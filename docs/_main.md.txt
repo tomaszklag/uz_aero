@@ -1,0 +1,602 @@
+# e-Chronometraż — dokumentacja projektu
+
+> Aplikacja Android (React Native) do elektronicznego chronometrażu lotów w trybie offline/online.
+> Przeznaczona dla pilotów operacyjnych. Zastępuje papierowy chronometraż i ręczne logowanie rozchodów paliwa.
+
+---
+
+## Spis treści
+
+1. [Kontekst i cel](#1-kontekst-i-cel)
+2. [Użytkownicy i środowisko](#2-użytkownicy-i-środowisko)
+3. [Wymagania funkcjonalne](#3-wymagania-funkcjonalne)
+4. [Architektura UX — dwa tryby](#4-architektura-ux--dwa-tryby)
+5. [Screen flow](#5-screen-flow)
+6. [Wymagania niefunkcjonalne i ryzyka](#6-wymagania-niefunkcjonalne-i-ryzyka)
+7. [Stack technologiczny](#7-stack-technologiczny)
+8. [Plan faz](#8-plan-faz)
+9. [Prompty dla agentów](#9-prompty-dla-agentów)
+
+---
+
+## 1. Kontekst i cel
+
+Aplikacja ma zastąpić papierowy e-chronometraż używany przez pilotów podczas dnia lotnego. Rejestruje:
+- czasy blokowe (off-block / on-block) dla każdego pilota
+- czasy lotów (takeoff / landing)
+- duty time (od meldowania do zakończenia służby)
+- stany i rozchód paliwa
+- liczniki startów i lądowań
+
+Dane eksportowane są do Google Sheets jako arkusz dzienny — zastępując ręczne wypełnianie tabel.
+
+---
+
+## 2. Użytkownicy i środowisko
+
+- **Użytkownik:** pilot (dowódca i/lub drugi pilot)
+- **Urządzenie:** telefon Android (głównie), możliwy tablet
+- **Środowisko użycia:**
+  - w kokpicie podczas lotu → priorytet: szybkość, czytelność, duże elementy
+  - na ziemi między lotami → priorytet: dokładność, szczegółowe formularze
+  - częste silne nasłonecznienie → ciemny motyw (dark mode) jako domyślny
+- **Łączność:** tryb offline-first; sync z Google Drive gdy dostępny internet
+
+---
+
+## 3. Wymagania funkcjonalne
+
+### 3.1 Ekran powitalny / preflight briefing
+
+Pilot wypełnia przed pierwszym lotem dnia:
+
+| Pole | Typ | Wymagane |
+|------|-----|----------|
+| Kod pilota (np. MIW) | tekst | tak |
+| Znak samolotu (np. SP-MIW) | tekst | tak |
+| Lotnisko startu (ICAO) | tekst | tak |
+| Lotnisko lądowania (ICAO) | tekst | tak |
+| Czas meldowania (duty start) | time picker | tak |
+| Rodzaj lotu | select: skoki / ferry / egzamin / lot techniczny / inne | tak |
+| Oznaczenie klienta | tekst | nie |
+| Poziom paliwa startowy (L) | liczba | tak |
+
+### 3.2 Ekran roboczy — cockpit view
+
+Główny ekran podczas dnia lotnego. Dwa stany:
+
+**Stan: silnik wyłączony (ground)**
+- duży przycisk START ENGINE z potwierdzeniem
+- czas lokalny i UTC
+- ostatni zarejestrowany lot (summary)
+- skróty: tankowanie, zmiana załogi, lista ręczna
+
+**Stan: silnik uruchomiony (running)**
+- timer block time (od kliknięcia start)
+- czas lokalny / UTC (live)
+- prędkość GPS (GS, kt)
+- wysokość GPS (ft)
+- szacowany fuel on board (obliczany)
+- licznik startów / lądowań (auto + ręczny)
+- przycisk STOP ENGINE z potwierdzeniem
+
+### 3.3 Algorytm auto-detekcji startu i lądowania
+
+Detekcja na podstawie danych GPS:
+
+**Start (takeoff):**
+- GS > próg (sugerowane 45–55 kt) przez min. 3 sekundy
+- LUB zmiana wysokości względem elewacji lotniska > próg (sugerowane 50 ft)
+- zabezpieczenie: hystereza — po detekcji startu ignoruj kolejne przez 60 s
+
+**Lądowanie (landing):**
+- GS < próg (sugerowane 30 kt) przez min. 5 sekund
+- ORAZ wysokość względem elewacji lotniska < 30 ft
+- zabezpieczenie: nie zaliczaj lądowania podczas ciasnych zakrętów (chwilowy spadek GS) — wymaga spełnienia obu warunków jednocześnie
+
+> ⚠️ Progi do kalibracji podczas testów z pilotami. Znane ryzyko: precyzja GPS consumer-grade może powodować fałszywe detekcje.
+
+Opcja ręczna: pilot może dokliknąć start lub lądowanie.
+
+### 3.4 Tankowanie
+
+Formularz dostępny między lotami:
+
+- stan paliwa przed tankowaniem (L) — podpowiada ostatnią wartość
+- ilość dolana (L)
+- stan po tankowaniu (wyliczany = przed + dolano)
+- **kalkulacja zużycia:** średnie zużycie/h na podstawie czasu pracy silnika od ostatniego tankowania
+- komunikat z wyliczonym zużyciem jako punkt kontrolny
+
+### 3.5 Zmiana załogi
+
+- zmiana dowódcy i/lub drugiego pilota
+- rejestracja kodu pilota + czasu zmiany
+- każdy pilot ma osobny licznik czasu blokowego
+
+### 3.6 Zakończenie dnia lotnego
+
+**Opcja "przerwa"** (nie kończy duty):
+- zatrzymanie timera silnika
+- możliwość wznowienia bez zakończenia dnia
+
+**Opcja "zakończenie dnia":**
+- stan końcowy paliwa (L)
+- ewentualne uzupełnienie po ostatnim locie
+- godzina zakończenia duty
+- generacja statystyk dnia
+
+### 3.7 Statystyki dnia
+
+Po zatwierdzeniu zakończenia:
+
+- czas blokowy per pilot (suma off-block → on-block)
+- czasy lotów (takeoff → landing, per lot)
+- duty time (czas meldowania → godzina zakończenia)
+- liczba startów i lądowań
+- paliwo startowe / dolane / końcowe / zużyte (obliczone)
+- lista wszystkich lotów dnia z czasami
+
+Dane edytowalne przed eksportem.
+
+### 3.8 Ręczna lista wzlotów (fallback GPS)
+
+Prosta tabela do ręcznego wpisu gdy GPS niedostępny:
+
+| Kolumna | Opis |
+|---------|------|
+| Off block | czas (podpowiada zegar, edytowalny) |
+| Takeoff | czas |
+| Landing | czas |
+| On block | czas |
+| Uwagi | tekst |
+
+Plus sekcja paliwa i stanów.
+
+### 3.9 Eksport
+
+- format: Google Sheets (arkusz dzienny)
+- autoryzacja: Google OAuth 2.0
+- struktura arkusza: do ustalenia (osobna specyfikacja)
+- tryb offline: dane w kolejce, eksport gdy internet dostępny
+
+---
+
+## 4. Architektura UX — dwa tryby
+
+Aplikacja automatycznie przełącza tryb na podstawie stanu silnika:
+
+```
+TRYB GROUND (silnik wyłączony)
+├── pełne formularze
+├── standardowe rozmiary elementów
+├── dostęp do historii i edycji
+└── akcje: tankowanie, zmiana załogi, zakończenie dnia
+
+TRYB COCKPIT (silnik uruchomiony / w locie)
+├── duże cyfry, maksymalna czytelność
+├── minimum elementów na ekranie
+├── tylko krytyczne akcje (stop, ręczny S/L)
+└── parametry GPS live
+```
+
+**Motyw wizualny:** dark mode jako domyślny (kokpit, nasłonecznienie). Toggle na jasny dostępny w ustawieniach.
+
+**Design language:**
+- ciemne tło (#0d0d0d / #141414)
+- zielony akcent na statusy aktywne (#2ecc71)
+- amber na paliwo / ostrzeżenia (#f39c12)
+- czerwony na stop / błędy (#e74c3c)
+- monospacingowe cyfry na timerach i parametrach
+
+---
+
+## 5. Screen flow
+
+```
+[Splash] → [Preflight briefing] → [Podgląd + potwierdź]
+                                           ↓
+                              [Cockpit view — ground]
+                                    ↓         ↓
+                            [START ENGINE?]  [Akcje ground]
+                            [modal confirm]   ├── Tankowanie
+                                    ↓         ├── Zmiana załogi
+                         [Cockpit — RUNNING]  └── Lista ręczna
+                                    ↓
+                            [STOP ENGINE?]
+                            [modal confirm]
+                                    ↓
+                         [Między lotami — ground]
+                          ↓                  ↓
+                    [kolejny lot]    [Zakończenie dnia]
+                          ↑                  ↓
+                    (pętla)         [Formularz end-of-day]
+                                             ↓
+                                    [Statystyki dnia]
+                                             ↓
+                                    [Edycja + eksport]
+```
+
+---
+
+## 6. Wymagania niefunkcjonalne i ryzyka
+
+### Ryzyka techniczne
+
+| Ryzyko | Poziom | Mitygacja |
+|--------|--------|-----------|
+| GPS w tle — Android battery saver zabija proces | 🔴 wysoki | Foreground Service z powiadomieniem w pasku; `expo-task-manager` |
+| Fałszywe S/L detekcje (ciasne zakręty, słaby GPS) | 🔴 wysoki | Hystereza, podwójny warunek (GS + alt), ręczna korekta |
+| Google OAuth konfiguracja (SHA certs, Play Console) | 🟡 średni | Osobny task setupu; testować wcześnie |
+| Brak internetu podczas eksportu | 🟡 średni | Offline queue w SQLite; sync gdy sieć wróci |
+| Dokładność elewacji lotniska (baza danych) | 🟡 średni | Rejestracja elewacji po kliknięciu START (GPS alt w momencie off-block) |
+
+### Wymagania systemowe
+
+- Android 10+ (API 29+)
+- Uprawnienia: `ACCESS_FINE_LOCATION`, `FOREGROUND_SERVICE`, `INTERNET`
+- Działa w tle (GPS tracking gdy ekran wygaszony)
+- Offline-first: wszystkie dane lokalne w SQLite, sync opcjonalny
+
+---
+
+## 7. Stack technologiczny
+
+| Warstwa | Technologia | Uzasadnienie |
+|---------|-------------|--------------|
+| Framework | React Native + Expo (managed → bare) | Szybki start, łatwy build Android |
+| Nawigacja | React Navigation v6 | Standard RN |
+| State | Zustand | Prosty, bez boilerplate |
+| Lokalna baza | expo-sqlite | Offline-first, dane trwałe |
+| GPS | expo-location + expo-task-manager | Background location |
+| Eksport | Google Sheets API v4 + expo-auth-session | OAuth 2.0 |
+| Czas | dayjs | Lekka biblioteka, strefy czasowe |
+| Testy | Jest + React Native Testing Library | Unit + integration |
+
+---
+
+## 8. Plan faz
+
+| Faza | Zakres | Szacunek |
+|------|--------|----------|
+| 0 | Design UX/UI — wireframes wszystkich ekranów, design tokens | 1–2 tyg. |
+| 1 | Fundament — RN + Expo, nawigacja, SQLite schema, GPS hook | 1 tyg. |
+| 2 | Ekrany — preflight, cockpit view, ground akcje | 3–4 tyg. |
+| 3 | Moduły techniczne — algorytm GPS S/L, offline sync, eksport Sheets | 3–4 tyg. |
+| 4 | Testy z pilotami, korekty UX, kalibracja progów S/L | 2 tyg. |
+| 5 | Wdrożenie — Play Store internal track, dokumentacja | 1 tyg. |
+
+---
+
+## 9. Prompty dla agentów
+
+Gotowe prompty do wklejenia w Claude Code lub nowym czacie. Każdy agent dostaje kontekst + konkretne zadanie.
+
+---
+
+### AGENT 1 — Inicjalizacja projektu React Native
+
+```
+Jesteś seniorem React Native developera. Zainicjalizuj projekt aplikacji mobilnej Android.
+
+KONTEKST: Aplikacja e-Chronometraż — elektroniczny chronometraż lotów dla pilotów.
+Działa offline-first, używa GPS w tle, eksportuje do Google Sheets.
+
+ZADANIE: Zainicjalizuj projekt i skonfiguruj fundament.
+
+STACK:
+- React Native z Expo (zacznij od managed workflow, przejdź na bare gdy potrzeba background location)
+- React Navigation v6 (bottom tabs + stack)
+- Zustand do state management
+- expo-sqlite do lokalnej bazy danych
+- expo-location + expo-task-manager do GPS w tle
+- dayjs do obsługi czasu i stref
+
+STRUKTURA KATALOGÓW do stworzenia:
+src/
+  screens/          # ekrany aplikacji
+  components/       # komponenty wielokrotnego użytku
+  store/            # Zustand stores
+  db/               # SQLite schema i queries
+  hooks/            # custom hooks (useGPS, useTimer, useFlightDetection)
+  utils/            # helpers (timeFormat, fuelCalc)
+  navigation/       # konfiguracja nawigacji
+  constants/        # kolory, rozmiary, progi GPS
+  types/            # TypeScript types
+
+SCHEMAT BAZY DANYCH (SQLite) do zaimplementowania:
+
+TABLE duty_days
+  id, date, pilot_code, aircraft_sign, 
+  departure_icao, destination_icao, duty_start_utc,
+  flight_type, customer, fuel_initial_l, fuel_final_l,
+  duty_end_utc, status (active|completed)
+
+TABLE engine_sessions
+  id, duty_day_id, pilot_code,
+  engine_start_utc, engine_stop_utc,
+  block_time_seconds
+
+TABLE flight_legs
+  id, engine_session_id,
+  takeoff_utc, landing_utc,
+  flight_time_seconds,
+  detection_method (auto|manual)
+
+TABLE fuel_events
+  id, duty_day_id, timestamp_utc,
+  fuel_before_l, fuel_added_l, fuel_after_l,
+  engine_hours_since_last_fuel
+
+TABLE crew_changes
+  id, duty_day_id, timestamp_utc,
+  role (commander|second),
+  pilot_code_out, pilot_code_in
+
+TABLE manual_log_entries
+  id, duty_day_id,
+  off_block_utc, takeoff_utc, landing_utc, on_block_utc,
+  notes
+
+DELIVERABLE:
+- działający projekt który się kompiluje
+- skonfigurowana nawigacja z placeholderami dla wszystkich ekranów
+- zainicjalizowana baza SQLite ze schemą
+- TypeScript types dla wszystkich encji
+- plik src/constants/gps.ts z progami detekcji S/L
+```
+
+---
+
+### AGENT 2 — Design system i komponenty bazowe
+
+```
+Jesteś senior React Native UI developerem. Tworzysz design system dla aplikacji lotniczej.
+
+KONTEKST: Aplikacja e-Chronometraż. Ciemny motyw (dark mode domyślny), 
+używana w kokpicie samolotu przy silnym nasłonecznieniu. Priorytet: czytelność i szybkość.
+
+DESIGN TOKENS (zaimplementuj w src/constants/theme.ts):
+
+KOLORY:
+  background:   #0d0d0d (primary), #141414 (secondary), #1a1a1a (tertiary)
+  text:         #e8e8e8 (primary), #888888 (secondary), #444444 (tertiary)
+  accent:
+    green:  #2ecc71  (silnik running, in flight, status OK)
+    amber:  #f39c12  (paliwo, ostrzeżenia)
+    red:    #e74c3c  (stop engine, błędy krytyczne)
+    blue:   #3498db  (informacje, UTC)
+  borders:      #222222 (subtle), #2a2a2a (default), #333333 (emphasis)
+
+TYPOGRAFIA (czcionki monospace dla cyfr!):
+  timer_large:    48px, weight 300, letter-spacing 4px, font: monospace
+  param_value:    24px, weight 400, font: monospace  
+  param_label:    10px, weight 400, letter-spacing 2px, uppercase
+  body:           14px, weight 400
+  label:          12px, weight 400, color: text.secondary
+
+SPACING: 4, 8, 12, 16, 20, 24, 32, 40, 48
+BORDER_RADIUS: 8 (small), 12 (medium), 16 (large), 24 (card)
+
+KOMPONENTY do zbudowania:
+
+1. TimerDisplay — duży timer monospace, props: seconds, label, color
+2. ParamCard — karta parametru GPS, props: label, value, unit, highlight
+3. CounterPill — licznik kołowy S/L, props: label, count, onIncrement
+4. ActionButton — przycisk akcji (stop/start/fuel/crew), props: variant, icon, label, onPress
+5. ConfirmModal — modal potwierdzenia krytycznej akcji, props: title, message, onConfirm, onCancel
+   (potwierdzenie wymaga przytrzymania 2 sekundy LUB dwukrotnego kliknięcia)
+6. StatusBar — górny pasek z kodem pilota, znakiem samolotu, trasą
+7. GroundActionCard — karta akcji na ziemi (tankowanie, zmiana załogi itp.)
+8. FuelIndicator — wskaźnik poziomu paliwa z kolorem amber gdy <1h lotu
+
+Wszystkie komponenty muszą:
+- obsługiwać React Native (nie web)
+- używać StyleSheet.create (nie inline styles dla performance)
+- być napisane w TypeScript z pełnymi typami props
+- mieć wariant light mode (prop colorScheme lub hook useColorScheme)
+```
+
+---
+
+### AGENT 3 — Ekran cockpit view (główny ekran roboczy)
+
+```
+Jesteś senior React Native developerem. Budujesz główny ekran roboczy aplikacji lotniczej.
+
+KONTEKST: Aplikacja e-Chronometraż. Ekran jest centrum aplikacji — pilot spędza tu 
+większość czasu. Musi być czytelny jednym spojrzeniem w kokpicie.
+
+ZAKŁADAJ że istnieje:
+- design system w src/constants/theme.ts
+- komponenty bazowe w src/components/
+- Zustand store z aktualnym stanem lotu w src/store/flightStore.ts
+- hook useGPS() zwracający { speed_kt, altitude_ft, latitude, longitude, accuracy }
+- hook useTimer() z { seconds, isRunning, start, stop, reset }
+
+STAN EKRANU — dwa warianty renderowania:
+
+WARIANT A: GROUND STATE (engineRunning === false)
+Layout od góry:
+  - StatusBar: kod pilota | znak samolotu | ICAO→ICAO
+  - Duży przycisk "START ENGINE" (zielony, wypełniony, cały szerokość)
+    → po kliknięciu otwiera ConfirmModal (przytrzymaj 2s)
+  - Sekcja "ostatni lot" (jeśli był): blok time, nr lotu, czas
+  - Grid 2x2 akcji: [Tankowanie] [Zmiana załogi] [Lista ręczna] [Zakończ dzień]
+
+WARIANT B: COCKPIT STATE (engineRunning === true)
+Layout od góry:
+  - StatusBar (mały, 32px wysokość)
+  - Czas lokalny + UTC (live, aktualizowany co sekundę)
+  - Timer "BLOCK TIME" — ogromny (48px), monospace, zielony
+  - Separator
+  - Grid 2x2 ParamCard:
+      [GS speed: XXX kt]  [Altitude: X XXX ft]
+      [Fuel est.: XXX L]  [Flight time: HH:MM]
+  - Row z CounterPill: [STARTS: N] [LDGS: N] [● IN FLIGHT]
+  - Row akcji: [STOP ENGINE (red)] [fuel ikon] [crew ikon] [+S/L ikon]
+
+INTERAKCJE:
+- Stop engine → ConfirmModal → zapis engine_session do SQLite
+- +S/L → bezpośrednio inkrementuje counter (bez modala, bo częsta akcja)
+- Fuel / Crew → nawigacja do odpowiednich ekranów
+
+WYMAGANIA TECHNICZNE:
+- aktualizacja GPS co 1s (useGPS hook z expo-location)
+- timer co 1s (setInterval w useTimer)
+- ekran nie może blokować GPS gdy aplikacja w tle
+- keepAwake podczas engineRunning (expo-keep-awake)
+- obsługa braku GPS (wyświetl "GPS: brak sygnału" zamiast wartości)
+```
+
+---
+
+### AGENT 4 — Algorytm detekcji startów i lądowań
+
+```
+Jesteś ekspertem od algorytmów i React Native. Implementujesz rdzeń aplikacji lotniczej.
+
+ZADANIE: Zaimplementuj hook useFlightDetection() wykrywający starty i lądowania na podstawie GPS.
+
+ZNANE PROBLEMY do rozwiązania:
+- ciasne zakręty mogą powodować chwilowy spadek GS do zera → fałszywe lądowanie
+- słaby sygnał GPS może powodować skoki wysokości → fałszywy start
+- consumer GPS ma dokładność ~5m, elewacja może skakać o ±20ft
+
+ALGORYTM:
+
+Stałe (konfigurowalny plik src/constants/gps.ts):
+  TAKEOFF_SPEED_KT = 50        // próg prędkości GS do detekcji startu
+  LANDING_SPEED_KT = 35        // próg prędkości do detekcji lądowania
+  TAKEOFF_ALT_DIFF_FT = 50     // różnica wysokości względem alt lotniska
+  LANDING_ALT_DIFF_FT = 30     // powrót poniżej tej wysokości = lądowanie
+  TAKEOFF_CONFIRM_SEC = 3      // ile sekund warunek musi być spełniony
+  LANDING_CONFIRM_SEC = 5      // ile sekund (dłużej bo zakręty)
+  COOLDOWN_AFTER_TAKEOFF_SEC = 60   // ignoruj przez 60s po starcie
+  COOLDOWN_AFTER_LANDING_SEC = 30   // ignoruj przez 30s po lądowaniu
+
+Logika:
+  1. Przy ENGINE START → zapisz altitude_ft jako airport_elevation
+  2. Co sekundę sprawdzaj:
+     
+     DETEKCJA STARTU (gdy inFlight === false):
+       conditionMet = (speed_kt > TAKEOFF_SPEED_KT) || (altitude_ft - airport_elevation > TAKEOFF_ALT_DIFF_FT)
+       jeśli conditionMet przez TAKEOFF_CONFIRM_SEC sekund → zapisz takeoff, inFlight = true, start cooldown
+     
+     DETEKCJA LĄDOWANIA (gdy inFlight === true):
+       conditionMet = (speed_kt < LANDING_SPEED_KT) && (altitude_ft - airport_elevation < LANDING_ALT_DIFF_FT)
+       jeśli conditionMet przez LANDING_CONFIRM_SEC sekund → zapisz landing, inFlight = false, start cooldown
+     
+     W trakcie cooldown → ignoruj wszelkie detekcje
+
+  3. Przy każdej detekcji → zapisz do SQLite (flight_legs), emituj event do store
+
+INTERFACE hooka:
+  useFlightDetection(engineSessionId: number) => {
+    inFlight: boolean,
+    takeoffCount: number,
+    landingCount: number,
+    manualTakeoff: () => void,
+    manualLanding: () => void,
+    detectionLog: DetectionEvent[]   // do debugowania
+  }
+
+DODATKOWE:
+- zapis DetectionEvent do AsyncStorage jako debug log (ostatnie 100 eventów)
+- opcja wyłączenia auto-detekcji w ustawieniach (tylko tryb ręczny)
+- unit testy dla algorytmu (Jest) z przypadkami brzegowymi:
+  - ciasny zakręt (GS=0 przez 2s, ale alt wysoka)
+  - turbulencje (alt skacze ±30ft)
+  - poprawny start i lądowanie
+```
+
+---
+
+### AGENT 5 — Eksport do Google Sheets
+
+```
+Jesteś ekspertem od integracji Google APIs w React Native / Expo.
+
+ZADANIE: Zaimplementuj eksport danych dnia lotnego do Google Sheets.
+
+AUTORYZACJA:
+- Google OAuth 2.0 przez expo-auth-session
+- scope: https://www.googleapis.com/auth/spreadsheets
+- token przechowywany w expo-secure-store
+- obsługa refresh tokena
+- fallback gdy brak internetu: dane w kolejce w SQLite (tabela export_queue)
+
+STRUKTURA ARKUSZA (jeden sheet per dzień, nazwa: YYYY-MM-DD_SP-XXX):
+
+Wiersz 1-5: nagłówek (pilot, samolot, data, trasa, duty time)
+Wiersz 7+: tabela lotów:
+
+| # | Off block | Takeoff | Landing | On block | Block time | Flight time | Pilot CDR | Pilot SIC | Uwagi |
+|---|-----------|---------|---------|----------|------------|-------------|-----------|-----------|-------|
+
+Pod tabelą: sekcja paliwa
+| Paliwo startowe | Dolane (tankowanie 1) | Dolane (tankowanie 2) | Stan końcowy | Zużyte |
+
+IMPLEMENTACJA:
+- src/services/googleSheets.ts — klasa GoogleSheetsService
+- metody: authenticate(), exportDutyDay(dutyDayId), syncQueue()
+- formatowanie: czasy w formacie HH:MM UTC, czas blokowy jako HH:MM
+- kolory komórek: nagłówki ciemnozielone, naprzemienne wiersze jasny/biały
+
+DELIVERABLE:
+- działający eksport do nowego spreadsheeta
+- opcja eksportu do istniejącego (podaj URL)
+- UI: ekran src/screens/ExportScreen.tsx z:
+  - podglądem danych do eksportu
+  - przyciskiem "eksportuj do Google Sheets"
+  - statusem (wysyłanie... / sukces / błąd / offline - w kolejce)
+  - linkiem do otwartego arkusza
+```
+
+---
+
+### AGENT 6 — Ekran statystyk i zakończenia dnia
+
+```
+Jesteś senior React Native developerem. Budujesz ekrany podsumowania dnia lotnego.
+
+EKRAN 1: Formularz zakończenia dnia (EndOfDayScreen)
+  - pole: stan paliwa końcowy (L)
+  - pole: ewentualne dolanie po ostatnim locie (L)  
+  - pole: godzina zakończenia duty (time picker, podpowiada teraz)
+  - przycisk "Oblicz statystyki"
+
+EKRAN 2: Statystyki dnia (DayStatsScreen)
+  Sekcja: Duty time
+    - od: [czas meldowania] do: [czas zakończenia] = [HH:MM]
+  
+  Sekcja: Per pilot (dla każdego pilota osobno)
+    - czas blokowy: suma wszystkich engine_sessions dla pilota
+    - liczba startów / lądowań
+  
+  Sekcja: Lista lotów (scrollowalna tabela)
+    | # | Takeoff UTC | Landing UTC | Czas lotu | Metoda (auto/ręcznie) |
+  
+  Sekcja: Paliwo
+    - startowe / dolane łącznie / końcowe / zużyte / średnie zużycie L/h
+
+  Przycisk: "Edytuj dane" → otwiera edytowalną wersję tabeli
+  Przycisk: "Eksportuj → Google Sheets"
+
+EDYCJA:
+  - każdy wiersz tabeli lotów edytowalny (tap → inline edit)
+  - możliwość usunięcia błędnego wpisu
+  - zmiana metody detekcji (auto → manual) bez usuwania
+  - po edycji: przelicz automatycznie wszystkie sumy
+  - przycisk "Zapisz zmiany" zanim przejdzie do eksportu
+
+WYMAGANIA:
+  - wszystkie obliczenia po stronie SQLite (queries agregujące)
+  - eksport możliwy tylko po zatwierdzeniu danych (nie można cofnąć)
+  - zapisz kopię JSON do AsyncStorage jako lokalny backup
+```
+
+---
+
+*Dokument wygenerowany na podstawie sesji projektowej. Aktualizować przy każdej zmianie wymagań.*
+*Wersja: 0.1 — faza design/planowanie*

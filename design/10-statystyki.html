@@ -1,0 +1,408 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 10 Statystyki Dnia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* App internals */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle {
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--text-muted);
+  }
+  .badge {
+    font-family:var(--font-mono); font-size:10px; letter-spacing:1px;
+    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
+    padding:4px 10px; border-radius:999px;
+  }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+
+  /* Duty time hero */
+  .duty-hero {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:16px 14px;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    position:relative; overflow:hidden;
+  }
+  .duty-hero::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, transparent, var(--green), transparent);
+  }
+  .duty-label {
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2.5px;
+    text-transform:uppercase; color:var(--text-muted);
+  }
+  .duty-time {
+    font-family:var(--font-display); font-size:52px; letter-spacing:3px;
+    color:var(--text-primary); line-height:1;
+  }
+  .duty-range {
+    font-family:var(--font-mono); font-size:11px; color:var(--text-secondary);
+    letter-spacing:1px;
+  }
+
+  /* Crew cards */
+  .crew-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .crew-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;
+  }
+  .crew-card.active { border-color:var(--green-border); background:var(--green-muted); }
+  .crew-role {
+    font-family:var(--font-mono); font-size:7px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--text-muted);
+  }
+  .crew-id {
+    font-family:var(--font-display); font-size:16px; letter-spacing:1px;
+    color:var(--text-primary);
+  }
+  .crew-card.active .crew-id { color:var(--green); }
+  .crew-stat { display:flex; flex-direction:column; gap:2px; margin-top:2px; }
+  .crew-stat-row { display:flex; justify-content:space-between; align-items:baseline; }
+  .crew-stat-key { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
+  .crew-stat-val { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
+  .crew-tag {
+    font-family:var(--font-mono); font-size:7px; letter-spacing:1px;
+    text-transform:uppercase; color:var(--green);
+    background:rgba(46,204,113,0.08); border:1px solid var(--green-border);
+    padding:2px 6px; border-radius:4px; align-self:flex-start; margin-top:2px;
+  }
+  .crew-empty {
+    font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
+    font-style:italic; margin-top:4px;
+  }
+
+  /* Section card */
+  .section-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+  }
+  .section-card-head {
+    padding:8px 12px; background:var(--surface-raised);
+    border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--text-muted);
+    display:flex; align-items:center; gap:6px;
+  }
+  .section-card-head::before {
+    content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong);
+  }
+
+  /* Flights table */
+  .data-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); }
+  .data-table th {
+    font-size:7px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--text-muted); padding:8px 8px; border-bottom:1px solid var(--border);
+    text-align:left;
+  }
+  .data-table td {
+    font-size:11px; color:var(--text-primary); padding:9px 8px;
+    border-bottom:1px solid var(--border);
+  }
+  .data-table tr:last-child td { border-bottom:none; }
+  .data-table td.num { color:var(--text-muted); }
+  .data-table td.type-auto {
+    font-size:8px; letter-spacing:1px; color:var(--green);
+    background:var(--green-muted); border-radius:4px; padding:2px 5px;
+    white-space:nowrap;
+  }
+  .data-table td.type-manual {
+    font-size:8px; letter-spacing:1px; color:var(--amber);
+    background:var(--amber-muted); border-radius:4px; padding:2px 5px;
+    white-space:nowrap;
+  }
+  .edit-btn {
+    background:none; border:1px solid var(--border); border-radius:5px;
+    color:var(--text-muted); cursor:pointer; padding:3px 5px;
+    display:inline-flex; align-items:center;
+  }
+  .edit-btn:hover { border-color:var(--border-strong); color:var(--text-secondary); }
+
+  /* Fuel grid */
+  .fuel-grid-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
+  .fuel-cell {
+    background:var(--surface); padding:10px 12px;
+    display:flex; flex-direction:column; gap:3px;
+  }
+  .fuel-cell-label {
+    font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--text-muted);
+  }
+  .fuel-cell-val {
+    font-family:var(--font-display); font-size:24px; letter-spacing:1px;
+    color:var(--amber); line-height:1;
+  }
+  .fuel-cell-unit {
+    font-family:var(--font-mono); font-size:9px; color:var(--text-secondary);
+  }
+  .fuel-avg-row {
+    padding:10px 12px; border-top:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .fuel-avg-label {
+    font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--text-muted);
+  }
+  .fuel-avg-val {
+    font-family:var(--font-display); font-size:20px; letter-spacing:2px;
+    color:var(--amber);
+  }
+
+  /* Buttons */
+  .btn-row { display:flex; flex-direction:column; gap:8px; }
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:13px; border-radius:12px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
+    border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
+  }
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:17px; border-radius:16px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 10</span>
+  <span class="slug">statystyki dnia</span>
+  <span class="canvas-meta"><span class="pulse"></span>Screen 10 / 11</span>
+</header>
+
+<main class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <!-- App Header -->
+    <div class="app-header">
+      <div style="width:56px;"></div>
+      <div class="app-header-center">
+        <span class="screen-title">STATYSTYKI DNIA</span>
+        <span class="header-subtitle">SP-MIW · 22 June 2026</span>
+      </div>
+      <span class="badge">5 lotów</span>
+    </div>
+
+    <!-- Scroll content -->
+    <div class="scroll">
+
+      <!-- Duty Time Hero -->
+      <div class="duty-hero">
+        <div class="duty-label">Czas służby</div>
+        <div class="duty-time">08:45</div>
+        <div class="duty-range">08:00 LT → 16:45 LT</div>
+      </div>
+
+      <!-- Crew cards -->
+      <div class="crew-grid">
+        <div class="crew-card active">
+          <div class="crew-role">CDR</div>
+          <div class="crew-id">MIW</div>
+          <div class="crew-stat">
+            <div class="crew-stat-row">
+              <span class="crew-stat-key">Block time</span>
+              <span class="crew-stat-val">02:30</span>
+            </div>
+            <div class="crew-stat-row">
+              <span class="crew-stat-key">St / Ld</span>
+              <span class="crew-stat-val">5 / 5</span>
+            </div>
+          </div>
+          <div class="crew-tag">Pełny dzień</div>
+        </div>
+        <div class="crew-card">
+          <div class="crew-role">SIC</div>
+          <div class="crew-id" style="color:var(--text-muted);">—</div>
+          <div class="crew-empty">Brak</div>
+        </div>
+      </div>
+
+      <!-- Flight list -->
+      <div class="section-card">
+        <div class="section-card-head">Lista lotów</div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Takeoff</th>
+              <th>Landing</th>
+              <th>Czas</th>
+              <th>Typ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="num">1</td>
+              <td>08:25</td>
+              <td>09:18</td>
+              <td>00:53</td>
+              <td><span class="type-auto">AUTO</span></td>
+              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="num">2</td>
+              <td>10:17</td>
+              <td>11:05</td>
+              <td>00:48</td>
+              <td><span class="type-auto">AUTO</span></td>
+              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="num">3</td>
+              <td>12:44</td>
+              <td>13:29</td>
+              <td>00:45</td>
+              <td><span class="type-auto">AUTO</span></td>
+              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="num">4</td>
+              <td>14:10</td>
+              <td>15:02</td>
+              <td>00:52</td>
+              <td><span class="type-manual">RĘCZNIE</span></td>
+              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+            </tr>
+            <tr>
+              <td class="num">5</td>
+              <td>15:20</td>
+              <td>16:08</td>
+              <td>00:48</td>
+              <td><span class="type-auto">AUTO</span></td>
+              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Fuel section -->
+      <div class="section-card">
+        <div class="section-card-head" style="color:var(--amber);">Paliwo</div>
+        <div class="fuel-grid-2x2">
+          <div class="fuel-cell">
+            <div class="fuel-cell-label">Startowe</div>
+            <div class="fuel-cell-val">150</div>
+            <div class="fuel-cell-unit">litrów</div>
+          </div>
+          <div class="fuel-cell">
+            <div class="fuel-cell-label">Dolane</div>
+            <div class="fuel-cell-val">63</div>
+            <div class="fuel-cell-unit">litrów</div>
+          </div>
+          <div class="fuel-cell">
+            <div class="fuel-cell-label">Końcowe</div>
+            <div class="fuel-cell-val">82</div>
+            <div class="fuel-cell-unit">litrów</div>
+          </div>
+          <div class="fuel-cell">
+            <div class="fuel-cell-label">Zużyte</div>
+            <div class="fuel-cell-val">131</div>
+            <div class="fuel-cell-unit">litrów</div>
+          </div>
+        </div>
+        <div class="fuel-avg-row">
+          <span class="fuel-avg-label">Średnie zużycie</span>
+          <span class="fuel-avg-val">35 L/H</span>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="btn-row">
+        <button class="btn-secondary">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+          EDYTUJ DANE
+        </button>
+        <a href="11-eksport.html" class="btn-primary">
+          EKSPORTUJ → SHEETS
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 1v9M3 6l4 4 4-4"/><path d="M1 11h12"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="09-end-of-day.html">← 09 Zakończenie</a>
+  <span>·</span>
+  <a href="10-statystyki.html" class="active">10 Statystyki</a>
+  <span>·</span>
+  <a href="11-eksport.html">11 Eksport →</a>
+</nav>
+
+</body>
+</html>

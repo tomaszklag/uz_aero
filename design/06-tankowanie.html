@@ -1,0 +1,273 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 06 Tankowanie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.04) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+
+  .canvas-label {
+    width: 100%; max-width: 460px;
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: baseline; gap: 20px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--border);
+  }
+  .film-strip { font-family: var(--font-display); font-size: 34px; letter-spacing: 3px; line-height: 1; }
+  .slug { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 18px; }
+  .canvas-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; display: inline-flex; align-items: center; gap: 10px; }
+  .canvas-meta .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px var(--amber-muted); animation: pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow: 0 0 0 8px transparent; opacity:0.6; } }
+
+  .phone {
+    width: 393px; height: 852px; border-radius: 54px;
+    background: var(--bg);
+    border: 10px solid #0D0E12;
+    box-shadow: 0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow: hidden; position: relative; isolation: isolate; flex-shrink: 0;
+    transform: scale(var(--phone-scale)); transform-origin: top center;
+    margin-bottom: calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--amber); }
+  .nav-strip a.active { color:var(--amber); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* App header */
+  .app-header {
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .back-btn { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-decoration: none; letter-spacing: 0.5px; }
+  .back-btn:hover { color: var(--text-secondary); }
+  .screen-title { font-family: var(--font-display); font-size: 22px; letter-spacing: 3px; color: var(--text-primary); }
+  .header-icon { color: var(--amber); }
+
+  /* Scroll */
+  .scroll { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* FOB Indicator */
+  .fob-indicator {
+    background: var(--amber-muted); border: 1px solid var(--amber-border);
+    border-radius: 20px; padding: 20px 20px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    box-shadow: 0 0 30px rgba(243,156,18,0.08);
+  }
+  .fob-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--amber); opacity: 0.7; }
+  .fob-value { font-family: var(--font-mono); font-size: 64px; font-weight: 700; color: var(--amber); line-height: 1; letter-spacing: -2px; }
+  .fob-unit { font-family: var(--font-mono); font-size: 28px; font-weight: 400; color: var(--amber); opacity: 0.6; margin-left: -4px; }
+  .fob-row { display: flex; align-items: baseline; gap: 6px; }
+  .fob-subtext { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 4px; text-align: center; }
+
+  /* Section */
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .section-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+
+  /* Field */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+  .field-input {
+    background: var(--surface-raised); border: 1px solid var(--amber-border); border-radius: 12px;
+    padding: 13px 14px; color: var(--text-primary);
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 0 0 3px rgba(243,156,18,0.06);
+  }
+
+  /* Slider */
+  .slider-track { position: relative; height: 6px; background: var(--surface-raised); border-radius: 3px; margin: 2px 0; border: 1px solid var(--border); }
+  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; width: 31.5%; background: var(--amber); border-radius: 3px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
+  .slider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); left: 31.5%; width: 16px; height: 16px; background: var(--amber); border: 2px solid #0D0D0D; border-radius: 50%; box-shadow: 0 0 0 3px rgba(243,156,18,0.3); }
+  .slider-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 6px; }
+
+  /* Result row */
+  .result-row {
+    background: var(--green-muted); border: 1px solid var(--green-border);
+    border-radius: 14px; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .result-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green); opacity: 0.8; }
+  .result-val { font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--green); letter-spacing: -0.5px; }
+  .result-formula { font-family: var(--font-mono); font-size: 10px; color: var(--green); opacity: 0.6; margin-top: 2px; }
+
+  /* Calc box */
+  .calc-box {
+    background: var(--amber-muted); border: 1px solid var(--amber-border);
+    border-radius: 14px; padding: 14px;
+    display: flex; flex-direction: column; gap: 7px;
+  }
+  .calc-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--amber); opacity: 0.7; }
+  .calc-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .calc-row-label { font-family: var(--font-body); font-size: 12px; color: var(--text-secondary); }
+  .calc-row-val { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+  .calc-highlight { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--amber); }
+  .calc-divider { height: 1px; background: var(--amber-border); opacity: 0.4; margin: 2px 0; }
+  .calc-subtext { font-family: var(--font-body); font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+
+  /* Amber button */
+  .btn-amber {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 18px; border-radius: 16px;
+    background: var(--amber); color: #0D0D0D;
+    font-family: var(--font-display); font-size: 22px; letter-spacing: 3px;
+    border: none; text-decoration: none; cursor: pointer;
+    box-shadow: 0 0 24px rgba(243,156,18,0.3);
+  }
+  .btn-amber:hover { box-shadow: 0 0 40px rgba(243,156,18,0.5); }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 06</span>
+  <span class="slug">tankowanie · fuel form</span>
+  <span class="canvas-meta"><span class="pulse"></span>Screen 6 / 11</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Tankowanie">
+  <div class="status-bar">
+    <span>11:47</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <!-- App Header -->
+    <div class="app-header">
+      <a href="04-cockpit-ground.html" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Kokpit
+      </a>
+      <div class="screen-title">TANKOWANIE</div>
+      <div class="header-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8l9-6 9 6v14"/><path d="M10 22V12h4v10"/><path d="M8 10h8"/></svg>
+      </div>
+    </div>
+
+    <!-- Scroll Content -->
+    <div class="scroll">
+
+      <!-- FOB Indicator -->
+      <div class="fob-indicator">
+        <div class="fob-label">FOB przed tankowaniem</div>
+        <div class="fob-row">
+          <div class="fob-value">87</div>
+          <div class="fob-unit">L</div>
+        </div>
+        <div class="fob-subtext">Obliczone z ostatnich sesji silnika</div>
+      </div>
+
+      <!-- Sekcja: Dolano -->
+      <div class="section">
+        <div class="section-label">Dolano</div>
+
+        <div class="field">
+          <div class="field-label">Ilość dolana</div>
+          <div class="field-input">
+            <span style="font-family: var(--font-mono); font-size: 32px; font-weight: 700; color: var(--amber); letter-spacing: -1px;">63</span>
+            <span style="font-family: var(--font-mono); font-size: 18px; color: var(--amber); opacity: 0.7;">L</span>
+          </div>
+        </div>
+
+        <!-- Fake Slider -->
+        <div>
+          <div class="slider-track">
+            <div class="slider-fill"></div>
+            <div class="slider-thumb"></div>
+          </div>
+          <div class="slider-labels">
+            <span>0 L</span>
+            <span>50 L</span>
+            <span>100 L</span>
+            <span>150 L</span>
+            <span>200 L</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div class="result-row">
+        <div>
+          <div class="result-label">Stan po tankowaniu</div>
+          <div class="result-formula">87 + 63 = 150 L</div>
+        </div>
+        <div class="result-val">150 L</div>
+      </div>
+
+      <!-- Calc Box -->
+      <div class="calc-box">
+        <div class="calc-title">Kalkulacja zużycia</div>
+        <div class="calc-row">
+          <span class="calc-row-label">Czas pracy silnika od tank.</span>
+          <span class="calc-row-val">1h 23 min</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-row-label">Zużycie w tym czasie</span>
+          <span class="calc-row-val">~63 L</span>
+        </div>
+        <div class="calc-divider"></div>
+        <div class="calc-row">
+          <span class="calc-row-label">Średnie zużycie</span>
+          <span class="calc-highlight">~46 L/h</span>
+        </div>
+        <div class="calc-subtext">Punkt kontrolny — zweryfikuj z dokumentacją samolotu</div>
+      </div>
+
+      <!-- Amber Button -->
+      <a href="04-cockpit-ground.html" class="btn-amber">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        ZAPISZ TANKOWANIE
+      </a>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="04-cockpit-ground.html">← 04/05 Kokpit</a>
+  <span>·</span>
+  <a href="06-tankowanie.html" class="active">06 Tankowanie</a>
+  <span>·</span>
+  <a href="04-cockpit-ground.html">→ Kokpit</a>
+</nav>
+
+</body>
+</html>

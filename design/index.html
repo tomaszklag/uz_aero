@@ -1,0 +1,432 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — Spis widoków</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D;
+    --bg-tint: #111318;
+    --surface: #141414;
+    --surface-raised: #1A1A1A;
+    --surface-hover: #222222;
+    --border: #252525;
+    --border-strong: #333333;
+    --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8;
+    --text-secondary: #888888;
+    --text-muted: #444444;
+    --green: #2ECC71;
+    --green-muted: rgba(46,204,113,0.12);
+    --green-border: rgba(46,204,113,0.28);
+    --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12;
+    --amber-muted: rgba(243,156,18,0.12);
+    --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C;
+    --red-muted: rgba(231,76,60,0.12);
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'Archivo', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(46,204,113,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at 80% 100%, rgba(243,156,18,0.03) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 80px;
+    gap: 0;
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 56px;
+  }
+  .hero-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: var(--green-muted);
+    border: 1px solid var(--green-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 32px var(--green-glow);
+    margin-bottom: 4px;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: 52px;
+    letter-spacing: 5px;
+    line-height: 1;
+    color: var(--text-primary);
+    text-align: center;
+  }
+  .hero h1 span { color: var(--green); }
+  .hero-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--green-muted);
+    border: 1px solid var(--green-border);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-top: 4px;
+  }
+  .hero-tag .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green-glow);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; box-shadow: 0 0 8px var(--green-glow); }
+    50% { opacity: 0.5; box-shadow: 0 0 2px var(--green-glow); }
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 0 16px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title::before {
+    content: '';
+    width: 4px;
+    height: 22px;
+    border-radius: 2px;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green-glow);
+  }
+
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 960px;
+    padding: 8px 0;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-wrap: wrap;
+  }
+  .flow-arrow::-webkit-scrollbar { display: none; }
+  .flow-step {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+  .flow-step:hover {
+    background: var(--surface-hover);
+    border-color: var(--green-border);
+    color: var(--green);
+  }
+  .flow-sep {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    width: 100%;
+    max-width: 960px;
+    margin-bottom: 48px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-decoration: none;
+    color: var(--text-primary);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: all 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--hairline);
+  }
+  .card:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .card.green:hover { border-color: var(--green-border); box-shadow: 0 8px 24px rgba(46,204,113,0.15); }
+  .card.amber:hover { border-color: var(--amber-border); box-shadow: 0 8px 24px rgba(243,156,18,0.15); }
+  .card.red:hover { border-color: rgba(231,76,60,0.3); box-shadow: 0 8px 24px rgba(231,76,60,0.15); }
+
+  .card-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .card.green .card-num { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
+  .card.amber .card-num { background: var(--amber-muted); border-color: var(--amber-border); color: var(--amber); }
+  .card.red .card-num { background: rgba(231,76,60,0.1); border-color: rgba(231,76,60,0.28); color: var(--red); }
+
+  .card-body {}
+  .card-title {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .card-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .tag.green { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
+  .tag.amber { background: var(--amber-muted); border-color: var(--amber-border); color: var(--amber); }
+  .tag.red { background: rgba(231,76,60,0.1); border-color: rgba(231,76,60,0.28); color: var(--red); }
+
+  footer {
+    margin-top: 40px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-align: center;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-icon">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/>
+    </svg>
+  </div>
+  <h1>UZ <span>AERO</span></h1>
+  <div class="hero-sub">Elektroniczny system lotniczy · Design System v0.1</div>
+  <div class="hero-tag"><span class="dot"></span> Faza 0 — UX/UI Design</div>
+</div>
+
+<div class="section-title">Screen flow</div>
+<div class="flow-arrow">
+  <a href="00-login.html" class="flow-step">00 Login</a>
+  <span class="flow-sep">→</span>
+  <a href="01-splash.html" class="flow-step">01 Splash</a>
+  <span class="flow-sep">→</span>
+  <a href="02-preflight.html" class="flow-step">02 Preflight</a>
+  <span class="flow-sep">→</span>
+  <a href="03-preflight-confirm.html" class="flow-step">03 Potwierdzenie</a>
+  <span class="flow-sep">→</span>
+  <a href="04-cockpit-ground.html" class="flow-step">04 Kokpit / Ground</a>
+  <span class="flow-sep">⇄</span>
+  <a href="05-cockpit-running.html" class="flow-step">05 Kokpit / Running</a>
+  <span class="flow-sep">→</span>
+  <a href="09-end-of-day.html" class="flow-step">09 End of Day</a>
+  <span class="flow-sep">→</span>
+  <a href="10-statystyki.html" class="flow-step">10 Statystyki</a>
+  <span class="flow-sep">→</span>
+  <a href="11-eksport.html" class="flow-step">11 Eksport</a>
+</div>
+
+<div class="section-title">Główny flow</div>
+<div class="grid">
+  <a href="01-splash.html" class="card">
+    <div class="card-num">01</div>
+    <div class="card-body">
+      <div class="card-title">01-splash</div>
+      <div class="card-desc">Ekran powitalny — boot, logo, wersja aplikacji</div>
+      <div class="card-tags"><span class="tag">onboarding</span></div>
+    </div>
+  </a>
+  <a href="00-login.html" class="card">
+    <div class="card-num">00</div>
+    <div class="card-body">
+      <div class="card-title">00-login</div>
+      <div class="card-desc">Wybór pilota / logowanie — tożsamość pilota znana dla całej sesji</div>
+      <div class="card-tags"><span class="tag">logowanie</span><span class="tag green">tożsamość</span></div>
+    </div>
+  </a>
+  <a href="02-preflight.html" class="card">
+    <div class="card-num">02</div>
+    <div class="card-body">
+      <div class="card-title">02-preflight</div>
+      <div class="card-desc">Preflight briefing — wybór samolotu (dropdown), rodzaj operacji (karty), trasa, paliwo</div>
+      <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">paliwo</span></div>
+    </div>
+  </a>
+  <a href="03-preflight-confirm.html" class="card">
+    <div class="card-num">03</div>
+    <div class="card-body">
+      <div class="card-title">03-preflight-confirm</div>
+      <div class="card-desc">Podgląd i potwierdzenie danych przed rozpoczęciem dnia</div>
+      <div class="card-tags"><span class="tag">potwierdzenie</span></div>
+    </div>
+  </a>
+  <a href="04-cockpit-ground.html" class="card green">
+    <div class="card-num">04</div>
+    <div class="card-body">
+      <div class="card-title">04-cockpit-ground</div>
+      <div class="card-desc">Kokpit — silnik wyłączony (GROUND). Duży przycisk START ENGINE, skróty akcji</div>
+      <div class="card-tags"><span class="tag green">ground state</span><span class="tag">główny</span></div>
+    </div>
+  </a>
+  <a href="05-cockpit-running.html" class="card green">
+    <div class="card-num">05</div>
+    <div class="card-body">
+      <div class="card-title">05-cockpit-running</div>
+      <div class="card-desc">Kokpit — silnik uruchomiony (RUNNING). Timery, GPS live, liczniki startów i lądowań</div>
+      <div class="card-tags"><span class="tag green">running state</span><span class="tag green">w locie</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Akcje ground</div>
+<div class="grid">
+  <a href="06-tankowanie.html" class="card amber">
+    <div class="card-num">06</div>
+    <div class="card-body">
+      <div class="card-title">06-tankowanie</div>
+      <div class="card-desc">Formularz tankowania — stan przed/po, ilość dolana, kalkulacja zużycia L/h</div>
+      <div class="card-tags"><span class="tag amber">paliwo</span><span class="tag">formularz</span></div>
+    </div>
+  </a>
+  <a href="07-zmiana-zalogi.html" class="card">
+    <div class="card-num">07</div>
+    <div class="card-body">
+      <div class="card-title">07-zmiana-zalogi</div>
+      <div class="card-desc">Zmiana dowódcy i/lub drugiego pilota — kod + czas zmiany, osobny licznik czasu blokowego</div>
+      <div class="card-tags"><span class="tag">załoga</span><span class="tag">formularz</span></div>
+    </div>
+  </a>
+  <a href="08-lista-reczna.html" class="card">
+    <div class="card-num">08</div>
+    <div class="card-body">
+      <div class="card-title">08-lista-reczna</div>
+      <div class="card-desc">Ręczna lista wzlotów (fallback GPS) — tabela off-block/takeoff/landing/on-block + paliwo</div>
+      <div class="card-tags"><span class="tag">fallback GPS</span><span class="tag">tabela</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Zakończenie dnia</div>
+<div class="grid">
+  <a href="09-end-of-day.html" class="card red">
+    <div class="card-num">09</div>
+    <div class="card-body">
+      <div class="card-title">09-end-of-day</div>
+      <div class="card-desc">Formularz zakończenia dnia — stan paliwa końcowy, godzina zakończenia duty</div>
+      <div class="card-tags"><span class="tag red">zakończenie</span><span class="tag">formularz</span></div>
+    </div>
+  </a>
+  <a href="10-statystyki.html" class="card">
+    <div class="card-num">10</div>
+    <div class="card-body">
+      <div class="card-title">10-statystyki</div>
+      <div class="card-desc">Statystyki dnia — duty time, czas blokowy per pilot, lista lotów, paliwo. Edycja przed eksportem</div>
+      <div class="card-tags"><span class="tag">statystyki</span><span class="tag">edycja</span></div>
+    </div>
+  </a>
+  <a href="11-eksport.html" class="card green">
+    <div class="card-num">11</div>
+    <div class="card-body">
+      <div class="card-title">11-eksport</div>
+      <div class="card-desc">Eksport do Google Sheets — OAuth, podgląd danych, status wysyłania, link do arkusza</div>
+      <div class="card-tags"><span class="tag green">Google Sheets</span><span class="tag">eksport</span></div>
+    </div>
+  </a>
+</div>
+
+<footer>UZ Aero · Design Phase 0 · v0.1 · Faza design/planowanie</footer>
+
+</body>
+</html>

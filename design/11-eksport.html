@@ -1,0 +1,376 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 11 Eksport Google Sheets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* App internals */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .back-btn {
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
+    text-decoration:none; padding:5px 8px; border-radius:6px;
+    border:1px solid var(--border);
+  }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+
+  /* Status chip */
+  .chip {
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px;
+    text-transform:uppercase; padding:4px 10px; border-radius:999px;
+  }
+  .chip.online { color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); }
+  .chip.online .dot { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 6px var(--green-glow); animation:pulse 2s ease-in-out infinite; }
+  .chip.offline { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+
+  /* Google account box */
+  .google-box {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:12px 14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .google-icon {
+    width:36px; height:36px; border-radius:50%;
+    background: conic-gradient(#4285F4 0deg 90deg, #EA4335 90deg 180deg, #FBBC04 180deg 270deg, #34A853 270deg 360deg);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; font-weight:800; font-size:14px; color:#fff;
+    font-family:var(--font-body);
+    box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  }
+  .google-info { display:flex; flex-direction:column; gap:3px; flex:1; }
+  .google-status { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .google-email { font-size:12px; font-weight:600; color:var(--text-primary); }
+  .google-change {
+    font-family:var(--font-mono); font-size:9px; color:var(--text-muted);
+    text-decoration:underline; cursor:pointer; background:none; border:none;
+    padding:0; letter-spacing:0.5px;
+  }
+  .google-change:hover { color:var(--text-secondary); }
+
+  /* Preview card */
+  .preview-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+  }
+  .preview-head {
+    padding:8px 12px; background:var(--surface-raised);
+    border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--text-muted);
+    display:flex; align-items:center; gap:6px;
+  }
+  .preview-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
+  .mini-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); }
+  .mini-table th { font-size:7px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); padding:6px 8px; border-bottom:1px solid var(--border); text-align:left; }
+  .mini-table td { font-size:10px; color:var(--text-primary); padding:6px 8px; border-bottom:1px solid var(--border); }
+  .mini-table tr.dim td { color:var(--text-muted); }
+  .mini-table tr:last-child td { border-bottom:none; }
+  .preview-foot {
+    padding:8px 12px; border-top:1px solid var(--border);
+    background:var(--surface-raised);
+  }
+  .preview-foot-main { font-family:var(--font-mono); font-size:9px; color:var(--text-secondary); margin-bottom:3px; }
+  .preview-foot-fuel { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
+
+  /* Export options */
+  .options-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+  }
+  .option-row {
+    padding:10px 14px;
+    display:flex; align-items:flex-start; gap:10px;
+    border-bottom:1px solid var(--border);
+  }
+  .option-row:last-child { border-bottom:none; }
+  .option-radio {
+    width:16px; height:16px; border-radius:50%;
+    border:2px solid var(--border-strong);
+    flex-shrink:0; margin-top:2px; position:relative;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .option-radio.active { border-color:var(--green); }
+  .option-radio.active::after {
+    content:''; width:7px; height:7px; border-radius:50%;
+    background:var(--green);
+  }
+  .option-body { flex:1; display:flex; flex-direction:column; gap:5px; }
+  .option-label { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); letter-spacing:0.5px; }
+  .option-label.muted { color:var(--text-muted); }
+  .option-input {
+    background:var(--surface-raised); border:1px solid var(--green-border);
+    border-radius:8px; padding:7px 10px;
+    font-family:var(--font-mono); font-size:11px; color:var(--text-primary);
+    letter-spacing:0.5px;
+  }
+  .option-input.disabled {
+    border-color:var(--border); color:var(--text-muted); opacity:0.5;
+  }
+
+  /* Main export button */
+  .btn-export {
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    width:100%; padding:18px 17px; border-radius:16px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 32px rgba(46,204,113,0.35);
+  }
+  .btn-export-sub {
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1px;
+    color:rgba(13,13,13,0.6); text-transform:uppercase;
+  }
+
+  /* Success box */
+  .success-box {
+    background:var(--green-muted); border:1px solid var(--green-border);
+    border-radius:12px; padding:12px 14px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .success-top {
+    display:flex; align-items:center; gap:8px;
+  }
+  .success-icon {
+    width:20px; height:20px; border-radius:50%;
+    background:var(--green); color:#0D0D0D;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; font-size:11px; font-weight:700;
+  }
+  .success-title { font-family:var(--font-mono); font-size:11px; color:var(--green); letter-spacing:0.5px; font-weight:700; }
+  .success-detail { font-family:var(--font-mono); font-size:9px; color:var(--text-secondary); letter-spacing:0.5px; }
+  .success-link {
+    font-family:var(--font-mono); font-size:11px; color:var(--green);
+    text-decoration:underline; cursor:pointer; letter-spacing:0.5px;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .success-backup { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); margin-top:2px; }
+
+  /* Offline queue (muted, shown as inactive) */
+  .offline-queue {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:10px 14px;
+    display:flex; align-items:center; gap:10px;
+    opacity:0.3;
+  }
+  .offline-queue-icon {
+    width:28px; height:28px; border-radius:8px;
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .offline-queue-text { font-family:var(--font-mono); font-size:10px; color:var(--amber); letter-spacing:0.5px; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 11</span>
+  <span class="slug">eksport · google sheets</span>
+  <span class="canvas-meta"><span class="pulse"></span>Screen 11 / 11</span>
+</header>
+
+<main class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <!-- App Header -->
+    <div class="app-header">
+      <a href="10-statystyki.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Statystyki
+      </a>
+      <span class="screen-title">EKSPORT</span>
+      <span class="chip online"><span class="dot"></span>Online</span>
+    </div>
+
+    <!-- Scroll area -->
+    <div class="scroll">
+
+      <!-- Google Account -->
+      <div class="google-box">
+        <div class="google-icon">G</div>
+        <div class="google-info">
+          <div class="google-status">Zalogowany jako</div>
+          <div class="google-email">pilot@gmail.com</div>
+        </div>
+        <button class="google-change">Zmień konto</button>
+      </div>
+
+      <!-- Preview card -->
+      <div class="preview-card">
+        <div class="preview-head">Podgląd arkusza</div>
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Takeoff</th>
+              <th>Landing</th>
+              <th>Block</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>08:25 UTC</td>
+              <td>09:18 UTC</td>
+              <td>00:53</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>10:17 UTC</td>
+              <td>11:05 UTC</td>
+              <td>00:48</td>
+            </tr>
+            <tr class="dim">
+              <td>3</td>
+              <td>12:44 UTC</td>
+              <td>13:29 UTC</td>
+              <td>00:45</td>
+            </tr>
+            <tr class="dim">
+              <td>4</td>
+              <td>14:10 UTC</td>
+              <td>15:02 UTC</td>
+              <td>00:52</td>
+            </tr>
+            <tr class="dim">
+              <td>5</td>
+              <td>15:20 UTC</td>
+              <td>16:08 UTC</td>
+              <td>00:48</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="preview-foot">
+          <div class="preview-foot-main">22 JUNE 2026 · SP-MIW · 5 lotów</div>
+          <div class="preview-foot-fuel">Paliwo: 150 → 82 L · zużyte 131 L</div>
+        </div>
+      </div>
+
+      <!-- Export options -->
+      <div class="options-card">
+        <!-- Option 1: New sheet (active) -->
+        <div class="option-row">
+          <div class="option-radio active"></div>
+          <div class="option-body">
+            <div class="option-label">Nowy arkusz</div>
+            <div class="option-input">2026-06-22_SP-MIW</div>
+          </div>
+        </div>
+        <!-- Option 2: Existing sheet (inactive) -->
+        <div class="option-row">
+          <div class="option-radio"></div>
+          <div class="option-body">
+            <div class="option-label muted">Istniejący arkusz</div>
+            <div class="option-input disabled">Wklej URL arkusza...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main export button -->
+      <button class="btn-export">
+        <span>&#8593; EKSPORTUJ DO GOOGLE SHEETS</span>
+        <span class="btn-export-sub">Arkusz zostanie udostępniony automatycznie</span>
+      </button>
+
+      <!-- Success status box -->
+      <div class="success-box">
+        <div class="success-top">
+          <div class="success-icon">✓</div>
+          <div class="success-title">Eksport zakończony pomyślnie</div>
+        </div>
+        <div class="success-detail">2026-06-22_SP-MIW · 5 lotów · 22 JUNE 2026</div>
+        <a href="#" class="success-link">
+          Otwórz arkusz
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8L8 2M4.5 2H8v3.5"/></svg>
+        </a>
+        <div class="success-backup">Dane zapisane lokalnie w kopii zapasowej</div>
+      </div>
+
+      <!-- Offline queue (inactive / muted because we're online) -->
+      <div class="offline-queue">
+        <div class="offline-queue-icon">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--amber)" stroke-width="1.5"><path d="M7 2v6M7 10.5v1"/><circle cx="7" cy="7" r="6"/></svg>
+        </div>
+        <div class="offline-queue-text">2 eksporty w kolejce · Wysłanie gdy dostępny internet</div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="10-statystyki.html">← 10 Statystyki</a>
+  <span>·</span>
+  <a href="11-eksport.html" class="active">11 Eksport</a>
+</nav>
+
+</body>
+</html>

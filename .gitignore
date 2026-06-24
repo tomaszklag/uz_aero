@@ -1,0 +1,16 @@
+# Claude Code local settings
+.claude/
+
+# Node / Expo (na przyszłość)
+node_modules/
+.expo/
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
