@@ -14,6 +14,7 @@ Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny
 ## Faza aktualna
 **Faza 0 — Design** — statyczne HTML mockupy w `design/`
 Nie piszemy kodu React Native dopóki design nie zostanie zatwierdzony.
+Aktywna checklista prac: `design/PLAN.md` (wdrażanie architektury offline-first w mockupach — rób kolejny nieodhaczony punkt).
 
 ## Design system (`design/*.html`)
 
@@ -49,7 +50,7 @@ Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-
 ```
 
 ## Pilot i samolot — UX
-- Pierwsze logowanie: Google OAuth / e-mail na `00-login.html` (wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
+- Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth — decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
 - Tożsamość pilota jest znana w całej sesji — NIE pytamy o kod pilota w formularzach
 - Samolot wybieramy z listy zarejestrowanych jednostek (dropdown/lista kart), NIE pole tekstowe
 - Rodzaj operacji — siatka kart z ikonami, NIE select

@@ -328,8 +328,8 @@
     <div class="card-num">00</div>
     <div class="card-body">
       <div class="card-title">00-login</div>
-      <div class="card-desc">Logowanie — Google OAuth (primary) lub e-mail + hasło. Tożsamość PIC znana dla całej sesji</div>
-      <div class="card-tags"><span class="tag">logowanie</span><span class="tag green">PIC</span></div>
+      <div class="card-desc">Logowanie — codzienne odblokowanie PIN-em (działa offline); konto nadaje administrator. Tożsamość PIC znana dla całej sesji</div>
+      <div class="card-tags"><span class="tag">PIN offline</span><span class="tag green">PIC</span></div>
     </div>
   </a>
   <a href="01-splash.html" class="card">
@@ -392,6 +392,22 @@
 
 <div class="section-title">Warianty i stany</div>
 <div class="grid">
+  <a href="00a-login-full.html" class="card">
+    <div class="card-num">00A</div>
+    <div class="card-body">
+      <div class="card-title">00a-login-full</div>
+      <div class="card-desc">Pełne logowanie — login + hasło od administratora (bez samodzielnej rejestracji), tworzy lokalny profil; wymaga internetu</div>
+      <div class="card-tags"><span class="tag">logowanie</span><span class="tag">nowy profil</span></div>
+    </div>
+  </a>
+  <a href="00b-login-offline.html" class="card amber">
+    <div class="card-num">00B</div>
+    <div class="card-body">
+      <div class="card-title">00b-login-offline</div>
+      <div class="card-desc">Logowanie offline bez profilu — twarda granica: komunikat z instrukcją, formularz nieaktywny, auto-ponawianie</div>
+      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">stan</span></div>
+    </div>
+  </a>
   <a href="02b-preflight-paliwo.html" class="card amber">
     <div class="card-num">02B</div>
     <div class="card-body">

@@ -55,6 +55,7 @@ ręcznie** — jego jedynym obowiązkiem jest rzetelny preflight i zamknięcie d
 | 2026-07-22 | Scalanie sesji po **łańcuchu liczników MH**, nie po timestampach; każde zdarzenie niesie dwa zegary (device + GPS) |
 | 2026-07-22 | Logowanie = jednorazowe provisioning (online); wejście do aplikacji = PIN offline; **wygasły token nie wylogowuje**; wylogowanie zablokowane przy niepustym outboxie |
 | 2026-07-22 | Tryb awaryjny (sesja bez zweryfikowanej tożsamości) **rozważony i odrzucony** — zweryfikowana tożsamość jest twardym warunkiem; jedyny wyjątek od zasady offline-first (pierwsze logowanie / zapomniany PIN / cudzy telefon) świadomie zaakceptowany i mitygowany proceduralnie |
+| 2026-07-22 | **Rezygnacja z Google OAuth** (odwraca decyzję z 2026-06-22): konta pilotów zakłada administrator w bazie, logowanie = login + hasło → JWT. Powód: argument za OAuth (Sheets na telefonie) zniknął wraz z eksportem serwerowym; wąskie, zamknięte grono użytkowników; zero konfiguracji OAuth/SHA/Play Console |
 
 ---
 
@@ -81,9 +82,10 @@ ręcznie** — jego jedynym obowiązkiem jest rzetelny preflight i zamknięcie d
 Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do aplikacji
 (codzienne odblokowanie):
 
-- Google OAuth 2.0 (primary CTA) lub e-mail + hasło (fallback); **pierwsze logowanie
-  wymaga sieci** — tworzy lokalny profil pilota: tożsamość, JWT + refresh
-  (`expo-secure-store`), PIN, cache referencyjny
+- logowanie kontem nadanym przez administratora (login + hasło; **brak samodzielnej
+  rejestracji** — użytkowników zakłada admin w bazie, reset hasła też u admina);
+  **pierwsze logowanie wymaga sieci** — weryfikacja na serwerze tworzy lokalny profil
+  pilota: tożsamość, JWT + refresh (`expo-secure-store`), PIN, cache referencyjny
 - od tej pory wejście do aplikacji = **odblokowanie PIN-em, zero sieci**; 00-login
   z istniejącym profilem otwiera się w trybie PIN ("Zaloguj jako inny pilot" dostępne
   pod spodem, z adnotacją że wymaga internetu)
@@ -321,7 +323,7 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 
 | Metoda | Endpoint | Cel |
 |--------|----------|-----|
-| POST | `/auth/google` | id_token Google → JWT sesji + refresh token |
+| POST | `/auth/login` | login + hasło → JWT sesji + refresh token |
 | POST | `/auth/refresh` | odświeżenie JWT (refresh długożyciowy — patrz 3.0) |
 | GET | `/reference` | samoloty + konfiguracje + piloci; ETag/`updated_at` do cache |
 | GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH — wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie z `day_close` **lub** zdarzenia w trakcie dnia, np. tankowanie), `last_sync_at` |
@@ -406,7 +408,8 @@ ze strumienia zdarzeń — przy kilkuset zdarzeniach dziennie tabele agregujące
 ### 5.3 PostgreSQL (serwer)
 
 ```
-pilots       — id, kod, imię i nazwisko, e-mail, google_sub, active
+pilots       — id, kod, imię i nazwisko, e-mail, password_hash, active
+               (konta zakłada i resetuje administrator — brak samodzielnej rejestracji)
 aircraft     — id, reg, typ, rok, capacity_l, mh_format, dual_required, service_status
 events       — uuid PK, session_uuid, aircraft_id, pic_id, dual_id, type,
                device_time, gps_time, payload JSONB, received_at, source_device
@@ -493,7 +496,7 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 
 ```
 [00 Login]  profil na telefonie → odblokowanie PIN-em (offline OK)
-            brak profilu → Google OAuth / e-mail (wymaga sieci; offline: komunikat)
+            brak profilu → login + hasło od administratora (wymaga sieci; offline: komunikat)
     ↓
 [01 Splash]  ładowanie sesji + odświeżenie cache referencyjnego
     ↓
@@ -535,7 +538,6 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 | Fałszywe detekcje S/L (ciasne zakręty, słaby GPS) | 🔴 wysoki | Histereza, podwójny warunek (GS + alt), toast z Cofnij, ręczna korekta |
 | Przestawiony zegar telefonu (offline) | 🟡 średni | `gps_time` przy każdym zdarzeniu; flaga `CLOCK_DRIFT`; czasy blokowe z GPS |
 | Spóźniony sync poprzednika przy przejęciu | 🟡 średni | Append-only + łańcuch MH + flagi zamiast blokad (sekcje 4.4–4.5) |
-| Google OAuth konfiguracja (SHA certs, Play Console) | 🟡 średni | Osobny task setupu; testować wcześnie |
 | Świeża instalacja / nowy telefon bez sieci w terenie | 🟡 średni | Pierwsze logowanie przed wylotem (procedura klubowa); czytelny komunikat offline na 00-login; wylogowanie chronione |
 | Utrzymanie własnego backendu | 🟡 średni | Mały serwis (1 kontener + Postgres), Docker, backup bazy, monitoring; właściciel operacyjny do wyznaczenia |
 | Bezpieczeństwo API | 🟡 średni | HTTPS, JWT, walidacja że zdarzenia sesji wysyła jej PIC |
@@ -561,7 +563,7 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 | State | Zustand | Projekcje ze zdarzeń, bez boilerplate |
 | Lokalna baza | expo-sqlite | Zdarzenia append-only + cache referencyjny |
 | GPS | expo-location + expo-task-manager | Background location + czas z fixa |
-| Auth | expo-auth-session (Google id_token) + expo-secure-store | Login online, tokeny i PIN lokalnie |
+| Auth | login + hasło → JWT (konta od administratora) + expo-secure-store | Zero konfiguracji OAuth; tokeny i PIN lokalnie |
 | Czas | dayjs | Strefy czasowe, formatowanie |
 | Testy | Jest + React Native Testing Library | Unit + integration |
 
@@ -612,7 +614,7 @@ Jesteś seniorem React Native. Zainicjalizuj projekt UZ Aero — elektroniczny c
 lotów, offline-first, GPS w tle, sync z własnym backendem (NIE bezpośrednio do Sheets).
 
 STACK: sekcja 9 dokumentacji (RN + Expo, React Navigation v6, Zustand, expo-sqlite,
-expo-location + task-manager, expo-auth-session + secure-store, dayjs).
+expo-location + task-manager, expo-secure-store, dayjs).
 
 STRUKTURA:
 src/screens, components, store, db, sync (outbox + api client), hooks
@@ -689,7 +691,7 @@ KONTRAKT API: sekcja 4.6. ZASADY: sekcje 4.1, 4.3, 4.8.
 - stan samolotu: GET /aircraft/:id/state na preflightcie i w trybie read-only
 - claim: session_claim jako zwykłe zdarzenie (sekcja 4.4 — warianty online/offline)
 - dwa zegary: każde zdarzenie z device_time + gps_time (z ostatniego fixa)
-- auth: expo-auth-session → POST /auth/google → JWT + refresh w secure-store;
+- auth: POST /auth/login (login + hasło) → JWT + refresh w secure-store;
   offline unlock PIN-em bez wylogowania
 
 DELIVERABLE: moduł src/sync z testami (kolejka, retry, dedup odpowiedzi, ETag).
@@ -715,7 +717,7 @@ i link do arkusza — wzorzec design/11-eksport.html. Bez akcji eksportu na tele
 Jesteś senior backend developerem (Node.js/TypeScript). Zbuduj serwis UZ Aero.
 
 STACK: Fastify + PostgreSQL + Docker (sekcja 9). SCHEMAT: sekcja 5.3.
-ENDPOINTY: sekcja 4.6 (auth Google id_token → JWT, reference z ETag, aircraft state,
+ENDPOINTY: sekcja 4.6 (auth login + hasło → JWT, reference z ETag, aircraft state,
 przyjmowanie zdarzeń, sync-status).
 
 RDZEŃ — scalanie (sekcja 4.5): dedup po UUID (idempotentny POST /events); projekcja

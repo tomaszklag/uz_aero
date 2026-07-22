@@ -156,4 +156,32 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > Uwaga do fazy RN: w trybach jasnych podbić font-weight cyfr i pogrubić bordery (1→1.5px);
 > jasność ekranu na max przy wykryciu trybu słonecznego.
 
+## 2026-07-22 — Iteracja 7
+
+**Audyt ekranów pod architekturę offline-first** (`docs/_main.md.txt` sekcje 4–6)
+> Wynik: 9 ekranów do zmiany (00 i 09 — przebudowy), brak stanu `cache` w całym designie,
+> brak wariantu read-only. Zmiany wdrażane w kolejności użycia aplikacji, od logowania.
+
+**Rezygnacja z Google OAuth** (odwraca iterację 4)
+> Powód: argument za OAuth ("Sheets i tak wymaga konta Google") zniknął wraz z decyzją
+> o własnym backendzie — telefon nie dotyka Sheets, eksport robi serwer kontem serwisowym.
+> Konta pilotów zakłada administrator w bazie (wąskie, zamknięte grono; bez samodzielnej
+> rejestracji; reset hasła u admina). Logowanie = login + hasło → JWT.
+> Zero konfiguracji OAuth / SHA certów / Play Console.
+
+**00-login — przebudowa na model "provisioning raz, PIN na co dzień"** (3 pliki)
+> Powód: architektura 3.0 — logowanie (jednorazowe, online) ≠ wejście do aplikacji
+> (codzienne, offline). Wygasły token nie wylogowuje.
+> - **00-login** — odblokowanie PIN-em (domyślne wejście): chip profilu lokalnego
+>   ("TMK · profil lokalny · działa offline"), 4 kropki + numpad (interaktywny — klikaj),
+>   opcjonalna biometria, linki "Nie pamiętam PIN" / "Zaloguj jako inny pilot"
+>   z adnotacją, że pełne logowanie wymaga internetu
+> - **00a-login-full** (nowy) — pełny login: pola login + hasło (konto od administratora,
+>   hint "konto i reset hasła — u administratora"), nota "pierwsze logowanie wymaga
+>   internetu — utworzy lokalny profil; później wchodzisz PIN-em, offline"
+> - **00b-login-offline** (nowy) — twarda granica: amber banner z instrukcją ("zaloguj się
+>   przy sieci — hangar, dom"), formularz wyszarzony (disabled z powodem, nie cichy błąd),
+>   przycisk "Spróbuj ponownie" + auto-ponawianie; przekreślone wifi w status barze
+> - index.html: karta 00 zaktualizowana (PIN offline), karty 00A/00B w "Warianty i stany"
+
 <!-- Dodawaj kolejne iteracje poniżej -->
