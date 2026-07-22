@@ -184,4 +184,27 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 >   przycisk "Spróbuj ponownie" + auto-ponawianie; przekreślone wifi w status barze
 > - index.html: karta 00 zaktualizowana (PIN offline), karty 00A/00B w "Warianty i stany"
 
+**01-splash — splash jako moment odświeżenia cache referencyjnego** (PLAN blok 1)
+> Powód: architektura 4.8 — przy starcie aplikacji telefon odświeża cache referencyjny
+> (samoloty, konfiguracje, piloci); splash to jedyny naturalny moment, żeby to pokazać.
+> - Nowa linia w stopce: zielona kropka + "Dane referencyjne · sync 09:41" (tooltip
+>   wyjaśnia mechanizm; offline pokazywałaby datę ostatniego synca — stan `cache`)
+> - Stopka "Offline · GPS · Google Sheets" → "Offline-first · GPS · Auto-sync"
+>   (telefon nie dotyka Sheets — eksport robi serwer, sekcja 4.7)
+> - Zgodne z regułą "no loader bez celu": to nie spinner, tylko status z konkretną informacją
+
+**02-preflight — SyncChip + wariant offline (nowy 02d)** (PLAN blok 2)
+> Powód: architektura 4.4 (claim optymistyczny, dwa warianty przejęcia) i 4.8 (cache
+> z adnotacją wieku); SyncChip = jedyny globalny wskaźnik łączności — preflight pokazuje
+> dane z serwera, więc chip należy się też tutaj (dotąd był tylko w kokpicie).
+> - 02: chip `SYNC` w nagłówku (wzorzec z 04a — pill, zielony, tooltip)
+> - **02d-preflight-offline** (nowy, interaktywny): chip `OFFLINE`, przekreślone wifi,
+>   pasek "Dane z cache · SYNC 21 JUN 17:30" nad listą samolotów (stan `cache`),
+>   tag claim "PIC: KRZ · wg cache 17:30" (stan mógł się zmienić),
+>   modal przejęcia w wariancie offline: "Aktywny PIC · wg cache", "Łączność: brak —
+>   claim wyśle się po odzyskaniu sieci", ostrzeżenie o liczników jako prawdzie
+>   i scaleniu konfliktu po syncu; po przejęciu tag "PIC: TY · claim w outboxie"
+> - Formularze sesji (operacja, trasa, duty start) celowo BEZ zmian offline — dane
+>   lokalne, zgodnie z zasadą "dane sesji nie mają wariantów offline"
+
 <!-- Dodawaj kolejne iteracje poniżej -->

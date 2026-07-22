@@ -112,6 +112,14 @@
     display: flex; flex-direction: column; align-items: center; gap: 8px;
     animation: textAppear 0.8s 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
+  .ref-sync {
+    font-family: var(--font-mono);
+    font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-bottom: 4px;
+  }
+  .ref-sync .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green-glow); }
   .version-tag {
     font-family: var(--font-mono);
     font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
@@ -187,8 +195,9 @@
     </a>
 
     <div class="splash-footer">
+      <div class="ref-sync" title="Cache referencyjny (samoloty, konfiguracje, piloci) odświeżany przy każdym starcie z siecią; offline — data ostatniego synca"><span class="dot"></span>Dane referencyjne · sync 09:41</div>
       <div class="version-tag">React Native · Expo · <span>v1.0.0-alpha</span></div>
-      <div class="version-tag" style="opacity:0.5">Offline · GPS · Google Sheets</div>
+      <div class="version-tag" style="opacity:0.5">Offline-first · GPS · Auto-sync</div>
     </div>
   </div>
 </main>

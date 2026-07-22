@@ -49,24 +49,22 @@
 - [x] `index.html` — karta 00 + karty 00A/00B; `ZMIANY.md` — Iteracja 7
 - [x] Dokumentacja wyczyszczona z OAuth (`_main.md.txt`, `CLAUDE.md`)
 
-### 1. 01-splash
+### ✅ 1. 01-splash — ZROBIONE 2026-07-22
 
-- [ ] Stopka "Offline · GPS · Google Sheets" → np. "Offline-first · GPS · Auto-sync"
-      (telefon nie dotyka Sheets — eksport robi serwer, sekcja 4.7)
-- [ ] Linia odświeżania cache referencyjnego: "dane referencyjne · sync 21 JUN 17:30"
-      (sekcja 4.8; zgodne z regułą "no loader bez celu" — tu cel jest)
-- [ ] Kontekst: splash pojawia się PO odblokowaniu (00 → 01 → 02) — sprawdzić opisy
+- [x] Stopka "Offline · GPS · Google Sheets" → "Offline-first · GPS · Auto-sync"
+- [x] Linia odświeżania cache referencyjnego: kropka + "Dane referencyjne · sync 09:41"
+      (online = świeży sync; wariant offline pokazywałby starą datę — stan `cache`)
+- [x] Opis w index.html: "po odblokowaniu" + odświeżenie danych referencyjnych
 
-### 2. 02-preflight
+### ✅ 2. 02-preflight — ZROBIONE 2026-07-22
 
-- [ ] Wariant **offline** modala przejęcia (sekcja 4.4): "Stan z cache z 17:30 · brak
-      łączności", mocniejsze ostrzeżenie, "wpisz odczyty z liczników w kolejnym kroku"
-      — do decyzji forma: drugi stan interaktywny w tym samym pliku (jak klikanie
-      samolotów) czy osobny plik
-- [ ] Adnotacja `cache` przy liście samolotów dla stanu offline ("dane z cache · sync
-      21 JUN 17:30") — status claim na kartach może być nieaktualny
-- [ ] Do rozstrzygnięcia: czy SyncChip pojawia się też na preflightcie (doc: "jeden
-      globalny wskaźnik" — sugeruje tak, w nagłówku)
+- [x] Wariant **offline** jako osobny plik `02d-preflight-offline.html` (konwencja
+      wariantów literowych): modal przejęcia offline — "Aktywny PIC · wg cache",
+      "Łączność: brak — claim wyśle się po odzyskaniu sieci", liczniki jako prawda
+- [x] Adnotacja `cache`: pasek "Dane z cache · SYNC 21 JUN 17:30" nad listą samolotów;
+      tag claim "PIC: KRZ · wg cache 17:30"
+- [x] Rozstrzygnięte: SyncChip TAK, na preflightcie w nagłówku (02 = SYNC zielony,
+      02d = OFFLINE amber; wzorzec pill z 04a)
 
 ### 3. 02a-preflight — stany świeżości przekazania (największa luka systemowa)
 

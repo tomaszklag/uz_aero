@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02 Preflight</title>
+<title>UZ Aero — 02D Preflight · offline (cache)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
     font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.05) 0%, transparent 60%),
       linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
     background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
@@ -40,8 +40,8 @@
   .film-strip { font-family: var(--font-display); font-size: 34px; letter-spacing: 3px; line-height: 1; }
   .slug { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 18px; }
   .canvas-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; display: inline-flex; align-items: center; gap: 10px; }
-  .canvas-meta .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px var(--green-muted); animation: pulse 1800ms ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow: 0 0 0 8px transparent; opacity:0.6; } }
+  .canvas-meta .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px var(--amber-muted); animation: pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow: 0 0 0 8px transparent; opacity:0.6; } }
 
   .phone {
     width: 393px; height: 852px; border-radius: 54px;
@@ -57,13 +57,14 @@
 
   .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
   .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .wifi-off { color: var(--amber); }
 
   .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
 
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
   .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
   .nav-strip a:hover { color:var(--green); }
-  .nav-strip a.active { color:var(--green); }
+  .nav-strip a.active { color:var(--amber); }
   .nav-strip span { color:var(--border-strong); }
 
   /* App header */
@@ -88,10 +89,22 @@
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
     color: var(--green);
   }
+  .sync-chip.offline { background: var(--amber-muted); border-color: var(--amber-border); color: var(--amber); }
 
   /* Scroll area */
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; padding-bottom: 24px; }
   .scroll::-webkit-scrollbar { display: none; }
+
+  /* Cache strip — adnotacja wieku danych referencyjnych (stan `cache`) */
+  .cache-strip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--amber-muted); border: 1px solid var(--amber-border);
+    border-radius: 10px; padding: 8px 12px;
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--amber);
+  }
+  .cache-strip svg { flex-shrink: 0; }
+  .cache-strip .cs-detail { color: var(--text-secondary); margin-left: auto; letter-spacing: 0.5px; }
 
   /* Section */
   .section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -106,38 +119,21 @@
     display: flex; align-items: center; justify-content: space-between;
   }
   .field-input.filled { border-color: var(--border-strong); }
-  .field-input.focused { border-color: var(--green-border); box-shadow: 0 0 0 3px rgba(46,204,113,0.08); }
   .field-input.mono { font-family: var(--font-mono); font-size: 17px; font-weight: 700; letter-spacing: 2px; }
   .field-input-val { font-size: 15px; font-weight: 600; color: var(--text-primary); }
-  .field-hint { font-size: 11px; color: var(--text-muted); }
-  .field-icon { color: var(--text-muted); flex-shrink: 0; }
-  .field-unit { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); margin-left: 6px; }
+  .field-placeholder { color: var(--text-muted); font-size: 14px; font-style: italic; }
 
   /* Route row */
   .route-row { display: flex; align-items: center; gap: 8px; }
   .route-row .field { flex: 1; }
   .route-arrow { font-family: var(--font-display); font-size: 22px; color: var(--text-muted); flex-shrink: 0; padding-top: 14px; }
 
-  /* Amber field */
-  .field-input.amber-val { border-color: var(--amber-border); }
-  .field-input.amber-val .field-input-val { color: var(--amber); }
-  .fuel-info { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; padding: 8px 0 0; }
-  .fuel-info span { color: var(--text-secondary); }
-  .fuel-ref {
-    display: flex; align-items: center; justify-content: space-between;
-    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
-    padding: 6px 0 0;
-  }
-  .fuel-ref-val { color: var(--text-secondary); }
   .fuel-warning {
     display: flex; align-items: center; gap: 6px;
     background: var(--amber-muted); border: 1px solid var(--amber-border);
     border-radius: 8px; padding: 7px 10px; margin-top: 6px;
     font-family: var(--font-mono); font-size: 10px; color: var(--amber); letter-spacing: 0.5px;
   }
-
-  /* Select field */
-  .select-val { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 
   /* Time field */
   .time-row { display: flex; align-items: center; gap: 10px; }
@@ -157,8 +153,9 @@
     box-shadow: 0 0 24px rgba(46,204,113,0.3);
   }
   .btn-primary:hover { background: var(--green-hover); box-shadow: 0 0 40px rgba(46,204,113,0.5); }
+  .btn-primary.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; }
 
-  /* ===== FUEL MODAL ===== */
+  /* ===== MODAL ===== */
   .modal-overlay {
     position: absolute; inset: 0; z-index: 50;
     background: rgba(0,0,0,0.7);
@@ -173,21 +170,7 @@
     width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong);
     align-self: center; margin-bottom: 4px;
   }
-  .modal-title {
-    font-family: var(--font-display); font-size: 22px; letter-spacing: 2px; color: var(--text-primary);
-  }
-  .modal-input-row {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--surface); border: 1px solid var(--border-strong);
-    border-radius: 14px; padding: 14px 16px;
-  }
-  .modal-input-val {
-    font-family: var(--font-mono); font-size: 32px; font-weight: 700;
-    letter-spacing: 2px; color: var(--amber); flex: 1;
-  }
-  .modal-input-unit {
-    font-family: var(--font-mono); font-size: 16px; color: var(--text-secondary);
-  }
+  .modal-title { font-family: var(--font-display); font-size: 22px; letter-spacing: 2px; color: var(--text-primary); }
   .modal-ref {
     display: flex; justify-content: space-between;
     font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
@@ -210,9 +193,9 @@
   .modal-btn-confirm {
     display: flex; align-items: center; justify-content: center;
     padding: 14px; border-radius: 14px; border: none;
-    background: var(--green); color: #0D0D0D;
+    background: var(--amber); color: #0D0D0D;
     font-family: var(--font-display); font-size: 16px; letter-spacing: 2px;
-    cursor: pointer; box-shadow: 0 0 20px rgba(46,204,113,0.25);
+    cursor: pointer; box-shadow: 0 0 20px rgba(243,156,18,0.25);
   }
 
   /* Optional tag */
@@ -222,7 +205,6 @@
     border-radius: 5px; padding: 2px 6px; white-space: nowrap;
   }
   .field-label-row { display: flex; align-items: center; justify-content: space-between; }
-  .field-placeholder { color: var(--text-muted); font-size: 14px; font-style: italic; }
 
   /* ===== LOGGED IN PILOT STRIP ===== */
   .pilot-strip {
@@ -248,13 +230,6 @@
     color: var(--green); background: var(--green-muted); border: 1px solid var(--green-border);
     border-radius: 6px; padding: 3px 9px; flex-shrink: 0;
   }
-  .logout-btn {
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-    color: var(--text-muted); background: transparent; border: 1px solid var(--border);
-    border-radius: 6px; padding: 4px 8px; text-decoration: none; cursor: pointer;
-    transition: border-color 0.15s; flex-shrink: 0;
-  }
-  .logout-btn:hover { border-color: var(--border-strong); color: var(--text-secondary); }
 
   /* ===== AIRCRAFT SELECTOR ===== */
   .aircraft-list { display: flex; flex-direction: column; gap: 6px; }
@@ -274,19 +249,13 @@
     color: var(--text-secondary); flex: 1;
   }
   .aircraft-option.selected .aircraft-reg { color: var(--green); }
-  .aircraft-type {
-    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px;
-  }
+  .aircraft-type { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; }
   .aircraft-check {
     width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
     border: 2px solid var(--border); display: flex; align-items: center; justify-content: center;
   }
-  .aircraft-option.selected .aircraft-check {
-    background: var(--green); border-color: var(--green); color: #0D0D0D;
-  }
-  .aircraft-option.disabled {
-    opacity: 0.45; cursor: not-allowed; pointer-events: none;
-  }
+  .aircraft-option.selected .aircraft-check { background: var(--green); border-color: var(--green); color: #0D0D0D; }
+  .aircraft-option.disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
   .aircraft-option.disabled .aircraft-reg { color: var(--text-muted); }
   .grounded-tag {
     font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
@@ -308,9 +277,7 @@
     transition: all 0.15s ease;
   }
   .op-option:hover { border-color: var(--border-strong); background: var(--surface-hover); }
-  .op-option.selected {
-    background: rgba(46,204,113,0.07); border-color: var(--green-border);
-  }
+  .op-option.selected { background: rgba(46,204,113,0.07); border-color: var(--green-border); }
   .op-icon {
     width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
     background: var(--surface); border: 1px solid var(--border);
@@ -353,23 +320,22 @@
     color: var(--amber); background: var(--amber-muted); border: 1px solid var(--amber-border);
     border-radius: 5px; padding: 2px 6px; white-space: nowrap;
   }
-  .btn-primary.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; }
 </style>
 </head>
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02</span>
-  <span class="slug">preflight briefing · formularz</span>
-  <span class="canvas-meta"><span class="pulse"></span>Screen 2 / 11</span>
+  <span class="film-strip">UZ AERO — 02D</span>
+  <span class="slug">preflight · offline · dane z cache · interaktywny</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 02</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Preflight">
+<main class="phone" role="region" aria-label="Mockup — Preflight offline">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
-      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
-      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5" opacity="0.4"/><rect x="10" y="2" width="3" height="10" rx="0.5" opacity="0.4"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg class="wifi-off" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
       <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
     </span>
   </div>
@@ -383,9 +349,9 @@
       </div>
       <div class="header-right">
         <div class="step-badge">1 / 3</div>
-        <div class="sync-chip" title="Online — dane referencyjne i stany claim na żywo z serwera">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          SYNC
+        <div class="sync-chip offline" title="Brak sieci — zdarzenia zapiszą się lokalnie i wyślą po odzyskaniu zasięgu; dane referencyjne z cache">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          OFFLINE
         </div>
       </div>
     </div>
@@ -393,7 +359,7 @@
     <!-- Scroll Content -->
     <div class="scroll">
 
-      <!-- ZALOGOWANY PILOT -->
+      <!-- ZALOGOWANY PILOT (profil lokalny — bez zmian offline) -->
       <div class="pilot-strip">
         <div class="pilot-avatar">M</div>
         <div class="pilot-info">
@@ -401,6 +367,13 @@
           <div class="pilot-sub"><span class="dot"></span> zalogowany · tomasz@uzaero.pl</div>
         </div>
         <span class="role-badge" title="Pilot in command — pilot zalogowany w aplikacji">PIC</span>
+      </div>
+
+      <!-- ADNOTACJA CACHE — stan `cache` danych referencyjnych -->
+      <div class="cache-strip" title="Brak łączności — lista samolotów, konfiguracje, piloci i stany claim pochodzą z ostatniej synchronizacji. Stan mógł się zmienić.">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Dane z cache
+        <span class="cs-detail">SYNC 21 JUN · 17:30</span>
       </div>
 
       <!-- SEKCJA: SAMOLOT -->
@@ -417,7 +390,7 @@
           <div class="aircraft-option" data-req2p="0" data-locked="KRZ" onclick="pickAircraft(this)">
             <div class="aircraft-reg">SP-FGK</div>
             <div class="aircraft-type">Cessna 182 · 2017</div>
-            <div class="pic-lock-tag">PIC: KRZ · od 07:10</div>
+            <div class="pic-lock-tag" title="Stan claim z cache — mógł się zmienić od ostatniej synchronizacji">PIC: KRZ · wg cache 17:30</div>
             <div class="aircraft-check"></div>
           </div>
           <div class="aircraft-option" data-req2p="1" onclick="pickAircraft(this)">
@@ -465,7 +438,7 @@
         </div>
       </div>
 
-      <!-- SEKCJA: RODZAJ OPERACJI -->
+      <!-- SEKCJA: RODZAJ OPERACJI (dane sesji — bez zmian offline) -->
       <div class="section">
         <div class="section-label">Rodzaj operacji</div>
         <div class="op-grid">
@@ -502,7 +475,7 @@
         </div>
       </div>
 
-      <!-- SEKCJA: TRASA -->
+      <!-- SEKCJA: TRASA (dane sesji — bez zmian offline) -->
       <div class="section">
         <div class="section-label">Trasa</div>
         <div class="route-row">
@@ -560,24 +533,29 @@
 
     </div>
 
-    <!-- TAKEOVER MODAL -->
+    <!-- TAKEOVER MODAL — wariant OFFLINE (sekcja 4.4 architektury) -->
     <div id="takeover-modal" class="modal-overlay" style="display:none;">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
         <div class="modal-title">PRZEJMIJ <span id="takeover-reg">SP-FGK</span>?</div>
         <div class="modal-ref">
-          <span>Aktywny PIC</span>
+          <span>Aktywny PIC · wg cache</span>
           <span style="color:var(--text-secondary);">KRZ · od 07:10</span>
         </div>
         <div class="modal-ref">
-          <span>Ostatnia synchronizacja</span>
-          <span style="color:var(--text-secondary);">06:58 UTC</span>
+          <span>Stan z cache</span>
+          <span style="color:var(--amber);">21 JUN · 17:30</span>
+        </div>
+        <div class="modal-ref">
+          <span>Łączność</span>
+          <span style="color:var(--amber);">brak — claim wyśle się po odzyskaniu sieci</span>
         </div>
         <div class="modal-warning">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Poprzedni PIC może mieć <strong>niewysłane dane</strong>. Po przejęciu tylko Ty
-          będziesz wysyłać dane dla tego samolotu — <strong>zweryfikuj odczyty paliwa i MH
-          z liczników</strong> w kolejnym kroku. Spóźnione dane poprzednika serwer scali automatycznie.</span>
+          <span>Brak łączności — <strong>nie wiemy, czy KRZ wysłał wszystkie dane</strong>; stan pochodzi
+          z cache z 17:30. <strong>Wpisz odczyty paliwa i MH z fizycznych liczników</strong> w kolejnym
+          kroku — Twój odczyt stanie się początkiem nowego ogniwa. Ewentualny konflikt claimów serwer
+          oznaczy do wyjaśnienia po synchronizacji.</span>
         </div>
         <div class="modal-actions">
           <button onclick="cancelTakeover()" class="modal-btn-cancel">Anuluj</button>
@@ -591,18 +569,17 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="01-splash.html">← 01 Splash</a>
+  <a href="02-preflight.html">← 02 Preflight</a>
+  <a href="02d-preflight-offline.html" class="active">02D Offline</a>
   <span>·</span>
-  <a href="02-preflight.html" class="active">02 Preflight</a>
-  <a href="02d-preflight-offline.html">02D Offline →</a>
   <a href="02a-preflight.html">02A Paliwo/MH →</a>
-  <span>·</span>
-  <a href="03-preflight-confirm.html">03 Potwierdź →</a>
 </nav>
 
 <script>
-  // Drugi pilot: wymagany gdy wybrany samolot ma flagę data-req2p="1" (konfiguracja samolotu na serwerze)
-  // Blokada PIC: samolot z data-locked ma aktywnego PIC — wybór wymaga przejęcia (jeden PIC wysyła dane)
+  // Wariant OFFLINE preflightu (architektura 4.4, 4.8):
+  // - dane referencyjne i stany claim z cache (adnotacja wieku nad listą samolotów)
+  // - claim optymistyczny: przejęcie działa bez serwera; zdarzenie session_claim trafia do outboxa
+  // - modal przejęcia w wariancie offline: słabsze dane (cache), mocniejsze ostrzeżenie, liczniki jako prawda
   let pendingTakeover = null;
 
   function pickAircraft(el) {
@@ -629,7 +606,7 @@
     document.getElementById('takeover-modal').style.display = 'none';
     if (pendingTakeover) {
       pendingTakeover.dataset.takenOver = '1';
-      pendingTakeover.querySelector('.pic-lock-tag').textContent = 'PIC: TY · przejęty';
+      pendingTakeover.querySelector('.pic-lock-tag').textContent = 'PIC: TY · claim w outboxie';
       selectAircraft(pendingTakeover);
       pendingTakeover = null;
     }
