@@ -9,7 +9,7 @@ Aplikacja Android (React Native + Expo) — elektroniczny system lotniczy dla pi
 Rejestruje: czasy blokowe, paliwo, starty/lądowania, eksportuje do Google Sheets.
 Dokumentacja: `docs/_main.md.txt`
 
-Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · Google Sheets API v4
+Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny backend (Node/TS + PostgreSQL) · eksport do Google Sheets po stronie serwera
 
 ## Faza aktualna
 **Faza 0 — Design** — statyczne HTML mockupy w `design/`
@@ -49,10 +49,24 @@ Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-
 ```
 
 ## Pilot i samolot — UX
-- Pilot loguje się na ekranie `00-login.html` (wybór z listy lub PIN)
+- Pierwsze logowanie: Google OAuth / e-mail na `00-login.html` (wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
 - Tożsamość pilota jest znana w całej sesji — NIE pytamy o kod pilota w formularzach
 - Samolot wybieramy z listy zarejestrowanych jednostek (dropdown/lista kart), NIE pole tekstowe
 - Rodzaj operacji — siatka kart z ikonami, NIE select
+
+## Offline-first (obowiązuje w designie i implementacji)
+Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
+
+- **Brak sieci NIGDY nie blokuje pracy pilota** — sieć to okazja do synca, nie warunek. Jedyny świadomy wyjątek: utworzenie profilu (pierwsze logowanie / zapomniany PIN) wymaga sieci — tryb awaryjny bez tożsamości został rozważony i ODRZUCONY, nie proponuj go ponownie
+- Zapis = lokalne zdarzenie append-only (SQLite, UUID) → outbox wysyła automatycznie, gdy jest sieć; eksport do Sheets robi serwer (ekran 11 = status synchronizacji, nie akcja eksportu)
+- Komponenty dzielimy wg źródła danych:
+  1. **dane sesji** (timery, log dnia, liczniki, statystyki) — lokalne, zawsze świeże, zero wariantów offline
+  2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) — 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych — wpisz z licznika")
+  3. **akcje wymagające sieci** (pierwsze logowanie, zmiana konta, ręczny sync) — offline: disabled z podanym powodem, nigdy cichy błąd
+- Jeden globalny wskaźnik łączności: SyncChip `SYNC` / `OFFLINE · n` — nie rozsiewamy komunikatów o braku sieci po ekranach
+- Blokada PIC = optymistyczny claim — przejęcie samolotu działa też offline (ostrzeżenie z danych cache)
+- Wygasły token ≠ wylogowanie; wylogowanie zablokowane przy niepustym outboxie
+- Liczniki fizyczne (MH, paliwomierz) > dane z serwera — serwer tylko podpowiada
 
 ## Reguły przy zlecaniu agentom
 Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
@@ -61,6 +75,7 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 3. Informację że aplikacja = UZ Aero
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`
+6. Gdy ekran pokazuje dane z serwera — stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej)
 
 ## Czego unikać
 - Nie dodawaj loadera/spinnera bez określonego celu (patrz: feedback do 01-splash)
