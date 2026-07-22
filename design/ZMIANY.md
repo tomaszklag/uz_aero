@@ -234,4 +234,51 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > - Panel wariantów rodziny 02A/02B/02C z opisami kiedy który
 > - Poprawka: canvas-meta "Krok 2 / 2" → "Krok 2 / 3" (niespójność ze step-badge)
 
+**04 / 04a — SyncChip, spójność scenariusza, panel wariantów** (PLAN blok 4)
+> - 04: chip SYNC w app-barze (był tylko na 04a i 05 — niespójność); leftover
+>   "SP-MIW" → SP-AXA; tankowanie w logu +45→+48 L (112+48=160, zgadza się z cyklem 2);
+>   karta Tankowanie "87→150" → "112→160"
+> - 04 i 04a: "Statystyki + eksport" → "Statystyki + synchronizacja" (eksport robi serwer)
+> - Panel wariantów rodziny 04A / 04 / 04B na obu ekranach
+
+**04b-cockpit-readonly — NOWY ekran: podgląd zajętego samolotu** (PLAN blok 5, sekcja 3.10)
+> Powód: single-writer — zapis ma wyłącznie telefon aktywnego PIC-a; pozostali piloci
+> dostają podgląd stanu z serwera. Domyka TODO "banner read-only" z iteracji 6.
+> Scenariusz: TMK ogląda SP-FGK prowadzony przez KRZ (spójne z 02).
+> - Niebieski banner "PODGLĄD — TYLKO ODCZYT" (blue = informacja, nie warning):
+>   kto prowadzi, od kiedy, "dane z serwera · sync 09:41 · ostatnia aktywność 09:38"
+> - Log dnia KRZ bez kolumny edycji; akcje ground disabled z podanym powodem
+>   ("zapis ma wyłącznie aktywny PIC"); chip SYNC
+> - Przycisk "PRZEJMIJ SAMOLOT" → flow przejęcia w preflightcie (02)
+
+**09-end-of-day — przebudowa pod łańcuch MH i eksport serwerowy** (PLAN blok 6)
+> Powód: `day_close` = końcowy FOB **+ MH** jako przekazanie dla następnego pilota
+> (sekcja 4.5) — ekran nie miał odczytu MH w ogóle (nietknięty od iteracji 1).
+> - Nowa sekcja "Motogodziny końcowe": 1 238:12 MH (hh:mm z konfiguracji SP-AXA;
+>   Δ +3:42 = block time dnia — spójne ze strip)
+> - Zielony box przekazania: "te odczyty zobaczy następny pilot; serwer porównuje
+>   z nimi start kolejnej sesji i flaguje dziury/cofnięcia"
+> - Warning: "przygotowanie eksportu" → "wysyłka do synchronizacji; arkusz przygotuje
+>   serwer; brak zasięgu niczego nie blokuje"
+> - Walidacja paliwa: dopisek "≤ 330 L · pojemność z konfiguracji SP-AXA"; chip SYNC
+
+**10-statystyki — leftover** (PLAN blok 7)
+> SP-MIW → SP-AXA w nagłówku.
+
+**11-synchronizacja — flagi serwera** (PLAN blok 8)
+> Wymaganie 3.9: lista flag sesji do wiadomości pilota. Karta "Flagi serwera · brak ✓"
+> z wyjaśnieniem typów (nakładka czasowa, dziura MH, cofnięty licznik, rozjazd zegara,
+> podwójny claim) i zasadą: rozwiązuje administrator, nie kokpit.
+> Tytuł i nav "Eksport" → "Synchronizacja".
+
+**Weryfikacja końcowa bloków 4–8** (grep po markerach architektury)
+> Wyłapane i poprawione:
+> - 10-statystyki: CTA "EKSPORTUJ → SHEETS" → "ZATWIERDŹ → SYNC" — pilot niczego nie
+>   eksportuje (stary model sprzed decyzji o serwerze); nav "11 Eksport" → "Synchronizacja"
+> - 11: arytmetyka paliwa "zużyte 131 L" → "dolane +48 · zużyte 116 L" (150+48−82=116)
+> - index: opis 10 "edycja przed eksportem" → "przed zamknięciem dnia"
+> Czyste: zero MIW, zero dziesiętnych MH w html, chipy SYNC/OFFLINE na wszystkich
+> ekranach z danymi, zero martwych linków. Do PLAN (blok 9) dopisana niespójność
+> czasów lotów 04 vs 11 (pre-existing, wymaga ujednolicenia osi czasu scenariusza).
+
 <!-- Dodawaj kolejne iteracje poniżej -->

@@ -161,6 +161,25 @@
   .warn-icon { font-size:14px; flex-shrink:0; margin-top:1px; }
   .warn-text { font-family:var(--font-body); font-size:11px; color:var(--red); line-height:1.5; }
 
+  /* Sync chip */
+  .sync-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 999px;
+    background: var(--green-muted); border: 1px solid var(--green-border);
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--green); flex-shrink: 0;
+  }
+
+  /* Handover box — przekazanie dla następnego pilota */
+  .handover-box {
+    background: var(--green-muted); border: 1px solid var(--green-border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .handover-icon { color: var(--green); flex-shrink: 0; margin-top: 1px; }
+  .handover-text { font-family: var(--font-body); font-size: 11px; color: var(--text-secondary); line-height: 1.55; }
+  .handover-text b { color: var(--green); font-weight: 700; font-family: var(--font-mono); }
+
   /* Primary button */
   .btn-primary-red {
     display:flex; align-items:center; justify-content:center; gap:10px;
@@ -201,7 +220,10 @@
         <span class="screen-title">ZAKOŃCZENIE DNIA</span>
         <span class="header-date">22 June 2026</span>
       </div>
-      <div style="width:56px;"></div>
+      <div class="sync-chip" title="Online — zdarzenia wysyłają się na bieżąco; zakończenie dnia działa też offline">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        SYNC
+      </div>
     </div>
 
     <!-- Summary strip -->
@@ -271,6 +293,29 @@
           <span class="result-label">Stan faktyczny</span>
           <span class="result-value">82 L</span>
         </div>
+        <div class="field-sub">Walidacja: ≤ 330 L · pojemność zbiorników z konfiguracji SP-AXA</div>
+      </div>
+
+      <!-- Motogodziny końcowe -->
+      <div class="form-section">
+        <div class="form-section-title">Motogodziny końcowe</div>
+
+        <div>
+          <div class="field-label">Odczyt licznika MH</div>
+          <div class="field-input amber-focus">
+            <span class="field-value" style="font-family:var(--font-display); font-size:26px; letter-spacing:1px; color:var(--text-primary);">1 238:12</span>
+            <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);">MH</span>
+          </div>
+          <div class="field-sub">format hh:mm · z konfiguracji SP-AXA · początek dnia: 1 234:30 · Δ <span style="color:var(--text-secondary)">+3:42 (= block time)</span></div>
+        </div>
+      </div>
+
+      <!-- Przekazanie dla następnego pilota -->
+      <div class="handover-box">
+        <svg class="handover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        <span class="handover-text">Te odczyty — <b>82 L</b> i <b>1 238:12 MH</b> — zobaczy następny pilot jako
+        <strong>przekazanie</strong>. Stają się ogniwem łańcucha SP-AXA: serwer porównuje z nimi start
+        kolejnej sesji i flaguje dziury lub cofnięcia licznika.</span>
       </div>
 
       <!-- Opcja przerwy -->
@@ -288,7 +333,7 @@
       <!-- Warning -->
       <div class="warn-box">
         <span class="warn-icon">⚠</span>
-        <span class="warn-text">Zakończenie dnia jest nieodwracalne. Spowoduje wygenerowanie statystyk i przygotowanie eksportu.</span>
+        <span class="warn-text">Zakończenie dnia jest nieodwracalne — wygeneruje statystyki i wyśle dane do synchronizacji. Arkusz przygotuje serwer; brak zasięgu niczego nie blokuje (wysyłka ruszy po powrocie sieci).</span>
       </div>
 
       <!-- CTA Button -->

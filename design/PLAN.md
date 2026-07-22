@@ -78,36 +78,35 @@
 - [x] Rozstrzygnięte: **przełącznik stanów na canvasie** (Live/Cache/Brak) w jednym pliku;
       konfiguracja samolotu (pojemność, format MH) widoczna we wszystkich stanach
 
-### 4. 04-cockpit-ground
+### ✅ 4. 04-cockpit-ground — ZROBIONE 2026-07-22
 
-- [ ] Dodać SyncChip (04a ma `SYNC`, 05 ma offline-badge — 04 nie ma nic; niespójność)
-- [ ] Leftover scenariusza: `SP-MIW` → `SP-AXA` (linia ~302)
+- [x] SyncChip w app-barze; leftover `SP-MIW` → `SP-AXA`
+- [x] Spójność scenariusza: tankowanie +48 L (112→160), karta Tankowanie "112→160"
+- [x] "Statystyki + eksport" → "+ synchronizacja" (04 i 04a); panele wariantów 04A/04/04B
 
-### 5. 04b-cockpit-readonly — NOWY ekran (sekcja 3.10)
+### ✅ 5. 04b-cockpit-readonly — ZROBIONE 2026-07-22 (nowy ekran)
 
-- [ ] Banner "Podgląd · SP-AXA zajęty przez TMK od 08:00"
-- [ ] Zero akcji zapisu (przyciski disabled z powodem lub ukryte); log i statystyki
-      widoczne; dane z serwera z adnotacją świeżości
-- [ ] Akcja "Przejmij" → flow przejęcia z 02
-- [ ] Link z 02 (karta zajętego samolotu → "Podgląd") + index.html
+- [x] Niebieski banner "PODGLĄD — TYLKO ODCZYT" (SP-FGK prowadzi KRZ · claim od 07:10;
+      dane z serwera · sync · ostatnia aktywność)
+- [x] Zero zapisu: log KRZ bez kolumny edycji, akcje disabled z powodem (single-writer)
+- [x] "PRZEJMIJ SAMOLOT" → flow przejęcia w 02; karta w index + nav + panele rodziny
+- [ ] (opcjonalnie, przy następnym dotknięciu 02): link "Podgląd" z karty zajętego samolotu
 
-### 6. 09-end-of-day — PRZEBUDOWA (nietknięty od iteracji 1)
+### ✅ 6. 09-end-of-day — ZROBIONE 2026-07-22
 
-- [ ] Sekcja odczytu **MH końcowych** (brak! — a `day_close` = FOB + MH; to ogniwo
-      łańcucha MH, fundament scalania — sekcja 4.5); format hh:mm z konfiguracji SP-AXA
-- [ ] Framing przekazania: "te wartości zobaczy następny pilot jako przekazanie"
-- [ ] Warning "przygotowanie eksportu" → wysyłka do synchronizacji (eksport robi serwer;
-      zakończenie dnia bez zasięgu jest poprawne — raport powstanie po syncu)
-- [ ] Walidacja paliwa pojemnością (dopisek 330 L z konfiguracji)
+- [x] Sekcja "Motogodziny końcowe": 1 238:12 MH · hh:mm z konfiguracji · Δ +3:42 = block time
+- [x] Zielony box przekazania (łańcuch MH — sekcja 4.5)
+- [x] Warning: wysyłka do synchronizacji zamiast "eksportu"; offline niczego nie blokuje
+- [x] Walidacja paliwa ≤ 330 L z konfiguracji; chip SYNC w nagłówku
 
-### 7. 10-statystyki
+### ✅ 7. 10-statystyki — ZROBIONE 2026-07-22
 
-- [ ] Leftover `SP-MIW` → `SP-AXA` (nagłówek, linia ~252)
+- [x] Leftover `SP-MIW` → `SP-AXA`
 
-### 8. 11-eksport (Synchronizacja)
+### ✅ 8. 11-synchronizacja — ZROBIONE 2026-07-22
 
-- [ ] Sekcja flag serwera dotyczących sesji (wymaganie 3.9): stan pusty "Flagi: brak ✓"
-      albo lista (np. `CLOCK_DRIFT` z opisem) — do wiadomości pilota, nie do rozwiązywania
+- [x] Karta "Flagi serwera · brak ✓" z typami flag i zasadą "rozwiązuje administrator";
+      tytuł i nav "Eksport" → "Synchronizacja"
 
 ### 9. Sprzątanie
 
@@ -115,8 +114,11 @@
       linia ~78) + dopisać założenia logowania (model PIN) i stany świeżości
 - [ ] Weryfikacja nawigacji: wszystkie pliki osiągalne z `index.html`, zero martwych
       linków (poprzedni audyt nawigacji: Iteracja 6)
-- [ ] Retrofit panelu „Warianty tego ekranu" na starsze rodziny: 02A+02B+02C,
-      04+04A, 05+05A–D
+- [ ] Retrofit panelu „Warianty tego ekranu" na pozostałą rodzinę: 05+05A–D
+      (02A–C i 04/04A/04B — zrobione)
+- [ ] Spójność czasów lotów między ekranami: log 04 (T/O 08:25 / 09:35 / 11:28)
+      vs tabela 11 (08:25 / 10:17 / 12:44 / 14:10 / 15:20) — ujednolicić oś czasu
+      dnia scenariusza (04 = stan na 12:28, 11 = koniec dnia; cykle muszą się zgadzać)
 - [ ] Commit po każdym większym bloku — zawsze PO weryfikacji użytkownika
 
 ---

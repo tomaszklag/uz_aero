@@ -118,6 +118,19 @@
   .nav-strip a:hover { color:var(--green); }
   .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
+
+  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:rgba(52,152,219,0.28); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -249,7 +262,7 @@
           </div>
           <div>
             <div class="action-label">Zakończ dzień</div>
-            <div class="action-sub">Statystyki + eksport</div>
+            <div class="action-sub">Statystyki + synchronizacja</div>
           </div>
         </a>
       </div>
@@ -258,6 +271,32 @@
   </div>
 </main>
 
+<aside class="variants-panel">
+  <div class="vp-title">Warianty kokpitu ground — kiedy który?</div>
+  <a class="vp-item active" href="04a-cockpit-ground.html">
+    <span class="vp-badge">04A</span>
+    <span class="vp-body">
+      <span class="vp-name">Start dnia</span>
+      <span class="vp-when">Zaraz po potwierdzeniu preflightu — pusty log, świeży duty, pierwszy START ENGINE.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="04-cockpit-ground.html">
+    <span class="vp-badge">04</span>
+    <span class="vp-body">
+      <span class="vp-name">W trakcie dnia</span>
+      <span class="vp-when">Silnik OFF między lotami — log cykli z odczytami MH/paliwa, akcje ground, kolejne START ENGINE.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="04b-cockpit-readonly.html">
+    <span class="vp-badge blue">04B</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd read-only</span>
+      <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log dnia z serwera, zero możliwości zapisu, akcja „Przejmij".</span>
+    </span>
+  </a>
+</aside>
+
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
@@ -265,6 +304,7 @@
   <span>·</span>
   <a href="04a-cockpit-ground.html" class="active">04A Ground (start)</a>
   <a href="04-cockpit-ground.html">04 Ground (mid-day)</a>
+  <a href="04b-cockpit-readonly.html">04B Podgląd</a>
   <a href="05-cockpit-running.html">05 Running →</a>
 </nav>
 

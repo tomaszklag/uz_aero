@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 11 Eksport Google Sheets</title>
+<title>UZ Aero — 11 Synchronizacja</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -203,6 +203,17 @@
   }
   .success-backup { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); margin-top:2px; }
 
+  /* Flagi serwera — niespójności sesji (architektura 4.5) */
+  .flags-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:11px 14px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .flags-head { display:flex; justify-content:space-between; align-items:center; }
+  .flags-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .flags-ok { font-family:var(--font-mono); font-size:10px; color:var(--green); letter-spacing:1px; display:inline-flex; align-items:center; gap:5px; }
+  .flags-sub { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); line-height:1.6; }
+
   /* Offline queue (muted, shown as inactive) */
   .offline-queue {
     background:var(--surface); border:1px solid var(--border);
@@ -308,7 +319,7 @@
         </table>
         <div class="preview-foot">
           <div class="preview-foot-main">22 JUNE 2026 · SP-AXA · 5 lotów</div>
-          <div class="preview-foot-fuel">Paliwo: 150 → 82 L · zużyte 131 L</div>
+          <div class="preview-foot-fuel">Paliwo: 150 → 82 L · dolane +48 L · zużyte 116 L</div>
         </div>
       </div>
 
@@ -336,6 +347,18 @@
         <div class="success-backup">Eksport wykonuje serwer po odebraniu danych · kopia lokalna zostaje na urządzeniu</div>
       </div>
 
+      <!-- Flagi serwera — do wiadomości pilota, rozwiązuje administrator (3.9 / 4.5) -->
+      <div class="flags-card">
+        <div class="flags-head">
+          <span class="flags-title">Flagi serwera · sesja 22 JUNE</span>
+          <span class="flags-ok">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            brak
+          </span>
+        </div>
+        <div class="flags-sub">Serwer nie wykrył niespójności (nakładka czasowa · dziura MH · cofnięty licznik · rozjazd zegara · podwójny claim). Ewentualne flagi rozwiązuje administrator — nie wymagają akcji w kokpicie.</div>
+      </div>
+
       <!-- Manual sync (fallback; sync is automatic) -->
       <button class="btn-export">
         <span>&#8635; SYNCHRONIZUJ TERAZ</span>
@@ -359,7 +382,7 @@
   <span>·</span>
   <a href="10-statystyki.html">← 10 Statystyki</a>
   <span>·</span>
-  <a href="11-eksport.html" class="active">11 Eksport</a>
+  <a href="11-eksport.html" class="active">11 Synchronizacja</a>
 </nav>
 
 </body>
