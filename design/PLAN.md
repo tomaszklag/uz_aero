@@ -70,12 +70,13 @@
 - [x] Rozstrzygnięte: SyncChip TAK, na preflightcie w nagłówku (02 = SYNC zielony,
       02d = OFFLINE amber; wzorzec pill z 04a)
 
-### 3. 02a-preflight — stany świeżości przekazania (największa luka systemowa)
+### ✅ 3. 02a-preflight — stany świeżości przekazania — ZROBIONE 2026-07-22
 
-- [ ] Stan `cache`: adnotacja przy FOB i MH ("· z cache · sync 21 JUN 17:30", amber)
-- [ ] Stan `brak`: puste pole + "brak danych — wpisz z licznika" (licznik fizyczny
-      przejmuje rolę źródła; breakdown przekazania znika)
-- [ ] Forma: przełącznik stanów w mockupie albo osobne pliki wariantów — do decyzji
+- [x] Stan `cache`: chip OFFLINE + amber adnotacja "Z cache · sync 21 JUN 17:30" przy FOB i MH
+- [x] Stan `brak`: "— —" + "brak danych — wpisz z licznika", przycisk "Wpisz odczyt",
+      breakdown/poświadczenie ukryte, amber box o łańcuchu, DALEJ disabled z powodem
+- [x] Rozstrzygnięte: **przełącznik stanów na canvasie** (Live/Cache/Brak) w jednym pliku;
+      konfiguracja samolotu (pojemność, format MH) widoczna we wszystkich stanach
 
 ### 4. 04-cockpit-ground
 

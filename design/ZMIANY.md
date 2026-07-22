@@ -217,4 +217,21 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > - Reguła w definition of done w PLAN.md; retrofit starszych rodzin (02A–C,
 >   04/04A, 05/05A–D) w bloku sprzątania
 
+**02a-preflight — stany świeżości przekazania live / cache / brak** (PLAN blok 3)
+> Powód: architektura 4.8 + zasada UI "3 stany danych z serwera" — dotąd mockup pokazywał
+> wyłącznie stan `live`; słowo "cache" nie występowało w żadnym pliku designu.
+> Forma: przełącznik stanów na canvasie (jeden plik zamiast trzech prawie identycznych) —
+> Live / Cache / Brak nad telefonem, z opisem kiedy dany stan występuje.
+> - **live** (default): jak dotychczas + chip SYNC w nagłówku
+> - **cache**: chip OFFLINE, przekreślone wifi, amber adnotacja "Z cache · sync 21 JUN
+>   17:30" przy FOB i MH; breakdown przekazania zostaje (to dane z cache)
+> - **brak**: wartości "— —", adnotacja "Brak danych — wpisz z licznika", przycisk
+>   "Wpisz odczyt" (amber, ten sam modal co Koryguj), ukryty breakdown i poświadczenie,
+>   amber box wyjaśniający regułę łańcucha (odczyt pilota = nowe ogniwo, sekcja 4.5),
+>   DALEJ zablokowane z podanym powodem (nie cichy błąd)
+> - Wiersz "330 L / format hh:mm z konfiguracji SP-AXA" widoczny we wszystkich stanach —
+>   konfiguracja samolotu jest w cache razem z samolotem, niezależnie od przekazania
+> - Panel wariantów rodziny 02A/02B/02C z opisami kiedy który
+> - Poprawka: canvas-meta "Krok 2 / 2" → "Krok 2 / 3" (niespójność ze step-badge)
+
 <!-- Dodawaj kolejne iteracje poniżej -->
