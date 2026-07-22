@@ -128,11 +128,12 @@
 
 ### Follow-up (poza pierwszym przejściem)
 
-- [ ] Pełne wyrównanie scenariusza rodziny 05 do kanonicznej osi czasu: czasy (05 pokazuje
-      cykl 3 jako 13:10/T-O 13:24/zrzut, oś ma 13:55/14:10/15:20), żywy FOB burn rate,
-      narracja „LOT #3 · 3 T/O" vs 2 T/O cyklu 3. Osobny task — dotyka żywych wartości GPS
-      w 6 plikach; nie architektura, tylko realizm scenariusza
+- [x] Wyrównanie rodziny 05 do osi — ZROBIONE (decyzja: dzień 6 lotów, realizm skoków).
+      Naprawione paliwo rosnące w locie; cykl 3 = 3 loty; 09/10/11 przeliczone na 6 lotów;
+      design-notes zaktualizowany. Cykle 1–2 (04) bez zmian
 - [ ] Retrofit panelu „Warianty" (canvas, nie sidebar) też na 06/07/08, jeśli uznamy za spójne
+- [ ] Drobne 🟢 z audytu: 04a „06:00 UTC" vs 04 „08:00 LT"; 03 bez SyncChip; separator
+      tysięcy MH (spacja vs brak w chipach logów); index „v0.1" → v0.2
 
 ---
 

@@ -318,4 +318,21 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > Odłożone (nie-architektura, świadomie): pełne wyrównanie żywych wartości rodziny 05
 > do osi (czasy 13:10, burn rate FOB) — follow-up w PLAN.
 
+**Follow-up 05: dzień skokowy 6 lotów + naprawa paliwa** (decyzja użytkownika)
+> Kontekst: audyt wykrył, że rodzina 05 (kokpit w locie) pokazuje popołudniową sesję
+> z 3 lotami, a dzień na 10/11 miał 5 lotów z popołudniem 14:10/15:20 — cross-screen
+> rozjazd. Decyzja użytkownika: **realizm skoków — dzień = 6 lotów** (05 zostaje sesją
+> 3-lotową jako cykl 3). Cykle 1–2 (ekran 04) bez zmian, więc niskie ryzyko.
+> - **Naprawa paliwa rosnącego w locie** (inwariant fizyczny): rodzina 05 pokazywała
+>   lądowania z FOB 172/160/148 L przy starcie 141 L (paliwo rosło!). Poprawione na
+>   monotoniczny spadek: 141 → ~123 → ~105 → in-flight ~92 → LDG ~90 → stop 88
+>   (05, 05c, 05d, 05-themes)
+> - **Kanoniczna oś przeliczona na 6 lotów**: cykl 3 = start 13:10, MH 1238:05, 141 L,
+>   3 loty (T/O 13:24/14:21/15:17, LDG 14:08/15:03/16:10), block 3:04, koniec MH 1241:09
+> - **09/10/11 zaktualizowane**: 5→6 lotów, block 6:00→6:39, MH koniec 1240:30→1241:09,
+>   paliwo koniec 82→88 (zużyte 116→110), St/Ld 6/6, śr 19→17 L/h; tabela lotów w 10 i 11
+>   dostała 6. wiersz i popołudniowe czasy zgodne z rodziną 05 (Lot 5 jako wpis ręczny)
+> - design-notes: oś czasu przepisana na 6-lotowy dzień skokowy z inwariantem paliwa
+> - Bilans domknięty: 150 +48 −110 = 88 L; MH Δ 6:39 = block; wszystkie cykle monotoniczne
+
 <!-- Dodawaj kolejne iteracje poniżej -->

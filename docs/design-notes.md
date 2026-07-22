@@ -181,14 +181,26 @@ Czcionki: `Bebas Neue` (display/timery) · `Archivo` (body) · `JetBrains Mono` 
 - Poprzednia zmiana: J. Kowalski · 21 JUNE · 17:30 (= czas synca cache w wariantach offline)
 - Samolot zajęty: SP-FGK · aktywny PIC: KRZ od 07:10 (scenariusz przejęcia w 02 i podglądu 04B)
 
-### Kanoniczna oś czasu dnia 22 JUNE (spójność ekranów 04 / 09 / 10 / 11)
+### Kanoniczna oś czasu dnia 22 JUNE — 6 lotów (operacja Skoki)
 
-- Cykl 1: start **08:12** (MH 1 234:30 · 150 L) · T/O 08:25 → LDG 09:18 (0:53) ·
-  T/O 09:35 → LDG 10:22 (0:47) · stop **10:34** (blok 2:22 · MH 1 236:52 · 112 L)
-- Tankowanie **10:48**: +48 L → 160 L
-- Cykl 2: start **11:15** · T/O 11:28 → LDG 12:15 (0:47) · stop **12:28**
-  (blok 1:13 · MH 1 238:05 · 141 L) — *ekran 04 = stan tuż po tym cyklu*
-- Cykl 3: start **13:55** · T/O 14:10 → LDG 15:02 (0:52, wpis ręczny) ·
-  T/O 15:20 → LDG 16:08 (0:48) · stop **16:20** (blok 2:25 · MH 1 240:30)
-- **Dzień:** 5 lotów · block 6:00 · duty 08:00→16:45 LT (8:45) ·
-  paliwo 150 +48 −116 = 82 L · MH 1 234:30 → **1 240:30** (przekazanie dla następnego)
+> Dzień skokowy = 3 cykle silnika, 6 krótkich lotów z zrzutami. Cykle 1–2 (rano)
+> pokazuje ekran 04; cykl 3 (popołudnie) to rodzina 05 (kokpit w locie).
+> Spójność: ekrany 04 / 05* / 09 / 10 / 11 muszą używać tych samych wartości.
+
+- **Cykl 1** (rano): start **08:12** (MH 1 234:30 · 150 L) · Lot 1: T/O 08:25 → LDG 09:18
+  (0:53) · Lot 2: T/O 09:35 → LDG 10:22 (0:47) · stop **10:34** (blok 2:22 · MH 1 236:52 · 112 L)
+- **Tankowanie 10:48**: 112 +48 → 160 L (ekran 06)
+- **Cykl 2** (przedpołudnie): start **11:15** · Lot 3: T/O 11:28 → LDG 12:15 (0:47) ·
+  stop **12:28** (blok 1:13 · MH 1 238:05 · 141 L) — *ekran 04 = stan tuż po tym cyklu*
+- **Cykl 3** (popołudnie = rodzina 05): start **13:10** (MH 1 238:05 · 141 L) ·
+  Lot 4: T/O 13:24, zrzut 13:48 → LDG 14:08 (0:44 · FOB ~123) ·
+  Lot 5: T/O 14:21, zrzut 14:42 → LDG 15:03 (0:42 · FOB ~105, wpis ręczny) ·
+  Lot 6: T/O 15:17, zrzut 15:45 → LDG 16:10 (0:53 · FOB ~90) · stop ~**16:14**
+  (blok 3:04 · MH 1 241:09 · 88 L)
+- **Dzień:** 6 lotów · block **6:39** · duty 08:00→16:45 LT (8:45) ·
+  paliwo 150 +48 −110 = **88 L** · MH 1 234:30 → **1 241:09** (przekazanie dla następnego) ·
+  śr. zużycie ~17 L/h · St/Ld 6/6
+
+> Uwaga: paliwo maleje monotonicznie w każdym cyklu (inwariant — nie może rosnąć bez
+> tankowania). Rodzina 05: start 141 → Lot 4 ~123 → Lot 5 ~105 → Lot 6 in-flight ~92
+> → LDG ~90 → stop 88. MH monotoniczne rosnące na całej osi.
