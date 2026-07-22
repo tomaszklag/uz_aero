@@ -101,6 +101,11 @@
   .crew-name.muted { color: var(--text-muted); font-style: italic; font-size: 14px; }
   .crew-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-left: auto; text-align: right; line-height: 1.4; }
   .crew-meta span { color: var(--text-secondary); }
+  .you-tag {
+    font-family: var(--font-mono); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--green); background: var(--green-muted); border: 1px solid var(--green-border);
+    border-radius: 5px; padding: 2px 6px; white-space: nowrap;
+  }
 
   /* Separator */
   .change-separator {
@@ -204,20 +209,22 @@
         <div class="section-label">Aktualna załoga</div>
 
         <div class="crew-row">
-          <div class="crew-role-badge">CDR</div>
+          <div class="crew-role-badge">PIC</div>
           <div class="crew-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
-          <div class="crew-name active">MIW</div>
+          <div class="crew-name active">TMK</div>
+          <span class="you-tag">zalogowany · Ty</span>
           <div class="crew-meta">od 08:00<br/><span>block: 00:53</span></div>
         </div>
 
         <div class="crew-row">
-          <div class="crew-role-badge">SIC</div>
+          <div class="crew-role-badge">DUAL</div>
           <div class="crew-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
-          <div class="crew-name muted">— (brak)</div>
+          <div class="crew-name active">AKO</div>
+          <div class="crew-meta">od 08:00<br/><span>block: 00:53</span></div>
         </div>
       </div>
 
@@ -227,7 +234,7 @@
       <!-- Zmień dowódcę -->
       <div class="section">
         <div class="toggle-row">
-          <div class="toggle-label">Zmień dowódcę</div>
+          <div class="toggle-label">Zmień PIC (dowódca)</div>
           <div class="toggle-switch on">
             <div class="toggle-thumb"></div>
           </div>
@@ -235,15 +242,15 @@
 
         <div class="fields-2col">
           <div class="field">
-            <div class="field-label">Wychodząc CDR</div>
+            <div class="field-label">Wychodzący PIC</div>
             <div class="field-input readonly">
-              <span class="field-val">MIW</span>
+              <span class="field-val">TMK</span>
               <svg class="lock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </div>
           </div>
 
           <div class="field">
-            <div class="field-label">Nowy CDR</div>
+            <div class="field-label">Nowy PIC</div>
             <div class="field-input focused">
               <span class="field-val green">KRZ</span>
             </div>
@@ -259,12 +266,29 @@
         </div>
       </div>
 
-      <!-- Dodaj drugiego pilota (collapsed) -->
-      <div class="section collapsed">
+      <!-- Zmień drugiego pilota -->
+      <div class="section">
         <div class="toggle-row">
-          <div class="toggle-label">Dodaj drugiego pilota</div>
-          <div class="toggle-switch off">
+          <div class="toggle-label">Zmień drugiego pilota (Dual)</div>
+          <div class="toggle-switch on">
             <div class="toggle-thumb"></div>
+          </div>
+        </div>
+
+        <div class="fields-2col">
+          <div class="field">
+            <div class="field-label">Wychodzący DUAL</div>
+            <div class="field-input readonly">
+              <span class="field-val">AKO</span>
+              <svg class="lock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Nowy DUAL</div>
+            <div class="field-input focused">
+              <span class="field-val green">PWI</span>
+            </div>
           </div>
         </div>
       </div>
@@ -275,7 +299,9 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         </div>
         <div class="info-text">
-          Każdy pilot ma osobny licznik czasu blokowego. Zmiana czasu pracy naliczana od momentu przejęcia.
+          <strong style="color: var(--blue);">PIC to pilot zalogowany w aplikacji na tym urządzeniu</strong> — przejęcie roli PIC
+          wymaga zalogowania nowego pilota. Każdy pilot ma osobny licznik czasu blokowego, naliczany od momentu przejęcia.
+          Dla samolotów z wymogiem załogi 2-osobowej (np. An-2) Dual nie może pozostać pusty.
         </div>
       </div>
 
@@ -292,9 +318,11 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="04-cockpit-ground.html">← 04/05 Kokpit</a>
+  <a href="04-cockpit-ground.html">← 04 Kokpit</a>
   <span>·</span>
+  <a href="06-tankowanie.html">06 Tankowanie</a>
   <a href="07-zmiana-zalogi.html" class="active">07 Zmiana załogi</a>
+  <a href="08-lista-reczna.html">08 Lista</a>
   <span>·</span>
   <a href="04-cockpit-ground.html">→ Kokpit</a>
 </nav>

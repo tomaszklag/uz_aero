@@ -92,6 +92,9 @@
   .fob-unit { font-family: var(--font-mono); font-size: 28px; font-weight: 400; color: var(--amber); opacity: 0.6; margin-left: -4px; }
   .fob-row { display: flex; align-items: baseline; gap: 6px; }
   .fob-subtext { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 4px; text-align: center; }
+  .fob-bar { width: 100%; height: 8px; border-radius: 4px; background: rgba(0,0,0,0.35); border: 1px solid var(--amber-border); margin-top: 10px; position: relative; overflow: hidden; }
+  .fob-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 26%; background: var(--amber); border-radius: 4px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
+  .fob-bar-labels { width: 100%; display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 5px; }
 
   /* Section */
   .section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
@@ -109,8 +112,8 @@
 
   /* Slider */
   .slider-track { position: relative; height: 6px; background: var(--surface-raised); border-radius: 3px; margin: 2px 0; border: 1px solid var(--border); }
-  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; width: 31.5%; background: var(--amber); border-radius: 3px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
-  .slider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); left: 31.5%; width: 16px; height: 16px; background: var(--amber); border: 2px solid #0D0D0D; border-radius: 50%; box-shadow: 0 0 0 3px rgba(243,156,18,0.3); }
+  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; width: 26%; background: var(--amber); border-radius: 3px; box-shadow: 0 0 8px rgba(243,156,18,0.4); }
+  .slider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); left: 26%; width: 16px; height: 16px; background: var(--amber); border: 2px solid #0D0D0D; border-radius: 50%; box-shadow: 0 0 0 3px rgba(243,156,18,0.3); }
   .slider-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); margin-top: 6px; }
 
   /* Result row */
@@ -190,7 +193,9 @@
           <div class="fob-value">87</div>
           <div class="fob-unit">L</div>
         </div>
-        <div class="fob-subtext">Obliczone z ostatnich sesji silnika</div>
+        <div class="fob-bar"><div class="fob-bar-fill"></div></div>
+        <div class="fob-bar-labels"><span>0 L</span><span>pojemność: 330 L</span></div>
+        <div class="fob-subtext">Obliczone z ostatnich sesji silnika · konfiguracja SP-AXA</div>
       </div>
 
       <!-- Sekcja: Dolano -->
@@ -203,6 +208,7 @@
             <span style="font-family: var(--font-mono); font-size: 32px; font-weight: 700; color: var(--amber); letter-spacing: -1px;">63</span>
             <span style="font-family: var(--font-mono); font-size: 18px; color: var(--amber); opacity: 0.7;">L</span>
           </div>
+          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted);">maks. dolewka: 243 L (do pełna) · pojemność 330 L z konfiguracji SP-AXA</div>
         </div>
 
         <!-- Fake Slider -->
@@ -213,10 +219,10 @@
           </div>
           <div class="slider-labels">
             <span>0 L</span>
-            <span>50 L</span>
-            <span>100 L</span>
-            <span>150 L</span>
-            <span>200 L</span>
+            <span>60 L</span>
+            <span>120 L</span>
+            <span>180 L</span>
+            <span>243 L</span>
           </div>
         </div>
       </div>
@@ -225,7 +231,7 @@
       <div class="result-row">
         <div>
           <div class="result-label">Stan po tankowaniu</div>
-          <div class="result-formula">87 + 63 = 150 L</div>
+          <div class="result-formula">87 + 63 = 150 L · 45% pojemności</div>
         </div>
         <div class="result-val">150 L</div>
       </div>
@@ -262,9 +268,11 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="04-cockpit-ground.html">← 04/05 Kokpit</a>
+  <a href="04-cockpit-ground.html">← 04 Kokpit</a>
   <span>·</span>
   <a href="06-tankowanie.html" class="active">06 Tankowanie</a>
+  <a href="07-zmiana-zalogi.html">07 Załoga</a>
+  <a href="08-lista-reczna.html">08 Lista</a>
   <span>·</span>
   <a href="04-cockpit-ground.html">→ Kokpit</a>
 </nav>

@@ -305,7 +305,11 @@
   <span class="flow-sep">→</span>
   <a href="02-preflight.html" class="flow-step">02 Preflight</a>
   <span class="flow-sep">→</span>
+  <a href="02a-preflight.html" class="flow-step">02A Paliwo/MH</a>
+  <span class="flow-sep">→</span>
   <a href="03-preflight-confirm.html" class="flow-step">03 Potwierdzenie</a>
+  <span class="flow-sep">→</span>
+  <a href="04a-cockpit-ground.html" class="flow-step">04A Start dnia</a>
   <span class="flow-sep">→</span>
   <a href="04-cockpit-ground.html" class="flow-step">04 Kokpit / Ground</a>
   <span class="flow-sep">⇄</span>
@@ -315,48 +319,64 @@
   <span class="flow-sep">→</span>
   <a href="10-statystyki.html" class="flow-step">10 Statystyki</a>
   <span class="flow-sep">→</span>
-  <a href="11-eksport.html" class="flow-step">11 Eksport</a>
+  <a href="11-eksport.html" class="flow-step">11 Sync</a>
 </div>
 
 <div class="section-title">Główny flow</div>
 <div class="grid">
-  <a href="01-splash.html" class="card">
-    <div class="card-num">01</div>
-    <div class="card-body">
-      <div class="card-title">01-splash</div>
-      <div class="card-desc">Ekran powitalny — boot, logo, wersja aplikacji</div>
-      <div class="card-tags"><span class="tag">onboarding</span></div>
-    </div>
-  </a>
   <a href="00-login.html" class="card">
     <div class="card-num">00</div>
     <div class="card-body">
       <div class="card-title">00-login</div>
-      <div class="card-desc">Wybór pilota / logowanie — tożsamość pilota znana dla całej sesji</div>
-      <div class="card-tags"><span class="tag">logowanie</span><span class="tag green">tożsamość</span></div>
+      <div class="card-desc">Logowanie — Google OAuth (primary) lub e-mail + hasło. Tożsamość PIC znana dla całej sesji</div>
+      <div class="card-tags"><span class="tag">logowanie</span><span class="tag green">PIC</span></div>
+    </div>
+  </a>
+  <a href="01-splash.html" class="card">
+    <div class="card-num">01</div>
+    <div class="card-body">
+      <div class="card-title">01-splash</div>
+      <div class="card-desc">Ekran powitalny po zalogowaniu — logo, wersja aplikacji, ładowanie sesji</div>
+      <div class="card-tags"><span class="tag">onboarding</span></div>
     </div>
   </a>
   <a href="02-preflight.html" class="card">
     <div class="card-num">02</div>
     <div class="card-body">
       <div class="card-title">02-preflight</div>
-      <div class="card-desc">Preflight briefing — wybór samolotu (dropdown), rodzaj operacji (karty), trasa, paliwo</div>
-      <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">paliwo</span></div>
+      <div class="card-desc">Preflight krok 1 — samolot (karty + blokada PIC + przejęcie), drugi pilot (Dual), operacja, trasa, duty start</div>
+      <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">blokada PIC</span><span class="tag">Dual</span></div>
+    </div>
+  </a>
+  <a href="02a-preflight.html" class="card">
+    <div class="card-num">02A</div>
+    <div class="card-body">
+      <div class="card-title">02a-preflight</div>
+      <div class="card-desc">Preflight krok 2 — paliwo na pokładzie i motogodziny z historią, korekty odczytów</div>
+      <div class="card-tags"><span class="tag amber">paliwo</span><span class="tag">motogodziny</span></div>
     </div>
   </a>
   <a href="03-preflight-confirm.html" class="card">
     <div class="card-num">03</div>
     <div class="card-body">
       <div class="card-title">03-preflight-confirm</div>
-      <div class="card-desc">Podgląd i potwierdzenie danych przed rozpoczęciem dnia</div>
+      <div class="card-desc">Podgląd i potwierdzenie danych przed rozpoczęciem dnia — PIC, Dual, paliwo, MH</div>
       <div class="card-tags"><span class="tag">potwierdzenie</span></div>
+    </div>
+  </a>
+  <a href="04a-cockpit-ground.html" class="card green">
+    <div class="card-num">04A</div>
+    <div class="card-body">
+      <div class="card-title">04a-cockpit-ground</div>
+      <div class="card-desc">Kokpit — start dnia, brak lotów. Pierwszy START ENGINE, pusty log, chip SYNC</div>
+      <div class="card-tags"><span class="tag green">ground state</span><span class="tag">start dnia</span></div>
     </div>
   </a>
   <a href="04-cockpit-ground.html" class="card green">
     <div class="card-num">04</div>
     <div class="card-body">
       <div class="card-title">04-cockpit-ground</div>
-      <div class="card-desc">Kokpit — silnik wyłączony (GROUND). Duży przycisk START ENGINE, skróty akcji</div>
+      <div class="card-desc">Kokpit — silnik wyłączony (GROUND), dzień w toku. Log cykli silnika, skróty akcji</div>
       <div class="card-tags"><span class="tag green">ground state</span><span class="tag">główny</span></div>
     </div>
   </a>
@@ -364,8 +384,68 @@
     <div class="card-num">05</div>
     <div class="card-body">
       <div class="card-title">05-cockpit-running</div>
-      <div class="card-desc">Kokpit — silnik uruchomiony (RUNNING). Timery, GPS live, liczniki startów i lądowań</div>
+      <div class="card-desc">Kokpit — silnik uruchomiony (RUNNING). Timery, GPS live, liczniki startów i lądowań, buforowanie offline</div>
       <div class="card-tags"><span class="tag green">running state</span><span class="tag green">w locie</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Warianty i stany</div>
+<div class="grid">
+  <a href="02b-preflight-paliwo.html" class="card amber">
+    <div class="card-num">02B</div>
+    <div class="card-body">
+      <div class="card-title">02b-preflight-paliwo</div>
+      <div class="card-desc">Modal odczytu paliwa — rozbieżność z szacunkiem, walidacja do pojemności zbiorników</div>
+      <div class="card-tags"><span class="tag amber">modal</span><span class="tag">walidacja</span></div>
+    </div>
+  </a>
+  <a href="02c-preflight-motogodziny.html" class="card amber">
+    <div class="card-num">02C</div>
+    <div class="card-body">
+      <div class="card-title">02c-preflight-motogodziny</div>
+      <div class="card-desc">Modal odczytu motogodzin — rozbieżność z szacunkiem, format licznika z konfiguracji</div>
+      <div class="card-tags"><span class="tag amber">modal</span><span class="tag">motogodziny</span></div>
+    </div>
+  </a>
+  <a href="05a-cockpit-taxi.html" class="card green">
+    <div class="card-num">05A</div>
+    <div class="card-body">
+      <div class="card-title">05a-cockpit-taxi</div>
+      <div class="card-desc">Kokpit — taxi przed startem, silnik ON, 0 lotów</div>
+      <div class="card-tags"><span class="tag green">taxi</span></div>
+    </div>
+  </a>
+  <a href="05b-cockpit-inflight-toast.html" class="card green">
+    <div class="card-num">05B</div>
+    <div class="card-body">
+      <div class="card-title">05b-cockpit-inflight-toast</div>
+      <div class="card-desc">Toast autodetekcji startu (GPS) — 4 s na korektę przed zapisem</div>
+      <div class="card-tags"><span class="tag green">autodetect T/O</span><span class="tag">toast</span></div>
+    </div>
+  </a>
+  <a href="05c-cockpit-toast-ldg.html" class="card green">
+    <div class="card-num">05C</div>
+    <div class="card-body">
+      <div class="card-title">05c-cockpit-toast-ldg</div>
+      <div class="card-desc">Toast autodetekcji lądowania — GPS wykrywa GS ≤ 30 KT podczas lotu</div>
+      <div class="card-tags"><span class="tag green">autodetect LDG</span><span class="tag">toast</span></div>
+    </div>
+  </a>
+  <a href="05d-cockpit-taxi-post.html" class="card green">
+    <div class="card-num">05D</div>
+    <div class="card-body">
+      <div class="card-title">05d-cockpit-taxi-post</div>
+      <div class="card-desc">Kokpit — taxi po lądowaniu, lot ukończony, silnik nadal ON</div>
+      <div class="card-tags"><span class="tag green">taxi</span></div>
+    </div>
+  </a>
+  <a href="05-themes.html" class="card">
+    <div class="card-num">05T</div>
+    <div class="card-body">
+      <div class="card-title">05-themes</div>
+      <div class="card-desc">Theme picker kokpitu — 5 wariantów (night / paper / solar / sky / amber), w tym tryby do pracy w pełnym słońcu</div>
+      <div class="card-tags"><span class="tag">eksperyment</span><span class="tag">themes</span></div>
     </div>
   </a>
 </div>
@@ -384,8 +464,8 @@
     <div class="card-num">07</div>
     <div class="card-body">
       <div class="card-title">07-zmiana-zalogi</div>
-      <div class="card-desc">Zmiana dowódcy i/lub drugiego pilota — kod + czas zmiany, osobny licznik czasu blokowego</div>
-      <div class="card-tags"><span class="tag">załoga</span><span class="tag">formularz</span></div>
+      <div class="card-desc">Zmiana PIC i/lub Dual — czas zmiany, osobne liczniki czasu blokowego; zmiana PIC = przelogowanie</div>
+      <div class="card-tags"><span class="tag">załoga</span><span class="tag green">PIC / Dual</span></div>
     </div>
   </a>
   <a href="08-lista-reczna.html" class="card">
@@ -420,8 +500,8 @@
     <div class="card-num">11</div>
     <div class="card-body">
       <div class="card-title">11-eksport</div>
-      <div class="card-desc">Eksport do Google Sheets — OAuth, podgląd danych, status wysyłania, link do arkusza</div>
-      <div class="card-tags"><span class="tag green">Google Sheets</span><span class="tag">eksport</span></div>
+      <div class="card-desc">Synchronizacja — status wysyłki na serwer, podgląd danych, eksport do Sheets robi serwer</div>
+      <div class="card-tags"><span class="tag green">sync</span><span class="tag">eksport serwera</span></div>
     </div>
   </a>
 </div>

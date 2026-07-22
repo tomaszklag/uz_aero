@@ -122,10 +122,11 @@
     <div class="scroll">
       <div class="pilot-strip">
         <div class="pilot-avatar">T</div>
-        <div>
+        <div style="flex:1;">
           <div class="pilot-name">Tomasz Małkiewicz</div>
-          <div class="pilot-sub">tomasz@uzaero.pl</div>
+          <div class="pilot-sub">zalogowany · tomasz@uzaero.pl</div>
         </div>
+        <span style="font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:2px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 9px;">PIC</span>
       </div>
       <div class="section">
         <div class="section-label">Samolot</div>
@@ -135,7 +136,7 @@
         <div class="section-label">Motogodziny</div>
         <div class="field-input" style="flex-direction:column; align-items:stretch; gap:6px; background:var(--surface);">
           <div style="display:flex; align-items:baseline; justify-content:space-between;">
-            <span style="font-family:var(--font-mono); font-size:22px; font-weight:700;">1 234.5 <span style="font-size:12px; color:var(--text-secondary);">h</span></span>
+            <span style="font-family:var(--font-mono); font-size:22px; font-weight:700;">1 234:30 <span style="font-size:12px; color:var(--text-secondary);">MH</span></span>
             <span class="optional-tag">szacowane</span>
           </div>
         </div>
@@ -149,23 +150,27 @@
         <div class="modal-title">Odczyt motogodzin</div>
 
         <div class="modal-input-row">
-          <span class="modal-input-val">1 236.0<span class="modal-cursor"></span></span>
-          <span class="modal-input-unit">h</span>
+          <span class="modal-input-val">1 236:00<span class="modal-cursor"></span></span>
+          <span class="modal-input-unit">MH</span>
         </div>
 
         <div class="modal-ref">
           <span>Szacowane z logów</span>
-          <span style="color: var(--text-secondary);">1 234.5 h</span>
+          <span style="color: var(--text-secondary);">1 234:30 MH</span>
+        </div>
+        <div class="modal-ref">
+          <span>Format licznika · konfiguracja SP-AXA</span>
+          <span style="color: var(--text-secondary);">hh:mm</span>
         </div>
 
         <div class="modal-warning">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Odczyt różni się od szacunku o <strong>+1.5 h</strong>. Sprawdź licznik silnika.</span>
+          <span>Odczyt różni się od szacunku o <strong>+1:30</strong>. Sprawdź licznik silnika.</span>
         </div>
 
         <div class="modal-actions">
-          <a href="02-preflight.html" class="modal-btn-cancel">Anuluj</a>
-          <a href="02-preflight.html" class="modal-btn-confirm">Potwierdź</a>
+          <a href="02a-preflight.html" class="modal-btn-cancel">Anuluj</a>
+          <a href="02a-preflight.html" class="modal-btn-confirm">Potwierdź</a>
         </div>
       </div>
     </div>

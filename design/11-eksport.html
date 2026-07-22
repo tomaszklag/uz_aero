@@ -223,7 +223,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 11</span>
-  <span class="slug">eksport · google sheets</span>
+  <span class="slug">synchronizacja · eksport po stronie serwera</span>
   <span class="canvas-meta"><span class="pulse"></span>Screen 11 / 11</span>
 </header>
 
@@ -244,21 +244,21 @@
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
         Statystyki
       </a>
-      <span class="screen-title">EKSPORT</span>
+      <span class="screen-title">SYNCHRONIZACJA</span>
       <span class="chip online"><span class="dot"></span>Online</span>
     </div>
 
     <!-- Scroll area -->
     <div class="scroll">
 
-      <!-- Google Account -->
+      <!-- Sync status -->
       <div class="google-box">
-        <div class="google-icon">G</div>
+        <div class="google-icon" style="background:var(--green-muted); border:1px solid var(--green-border); color:var(--green); font-size:16px;">✓</div>
         <div class="google-info">
-          <div class="google-status">Zalogowany jako</div>
-          <div class="google-email">pilot@gmail.com</div>
+          <div class="google-status">Status wysyłki · PIC: TMK</div>
+          <div class="google-email">47 / 47 zdarzeń wysłanych na serwer</div>
         </div>
-        <button class="google-change">Zmień konto</button>
+        <span style="font-family:var(--font-mono); font-size:9px; color:var(--text-muted); letter-spacing:0.5px;">16:45 UTC</span>
       </div>
 
       <!-- Preview card -->
@@ -307,57 +307,47 @@
           </tbody>
         </table>
         <div class="preview-foot">
-          <div class="preview-foot-main">22 JUNE 2026 · SP-MIW · 5 lotów</div>
+          <div class="preview-foot-main">22 JUNE 2026 · SP-AXA · 5 lotów</div>
           <div class="preview-foot-fuel">Paliwo: 150 → 82 L · zużyte 131 L</div>
         </div>
       </div>
 
-      <!-- Export options -->
+      <!-- Target sheet (server config) -->
       <div class="options-card">
-        <!-- Option 1: New sheet (active) -->
         <div class="option-row">
-          <div class="option-radio active"></div>
           <div class="option-body">
-            <div class="option-label">Nowy arkusz</div>
-            <div class="option-input">2026-06-22_SP-MIW</div>
-          </div>
-        </div>
-        <!-- Option 2: Existing sheet (inactive) -->
-        <div class="option-row">
-          <div class="option-radio"></div>
-          <div class="option-body">
-            <div class="option-label muted">Istniejący arkusz</div>
-            <div class="option-input disabled">Wklej URL arkusza...</div>
+            <div class="option-label muted" style="font-size:8px; letter-spacing:2px; text-transform:uppercase;">Arkusz docelowy · konfiguracja serwera</div>
+            <div class="option-input">UZ Aero 2026 → 2026-06-22_SP-AXA</div>
           </div>
         </div>
       </div>
 
-      <!-- Main export button -->
-      <button class="btn-export">
-        <span>&#8593; EKSPORTUJ DO GOOGLE SHEETS</span>
-        <span class="btn-export-sub">Arkusz zostanie udostępniony automatycznie</span>
-      </button>
-
-      <!-- Success status box -->
+      <!-- Server export status -->
       <div class="success-box">
         <div class="success-top">
           <div class="success-icon">✓</div>
-          <div class="success-title">Eksport zakończony pomyślnie</div>
+          <div class="success-title">Serwer zaktualizował arkusz · 16:47 UTC</div>
         </div>
-        <div class="success-detail">2026-06-22_SP-MIW · 5 lotów · 22 JUNE 2026</div>
+        <div class="success-detail">2026-06-22_SP-AXA · 5 lotów · 22 JUNE 2026</div>
         <a href="#" class="success-link">
           Otwórz arkusz
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8L8 2M4.5 2H8v3.5"/></svg>
         </a>
-        <div class="success-backup">Dane zapisane lokalnie w kopii zapasowej</div>
+        <div class="success-backup">Eksport wykonuje serwer po odebraniu danych · kopia lokalna zostaje na urządzeniu</div>
       </div>
+
+      <!-- Manual sync (fallback; sync is automatic) -->
+      <button class="btn-export">
+        <span>&#8635; SYNCHRONIZUJ TERAZ</span>
+        <span class="btn-export-sub">Wysyłka działa automatycznie w tle</span>
+      </button>
 
       <!-- Offline queue (inactive / muted because we're online) -->
       <div class="offline-queue">
         <div class="offline-queue-icon">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--amber)" stroke-width="1.5"><path d="M7 2v6M7 10.5v1"/><circle cx="7" cy="7" r="6"/></svg>
         </div>
-        <div class="offline-queue-text">2 eksporty w kolejce · Wysłanie gdy dostępny internet</div>
+        <div class="offline-queue-text">0 zdarzeń w kolejce · offline? wysyłka wznowi się sama</div>
       </div>
 
     </div>
