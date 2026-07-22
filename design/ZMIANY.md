@@ -207,4 +207,14 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > - Formularze sesji (operacja, trasa, duty start) celowo BEZ zmian offline — dane
 >   lokalne, zgodnie z zasadą "dane sesji nie mają wariantów offline"
 
+**Panel „Warianty tego ekranu" — nowa konwencja canvasu** (feedback)
+> Powód: nav-strip jest zbyt dyskretny do przeglądu wariantów; recenzent potrzebuje
+> na miejscu odpowiedzi "kiedy który wariant się wyświetli".
+> - Panel pod telefonem: linki do całej rodziny wariantów + opis okoliczności
+>   wyświetlenia (np. 00B: "jak 00A, ale bez sieci — twarda granica"); bieżący
+>   ekran oznaczony tagiem "ten ekran"
+> - Wdrożone: rodzina logowania (00 / 00A / 00B) i preflightu krok 1 (02 / 02D)
+> - Reguła w definition of done w PLAN.md; retrofit starszych rodzin (02A–C,
+>   04/04A, 05/05A–D) w bloku sprzątania
+
 <!-- Dodawaj kolejne iteracje poniżej -->

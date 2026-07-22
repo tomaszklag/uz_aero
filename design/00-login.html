@@ -133,6 +133,19 @@
     color: var(--text-muted); display: flex; align-items: center; gap: 6px;
   }
 
+  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+
   /* nav strip */
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
   .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
@@ -221,11 +234,38 @@
   </div>
 </main>
 
+<aside class="variants-panel">
+  <div class="vp-title">Warianty ekranu logowania — kiedy który?</div>
+  <a class="vp-item active" href="00-login.html">
+    <span class="vp-badge">00</span>
+    <span class="vp-body">
+      <span class="vp-name">Odblokowanie PIN</span>
+      <span class="vp-when">Codzienne wejście — na telefonie jest profil pilota. Działa w pełni offline; wygasły token nie wylogowuje.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="00a-login-full.html">
+    <span class="vp-badge">00A</span>
+    <span class="vp-body">
+      <span class="vp-name">Pełny login</span>
+      <span class="vp-when">Brak profilu na telefonie (nowy / cudzy telefon), „Zaloguj jako inny pilot" albo „Nie pamiętam PIN". Wymaga internetu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="00b-login-offline.html">
+    <span class="vp-badge amber">00B</span>
+    <span class="vp-body">
+      <span class="vp-name">Offline bez profilu</span>
+      <span class="vp-when">Jak 00A, ale bez sieci — logowanie niemożliwe (twarda granica, jedyny wyjątek od offline-first). Instrukcja zamiast martwego formularza.</span>
+    </span>
+  </a>
+</aside>
+
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
   <a href="00-login.html" class="active">00 PIN</a>
   <a href="00a-login-full.html">00A Pełny login →</a>
+  <a href="00b-login-offline.html">00B Offline →</a>
   <span>·</span>
   <a href="01-splash.html">01 Splash →</a>
 </nav>

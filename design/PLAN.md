@@ -9,7 +9,11 @@
 
 1. Zmiana w mockupie zgodna z design tokenami i phone frame (patrz `CLAUDE.md`)
 2. Nav-strip spięty z sąsiadami, nowe pliki dodane do `index.html`
-3. Wpis w `ZMIANY.md` (co + DLACZEGO, z odwołaniem do sekcji architektury)
+3. Ekran mający warianty dostaje **panel „Warianty tego ekranu"** na canvasie (pod
+   telefonem): linki do całej rodziny + opis KIEDY dany wariant się wyświetla;
+   bieżący oznaczony „ten ekran" (wzorzec: 00 / 02)
+4. Wpis w `ZMIANY.md` (co + DLACZEGO, z odwołaniem do sekcji architektury)
+5. **STOP — weryfikacja użytkownika.** Commit dopiero po jego akceptacji, nigdy automatycznie.
 
 ## Zasady wspólne (z architektury — obowiązują każdy ekran)
 
@@ -110,7 +114,9 @@
       linia ~78) + dopisać założenia logowania (model PIN) i stany świeżości
 - [ ] Weryfikacja nawigacji: wszystkie pliki osiągalne z `index.html`, zero martwych
       linków (poprzedni audyt nawigacji: Iteracja 6)
-- [ ] Commit po każdym większym bloku
+- [ ] Retrofit panelu „Warianty tego ekranu" na starsze rodziny: 02A+02B+02C,
+      04+04A, 05+05A–D
+- [ ] Commit po każdym większym bloku — zawsze PO weryfikacji użytkownika
 
 ---
 

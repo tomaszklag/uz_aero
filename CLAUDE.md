@@ -41,6 +41,11 @@ Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-
 - Dropdowny jako lista kart do wyboru (nie natywny `<select>`) — widoczne opcje, zaznaczona = zielona obramówka
 - Operacje/typy jako siatka kart z ikonami
 
+### Nawigacja i warianty mockupów (obowiązuje każdy nowy/zmieniany ekran)
+- Każdy plik: nav-strip z linkami do sąsiadów + karta w `index.html` (warianty literowe → sekcja "Warianty i stany")
+- Ekran mający warianty → **panel „Warianty tego ekranu" na canvasie pod telefonem**: linki do całej rodziny + opis KIEDY dany wariant się wyświetla; bieżący ekran z tagiem „ten ekran"; badge amber dla stanów offline/warning. Wzorzec: `00-login.html`, `02-preflight.html`
+- Po zmianach: zero martwych linków (sprawdzaj greppem po `href`)
+
 ## Screen flow (kolejność ekranów)
 ```
 00-login → 01-splash → 02-preflight → 03-preflight-confirm
@@ -77,6 +82,7 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`
 6. Gdy ekran pokazuje dane z serwera — stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej)
+7. Gdy ekran ma warianty — panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej)
 
 ## Czego unikać
 - Nie dodawaj loadera/spinnera bez określonego celu (patrz: feedback do 01-splash)

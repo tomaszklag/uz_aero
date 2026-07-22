@@ -354,6 +354,19 @@
     border-radius: 5px; padding: 2px 6px; white-space: nowrap;
   }
   .btn-primary.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; }
+
+  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -587,6 +600,25 @@
     </div>
   </div>
 </main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty ekranu preflight (krok 1) — kiedy który?</div>
+  <a class="vp-item active" href="02-preflight.html">
+    <span class="vp-badge">02</span>
+    <span class="vp-body">
+      <span class="vp-name">Online</span>
+      <span class="vp-when">Jest sieć — stany claim i dane referencyjne na żywo z serwera. Chip SYNC.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="02d-preflight-offline.html">
+    <span class="vp-badge amber">02D</span>
+    <span class="vp-body">
+      <span class="vp-name">Offline — dane z cache</span>
+      <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); przejęcie na podstawie cache, claim trafia do outboxa. Chip OFFLINE.</span>
+    </span>
+  </a>
+</aside>
 
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
