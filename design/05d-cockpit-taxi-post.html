@@ -210,7 +210,7 @@
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-        <div class="log-body"><div class="log-t start">13:10</div><div class="log-lbl start">Start engine</div><span class="log-chip log-chip-mh">MH 1238:00</span><span class="log-chip log-chip-fuel">185 L</span></div>
+        <div class="log-body"><div class="log-t start">13:10</div><div class="log-lbl start">Start engine</div><span class="log-chip log-chip-mh">MH 1238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
       </div>
       <div class="flight-sep"><span class="flight-sep-label">Lot 1</span></div>
       <div class="log-row">
@@ -279,11 +279,11 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05a-cockpit-taxi.html"><span class="dot"></span>Taxi przed T/O</a>
-  <a href="05-cockpit-running.html"><span class="dot"></span>In Flight</a>
-  <a href="05b-cockpit-inflight-toast.html"><span class="dot"></span>Toast Takeoff</a>
-  <a href="05c-cockpit-toast-ldg.html"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" class="active"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: silnik ON, GS < 5 kt, przed pierwszym T/O — autodetekcja czeka na start"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
+  <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
+  <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
+  <a href="05d-cockpit-taxi-post.html" class="active" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
 </nav>
 </div>
 

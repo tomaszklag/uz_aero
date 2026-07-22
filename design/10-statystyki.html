@@ -272,7 +272,7 @@
           <div class="crew-stat">
             <div class="crew-stat-row">
               <span class="crew-stat-key">Block time</span>
-              <span class="crew-stat-val">02:30</span>
+              <span class="crew-stat-val">06:00</span>
             </div>
             <div class="crew-stat-row">
               <span class="crew-stat-key">St / Ld</span>
@@ -287,7 +287,7 @@
           <div class="crew-stat">
             <div class="crew-stat-row">
               <span class="crew-stat-key">Block time</span>
-              <span class="crew-stat-val">02:30</span>
+              <span class="crew-stat-val">06:00</span>
             </div>
             <div class="crew-stat-row">
               <span class="crew-stat-key">St / Ld</span>
@@ -323,17 +323,17 @@
             </tr>
             <tr>
               <td class="num">2</td>
-              <td>10:17</td>
-              <td>11:05</td>
-              <td>00:48</td>
+              <td>09:35</td>
+              <td>10:22</td>
+              <td>00:47</td>
               <td><span class="type-auto">AUTO</span></td>
               <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
             </tr>
             <tr>
               <td class="num">3</td>
-              <td>12:44</td>
-              <td>13:29</td>
-              <td>00:45</td>
+              <td>11:28</td>
+              <td>12:15</td>
+              <td>00:47</td>
               <td><span class="type-auto">AUTO</span></td>
               <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
             </tr>
@@ -368,7 +368,7 @@
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Dolane</div>
-            <div class="fuel-cell-val">63</div>
+            <div class="fuel-cell-val">48</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
           <div class="fuel-cell">
@@ -378,13 +378,30 @@
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Zużyte</div>
-            <div class="fuel-cell-val">131</div>
+            <div class="fuel-cell-val">116</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
         </div>
         <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Średnie zużycie</span>
-          <span class="fuel-avg-val">35 L/H</span>
+          <span class="fuel-avg-label">Średnie zużycie (na block time)</span>
+          <span class="fuel-avg-val">19 L/H</span>
+        </div>
+      </div>
+
+      <!-- Motogodziny (3.7: początek / koniec / delta) -->
+      <div class="section-card">
+        <div class="section-card-head">Motogodziny · hh:mm z konfiguracji SP-AXA</div>
+        <div class="fuel-avg-row">
+          <span class="fuel-avg-label">Początek dnia</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">1 234:30</span>
+        </div>
+        <div class="fuel-avg-row">
+          <span class="fuel-avg-label">Koniec dnia (przekazanie)</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">1 240:30</span>
+        </div>
+        <div class="fuel-avg-row">
+          <span class="fuel-avg-label">Δ dnia (= block time)</span>
+          <span class="fuel-avg-val" style="color:var(--green);">+6:00</span>
         </div>
       </div>
 

@@ -81,7 +81,7 @@
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
 
-  /* Google account box */
+  /* Sync status box (klasy .google-* to nazwy historyczne — brak integracji Google, eksport robi serwer) */
   .google-box {
     background:var(--surface); border:1px solid var(--border);
     border-radius:12px; padding:12px 14px;
@@ -89,7 +89,7 @@
   }
   .google-icon {
     width:36px; height:36px; border-radius:50%;
-    background: conic-gradient(#4285F4 0deg 90deg, #EA4335 90deg 180deg, #FBBC04 180deg 270deg, #34A853 270deg 360deg);
+    background: var(--green-muted); border: 1px solid var(--green-border);
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0; font-weight:800; font-size:14px; color:#fff;
     font-family:var(--font-body);
@@ -293,15 +293,15 @@
             </tr>
             <tr>
               <td>2</td>
-              <td>10:17 UTC</td>
-              <td>11:05 UTC</td>
-              <td>00:48</td>
+              <td>09:35 UTC</td>
+              <td>10:22 UTC</td>
+              <td>00:47</td>
             </tr>
             <tr class="dim">
               <td>3</td>
-              <td>12:44 UTC</td>
-              <td>13:29 UTC</td>
-              <td>00:45</td>
+              <td>11:28 UTC</td>
+              <td>12:15 UTC</td>
+              <td>00:47</td>
             </tr>
             <tr class="dim">
               <td>4</td>

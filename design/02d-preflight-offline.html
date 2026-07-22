@@ -267,6 +267,13 @@
     color: var(--amber); background: var(--amber-muted); border: 1px solid var(--amber-border);
     border-radius: 4px; padding: 2px 6px; white-space: nowrap;
   }
+  .peek-link {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+    border: 1px solid var(--border); color: var(--text-muted);
+    text-decoration: none; transition: all 0.15s;
+  }
+  .peek-link:hover { color: var(--blue); border-color: rgba(52,152,219,0.28); background: var(--blue-muted); }
 
   /* ===== OPERATION SELECTOR ===== */
   .op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
@@ -404,6 +411,9 @@
             <div class="aircraft-reg">SP-FGK</div>
             <div class="aircraft-type">Cessna 182 · 2017</div>
             <div class="pic-lock-tag" title="Stan claim z cache — mógł się zmienić od ostatniej synchronizacji">PIC: KRZ · wg cache 17:30</div>
+            <a class="peek-link" href="04b-cockpit-readonly.html" onclick="event.stopPropagation()" title="Podgląd read-only — offline pokaże ostatni znany stan z cache (04B)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </a>
             <div class="aircraft-check"></div>
           </div>
           <div class="aircraft-option" data-req2p="1" onclick="pickAircraft(this)">

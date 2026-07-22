@@ -3,8 +3,9 @@
 ## Przepływ ekranów (screen flow)
 
 ```
-01-splash
-  → 02-preflight          (krok 1/3 — samolot, operacja, trasa, czas służby)
+00-login (odblokowanie PIN · warianty: 00a pełny login, 00b offline bez profilu)
+  → 01-splash             (odświeżenie cache referencyjnego — adnotacja "dane referencyjne · sync")
+  → 02-preflight          (krok 1/3 — samolot, operacja, trasa, czas służby; wariant offline: 02d)
   → 02a-preflight         (krok 2/3 — paliwo, motogodziny)
     02b-preflight-paliwo    (modal: korekta paliwa — wizualizacja)
     02c-preflight-moto      (modal: korekta MH — wizualizacja)
@@ -39,6 +40,9 @@ Cockpit cycle (powtarzalny):
 
 ### Tożsamość pilota i samolotu
 - Pilot loguje się raz na ekranie `00-login` — tożsamość znana przez całą sesję
+- Logowanie = jednorazowe provisioning (online; konto zakłada administrator, bez Google OAuth);
+  codzienne wejście = odblokowanie PIN-em offline; wygasły token nie wylogowuje
+  (szczegóły: `docs/_main.md.txt` sekcja 3.0)
 - Nigdzie w formularzach nie pytamy ponownie o kod pilota
 - Samolot wybieramy z listy zarejestrowanych jednostek (karty do wyboru, nie `<select>`)
 - Samolot może być **wyłączony ze służby** — oznaczony tagiem "Wyłączony", niedostępny do wyboru (`disabled`)
@@ -75,7 +79,7 @@ Dane na ekranie 03 (potwierdzenie) muszą zgadzać się z danymi z kroków 1 i 2
 - Pilot: T. Małkiewicz
 - Meldunek: 06:00 UTC
 - Paliwo: 150 L
-- Motogodziny: 1 234.5 h
+- Motogodziny: 1 234:30 MH (format hh:mm z konfiguracji SP-AXA)
 
 ---
 
@@ -173,5 +177,18 @@ Czcionki: `Bebas Neue` (display/timery) · `Archivo` (body) · `JetBrains Mono` 
 - Baza: EPKK → EPWA
 - Operacja: Skoki
 - Paliwo przekazane: 150 L (po tankowaniu 185 L, spalone 35 L, śr. 17.5 L/h)
-- Motogodziny: 1 234.5 h (poprzedni odczyt 1 230.0 h, loty zegarowe 4h 30min)
-- Poprzednia zmiana: J. Kowalski · 21 JUNE · 17:30
+- Motogodziny: 1 234:30 MH — hh:mm z konfiguracji SP-AXA (poprzedni odczyt 1 230:30, loty zegarowe 4:00)
+- Poprzednia zmiana: J. Kowalski · 21 JUNE · 17:30 (= czas synca cache w wariantach offline)
+- Samolot zajęty: SP-FGK · aktywny PIC: KRZ od 07:10 (scenariusz przejęcia w 02 i podglądu 04B)
+
+### Kanoniczna oś czasu dnia 22 JUNE (spójność ekranów 04 / 09 / 10 / 11)
+
+- Cykl 1: start **08:12** (MH 1 234:30 · 150 L) · T/O 08:25 → LDG 09:18 (0:53) ·
+  T/O 09:35 → LDG 10:22 (0:47) · stop **10:34** (blok 2:22 · MH 1 236:52 · 112 L)
+- Tankowanie **10:48**: +48 L → 160 L
+- Cykl 2: start **11:15** · T/O 11:28 → LDG 12:15 (0:47) · stop **12:28**
+  (blok 1:13 · MH 1 238:05 · 141 L) — *ekran 04 = stan tuż po tym cyklu*
+- Cykl 3: start **13:55** · T/O 14:10 → LDG 15:02 (0:52, wpis ręczny) ·
+  T/O 15:20 → LDG 16:08 (0:48) · stop **16:20** (blok 2:25 · MH 1 240:30)
+- **Dzień:** 5 lotów · block 6:00 · duty 08:00→16:45 LT (8:45) ·
+  paliwo 150 +48 −116 = 82 L · MH 1 234:30 → **1 240:30** (przekazanie dla następnego)

@@ -281,4 +281,41 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > ekranach z danymi, zero martwych linków. Do PLAN (blok 9) dopisana niespójność
 > czasów lotów 04 vs 11 (pre-existing, wymaga ujednolicenia osi czasu scenariusza).
 
+**Blok 9 — sprzątanie i spójność scenariusza** (PLAN blok 9)
+> - Panel wariantów rodziny 05 (05/05A–D): tooltipy "kiedy który" na state-sidebar
+>   (warunki GPS: Taxi GS<5, Toast T/O GS>50, Toast LDG GS<30 itd.)
+> - Link "Podgląd" (ikona oka) na karcie zajętego samolotu SP-FGK → 04B, na 02 i 02d
+>   (stopPropagation, żeby nie odpalać modala przejęcia)
+> - **Kanoniczna oś czasu dnia 22 JUNE** spisana w design-notes.md i wyrównana na
+>   ekranach 04/09/10/11: 3 cykle, 5 lotów, block 6:00, MH 1 234:30 → 1 240:30,
+>   paliwo 150 +48 −116 = 82 L. Poprawki: block time per pilot 02:30 → 06:00,
+>   loty 2-3 w 10/11 zsynchronizowane z logiem 04, dolane 63→48, zużyte 131→116,
+>   śr. zużycie 35→19 L/h; nowa sekcja "Motogodziny" w statystykach (10)
+> - **Naprawa regresji MH** w rodzinie 05 (6 plików): start engine MH 1238:00 → 1238:05
+>   (licznik nie może się cofać — inwariant łańcucha, sekcja 4.5); paliwo startowe
+>   185 → 141 L (185 L nie występowało w dniu). Głębsze wyrównanie żywych wartości 05
+>   (czasy 13:10, burn rate FOB) — osobny follow-up w PLAN
+> - design-notes.md: model logowania (PIN/provisioning), format MH hh:mm, oś czasu dnia
+
+**Audyt niezależny + poprawki klastra scenariusza** (zlecony agentowi, 2026-07-22)
+> Werdykt audytu: zero sprzeczności z inwariantami architektury (offline-first,
+> single-writer, claim optymistyczny, monotoniczny łańcuch MH hh:mm, eksport serwerowy,
+> brak OAuth, stany świeżości, SyncChip, żywa nawigacja). Poprawiony potwierdzony
+> klaster niespójności scenariusza:
+> - **02a/02c**: poprzednik „T. Małkiewicz" → **„J. Kowalski"** (pilot przekazywał sam
+>   sobie); terminologia korekt „Szacowane z logów"/„szacowane" → „Przekazane przez
+>   poprzednika"/„przekazane" (02b i 02c) — wartość to przekazanie, nie szacunek
+> - **06-tankowanie**: wyrównane do kanonicznego zdarzenia +48 (112→160 @ 10:48):
+>   FOB 87→112, dolano 63→48, wynik 150→160, calc realny ~16 L/h (było ~46), paski %
+> - **08-lista-reczna**: tankowanie +45→+48, karta „Dolane" 63→48 (było sprzeczne wewn.)
+> - **04**: duty timer 01:42 → 04:34 (log kończył się na 12:28 przy meldunku 08:00)
+> - **09**: „obliczone ~87 L" (sierota starego zestawu) → „~84 L" (blisko faktycznego 82)
+> - **02b/02c**: step-badge „1/2" → „2/3" (należą do kroku 2 z 3)
+> - **11**: usunięte zahardkodowane kolory Google (conic-gradient #4285F4…) z .google-icon
+>   → var(--green-*); komentarz „Google account box" → „Sync status box" (relikt po OAuth)
+> - 02a `+45 L → 185 L` ZOSTAJE — to tankowanie poprzednika z 21 JUNE (historia
+>   przekazania), inne zdarzenie niż dzisiejsze +48
+> Odłożone (nie-architektura, świadomie): pełne wyrównanie żywych wartości rodziny 05
+> do osi (czasy 13:10, burn rate FOB) — follow-up w PLAN.
+
 <!-- Dodawaj kolejne iteracje poniżej -->

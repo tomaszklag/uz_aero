@@ -108,18 +108,31 @@
 - [x] Karta "Flagi serwera · brak ✓" z typami flag i zasadą "rozwiązuje administrator";
       tytuł i nav "Eksport" → "Synchronizacja"
 
-### 9. Sprzątanie
+### ✅ 9. Sprzątanie — ZROBIONE 2026-07-22
 
-- [ ] `docs/design-notes.md` — placeholder MH `1 234.5 h` → `1 234:30` (scenariusz hh:mm,
-      linia ~78) + dopisać założenia logowania (model PIN) i stany świeżości
-- [ ] Weryfikacja nawigacji: wszystkie pliki osiągalne z `index.html`, zero martwych
-      linków (poprzedni audyt nawigacji: Iteracja 6)
-- [ ] Retrofit panelu „Warianty tego ekranu" na pozostałą rodzinę: 05+05A–D
-      (02A–C i 04/04A/04B — zrobione)
-- [ ] Spójność czasów lotów między ekranami: log 04 (T/O 08:25 / 09:35 / 11:28)
-      vs tabela 11 (08:25 / 10:17 / 12:44 / 14:10 / 15:20) — ujednolicić oś czasu
-      dnia scenariusza (04 = stan na 12:28, 11 = koniec dnia; cykle muszą się zgadzać)
-- [ ] Commit po każdym większym bloku — zawsze PO weryfikacji użytkownika
+- [x] `docs/design-notes.md` — MH `1 234.5 h` → `1 234:30`; założenia logowania (PIN/
+      provisioning); kanoniczna oś czasu dnia 22 JUNE
+- [x] Weryfikacja nawigacji: zero martwych linków, wszystkie pliki w `index.html`
+- [x] Panel/tooltipy wariantów rodziny 05 (state-sidebar z opisem "kiedy który")
+- [x] Spójność osi czasu 04/09/10/11 wyrównana do design-notes; naprawiona regresja MH w 05
+- [x] Link „Podgląd" z karty zajętego samolotu (02, 02d) → 04B
+
+### Audyt niezależny — 2026-07-22 (zlecony agentowi)
+
+- [x] Werdykt: zero 🔴 (inwarianty architektury trzymają). Klaster 🟡 scenariusza poprawiony:
+      02a/02c poprzednik J. Kowalski + terminologia „przekazane"; 06/08 tankowanie +48;
+      04 duty 04:34; 09 estymata ~84; 02b/02c badge 2/3; 11 usunięte kolory Google
+- [ ] 🟢 pozostawione świadomie: 04a „06:00 UTC" vs 04 „08:00 LT" (obie poprawne, różna
+      konwencja); 03 bez SyncChip (tylko dane lokalne); separator tysięcy MH (spacja vs brak
+      w chipach logów); index „v0.1" vs docs v0.2
+
+### Follow-up (poza pierwszym przejściem)
+
+- [ ] Pełne wyrównanie scenariusza rodziny 05 do kanonicznej osi czasu: czasy (05 pokazuje
+      cykl 3 jako 13:10/T-O 13:24/zrzut, oś ma 13:55/14:10/15:20), żywy FOB burn rate,
+      narracja „LOT #3 · 3 T/O" vs 2 T/O cyklu 3. Osobny task — dotyka żywych wartości GPS
+      w 6 plikach; nie architektura, tylko realizm scenariusza
+- [ ] Retrofit panelu „Warianty" (canvas, nie sidebar) też na 06/07/08, jeśli uznamy za spójne
 
 ---
 
