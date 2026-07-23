@@ -348,4 +348,27 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > - Świadomie zostawione: 04b „Meldunek 07:10 LT" — inna sesja (KRZ), wewnętrznie spójna
 >   z czasem claim „od 07:10" w 02; zmiana na UTC rozjechałaby te dwie wartości
 
+**UTC jako domyślny czas w całej aplikacji** (decyzja użytkownika)
+> Problem: ta sama liczba była opisywana sprzecznie — 11 etykietował czasy lotów jako
+> `08:25 UTC`, a 09/10 te same wartości jako `08:00 LT → 16:45 LT`. Przy offsecie +2 h
+> jedna liczba nie może być i LT, i UTC.
+> Rozstrzygnięcie: **UTC domyślnie wszędzie** (log, T/O, LDG, tankowanie, duty, tabela
+> lotów, arkusz); LT tylko jako wartość drugorzędna przy meldunku.
+> Kluczowe: **liczby były już poprawne** (11 od początku etykietował je jako UTC) —
+> kłamały wyłącznie opisy, więc nic nie trzeba było przeliczać.
+> - Meldunek = **08:00 UTC · 10:00 LT** (02, 02d, 03, 04, 04a); 04b (KRZ) = 07:10 UTC ·
+>   09:10 LT — `07:10` zostaje spójne z tagiem claim „PIC: KRZ · od 07:10" na 02
+> - 07: nagłówek `10:34 LT` → `10:34 UTC`; 09: „Czas meldowania 08:00 UTC";
+>   10: duty range `08:00 → 16:45 UTC`
+> - Jawne markery, żeby czas nieoznaczony był czytelny: „Log dnia · UTC" (04/04a/04b),
+>   „Lista lotów · czasy UTC" (10)
+> - Reguła zapisana w design-notes (sekcja „Strefa czasowa") i w CLAUDE.md,
+>   żeby obowiązywała też w fazie implementacji
+
+**04b — konwencja meldunku (przy okazji)**
+> 04b pokazywał `Meldunek 07:10 LT`, gdy 04/04a miały UTC — rozjazd na bliźniaczych
+> ekranach. Zamiana na czyste UTC rozspójniłaby ekran z tagiem claim na 02, dlatego
+> zastosowano **display dualny** (UTC primary · LT secondary) w całej rodzinie kokpitu
+> oraz na 03, zgodnie z doktryną duty start z design-notes.
+
 <!-- Dodawaj kolejne iteracje poniżej -->

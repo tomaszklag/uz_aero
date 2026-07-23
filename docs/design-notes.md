@@ -55,6 +55,16 @@ Cockpit cycle (powtarzalny):
 
 ### Czas meldowania (duty start)
 - Wyświetlany jako **UTC primary** (duża czcionka mono), LT secondary (mała, po prawej)
+
+### Strefa czasowa — reguła nadrzędna
+
+**UTC jest domyślnym czasem w całej aplikacji.** Wszystkie czasy zdarzeń (log dnia,
+T/O, LDG, tankowanie, start/stop silnika, duty start i end, tabela lotów, arkusz
+w eksporcie) są w UTC — czas nieoznaczony = UTC.
+LT pojawia się **wyłącznie jako wartość drugorzędna** przy meldunku (duty start),
+bo pilot melduje się o lokalnej godzinie; format: `08:00 UTC · 10:00 LT`.
+Logi i tabele mają jawny marker („Log dnia · UTC", „Lista lotów · czasy UTC"),
+żeby nie było wątpliwości. Scenariusz mockupów: offset LT = UTC+2.
 - Domyślnie pobierany z systemu, edytowalny (ołówek)
 - Data wyświetlana jako badge poniżej (`22 JUNE 2026`)
 
@@ -78,7 +88,7 @@ Cockpit cycle (powtarzalny):
 Dane na ekranie 03 (potwierdzenie) muszą zgadzać się z danymi z kroków 1 i 2:
 - Samolot: SP-AXA (Cessna 182 · 2019)
 - Pilot: T. Małkiewicz
-- Meldunek: 06:00 UTC
+- Meldunek: 08:00 UTC (10:00 LT)
 - Paliwo: 150 L
 - Motogodziny: 1 234:30 MH (format hh:mm z konfiguracji SP-AXA)
 
@@ -200,7 +210,7 @@ Czcionki: `Bebas Neue` (display/timery) · `Archivo` (body) · `JetBrains Mono` 
   Lot 5: T/O 14:21, zrzut 14:42 → LDG 15:03 (0:42 · FOB ~105, wpis ręczny) ·
   Lot 6: T/O 15:17, zrzut 15:45 → LDG 16:10 (0:53 · FOB ~90) · stop ~**16:14**
   (blok 3:04 · MH 1 241:09 · 88 L)
-- **Dzień:** 6 lotów · block **6:39** · duty 08:00→16:45 LT (8:45) ·
+- **Dzień:** 6 lotów · block **6:39** · duty 08:00→16:45 UTC (8:45) ·
   paliwo 150 +48 −110 = **88 L** · MH 1 234:30 → **1 241:09** (przekazanie dla następnego) ·
   śr. zużycie ~17 L/h · St/Ld 6/6
 

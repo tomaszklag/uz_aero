@@ -46,6 +46,11 @@ Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-
 - Ekran mający warianty → **panel „Warianty tego ekranu" na canvasie pod telefonem**: linki do całej rodziny + opis KIEDY dany wariant się wyświetla; bieżący ekran z tagiem „ten ekran"; badge amber dla stanów offline/warning. Wzorzec: `00-login.html`, `02-preflight.html`
 - Po zmianach: zero martwych linków (sprawdzaj greppem po `href`)
 
+## Strefa czasowa
+**UTC jest domyślnym czasem wszędzie** — log dnia, T/O, LDG, tankowanie, duty start/end, tabela lotów, arkusz. Czas nieoznaczony = UTC.
+LT tylko jako wartość drugorzędna przy meldunku: `08:00 UTC · 10:00 LT` (scenariusz mockupów: LT = UTC+2).
+Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC").
+
 ## Screen flow (kolejność ekranów)
 ```
 00-login → 01-splash → 02-preflight → 03-preflight-confirm
