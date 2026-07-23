@@ -14,6 +14,7 @@
 
 Cockpit cycle (powtarzalny):
   04a / 04-cockpit-ground   (silnik OFF — start dnia / w trakcie dnia)
+  04b-cockpit-readonly      (podgląd cudzego samolotu — zajęty przez innego PIC)
     ↓ Start engine
   05a-cockpit-taxi          (silnik ON — kołowanie przed T/O)
     ↓ autodetect T/O
@@ -87,6 +88,8 @@ Dane na ekranie 03 (potwierdzenie) muszą zgadzać się z danymi z kroków 1 i 2
 
 ### Dwa warianty ekranu
 - `04a-cockpit-ground` — **start dnia**: log pusty, duty time świeży (00:0x), START ENGINE prominentny
+- `04b-cockpit-readonly` — **podgląd cudzego samolotu** (single-writer): banner „tylko odczyt",
+  log i stan z serwera, akcje disabled z podanym powodem, przycisk „Przejmij" → flow w 02
 - `04-cockpit-ground` — **w trakcie dnia**: log z historią cykli, akcje ground dostępne
 
 ### "Zakończ dzień" — dostępność

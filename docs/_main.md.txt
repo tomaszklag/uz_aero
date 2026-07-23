@@ -472,10 +472,19 @@ według źródła danych:
 Globalny stan łączności pokazuje wyłącznie SyncChip (`SYNC` / `OFFLINE · n`) —
 pojedynczy wskaźnik zamiast rozsianych komunikatów o braku sieci.
 
-Ekrany, które potrzebują wariantów stanu w mockupach: 00-login (PIN / pełny login /
-offline bez profilu), 02 (karta samolotu ze stale claim), 02a (przekazanie:
-live / cache / brak), modal przejęcia (online / offline), podgląd read-only
-(live / ostatni znany stan).
+Warianty stanu zrealizowane w mockupach (rodziny wariantów; każdy ekran rodziny ma
+na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
+
+- **logowanie:** `00-login` (odblokowanie PIN, offline) · `00a-login-full` (pełny login,
+  wymaga sieci) · `00b-login-offline` (twarda granica — brak profilu i brak sieci)
+- **preflight krok 1:** `02-preflight` (online, claim live) · `02d-preflight-offline`
+  (dane z cache z adnotacją wieku, modal przejęcia w wariancie offline)
+- **preflight krok 2:** `02a-preflight` — przełącznik stanów świeżości przekazania
+  (`live` / `cache` / `brak`) na canvasie; modale korekty `02b` / `02c`
+- **kokpit ground:** `04a` (start dnia) · `04` (w trakcie dnia) · `04b-cockpit-readonly`
+  (podgląd cudzego samolotu — single-writer, akcje disabled z powodem)
+- **kokpit w locie:** `05a` (taxi) · `05b` (toast T/O) · `05` (in flight) · `05c`
+  (toast LDG) · `05d` (taxi po LDG)
 
 **Motywy:** para ciemna — Night (domyślny), Amber/NVG; para jasna pod pełne słońce —
 Paper (ciepła biel), Solar (czysta biel), Sky (chłodny błękitno-szary).
@@ -523,7 +532,7 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 [11 Synchronizacja]  status wysyłki / eksportu serwera (nie akcja eksportu)
 ```
 
-Mockupy: `design/index.html` (21 ekranów, stany i warianty). Szczegółowe założenia
+Mockupy: `design/index.html` (25 ekranów + index, stany i warianty). Szczegółowe założenia
 per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`.
 
 ---
