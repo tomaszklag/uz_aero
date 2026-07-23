@@ -335,4 +335,17 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > - design-notes: oś czasu przepisana na 6-lotowy dzień skokowy z inwariantem paliwa
 > - Bilans domknięty: 150 +48 −110 = 88 L; MH Δ 6:39 = block; wszystkie cykle monotoniczne
 
+**Domknięcie drobnych 🟢 z audytu**
+> - **04**: „Meldunek 08:00 LT" → „06:00 UTC" — bliźniacze ekrany 04/04a używały różnej
+>   konwencji; standard z design-notes to UTC primary (duty start)
+> - **03**: dodany SyncChip — spójność steppera 02→02a→03; realna wartość: pilot widzi,
+>   czy potwierdzenie utworzy claim od razu na serwerze, czy trafi do outboxa
+> - **Separator tysięcy MH ujednolicony** (12 chipów w 8 plikach): „MH 1238:05" →
+>   „MH 1 238:05" — format zgodny z resztą UI („1 234:30" w preflightcie i statystykach)
+> - **index**: „Design System v0.1" → v0.2 (dokumentacja jest na 0.2)
+> - Panel „Warianty tego ekranu" na 06/07/08 — **nie dotyczy**: to pojedyncze ekrany akcji
+>   bez rodziny wariantów (panel służy do linkowania rodzeństwa, nie ma czego linkować)
+> - Świadomie zostawione: 04b „Meldunek 07:10 LT" — inna sesja (KRZ), wewnętrznie spójna
+>   z czasem claim „od 07:10" w 02; zmiana na UTC rozjechałaby te dwie wartości
+
 <!-- Dodawaj kolejne iteracje poniżej -->

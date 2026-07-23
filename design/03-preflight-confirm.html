@@ -75,7 +75,9 @@
   .back-btn { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-decoration: none; letter-spacing: 0.5px; min-width: 56px; }
   .back-btn:hover { color: var(--text-secondary); }
   .screen-title { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; color: var(--text-primary); }
-  .step-badge { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; min-width: 56px; text-align: right; }
+  .step-badge { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; text-align: right; }
+  .header-right { min-width: 56px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  .sync-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; background: var(--green-muted); border: 1px solid var(--green-border); font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green); }
 
   /* Scroll */
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
@@ -172,7 +174,13 @@
         Wróć
       </a>
       <div class="screen-title">POTWIERDŹ DANE</div>
-      <div class="step-badge">3 / 3</div>
+      <div class="header-right">
+        <div class="step-badge">3 / 3</div>
+        <div class="sync-chip" title="Online — potwierdzenie utworzy claim od razu na serwerze; offline claim trafiłby do outboxa">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          SYNC
+        </div>
+      </div>
     </div>
 
     <!-- Scroll Content -->

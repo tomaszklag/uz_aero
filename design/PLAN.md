@@ -131,9 +131,17 @@
 - [x] Wyrównanie rodziny 05 do osi — ZROBIONE (decyzja: dzień 6 lotów, realizm skoków).
       Naprawione paliwo rosnące w locie; cykl 3 = 3 loty; 09/10/11 przeliczone na 6 lotów;
       design-notes zaktualizowany. Cykle 1–2 (04) bez zmian
-- [ ] Retrofit panelu „Warianty" (canvas, nie sidebar) też na 06/07/08, jeśli uznamy za spójne
-- [ ] Drobne 🟢 z audytu: 04a „06:00 UTC" vs 04 „08:00 LT"; 03 bez SyncChip; separator
-      tysięcy MH (spacja vs brak w chipach logów); index „v0.1" → v0.2
+- [x] Panel „Warianty" na 06/07/08 — **nie dotyczy**: pojedyncze ekrany akcji bez rodziny
+      wariantów (nie ma rodzeństwa do zlinkowania)
+- [x] Drobne 🟢 z audytu — ZROBIONE: 04 meldunek → „06:00 UTC" (spójnie z 04a); SyncChip
+      na 03; separator MH ujednolicony w 12 chipach; index → v0.2.
+      Zostawione świadomie: 04b „07:10 LT" (inna sesja, spójna z claim w 02)
+
+---
+
+## Status: PLAN wykonany w całości (bloki 0–9 + follow-upy)
+
+Kolejne prace → nowa checklista albo bezpośrednio faza 1 (implementacja RN).
 
 ---
 
