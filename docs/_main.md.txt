@@ -55,6 +55,12 @@ ręcznie** — jego jedynym obowiązkiem jest rzetelny preflight i zamknięcie d
 | 2026-07-22 | Scalanie sesji po **łańcuchu liczników MH**, nie po timestampach; każde zdarzenie niesie dwa zegary (device + GPS) |
 | 2026-07-22 | Logowanie = jednorazowe provisioning (online); wejście do aplikacji = PIN offline; **wygasły token nie wylogowuje**; wylogowanie zablokowane przy niepustym outboxie |
 | 2026-07-22 | Tryb awaryjny (sesja bez zweryfikowanej tożsamości) **rozważony i odrzucony** — zweryfikowana tożsamość jest twardym warunkiem; jedyny wyjątek od zasady offline-first (pierwsze logowanie / zapomniany PIN / cudzy telefon) świadomie zaakceptowany i mitygowany proceduralnie |
+| 2026-07-23 | **Zrzuty rozliczane w aplikacji**: `drop` niesie liczbę skoczków w rozbiciu na typy (tandem/AFF/solo); statystyki i arkusz dostają sekcję rozliczeniową; pole „klient" z preflightu wiąże dzień z odbiorcą. Powód: bez tego aplikacja rejestruje wszystko, co kosztuje, i nic, co zarabia — papierowa lista wyniesień przetrwałaby wdrożenie |
+| 2026-07-23 | **Korekta po `day_close`: okno 24 h** — pilot poprawia samodzielnie, bez akceptacji administratora; po oknie tylko admin. Zawsze append-only |
+| 2026-07-23 | **Jeden samolot = jeden dzień** — przesiadka wymaga zamknięcia dnia i nowego preflightu. Świadomy trade-off: duty time nie odzwierciedla wtedy pełnej służby pilota (powstają dwie „służby"). Rozdzielenie duty od sesji samolotu **rozważone i odrzucone** jako nadmiarowe przy obecnej skali |
+| 2026-07-23 | **Usunięto „przerwę" w duty** — przełącznik bez konsekwencji; duty liczone brutto |
+| 2026-07-24 | **Utrata telefonu z niepustym outboxem — poza zakresem.** Ryzyko rozpoznane (dzień bez zasięgu istnieje w jednym egzemplarzu, do czasu synchronizacji), świadomie NIE adresowane w tej wersji. Nie proponować ponownie |
+| 2026-07-24 | **Panel administratora — nie teraz.** Zakładanie kont, resety haseł, rozwiązywanie flag i korekty po oknie 24 h zostają procesem ręcznym (SQL/seed). Do rozważenia po backendzie |
 | 2026-07-22 | **Rezygnacja z Google OAuth** (odwraca decyzję z 2026-06-22): konta pilotów zakłada administrator w bazie, logowanie = login + hasło → JWT. Powód: argument za OAuth (Sheets na telefonie) zniknął wraz z eksportem serwerowym; wąskie, zamknięte grono użytkowników; zero konfiguracji OAuth/SHA/Play Console |
 
 ---
@@ -191,9 +197,12 @@ Formularz dostępny między lotami:
 
 ### 3.6 Zakończenie dnia lotnego
 
-**Opcja "przerwa"** (nie kończy duty): zatrzymanie pracy bez zamykania dnia, wznowienie możliwe.
+> Opcja „przerwa" (pauzowanie duty) została **usunięta** — decyzja 2026-07-23. Duty liczy
+> się brutto od meldunku do zakończenia; przerwy pozostają poza aplikacją. Powód: przełącznik
+> istniał w UI bez żadnych konsekwencji (brak stanu, wznowienia i odjęcia od duty), a funkcja
+> pozorna jest gorsza od jej braku.
 
-**Opcja "zakończenie dnia":** stan końcowy paliwa i odczyt MH (stają się "przekazaniem"
+**Zakończenie dnia:** stan końcowy paliwa i odczyt MH (stają się "przekazaniem"
 dla następnego pilota), godzina zakończenia duty, generacja statystyk. Emituje `day_close`.
 Eksport arkusza uruchamia **serwer** po dotarciu danych — zakończenie dnia bez zasięgu
 jest w pełni poprawne, raport powstanie po odzyskaniu sieci.
@@ -203,7 +212,12 @@ jest w pełni poprawne, raport powstanie po odzyskaniu sieci.
 - czas blokowy per pilot (PIC / Dual), czasy lotów per lot, duty time
 - liczba startów i lądowań, zrzuty przy skokach
 - paliwo: startowe / dolane / końcowe / zużyte / średnie L/h; MH: początek / koniec / delta
-- lista wszystkich lotów dnia; dane edytowalne **przed** `day_close`, po zamknięciu read-only
+- **zrzuty**: liczba wyniesień, łączna liczba skoczków w rozbiciu na typy, średnia wysokość
+  zrzutu, klient — to strona przychodowa dnia (operacja Skoki)
+- lista wszystkich lotów dnia; dane edytowalne przed `day_close` oraz **przez 24 h po nim**
+  (decyzja 2026-07-23): pilot nanosi korektę samodzielnie, bez akceptacji administratora.
+  Po upływie okna korektę wprowadza administrator. Korekta zawsze jest zdarzeniem
+  append-only — nie kasuje oryginalnego odczytu
 
 ### 3.8 Ręczna lista wzlotów (fallback GPS)
 
@@ -384,7 +398,7 @@ Typy zdarzeń:
 | `preflight_confirm` | trasa, operacja, duty start, odczyt FOB + MH, korekty z powodem |
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
-| `drop` | numer zrzutu (operacja Skoki) |
+| `drop` | numer zrzutu, wysokość (z GPS), **liczba skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm` |
 | `refuel` | przed / dolano / po, wyliczone zużycie |
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |

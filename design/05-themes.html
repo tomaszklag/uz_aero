@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -125,7 +125,7 @@
     background: var(--surface); padding: 12px 14px;
     display: flex; flex-direction: column; gap: 4px;
   }
-  .param-label { font-family: var(--font-mono); font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); }
+  .param-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); }
   .param-value { font-family: var(--font-mono); font-size: 28px; font-weight: 400; letter-spacing: 2px; line-height: 1; color: var(--text-primary); }
   .param-unit { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; color: var(--text-secondary); }
   .param-value.amber { color: var(--amber); }
@@ -244,6 +244,17 @@
   }
   .zrzut-btn-lbl { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; }
 
+  /* STOP ENGINE — wymaganie 3.2; aktywny tylko na ziemi, w locie disabled z powodem */
+  .stop-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    padding: 12px 14px;
+    background: var(--red-muted); border: 1px solid var(--red-border);
+    border-radius: 14px; color: var(--red); text-decoration: none; cursor: pointer;
+    font-family: var(--font-display); font-size: 16px; letter-spacing: 1.5px; white-space: nowrap;
+  }
+  .stop-btn-lbl { font-family: var(--font-mono); font-size: 7px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; }
+  .stop-btn.disabled { opacity: 0.32; filter: saturate(0.4); pointer-events: none; }
+
   /* GPS NO SIGNAL */
   .no-gps {
     position: absolute; top: 4px; right: 14px;
@@ -303,7 +314,7 @@
     --bg: #F4EEE1; --bg-tint: #FAF5EA;
     --surface: #FBF7ED; --surface-raised: #EFE8D6;
     --border: #D9CEB6; --border-strong: #B3A583;
-    --text-primary: #241C10; --text-secondary: #5C5140; --text-muted: #93866C;
+    --text-primary: #241C10; --text-secondary: #544A3A; --text-muted: #6E6250;
     --green: #1E7A40; --amber: #9E5C00; --red: #A62A18; --blue: #205C90;
     --green-muted: rgba(30,122,64,0.12); --green-border: rgba(30,122,64,0.38);
     --amber-muted: rgba(158,92,0,0.12); --amber-border: rgba(158,92,0,0.38);
@@ -328,7 +339,7 @@
     --bg: #E9EFF5; --bg-tint: #F2F6FA;
     --surface: #F7FAFD; --surface-raised: #E1E9F1;
     --border: #B7C5D3; --border-strong: #7E93A8;
-    --text-primary: #0F1E2C; --text-secondary: #38495A; --text-muted: #74849A;
+    --text-primary: #0F1E2C; --text-secondary: #334454; --text-muted: #556579;
     --green: #14784A; --amber: #A05E00; --red: #A82418; --blue: #16528E;
     --green-muted: rgba(20,120,74,0.12); --green-border: rgba(20,120,74,0.40);
     --amber-muted: rgba(160,94,0,0.12); --amber-border: rgba(160,94,0,0.40);
@@ -377,7 +388,7 @@
     --bg: #070400; --bg-tint: #0F0800;
     --surface: #100600; --surface-raised: #190D00;
     --border: #2A1600; --border-strong: #3C2000;
-    --text-primary: #FFB020; --text-secondary: #A06010; --text-muted: #4C2C08;
+    --text-primary: #FFB020; --text-secondary: #D09030; --text-muted: #A87020;
     --amber: #FF7800; --blue: #60A0F0;
     --amber-muted: rgba(255,120,0,0.12); --amber-border: rgba(255,120,0,0.32);
     --blue-muted: rgba(96,160,240,0.10); --hairline: rgba(255,176,32,0.04);
@@ -520,7 +531,7 @@
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">13:48</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">2 450 FT</span></div>
+        <div class="log-body"><div class="log-t" style="color:var(--blue)">13:48</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 2 450 ft</span></div>
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-dot-sm"></div></div>
@@ -537,7 +548,7 @@
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">14:42</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">1 800 FT</span></div>
+        <div class="log-body"><div class="log-t" style="color:var(--blue)">14:42</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">3 skoczków · 1 800 ft</span></div>
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-dot-sm"></div></div>
@@ -554,7 +565,7 @@
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">15:45</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">3 200 FT</span></div>
+        <div class="log-body"><div class="log-t" style="color:var(--blue)">15:45</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 3 200 ft</span></div>
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon live"></div></div>
@@ -564,14 +575,19 @@
 
     <!-- BOTTOM ACTIONS -->
     <div class="action-row">
-      <div class="primary-btn">
+      <a href="05f-zdarzenie-reczne.html" class="primary-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
         LAND
-      </div>
+      </a>
       <div class="zrzut-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
       </div>
+      <span class="stop-btn disabled" title="Silnik zatrzymasz po wylądowaniu i zakończeniu dobiegu">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+        STOP
+        <span class="stop-btn-lbl">po LDG</span>
+      </span>
     </div>
 
   </div><!-- end screen -->

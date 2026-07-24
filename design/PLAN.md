@@ -139,9 +139,71 @@
 
 ---
 
-## Status: PLAN wykonany w całości (bloki 0–9 + follow-upy)
+## Audyt trzech specjalistów (2026-07-23) — blokery i backlog
 
-Kolejne prace → nowa checklista albo bezpośrednio faza 1 (implementacja RN).
+### ✅ Blokery — ZROBIONE
+
+- [x] **STOP ENGINE** w 6 ekranach rodziny 05 (aktywny na ziemi 05a/05d → 04,
+      disabled z powodem w locie 05/05b/05c). Wymaganie 3.2 spełnione
+- [x] **04c-korekta-zdarzenia** (nowy) — edycja czasu + „tego lądowania nie było",
+      append-only (nie kasuje historii); 14 martwych ikonek w 04 ożywionych
+- [x] **07-zmiana-załogi** — rozdzielone: A) Dual lokalny (karty pilotów, offline OK)
+      B) przekazanie samolotu bez pola „nowy PIC" → 04b jako stan terminalny
+- [x] Poprawki danych: FOB w siatce GPS 05a/05b/05d; „Zużyte 116" → 110 w 10
+
+### ✅ Domknięcie offline-first — ZROBIONE 2026-07-23
+
+- [x] `11a-sync-offline` (nowy) — licznik 35/47, sync disabled z powodem, flagi „nieznane"
+      zamiast kłamliwego „brak ✓", arkusz „jeszcze nie powstał", kolejka z ostrzeżeniem
+- [x] `04b-cockpit-readonly` — przełącznik stanów live/cache; offline „Przejmij" → 02d
+- [x] SyncChip na `05a`–`05d` z rosnącym licznikiem outboxa; ujednolicony wzorzec `Offline · n`
+- [x] Ochrona wylogowania przy niepustym outboxie (00-login)
+- [x] `02a` — świeżość odspawana od łączności (stan `brak` ≠ offline)
+
+**Wynik: offline-first obowiązuje na wszystkich widokach.** Jedyny wyjątek to pierwsze
+logowanie / zapomniany PIN (00a/00b) — świadomie zaakceptowana twarda granica z 3.0,
+obsłużona disabled-z-powodem i instrukcją proceduralną.
+
+### Degradacja sensorów (osobny temat, nie sieć)
+
+- [ ] Stan „GPS: brak sygnału" — klasa `.no-gps` zdefiniowana w 05 i 05-themes, nigdy
+      nieużyta. To degradacja **czujnika**, nie łączności, więc nie wchodzi w domknięcie
+      offline; wymaga własnego wariantu 05 + wejścia do listy ręcznej (08) z kokpitu.
+      Dokumentacja klasyfikuje fałszywe/brakujące detekcje GPS jako ryzyko 🔴 (sekcja 8),
+      a UI nie ma dziś żadnej sygnalizacji utraty fixa
+
+### ✅ Decyzje biznesowe — ROZSTRZYGNIĘTE 2026-07-23
+
+- [x] **Rozliczanie zrzutów → pełne**: `05e-zrzut` (trzy steppery pod rękawice), chipy
+      w logu z liczbą skoczków, karta rozliczeniowa w 10, wiersz w 11/11a, klient wypełniony
+- [x] **Korekta po `day_close` → okno 24 h** bez akceptacji admina: pasek w 10, poprawione
+      ostrzeżenie w 09, ołówki prowadzą do 04c
+- [x] **Dwa samoloty w dniu → jeden samolot = jeden dzień** (świadomy trade-off, w logu decyzji)
+- [x] **„Przerwa" w duty → usunięta** (przełącznik bez konsekwencji + martwy CSS)
+- [ ] **Panel administratora** — zakłada konta, resetuje hasła, rozwiązuje flagi, nanosi
+      korekty po oknie 24 h. Niezaprojektowana połowa systemu; do rozstrzygnięcia, czy
+      wchodzi w fazę 0 (mockupy), czy dopiero po backendzie
+
+### ✅ Naprawy po studium przypadku i analizie użyteczności — ZROBIONE 2026-07-24
+
+- [x] **Regresja 07** — przekazanie idzie przez `09` (odczyty końcowe), nie prosto do `04b`
+- [x] **05f-zdarzenie-reczne** (nowy) + ożywione T/O i LAND w 6 plikach rodziny 05
+- [x] **Toast odwrócony** — duży „COFNIJ" + licznik zamiast zbędnego „Potwierdź"
+- [x] **Cele korekty ≥ 44 px** (log-edit, edit-btn, koryguj-btn) i pełny kontrast
+- [x] **Kontrast**: `--text-muted` #444444 → #7A7A7A (29 plików) + korekta w 4 motywach;
+      `.param-label` 8 → 10 px
+- [x] **12-historia** (nowy) + wejście z `01-splash` — okno korekty 24 h ma wreszcie drzwi
+
+### Backlog UX z audytu (niższy priorytet)
+
+- [ ] Formularz dodawania wpisu w `08` (przyciski „Dodaj wpis" martwe) + kolumna „Uwagi" (3.8)
+- [ ] Semantyka toasta odwrócona: doc mówi „brak reakcji = zapis, jedyna akcja Cofnij",
+      mockup ma duży zielony „Potwierdź" i mikroskopijne „Odrzuć" (23 px)
+- [ ] Ekran ustawień (motywy, PIN, wylogowanie, diagnostyka GPS) — 8 martwych zębatek
+- [ ] Wznowienie sesji po ubiciu aplikacji; wariant `01-splash` „wróć do dnia"
+- [ ] Stan zerowy w 09/10 (dzień bez lotów); historia / poprzednie dni
+- [ ] Zgłoszenie usterki technicznej (`defect_report`)
+- [ ] Trasa per lot zamiast per dzień (dzień skokowy to 6× EPKK → EPKK)
 
 ---
 

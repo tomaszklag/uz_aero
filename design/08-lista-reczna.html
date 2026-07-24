@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -61,6 +61,8 @@
     padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
   }
   .app-header-left { display:flex; align-items:center; gap:8px; }
+  .app-header-right { display:flex; align-items:center; gap:8px; }
+  .sync-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
   .back-btn {
     display:inline-flex; align-items:center; gap:5px;
     font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
@@ -289,10 +291,16 @@
         </a>
         <span class="screen-title">LISTA RĘCZNA</span>
       </div>
-      <button class="btn-add">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="1" x2="5" y2="9"/><line x1="1" y1="5" x2="9" y2="5"/></svg>
-        Dodaj wpis
-      </button>
+      <div class="app-header-right">
+        <div class="sync-chip" title="Wpisy ręczne to zdarzenia lokalne — fallback GPS działa w pełni offline">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          SYNC
+        </div>
+        <button class="btn-add">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="1" x2="5" y2="9"/><line x1="1" y1="5" x2="9" y2="5"/></svg>
+          Dodaj wpis
+        </button>
+      </div>
     </div>
 
     <!-- Sub header -->

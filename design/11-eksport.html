@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -228,6 +228,19 @@
     flex-shrink:0;
   }
   .offline-queue-text { font-family:var(--font-mono); font-size:10px; color:var(--amber); letter-spacing:0.5px; }
+
+  /* ===== VARIANTS PANEL (canvas) ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -326,6 +339,7 @@
         <div class="preview-foot">
           <div class="preview-foot-main">22 JUNE 2026 · SP-AXA · 6 lotów</div>
           <div class="preview-foot-fuel">Paliwo: 150 → 88 L · dolane +48 L · zużyte 110 L</div>
+          <div class="preview-foot-fuel" style="color:var(--blue); margin-top:2px;">Zrzuty: 6 wyniesień · 22 skoczków (12 tandem / 6 AFF / 4 solo) · klient SKY CAMP 2026/114</div>
         </div>
       </div>
 
@@ -383,12 +397,32 @@
   </div>
 </main>
 
+<aside class="variants-panel">
+  <div class="vp-title">Warianty ekranu synchronizacji — kiedy który?</div>
+  <a class="vp-item active" href="11-eksport.html">
+    <span class="vp-badge">11</span>
+    <span class="vp-body">
+      <span class="vp-name">Online — wszystko wysłane</span>
+      <span class="vp-when">Jest sieć, outbox pusty: 47/47 zdarzeń, serwer zaktualizował arkusz, flagi sprawdzone i puste, link do arkusza.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="11a-sync-offline.html">
+    <span class="vp-badge amber">11A</span>
+    <span class="vp-body">
+      <span class="vp-name">Offline — outbox niepusty</span>
+      <span class="vp-when">Brak sieci: licznik częściowy 35/47, ręczny sync disabled z powodem, arkusz jeszcze nie powstał, a flagi w stanie <b>nieznane</b> — serwer danych nie widział, więc nie mógł ich sprawdzić.</span>
+    </span>
+  </a>
+</aside>
+
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
   <a href="10-statystyki.html">← 10 Statystyki</a>
   <span>·</span>
   <a href="11-eksport.html" class="active">11 Synchronizacja</a>
+  <a href="11a-sync-offline.html">11A Offline</a>
 </nav>
 
 </body>

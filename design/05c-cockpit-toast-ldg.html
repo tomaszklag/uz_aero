@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
@@ -51,6 +51,7 @@
   .compact-sep { color:var(--border-strong); }
   .running-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
   .running-badge .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
+  .offline-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--amber-muted); border:1px solid var(--amber-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); }
 
   .phase-hero { display:flex; flex-direction:column; padding:10px 16px 12px; background:var(--bg); flex-shrink:0; position:relative; gap:8px; }
   .phase-hero::after { content:''; position:absolute; bottom:0; left:16px; right:16px; height:1px; background:linear-gradient(90deg, transparent, rgba(46,204,113,0.2), transparent); }
@@ -64,7 +65,7 @@
   .param-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); margin:0; flex-shrink:0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
   .param-cell { background:var(--surface); padding:12px 14px; display:flex; flex-direction:column; gap:4px; }
   .param-cell.amber-bg { background:rgba(243,156,18,0.04); }
-  .param-label { font-family:var(--font-mono); font-size:8px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); }
+  .param-label { font-family:var(--font-mono); font-size: 10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); }
   .param-value { font-family:var(--font-mono); font-size:28px; font-weight:400; letter-spacing:2px; line-height:1; color:var(--text-primary); }
   .param-value.amber { color:var(--amber); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
@@ -101,7 +102,11 @@
   .flight-sep-label { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); white-space:nowrap; }
 
   /* AUTODETECT TOAST */
-  .action-row { padding:12px 14px; background:var(--bg); flex-shrink:0; }
+  .action-row { display:grid; grid-template-columns:1fr auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
+  /* STOP ENGINE — wymaganie 3.2; podczas dobiegu jeszcze disabled, aktywny po zatrzymaniu (05d) */
+  .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 16px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
+  .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
+  .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
 
   /* Bottom sheet — autodetect event */
   .detect-sheet {
@@ -115,8 +120,21 @@
     overflow: hidden;
   }
   .detect-bar {
-    height: 3px; background: var(--green); width: 60%; opacity: 0.55;
+    height: 6px; background: var(--green); width: 60%;
   }
+  /* Doktryna 3.2: brak reakcji = zapis. Jedyną akcją jest COFNIJ — więc ona ma być duża. */
+  .detect-count { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--green); min-width: 34px; text-align: center; }
+  .detect-undo {
+    margin: 14px 18px 8px; min-height: 58px; padding: 16px 20px;
+    background: var(--amber-muted); border: 1px solid var(--amber-border);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-family: var(--font-display); font-size: 21px; letter-spacing: 2px;
+    color: var(--amber); cursor: pointer; text-decoration: none;
+  }
+  .detect-undo:active { background: rgba(243,156,18,0.22); }
+  .detect-auto { font-family: var(--font-body); font-size: 12px; color: var(--text-secondary); text-align: center; padding: 0 18px 4px; line-height: 1.5; }
+  .detect-auto b { color: var(--green); font-weight: 600; }
   .detect-handle {
     width: 36px; height: 4px; border-radius: 2px;
     background: var(--border-strong); margin: 12px auto 16px;
@@ -211,6 +229,10 @@
         <span>EPKK → EPWA</span>
       </div>
       <div class="compact-right">
+        <div class="offline-badge" title="Brak sieci — zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          Offline · 13
+        </div>
         <div class="running-badge">
           <span class="live-dot"></span>
           RUNNING
@@ -275,7 +297,7 @@
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">13:48</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">2 450 FT</span></div>
+        <div class="log-body"><div class="log-t" style="color:var(--blue)">13:48</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 2 450 ft</span></div>
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-dot-sm"></div></div>
@@ -292,7 +314,7 @@
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">14:42</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">1 800 FT</span></div>
+        <div class="log-body"><div class="log-t" style="color:var(--blue)">14:42</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">3 skoczków · 1 800 ft</span></div>
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-dot-sm"></div></div>
@@ -309,7 +331,7 @@
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">15:45</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">3 200 FT</span></div>
+        <div class="log-body"><div class="log-t" style="color:var(--blue)">15:45</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 3 200 ft</span></div>
       </div>
       <div class="log-row" style="background:rgba(46,204,113,0.04);">
         <div class="log-tl"><div class="log-dot-pending"></div></div>
@@ -324,10 +346,15 @@
     </div>
 
     <div class="action-row">
-      <div class="primary-btn">
+      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie — GPS nie wykrył zdarzenia albo wykrył za późno">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
         Take-off
-      </div>
+      </a>
+      <span class="stop-btn disabled" title="Trwa dobieg — silnik zatrzymasz po zatrzymaniu samolotu (ekran Taxi po LDG)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+        STOP
+        <span class="stop-btn-lbl">po dobiegu</span>
+      </span>
     </div>
 
     <!-- BOTTOM SHEET — autodetect Landing -->
@@ -342,13 +369,13 @@
           <div class="detect-label">Wykryto: Landing</div>
           <div class="detect-meta">16:10 UTC · GS ≤ 30 KT · alt stała</div>
         </div>
+        <div class="detect-count">5</div>
       </div>
-      <a href="05d-cockpit-taxi-post.html" class="detect-confirm">
-        <div class="detect-confirm-fill"></div>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        <span>Potwierdź</span>
+      <a href="05-cockpit-running.html" class="detect-undo">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+        <span>COFNIJ — TO PRZELOT</span>
       </a>
-      <div class="detect-dismiss">Odrzuć — to nie było lądowanie</div>
+      <div class="detect-auto">Nic nie rób, a zapiszemy automatycznie za <b>5 s</b>. Cofnij, jeśli to był przelot nad lotniskiem, nie lądowanie.</div>
     </div>
   </div>
 </main>
@@ -359,6 +386,7 @@
   <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
   <a href="05c-cockpit-toast-ldg.html" class="active" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
   <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — zapis liczby skoczków (rozliczenie)"><span class="dot"></span>Zrzut</a>
 </nav>
 </div>
 

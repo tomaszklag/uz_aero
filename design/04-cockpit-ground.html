@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
@@ -230,12 +230,14 @@
     font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
     letter-spacing: 0.3px; white-space: nowrap;
   }
+  /* Cel korekty — min. 44 px i pełny kontrast: naprawa błędu nie może być trudniejsza
+     niż jego popełnienie (GPS consumer-grade gwarantuje fałszywe detekcje). */
   .log-edit {
-    width: 28px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-    color: var(--text-muted); opacity: 0.4; border-left: 1px solid var(--border);
-    align-self: stretch; cursor: pointer;
+    width: 46px; min-height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary); border-left: 1px solid var(--border);
+    align-self: stretch; cursor: pointer; text-decoration: none;
   }
-  .log-edit:hover { opacity: 1; color: var(--text-secondary); background: var(--surface-raised); }
+  .log-edit:hover { color: var(--amber); background: var(--surface-raised); }
   .log-chip { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
   .log-chip-mh { color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); }
   .log-chip-fuel { color: var(--amber); background: var(--amber-muted); border: 1px solid var(--amber-border); }
@@ -390,7 +392,7 @@
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
           <div class="log-cycle-body"><div class="log-time green">08:12</div><div class="log-evt-label green">Start engine</div><span class="log-chip log-chip-mh">MH 1 234:30</span><span class="log-chip log-chip-fuel">150 L</span></div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
@@ -398,7 +400,7 @@
             <div class="log-time neutral">08:25</div>
             <div class="log-evt-label neutral">Takeoff</div>
           </div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg></div></div>
@@ -407,7 +409,7 @@
             <div class="log-evt-label neutral">Landing</div>
             <div class="log-meta">0:53</div>
           </div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
@@ -415,7 +417,7 @@
             <div class="log-time neutral">09:35</div>
             <div class="log-evt-label neutral">Takeoff</div>
           </div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg></div></div>
@@ -424,12 +426,12 @@
             <div class="log-evt-label neutral">Landing</div>
             <div class="log-meta">0:47</div>
           </div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon stop"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div></div>
           <div class="log-cycle-body"><div class="log-time red">10:34</div><div class="log-evt-label red">Stop engine</div><div class="log-meta">blok 2:22</div><span class="log-chip log-chip-mh">MH 1 236:52</span><span class="log-chip log-chip-fuel">112 L</span></div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
 
         <!-- Tankowanie -->
@@ -437,14 +439,14 @@
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h3m0 0V3h6v3m0 0h3a2 2 0 0 1 2 2v14M9 6h6"/></svg>
           <div class="log-ground-label">Tankowanie</div>
           <div class="log-ground-meta">+48 L · 10:48</div>
-          <div class="log-edit" style="border:none;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" style="border:none;" title="Korekta tankowania — zmień ilość albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
 
         <!-- Cykl 2 -->
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
           <div class="log-cycle-body"><div class="log-time green">11:15</div><div class="log-evt-label green">Start engine</div><span class="log-chip log-chip-mh">MH 1 236:52</span><span class="log-chip log-chip-fuel">160 L</span></div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
@@ -452,7 +454,7 @@
             <div class="log-time neutral">11:28</div>
             <div class="log-evt-label neutral">Takeoff</div>
           </div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg></div></div>
@@ -461,12 +463,12 @@
             <div class="log-evt-label neutral">Landing</div>
             <div class="log-meta">0:47</div>
           </div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon stop"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div></div>
           <div class="log-cycle-body"><div class="log-time red">12:28</div><div class="log-evt-label red">Stop engine</div><div class="log-meta">blok 1:13</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
-          <div class="log-edit"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <a href="04c-korekta-zdarzenia.html" class="log-edit" title="Korekta zdarzenia — zmień czas albo oznacz jako błędne"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></a>
         </div>
       </div>
 
@@ -538,6 +540,13 @@
       <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log dnia z serwera, zero możliwości zapisu, akcja „Przejmij".</span>
     </span>
   </a>
+  <a class="vp-item" href="04c-korekta-zdarzenia.html">
+    <span class="vp-badge blue">04C</span>
+    <span class="vp-body">
+      <span class="vp-name">Korekta zdarzenia</span>
+      <span class="vp-when">Autodetekcja pomyliła się — zapisała zdarzenie, którego nie było, albo o złym czasie. Otwierane z wiersza logu; append-only, działa offline.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -547,6 +556,7 @@
   <a href="04a-cockpit-ground.html">04A Ground (start)</a>
   <a href="04-cockpit-ground.html" class="active">04 Ground (mid-day)</a>
   <a href="04b-cockpit-readonly.html">04B Podgląd</a>
+  <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
   <a href="05-cockpit-running.html">05 Running →</a>
   <span>·</span>
   <a href="06-tankowanie.html">06 Paliwo</a>

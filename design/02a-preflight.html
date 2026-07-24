@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
@@ -109,7 +109,7 @@
 
   .btn-primary { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:18px; border-radius:16px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:22px; letter-spacing:3px; border:none; text-decoration:none; cursor:pointer; box-shadow:0 0 24px rgba(46,204,113,0.3); }
 
-  .koryguj-btn { display:flex; align-items:center; gap:5px; background:none; border:1px solid var(--border); border-radius:7px; padding:4px 9px; color:var(--text-muted); font-family:var(--font-mono); font-size:9px; letter-spacing:1px; cursor:pointer; text-transform:uppercase; }
+  .koryguj-btn { display:flex; align-items:center; gap:6px; background:none; border:1px solid var(--border-strong); border-radius:10px; padding:0 14px; min-height:44px; color:var(--text-secondary); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; text-transform:uppercase; }
 
   /* MODAL */
   .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.7); display:flex; flex-direction:column; justify-content:flex-end; }
@@ -134,7 +134,9 @@
   /* ===== STANY ŚWIEŻOŚCI live/cache/brak (przełącznik na canvasie steruje data-state) ===== */
   .phone[data-state="live"] .only-cache, .phone[data-state="live"] .only-none, .phone[data-state="live"] .only-offline { display:none !important; }
   .phone[data-state="cache"] .only-none, .phone[data-state="cache"] .only-live { display:none !important; }
-  .phone[data-state="none"] .only-cache, .phone[data-state="none"] .only-live { display:none !important; }
+  /* Świeżość danych i łączność to DWIE ORTOGONALNE OSIE — stan `brak` zdarza się także
+     online (nowy samolot, pierwszy dzień po wpisaniu do floty), więc nie pokazujemy tu OFFLINE. */
+  .phone[data-state="none"] .only-cache, .phone[data-state="none"] .only-offline { display:none !important; }
   .phone[data-state="none"] .hide-none { display:none !important; }
   .fresh-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); margin-top:5px; display:flex; align-items:center; gap:6px; }
   .fresh-note::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--amber); flex-shrink:0; }
@@ -234,7 +236,7 @@
               <span class="value-none only-none">— —</span>
               <span class="value-unit">L</span>
             </div>
-            <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji — stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Z cache · sync 21 JUN 17:30</div>
+            <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji — stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 JUN 17:30</div>
             <div class="fresh-note only-none">Brak danych — wpisz z licznika</div>
             <div class="hide-none" style="margin-top:6px; width:130px; height:6px; border-radius:3px; background:var(--surface-raised); border:1px solid var(--amber-border); position:relative; overflow:hidden;"><div style="position:absolute; inset:0; width:45%; background:var(--amber); border-radius:3px;"></div></div>
             <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">45% pojemności · 330 L z konfiguracji SP-AXA</div>
@@ -278,7 +280,7 @@
               <span class="value-none only-none">— —:—</span>
               <span class="value-unit">MH</span>
             </div>
-            <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji — stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Z cache · sync 21 JUN 17:30</div>
+            <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji — stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 JUN 17:30</div>
             <div class="fresh-note only-none">Brak danych — wpisz z licznika</div>
             <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">format: hh:mm · z konfiguracji SP-AXA</div>
           </div>
@@ -438,7 +440,7 @@
   const ssDesc = {
     live: 'Jest sieć — przekazanie na żywo z serwera (ostatnie zsynchronizowane zdarzenia).',
     cache: 'Brak sieci — wartości z ostatniej synchronizacji (21 JUN 17:30); licznik fizyczny pozostaje prawdą.',
-    none: 'Brak przekazania (pusty cache / nowy samolot / przejęcie offline) — odczyty z liczników rozpoczynają nowe ogniwo łańcucha.'
+    none: 'Brak przekazania — nowy samolot we flocie albo przejęcie bez danych. Zdarza się też przy działającej sieci (dlatego chip pokazuje SYNC): świeżość danych i łączność to dwie różne osie. Odczyty z liczników rozpoczynają nowe ogniwo łańcucha.'
   };
   function setState(s) {
     phoneEl.dataset.state = s;

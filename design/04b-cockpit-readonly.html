@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
@@ -165,6 +165,24 @@
     color: var(--text-muted); text-align: center; line-height: 1.6; margin-top: -6px;
   }
 
+  /* ===== STANY ŚWIEŻOŚCI danych z serwera (przełącznik na canvasie) ===== */
+  .phone[data-state="live"]  .only-cache { display:none !important; }
+  .phone[data-state="cache"] .only-live  { display:none !important; }
+  .phone[data-state="cache"] .ro-banner { background:var(--amber-muted); border-color:var(--amber-border); }
+  .phone[data-state="cache"] .ro-icon { color:var(--amber); }
+  .phone[data-state="cache"] .ro-title { color:var(--amber); }
+  .phone[data-state="cache"] .ro-meta .dot { background:var(--amber); }
+  .phone[data-state="cache"] .aircraft-code { color:var(--amber); }
+  .stale-warn { font-size:11px; color:var(--amber); line-height:1.5; margin-top:2px; }
+
+  .state-switch { width:100%; max-width:460px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .ss-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-right:2px; }
+  .ss-btn { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; padding:6px 14px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--text-secondary); cursor:pointer; transition:all .15s; }
+  .ss-btn:hover { border-color:var(--border-strong); }
+  .ss-btn.active { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .ss-btn[data-state="cache"].active { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
+  .ss-desc { width:100%; font-family:var(--font-mono); font-size:9px; color:var(--text-muted); letter-spacing:0.5px; padding-left:2px; }
+
   /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
@@ -194,7 +212,14 @@
   <span class="canvas-meta"><span class="pulse"></span>Wariant 04</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Podgląd samolotu (read-only)">
+<div class="state-switch">
+  <span class="ss-label">Stan danych</span>
+  <button class="ss-btn active" data-state="live" onclick="setState('live')">Live</button>
+  <button class="ss-btn" data-state="cache" onclick="setState('cache')">Cache</button>
+  <span class="ss-desc" id="ss-desc">Jest sieć — stan samolotu pobrany na żywo z serwera.</span>
+</div>
+
+<main class="phone" id="phone" data-state="live" role="region" aria-label="Mockup — Podgląd samolotu (read-only)">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -219,9 +244,13 @@
         </div>
       </div>
       <div class="app-bar-right">
-        <div class="sync-chip" title="Online — podgląd na żywo z serwera">
+        <div class="sync-chip only-live" title="Online — podgląd na żywo z serwera">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           SYNC
+        </div>
+        <div class="sync-chip only-cache" style="background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber);" title="Brak sieci — pokazujemy ostatni znany stan z cache">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          OFFLINE
         </div>
       </div>
     </div>
@@ -234,8 +263,10 @@
         <svg class="ro-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         <div class="ro-body">
           <div class="ro-title">PODGLĄD — TYLKO ODCZYT</div>
-          <div class="ro-text">Samolot prowadzi <strong>KRZ · claim od 07:10</strong>. Dane sesji wysyła wyłącznie jego telefon (single-writer) — Ty widzisz stan z serwera.</div>
-          <div class="ro-meta"><span class="dot"></span>Dane z serwera · sync 09:41 · ostatnia aktywność KRZ 09:38</div>
+          <div class="ro-text">Samolot prowadzi <strong>KRZ · od 07:10</strong>. Dane zapisuje wyłącznie jego telefon — Ty widzisz stan pobrany z serwera.</div>
+          <div class="stale-warn only-cache">Brak łączności — to <strong>ostatni znany stan</strong>. KRZ mógł już wylądować, zatankować albo zamknąć dzień.</div>
+          <div class="ro-meta only-live"><span class="dot"></span>Dane z serwera · pobrano 09:41 · ostatnia aktywność KRZ 09:38</div>
+          <div class="ro-meta only-cache"><span class="dot"></span>Ostatnie pobrane dane · 21 JUN 17:30 · stan sprzed ponad doby</div>
         </div>
       </div>
 
@@ -291,11 +322,16 @@
       </div>
 
       <!-- PRZEJMIJ -->
-      <a href="02-preflight.html" class="takeover-btn">
+      <a href="02-preflight.html" class="takeover-btn only-live">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint">Przejęcie = Twój claim w preflightcie · ostrzeżenie, jeśli KRZ ma niewysłane dane</div>
+      <div class="takeover-hint only-live">Przejmiesz samolot w preflightcie · ostrzeżemy, jeśli KRZ ma jeszcze niewysłane dane</div>
+      <a href="02d-preflight-offline.html" class="takeover-btn only-cache">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+        PRZEJMIJ SAMOLOT
+      </a>
+      <div class="takeover-hint only-cache">Przejęcie działa też bez sieci — zapisze się na telefonie i wyśle po powrocie zasięgu, a odczyty wpiszesz z liczników. Jeśli KRZ nadal lata, oznaczymy to do wyjaśnienia.</div>
 
       <!-- ACTIONS (disabled) -->
       <div class="action-grid">
@@ -336,7 +372,7 @@
           </div>
         </span>
       </div>
-      <div class="actions-reason">Akcje niedostępne w podglądzie — zapis ma wyłącznie aktywny PIC (single-writer)</div>
+      <div class="actions-reason">Akcje niedostępne w podglądzie — zapisywać może tylko pilot, który prowadzi samolot</div>
 
     </div><!-- end scroll -->
   </div><!-- end screen -->
@@ -366,6 +402,13 @@
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
+  <a class="vp-item" href="04c-korekta-zdarzenia.html">
+    <span class="vp-badge blue">04C</span>
+    <span class="vp-body">
+      <span class="vp-name">Korekta zdarzenia</span>
+      <span class="vp-when">Autodetekcja pomyliła się — zapisała zdarzenie, którego nie było, albo o złym czasie. Otwierane z wiersza logu; append-only, działa offline.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -374,9 +417,25 @@
   <a href="04a-cockpit-ground.html">04A Ground (start)</a>
   <a href="04-cockpit-ground.html">04 Ground (mid-day)</a>
   <a href="04b-cockpit-readonly.html" class="active">04B Podgląd</a>
+  <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
   <span>·</span>
   <a href="02-preflight.html">02 Preflight (przejęcie)</a>
 </nav>
+
+<script>
+  // Stany świeżości danych z serwera (architektura 4.8): cały ten ekran to kategoria (b),
+  // więc musi mieć wariant cache — offline pokazujemy ostatni znany stan z adnotacją wieku.
+  const phoneEl = document.getElementById('phone');
+  const ssDesc = {
+    live: 'Jest sieć — stan samolotu pobrany na żywo z serwera.',
+    cache: 'Brak sieci — ostatni znany stan z cache (21 JUN 17:30). Przejęcie nadal możliwe: claim jest optymistyczny.'
+  };
+  function setState(s) {
+    phoneEl.dataset.state = s;
+    document.querySelectorAll('.ss-btn').forEach(b => b.classList.toggle('active', b.dataset.state === s));
+    document.getElementById('ss-desc').textContent = ssDesc[s];
+  }
+</script>
 
 </body>
 </html>

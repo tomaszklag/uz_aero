@@ -19,7 +19,7 @@
     --hairline: rgba(255,255,255,0.04);
     --text-primary: #E8E8E8;
     --text-secondary: #888888;
-    --text-muted: #444444;
+    --text-muted: #7A7A7A;
     --green: #2ECC71;
     --green-muted: rgba(46,204,113,0.12);
     --green-border: rgba(46,204,113,0.28);
@@ -416,6 +416,14 @@
       <div class="card-tags"><span class="tag amber">offline</span><span class="tag">cache</span><span class="tag amber">przejęcie</span></div>
     </div>
   </a>
+  <a href="11a-sync-offline.html" class="card amber">
+    <div class="card-num">11A</div>
+    <div class="card-body">
+      <div class="card-title">11a-sync-offline</div>
+      <div class="card-desc">Synchronizacja bez sieci — licznik częściowy 35/47, ręczny sync disabled z powodem, flagi w stanie „nieznane" (online pokazywałyby „brak ✓", co offline byłoby nieprawdą)</div>
+      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">outbox</span></div>
+    </div>
+  </a>
   <a href="02b-preflight-paliwo.html" class="card amber">
     <div class="card-num">02B</div>
     <div class="card-body">
@@ -438,6 +446,14 @@
       <div class="card-title">04b-cockpit-readonly</div>
       <div class="card-desc">Podgląd zajętego samolotu — banner read-only, log i stan z serwera na żywo, akcje zablokowane z powodem (single-writer), przycisk Przejmij</div>
       <div class="card-tags"><span class="tag">read-only</span><span class="tag">single-writer</span></div>
+    </div>
+  </a>
+  <a href="04c-korekta-zdarzenia.html" class="card">
+    <div class="card-num">04C</div>
+    <div class="card-body">
+      <div class="card-title">04c-korekta-zdarzenia</div>
+      <div class="card-desc">Korekta błędu autodetekcji — zmiana czasu lub oznaczenie „tego lądowania nie było". Append-only: nie kasuje historii, zapisuje zdarzenie korygujące</div>
+      <div class="card-tags"><span class="tag">korekta</span><span class="tag">append-only</span></div>
     </div>
   </a>
   <a href="05a-cockpit-taxi.html" class="card green">
@@ -470,6 +486,22 @@
       <div class="card-title">05d-cockpit-taxi-post</div>
       <div class="card-desc">Kokpit — taxi po lądowaniu, lot ukończony, silnik nadal ON</div>
       <div class="card-tags"><span class="tag green">taxi</span></div>
+    </div>
+  </a>
+  <a href="05e-zrzut.html" class="card">
+    <div class="card-num">05E</div>
+    <div class="card-body">
+      <div class="card-title">05e-zrzut</div>
+      <div class="card-desc">Zapis zrzutu — wysokość z GPS, trzy steppery liczby skoczków (tandem/AFF/solo) pod obsługę w rękawicach; strona przychodowa dnia</div>
+      <div class="card-tags"><span class="tag">rozliczenie</span><span class="tag">skoki</span></div>
+    </div>
+  </a>
+  <a href="05f-zdarzenie-reczne.html" class="card amber">
+    <div class="card-num">05F</div>
+    <div class="card-body">
+      <div class="card-title">05f-zdarzenie-reczne</div>
+      <div class="card-desc">GPS nie wykrył startu/lądowania — ręczny zapis z cofalnym czasem (stepper ±1 min), bo pilot orientuje się po fakcie. Domyka warstwę korekty w locie</div>
+      <div class="card-tags"><span class="tag amber">korekta</span><span class="tag">fallback GPS</span></div>
     </div>
   </a>
   <a href="05-themes.html" class="card">
@@ -526,6 +558,14 @@
       <div class="card-title">10-statystyki</div>
       <div class="card-desc">Statystyki dnia — duty time, czas blokowy per pilot, lista lotów, paliwo. Edycja przed zamknięciem dnia</div>
       <div class="card-tags"><span class="tag">statystyki</span><span class="tag">edycja</span></div>
+    </div>
+  </a>
+  <a href="12-historia.html" class="card">
+    <div class="card-num">12</div>
+    <div class="card-body">
+      <div class="card-title">12-historia</div>
+      <div class="card-desc">Historia dni — dzień w oknie korekty 24 h wyróżniony i klikalny; starsze zamknięte. Wejście z ekranu startowego</div>
+      <div class="card-tags"><span class="tag">historia</span><span class="tag">okno 24 h</span></div>
     </div>
   </a>
   <a href="11-eksport.html" class="card green">

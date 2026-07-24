@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -390,10 +390,10 @@
       </div>
 
       <!-- ADNOTACJA CACHE — stan `cache` danych referencyjnych -->
-      <div class="cache-strip" title="Brak łączności — lista samolotów, konfiguracje, piloci i stany claim pochodzą z ostatniej synchronizacji. Stan mógł się zmienić.">
+      <div class="cache-strip" title="Brak łączności — lista samolotów, konfiguracje i piloci pochodzą z ostatniego pobrania. Stan mógł się zmienić.">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Dane z cache
-        <span class="cs-detail">SYNC 21 JUN · 17:30</span>
+        Ostatnie pobrane dane
+        <span class="cs-detail">21 JUN · 17:30</span>
       </div>
 
       <!-- SEKCJA: SAMOLOT -->
@@ -410,7 +410,7 @@
           <div class="aircraft-option" data-req2p="0" data-locked="KRZ" onclick="pickAircraft(this)">
             <div class="aircraft-reg">SP-FGK</div>
             <div class="aircraft-type">Cessna 182 · 2017</div>
-            <div class="pic-lock-tag" title="Stan claim z cache — mógł się zmienić od ostatniej synchronizacji">PIC: KRZ · wg cache 17:30</div>
+            <div class="pic-lock-tag" title="Kto prowadzi samolot — wg ostatnio pobranych danych; mogło się zmienić">PIC: KRZ · wg danych z 17:30</div>
             <a class="peek-link" href="04b-cockpit-readonly.html" onclick="event.stopPropagation()" title="Podgląd read-only — offline pokaże ostatni znany stan z cache (04B)">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </a>
@@ -562,23 +562,23 @@
         <div class="modal-handle"></div>
         <div class="modal-title">PRZEJMIJ <span id="takeover-reg">SP-FGK</span>?</div>
         <div class="modal-ref">
-          <span>Aktywny PIC · wg cache</span>
+          <span>Aktywny PIC · wg ostatnich danych</span>
           <span style="color:var(--text-secondary);">KRZ · od 07:10</span>
         </div>
         <div class="modal-ref">
-          <span>Stan z cache</span>
+          <span>Dane pobrane</span>
           <span style="color:var(--amber);">21 JUN · 17:30</span>
         </div>
         <div class="modal-ref">
           <span>Łączność</span>
-          <span style="color:var(--amber);">brak — claim wyśle się po odzyskaniu sieci</span>
+          <span style="color:var(--amber);">brak — zapis wyśle się po powrocie zasięgu</span>
         </div>
         <div class="modal-warning">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Brak łączności — <strong>nie wiemy, czy KRZ wysłał wszystkie dane</strong>; stan pochodzi
-          z cache z 17:30. <strong>Wpisz odczyty paliwa i MH z fizycznych liczników</strong> w kolejnym
-          kroku — Twój odczyt stanie się początkiem nowego ogniwa. Ewentualny konflikt claimów serwer
-          oznaczy do wyjaśnienia po synchronizacji.</span>
+          <span>Brak łączności — <strong>nie wiemy, czy KRZ wysłał wszystkie dane</strong>; pokazujemy
+          stan pobrany 17:30. <strong>Wpisz odczyty paliwa i MH z liczników w samolocie</strong> w kolejnym
+          kroku — to one będą punktem odniesienia. Jeśli KRZ nadal prowadzi ten samolot,
+          oznaczymy to do wyjaśnienia po synchronizacji.</span>
         </div>
         <div class="modal-actions">
           <button onclick="cancelTakeover()" class="modal-btn-cancel">Anuluj</button>
@@ -648,7 +648,7 @@
     document.getElementById('takeover-modal').style.display = 'none';
     if (pendingTakeover) {
       pendingTakeover.dataset.takenOver = '1';
-      pendingTakeover.querySelector('.pic-lock-tag').textContent = 'PIC: TY · claim w outboxie';
+      pendingTakeover.querySelector('.pic-lock-tag').textContent = 'PIC: TY · czeka na wysyłkę';
       selectAircraft(pendingTakeover);
       pendingTakeover = null;
     }

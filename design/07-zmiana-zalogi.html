@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -75,6 +75,8 @@
   .back-btn:hover { color: var(--text-secondary); }
   .screen-title { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; color: var(--text-primary); }
   .header-time { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1px; }
+  .header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .sync-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
 
   /* Scroll */
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
@@ -115,21 +117,6 @@
   }
   .change-separator::before, .change-separator::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  /* Toggle row */
-  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
-  .toggle-label { font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--text-primary); }
-  .toggle-switch {
-    width: 44px; height: 26px; border-radius: 13px; position: relative; flex-shrink: 0;
-  }
-  .toggle-switch.on { background: var(--green); box-shadow: 0 0 10px rgba(46,204,113,0.3); }
-  .toggle-switch.off { background: var(--surface-hover); border: 1px solid var(--border-strong); }
-  .toggle-thumb {
-    position: absolute; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  }
-  .toggle-switch.on .toggle-thumb { left: 21px; }
-  .toggle-switch.off .toggle-thumb { left: 3px; }
-
   /* Field */
   .field { display: flex; flex-direction: column; gap: 5px; }
   .field-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
@@ -149,7 +136,6 @@
 
   /* Collapsed section */
   .section.collapsed { opacity: 0.5; }
-  .section.collapsed .toggle-label { color: var(--text-secondary); }
 
   /* Info box */
   .info-box {
@@ -170,6 +156,38 @@
     box-shadow: 0 0 24px rgba(46,204,113,0.3);
   }
   .btn-primary:hover { background: var(--green-hover); box-shadow: 0 0 40px rgba(46,204,113,0.5); }
+
+  /* ===== ROZDZIAŁ: Dual (lokalny) vs przekazanie PIC (single-writer) ===== */
+  .scope-tag { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; padding:3px 8px; border-radius:5px; white-space:nowrap; }
+  .scope-tag.local { color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); }
+  .scope-tag.net { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
+  .section-head-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+  .pilot-list { display:flex; flex-direction:column; gap:6px; }
+  .pilot-opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; transition:all .15s; }
+  .pilot-opt:hover { border-color:var(--border-strong); }
+  .pilot-opt.selected { background:rgba(46,204,113,0.07); border-color:var(--green-border); }
+  .pilot-av { width:30px; height:30px; border-radius:9px; flex-shrink:0; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:13px; letter-spacing:1px; color:var(--text-secondary); }
+  .pilot-opt.selected .pilot-av { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .pilot-nm { flex:1; font-size:13px; font-weight:600; color:var(--text-secondary); }
+  .pilot-opt.selected .pilot-nm { color:var(--text-primary); }
+  .pilot-cd { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--text-muted); }
+  .pilot-opt.selected .pilot-cd { color:var(--green); }
+  .pilot-chk { width:19px; height:19px; border-radius:50%; flex-shrink:0; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; }
+  .pilot-opt.selected .pilot-chk { background:var(--green); border-color:var(--green); color:#0D0D0D; }
+  .cache-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--amber); display:flex; align-items:center; gap:6px; }
+  .cache-note::before { content:''; width:5px; height:5px; border-radius:50%; background:var(--amber); flex-shrink:0; }
+
+  .handover-explain { font-size:11.5px; color:var(--text-secondary); line-height:1.6; }
+  .handover-explain b { color:var(--text-primary); font-weight:600; }
+  .handover-steps { display:flex; flex-direction:column; gap:7px; margin-top:2px; }
+  .hstep { display:flex; align-items:flex-start; gap:9px; font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .hstep-num { width:18px; height:18px; border-radius:50%; flex-shrink:0; background:var(--amber-muted); border:1px solid var(--amber-border); color:var(--amber); font-family:var(--font-mono); font-size:9px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+
+  .btn-secondary-green { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:14px; border-radius:14px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:18px; letter-spacing:2.5px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.25); }
+  .btn-danger { display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:14px; border-radius:14px; background:transparent; border:1px solid var(--red-border); color:var(--red); font-family:var(--font-display); font-size:17px; letter-spacing:2.5px; text-decoration:none; cursor:pointer; transition:background .15s; }
+  .btn-danger:hover { background:var(--red-muted); }
+  .action-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); text-align:center; line-height:1.6; }
 </style>
 </head>
 <body>
@@ -198,7 +216,13 @@
         Kokpit
       </a>
       <div class="screen-title">ZMIANA ZAŁOGI</div>
-      <div class="header-time">10:34 UTC</div>
+      <div class="header-right">
+        <div class="header-time">10:34 UTC</div>
+        <div class="sync-chip" title="Zmiana Dual to zdarzenie lokalne (offline OK); przekazanie samolotu kończy sesję i też działa bez sieci">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          SYNC
+        </div>
+      </div>
     </div>
 
     <!-- Scroll Content -->
@@ -215,7 +239,7 @@
           </div>
           <div class="crew-name active">TMK</div>
           <span class="you-tag">zalogowany · Ty</span>
-          <div class="crew-meta">od 08:00<br/><span>block: 00:53</span></div>
+          <div class="crew-meta">od 08:00<br/><span>block: 2:22</span></div>
         </div>
 
         <div class="crew-row">
@@ -224,73 +248,80 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
           <div class="crew-name active">AKO</div>
-          <div class="crew-meta">od 08:00<br/><span>block: 00:53</span></div>
+          <div class="crew-meta">od 08:00<br/><span>block: 2:22</span></div>
         </div>
       </div>
 
-      <!-- Separator -->
-      <div class="change-separator">Nowa zmiana</div>
-
-      <!-- Zmień dowódcę -->
+      <!-- ════ A: ZMIANA DUAL — zdarzenie lokalne ════ -->
       <div class="section">
-        <div class="toggle-row">
-          <div class="toggle-label">Zmień PIC (dowódca)</div>
-          <div class="toggle-switch on">
-            <div class="toggle-thumb"></div>
-          </div>
+        <div class="section-head-row">
+          <div class="section-label">A · Zmiana drugiego pilota (Dual)</div>
+          <span class="scope-tag local">zapis lokalny · offline OK</span>
         </div>
 
-        <div class="fields-2col">
-          <div class="field">
-            <div class="field-label">Wychodzący PIC</div>
-            <div class="field-input readonly">
-              <span class="field-val">TMK</span>
-              <svg class="lock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </div>
-          </div>
-
-          <div class="field">
-            <div class="field-label">Nowy PIC</div>
-            <div class="field-input focused">
-              <span class="field-val green">KRZ</span>
-            </div>
+        <div class="field">
+          <div class="field-label">Wychodzący DUAL</div>
+          <div class="field-input readonly">
+            <span class="field-val">AKO · Anna Kowalska</span>
+            <svg class="lock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </div>
         </div>
 
         <div class="field">
-          <div class="field-label">Czas zmiany</div>
-          <div class="field-input" style="border-color: var(--border-strong);">
-            <span style="font-family: var(--font-mono); font-size: 20px; font-weight: 700; letter-spacing: 1px;">10:34</span>
-            <span style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1px;">Aktualny czas</span>
+          <div class="field-label">Nowy DUAL</div>
+          <div class="pilot-list">
+            <div class="pilot-opt selected">
+              <div class="pilot-av">PW</div>
+              <div class="pilot-nm">Piotr Wiśniewski</div>
+              <div class="pilot-cd">PWI</div>
+              <div class="pilot-chk"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+            </div>
+            <div class="pilot-opt">
+              <div class="pilot-av">JS</div>
+              <div class="pilot-nm">Jan Serafin</div>
+              <div class="pilot-cd">JSE</div>
+              <div class="pilot-chk"></div>
+            </div>
+            <div class="pilot-opt">
+              <div class="pilot-av">—</div>
+              <div class="pilot-nm">Bez drugiego pilota</div>
+              <div class="pilot-cd">—</div>
+              <div class="pilot-chk"></div>
+            </div>
           </div>
+          <div class="cache-note" style="margin-top:7px;">Lista pilotów · ostatnie pobrane 21 JUN 17:30</div>
         </div>
+
+        <a href="04-cockpit-ground.html" class="btn-secondary-green">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          ZAPISZ ZMIANĘ DUAL
+        </a>
+        <div class="action-hint">Zdarzenie <span style="color:var(--text-secondary)">crew_change</span> · zapis natychmiastowy, wysyłka automatyczna gdy wróci sieć</div>
       </div>
 
-      <!-- Zmień drugiego pilota -->
+      <!-- ════ B: PRZEKAZANIE SAMOLOTU — single-writer ════ -->
       <div class="section">
-        <div class="toggle-row">
-          <div class="toggle-label">Zmień drugiego pilota (Dual)</div>
-          <div class="toggle-switch on">
-            <div class="toggle-thumb"></div>
-          </div>
+        <div class="section-head-row">
+          <div class="section-label">B · Przekazanie samolotu innemu PIC</div>
+          <span class="scope-tag net">kończy Twoją sesję</span>
         </div>
 
-        <div class="fields-2col">
-          <div class="field">
-            <div class="field-label">Wychodzący DUAL</div>
-            <div class="field-input readonly">
-              <span class="field-val">AKO</span>
-              <svg class="lock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </div>
-          </div>
-
-          <div class="field">
-            <div class="field-label">Nowy DUAL</div>
-            <div class="field-input focused">
-              <span class="field-val green">PWI</span>
-            </div>
-          </div>
+        <div class="handover-explain">
+          <b>Nie wybierasz tu nowego dowódcy.</b> Dane sesji zapisuje wyłącznie telefon aktywnego PIC
+          (zasada jednego piszącego urządzenia), więc nowy dowódca przejmuje samolot <b>ze swojego telefonu</b>.
         </div>
+
+        <div class="handover-steps">
+          <div class="hstep"><span class="hstep-num">1</span><span><span style="color:var(--text-primary)">Zamykasz dzień odczytami końcowymi</span> — paliwomierz i licznik MH. To one są przekazaniem dla kolegi; bez nich zaczyna „od zera".</span></div>
+          <div class="hstep"><span class="hstep-num">2</span><span>Nowy PIC na swoim telefonie: <span style="color:var(--text-primary)">Preflight → karta SP-AXA → Przejmij</span> i porównuje z tym, co widzi na licznikach.</span></div>
+          <div class="hstep"><span class="hstep-num">3</span><span>Twój dzień idzie do statystyk i wysyłki; ten telefon przestaje zapisywać dane tego samolotu.</span></div>
+        </div>
+
+        <a href="09-end-of-day.html" class="btn-danger">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          PRZEKAŻ — ZAMKNIJ DZIEŃ
+        </a>
+        <div class="action-hint">Prowadzi do zamknięcia dnia (odczyty końcowe) · działa offline — dane dojdą po powrocie zasięgu</div>
       </div>
 
       <!-- Info box -->
@@ -299,17 +330,12 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         </div>
         <div class="info-text">
-          <strong style="color: var(--blue);">PIC to pilot zalogowany w aplikacji na tym urządzeniu</strong> — przejęcie roli PIC
-          wymaga zalogowania nowego pilota. Każdy pilot ma osobny licznik czasu blokowego, naliczany od momentu przejęcia.
-          Dla samolotów z wymogiem załogi 2-osobowej (np. An-2) Dual nie może pozostać pusty.
+          <strong style="color: var(--blue);">Dlaczego dwie osobne sekcje?</strong> Zmiana Dual to zwykłe zdarzenie w Twojej sesji —
+          zapisujesz je sam, także bez zasięgu. Zmiana PIC to <em>przekazanie prawa zapisu</em> innemu urządzeniu, więc nie da się
+          jej wykonać za kogoś. Każdy pilot ma osobny licznik czasu blokowego. Przy samolotach z wymogiem załogi 2-osobowej
+          (np. An-2) Dual nie może pozostać pusty.
         </div>
       </div>
-
-      <!-- Button -->
-      <a href="04-cockpit-ground.html" class="btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        ZATWIERDŹ ZMIANĘ
-      </a>
 
     </div>
   </div>

@@ -371,4 +371,202 @@ Flow: splash → login → preflight → cockpit (ground/running) → akcje → 
 > zastosowano **display dualny** (UTC primary · LT secondary) w całej rodzinie kokpitu
 > oraz na 03, zgodnie z doktryną duty start z design-notes.
 
+## 2026-07-23 — Audyt trzech specjalistów + blokery
+
+**Audyt równoległy: wymagania biznesowe / offline-first per widok / flow i przypadki brzegowe**
+> Trzej niezależni audytorzy zbiegli się na tych samych trzech blokerach. Werdykt wspólny:
+> architektura dojrzała (offline-first, claim, single-writer, łańcuch MH — bez sprzeczności),
+> ale **warstwa wyjątków i korekt nie istniała**. Zaprojektowaliśmy dzień, w którym nic się
+> nie psuje, a GPS consumer-grade gwarantuje, że będzie się psuł.
+> Pokrycie wymagań: 3 POKRYTE, 8 CZĘŚCIOWO, 0 pominiętych.
+> Offline-first: realny na 21 z 25 ekranów (wyjątki: 11, 04b, 05a–d, 07).
+
+**BLOKER 1 — STOP ENGINE nie istniał w żadnym stanie silnik-ON** (wymaganie 3.2)
+> Potwierdzone greppem: w 6 plikach rodziny 05 jedyne trafienia „STOP ENGINE" to tooltipy
+> nawigacji. CSS zdradzał zamiar — `05:231` „next event primary, Zrzut middle, **STOP right**"
+> i siatka `1fr auto auto` z **pustą trzecią kolumną**. Bez tego dzień lotny nie miał jak
+> się skończyć: pilot zostawał w trybie kokpit i nigdy nie docierał do 09.
+> - Reguła: **aktywny na ziemi** (05a taxi, 05d taxi po LDG — GS < 5 kt), **disabled
+>   z podanym powodem w locie/na dobiegu** (05, 05b, 05c) — `engine_stop` w powietrzu
+>   byłby fałszywym wpisem, więc blokada jest merytoryczna, nie techniczna
+> - 05a/05d: STOP → `04-cockpit-ground` — przy okazji znika ślepa uliczka „brak powrotu
+>   z trybu kokpit do ground" (druga uwaga audytu flow)
+> - Hold-to-confirm 2 s (wzorzec START ENGINE), czerwień na tokenach
+
+**BLOKER 2 — brak warstwy korekty: 34 martwe ikonki ołówka** (wymaganie 3.3)
+> Design-notes obiecywał „pilot usuwa błędny wpis (edit w wierszu)", ale nie istniał żaden
+> ekran edycji — modale w projekcie były tylko cztery (paliwo, MH, przejęcie ×2).
+> - **04c-korekta-zdarzenia** (nowy): bottom-sheet z kartą korygowanego zdarzenia
+>   (typ, czas, badge „auto · GPS"), edycją czasu z pokazanym wpływem na czas lotu,
+>   oraz akcją destrukcyjną **„TEGO LĄDOWANIA NIE BYŁO"**
+> - **Zgodne z append-only**: korekta nie kasuje historii — zapisuje osobne zdarzenie
+>   korygujące, oryginalny odczyt GPS zostaje w rejestrze, serwer scala obie wersje.
+>   To był warunek, żeby ekran nie łamał modelu danych
+> - Działa offline (korekta = zdarzenie lokalne) — chip SYNC z tooltipem
+> - Ikonki ołówka w 04 (14 szt.) prowadzą teraz do 04c zamiast donikąd
+
+**BLOKER 3 — 07-zmiana-załogi łamała single-writer**
+> Formularz pozwalał wybrać „Nowy PIC: KRZ" **na telefonie ustępującego pilota**, podczas
+> gdy info-box tuż obok mówił poprawnie, że nowy PIC loguje się na swoim. Podpis przeczył
+> kontrolce, przy której stał.
+> - Rozdzielone na dwie sekcje wg źródła zapisu:
+>   **A · Zmiana Dual** — zdarzenie lokalne, tag „zapis lokalny · offline OK", lista
+>   pilotów jako karty (nie pole tekstowe) z adnotacją „z cache · sync 21 JUN 17:30"
+>   **B · Przekazanie samolotu** — **bez pola „nowy PIC"**; instrukcja 3-krokowa
+>   (zakończ swoją sesję → nowy PIC przejmuje ze swojego telefonu → ten telefon
+>   przechodzi w read-only), akcja „ZAKOŃCZ MOJĄ SESJĘ" → 04b
+> - To domyka też brak stanu terminalnego po przekazaniu (uwaga audytu flow)
+> - Poprawka: „block: 00:53" → „2:22" (kanoniczna oś po cyklu 1)
+
+**Poprawki danych wyłapane przez audyt**
+> - Naprawa paliwa z poprzedniej iteracji była **niepełna** — poprawiłem chipy w logach,
+>   ale nie wskaźniki FOB w siatce GPS: `05a` ~185 L przy własnym starcie 141 L,
+>   `05b` ~182, `05d` ~145 przy lądowaniu ~90. Teraz 140 / 139 / 89
+> - `10-statystyki`: „Zużyte 116" → **110** (150 + 48 − 88); sierota po dniu 5-lotowym
+
+**Domknięcie offline-first — 4 ekrany, na których zasada nie obowiązywała**
+> Audyt wykazał, że offline-first był realny na 21 z 25 ekranów. Zamknięte wszystkie
+> nieuzasadnione wyjątki (uzasadniony zostaje jeden: pierwsze logowanie w 00a/00b).
+>
+> - **11a-sync-offline** (nowy) — ekran, którego zadaniem jest status synchronizacji,
+>   nie miał wariantu offline, a co gorsza offline **kłamał**: zielone „Flagi: brak ✓"
+>   sugerowało czystą sesję, podczas gdy serwer nie widział jeszcze ani jednego zdarzenia.
+>   Teraz: chip `Offline · 12`, licznik częściowy **35/47** z paskiem postępu, arkusz
+>   „jeszcze nie powstał — nie ma czego otwierać", flagi w stanie **nieznane** z listą
+>   tego, czego nie sprawdzono, `SYNCHRONIZUJ TERAZ` **disabled z powodem** (był cichym
+>   błędem — zwykły `<button>` bez wariantu), kolejka z ostrzeżeniem „nie wylogowuj się".
+>   Osobna karta podkreśla, że **dane dnia są kompletne lokalnie** — brak sieci wpływa
+>   tylko na to, kiedy dotrą, nie na to, czy istnieją
+> - **04b-cockpit-readonly** — cały ekran to dane z serwera, a istniał tylko w stanie
+>   `live`; tooltip w 02d obiecywał wariant cache bez pokrycia. Dodany przełącznik
+>   stanów (wzorzec 02a): w `cache` banner robi się amber, „ostatni znany stan · sync
+>   21 JUN 17:30 · stan sprzed ponad doby" + ostrzeżenie, że KRZ mógł już zamknąć dzień;
+>   „Przejmij" offline prowadzi do 02d, nie 02
+> - **SyncChip w rodzinie 05** — znikał na 4 z 6 ekranów w locie, czyli tam, gdzie
+>   zasięgu brakuje najczęściej. Dodany do 05a/05b/05c/05d z **rosnącym licznikiem
+>   outboxa 8 → 9 → 12 → 13 → 14**, co pokazuje narastanie kolejki w trakcie cyklu.
+>   Ujednolicony słownik: 05 pokazywało samo „12", teraz wszędzie `Offline · n`
+> - **Ochrona wylogowania** (reguła z 3.0) — nie istniała nigdzie w designie, a to jedyne
+>   miejsce, gdzie pilot może bezpowrotnie stracić dane. Na 00-login „Zaloguj jako inny
+>   pilot" jest teraz zablokowane z amber wyjaśnieniem „12 zdarzeń czeka na wysyłkę —
+>   zmiana konta nadpisze profil"
+> - **02a — odspawanie świeżości od łączności**: stan `brak` wymuszał chip OFFLINE, choć
+>   własny opis wymieniał „nowy samolot" (scenariusz online). Świeżość danych i łączność
+>   to dwie ortogonalne osie — teraz `brak` pokazuje SYNC, a opis to tłumaczy
+> - **SyncChip na 06/07/08/10** — reguła mówi „jeden **globalny** wskaźnik", a brakowało
+>   go m.in. tam, gdzie pilot zapisuje dane (tankowanie, lista ręczna). Dodany wraz
+>   z tooltipem tłumaczącym, dlaczego dany ekran działa offline (zdarzenie lokalne /
+>   projekcja z lokalnych zdarzeń)
+>
+> **Pokrycie po zmianach: 20 z 20 ekranów operacyjnych ma wskaźnik łączności.**
+> Pozostałe 6 bez chipa to świadome wyjątki: 00/00a/00b (cały ekran *jest* komunikatem
+> o stanie łączności), 01-splash (ma własną linię „dane referencyjne · sync"),
+> 02b/02c (modale nad 02a, które chip ma).
+
+## 2026-07-23 — Decyzje biznesowe
+
+**1. Zrzuty rozliczane w aplikacji** (decyzja: pełne rozliczenie)
+> Problem: rejestrowaliśmy skrupulatnie wszystko, co **kosztuje** (paliwo, MH), i nic z tego,
+> co **zarabia** — zrzuty miały wysokość, ale nie liczbę skoczków, a pole „klient"
+> z preflightu nigdzie nie trafiało. Bez tego papierowa lista wyniesień przetrwałaby wdrożenie.
+> - **05e-zrzut** (nowy) — ekran przechwytywania: wysokość podstawia GPS, pilot ustawia
+>   tylko liczby. **Trzy steppery zamiast „suma + rozbicie"** — o jedno pojęcie mniej przy
+>   obsłudze w rękawicach; przyciski 46 px, suma liczona automatycznie. Interaktywny.
+>   Zapis lokalny, działa offline
+> - Log w kokpicie: chip zrzutu pokazuje teraz `4 skoczków · 2 450 ft` (było samo „2 450 FT")
+> - **10-statystyki**: nowa karta „Zrzuty · rozliczenie" — 6 wyniesień · 22 skoczków ·
+>   12 tandem / 6 AFF / 4 solo · śr. 2 700 ft · klient
+> - **11 / 11a**: wiersz rozliczeniowy w podglądzie arkusza
+> - **02 / 03**: pole klienta wypełnione (SKY CAMP · zlec. 2026/114) i opisane, dokąd trafia
+> - Przycisk „Zrzut" w 05 i 05b prowadzi do 05e (był martwym `<div>`)
+
+**2. Korekta po zamknięciu dnia — okno 24 h** (decyzja: bez akceptacji admina)
+> - **09**: ostrzeżenie „nieodwracalne" przestało być prawdziwe → „korektę możesz nanieść
+>   jeszcze przez 24 h; później tylko przez administratora"
+> - **10**: niebieski pasek okna korekty z konkretnym terminem (do 23 JUN 16:45 UTC);
+>   ołówki przy lotach i „EDYTUJ DANE" (dotąd martwe) prowadzą do 04c
+> - Korekta pozostaje append-only — okno dotyczy tego, KTO ją nanosi, nie tego, czy kasuje historię
+
+**3. Jeden samolot = jeden dzień** (decyzja: zostawiamy)
+> Przesiadka wymaga zamknięcia dnia i nowego preflightu. **Świadomy trade-off**: duty time
+> nie odzwierciedla wtedy pełnej służby pilota (powstają dwie „służby" tego samego dnia).
+> Rozdzielenie duty od sesji samolotu rozważone i odrzucone jako nadmiarowe przy obecnej skali.
+> Zapisane w logu decyzji, żeby nie wróciło jako „przeoczenie".
+
+**4. Usunięta „przerwa" w duty** (decyzja: usunąć przełącznik)
+> Przełącznik na 09 nie miał żadnych konsekwencji — brak stanu, wznowienia i odjęcia od duty.
+> Funkcja pozorna jest gorsza od jej braku, więc usunięty razem z martwym CSS.
+> Duty liczone brutto od meldunku do zakończenia.
+
+## 2026-07-24 — Przegląd pod kątem pilota i biznesu
+
+**Żargon programisty wyciekł do kokpitu — wyczyszczony**
+> Własny przegląd wykazał, że przy pisaniu ekranów offline-first przeniosłem słownik
+> architektury do tekstów widocznych dla pilota. Pilot zna PIC, Dual, MH, FOB — to słownik
+> lotniczy. Nie zna `claim`, `outbox`, `single-writer`, `append-only` — to słownik implementacji.
+>
+> **Przyjęta zasada: wewnątrz telefonu — język pilota; na canvasie — język projektanta.**
+> Panele wariantów i opisy w index.html zostają techniczne (służą recenzentowi designu).
+>
+> Poprawione teksty w telefonie:
+> - 04b: „KRZ · **claim** od 07:10" → „KRZ · od 07:10"; „Dane sesji wysyła wyłącznie jego
+>   telefon **(single-writer)**" → „Dane zapisuje wyłącznie jego telefon"; „zapis ma wyłącznie
+>   aktywny PIC (single-writer)" → „zapisywać może tylko pilot, który prowadzi samolot"
+> - 04b: „Przejęcie = Twój **claim** w preflightcie" → „Przejmiesz samolot w preflightcie";
+>   „**claim** trafi do **outboxa**" → „zapisze się na telefonie i wyśle po powrocie zasięgu"
+> - 02d: „Aktywny PIC · wg **cache**" → „wg ostatnich danych"; „**claim** wyśle się po
+>   odzyskaniu sieci" → „zapis wyśle się po powrocie zasięgu"; „konflikt **claimów**" →
+>   „Jeśli KRZ nadal prowadzi ten samolot, oznaczymy to do wyjaśnienia"
+> - 11a: „12 czeka w **outboksie**" → „12 czeka na wysyłkę" (było niespójne z resztą ekranu)
+> - 02a / 07 / 04b: „Z **cache** · **sync** 21 JUN 17:30" → „Ostatnie pobrane · 21 JUN 17:30"
+> - 00-login: tooltip blokady wylogowania bez słowa „outbox"
+
+**Sprzątanie**: usunięty `__audit_tmp.html` — plik roboczy pozostawiony przez agenta audytowego.
+
+## 2026-07-24 — Studium przypadku + analiza użyteczności: naprawy
+
+Dwa niezależne audyty (studium czterech dni operacyjnych + ocena heurystyczna z pomiarami
+kontrastu i celów dotykowych) zbiegły się na jednej diagnozie: **szczęśliwa ścieżka jest
+wyklikana do końca, nieszczęśliwa kończy się `<div>`-em**. Wszystkie martwe kontrolki
+w projekcie leżały na ścieżkach awaryjnych.
+
+**1. Regresja z 07 — przekazanie zrywało łańcuch MH** (wprowadzona przy naprawie single-writer)
+> „ZAKOŃCZ MOJĄ SESJĘ" prowadziło prosto do `04b`, **z pominięciem `09`** — czyli bez
+> końcowego FOB i odczytu MH, które architektura (4.5) nazywa kręgosłupem scalania.
+> Następny pilot dostawał stan „brak", serwer `MH_GAP`. Do tego `04b` blokuje „Zakończ dzień",
+> więc ustępujący pilot nie miał jak dojść do własnych statystyk.
+> - Przycisk → `09-end-of-day`, etykieta „PRZEKAŻ — ZAMKNIJ DZIEŃ"
+> - Instrukcja 3-krokowa przepisana: krok 1 to teraz jawnie odczyty końcowe („to one są
+>   przekazaniem dla kolegi; bez nich zaczyna od zera")
+
+**2. Warstwa korekty — ożywiona**
+> - **05f-zdarzenie-reczne** (nowy): GPS nie wykrył startu/lądowania. Wybór typu, czas
+>   **cofalny stepperami ±1 min** (46 px) — bo pilot orientuje się po fakcie, a tapnięcie
+>   „teraz" zapisałoby zły czas. Wpis oznaczany jako ręczny
+> - **Martwe przyciski T/O i LAND ożywione w 6 plikach** (05, 05a–05d, 05-themes) —
+>   były `<div>` bez akcji, czyli jedyne udokumentowane lekarstwo na pominiętą detekcję
+>   nie istniało
+> - **Toast odwrócony zgodnie z doktryną 3.2** („brak reakcji = zapis, jedyna akcja Cofnij"):
+>   zniknął zbędny zielony „Potwierdź" (dublował to, co i tak nastąpi), pojawił się duży
+>   amber **„COFNIJ"** (58 px) + widoczny licznik sekund + zdanie „nic nie rób, a zapiszemy
+>   za 5 s". Wcześniej jedyna potrzebna akcja miała 26 px i kontrast 1,79:1
+> - **Cele korekty powiększone**: `.log-edit` 28→46 px i pełny kontrast (było `opacity:0.4`),
+>   `.edit-btn` w 10 → 44×44, `.koryguj-btn` w 02a → min. 44 px, ikony 9–10 → 14–15 px
+
+**3. Kontrast — token był źródłem problemu, nie paleta**
+> Pomiar audytu: `--text-muted: #444444` nie przechodził progu 4,5:1 **w żadnym z pięciu
+> motywów** (Amber/NVG 1,38:1, Night 1,57:1). Zbudowaliśmy trzy motywy pod słońce, a
+> nieczytelność siedziała w tokenie i rozmiarze czcionki.
+> - `--text-muted` **#444444 → #7A7A7A** we wszystkich 29 plikach
+> - Motywy: Paper `#93866C→#6E6250`, Sky `#74849A→#556579`, Amber/NVG `#4C2C08→#A87020`
+>   (tam też `--text-secondary` był poniżej progu → `#D09030`)
+> - `.param-label` (etykiety siatki GPS) **8 → 10 px**
+
+**4. Historia dni — okno korekty dostało drzwi**
+> Obietnica „poprawisz przez 24 h" była powtórzona w trzech miejscach, a **żaden ekran nie
+> prowadził do zamkniętego dnia** — `01-splash` oferował wyłącznie „NOWY DZIEŃ LOTNY".
+> - **12-historia** (nowy): dzień w oknie wyróżniony, z odliczaniem („zostało 23 h 04 min")
+>   i CTA „OTWÓRZ I POPRAW" → 10 → 04c; starsze dni zamknięte z wyjaśnieniem
+> - `01-splash`: link „Poprzednie dni" z badge „22 JUN — można poprawić"
+
 <!-- Dodawaj kolejne iteracje poniżej -->

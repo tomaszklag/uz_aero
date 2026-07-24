@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #444444;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -61,6 +61,17 @@
     padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
   }
   .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; }
+  .app-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  /* Okno korekty po day_close — decyzja: 24 h samodzielnie, potem administrator */
+  .correction-window {
+    display:flex; align-items:flex-start; gap:9px;
+    background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
+    border-radius:12px; padding:11px 13px;
+  }
+  .cw-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
+  .cw-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .cw-text b { color:var(--blue); font-weight:600; }
+  .sync-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
   .header-subtitle {
     font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px;
@@ -169,9 +180,11 @@
     background:var(--amber-muted); border-radius:4px; padding:2px 5px;
     white-space:nowrap;
   }
+  /* Cel korekty w oknie 24 h — min. 44 px; tu poprawki są najczęstsze */
   .edit-btn {
-    background:none; border:1px solid var(--border); border-radius:5px;
-    color:var(--text-muted); cursor:pointer; padding:3px 5px;
+    background:none; border:1px solid var(--border-strong); border-radius:8px;
+    color:var(--text-secondary); cursor:pointer; padding:0; text-decoration:none;
+    min-width:44px; min-height:44px; justify-content:center;
     display:inline-flex; align-items:center;
   }
   .edit-btn:hover { border-color:var(--border-strong); color:var(--text-secondary); }
@@ -251,11 +264,23 @@
         <span class="screen-title">STATYSTYKI DNIA</span>
         <span class="header-subtitle">SP-AXA · 22 June 2026</span>
       </div>
-      <span class="badge">6 lotów</span>
+      <div class="app-header-right">
+        <span class="badge">6 lotów</span>
+        <div class="sync-chip" title="Statystyki to projekcja z lokalnych zdarzeń — liczą się identycznie offline">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          SYNC
+        </div>
+      </div>
     </div>
 
     <!-- Scroll content -->
     <div class="scroll">
+
+      <!-- Okno korekty (decyzja: 24 h samodzielnie) -->
+      <div class="correction-window">
+        <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zatwierdzeniu</b> — do 23 JUN 16:45 UTC. Później korektę nanosi administrator. Stuknij ołówek przy locie, żeby poprawić czas albo oznaczyć zdarzenie jako błędne.</span>
+      </div>
 
       <!-- Duty Time Hero -->
       <div class="duty-hero">
@@ -319,7 +344,7 @@
               <td>09:18</td>
               <td>00:53</td>
               <td><span class="type-auto">AUTO</span></td>
-              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
               <td class="num">2</td>
@@ -327,7 +352,7 @@
               <td>10:22</td>
               <td>00:47</td>
               <td><span class="type-auto">AUTO</span></td>
-              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
               <td class="num">3</td>
@@ -335,7 +360,7 @@
               <td>12:15</td>
               <td>00:47</td>
               <td><span class="type-auto">AUTO</span></td>
-              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
               <td class="num">4</td>
@@ -343,7 +368,7 @@
               <td>14:08</td>
               <td>00:44</td>
               <td><span class="type-auto">AUTO</span></td>
-              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
               <td class="num">5</td>
@@ -351,7 +376,7 @@
               <td>15:03</td>
               <td>00:42</td>
               <td><span class="type-manual">RĘCZNIE</span></td>
-              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
               <td class="num">6</td>
@@ -359,7 +384,7 @@
               <td>16:10</td>
               <td>00:53</td>
               <td><span class="type-auto">AUTO</span></td>
-              <td><button class="edit-btn"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></button></td>
+              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
           </tbody>
         </table>
@@ -386,7 +411,7 @@
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Zużyte</div>
-            <div class="fuel-cell-val">116</div>
+            <div class="fuel-cell-val">110</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
         </div>
@@ -413,12 +438,41 @@
         </div>
       </div>
 
+      <!-- Zrzuty — strona przychodowa dnia (operacja Skoki) -->
+      <div class="section-card">
+        <div class="section-card-head" style="color:var(--blue);">Zrzuty · rozliczenie</div>
+        <div class="fuel-grid-2x2">
+          <div class="fuel-cell">
+            <div class="fuel-cell-label">Zrzutów</div>
+            <div class="fuel-cell-val" style="color:var(--blue);">6</div>
+            <div class="fuel-cell-unit">wyniesień</div>
+          </div>
+          <div class="fuel-cell">
+            <div class="fuel-cell-label">Skoczków</div>
+            <div class="fuel-cell-val" style="color:var(--blue);">22</div>
+            <div class="fuel-cell-unit">łącznie</div>
+          </div>
+        </div>
+        <div class="fuel-avg-row">
+          <span class="fuel-avg-label">Typy skoków</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">12 TANDEM · 6 AFF · 4 SOLO</span>
+        </div>
+        <div class="fuel-avg-row">
+          <span class="fuel-avg-label">Średnia wysokość zrzutu</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">2 700 FT</span>
+        </div>
+        <div class="fuel-avg-row">
+          <span class="fuel-avg-label">Klient</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">SKY CAMP · zlec. 2026/114</span>
+        </div>
+      </div>
+
       <!-- Action buttons -->
       <div class="btn-row">
-        <button class="btn-secondary">
+        <a href="04c-korekta-zdarzenia.html" class="btn-secondary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
-        </button>
+        </a>
         <a href="11-eksport.html" class="btn-primary">
           ZATWIERDŹ → SYNC
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 7h9M7 3l4 4-4 4"/></svg>
