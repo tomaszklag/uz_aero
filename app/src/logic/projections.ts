@@ -1,0 +1,369 @@
+/**
+ * UZ Aero — projekcje sesji (docs/_main.md.txt §5.2, §3.7).
+ *
+ * „Stan bieżącej sesji i statystyki dnia to PROJEKCJE liczone w pamięci ze strumienia
+ * zdarzeń — przy kilkuset zdarzeniach dziennie tabele agregujące są zbędne" (§5.2).
+ *
+ * Ten moduł to CZYSTE, DETERMINISTYCZNE funkcje: `projectSession(events) → SessionState`.
+ * Bez DB, bez Zustand, bez zegara systemowego — dzięki temu jest rdzeniem testów.
+ *
+ * Zasady liczenia:
+ *  - czas zdarzenia = `gpsTime ?? deviceTime` — preferujemy GPS (niezależny od zegara
+ *    telefonu, §4.1 pkt 6, mitygacja CLOCK_DRIFT), z fallbackiem na zegar urządzenia,
+ *  - kolejność = kolejność w tablicy (repo zwraca kolejność wstawienia = chronologię),
+ *  - block time i MH liczymy z ODCZYTÓW/zdarzeń; wartości „na żywo" (bieżący, jeszcze
+ *    otwarty cykl / lot) NIE wchodzą do sum — do tego są selektory `live*` z `now`.
+ */
+
+import type { EpochMillis } from '../types/time';
+import type {
+  DetectionMethod,
+  Event,
+  JumperCounts,
+  MhFormat,
+  OperationType,
+} from '../types/events';
+
+/** Cykl pracy silnika (engine_start → engine_stop). `stoppedAt: null` = wciąż pracuje. */
+export interface EngineRun {
+  startedAt: EpochMillis;
+  stoppedAt: EpochMillis | null;
+  /** Czas trwania (ms); 0 dopóki cykl otwarty. */
+  durationMs: number;
+}
+
+/** Lot (takeoff → landing). `landingAt: null` = w powietrzu. */
+export interface Flight {
+  /** Numer lotu w dniu (1-based) — separator „Lot N" w logu. */
+  index: number;
+  method: DetectionMethod;
+  takeoffAt: EpochMillis;
+  landingAt: EpochMillis | null;
+  /** Czas lotu (ms); 0 dopóki w powietrzu. */
+  durationMs: number;
+}
+
+/** Bilans paliwa dnia (§3.7): start + dolane − zużyte. */
+export interface FuelState {
+  /** Odczyt startowy z preflightu (L). */
+  startL: number | null;
+  /** Suma dolanego paliwa (L). */
+  addedL: number;
+  /** Odczyt końcowy z day_close (L). */
+  endL: number | null;
+  /** Zużyte = (start + dolane) − koniec; null dopóki brak odczytu końcowego. */
+  consumedL: number | null;
+  /** Ostatni bezpośredni odczyt paliwomierza (start / po tankowaniu / koniec). */
+  lastReadingL: number | null;
+}
+
+/** Motogodziny (§3.7): początek/koniec/delta z odczytów fizycznego licznika. */
+export interface MhState {
+  start: number | null;
+  end: number | null;
+  /** Delta = koniec − start (godziny); null dopóki brak odczytu końcowego. */
+  deltaH: number | null;
+}
+
+/** Rozliczenie zrzutów (§3.7 — strona przychodowa dnia). */
+export interface DropSummary {
+  /** Liczba wyniesień (zdarzeń drop). */
+  count: number;
+  /** Suma skoczków wg typów. */
+  jumpers: JumperCounts;
+  totalJumpers: number;
+  /** Średnia wysokość zrzutu (ft) — null, gdy żaden drop nie miał wysokości. */
+  avgAltitudeFt: number | null;
+}
+
+/** Pełny stan/statystyki sesji wyliczone ze strumienia zdarzeń. */
+export interface SessionState {
+  sessionUuid: string | null;
+  aircraftId: string | null;
+  picId: string | null;
+  dualId: string | null;
+
+  operation: OperationType | null;
+  departureIcao: string | null;
+  arrivalIcao: string | null;
+  client: string | null;
+  mhFormat: MhFormat | null;
+
+  dutyStart: EpochMillis | null;
+  dutyEnd: EpochMillis | null;
+
+  engineRunning: boolean;
+  inFlight: boolean;
+  /** Start otwartego cyklu silnika (do liczenia block time „na żywo"). */
+  openEngineStartAt: EpochMillis | null;
+  /** Start otwartego lotu (do liczenia flight time „na żywo"). */
+  openTakeoffAt: EpochMillis | null;
+
+  engineRuns: EngineRun[];
+  /** Suma zamkniętych cykli silnika + ręcznych off/on-block (ms). */
+  blockTimeMs: number;
+
+  flights: Flight[];
+  /** Suma zamkniętych lotów (ms). */
+  flightTimeMs: number;
+  takeoffCount: number;
+  landingCount: number;
+
+  fuel: FuelState;
+  mh: MhState;
+  drops: DropSummary;
+
+  /** Czy padł `day_close`. */
+  closed: boolean;
+  eventCount: number;
+  lastEventAt: EpochMillis | null;
+}
+
+/** Czas zdarzenia użyty w arytmetyce: preferuj GPS, fallback na zegar telefonu. */
+export function eventTime(event: Event): EpochMillis {
+  return event.gpsTime ?? event.deviceTime;
+}
+
+/** Świeży, pusty stan sesji — początek redukcji i stan startowy store'u. */
+export function emptySessionState(): SessionState {
+  return {
+    sessionUuid: null,
+    aircraftId: null,
+    picId: null,
+    dualId: null,
+    operation: null,
+    departureIcao: null,
+    arrivalIcao: null,
+    client: null,
+    mhFormat: null,
+    dutyStart: null,
+    dutyEnd: null,
+    engineRunning: false,
+    inFlight: false,
+    openEngineStartAt: null,
+    openTakeoffAt: null,
+    engineRuns: [],
+    blockTimeMs: 0,
+    flights: [],
+    flightTimeMs: 0,
+    takeoffCount: 0,
+    landingCount: 0,
+    fuel: { startL: null, addedL: 0, endL: null, consumedL: null, lastReadingL: null },
+    mh: { start: null, end: null, deltaH: null },
+    drops: {
+      count: 0,
+      jumpers: { tandem: 0, aff: 0, solo: 0 },
+      totalJumpers: 0,
+      avgAltitudeFt: null,
+    },
+    closed: false,
+    eventCount: 0,
+    lastEventAt: null,
+  };
+}
+
+/**
+ * Redukuje strumień zdarzeń do stanu/statystyk sesji.
+ * @param events zdarzenia w kolejności chronologicznej (jak zwraca `EventsRepo`).
+ */
+export function projectSession(events: Event[]): SessionState {
+  const state = emptySessionState();
+
+  // Bufor sum wysokości zrzutów — średnią liczymy na końcu.
+  let dropAltSum = 0;
+  let dropAltCount = 0;
+
+  // Kolejność WSTAWIENIA ≠ kolejność ZDARZEŃ. Wpis ręczny (05f) niesie czas cofnięty
+  // („4 min temu"), a korekta (04c) zmienia czas istniejącego zdarzenia — oba trafiają
+  // do rejestru po zdarzeniach późniejszych. Arytmetyka cykli i lotów wymaga porządku
+  // chronologicznego, więc sortujemy po czasie zdarzenia (GPS → fallback zegar telefonu).
+  // Sort jest stabilny (ES2019+), więc zdarzenia równoczesne zachowują kolejność zapisu.
+  const ordered = [...events].sort((a, b) => eventTime(a) - eventTime(b));
+
+  for (const event of ordered) {
+    const t = eventTime(event);
+    state.eventCount += 1;
+    state.lastEventAt = t;
+
+    // Tożsamość sesji ustalamy z pierwszego zdarzenia; bieżącą załogę bierzemy
+    // z nagłówka ostatniego zdarzenia (single-writer: PIC stały, Dual może się zmienić).
+    if (state.sessionUuid == null) {
+      state.sessionUuid = event.sessionUuid;
+      state.aircraftId = event.aircraftId;
+    }
+    state.picId = event.picId;
+    state.dualId = event.dualId;
+
+    switch (event.type) {
+      case 'preflight_confirm': {
+        const p = event.payload;
+        state.operation = p.operation;
+        state.departureIcao = p.departureIcao ?? null;
+        state.arrivalIcao = p.arrivalIcao ?? null;
+        state.client = p.client ?? null;
+        state.mhFormat = p.mhFormat ?? null;
+        state.dutyStart = p.dutyStart;
+        state.fuel.startL = p.reading.fuelL;
+        state.fuel.lastReadingL = p.reading.fuelL;
+        state.mh.start = p.reading.mh;
+        break;
+      }
+
+      case 'engine_start': {
+        state.engineRuns.push({ startedAt: t, stoppedAt: null, durationMs: 0 });
+        state.engineRunning = true;
+        state.openEngineStartAt = t;
+        break;
+      }
+
+      case 'engine_stop': {
+        const run = lastOpen(state.engineRuns, (r) => r.stoppedAt == null);
+        if (run) {
+          run.stoppedAt = t;
+          run.durationMs = Math.max(0, t - run.startedAt);
+          state.blockTimeMs += run.durationMs;
+        }
+        state.engineRunning = false;
+        state.openEngineStartAt = null;
+        break;
+      }
+
+      case 'takeoff': {
+        state.takeoffCount += 1;
+        if (!state.inFlight) {
+          state.flights.push({
+            index: state.flights.length + 1,
+            method: event.payload.method,
+            takeoffAt: t,
+            landingAt: null,
+            durationMs: 0,
+          });
+          state.inFlight = true;
+          state.openTakeoffAt = t;
+        }
+        break;
+      }
+
+      case 'landing': {
+        state.landingCount += 1;
+        const flight = lastOpen(state.flights, (f) => f.landingAt == null);
+        if (flight) {
+          flight.landingAt = t;
+          flight.durationMs = Math.max(0, t - flight.takeoffAt);
+          state.flightTimeMs += flight.durationMs;
+        }
+        state.inFlight = false;
+        state.openTakeoffAt = null;
+        break;
+      }
+
+      case 'refuel': {
+        const p = event.payload;
+        state.fuel.addedL += p.addedL;
+        state.fuel.lastReadingL = p.afterL;
+        break;
+      }
+
+      case 'drop': {
+        const p = event.payload;
+        state.drops.count += 1;
+        state.drops.jumpers.tandem += p.jumpers.tandem;
+        state.drops.jumpers.aff += p.jumpers.aff;
+        state.drops.jumpers.solo += p.jumpers.solo;
+        if (p.altitudeFt != null) {
+          dropAltSum += p.altitudeFt;
+          dropAltCount += 1;
+        }
+        if (state.client == null && p.client != null) state.client = p.client;
+        break;
+      }
+
+      case 'manual_log_entry': {
+        // Fallback GPS (§3.8): ręczny wzlot wnosi własny block i lot (metoda manual).
+        const p = event.payload;
+        if (p.takeoff != null) state.takeoffCount += 1;
+        if (p.landing != null) state.landingCount += 1;
+        if (p.takeoff != null && p.landing != null) {
+          const durationMs = Math.max(0, p.landing - p.takeoff);
+          state.flights.push({
+            index: state.flights.length + 1,
+            method: 'manual',
+            takeoffAt: p.takeoff,
+            landingAt: p.landing,
+            durationMs,
+          });
+          state.flightTimeMs += durationMs;
+        }
+        if (p.offBlock != null && p.onBlock != null) {
+          state.blockTimeMs += Math.max(0, p.onBlock - p.offBlock);
+        }
+        break;
+      }
+
+      case 'day_close': {
+        const p = event.payload;
+        state.fuel.endL = p.finalReading.fuelL;
+        state.fuel.lastReadingL = p.finalReading.fuelL;
+        state.mh.end = p.finalReading.mh;
+        state.dutyEnd = p.dutyEnd;
+        state.closed = true;
+        break;
+      }
+
+      case 'session_claim':
+      case 'crew_change':
+        // Tożsamość/załoga aktualizowana z nagłówka (wyżej). Payload informacyjny.
+        break;
+
+      default:
+        // Wyczerpujące pokrycie unii — kompilator pilnuje kompletności `switch`.
+        assertNever(event);
+    }
+  }
+
+  // Pochodne bilanse.
+  if (state.fuel.endL != null && state.fuel.startL != null) {
+    state.fuel.consumedL = state.fuel.startL + state.fuel.addedL - state.fuel.endL;
+  }
+  if (state.mh.start != null && state.mh.end != null) {
+    state.mh.deltaH = state.mh.end - state.mh.start;
+  }
+  state.drops.totalJumpers =
+    state.drops.jumpers.tandem + state.drops.jumpers.aff + state.drops.jumpers.solo;
+  state.drops.avgAltitudeFt = dropAltCount > 0 ? dropAltSum / dropAltCount : null;
+
+  return state;
+}
+
+/**
+ * Block time „na żywo": suma zamkniętych cykli + trwający cykl liczony do `now`.
+ * Do timera w kokpicie (UI podaje `now`, np. z tykającego zegara). `now` musi być
+ * w tej samej domenie co czasy zdarzeń (UTC epoch ms).
+ */
+export function liveBlockTimeMs(state: SessionState, now: EpochMillis): number {
+  if (state.engineRunning && state.openEngineStartAt != null) {
+    return state.blockTimeMs + Math.max(0, now - state.openEngineStartAt);
+  }
+  return state.blockTimeMs;
+}
+
+/** Flight time „na żywo": suma zamkniętych lotów + trwający lot liczony do `now`. */
+export function liveFlightTimeMs(state: SessionState, now: EpochMillis): number {
+  if (state.inFlight && state.openTakeoffAt != null) {
+    return state.flightTimeMs + Math.max(0, now - state.openTakeoffAt);
+  }
+  return state.flightTimeMs;
+}
+
+/** Ostatni element spełniający predykat (od końca) — bez mutacji tablicy. */
+function lastOpen<T>(items: T[], predicate: (item: T) => boolean): T | undefined {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (predicate(items[i]!)) return items[i];
+  }
+  return undefined;
+}
+
+/** Strażnik wyczerpania unii — nieosiągalny w runtime dla poprawnych danych. */
+function assertNever(value: never): never {
+  throw new Error(`Nieobsłużony typ zdarzenia: ${JSON.stringify(value)}`);
+}
