@@ -84,7 +84,11 @@
   .time-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; text-align:center; }
   .time-delta { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--amber); text-align:center; min-height:14px; }
 
-  .note-box { display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 13px; }
+  .note-box { position:relative; display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 40px 11px 13px; }
+  /* Baner pouczający (Typ C) — zamykalny, zwija się w miejscu do (?) · patrz design-notes */
+  .edu-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; }
+  .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
+  .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
   .note-box svg { flex-shrink:0; margin-top:1px; color:var(--blue); }
   .note-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
 
@@ -189,10 +193,17 @@
           <div class="time-delta" id="td">4 min temu — tyle trwało, zanim zauważyłeś</div>
         </div>
 
-        <div class="note-box">
+        <div class="note-box" id="eduManual">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           <span class="note-text">Wpis zostanie oznaczony jako <b>ręczny</b> — w statystykach i arkuszu widać, które zdarzenia pochodzą z GPS, a które od pilota.</span>
+          <button class="edu-dismiss" onclick="eduCollapse('eduManual')" title="Rozumiem — schowaj wyjaśnienie">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
+        <button class="edu-mini" id="eduManual-mini" onclick="eduExpand('eduManual')" title="Pokaż wyjaśnienie">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Wpis ręczny — co to znaczy?
+        </button>
 
         <div class="sheet-actions">
           <a href="05-cockpit-running.html" class="btn-cancel">Anuluj</a>
@@ -261,6 +272,9 @@
     document.getElementById('c-to').classList.toggle('selected', t === 'to');
     document.getElementById('c-ldg').classList.toggle('selected', t === 'ldg');
   }
+  // Baner pouczający (Typ C) — w aplikacji stan „schowany" zapamiętany na stałe per pilot.
+  function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }
+  function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
 </script>
 
 </body>

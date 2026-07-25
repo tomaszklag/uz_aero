@@ -139,11 +139,16 @@
 
   /* Info box */
   .info-box {
+    position: relative;
     background: var(--blue-muted); border: 1px solid rgba(52,152,219,0.28);
-    border-radius: 14px; padding: 13px 14px;
+    border-radius: 14px; padding: 13px 40px 13px 14px;
     display: flex; gap: 10px; align-items: flex-start;
   }
   .info-icon { flex-shrink: 0; margin-top: 1px; }
+  /* Baner pouczający (Typ C) — zamykalny, zwija się w miejscu do (?) · patrz design-notes */
+  .edu-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; }
+  .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
+  .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
   .info-text { font-family: var(--font-body); font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
 
   /* Primary button */
@@ -324,8 +329,8 @@
         <div class="action-hint">Prowadzi do zamknięcia dnia (odczyty końcowe) · działa offline — dane dojdą po powrocie zasięgu</div>
       </div>
 
-      <!-- Info box -->
-      <div class="info-box">
+      <!-- Info box (Typ C — pouczający, zamykalny) -->
+      <div class="info-box" id="eduWhy">
         <div class="info-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         </div>
@@ -335,7 +340,14 @@
           jej wykonać za kogoś. Każdy pilot ma osobny licznik czasu blokowego. Przy samolotach z wymogiem załogi 2-osobowej
           (np. An-2) Dual nie może pozostać pusty.
         </div>
+        <button class="edu-dismiss" onclick="eduCollapse('eduWhy')" title="Rozumiem — schowaj wyjaśnienie">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
+      <button class="edu-mini" id="eduWhy-mini" onclick="eduExpand('eduWhy')" title="Pokaż wyjaśnienie">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Dlaczego dwie sekcje?
+      </button>
 
     </div>
   </div>
@@ -352,6 +364,14 @@
   <span>·</span>
   <a href="04-cockpit-ground.html">→ Kokpit</a>
 </nav>
+
+<script>
+  // Banery pouczające (Typ C): zamknięcie chowa baner i pokazuje mini-(?) w miejscu.
+  // W aplikacji stan „schowany" zapisujemy NA STAŁE per pilot (localStorage) — baner
+  // nie wraca rozwinięty co sesję. Status i ostrzeżenia warunkowe NIE są zamykane.
+  function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; /* localStorage.setItem('seen:'+id,'1') */ }
+  function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
+</script>
 
 </body>
 </html>

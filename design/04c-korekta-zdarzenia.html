@@ -86,6 +86,11 @@
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--border-strong); }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+  /* ===== Baner pouczający (Typ C): zamykalny, zwija się do (?) przy tytule ===== */
+  .modal-title-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .help-reopen { display:none; align-items:center; gap:5px; padding:6px 11px; min-height:32px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+  .append-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; }
+  .append-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
 
   /* karta korygowanego zdarzenia */
   .evt-card { display:flex; align-items:center; gap:11px; background:var(--surface); border:1px solid var(--blue-border); border-radius:14px; padding:12px 14px; }
@@ -106,7 +111,7 @@
   .modal-ref-val { color:var(--text-secondary); }
 
   /* append-only info */
-  .append-box { display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 13px; }
+  .append-box { position:relative; display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 40px 11px 13px; }
   .append-box svg { flex-shrink:0; margin-top:1px; color:var(--blue); }
   .append-text { font-family:var(--font-body); font-size:11px; color:var(--text-secondary); line-height:1.55; }
   .append-text b { color:var(--blue); font-weight:600; }
@@ -197,7 +202,13 @@
     <div class="modal-overlay">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
-        <div class="modal-title">KOREKTA ZDARZENIA</div>
+        <div class="modal-title-row">
+          <div class="modal-title">KOREKTA ZDARZENIA</div>
+          <button class="help-reopen" id="helpReopen" onclick="showInfo()" title="Pokaż wyjaśnienie, jak działa korekta">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Jak to działa?
+          </button>
+        </div>
 
         <div class="evt-card">
           <div class="evt-icon">
@@ -229,9 +240,12 @@
           <span class="modal-ref-val">0:53 → 0:56</span>
         </div>
 
-        <div class="append-box">
+        <div class="append-box" id="appendInfo">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           <span class="append-text">Korekta <b>nie kasuje historii</b> — zapisujemy osobne zdarzenie korygujące, oryginalny odczyt GPS zostaje w rejestrze. Serwer scali obie wersje i pokaże poprawkę w arkuszu.</span>
+          <button class="append-dismiss" onclick="dismissInfo()" title="Rozumiem — schowaj wyjaśnienie">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
         <div class="modal-actions">
@@ -292,6 +306,21 @@
   <span>·</span>
   <a href="08-lista-reczna.html">08 Lista ręczna</a>
 </nav>
+
+<script>
+  // Wzorzec „baner pouczający" (Typ C): pomocny za pierwszym razem, potem szum.
+  // KLUCZOWE: w aplikacji stan „schowany" zapisujemy NA STAŁE per pilot
+  // (np. localStorage 'seen:correction-append'), więc baner NIE wraca rozwinięty
+  // co sesję — (?) przy tytule to rzadka furtka, nie powtarzalny obowiązek.
+  // Dotyczy WYŁĄCZNIE banerów pouczających; status (offline, read-only, odliczanie)
+  // i ostrzeżenia warunkowe (paliwo, załoga) nigdy nie są zamykane ręcznie.
+  const _info = document.getElementById('appendInfo');
+  const _help = document.getElementById('helpReopen');
+  function dismissInfo() { _info.style.display = 'none'; _help.style.display = 'inline-flex'; /* localStorage.setItem('seen:correction-append','1') */ }
+  function showInfo()    { _info.style.display = 'flex';  _help.style.display = 'none'; }
+  // Podgląd „powracającego pilota": odkomentuj, aby wejść z banerem już schowanym.
+  // dismissInfo();
+</script>
 
 </body>
 </html>

@@ -172,6 +172,31 @@ Czcionki: `Bebas Neue` (display/timery) · `Archivo` (body) · `JetBrains Mono` 
 
 ---
 
+## Banery i info-boksy — trzy typy, jeden zamykalny
+
+Nie każdy baner jest równy. Zanim dodasz baner, sklasyfikuj go — od tego zależy, czy
+wolno go zamknąć:
+
+- **Typ A — żywy status** (offline / dane z cache, „tylko odczyt", odliczanie okna korekty,
+  „flagi: nieznane"). To przyrząd, nie onboarding. **Nigdy zamykalny** — ukrycie go = ukrycie
+  stanu, którego pilot potrzebuje przy każdym spojrzeniu.
+- **Typ B — ostrzeżenie warunkowe** (rozbieżność paliwa/MH, „An-2 wymaga załogi 2-os.",
+  „zakończenie nieodwracalne"). Pojawia się i znika **z warunkiem**; nie zamyka się ręcznie.
+- **Typ C — pouczający, jednorazowy** (np. „korekta nie kasuje historii", „dlaczego dwie
+  sekcje", „wpis ręczny — co znaczy"). Pomocny za pierwszym razem, szum potem. **Zamykalny.**
+
+### Wzorzec zamykalnego banera (Typ C)
+
+- `×` (32 px) na banerze → baner znika, w jego miejscu pojawia się mini-chip `(?)` z krótką
+  etykietą; klik `(?)` przywraca baner. Kolor chipu = akcent banera (niebieski/zielony).
+- **Stan „schowany" zapamiętany NA STAŁE per pilot** (localStorage / profil) — to sedno.
+  Baner nie wraca rozwinięty co sesję; `(?)` to rzadka furtka, nie powtarzalny obowiązek.
+  Dzień 1 uczy pełnymi banerami, dzień 3 to czysty ekran z dyskretnymi `(?)`.
+- Klasy: `.edu-dismiss` (× na banerze), `.edu-mini` (chip `(?)`); funkcje `eduCollapse(id)` /
+  `eduExpand(id)`. Wdrożone: 04c, 05f, 07, 09.
+- Wyjątek: instrukcje **rzadkich** akcji (np. 3-kroki przekazania) zostają — przy rzadkim
+  użyciu pilot i tak zapomina, więc coaching wciąż pomaga.
+
 ## UX rules — co unikamy
 
 - Nie używamy natywnego `<select>` — zawsze stylizowana lista kart

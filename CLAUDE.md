@@ -89,6 +89,11 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 6. Gdy ekran pokazuje dane z serwera — stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej)
 7. Gdy ekran ma warianty — panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej)
 
+## Banery — trzy typy (szczegóły: `docs/design-notes.md`)
+- **Status** (offline, tylko-odczyt, odliczanie) — nigdy zamykalny, to przyrząd
+- **Ostrzeżenie warunkowe** (paliwo/MH, załoga) — znika samo z warunkiem, nie zamyka się ręcznie
+- **Pouczający jednorazowy** — zamykalny `×` → zwija się do mini-`(?)` w miejscu; stan schowany zapamiętany NA STAŁE per pilot. Klasy `.edu-dismiss`/`.edu-mini`, funkcje `eduCollapse/eduExpand`
+
 ## Czego unikać
 - Nie dodawaj loadera/spinnera bez określonego celu (patrz: feedback do 01-splash)
 - Nie używaj natywnego `<select>` — zawsze stylizowana lista kart

@@ -152,13 +152,17 @@
     color: var(--green); flex-shrink: 0;
   }
 
-  /* Handover box — przekazanie dla następnego pilota */
+  /* Handover box — przekazanie dla następnego pilota (Typ C — pouczający, zamykalny) */
   .handover-box {
+    position: relative;
     background: var(--green-muted); border: 1px solid var(--green-border);
-    border-radius: 12px; padding: 12px 14px;
+    border-radius: 12px; padding: 12px 40px 12px 14px;
     display: flex; align-items: flex-start; gap: 10px;
   }
   .handover-icon { color: var(--green); flex-shrink: 0; margin-top: 1px; }
+  .edu-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; }
+  .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
+  .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--green-border); background:var(--green-muted); color:var(--green); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
   .handover-text { font-family: var(--font-body); font-size: 11px; color: var(--text-secondary); line-height: 1.55; }
   .handover-text b { color: var(--green); font-weight: 700; font-family: var(--font-mono); }
 
@@ -293,12 +297,19 @@
       </div>
 
       <!-- Przekazanie dla następnego pilota -->
-      <div class="handover-box">
+      <div class="handover-box" id="eduHandover">
         <svg class="handover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
         <span class="handover-text">Te odczyty — <b>88 L</b> i <b>1 241:09 MH</b> — zobaczy następny pilot jako
         <strong>przekazanie</strong>. Stają się ogniwem łańcucha SP-AXA: serwer porównuje z nimi start
         kolejnej sesji i flaguje dziury lub cofnięcia licznika.</span>
+        <button class="edu-dismiss" onclick="eduCollapse('eduHandover')" title="Rozumiem — schowaj wyjaśnienie">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
+      <button class="edu-mini" id="eduHandover-mini" onclick="eduExpand('eduHandover')" title="Pokaż wyjaśnienie">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Co znaczą te odczyty?
+      </button>
 
       <!-- Warning -->
       <div class="warn-box">
@@ -325,6 +336,12 @@
   <span>·</span>
   <a href="10-statystyki.html">10 Statystyki →</a>
 </nav>
+
+<script>
+  // Baner pouczający (Typ C) — stan „schowany" w aplikacji zapamiętany na stałe per pilot.
+  function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }
+  function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
+</script>
 
 </body>
 </html>

@@ -569,4 +569,33 @@ w projekcie leżały na ścieżkach awaryjnych.
 >   i CTA „OTWÓRZ I POPRAW" → 10 → 04c; starsze dni zamknięte z wyjaśnieniem
 > - `01-splash`: link „Poprzednie dni" z badge „22 JUN — można poprawić"
 
+## 2026-07-25 — Banery zamykalne (Typ C)
+
+**Weryfikacja pomysłu użytkownika: zwijanie banerów do (?)**
+> Pytanie: banery pomocne za pierwszym razem, potem szum — dać zamykanie do ikonki?
+> Werdykt: dobry instynkt, ale NIE jednolicie. Podział na 3 typy (design-notes):
+> A) żywy status — nigdy zamykalny (przyrząd); B) ostrzeżenie warunkowe — znika samo;
+> C) pouczający jednorazowy — zamykalny.
+> Krytyczny warunek, żeby nie było gorzej niż teraz: **stan schowany zapamiętany na stałe
+> per pilot**, inaczej pilot zamyka baner w kółko co sesję.
+> - Wzorzec: `×` (32 px) na banerze → mini-chip `(?)` w miejscu; klik przywraca.
+>   Kolor chipu = akcent banera. Klasy `.edu-dismiss`/`.edu-mini`, `eduCollapse/eduExpand`
+> - Wdrożone na banerach Typu C: 04c („nie kasuje historii"), 07 („dlaczego dwie sekcje"),
+>   05f („wpis ręczny"), 09 („co znaczą odczyty")
+> - Zostawione świadomie: instrukcja 3-kroków przekazania (07) — rzadka akcja, coaching
+>   wciąż pomaga; wszystkie banery Typu A/B bez zmian
+> - Uwaga porządkowa: usunięty `outbox-guard` z 00-login (był przy „zaloguj jako inny
+>   pilot", którego już nie ma)
+
+**Czyszczenie tekstów (uwagi użytkownika per ekran)**
+> - 00-login: podpis profilu „TMK · profil lokalny · działa offline" → samo „TMK";
+>   usunięta opcja „Zaloguj jako inny pilot" (brak przekazywania telefonu)
+> - 00a: usunięta nota „Pierwsze logowanie wymaga internetu…"; poprawiony (błędny) opis
+>   wariantu w panelu
+> - 01-splash: usunięte „React Native · Expo" i „Offline-first · GPS · Auto-sync"
+>   (stack techniczny nie dla pilota); numer wersji został
+> - 02/02d: „· zalogowany · e-mail" → sam e-mail (rola i tak jest w badge PIC)
+> - 00b (offline bez profilu): świadomie pominięty — przypadek praktycznie niemożliwy;
+>   usunięty z paneli wariantów 00/00a, plik zostaje (dostępny z index)
+
 <!-- Dodawaj kolejne iteracje poniżej -->
