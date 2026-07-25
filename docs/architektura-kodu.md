@@ -42,7 +42,7 @@ Dlatego istnieje warstwa `domain/rules`: 34 kody naruszeń, sprawdzane przy każ
 
 | Warstwa | Katalog | Co tu mieszka | Czego NIE wolno importować |
 |---|---|---|---|
-| Domena | `src/domain/` | typy zdarzeń, inwarianty, projekcje, progi GPS | React, RN, Expo, SQLite, Zustand, **oraz pozostałe warstwy** |
+| Domena | `src/domain/` | typy zdarzeń, inwarianty, projekcje, **detekcja lotu** | React, RN, Expo, SQLite, Zustand, **oraz pozostałe warstwy** |
 | Aplikacja | `src/application/` | komendy, zapytania, porty, `EventsRepo` | framework, `infrastructure/`, `ui/` |
 | Infrastruktura | `src/infrastructure/` | adaptery: SQLite, in-memory, zegar, id | `ui/` |
 | UI | `src/ui/` | ekrany, nawigacja, komponenty, motywy, store, formatowanie | — |
@@ -119,6 +119,11 @@ Trzy porty w `application/ports/`, każdy z realnym powodem:
 | `StoragePort` | `expo-sqlite` **nie działa w Node/Jest**. Bez tego portu logika byłaby nietestowalna. Implementacje: `expoSqliteAdapter` (aplikacja), `inMemoryAdapter` (testy). |
 | `ClockPort` | Czas musi być deterministyczny w testach; produkcyjnie dwa zegary (device + GPS, §4.5). |
 | `IdPort` | UUID zdarzenia = klucz idempotencji; w testach przewidywalny. |
+| `GpsPort` | Lot trwa 45 minut i wymaga samolotu. Port pozwala **odtworzyć trasę** z serii fixów i sprawdzić detekcję w milisekundach. Implementacje: `expoLocationAdapter` (urządzenie), `replayGpsAdapter` (testy i podgląd). |
+
+Moduły natywne (`expo-sqlite`, `expo-location`) są importowane **wyłącznie** przez swoje
+adaptery i nie trafiają do barrela infrastruktury — inaczej testy w Node przestałyby
+działać. Pilnują tego dwa testy w `architecture.test.ts`.
 
 Portów **nie mnożymy na zapas** — port bez drugiej implementacji lub potrzeby testowej to koszt bez zysku.
 
@@ -184,6 +189,15 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `projections.test.ts` | zgodności z designem — patrz niżej |
 | `repo.test.ts` | append, outbox (`syncedAt IS NULL`), `markSynced`, dedup po uuid, dwa zegary |
 | `store.test.ts` | cienkiej warstwy Zustand nad aplikacją |
+| `flightDetector.test.ts` | automatu detekcji — patrz niżej |
+
+**`flightDetector.test.ts` odtwarza sytuacje, których nie da się wyklikać na biurku.**
+Consumer-grade GPS kłamie, a §8 klasyfikuje fałszywe detekcje jako ryzyko 🔴. Testy
+odtwarzają je deterministycznie: **ciasny zakręt** (GS spada do zera na wysokości 2500 ft —
+nie wolno uznać za lądowanie), **turbulencja przy ziemi** (±30 ft nie może udawać startu),
+**przelot nad pasem** (nisko, ale szybko), **utrata sygnału** (po przerwie nie wolno
+„domknąć" warunku z rozpędu), **skok zegara wstecz**, oraz pełny cykl kołowanie → start
+→ przelot → lądowanie. To jedyny sposób, żeby sprawdzić algorytm bez samolotu.
 
 **`projections.test.ts` to kontrakt z designem, nie zwykły test.** Odwzorowuje kanoniczną oś dnia 22 JUNE z `docs/design-notes.md` — te same liczby, które pokazują mockupy 04/09/10/11: block **6:39** (2:22 + 1:13 + 3:04), 6 lotów, paliwo **150 +48 −110 = 88 L**, MH **1234:30 → 1241:09**, oraz inwariant **Δ MH = block time**. Zmiana tych liczb w teście bez zmiany designu (i odwrotnie) to rozjazd, nie poprawka.
 

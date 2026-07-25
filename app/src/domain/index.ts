@@ -14,3 +14,4 @@ export * from './reference';
 export * from './projections';
 export * from './rules';
 export * from './detection/thresholds';
+export * from './detection/flightDetector';

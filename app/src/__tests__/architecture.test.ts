@@ -142,7 +142,16 @@ describe('granice warstw', () => {
     expect(users).toEqual(['infrastructure/storage/expoSqliteAdapter.ts']);
   });
 
-  it('barrel infrastruktury nie wciąga modułu natywnego (testy w Node)', () => {
-    expect(importsOf('infrastructure/index.ts')).not.toContain('./storage/expoSqliteAdapter');
+  it('tylko adapter GPS dotyka expo-location', () => {
+    const users = sourceFiles('.')
+      .filter((f) => importsOf(f).some((s) => s === 'expo-location'))
+      .sort();
+    expect(users).toEqual(['infrastructure/gps/expoLocationAdapter.ts']);
+  });
+
+  it('barrel infrastruktury nie wciąga modułów natywnych (testy w Node)', () => {
+    const barrel = importsOf('infrastructure/index.ts');
+    expect(barrel).not.toContain('./storage/expoSqliteAdapter');
+    expect(barrel).not.toContain('./gps/expoLocationAdapter');
   });
 });

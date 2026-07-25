@@ -1,13 +1,15 @@
 /**
  * Barrel warstwy INFRASTRUKTURY (adaptery portów).
  *
- * Uwaga: `ExpoSqliteAdapter` NIE jest tu re-eksportowany celowo — import tego barrela
- * nie może wciągać modułu natywnego `expo-sqlite` (inaczej padłyby testy Node/Jest oraz
- * konteksty czysto-JS). Adapter SQLite importuj wprost:
+ * Uwaga: adaptery modułów NATYWNYCH nie są tu re-eksportowane celowo — import tego
+ * barrela nie może wciągać `expo-sqlite` ani `expo-location` (inaczej padłyby testy
+ * Node/Jest oraz konteksty czysto-JS). Importuj je wprost:
  *   `import { ExpoSqliteAdapter } from '../infrastructure/storage/expoSqliteAdapter';`
+ *   `import { ExpoLocationAdapter } from '../infrastructure/gps/expoLocationAdapter';`
  */
 
 export * from './clock';
 export * from './id';
 export * from './createEventsRepo';
 export * from './storage/inMemoryAdapter';
+export * from './gps/replayGpsAdapter';
