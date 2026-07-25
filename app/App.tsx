@@ -31,7 +31,8 @@ import {
 import { ThemeProvider, useTheme } from './src/ui/theme';
 import { AppText } from './src/ui/components';
 import { RootNavigator } from './src/ui/navigation/RootNavigator';
-import { useAppBootstrap } from './src/ui/bootstrap/appBootstrap';
+import { useAppBootstrap, useGpsPort } from './src/ui/bootstrap/appBootstrap';
+import { ServicesProvider } from './src/ui/bootstrap/ServicesProvider';
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
 function AppRoot() {
   const { theme, ready: themeReady } = useTheme();
   const boot = useAppBootstrap();
+  const gps = useGpsPort();
 
   const [fontsLoaded, fontError] = useFonts({
     BebasNeue_400Regular,
@@ -88,10 +90,10 @@ function AppRoot() {
   }
 
   return (
-    <>
+    <ServicesProvider gps={gps}>
       <StatusBar style={theme.isLight ? 'dark' : 'light'} />
       <RootNavigator />
-    </>
+    </ServicesProvider>
   );
 }
 

@@ -41,6 +41,7 @@ export interface ThemeColors {
   redGlow: string;
   blue: string;
   blueMuted: string;
+  blueBorder: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -73,6 +74,7 @@ const nightColors: ThemeColors = {
   redGlow: 'rgba(231,76,60,0.4)',
   blue: '#3498DB',
   blueMuted: 'rgba(52,152,219,0.12)',
+  blueBorder: 'rgba(52,152,219,0.28)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -101,6 +103,7 @@ const paperColors: ThemeColors = {
   redBorder: 'rgba(166,42,24,0.38)',
   blue: '#205C90',
   blueMuted: 'rgba(32,92,144,0.10)',
+  blueBorder: 'rgba(32,92,144,0.38)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,6 +132,7 @@ const solarColors: ThemeColors = {
   redBorder: 'rgba(152,0,0,0.40)',
   blue: '#004890',
   blueMuted: 'rgba(0,72,144,0.10)',
+  blueBorder: 'rgba(0,72,144,0.40)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -157,6 +161,7 @@ const skyColors: ThemeColors = {
   redBorder: 'rgba(168,36,24,0.40)',
   blue: '#16528E',
   blueMuted: 'rgba(22,82,142,0.10)',
+  blueBorder: 'rgba(22,82,142,0.40)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -181,6 +186,7 @@ const amberColors: ThemeColors = {
   amberBorder: 'rgba(255,120,0,0.32)',
   blue: '#60A0F0',
   blueMuted: 'rgba(96,160,240,0.10)',
+  blueBorder: 'rgba(96,160,240,0.32)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

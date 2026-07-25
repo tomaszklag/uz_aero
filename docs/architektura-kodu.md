@@ -51,9 +51,10 @@ Wnętrze `ui/`:
 
 | Katalog | Rola |
 |---|---|
-| `screens/` | ekrany aplikacji (jeden plik = jeden ekran z mockupów) |
+| `screens/` | ekrany aplikacji |
 | `navigation/` | stos nawigacji + `RootStackParamList` |
-| `components/` | prymitywy Design Systemu (`Screen`, `AppText`, `SyncChip`, `ThemePicker`) |
+| `components/` | **Design System** — patrz katalog niżej |
+| `hooks/` | spoiny między portami a UI (np. `useFlightDetection`) |
 | `theme/` | tokeny 5 motywów + `ThemeProvider` / `useTheme` |
 | `store/` | Zustand — cienka warstwa nad komendami i zapytaniami |
 | `bootstrap/` | **composition root**: otwiera SQLite, buduje warstwy, podłącza do store'u |
@@ -61,6 +62,34 @@ Wnętrze `ui/`:
 
 `App.tsx` odpowiada wyłącznie za poziom aplikacji: dostawcy kontekstu, fonty, composition
 root i nawigację. Ekran nie wie, skąd biorą się zależności.
+
+### Design System (`ui/components/`)
+
+**Zasada: ekran nie definiuje własnych kart, chipów ani przycisków.** Jeśli czegoś
+brakuje — dokładamy to do DS i używamy wszędzie. Dzięki temu poprawka wzorca (np.
+powiększenie celów dotykowych po audycie użyteczności) przechodzi przez całą aplikację,
+a nie przez jeden ekran.
+
+| Komponent | Rola | Skąd w designie |
+|---|---|---|
+| `Screen` | tło, safe area, scroll | wszystkie ekrany |
+| `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`) | wszystkie |
+| `AppBar` | pasek: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
+| `Card` | karta z opcjonalnym nagłówkiem | `.section` / `.card` / `.day-log` |
+| `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
+| `StatusChip` | pozostałe chipy stanu (GROUND, RUNNING, claim, cache) | `.ground-chip`, `.pic-lock-tag` |
+| `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
+| `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
+| `PhaseHero` | faza lotu ogromną czcionką | „Cockpit Running" |
+| `EventLog` | log dnia/cyklu, cele korekty ≥ 44 px | `.day-log`, `.cycle-log` |
+| `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | START/STOP ENGINE |
+| `DetectToast` | toast autodetekcji: duży **COFNIJ** + licznik | `.detect-sheet` |
+| `tone.ts` | mapowanie tonu → (akcent, tło, obramowanie) | wspólne dla wszystkich |
+
+Trzy rzeczy w `ActionButton` nie są ozdobnikiem: przytrzymanie chroni przed
+przypadkowym dotknięciem w wibracjach, powód blokady jest **widocznym tekstem** (nie
+tooltipem — `title` w RN nie istnieje), a cel dotykowy ma ≥ 44 px, bo pilot pracuje
+w rękawicach.
 
 ### To nie jest tylko obietnica
 

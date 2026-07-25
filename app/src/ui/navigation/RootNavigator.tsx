@@ -14,11 +14,11 @@ import { NavigationContainer, DarkTheme, DefaultTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useTheme } from '../theme';
-import { CockpitGroundScreen } from '../screens/CockpitGroundScreen';
+import { CockpitScreen } from '../screens/CockpitScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
-  CockpitGround: undefined;
+  Cockpit: undefined;
   StyleGuide: undefined;
 };
 
@@ -44,7 +44,7 @@ export function RootNavigator() {
   return (
     <NavigationContainer theme={navTheme}>
       <Stack.Navigator
-        initialRouteName="CockpitGround"
+        initialRouteName="Cockpit"
         screenOptions={{
           headerStyle: { backgroundColor: theme.colors.surface },
           headerTintColor: theme.colors.textPrimary,
@@ -52,8 +52,8 @@ export function RootNavigator() {
         }}
       >
         <Stack.Screen
-          name="CockpitGround"
-          component={CockpitGroundScreen}
+          name="Cockpit"
+          component={CockpitScreen}
           options={{ title: 'Kokpit' }}
         />
         <Stack.Screen

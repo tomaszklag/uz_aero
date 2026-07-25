@@ -9,10 +9,12 @@
  * barrel celowo nie wciąga modułu natywnego, żeby testy w Node działały bez urządzenia.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { createEventsRepo } from '../../infrastructure';
 import { ExpoSqliteAdapter } from '../../infrastructure/storage/expoSqliteAdapter';
+import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapter';
+import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 
 /** Stan startu aplikacji — UI musi wiedzieć, czy baza jest gotowa. */
@@ -20,6 +22,14 @@ export type BootstrapStatus =
   | { phase: 'loading' }
   | { phase: 'ready' }
   | { phase: 'error'; message: string };
+
+/**
+ * Port GPS aplikacji. Tworzony raz — adapter trzyma subskrypcję, więc nie może
+ * powstawać przy każdym renderze.
+ */
+export function useGpsPort(): GpsPort {
+  return useMemo(() => new ExpoLocationAdapter(), []);
+}
 
 /**
  * Otwiera bazę na urządzeniu, buduje warstwy i podłącza je do store'u.
