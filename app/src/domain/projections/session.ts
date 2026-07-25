@@ -15,14 +15,14 @@
  *    otwarty cykl / lot) NIE wchodzą do sum — do tego są selektory `live*` z `now`.
  */
 
-import type { EpochMillis } from '../types/time';
+import type { EpochMillis } from '../time';
 import type {
   DetectionMethod,
   Event,
   JumperCounts,
   MhFormat,
   OperationType,
-} from '../types/events';
+} from '../events';
 
 /** Cykl pracy silnika (engine_start → engine_stop). `stoppedAt: null` = wciąż pracuje. */
 export interface EngineRun {
@@ -82,6 +82,12 @@ export interface SessionState {
   aircraftId: string | null;
   picId: string | null;
   dualId: string | null;
+  /**
+   * PIC ustalony przy otwarciu sesji (nagłówek pierwszego zdarzenia = `session_claim`).
+   * To jest **jedyny uprawniony piszący** tej sesji (single-writer, §4.1 pkt 3) — reguła
+   * `WRITER_MISMATCH` porównuje z tą wartością, nie z `picId` (który jest „bieżący").
+   */
+  sessionPicId: string | null;
 
   operation: OperationType | null;
   departureIcao: string | null;
@@ -115,6 +121,11 @@ export interface SessionState {
 
   /** Czy padł `day_close`. */
   closed: boolean;
+  /**
+   * Czas zdarzenia `day_close` (null dopóki dzień otwarty). Od niego liczy się
+   * 24-godzinne okno korekty (decyzja 2026-07-23) — patrz `domain/rules`.
+   */
+  closedAt: EpochMillis | null;
   eventCount: number;
   lastEventAt: EpochMillis | null;
 }
@@ -131,6 +142,7 @@ export function emptySessionState(): SessionState {
     aircraftId: null,
     picId: null,
     dualId: null,
+    sessionPicId: null,
     operation: null,
     departureIcao: null,
     arrivalIcao: null,
@@ -157,6 +169,7 @@ export function emptySessionState(): SessionState {
       avgAltitudeFt: null,
     },
     closed: false,
+    closedAt: null,
     eventCount: 0,
     lastEventAt: null,
   };
@@ -190,6 +203,7 @@ export function projectSession(events: Event[]): SessionState {
     if (state.sessionUuid == null) {
       state.sessionUuid = event.sessionUuid;
       state.aircraftId = event.aircraftId;
+      state.sessionPicId = event.picId;
     }
     state.picId = event.picId;
     state.dualId = event.dualId;
@@ -307,6 +321,7 @@ export function projectSession(events: Event[]): SessionState {
         state.mh.end = p.finalReading.mh;
         state.dutyEnd = p.dutyEnd;
         state.closed = true;
+        state.closedAt = t;
         break;
       }
 

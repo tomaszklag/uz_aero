@@ -4,10 +4,10 @@
  * dwa zegary (deviceTime + gpsTime), cache referencyjny z fetchedAt.
  */
 
-import { InMemoryAdapter } from '../db/storageAdapter';
-import { EventsRepo } from '../db/eventsRepo';
-import { FixedClock } from '../utils/clock';
-import type { AppendEventInput } from '../types/events';
+import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
+import { EventsRepo } from '../application/eventsRepo';
+import { FixedClock } from '../infrastructure/clock';
+import type { AppendEventInput } from '../domain/events';
 
 const SESSION = 'sess-1';
 const AC = 'ac-1';

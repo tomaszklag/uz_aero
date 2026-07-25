@@ -1,24 +1,16 @@
 /**
- * UZ Aero — zegar zdarzeń: dwa niezależne czasy (docs/_main.md.txt §4.1 pkt 6, §4.5).
+ * UZ Aero — ADAPTERY zegara (`ClockPort`): dwa niezależne czasy (§4.1 pkt 6, §4.5).
  *
  * Każde zdarzenie niesie `deviceTime` (zegar telefonu) i `gpsTime` (czas z fixa GPS).
  * GPS jest niezależny od sieci i ustawień telefonu — serwer po nim wykrywa przestawiony
  * zegar (flaga CLOCK_DRIFT). Ten moduł jest jedynym miejscem, które „stempluje" czas.
  *
- * Zakres Fazy 1 (warstwa danych): interfejs + zaślepka. Realny GPS (expo-location)
- * podłączymy później przez `DeviceClock.setGpsFix(...)` w hooku lokalizacji — tu NIE
- * importujemy expo-location, żeby moduł działał w Node/Jest.
+ * Realny GPS (expo-location) podłączymy przez `DeviceClock.setGpsFix(...)` w hooku
+ * lokalizacji — tu NIE importujemy expo-location, żeby moduł działał też w Node/Jest.
  */
 
-import type { EpochMillis } from '../types/time';
-
-/** Źródło obu czasów zdarzenia. Wstrzykiwane do `EventsRepo` (testowalność). */
-export interface Clock {
-  /** Zegar telefonu (UTC, epoch ms). */
-  now(): EpochMillis;
-  /** Czas ostatniego świeżego fixa GPS (UTC, epoch ms) — null gdy brak/nieświeży. */
-  gpsTime(): EpochMillis | null;
-}
+import type { EpochMillis } from '../domain';
+import type { ClockPort } from '../application/ports';
 
 /**
  * Zegar produkcyjny. `now()` = `Date.now()`. `gpsTime()` zwraca surowy czas ostatniego
@@ -28,7 +20,7 @@ export interface Clock {
  *
  * Hook lokalizacji woła `setGpsFix(fix.timestamp)` przy każdym odczycie GPS.
  */
-export class DeviceClock implements Clock {
+export class DeviceClock implements ClockPort {
   private lastGpsMs: EpochMillis | null = null;
   private lastFixDeviceMs: EpochMillis | null = null;
 
@@ -66,7 +58,7 @@ export class DeviceClock implements Clock {
  * Zegar deterministyczny do testów. `now()` można krokować `advance()`.
  * `gpsTime()` zwraca ustaloną wartość (null = brak fixa).
  */
-export class FixedClock implements Clock {
+export class FixedClock implements ClockPort {
   constructor(
     private current: EpochMillis,
     private gps: EpochMillis | null = null,

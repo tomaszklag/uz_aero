@@ -25,8 +25,8 @@ import {
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
 
-import { ThemeProvider, useTheme } from './src/theme';
-import { AppText, Screen, SyncChip, ThemePicker } from './src/components';
+import { ThemeProvider, useTheme } from './src/ui/theme';
+import { AppText, Screen, SyncChip, ThemePicker } from './src/ui/components';
 
 export default function App() {
   return (

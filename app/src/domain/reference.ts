@@ -1,11 +1,17 @@
 /**
- * UZ Aero — cache referencyjny (docs/_main.md.txt §5.2, §5.4, §4.8).
+ * UZ Aero — dane referencyjne (docs/_main.md.txt §5.2, §5.4, §4.8).
  *
- * Dane „wolnozmienne" z serwera trzymane lokalnie jako fallback offline: lista
- * samolotów z konfiguracją i lista pilotów. Każdy rekord niesie `fetchedAt` —
- * UI dokleja adnotację wieku („· z cache · sync 21 JUN 17:30", §4.8, §6).
+ * Dane „wolnozmienne" z serwera: lista samolotów z konfiguracją i lista pilotów.
+ * Każdy rekord niesie `fetchedAt` — UI dokleja adnotację wieku („· z cache · sync
+ * 21 JUN 17:30", §4.8, §6).
  *
- * To NIE jest źródło prawdy sesji (tym jest strumień zdarzeń) — to podpowiedzi.
+ * DLACZEGO W DOMENIE, a nie w warstwie danych: konfiguracja samolotu (`capacityL`,
+ * `mhFormat`, `dualRequired`) jest wejściem REGUŁ domenowych — bez pojemności zbiorników
+ * nie da się sprawdzić inwariantu „paliwo po tankowaniu ≤ pojemność" (§3.4). To czyste
+ * typy danych, zero zależności od magazynu.
+ *
+ * To NIE jest źródło prawdy sesji (tym jest strumień zdarzeń) — to podpowiedzi
+ * (§4.1 pkt 5: liczniki fizyczne > dane z serwera).
  * Sekrety (JWT, PIN) mieszkają w expo-secure-store, nie tutaj (§5.2).
  */
 
@@ -63,15 +69,3 @@ export interface ReferencePilot {
   active: boolean;
   fetchedAt: EpochMillis;
 }
-
-/**
- * Klucze `session_meta` (§5.2 — key/value bieżącej sesji i zalogowanego pilota).
- * Trzymane jako string↔string; wartości strukturalne serializujemy do JSON.
- */
-export const SESSION_META_KEYS = {
-  currentSessionUuid: 'current_session_uuid',
-  currentPilotId: 'current_pilot_id',
-  currentAircraftId: 'current_aircraft_id',
-} as const;
-
-export type SessionMetaKey = (typeof SESSION_META_KEYS)[keyof typeof SESSION_META_KEYS];

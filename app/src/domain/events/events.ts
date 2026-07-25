@@ -18,7 +18,7 @@
  * `undefined`). Skrót `?` z opisu w dokumentacji = `| null` w tym modelu.
  */
 
-import type { EpochMillis } from './time';
+import type { EpochMillis } from '../time';
 
 /** Wersja schematu payloadu — bump przy każdej zmianie kształtu payloadów (§5.1). */
 export const CURRENT_SCHEMA_VERSION = 1;

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — implementacja `StorageAdapter` na `expo-sqlite` (docs/_main.md.txt §5.2).
+ * UZ Aero — ADAPTER `StoragePort` na `expo-sqlite` (docs/_main.md.txt §5.2).
  *
  * Schemat: `events` (append-only + `synced_at` NULL = outbox), `reference_aircraft`,
  * `reference_pilots`, `session_meta`. Payloady i `handover` trzymamy jako JSON w TEXT,
@@ -19,16 +19,18 @@ import {
   type SQLiteDatabase,
 } from 'expo-sqlite';
 
-import type { EpochMillis } from '../types/time';
-import { EVENT_TYPES, type Event, type EventType } from '../types/events';
-import type {
-  Handover,
-  MhFormat,
-  ReferenceAircraft,
-  ReferencePilot,
-  ServiceStatus,
-} from '../types/reference';
-import type { StorageAdapter } from './storageAdapter';
+import {
+  EVENT_TYPES,
+  type EpochMillis,
+  type Event,
+  type EventType,
+  type Handover,
+  type MhFormat,
+  type ReferenceAircraft,
+  type ReferencePilot,
+  type ServiceStatus,
+} from '../../domain';
+import type { StoragePort } from '../../application/ports';
 
 const DB_NAME = 'uzaero.db';
 /** Wersja schematu lokalnej bazy (PRAGMA user_version). Bump = nowa migracja. */
@@ -73,7 +75,7 @@ interface PilotRow {
   fetched_at: number;
 }
 
-export class ExpoSqliteAdapter implements StorageAdapter {
+export class ExpoSqliteAdapter implements StoragePort {
   private db: SQLiteDatabase | null = null;
 
   constructor(private readonly databaseName: string = DB_NAME) {}

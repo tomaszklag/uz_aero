@@ -1,32 +1,42 @@
 /**
  * UZ Aero — repozytorium zdarzeń (docs/_main.md.txt §4.1, §4.3, §4.8, §5.2).
  *
- * Warstwa nad `StorageAdapter`: nadaje `uuid`, stempluje dwa zegary, egzekwuje
- * idempotencję i wystawia outbox oraz cache referencyjny. Nie zna SQLite ani UI —
- * działa na dowolnym adapterze (produkcja: `ExpoSqliteAdapter`, testy: `InMemoryAdapter`).
+ * Serwis APLIKACYJNY nad portami: nadaje `uuid`, stempluje dwa zegary, egzekwuje
+ * idempotencję i wystawia outbox oraz cache referencyjny. Zależy wyłącznie od portów
+ * (`StoragePort`, `ClockPort`, `IdPort`) i domeny — nie zna SQLite, RN ani UI.
+ *
+ * CELOWO BEZ REGUŁ DOMENOWYCH: `appendEvent` zapisze każde poprawnie zbudowane zdarzenie.
+ * Inwarianty egzekwuje warstwa komend (`application/commands`), bo repozytorium musi umieć
+ * odtworzyć również historię, która powstała pod starszymi regułami (append-only).
+ * Kto chce sprawdzić regułę przed zapisem, używa pary `stampEvent` + `appendStamped`.
  *
  * Zegar i generator UUID są WSTRZYKIWANE (DI) — testy podają `FixedClock` i deterministyczny
  * `generateId`, więc asercje na czasie/uuid są powtarzalne. W RN można podać
  * `expo-crypto`.randomUUID jako `generateId` (mocniejsza losowość niż fallback).
  */
 
-import type { EpochMillis } from '../types/time';
 import {
   CURRENT_SCHEMA_VERSION,
   type AppendEventInput,
+  type EpochMillis,
   type Event,
-} from '../types/events';
-import type { ReferenceAircraft, ReferencePilot } from '../types/reference';
-import { SESSION_META_KEYS } from '../types/reference';
-import { defaultClock, type Clock } from '../utils/clock';
-import { uuidv4 } from '../utils/id';
-import type { StorageAdapter } from './storageAdapter';
+  type ReferenceAircraft,
+  type ReferencePilot,
+} from '../domain';
+import { SESSION_META_KEYS, type ClockPort, type IdPort, type StoragePort } from './ports';
 
+/**
+ * Zależności repozytorium — WYMAGANE, nie opcjonalne z domyślnymi wartościami.
+ *
+ * Gdyby miały domyślne (`clock = defaultClock`), warstwa aplikacji musiałaby importować
+ * infrastrukturę i kierunek zależności złamałby się w jednej linijce. Produkcyjne
+ * domyślne wiąże `infrastructure/createEventsRepo.ts` (composition root).
+ */
 export interface EventsRepoOptions {
-  /** Źródło `deviceTime`/`gpsTime`. Domyślnie `defaultClock`. */
-  clock?: Clock;
-  /** Generator UUID. Domyślnie `uuidv4`. */
-  generateId?: () => string;
+  /** Źródło `deviceTime`/`gpsTime`. */
+  clock: ClockPort;
+  /** Generator UUID (klucz idempotencji). */
+  generateId: IdPort;
 }
 
 /** Bieżący kontekst sesji zapisany w `session_meta` (§5.2). */
@@ -37,15 +47,20 @@ export interface CurrentSession {
 }
 
 export class EventsRepo {
-  private readonly clock: Clock;
-  private readonly generateId: () => string;
+  private readonly clock: ClockPort;
+  private readonly generateId: IdPort;
 
   constructor(
-    private readonly adapter: StorageAdapter,
-    options: EventsRepoOptions = {},
+    private readonly adapter: StoragePort,
+    options: EventsRepoOptions,
   ) {
-    this.clock = options.clock ?? defaultClock;
-    this.generateId = options.generateId ?? uuidv4;
+    this.clock = options.clock;
+    this.generateId = options.generateId;
+  }
+
+  /** Zegar użyty do stemplowania zdarzeń — komendy potrzebują go do reguł czasowych. */
+  get now(): EpochMillis {
+    return this.clock.now();
   }
 
   /** Przygotowuje magazyn (schemat/migracje). Woła się raz przy starcie aplikacji. */
@@ -66,6 +81,17 @@ export class EventsRepo {
    * zapisany (dedup po UUID, §4.1). Bezpieczne przy retry warstwy sync.
    */
   async appendEvent(input: AppendEventInput): Promise<Event> {
+    return this.appendStamped(this.stampEvent(input));
+  }
+
+  /**
+   * Buduje kompletne zdarzenie (uuid + oba zegary + wersja schematu) BEZ zapisu.
+   *
+   * Rozdzielone od zapisu, bo reguły domenowe (`checkAppend`) potrzebują kandydata
+   * z czasami — dopiero mając ostemplowane zdarzenie można sprawdzić np. okno korekty
+   * 24 h czy rozjazd device↔GPS. Warstwa komend robi: `stampEvent` → reguły → `appendStamped`.
+   */
+  stampEvent(input: AppendEventInput): Event {
     const uuid = input.uuid ?? this.generateId();
     const deviceTime = input.deviceTime ?? this.clock.now();
     const gpsTime = input.gpsTime !== undefined ? input.gpsTime : this.clock.gpsTime();
@@ -73,7 +99,7 @@ export class EventsRepo {
     // Rzut do `Event` jest bezpieczny: `AppendEventInput` to unia skorelowana
     // (para `type`↔`payload` wymuszona w miejscu wywołania). Dostęp do pól rozrywa
     // korelację dla kompilatora, ale nie w runtime — pary nie da się rozjechać.
-    const event = {
+    return {
       uuid,
       sessionUuid: input.sessionUuid,
       aircraftId: input.aircraftId,
@@ -86,10 +112,13 @@ export class EventsRepo {
       schemaVersion: input.schemaVersion ?? CURRENT_SCHEMA_VERSION,
       syncedAt: null,
     } as Event;
+  }
 
+  /** Zapisuje gotowe (ostemplowane) zdarzenie. Idempotentne — patrz `appendEvent`. */
+  async appendStamped(event: Event): Promise<Event> {
     const inserted = await this.adapter.insertEvent(event);
     if (!inserted) {
-      const existing = await this.adapter.getEventByUuid(uuid);
+      const existing = await this.adapter.getEventByUuid(event.uuid);
       return existing ?? event;
     }
     return event;
