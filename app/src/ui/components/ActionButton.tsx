@@ -31,11 +31,13 @@ export type ActionVariant = 'solid' | 'primary' | 'secondary';
 
 /**
  * Rozmiar etykiety i celu dotykowego — z mockupów:
- *  `lg` = `.btn-primary` (22 px / ls 3, wysokość ≥ 56) — główna akcja ekranu;
- *  `md` = `.modal-btn-*` (16 px / ls 2, wysokość ≥ 48) — para akcji w arkuszu, gdzie
- *         dwa przyciski dzielą szerokość i pełny rozmiar rozpychałby arkusz.
+ *  `hero` = `.start-engine` z kokpitu: układ pionowy, okrągła ikona 56 px, napis 28 px / ls 4.
+ *           Jedyna akcja na ekranie, którą trzeba trafić nie patrząc — stąd ta skala;
+ *  `lg`   = `.btn-primary` (22 px / ls 3, wysokość ≥ 56) — główna akcja formularza;
+ *  `md`   = `.modal-btn-*` (16 px / ls 2, wysokość ≥ 48) — para akcji w arkuszu, gdzie
+ *           dwa przyciski dzielą szerokość i pełny rozmiar rozpychałby arkusz.
  */
-export type ActionSize = 'lg' | 'md';
+export type ActionSize = 'hero' | 'lg' | 'md';
 
 export interface ActionButtonProps {
   label: string;
@@ -110,6 +112,7 @@ export function ActionButton({
   }, [cancelHold, disabled, holdMs, onPress, progress]);
 
   const solid = variant === 'solid';
+  const hero = size === 'hero';
   const background = disabled
     ? theme.colors.surfaceHover
     : solid
@@ -136,12 +139,12 @@ export function ActionButton({
         style={({ pressed }) => [
           styles.button,
           {
-            // Oba warianty zostają powyżej progu 44 px dla rękawic.
-            minHeight: size === 'lg' ? 56 : 48,
-            gap: theme.spacing.xs,
+            // Każdy wariant zostaje powyżej progu 44 px dla rękawic.
+            minHeight: hero ? 132 : size === 'lg' ? 56 : 48,
+            gap: hero ? theme.spacing.sm : theme.spacing.xs,
             paddingHorizontal: theme.spacing.lg,
-            paddingVertical: size === 'lg' ? theme.spacing.md : theme.spacing.sm,
-            borderRadius: size === 'lg' ? theme.radius.lg : theme.radius.md,
+            paddingVertical: hero ? 22 : size === 'lg' ? theme.spacing.md : theme.spacing.sm,
+            borderRadius: hero ? 20 : size === 'lg' ? theme.radius.lg : theme.radius.md,
             borderWidth: theme.borderWidth,
             borderColor: disabled ? theme.colors.border : solid ? c.accent : c.border,
             backgroundColor: background,
@@ -163,9 +166,25 @@ export function ActionButton({
           />
         )}
 
+        {/* `hero`: okrągła plakietka z ikoną nad napisem — cel, w który trzeba trafić,
+            nie patrząc na ekran. */}
+        {hero && icon != null && (
+          <View
+            style={[
+              styles.heroIcon,
+              { backgroundColor: disabled ? theme.colors.surfaceHover : c.accent },
+            ]}
+          >
+            {icon}
+          </View>
+        )}
+
         <View style={styles.row}>
-          {icon}
-          <AppText variant={size === 'lg' ? 'button' : 'buttonSmall'} style={{ color: labelColor }}>
+          {!hero && icon}
+          <AppText
+            variant={size === 'md' ? 'buttonSmall' : 'button'}
+            style={[hero ? styles.heroLabel : null, { color: labelColor }]}
+          >
             {label}
           </AppText>
           {trailingIcon}
@@ -173,8 +192,11 @@ export function ActionButton({
 
         {hint != null && (
           <AppText
-            variant="label"
-            style={{ color: solid && !disabled ? theme.colors.bg : theme.colors.textMuted }}
+            variant="mono"
+            style={[
+              styles.hint,
+              { color: solid && !disabled ? theme.colors.bg : theme.colors.textMuted },
+            ]}
           >
             {hint}
           </AppText>
@@ -194,5 +216,14 @@ export function ActionButton({
 const styles = StyleSheet.create({
   button: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  heroIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroLabel: { fontSize: 28, lineHeight: 30, letterSpacing: 4 },
+  hint: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', textAlign: 'center' },
   reason: { textAlign: 'center', marginTop: 6 },
 });

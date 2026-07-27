@@ -100,7 +100,9 @@ a nie przez jeden ekran.
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
 | `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | faza lotu ogromną czcionką | „Cockpit Running" |
-| `EventLog` | log dnia/cyklu, cele korekty ≥ 44 px | `.day-log`, `.cycle-log` |
+| `EventLog` | log dnia jako **oś cykli**: szyna z ikonami, chipy, cel korekty ≥ 44 px | `.day-log`, `.cycle-log` |
+| `DutyStrip` | licznik czasu służby od meldunku | `.duty-strip` |
+| `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine` |
 | `Sheet` | arkusz od dołu dla decyzji dotykających innych | `.modal-overlay` (przejęcie) |
 | `DetectToast` | toast autodetekcji: duży **COFNIJ** + licznik | `.detect-sheet` |
@@ -260,7 +262,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 124 testy, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 131 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -273,6 +275,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `flightDetector.test.ts` | automatu detekcji — patrz niżej |
 | `sqliteSchema.test.ts` | DDL na prawdziwym silniku SQLite — patrz niżej |
 | `format.test.ts` | formatowania i **parsowania** odczytów w obie strony |
+| `cockpitLog.test.ts` | budowania wierszy logu dnia, w tym wyliczenia łańcucha MH |
 
 `format.test.ts` pilnuje `parseMotoHours` — jedynego miejsca, w którym napis wpisany przez
 pilota staje się liczbą trafiającą do rejestru. Pomyłka o pół godziny nie wygląda tam na

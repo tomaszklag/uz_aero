@@ -17,25 +17,29 @@ import { View } from 'react-native';
 
 import {
   ActionButton,
+  ActionGrid,
   AppBar,
   AppText,
   Banner,
   Card,
   DetectToast,
+  DutyStrip,
   EventLog,
+  Icon,
   Metric,
   MetricGrid,
   PhaseHero,
   Screen,
   StatusChip,
   SyncChip,
-  type EventLogRow,
+  type ActionCardSpec,
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useGps } from '../bootstrap/ServicesProvider';
 import { useFlightDetection } from '../hooks/useFlightDetection';
-import { duration, durationLong, litres, motoHours, timeUtc } from '../format';
+import { duration, durationLong, litres, timeLocal, timeUtc } from '../format';
+import { buildLogRows } from './cockpitLog';
 import type { Event } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */
@@ -48,29 +52,6 @@ function useTicker(active: boolean): number {
   }, [active]);
   return now;
 }
-
-/** Etykiety zdarzeń po polsku — log ma być czytelny, nie techniczny. */
-const EVENT_LABEL: Record<string, string> = {
-  session_claim: 'Przejęcie samolotu',
-  preflight_confirm: 'Preflight',
-  engine_start: 'Start engine',
-  engine_stop: 'Stop engine',
-  takeoff: 'Takeoff',
-  landing: 'Landing',
-  drop: 'Zrzut',
-  refuel: 'Tankowanie',
-  crew_change: 'Zmiana załogi',
-  manual_log_entry: 'Wpis ręczny',
-  day_close: 'Zamknięcie dnia',
-};
-
-const EVENT_TONE: Record<string, 'green' | 'red' | 'blue' | 'amber' | 'neutral'> = {
-  engine_start: 'green',
-  engine_stop: 'red',
-  drop: 'blue',
-  refuel: 'amber',
-  day_close: 'red',
-};
 
 export function CockpitScreen({
   navigation,
@@ -141,15 +122,57 @@ export function CockpitScreen({
     projection.openTakeoffAt != null ? now - projection.openTakeoffAt : projection.flightTimeMs;
   const dutyMs = projection.dutyStart != null ? now - projection.dutyStart : 0;
 
-  const logRows: EventLogRow[] = [...events]
-    .sort((a, b) => (b.gpsTime ?? b.deviceTime) - (a.gpsTime ?? a.deviceTime))
-    .map((e) => ({
-      id: e.uuid,
-      time: timeUtc(e.gpsTime ?? e.deviceTime),
-      label: EVENT_LABEL[e.type] ?? e.type,
-      tone: EVENT_TONE[e.type] ?? 'neutral',
-      pending: e.syncedAt == null,
-    }));
+  const logRows = buildLogRows(events, projection, projection.mhFormat ?? 'decimal');
+
+  /**
+   * Akcje naziemne (`.action-grid` z mockupu 04). Każda niesie podpis ze stanem, żeby
+   * pilot widział, czy warto tam wchodzić. Widoczne wyłącznie przy wyłączonym silniku —
+   * to są czynności na ziemi, a §3.2 nie pozwala ich mieszać z lotem.
+   *
+   * Ekrany docelowe (06 / 07 / 08 / 09) jeszcze nie istnieją, więc karty są **zablokowane
+   * z podanym powodem** zamiast prowadzić w pustkę. Ukrycie ich byłoby gorsze: pilot nie
+   * dowiedziałby się, że te czynności w ogóle są przewidziane.
+   */
+  const soon = 'Ekran w budowie';
+  const groundActions: ActionCardSpec[] = [
+    {
+      id: 'refuel',
+      icon: 'refuel',
+      label: 'Tankowanie',
+      tone: 'amber',
+      sub:
+        projection.fuel.addedL > 0
+          ? `Dolane dziś: ${litres(projection.fuel.addedL)}`
+          : `Na pokładzie: ${litres(projection.fuel.lastReadingL)}`,
+      disabledReason: soon,
+      onPress: () => undefined,
+    },
+    {
+      id: 'crew',
+      icon: 'crew',
+      label: 'Zmiana załogi',
+      sub: `PIC: ${projection.picId ?? '—'}${projection.dualId != null ? ` · DUAL: ${projection.dualId}` : ''}`,
+      disabledReason: soon,
+      onPress: () => undefined,
+    },
+    {
+      id: 'manual',
+      icon: 'manual-log',
+      label: 'Lista ręczna',
+      sub: `Fallback GPS · ${projection.flights.length} lotów`,
+      disabledReason: soon,
+      onPress: () => undefined,
+    },
+    {
+      id: 'end-day',
+      icon: 'end-day',
+      label: 'Zakończ dzień',
+      tone: 'red',
+      sub: 'Statystyki + synchronizacja',
+      disabledReason: soon,
+      onPress: () => undefined,
+    },
+  ];
 
   return (
     <Screen scroll padded={false}>
@@ -187,14 +210,16 @@ export function CockpitScreen({
           />
         )}
 
-        {/* ── akcja główna ─────────────────────────────────────────────── */}
+        {/* ── akcja główna (`.start-engine`) ───────────────────────────── */}
         {engineOn ? (
           <ActionButton
             label="STOP ENGINE"
             tone="red"
+            size="hero"
+            icon={<Icon name="stop" size={22} color={theme.colors.bg} />}
             holdMs={2000}
             busy={busy}
-            hint="przytrzymaj 2 s"
+            hint="Przytrzymaj 2 sekundy aby potwierdzić"
             // Zatrzymanie silnika w powietrzu byłoby fałszywym wpisem — blokujemy
             // z podanym powodem, nie po cichu (§3.2).
             disabledReason={inFlight ? 'Silnik zatrzymasz po wylądowaniu i dobiegu' : null}
@@ -204,10 +229,20 @@ export function CockpitScreen({
           <ActionButton
             label="START ENGINE"
             tone="green"
+            size="hero"
+            icon={<Icon name="start" size={24} color={theme.colors.bg} />}
             holdMs={2000}
             busy={busy}
-            hint="przytrzymaj 2 s"
+            hint="Przytrzymaj 2 sekundy aby potwierdzić"
             onPress={handleStart}
+          />
+        )}
+
+        {/* ── czas służby (`.duty-strip`) — tylko na ziemi ──────────────── */}
+        {!engineOn && projection.dutyStart != null && (
+          <DutyStrip
+            elapsed={duration(dutyMs)}
+            since={`Meldunek ${timeUtc(projection.dutyStart)} UTC · ${timeLocal(projection.dutyStart)} LT`}
           />
         )}
 
@@ -228,54 +263,44 @@ export function CockpitScreen({
           />
         )}
 
-        {/* ── parametry ────────────────────────────────────────────────── */}
-        <MetricGrid>
-          {engineOn ? (
-            <>
-              <Metric label="Ground speed" value={`${Math.round(fix?.groundSpeedKt ?? 0)}`} unit="KT" />
-              <Metric
-                label="Altitude"
-                value={fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—'}
-                unit="FT"
-              />
-              <Metric
-                label="Fuel on board"
-                value={litres(projection.fuel.lastReadingL)}
-                tone="amber"
-                emphasis
-              />
-              <Metric
-                label="Flight time"
-                value={duration(liveFlightMs)}
-                tone={inFlight ? 'green' : 'neutral'}
-                emphasis={inFlight}
-              />
-            </>
-          ) : (
-            <>
-              <Metric label="Duty time" value={duration(dutyMs)} />
-              <Metric label="Block time" value={duration(liveBlockMs)} />
-              <Metric label="Loty" value={`${projection.flights.length}`} />
-              <Metric
-                label="Starty / lądowania"
-                value={`${projection.takeoffCount} / ${projection.landingCount}`}
-              />
-              <Metric label="Paliwo" value={litres(projection.fuel.lastReadingL)} tone="amber" />
-              <Metric
-                label="Motogodziny"
-                value={motoHours(projection.mh.end ?? projection.mh.start, projection.mhFormat)}
-              />
-            </>
-          )}
-        </MetricGrid>
+        {/* ── parametry GPS — wyłącznie w locie (mockup 05) ─────────────── */}
+        {engineOn && (
+          <MetricGrid>
+            <Metric label="Ground speed" value={`${Math.round(fix?.groundSpeedKt ?? 0)}`} unit="KT" />
+            <Metric
+              label="Altitude"
+              value={fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—'}
+              unit="FT"
+            />
+            <Metric
+              label="Fuel on board"
+              value={litres(projection.fuel.lastReadingL)}
+              tone="amber"
+              emphasis
+            />
+            <Metric
+              label="Flight time"
+              value={duration(liveFlightMs)}
+              tone={inFlight ? 'green' : 'neutral'}
+              emphasis={inFlight}
+            />
+          </MetricGrid>
+        )}
 
-        {/* ── log ──────────────────────────────────────────────────────── */}
+        {/* ── log dnia (`.day-log`) ────────────────────────────────────── */}
         <Card
-          title={`LOG DNIA · UTC · ${projection.engineRuns.length} CYKLI · ${projection.takeoffCount} T/O`}
+          title={`Log dnia · UTC · ${projection.engineRuns.length} cykli · ${projection.takeoffCount} T/O`}
           flush
         >
+          {/* TODO: `onCorrect` → ekran 04c. Korekta wymaga nowego typu zdarzenia
+              w domenie (rejestr jest append-only, więc poprawka to osobny wpis),
+              więc dopinamy ją razem z tamtym ekranem — pusty ołówek byłby gorszy
+              niż jego brak. */}
           <EventLog rows={logRows} emptyText="Brak zdarzeń — zacznij od START ENGINE." />
         </Card>
+
+        {/* ── akcje naziemne (`.action-grid`) ──────────────────────────── */}
+        {!engineOn && <ActionGrid actions={groundActions} />}
 
         {engineOn && projection.openEngineStartAt != null && (
           <AppText variant="mono" tone="green" style={{ textAlign: 'center' }}>

@@ -53,6 +53,17 @@ const REGISTRY = {
   // akcje kokpitu
   start: f('play'),
   stop: f('square'),
+  takeoff: f('arrow-up'),
+  landing: f('arrow-down'),
+  settings: f('settings'),
+  more: f('chevron-right'),
+
+  // akcje naziemne (siatka na 04)
+  refuel: m('fuel'),
+  crew: f('user-check'),
+  'manual-log': f('file-text'),
+  'end-day': f('log-out'),
+  drop: m('parachute'),
 
   // obiekty
   aircraft: m('airplane'),

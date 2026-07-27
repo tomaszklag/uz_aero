@@ -50,6 +50,8 @@ export * from './SummaryGrid';
 export * from './Metric';
 export * from './PhaseHero';
 export * from './EventLog';
+export * from './DutyStrip';
+export * from './ActionGrid';
 export * from './ActionButton';
 export * from './DetectToast';
 
