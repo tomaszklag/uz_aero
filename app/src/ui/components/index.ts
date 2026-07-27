@@ -11,6 +11,7 @@ export * from './tone';
 // Fundament
 export * from './Screen';
 export * from './AppText';
+export * from './CheckIcon';
 
 // Kontenery i nagłówki
 export * from './Card';

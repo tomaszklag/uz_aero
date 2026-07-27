@@ -16,6 +16,7 @@ import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
 import { AppText } from './AppText';
+import { CheckIcon } from './CheckIcon';
 import { toneColors, type Tone } from './tone';
 
 export interface PickerOption<T extends string> {
@@ -115,7 +116,9 @@ export function CardPicker<T extends string>({
                 </View>
               )}
 
-              {/* Znacznik wyboru — kółko, jak w mockupach (.aircraft-check). */}
+              {/* Znacznik wyboru — kółko z ptaszkiem, jak w mockupach (.aircraft-check).
+                  Sam zielony krążek nie wystarcza: kolor jest sygnałem słabym (rękawice,
+                  słońce, motywy jasne, daltonizm), ptaszek jest jednoznaczny kształtem. */}
               <View
                 style={[
                   styles.check,
@@ -124,7 +127,9 @@ export function CardPicker<T extends string>({
                     backgroundColor: selected ? green.accent : 'transparent',
                   },
                 ]}
-              />
+              >
+                {selected && <CheckIcon size={12} color={theme.colors.bg} />}
+              </View>
             </View>
 
             {onSecondary != null && secondaryLabel != null && opt.disabledReason == null && (
@@ -150,5 +155,12 @@ const styles = StyleSheet.create({
   card: { justifyContent: 'center' },
   main: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   texts: { flex: 1, gap: 2 },
-  check: { width: 20, height: 20, borderRadius: 10, borderWidth: 2 },
+  check: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

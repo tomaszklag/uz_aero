@@ -74,6 +74,7 @@ a nie przez jeden ekran.
 |---|---|---|
 | `Screen` | tło, safe area, scroll | wszystkie ekrany |
 | `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`) | wszystkie |
+| `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
 | `AppBar` | pasek: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
 | `Card` | karta z opcjonalnym nagłówkiem | `.section` / `.card` / `.day-log` |
 | `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
@@ -92,6 +93,12 @@ Trzy rzeczy w `ActionButton` nie są ozdobnikiem: przytrzymanie chroni przed
 przypadkowym dotknięciem w wibracjach, powód blokady jest **widocznym tekstem** (nie
 tooltipem — `title` w RN nie istnieje), a cel dotykowy ma ≥ 44 px, bo pilot pracuje
 w rękawicach.
+
+`CheckIcon` powstał, bo zaznaczenie w `CardPicker` było wyłącznie zielonym krążkiem —
+czyli sygnałem **wyłącznie kolorystycznym**. W słońcu, w motywach jasnych i przy
+daltonizmie to za mało; kształt ptaszka niesie tę informację niezależnie od koloru.
+Rysujemy go layoutem RN, a nie `react-native-svg` ani fontem ikon — obie te biblioteki
+są modułami natywnymi i wymuszałyby przebudowę dev clienta.
 
 `Stepper` istnieje z konkretnego powodu: audyt użyteczności wykazał, że dolewka paliwa
 była ustawiana uchwytem suwaka 16×16 px na torze 312 px — około **1,4 litra na piksel**.
@@ -221,7 +228,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 86 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 115 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -232,6 +239,18 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `repo.test.ts` | append, outbox (`syncedAt IS NULL`), `markSynced`, dedup po uuid, dwa zegary |
 | `store.test.ts` | cienkiej warstwy Zustand nad aplikacją |
 | `flightDetector.test.ts` | automatu detekcji — patrz niżej |
+| `sqliteSchema.test.ts` | DDL na prawdziwym silniku SQLite — patrz niżej |
+
+**`sqliteSchema.test.ts` zamyka jedyną lukę, przez którą błąd doszedł na telefon.**
+Adapter importuje `expo-sqlite`, więc schemat był poza zasięgiem testów w Node — i właśnie
+tam ukrył się `rowid` na liście kolumn `CREATE INDEX` (legalny w `ORDER BY`, odrzucany
+w indeksie). `tsc` i 103 testy przeszły; aplikacja wysypała się przy pierwszym starcie
+na urządzeniu. Dlatego DDL mieszka teraz w `infrastructure/storage/schema.ts` jako czysty
+tekst i jest uruchamiany na `node:sqlite` (silnik wbudowany w Node 24 — zero zależności).
+Test sprawdza też rzeczy, na których adapter milcząco polega: idempotencję migracji,
+zgodność `SCHEMA_VERSION` z liczbą migracji, listy kolumn (kontrakt z `EventRow`
+i spółką — literówka w nazwie kolumny nie jest błędem typów, tylko `undefined` w runtime),
+użycie indeksu przez planer oraz sortowanie po `rowid`.
 
 **`flightDetector.test.ts` odtwarza sytuacje, których nie da się wyklikać na biurku.**
 Consumer-grade GPS kłamie, a §8 klasyfikuje fałszywe detekcje jako ryzyko 🔴. Testy

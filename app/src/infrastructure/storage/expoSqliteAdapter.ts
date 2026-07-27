@@ -31,10 +31,11 @@ import {
   type ServiceStatus,
 } from '../../domain';
 import type { StoragePort } from '../../application/ports';
+// Schemat trzymamy osobno, bo dzięki temu da się go uruchomić w Node i przetestować
+// na prawdziwym silniku SQLite — patrz `schema.ts` i `sqliteSchema.test.ts`.
+import { MIGRATIONS, SCHEMA_VERSION } from './schema';
 
 const DB_NAME = 'uzaero.db';
-/** Wersja schematu lokalnej bazy (PRAGMA user_version). Bump = nowa migracja. */
-const SCHEMA_VERSION = 1;
 
 // ── kształty wierszy tak, jak wracają z SQLite ──────────────────────────────────
 
@@ -88,65 +89,16 @@ export class ExpoSqliteAdapter implements StoragePort {
     const versionRow = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version;');
     const current = versionRow?.user_version ?? 0;
 
-    if (current < 1) {
-      await this.migrateTo1(db);
+    // Migracje stosujemy po kolei od bieżącej wersji — jedno źródło DDL (`schema.ts`),
+    // wspólne z testem schematu.
+    for (let v = current; v < MIGRATIONS.length; v += 1) {
+      await db.execAsync(MIGRATIONS[v]);
     }
 
     // PRAGMA nie przyjmuje parametrów — wartość to nasza stała liczbowa (bezpieczne).
     await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   }
 
-  private async migrateTo1(db: SQLiteDatabase): Promise<void> {
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS events (
-        uuid           TEXT PRIMARY KEY NOT NULL,
-        session_uuid   TEXT NOT NULL,
-        aircraft_id    TEXT NOT NULL,
-        pic_id         TEXT NOT NULL,
-        dual_id        TEXT,
-        type           TEXT NOT NULL,
-        device_time    INTEGER NOT NULL,
-        gps_time       INTEGER,
-        payload        TEXT NOT NULL,
-        schema_version INTEGER NOT NULL,
-        synced_at      INTEGER
-      );
-      -- UWAGA: SQLite NIE pozwala umiescic rowid na liscie kolumn indeksu
-      -- (blad: "no such column: rowid"), choc w ORDER BY jest legalny. Nie trzeba go
-      -- zreszta wymieniac: rowid jest lokalizatorem wiersza w kazdym indeksie, wiec po
-      -- trafieniu w session_uuid / synced_at sortowanie po rowid i tak idzie po indeksie.
-      CREATE INDEX IF NOT EXISTS idx_events_session ON events (session_uuid);
-      CREATE INDEX IF NOT EXISTS idx_events_outbox  ON events (synced_at);
-
-      CREATE TABLE IF NOT EXISTS reference_aircraft (
-        id             TEXT PRIMARY KEY NOT NULL,
-        reg            TEXT NOT NULL,
-        type           TEXT NOT NULL,
-        year           INTEGER,
-        capacity_l     REAL NOT NULL,
-        mh_format      TEXT NOT NULL,
-        dual_required  INTEGER NOT NULL,
-        service_status TEXT NOT NULL,
-        claim_pic      TEXT,
-        claim_since    INTEGER,
-        handover       TEXT,
-        fetched_at     INTEGER NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS reference_pilots (
-        id         TEXT PRIMARY KEY NOT NULL,
-        code       TEXT NOT NULL,
-        name       TEXT NOT NULL,
-        active     INTEGER NOT NULL,
-        fetched_at INTEGER NOT NULL
-      );
-
-      CREATE TABLE IF NOT EXISTS session_meta (
-        key   TEXT PRIMARY KEY NOT NULL,
-        value TEXT NOT NULL
-      );
-    `);
-  }
 
   private getDb(): SQLiteDatabase {
     if (!this.db) {

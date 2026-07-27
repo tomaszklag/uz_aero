@@ -1,0 +1,76 @@
+/**
+ * UZ Aero — schemat lokalnej bazy (DDL) jako czysty tekst.
+ *
+ * DLACZEGO OSOBNY MODUŁ: adapter importuje `expo-sqlite`, którego nie ma w Node, więc
+ * schemat był jedyną warstwą bez testów — i to właśnie w nim ukrył się błąd, który
+ * wyszedł dopiero na urządzeniu (`rowid` na liście kolumn indeksu; SQLite tego nie
+ * przyjmuje, choć w `ORDER BY` jest legalny).
+ *
+ * Trzymając DDL tutaj, uruchamiamy go w teście na prawdziwym silniku SQLite
+ * (`node:sqlite`, wbudowany w Node) i wyłapujemy takie rzeczy w sekundę, bez telefonu.
+ * Adapter i test korzystają z tego samego źródła — nie da się poprawić jednego,
+ * zapominając o drugim.
+ *
+ * Model danych: §5.2 dokumentacji. `events` jest append-only; `synced_at IS NULL`
+ * wyznacza outbox (§4.3).
+ */
+
+/** Wersja schematu — sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
+export const SCHEMA_VERSION = 1;
+
+/**
+ * Migracja 0 → 1: pełny schemat początkowy.
+ *
+ * Uwaga o indeksach: NIE wymieniamy `rowid` na liście kolumn (SQLite odrzuca to błędem
+ * „no such column: rowid"). Nie trzeba go zresztą podawać — rowid jest lokalizatorem
+ * wiersza w każdym indeksie, więc po trafieniu w `session_uuid` / `synced_at`
+ * sortowanie po rowid nadal idzie po indeksie.
+ */
+export const MIGRATION_1 = `
+  CREATE TABLE IF NOT EXISTS events (
+    uuid           TEXT PRIMARY KEY NOT NULL,
+    session_uuid   TEXT NOT NULL,
+    aircraft_id    TEXT NOT NULL,
+    pic_id         TEXT NOT NULL,
+    dual_id        TEXT,
+    type           TEXT NOT NULL,
+    device_time    INTEGER NOT NULL,
+    gps_time       INTEGER,
+    payload        TEXT NOT NULL,
+    schema_version INTEGER NOT NULL,
+    synced_at      INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_events_session ON events (session_uuid);
+  CREATE INDEX IF NOT EXISTS idx_events_outbox  ON events (synced_at);
+
+  CREATE TABLE IF NOT EXISTS reference_aircraft (
+    id             TEXT PRIMARY KEY NOT NULL,
+    reg            TEXT NOT NULL,
+    type           TEXT NOT NULL,
+    year           INTEGER,
+    capacity_l     REAL NOT NULL,
+    mh_format      TEXT NOT NULL,
+    dual_required  INTEGER NOT NULL,
+    service_status TEXT NOT NULL,
+    claim_pic      TEXT,
+    claim_since    INTEGER,
+    handover       TEXT,
+    fetched_at     INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS reference_pilots (
+    id         TEXT PRIMARY KEY NOT NULL,
+    code       TEXT NOT NULL,
+    name       TEXT NOT NULL,
+    active     INTEGER NOT NULL,
+    fetched_at INTEGER NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS session_meta (
+    key   TEXT PRIMARY KEY NOT NULL,
+    value TEXT NOT NULL
+  );
+`;
+
+/** Migracje w kolejności stosowania: indeks = wersja docelowa − 1. */
+export const MIGRATIONS: readonly string[] = [MIGRATION_1];
