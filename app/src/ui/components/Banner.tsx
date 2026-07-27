@@ -21,6 +21,7 @@ import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
 import { AppText } from './AppText';
+import { Icon, type IconName } from './Icon';
 import { toneColors, type Tone } from './tone';
 
 export type BannerKind = 'status' | 'warning' | 'edu';
@@ -29,6 +30,8 @@ export interface BannerProps {
   kind: BannerKind;
   title?: string;
   text: string;
+  /** Ikona po lewej (mockupy mają ją przy ostrzeżeniach — `.warning-box`). */
+  icon?: IconName;
   /** Ton akcentu; domyślnie dobierany po rodzaju. */
   tone?: Tone;
   /** Dotyczy wyłącznie `edu`: czy baner jest schowany do mini-chipu. */
@@ -50,6 +53,7 @@ export function Banner({
   kind,
   title,
   text,
+  icon,
   tone,
   dismissed = false,
   onDismiss,
@@ -104,14 +108,19 @@ export function Banner({
         style,
       ]}
     >
-      {title != null && (
-        <AppText variant="label" style={{ color: c.accent }}>
-          {title}
-        </AppText>
-      )}
-      <AppText variant="body" tone="secondary">
-        {text}
-      </AppText>
+      <View style={styles.row}>
+        {icon != null && <Icon name={icon} size={20} color={c.accent} style={styles.icon} />}
+        <View style={styles.content}>
+          {title != null && (
+            <AppText variant="label" style={{ color: c.accent }}>
+              {title}
+            </AppText>
+          )}
+          <AppText variant="body" tone="secondary">
+            {text}
+          </AppText>
+        </View>
+      </View>
 
       {dismissible && (
         <Pressable
@@ -132,6 +141,9 @@ export function Banner({
 
 const styles = StyleSheet.create({
   banner: { position: 'relative' },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  content: { flex: 1, gap: 4 },
+  icon: { marginTop: 1 },
   close: {
     position: 'absolute',
     top: 6,

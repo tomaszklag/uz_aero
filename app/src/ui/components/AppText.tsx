@@ -20,6 +20,8 @@ export type AppTextVariant =
   | 'timer'
   | 'param'
   | 'paramLabel'
+  | 'button'
+  | 'buttonSmall'
   | 'body'
   | 'label'
   | 'mono';
@@ -38,6 +40,8 @@ const VARIANT_TOKEN: Record<AppTextVariant, TypographyName> = {
   timer: 'timer_large',
   param: 'param_value',
   paramLabel: 'param_label',
+  button: 'button',
+  buttonSmall: 'button_small',
   body: 'body',
   label: 'label',
   mono: 'mono_code',

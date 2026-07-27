@@ -1,28 +1,61 @@
 /**
  * UZ Aero — 02A PREFLIGHT · krok 2/3: paliwo i motogodziny.
  *
- * Najważniejszy ekran całego preflightu, bo to tutaj powstaje **początek łańcucha MH**
- * (§4.5) — wartość, po której serwer porządkuje sesje samolotu.
+ * Odwzorowanie mockupu `design/02a-preflight.html` wraz z arkuszami korekty z 02b/02c.
+ * Struktura stamtąd: [box „brak danych"] → sekcja PALIWO → sekcja MOTOGODZINY →
+ * poświadczenie → DALEJ.
+ *
+ * Najważniejszy ekran preflightu, bo tutaj powstaje **początek łańcucha MH** (§4.5) —
+ * wartość, po której serwer porządkuje sesje samolotu.
  *
  * Zasada nadrzędna (`CLAUDE.md`): **liczniki fizyczne > dane z serwera**. Przekazanie
- * od poprzednika jest podpowiedzią, nie prawdą — pilot patrzy na paliwomierz i licznik
- * w samolocie. Dlatego:
- *  • gdy jest przekazanie — pokazujemy je z kontekstem (kto, kiedy) i wiekiem danych;
- *  • gdy go brak — mówimy wprost „wpisz z licznika", zamiast podstawiać zero jako fakt;
- *  • każda zmiana względem przekazania jest widoczna jako różnica, nie cichy nadpis.
+ * od poprzednika jest podpowiedzią, nie prawdą. Dlatego każda wartość niesie adnotację
+ * świeżości (§4.8: `live` bez adnotacji / `cache` z datą synchronizacji / `brak`),
+ * historię, która do niej doprowadziła, i korektę na wyciągnięcie kciuka.
  *
- * Format MH (`decimal` / `hhmm`) pochodzi z konfiguracji samolotu (§5.4) — w danych
- * trzymamy zawsze godziny dziesiętne, formatowanie jest sprawą UI.
+ * Świeżość i łączność to **dwie różne osie** (komentarz z mockupu): „brak" zdarza się
+ * też online — nowy samolot we flocie albo przejęcie bez danych.
  */
 
-import React from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
-import { ActionButton, AppText, Banner, Card, Screen, Stepper, SyncChip } from '../components';
+import {
+  ActionButton,
+  AppText,
+  Icon,
+  InlineNote,
+  LevelBar,
+  ReadingSheet,
+  Readout,
+  Screen,
+  ScreenHeader,
+  SyncChip,
+  type Freshness,
+  type TrailRow,
+} from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
-import { litres, motoHours, timeUtc } from '../format';
+import {
+  dateUtcLong,
+  duration,
+  litres,
+  motoHours,
+  parseLitres,
+  parseMotoHours,
+  timeUtc,
+} from '../format';
+import type { HandoverTrailEntry, ReferencePilot } from '../../domain';
+
+/** Próg, powyżej którego rozbieżność wobec przekazania wymaga świadomego potwierdzenia. */
+const FUEL_WARN_L = 10;
+const MH_WARN_H = 0.5;
+
+/** „21 JUNE 09:15" — datownik osi czasu (mockup 02a). */
+function stamp(t: number): string {
+  return `${dateUtcLong(t).replace(/ \d{4}$/, '')} ${timeUtc(t)}`;
+}
 
 export function PreflightReadingsScreen({
   navigation,
@@ -34,9 +67,106 @@ export function PreflightReadingsScreen({
   const outboxCount = useSessionStore((s) => s.outboxCount);
 
   const draft = usePreflightDraft();
+  const [pilots, setPilots] = useState<ReferencePilot[]>([]);
+  const [editing, setEditing] = useState<'fuel' | 'mh' | null>(null);
+
+  const queries = useSessionStore((s) => s.queries);
+  React.useEffect(() => {
+    if (!queries) return;
+    void queries.pilots().then(setPilots);
+  }, [queries]);
+
   const aircraft = draft.aircraft;
   const handover = aircraft?.handover ?? null;
   const mhFormat = draft.mhFormat();
+
+  const pilotName = useCallback(
+    (id: string | null): string => pilots.find((p) => p.id === id)?.name ?? id ?? 'Poprzedni pilot',
+    [pilots],
+  );
+
+  /**
+   * Stan świeżości (§4.8). Bez przekazania jest `brak` — niezależnie od sieci.
+   * Z przekazaniem: gdy jesteśmy online, wartości są tak świeże, jak ostatni kontakt
+   * z serwerem (`live`); offline to z definicji dane z ostatniej synchronizacji (`cache`).
+   */
+  const freshness: Freshness = handover == null ? 'brak' : synced ? 'live' : 'cache';
+  const syncedAt = aircraft != null ? stamp(aircraft.fetchedAt) : null;
+
+  // ── oś czasu: dane → napisy ──────────────────────────────────────────────────
+  const trails = useMemo(() => {
+    const entries = [...(handover?.trail ?? [])].sort((a, b) => a.at - b.at);
+    const fuel: TrailRow[] = [];
+    const mh: TrailRow[] = [];
+    let lastFuel: number | null = null;
+
+    for (const e of entries) {
+      if (e.kind === 'refuel' && e.fuelDeltaL != null) {
+        fuel.push({
+          id: `f-${e.at}`,
+          tone: 'amber',
+          title: `Tankowanie · ${stamp(e.at)}`,
+          meta: [
+            `dolano +${Math.round(e.fuelDeltaL)} L`,
+            e.fuelAfterL != null ? `w zbiorniku ${litres(e.fuelAfterL)}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        });
+      }
+
+      if (e.kind === 'duty_start') {
+        mh.push({
+          id: `m-${e.at}`,
+          title: `Start służby · ${stamp(e.at)}`,
+          meta: `przed włączeniem ${motoHours(e.mhAfter, mhFormat)} MH`,
+        });
+      }
+
+      if (e.kind === 'flight') {
+        const flown = e.durationMs != null ? duration(e.durationMs) : null;
+        const hours = e.durationMs != null ? e.durationMs / 3_600_000 : null;
+        const title = `${pilotName(e.pilotId)} latał${flown != null ? ` · ${flown}` : ''}`;
+
+        // Średnie liczymy z danych, nie przepisujemy — inaczej rozjechałyby się
+        // z wartościami obok, gdy serwer przyśle inne liczby.
+        const used = lastFuel != null && e.fuelAfterL != null ? lastFuel - e.fuelAfterL : null;
+        fuel.push({
+          id: `f-${e.at}`,
+          title,
+          meta: [
+            used != null && hours ? `śr. ${(used / hours).toFixed(1)} L/h` : null,
+            e.fuelAfterL != null ? `zostało ${litres(e.fuelAfterL)}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        });
+
+        mh.push({
+          id: `m-${e.at}`,
+          title,
+          meta:
+            e.mhAfter != null
+              ? `po wyłączeniu ${motoHours(e.mhAfter, mhFormat)} MH`
+              : 'brak odczytu licznika',
+        });
+      }
+
+      if (e.fuelAfterL != null) lastFuel = e.fuelAfterL;
+    }
+
+    return { fuel, mh };
+  }, [handover, mhFormat, pilotName]);
+
+  const applyReading = useCallback(
+    (key: 'fuelL' | 'mh', value: number) => {
+      draft.set(key, value);
+      // Ręczna korekta zrywa więź z przekazaniem — od tej chwili źródłem jest licznik.
+      draft.set('readingSource', 'manual');
+      setEditing(null);
+    },
+    [draft],
+  );
 
   if (aircraft == null) {
     return (
@@ -49,118 +179,155 @@ export function PreflightReadingsScreen({
   }
 
   const capacity = aircraft.capacityL;
-  const fuelDiff = handover != null ? draft.fuelL - handover.reading.fuelL : 0;
+  const missing = freshness === 'brak';
   const mhDiff = handover != null ? draft.mh - handover.reading.mh : 0;
+  // Bez odczytów nie da się rozpocząć łańcucha MH — to jedyna twarda blokada tego kroku.
+  const noReadings = draft.fuelL <= 0 && draft.mh <= 0;
 
   return (
-    <Screen scroll>
+    <Screen
+      scroll
+      header={
+        <ScreenHeader
+          title="PREFLIGHT"
+          step="2 / 3"
+          onBack={navigation.goBack}
+          right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+        />
+      }
+    >
       <View style={{ gap: theme.spacing.md }}>
-        <View style={styles.headerRow}>
-          <AppText variant="display">ODCZYTY</AppText>
-          <View style={styles.headerRight}>
-            <AppText variant="label" tone="muted">
-              KROK 2 / 3
-            </AppText>
-            <SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />
-          </View>
-        </View>
-
-        {/* Stan świeżości danych przekazania — trzy przypadki (§4.8). */}
-        {handover != null ? (
-          <Banner
-            kind="status"
-            title="Przekazanie od poprzednika"
-            text={`${litres(handover.reading.fuelL)} · ${motoHours(handover.reading.mh, mhFormat)} MH · ${
-              handover.byPilotId
-            } · ${timeUtc(handover.at)} UTC. To podpowiedź — sprawdź liczniki w samolocie.`}
-          />
-        ) : (
-          <Banner
-            kind="warning"
-            title="Brak danych przekazania"
-            text={
-              'Nie mamy odczytów od poprzedniego pilota. Wpisz stan z paliwomierza i licznika ' +
-              'motogodzin — Twój odczyt rozpocznie nowe ogniwo łańcucha.'
-            }
-          />
-        )}
-
-        {/* ── paliwo ──────────────────────────────────────────────────── */}
-        <Card title={`PALIWO NA POKŁADZIE · POJEMNOŚĆ ${capacity} L`}>
-          <Stepper
-            value={draft.fuelL}
-            onChange={(v) => {
-              draft.set('fuelL', v);
-              draft.set('readingSource', 'manual');
-            }}
-            step={1}
-            bigStep={10}
-            min={0}
-            max={capacity}
+        {/* ── brak przekazania: skąd wziąć wartości (`.none-box`) ────────── */}
+        {missing && (
+          <InlineNote
+            icon="warning"
             tone="amber"
-            unit="L"
-            hint={
-              handover != null && fuelDiff !== 0
-                ? `Różnica względem przekazania: ${fuelDiff > 0 ? '+' : ''}${fuelDiff} L`
-                : `Zakres 0–${capacity} L (pojemność z konfiguracji ${aircraft.reg})`
+            text={
+              `Brak danych przekazania dla ${aircraft.reg} (pusty cache / przejęcie offline). ` +
+              'Wpisz odczyty z fizycznych liczników — Twój odczyt rozpocznie nowe ogniwo ' +
+              'łańcucha; serwer scali dane po synchronizacji.'
             }
-          />
-        </Card>
-
-        {/* ── motogodziny ─────────────────────────────────────────────── */}
-        <Card title={`MOTOGODZINY · FORMAT ${mhFormat === 'hhmm' ? 'HH:MM' : 'DZIESIĘTNY'}`}>
-          <Stepper
-            value={draft.mh}
-            onChange={(v) => {
-              draft.set('mh', v);
-              draft.set('readingSource', 'manual');
-            }}
-            // Krok 0,1 h = 6 minut — najmniejsza działka typowego licznika.
-            step={0.1}
-            bigStep={1}
-            min={0}
-            tone="green"
-            unit="MH"
-            format={(v) => motoHours(v, mhFormat)}
-            hint={
-              handover != null && Math.abs(mhDiff) > 0.001
-                ? `Różnica względem przekazania: ${mhDiff > 0 ? '+' : ''}${motoHours(Math.abs(mhDiff), mhFormat)}`
-                : 'Krok 0,1 h (6 min) · duży krok 1 h'
-            }
-          />
-        </Card>
-
-        {/* Cofnięty licznik to twardy błąd domeny — ostrzegamy, zanim komenda odrzuci. */}
-        {handover != null && mhDiff < 0 && (
-          <Banner
-            kind="warning"
-            tone="red"
-            title="Licznik nie może się cofnąć"
-            text={`Wpisana wartość jest niższa niż przekazana (${motoHours(
-              handover.reading.mh,
-              mhFormat,
-            )} MH). Sprawdź odczyt — zapis zostanie odrzucony.`}
           />
         )}
 
-        <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
-          <ActionButton label="WSTECZ" tone="neutral" variant="secondary" onPress={navigation.goBack} style={{ flex: 1 }} />
-          <ActionButton
-            label="DALEJ"
+        {/* ── paliwo ──────────────────────────────────────────────────────── */}
+        <Readout
+          label="Paliwo na pokładzie"
+          value={missing && draft.fuelL <= 0 ? null : String(Math.round(draft.fuelL))}
+          unit="L"
+          tone="amber"
+          freshness={missing && draft.fuelL > 0 ? 'live' : freshness}
+          syncedAt={syncedAt}
+          gauge={<LevelBar ratio={draft.fuelL / capacity} tone="amber" />}
+          caption={`${Math.round((draft.fuelL / capacity) * 100)}% pojemności · ${capacity} L z konfiguracji ${aircraft.reg}`}
+          trail={trails.fuel}
+          onCorrect={() => setEditing('fuel')}
+        />
+
+        {/* ── motogodziny ─────────────────────────────────────────────────── */}
+        <Readout
+          label="Motogodziny silnika"
+          value={missing && draft.mh <= 0 ? null : motoHours(draft.mh, mhFormat)}
+          unit="MH"
+          freshness={missing && draft.mh > 0 ? 'live' : freshness}
+          syncedAt={syncedAt}
+          caption={`format: ${mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny'} · z konfiguracji ${aircraft.reg}`}
+          trail={trails.mh}
+          onCorrect={() => setEditing('mh')}
+        />
+
+        {/* ── poświadczenie (`.certified-row`) ─────────────────────────────── */}
+        {handover != null && (
+          <InlineNote
+            icon="check"
             tone="green"
-            disabledReason={
-              handover != null && mhDiff < 0 ? 'Popraw odczyt motogodzin' : null
-            }
-            onPress={() => navigation.navigate('PreflightConfirm')}
-            style={{ flex: 2 }}
+            text={`Poświadczył ${pilotName(handover.byPilotId)} · ${stamp(handover.at)}`}
           />
-        </View>
+        )}
+
+        <ActionButton
+          label="DALEJ"
+          tone="green"
+          variant="solid"
+          trailingIcon={<Icon name="next" size={18} color={theme.colors.bg} />}
+          disabledReason={
+            noReadings
+              ? 'Wprowadź odczyty paliwa i MH z liczników — rozpoczną nowe ogniwo łańcucha'
+              : mhDiff < 0
+                ? 'Licznik motogodzin nie może być niższy niż przekazany — popraw odczyt'
+                : null
+          }
+          onPress={() => navigation.navigate('PreflightConfirm')}
+        />
       </View>
+
+      {/* ── arkusze korekty (02b / 02c) ──────────────────────────────────── */}
+      <ReadingSheet
+        visible={editing === 'fuel'}
+        title="Odczyt paliwa"
+        unit="L"
+        tone="amber"
+        initialText={String(Math.round(draft.fuelL))}
+        rows={[
+          {
+            label: 'Przekazane przez poprzednika',
+            value: handover != null ? litres(handover.reading.fuelL) : 'brak danych',
+          },
+          {
+            label: `Pojemność zbiorników · konfiguracja ${aircraft.reg}`,
+            value: litres(capacity),
+          },
+        ]}
+        parse={parseLitres}
+        warningFor={(v) => {
+          if (v > capacity) {
+            return `Wpisane ${litres(v)} przekracza pojemność ${litres(capacity)}. Sprawdź odczyt.`;
+          }
+          if (handover == null) return null;
+          const d = v - handover.reading.fuelL;
+          return Math.abs(d) >= FUEL_WARN_L
+            ? `Odczyt różni się od przekazanego o ${d > 0 ? '+' : '−'}${Math.abs(Math.round(d))} L. ` +
+                'Sprawdź stan zbiorników. Czy na pewno chcesz zapisać ten odczyt?'
+            : null;
+        }}
+        onConfirm={(v) => applyReading('fuelL', v)}
+        onCancel={() => setEditing(null)}
+      />
+
+      <ReadingSheet
+        visible={editing === 'mh'}
+        title="Odczyt motogodzin"
+        unit="MH"
+        tone="neutral"
+        initialText={motoHours(draft.mh, mhFormat)}
+        keyboard={mhFormat === 'hhmm' ? 'text' : 'decimal'}
+        rows={[
+          {
+            label: 'Przekazane przez poprzednika',
+            value: handover != null ? `${motoHours(handover.reading.mh, mhFormat)} MH` : 'brak danych',
+          },
+          {
+            label: `Format licznika · konfiguracja ${aircraft.reg}`,
+            value: mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny',
+          },
+        ]}
+        parse={parseMotoHours}
+        warningFor={(v) => {
+          if (handover == null) return null;
+          const d = v - handover.reading.mh;
+          if (d < 0) {
+            return (
+              `Licznik nie może się cofnąć — przekazano ${motoHours(handover.reading.mh, mhFormat)} MH. ` +
+              'Zapis z niższą wartością zostanie odrzucony.'
+            );
+          }
+          return d >= MH_WARN_H
+            ? `Odczyt różni się od przekazanego o +${motoHours(d, mhFormat)}. Sprawdź licznik silnika.`
+            : null;
+        }}
+        onConfirm={(v) => applyReading('mh', v)}
+        onCancel={() => setEditing(null)}
+      />
     </Screen>
   );
 }
-
-const styles = {
-  headerRow: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
-  headerRight: { alignItems: 'flex-end' as const, gap: 4 },
-};

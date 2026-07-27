@@ -72,20 +72,37 @@ a nie przez jeden ekran.
 
 | Komponent | Rola | Skąd w designie |
 |---|---|---|
-| `Screen` | tło, safe area, scroll | wszystkie ekrany |
+| `Screen` | tło, safe area, scroll, **przyklejony nagłówek** | wszystkie ekrany |
 | `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`) | wszystkie |
+| `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
-| `AppBar` | pasek: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
-| `Card` | karta z opcjonalnym nagłówkiem | `.section` / `.card` / `.day-log` |
+| `Avatar` | kafelek z inicjałami, 40/32 px | `.pilot-avatar`, `.crew-avatar` |
+| `AppBar` | pasek **dnia lotnego**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
+| `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót | `.app-header` |
+| `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
+| `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` |
 | `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
-| `StatusChip` | pozostałe chipy stanu (GROUND, RUNNING, claim, cache) | `.ground-chip`, `.pic-lock-tag` |
+| `StatusChip` | chipy **stanu sesji** (GROUND, RUNNING, cache) | `.ground-chip` |
+| `Tag` | **przypisy** przy pozycji listy/nagłówku (8–11 px) | `.pic-lock-tag`, `.optional-tag`, `.step-badge` |
 | `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
-| `CardPicker` | wybór z **listy kart** (nigdy natywny select) | wybór samolotu, Duala, operacji |
+| `CardPicker` | wybór z **listy kart** (nigdy natywny select), układ jednowierszowy | `.aircraft-option`, `.crew-option` |
+| `OptionGrid` | siatka kart **z ikonami**, 2 kolumny | `.op-grid` |
+| `Field`, `TextField` | oprawa pola: etykieta mono, tag, podpowiedź; fokus zielony | `.field` / `.field-input` |
+| `ValueBox` | pole **odczytu**: duża wartość + jednostka, kontekst i ołówek po prawej | `.field-input.filled` |
+| `Readout` | sekcja odczytu z licznika: wartość, świeżość, pasek, korekta, historia | `.section` w 02a |
+| `FreshnessNote` | adnotacja §4.8: `live` (cisza) / `cache` (data) / `brak` | `.fresh-note` |
+| `LevelBar` | pasek poziomu wobec pojemności | wskaźnik paliwa w 02a |
+| `Trail` | oś czasu prowadząca do wartości przekazania | `.trail` |
+| `InlineNote` | przypis w kolorowym pudełku (mono 10 px + ikona) | `.certified-row`, `.none-box` |
+| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
+| `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
+| `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
 | `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | faza lotu ogromną czcionką | „Cockpit Running" |
 | `EventLog` | log dnia/cyklu, cele korekty ≥ 44 px | `.day-log`, `.cycle-log` |
-| `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | START/STOP ENGINE |
+| `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine` |
+| `Sheet` | arkusz od dołu dla decyzji dotykających innych | `.modal-overlay` (przejęcie) |
 | `DetectToast` | toast autodetekcji: duży **COFNIJ** + licznik | `.detect-sheet` |
 | `tone.ts` | mapowanie tonu → (akcent, tło, obramowanie) | wspólne dla wszystkich |
 
@@ -99,6 +116,21 @@ czyli sygnałem **wyłącznie kolorystycznym**. W słońcu, w motywach jasnych i
 daltonizmie to za mało; kształt ptaszka niesie tę informację niezależnie od koloru.
 Rysujemy go layoutem RN, a nie `react-native-svg` ani fontem ikon — obie te biblioteki
 są modułami natywnymi i wymuszałyby przebudowę dev clienta.
+
+**Mockup jest specyfikacją, nie inspiracją.** Ekran implementujemy przez odczytanie
+odpowiadającego mu pliku w `design/` i odwzorowanie go sekcja po sekcji — kolejność,
+treść etykiet i formy kontrolek stamtąd, nie z improwizacji. Gdy w DS brakuje wzorca
+(pasek tożsamości, siatka ikon, arkusz przejęcia), **dokładamy komponent**, a nie
+upraszczamy ekran do tego, co już mamy. Jeśli mockup wydaje się zły — to temat na rozmowę
+przed implementacją, nie na cichą zmianę w kodzie.
+
+Trzy warianty `ActionButton` odpowiadają trzem klasom z mockupów: `solid` = `.btn-primary`
+(pełna zieleń, ciemny napis — „DALEJ" formularza), `primary` = `.start-engine` (przygaszone
+tło akcentu, bo pełna zieleń świeciłaby nocą w oczy), `secondary` = sam kontur.
+Do tego dwa rozmiary: `lg` (22 px / ls 3, `.btn-primary`) dla głównej akcji ekranu i `md`
+(16 px / ls 2, `.modal-btn-*`) dla pary akcji w arkuszu. Oba mają tokeny `button`
+i `button_small` — napis na przycisku **nigdy** nie używa tokenu `display` (34 px),
+bo to rozmiar tytułu ekranu.
 
 `Stepper` istnieje z konkretnego powodu: audyt użyteczności wykazał, że dolewka paliwa
 była ustawiana uchwytem suwaka 16×16 px na torze 312 px — około **1,4 litra na piksel**.
@@ -228,7 +260,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 115 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 124 testy, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -240,6 +272,12 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `store.test.ts` | cienkiej warstwy Zustand nad aplikacją |
 | `flightDetector.test.ts` | automatu detekcji — patrz niżej |
 | `sqliteSchema.test.ts` | DDL na prawdziwym silniku SQLite — patrz niżej |
+| `format.test.ts` | formatowania i **parsowania** odczytów w obie strony |
+
+`format.test.ts` pilnuje `parseMotoHours` — jedynego miejsca, w którym napis wpisany przez
+pilota staje się liczbą trafiającą do rejestru. Pomyłka o pół godziny nie wygląda tam na
+błąd, tylko na zapisaną wartość, więc parser i formater sprawdzamy razem (`1234:30` ↔ `1234.5`),
+razem z wpisami nieczytelnymi, które muszą dać `null`, a nie „prawie liczbę".
 
 **`sqliteSchema.test.ts` zamyka jedyną lukę, przez którą błąd doszedł na telefon.**
 Adapter importuje `expo-sqlite`, więc schemat był poza zasięgiem testów w Node — i właśnie

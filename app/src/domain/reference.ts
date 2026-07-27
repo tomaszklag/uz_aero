@@ -25,6 +25,32 @@ export type { MhFormat };
 /** Dostępność samolotu na liście wyboru (§5.4). */
 export type ServiceStatus = 'active' | 'disabled';
 
+/**
+ * Pojedyncze ogniwo historii, która doprowadziła do przekazanych wartości.
+ *
+ * Mockup 02a pokazuje ją jako oś czasu („Tankowanie · +45 L · w zbiorniku 185 L",
+ * „J. Kowalski latał 1h 30min"). Sens jest praktyczny: pilot patrzy na paliwomierz
+ * i widzi mniej, niż mówi przekazanie — historia odpowiada, czy to błąd odczytu,
+ * czy po prostu ktoś jeszcze poleciał.
+ *
+ * Trzymamy **dane, nie zdania** — formatowanie („śr. 23 L/h") należy do UI.
+ * Wypełnia to serwer przy `GET /reference` (§4.6); offline pole zwyczajnie jest puste.
+ */
+export interface HandoverTrailEntry {
+  kind: 'refuel' | 'flight' | 'duty_start';
+  at: EpochMillis;
+  /** Kto — dla `refuel` bywa `null` (tankowanie techniczne). */
+  pilotId: string | null;
+  /** Zmiana paliwa: dodatnia przy tankowaniu, `null` gdy nieznana. */
+  fuelDeltaL: number | null;
+  /** Stan paliwa PO zdarzeniu (L). */
+  fuelAfterL: number | null;
+  /** Stan licznika motogodzin PO zdarzeniu (godziny dziesiętne). */
+  mhAfter: number | null;
+  /** Czas trwania lotu/służby (ms) — dla `flight`. */
+  durationMs: number | null;
+}
+
 /** Przekazanie od poprzednika (JSON w kolumnie `handover`, §5.2). */
 export interface Handover {
   reading: FuelMhReading;
@@ -32,6 +58,8 @@ export interface Handover {
   byPilotId: string;
   /** Kiedy powstało przekazanie (UTC). */
   at: EpochMillis;
+  /** Historia prowadząca do tych wartości, od najstarszej. Puste = serwer jej nie podał. */
+  trail?: HandoverTrailEntry[];
 }
 
 /**

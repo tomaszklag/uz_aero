@@ -12,6 +12,12 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeProvider';
 
 export interface ScreenProps extends ViewProps {
+  /**
+   * Nagłówek POZA obszarem przewijania (`ScreenHeader` / `AppBar`).
+   * W mockupach pasek u góry jest przyklejony — numer kroku i stan sieci muszą być
+   * widoczne także w połowie długiego formularza.
+   */
+  header?: React.ReactNode;
   /** Owija zawartość w ScrollView. */
   scroll?: boolean;
   /** Padding wewnętrzny (spacing.lg). Domyślnie true. */
@@ -25,6 +31,7 @@ export interface ScreenProps extends ViewProps {
 const DEFAULT_EDGES: readonly Edge[] = ['top', 'bottom', 'left', 'right'];
 
 export function Screen({
+  header,
   scroll = false,
   padded = true,
   edges = DEFAULT_EDGES,
@@ -40,6 +47,7 @@ export function Screen({
   if (scroll) {
     return (
       <SafeAreaView style={[styles.flex, bg]} edges={edges}>
+        {header}
         <ScrollView
           style={styles.flex}
           contentContainerStyle={[pad, contentContainerStyle]}
@@ -53,8 +61,11 @@ export function Screen({
   }
 
   return (
-    <SafeAreaView style={[styles.flex, bg, pad, style]} edges={edges} {...rest}>
-      {children}
+    <SafeAreaView style={[styles.flex, bg]} edges={edges}>
+      {header}
+      <View style={[styles.flex, pad, style]} {...rest}>
+        {children}
+      </View>
     </SafeAreaView>
   );
 }

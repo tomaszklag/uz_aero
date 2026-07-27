@@ -4,9 +4,11 @@
  * Docelowy flow (docs `_main.md.txt` §7): 00 login → 01 splash → 02/02a/03 preflight
  * → 04/04a kokpit ground ⇄ 05x kokpit w locie → 06/07/08 akcje → 09/10/11 zamknięcie.
  *
- * Na razie w stosie są dwa ekrany: pierwszy realny (kokpit ground) i katalog Design
- * Systemu. Kolejne ekrany dokładamy do `RootStackParamList` i tutaj — reszta aplikacji
- * nie musi wiedzieć, że przybyły.
+ * W stosie są dziś kokpit, trzy kroki preflightu i katalog Design Systemu. Kolejne ekrany
+ * dokładamy do `RootStackParamList` i tutaj — reszta aplikacji nie musi wiedzieć, że przybyły.
+ *
+ * Nawigacja jest **bezgłowa**: każdy ekran rysuje własny nagłówek zgodny z mockupem,
+ * a natywny pasek stosu jest wyłączony (patrz `screenOptions` niżej).
  */
 
 import React from 'react';
@@ -52,36 +54,20 @@ export function RootNavigator() {
       <Stack.Navigator
         initialRouteName="Cockpit"
         screenOptions={{
-          headerStyle: { backgroundColor: theme.colors.surface },
-          headerTintColor: theme.colors.textPrimary,
+          // Bez natywnego paska nawigacji. W mockupach ekran idzie od status bara prosto
+          // do własnego nagłówka (`.app-header`) — pasek systemowy dokładałby drugi tytuł,
+          // drugą strzałkę wstecz i ~56 px wysokości, których design nie przewiduje.
+          // Powrót między krokami prowadzi `ScreenHeader onBack`; sprzętowy „wstecz"
+          // Androida działa niezależnie od tego ustawienia.
+          headerShown: false,
           contentStyle: { backgroundColor: theme.colors.bg },
         }}
       >
-        <Stack.Screen
-          name="Cockpit"
-          component={CockpitScreen}
-          options={{ title: 'Kokpit' }}
-        />
-        <Stack.Screen
-          name="PreflightAircraft"
-          component={PreflightAircraftScreen}
-          options={{ title: 'Preflight · 1 z 3' }}
-        />
-        <Stack.Screen
-          name="PreflightReadings"
-          component={PreflightReadingsScreen}
-          options={{ title: 'Preflight · 2 z 3' }}
-        />
-        <Stack.Screen
-          name="PreflightConfirm"
-          component={PreflightConfirmScreen}
-          options={{ title: 'Preflight · 3 z 3' }}
-        />
-        <Stack.Screen
-          name="StyleGuide"
-          component={StyleGuideScreen}
-          options={{ title: 'Design System' }}
-        />
+        <Stack.Screen name="Cockpit" component={CockpitScreen} />
+        <Stack.Screen name="PreflightAircraft" component={PreflightAircraftScreen} />
+        <Stack.Screen name="PreflightReadings" component={PreflightReadingsScreen} />
+        <Stack.Screen name="PreflightConfirm" component={PreflightConfirmScreen} />
+        <Stack.Screen name="StyleGuide" component={StyleGuideScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

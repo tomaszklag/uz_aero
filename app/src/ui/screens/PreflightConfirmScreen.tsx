@@ -1,43 +1,39 @@
 /**
  * UZ Aero — 03 PREFLIGHT · krok 3/3: podsumowanie i potwierdzenie.
  *
+ * Odwzorowanie mockupu `design/03-preflight-confirm.html`: karta podsumowania (samolot,
+ * trasa, tagi) → dwukolumnowa siatka szczegółów → ostrzeżenie → para przycisków
+ * „WRÓĆ I POPRAW" / „POTWIERDŹ I ZACZNIJ DZIEŃ".
+ *
  * Tu kończy się szkic, a zaczyna rejestr: potwierdzenie emituje `session_claim`
- * i `preflight_confirm`. Do tej chwili nic nie zostało zapisane — pilot mógł wrócić
+ * i `preflight_confirm`. Do tej chwili **nic nie zostało zapisane** — pilot mógł wrócić
  * i zmienić każdą wartość.
  *
- * Ekran jest **wyłącznie do odczytu** (§3.1 krok 3): pokazuje to, co za chwilę
- * zostanie utrwalone. Zmiana wymaga cofnięcia się do właściwego kroku — dzięki temu
- * podsumowanie nie staje się drugim, konkurencyjnym formularzem.
+ * Ekran jest **wyłącznie do odczytu** (§3.1 krok 3): pokazuje to, co za chwilę zostanie
+ * utrwalone. Zmiana wymaga cofnięcia się do właściwego kroku — dlatego „WRÓĆ I POPRAW"
+ * jest pełnoprawnym przyciskiem obok potwierdzenia, a nie odnośnikiem na marginesie.
+ * Dzięki temu podsumowanie nie staje się drugim, konkurencyjnym formularzem.
  */
 
 import React, { useCallback, useState } from 'react';
 import { View } from 'react-native';
 
-import { ActionButton, AppText, Banner, Card, Screen, SyncChip } from '../components';
+import {
+  ActionButton,
+  AppText,
+  Banner,
+  Icon,
+  Screen,
+  ScreenHeader,
+  SummaryGrid,
+  SummaryHero,
+  SyncChip,
+  type SummaryEntry,
+} from '../components';
 import { useTheme } from '../theme';
-import { useSessionStore } from '../store';
+import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
-import { litres, motoHours, timeUtc } from '../format';
-
-/** Wiersz podsumowania: klucz po lewej, wartość po prawej. */
-function Row({ label, value }: { label: string; value: string }) {
-  const { theme } = useTheme();
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'baseline',
-        gap: theme.spacing.sm,
-      }}
-    >
-      <AppText variant="label" tone="muted">
-        {label}
-      </AppText>
-      <AppText variant="mono">{value}</AppText>
-    </View>
-  );
-}
+import { dateUtcLong, litres, motoHours, shortName, timeLocal, timeUtc } from '../format';
 
 export function PreflightConfirmScreen({
   navigation,
@@ -50,11 +46,28 @@ export function PreflightConfirmScreen({
   const lastError = useSessionStore((s) => s.lastError);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const queries = useSessionStore((s) => s.queries);
+
+  const pilotId = useCurrentPilot((s) => s.id);
+  const pilotProfile = useCurrentPilot((s) => s.profile);
 
   const draft = usePreflightDraft();
   const [busy, setBusy] = useState(false);
+  const [dualName, setDualName] = useState<string | null>(null);
   const aircraft = draft.aircraft;
   const mhFormat = draft.mhFormat();
+
+  // Drugiego pilota pokazujemy nazwiskiem, nie kodem — podsumowanie ma być czytane,
+  // a nie odszyfrowywane.
+  React.useEffect(() => {
+    if (!queries || draft.dualId == null) {
+      setDualName(null);
+      return;
+    }
+    void queries
+      .pilots()
+      .then((list) => setDualName(list.find((p) => p.id === draft.dualId)?.name ?? draft.dualId));
+  }, [queries, draft.dualId]);
 
   const confirm = useCallback(async () => {
     if (aircraft == null) return;
@@ -70,7 +83,7 @@ export function PreflightConfirmScreen({
       await claim({
         sessionUuid: `sess-${Date.now()}`,
         aircraftId: aircraft.id,
-        picId: 'TMK',
+        picId: pilotId,
         dualId: draft.dualId,
         mode: aircraft.claimPicId != null ? 'takeover_offline' : 'free',
         previousPicId: aircraft.claimPicId ?? undefined,
@@ -94,7 +107,7 @@ export function PreflightConfirmScreen({
     } finally {
       setBusy(false);
     }
-  }, [aircraft, claim, confirmPreflight, draft, mhFormat, navigation]);
+  }, [aircraft, claim, confirmPreflight, draft, mhFormat, navigation, pilotId]);
 
   if (aircraft == null) {
     return (
@@ -106,90 +119,105 @@ export function PreflightConfirmScreen({
     );
   }
 
+  const route = [draft.departureIcao, draft.arrivalIcao].filter(Boolean).join(' → ');
+
+  const entries: SummaryEntry[] = [
+    {
+      key: 'PIC · zalogowany',
+      value: shortName(pilotProfile?.name ?? pilotId),
+      text: true,
+    },
+    {
+      key: 'Dual · drugi pilot',
+      value: dualName != null ? shortName(dualName) : '—',
+      text: true,
+    },
+    {
+      key: 'Meldunek',
+      value: timeUtc(draft.dutyStart),
+      note: `UTC · ${timeLocal(draft.dutyStart)} LT`,
+    },
+    { key: 'Paliwo start', value: litres(draft.fuelL), tone: 'amber' },
+    { key: 'Motogodziny', value: motoHours(draft.mh, mhFormat), note: 'MH' },
+    { key: 'Klient', value: draft.client ?? '—', text: true },
+  ];
+
   return (
-    <Screen scroll>
+    <Screen
+      scroll
+      header={
+        <ScreenHeader
+          title="POTWIERDŹ DANE"
+          // Dłuższy tytuł — mockup 03 zmniejsza go do 20 px, żeby nie wchodził na sloty boczne.
+          size="md"
+          step="3 / 3"
+          onBack={navigation.goBack}
+          right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+        />
+      }
+    >
       <View style={{ gap: theme.spacing.md }}>
-        <View style={styles.headerRow}>
-          <AppText variant="display">POTWIERDŹ</AppText>
-          <View style={styles.headerRight}>
-            <AppText variant="label" tone="muted">
-              KROK 3 / 3
-            </AppText>
-            <SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />
-          </View>
+        <SummaryHero
+          code={aircraft.reg}
+          codeDetail={[aircraft.type, aircraft.year].filter(Boolean).join(' · ')}
+          // Bez trasy karta i tak musi coś powiedzieć — wtedy niesie rodzaj operacji.
+          title={route.length > 0 ? route : draft.operation.toUpperCase()}
+          tags={[draft.operation.toUpperCase(), dateUtcLong(draft.dutyStart)]}
+        />
+
+        <View
+          style={{
+            padding: theme.spacing.lg - 2,
+            borderRadius: theme.radius.lg,
+            borderWidth: theme.borderWidth,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
+          }}
+        >
+          <SummaryGrid entries={entries} />
         </View>
 
-        <Card title="DZIEŃ LOTNY">
-          <View style={{ gap: theme.spacing.sm }}>
-            <Row label="Samolot" value={`${aircraft.reg} · ${aircraft.type}`} />
-            <Row label="PIC" value="TMK" />
-            <Row label="Drugi pilot" value={draft.dualId ?? '—'} />
-            <Row label="Operacja" value={draft.operation.toUpperCase()} />
-            <Row
-              label="Trasa"
-              value={[draft.departureIcao, draft.arrivalIcao].filter(Boolean).join(' → ') || '—'}
-            />
-            <Row label="Meldowanie" value={`${timeUtc(draft.dutyStart)} UTC`} />
-          </View>
-        </Card>
-
-        <Card title="ODCZYTY POCZĄTKOWE">
-          <View style={{ gap: theme.spacing.sm }}>
-            <Row label="Paliwo" value={litres(draft.fuelL)} />
-            <Row label="Motogodziny" value={`${motoHours(draft.mh, mhFormat)} MH`} />
-            <Row
-              label="Źródło"
-              value={draft.readingSource === 'handover' ? 'przekazanie' : 'odczyt z licznika'}
-            />
-          </View>
-        </Card>
-
         <Banner
-          kind="edu"
-          title="Co się teraz stanie"
-          text={
-            'Zapiszemy przejęcie samolotu i odczyty początkowe. Od tej chwili dane dnia wysyła ' +
-            'wyłącznie ten telefon. Zapis działa bez zasięgu — wyśle się, gdy wróci sieć.'
-          }
-          collapsedLabel="Co się stanie?"
+          kind="warning"
+          icon="warning"
+          title="Sprawdź poprawność danych"
+          text="Po potwierdzeniu dane dnia można zmienić tylko korektą w logu — nie w formularzu."
         />
 
         {aircraft.claimPicId != null && (
           <Banner
             kind="warning"
+            icon="warning"
             title={`Przejmujesz samolot od ${aircraft.claimPicId}`}
             text="Jeśli poprzedni pilot nadal prowadzi ten samolot, serwer oznaczy nakładkę do wyjaśnienia."
           />
         )}
 
         {lastError != null && (
-          <Banner kind="warning" tone="red" title="Nie zapisano" text={lastError} />
+          <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
         )}
 
-        <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
+        {/* Mockup: `.btn-group` — dwa przyciski pełnej szerokości, jeden pod drugim.
+            Hierarchię niesie wypełnienie (pełna zieleń vs kontur), a nie rozmiar napisu:
+            powrót do poprawek jest tu działaniem oczekiwanym, nie wycofaniem się. */}
+        <View style={{ gap: theme.spacing.sm }}>
           <ActionButton
-            label="WSTECZ"
+            label="WRÓĆ I POPRAW"
             tone="neutral"
             variant="secondary"
+            icon={<Icon name="back" size={16} color={theme.colors.textSecondary} />}
             onPress={navigation.goBack}
-            style={{ flex: 1 }}
           />
           <ActionButton
-            label="ZACZNIJ DZIEŃ"
+            label="POTWIERDŹ I ZACZNIJ DZIEŃ"
             tone="green"
+            variant="solid"
             busy={busy}
-            holdMs={2000}
-            hint="przytrzymaj 2 s"
+            icon={<Icon name="check" size={18} color={theme.colors.bg} />}
             onPress={confirm}
-            style={{ flex: 2 }}
           />
         </View>
       </View>
     </Screen>
   );
 }
-
-const styles = {
-  headerRow: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
-  headerRight: { alignItems: 'flex-end' as const, gap: 4 },
-};

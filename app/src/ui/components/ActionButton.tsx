@@ -20,17 +20,35 @@ import { useTheme } from '../theme';
 import { AppText } from './AppText';
 import { toneColors, type Tone } from './tone';
 
-export type ActionVariant = 'primary' | 'secondary';
+/**
+ * `solid`   — `.btn-primary` z mockupów: pełne wypełnienie akcentem, ciemny napis.
+ *             Główne „dalej" formularza; jeden taki przycisk na ekran.
+ * `primary` — `.start-engine`: przygaszone tło akcentu i akcentowany napis. Akcje kokpitu,
+ *             gdzie pełna zieleń świeciłaby w nocy prosto w oczy.
+ * `secondary` — sam kontur (Anuluj, Wstecz).
+ */
+export type ActionVariant = 'solid' | 'primary' | 'secondary';
+
+/**
+ * Rozmiar etykiety i celu dotykowego — z mockupów:
+ *  `lg` = `.btn-primary` (22 px / ls 3, wysokość ≥ 56) — główna akcja ekranu;
+ *  `md` = `.modal-btn-*` (16 px / ls 2, wysokość ≥ 48) — para akcji w arkuszu, gdzie
+ *         dwa przyciski dzielą szerokość i pełny rozmiar rozpychałby arkusz.
+ */
+export type ActionSize = 'lg' | 'md';
 
 export interface ActionButtonProps {
   label: string;
   onPress: () => void;
   tone?: Tone;
   variant?: ActionVariant;
+  size?: ActionSize;
   /** Podpis pod etykietą (np. „przytrzymaj 2 s", „zapisze odczyt MH"). */
   hint?: string;
   /** Ikona/element przed etykietą. */
   icon?: React.ReactNode;
+  /** Ikona/element za etykietą (np. strzałka „dalej"). */
+  trailingIcon?: React.ReactNode;
   /** Czas przytrzymania (ms). 0 = zwykłe tapnięcie. */
   holdMs?: number;
   /** Blokada — wymaga podania powodu; powód jest pokazywany pod przyciskiem. */
@@ -45,8 +63,10 @@ export function ActionButton({
   onPress,
   tone = 'green',
   variant = 'primary',
+  size = 'lg',
   hint,
   icon,
+  trailingIcon,
   holdMs = 0,
   disabledReason = null,
   busy = false,
@@ -89,7 +109,19 @@ export function ActionButton({
     }, holdMs);
   }, [cancelHold, disabled, holdMs, onPress, progress]);
 
-  const filled = variant === 'primary';
+  const solid = variant === 'solid';
+  const background = disabled
+    ? theme.colors.surfaceHover
+    : solid
+      ? c.accent
+      : variant === 'primary'
+        ? c.muted
+        : 'transparent';
+  const labelColor = disabled
+    ? theme.colors.textMuted
+    : solid
+      ? theme.colors.bg // ciemny napis na pełnym akcencie — kontrast w każdym motywie
+      : c.accent;
 
   return (
     <View style={style}>
@@ -104,18 +136,15 @@ export function ActionButton({
         style={({ pressed }) => [
           styles.button,
           {
-            minHeight: 56,
+            // Oba warianty zostają powyżej progu 44 px dla rękawic.
+            minHeight: size === 'lg' ? 56 : 48,
             gap: theme.spacing.xs,
             paddingHorizontal: theme.spacing.lg,
-            paddingVertical: theme.spacing.md,
-            borderRadius: theme.radius.lg,
+            paddingVertical: size === 'lg' ? theme.spacing.md : theme.spacing.sm,
+            borderRadius: size === 'lg' ? theme.radius.lg : theme.radius.md,
             borderWidth: theme.borderWidth,
-            borderColor: disabled ? theme.colors.border : c.border,
-            backgroundColor: disabled
-              ? theme.colors.surfaceHover
-              : filled
-                ? c.muted
-                : 'transparent',
+            borderColor: disabled ? theme.colors.border : solid ? c.accent : c.border,
+            backgroundColor: background,
             opacity: disabled ? 0.45 : pressed && holdMs === 0 ? 0.7 : 1,
           },
         ]}
@@ -136,16 +165,17 @@ export function ActionButton({
 
         <View style={styles.row}>
           {icon}
-          <AppText
-            variant="display"
-            style={{ color: disabled ? theme.colors.textMuted : c.accent }}
-          >
+          <AppText variant={size === 'lg' ? 'button' : 'buttonSmall'} style={{ color: labelColor }}>
             {label}
           </AppText>
+          {trailingIcon}
         </View>
 
         {hint != null && (
-          <AppText variant="label" tone="muted">
+          <AppText
+            variant="label"
+            style={{ color: solid && !disabled ? theme.colors.bg : theme.colors.textMuted }}
+          >
             {hint}
           </AppText>
         )}

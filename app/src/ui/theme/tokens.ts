@@ -276,6 +276,22 @@ export const typography = {
     letterSpacing: 2.5,
     textTransform: 'uppercase',
   },
+  // Etykiety przycisków akcji. Dwa rozmiary, oba skopiowane z mockupów:
+  //  - button       → `.btn-primary` (DALEJ, ZACZNIJ DZIEŃ, START ENGINE)
+  //  - button_small → `.modal-btn-cancel` / `.modal-btn-confirm` (akcje arkusza)
+  // Nie używamy tu `display` (34 px) — to rozmiar tytułu ekranu, nie napisu na przycisku.
+  button: {
+    fontFamily: fontFamily.display,
+    fontSize: 22,
+    lineHeight: 24,
+    letterSpacing: 3,
+  },
+  button_small: {
+    fontFamily: fontFamily.display,
+    fontSize: 16,
+    lineHeight: 18,
+    letterSpacing: 2,
+  },
   body: {
     fontFamily: fontFamily.body,
     fontSize: 14,

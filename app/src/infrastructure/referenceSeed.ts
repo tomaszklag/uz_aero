@@ -22,6 +22,17 @@ import type { ReferenceAircraft, ReferencePilot } from '../domain';
 type SeedAircraft = Omit<ReferenceAircraft, 'fetchedAt'>;
 type SeedPilot = Omit<ReferencePilot, 'fetchedAt'>;
 
+/**
+ * Przekazanie dla SP-AXA — scenariusz z mockupu 02a (paliwo 150 L, licznik 1234:30,
+ * poprzednik i jego historia). Bez tego ekran odczytów pokazywałby wyłącznie wariant
+ * „brak danych", więc nie dałoby się zobaczyć ani osi czasu, ani adnotacji świeżości.
+ *
+ * Liczby są spójne arytmetycznie (mockup ma je poglądowe): 140 L +45 = 185 L,
+ * po locie 1 h 30 min zostaje 150 L (35 L → ok. 23 L/h), licznik 1233:00 → 1234:30.
+ */
+const HANDOVER_DAY = Date.UTC(2026, 5, 21); // 21 czerwca 2026
+const at = (h: number, m: number): number => HANDOVER_DAY + (h * 60 + m) * 60_000;
+
 /** Flota scenariusza — konfiguracje zgodne z §5.4 (pojemność, format MH, wymóg Duala). */
 const AIRCRAFT: SeedAircraft[] = [
   {
@@ -35,7 +46,40 @@ const AIRCRAFT: SeedAircraft[] = [
     serviceStatus: 'active',
     claimPicId: null,
     claimSince: null,
-    handover: null,
+    handover: {
+      reading: { fuelL: 150, mh: 1234.5 }, // 1234:30 w formacie hh:mm
+      byPilotId: 'AKO',
+      at: at(17, 30),
+      trail: [
+        {
+          kind: 'refuel',
+          at: at(9, 15),
+          pilotId: null,
+          fuelDeltaL: 45,
+          fuelAfterL: 185,
+          mhAfter: null,
+          durationMs: null,
+        },
+        {
+          kind: 'duty_start',
+          at: at(7, 0),
+          pilotId: 'AKO',
+          fuelDeltaL: null,
+          fuelAfterL: null,
+          mhAfter: 1233,
+          durationMs: null,
+        },
+        {
+          kind: 'flight',
+          at: at(16, 0),
+          pilotId: 'AKO',
+          fuelDeltaL: null,
+          fuelAfterL: 150,
+          mhAfter: 1234.5,
+          durationMs: 90 * 60_000,
+        },
+      ],
+    },
   },
   {
     // Zajęty przez innego pilota — scenariusz przejęcia (02) i podglądu read-only (04b).

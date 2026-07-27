@@ -10,7 +10,7 @@
  * Ekrany nie wiedzą, skąd biorą się zależności — dostają je gotowe (§5 architektury).
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -34,6 +34,32 @@ import { RootNavigator } from './src/ui/navigation/RootNavigator';
 import { useAppBootstrap, useGpsPort } from './src/ui/bootstrap/appBootstrap';
 import { ServicesProvider } from './src/ui/bootstrap/ServicesProvider';
 
+/**
+ * Tło okna natywnego — jedyna warstwa, której nie da się pomalować widokiem RN.
+ *
+ * Widać ją przez ułamek sekundy podczas animacji przejścia między ekranami
+ * (`react-native-screens` animuje fragmenty, a pod nimi jest okno Androida, domyślnie
+ * białe). Dopóki ekrany miały natywny pasek nawigacji, przykrywał on tę dziurę;
+ * po jego wyłączeniu — zgodnie z mockupami, które takiego paska nie mają — błysk wyszedł
+ * na wierzch. Statyczny `backgroundColor` w `app.json` załatwia start aplikacji;
+ * to ustawienie dokłada zgodność z **wybranym motywem** (mamy ich pięć).
+ *
+ * Wymaga modułu natywnego, więc zadziała dopiero po przebudowie dev clienta —
+ * do tego czasu wywołanie po cichu przepada, zamiast wywracać aplikację.
+ */
+function useSystemBackground(color: string): void {
+  useEffect(() => {
+    void (async () => {
+      try {
+        const SystemUI = require('expo-system-ui') as typeof import('expo-system-ui');
+        await SystemUI.setBackgroundColorAsync(color);
+      } catch {
+        // Stary dev client bez modułu — zostaje kolor z `app.json`.
+      }
+    })();
+  }, [color]);
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -48,6 +74,8 @@ function AppRoot() {
   const { theme, ready: themeReady } = useTheme();
   const boot = useAppBootstrap();
   const gps = useGpsPort();
+
+  useSystemBackground(theme.colors.bg);
 
   const [fontsLoaded, fontError] = useFonts({
     BebasNeue_400Regular,
@@ -92,12 +120,23 @@ function AppRoot() {
   return (
     <ServicesProvider gps={gps}>
       <StatusBar style={theme.isLight ? 'dark' : 'light'} />
-      <RootNavigator />
+      {/*
+        Nieprzezroczyste tło POD nawigatorem.
+
+        Bez niego przy cofaniu widać biały błysk: `react-native-screens` w trakcie animacji
+        przez moment nie ma nad sobą żadnej nieprzezroczystej warstwy, więc prześwituje
+        tło okna Androida (domyślnie białe). Ta ramka zamyka dziurę od strony JS —
+        natywne tło okna ustawia dodatkowo `backgroundColor` w `app.json`.
+      */}
+      <View style={[styles.flex, { backgroundColor: theme.colors.bg }]}>
+        <RootNavigator />
+      </View>
     </ServicesProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   msg: { textAlign: 'center' },
 });
