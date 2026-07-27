@@ -111,8 +111,12 @@ export class ExpoSqliteAdapter implements StoragePort {
         schema_version INTEGER NOT NULL,
         synced_at      INTEGER
       );
-      CREATE INDEX IF NOT EXISTS idx_events_session ON events (session_uuid, rowid);
-      CREATE INDEX IF NOT EXISTS idx_events_outbox  ON events (synced_at, rowid);
+      -- UWAGA: SQLite NIE pozwala umiescic rowid na liscie kolumn indeksu
+      -- (blad: "no such column: rowid"), choc w ORDER BY jest legalny. Nie trzeba go
+      -- zreszta wymieniac: rowid jest lokalizatorem wiersza w kazdym indeksie, wiec po
+      -- trafieniu w session_uuid / synced_at sortowanie po rowid i tak idzie po indeksie.
+      CREATE INDEX IF NOT EXISTS idx_events_session ON events (session_uuid);
+      CREATE INDEX IF NOT EXISTS idx_events_outbox  ON events (synced_at);
 
       CREATE TABLE IF NOT EXISTS reference_aircraft (
         id             TEXT PRIMARY KEY NOT NULL,

@@ -72,7 +72,11 @@ const EVENT_TONE: Record<string, 'green' | 'red' | 'blue' | 'amber' | 'neutral'>
   day_close: 'red',
 };
 
-export function CockpitScreen() {
+export function CockpitScreen({
+  navigation,
+}: {
+  navigation: { navigate: (screen: string) => void };
+}) {
   const { theme } = useTheme();
   const gps = useGps();
 
@@ -128,7 +132,7 @@ export function CockpitScreen() {
     [fix, run, startEngine],
   );
 
-  if (!context) return <NoSession />;
+  if (!context) return <NoSession onStart={() => navigation.navigate('PreflightAircraft')} />;
 
   const liveBlockMs =
     projection.blockTimeMs +
@@ -295,44 +299,15 @@ export function CockpitScreen() {
 }
 
 /**
- * Brak sesji.
+ * Brak sesji — dzień jeszcze się nie zaczął.
  *
- * RUSZTOWANIE: przycisk otwiera dzień danymi scenariusza, bo ekrany preflightu
- * (02 → 02a → 03) jeszcze nie istnieją. Idzie normalną ścieżką komend, więc niczego
- * nie obchodzi — docelowo zastąpi go preflight.
+ * Jedyne wejście prowadzi przez preflight (02 → 02a → 03): to tam pilot wybiera
+ * samolot i odczytuje liczniki, a odczyt startowy jest początkiem łańcucha MH (§4.5).
+ * Skrótu „otwórz dzień na sztywno" celowo nie ma — omijałby odczyty.
  */
-function NoSession() {
+function NoSession({ onStart }: { onStart: () => void }) {
   const { theme } = useTheme();
-  const claim = useSessionStore((s) => s.claim);
-  const confirmPreflight = useSessionStore((s) => s.confirmPreflight);
   const lastError = useSessionStore((s) => s.lastError);
-  const [busy, setBusy] = useState(false);
-
-  const startDay = useCallback(async () => {
-    setBusy(true);
-    try {
-      const now = Date.now();
-      await claim({
-        sessionUuid: `sess-${now}`,
-        aircraftId: 'SP-AXA',
-        picId: 'TMK',
-        dualId: null,
-        mode: 'free',
-      });
-      await confirmPreflight({
-        operation: 'skoki',
-        departureIcao: 'EPKK',
-        arrivalIcao: 'EPWA',
-        dutyStart: now,
-        reading: { fuelL: 150, mh: 1234.5 },
-        mhFormat: 'hhmm',
-      });
-    } catch {
-      // Powód w `lastError`.
-    } finally {
-      setBusy(false);
-    }
-  }, [claim, confirmPreflight]);
 
   return (
     <Screen>
@@ -343,13 +318,7 @@ function NoSession() {
         <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
           Dzień lotny zaczyna się od preflightu — wyboru samolotu i odczytu liczników.
         </AppText>
-        <ActionButton
-          label="OTWÓRZ DZIEŃ"
-          tone="green"
-          busy={busy}
-          hint="SP-AXA · 150 L · 1234:30 MH (scenariusz)"
-          onPress={startDay}
-        />
+        <ActionButton label="ROZPOCZNIJ PREFLIGHT" tone="green" onPress={onStart} />
         {lastError != null && <Banner kind="warning" tone="red" title="Nie zapisano" text={lastError} />}
       </View>
     </Screen>

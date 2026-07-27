@@ -13,3 +13,4 @@ export * from './id';
 export * from './createEventsRepo';
 export * from './storage/inMemoryAdapter';
 export * from './gps/replayGpsAdapter';
+export * from './referenceSeed';

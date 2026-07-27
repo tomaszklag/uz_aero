@@ -21,6 +21,10 @@ export * from './SyncChip';
 export * from './StatusChip';
 export * from './Banner';
 
+// Wprowadzanie danych
+export * from './CardPicker';
+export * from './Stepper';
+
 // Dane i akcje
 export * from './Metric';
 export * from './PhaseHero';

@@ -11,7 +11,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { createEventsRepo } from '../../infrastructure';
+import { createEventsRepo, seedReferenceIfEmpty } from '../../infrastructure';
 import { ExpoSqliteAdapter } from '../../infrastructure/storage/expoSqliteAdapter';
 import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapter';
 import type { GpsPort } from '../../application/ports';
@@ -51,7 +51,13 @@ export function useAppBootstrap(): BootstrapStatus {
         await storage.init();
         if (cancelled) return;
 
-        attachRepo(createEventsRepo(storage));
+        const repo = createEventsRepo(storage);
+        // Zaślepka floty do czasu `GET /reference` — wstawiana tylko przy pustym cache,
+        // więc nigdy nie nadpisze danych z serwera.
+        await seedReferenceIfEmpty(repo);
+        if (cancelled) return;
+
+        attachRepo(repo);
         setStatus({ phase: 'ready' });
       } catch (err) {
         if (cancelled) return;

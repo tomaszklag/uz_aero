@@ -79,6 +79,8 @@ a nie przez jeden ekran.
 | `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
 | `StatusChip` | pozostałe chipy stanu (GROUND, RUNNING, claim, cache) | `.ground-chip`, `.pic-lock-tag` |
 | `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
+| `CardPicker` | wybór z **listy kart** (nigdy natywny select) | wybór samolotu, Duala, operacji |
+| `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | faza lotu ogromną czcionką | „Cockpit Running" |
 | `EventLog` | log dnia/cyklu, cele korekty ≥ 44 px | `.day-log`, `.cycle-log` |
@@ -90,6 +92,17 @@ Trzy rzeczy w `ActionButton` nie są ozdobnikiem: przytrzymanie chroni przed
 przypadkowym dotknięciem w wibracjach, powód blokady jest **widocznym tekstem** (nie
 tooltipem — `title` w RN nie istnieje), a cel dotykowy ma ≥ 44 px, bo pilot pracuje
 w rękawicach.
+
+`Stepper` istnieje z konkretnego powodu: audyt użyteczności wykazał, że dolewka paliwa
+była ustawiana uchwytem suwaka 16×16 px na torze 312 px — około **1,4 litra na piksel**.
+W rękawicach to nie precyzja, tylko loteria.
+
+### Stan UI vs rejestr zdarzeń
+
+`ui/store/preflightDraft.ts` trzyma **szkic** preflightu przez trzy ekrany (02 → 02a → 03).
+Rejestr jest append-only, więc nie wolno do niego wpisywać stanów pośrednich, które pilot
+może jeszcze zmienić albo porzucić. Zdarzenia `session_claim` i `preflight_confirm`
+powstają dopiero przy potwierdzeniu na ekranie 3.
 
 ### To nie jest tylko obietnica
 

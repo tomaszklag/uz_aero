@@ -15,10 +15,16 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { useTheme } from '../theme';
 import { CockpitScreen } from '../screens/CockpitScreen';
+import { PreflightAircraftScreen } from '../screens/PreflightAircraftScreen';
+import { PreflightReadingsScreen } from '../screens/PreflightReadingsScreen';
+import { PreflightConfirmScreen } from '../screens/PreflightConfirmScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
   Cockpit: undefined;
+  PreflightAircraft: undefined;
+  PreflightReadings: undefined;
+  PreflightConfirm: undefined;
   StyleGuide: undefined;
 };
 
@@ -55,6 +61,21 @@ export function RootNavigator() {
           name="Cockpit"
           component={CockpitScreen}
           options={{ title: 'Kokpit' }}
+        />
+        <Stack.Screen
+          name="PreflightAircraft"
+          component={PreflightAircraftScreen}
+          options={{ title: 'Preflight · 1 z 3' }}
+        />
+        <Stack.Screen
+          name="PreflightReadings"
+          component={PreflightReadingsScreen}
+          options={{ title: 'Preflight · 2 z 3' }}
+        />
+        <Stack.Screen
+          name="PreflightConfirm"
+          component={PreflightConfirmScreen}
+          options={{ title: 'Preflight · 3 z 3' }}
         />
         <Stack.Screen
           name="StyleGuide"
