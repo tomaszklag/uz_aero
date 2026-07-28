@@ -14,8 +14,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { createEventsRepo, seedReferenceIfEmpty } from '../../infrastructure';
 import { ExpoSqliteAdapter } from '../../infrastructure/storage/expoSqliteAdapter';
 import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapter';
+import { HttpServerApi } from '../../infrastructure/api/httpServerApi';
+import { apiBaseUrl } from '../../infrastructure/api/apiBaseUrl';
+import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
+import { AuthService, ReferenceSync, SyncEngine } from '../../application';
 import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
+import { useAuthStore } from '../store/authStore';
 
 /** Stan startu aplikacji — UI musi wiedzieć, czy baza jest gotowa. */
 export type BootstrapStatus =
@@ -58,6 +63,18 @@ export function useAppBootstrap(): BootstrapStatus {
         if (cancelled) return;
 
         attachRepo(repo);
+
+        // Warstwa synca (M3): HTTP → serwis poświadczeń → silnik. Store auth dostaje
+        // serwis i od razu czyta magazyn — to on przełącza bramkę login/aplikacja;
+        // silnik idzie do store'u sesji, skąd żyją pętla okazji i ekran 11.
+        const server = new HttpServerApi(apiBaseUrl());
+        const auth = new AuthService(server, new SecureCredentials());
+        useAuthStore.getState().attach(auth);
+        void useAuthStore.getState().restore();
+        useSessionStore
+          .getState()
+          .attachSync(new SyncEngine(repo, server, auth), new ReferenceSync(repo, server, auth));
+
         setStatus({ phase: 'ready' });
       } catch (err) {
         if (cancelled) return;

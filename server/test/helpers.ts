@@ -68,7 +68,7 @@ export async function testHarness() {
       tokens,
       clock,
     ),
-    reference: new ReferenceQueries(new PgReferenceRepo(db)),
+    reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
     ingest: new IngestCommands(db, events, sessions, flags),
     state: new StateQueries(db, events, sessions, flags),
     tokens,

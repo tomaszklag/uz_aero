@@ -18,5 +18,8 @@
     "db:down": "docker stop uzaero-pg",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.10"
   }
 }

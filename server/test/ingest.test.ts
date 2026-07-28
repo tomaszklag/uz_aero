@@ -146,6 +146,56 @@ describe('POST /events', () => {
     const res = await post(app, token, [{ nonsense: true }]);
     expect(res.statusCode).toBe(400);
   });
+
+  it('przejęcie CUDZEJ sesji własnym podpisem → 403 (audyt: krytyczne)', async () => {
+    // KRZ zna sessionUuid TMK i wysyła zdarzenia z WŁASNYM picId — antydatowany
+    // `session_claim` przejąłby sesję, a `day_close` zamknąłby cudzy dzień.
+    const { app, db } = await testHarness();
+    const tokenTmk = await login(app, 'TMK');
+    const tokenKrz = await login(app, 'KRZ');
+    await post(app, tokenTmk, day('sess-1').slice(0, 6)); // sesja TMK, otwarta
+
+    const hijack = day('sess-1', { picId: 'KRZ' }).map((e, i) => ({
+      ...e,
+      uuid: `hijack-${i}`,
+      deviceTime: at(6, 0), // wcześniejsze niż wszystko — próba przejęcia sortowaniem
+      gpsTime: at(6, 0),
+    }));
+    const res = await post(app, tokenKrz, hijack);
+
+    expect(res.statusCode).toBe(403);
+    const { rows } = await db.query<{ pic_id: string }>(
+      "SELECT pic_id FROM sessions WHERE session_uuid = 'sess-1'",
+    );
+    expect(rows[0]!.pic_id).toBe('TMK'); // sesja nietknięta
+  });
+
+  it('poprawna koperta ze zepsutym payloadem → 400, nie 500 i wieczny retry', async () => {
+    const { app, db } = await testHarness();
+    const token = await login(app);
+
+    // `drop` bez `jumpers` wywaliłby projekcję TypeErrorem w transakcji.
+    const broken = [...day('sess-1').slice(0, 4), event('drop', at(8, 48), {})];
+    const res = await post(app, token, broken);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe('bad_payload');
+    const { rows } = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM events');
+    expect(Number(rows[0]!.n)).toBe(0); // cała paczka odrzucona przed zapisem
+  });
+
+  it('NaN w liczbach payloadu nie przechodzi — Postgres by je przyjął', async () => {
+    const { app } = await testHarness();
+    const token = await login(app);
+    const nan = day('sess-1').map((e) =>
+      e.type === 'preflight_confirm'
+        ? { ...e, payload: { ...(e.payload as object), reading: { fuelL: NaN, mh: 1234.5 } } }
+        : e,
+    );
+    // NaN nie jest legalnym JSON-em — koperta odrzuca na serializacji/walidacji.
+    const res = await post(app, token, nan);
+    expect(res.statusCode).toBe(400);
+  });
 });
 
 describe('flagi łańcucha MH (§4.5)', () => {

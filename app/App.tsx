@@ -33,6 +33,9 @@ import { AppText } from './src/ui/components';
 import { RootNavigator } from './src/ui/navigation/RootNavigator';
 import { useAppBootstrap, useGpsPort } from './src/ui/bootstrap/appBootstrap';
 import { ServicesProvider } from './src/ui/bootstrap/ServicesProvider';
+import { useAuthStore } from './src/ui/store/authStore';
+import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
+import { LoginScreen } from './src/ui/screens/LoginScreen';
 
 /**
  * Tło okna natywnego — jedyna warstwa, której nie da się pomalować widokiem RN.
@@ -129,10 +132,35 @@ function AppRoot() {
         natywne tło okna ustawia dodatkowo `backgroundColor` w `app.json`.
       */}
       <View style={[styles.flex, { backgroundColor: theme.colors.bg }]}>
-        <RootNavigator />
+        <AuthGate />
       </View>
     </ServicesProvider>
   );
+}
+
+/**
+ * Bramka tożsamości (§3.0): bez profilu jedyną drogą jest 00-login; z profilem —
+ * aplikacja. Pętla synca żyje TUTAJ, nad nawigatorem: okazje do wysyłki nie mogą
+ * zależeć od tego, który ekran jest otwarty (silnik i bramkę `signed_in` pętla
+ * czyta sama ze store'ów).
+ */
+function AuthGate() {
+  const { theme } = useTheme();
+  const status = useAuthStore((s) => s.status);
+
+  useSyncLoop();
+
+  if (status === 'loading') {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.colors.bg }]}>
+        <ActivityIndicator color={theme.colors.green} size="large" />
+      </View>
+    );
+  }
+
+  if (status === 'signed_out') return <LoginScreen />;
+
+  return <RootNavigator />;
 }
 
 const styles = StyleSheet.create({

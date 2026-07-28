@@ -57,14 +57,34 @@ export class IngestCommands {
     batch: readonly Event[],
     sourceDevice: string | null,
   ): Promise<IngestOutcome> {
-    // Single-writer: każda paczka niesie zdarzenia podpisane PIC-em sesji; nadawca
-    // musi nim być. Odrzucamy CAŁĄ paczkę — częściowe przyjęcie rozjechałoby
-    // księgowość outboxa (telefon nie wie, które wiersze weszły).
+    // Single-writer (§4.4), warstwa 1: każda paczka niesie zdarzenia podpisane PIC-em
+    // sesji; nadawca musi nim być. Odrzucamy CAŁĄ paczkę — częściowe przyjęcie
+    // rozjechałoby księgowość outboxa (telefon nie wie, które wiersze weszły).
     if (batch.some((e) => e.picId !== senderPilotId)) {
       return { ok: false, reason: 'not_session_pic' };
     }
 
+    // Warstwa 2 (audyt: KRYTYCZNE): sam podpis w paczce nie wystarcza — napastnik
+    // wpisałby WŁASNE picId w zdarzenia celujące w CUDZĄ sessionUuid i antydatowanym
+    // zdarzeniem przejął sesję, unieważnił loty korektą albo zamknął cudzy dzień.
+    // Dlatego nadawcę porównujemy z PIC-em sesji JUŻ ISTNIEJĄCEJ na serwerze; nowa
+    // sesja należy do tego, kto ją pierwszy przyniósł.
+    for (const sessionUuid of new Set(batch.map((e) => e.sessionUuid))) {
+      const existing = await this.sessions.get(this.db, sessionUuid);
+      if (existing != null && existing.picId !== senderPilotId) {
+        return { ok: false, reason: 'not_session_pic' };
+      }
+    }
+
     const result = await this.db.transaction(async (tx) => {
+      // Blokada advisory per sesja (audyt: lost update) — dwie równoległe paczki tej
+      // samej sesji liczyłyby projekcję każda bez zdarzeń drugiej i ostatni commit
+      // nadpisałby `sessions` niekompletnym stanem. Lock szereguje ingest per sesja,
+      // zwalnia się sam z końcem transakcji.
+      for (const sessionUuid of [...new Set(batch.map((e) => e.sessionUuid))].sort()) {
+        await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [sessionUuid]);
+      }
+
       const { accepted, duplicates } = await this.events.insertBatch(tx, batch, sourceDevice);
 
       // Projekcje przeliczamy per DOTKNIĘTA sesja — pełny strumień, nie przyrost.

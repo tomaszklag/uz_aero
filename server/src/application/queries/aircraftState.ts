@@ -10,6 +10,8 @@
 
 import type { Handover } from '@uzaero/domain';
 
+import { activeClaim, latestHandover } from '../aircraftStateView.ts';
+
 import type {
   Database,
   EventsStorePort,
@@ -47,19 +49,12 @@ export class StateQueries {
 
   async aircraftState(aircraftId: string): Promise<AircraftState> {
     const sessions = await this.sessions.listByAircraft(this.db, aircraftId);
-
-    // Claim = sesja niezamknięta. Przy nakładce (dwie otwarte — §4.4) pokazujemy
-    // świeższą: to ona odpowiada temu, co dzieje się przy samolocie TERAZ; sam
-    // konflikt jest już oflagowany i widoczny osobno.
-    const open = sessions
-      .filter((s) => s.status === 'active')
-      .sort((a, b) => (b.claimTime ?? 0) - (a.claimTime ?? 0));
-    const claim = open[0] ?? null;
+    const claim = activeClaim(sessions);
 
     return {
       aircraftId,
       claimPicId: claim?.picId ?? null,
-      claimSince: claim?.claimTime ?? null,
+      claimSince: claim?.since ?? null,
       handover: latestHandover(sessions),
       lastSyncAt: (await this.events.lastReceivedAt(this.db, aircraftId))?.toISOString() ?? null,
     };
@@ -80,43 +75,4 @@ export class StateQueries {
       exportUrl: null,
     };
   }
-}
-
-/**
- * Ostatnie znane odczyty jako przekazanie (§4.5).
- *
- * Podstawą jest ostatnia sesja ZAMKNIĘTA (day_close = świadome przekazanie), ale gdy
- * po niej trwa już kolejny dzień z nowszymi odczytami (tankowanie podbija fuel_last),
- * pokazujemy je — preflight ma podpowiadać stan FAKTYCZNY, nie historyczny.
- */
-function latestHandover(sessions: SessionRow[]): Handover | null {
-  const closed = sessions
-    .filter((s) => s.status === 'closed' && s.mhEnd != null && s.fuelEndL != null)
-    .sort((a, b) => (b.closeTime ?? 0) - (a.closeTime ?? 0));
-  const base = closed[0];
-  if (base == null) return null;
-
-  const newerOpen = sessions
-    .filter(
-      (s) =>
-        s.status === 'active' &&
-        (s.claimTime ?? 0) > (base.closeTime ?? 0) &&
-        s.fuelLastL != null &&
-        s.mhLast != null,
-    )
-    .sort((a, b) => (b.claimTime ?? 0) - (a.claimTime ?? 0))[0];
-
-  if (newerOpen != null) {
-    return {
-      reading: { fuelL: newerOpen.fuelLastL!, mh: newerOpen.mhLast! },
-      byPilotId: newerOpen.picId,
-      at: newerOpen.claimTime ?? 0,
-    };
-  }
-
-  return {
-    reading: { fuelL: base.fuelEndL!, mh: base.mhEnd! },
-    byPilotId: base.picId,
-    at: base.closeTime ?? 0,
-  };
 }

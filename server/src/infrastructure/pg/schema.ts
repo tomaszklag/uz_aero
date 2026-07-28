@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -109,4 +109,15 @@ export const MIGRATION_2 = `
   CREATE INDEX IF NOT EXISTS idx_flags_aircraft ON flags (aircraft_id) WHERE status = 'open';
 `;
 
-export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2];
+/**
+ * Migracja 3 (audyt): unikalność flag na poziomie BAZY.
+ *
+ * Dedupe w adapterze (SELECT-then-INSERT) przegrywa wyścig dwóch równoległych
+ * transakcji — constraint jest jedyną gwarancją, której nie da się ominąć timingiem.
+ * `session_uuids` wstawiamy zawsze posortowane, więc UNIQUE działa na zbiorze.
+ */
+export const MIGRATION_3 = `
+  ALTER TABLE flags ADD CONSTRAINT uq_flags_type_sessions UNIQUE (type, session_uuids);
+`;
+
+export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2, MIGRATION_3];

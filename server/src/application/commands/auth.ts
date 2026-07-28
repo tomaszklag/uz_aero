@@ -60,15 +60,24 @@ export class AuthCommands {
     return { ok: true, tokens: await this.issueFor(account.id, account.code, account.name) };
   }
 
-  /** Rotacja: zużywa refresh, wydaje świeżą parę. `null` = token nieznany/wygasły. */
+  /** Rotacja: zużywa refresh i wydaje świeżą parę ATOMOWO. `null` = token martwy. */
   async refresh(refreshToken: string): Promise<AuthTokens | null> {
-    const consumed = await this.refreshTokens.consume(refreshToken);
-    if (consumed == null) return null;
+    const expiresAt = new Date(
+      this.clock.now().getTime() + REFRESH_TTL_DAYS * 24 * 3_600_000,
+    );
+    const rotated = await this.refreshTokens.rotate(refreshToken, expiresAt);
+    if (rotated == null) return null;
 
-    const account = await this.pilots.findById(consumed.pilotId);
+    const account = await this.pilots.findById(rotated.pilotId);
+    // Konto skasowane/wyłączone PO rotacji: token przepada razem z odmową — i dobrze,
+    // dezaktywacja ma odcinać dostęp, nie zostawiać zapasowego refresha.
     if (account == null || !account.active) return null;
 
-    return this.issueFor(account.id, account.code, account.name);
+    return {
+      token: this.tokens.sign({ pilotId: account.id, code: account.code }, ACCESS_TTL_SEC),
+      refreshToken: rotated.token,
+      pilot: { id: account.id, code: account.code, name: account.name },
+    };
   }
 
   private async issueFor(id: string, code: string, name: string): Promise<AuthTokens> {

@@ -1,17 +1,19 @@
 /**
- * UZ Aero — dane referencyjne floty (ZAŚLEPKA).
+ * UZ Aero — dane referencyjne floty (dane PIERWSZEGO URUCHOMIENIA).
  *
- * ⚠️ TYMCZASOWE: docelowo cache referencyjny wypełnia serwer przez `GET /reference`
- * (§4.6, §4.8) i odświeża przy każdym kontakcie z siecią. Do czasu powstania backendu
- * wstawiamy tu flotę scenariusza, żeby preflight miał z czego wybierać.
+ * Od M3 cache referencyjny wypełnia serwer (`GET /reference` przez
+ * `application/sync/referenceSync.ts` — z ETagiem i bramą wieku). Seed pokrywa jedynie
+ * okno między instalacją a pierwszym udanym kontaktem z serwerem (oraz pracę bez
+ * backendu w dev/StyleGuide) — po pierwszym odświeżeniu każdy wiersz nadpisuje upsert
+ * prawdą serwera.
  *
  * Dlaczego to jest w INFRASTRUKTURZE, a nie w domenie: to namiastka źródła zewnętrznego,
- * dokładnie jak adapter HTTP, który ją zastąpi. Domena nie może zależeć od tego, że
+ * dokładnie jak adapter HTTP, który ją wypiera. Domena nie może zależeć od tego, że
  * akurat dziś flota bierze się z tablicy w kodzie.
  *
- * Seed jest **idempotentny** i NIE nadpisuje świeższych danych z serwera: wstawiamy go
- * tylko wtedy, gdy cache jest pusty. Inaczej po pierwszym syncu kasowalibyśmy prawdę
- * serwera przy każdym starcie aplikacji.
+ * Seed jest **idempotentny** i NIE nadpisuje danych z serwera: wstawiamy go tylko wtedy,
+ * gdy cache jest pusty. Inaczej po pierwszym syncu kasowalibyśmy prawdę serwera przy
+ * każdym starcie aplikacji.
  *
  * Flota i konfiguracje pochodzą z `docs/design-notes.md` (sekcja „Placeholdery").
  */

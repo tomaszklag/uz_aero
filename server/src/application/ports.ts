@@ -75,8 +75,13 @@ export interface TokenService {
  */
 export interface RefreshTokensPort {
   issue(pilotId: string, expiresAt: Date): Promise<string>;
-  /** Zużywa token (rotacja): zwraca pilota i unieważnia stary; `null` = nieznany/wygasły. */
-  consume(token: string): Promise<{ pilotId: string } | null>;
+  /**
+   * ATOMOWA rotacja: unieważnia stary i wydaje nowy w jednej transakcji.
+   * Rozdzielone consume+issue (audyt) zostawiały okno, w którym crash/zgubiona
+   * odpowiedź kasowały stary token bez wydania nowego — a pełne ponowne logowanie
+   * wymaga sieci, więc łamałoby obietnicę §3.0. `null` = token nieznany/wygasły.
+   */
+  rotate(token: string, newExpiresAt: Date): Promise<{ pilotId: string; token: string } | null>;
 }
 
 // ── dane referencyjne ───────────────────────────────────────────────────────────

@@ -14,6 +14,7 @@ import { EVENT_TYPES, type Event } from '@uzaero/domain';
 import type { IngestCommands } from '../../application/commands/ingest.ts';
 import type { TokenService } from '../../application/ports.ts';
 import { authorize } from '../authorize.ts';
+import { payloadValid } from './eventPayloads.ts';
 
 /** Eksportowana dla testu kontraktowego zod ↔ typ domenowy. */
 export const eventEnvelope = z.object({
@@ -45,6 +46,12 @@ export function registerEventsRoutes(
 
     const parsed = eventsBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
+
+    // Payload per typ (audyt): zepsuty payload dawałby 500 w transakcji i wieczny
+    // retry telefonu albo NaN na stałe w projekcji. 400 mówi klientowi „nie ponawiaj".
+    if (parsed.data.events.some((e) => !payloadValid(e.type, e.payload))) {
+      return reply.code(400).send({ error: 'bad_payload' });
+    }
 
     const outcome = await ingest.ingest(
       who.pilotId,

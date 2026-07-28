@@ -9,3 +9,6 @@ export * from './ports';
 export * from './eventsRepo';
 export * from './commands';
 export * from './queries';
+export * from './auth/authService';
+export * from './sync/syncEngine';
+export * from './sync/referenceSync';

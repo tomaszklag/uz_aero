@@ -1,8 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    // `Preserve` + `Bundler`: serwer wykonuje TS przez tsx (rozdzielczość bundlerowa),
+    // więc typecheck ma widzieć moduły tak samo jak runtime. NodeNext wymagałby
+    // rozszerzeń w relatywnych importach WEWNĄTRZ `@uzaero/domain` — a domena musi
+    // kompilować się też pod Metro/Jest aplikacji, które rozszerzeń nie chcą.
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
     "lib": ["ES2022"],
     "types": ["node"],
     "strict": true,

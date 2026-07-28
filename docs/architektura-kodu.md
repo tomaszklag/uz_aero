@@ -25,11 +25,41 @@ i osobnej bazy odczytu — projekcje odświeżane synchronicznie w transakcji pr
 zdarzeń. Przy skali klubu każdy dodatkowy ruchomy element to koszt bez zysku.
 
 Stan po M2: `POST /events` (idempotencja po uuid, single-writer egzekwowany tożsamością
-z JWT), projekcja `sessions` odświeżana w transakcji przyjęcia, flagi łańcucha MH
-(`mh_gap` / `mh_regression` / `session_overlap` — czysta funkcja `server/src/domain/mhChain.ts`,
-tolerancja 0,05 h), `GET /aircraft/:id/state` i `GET /sessions/:uuid/sync-status`.
-Serwer projektuje sesje `projectSession` z `@uzaero/domain` — liczby kanonicznego dnia
-wychodzą identyczne jak na ekranie 10 telefonu, co przybija test integracyjny.
+z JWT **i** — po audycie — zgodnością z `pic_id` istniejącej sesji, plus walidacja
+payloadów per typ zdarzenia i `pg_advisory_xact_lock` per sesja), projekcja `sessions`
+odświeżana w transakcji przyjęcia, flagi łańcucha MH (`mh_gap` / `mh_regression` /
+`session_overlap` — czysta funkcja `server/src/domain/mhChain.ts`, tolerancja
+`MH_TOLERANCE_H` z domeny), `GET /aircraft/:id/state`, `GET /sessions/:uuid/sync-status`
+i `GET /reference` wzbogacone o claim/przekazanie z projekcji sesji (ETag liczy też
+znacznik sesji). Serwer projektuje sesje `projectSession` z `@uzaero/domain` — liczby
+kanonicznego dnia wychodzą identyczne jak na ekranie 10 telefonu, co przybija test
+integracyjny.
+
+Stan po M3 (app ↔ serwer): `ServerPort` + adapter fetch (`infrastructure/api/`),
+`AuthService` na `expo-secure-store` (§3.0: wygasły token ≠ wylogowanie, logout blokowany
+niepustym outboxem), `SyncEngine` (§4.3: paczki ≤ 500, duplikaty = dostarczone, jedna
+rotacja tokenu, offline ≠ auth_expired) podpięty do store'u sesji (`attachSync` /
+`syncNow`), pętla okazji `useSyncLoop` (start, powrót z tła, przyrost outboxa, puls 60 s),
+ekran 00-login za bramką `AuthGate` i ekran 11 (synchronizacja) z flagami serwera
+w trzech stanach świeżości. Cache referencyjny zasila `ReferenceSync`
+(`application/sync/referenceSync.ts`): `GET /reference` z ETagiem (304 = podbicie
+`fetchedAt`, treść bez transferu), brama wieku 15 min w pętli okazji, upsert — nie
+replace (flota i piloci są wyłączani, nie kasowani); seed został danymi pierwszego
+uruchomienia. Wspólny wzorzec „świeży token + jedna rotacja przy 401" dla odczytów
+mieszka w `application/sync/authorizedFetch.ts` (wysyłka outboxa celowo NIE korzysta —
+tam rozróżnienie offline/auth_expired/rejected niesie decyzje).
+
+**Zaległości audytu serwera (2026-07-28) — świadomie odłożone, do zrobienia przed
+wdrożeniem (faza 6):** rate-limit na `/auth/*` (dziś brute-force ogranicza tylko koszt
+scrypta); okno łaski przy rotacji refresh tokenu (równoległe rotacje z dwóch urządzeń
+tego samego pilota unieważniają się nawzajem — dziś akceptowalne, bo profil żyje na
+jednym telefonie); klucze obce `events`/`sessions` → `pilots`/`aircraft` (dziś spójność
+pilnowana kodem, nie schematem); odświeżanie pola `details` istniejącej flagi przy
+zmianie wielkości dziury MH (dedupe zostawia pierwszy pomiar); transakcyjne pary
+migracji w `migrate.ts`; sprzątanie wygasłych refresh tokenów (cron/`DELETE` przy
+logowaniu); skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń;
+porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
+ignorowana).
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób
@@ -136,11 +166,14 @@ a nie przez jeden ekran.
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
 | `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` |
 | `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
+| `SyncStatusBox` | przyrząd statusu wysyłki: plakietka, licznik, pasek postępu | `.google-box` (11) / `.sync-box` (11a) |
+| `QueueBox` | kolejka outboxa: aktywna (amber) albo przygaszona do 30% | `.queue-box` (11a) / `.offline-queue` (11) |
 | `StatusChip` | chipy **stanu sesji** (GROUND, RUNNING, cache) | `.ground-chip` |
 | `Tag` | **przypisy** przy pozycji listy/nagłówku (8–11 px) | `.pic-lock-tag`, `.optional-tag`, `.step-badge` |
 | `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
 | `CardPicker` | wybór z **listy kart** (nigdy natywny select), układ jednowierszowy | `.aircraft-option`, `.crew-option` |
 | `OptionGrid` | siatka kart **z ikonami**, 2 kolumny | `.op-grid` |
+| `OptionInput` | wartość konfiguracyjna w „ubraniu" pola — bez wpisywania | `.option-input` (11) |
 | `Field`, `TextField` | oprawa pola: etykieta mono, tag, podpowiedź; fokus zielony | `.field` / `.field-input` |
 | `ValueBox` | pole **odczytu**: duża wartość + jednostka, kontekst i ołówek po prawej | `.field-input.filled` |
 | `Readout` | sekcja odczytu z licznika: wartość, świeżość, pasek, korekta, historia | `.section` w 02a |
@@ -352,7 +385,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 240 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 285 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -372,10 +405,11 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `cockpitPeek.test.ts` | podglądu cudzej sesji: świeżość migawki, treść ostrzeżeń |
 | `crewChange.test.ts` | atrybucji block time per pilot i blokad zmiany Duala |
 | `manualLog.test.ts` | grupowania logu w cykle silnikowe i wierszy oczekiwanych |
-| `corrections.test.ts` | korekt 04c (`retime` / `void`) nakładanych przez projekcję, append-only |
+| `corrections.test.ts` | nakładania korekt 04c (retime/void, „ostatnia wygrywa") i ich reguł |
 | `correctionUi.test.ts` | zapowiedzi skutku korekty — „Wpływ na czas lotu" liczy ta sama projekcja |
-| `corrections.test.ts` | nakładania korekt (retime/void, „ostatnia wygrywa") i ich reguł |
-| `correctionUi.test.ts` | podglądu wpływu korekty na czasy — patrz niżej |
+| `syncEngine.test.ts` | pętli wysyłki §4.3 i poświadczeń §3.0: duplikaty = dostarczone, offline ≠ auth_expired, jedna rotacja tokenu, `fetchStatus` dla ekranu 11 |
+| `syncStatus.test.ts` | prezentacji ekranu 11: odmiana liczebników, konwencja nazwy karty §4.7, licznik wysyłki z ogonem outboxa |
+| `referenceSync.test.ts` | odświeżania cache §4.8: nadpisanie seedu prawdą serwera, ETag/304 z podbiciem wieku, brama 15 min, offline nie psuje cache |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:

@@ -56,8 +56,19 @@ export class ScryptHasher implements PasswordHasher {
     const p = Number(pStr);
     if (!Number.isInteger(N) || !Number.isInteger(r) || !Number.isInteger(p)) return false;
 
+    // Gardy z audytu: parametry idą z PRZECHOWYWANEGO wpisu, więc podmieniony rekord
+    // nie może dyktować kosztu KDF (DoS pamięciowy). Górne granice z zapasem na
+    // przyszłe podnoszenie PARAMS; N musi być potęgą dwójki (wymóg scrypt).
+    if (N > 2 ** 17 || (N & (N - 1)) !== 0 || r <= 0 || r > 32 || p <= 0 || p > 16) {
+      return false;
+    }
+
     const salt = Buffer.from(saltB64!, 'base64');
     const expected = Buffer.from(hashB64!, 'base64');
+
+    // Pusty/ucięty hash: `timingSafeEqual(empty, empty)` zwraca true — fail-open,
+    // w którym uszkodzony rekord przyjmuje KAŻDE hasło. Minimalna długość zamyka to.
+    if (expected.length < 32 || salt.length < 8) return false;
 
     try {
       const actual = await scrypt(password, salt, expected.length, {

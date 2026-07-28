@@ -17,6 +17,8 @@
  * życia flag należą do warstwy aplikacji.
  */
 
+import { MH_TOLERANCE_H } from '@uzaero/domain';
+
 export interface ChainLink {
   sessionUuid: string;
   /** Odczyt startowy MH (z preflight); null = sesja jeszcze bez odczytu. */
@@ -33,11 +35,13 @@ export interface ChainFlag {
 }
 
 /**
- * Tolerancja zgodności ogniw (h). Licznik analogowy czyta się z dokładnością ~0,05 h
- * (3 min); flagowanie różnic mniejszych produkowałoby szum, który nauczy wszystkich
- * ignorować flagi w ogóle.
+ * Tolerancja zgodności ogniw — WSPÓLNA z aplikacją (`MH_TOLERANCE_H`, §4.5).
+ *
+ * Audyt wyłapał forka (0.05 tu vs 0.1 w domenie): delta 0.06–0.1 h przechodziła
+ * na telefonie bez ostrzeżenia, a serwer ją flagował — dokładnie ten rozjazd
+ * klient/serwer, przed którym broni monorepo. Jeden próg, jedno źródło.
  */
-export const CHAIN_TOLERANCE_H = 0.05;
+export const CHAIN_TOLERANCE_H = MH_TOLERANCE_H;
 
 export function chainFlags(links: readonly ChainLink[]): ChainFlag[] {
   const flags: ChainFlag[] = [];

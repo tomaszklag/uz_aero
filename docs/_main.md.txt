@@ -339,7 +339,7 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 |--------|----------|-----|
 | POST | `/auth/login` | login + hasło → JWT sesji + refresh token |
 | POST | `/auth/refresh` | odświeżenie JWT (refresh długożyciowy — patrz 3.0) |
-| GET | `/reference` | samoloty + konfiguracje + piloci; ETag/`updated_at` do cache |
+| GET | `/reference` | samoloty + konfiguracje + piloci + claim/przekazanie per samolot; ETag (flota **i** sesje) do cache |
 | GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH — wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie z `day_close` **lub** zdarzenia w trakcie dnia, np. tankowanie), `last_sync_at` |
 | POST | `/events` | paczka zdarzeń → `{accepted, duplicates, flags}` |
 | GET | `/sessions/:uuid/sync-status` | wysłane/łącznie, flagi sesji, status i link eksportu |
@@ -613,9 +613,9 @@ seed/SQL lub prosty panel — do decyzji w fazie backendowej.
 |------|--------|--------|
 | 0 | Design UX/UI — mockupy HTML wszystkich ekranów, design tokens | ✅ zakończona — 30 mockupów w `design/`, zatwierdzone jako specyfikacja |
 | 1 | Fundament aplikacji — RN + Expo, nawigacja, schemat zdarzeń w SQLite, GPS hook | ✅ zakończona — architektura kodu: `docs/architektura-kodu.md` |
-| 2 | Fundament backendu — API (kontrakt 4.6), Postgres, auth login+hasło→JWT (decyzja 2026-07-22), dedup | przed nami · szac. 1–2 tyg. |
-| 3 | Ekrany aplikacji — preflight, cockpit, akcje ground, statystyki | 🔶 w toku — gotowe 02–10 (z 04b/04c i arkuszami 05e/05f); brak: 00 login, 01 splash, 11 synchronizacja, 12 historia |
-| 4 | Sync end-to-end — outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | przed nami · szac. 2–3 tyg. |
+| 2 | Fundament backendu — API (kontrakt 4.6), Postgres, auth login+hasło→JWT (decyzja 2026-07-22), dedup | ✅ zakończona — `server/` (clean architecture + uproszczony CQRS, wspólna domena `packages/domain`); po audycie bezpieczeństwa (2026-07-28); zaległości audytu: `docs/architektura-kodu.md` §0 |
+| 3 | Ekrany aplikacji — preflight, cockpit, akcje ground, statystyki | 🔶 w toku — gotowe 00 i 02–11 (z 04b/04c i arkuszami 05e/05f); brak: 01 splash + odblokowanie PIN, 12 historia |
+| 4 | Sync end-to-end — outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | 🔶 w toku — działa: outbox → `/events` (SyncEngine §4.3), auth §3.0, flagi + `sync-status`, ekran 11, cache referencyjny z `GET /reference` (ETag/304, brama wieku; seed = pierwsze uruchomienie); brak: `takeover_online`, eksport Sheets (4.7) |
 | 5 | Testy z pilotami, korekty UX, kalibracja progów S/L | przed nami · szac. 2 tyg. |
 | 6 | Wdrożenie — Play Store internal track, deploy backendu, dokumentacja | przed nami · szac. 1 tyg. |
 

@@ -52,9 +52,6 @@ import {
   jumperBreakdown,
 } from './statsDay';
 
-/** Ekrany 04c (korekta zdarzenia) i 11 (synchronizacja) jeszcze nie istnieją. */
-const NOT_BUILT = 'Ekran w budowie';
-
 /** Kolumny listy lotów — `#` i `Typ` mają stałą szerokość, czasy dzielą resztę po równo. */
 const FLIGHT_COLUMNS = [
   { label: '#', width: 20 },
@@ -337,8 +334,7 @@ export function StatsScreen({
             tone="green"
             variant="solid"
             trailingIcon="next"
-            disabledReason={NOT_BUILT}
-            onPress={() => navigation.navigate('Export')}
+            onPress={() => navigation.navigate('Sync')}
           />
         </View>
       </View>

@@ -29,6 +29,7 @@ import { ManualLogScreen } from '../screens/ManualLogScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { EndOfDayScreen } from '../screens/EndOfDayScreen';
 import { StatsScreen } from '../screens/StatsScreen';
+import { SyncScreen } from '../screens/SyncScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
@@ -43,6 +44,7 @@ export type RootStackParamList = {
   ManualLog: undefined;
   EndOfDay: undefined;
   Stats: undefined;
+  Sync: undefined;
   StyleGuide: undefined;
 };
 
@@ -89,6 +91,7 @@ export function RootNavigator() {
         <Stack.Screen name="ManualLog" component={ManualLogScreen} />
         <Stack.Screen name="EndOfDay" component={EndOfDayScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
+        <Stack.Screen name="Sync" component={SyncScreen} />
         <Stack.Screen name="StyleGuide" component={StyleGuideScreen} />
       </Stack.Navigator>
     </NavigationContainer>

@@ -32,17 +32,15 @@ export class PgFlagsRepo implements FlagsPort {
     flag: { type: string; aircraftId: string; sessionUuids: string[]; details: Record<string, unknown> },
   ): Promise<void> {
     const uuids = [...flag.sessionUuids].sort();
-    // Dedupe po (typ, zestaw sesji): ponowny sync tych samych danych nie mnoży flag,
-    // a rozwiązana flaga NIE odżywa — jeśli anomalia trwa, admin już o niej wie.
-    const { rows } = await tx.query<{ id: number }>(
-      `SELECT id FROM flags WHERE type = $1 AND session_uuids = $2`,
-      [flag.type, uuids],
-    );
-    if (rows.length > 0) return;
-
+    // Dedupe po (typ, zestaw sesji) — CELOWO obejmuje też flagi `resolved`: anomalia
+    // łańcucha jest trwała (odczyty się nie zmienią), więc ponowne otwarcie po decyzji
+    // administratora produkowałoby szum uczący ignorowania flag. Nowa sesja w nakładce
+    // = nowy zestaw = nowa flaga. Ostatnim słowem jest UNIQUE w bazie (migracja 3) —
+    // sam SELECT-then-INSERT przegrywa wyścig równoległych transakcji.
     await tx.query(
       `INSERT INTO flags (type, aircraft_id, session_uuids, details)
-       VALUES ($1, $2, $3, $4)`,
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (type, session_uuids) DO NOTHING`,
       [flag.type, flag.aircraftId, uuids, JSON.stringify(flag.details)],
     );
   }

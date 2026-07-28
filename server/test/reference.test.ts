@@ -55,9 +55,64 @@ describe('GET /reference', () => {
     expect(kwa.serviceStatus).toBe('disabled');
     expect(kwa.mhFormat).toBe('decimal');
 
-    // Pola wyliczane ze zdarzeń (M2) — na razie jawnie puste, nie brakujące.
+    // Bez sesji na serwerze pola stanu są jawnie puste, nie brakujące.
     expect(an2.claimPicId).toBeNull();
     expect(an2.handover).toBeNull();
+  });
+
+  it('otwarta sesja wypełnia claim w /reference — cache telefonu dostaje stan floty', async () => {
+    const { app } = await testHarness();
+    const token = await authed(app);
+
+    // TMK otwiera dzień na SP-AXA (claim + preflight, bez zamknięcia).
+    const DAY = Date.UTC(2026, 5, 22);
+    const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
+    const mk = (i: number, type: string, time: number, payload: object) => ({
+      uuid: `ref-claim-${i}`,
+      sessionUuid: 'sess-ref',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type,
+      deviceTime: time,
+      gpsTime: time,
+      payload,
+      schemaVersion: 1,
+    });
+    const first = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        events: [
+          mk(1, 'session_claim', at(8, 0), { mode: 'free' }),
+          mk(2, 'preflight_confirm', at(8, 0), {
+            operation: 'skoki',
+            dutyStart: at(8, 0),
+            reading: { fuelL: 150, mh: 1234.5 },
+            mhFormat: 'hhmm',
+          }),
+        ],
+      },
+    });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      // Stary ETag NIE może dać 304 — claim właśnie się zmienił.
+      headers: { authorization: `Bearer ${token}`, 'if-none-match': first.headers.etag as string },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+    expect(axa.claimPicId).toBe('TMK');
+    expect(axa.claimSince).toBe(at(8, 0));
   });
 
   it('If-None-Match z aktualnym ETagiem → 304 bez ciała', async () => {
