@@ -181,6 +181,26 @@ export interface SheetsPort {
   writeDaySheet(sheet: DaySheet): Promise<{ url: string }>;
 }
 
+/** Zapisana karta dzienna: dosłowna treść + stempel ostatniego nadpisania (rewizji). */
+export interface StoredDaySheet {
+  tab: string;
+  rows: string[][];
+  updatedAt: Date;
+}
+
+/**
+ * Odczyt zapisanych kart — OSOBNY port, nie metoda `SheetsPort`. Stronę zapisu
+ * implementuje KAŻDY dostawca arkuszy (bazodanowy dziś, Google po dostarczeniu
+ * klucza serwisowego — podmiana tego samego portu), ale odczyt po nazwie istnieje
+ * wyłącznie dlatego, że karty serwujemy z własnej bazy (`GET /sheets/:tab`).
+ * U Google „odczytem" jest sam arkusz pod `sheet_url` — doklejenie tej metody do
+ * `SheetsPort` zmuszałoby przyszły adapter do martwego kodu.
+ */
+export interface SheetsReadPort {
+  /** Karta po nazwie (`YYYY-MM-DD_SP-XXX`); `null` = nigdy nie wyeksportowano. */
+  readDaySheet(tab: string): Promise<StoredDaySheet | null>;
+}
+
 /** Wpis dziennika eksportu (§5.3 `export_log`) — jedna wykonana rewizja karty. */
 export interface ExportRecord {
   sessionUuid: string;

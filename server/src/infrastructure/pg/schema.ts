@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -142,4 +142,31 @@ export const MIGRATION_4 = `
   CREATE INDEX IF NOT EXISTS idx_export_log_session ON export_log (session_uuid);
 `;
 
-export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2, MIGRATION_3, MIGRATION_4];
+/**
+ * Migracja 5: treść wyeksportowanych kart dziennych (§4.7) — bazodanowy adapter
+ * `SheetsPort` (zamiast czekania na klucz serwisowy Google).
+ *
+ * Semantyka DOKŁADNIE jak karty w arkuszu Google: jedna nazwa = jedna karta,
+ * a rewizja NADPISUJE treść (UPSERT po `tab`) — czytelnik linku z ekranu 11 ma
+ * widzieć wyłącznie aktualny stan dnia, tak jak widziałby arkusz. Historii rewizji
+ * tu NIE ma i nie wolno jej tu dodawać: „co i kiedy poszło" pamięta append-only
+ * `export_log` (jedyny ślad rozjazdu arkusz↔rejestr), a treść każdej rewizji da się
+ * odtworzyć ze strumienia zdarzeń — pełne kopie dublowałyby rejestr bez zysku.
+ * `rows` to DOSŁOWNE wiersze karty (`DaySheet.rows`, string[][]) — karta jest
+ * dokumentem w kształcie Excela, nie projekcją do dalszego liczenia.
+ */
+export const MIGRATION_5 = `
+  CREATE TABLE IF NOT EXISTS exported_sheets (
+    tab        TEXT PRIMARY KEY,
+    rows       JSONB NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+  );
+`;
+
+export const MIGRATIONS: readonly string[] = [
+  MIGRATION_1,
+  MIGRATION_2,
+  MIGRATION_3,
+  MIGRATION_4,
+  MIGRATION_5,
+];

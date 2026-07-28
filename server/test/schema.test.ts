@@ -69,6 +69,7 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'export_log',
       ['id', 'session_uuid', 'day', 'aircraft_id', 'sheet_url', 'revision', 'exported_at'],
     ],
+    ['exported_sheets', ['tab', 'rows', 'updated_at']],
   ])('tabela %s ma dokładnie uzgodnione kolumny', async (table, expected) => {
     const db = await migrated();
     expect(await columnsOf(db, table as string)).toEqual(expected);

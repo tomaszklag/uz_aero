@@ -11,8 +11,9 @@ import { z } from 'zod';
 
 import { AuthCommands } from './application/commands/auth.ts';
 import { IngestCommands } from './application/commands/ingest.ts';
-import type { DayExporter } from './application/export/dayExporter.ts';
+import { DayExporter } from './application/export/dayExporter.ts';
 import { ReferenceQueries } from './application/queries/reference.ts';
+import { SheetQueries } from './application/queries/sheets.ts';
 import { StateQueries } from './application/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
@@ -25,6 +26,7 @@ import { migrate } from './infrastructure/pg/migrate.ts';
 import { PgPilotsRepo } from './infrastructure/pg/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/refreshTokensRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/referenceRepo.ts';
+import { PgSheets } from './infrastructure/pg/sheetsRepo.ts';
 import { buildServer } from './http/server.ts';
 
 const env = z
@@ -32,6 +34,8 @@ const env = z
     DATABASE_URL: z.string().url(),
     JWT_SECRET: z.string().min(32),
     PORT: z.coerce.number().int().positive().default(3000),
+    /** Adres serwera widziany Z TELEFONU — baza linków do kart (`GET /sheets/:tab`). */
+    PUBLIC_BASE_URL: z.string().url().optional(),
   })
   .parse(process.env);
 
@@ -46,25 +50,23 @@ const events = new PgEventsStore();
 const sessions = new PgSessionsProjection();
 const flags = new PgFlagsRepo();
 const exportLog = new PgExportLogRepo();
+const pilots = new PgPilotsRepo(db);
 
-// Eksport §4.7: eksporter powstaje TYLKO przy kompletnej konfiguracji Sheets w env —
-// a że adaptera Google jeszcze nie ma (klucz serwisowy dopiero będzie), na razie
-// nie konstruujemy go wcale. `null` = ingest pomija eksport; cała reszta (port,
-// dziennik, `exportUrl` w sync-status) już działa i czeka na adapter.
-// Placeholdery zmiennych: `.env.example`.
-const exporter: DayExporter | null = null;
+// Eksport §4.7 działa END-TO-END na adapterze bazodanowym: `day_close` → karta
+// w `exported_sheets` → wpis w `export_log` → link w sync-status, serwowany pod
+// `GET /sheets/:tab`. Adapter Google (konto serwisowe, zmienne `GOOGLE_*`
+// w `.env.example`) będzie podmianą TEGO SAMEGO portu w tym miejscu.
+// `PUBLIC_BASE_URL` = adres, pod którym telefony widzą serwer — linki do kart
+// muszą być klikalne z telefonu, nie z localhosta serwera.
+const sheets = new PgSheets(db, env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`, clock);
+const exporter = new DayExporter(db, events, flags, exportLog, sheets, pilots, clock);
 
 const app = buildServer({
-  auth: new AuthCommands(
-    new PgPilotsRepo(db),
-    new PgRefreshTokens(db, clock),
-    new ScryptHasher(),
-    tokens,
-    clock,
-  ),
+  auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), new ScryptHasher(), tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
   ingest: new IngestCommands(db, events, sessions, flags, exporter),
   state: new StateQueries(db, events, sessions, flags, exportLog),
+  sheets: new SheetQueries(sheets),
   tokens,
 });
 

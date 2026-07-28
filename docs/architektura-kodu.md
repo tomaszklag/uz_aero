@@ -71,10 +71,20 @@ ingestu, dla sesji zamkniętych po przetworzeniu; bramki: sesja otwarta / otwart
 `session_overlap` = nic; spóźnione dane → rewizja +1). Dziennik `export_log`
 (migracja 4, append-only — historia rewizji to jedyny ślad rozjazdu arkusz↔rejestr);
 `sync-status.exportUrl` z ostatniej rewizji. Awarię Sheets łapie ingest — telefon
-dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek. `SheetsPort` ma na razie tylko
-atrapę testową — adapter Google (konto serwisowe, `SHEETS_SPREADSHEET_ID`) powstanie
-po dostarczeniu klucza; do tego czasu composition root nie konstruuje eksportera
-(`exporter: null`).
+dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek.
+
+Karty mieszkają W BAZIE (decyzja 2026-07-28: nie czekamy na Google): adapter
+`PgSheets` (`infrastructure/pg/sheetsRepo.ts`) zapisuje dosłowne wiersze karty do
+`exported_sheets` (migracja 5; UPSERT po `tab` — semantyka jak karta w Google:
+czytelnik widzi wyłącznie aktualny stan, historię rewizji trzyma `export_log`),
+a `GET /sheets/:tab` (autoryzowane, `SheetQueries` + osobny `SheetsReadPort` —
+odczyt po nazwie istnieje tylko przy własnej bazie, Google „czyta się" samym
+`sheet_url`) serwuje je pod linkiem z `export_log`. Eksport jest WŁĄCZONY
+domyślnie; `PUBLIC_BASE_URL` w env ustawia bazę linków widzianą z telefonu.
+Adapter Google pozostaje przyszłą podmianą `SheetsPort` w composition root —
+eksporter, treść kart i dziennik nie drgną. Zastrzeżenie: link z ekranu 11 otwarty
+w przeglądarce telefonu dostanie 401 (zasób autoryzowany) — klikalny „na
+zewnątrz" stanie się z adapterem Google.
 
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą

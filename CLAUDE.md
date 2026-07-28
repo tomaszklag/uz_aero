@@ -13,7 +13,7 @@ Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny
 
 ## Faza aktualna
 **Monorepo: aplikacja RN w `app/`, backend w `server/`, wspólna domena w `packages/domain`.**
-Fazy z `docs/_main.md.txt` §10: 1–3 ✅ (komplet ekranów 00–12) · 4 🔶 (sync outbox↔serwer, ekran 11, cache referencyjny, `takeover_online` i logika eksportu §4.7 działają; brak: TYLKO adapter Google Sheets — czeka na klucz konta serwisowego).
+Fazy z `docs/_main.md.txt` §10: 1–4 ✅ (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE — `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · przed nami: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
 - Mockupy w `design/` to **zatwierdzona specyfikacja**: ekran RN wdrażamy 1:1 z odpowiadającego pliku HTML, sekcja po sekcji, bez upraszczania. Wątpliwość do mockupu = rozmowa przed implementacją, nie cicha zmiana w kodzie.
 - Architektura kodu i przepisy (nowy typ zdarzenia / reguła / ekran): `docs/architektura-kodu.md` (tam też zaległości audytu serwera). Po zmianach w `app/`: `npx jest` i `npx tsc --noEmit`; po zmianach w `server/` lub `packages/domain`: `npx vitest run` i `npx tsc --noEmit` w `server/` — wszystko musi przechodzić.
 - `design/PLAN.md` nie jest już aktywną checklistą (został backlog UX). Reguły designu niżej nadal obowiązują przy każdej zmianie mockupów.

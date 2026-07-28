@@ -8,7 +8,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { TEST_BASE_URL, TEST_PASSWORD, testHarness } from './helpers.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -344,6 +344,8 @@ describe('GET /aircraft/:id/state i sync-status', () => {
 
     expect(body).toMatchObject({ sessionUuid: 'sess-2', received: 7, status: 'closed' });
     expect(body.flags.map((f: { type: string }) => f.type)).toEqual(['mh_gap']);
-    expect(body.exportUrl).toBeNull();
+    // Eksport jest domyślnie WŁĄCZONY (adapter bazodanowy): zamknięty dzień ma link.
+    // `mh_gap` nie blokuje eksportu — arkusz wstrzymuje wyłącznie `session_overlap` (§4.7).
+    expect(body.exportUrl).toBe(`${TEST_BASE_URL}/sheets/2026-06-22_SP-AXA`);
   });
 });

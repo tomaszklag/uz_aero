@@ -16,6 +16,7 @@ import { AuthCommands } from '../src/application/commands/auth.ts';
 import { IngestCommands } from '../src/application/commands/ingest.ts';
 import { DayExporter } from '../src/application/export/dayExporter.ts';
 import { ReferenceQueries } from '../src/application/queries/reference.ts';
+import { SheetQueries } from '../src/application/queries/sheets.ts';
 import { StateQueries } from '../src/application/queries/aircraftState.ts';
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
@@ -27,6 +28,7 @@ import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/refreshTokensRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/referenceRepo.ts';
+import { PgSheets } from '../src/infrastructure/pg/sheetsRepo.ts';
 import { seed } from '../src/infrastructure/pg/seed.ts';
 import { buildServer } from '../src/http/server.ts';
 
@@ -42,6 +44,8 @@ export class TestClock implements Clock {
 
 export const TEST_SECRET = 'test-secret-o-dlugosci-co-najmniej-32-znakow';
 export const TEST_PASSWORD = 'poprawne-haslo-testowe';
+/** Celowo sztuczny host — nic tu nie nasłuchuje; testy przybijają PEŁNE URL-e kart. */
+export const TEST_BASE_URL = 'http://uzaero.test';
 
 export async function testHarness(options: { sheets?: SheetsPort } = {}) {
   const pglite = new PGlite();
@@ -63,13 +67,21 @@ export async function testHarness(options: { sheets?: SheetsPort } = {}) {
   const flags = new PgFlagsRepo();
   const exportLog = new PgExportLogRepo();
 
-  // Jak w produkcyjnym composition root: eksporter §4.7 istnieje TYLKO z podanym
-  // `SheetsPort` (testy eksportu podają atrapę); bez niego ingest pomija eksport —
-  // dotychczasowe testy jadą dokładnie tą samą ścieżką co przed M4.
-  const exporter =
-    options.sheets != null
-      ? new DayExporter(db, events, flags, exportLog, options.sheets, new PgPilotsRepo(db), clock)
-      : null;
+  // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
+  // i pisze karty bazodanowym `PgSheets` — te same klasy co produkcja. Testy trybu
+  // awarii/atrap podają własny `SheetsPort` przez `options.sheets`; odczyt
+  // `GET /sheets/:tab` ZAWSZE czyta z bazy (atrapa pisze poza nią, więc trasa
+  // odpowie 404 — zgodnie z prawdą).
+  const pgSheets = new PgSheets(db, TEST_BASE_URL, clock);
+  const exporter = new DayExporter(
+    db,
+    events,
+    flags,
+    exportLog,
+    options.sheets ?? pgSheets,
+    new PgPilotsRepo(db),
+    clock,
+  );
 
   const app = buildServer({
     auth: new AuthCommands(
@@ -82,6 +94,7 @@ export async function testHarness(options: { sheets?: SheetsPort } = {}) {
     reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
     ingest: new IngestCommands(db, events, sessions, flags, exporter),
     state: new StateQueries(db, events, sessions, flags, exportLog),
+    sheets: new SheetQueries(pgSheets),
     tokens,
   });
 
