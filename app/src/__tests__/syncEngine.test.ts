@@ -15,11 +15,13 @@ import {
   ServerUnreachableError,
   type AuthTokens,
   type PushResult,
+  type RemoteAircraftState,
   type ServerPort,
   type SessionSyncStatus,
   type StoredCredentials,
 } from '../application/ports';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
+import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 import { FixedClock } from '../infrastructure/clock';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
@@ -82,13 +84,22 @@ class ScriptedServer implements ServerPort {
   }
 
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
-  getAircraftState = async () => ({
-    aircraftId: 'SP-AXA',
-    claimPicId: null,
-    claimSince: null,
-    handover: null,
-    lastSyncAt: null,
-  });
+
+  /** Skryptowalny jak `statusScript`; domyślnie samolot wolny. */
+  aircraftStateScript: Array<RemoteAircraftState | Error> = [];
+  async getAircraftState(_token: string, aircraftId: string): Promise<RemoteAircraftState> {
+    const next = this.aircraftStateScript.shift();
+    if (next instanceof Error) throw next;
+    return (
+      next ?? {
+        aircraftId,
+        claimPicId: null,
+        claimSince: null,
+        handover: null,
+        lastSyncAt: null,
+      }
+    );
+  }
 }
 
 const PILOT = { id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' };
@@ -121,7 +132,11 @@ async function repoWithEvents(n: number): Promise<EventsRepo> {
 }
 
 function engineWith(repo: EventsRepo, server: ServerPort): SyncEngine {
-  return new SyncEngine(repo, server, new AuthService(server, new MemoryCredentials(CREDS)));
+  return new SyncEngine(
+    repo,
+    server,
+    new AuthService(server, new MemoryCredentials(CREDS), new PinCrypto()),
+  );
 }
 
 describe('SyncEngine.syncOnce', () => {
@@ -263,10 +278,31 @@ describe('SyncEngine.fetchStatus (ekran 11)', () => {
   });
 });
 
+describe('SyncEngine.fetchAircraftState (przejęcie §4.4)', () => {
+  it('zwraca żywy stan — podstawa do takeover_online', async () => {
+    const repo = await repoWithEvents(0);
+    const server = new ScriptedServer([]);
+    server.aircraftStateScript = [
+      { aircraftId: 'SP-AXA', claimPicId: 'AKO', claimSince: T0, handover: null, lastSyncAt: null },
+    ];
+
+    const state = await engineWith(repo, server).fetchAircraftState('SP-AXA');
+    expect(state?.claimPicId).toBe('AKO');
+  });
+
+  it('offline → null — wołający musi zadeklarować takeover_offline', async () => {
+    const repo = await repoWithEvents(0);
+    const server = new ScriptedServer([]);
+    server.aircraftStateScript = [new ServerUnreachableError()];
+
+    expect(await engineWith(repo, server).fetchAircraftState('SP-AXA')).toBeNull();
+  });
+});
+
 describe('AuthService', () => {
   it('login zapisuje komplet poświadczeń (provisioning §3.0)', async () => {
     const credentials = new MemoryCredentials();
-    const auth = new AuthService(new ScriptedServer([]), credentials);
+    const auth = new AuthService(new ScriptedServer([]), credentials, new PinCrypto());
 
     await auth.login('TMK', 'haslo');
 
@@ -275,12 +311,29 @@ describe('AuthService', () => {
 
   it('wylogowanie zablokowane przy niepustym outboxie — poświadczenia zostają', async () => {
     const credentials = new MemoryCredentials(CREDS);
-    const auth = new AuthService(new ScriptedServer([]), credentials);
+    const auth = new AuthService(new ScriptedServer([]), credentials, new PinCrypto());
 
     expect(await auth.logout(3)).toBe('outbox_not_empty');
     expect(await credentials.load()).not.toBeNull();
 
     expect(await auth.logout(0)).toBeNull();
     expect(await credentials.load()).toBeNull();
+  });
+
+  it('PIN: ustawienie → weryfikacja offline; ponowny login ZERUJE PIN (§3.0)', async () => {
+    const credentials = new MemoryCredentials(CREDS);
+    const auth = new AuthService(new ScriptedServer([]), credentials, new PinCrypto());
+
+    await auth.setPin('1234');
+    expect(await auth.verifyPin('1234')).toBe(true);
+    expect(await auth.verifyPin('0000')).toBe(false);
+    // Skrót w magazynie, nigdy sam PIN.
+    const stored = await credentials.load();
+    expect(stored?.pin?.hash).toBeDefined();
+    expect(JSON.stringify(stored)).not.toContain('1234');
+
+    // „Nie pamiętam PIN" → pełny login → stary PIN nie ma prawa przeżyć.
+    await auth.login('TMK', 'haslo');
+    expect(await auth.verifyPin('1234')).toBe(false);
   });
 });

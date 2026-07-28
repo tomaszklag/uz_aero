@@ -34,8 +34,10 @@ import { RootNavigator } from './src/ui/navigation/RootNavigator';
 import { useAppBootstrap, useGpsPort } from './src/ui/bootstrap/appBootstrap';
 import { ServicesProvider } from './src/ui/bootstrap/ServicesProvider';
 import { useAuthStore } from './src/ui/store/authStore';
+import { useSessionStore } from './src/ui/store/sessionStore';
 import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
 import { LoginScreen } from './src/ui/screens/LoginScreen';
+import { PinScreen } from './src/ui/screens/PinScreen';
 
 /**
  * Tło okna natywnego — jedyna warstwa, której nie da się pomalować widokiem RN.
@@ -139,10 +141,10 @@ function AppRoot() {
 }
 
 /**
- * Bramka tożsamości (§3.0): bez profilu jedyną drogą jest 00-login; z profilem —
- * aplikacja. Pętla synca żyje TUTAJ, nad nawigatorem: okazje do wysyłki nie mogą
- * zależeć od tego, który ekran jest otwarty (silnik i bramkę `signed_in` pętla
- * czyta sama ze store'ów).
+ * Bramka tożsamości (§3.0): bez profilu — 00a-login; z profilem bez PIN-u — „Ustaw
+ * PIN"; z PIN-em — zamek 00; odblokowane — aplikacja. Pętla synca żyje TUTAJ, nad
+ * nawigatorem: okazje do wysyłki nie mogą zależeć od tego, który ekran jest otwarty
+ * (silnik i bramkę `signed_in` pętla czyta sama ze store'ów).
  */
 function AuthGate() {
   const { theme } = useTheme();
@@ -159,8 +161,53 @@ function AuthGate() {
   }
 
   if (status === 'signed_out') return <LoginScreen />;
+  if (status === 'pin_setup' || status === 'locked') return <PinScreen />;
 
-  return <RootNavigator />;
+  return <ResumeGate />;
+}
+
+/**
+ * Wznowienie dnia po restarcie (§5.2): otwarta sesja z `session_meta` wraca prosto
+ * do kokpitu — inaczej „NOWY DZIEŃ LOTNY" na 01 rozwidliłby trwający dzień w drugą
+ * sesję (i flagę `session_overlap`). Zamknięty albo nieobecny dzień startuje z 01.
+ */
+function ResumeGate() {
+  const { theme } = useTheme();
+  const queries = useSessionStore((s) => s.queries);
+  const loadSession = useSessionStore((s) => s.loadSession);
+  const [initial, setInitial] = React.useState<'Splash' | 'Cockpit' | null>(null);
+
+  React.useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const current = queries != null ? await queries.currentSession() : null;
+        if (current != null) {
+          await loadSession(current.sessionUuid);
+          const { projection } = useSessionStore.getState();
+          const open = projection.sessionUuid != null && projection.dutyEnd == null;
+          if (alive) setInitial(open ? 'Cockpit' : 'Splash');
+          return;
+        }
+      } catch {
+        // Uszkodzone meta nie może zablokować wejścia — najwyżej zaczniemy od 01.
+      }
+      if (alive) setInitial('Splash');
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [queries, loadSession]);
+
+  if (initial == null) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.colors.bg }]}>
+        <ActivityIndicator color={theme.colors.green} size="large" />
+      </View>
+    );
+  }
+
+  return <RootNavigator initialRouteName={initial} />;
 }
 
 const styles = StyleSheet.create({

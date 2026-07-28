@@ -14,6 +14,7 @@ export * from './AppText';
 export * from './CheckIcon';
 export * from './Icon';
 export * from './Avatar';
+export * from './Brand';
 
 // Kontenery i nagłówki
 export * from './Card';
@@ -41,6 +42,9 @@ export * from './GhostAction';
 export * from './CardPicker';
 export * from './OptionGrid';
 export * from './OptionInput';
+export * from './PinDots';
+export * from './Numpad';
+export * from './ProfileChip';
 export * from './Field';
 export * from './Stepper';
 export * from './CounterRow';

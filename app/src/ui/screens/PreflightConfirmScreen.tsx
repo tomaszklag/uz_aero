@@ -33,6 +33,7 @@ import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { dateUtcLong, litres, motoHours, shortName, timeLocal, timeUtc } from '../format';
+import { claimDecision } from './claimMode';
 
 export function PreflightConfirmScreen({
   navigation,
@@ -46,6 +47,7 @@ export function PreflightConfirmScreen({
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const queries = useSessionStore((s) => s.queries);
+  const sync = useSessionStore((s) => s.sync);
 
   const pilotId = useCurrentPilot((s) => s.id);
   const pilotProfile = useCurrentPilot((s) => s.profile);
@@ -74,18 +76,23 @@ export function PreflightConfirmScreen({
     try {
       // 1. Claim — od tej chwili to urządzenie jest jedynym piszącym dla tego samolotu.
       //
-      //    §4.4 rozróżnia przejęcie `takeover_online` (znamy aktualny stan z serwera)
-      //    od `takeover_offline` (opieramy się na cache, który mógł się zdezaktualizować).
-      //    Nie mamy jeszcze portu łączności, więc świadomie wybieramy wariant SŁABSZY:
-      //    zadeklarowanie „zweryfikowane online", gdy nie mieliśmy jak sprawdzić, byłoby
-      //    kłamstwem wobec serwera przy scalaniu. TODO: podmienić po dodaniu NetworkPort.
+      //    Przy przejęciu pytamy serwer o ŻYWY stan (§4.4): odpowiedź awansuje claim
+      //    do `takeover_online` (z aktualnym poprzednikiem — cache mógł wskazywać
+      //    kogoś, kto już oddał samolot), brak odpowiedzi degraduje do
+      //    `takeover_offline`. Bez zasięgu `fetchAircraftState` szybko wraca `null`
+      //    i pilot leci dalej — sieć jest okazją, nie warunkiem (§6).
+      const live =
+        aircraft.claimPicId != null && sync != null
+          ? await sync.fetchAircraftState(aircraft.id)
+          : null;
+      const decision = claimDecision(aircraft.claimPicId, live);
       await claim({
         sessionUuid: `sess-${Date.now()}`,
         aircraftId: aircraft.id,
         picId: pilotId,
         dualId: draft.dualId,
-        mode: aircraft.claimPicId != null ? 'takeover_offline' : 'free',
-        previousPicId: aircraft.claimPicId ?? undefined,
+        mode: decision.mode,
+        previousPicId: decision.previousPicId ?? undefined,
       });
 
       // 2. Preflight — odczyty liczników stają się początkiem łańcucha MH (§4.5).
@@ -106,7 +113,7 @@ export function PreflightConfirmScreen({
     } finally {
       setBusy(false);
     }
-  }, [aircraft, claim, confirmPreflight, draft, mhFormat, navigation, pilotId]);
+  }, [aircraft, claim, confirmPreflight, draft, mhFormat, navigation, pilotId, sync]);
 
   if (aircraft == null) {
     return (

@@ -24,6 +24,7 @@ import {
   ServerRejectedError,
   ServerUnreachableError,
   type PushResult,
+  type RemoteAircraftState,
   type ServerPort,
   type SessionSyncStatus,
 } from '../ports/serverPort';
@@ -77,6 +78,16 @@ export class SyncEngine {
    */
   fetchStatus(sessionUuid: string): Promise<SessionSyncStatus | null> {
     return authorizedFetch(this.auth, (token) => this.server.getSyncStatus(token, sessionUuid));
+  }
+
+  /**
+   * Żywy stan samolotu (`GET /aircraft/:id/state`) — pytany PUNKTOWO w chwili
+   * przejęcia (§4.4): odpowiedź decyduje między `takeover_online` (wiedzieliśmy,
+   * co przejmujemy) a `takeover_offline` (opieraliśmy się na cache). `null` = nie
+   * udało się sprawdzić — wołający MUSI wtedy deklarować wariant offline.
+   */
+  fetchAircraftState(aircraftId: string): Promise<RemoteAircraftState | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getAircraftState(token, aircraftId));
   }
 
   private async drain(): Promise<SyncOutcome> {

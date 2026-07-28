@@ -4,3 +4,4 @@ export * from './idPort';
 export * from './gpsPort';
 export * from './serverPort';
 export * from './credentialsPort';
+export * from './pinCryptoPort';

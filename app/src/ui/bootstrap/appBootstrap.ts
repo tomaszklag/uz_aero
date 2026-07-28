@@ -17,6 +17,7 @@ import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapte
 import { HttpServerApi } from '../../infrastructure/api/httpServerApi';
 import { apiBaseUrl } from '../../infrastructure/api/apiBaseUrl';
 import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
+import { PinCrypto } from '../../infrastructure/auth/pinCrypto';
 import { AuthService, ReferenceSync, SyncEngine } from '../../application';
 import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
@@ -68,7 +69,7 @@ export function useAppBootstrap(): BootstrapStatus {
         // serwis i od razu czyta magazyn — to on przełącza bramkę login/aplikacja;
         // silnik idzie do store'u sesji, skąd żyją pętla okazji i ekran 11.
         const server = new HttpServerApi(apiBaseUrl());
-        const auth = new AuthService(server, new SecureCredentials());
+        const auth = new AuthService(server, new SecureCredentials(), new PinCrypto());
         useAuthStore.getState().attach(auth);
         void useAuthStore.getState().restore();
         useSessionStore

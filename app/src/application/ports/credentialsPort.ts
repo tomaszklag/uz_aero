@@ -10,11 +10,22 @@
  * o cyklu życia poświadczeń podejmuje warstwa aplikacji, magazyn tylko przechowuje.
  */
 
+/** Solony skrót PIN-u (§3.0) — nigdy sam PIN; weryfikację robi `PinCryptoPort`. */
+export interface PinRecord {
+  salt: string;
+  hash: string;
+}
+
 /** Komplet poświadczeń zapisany przy logowaniu (provisioning urządzenia). */
 export interface StoredCredentials {
   token: string;
   refreshToken: string;
   pilot: { id: string; code: string; name: string };
+  /**
+   * PIN codziennego odblokowania — ustawiany PO logowaniu (krok „Ustaw PIN").
+   * Brak pola = profil sprzed ustawienia PIN-u → bramka kieruje do konfiguracji.
+   */
+  pin?: PinRecord | null;
 }
 
 export interface CredentialsPort {

@@ -3,12 +3,15 @@
  *
  * `status` steruje bramką nawigacji:
  *  • `loading`    — czytamy magazyn poświadczeń (moment startu);
- *  • `signed_out` — brak profilu → ekran 00-login (jedyna czynność wymagająca sieci);
- *  • `signed_in`  — profil jest; wygasłe tokeny NIE zmieniają tego stanu (§3.0 —
+ *  • `signed_out` — brak profilu → ekran 00a-login (jedyna czynność wymagająca sieci);
+ *  • `pin_setup`  — profil jest, PIN-u nie ma (świeży provisioning albo profil sprzed
+ *                   tej funkcji) → krok „Ustaw PIN";
+ *  • `locked`     — profil i PIN są → codzienne odblokowanie (00, w 100% offline);
+ *  • `signed_in`  — odblokowane; wygasłe tokeny NIE zmieniają tego stanu (§3.0 —
  *                   aplikacja nigdy sama nie wyrzuca pilota do logowania).
  *
- * Store nie zna HTTP ani SecureStore — dostaje `AuthService` przez `attach` z composition
- * root, jak store sesji dostaje komendy.
+ * Store nie zna HTTP, SecureStore ani krypto — dostaje `AuthService` przez `attach`
+ * z composition root, jak store sesji dostaje komendy.
  */
 
 import { create } from 'zustand';
@@ -17,12 +20,12 @@ import type { AuthService } from '../../application/auth/authService';
 import { ServerRejectedError, ServerUnreachableError } from '../../application/ports';
 import { useCurrentPilot } from './currentPilot';
 
-export type AuthStatus = 'loading' | 'signed_out' | 'signed_in';
+export type AuthStatus = 'loading' | 'signed_out' | 'pin_setup' | 'locked' | 'signed_in';
 
 interface AuthStore {
   status: AuthStatus;
   pilot: { id: string; code: string; name: string } | null;
-  /** Błąd ostatniej próby logowania — po polsku, do pokazania na 00-login. */
+  /** Błąd ostatniej próby logowania — po polsku, do pokazania na 00a-login. */
   loginError: string | null;
   busy: boolean;
 
@@ -30,6 +33,16 @@ interface AuthStore {
   /** Odczyt magazynu przy starcie — ustala bramkę. */
   restore(): Promise<void>;
   login(login: string, password: string): Promise<boolean>;
+  /** Krok „Ustaw PIN" po logowaniu — po zapisie wpuszcza do aplikacji. */
+  setPin(pin: string): Promise<void>;
+  /** Codzienne odblokowanie (offline). `false` = zły PIN — ekran pokazuje odmowę. */
+  unlock(pin: string): Promise<boolean>;
+  /**
+   * „Nie pamiętam PIN" → pełne ponowne logowanie. Poświadczeń NIE czyścimy —
+   * nadpisze je dopiero UDANY login (§3.0: zabicie aplikacji w połowie drogi
+   * wraca do zamka, nie do pustego telefonu). Ochronę outboxa egzekwuje ekran.
+   */
+  requestRelogin(): void;
 }
 
 let service: AuthService | null = null;
@@ -37,6 +50,9 @@ const requireService = (): AuthService => {
   if (!service) throw new Error('AuthStore: attach() nie został wywołany.');
   return service;
 };
+
+/** Bramka dla istniejącego profilu: bez PIN-u → konfiguracja, z PIN-em → zamek. */
+const gateFor = (pin: unknown): AuthStatus => (pin == null ? 'pin_setup' : 'locked');
 
 export const useAuthStore = create<AuthStore>((set) => ({
   status: 'loading',
@@ -54,7 +70,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       if (stored != null) {
         // Tożsamość z provisioning zasila cały UI — nigdzie nie pytamy o kod pilota.
         useCurrentPilot.setState({ id: stored.pilot.id });
-        set({ status: 'signed_in', pilot: stored.pilot });
+        set({ status: gateFor(stored.pin), pilot: stored.pilot });
       } else {
         set({ status: 'signed_out' });
       }
@@ -70,12 +86,28 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       const stored = await requireService().login(login, password);
       useCurrentPilot.setState({ id: stored.pilot.id });
-      set({ status: 'signed_in', pilot: stored.pilot, busy: false });
+      // Świeży provisioning nigdy nie ma PIN-u → zawsze przez „Ustaw PIN".
+      set({ status: gateFor(stored.pin), pilot: stored.pilot, busy: false });
       return true;
     } catch (error) {
       set({ busy: false, loginError: loginErrorMessage(error) });
       return false;
     }
+  },
+
+  async setPin(pin) {
+    await requireService().setPin(pin);
+    set({ status: 'signed_in' });
+  },
+
+  async unlock(pin) {
+    const ok = await requireService().verifyPin(pin);
+    if (ok) set({ status: 'signed_in' });
+    return ok;
+  },
+
+  requestRelogin() {
+    set({ status: 'signed_out', loginError: null });
   },
 }));
 

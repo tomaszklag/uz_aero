@@ -13,6 +13,7 @@
  */
 
 import type { CredentialsPort, StoredCredentials } from '../ports/credentialsPort';
+import type { PinCryptoPort } from '../ports/pinCryptoPort';
 import { ServerRejectedError, type ServerPort } from '../ports/serverPort';
 
 export type LogoutBlock = 'outbox_not_empty' | null;
@@ -21,6 +22,7 @@ export class AuthService {
   constructor(
     private readonly server: ServerPort,
     private readonly credentials: CredentialsPort,
+    private readonly pinCrypto: PinCryptoPort,
   ) {}
 
   /** Profil z magazynu — `null` = urządzenie bez provisioning (droga do 00-login). */
@@ -28,16 +30,41 @@ export class AuthService {
     return this.credentials.load();
   }
 
-  /** Pierwsze logowanie (online). Zapisuje komplet poświadczeń i zwraca tożsamość. */
+  /**
+   * Pierwsze logowanie (online). Zapisuje komplet poświadczeń i zwraca tożsamość.
+   * PIN jest jawnie ZEROWANY — świeży provisioning (także po „Nie pamiętam PIN")
+   * przechodzi przez krok „Ustaw PIN", stary skrót nie ma prawa przeżyć.
+   */
   async login(login: string, password: string): Promise<StoredCredentials> {
     const tokens = await this.server.login(login, password);
     const stored: StoredCredentials = {
       token: tokens.token,
       refreshToken: tokens.refreshToken,
       pilot: tokens.pilot,
+      pin: null,
     };
     await this.credentials.save(stored);
     return stored;
+  }
+
+  // ── PIN (§3.0: codzienne wejście = odblokowanie offline) ─────────────────────
+
+  /** Ustawia PIN profilu (krok po logowaniu). Wymaga istniejącego profilu. */
+  async setPin(pin: string): Promise<void> {
+    const stored = await this.credentials.load();
+    if (stored == null) throw new Error('AuthService: brak profilu — najpierw logowanie.');
+    await this.credentials.save({ ...stored, pin: await this.pinCrypto.create(pin) });
+  }
+
+  /**
+   * Weryfikacja PIN-u przy wejściu. Działa w 100% offline — porównanie skrótów
+   * z magazynu, zero rozmowy z serwerem. Brak profilu albo brak PIN-u = `false`
+   * (bramka i tak nie pokaże tego ekranu bez profilu — to pas bezpieczeństwa).
+   */
+  async verifyPin(pin: string): Promise<boolean> {
+    const stored = await this.credentials.load();
+    if (stored?.pin == null) return false;
+    return this.pinCrypto.verify(pin, stored.pin);
   }
 
   /**

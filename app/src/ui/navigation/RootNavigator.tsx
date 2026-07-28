@@ -28,11 +28,14 @@ import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualLogScreen } from '../screens/ManualLogScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { EndOfDayScreen } from '../screens/EndOfDayScreen';
+import { SplashScreen } from '../screens/SplashScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { SyncScreen } from '../screens/SyncScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
+  /** 01 — ekran startowy dnia (bez otwartej sesji). */
+  Splash: undefined;
   Cockpit: undefined;
   PreflightAircraft: undefined;
   PreflightReadings: undefined;
@@ -50,7 +53,15 @@ export type RootStackParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export function RootNavigator() {
+export function RootNavigator({
+  initialRouteName = 'Splash',
+}: {
+  /**
+   * Punkt wejścia zależy od stanu dnia: otwarta sesja po restarcie wraca prosto do
+   * kokpitu (`App.tsx` sprawdza `session_meta`, §5.2), świeży start zaczyna od 01.
+   */
+  initialRouteName?: keyof RootStackParamList;
+}) {
   const { theme } = useTheme();
 
   // Motyw nawigacji budujemy z naszych tokenów, żeby tła ekranów i przejść nie
@@ -70,7 +81,7 @@ export function RootNavigator() {
   return (
     <NavigationContainer theme={navTheme}>
       <Stack.Navigator
-        initialRouteName="Cockpit"
+        initialRouteName={initialRouteName}
         screenOptions={{
           // Bez natywnego paska nawigacji. W mockupach ekran idzie od status bara prosto
           // do własnego nagłówka (`.app-header`) — pasek systemowy dokładałby drugi tytuł,
@@ -81,6 +92,7 @@ export function RootNavigator() {
           contentStyle: { backgroundColor: theme.colors.bg },
         }}
       >
+        <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Cockpit" component={CockpitScreen} />
         <Stack.Screen name="PreflightAircraft" component={PreflightAircraftScreen} />
         <Stack.Screen name="PreflightReadings" component={PreflightReadingsScreen} />

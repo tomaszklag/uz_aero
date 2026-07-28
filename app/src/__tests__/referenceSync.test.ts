@@ -26,6 +26,7 @@ import {
 } from '../application/ports';
 import type { ReferenceAircraft, ReferencePilot } from '../domain';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
+import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 import { FixedClock } from '../infrastructure/clock';
 
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
@@ -99,7 +100,11 @@ function harness() {
   const clock = new FixedClock(T0);
   const repo = new EventsRepo(new InMemoryAdapter(), { clock, generateId: () => 'id' });
   const server = new RefServer();
-  const sync = new ReferenceSync(repo, server, new AuthService(server, new MemoryCredentials()));
+  const sync = new ReferenceSync(
+    repo,
+    server,
+    new AuthService(server, new MemoryCredentials(), new PinCrypto()),
+  );
   return { clock, repo, server, sync };
 }
 

@@ -47,7 +47,23 @@ w trzech stanach świeżości. Cache referencyjny zasila `ReferenceSync`
 replace (flota i piloci są wyłączani, nie kasowani); seed został danymi pierwszego
 uruchomienia. Wspólny wzorzec „świeży token + jedna rotacja przy 401" dla odczytów
 mieszka w `application/sync/authorizedFetch.ts` (wysyłka outboxa celowo NIE korzysta —
-tam rozróżnienie offline/auth_expired/rejected niesie decyzje).
+tam rozróżnienie offline/auth_expired/rejected niesie decyzje). Przejęcie samolotu
+pyta o żywy stan (`SyncEngine.fetchAircraftState`) w chwili claimu: odpowiedź →
+`takeover_online` z AKTUALNYM poprzednikiem (serwer mógł wskazać kogoś innego niż
+cache, albo „już wolny" → zwykłe `free`), brak odpowiedzi → `takeover_offline`;
+decyzja to czysta funkcja `screens/claimMode.ts`.
+
+Wejście do aplikacji (§3.0, mockupy 00/00a/01): bramka `AuthGate` w `App.tsx` ma pięć
+stanów — `signed_out` → 00a login, `pin_setup` → „Ustaw PIN" (ten sam układ co zamek;
+mockupu konfiguracji nie ma, spec §3.0 wymaga PIN-u po provisioning), `locked` → 00
+odblokowanie (w 100% offline, solony SHA-256 w `expo-secure-store`; własna
+implementacja skrótu w `infrastructure/auth/sha256.ts` — powody w docblocku),
+`signed_in` → `ResumeGate`: otwarta sesja z `session_meta` (§5.2) wraca prosto do
+kokpitu, inaczej ekran 01 (start dnia: „NOWY DZIEŃ LOTNY" → preflight, stopka ze
+stemplem cache referencyjnego). „Nie pamiętam PIN" nie czyści poświadczeń (nadpisuje
+je dopiero udany login) i jest zablokowane przy niepustym outboxie. Klawisz biometrii
+z mockupu 00 odłożony (wymagałby `expo-local-authentication`); „Poprzednie dni" na 01
+zablokowane z powodem do czasu ekranu 12.
 
 **Zaległości audytu serwera (2026-07-28) — świadomie odłożone, do zrobienia przed
 wdrożeniem (faza 6):** rate-limit na `/auth/*` (dziś brute-force ogranicza tylko koszt
@@ -158,6 +174,7 @@ a nie przez jeden ekran.
 |---|---|---|
 | `Screen` | tło, safe area, scroll, **przyklejony nagłówek** | wszystkie ekrany |
 | `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`) | wszystkie |
+| `Brand` | znak marki (kafel z ikoną, „UZ AERO", tagline), rozmiary `md`/`hero` | `.brand` (00/00a), `.app-icon` (01) |
 | `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
 | `Avatar` | kafelek z inicjałami, 40/32 px | `.pilot-avatar`, `.crew-avatar` |
@@ -174,6 +191,9 @@ a nie przez jeden ekran.
 | `CardPicker` | wybór z **listy kart** (nigdy natywny select), układ jednowierszowy | `.aircraft-option`, `.crew-option` |
 | `OptionGrid` | siatka kart **z ikonami**, 2 kolumny | `.op-grid` |
 | `OptionInput` | wartość konfiguracyjna w „ubraniu" pola — bez wpisywania | `.option-input` (11) |
+| `PinDots` | kropki PIN-u; odmowa = czerwień + potrząśnięcie (jedyny komunikat) | `.pin-dots` (00) |
+| `Numpad` | klawiatura PIN 3×4, klawisze 58 px; slot biometrii celowo pusty | `.numpad` (00) |
+| `ProfileChip` | karta lokalnego profilu na zamku (awatar, nazwisko, kod) | `.profile-chip` (00) |
 | `Field`, `TextField` | oprawa pola: etykieta mono, tag, podpowiedź; fokus zielony | `.field` / `.field-input` |
 | `ValueBox` | pole **odczytu**: duża wartość + jednostka, kontekst i ołówek po prawej | `.field-input.filled` |
 | `Readout` | sekcja odczytu z licznika: wartość, świeżość, pasek, korekta, historia | `.section` w 02a |
@@ -385,7 +405,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 285 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 299 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -410,6 +430,8 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `syncEngine.test.ts` | pętli wysyłki §4.3 i poświadczeń §3.0: duplikaty = dostarczone, offline ≠ auth_expired, jedna rotacja tokenu, `fetchStatus` dla ekranu 11 |
 | `syncStatus.test.ts` | prezentacji ekranu 11: odmiana liczebników, konwencja nazwy karty §4.7, licznik wysyłki z ogonem outboxa |
 | `referenceSync.test.ts` | odświeżania cache §4.8: nadpisanie seedu prawdą serwera, ETag/304 z podbiciem wieku, brama 15 min, offline nie psuje cache |
+| `claimMode.test.ts` | trybu przejęcia §4.4: `takeover_online` tylko z odpowiedzią serwera, żywy poprzednik wygrywa z cache, „już wolny" gasi przejęcie |
+| `pinCrypto.test.ts` | własnego SHA-256 (wektory NIST + node:crypto dla UTF-8) i solonego skrótu PIN-u — rekord nigdy nie niesie PIN-u wprost |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:

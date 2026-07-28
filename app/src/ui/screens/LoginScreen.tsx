@@ -23,17 +23,15 @@ import {
   ActionButton,
   AppText,
   Banner,
-  Icon,
+  Brand,
   Screen,
   TextField,
 } from '../components';
 import { useTheme } from '../theme';
 import { useAuthStore } from '../store/authStore';
-import { toneColors } from '../components/tone';
 
 export function LoginScreen() {
   const { theme } = useTheme();
-  const green = toneColors(theme, 'green');
 
   const login = useAuthStore((s) => s.login);
   const busy = useAuthStore((s) => s.busy);
@@ -52,26 +50,7 @@ export function LoginScreen() {
     <Screen>
       <View style={styles.wrap}>
         {/* ── znak marki (`.brand`) ───────────────────────────────────── */}
-        <View style={styles.brand}>
-          <View
-            style={[
-              styles.brandIcon,
-              {
-                borderWidth: theme.borderWidth,
-                borderColor: green.border,
-                backgroundColor: green.muted,
-              },
-            ]}
-          >
-            <Icon name="aircraft" size={36} color={green.accent} />
-          </View>
-          <AppText variant="display" style={styles.brandName}>
-            UZ <AppText variant="display" style={[styles.brandName, { color: green.accent }]}>AERO</AppText>
-          </AppText>
-          <AppText variant="mono" tone="muted" style={styles.brandSub}>
-            Elektroniczny system lotniczy
-          </AppText>
-        </View>
+        <Brand />
 
         {/* ── karta formularza (`.form-card`) ─────────────────────────── */}
         <View
@@ -140,17 +119,6 @@ export function LoginScreen() {
 
 const styles = {
   wrap: { flex: 1, justifyContent: 'center' as const, gap: 24, paddingBottom: 40 },
-  brand: { alignItems: 'center' as const, gap: 8 },
-  brandIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    marginBottom: 6,
-  },
-  brandName: { fontSize: 40, lineHeight: 42, letterSpacing: 5 },
-  brandSub: { fontSize: 9, letterSpacing: 2.5, textTransform: 'uppercase' as const },
   card: { borderRadius: 20, padding: 20, gap: 14 },
   error: { marginTop: -8 },
   netNote: {
