@@ -70,10 +70,13 @@ export function aircraftLimitsFrom(
 
 /**
  * Typy zdarzeń dopuszczone PO `day_close` w oknie 24 h (decyzja 2026-07-23).
- * Wpis ręczny jest jedynym nośnikiem korekty w modelu z §5.1 — korekta jest zawsze
- * dopisaniem zdarzenia, nigdy edycją (append-only).
+ * Korekta jest zawsze dopisaniem zdarzenia, nigdy edycją (append-only): brakujący lot
+ * uzupełnia `manual_log_entry`, poprawkę istniejącego wpisu niesie `event_correction` (04c).
  */
-export const CORRECTION_EVENT_TYPES: readonly EventType[] = ['manual_log_entry'];
+export const CORRECTION_EVENT_TYPES: readonly EventType[] = [
+  'manual_log_entry',
+  'event_correction',
+];
 
 /** Stan okna korekty po zamknięciu dnia — do bannera z odliczaniem (design-notes). */
 export interface CorrectionWindow {
@@ -268,6 +271,23 @@ function checkByType(
       break;
     }
 
+    case 'taxi': {
+      // Kołowanie bez pracującego silnika jest fizycznie niemożliwe — to twardy błąd,
+      // tak jak start. Kołowanie „w locie" znaczy, że automat pomylił fazę.
+      if (!state.engineRunning) {
+        v.push(
+          error(
+            'ENGINE_NOT_RUNNING',
+            'Kołowanie bez pracującego silnika. Uruchom silnik albo popraw wpis.',
+          ),
+        );
+      }
+      if (state.inFlight) {
+        v.push(error('ALREADY_IN_FLIGHT', 'Samolot jest w powietrzu — kołowanie nie ma sensu.'));
+      }
+      break;
+    }
+
     case 'takeoff': {
       if (!state.engineRunning) {
         v.push(
@@ -381,6 +401,45 @@ function checkByType(
       }
       if (p.role === 'dual' && p.pilotInId != null && p.pilotInId === state.sessionPicId) {
         v.push(error('DUAL_IS_PIC', 'Dual nie może być tą samą osobą co PIC.'));
+      }
+      break;
+    }
+
+    case 'event_correction': {
+      const p = candidate.payload;
+      const targetType = state.eventIndex[p.targetUuid];
+
+      if (targetType == null) {
+        // Cel spoza tej sesji (albo literówka w uuid) — poprawka wisiałaby w próżni,
+        // a serwer nie miałby czego scalić.
+        v.push(
+          error('CORRECTION_TARGET_NOT_FOUND', 'Korygowane zdarzenie nie istnieje w tej sesji.'),
+        );
+        break;
+      }
+
+      // Korygowalne są FAKTY OPERACYJNE (starty, lądowania, cykle, tankowania…).
+      // Zdarzenia cyklu życia sesji mają własne ścieżki: claim to tożsamość dnia,
+      // preflight i day_close niosą odczyty łańcucha MH (§4.5) — „przesunięcie czasu"
+      // niczego by w nich nie poprawiało, a unieważnienie rozbiłoby sesję w pół.
+      if (
+        targetType === 'session_claim' ||
+        targetType === 'preflight_confirm' ||
+        targetType === 'day_close' ||
+        targetType === 'event_correction'
+      ) {
+        v.push(
+          error(
+            'CORRECTION_TARGET_NOT_ALLOWED',
+            'To zdarzenie nie podlega korekcie — poprawki dotyczą zdarzeń operacyjnych (starty, lądowania, cykle, tankowania).',
+          ),
+        );
+      }
+
+      // Czas z przyszłości nie jest korektą, tylko przepowiednią. Odniesieniem jest
+      // zegar telefonu w chwili zapisu poprawki — bardziej aktualnego „teraz" nie mamy.
+      if (p.action === 'retime' && p.newTime > candidate.deviceTime) {
+        v.push(error('CORRECTION_TIME_IN_FUTURE', 'Poprawiony czas nie może być z przyszłości.'));
       }
       break;
     }

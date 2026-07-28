@@ -78,7 +78,7 @@ a nie przez jeden ekran.
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
 | `Avatar` | kafelek z inicjałami, 40/32 px | `.pilot-avatar`, `.crew-avatar` |
 | `AppBar` | pasek **dnia lotnego**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
-| `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót | `.app-header` |
+| `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót, wariant wyśrodkowany | `.app-header` |
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
 | `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` |
 | `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
@@ -90,16 +90,36 @@ a nie przez jeden ekran.
 | `Field`, `TextField` | oprawa pola: etykieta mono, tag, podpowiedź; fokus zielony | `.field` / `.field-input` |
 | `ValueBox` | pole **odczytu**: duża wartość + jednostka, kontekst i ołówek po prawej | `.field-input.filled` |
 | `Readout` | sekcja odczytu z licznika: wartość, świeżość, pasek, korekta, historia | `.section` w 02a |
-| `FreshnessNote` | adnotacja §4.8: `live` (cisza) / `cache` (data) / `brak` | `.fresh-note` |
+| `FreshnessNote` | adnotacja §4.8: `live` (cisza) / `cache` (data) / `brak` / `manual` | `.fresh-note` |
 | `LevelBar` | pasek poziomu wobec pojemności | wskaźnik paliwa w 02a |
 | `Trail` | oś czasu prowadząca do wartości przekazania | `.trail` |
 | `InlineNote` | przypis w kolorowym pudełku (mono 10 px + ikona) | `.certified-row`, `.none-box` |
+| `PeekBanner` | pasek „oglądasz cudzą sesję" ze źródłem i wiekiem danych | `.ro-banner` (04b) |
+| `Caption` | wyśrodkowany podpis pod akcją (mono 9 px) | `.takeover-hint`, `.actions-reason` |
+| `CrewRow` | wiersz aktualnej załogi: rola, kod, „od kiedy", block | `.crew-row` (07) |
+| `StepList` | numerowana procedura wychodząca poza ten telefon | `.handover-steps` (07) |
+| `PillButton` | mała akcja nagłówka (pigułka z ikoną) | `.btn-add` (08) |
+| `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
 | `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
+| `SummaryStrip` | pasek bilansu dnia poza obszarem przewijania | `.summary-strip` |
+| `ResultRow` | stopka sekcji: opis + wyliczona wartość nad linią | `.result-row` (09) |
+| `ResultBar` | samodzielny pasek wyniku z rachunkiem, na tonowanym tle | `.result-row` (06) |
+| `CalcBox` | wyliczenie zużycia paliwa z podaniem składników | `.calc-box` |
+| `GaugeHero`, `ScaleBar` | wskaźnik FOB z podziałką | `.fob-indicator` |
+| `DutyHero` | czas służby wielką czcionką + zakres | `.duty-hero` |
+| `CrewCard`, `CrewGrid` | karty załogi ze statystykami | `.crew-card` |
+| `DataTable` | tabela lotów z celem korekty ≥ 44 px | `.data-table` |
+| `StatGrid` | siatka 2×2 statystyk (etykieta / wartość / jednostka) | `.fuel-grid-2x2` |
+| `CounterRow` | licznik sztuk z przyciskami 46 px | `.type-row` (05e) |
+| `DropSheet`, `ManualEventSheet` | arkusze zrzutu i wpisu ręcznego nad kokpitem | 05e / 05f |
+| `CorrectionSheet` | arkusz korekty: czas ±1 min, wpływ na czasy, strefa „nie było" | 04c |
 | `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
-| `PhaseHero` | faza lotu ogromną czcionką | „Cockpit Running" |
+| `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
+| `ParamGrid` | sztywna siatka 2×2 parametrów GPS, komórki na styk | `.param-grid` |
+| `CockpitActions` | dolny pasek: zapis ręczny, zrzut, STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami, chipy, cel korekty ≥ 44 px | `.day-log`, `.cycle-log` |
 | `DutyStrip` | licznik czasu służby od meldunku | `.duty-strip` |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
@@ -118,6 +138,22 @@ czyli sygnałem **wyłącznie kolorystycznym**. W słońcu, w motywach jasnych i
 daltonizmie to za mało; kształt ptaszka niesie tę informację niezależnie od koloru.
 Rysujemy go layoutem RN, a nie `react-native-svg` ani fontem ikon — obie te biblioteki
 są modułami natywnymi i wymuszałyby przebudowę dev clienta.
+
+**Czwarty stan świeżości: `manual`.** §4.8 zna trzy stany danych z serwera (`live` / `cache`
+/ `brak`), ale po ręcznej korekcie wartość nie pochodzi już z serwera **wcale**. Audyt
+wyłapał, że ekran 02a zostawiał wtedy „Ostatnie pobrane · 21 JUN 17:30" obok liczby wpisanej
+przez pilota — kłamstwo o pochodzeniu danych. `manual` renderuje zieloną adnotację „Twój
+odczyt z licznika": zielona, bo `CLAUDE.md` stawia licznik fizyczny WYŻEJ niż serwer, więc
+to potwierdzenie, a nie ostrzeżenie.
+
+**Stan banerów `edu` jest trwały i per pilot** (`ui/store/eduBanners.ts`, AsyncStorage).
+To wymóg z `CLAUDE.md`, a nie usprawnienie: baner pouczający jest pomocny raz i szumem
+zawsze potem. Trzymamy go poza rejestrem zdarzeń — rejestr opisuje lot, nie ustawienia.
+
+**Przycisk podaje ikonę NAZWĄ, nie gotowym elementem.** `ActionButton icon="check"`, nie
+`icon={<Icon … color={…} />}`. Kolor i rozmiar zna tylko przycisk, bo tylko on wie, czy
+jest zablokowany i jakiego jest wariantu. Gdy kolor ustawiały ekrany, każdy wpisywał
+`theme.colors.bg` na sztywno i po zablokowaniu zostawała czarna ikona na ciemnym tle.
 
 **Mockup jest specyfikacją, nie inspiracją.** Ekran implementujemy przez odczytanie
 odpowiadającego mu pliku w `design/` i odwzorowanie go sekcja po sekcji — kolejność,
@@ -245,7 +281,7 @@ Kryterium przy dokładaniu warstwy: **czy junior wchodzący w projekt szybciej z
 
 ### Nowy ekran
 
-Wzorzec: `ui/screens/CockpitGroundScreen.tsx` (pierwszy ekran wpięty end-to-end).
+Wzorzec: `ui/screens/CockpitScreen.tsx` (pierwszy ekran wpięty end-to-end).
 
 1. Plik w `ui/screens/`, zbudowany na prymitywach z `ui/components` i tokenach z `ui/theme` — **żadnych kolorów na sztywno**; styl przez lokalny `useStyles()` czytający motyw.
 2. Dane czytaj ze store'u (`useSessionStore`), zapisuj **wyłącznie komendą**. Ekran nie dotyka repozytorium ani bazy.
@@ -262,7 +298,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 131 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 240 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -276,6 +312,50 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `sqliteSchema.test.ts` | DDL na prawdziwym silniku SQLite — patrz niżej |
 | `format.test.ts` | formatowania i **parsowania** odczytów w obie strony |
 | `cockpitLog.test.ts` | budowania wierszy logu dnia, w tym wyliczenia łańcucha MH |
+| `flightPhase.test.ts` | fazy lotu i prędkości pionowej — patrz niżej |
+| `refuelMath.test.ts` | wyliczeń tankowania: zużycie L/h, limit dolewki, podziałka |
+| `statsDay.test.ts` | składania statystyk dnia: tabela lotów, zużycie, rozbicie skoczków |
+| `cockpitPeek.test.ts` | podglądu cudzej sesji: świeżość migawki, treść ostrzeżeń |
+| `crewChange.test.ts` | atrybucji block time per pilot i blokad zmiany Duala |
+| `manualLog.test.ts` | grupowania logu w cykle silnikowe i wierszy oczekiwanych |
+| `corrections.test.ts` | korekt 04c (`retime` / `void`) nakładanych przez projekcję, append-only |
+| `correctionUi.test.ts` | zapowiedzi skutku korekty — „Wpływ na czas lotu" liczy ta sama projekcja |
+| `corrections.test.ts` | nakładania korekt (retime/void, „ostatnia wygrywa") i ich reguł |
+| `correctionUi.test.ts` | podglądu wpływu korekty na czasy — patrz niżej |
+
+**Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
+rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:
+`applyCorrections` zamienia strumień surowy na EFEKTYWNY (czasy po poprawce, bez zdarzeń
+unieważnionych, bez samych `event_correction`), a przechodzą przez nią WSZYSCY konsumenci
+(projekcja, log dnia, statystyki), więc „starych" czasów nie widać nigdzie poza rejestrem,
+który celowo pamięta wszystko. Gdy cel ma kilka korekt, wygrywa ostatnia — `retime` po
+`void` przywraca zdarzenie do życia. Wiersz „Wpływ na czas lotu: 0:53 → 0:56" w arkuszu
+liczy się PODWÓJNĄ PROJEKCJĄ (przed/po kandydacie) — obietnica i skutek to jeden kod,
+nie dwa równoległe wyliczenia. Walidację celu robią reguły przez `state.eventIndex`
+(uuid → typ, z surowego strumienia): cel musi istnieć, zdarzenia cyklu życia sesji
+(claim/preflight/day_close) nie podlegają korekcie, czas z przyszłości odpada, a po
+`day_close` obowiązuje okno 24 h (`CORRECTION_EVENT_TYPES`).
+
+**`crewChange.test.ts` pilnuje atrybucji czasu per pilot.** Dual wchodzący w połowie dnia
+dostaje block time WYŁĄCZNIE z cykli po swoim wejściu (cykl trwający w chwili wejścia —
+od momentu wejścia). Do dokumentów każdy pilot wpisuje własny czas, więc przybliżenie
+„wszyscy mają tyle co dzień" byłoby fałszem rozliczeniowym, którego nikt nie zauważy
+aż do kontroli.
+
+**Zdarzenie `taxi` ma inną „cenę pomyłki" niż start i lądowanie** — i stąd wynika cała
+jego obsługa. Nie wyznacza żadnego czasu w dokumentach (blok liczą `engine_start`/`engine_stop`,
+lot — `takeoff`/`landing`), więc fałszywy wpis dokłada wiersz w logu zamiast psuć rozliczenie.
+Dlatego zapisuje się **od razu, bez okna „COFNIJ"**, a jego detekcja jest w automacie
+rozpatrywana **dopiero po** starcie i lądowaniu: gdyby szła pierwsza, jej wykrycie kończyłoby
+krok i przesuwało potwierdzenie startu o jeden fix. Ten defekt wyszedł dopiero z testu
+i został naprawiony kolejnością, nie obejściem w teście.
+
+**`flightPhase.test.ts` wymusił zmianę algorytmu, a nie tylko go opisał.** Pierwsza wersja
+liczyła prędkość pionową jako różnicę skrajnych fixów okna. Test z realnym artefaktem GPS
+(jeden fix wyżej o 30 ft przy 5 s historii) dał **360 ft/min** — czyli fałszywe „Climb"
+z szumu. Metodę zastąpiła regresja liniowa po całym oknie plus minimalna rozpiętość 5 s:
+ten sam artefakt daje teraz ~275 ft/min, poniżej progu. Faza jest najbardziej wyeksponowaną
+informacją w locie (napis 54 px) — migotanie odebrałoby jej sens.
 
 `format.test.ts` pilnuje `parseMotoHours` — jedynego miejsca, w którym napis wpisany przez
 pilota staje się liczbą trafiającą do rejestru. Pomyłka o pół godziny nie wygląda tam na
@@ -312,7 +392,7 @@ Ten test już raz się opłacił: wykrył, że projekcja iterowała zdarzenia w 
 ```bash
 cd app
 npx expo start        # aplikacja (Expo Go / emulator)
-npx jest              # testy — 86, w Node, bez urządzenia
+npx jest              # testy — wszystkie w Node, bez urządzenia (liczba: §8)
 npx tsc --noEmit      # kontrola typów (strict)
 ```
 

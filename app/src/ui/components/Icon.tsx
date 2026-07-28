@@ -39,6 +39,11 @@ const REGISTRY = {
   warning: f('alert-triangle'),
   info: f('alert-circle'),
   peek: f('eye'), // podgląd read-only cudzego samolotu (04B)
+  // Przejęcie samolotu (`.takeover-btn` z 04B) — strzałki rozchodzące się na zewnątrz.
+  // To dokładnie ten kształt, który mockup wkleja jako SVG (Feather `maximize-2`):
+  // ruch „na zewnątrz podglądu", a nie kolejna strzałka w prawo, która myliłaby się
+  // z „DALEJ".
+  takeover: f('maximize-2'),
   edit: f('edit-2'),
   next: f('arrow-right'),
   // Powrót to `chevron-left`, nie `arrow-left` — tak jest w `.back-btn` mockupów.

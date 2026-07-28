@@ -23,7 +23,6 @@ import { View } from 'react-native';
 import {
   ActionButton,
   AppText,
-  Icon,
   InlineNote,
   LevelBar,
   ReadingSheet,
@@ -90,8 +89,15 @@ export function PreflightReadingsScreen({
    * Z przekazaniem: gdy jesteśmy online, wartości są tak świeże, jak ostatni kontakt
    * z serwerem (`live`); offline to z definicji dane z ostatniej synchronizacji (`cache`).
    */
-  const freshness: Freshness = handover == null ? 'brak' : synced ? 'live' : 'cache';
+  const serverFreshness: Freshness = handover == null ? 'brak' : synced ? 'live' : 'cache';
   const syncedAt = aircraft != null ? stamp(aircraft.fetchedAt) : null;
+
+  /**
+   * Po ręcznej korekcie wartość NIE pochodzi już z serwera — i adnotacja musi to mówić.
+   * Wcześniej ekran zostawiał tu „Ostatnie pobrane · …" obok liczby wpisanej przez
+   * pilota (kłamstwo o pochodzeniu) albo oznaczał ją jako `live` (kłamstwo w drugą stronę).
+   */
+  const freshness: Freshness = draft.readingSource === 'manual' ? 'manual' : serverFreshness;
 
   // ── oś czasu: dane → napisy ──────────────────────────────────────────────────
   const trails = useMemo(() => {
@@ -216,7 +222,7 @@ export function PreflightReadingsScreen({
           value={missing && draft.fuelL <= 0 ? null : String(Math.round(draft.fuelL))}
           unit="L"
           tone="amber"
-          freshness={missing && draft.fuelL > 0 ? 'live' : freshness}
+          freshness={freshness}
           syncedAt={syncedAt}
           gauge={<LevelBar ratio={draft.fuelL / capacity} tone="amber" />}
           caption={`${Math.round((draft.fuelL / capacity) * 100)}% pojemności · ${capacity} L z konfiguracji ${aircraft.reg}`}
@@ -229,7 +235,7 @@ export function PreflightReadingsScreen({
           label="Motogodziny silnika"
           value={missing && draft.mh <= 0 ? null : motoHours(draft.mh, mhFormat)}
           unit="MH"
-          freshness={missing && draft.mh > 0 ? 'live' : freshness}
+          freshness={freshness}
           syncedAt={syncedAt}
           caption={`format: ${mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny'} · z konfiguracji ${aircraft.reg}`}
           trail={trails.mh}
@@ -249,7 +255,7 @@ export function PreflightReadingsScreen({
           label="DALEJ"
           tone="green"
           variant="solid"
-          trailingIcon={<Icon name="next" size={18} color={theme.colors.bg} />}
+          trailingIcon="next"
           disabledReason={
             noReadings
               ? 'Wprowadź odczyty paliwa i MH z liczników — rozpoczną nowe ogniwo łańcucha'

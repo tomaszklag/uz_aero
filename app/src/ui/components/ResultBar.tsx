@@ -1,0 +1,99 @@
+/**
+ * UZ Aero — ResultBar (`.result-row` z mockupu 06)
+ *
+ * Samodzielny pasek WYNIKU: po lewej etykieta i rachunek, który do niego doprowadził,
+ * po prawej jedna duża liczba na tonowanym tle. To nie jest kolejne pole formularza —
+ * to odpowiedź na pytanie „co dokładnie zapiszę", policzona z tego, co pilot ustawił.
+ *
+ * Dlaczego rachunek jest widoczny, a nie tylko wynik: `refuel` zapisuje TRZY liczby
+ * (przed / dolano / po) i domena odrzuca zdarzenie, gdy się nie sumują (`FUEL_ARITHMETIC`,
+ * §3.4). Pokazanie „112 + 48 = 160 L" pozwala pilotowi wyłapać zły odczyt zanim komenda
+ * go odrzuci — i zrozumieć komunikat, gdyby jednak odrzuciła.
+ *
+ * Czym różni się od `ResultRow` z `Field.tsx`: tamten jest STOPKĄ sekcji formularza —
+ * cienka linia i wartość 18 px, wewnątrz karty, pod polami, z których wynika. Ten stoi
+ * MIĘDZY sekcjami jako osobny element o własnym tle i tonie (zielony gdy wynik jest
+ * w porządku, czerwony gdy łamie limit), bo w mockupie 06 wynik jest równorzędny
+ * ze wskaźnikiem FOB, a nie przypisem do pola.
+ *
+ * Czym różni się od `Metric`: metryka to przyrząd czytany kątem oka (własna ramka,
+ * etykieta nad wartością). Tu wartość ma sens wyłącznie razem z rachunkiem obok,
+ * więc oba stoją w jednym wierszu i dzielą jedno tło.
+ */
+
+import React from 'react';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
+
+import { useTheme } from '../theme';
+import { AppText } from './AppText';
+import { toneColors, type Tone } from './tone';
+
+export interface ResultBarProps {
+  /** Nazwa wyniku, np. „Stan po tankowaniu". */
+  label: string;
+  /** Wynik gotowy do wyświetlenia, razem z jednostką („160 L"). */
+  value: string;
+  /** Rachunek prowadzący do wartości („112 + 48 = 160 L · 48% pojemności"). */
+  formula?: string | null;
+  /** Ton wyniku — `green` gdy wynik jest w porządku, `red` gdy łamie limit. */
+  tone?: Tone;
+  style?: ViewStyle;
+}
+
+export function ResultBar({ label, value, formula, tone = 'green', style }: ResultBarProps) {
+  const { theme } = useTheme();
+  const c = toneColors(theme, tone);
+
+  return (
+    <View
+      accessibilityRole="text"
+      accessibilityLabel={`${label}: ${value}${formula != null ? `. ${formula}` : ''}`}
+      style={[
+        styles.row,
+        {
+          gap: theme.spacing.md,
+          paddingHorizontal: theme.spacing.lg,
+          paddingVertical: 14,
+          borderRadius: 14,
+          borderWidth: theme.borderWidth,
+          borderColor: c.border,
+          backgroundColor: c.muted,
+        },
+        style,
+      ]}
+    >
+      <View style={styles.left}>
+        {/* Krycie 0,8 / 0,6 z mockupu: etykieta i rachunek ustępują samej liczbie. */}
+        <AppText variant="mono" style={[styles.label, { color: c.accent }]}>
+          {label}
+        </AppText>
+        {formula != null && (
+          <AppText variant="mono" style={[styles.formula, { color: c.accent }]}>
+            {formula}
+          </AppText>
+        )}
+      </View>
+
+      <AppText
+        variant="mono"
+        numberOfLines={1}
+        style={{
+          fontFamily: theme.fontFamily.monoBold,
+          fontSize: 28,
+          lineHeight: 32,
+          letterSpacing: -0.5,
+          color: c.accent,
+        }}
+      >
+        {value}
+      </AppText>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  left: { flexShrink: 1, gap: 2 },
+  label: { fontSize: 10, letterSpacing: 1.5, lineHeight: 14, textTransform: 'uppercase', opacity: 0.8 },
+  formula: { fontSize: 10, letterSpacing: 0.5, lineHeight: 14, opacity: 0.6 },
+});

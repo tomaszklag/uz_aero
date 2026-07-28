@@ -18,6 +18,7 @@ import { Animated, Pressable, StyleSheet, View, type ViewStyle } from 'react-nat
 
 import { useTheme } from '../theme';
 import { AppText } from './AppText';
+import { Icon, type IconName } from './Icon';
 import { toneColors, type Tone } from './tone';
 
 /**
@@ -47,10 +48,16 @@ export interface ActionButtonProps {
   size?: ActionSize;
   /** Podpis pod etykietą (np. „przytrzymaj 2 s", „zapisze odczyt MH"). */
   hint?: string;
-  /** Ikona/element przed etykietą. */
-  icon?: React.ReactNode;
-  /** Ikona/element za etykietą (np. strzałka „dalej"). */
-  trailingIcon?: React.ReactNode;
+  /**
+   * Ikona przed etykietą — podawana NAZWĄ, nie gotowym elementem.
+   *
+   * Kolor i rozmiar ustala przycisk, bo tylko on wie, czy jest zablokowany i jakiego
+   * jest wariantu. Gdy ikony przekazywały ekrany, każdy wpisywał `theme.colors.bg`
+   * na sztywno — i po zablokowaniu zostawała czarna ikona na ciemnym tle, niewidoczna.
+   */
+  icon?: IconName;
+  /** Ikona za etykietą (np. strzałka „dalej"). */
+  trailingIcon?: IconName;
   /** Czas przytrzymania (ms). 0 = zwykłe tapnięcie. */
   holdMs?: number;
   /** Blokada — wymaga podania powodu; powód jest pokazywany pod przyciskiem. */
@@ -175,19 +182,28 @@ export function ActionButton({
               { backgroundColor: disabled ? theme.colors.surfaceHover : c.accent },
             ]}
           >
-            {icon}
+            <Icon
+              name={icon}
+              size={24}
+              // Na wypełnionej plakietce napis musi być ciemny, na przygaszonej — muted.
+              color={disabled ? theme.colors.textMuted : theme.colors.bg}
+            />
           </View>
         )}
 
         <View style={styles.row}>
-          {!hero && icon}
+          {!hero && icon != null && (
+            <Icon name={icon} size={size === 'md' ? 16 : 18} color={labelColor} />
+          )}
           <AppText
             variant={size === 'md' ? 'buttonSmall' : 'button'}
             style={[hero ? styles.heroLabel : null, { color: labelColor }]}
           >
             {label}
           </AppText>
-          {trailingIcon}
+          {trailingIcon != null && (
+            <Icon name={trailingIcon} size={size === 'md' ? 16 : 18} color={labelColor} />
+          )}
         </View>
 
         {hint != null && (

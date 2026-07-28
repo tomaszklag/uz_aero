@@ -1,11 +1,18 @@
 /**
- * UZ Aero — KOKPIT (mockupy 04/04a: ziemia · 05/05a–05d: lot)
+ * UZ Aero — KOKPIT (mockupy 04: ziemia · 05: lot)
  *
  * Jeden ekran, dwa tryby — zgodnie z §6: aplikacja **sama** przełącza tryb na podstawie
  * stanu silnika, pilot niczego nie wybiera.
- *   • silnik OFF → tryb GROUND: duży START ENGINE, log dnia, liczniki, akcje naziemne;
- *   • silnik ON  → tryb LOT: faza lotu ogromną czcionką, siatka GPS, log cyklu,
- *                  STOP dostępny dopiero po wylądowaniu.
+ *
+ *   • silnik OFF → GROUND (04): przewijalny ekran — status, wielki START ENGINE,
+ *     pasek czasu służby, log całego dnia, siatka akcji naziemnych;
+ *   • silnik ON  → LOT (05): układ **stały**, przewija się wyłącznie log cyklu —
+ *     faza lotu ogromną czcionką, siatka GPS, log bieżącego cyklu z podziałem na loty,
+ *     pasek akcji przyklejony do dołu.
+ *
+ * Ta różnica układów jest z designu i ma powód: na ziemi pilot czyta, w locie sięga.
+ * W powietrzu przyciski muszą być zawsze w tym samym miejscu, niezależnie od tego,
+ * ile zdarzeń przybyło w logu.
  *
  * Cały ekran jest zbudowany z komponentów Design Systemu — nie ma tu własnych „kart"
  * ani „chipów". Zapis wyłącznie przez komendy; twarde odrzucenie inwariantu i miękkie
@@ -13,7 +20,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import {
   ActionButton,
@@ -22,25 +29,29 @@ import {
   AppText,
   Banner,
   Card,
+  CockpitActions,
   DetectToast,
+  DropSheet,
   DutyStrip,
   EventLog,
-  Icon,
-  Metric,
-  MetricGrid,
+  ManualEventSheet,
+  ParamGrid,
   PhaseHero,
   Screen,
   StatusChip,
   SyncChip,
+  Tag,
   type ActionCardSpec,
+  type Tone,
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useGps } from '../bootstrap/ServicesProvider';
 import { useFlightDetection } from '../hooks/useFlightDetection';
-import { duration, durationLong, litres, timeLocal, timeUtc } from '../format';
-import { buildLogRows } from './cockpitLog';
-import type { Event } from '../../domain';
+import { useEventCorrection } from '../hooks/useEventCorrection';
+import { duration, litres, timeLocal, timeUtc } from '../format';
+import { buildCycleRows, buildLogRows } from './cockpitLog';
+import type { Event, FlightPhase } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */
 function useTicker(active: boolean): number {
@@ -51,6 +62,31 @@ function useTicker(active: boolean): number {
     return () => clearInterval(id);
   }, [active]);
   return now;
+}
+
+/** Napisy faz z mockupu 05 (`.phase-hero-name`). */
+const PHASE_LABEL: Record<FlightPhase, string> = {
+  idle: 'Engine idle',
+  taxi: 'Taxi',
+  climb: 'Climb',
+  cruise: 'Cruise',
+  descent: 'Descent',
+};
+
+/** Kolor fazy: niebieski = w powietrzu, zielony = ziemia z pracującym silnikiem. */
+const PHASE_TONE: Record<FlightPhase, Tone> = {
+  idle: 'neutral',
+  taxi: 'green',
+  climb: 'blue',
+  cruise: 'blue',
+  descent: 'blue',
+};
+
+/** „+1 200 FT/MIN" — znak jest istotny, więc wypisujemy go jawnie. */
+function verticalSpeedLabel(fpm: number | null): string | null {
+  if (fpm == null) return null;
+  const rounded = Math.round(fpm / 50) * 50;
+  return `${rounded >= 0 ? '+' : '−'}${Math.abs(rounded)} FT/MIN`;
 }
 
 export function CockpitScreen({
@@ -70,8 +106,13 @@ export function CockpitScreen({
   const lastError = useSessionStore((s) => s.lastError);
   const startEngine = useSessionStore((s) => s.startEngine);
   const stopEngine = useSessionStore((s) => s.stopEngine);
+  const drop = useSessionStore((s) => s.drop);
+  const takeoff = useSessionStore((s) => s.takeoff);
+  const landing = useSessionStore((s) => s.landing);
 
   const [busy, setBusy] = useState(false);
+  const [dropOpen, setDropOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
   const engineOn = projection.engineRunning;
   const inFlight = projection.inFlight;
   const now = useTicker(engineOn || projection.dutyStart != null);
@@ -85,11 +126,12 @@ export function CockpitScreen({
     return start?.payload.fieldElevationFt ?? null;
   }, [events]);
 
-  const { fix, pending, undo, gpsAvailable } = useFlightDetection({
+  const { fix, phase, pending, undo, gpsAvailable } = useFlightDetection({
     gps,
     enabled: engineOn,
     fieldElevationFt,
   });
+  const { openCorrection, correctionSheet } = useEventCorrection();
 
   const run = useCallback(async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -115,25 +157,180 @@ export function CockpitScreen({
 
   if (!context) return <NoSession onStart={() => navigation.navigate('PreflightAircraft')} />;
 
-  const liveBlockMs =
-    projection.blockTimeMs +
-    (projection.openEngineStartAt != null ? now - projection.openEngineStartAt : 0);
+  const mhFormat = projection.mhFormat ?? 'decimal';
   const liveFlightMs =
     projection.openTakeoffAt != null ? now - projection.openTakeoffAt : projection.flightTimeMs;
   const dutyMs = projection.dutyStart != null ? now - projection.dutyStart : 0;
 
-  const logRows = buildLogRows(events, projection, projection.mhFormat ?? 'decimal');
+  /** Komunikaty wspólne dla obu trybów — nigdy cichy błąd (§6 pkt 3). */
+  const messages = (
+    <>
+      {lastError != null && (
+        <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
+      )}
+      {warnings.length > 0 && (
+        <Banner
+          kind="warning"
+          icon="warning"
+          title="Zapisane — sprawdź"
+          text={warnings.map((w) => w.message).join('\n')}
+        />
+      )}
+    </>
+  );
+
+  const toast =
+    pending == null ? null : (
+      <DetectToast
+        title={pending.detection === 'takeoff' ? 'Takeoff' : 'Landing'}
+        detail={`${timeUtc(pending.fix.time)} UTC · GS ${Math.round(pending.fix.groundSpeedKt)} KT`}
+        secondsLeft={pending.secondsLeft}
+        undoLabel={pending.detection === 'takeoff' ? 'COFNIJ — NIE BYŁO STARTU' : 'COFNIJ — TO PRZELOT'}
+        onUndo={undo}
+      />
+    );
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TRYB LOT (mockup 05) — układ stały, przewija się tylko log cyklu.
+  // ─────────────────────────────────────────────────────────────────────────
+  if (engineOn) {
+    const cycleRows = buildCycleRows(events, projection, mhFormat, now);
+    const landings = cycleRows.filter((r) => r.kind === 'landing').length;
+    const takeoffs = cycleRows.filter((r) => r.kind === 'takeoff').length;
+
+    return (
+      <Screen padded={false}>
+        <AppBar
+          aircraft={projection.aircraftId}
+          subtitle={[projection.departureIcao, projection.arrivalIcao].filter(Boolean).join(' → ')}
+          compact
+          right={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
+              <SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />
+              <StatusChip label="Running" tone="green" />
+            </View>
+          }
+          onSettings={() => navigation.navigate('StyleGuide')}
+        />
+
+        <PhaseHero
+          phase={PHASE_LABEL[phase.phase]}
+          tone={PHASE_TONE[phase.phase]}
+          detail={
+            gpsAvailable
+              ? (verticalSpeedLabel(phase.verticalSpeedFpm) ?? 'brak danych o wysokości')
+              : 'GPS: brak sygnału — zapisuj ręcznie'
+          }
+        />
+
+        <ParamGrid
+          cells={[
+            { label: 'Ground speed', value: `${Math.round(fix?.groundSpeedKt ?? 0)}`, unit: 'KT' },
+            {
+              label: 'Altitude',
+              value: fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—',
+              unit: 'FT',
+            },
+            {
+              label: 'Fuel on board',
+              value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+              unit: 'L',
+              tone: 'amber',
+              tint: true,
+            },
+            { label: 'Flight time', value: duration(liveFlightMs), tone: 'green', tint: true },
+          ]}
+        />
+
+        {/* Log bieżącego cyklu — jedyny element, który się przewija. */}
+        <Card
+          title={`Cykl bieżący · ${takeoffs} T/O · ${landings} LDG`}
+          headerRight={<Tag label={`Lot #${projection.flights.length + (inFlight ? 1 : 0)}`} />}
+          flush
+          style={{ flex: 1, borderRadius: 0, borderLeftWidth: 0, borderRightWidth: 0 }}
+          contentStyle={{ flex: 1 }}
+        >
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <EventLog rows={cycleRows} emptyText="Cykl dopiero się zaczął." />
+          </ScrollView>
+        </Card>
+
+        {(lastError != null || warnings.length > 0 || !gpsAvailable) && (
+          <View style={{ paddingHorizontal: 14, paddingTop: theme.spacing.sm, gap: theme.spacing.sm }}>
+            {messages}
+            {!gpsAvailable && (
+              <Banner
+                kind="status"
+                tone="amber"
+                icon="warning"
+                title="GPS: brak sygnału"
+                text="Starty i lądowania nie będą wykrywane automatycznie — użyj zapisu ręcznego."
+              />
+            )}
+          </View>
+        )}
+
+        <CockpitActions
+          primaryLabel={inFlight ? 'LAND' : 'T/O'}
+          primaryIcon={inFlight ? 'landing' : 'takeoff'}
+          onPrimary={() => setManualOpen(true)}
+          onDrop={() => setDropOpen(true)}
+          // Wyniesienie z definicji dzieje się w powietrzu (§3.3).
+          dropDisabledReason={inFlight ? null : 'Zrzut zapiszesz w powietrzu'}
+          onStop={() => run(stopEngine)}
+          // `engine_stop` w powietrzu byłby fałszywym wpisem — blokujemy z powodem (§3.2).
+          stopDisabledReason={inFlight ? 'Silnik zatrzymasz po wylądowaniu i dobiegu' : null}
+        />
+
+        {/* ── zrzut (mockup 05e) — arkusz nad kokpitem, nie osobny ekran ── */}
+        <DropSheet
+          visible={dropOpen}
+          // Numer LOTU, nie zrzutu — w jednym locie bywa kilka wyniesień.
+          flightNumber={projection.flights.length + (inFlight ? 1 : 0)}
+          time={timeUtc(now)}
+          // Wysokość bierzemy z GPS, nie z palca — pilot ustawia tylko liczby skoczków.
+          altitudeFt={fix?.altitudeFt ?? null}
+          client={projection.client}
+          busy={busy}
+          onConfirm={(jumpers) => {
+            setDropOpen(false);
+            void run(() => drop({ jumpers, altitudeFt: fix?.altitudeFt ?? null }));
+          }}
+          onCancel={() => setDropOpen(false)}
+        />
+
+        {/* ── wpis ręczny (mockup 05f) — ratunek na fałszywą detekcję GPS ── */}
+        <ManualEventSheet
+          visible={manualOpen}
+          initialType={inFlight ? 'landing' : 'takeoff'}
+          now={now}
+          formatTime={timeUtc}
+          busy={busy}
+          onConfirm={(type, at) => {
+            setManualOpen(false);
+            // Czas wybrany przez pilota JEST czasem zdarzenia — zapis dostaje go jawnie,
+            // a chwila zapisu zostaje w `deviceTime` (§5.1, dwa zegary).
+            void run(() =>
+              type === 'takeoff' ? takeoff('manual', null, at) : landing('manual', null, at),
+            );
+          }}
+          onCancel={() => setManualOpen(false)}
+        />
+
+        {toast}
+      </Screen>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TRYB GROUND (mockup 04) — przewijalny ekran dnia.
+  // ─────────────────────────────────────────────────────────────────────────
+  const logRows = buildLogRows(events, projection, mhFormat);
 
   /**
-   * Akcje naziemne (`.action-grid` z mockupu 04). Każda niesie podpis ze stanem, żeby
-   * pilot widział, czy warto tam wchodzić. Widoczne wyłącznie przy wyłączonym silniku —
-   * to są czynności na ziemi, a §3.2 nie pozwala ich mieszać z lotem.
-   *
-   * Ekrany docelowe (06 / 07 / 08 / 09) jeszcze nie istnieją, więc karty są **zablokowane
-   * z podanym powodem** zamiast prowadzić w pustkę. Ukrycie ich byłoby gorsze: pilot nie
-   * dowiedziałby się, że te czynności w ogóle są przewidziane.
+   * Akcje naziemne (`.action-grid`). Każda niesie podpis ze stanem, żeby pilot widział,
+   * czy warto tam wchodzić, bez otwierania ekranu i wracania.
    */
-  const soon = 'Ekran w budowie';
   const groundActions: ActionCardSpec[] = [
     {
       id: 'refuel',
@@ -144,24 +341,21 @@ export function CockpitScreen({
         projection.fuel.addedL > 0
           ? `Dolane dziś: ${litres(projection.fuel.addedL)}`
           : `Na pokładzie: ${litres(projection.fuel.lastReadingL)}`,
-      disabledReason: soon,
-      onPress: () => undefined,
+      onPress: () => navigation.navigate('Refuel'),
     },
     {
       id: 'crew',
       icon: 'crew',
       label: 'Zmiana załogi',
       sub: `PIC: ${projection.picId ?? '—'}${projection.dualId != null ? ` · DUAL: ${projection.dualId}` : ''}`,
-      disabledReason: soon,
-      onPress: () => undefined,
+      onPress: () => navigation.navigate('CrewChange'),
     },
     {
       id: 'manual',
       icon: 'manual-log',
       label: 'Lista ręczna',
       sub: `Fallback GPS · ${projection.flights.length} lotów`,
-      disabledReason: soon,
-      onPress: () => undefined,
+      onPress: () => navigation.navigate('ManualLog'),
     },
     {
       id: 'end-day',
@@ -169,8 +363,7 @@ export function CockpitScreen({
       label: 'Zakończ dzień',
       tone: 'red',
       sub: 'Statystyki + synchronizacja',
-      disabledReason: soon,
-      onPress: () => undefined,
+      onPress: () => navigation.navigate('EndOfDay'),
     },
   ];
 
@@ -184,141 +377,53 @@ export function CockpitScreen({
         ]
           .filter(Boolean)
           .join(' · ')}
-        compact={engineOn}
         right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+        // `.settings-btn` z mockupu 04 — jedyne wejście do ustawień, w tym do wyboru
+        // motywu. Bez niego pięć motywów istniało wyłącznie w kodzie.
+        onSettings={() => navigation.navigate('StyleGuide')}
       />
 
-      <View style={{ padding: theme.spacing.md, gap: theme.spacing.md }}>
-        {engineOn ? (
-          <PhaseHero
-            phase={inFlight ? 'In flight' : 'Taxi'}
-            detail={
-              gpsAvailable
-                ? `${Math.round(fix?.groundSpeedKt ?? 0)} KT · ${
-                    fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)} FT` : 'brak wysokości'
-                  }`
-                : 'GPS: brak sygnału — użyj wpisu ręcznego'
-            }
-            tone={inFlight ? 'blue' : 'green'}
-            aside={<StatusChip label={duration(liveBlockMs)} tone="neutral" dot={false} />}
-          />
-        ) : (
-          <StatusChip
-            label="GROUND · SILNIK WYŁĄCZONY"
-            tone="neutral"
-            style={{ alignSelf: 'center' }}
-          />
-        )}
+      <View style={{ padding: theme.spacing.lg, gap: 14 }}>
+        <StatusChip label="Ground · silnik wyłączony" tone="neutral" style={{ alignSelf: 'center' }} />
 
-        {/* ── akcja główna (`.start-engine`) ───────────────────────────── */}
-        {engineOn ? (
-          <ActionButton
-            label="STOP ENGINE"
-            tone="red"
-            size="hero"
-            icon={<Icon name="stop" size={22} color={theme.colors.bg} />}
-            holdMs={2000}
-            busy={busy}
-            hint="Przytrzymaj 2 sekundy aby potwierdzić"
-            // Zatrzymanie silnika w powietrzu byłoby fałszywym wpisem — blokujemy
-            // z podanym powodem, nie po cichu (§3.2).
-            disabledReason={inFlight ? 'Silnik zatrzymasz po wylądowaniu i dobiegu' : null}
-            onPress={() => run(stopEngine)}
-          />
-        ) : (
-          <ActionButton
-            label="START ENGINE"
-            tone="green"
-            size="hero"
-            icon={<Icon name="start" size={24} color={theme.colors.bg} />}
-            holdMs={2000}
-            busy={busy}
-            hint="Przytrzymaj 2 sekundy aby potwierdzić"
-            onPress={handleStart}
-          />
-        )}
+        <ActionButton
+          label="START ENGINE"
+          tone="green"
+          size="hero"
+          icon="start"
+          holdMs={2000}
+          busy={busy}
+          hint="Przytrzymaj 2 sekundy aby potwierdzić"
+          onPress={handleStart}
+        />
 
-        {/* ── czas służby (`.duty-strip`) — tylko na ziemi ──────────────── */}
-        {!engineOn && projection.dutyStart != null && (
+        {projection.dutyStart != null && (
           <DutyStrip
             elapsed={duration(dutyMs)}
             since={`Meldunek ${timeUtc(projection.dutyStart)} UTC · ${timeLocal(projection.dutyStart)} LT`}
           />
         )}
 
-        {lastError != null && <Banner kind="warning" tone="red" title="Nie zapisano" text={lastError} />}
-        {warnings.length > 0 && (
-          <Banner
-            kind="warning"
-            title="Zapisane — sprawdź"
-            text={warnings.map((w) => w.message).join('\n')}
-          />
-        )}
-        {engineOn && !gpsAvailable && (
-          <Banner
-            kind="status"
-            tone="amber"
-            title="GPS: brak sygnału"
-            text="Starty i lądowania nie będą wykrywane automatycznie. Zapisz je ręcznie — czasy możesz cofnąć."
-          />
-        )}
+        {messages}
 
-        {/* ── parametry GPS — wyłącznie w locie (mockup 05) ─────────────── */}
-        {engineOn && (
-          <MetricGrid>
-            <Metric label="Ground speed" value={`${Math.round(fix?.groundSpeedKt ?? 0)}`} unit="KT" />
-            <Metric
-              label="Altitude"
-              value={fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—'}
-              unit="FT"
-            />
-            <Metric
-              label="Fuel on board"
-              value={litres(projection.fuel.lastReadingL)}
-              tone="amber"
-              emphasis
-            />
-            <Metric
-              label="Flight time"
-              value={duration(liveFlightMs)}
-              tone={inFlight ? 'green' : 'neutral'}
-              emphasis={inFlight}
-            />
-          </MetricGrid>
-        )}
-
-        {/* ── log dnia (`.day-log`) ────────────────────────────────────── */}
         <Card
           title={`Log dnia · UTC · ${projection.engineRuns.length} cykli · ${projection.takeoffCount} T/O`}
           flush
         >
-          {/* TODO: `onCorrect` → ekran 04c. Korekta wymaga nowego typu zdarzenia
-              w domenie (rejestr jest append-only, więc poprawka to osobny wpis),
-              więc dopinamy ją razem z tamtym ekranem — pusty ołówek byłby gorszy
-              niż jego brak. */}
-          <EventLog rows={logRows} emptyText="Brak zdarzeń — zacznij od START ENGINE." />
+          {/* Ołówek przy każdym wierszu → arkusz korekty (04c). Cel ≥ 44 px: naprawa
+              błędu nie może być trudniejsza niż jego popełnienie (§8, audyt). */}
+          <EventLog
+            rows={logRows}
+            onCorrect={openCorrection}
+            emptyText="Brak zdarzeń — zacznij od START ENGINE."
+          />
         </Card>
 
-        {/* ── akcje naziemne (`.action-grid`) ──────────────────────────── */}
-        {!engineOn && <ActionGrid actions={groundActions} />}
-
-        {engineOn && projection.openEngineStartAt != null && (
-          <AppText variant="mono" tone="green" style={{ textAlign: 'center' }}>
-            ● {durationLong(now - projection.openEngineStartAt)} — cykl w toku
-          </AppText>
-        )}
+        <ActionGrid actions={groundActions} />
       </View>
 
-      {/* ── toast autodetekcji: brak reakcji = zapis (§3.2) ─────────────── */}
-      {pending != null && (
-        <DetectToast
-          title={pending.detection === 'takeoff' ? 'Takeoff' : 'Landing'}
-          detail={`${timeUtc(pending.fix.time)} UTC · GS ${Math.round(pending.fix.groundSpeedKt)} KT`}
-          secondsLeft={pending.secondsLeft}
-          undoLabel={pending.detection === 'takeoff' ? 'COFNIJ — NIE BYŁO STARTU' : 'COFNIJ — TO PRZELOT'}
-          onUndo={undo}
-        />
-      )}
+      {correctionSheet}
+      {toast}
     </Screen>
   );
 }
@@ -343,8 +448,10 @@ function NoSession({ onStart }: { onStart: () => void }) {
         <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
           Dzień lotny zaczyna się od preflightu — wyboru samolotu i odczytu liczników.
         </AppText>
-        <ActionButton label="ROZPOCZNIJ PREFLIGHT" tone="green" onPress={onStart} />
-        {lastError != null && <Banner kind="warning" tone="red" title="Nie zapisano" text={lastError} />}
+        <ActionButton label="ROZPOCZNIJ PREFLIGHT" tone="green" variant="solid" onPress={onStart} />
+        {lastError != null && (
+          <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
+        )}
       </View>
     </Screen>
   );

@@ -197,8 +197,60 @@ export function ValueBox({
   );
 }
 
+export interface ResultRowProps {
+  label: string;
+  value: string;
+  tone?: Tone;
+  style?: ViewStyle;
+}
+
+/**
+ * `.result-row` — wiersz wyniku zamykający sekcję formularza: opis po lewej, wyliczona
+ * wartość po prawej, oddzielony linią od pól nad nim.
+ *
+ * Sens jest taki, że pilot wpisuje składniki (stan paliwa, dolanie), a tu widzi **to,
+ * co faktycznie zostanie zapisane**. Bez tego wiersza musiałby dodawać w głowie i ufać,
+ * że aplikacja liczy tak samo jak on.
+ */
+export function ResultRow({ label, value, tone = 'amber', style }: ResultRowProps) {
+  const { theme } = useTheme();
+  const c = toneColors(theme, tone);
+
+  return (
+    <View
+      style={[
+        styles.result,
+        {
+          paddingVertical: 8,
+          marginTop: 2,
+          borderTopWidth: theme.borderWidth,
+          borderTopColor: theme.colors.border,
+        },
+        style,
+      ]}
+    >
+      <AppText variant="mono" tone="muted" style={styles.resultLabel}>
+        {label}
+      </AppText>
+      <AppText
+        variant="display"
+        style={{
+          fontSize: 18,
+          lineHeight: 20,
+          letterSpacing: 1,
+          color: tone === 'neutral' ? theme.colors.textPrimary : c.accent,
+        }}
+      >
+        {value}
+      </AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  result: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  resultLabel: { flexShrink: 1, fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
   label: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
   hint: { fontSize: 9, letterSpacing: 0.5, lineHeight: 13 },
   box: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },

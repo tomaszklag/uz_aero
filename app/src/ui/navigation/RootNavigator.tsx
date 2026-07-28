@@ -20,6 +20,15 @@ import { CockpitScreen } from '../screens/CockpitScreen';
 import { PreflightAircraftScreen } from '../screens/PreflightAircraftScreen';
 import { PreflightReadingsScreen } from '../screens/PreflightReadingsScreen';
 import { PreflightConfirmScreen } from '../screens/PreflightConfirmScreen';
+import {
+  CockpitReadonlyScreen,
+  type CockpitReadonlyParams,
+} from '../screens/CockpitReadonlyScreen';
+import { CrewChangeScreen } from '../screens/CrewChangeScreen';
+import { ManualLogScreen } from '../screens/ManualLogScreen';
+import { RefuelScreen } from '../screens/RefuelScreen';
+import { EndOfDayScreen } from '../screens/EndOfDayScreen';
+import { StatsScreen } from '../screens/StatsScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
@@ -27,6 +36,13 @@ export type RootStackParamList = {
   PreflightAircraft: undefined;
   PreflightReadings: undefined;
   PreflightConfirm: undefined;
+  /** Podgląd cudzego samolotu bez przejmowania go (04b) — wejście z listy na 02. */
+  CockpitReadonly: CockpitReadonlyParams;
+  Refuel: undefined;
+  CrewChange: undefined;
+  ManualLog: undefined;
+  EndOfDay: undefined;
+  Stats: undefined;
   StyleGuide: undefined;
 };
 
@@ -67,6 +83,12 @@ export function RootNavigator() {
         <Stack.Screen name="PreflightAircraft" component={PreflightAircraftScreen} />
         <Stack.Screen name="PreflightReadings" component={PreflightReadingsScreen} />
         <Stack.Screen name="PreflightConfirm" component={PreflightConfirmScreen} />
+        <Stack.Screen name="CockpitReadonly" component={CockpitReadonlyScreen} />
+        <Stack.Screen name="Refuel" component={RefuelScreen} />
+        <Stack.Screen name="CrewChange" component={CrewChangeScreen} />
+        <Stack.Screen name="ManualLog" component={ManualLogScreen} />
+        <Stack.Screen name="EndOfDay" component={EndOfDayScreen} />
+        <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="StyleGuide" component={StyleGuideScreen} />
       </Stack.Navigator>
     </NavigationContainer>

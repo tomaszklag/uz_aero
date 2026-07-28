@@ -23,7 +23,9 @@ import {
   type DetectionMethod,
   type EngineStartPayload,
   type EngineStopPayload,
+  type EpochMillis,
   type Event,
+  type EventCorrectionPayload,
   type GpsPosition,
   type ManualLogEntryPayload,
   type PreflightConfirmPayload,
@@ -74,9 +76,26 @@ export interface SessionStore {
   confirmPreflight(payload: PreflightConfirmPayload): Promise<CommandResult>;
   startEngine(payload?: EngineStartPayload): Promise<CommandResult>;
   stopEngine(payload?: EngineStopPayload): Promise<CommandResult>;
-  takeoff(method?: DetectionMethod, position?: GpsPosition | null): Promise<CommandResult>;
-  landing(method?: DetectionMethod, position?: GpsPosition | null): Promise<CommandResult>;
+  /** Rozpoczęcie kołowania — bez okna „COFNIJ", zapis natychmiastowy. */
+  taxi(
+    method?: DetectionMethod,
+    position?: GpsPosition | null,
+    at?: EpochMillis,
+  ): Promise<CommandResult>;
+  /** `at` = rzeczywisty czas zdarzenia, gdy różni się od chwili zapisu (§5.1). */
+  takeoff(
+    method?: DetectionMethod,
+    position?: GpsPosition | null,
+    at?: EpochMillis,
+  ): Promise<CommandResult>;
+  landing(
+    method?: DetectionMethod,
+    position?: GpsPosition | null,
+    at?: EpochMillis,
+  ): Promise<CommandResult>;
   refuel(payload: RefuelPayload): Promise<CommandResult>;
+  /** Korekta zdarzenia (04c) — zmiana czasu albo unieważnienie, zapis append-only. */
+  correctEvent(payload: EventCorrectionPayload): Promise<CommandResult>;
   drop(input: DropInput): Promise<CommandResult>;
   crewChange(payload: CrewChangePayload): Promise<CommandResult>;
   manualLogEntry(payload: ManualLogEntryPayload): Promise<CommandResult>;
@@ -193,16 +212,24 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       return run(() => requireCommands().stopEngine(requireContext(), payload));
     },
 
-    takeoff(method = 'manual', position = null) {
-      return run(() => requireCommands().takeoff(requireContext(), method, position));
+    taxi(method = 'manual', position = null, at) {
+      return run(() => requireCommands().taxi(requireContext(), method, position, at));
     },
 
-    landing(method = 'manual', position = null) {
-      return run(() => requireCommands().landing(requireContext(), method, position));
+    takeoff(method = 'manual', position = null, at) {
+      return run(() => requireCommands().takeoff(requireContext(), method, position, at));
+    },
+
+    landing(method = 'manual', position = null, at) {
+      return run(() => requireCommands().landing(requireContext(), method, position, at));
     },
 
     refuel(payload) {
       return run(() => requireCommands().refuel(requireContext(), payload));
+    },
+
+    correctEvent(payload) {
+      return run(() => requireCommands().correctEvent(requireContext(), payload));
     },
 
     drop(input) {

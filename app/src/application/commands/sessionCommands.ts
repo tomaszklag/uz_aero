@@ -40,6 +40,7 @@ import {
   type JumperCounts,
   type ManualLogEntryPayload,
   type PreflightConfirmPayload,
+  type EventCorrectionPayload,
   type RefuelPayload,
   type SessionClaimMode,
   type SessionState,
@@ -117,26 +118,68 @@ export class SessionCommands {
   }
 
   /** Start: `auto` po upływie okna „Cofnij" w toaście, `manual` z przycisku korekty (§3.3). */
+  /**
+   * Rozpoczęcie kołowania — otwiera lot w logu cyklu (mockup 05).
+   *
+   * Nie ma okna „COFNIJ": kołowanie nie wpływa ani na czas blokowy, ani na czas lotu,
+   * więc pomyłka kosztuje jeden wiersz w logu, a nie błędny wpis w dokumentach.
+   */
+  taxi(
+    ctx: SessionContext,
+    method: DetectionMethod = 'manual',
+    position: GpsPosition | null = null,
+    at?: EpochMillis,
+  ): Promise<CommandResult> {
+    return this.execute(ctx, 'taxi', () => ({
+      payload: { method, position },
+      ...(at !== undefined ? { gpsTime: at } : {}),
+    }));
+  }
+
+  /**
+   * `at` = kiedy zdarzenie NAPRAWDĘ zaszło, jeśli różni się od chwili zapisu (§5.1,
+   * dwa zegary). Dwa realne przypadki:
+   *  • autodetekcja — zdarzenie ma czas fixa GPS, nie czas wyjścia z okna „COFNIJ";
+   *  • wpis ręczny (05f) — pilot cofa czas, bo zorientował się po fakcie.
+   * Bez tego oba zapisywałyby się z opóźnieniem, o które nikt później nie zapyta.
+   */
   takeoff(
     ctx: SessionContext,
     method: DetectionMethod = 'manual',
     position: GpsPosition | null = null,
+    at?: EpochMillis,
   ): Promise<CommandResult> {
-    return this.execute(ctx, 'takeoff', () => ({ payload: { method, position } }));
+    return this.execute(ctx, 'takeoff', () => ({
+      payload: { method, position },
+      ...(at !== undefined ? { gpsTime: at } : {}),
+    }));
   }
 
   landing(
     ctx: SessionContext,
     method: DetectionMethod = 'manual',
     position: GpsPosition | null = null,
+    at?: EpochMillis,
   ): Promise<CommandResult> {
-    return this.execute(ctx, 'landing', () => ({ payload: { method, position } }));
+    return this.execute(ctx, 'landing', () => ({
+      payload: { method, position },
+      ...(at !== undefined ? { gpsTime: at } : {}),
+    }));
   }
 
   // ── akcje ground i rozliczenie ──────────────────────────────────────────────
 
   refuel(ctx: SessionContext, payload: RefuelPayload): Promise<CommandResult> {
     return this.execute(ctx, 'refuel', () => ({ payload }));
+  }
+
+  /**
+   * Korekta zdarzenia (04c): zmiana czasu albo unieważnienie — zawsze jako NOWE
+   * zdarzenie, oryginał zostaje w rejestrze (append-only). Walidację celu i okna 24 h
+   * po zamknięciu dnia robią reguły; tu tylko zapis.
+   */
+  correctEvent(ctx: SessionContext, payload: EventCorrectionPayload): Promise<CommandResult> {
+    return this.execute(ctx, 'event_correction', () => ({ payload }));
   }
 
   /** Zrzut; `dropNumber` domyślnie kolejny, klient dziedziczony z preflightu (§5.1). */

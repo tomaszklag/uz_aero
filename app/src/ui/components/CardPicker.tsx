@@ -46,6 +46,12 @@ export interface PickerOption<T extends string> {
   tags?: PickerTag[];
   /** Blokada wyboru z powodem; powód jest widoczny na karcie. */
   disabledReason?: string;
+  /**
+   * Czy pozycja ma akcję poboczną (mockup 02: „oko" tylko przy samolocie z cudzym
+   * claimem). Bez tego pola przycisk pojawiałby się przy każdej pozycji listy —
+   * podgląd read-only ma sens wyłącznie tam, gdzie jest co podglądać.
+   */
+  hasSecondary?: boolean;
   /** Gdy powód mieści się w tagu (np. „Wyłączony") — nie dublujemy go osobną linią. */
   disabledTagged?: boolean;
 }
@@ -129,7 +135,7 @@ export function CardPicker<T extends string>({
                 <Tag key={t.label} label={t.label} tone={t.tone ?? 'neutral'} />
               ))}
 
-              {onSecondary != null && !disabled && (
+              {onSecondary != null && opt.hasSecondary === true && !disabled && (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={secondaryLabel}

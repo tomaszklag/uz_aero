@@ -31,7 +31,16 @@ import { Icon, type IconName } from './Icon';
 import { toneColors, type Tone } from './tone';
 
 /** Rodzaj wiersza — steruje ikoną, kolorem i tym, czy wiersz stoi w szynie cyklu. */
-export type LogKind = 'start' | 'stop' | 'takeoff' | 'landing' | 'event' | 'ground';
+export type LogKind =
+  | 'start'
+  | 'stop'
+  | 'taxi'
+  | 'takeoff'
+  | 'landing'
+  | 'drop'
+  | 'event'
+  | 'ground'
+  | 'live';
 
 export interface LogChip {
   label: string;
@@ -51,6 +60,14 @@ export interface EventLogRow {
   chips?: LogChip[];
   /** Zdarzenie czeka na wysyłkę. */
   pending?: boolean;
+  /**
+   * Wiersz OCZEKIWANY (mockup 08 `.pending-row`): zdarzenie, którego jeszcze nie ma,
+   * ale wiadomo, że nadejdzie („— · Landing · W locie…"). Kreskowana plakietka, wygaszone
+   * napisy, bez celu korekty — nie da się poprawić czegoś, co nie zostało zapisane.
+   */
+  awaited?: boolean;
+  /** Separator nad wierszem („Lot 2") — dzieli cykl na loty (mockup 05 `.flight-sep`). */
+  section?: string;
 }
 
 export interface EventLogProps {
@@ -64,19 +81,26 @@ export interface EventLogProps {
 const KIND_ICON: Record<LogKind, IconName> = {
   start: 'start',
   stop: 'stop',
+  // Kołowanie to ruch po ziemi — strzałka w prawo, nie w górę ani w dół.
+  taxi: 'next',
   takeoff: 'takeoff',
   landing: 'landing',
+  drop: 'drop',
   event: 'info',
   ground: 'refuel',
+  live: 'start',
 };
 
 const KIND_TONE: Record<LogKind, Tone> = {
   start: 'green',
   stop: 'red',
+  taxi: 'neutral',
   takeoff: 'neutral',
   landing: 'neutral',
+  drop: 'blue',
   event: 'neutral',
   ground: 'amber',
+  live: 'green',
 };
 
 export function EventLog({ rows, onCorrect, emptyText = 'Brak zdarzeń.', style }: EventLogProps) {
@@ -95,13 +119,15 @@ export function EventLog({ rows, onCorrect, emptyText = 'Brak zdarzeń.', style 
   return (
     <View style={style}>
       {rows.map((row, index) => (
-        <LogRow
-          key={row.id}
-          row={row}
-          first={index === 0}
-          last={index === rows.length - 1}
-          onCorrect={onCorrect}
-        />
+        <React.Fragment key={row.id}>
+          {row.section != null && <FlightSeparator label={row.section} />}
+          <LogRow
+            row={row}
+            first={index === 0}
+            last={index === rows.length - 1}
+            onCorrect={onCorrect}
+          />
+        </React.Fragment>
       ))}
     </View>
   );
@@ -123,8 +149,13 @@ function LogRow({
   const c = toneColors(theme, tone);
   const ground = row.kind === 'ground';
 
+  // Wiersz „na żywo" (mockup 05): pulsujący punkt zamiast plakietki i BRAK korekty —
+  // to nie jest zdarzenie w rejestrze, tylko trwający stan.
+  const live = row.kind === 'live';
+  const awaited = row.awaited === true;
+
   const correctButton =
-    onCorrect == null ? null : (
+    onCorrect == null || live || awaited ? null : (
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Korekta: ${row.label} o ${row.time}`}
@@ -188,22 +219,34 @@ function LogRow({
             },
           ]}
         />
-        <View
-          style={[
-            styles.railIcon,
-            {
-              borderWidth: theme.borderWidth,
-              borderColor: tone === 'neutral' ? theme.colors.border : c.border,
-              backgroundColor: tone === 'neutral' ? theme.colors.surfaceRaised : c.muted,
-            },
-          ]}
-        >
-          <Icon
-            name={KIND_ICON[row.kind]}
-            size={11}
-            color={tone === 'neutral' ? theme.colors.textSecondary : c.accent}
-          />
-        </View>
+        {live ? (
+          <View style={[styles.railLive, { backgroundColor: c.accent }]} />
+        ) : (
+          <View
+            style={[
+              styles.railIcon,
+              awaited
+                ? {
+                    // `.event-icon.pending` — kreskowana obwódka, przezroczysty środek.
+                    borderWidth: theme.borderWidth,
+                    borderStyle: 'dashed',
+                    borderColor: theme.colors.borderStrong,
+                    backgroundColor: 'transparent',
+                  }
+                : {
+                    borderWidth: theme.borderWidth,
+                    borderColor: tone === 'neutral' ? theme.colors.border : c.border,
+                    backgroundColor: tone === 'neutral' ? theme.colors.surfaceRaised : c.muted,
+                  },
+            ]}
+          >
+            <Icon
+              name={KIND_ICON[row.kind]}
+              size={11}
+              color={awaited || tone === 'neutral' ? theme.colors.textMuted : c.accent}
+            />
+          </View>
+        )}
       </View>
 
       <View style={styles.body}>
@@ -213,7 +256,11 @@ function LogRow({
             styles.time,
             {
               fontFamily: theme.fontFamily.monoBold,
-              color: tone === 'neutral' ? theme.colors.textPrimary : c.accent,
+              color: awaited
+                ? theme.colors.textMuted
+                : tone === 'neutral'
+                  ? theme.colors.textPrimary
+                  : c.accent,
             },
           ]}
         >
@@ -225,7 +272,13 @@ function LogRow({
           numberOfLines={1}
           style={[
             styles.label,
-            { color: tone === 'neutral' ? theme.colors.textSecondary : c.accent },
+            {
+              color: awaited
+                ? theme.colors.textMuted
+                : tone === 'neutral'
+                  ? theme.colors.textSecondary
+                  : c.accent,
+            },
           ]}
         >
           {row.label}
@@ -272,6 +325,36 @@ function LogRow({
   );
 }
 
+/**
+ * `.flight-sep` — poziomy separator z etykietą („Lot 2").
+ *
+ * W cyklu z sześcioma lotami sama szyna nie wystarcza: bez podziału nie widać,
+ * do którego lotu należy zrzut i które lądowanie go zamyka.
+ */
+function FlightSeparator({ label }: { label: string }) {
+  const { theme } = useTheme();
+  return (
+    <View
+      style={[
+        styles.sep,
+        {
+          paddingHorizontal: 12,
+          paddingVertical: 5,
+          backgroundColor: theme.colors.surfaceRaised,
+          borderBottomWidth: theme.borderWidth,
+          borderBottomColor: theme.colors.borderStrong,
+        },
+      ]}
+    >
+      <View style={[styles.sepLine, { backgroundColor: theme.colors.borderStrong }]} />
+      <AppText variant="mono" tone="secondary" style={styles.sepLabel}>
+        {label}
+      </AppText>
+      <View style={[styles.sepLine, { backgroundColor: theme.colors.borderStrong }]} />
+    </View>
+  );
+}
+
 function Pending() {
   return (
     <AppText variant="mono" tone="amber" accessibilityLabel="Czeka na wysyłkę" style={styles.meta}>
@@ -291,6 +374,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  railLive: { width: 10, height: 10, borderRadius: 5 },
   body: {
     flex: 1,
     flexDirection: 'row',
@@ -307,6 +391,9 @@ const styles = StyleSheet.create({
   chip: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 },
   chipLabel: { fontSize: 8, letterSpacing: 1, textTransform: 'uppercase' },
   correct: { width: 46, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  sep: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sepLine: { flex: 1, height: 1 },
+  sepLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
   groundRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 0 },
   groundLabel: { flex: 1, fontSize: 8, letterSpacing: 1, textTransform: 'uppercase' },
   groundMeta: { fontSize: 9, opacity: 0.75 },

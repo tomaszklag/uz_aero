@@ -26,7 +26,6 @@ import {
   Card,
   CardPicker,
   Field,
-  Icon,
   IdentityStrip,
   OptionGrid,
   Screen,
@@ -58,7 +57,8 @@ const OPERATIONS: GridOption<OperationType>[] = [
 export function PreflightAircraftScreen({
   navigation,
 }: {
-  navigation: { navigate: (s: string) => void };
+  // Podgląd read-only (04b) potrzebuje parametru — stąd druga, opcjonalna pozycja.
+  navigation: { navigate: (screen: string, params?: Record<string, unknown>) => void };
 }) {
   const { theme } = useTheme();
   const queries = useSessionStore((s) => s.queries);
@@ -102,8 +102,21 @@ export function PreflightAircraftScreen({
           tags: grounded
             ? [{ label: 'Wyłączony', tone: 'red' as const }]
             : claimed
-              ? [{ label: `PIC: ${a.claimPicId}`, tone: 'amber' as const }]
+              ? [
+                  {
+                    // Mockup: „PIC: KRZ · od 07:10" — sama informacja „kto" bez „od kiedy"
+                    // nie pozwala ocenić, czy tamten dzień jeszcze trwa.
+                    label:
+                      a.claimSince != null
+                        ? `PIC: ${a.claimPicId} · od ${timeUtc(a.claimSince)}`
+                        : `PIC: ${a.claimPicId}`,
+                    tone: 'amber' as const,
+                  },
+                ]
               : undefined,
+          // Podgląd read-only (04b) TYLKO przy samolocie prowadzonym przez kogoś innego —
+          // tam, gdzie pilot chce zobaczyć stan, zanim zdecyduje się przejąć.
+          hasSecondary: claimed,
           disabledReason: grounded ? 'Wyłączony ze służby' : undefined,
           // Powód niesie już czerwony tag — druga linia byłaby powtórzeniem.
           disabledTagged: grounded,
@@ -172,6 +185,11 @@ export function PreflightAircraftScreen({
               options={aircraftOptions}
               value={selected?.id ?? null}
               onChange={handleAircraft}
+              // Podglądanie i przejmowanie to dwie różne czynności: przejęcie odbiera
+              // poprzednikowi prawo zapisu (§4.4), więc nie może być skutkiem ubocznym
+              // sprawdzenia, co się z samolotem dzieje.
+              onSecondary={(id) => navigation.navigate('CockpitReadonly', { aircraftId: id })}
+              secondaryLabel="Podgląd bez przejmowania"
             />
           )}
         </Card>
@@ -291,13 +309,7 @@ export function PreflightAircraftScreen({
           label="DALEJ"
           tone="green"
           variant="solid"
-          trailingIcon={
-            <Icon
-              name="next"
-              size={18}
-              color={draft.step1Valid() ? theme.colors.bg : theme.colors.textMuted}
-            />
-          }
+          trailingIcon="next"
           disabledReason={
             selected == null
               ? 'Wybierz samolot, aby przejść dalej'
@@ -318,6 +330,13 @@ export function PreflightAircraftScreen({
           {
             label: 'Blokada od',
             value: takeover?.claimSince != null ? `${timeUtc(takeover.claimSince)} UTC` : 'brak danych',
+          },
+          {
+            // Wiek danych JEST częścią tej decyzji: „PIC: KRZ" sprzed dwóch godzin znaczy
+            // coś zupełnie innego niż sprzed dwóch minut. Bez tego wiersza pilot ocenia
+            // sytuację, nie wiedząc, jak stara jest informacja, na której się opiera (§4.8).
+            label: 'Ostatnia synchronizacja',
+            value: takeover != null ? `${timeUtc(takeover.fetchedAt)} UTC` : '—',
           },
         ]}
         warning={

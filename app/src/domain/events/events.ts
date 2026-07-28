@@ -132,6 +132,46 @@ export interface EngineStopPayload {
   position?: GpsPosition | null;
 }
 
+/**
+ * `taxi` — samolot ruszył w kierunku startu.
+ *
+ * Otwiera każdy lot w logu cyklu (mockup 05: „13:11 · Taxi · 0:13" przed „13:24 · Takeoff").
+ * Zdarzenie zapada raz na lot: po uruchomieniu silnika albo zaraz po lądowaniu, gdy
+ * samolot kołuje z powrotem.
+ *
+ * DLACZEGO ZDARZENIE, A NIE SAMA FAZA: faza lotu (`flightPhase`) jest wyliczana z bieżących
+ * fixów i znika razem z nimi — po restarcie aplikacji albo w logu dnia nie ma po niej
+ * śladu. Czas rozpoczęcia kołowania jest natomiast trwałą informacją: to od niego liczy
+ * się czas przygotowania do startu, widoczny w logu jako „0:13".
+ *
+ * NIE wpływa na czas blokowy ani na czas lotu — te wyznaczają `engine_start`/`engine_stop`
+ * i `takeoff`/`landing`. Fałszywe kołowanie dodaje wiersz w logu i nic poza tym, dlatego
+ * (inaczej niż start i lądowanie) zapisuje się od razu, bez okna „COFNIJ".
+ */
+export interface TaxiPayload {
+  method: DetectionMethod;
+  position?: GpsPosition | null;
+}
+
+/**
+ * `event_correction` — poprawka istniejącego zdarzenia (ekran 04c).
+ *
+ * Rejestr jest append-only, więc korekta NIE edytuje celu: dopisujemy osobne zdarzenie,
+ * a oryginalny odczyt zostaje. Projekcja nakłada korekty przed liczeniem (ostatnia
+ * wygrywa), serwer scali obie wersje i pokaże poprawkę w arkuszu.
+ *
+ * Dwie akcje — dokładnie te z mockupu:
+ *  • `retime` — zdarzenie zaszło, ale o innej godzinie (GPS wykrył za późno);
+ *  • `void`   — zdarzenia NIE BYŁO (przelot nad pasem zaliczony jako lądowanie).
+ *
+ * `void` nie usuwa wiersza z rejestru — wyłącza go z projekcji. Dzięki temu „cofnięcie"
+ * pomyłki samo jest udokumentowane, a serwer widzi pełną historię decyzji.
+ */
+export type EventCorrectionPayload = { targetUuid: string } & (
+  | { action: 'retime'; newTime: EpochMillis }
+  | { action: 'void' }
+);
+
 /** `takeoff` — metoda (auto/manual) + pozycja. */
 export interface TakeoffPayload {
   method: DetectionMethod;
@@ -205,6 +245,7 @@ export interface EventPayloadMap {
   preflight_confirm: PreflightConfirmPayload;
   engine_start: EngineStartPayload;
   engine_stop: EngineStopPayload;
+  taxi: TaxiPayload;
   takeoff: TakeoffPayload;
   landing: LandingPayload;
   drop: DropPayload;
@@ -212,6 +253,7 @@ export interface EventPayloadMap {
   crew_change: CrewChangePayload;
   manual_log_entry: ManualLogEntryPayload;
   day_close: DayClosePayload;
+  event_correction: EventCorrectionPayload;
 }
 
 /** Unia typów zdarzeń (§5.1). */
@@ -223,6 +265,7 @@ export const EVENT_TYPES: readonly EventType[] = [
   'preflight_confirm',
   'engine_start',
   'engine_stop',
+  'taxi',
   'takeoff',
   'landing',
   'drop',
@@ -230,6 +273,7 @@ export const EVENT_TYPES: readonly EventType[] = [
   'crew_change',
   'manual_log_entry',
   'day_close',
+  'event_correction',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -9,10 +9,11 @@
  */
 
 import React from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
 import { AppText } from './AppText';
+import { Icon } from './Icon';
 
 export interface AppBarProps {
   /** Znak samolotu (np. „SP-AXA"). */
@@ -21,12 +22,21 @@ export interface AppBarProps {
   subtitle?: string | null;
   /** Prawa strona — zwykle `SyncChip`, ewentualnie akcje. */
   right?: React.ReactNode;
+  /** Koło zębate po prawej (`.settings-btn` z mockupów kokpitu). */
+  onSettings?: () => void;
   /** Kompaktowy wariant dla trybu w locie (mniej pionowego miejsca). */
   compact?: boolean;
   style?: ViewStyle;
 }
 
-export function AppBar({ aircraft, subtitle, right, compact = false, style }: AppBarProps) {
+export function AppBar({
+  aircraft,
+  subtitle,
+  right,
+  onSettings,
+  compact = false,
+  style,
+}: AppBarProps) {
   const { theme } = useTheme();
 
   return (
@@ -48,12 +58,36 @@ export function AppBar({ aircraft, subtitle, right, compact = false, style }: Ap
           {aircraft ?? '—'}
         </AppText>
         {subtitle != null && (
-          <AppText variant="label" tone="muted">
+          // Druga linia niesie kody ICAO, a te wg `CLAUDE.md` należą do JetBrains Mono
+          // — nie do Archivo. Mockup `.route-line`: mono 11 px / ls 1.
+          <AppText variant="mono" tone="muted" style={styles.subtitle}>
             {subtitle}
           </AppText>
         )}
       </View>
-      {right}
+
+      <View style={styles.right}>
+        {right}
+        {onSettings != null && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ustawienia"
+            onPress={onSettings}
+            hitSlop={10}
+            style={({ pressed }) => [
+              styles.settings,
+              {
+                borderRadius: 7,
+                borderWidth: theme.borderWidth,
+                borderColor: theme.colors.border,
+                opacity: pressed ? 0.6 : 1,
+              },
+            ]}
+          >
+            <Icon name="settings" size={16} color={theme.colors.textMuted} />
+          </Pressable>
+        )}
+      </View>
     </View>
   );
 }
@@ -67,4 +101,7 @@ const styles = StyleSheet.create({
   },
   left: { flexShrink: 1, gap: 2 },
   aircraft: { letterSpacing: 1.5 },
+  subtitle: { fontSize: 11, lineHeight: 15, letterSpacing: 1 },
+  right: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
+  settings: { width: 26, height: 26, alignItems: 'center', justifyContent: 'center' },
 });

@@ -22,7 +22,6 @@ import {
   ActionButton,
   AppText,
   Banner,
-  Icon,
   Screen,
   ScreenHeader,
   SummaryGrid,
@@ -205,7 +204,7 @@ export function PreflightConfirmScreen({
             label="WRÓĆ I POPRAW"
             tone="neutral"
             variant="secondary"
-            icon={<Icon name="back" size={16} color={theme.colors.textSecondary} />}
+            icon="back"
             onPress={navigation.goBack}
           />
           <ActionButton
@@ -213,7 +212,7 @@ export function PreflightConfirmScreen({
             tone="green"
             variant="solid"
             busy={busy}
-            icon={<Icon name="check" size={18} color={theme.colors.bg} />}
+            icon="check"
             onPress={confirm}
           />
         </View>

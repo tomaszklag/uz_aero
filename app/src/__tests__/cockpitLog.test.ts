@@ -112,6 +112,54 @@ describe('log dnia', () => {
     expect(rows.find((r) => r.kind === 'takeoff')?.chips).toBeUndefined();
   });
 
+  it('kołowanie otwiera lot i dostaje czas trwania liczony DO startu', () => {
+    // Mockup 05: „13:11 · Taxi · 0:13" i zaraz pod nim „13:24 · Takeoff".
+    const rows = buildLogRows(
+      [
+        event('engine_start', at(13, 10)),
+        event('taxi', at(13, 11), { method: 'auto' }),
+        event('takeoff', at(13, 24), { method: 'auto' }),
+      ],
+      projection(),
+      'hhmm',
+    );
+
+    const taxi = rows.find((r) => r.kind === 'taxi')!;
+    expect(taxi.time).toBe('13:11');
+    // Czasu nie da się podać w chwili kołowania — dopisuje go dopiero start.
+    expect(taxi.meta).toBe('0:13');
+  });
+
+  it('kołowanie bez startu zostaje bez czasu, zamiast dostać zmyślony', () => {
+    // Pilot ruszył i zawrócił — lot się nie odbył, więc nie ma czego liczyć.
+    const rows = buildLogRows(
+      [event('engine_start', at(13, 10)), event('taxi', at(13, 11), { method: 'auto' })],
+      projection(),
+      'hhmm',
+    );
+
+    expect(rows.find((r) => r.kind === 'taxi')?.meta).toBeUndefined();
+  });
+
+  it('drugie kołowanie w cyklu liczy się od siebie, nie od pierwszego', () => {
+    const rows = buildLogRows(
+      [
+        event('engine_start', at(13, 10)),
+        event('taxi', at(13, 11), { method: 'auto' }),
+        event('takeoff', at(13, 24), { method: 'auto' }),
+        event('landing', at(14, 8), { method: 'auto' }),
+        event('taxi', at(14, 8), { method: 'auto' }),
+        event('takeoff', at(14, 21), { method: 'auto' }),
+      ],
+      projection(),
+      'hhmm',
+    );
+
+    const taxis = rows.filter((r) => r.kind === 'taxi');
+    expect(taxis.map((r) => r.time)).toEqual(['13:11', '14:08']);
+    expect(taxis.map((r) => r.meta)).toEqual(['0:13', '0:13']);
+  });
+
   it('tankowanie jest wierszem naziemnym z ilością dolaną', () => {
     const rows = buildLogRows(
       [event('refuel', at(10, 48), { beforeL: 112, addedL: 48, afterL: 160 })],
@@ -121,7 +169,8 @@ describe('log dnia', () => {
 
     expect(rows[0]!.kind).toBe('ground');
     expect(rows[0]!.meta).toBe('+48 L');
-    expect(rows[0]!.label).toContain('160 L');
+    // Mockup 04 trzyma w etykiecie samo „Tankowanie" — liczby idą po prawej.
+    expect(rows[0]!.label).toBe('Tankowanie');
   });
 
   it('pokazuje paliwo tylko tam, gdzie faktycznie się zmieniło', () => {

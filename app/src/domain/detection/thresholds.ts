@@ -10,6 +10,15 @@
  * Ten moduł to TYLKO stałe — sam algorytm `useFlightDetection()` powstanie osobno.
  */
 
+/**
+ * Kołowanie: samolot rusza, gdy prędkość po ziemi przekroczy ten próg (węzły).
+ *
+ * Nisko, bo chodzi o odróżnienie „stoi" od „jedzie", a nie o cokolwiek subtelniejszego.
+ * Szum GPS na postoju rzadko przekracza 2 kt; poniżej tego progu mielibyśmy zdarzenie
+ * kołowania przy zaparkowanym samolocie.
+ */
+export const TAXI_SPEED_KT = 4;
+
 /** Start: prędkość względem ziemi powyżej progu (węzły). §3.3 sugeruje 45–55. */
 export const TAKEOFF_SPEED_KT = 50;
 
@@ -21,6 +30,9 @@ export const TAKEOFF_ALT_DIFF_FT = 50;
 
 /** Lądowanie: wysokość względem elewacji lotniska poniżej progu (stopy). */
 export const LANDING_ALT_DIFF_FT = 30;
+
+/** Kołowanie: warunek musi trwać min. tyle sekund (odsiew szpilek GS na postoju). */
+export const TAXI_CONFIRM_SEC = 3;
 
 /** Start: warunek musi trwać min. tyle sekund (odsiew chwilowych szpilek GS). */
 export const TAKEOFF_CONFIRM_SEC = 3;
@@ -45,6 +57,8 @@ export const FIELD_ELEVATION_SOURCE = 'engine_start_gps_altitude' as const;
 
 /** Komplet progów jako obiekt (wygodne wstrzyknięcie do algorytmu i testów). */
 export const GPS_THRESHOLDS = {
+  TAXI_SPEED_KT,
+  TAXI_CONFIRM_SEC,
   TAKEOFF_SPEED_KT,
   LANDING_SPEED_KT,
   TAKEOFF_ALT_DIFF_FT,

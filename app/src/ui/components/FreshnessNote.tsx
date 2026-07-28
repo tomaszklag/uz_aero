@@ -23,7 +23,18 @@ import { useTheme } from '../theme';
 import { AppText } from './AppText';
 import { toneColors } from './tone';
 
-export type Freshness = 'live' | 'cache' | 'brak';
+/**
+ * Czwarty stan — `manual` — nie jest stanem świeżości danych serwera, tylko jego
+ * ZAPRZECZENIEM: wartość pochodzi z licznika w samolocie, a nie z sieci.
+ *
+ * Bez niego ekran kłamał: po ręcznej korekcie w stanie `cache` obok liczby wpisanej
+ * przez pilota nadal stało „Ostatnie pobrane · 21 JUN 17:30", a po wpisaniu odczytu
+ * w stanie `brak` wartość dostawała `live`, czyli „na żywo z serwera".
+ *
+ * Adnotacja jest zielona, bo `CLAUDE.md` stawia licznik fizyczny WYŻEJ niż serwer —
+ * to potwierdzenie, nie ostrzeżenie.
+ */
+export type Freshness = 'live' | 'cache' | 'brak' | 'manual';
 
 export interface FreshnessNoteProps {
   state: Freshness;
@@ -41,12 +52,15 @@ export function FreshnessNote({
   style,
 }: FreshnessNoteProps) {
   const { theme } = useTheme();
-  const amber = toneColors(theme, 'amber');
 
   if (state === 'live') return null;
 
-  const label =
-    state === 'cache'
+  const manual = state === 'manual';
+  const c = toneColors(theme, manual ? 'green' : 'amber');
+
+  const label = manual
+    ? 'Twój odczyt z licznika'
+    : state === 'cache'
       ? syncedAt != null
         ? `Ostatnie pobrane · ${syncedAt}`
         : 'Ostatnie pobrane · z cache'
@@ -54,8 +68,8 @@ export function FreshnessNote({
 
   return (
     <View style={[styles.row, style]}>
-      <View style={[styles.dot, { backgroundColor: amber.accent }]} />
-      <AppText variant="mono" tone="amber" style={styles.label}>
+      <View style={[styles.dot, { backgroundColor: c.accent }]} />
+      <AppText variant="mono" style={[styles.label, { color: c.accent }]}>
         {label}
       </AppText>
     </View>

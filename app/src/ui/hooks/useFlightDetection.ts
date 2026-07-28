@@ -19,18 +19,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AUTODETECT_TOAST_SEC,
+  VS_WINDOW_SEC,
   createDetectorState,
+  flightPhase,
   stepDetector,
   type Detection,
   type DetectorState,
   type GpsFix,
+  type PhaseReading,
 } from '../../domain';
 import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 
 /** Oczekujące zdarzenie w oknie „COFNIJ". */
 export interface PendingDetection {
-  detection: Detection;
+  /** Tylko start i lądowanie trafiają do okna „COFNIJ" — kołowanie zapisuje się od razu. */
+  detection: Exclude<Detection, 'taxi'>;
   /** Fix, który wywołał detekcję — z niego bierzemy czas zdarzenia. */
   fix: GpsFix;
   secondsLeft: number;
@@ -39,6 +43,8 @@ export interface PendingDetection {
 export interface FlightDetectionState {
   /** Ostatni fix — zasila siatkę GPS w kokpicie. */
   fix: GpsFix | null;
+  /** Faza lotu i prędkość pionowa — napis w `PhaseHero` (mockup 05). */
+  phase: PhaseReading;
   /** Detekcja czekająca na potwierdzenie ciszą albo cofnięcie. */
   pending: PendingDetection | null;
   /** Anuluje oczekującą detekcję — nic nie zostaje zapisane. */
@@ -64,12 +70,17 @@ export function useFlightDetection({
   fieldElevationFt = null,
   windowSec = AUTODETECT_TOAST_SEC,
 }: UseFlightDetectionOptions): FlightDetectionState {
+  const taxi = useSessionStore((s) => s.taxi);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
 
   const [fix, setFix] = useState<GpsFix | null>(null);
+  const [phase, setPhase] = useState<PhaseReading>({ phase: 'idle', verticalSpeedFpm: null });
   const [pending, setPending] = useState<PendingDetection | null>(null);
   const [gpsAvailable, setGpsAvailable] = useState(false);
+
+  /** Okno fixów do liczenia prędkości pionowej — trzymamy tylko tyle, ile potrzeba. */
+  const window = useRef<GpsFix[]>([]);
 
   const detector = useRef<DetectorState>(createDetectorState(fieldElevationFt));
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,11 +106,13 @@ export function useFlightDetection({
 
   /** Po upływie okna zapisujemy zdarzenie — metodą `auto`, z czasem z fixa GPS. */
   const commit = useCallback(
-    async (d: Detection, at: GpsFix) => {
+    async (d: Exclude<Detection, 'taxi'>, at: GpsFix) => {
       setPending(null);
       try {
-        if (d === 'takeoff') await takeoff('auto', null);
-        else await landing('auto', null);
+        // Czas zdarzenia to chwila fixa, NIE moment wyjścia z okna „COFNIJ" — inaczej
+        // każdy start byłby zapisany 10 s za późno, o czym nikt później nie wie (§5.1).
+        if (d === 'takeoff') await takeoff('auto', null, at.time);
+        else await landing('auto', null, at.time);
       } catch {
         // Twarde odrzucenie inwariantu (np. landing bez startu) trafia do `lastError`
         // w store i jest pokazywane na ekranie — tutaj nie ma czego dodać.
@@ -109,7 +122,7 @@ export function useFlightDetection({
   );
 
   const schedule = useCallback(
-    (d: Detection, at: GpsFix) => {
+    (d: Exclude<Detection, 'taxi'>, at: GpsFix) => {
       clearTimers();
       setPending({ detection: d, fix: at, secondsLeft: windowSec });
 
@@ -147,7 +160,27 @@ export function useFlightDetection({
 
         const step = stepDetector(detector.current, incoming);
         detector.current = step.state;
-        if (step.detection) schedule(step.detection, incoming);
+
+        // Kołowanie zapisujemy OD RAZU, bez okna „COFNIJ". Okno istnieje po to, żeby
+        // fałszywy start albo lądowanie nie trafiły do czasów lotu — kołowanie żadnego
+        // czasu nie wyznacza, więc pytanie „czy na pewno?" byłoby samym szumem.
+        if (step.detection === 'taxi') {
+          void taxi('auto', null, incoming.time).catch(() => {
+            // Powód odrzucenia trafia do `lastError` w store i jest widoczny w kokpicie.
+          });
+        }
+
+        // Okno prędkości pionowej — z zapasem jednego fixa, żeby po odrzuceniu
+        // przeterminowanych zawsze zostały co najmniej dwa punkty.
+        window.current = [...window.current, incoming].filter(
+          (f) => incoming.time - f.time <= VS_WINDOW_SEC * 1000,
+        );
+        if (window.current.length < 2) window.current = [incoming];
+        setPhase(flightPhase(step.state.phase === 'airborne', window.current));
+
+        if (step.detection === 'takeoff' || step.detection === 'landing') {
+          schedule(step.detection, incoming);
+        }
       });
     })();
 
@@ -156,7 +189,7 @@ export function useFlightDetection({
       stop?.();
       clearTimers();
     };
-  }, [clearTimers, enabled, gps, schedule]);
+  }, [clearTimers, enabled, gps, schedule, taxi]);
 
-  return { fix, pending, undo, gpsAvailable };
+  return { fix, phase, pending, undo, gpsAvailable };
 }

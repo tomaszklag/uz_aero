@@ -12,9 +12,10 @@ Dokumentacja: `docs/_main.md.txt`
 Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny backend (Node/TS + PostgreSQL) · eksport do Google Sheets po stronie serwera
 
 ## Faza aktualna
-**Faza 0 — Design** — statyczne HTML mockupy w `design/`
-Nie piszemy kodu React Native dopóki design nie zostanie zatwierdzony.
-Aktywna checklista prac: `design/PLAN.md` (wdrażanie architektury offline-first w mockupach — rób kolejny nieodhaczony punkt).
+**Implementacja aplikacji RN w `app/`** — fazy 1 ✅ i 3 🔶 planu z `docs/_main.md.txt` §10 (backend i sync jeszcze nie istnieją).
+- Mockupy w `design/` to **zatwierdzona specyfikacja**: ekran RN wdrażamy 1:1 z odpowiadającego pliku HTML, sekcja po sekcji, bez upraszczania. Wątpliwość do mockupu = rozmowa przed implementacją, nie cicha zmiana w kodzie.
+- Architektura kodu i przepisy (nowy typ zdarzenia / reguła / ekran): `docs/architektura-kodu.md`. Po zmianach w `app/`: `npx jest` i `npx tsc --noEmit` muszą przechodzić.
+- `design/PLAN.md` nie jest już aktywną checklistą (został backlog UX). Reguły designu niżej nadal obowiązują przy każdej zmianie mockupów.
 
 ## Design system (`design/*.html`)
 
@@ -98,4 +99,4 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 - Nie dodawaj loadera/spinnera bez określonego celu (patrz: feedback do 01-splash)
 - Nie używaj natywnego `<select>` — zawsze stylizowana lista kart
 - Nie wpisuj hardcoded kolorów — tylko zmienne CSS
-- Nie twórz nowych plików poza `design/` bez pytania
+- Nie twórz nowych plików poza `design/` i `app/` bez pytania

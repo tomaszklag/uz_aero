@@ -55,7 +55,10 @@ export function StatusChip({
       ]}
     >
       {dot && <View style={[styles.dot, { backgroundColor: c.accent }]} />}
-      <AppText variant="label" style={{ color: c.accent }}>
+      {/* Wszystkie chipy w mockupach (`.ground-chip`, `.running-badge`, `.sync-chip`) to
+          mono 9 px / ls 2 / WERSALIKI. Wariant `label` (Archivo 13 px) renderował
+          „Ground · silnik wyłączony" zamiast „GROUND · SILNIK WYŁĄCZONY". */}
+      <AppText variant="mono" style={[styles.label, { color: c.accent }]}>
         {label}
       </AppText>
     </View>
@@ -65,4 +68,5 @@ export function StatusChip({
 const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
   dot: { width: 6, height: 6, borderRadius: 3 },
+  label: { fontSize: 9, lineHeight: 13, letterSpacing: 2, textTransform: 'uppercase' },
 });

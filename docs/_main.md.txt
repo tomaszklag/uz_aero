@@ -397,12 +397,14 @@ Typy zdarzeń:
 | `session_claim` | tryb przejęcia (wolny / przejęcie online / przejęcie offline) |
 | `preflight_confirm` | trasa, operacja, duty start, odczyt FOB + MH, korekty z powodem |
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
+| `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
 | `drop` | numer zrzutu, wysokość (z GPS), **liczba skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm` |
 | `refuel` | przed / dolano / po, wyliczone zużycie |
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |
 | `day_close` | końcowy FOB + MH (przekazanie), duty end |
+| `event_correction` | `targetUuid` + akcja: `retime` (nowy czas) **lub** `void` („zdarzenia nie było") — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po `day_close` (decyzja 2026-07-23) |
 
 ### 5.2 SQLite (telefon)
 
@@ -546,7 +548,7 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 [11 Synchronizacja]  status wysyłki / eksportu serwera (nie akcja eksportu)
 ```
 
-Mockupy: `design/index.html` (25 ekranów + index, stany i warianty). Szczegółowe założenia
+Mockupy: `design/index.html` (30 mockupów + index, stany i warianty). Szczegółowe założenia
 per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`.
 
 ---
@@ -582,13 +584,13 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 | Warstwa | Technologia | Uzasadnienie |
 |---------|-------------|--------------|
 | Framework | React Native + Expo (managed → bare) | Szybki start, łatwy build Android |
-| Nawigacja | React Navigation v6 | Standard RN |
+| Nawigacja | React Navigation v7 | Standard RN |
 | State | Zustand | Projekcje ze zdarzeń, bez boilerplate |
 | Lokalna baza | expo-sqlite | Zdarzenia append-only + cache referencyjny |
 | GPS | expo-location + expo-task-manager | Background location + czas z fixa |
 | Auth | login + hasło → JWT (konta od administratora) + expo-secure-store | Zero konfiguracji OAuth; tokeny i PIN lokalnie |
-| Czas | dayjs | Strefy czasowe, formatowanie |
-| Testy | Jest + React Native Testing Library | Unit + integration |
+| Czas | epoch ms (UTC) + własny `ui/format.ts` | dayjs okazał się zbędny: wszystko w UTC, formaty (block, MH hh:mm/dziesiętne) własne |
+| Testy | Jest, czysty Node | Logika ekranów wyniesiona do czystych modułów → testy bez urządzenia i bez RNTL |
 
 ### Backend (własny serwis)
 
@@ -607,15 +609,15 @@ seed/SQL lub prosty panel — do decyzji w fazie backendowej.
 
 ## 10. Plan faz
 
-| Faza | Zakres | Szacunek |
-|------|--------|----------|
-| 0 | Design UX/UI — mockupy HTML wszystkich ekranów, design tokens **(w toku)** | 1–2 tyg. |
-| 1 | Fundament aplikacji — RN + Expo, nawigacja, schemat zdarzeń w SQLite, GPS hook | 1 tyg. |
-| 2 | Fundament backendu — API (kontrakt 4.6), Postgres, auth Google, dedup; równolegle z fazą 1 | 1–2 tyg. |
-| 3 | Ekrany aplikacji — preflight, cockpit, akcje ground, statystyki | 3–4 tyg. |
-| 4 | Sync end-to-end — outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | 2–3 tyg. |
-| 5 | Testy z pilotami, korekty UX, kalibracja progów S/L | 2 tyg. |
-| 6 | Wdrożenie — Play Store internal track, deploy backendu, dokumentacja | 1 tyg. |
+| Faza | Zakres | Status |
+|------|--------|--------|
+| 0 | Design UX/UI — mockupy HTML wszystkich ekranów, design tokens | ✅ zakończona — 30 mockupów w `design/`, zatwierdzone jako specyfikacja |
+| 1 | Fundament aplikacji — RN + Expo, nawigacja, schemat zdarzeń w SQLite, GPS hook | ✅ zakończona — architektura kodu: `docs/architektura-kodu.md` |
+| 2 | Fundament backendu — API (kontrakt 4.6), Postgres, auth login+hasło→JWT (decyzja 2026-07-22), dedup | przed nami · szac. 1–2 tyg. |
+| 3 | Ekrany aplikacji — preflight, cockpit, akcje ground, statystyki | 🔶 w toku — gotowe 02–10 (z 04b/04c i arkuszami 05e/05f); brak: 00 login, 01 splash, 11 synchronizacja, 12 historia |
+| 4 | Sync end-to-end — outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | przed nami · szac. 2–3 tyg. |
+| 5 | Testy z pilotami, korekty UX, kalibracja progów S/L | przed nami · szac. 2 tyg. |
+| 6 | Wdrożenie — Play Store internal track, deploy backendu, dokumentacja | przed nami · szac. 1 tyg. |
 
 ---
 
@@ -627,6 +629,13 @@ zweryfikować z zatwierdzonym designem (`design/`, `docs/design-notes.md`).
 
 Każdy prompt uzupełnij o kontekst: **aplikacja nazywa się UZ Aero**, dokumentacja
 w `docs/_main.md.txt`, design tokens i phone frame w `design/` (patrz `CLAUDE.md`).
+
+> **Status (2026-07-28):** fazy 1 i 3 powstały bez tych promptów — AGENT 1–4 i 6 są
+> **historyczne** i opisują inną strukturę niż faktycznie zbudowana (warstwy
+> `domain/application/infrastructure/ui` z portami, nie `src/db`/`src/sync` —
+> patrz `docs/architektura-kodu.md`). Aktualne pozostają AGENT 7 (backend, faza 2)
+> i AGENT 5 (sync, faza 4) — przy czym deliverable AGENT 5 to adapter za portami
+> `application/ports/`, nie osobny moduł `src/sync`.
 
 ---
 
@@ -759,4 +768,5 @@ duplikaty zdarzeń. Walidacja: zdarzenia sesji przyjmowane tylko od jej PIC-a (J
 
 *Dokument aktualizowany przy każdej zmianie wymagań. Decyzje designu: `design/ZMIANY.md`;
 założenia per ekran: `docs/design-notes.md`.*
-*Wersja: 0.2 — 2026-07-22 — faza 0 (design w toku); architektura synchronizacji przyjęta.*
+*Wersja: 0.3 — 2026-07-28 — design zatwierdzony (30 mockupów); aplikacja w budowie
+(fazy 1 ✅ i 3 🔶 — patrz §10); architektura kodu: `docs/architektura-kodu.md`.*

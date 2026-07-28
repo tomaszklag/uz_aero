@@ -19,10 +19,12 @@ import type { EpochMillis } from '../time';
 import type {
   DetectionMethod,
   Event,
+  EventType,
   JumperCounts,
   MhFormat,
   OperationType,
 } from '../events';
+import { applyCorrections, buildEventIndex } from './corrections';
 
 /** Cykl pracy silnika (engine_start → engine_stop). `stoppedAt: null` = wciąż pracuje. */
 export interface EngineRun {
@@ -41,6 +43,13 @@ export interface Flight {
   landingAt: EpochMillis | null;
   /** Czas lotu (ms); 0 dopóki w powietrzu. */
   durationMs: number;
+  /**
+   * Uuid zdarzeń źródłowych — adres celu dla korekty (04c). Tabela lotów na ekranie
+   * statystyk otwiera nimi arkusz korekty; bez nich wiersz wiedziałby „kiedy", ale
+   * nie „które zdarzenie poprawić".
+   */
+  takeoffUuid: string;
+  landingUuid: string | null;
 }
 
 /** Bilans paliwa dnia (§3.7): start + dolane − zużyte. */
@@ -127,6 +136,12 @@ export interface SessionState {
    */
   closedAt: EpochMillis | null;
   eventCount: number;
+  /**
+   * Indeks zdarzeń korygowalnych (uuid → typ) — z SUROWEGO strumienia, sprzed nałożenia
+   * korekt. Reguły walidują nim cel `event_correction`; obejmuje też zdarzenia już
+   * unieważnione, bo ponowna korekta unieważnionego jest legalna („ostatnia wygrywa").
+   */
+  eventIndex: Record<string, EventType>;
   lastEventAt: EpochMillis | null;
 }
 
@@ -171,6 +186,7 @@ export function emptySessionState(): SessionState {
     closed: false,
     closedAt: null,
     eventCount: 0,
+    eventIndex: {},
     lastEventAt: null,
   };
 }
@@ -182,6 +198,14 @@ export function emptySessionState(): SessionState {
 export function projectSession(events: Event[]): SessionState {
   const state = emptySessionState();
 
+  // Indeks celów korekty budujemy z SUROWEGO strumienia — reguły muszą widzieć także
+  // zdarzenia unieważnione (ponowna korekta unieważnionego jest legalna).
+  state.eventIndex = buildEventIndex(events);
+
+  // Korekty (04c) nakładamy PRZED liczeniem: dalej płynie strumień efektywny — czasy
+  // po poprawce, bez zdarzeń unieważnionych i bez samych `event_correction`.
+  const effective = applyCorrections(events);
+
   // Bufor sum wysokości zrzutów — średnią liczymy na końcu.
   let dropAltSum = 0;
   let dropAltCount = 0;
@@ -191,7 +215,7 @@ export function projectSession(events: Event[]): SessionState {
   // do rejestru po zdarzeniach późniejszych. Arytmetyka cykli i lotów wymaga porządku
   // chronologicznego, więc sortujemy po czasie zdarzenia (GPS → fallback zegar telefonu).
   // Sort jest stabilny (ES2019+), więc zdarzenia równoczesne zachowują kolejność zapisu.
-  const ordered = [...events].sort((a, b) => eventTime(a) - eventTime(b));
+  const ordered = [...effective].sort((a, b) => eventTime(a) - eventTime(b));
 
   for (const event of ordered) {
     const t = eventTime(event);
@@ -251,6 +275,8 @@ export function projectSession(events: Event[]): SessionState {
             takeoffAt: t,
             landingAt: null,
             durationMs: 0,
+            takeoffUuid: event.uuid,
+            landingUuid: null,
           });
           state.inFlight = true;
           state.openTakeoffAt = t;
@@ -264,6 +290,7 @@ export function projectSession(events: Event[]): SessionState {
         if (flight) {
           flight.landingAt = t;
           flight.durationMs = Math.max(0, t - flight.takeoffAt);
+          flight.landingUuid = event.uuid;
           state.flightTimeMs += flight.durationMs;
         }
         state.inFlight = false;
@@ -305,6 +332,10 @@ export function projectSession(events: Event[]): SessionState {
             takeoffAt: p.takeoff,
             landingAt: p.landing,
             durationMs,
+            // Cały lot pochodzi z JEDNEGO wpisu ręcznego — korekta celuje w niego,
+            // niezależnie od tego, czy pilot poprawia start, czy lądowanie.
+            takeoffUuid: event.uuid,
+            landingUuid: event.uuid,
           });
           state.flightTimeMs += durationMs;
         }
@@ -328,6 +359,18 @@ export function projectSession(events: Event[]): SessionState {
       case 'session_claim':
       case 'crew_change':
         // Tożsamość/załoga aktualizowana z nagłówka (wyżej). Payload informacyjny.
+        break;
+
+      case 'taxi':
+        // Kołowanie nie wpływa na ŻADEN bilans: czas blokowy wyznaczają `engine_start`
+        // i `engine_stop`, czas lotu — `takeoff` i `landing`. To wpis czysto opisowy,
+        // odczytywany wprost ze strumienia przy budowaniu logu cyklu (mockup 05).
+        // Gdyby kiedyś wszedł do statystyk, jego miejsce jest tutaj.
+        break;
+
+      case 'event_correction':
+        // Strumień efektywny nie zawiera korekt (nałożone w `applyCorrections` wyżej) —
+        // ten przypadek istnieje dla wyczerpującego pokrycia unii przez kompilator.
         break;
 
       default:

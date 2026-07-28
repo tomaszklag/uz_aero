@@ -86,6 +86,11 @@ const paperColors: ThemeColors = {
   bgTint: '#FAF5EA',
   surface: '#FBF7ED',
   surfaceRaised: '#EFE8D6',
+  // 05-themes.html nie nadpisuje `--surface-hover` w motywach jasnych, bo na webie to
+  // stan `:hover`, którego na telefonie nie ma. My używamy tego tokenu jako powierzchni
+  // „przygaszonej" — bez wartości per motyw dziedziczyłby czerń z Night i dawał
+  // prawie czarny prostokąt na jasnym tle. Wartość: o stopień ciemniejsza od `raised`.
+  surfaceHover: '#E4DAC4',
   border: '#D9CEB6',
   borderStrong: '#B3A583',
   hairline: 'rgba(60,40,10,0.08)',
@@ -115,6 +120,7 @@ const solarColors: ThemeColors = {
   bgTint: '#F8F8F8',
   surface: '#FFFFFF',
   surfaceRaised: '#F0F0F0',
+  surfaceHover: '#E2E2E2', // patrz komentarz przy `paperColors.surfaceHover`
   border: '#A8A8A8',
   borderStrong: '#5E5E5E',
   hairline: 'rgba(0,0,0,0.08)',
@@ -144,6 +150,7 @@ const skyColors: ThemeColors = {
   bgTint: '#F2F6FA',
   surface: '#F7FAFD',
   surfaceRaised: '#E1E9F1',
+  surfaceHover: '#D3DDE8', // patrz komentarz przy `paperColors.surfaceHover`
   border: '#B7C5D3',
   borderStrong: '#7E93A8',
   hairline: 'rgba(15,30,44,0.08)',

@@ -1,13 +1,16 @@
 /**
- * UZ Aero — PhaseHero
+ * UZ Aero — PhaseHero (`.phase-hero` z mockupu 05)
  *
- * Główny widget kokpitu w locie (docs/design-notes „Cockpit Running"): faza lotu
- * ogromną czcionką display, pod nią jedna linia kontekstu (np. prędkość pionowa).
+ * Główny display kokpitu w locie: kwadratowa plakietka z sylwetką samolotu i obok niej
+ * nazwa fazy ogromną czcionką (54 px / ls 6) z jedną linią kontekstu pod spodem.
  *
- * Dlaczego faza dominuje, a block time jest zdegradowany do chipa: w powietrzu pilot
- * potrzebuje jednego spojrzenia, żeby wiedzieć, w jakim stanie jest lot — nie odczytu
- * sześciu liczb. Kolor niesie znaczenie: air = niebieski, ziemia/aktywne = zielony,
- * uwaga = amber.
+ * Dlaczego faza dominuje nad wszystkim innym: w powietrzu pilot ma jedno spojrzenie,
+ * a nie chwilę na czytanie. Nazwa fazy odpowiada na pytanie „co się teraz dzieje",
+ * liczby (GS, wysokość, paliwo) są od pytania „jak bardzo" i dlatego siedzą niżej,
+ * w siatce parametrów.
+ *
+ * Kolor niesie znaczenie i pochodzi z tonu: `blue` = w powietrzu, `green` = na ziemi
+ * z pracującym silnikiem, `amber` = uwaga, `neutral` = stan bierny.
  */
 
 import React from 'react';
@@ -15,47 +18,87 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
 import { AppText } from './AppText';
+import { Icon, type IconName } from './Icon';
 import { toneColors, type Tone } from './tone';
 
 export interface PhaseHeroProps {
-  /** Nazwa fazy: Taxi, Takeoff, Climb, Cruise, Descent, Landing, Engine Idle. */
+  /** Nazwa fazy: Taxi, Climb, Cruise, Descent, Engine Idle. */
   phase: string;
   /** Linia pod fazą — kontekst, nie ozdobnik (np. „+1 200 FT/MIN"). */
   detail?: string;
   tone?: Tone;
-  /** Chip po prawej (np. block time) — drugorzędny wobec fazy. */
+  icon?: IconName;
+  /** Chip po prawej — drugorzędny wobec fazy. */
   aside?: React.ReactNode;
   style?: ViewStyle;
 }
 
-export function PhaseHero({ phase, detail, tone = 'blue', aside, style }: PhaseHeroProps) {
+export function PhaseHero({
+  phase,
+  detail,
+  tone = 'blue',
+  icon = 'aircraft',
+  aside,
+  style,
+}: PhaseHeroProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
 
   return (
-    <View style={[styles.wrap, { padding: theme.spacing.md, gap: theme.spacing.xs }, style]}>
-      <View style={styles.top}>
-        <AppText
-          variant="display"
-          accessibilityRole="header"
-          style={[styles.phase, { color: c.accent }]}
+    <View
+      style={[
+        styles.wrap,
+        {
+          paddingHorizontal: theme.spacing.lg,
+          paddingTop: 10,
+          paddingBottom: 12,
+          borderBottomWidth: theme.borderWidth,
+          borderBottomColor: theme.colors.border,
+        },
+        style,
+      ]}
+    >
+      <View style={styles.body}>
+        <View
+          style={[
+            styles.iconBox,
+            {
+              borderWidth: theme.borderWidth,
+              borderColor: theme.colors.borderStrong,
+              backgroundColor: theme.colors.surfaceRaised,
+            },
+          ]}
         >
-          {phase.toUpperCase()}
-        </AppText>
+          <Icon name={icon} size={28} color={theme.colors.textPrimary} />
+        </View>
+
+        <View style={styles.texts}>
+          <AppText
+            variant="display"
+            accessibilityRole="header"
+            numberOfLines={1}
+            style={[styles.phase, { color: tone === 'neutral' ? theme.colors.textSecondary : c.accent }]}
+          >
+            {phase.toUpperCase()}
+          </AppText>
+          {detail != null && (
+            <AppText variant="mono" tone="muted" style={styles.detail}>
+              {detail}
+            </AppText>
+          )}
+        </View>
+
         {aside}
       </View>
-      {detail != null && (
-        <AppText variant="label" tone="muted">
-          {detail}
-        </AppText>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center' },
-  top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  // Faza ma dominować — stąd skok ponad rozmiar wariantu `display`.
-  phase: { fontSize: 48, lineHeight: 52, letterSpacing: 4 },
+  body: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  iconBox: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  texts: { gap: 3 },
+  phase: { fontSize: 54, lineHeight: 56, letterSpacing: 6 },
+  detail: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
 });

@@ -68,6 +68,10 @@ export type ViolationCode =
   | 'MANUAL_ENTRY_TIME_ORDER'
   | 'DAY_ALREADY_CLOSED'
   | 'DUTY_END_BEFORE_START'
+  // ── korekta zdarzenia (04c) ────────────────────────────────────────────────
+  | 'CORRECTION_TARGET_NOT_FOUND'
+  | 'CORRECTION_TARGET_NOT_ALLOWED'
+  | 'CORRECTION_TIME_IN_FUTURE'
   // ── zegary ─────────────────────────────────────────────────────────────────
   | 'CLOCK_DRIFT';
 

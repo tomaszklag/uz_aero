@@ -42,10 +42,27 @@ export interface GpsFix {
 export type DetectorPhase = 'ground' | 'airborne';
 
 /** Co detektor wykrył w tym kroku (null = nic). */
-export type Detection = 'takeoff' | 'landing';
+/**
+ * `taxi` jest w tej unii, bo automat naprawdę je wykrywa — ale UI traktuje je inaczej:
+ * start i lądowanie przechodzą przez okno „COFNIJ", kołowanie zapisuje się od razu.
+ * Ta różnica to polityka interfejsu (fałszywy start psuje czas lotu, fałszywe kołowanie
+ * dodaje wiersz w logu), więc mieszka w `useFlightDetection`, nie tutaj.
+ */
+export type Detection = 'taxi' | 'takeoff' | 'landing';
 
 export interface DetectorState {
   phase: DetectorPhase;
+  /**
+   * Czy w bieżącym locie odnotowano już rozpoczęcie kołowania.
+   *
+   * Zeruje się przy starcie (kolejne kołowanie będzie dopiero po lądowaniu) i przy
+   * lądowaniu (samolot kołuje z powrotem). Bez tej flagi każdy fix na ziemi z prędkością
+   * ponad progiem produkowałby nowe zdarzenie — a kołowanie ma być JEDNYM wpisem
+   * otwierającym lot, tak jak w mockupie 05.
+   */
+  taxiing: boolean;
+  /** Od kiedy nieprzerwanie trzyma się warunek kołowania (osobny tor niż start/lądowanie). */
+  taxiCandidateSince: EpochMillis | null;
   /**
    * Elewacja lotniska = wysokość GPS w chwili ENGINE START (§3.3, §8 mitygacja).
    * Null, gdy przy starcie silnika nie było fixa z wysokością.
@@ -79,6 +96,8 @@ export const MAX_FIX_GAP_SEC = 10;
 export function createDetectorState(fieldElevationFt: number | null = null): DetectorState {
   return {
     phase: 'ground',
+    taxiing: false,
+    taxiCandidateSince: null,
     fieldElevationFt,
     candidateSince: null,
     cooldownUntil: null,
@@ -138,30 +157,57 @@ export function stepDetector(
     ...state,
     lastFixAt: fix.time,
     candidateSince: signalBroken ? null : state.candidateSince,
+    taxiCandidateSince: signalBroken ? null : state.taxiCandidateSince,
   };
 
-  // 3. Histereza po poprzedniej detekcji.
-  if (next.cooldownUntil != null && fix.time < next.cooldownUntil) {
-    return { state: { ...next, candidateSince: null }, detection: null };
-  }
+  // 3. Histereza po poprzedniej detekcji — dotyczy WYŁĄCZNIE zmian fazy.
+  //
+  //    Kołowanie fazy nie zmienia, więc histereza go nie blokuje: gdyby blokowała, wpis
+  //    po lądowaniu spóźniałby się o pół minuty, a w mockupie 05 kołowanie zaczyna się
+  //    dokładnie wtedy, gdy samolot zjeżdża z pasa („14:08 Landing", „14:08 Taxi").
+  const inCooldown = next.cooldownUntil != null && fix.time < next.cooldownUntil;
 
   const conditionMet =
-    next.phase === 'ground'
+    !inCooldown &&
+    (next.phase === 'ground'
       ? takeoffConditionMet(fix, next, thresholds)
-      : landingConditionMet(fix, next, thresholds);
+      : landingConditionMet(fix, next, thresholds));
 
-  if (!conditionMet) {
-    return { state: { ...next, candidateSince: null }, detection: null };
-  }
+  if (conditionMet) {
+    // Warunek spełniony — od kiedy?
+    const since = next.candidateSince ?? fix.time;
+    const heldSec = (fix.time - since) / 1000;
+    const requiredSec =
+      next.phase === 'ground' ? thresholds.TAKEOFF_CONFIRM_SEC : thresholds.LANDING_CONFIRM_SEC;
 
-  // Warunek spełniony — od kiedy?
-  const since = next.candidateSince ?? fix.time;
-  const heldSec = (fix.time - since) / 1000;
-  const requiredSec =
-    next.phase === 'ground' ? thresholds.TAKEOFF_CONFIRM_SEC : thresholds.LANDING_CONFIRM_SEC;
+    if (heldSec < requiredSec) {
+      return { state: { ...next, candidateSince: since }, detection: null };
+    }
+  } else {
+    next.candidateSince = null;
 
-  if (heldSec < requiredSec) {
-    return { state: { ...next, candidateSince: since }, detection: null };
+    // 4. Kołowanie rozpatrujemy DOPIERO, gdy w tym kroku nie zaszła zmiana fazy.
+    //
+    //    Kolejność ma znaczenie: gdyby kołowanie było sprawdzane pierwsze, jego wykrycie
+    //    kończyłoby krok i „zjadało" tick, w którym potwierdzał się start — start
+    //    przesuwałby się o jeden fix. Poza tym wpis „ruszył kołować" w tej samej chwili,
+    //    w której samolot się oderwał, byłby bez sensu.
+    if (next.phase === 'ground' && !next.taxiing) {
+      if (fix.groundSpeedKt >= thresholds.TAXI_SPEED_KT) {
+        const taxiSince = next.taxiCandidateSince ?? fix.time;
+        if ((fix.time - taxiSince) / 1000 >= thresholds.TAXI_CONFIRM_SEC) {
+          return {
+            state: { ...next, taxiing: true, taxiCandidateSince: null },
+            detection: 'taxi',
+          };
+        }
+        next.taxiCandidateSince = taxiSince;
+      } else {
+        next.taxiCandidateSince = null;
+      }
+    }
+
+    return { state: next, detection: null };
   }
 
   // 4. Detekcja: zmiana fazy + histereza.
@@ -175,6 +221,10 @@ export function stepDetector(
     state: {
       ...next,
       phase: detection === 'takeoff' ? 'airborne' : 'ground',
+      // Start zamyka kołowanie tego lotu; lądowanie otwiera drogę do kolejnego —
+      // samolot zjeżdża z pasa i kołuje z powrotem, co jest nowym wpisem.
+      taxiing: false,
+      taxiCandidateSince: null,
       candidateSince: null,
       cooldownUntil: fix.time + cooldownSec * 1000,
     },

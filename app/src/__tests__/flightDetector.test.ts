@@ -44,8 +44,9 @@ describe('detekcja startu', () => {
     // GS 60 kt (> 50) przez 5 s — warunek prędkościowy z zapasem ponad 3 s potwierdzenia.
     const { detections, state } = runDetector(onGround(), series(0, 5, 60, FIELD_ELEV));
 
-    expect(detections).toHaveLength(1);
-    expect(detections[0].detection).toBe('takeoff');
+    // Seria zaczyna się od razu powyżej progu startu, więc automat nigdy nie widzi
+    // samolotu „ruszającego" — kołowanie ma własny zestaw testów niżej.
+    expect(detections.map((d) => d.detection)).toEqual(['takeoff']);
     expect(state.phase).toBe('airborne');
   });
 
@@ -53,7 +54,8 @@ describe('detekcja startu', () => {
     const { detections } = runDetector(onGround(), series(0, 10, 60, FIELD_ELEV));
 
     // Warunek trzyma się od t=0; potwierdzenie po TAKEOFF_CONFIRM_SEC.
-    expect(detections[0].at).toBe(t(T.TAKEOFF_CONFIRM_SEC));
+    const takeoff = detections.find((d) => d.detection === 'takeoff');
+    expect(takeoff?.at).toBe(t(T.TAKEOFF_CONFIRM_SEC));
   });
 
   it('krótka szpilka prędkości (poniżej czasu potwierdzenia) NIE wywołuje startu', () => {
@@ -64,7 +66,10 @@ describe('detekcja startu', () => {
     ];
     const { detections, state } = runDetector(onGround(), fixes);
 
-    expect(detections).toHaveLength(0);
+    // Szpilka nie daje STARTU. Kołowanie owszem — samolot naprawdę ruszył i to jest
+    // osobna, tańsza informacja: fałszywy wpis kołowania dodaje wiersz w logu,
+    // fałszywy start psułby czas lotu.
+    expect(detections.map((d) => d.detection)).toEqual(['taxi']);
     expect(state.phase).toBe('ground');
   });
 
@@ -72,8 +77,7 @@ describe('detekcja startu', () => {
     // GS 10 kt (nierealnie mało jak na lot), ale 300 ft nad lotniskiem.
     const { detections } = runDetector(onGround(), series(0, 6, 10, FIELD_ELEV + 300));
 
-    expect(detections).toHaveLength(1);
-    expect(detections[0].detection).toBe('takeoff');
+    expect(detections.map((d) => d.detection)).toEqual(['takeoff']);
   });
 
   it('turbulencja przy ziemi (±30 ft) nie przekracza progu wysokości → brak startu', () => {
@@ -192,7 +196,7 @@ describe('odporność na sygnał', () => {
 });
 
 describe('pełny cykl lotu', () => {
-  it('kołowanie → start → przelot → podejście → lądowanie daje dokładnie 2 detekcje', () => {
+  it('kołowanie → start → przelot → podejście → lądowanie → kołowanie z powrotem', () => {
     const cd = T.COOLDOWN_AFTER_TAKEOFF_SEC;
     const fixes: GpsFix[] = [
       ...series(0, 10, 8, FIELD_ELEV), // kołowanie
@@ -203,7 +207,61 @@ describe('pełny cykl lotu', () => {
     ];
     const { detections, state } = runDetector(onGround(), fixes);
 
-    expect(detections.map((d) => d.detection)).toEqual(['takeoff', 'landing']);
+    // Ostatnie kołowanie to zjazd z pasa — otwiera kolejny lot, tak jak w mockupie 05.
+    expect(detections.map((d) => d.detection)).toEqual(['taxi', 'takeoff', 'landing', 'taxi']);
     expect(state.phase).toBe('ground');
+  });
+});
+
+/**
+ * Kołowanie ma inną „cenę pomyłki" niż start i lądowanie: nie wyznacza żadnego czasu
+ * w dokumentach, tylko otwiera lot w logu. Dlatego zapisuje się od razu (bez okna
+ * „COFNIJ") — i tym bardziej nie może migotać.
+ */
+describe('detekcja kołowania', () => {
+  it('ruszenie z miejsca daje DOKŁADNIE jedno zdarzenie, nie jedno na fix', () => {
+    const { detections } = runDetector(onGround(), series(0, 20, 12, FIELD_ELEV));
+
+    expect(detections.map((d) => d.detection)).toEqual(['taxi']);
+    expect(detections[0].at).toBe(t(T.TAXI_CONFIRM_SEC));
+  });
+
+  it('szum GPS na postoju nie wywołuje kołowania', () => {
+    // Typowe „pływanie" pozycji przy zaparkowanym samolocie: 0–3 kt.
+    const fixes = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => ({
+      time: t(i),
+      groundSpeedKt: i % 2 === 0 ? 3 : 1,
+      altitudeFt: FIELD_ELEV,
+    }));
+
+    expect(runDetector(onGround(), fixes).detections).toHaveLength(0);
+  });
+
+  it('pojedyncza szpilka poniżej czasu potwierdzenia nie wystarcza', () => {
+    const fixes = [
+      ...series(0, 2, 12, FIELD_ELEV), // 2 s < TAXI_CONFIRM_SEC (3 s)
+      ...series(2, 6, 0, FIELD_ELEV),
+    ];
+
+    expect(runDetector(onGround(), fixes).detections).toHaveLength(0);
+  });
+
+  it('po lądowaniu kołowanie zapada PONOWNIE — to już następny lot', () => {
+    // Mockup 05: „14:08 Landing" i zaraz „14:08 Taxi" otwierające Lot 2.
+    const cd = T.COOLDOWN_AFTER_LANDING_SEC;
+    const fixes: GpsFix[] = [
+      ...series(0, 10, 20, FIELD_ELEV + 10), // dobieg → landing
+      ...series(20 + cd, 10, 12, FIELD_ELEV), // kołowanie z powrotem
+    ];
+    const { detections } = runDetector(airborne(), fixes);
+
+    expect(detections.map((d) => d.detection)).toEqual(['landing', 'taxi']);
+  });
+
+  it('w powietrzu kołowanie nie jest wykrywane', () => {
+    // Wolny przelot ma GS ponad progiem kołowania — bez warunku fazy sypałby zdarzeniami.
+    const { detections } = runDetector(airborne(), series(0, 10, 60, FIELD_ELEV + 3000));
+
+    expect(detections).toHaveLength(0);
   });
 });
