@@ -30,6 +30,13 @@ export interface OutboxStatus {
   synced: boolean;
 }
 
+/** Dzień w historii (ekran 12): projekcja + lokalna zaległość wysyłki tej sesji. */
+export interface HistoryDay {
+  state: SessionState;
+  /** Ile zdarzeń TEJ sesji czeka w outboksie (0 = „Wysłane"). */
+  pendingCount: number;
+}
+
 export class SessionQueries {
   constructor(private readonly repo: EventsRepo) {}
 
@@ -74,5 +81,30 @@ export class SessionQueries {
   /** Sesja zapamiętana w `session_meta` — do wznowienia dnia po restarcie (§5.2). */
   currentSession(): Promise<CurrentSession | null> {
     return this.repo.getCurrentSession();
+  }
+
+  /**
+   * Wszystkie dni z lokalnego strumienia (ekran 12): grupowanie po `sessionUuid`
+   * i projekcja per sesja TYM SAMYM `projectSession`, co ekran 10 — liczby na karcie
+   * historii nie mają prawa różnić się od statystyk dnia.
+   *
+   * Liczy się w pamięci przy każdym odczycie — jak wszystkie projekcje (§5.2: sezon
+   * klubu to tysiące zdarzeń, nie miliony; tabela agregująca byłaby przedwczesna).
+   * Kolejność: najnowszy `dutyStart` pierwszy.
+   */
+  async historyDays(): Promise<HistoryDay[]> {
+    const events = await this.repo.getAllEvents();
+    const bySession = new Map<string, Event[]>();
+    for (const event of events) {
+      const stream = bySession.get(event.sessionUuid);
+      if (stream) stream.push(event);
+      else bySession.set(event.sessionUuid, [event]);
+    }
+    return [...bySession.values()]
+      .map((stream) => ({
+        state: projectSession(stream),
+        pendingCount: stream.filter((e) => e.syncedAt == null).length,
+      }))
+      .sort((a, b) => (b.state.dutyStart ?? 0) - (a.state.dutyStart ?? 0));
   }
 }

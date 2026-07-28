@@ -13,7 +13,7 @@ Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny
 
 ## Faza aktualna
 **Monorepo: aplikacja RN w `app/`, backend w `server/`, wspólna domena w `packages/domain`.**
-Fazy z `docs/_main.md.txt` §10: 1–2 ✅ · 3 🔶 (brak: tylko 12 historia) · 4 🔶 (sync outbox↔serwer, ekran 11, cache referencyjny z `GET /reference` i `takeover_online` działają; brak: eksport Sheets).
+Fazy z `docs/_main.md.txt` §10: 1–3 ✅ (komplet ekranów 00–12) · 4 🔶 (sync outbox↔serwer, ekran 11, cache referencyjny z `GET /reference` i `takeover_online` działają; brak: eksport Sheets).
 - Mockupy w `design/` to **zatwierdzona specyfikacja**: ekran RN wdrażamy 1:1 z odpowiadającego pliku HTML, sekcja po sekcji, bez upraszczania. Wątpliwość do mockupu = rozmowa przed implementacją, nie cicha zmiana w kodzie.
 - Architektura kodu i przepisy (nowy typ zdarzenia / reguła / ekran): `docs/architektura-kodu.md` (tam też zaległości audytu serwera). Po zmianach w `app/`: `npx jest` i `npx tsc --noEmit`; po zmianach w `server/` lub `packages/domain`: `npx vitest run` i `npx tsc --noEmit` w `server/` — wszystko musi przechodzić.
 - `design/PLAN.md` nie jest już aktywną checklistą (został backlog UX). Reguły designu niżej nadal obowiązują przy każdej zmianie mockupów.
@@ -59,6 +59,7 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 → 04-cockpit-ground ⇄ 05-cockpit-running
 → 06-tankowanie / 07-zmiana-zalogi / 08-lista-reczna (akcje ground)
 → 09-end-of-day → 10-statystyki → 11-eksport
+01-splash → 12-historia (okno korekty 24 h) → 10-statystyki
 ```
 
 ## Pilot i samolot — UX

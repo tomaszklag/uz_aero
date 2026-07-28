@@ -62,8 +62,16 @@ implementacja skrótu w `infrastructure/auth/sha256.ts` — powody w docblocku),
 kokpitu, inaczej ekran 01 (start dnia: „NOWY DZIEŃ LOTNY" → preflight, stopka ze
 stemplem cache referencyjnego). „Nie pamiętam PIN" nie czyści poświadczeń (nadpisuje
 je dopiero udany login) i jest zablokowane przy niepustym outboxie. Klawisz biometrii
-z mockupu 00 odłożony (wymagałby `expo-local-authentication`); „Poprzednie dni" na 01
-zablokowane z powodem do czasu ekranu 12.
+z mockupu 00 odłożony (wymagałby `expo-local-authentication`).
+
+Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
+i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
+się różnić liczbami. Podział na grupy robi okno korekty (czysta funkcja
+`screens/historyDays.ts`); dzień otwarty nie jest historią (ma kokpit przez
+`ResumeGate`). „OTWÓRZ I POPRAW" ładuje zamkniętą sesję do store'u i otwiera 10 —
+bezpieczne, bo historia jest osiągalna tylko ze splasha (bez otwartego dnia w tle).
+Tag „arkusz gotowy" dołączy do „Wysłane" razem z eksportem Sheets; plakietka
+`.history-badge` na 01 pokazuje najświeższy dzień w oknie.
 
 **Zaległości audytu serwera (2026-07-28) — świadomie odłożone, do zrobienia przed
 wdrożeniem (faza 6):** rate-limit na `/auth/*` (dziś brute-force ogranicza tylko koszt
@@ -217,6 +225,7 @@ a nie przez jeden ekran.
 | `CalcBox` | wyliczenie zużycia paliwa z podaniem składników | `.calc-box` |
 | `GaugeHero`, `ScaleBar` | wskaźnik FOB z podziałką | `.fob-indicator` |
 | `DutyHero` | czas służby wielką czcionką + zakres | `.duty-hero` |
+| `DayCard` | karta dnia w historii; wariant `editable` = niebieska ramka + pas „OTWÓRZ I POPRAW" | `.day-card` (12) |
 | `CrewCard`, `CrewGrid` | karty załogi ze statystykami | `.crew-card` |
 | `DataTable` | tabela lotów z celem korekty ≥ 44 px | `.data-table` |
 | `StatGrid` | siatka 2×2 statystyk (etykieta / wartość / jednostka) | `.fuel-grid-2x2` |
@@ -405,7 +414,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 299 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 305 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -432,6 +441,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `referenceSync.test.ts` | odświeżania cache §4.8: nadpisanie seedu prawdą serwera, ETag/304 z podbiciem wieku, brama 15 min, offline nie psuje cache |
 | `claimMode.test.ts` | trybu przejęcia §4.4: `takeover_online` tylko z odpowiedzią serwera, żywy poprzednik wygrywa z cache, „już wolny" gasi przejęcie |
 | `pinCrypto.test.ts` | własnego SHA-256 (wektory NIST + node:crypto dla UTF-8) i solonego skrótu PIN-u — rekord nigdy nie niesie PIN-u wprost |
+| `historyDays.test.ts` | ekranu 12: podział wg okna korekty, dzień otwarty poza historią, tag wysyłki z outboxa sesji, plakietka splasha, odliczanie |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:

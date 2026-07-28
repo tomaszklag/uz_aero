@@ -64,6 +64,7 @@ export * from './ManualEventSheet';
 export * from './CorrectionSheet';
 
 // Dane i akcje
+export * from './DayCard';
 export * from './SummaryHero';
 export * from './SummaryGrid';
 export * from './SummaryStrip';

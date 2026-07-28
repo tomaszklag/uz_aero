@@ -9,9 +9,9 @@
  * Pojawia się tylko, gdy NIE ma otwartego dnia — restart w środku dnia wraca prosto
  * do kokpitu (routing w `App.tsx`; §5.2 `session_meta` istnieje właśnie po to).
  *
- * „Poprzednie dni" prowadzi do ekranu 12, którego jeszcze nie ma — przycisk stoi
- * zablokowany Z POWODEM (§6 pkt 3), bez plakietki okna korekty (jej dane przyjdą
- * razem z 12).
+ * „Poprzednie dni" otwiera historię (12); gdy jakiś dzień jest jeszcze w oknie
+ * korekty 24 h, przycisk nosi niebieską plakietkę „22 JUN — można poprawić"
+ * (`.history-badge`) — okno ma być widoczne, zanim pilot pomyśli o szukaniu go.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -19,10 +19,11 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 
 import { REFERENCE_META_CHECKED_AT } from '../../application';
-import { AppText, Brand, Icon, Screen } from '../components';
+import { AppText, Brand, Icon, Screen, Tag } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { timeUtc } from '../format';
+import { editableBadge } from './historyDays';
 
 export function SplashScreen({
   navigation,
@@ -31,7 +32,21 @@ export function SplashScreen({
 }) {
   const { theme } = useTheme();
   const repo = useSessionStore((s) => s.repo);
+  const queries = useSessionStore((s) => s.queries);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
+
+  // Plakietka okna korekty na przycisku historii (`.history-badge`).
+  const [badge, setBadge] = useState<string | null>(null);
+  useEffect(() => {
+    if (queries == null) return;
+    let alive = true;
+    void queries.historyDays().then((days) => {
+      if (alive) setBadge(editableBadge(days, Date.now()));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [queries]);
 
   // Stempel ostatniego potwierdzenia cache referencyjnego (§4.8). Zależność od
   // `lastSyncAt` odświeża napis, gdy pętla okazji właśnie zsynchronizowała.
@@ -80,21 +95,24 @@ export function SplashScreen({
           )}
         </Pressable>
 
-        {/* ── `.history-link` — ekran 12 w budowie ────────────────────────── */}
-        <View
-          style={[
+        {/* ── `.history-link` → 12 Historia ───────────────────────────────── */}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('History')}
+          style={({ pressed }) => [
             styles.historyBtn,
-            { borderColor: theme.colors.borderStrong, borderWidth: theme.borderWidth, opacity: 0.45 },
+            {
+              borderColor: pressed ? theme.colors.greenBorder : theme.colors.borderStrong,
+              borderWidth: theme.borderWidth,
+            },
           ]}
         >
           <Icon name="clock" size={14} color={theme.colors.textSecondary} />
           <AppText variant="body" tone="secondary" style={styles.historyLabel}>
             Poprzednie dni
           </AppText>
-        </View>
-        <AppText variant="label" tone="amber" style={styles.reason}>
-          Ekran historii w budowie
-        </AppText>
+          {badge != null && <Tag label={badge} tone="blue" />}
+        </Pressable>
       </View>
 
       {/* ── `.splash-footer` ──────────────────────────────────────────────── */}
@@ -149,7 +167,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   historyLabel: { fontSize: 13, fontWeight: '600' },
-  reason: { marginTop: 6, textAlign: 'center' },
   footer: { position: 'absolute', bottom: 36, left: 0, right: 0, alignItems: 'center', gap: 8 },
   refRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   dot: { width: 6, height: 6, borderRadius: 3 },
