@@ -164,13 +164,13 @@
 logowanie / zapomniany PIN (00a/00b) — świadomie zaakceptowana twarda granica z 3.0,
 obsłużona disabled-z-powodem i instrukcją proceduralną.
 
-### Degradacja sensorów (osobny temat, nie sieć)
+### ✅ Degradacja sensorów (osobny temat, nie sieć) — ZROBIONE 2026-07-28
 
-- [ ] Stan „GPS: brak sygnału" — klasa `.no-gps` zdefiniowana w 05 i 05-themes, nigdy
-      nieużyta. To degradacja **czujnika**, nie łączności, więc nie wchodzi w domknięcie
-      offline; wymaga własnego wariantu 05 + wejścia do listy ręcznej (08) z kokpitu.
-      Dokumentacja klasyfikuje fałszywe/brakujące detekcje GPS jako ryzyko 🔴 (sekcja 8),
-      a UI nie ma dziś żadnej sygnalizacji utraty fixa
+- [x] Stan „GPS: brak sygnału" — **`05g-cockpit-no-gps` (nowy)**: czerwony baner Typ A
+      („autodetekcja wstrzymana" + wiek fixa), parametry GPS „— —", wejścia ręczne
+      (05F + link do 08) przejmują robotę autodetekcji; timery/log liczą z zegara.
+      SyncChip celowo zielony SYNC przy martwym GPS — rozdzielenie osi czujnik/sieć
+      pokazane wprost. 05G w state-sidebarach całej rodziny 05 i panelach 05e/05f
 
 ### ✅ Decyzje biznesowe — ROZSTRZYGNIĘTE 2026-07-23
 
@@ -196,12 +196,26 @@ obsłużona disabled-z-powodem i instrukcją proceduralną.
 
 ### Backlog UX z audytu (niższy priorytet)
 
-- [ ] Formularz dodawania wpisu w `08` (przyciski „Dodaj wpis" martwe) + kolumna „Uwagi" (3.8)
-- [ ] Semantyka toasta odwrócona: doc mówi „brak reakcji = zapis, jedyna akcja Cofnij",
-      mockup ma duży zielony „Potwierdź" i mikroskopijne „Odrzuć" (23 px)
-- [ ] Ekran ustawień (motywy, PIN, wylogowanie, diagnostyka GPS) — 8 martwych zębatek
-- [ ] Wznowienie sesji po ubiciu aplikacji; wariant `01-splash` „wróć do dnia"
-- [ ] Stan zerowy w 09/10 (dzień bez lotów); historia / poprzednie dni
+- [x] Formularz dodawania wpisu w `08` + kolumna „Uwagi" (3.8) — ZROBIONE 2026-07-28:
+      arkusz „Nowy wpis ręczny" (4 czasy ze stepperami ±1 min + uwagi, wzorzec 04c/05f),
+      oba przyciski ożywione, zapis → grupa RĘCZNIE w rejestrze; uwagi jako stopka
+      każdej grupy (puste = „—"). Bez panelu wariantów (pojedynczy ekran, jak niżej)
+- [x] Semantyka toasta odwrócona — zrobione już 2026-07-24 (sekcja „Naprawy po studium
+      przypadku": duży amber COFNIJ + licznik); wpis w backlogu był zdublowany
+- [x] Ekran ustawień — ZROBIONE 2026-07-28: **`13-ustawienia` (nowy)** — motyw (5 kart
+      ze swatchami), zmiana PIN offline (arkusz z numpadem, 2 kroki), konto z ochroną
+      wylogowania (.outbox-guard, disabled z powodem, nota o internecie), diagnostyka
+      GPS (fix/wiek/dokładność/pozycja + Odśwież), o aplikacji (wersja + stempel danych
+      referencyjnych). 8 zębatek (04, 04a, 05, 05a–05d, 05-themes) podpiętych
+- [x] Wznowienie sesji po ubiciu aplikacji — ZROBIONE 2026-07-28 W APLIKACJI, bez
+      wariantu mockupu: otwarta sesja z `session_meta` (§5.2) wraca po odblokowaniu
+      PROSTO do kokpitu (routing `ResumeGate` w `App.tsx`), więc splash z przyciskiem
+      „wróć do dnia" nie ma kiedy się pokazać — 01 pojawia się wyłącznie bez otwartego
+      dnia. Prostsze niż wariant ekranu i bez ryzyka rozwidlenia dnia drugą sesją
+- [x] Stan zerowy w 09/10 — ZROBIONE 2026-07-28: **`09a` + `10a` (nowe)** — uczciwe zera,
+      „Żaden lot nie został zapisany", odczyty końcowe nadal wymagane (łańcuch 4.5
+      obowiązuje też bez lotów), zrzuty 0 z operacją; panele wariantów na 09/09a i 10/10a.
+      Historia / poprzednie dni: wejście istnieje od 2026-07-24 (`12-historia`)
 - [ ] Zgłoszenie usterki technicznej (`defect_report`)
 - [ ] Trasa per lot zamiast per dzień (dzień skokowy to 6× EPKK → EPKK)
 

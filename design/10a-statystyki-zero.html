@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10 Statystyki Dnia</title>
+<title>UZ Aero — 10A Statystyki dnia · bez lotów</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
     font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.04) 0%, transparent 60%),
       linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
     background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
@@ -34,8 +34,8 @@
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
   .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
-  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 4px var(--amber-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
   .phone {
     width:393px; height:852px; border-radius:54px; background:var(--bg);
     border:10px solid #0D0E12;
@@ -52,7 +52,7 @@
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
   .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
   .nav-strip a:hover { color:var(--green); }
-  .nav-strip a.active { color:var(--green); }
+  .nav-strip a.active { color:var(--amber); }
   .nav-strip span { color:var(--border-strong); }
 
   /* App internals */
@@ -62,7 +62,6 @@
   }
   .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; }
   .app-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
-  /* Okno korekty po day_close — decyzja: 24 h samodzielnie, potem administrator */
   .correction-window {
     display:flex; align-items:flex-start; gap:9px;
     background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
@@ -79,14 +78,14 @@
   }
   .badge {
     font-family:var(--font-mono); font-size:10px; letter-spacing:1px;
-    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
     padding:4px 10px; border-radius:999px;
   }
 
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
 
-  /* Duty time hero */
+  /* Duty time hero — duty liczy się także bez lotów */
   .duty-hero {
     background:var(--surface); border:1px solid var(--border);
     border-radius:14px; padding:16px 14px;
@@ -132,13 +131,9 @@
   .crew-stat-val { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
   .crew-tag {
     font-family:var(--font-mono); font-size:7px; letter-spacing:1px;
-    text-transform:uppercase; color:var(--green);
-    background:rgba(46,204,113,0.08); border:1px solid var(--green-border);
+    text-transform:uppercase; color:var(--amber);
+    background:var(--amber-muted); border:1px solid var(--amber-border);
     padding:2px 6px; border-radius:4px; align-self:flex-start; margin-top:2px;
-  }
-  .crew-empty {
-    font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
-    font-style:italic; margin-top:4px;
   }
 
   /* Section card */
@@ -157,37 +152,13 @@
     content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong);
   }
 
-  /* Flights table */
-  .data-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); }
-  .data-table th {
-    font-size:7px; letter-spacing:1.5px; text-transform:uppercase;
-    color:var(--text-muted); padding:8px 8px; border-bottom:1px solid var(--border);
-    text-align:left;
+  /* Pusta lista lotów — komunikat zamiast wierszy, zero kreatywnej grafiki */
+  .empty-rows {
+    padding:20px 14px 18px; display:flex; flex-direction:column; align-items:center; gap:5px;
+    text-align:center;
   }
-  .data-table td {
-    font-size:11px; color:var(--text-primary); padding:9px 8px;
-    border-bottom:1px solid var(--border);
-  }
-  .data-table tr:last-child td { border-bottom:none; }
-  .data-table td.num { color:var(--text-muted); }
-  .data-table td.type-auto {
-    font-size:8px; letter-spacing:1px; color:var(--green);
-    background:var(--green-muted); border-radius:4px; padding:2px 5px;
-    white-space:nowrap;
-  }
-  .data-table td.type-manual {
-    font-size:8px; letter-spacing:1px; color:var(--amber);
-    background:var(--amber-muted); border-radius:4px; padding:2px 5px;
-    white-space:nowrap;
-  }
-  /* Cel korekty w oknie 24 h — min. 44 px; tu poprawki są najczęstsze */
-  .edit-btn {
-    background:none; border:1px solid var(--border-strong); border-radius:8px;
-    color:var(--text-secondary); cursor:pointer; padding:0; text-decoration:none;
-    min-width:44px; min-height:44px; justify-content:center;
-    display:inline-flex; align-items:center;
-  }
-  .edit-btn:hover { border-color:var(--border-strong); color:var(--text-secondary); }
+  .empty-msg { font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--text-secondary); }
+  .empty-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
 
   /* Fuel grid */
   .fuel-grid-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
@@ -203,12 +174,13 @@
     font-family:var(--font-display); font-size:24px; letter-spacing:1px;
     color:var(--amber); line-height:1;
   }
+  .fuel-cell-val.zero { color:var(--text-muted); }
   .fuel-cell-unit {
     font-family:var(--font-mono); font-size:9px; color:var(--text-secondary);
   }
   .fuel-avg-row {
     padding:10px 12px; border-top:1px solid var(--border);
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
   }
   .fuel-avg-label {
     font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px;
@@ -216,8 +188,10 @@
   }
   .fuel-avg-val {
     font-family:var(--font-display); font-size:20px; letter-spacing:2px;
-    color:var(--amber);
+    color:var(--amber); text-align:right;
   }
+  .fuel-avg-val.na { color:var(--text-muted); }
+  .fuel-avg-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); }
 
   /* Buttons */
   .btn-row { display:flex; flex-direction:column; gap:8px; }
@@ -242,26 +216,26 @@
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
   .vp-item:hover { border-color:var(--green-border); }
-  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
   .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
   .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
-  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-top:3px; white-space:nowrap; }
 </style>
 </head>
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10</span>
-  <span class="slug">statystyki dnia</span>
-  <span class="canvas-meta"><span class="pulse"></span>Screen 10 / 11</span>
+  <span class="film-strip">UZ AERO — 10A</span>
+  <span class="slug">statystyki dnia · bez lotów</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 10</span>
 </header>
 
-<main class="phone">
+<main class="phone" role="region" aria-label="Mockup — Statystyki dnia bez lotów">
   <div class="status-bar">
-    <span>9:41</span>
+    <span>11:32</span>
     <span class="status-right">
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
       <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
@@ -278,7 +252,7 @@
         <span class="header-subtitle">SP-AXA · 22 June 2026</span>
       </div>
       <div class="app-header-right">
-        <span class="badge">6 lotów</span>
+        <span class="badge">0 lotów</span>
         <div class="sync-chip" title="Statystyki to projekcja z lokalnych zdarzeń — liczą się identycznie offline">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           SYNC
@@ -289,20 +263,20 @@
     <!-- Scroll content -->
     <div class="scroll">
 
-      <!-- Okno korekty (decyzja: 24 h samodzielnie) -->
+      <!-- Okno korekty (24 h) — w dniu bez lotów do poprawy są tylko odczyty i czasy -->
       <div class="correction-window">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zatwierdzeniu</b> — do 23 JUN 16:45 UTC. Później korektę nanosi administrator. Stuknij ołówek przy locie, żeby poprawić czas albo oznaczyć zdarzenie jako błędne.</span>
+        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zatwierdzeniu</b> — do 23 JUN 11:30 UTC. Później korektę nanosi administrator. W dniu bez lotów do poprawy są tylko odczyty końcowe (paliwo, MH) i czasy służby — „Edytuj dane" wraca do formularza zakończenia.</span>
       </div>
 
-      <!-- Duty Time Hero -->
+      <!-- Duty Time Hero — duty liczy się także bez lotów -->
       <div class="duty-hero">
         <div class="duty-label">Czas służby</div>
-        <div class="duty-time">08:45</div>
-        <div class="duty-range">08:00 UTC → 16:45 UTC</div>
+        <div class="duty-time">03:30</div>
+        <div class="duty-range">08:00 UTC → 11:30 UTC</div>
       </div>
 
-      <!-- Crew cards -->
+      <!-- Crew cards — załoga z preflightu, uczciwe zera -->
       <div class="crew-grid">
         <div class="crew-card active">
           <div class="crew-role">PIC · zalogowany (Ty)</div>
@@ -310,14 +284,14 @@
           <div class="crew-stat">
             <div class="crew-stat-row">
               <span class="crew-stat-key">Block time</span>
-              <span class="crew-stat-val">06:39</span>
+              <span class="crew-stat-val">00:00</span>
             </div>
             <div class="crew-stat-row">
               <span class="crew-stat-key">St / Ld</span>
-              <span class="crew-stat-val">6 / 6</span>
+              <span class="crew-stat-val">0 / 0</span>
             </div>
           </div>
-          <div class="crew-tag">Pełny dzień</div>
+          <div class="crew-tag">Dzień bez lotów</div>
         </div>
         <div class="crew-card">
           <div class="crew-role">Dual · drugi pilot</div>
@@ -325,85 +299,27 @@
           <div class="crew-stat">
             <div class="crew-stat-row">
               <span class="crew-stat-key">Block time</span>
-              <span class="crew-stat-val">06:39</span>
+              <span class="crew-stat-val">00:00</span>
             </div>
             <div class="crew-stat-row">
               <span class="crew-stat-key">St / Ld</span>
               <span class="crew-stat-val">0 / 0</span>
             </div>
           </div>
-          <div class="crew-tag">Pełny dzień</div>
+          <div class="crew-tag">Dzień bez lotów</div>
         </div>
       </div>
 
-      <!-- Flight list -->
+      <!-- Flight list — brak wierszy = komunikat wprost -->
       <div class="section-card">
         <div class="section-card-head">Lista lotów · czasy UTC</div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Takeoff</th>
-              <th>Landing</th>
-              <th>Czas</th>
-              <th>Typ</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="num">1</td>
-              <td>08:25</td>
-              <td>09:18</td>
-              <td>00:53</td>
-              <td><span class="type-auto">AUTO</span></td>
-              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
-            </tr>
-            <tr>
-              <td class="num">2</td>
-              <td>09:35</td>
-              <td>10:22</td>
-              <td>00:47</td>
-              <td><span class="type-auto">AUTO</span></td>
-              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
-            </tr>
-            <tr>
-              <td class="num">3</td>
-              <td>11:28</td>
-              <td>12:15</td>
-              <td>00:47</td>
-              <td><span class="type-auto">AUTO</span></td>
-              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
-            </tr>
-            <tr>
-              <td class="num">4</td>
-              <td>13:24</td>
-              <td>14:08</td>
-              <td>00:44</td>
-              <td><span class="type-auto">AUTO</span></td>
-              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
-            </tr>
-            <tr>
-              <td class="num">5</td>
-              <td>14:21</td>
-              <td>15:03</td>
-              <td>00:42</td>
-              <td><span class="type-manual">RĘCZNIE</span></td>
-              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
-            </tr>
-            <tr>
-              <td class="num">6</td>
-              <td>15:17</td>
-              <td>16:10</td>
-              <td>00:53</td>
-              <td><span class="type-auto">AUTO</span></td>
-              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="empty-rows">
+          <span class="empty-msg">Żaden lot nie został zapisany</span>
+          <span class="empty-sub">0 startów · 0 lądowań · silnik nie był uruchamiany</span>
+        </div>
       </div>
 
-      <!-- Fuel section -->
+      <!-- Fuel section — bilans zerowy, końcowe = przekazane -->
       <div class="section-card">
         <div class="section-card-head" style="color:var(--amber);">Paliwo</div>
         <div class="fuel-grid-2x2">
@@ -414,27 +330,30 @@
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Dolane</div>
-            <div class="fuel-cell-val">48</div>
+            <div class="fuel-cell-val zero">0</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Końcowe</div>
-            <div class="fuel-cell-val">88</div>
+            <div class="fuel-cell-val">150</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Zużyte</div>
-            <div class="fuel-cell-val">110</div>
+            <div class="fuel-cell-val zero">0</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
         </div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Średnie zużycie (na block time)</span>
-          <span class="fuel-avg-val">17 L/H</span>
+          <span class="fuel-avg-val na">— —</span>
+        </div>
+        <div class="fuel-avg-row" style="border-top:none;padding-top:0;">
+          <span class="fuel-avg-note">nie liczymy — block time 0:00 (dzielenie przez zero to nie statystyka)</span>
         </div>
       </div>
 
-      <!-- Motogodziny (3.7: początek / koniec / delta) -->
+      <!-- Motogodziny — bez zmian, ale nadal ogniwo łańcucha -->
       <div class="section-card">
         <div class="section-card-head">Motogodziny · hh:mm z konfiguracji SP-AXA</div>
         <div class="fuel-avg-row">
@@ -443,36 +362,36 @@
         </div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Koniec dnia (przekazanie)</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">1 241:09</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">1 234:30</span>
         </div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Δ dnia (= block time)</span>
-          <span class="fuel-avg-val" style="color:var(--green);">+6:39</span>
+          <span class="fuel-avg-val" style="color:var(--text-secondary);">+0:00</span>
         </div>
       </div>
 
-      <!-- Zrzuty — strona przychodowa dnia (operacja Skoki) -->
+      <!-- Zrzuty — zero, ale z kontekstem operacji (rozliczenie musi widzieć odwołany dzień) -->
       <div class="section-card">
         <div class="section-card-head" style="color:var(--blue);">Zrzuty · rozliczenie</div>
         <div class="fuel-grid-2x2">
           <div class="fuel-cell">
             <div class="fuel-cell-label">Zrzutów</div>
-            <div class="fuel-cell-val" style="color:var(--blue);">6</div>
+            <div class="fuel-cell-val zero">0</div>
             <div class="fuel-cell-unit">wyniesień</div>
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Skoczków</div>
-            <div class="fuel-cell-val" style="color:var(--blue);">22</div>
+            <div class="fuel-cell-val zero">0</div>
             <div class="fuel-cell-unit">łącznie</div>
           </div>
         </div>
         <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Typy skoków</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">12 TANDEM · 6 AFF · 4 SOLO</span>
+          <span class="fuel-avg-label">Operacja</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">SKOKI · 0 WYNIESIEŃ</span>
         </div>
         <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Średnia wysokość zrzutu</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">2 700 FT</span>
+          <span class="fuel-avg-label">Typy skoków</span>
+          <span class="fuel-avg-val na">—</span>
         </div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Klient</span>
@@ -480,9 +399,9 @@
         </div>
       </div>
 
-      <!-- Action buttons -->
+      <!-- Action buttons — ołówków brak (nie ma wierszy), edycja wraca do odczytów w 09A -->
       <div class="btn-row">
-        <a href="04c-korekta-zdarzenia.html" class="btn-secondary">
+        <a href="09a-end-of-day-zero.html" class="btn-secondary" title="W dniu bez lotów jedyne dane do poprawy to odczyty końcowe i czasy służby">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
         </a>
@@ -498,30 +417,30 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
-  <a class="vp-item active" href="10-statystyki.html">
+  <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
       <span class="vp-name">Statystyki dnia — z lotami</span>
       <span class="vp-when">Standard: tabela lotów z ołówkami korekty, bilans paliwa i MH, rozliczenie zrzutów (scenariusz 22 JUN — 6 lotów).</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="10a-statystyki-zero.html">
+  <a class="vp-item active" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
       <span class="vp-name">Statystyki dnia — bez lotów</span>
-      <span class="vp-when">Dzień zamknięty bez ani jednego lotu: pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji; edycja wraca do odczytów końcowych (09A).</span>
+      <span class="vp-when">Dzień zamknięty bez ani jednego lotu: pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji i klienta. Duty i odczyty końcowe są — dzień bez lotów to wciąż zamknięty dzień. Oś alternatywna względem 10.</span>
     </span>
+    <span class="vp-tag">ten ekran</span>
   </a>
 </aside>
 
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="09-end-of-day.html">← 09 Zakończenie</a>
+  <a href="09a-end-of-day-zero.html">← 09A Bez lotów</a>
   <span>·</span>
-  <a href="10-statystyki.html" class="active">10 Statystyki</a>
-  <a href="10a-statystyki-zero.html">10A Bez lotów</a>
+  <a href="10-statystyki.html">10 Statystyki</a>
+  <a href="10a-statystyki-zero.html" class="active">10A Bez lotów</a>
   <span>·</span>
   <a href="11-eksport.html">11 Synchronizacja →</a>
 </nav>

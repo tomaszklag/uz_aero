@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 13 Ustawienia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%), linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+
+  .phone { width:393px; height:852px; border-radius:54px; background:var(--bg); border:10px solid #0D0E12; box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03); overflow:hidden; position:relative; isolation:isolate; flex-shrink:0; transform:scale(var(--phone-scale)); transform-origin:top center; margin-bottom:calc((var(--phone-scale) - 1) * 852px); }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .wifi-off { color:var(--amber); }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* app header */
+  .app-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .back-btn { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); text-decoration:none; padding:8px 10px; border-radius:8px; border:1px solid var(--border); min-height:38px; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .offline-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--amber-muted); border:1px solid var(--amber-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+
+  /* sekcja — wzorzec formularzy z 09 */
+  .form-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
+  .form-section-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:6px; }
+  .form-section-title::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
+  .section-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); line-height:1.6; }
+  .section-note b { color:var(--green); font-weight:700; }
+
+  /* ── MOTYW — lista kart (nie natywny select), zaznaczony = zielona obramówka ── */
+  .theme-card {
+    display:flex; align-items:center; gap:11px;
+    background:var(--surface-raised); border:1px solid var(--border); border-radius:12px;
+    padding:10px 12px; cursor:pointer; min-height:52px;
+  }
+  .theme-card.selected { border-color:var(--green-border); background:rgba(46,204,113,0.05); box-shadow:0 0 0 3px rgba(46,204,113,0.05); }
+  .theme-swatch { display:flex; align-items:center; flex-shrink:0; }
+  .theme-swatch span { width:22px; height:22px; border-radius:50%; border:2px solid var(--border-strong); }
+  .theme-swatch span + span { margin-left:-8px; }
+  .theme-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .theme-name { font-size:13.5px; font-weight:600; color:var(--text-primary); }
+  .theme-desc { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .theme-check { color:var(--green); flex-shrink:0; opacity:0; }
+  .theme-card.selected .theme-check { opacity:1; }
+  .theme-preview-link { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; min-height:34px; padding:7px 12px; border-radius:999px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-secondary); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; text-decoration:none; }
+  .theme-preview-link:hover { color:var(--text-primary); border-color:var(--border-strong); }
+
+  /* ── wiersz akcji (PIN, wylogowanie) ── */
+  .action-item {
+    display:flex; align-items:center; gap:11px;
+    background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px;
+    padding:12px 14px; cursor:pointer; min-height:50px; width:100%;
+    color:var(--text-primary); font-family:var(--font-body); text-align:left;
+  }
+  .action-item:hover { background:var(--surface-hover); }
+  .action-icon { width:34px; height:34px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface); border:1px solid var(--border); color:var(--text-secondary); }
+  .action-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .action-name { font-size:13.5px; font-weight:600; color:var(--text-primary); }
+  .action-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .action-chevron { color:var(--text-muted); flex-shrink:0; }
+  .action-item.disabled { opacity:0.45; cursor:not-allowed; }
+  .action-item.disabled:hover { background:var(--surface-raised); }
+
+  /* ── konto ── */
+  .profile-chip { display:flex; align-items:center; gap:12px; background:var(--surface-raised); border:1px solid var(--border); border-radius:14px; padding:11px 14px; }
+  .avatar { width:44px; height:44px; border-radius:50%; background:var(--green-muted); border:1px solid var(--green-border); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:14px; color:var(--green); flex-shrink:0; }
+  .profile-text { display:flex; flex-direction:column; gap:3px; }
+  .profile-name { font-size:15px; font-weight:600; color:var(--text-primary); line-height:1; }
+  .profile-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+
+  /* Ochrona wylogowania (3.0) — wzorzec .outbox-guard z 00-login */
+  .outbox-guard {
+    display:flex; align-items:flex-start; gap:8px;
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:10px; padding:9px 11px;
+    font-size:10.5px; color:var(--text-secondary); line-height:1.5; text-align:left;
+  }
+  .outbox-guard svg { flex-shrink:0; margin-top:1px; color:var(--amber); }
+  .outbox-guard b { color:var(--amber); font-weight:600; }
+
+  /* ── diagnostyka GPS ── */
+  .diag-row { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid var(--border); }
+  .diag-row:last-of-type { border-bottom:none; }
+  .diag-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
+  .diag-val { font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.5px; color:var(--text-primary); text-align:right; }
+  .diag-val.green { color:var(--green); }
+  .diag-val small { font-size:9px; font-weight:400; color:var(--text-secondary); }
+  .btn-refresh { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:44px; padding:12px; border-radius:12px; background:var(--surface-raised); color:var(--text-secondary); font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; border:1px solid var(--border-strong); cursor:pointer; }
+  .btn-refresh:hover { background:var(--surface-hover); color:var(--text-primary); }
+
+  /* ── o aplikacji ── */
+  .ref-sync { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
+  .ref-sync .dot { width:6px; height:6px; border-radius:50%; background:var(--amber); flex-shrink:0; }
+
+  /* ── ARKUSZ ZMIANY PIN — offline, dwa kroki ── */
+  .sheet-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.74); display:none; flex-direction:column; justify-content:flex-end; }
+  .sheet-overlay.open { display:flex; }
+  .sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:16px 16px 26px; display:flex; flex-direction:column; align-items:center; gap:12px; border-top:1px solid var(--border-strong); }
+  .sheet-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); }
+  .sheet-title { font-family:var(--font-display); font-size:23px; letter-spacing:2px; color:var(--text-primary); align-self:flex-start; }
+  .pin-step { font-family:var(--font-mono); font-size:9px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); min-height:14px; }
+  .pin-step.ok { color:var(--green); }
+  .pin-dots { display:flex; gap:18px; margin:4px 0 8px; }
+  .pin-dots span { width:13px; height:13px; border-radius:50%; border:1.5px solid var(--border-strong); background:transparent; transition:all 0.15s ease; }
+  .pin-dots span.filled { background:var(--green); border-color:var(--green); box-shadow:0 0 12px var(--green-glow); }
+  .numpad { display:grid; grid-template-columns:repeat(3, 78px); gap:10px 16px; justify-content:center; }
+  .num-btn { height:58px; border-radius:14px; background:var(--surface); border:1px solid var(--border); color:var(--text-primary); font-family:var(--font-mono); font-size:20px; font-weight:500; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.12s ease; user-select:none; }
+  .num-btn:hover { background:var(--surface-hover); border-color:var(--border-strong); }
+  .num-btn:active { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .num-btn.ghost { background:transparent; border-color:transparent; color:var(--text-muted); }
+  .sheet-cancel { margin-top:4px; font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); background:none; border:none; cursor:pointer; padding:10px 16px; min-height:40px; }
+  .sheet-cancel:hover { color:var(--text-primary); }
+  .sheet-offline-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--green); display:flex; align-items:center; gap:6px; }
+
+  /* ===== PANEL „DOKĄD STĄD?" ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 13</span>
+  <span class="slug">ustawienia · motyw · pin · konto · gps</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ekran 13</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Ustawienia">
+  <div class="status-bar">
+    <span>12:47</span>
+    <span class="status-right">
+      <!-- sieć padła — wifi przekreślone; GPS ma się świetnie (sekcja Diagnostyka) -->
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5" opacity="0.4"/><rect x="10" y="2" width="3" height="10" rx="0.5" opacity="0.4"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg class="wifi-off" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="16" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="04-cockpit-ground.html" class="back-btn">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
+        Kokpit
+      </a>
+      <span class="screen-title">USTAWIENIA</span>
+      <div class="offline-chip" title="Brak sieci — 3 zapisy czekają na wysyłkę; wyślą się same po powrocie zasięgu. Ustawienia działają w pełni offline.">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        Offline · 3
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ══ MOTYW ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Motyw wyświetlacza</div>
+
+        <div class="theme-card selected" id="th-night" onclick="pickTheme('night')">
+          <span class="theme-swatch"><span style="background:#0D0D0D;"></span><span style="background:#2ECC71;"></span></span>
+          <span class="theme-body">
+            <span class="theme-name">Night</span>
+            <span class="theme-desc">ciemny · domyślny · kokpit po zmroku</span>
+          </span>
+          <svg class="theme-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="theme-card" id="th-paper" onclick="pickTheme('paper')">
+          <span class="theme-swatch"><span style="background:#F4EEE1;"></span><span style="background:#1E7A40;"></span></span>
+          <span class="theme-body">
+            <span class="theme-name">Paper</span>
+            <span class="theme-desc">ciepła biel · mniej odblasków za dnia</span>
+          </span>
+          <svg class="theme-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="theme-card" id="th-solar" onclick="pickTheme('solar')">
+          <span class="theme-swatch"><span style="background:#FFFFFF;"></span><span style="background:#000000;"></span></span>
+          <span class="theme-body">
+            <span class="theme-name">Solar</span>
+            <span class="theme-desc">maksymalny kontrast · ostre słońce</span>
+          </span>
+          <svg class="theme-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="theme-card" id="th-sky" onclick="pickTheme('sky')">
+          <span class="theme-swatch"><span style="background:#E9EFF5;"></span><span style="background:#16528E;"></span></span>
+          <span class="theme-body">
+            <span class="theme-name">Sky</span>
+            <span class="theme-desc">jasny błękitno-szary · day mode awioniki</span>
+          </span>
+          <svg class="theme-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="theme-card" id="th-amber" onclick="pickTheme('amber')">
+          <span class="theme-swatch"><span style="background:#070400;"></span><span style="background:#FFB020;"></span></span>
+          <span class="theme-body">
+            <span class="theme-name">Amber</span>
+            <span class="theme-desc">bursztyn na czerni · klasyczny kokpit / NVG</span>
+          </span>
+          <svg class="theme-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+
+        <a href="05-themes.html" class="theme-preview-link">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Podgląd motywów w kokpicie
+        </a>
+        <div class="section-note">Zapisywany na telefonie, per pilot — <b>działa offline</b>.</div>
+      </div>
+
+      <!-- ══ PIN ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Bezpieczeństwo</div>
+        <button class="action-item" onclick="openPin()">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Zmień PIN</span>
+            <span class="action-sub">najpierw obecny PIN, potem nowy</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </button>
+        <div class="section-note">PIN sprawdzany lokalnie na telefonie — zmiana <b>działa w 100% offline</b>.</div>
+      </div>
+
+      <!-- ══ KONTO ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Konto</div>
+        <div class="profile-chip">
+          <div class="avatar">TM</div>
+          <div class="profile-text">
+            <span class="profile-name">Tomasz Małkiewicz</span>
+            <span class="profile-sub">TMK · tomasz@uzaero.pl</span>
+          </div>
+        </div>
+
+        <!-- Wylogowanie zablokowane: niepusty outbox (3.0) — disabled Z POWODEM, nigdy cichy błąd -->
+        <button class="action-item disabled" title="Zablokowane: 3 zapisy z dzisiejszej sesji nie dotarły jeszcze na serwer" aria-disabled="true">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Wyloguj i zmień konto</span>
+            <span class="action-sub">niedostępne — 3 zapisy czekają na wysyłkę</span>
+          </span>
+        </button>
+
+        <div class="outbox-guard">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><b>3 zapisy z dzisiejszej sesji</b> nie dotarły jeszcze na serwer — wylogowanie by je skasowało. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.</span>
+        </div>
+        <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> — konta zakłada administrator.</div>
+      </div>
+
+      <!-- ══ DIAGNOSTYKA GPS — czujnik lokalny, oś niezależna od sieci ══ -->
+      <div class="form-section">
+        <div class="form-section-title">Diagnostyka GPS</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Status</span>
+            <span class="diag-val green">FIX 3D · 11 satelitów</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Ostatni fix</span>
+            <span class="diag-val" id="fixTime">12:47:29 UTC <small id="fixAge">· 2 s temu</small></span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Dokładność</span>
+            <span class="diag-val">± 4 m</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Pozycja</span>
+            <span class="diag-val">50°04.7'N 019°47.1'E</span>
+          </div>
+        </div>
+        <button class="btn-refresh" onclick="refreshFix()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Odśwież
+        </button>
+        <div class="section-note">Czujnik lokalny — odczyt <b>działa bez zasięgu</b>. Brak fixa w locie zobaczysz w kokpicie jako czerwony baner (05G).</div>
+      </div>
+
+      <!-- ══ O APLIKACJI ══ -->
+      <div class="form-section">
+        <div class="form-section-title">O aplikacji</div>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Aplikacja</span>
+            <span class="diag-val">UZ Aero · <small>v1.0.0-alpha</small></span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Samolot sesji</span>
+            <span class="diag-val">SP-AXA <small>· Cessna 182</small></span>
+          </div>
+        </div>
+        <div class="ref-sync" title="Samoloty, konfiguracje, piloci — pobierane z serwera przy każdym starcie z siecią; teraz offline, więc pokazujemy wiek danych">
+          <span class="dot"></span>Dane referencyjne · sync 09:41 UTC
+        </div>
+        <div class="section-note">Offline — dane referencyjne odświeżą się same po powrocie zasięgu.</div>
+      </div>
+
+    </div>
+
+    <!-- ═══ ARKUSZ ZMIANY PIN — dwa kroki, w pełni offline ═══ -->
+    <div class="sheet-overlay" id="pinSheet">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">ZMIEŃ PIN</div>
+        <div class="pin-step" id="pinStep">Wpisz obecny PIN</div>
+        <div class="pin-dots" id="pinDots">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="numpad">
+          <div class="num-btn" onclick="press()">1</div>
+          <div class="num-btn" onclick="press()">2</div>
+          <div class="num-btn" onclick="press()">3</div>
+          <div class="num-btn" onclick="press()">4</div>
+          <div class="num-btn" onclick="press()">5</div>
+          <div class="num-btn" onclick="press()">6</div>
+          <div class="num-btn" onclick="press()">7</div>
+          <div class="num-btn" onclick="press()">8</div>
+          <div class="num-btn" onclick="press()">9</div>
+          <div class="num-btn ghost"></div>
+          <div class="num-btn" onclick="press()">0</div>
+          <div class="num-btn ghost" onclick="back()" title="Usuń cyfrę">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+          </div>
+        </div>
+        <div class="sheet-offline-note">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Sprawdzane lokalnie — bez zasięgu też działa
+        </div>
+        <button class="sheet-cancel" onclick="closePin()">Anuluj</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Dokąd stąd?</div>
+  <a class="vp-item active" href="13-ustawienia.html">
+    <span class="vp-badge">13</span>
+    <span class="vp-body">
+      <span class="vp-name">Ustawienia</span>
+      <span class="vp-when">Wejście zębatką z app-baru kokpitu (04, 04A, 05, 05A–05D). Wszystko tu działa offline — jedyna akcja wymagająca sieci (wylogowanie → ponowny login) jest disabled z podanym powodem, a przy niepustej kolejce wysyłki chroni ją amber-box (wzorzec z 00).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="05-themes.html">
+    <span class="vp-badge">05T</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd motywów</span>
+      <span class="vp-when">Pięć motywów przełączanych na żywym ekranie kokpitu — sekcja „Motyw" prowadzi tutaj.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="04-cockpit-ground.html">
+    <span class="vp-badge">04</span>
+    <span class="vp-body">
+      <span class="vp-name">Kokpit — powrót</span>
+      <span class="vp-when">Strzałka wstecz wraca dokładnie tam, skąd przyszła zębatka.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="04-cockpit-ground.html">← 04 Kokpit ground</a>
+  <a href="05-cockpit-running.html">← 05 Kokpit lot</a>
+  <a href="13-ustawienia.html" class="active">13 Ustawienia</a>
+  <a href="05-themes.html">05-T Motywy</a>
+</nav>
+
+<script>
+  // ── Motyw: lista kart, zaznaczenie = zielona obramówka (bez natywnego selecta) ──
+  function pickTheme(t) {
+    ['night','paper','solar','sky','amber'].forEach(k =>
+      document.getElementById('th-' + k).classList.toggle('selected', k === t));
+  }
+
+  // ── Diagnostyka GPS: odświeżenie fixa (czujnik lokalny — zero sieci) ──
+  function refreshFix() {
+    document.getElementById('fixTime').childNodes[0].textContent = '12:47:41 UTC ';
+    document.getElementById('fixAge').textContent = '· przed chwilą';
+  }
+
+  // ── Zmiana PIN: dwa kroki (obecny → nowy), sprawdzane lokalnie (3.0) ──
+  const dots = [...document.querySelectorAll('#pinDots span')];
+  const stepEl = document.getElementById('pinStep');
+  let pin = '', phase = 'current';
+  function render() { dots.forEach((el, i) => el.classList.toggle('filled', i < pin.length)); }
+  function openPin() {
+    pin = ''; phase = 'current';
+    stepEl.textContent = 'Wpisz obecny PIN'; stepEl.classList.remove('ok');
+    render();
+    document.getElementById('pinSheet').classList.add('open');
+  }
+  function closePin() { document.getElementById('pinSheet').classList.remove('open'); }
+  function press() {
+    if (pin.length >= 4) return;
+    pin += '•'; render();
+    if (pin.length === 4) {
+      if (phase === 'current') {
+        phase = 'new';
+        setTimeout(() => { pin = ''; render(); stepEl.textContent = 'Ustaw nowy PIN'; }, 380);
+      } else {
+        stepEl.textContent = 'PIN zmieniony ✓'; stepEl.classList.add('ok');
+        setTimeout(closePin, 900);
+      }
+    }
+  }
+  function back() { pin = pin.slice(0, -1); render(); }
+</script>
+
+</body>
+</html>

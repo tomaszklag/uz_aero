@@ -504,6 +504,30 @@
       <div class="card-tags"><span class="tag amber">korekta</span><span class="tag">fallback GPS</span></div>
     </div>
   </a>
+  <a href="05g-cockpit-no-gps.html" class="card red">
+    <div class="card-num">05G</div>
+    <div class="card-body">
+      <div class="card-title">05g-cockpit-no-gps</div>
+      <div class="card-desc">Kokpit bez fixa GPS — degradacja czujnika (nie sieci!): czerwony baner statusowy, parametry „— —" z wiekiem fixa, autodetekcja wstrzymana, wejścia ręczne aktywne; SyncChip osobno pokazuje sieć (tu: zielony SYNC)</div>
+      <div class="card-tags"><span class="tag red">no GPS</span><span class="tag">degradacja czujnika</span><span class="tag amber">fallback ręczny</span></div>
+    </div>
+  </a>
+  <a href="09a-end-of-day-zero.html" class="card amber">
+    <div class="card-num">09A</div>
+    <div class="card-body">
+      <div class="card-title">09a-end-of-day-zero</div>
+      <div class="card-desc">Zakończenie dnia bez lotów — uczciwe zera (block 0:00, St/Ld 0/0), amber-box „żaden lot nie został zapisany"; odczyty MH/paliwa nadal wymagane (łańcuch przekazań 4.5 obowiązuje też bez lotów)</div>
+      <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">łańcuch MH</span></div>
+    </div>
+  </a>
+  <a href="10a-statystyki-zero.html" class="card amber">
+    <div class="card-num">10A</div>
+    <div class="card-body">
+      <div class="card-title">10a-statystyki-zero</div>
+      <div class="card-desc">Statystyki dnia bez lotów — pusta lista jako komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji i klienta; edycja wraca do odczytów końcowych</div>
+      <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">statystyki</span></div>
+    </div>
+  </a>
   <a href="05-themes.html" class="card">
     <div class="card-num">05T</div>
     <div class="card-body">
@@ -536,8 +560,16 @@
     <div class="card-num">08</div>
     <div class="card-body">
       <div class="card-title">08-lista-reczna</div>
-      <div class="card-desc">Ręczna lista wzlotów (fallback GPS) — tabela off-block/takeoff/landing/on-block + paliwo</div>
-      <div class="card-tags"><span class="tag">fallback GPS</span><span class="tag">tabela</span></div>
+      <div class="card-desc">Ręczna lista wzlotów (fallback GPS) — rejestr dnia z kolumną „Uwagi" + interaktywny arkusz „Nowy wpis ręczny" (§3.8: 4 czasy ze stepperami ±1 min, uwagi, chip RĘCZNIE)</div>
+      <div class="card-tags"><span class="tag">fallback GPS</span><span class="tag">tabela</span><span class="tag amber">wpis ręczny</span></div>
+    </div>
+  </a>
+  <a href="13-ustawienia.html" class="card">
+    <div class="card-num">13</div>
+    <div class="card-body">
+      <div class="card-title">13-ustawienia</div>
+      <div class="card-desc">Ustawienia (zębatka w app-barze kokpitu) — motyw (5 kart), zmiana PIN offline, konto z ochroną wylogowania przy niewysłanych zapisach, diagnostyka GPS, o aplikacji ze stemplem danych referencyjnych</div>
+      <div class="card-tags"><span class="tag">ustawienia</span><span class="tag green">offline OK</span><span class="tag amber">ochrona wylogowania</span></div>
     </div>
   </a>
 </div>

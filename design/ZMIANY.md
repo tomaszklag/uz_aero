@@ -598,4 +598,73 @@ w projekcie leżały na ścieżkach awaryjnych.
 > - 00b (offline bez profilu): świadomie pominięty — przypadek praktycznie niemożliwy;
 >   usunięty z paneli wariantów 00/00a, plik zostaje (dostępny z index)
 
+## 2026-07-28 — Backlog UX z audytu: degradacja GPS, wpis ręczny, ustawienia, stany zerowe
+
+**05g-cockpit-no-gps (nowy) — degradacja CZUJNIKA dostała ekran** (ryzyko 🔴, sekcja 8)
+> Dokumentacja klasyfikuje fałszywe/brakujące detekcje GPS jako ryzyko 🔴, a klasa `.no-gps`
+> siedziała w 05 zdefiniowana i nigdy nieużyta — utrata fixa w locie nie miała ŻADNEJ
+> sygnalizacji. Kluczowe rozróżnienie: to awaria **czujnika**, nie łączności — dwie osie,
+> których nie wolno zlać w jeden wskaźnik.
+> - Baner **Typ A** (przyrząd, nie zamyka się): „GPS: brak sygnału · autodetekcja
+>   wstrzymana" + ostatni fix 15:58 (12 min temu). **Czerwony**, bo w locie niezauważony
+>   brak fixa = niezapisane lądowanie; ta sama degradacja na ziemi miałaby wagę amber
+>   (start/stop silnika i tak są ręczne) — gradacja opisana w panelu wariantów
+> - Parametry z czujnika w siatce jako „— —" z adnotacją „brak fixa od 15:58";
+>   FOB (szacunek ze zużycia) i Flight Time (zegar) zostają żywe — dane lokalne
+> - Wejścia ręczne przejmują: LAND awansuje na amber „LAND · RĘCZNIE" → 05F,
+>   baner linkuje 05F i 08; STOP disabled jak w 05 (w locie); Zrzut działa
+>   (wysokość z wysokościomierza — tooltip)
+> - **SyncChip celowo zielony SYNC przy martwym GPS** — dokładnie ten przypadek pokazuje,
+>   że sieć i czujnik to osobne tory (wysyłka zdarzeń biegnie dalej)
+> - 05G dodany do state-sidebarów całej rodziny (05, 05a–05d, 05-themes) i paneli 05e/05f
+
+**08-lista-reczna — martwe „Dodaj wpis" ożyło + kolumna „Uwagi"** (§3.8)
+> Oba przyciski („Dodaj wpis" w nagłówku i „Dodaj zdarzenie ręcznie" w aktywnym cyklu)
+> otwierają arkusz nad ekranem (wzorzec 04c/05f): **cztery czasy §3.8** — off block /
+> takeoff / landing / on block (UTC, steppery ±1 min, cele 46 px) + opcjonalne „Uwagi".
+> Zapis dopisuje grupę „Wpis ręczny" do rejestru z chipem **RĘCZNIE** (amber, wzorzec
+> z 10) — mockup interaktywny, prefill = kanoniczny Lot 5 (14:21→15:03), czyli ten,
+> który w 10 ma chip RĘCZNIE.
+> „Uwagi" w pionowym logu jako stopka każdej grupy (puste = „—") — dosłowna kolumna
+> nie mieści się w 393 px, a stopka zachowuje kontrakt §3.8: każdy wpis ma swoje uwagi.
+> Panelu wariantów zgodnie z planem NIE dodano (pojedynczy ekran — PLAN.md „nie dotyczy").
+
+**13-ustawienia (nowy) — 8 martwych zębatek wreszcie ma cel**
+> Zębatki w app-barach 04, 04a, 05, 05a–05d i 05-themes były `<div>`-ami bez akcji —
+> kolejny przypadek „szczęśliwa ścieżka wyklikana, boczna kończy się divem". Wszystkie
+> (plus nowa w 05G) prowadzą teraz do 13. Ekran zamrożony w stanie **Offline · 3**,
+> bo wtedy widać wszystkie obiecane zabezpieczenia naraz:
+> - **Motyw**: 5 kart z podglądem kolorów (swatche z 05-themes), zaznaczenie = zielona
+>   obramówka, link do podglądu 05-T; per pilot, offline
+> - **PIN**: „Zmień PIN" → arkusz z numpadem (58 px) w dwóch krokach (obecny → nowy),
+>   jawnie oznaczone „sprawdzane lokalnie — bez zasięgu też działa" (3.0)
+> - **Konto**: profil TMK; „Wyloguj i zmień konto" **disabled z powodem** + amber-box
+>   (wzorzec .outbox-guard z 00-login, język pilota: „3 zapisy czekają na wysyłkę")
+>   + stała nota „ponowne logowanie wymaga internetu — konta zakłada administrator"
+> - **Diagnostyka GPS**: fix, wiek, dokładność ±m, pozycja, „Odśwież" — czujnik lokalny
+>   działa offline; to lustrzane dopełnienie 05G (tam GPS padł przy żywej sieci,
+>   tu sieć padła przy żywym GPS — dwie osie widać z obu stron)
+> - **O aplikacji**: wersja v1.0.0-alpha (spójna z 01) + stempel „Dane referencyjne ·
+>   sync 09:41 UTC" w stanie cache (amber — offline)
+> - Nav-strip 04 i 05 dostały link „13 Ustawienia"
+
+**09a / 10a (nowe) — dzień zamknięty bez lotów przestał być niezaprojektowany**
+> „Zakończ dzień" jest dostępny zawsze (design-notes: pilot mógł tylko zatankować
+> i skończyć), ale 09/10 zakładały 6 lotów — stan zerowy nie istniał.
+> - **09a**: uczciwe zera w pasku (0 lotów, block 0:00, St/Ld 0/0), amber-box Typ B
+>   „Żaden lot nie został zapisany" (znika z warunkiem), duty 08:00→11:30 liczony
+>   normalnie. **Odczyty końcowe nadal wymagane**: 150 L i 1 234:30 MH bez zmian —
+>   łańcuch przekazań (4.5) obowiązuje też w dzień bez lotów; handover-box tłumaczy,
+>   że potwierdzenie „liczniki się nie ruszyły" chroni następnego pilota przed dziurą
+> - **10a**: pusta lista lotów = komunikat wprost („Żaden lot nie został zapisany",
+>   zero kreatywnej grafiki), średnie zużycie „— —" z powodem (block 0:00 — nie dzielimy
+>   przez zero), MH Δ +0:00, **zrzuty 0 z operacją** (SKOKI · 0 wyniesień, klient
+>   SKY CAMP — rozliczenie musi widzieć odwołany dzień); „Edytuj dane" wraca do 09a,
+>   bo w dniu bez lotów jedyne dane to odczyty i czasy (ołówków nie ma — nie ma wierszy)
+> - Panele „Warianty tego ekranu" na 09/09a i 10/10a (amber badge dla wariantów
+>   zerowych); oś alternatywna względem kanonicznego 22 JUN — wariant, nie kontynuacja
+
+**Index**: karty 05G / 09A / 10A w „Warianty i stany", 13 w „Akcje ground";
+opis karty 08 zaktualizowany o arkusz wpisu i kolumnę „Uwagi".
+
 <!-- Dodawaj kolejne iteracje poniżej -->
