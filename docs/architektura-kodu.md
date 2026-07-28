@@ -24,6 +24,27 @@ Uproszczony CQRS: komendy piszą, zapytania czytają projekcje; bez szyny zdarze
 i osobnej bazy odczytu — projekcje odświeżane synchronicznie w transakcji przyjęcia
 zdarzeń. Przy skali klubu każdy dodatkowy ruchomy element to koszt bez zysku.
 
+Stan po M2: `POST /events` (idempotencja po uuid, single-writer egzekwowany tożsamością
+z JWT), projekcja `sessions` odświeżana w transakcji przyjęcia, flagi łańcucha MH
+(`mh_gap` / `mh_regression` / `session_overlap` — czysta funkcja `server/src/domain/mhChain.ts`,
+tolerancja 0,05 h), `GET /aircraft/:id/state` i `GET /sessions/:uuid/sync-status`.
+Serwer projektuje sesje `projectSession` z `@uzaero/domain` — liczby kanonicznego dnia
+wychodzą identyczne jak na ekranie 10 telefonu, co przybija test integracyjny.
+
+**Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
+jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób
+(`http/routes/*.ts`); mapowania jako osobne, nazwane moduły (`application/sessionRow.ts`);
+wspólna autoryzacja w jednym miejscu (`http/authorize.ts`). Warstw NIE przybywa —
+kierunek zależności zostaje; chodzi o to, żeby plik dało się przeczytać w całości
+i żeby nazwa mówiła, co w środku.
+
+**Spójność modeli bez ORM:** źródłem prawdy jest `@uzaero/domain`, a styki pilnują testy
+kontraktowe — `test/schema.test.ts` (listy kolumn PG przybite na sztywno, na PGlite;
+lustro `sqliteSchema.test.ts` z aplikacji) i `test/contract.test.ts` (każdy typ zdarzenia
+domeny musi przechodzić przez kopertę zod `/events`; wiersz `sessions` musi odtwarzać
+liczby `projectSession`, nie liczyć własnych). Nowe pole w domenie bez aktualizacji
+koperty wywala test, a nie produkcyjny sync.
+
 Wybory infrastrukturalne serwera (i dlaczego):
 - **scrypt z `node:crypto`** zamiast argon2 — argon2 to natywny addon (node-gyp),
   scrypt jest wbudowany i wystarczający; parametry KDF zapisane w hashu, więc da się

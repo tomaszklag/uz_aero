@@ -10,11 +10,18 @@ import { Pool } from 'pg';
 import { z } from 'zod';
 
 import { AuthCommands } from './application/commands/auth.ts';
+import { IngestCommands } from './application/commands/ingest.ts';
 import { ReferenceQueries } from './application/queries/reference.ts';
+import { StateQueries } from './application/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
+import { PgDatabase } from './infrastructure/pg/database.ts';
+import { PgEventsStore } from './infrastructure/pg/eventsStore.ts';
+import { PgFlagsRepo } from './infrastructure/pg/flagsRepo.ts';
+import { PgSessionsProjection } from './infrastructure/pg/sessionsProjection.ts';
 import { migrate } from './infrastructure/pg/migrate.ts';
-import { PgPilotsRepo, PgRefreshTokens } from './infrastructure/pg/pilotsRepo.ts';
+import { PgPilotsRepo } from './infrastructure/pg/pilotsRepo.ts';
+import { PgRefreshTokens } from './infrastructure/pg/refreshTokensRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/referenceRepo.ts';
 import { buildServer } from './http/server.ts';
 
@@ -28,19 +35,27 @@ const env = z
 
 const clock = { now: () => new Date() };
 const pool = new Pool({ connectionString: env.DATABASE_URL });
+const db = new PgDatabase(pool);
 
-await migrate(pool);
+await migrate(db);
+
+const tokens = new Hs256Tokens(env.JWT_SECRET, clock);
+const events = new PgEventsStore();
+const sessions = new PgSessionsProjection();
+const flags = new PgFlagsRepo();
 
 const app = buildServer({
   auth: new AuthCommands(
-    new PgPilotsRepo(pool),
-    new PgRefreshTokens(pool, clock),
+    new PgPilotsRepo(db),
+    new PgRefreshTokens(db, clock),
     new ScryptHasher(),
-    new Hs256Tokens(env.JWT_SECRET, clock),
+    tokens,
     clock,
   ),
-  reference: new ReferenceQueries(new PgReferenceRepo(pool)),
-  tokens: new Hs256Tokens(env.JWT_SECRET, clock),
+  reference: new ReferenceQueries(new PgReferenceRepo(db)),
+  ingest: new IngestCommands(db, events, sessions, flags),
+  state: new StateQueries(db, events, sessions, flags),
+  tokens,
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

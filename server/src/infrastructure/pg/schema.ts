@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -64,4 +64,49 @@ export const MIGRATION_1 = `
   CREATE INDEX IF NOT EXISTS idx_events_aircraft ON events (aircraft_id);
 `;
 
-export const MIGRATIONS: readonly string[] = [MIGRATION_1];
+/**
+ * Migracja 2: projekcje po stronie serwera (§5.3).
+ *
+ * `sessions` NIE jest źródłem prawdy — to zrzut `projectSession(events)` odświeżany
+ * w tej samej transakcji, w której przyjmujemy zdarzenia. Kolumny liczbowe trzymamy
+ * po to, żeby `state`, `sync-status` i (w M4) eksport nie musiały wczytywać strumienia.
+ *
+ * `flags` żyją osobno od sesji: jedna flaga może dotyczyć DWÓCH sesji (nakładka po
+ * przejęciu offline), a jej cykl życia (open → resolved) jest dłuższy niż dzień lotny.
+ */
+export const MIGRATION_2 = `
+  CREATE TABLE IF NOT EXISTS sessions (
+    session_uuid  TEXT PRIMARY KEY,
+    aircraft_id   TEXT NOT NULL,
+    pic_id        TEXT NOT NULL,
+    dual_id       TEXT,
+    status        TEXT NOT NULL DEFAULT 'active',
+    claim_time    BIGINT,
+    close_time    BIGINT,
+    mh_start      DOUBLE PRECISION,
+    mh_end        DOUBLE PRECISION,
+    fuel_start_l  DOUBLE PRECISION,
+    fuel_end_l    DOUBLE PRECISION,
+    fuel_last_l   DOUBLE PRECISION,
+    mh_last       DOUBLE PRECISION,
+    block_ms      BIGINT NOT NULL DEFAULT 0,
+    flight_ms     BIGINT NOT NULL DEFAULT 0,
+    flights_count INTEGER NOT NULL DEFAULT 0,
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS idx_sessions_aircraft ON sessions (aircraft_id);
+
+  CREATE TABLE IF NOT EXISTS flags (
+    id            SERIAL PRIMARY KEY,
+    type          TEXT NOT NULL,
+    aircraft_id   TEXT NOT NULL,
+    session_uuids TEXT[] NOT NULL,
+    details       JSONB NOT NULL DEFAULT '{}'::jsonb,
+    status        TEXT NOT NULL DEFAULT 'open',
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    resolved_at   TIMESTAMPTZ
+  );
+  CREATE INDEX IF NOT EXISTS idx_flags_aircraft ON flags (aircraft_id) WHERE status = 'open';
+`;
+
+export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2];

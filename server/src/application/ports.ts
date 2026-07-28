@@ -12,7 +12,7 @@
  * serwer, kilkunastu pilotów) każdy dodatkowy ruchomy element to koszt bez zysku.
  */
 
-import type { ReferenceAircraft, ReferencePilot } from '@uzaero/domain';
+import type { Event, ReferenceAircraft, ReferencePilot } from '@uzaero/domain';
 
 // ── magazyn ─────────────────────────────────────────────────────────────────────
 
@@ -23,6 +23,15 @@ import type { ReferenceAircraft, ReferencePilot } from '@uzaero/domain';
  */
 export interface Queryable {
   query<R = unknown>(text: string, params?: unknown[]): Promise<{ rows: R[] }>;
+}
+
+/**
+ * Baza z transakcjami. Przyjęcie paczki zdarzeń jest atomowe: wstawienie + odświeżenie
+ * projekcji + flagi w JEDNEJ transakcji — telefon, który dostał odpowiedź, może uznać
+ * zdarzenia za dostarczone, a stan `sessions` nigdy nie wyprzedza ani nie goni `events`.
+ */
+export interface Database extends Queryable {
+  transaction<T>(fn: (tx: Queryable) => Promise<T>): Promise<T>;
 }
 
 // ── piloci i uwierzytelnienie ───────────────────────────────────────────────────
@@ -82,6 +91,71 @@ export interface ReferenceSnapshot {
 
 export interface ReferencePort {
   snapshot(): Promise<ReferenceSnapshot>;
+}
+
+// ── zdarzenia, sesje, flagi (M2) ────────────────────────────────────────────────
+
+export interface EventsStorePort {
+  /** Wstawia paczkę; duplikaty po `uuid` pomija (idempotencja synca §4.3). */
+  insertBatch(
+    tx: Queryable,
+    events: readonly Event[],
+    sourceDevice: string | null,
+  ): Promise<{ accepted: number; duplicates: number }>;
+  /** Pełny strumień sesji — wejście `projectSession`. */
+  sessionEvents(db: Queryable, sessionUuid: string): Promise<Event[]>;
+  /** Znacznik ostatniego przyjęcia zdarzenia samolotu (do `last_sync_at`). */
+  lastReceivedAt(db: Queryable, aircraftId: string): Promise<Date | null>;
+  /** Liczba zdarzeń sesji przyjętych przez serwer (do `sync-status`). */
+  countForSession(db: Queryable, sessionUuid: string): Promise<number>;
+}
+
+/** Wiersz projekcji `sessions` — zrzut `projectSession`, nigdy źródło prawdy. */
+export interface SessionRow {
+  sessionUuid: string;
+  aircraftId: string;
+  picId: string;
+  dualId: string | null;
+  status: 'active' | 'closed';
+  claimTime: number | null;
+  closeTime: number | null;
+  mhStart: number | null;
+  mhEnd: number | null;
+  fuelStartL: number | null;
+  fuelEndL: number | null;
+  fuelLastL: number | null;
+  mhLast: number | null;
+  blockMs: number;
+  flightMs: number;
+  flightsCount: number;
+}
+
+export interface SessionsProjectionPort {
+  upsert(tx: Queryable, row: SessionRow): Promise<void>;
+  get(db: Queryable, sessionUuid: string): Promise<SessionRow | null>;
+  listByAircraft(db: Queryable, aircraftId: string): Promise<SessionRow[]>;
+}
+
+export interface FlagRecord {
+  id: number;
+  type: string;
+  aircraftId: string;
+  sessionUuids: string[];
+  details: Record<string, unknown>;
+  status: 'open' | 'resolved';
+}
+
+export interface FlagsPort {
+  /**
+   * Zapewnia OTWARTĄ flagę (typ + ten sam zestaw sesji) — wstawia tylko, gdy nie ma.
+   * Ponowny sync tych samych danych nie może mnożyć flag.
+   */
+  ensureOpen(
+    tx: Queryable,
+    flag: { type: string; aircraftId: string; sessionUuids: string[]; details: Record<string, unknown> },
+  ): Promise<void>;
+  openForSession(db: Queryable, sessionUuid: string): Promise<FlagRecord[]>;
+  openForAircraft(db: Queryable, aircraftId: string): Promise<FlagRecord[]>;
 }
 
 // ── zegar ───────────────────────────────────────────────────────────────────────

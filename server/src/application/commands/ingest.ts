@@ -1,0 +1,119 @@
+/**
+ * UZ Aero (serwer) — komenda przyjęcia paczki zdarzeń (`POST /events`, §4.3–4.5).
+ *
+ * Cała operacja jest JEDNĄ transakcją: wstawienie zdarzeń → przeliczenie projekcji
+ * dotkniętych sesji → flagi łańcucha MH. Telefon, który dostał odpowiedź, może
+ * oznaczyć zdarzenia jako wysłane; stan `sessions` nigdy nie rozjeżdża się z `events`.
+ *
+ * Dwie zasady, które ta komenda MUSI utrzymać:
+ *
+ *  • **Idempotencja** (§4.3): retry tej samej paczki daje `duplicates`, nie podwójne
+ *    wiersze. Klucz = uuid nadany przez telefon.
+ *  • **Serwer nie blokuje, flaguje** (§4.5): nakładka sesji, dziura albo cofnięcie
+ *    łańcucha MH nie odrzucają zdarzeń — trafiają do `flags` do wyjaśnienia. Jedyny
+ *    twardy warunek to TOŻSAMOŚĆ: paczkę sesji wysyła wyłącznie telefon jej PIC-a
+ *    (single-writer §4.4); cudze zdarzenia to nie konflikt danych, tylko brak
+ *    uprawnień.
+ *
+ * Projekcję liczy `projectSession` z `@uzaero/domain` — DOKŁADNIE ten sam kod, który
+ * liczy ekran statystyk na telefonie. Korekty (04c) wchodzą w wynik automatycznie,
+ * bo nakłada je sama projekcja.
+ */
+
+import type { Event } from '@uzaero/domain';
+
+import { chainFlags, type ChainLink } from '../../domain/mhChain.ts';
+import { sessionRowFrom } from '../sessionRow.ts';
+import type {
+  Database,
+  EventsStorePort,
+  FlagRecord,
+  FlagsPort,
+  Queryable,
+  SessionsProjectionPort,
+} from '../ports.ts';
+
+export interface IngestResult {
+  accepted: number;
+  duplicates: number;
+  /** Otwarte flagi dotykające przysłanych sesji — telefon pokaże je na ekranie 11. */
+  flags: FlagRecord[];
+}
+
+export type IngestOutcome =
+  | { ok: true; result: IngestResult }
+  | { ok: false; reason: 'not_session_pic' };
+
+export class IngestCommands {
+  constructor(
+    private readonly db: Database,
+    private readonly events: EventsStorePort,
+    private readonly sessions: SessionsProjectionPort,
+    private readonly flags: FlagsPort,
+  ) {}
+
+  async ingest(
+    senderPilotId: string,
+    batch: readonly Event[],
+    sourceDevice: string | null,
+  ): Promise<IngestOutcome> {
+    // Single-writer: każda paczka niesie zdarzenia podpisane PIC-em sesji; nadawca
+    // musi nim być. Odrzucamy CAŁĄ paczkę — częściowe przyjęcie rozjechałoby
+    // księgowość outboxa (telefon nie wie, które wiersze weszły).
+    if (batch.some((e) => e.picId !== senderPilotId)) {
+      return { ok: false, reason: 'not_session_pic' };
+    }
+
+    const result = await this.db.transaction(async (tx) => {
+      const { accepted, duplicates } = await this.events.insertBatch(tx, batch, sourceDevice);
+
+      // Projekcje przeliczamy per DOTKNIĘTA sesja — pełny strumień, nie przyrost.
+      // Strumień dnia to dziesiątki zdarzeń; odtwarzalność > mikrooptymalizacja.
+      const sessionUuids = [...new Set(batch.map((e) => e.sessionUuid))];
+      const aircraftIds = new Set<string>();
+
+      for (const sessionUuid of sessionUuids) {
+        const stream = await this.events.sessionEvents(tx, sessionUuid);
+        if (stream.length === 0) continue;
+        const row = sessionRowFrom(sessionUuid, stream);
+        await this.sessions.upsert(tx, row);
+        aircraftIds.add(row.aircraftId);
+      }
+
+      // Flagi liczymy per samolot, z CAŁEJ jego historii sesji — anomalia łańcucha
+      // z definicji dotyczy pary sesji, więc sama paczka nie wystarcza.
+      for (const aircraftId of aircraftIds) {
+        const links: ChainLink[] = (await this.sessions.listByAircraft(tx, aircraftId)).map(
+          (s) => ({
+            sessionUuid: s.sessionUuid,
+            mhStart: s.mhStart,
+            mhEnd: s.mhEnd,
+            closed: s.status === 'closed',
+          }),
+        );
+        for (const flag of chainFlags(links)) {
+          await this.flags.ensureOpen(tx, { ...flag, aircraftId });
+        }
+      }
+
+      const flags = await openFlagsFor(this.flags, tx, sessionUuids);
+      return { accepted, duplicates, flags };
+    });
+
+    return { ok: true, result };
+  }
+}
+
+async function openFlagsFor(
+  flags: FlagsPort,
+  db: Queryable,
+  sessionUuids: string[],
+): Promise<FlagRecord[]> {
+  const seen = new Map<number, FlagRecord>();
+  for (const uuid of sessionUuids) {
+    for (const flag of await flags.openForSession(db, uuid)) {
+      seen.set(flag.id, flag);
+    }
+  }
+  return [...seen.values()].sort((a, b) => a.id - b.id);
+}
