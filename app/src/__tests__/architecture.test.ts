@@ -20,9 +20,15 @@ import { join, relative, sep } from 'node:path';
 
 const SRC = join(__dirname, '..');
 
-/** Wszystkie pliki .ts/.tsx w katalogu (rekurencyjnie), ścieżki względem `src`. */
-function sourceFiles(dir: string): string[] {
-  const abs = join(SRC, dir);
+/**
+ * Domena mieszka od Fazy 2 w `packages/domain` (współdzielona z serwerem) — skanujemy
+ * ją tam. W `app/src/domain` został wyłącznie shim zgodności (`export * from '@uzaero/domain'`).
+ */
+const DOMAIN_SRC = join(__dirname, '..', '..', '..', 'packages', 'domain', 'src');
+
+/** Wszystkie pliki .ts/.tsx w katalogu (rekurencyjnie), ścieżki względem bazy. */
+function filesUnder(base: string, dir: string): string[] {
+  const abs = join(base, dir);
   const out: string[] = [];
   const walk = (current: string): void => {
     for (const entry of readdirSync(current)) {
@@ -30,7 +36,7 @@ function sourceFiles(dir: string): string[] {
       if (statSync(full).isDirectory()) {
         walk(full);
       } else if (/\.tsx?$/.test(entry)) {
-        out.push(relative(SRC, full).split(sep).join('/'));
+        out.push(relative(base, full).split(sep).join('/'));
       }
     }
   };
@@ -38,9 +44,15 @@ function sourceFiles(dir: string): string[] {
   return out;
 }
 
+const sourceFiles = (dir: string): string[] => filesUnder(SRC, dir);
+const domainFiles = (): string[] => filesUnder(DOMAIN_SRC, '.');
+
+const importsOf = (file: string): string[] => importsFrom(SRC, file);
+const domainImportsOf = (file: string): string[] => importsFrom(DOMAIN_SRC, file);
+
 /** Źródła importów z pliku: `import … from 'x'`, `export … from 'x'`, `require('x')`. */
-function importsOf(file: string): string[] {
-  const code = readFileSync(join(SRC, file), 'utf8');
+function importsFrom(base: string, file: string): string[] {
+  const code = readFileSync(join(base, file), 'utf8');
   const found: string[] = [];
   const patterns = [
     /(?:^|\n)\s*(?:import|export)[\s\S]*?from\s+['"]([^'"]+)['"]/g,
@@ -78,7 +90,7 @@ describe('granice warstw', () => {
   // Bez tego zielony wynik pozostałych testów nic nie znaczy: pusta lista plików albo
   // zepsuty regex dałyby „brak naruszeń" przy dowolnie połamanej architekturze.
   it('skaner faktycznie widzi pliki i importy (kontrola samego testu)', () => {
-    expect(sourceFiles('domain').length).toBeGreaterThan(5);
+    expect(domainFiles().length).toBeGreaterThan(5);
     expect(sourceFiles('application').length).toBeGreaterThan(5);
 
     const storeImports = importsOf('ui/store/sessionStore.ts');
@@ -88,24 +100,40 @@ describe('granice warstw', () => {
     expect(crossesTo('../../infrastructure/clock', 'infrastructure')).toBe(true);
     expect(crossesTo('../ui/theme', 'ui')).toBe(true);
     expect(crossesTo('./violations', 'ui')).toBe(false);
+
+    // Shim w `app/src/domain` ma być JEDYNYM plikiem i tylko re-eksportem pakietu.
+    expect(sourceFiles('domain')).toEqual(['domain/index.ts']);
+    expect(importsOf('domain/index.ts')).toEqual(['@uzaero/domain']);
   });
 
-  it('domain nie importuje Reacta, React Native, Expo, SQLite ani Zustanda', () => {
+  it('domain (packages/domain) nie importuje Reacta, RN, Expo, SQLite ani Zustanda', () => {
     const offenders: string[] = [];
-    for (const file of sourceFiles('domain')) {
-      for (const spec of importsOf(file)) {
+    for (const file of domainFiles()) {
+      for (const spec of domainImportsOf(file)) {
         if (isFramework(spec)) offenders.push(`${file} → ${spec}`);
       }
     }
     expect(offenders).toEqual([]);
   });
 
-  it('domain nie importuje application, infrastructure ani ui', () => {
+  it('domain nie importuje ŻADNEGO pakietu — czysty TS, zero zależności', () => {
+    // Mocniejsze niż w aplikacji: domena jest współdzielona z serwerem, więc każdy
+    // import pakietu (choćby dev-owego) wiązałby OBIE strony z jego obecnością.
     const offenders: string[] = [];
-    for (const file of sourceFiles('domain')) {
-      for (const spec of importsOf(file)) {
-        for (const layer of ['application', 'infrastructure', 'ui']) {
-          if (crossesTo(spec, layer)) offenders.push(`${file} → ${spec}`);
+    for (const file of domainFiles()) {
+      for (const spec of domainImportsOf(file)) {
+        if (!spec.startsWith('.')) offenders.push(`${file} → ${spec}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('domain nie sięga do app/ ani server/ ścieżkami względnymi', () => {
+    const offenders: string[] = [];
+    for (const file of domainFiles()) {
+      for (const spec of domainImportsOf(file)) {
+        if (/(^|\/)\.\.\/(\.\.\/)*(app|server)(\/|$)/.test(spec) || spec.includes('../../..')) {
+          offenders.push(`${file} → ${spec}`);
         }
       }
     }

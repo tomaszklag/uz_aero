@@ -13,8 +13,8 @@ import {
   stepDetector,
   MAX_FIX_GAP_SEC,
   type GpsFix,
-} from '../domain/detection/flightDetector';
-import { GPS_THRESHOLDS as T } from '../domain/detection/thresholds';
+} from '../domain';
+import { GPS_THRESHOLDS as T } from '../domain';
 
 const FIELD_ELEV = 800; // elewacja lotniska (ft) — z fixa przy ENGINE START
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);

@@ -20,7 +20,8 @@
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.14",
+    "@uzaero/domain": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

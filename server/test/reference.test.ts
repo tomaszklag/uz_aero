@@ -1,0 +1,107 @@
+/**
+ * UZ Aero (serwer) — testy `GET /reference` (§4.6, §4.8).
+ *
+ * Kontrakt z aplikacją: kształty `ReferenceAircraft`/`ReferencePilot` idą z pakietu
+ * domeny, więc test sprawdza dokładnie to, co telefon włoży do cache. ETag/304 to
+ * oszczędność łącza w terenie — flota zmienia się kilka razy w sezonie.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { TEST_PASSWORD, testHarness } from './helpers.ts';
+
+async function authed(app: Awaited<ReturnType<typeof testHarness>>['app']): Promise<string> {
+  const login = await app.inject({
+    method: 'POST',
+    url: '/auth/login',
+    payload: { login: 'TMK', password: TEST_PASSWORD },
+  });
+  return login.json().token as string;
+}
+
+describe('GET /reference', () => {
+  it('bez tokenu → 401 (dane floty nie są publiczne)', async () => {
+    const { app } = await testHarness();
+    const res = await app.inject({ method: 'GET', url: '/reference' });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('zwraca flotę i pilotów w kształtach domeny — scenariusz zgodny z aplikacją', async () => {
+    const { app } = await testHarness();
+    const token = await authed(app);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+
+    expect(body.aircraft.map((a: { reg: string }) => a.reg)).toEqual([
+      'SP-ANK',
+      'SP-AXA',
+      'SP-FGK',
+      'SP-KWA',
+    ]);
+    expect(body.pilots).toHaveLength(5);
+
+    // Konfiguracja §5.4 — to z niej aplikacja bierze walidacje i formaty.
+    const an2 = body.aircraft.find((a: { reg: string }) => a.reg === 'SP-ANK');
+    expect(an2.dualRequired).toBe(true);
+    expect(an2.capacityL).toBe(1700);
+    const kwa = body.aircraft.find((a: { reg: string }) => a.reg === 'SP-KWA');
+    expect(kwa.serviceStatus).toBe('disabled');
+    expect(kwa.mhFormat).toBe('decimal');
+
+    // Pola wyliczane ze zdarzeń (M2) — na razie jawnie puste, nie brakujące.
+    expect(an2.claimPicId).toBeNull();
+    expect(an2.handover).toBeNull();
+  });
+
+  it('If-None-Match z aktualnym ETagiem → 304 bez ciała', async () => {
+    const { app } = await testHarness();
+    const token = await authed(app);
+
+    const first = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const etag = first.headers.etag as string;
+    expect(etag).toMatch(/^W\//);
+
+    const second = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}`, 'if-none-match': etag },
+    });
+    expect(second.statusCode).toBe(304);
+    expect(second.body).toBe('');
+  });
+
+  it('zmiana danych zmienia ETag — 304 nie zamraża floty na zawsze', async () => {
+    const { app, db } = await testHarness();
+    const token = await authed(app);
+
+    const first = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    // Administrator wyłącza samolot ze służby — updated_at idzie do przodu.
+    await db.query(
+      "UPDATE aircraft SET service_status = 'disabled', updated_at = now() + interval '1 second' WHERE id = 'SP-AXA'",
+    );
+
+    const second = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}`, 'if-none-match': first.headers.etag as string },
+    });
+    expect(second.statusCode).toBe(200);
+    expect(second.headers.etag).not.toBe(first.headers.etag);
+  });
+});

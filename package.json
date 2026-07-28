@@ -1,0 +1,16 @@
+{
+  "name": "uzaero",
+  "private": true,
+  "version": "0.0.0",
+  "description": "UZ Aero — elektroniczny chronometraż lotów: aplikacja (Expo) + serwer (Fastify) + wspólna domena",
+  "workspaces": [
+    "app",
+    "server",
+    "packages/*"
+  ],
+  "scripts": {
+    "app": "npm run start --workspace app",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

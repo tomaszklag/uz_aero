@@ -12,8 +12,8 @@
  * Dzięki temu test pilnuje nie tylko poprawności kodu, ale i zgodności z designem.
  */
 
-import { projectSession, emptySessionState } from '../domain/projections';
-import type { Event, EventType, EventPayloadMap } from '../domain/events';
+import { projectSession, emptySessionState } from '../domain';
+import type { Event, EventType, EventPayloadMap } from '../domain';
 
 const SESSION = 'sess-22jun';
 const AC = 'sp-axa';

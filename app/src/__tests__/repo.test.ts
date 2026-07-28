@@ -7,7 +7,7 @@
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
 import { EventsRepo } from '../application/eventsRepo';
 import { FixedClock } from '../infrastructure/clock';
-import type { AppendEventInput } from '../domain/events';
+import type { AppendEventInput } from '../domain';
 
 const SESSION = 'sess-1';
 const AC = 'ac-1';

@@ -1,8 +1,41 @@
 # UZ Aero — architektura kodu
 
-> Dotyczy aplikacji mobilnej w `app/` (React Native + Expo, TypeScript strict).
+> Dotyczy monorepo: `app/` (React Native + Expo), `server/` (Fastify + PostgreSQL)
+> i `packages/domain` (wspólna domena). TypeScript strict wszędzie.
 > Architektura systemu (offline-first, sync, kontrakt API): `docs/_main.md.txt`.
 > Ten dokument mówi, **jak jest zbudowany kod** i gdzie dopisać nową rzecz.
+
+## 0. Monorepo (Faza 2)
+
+```
+packages/domain    @uzaero/domain — zdarzenia, reguły, projekcje, detekcja. Czysty TS,
+                   ZERO zależności (pilnowane testem architektury).
+app/               aplikacja; w `src/domain` został shim `export * from '@uzaero/domain'`
+server/            backend; importuje TĘ SAMĄ domenę
+```
+
+**Po co wspólny pakiet:** serwer liczy sesje `projectSession` i sprawdza te same
+inwarianty co telefon. Dwie implementacje rozjechałyby się przy pierwszej zmianie —
+a rozjazd klient/serwer w liczeniu czasów to błąd, którego nie widać do końca miesiąca.
+
+**Serwer — te same warstwy co aplikacja** (`application/` komendy·zapytania·porty,
+`infrastructure/` adaptery, `http/` cienkie trasy, composition root w `index.ts`).
+Uproszczony CQRS: komendy piszą, zapytania czytają projekcje; bez szyny zdarzeń
+i osobnej bazy odczytu — projekcje odświeżane synchronicznie w transakcji przyjęcia
+zdarzeń. Przy skali klubu każdy dodatkowy ruchomy element to koszt bez zysku.
+
+Wybory infrastrukturalne serwera (i dlaczego):
+- **scrypt z `node:crypto`** zamiast argon2 — argon2 to natywny addon (node-gyp),
+  scrypt jest wbudowany i wystarczający; parametry KDF zapisane w hashu, więc da się
+  je podnieść bez unieważniania haseł;
+- **JWT HS256 własnym modułem** (~70 linii na `createHmac`) — potrzebny dokładnie jeden
+  wariant, a stały nagłówek wyklucza confusion algorytmów; refresh tokeny są OSOBNO,
+  nieprzezroczyste i rotowane (hash w bazie → wyciek tabeli nie daje sesji, jedno
+  użycie unieważnia token);
+- **PGlite w testach** — Postgres w procesie Node: ten sam trik co `node:sqlite`
+  w aplikacji; testy przechodzą przez prawdziwe endpointy (`app.inject`) i prawdziwy
+  silnik SQL, atrap brak. Jedyna pułapka: `query()` PGlite nie przyjmuje SQL-a
+  wielopoleceniowego — runner migracji używa `exec`, gdy jest.
 
 ---
 
