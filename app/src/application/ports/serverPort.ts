@@ -68,7 +68,8 @@ export interface RemoteAircraftState {
 export interface SessionSyncStatus {
   sessionUuid: string;
   received: number;
-  status: 'open' | 'closed';
+  /** Stan wg PROJEKCJI serwera; `unknown` = serwer nie widział jeszcze tej sesji. */
+  status: 'active' | 'closed' | 'unknown';
   flags: { type: string; sessionUuids: string[] }[];
   exportUrl: string | null;
 }

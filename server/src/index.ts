@@ -11,12 +11,14 @@ import { z } from 'zod';
 
 import { AuthCommands } from './application/commands/auth.ts';
 import { IngestCommands } from './application/commands/ingest.ts';
+import type { DayExporter } from './application/export/dayExporter.ts';
 import { ReferenceQueries } from './application/queries/reference.ts';
 import { StateQueries } from './application/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
 import { PgEventsStore } from './infrastructure/pg/eventsStore.ts';
+import { PgExportLogRepo } from './infrastructure/pg/exportLogRepo.ts';
 import { PgFlagsRepo } from './infrastructure/pg/flagsRepo.ts';
 import { PgSessionsProjection } from './infrastructure/pg/sessionsProjection.ts';
 import { migrate } from './infrastructure/pg/migrate.ts';
@@ -43,6 +45,14 @@ const tokens = new Hs256Tokens(env.JWT_SECRET, clock);
 const events = new PgEventsStore();
 const sessions = new PgSessionsProjection();
 const flags = new PgFlagsRepo();
+const exportLog = new PgExportLogRepo();
+
+// Eksport §4.7: eksporter powstaje TYLKO przy kompletnej konfiguracji Sheets w env —
+// a że adaptera Google jeszcze nie ma (klucz serwisowy dopiero będzie), na razie
+// nie konstruujemy go wcale. `null` = ingest pomija eksport; cała reszta (port,
+// dziennik, `exportUrl` w sync-status) już działa i czeka na adapter.
+// Placeholdery zmiennych: `.env.example`.
+const exporter: DayExporter | null = null;
 
 const app = buildServer({
   auth: new AuthCommands(
@@ -53,8 +63,8 @@ const app = buildServer({
     clock,
   ),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-  ingest: new IngestCommands(db, events, sessions, flags),
-  state: new StateQueries(db, events, sessions, flags),
+  ingest: new IngestCommands(db, events, sessions, flags, exporter),
+  state: new StateQueries(db, events, sessions, flags, exportLog),
   tokens,
 });
 

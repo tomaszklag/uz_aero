@@ -15,6 +15,7 @@ import { activeClaim, latestHandover } from '../aircraftStateView.ts';
 import type {
   Database,
   EventsStorePort,
+  ExportLogPort,
   FlagRecord,
   FlagsPort,
   SessionRow,
@@ -35,8 +36,8 @@ export interface SyncStatus {
   received: number;
   status: 'active' | 'closed' | 'unknown';
   flags: FlagRecord[];
-  /** Link do arkusza — M4; `null` mówi „jeszcze nie wyeksportowano". */
-  exportUrl: null;
+  /** Link do karty arkusza (§4.7); `null` mówi „jeszcze nie wyeksportowano". */
+  exportUrl: string | null;
 }
 
 export class StateQueries {
@@ -45,6 +46,7 @@ export class StateQueries {
     private readonly events: EventsStorePort,
     private readonly sessions: SessionsProjectionPort,
     private readonly flags: FlagsPort,
+    private readonly exportLog: ExportLogPort,
   ) {}
 
   async aircraftState(aircraftId: string): Promise<AircraftState> {
@@ -61,10 +63,13 @@ export class StateQueries {
   }
 
   async syncStatus(sessionUuid: string): Promise<SyncStatus> {
-    const [row, received, flags] = await Promise.all([
+    const [row, received, flags, exported] = await Promise.all([
       this.sessions.get(this.db, sessionUuid),
       this.events.countForSession(this.db, sessionUuid),
       this.flags.openForSession(this.db, sessionUuid),
+      // Ostatnia rewizja eksportu — na ekranie 11 staje się pudełkiem
+      // „Serwer zaktualizował arkusz" z linkiem.
+      this.exportLog.latest(this.db, sessionUuid),
     ]);
 
     return {
@@ -72,7 +77,7 @@ export class StateQueries {
       received,
       status: row?.status ?? 'unknown',
       flags,
-      exportUrl: null,
+      exportUrl: exported?.sheetUrl ?? null,
     };
   }
 }

@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -120,4 +120,26 @@ export const MIGRATION_3 = `
   ALTER TABLE flags ADD CONSTRAINT uq_flags_type_sessions UNIQUE (type, session_uuids);
 `;
 
-export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2, MIGRATION_3];
+/**
+ * Migracja 4: dziennik eksportu arkuszy (§4.7, §5.3 `export_log`).
+ *
+ * Append-only jak wszystko wokół: spóźnione dane po eksporcie regenerują kartę
+ * i dopisują NOWY wiersz z podbitą rewizją — nadpisanie zgubiłoby historię „co
+ * i kiedy poszło do arkusza", a to jedyny ślad, którym da się wyjaśnić rozjazd
+ * między arkuszem a rejestrem. `session_uuid` spina wpis z sesją — po nim pyta
+ * `GET /sessions/:uuid/sync-status` (link na ekranie 11).
+ */
+export const MIGRATION_4 = `
+  CREATE TABLE IF NOT EXISTS export_log (
+    id           SERIAL PRIMARY KEY,
+    session_uuid TEXT NOT NULL,
+    day          DATE NOT NULL,
+    aircraft_id  TEXT NOT NULL,
+    sheet_url    TEXT NOT NULL,
+    revision     INTEGER NOT NULL,
+    exported_at  TIMESTAMPTZ NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_export_log_session ON export_log (session_uuid);
+`;
+
+export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2, MIGRATION_3, MIGRATION_4];

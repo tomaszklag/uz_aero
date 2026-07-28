@@ -64,6 +64,18 @@ stemplem cache referencyjnego). „Nie pamiętam PIN" nie czyści poświadczeń 
 je dopiero udany login) i jest zablokowane przy niepustym outboxie. Klawisz biometrii
 z mockupu 00 odłożony (wymagałby `expo-local-authentication`).
 
+Eksport arkuszy (§4.7, serwer): `application/export/` — `buildDaySheet` (czysta funkcja
+`SessionState` → karta; nazwa `YYYY-MM-DD_SP-XXX` bajt w bajt zgodna z `sheetTabName`
+aplikacji, treść = ekrany 10/11, MH w formacie samolotu) i `DayExporter` (po commicie
+ingestu, dla sesji zamkniętych po przetworzeniu; bramki: sesja otwarta / otwarta flaga
+`session_overlap` = nic; spóźnione dane → rewizja +1). Dziennik `export_log`
+(migracja 4, append-only — historia rewizji to jedyny ślad rozjazdu arkusz↔rejestr);
+`sync-status.exportUrl` z ostatniej rewizji. Awarię Sheets łapie ingest — telefon
+dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek. `SheetsPort` ma na razie tylko
+atrapę testową — adapter Google (konto serwisowe, `SHEETS_SPREADSHEET_ID`) powstanie
+po dostarczeniu klucza; do tego czasu composition root nie konstruuje eksportera
+(`exporter: null`).
+
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
 się różnić liczbami. Podział na grupy robi okno korekty (czysta funkcja
@@ -83,7 +95,9 @@ zmianie wielkości dziury MH (dedupe zostawia pierwszy pomiar); transakcyjne par
 migracji w `migrate.ts`; sprzątanie wygasłych refresh tokenów (cron/`DELETE` przy
 logowaniu); skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń;
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
-ignorowana).
+ignorowana); `UNIQUE (session_uuid, revision)` na `export_log` + kolejka ponowień
+nieudanych eksportów i re-eksport po rozwiązaniu flagi przez administratora (dziś
+ponowienie robi dopiero następna paczka tej sesji).
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób

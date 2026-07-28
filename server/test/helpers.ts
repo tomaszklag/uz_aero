@@ -11,14 +11,16 @@
 
 import { PGlite } from '@electric-sql/pglite';
 
-import type { Clock, Database, Queryable } from '../src/application/ports.ts';
+import type { Clock, Database, Queryable, SheetsPort } from '../src/application/ports.ts';
 import { AuthCommands } from '../src/application/commands/auth.ts';
 import { IngestCommands } from '../src/application/commands/ingest.ts';
+import { DayExporter } from '../src/application/export/dayExporter.ts';
 import { ReferenceQueries } from '../src/application/queries/reference.ts';
 import { StateQueries } from '../src/application/queries/aircraftState.ts';
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
 import { PgEventsStore } from '../src/infrastructure/pg/eventsStore.ts';
+import { PgExportLogRepo } from '../src/infrastructure/pg/exportLogRepo.ts';
 import { PgFlagsRepo } from '../src/infrastructure/pg/flagsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/sessionsProjection.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
@@ -41,7 +43,7 @@ export class TestClock implements Clock {
 export const TEST_SECRET = 'test-secret-o-dlugosci-co-najmniej-32-znakow';
 export const TEST_PASSWORD = 'poprawne-haslo-testowe';
 
-export async function testHarness() {
+export async function testHarness(options: { sheets?: SheetsPort } = {}) {
   const pglite = new PGlite();
   // PGlite spełnia `Queryable` wprost, a transakcje ma własne (`transaction(cb)` daje
   // obiekt z `query`) — opakowanie dopasowuje tylko kształt do portu `Database`.
@@ -59,6 +61,15 @@ export async function testHarness() {
   const events = new PgEventsStore();
   const sessions = new PgSessionsProjection();
   const flags = new PgFlagsRepo();
+  const exportLog = new PgExportLogRepo();
+
+  // Jak w produkcyjnym composition root: eksporter §4.7 istnieje TYLKO z podanym
+  // `SheetsPort` (testy eksportu podają atrapę); bez niego ingest pomija eksport —
+  // dotychczasowe testy jadą dokładnie tą samą ścieżką co przed M4.
+  const exporter =
+    options.sheets != null
+      ? new DayExporter(db, events, flags, exportLog, options.sheets, new PgPilotsRepo(db), clock)
+      : null;
 
   const app = buildServer({
     auth: new AuthCommands(
@@ -69,8 +80,8 @@ export async function testHarness() {
       clock,
     ),
     reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-    ingest: new IngestCommands(db, events, sessions, flags),
-    state: new StateQueries(db, events, sessions, flags),
+    ingest: new IngestCommands(db, events, sessions, flags, exporter),
+    state: new StateQueries(db, events, sessions, flags, exportLog),
     tokens,
   });
 

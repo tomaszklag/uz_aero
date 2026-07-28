@@ -163,6 +163,47 @@ export interface FlagsPort {
   openForAircraft(db: Queryable, aircraftId: string): Promise<FlagRecord[]>;
 }
 
+// ── eksport dzienny (§4.7) ──────────────────────────────────────────────────────
+
+/**
+ * Dzienna karta arkusza: tytuł wg konwencji §4.7 (`YYYY-MM-DD_SP-XXX`) + zawartość
+ * tabelaryczna jako wiersze komórek. Kształt jest CELOWO niezależny od Google API —
+ * budowa treści to czysta funkcja domeny eksportu, a jak te wiersze trafiają do
+ * arkusza (i czym jest „karta" u dostawcy), wie wyłącznie adapter.
+ */
+export interface DaySheet {
+  tab: string;
+  rows: string[][];
+}
+
+export interface SheetsPort {
+  /** Zapisuje/nadpisuje dzienną kartę arkusza; zwraca URL karty. */
+  writeDaySheet(sheet: DaySheet): Promise<{ url: string }>;
+}
+
+/** Wpis dziennika eksportu (§5.3 `export_log`) — jedna wykonana rewizja karty. */
+export interface ExportRecord {
+  sessionUuid: string;
+  /** Dzień karty jako `YYYY-MM-DD` (UTC z duty start) — prefiks nazwy karty. */
+  day: string;
+  aircraftId: string;
+  sheetUrl: string;
+  /** 1 = pierwszy eksport; spóźnione dane po eksporcie podbijają o 1 (§4.7). */
+  revision: number;
+  exportedAt: Date;
+}
+
+/**
+ * Dziennik eksportu jest append-only jak reszta systemu: regeneracja karty to NOWY
+ * wiersz z kolejną rewizją, nie nadpisanie — historia „co i kiedy poszło do arkusza"
+ * zostaje do audytu, a `sync-status` czyta po prostu najświeższy wpis.
+ */
+export interface ExportLogPort {
+  /** Ostatnia rewizja eksportu sesji; `null` = jeszcze nie eksportowano. */
+  latest(db: Queryable, sessionUuid: string): Promise<ExportRecord | null>;
+  append(db: Queryable, record: ExportRecord): Promise<void>;
+}
+
 // ── zegar ───────────────────────────────────────────────────────────────────────
 
 /** Czas jako port — testy okna refresh tokenów sterują nim jawnie. */

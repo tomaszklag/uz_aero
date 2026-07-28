@@ -24,6 +24,7 @@ import type { Event } from '@uzaero/domain';
 
 import { chainFlags, type ChainLink } from '../../domain/mhChain.ts';
 import { sessionRowFrom } from '../sessionRow.ts';
+import type { DayExporter } from '../export/dayExporter.ts';
 import type {
   Database,
   EventsStorePort,
@@ -50,6 +51,8 @@ export class IngestCommands {
     private readonly events: EventsStorePort,
     private readonly sessions: SessionsProjectionPort,
     private readonly flags: FlagsPort,
+    /** `null` = eksport §4.7 wyłączony (brak konfiguracji Sheets w composition root). */
+    private readonly exporter: DayExporter | null,
   ) {}
 
   async ingest(
@@ -76,7 +79,7 @@ export class IngestCommands {
       }
     }
 
-    const result = await this.db.transaction(async (tx) => {
+    const { closedNow, ...result } = await this.db.transaction(async (tx) => {
       // Blokada advisory per sesja (audyt: lost update) — dwie równoległe paczki tej
       // samej sesji liczyłyby projekcję każda bez zdarzeń drugiej i ostatni commit
       // nadpisałby `sessions` niekompletnym stanem. Lock szereguje ingest per sesja,
@@ -91,6 +94,7 @@ export class IngestCommands {
       // Strumień dnia to dziesiątki zdarzeń; odtwarzalność > mikrooptymalizacja.
       const sessionUuids = [...new Set(batch.map((e) => e.sessionUuid))];
       const aircraftIds = new Set<string>();
+      const closedNow: string[] = [];
 
       for (const sessionUuid of sessionUuids) {
         const stream = await this.events.sessionEvents(tx, sessionUuid);
@@ -98,6 +102,7 @@ export class IngestCommands {
         const row = sessionRowFrom(sessionUuid, stream);
         await this.sessions.upsert(tx, row);
         aircraftIds.add(row.aircraftId);
+        if (row.status === 'closed') closedNow.push(sessionUuid);
       }
 
       // Flagi liczymy per samolot, z CAŁEJ jego historii sesji — anomalia łańcucha
@@ -117,8 +122,24 @@ export class IngestCommands {
       }
 
       const flags = await openFlagsFor(this.flags, tx, sessionUuids);
-      return { accepted, duplicates, flags };
+      return { accepted, duplicates, flags, closedNow };
     });
+
+    // Eksport §4.7 — PO commicie i poza gwarancjami odpowiedzi: telefon dostaje 200
+    // za PRZYJĘCIE zdarzeń, a arkusz jest skutkiem, nie warunkiem. Awaria Sheets nie
+    // może zamienić dostarczonej paczki w wieczny retry outboxa — dlatego wyjątek
+    // kończy się logiem, nigdy błędem odpowiedzi. Sesja zamknięta w tej paczce
+    // (albo domknięta wcześniej i właśnie uzupełniona spóźnionymi danymi) dostaje
+    // świeżą kartę; rewizje nalicza eksporter.
+    if (this.exporter != null) {
+      for (const sessionUuid of closedNow) {
+        try {
+          await this.exporter.exportSession(sessionUuid);
+        } catch (err) {
+          console.error(`eksport arkusza sesji ${sessionUuid} nie powiódł się:`, err);
+        }
+      }
+    }
 
     return { ok: true, result };
   }
