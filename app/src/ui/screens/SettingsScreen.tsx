@@ -23,8 +23,10 @@ import {
   Card,
   GhostAction,
   Icon,
+  OutboxGuard,
   PinChangeSheet,
   ProfileChip,
+  RefDataStamp,
   Screen,
   ScreenHeader,
   SyncChip,
@@ -32,6 +34,7 @@ import {
   type IconName,
 } from '../components';
 import { useTheme } from '../theme';
+import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { useGps } from '../bootstrap/ServicesProvider';
@@ -156,7 +159,9 @@ export function SettingsScreen({
         <Card title="Motyw wyświetlacza" header="inline">
           <ThemePicker detailed />
           <GhostAction label="Podgląd motywów w kokpicie" onPress={() => navigation.navigate('StyleGuide')} />
-          <SectionNote text="Zapisywany na telefonie, per pilot — działa offline." />
+          {/* Mockup obiecuje „per pilot" — wybór jest dziś per TELEFON (jeden klucz
+              w AsyncStorage); nota mówi prawdę, kluczowanie po pilocie w backlogu. */}
+          <SectionNote text="Zapisywany na telefonie — działa offline." />
         </Card>
 
         {/* ── bezpieczeństwo ────────────────────────────────────────────────── */}
@@ -190,26 +195,7 @@ export function SettingsScreen({
             disabled={logoutBlocked}
             onPress={() => void doLogout()}
           />
-          {logoutBlocked && (
-            <View
-              style={[
-                styles.guard,
-                {
-                  backgroundColor: theme.colors.amberMuted,
-                  borderColor: theme.colors.amberBorder,
-                  borderWidth: theme.borderWidth,
-                },
-              ]}
-            >
-              <Icon name="warning" size={13} color={theme.colors.amber} />
-              <AppText variant="body" tone="secondary" style={styles.guardText}>
-                <AppText variant="body" style={[styles.guardText, { color: theme.colors.amber, fontWeight: '600' }]}>
-                  {`${eventsCount(outboxCount)} z dzisiejszej sesji`}
-                </AppText>
-                {' nie dotarły jeszcze na serwer — wylogowanie by je osierociło. Wróć do zasięgu: wyślą się same i przycisk się odblokuje.'}
-              </AppText>
-            </View>
-          )}
+          {logoutBlocked && <OutboxGuard count={outboxCount} />}
           {logoutError != null && (
             <Banner kind="warning" tone="red" icon="warning" title="Nie wylogowano" text={logoutError} />
           )}
@@ -250,19 +236,7 @@ export function SettingsScreen({
                 : '—'
             }
           />
-          <View style={styles.refRow}>
-            <View
-              style={[
-                styles.dot,
-                { backgroundColor: refCheckedAt != null ? theme.colors.green : theme.colors.amber },
-              ]}
-            />
-            <AppText variant="mono" tone="secondary" style={styles.refText}>
-              {refCheckedAt != null
-                ? `Dane referencyjne · sync ${timeUtc(refCheckedAt)} UTC`
-                : 'Dane referencyjne · jeszcze bez synca'}
-            </AppText>
-          </View>
+          <RefDataStamp checkedAt={refCheckedAt} style={styles.refRow} />
           <SectionNote text="Dane referencyjne odświeżają się same przy każdym kontakcie z siecią." />
         </Card>
       </View>
@@ -376,17 +350,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   actionBody: { flex: 1, gap: 2 },
-  actionName: { fontSize: 13, fontWeight: '600' },
+  actionName: { fontSize: 13, fontFamily: fontFamily.bodySemiBold },
   actionSub: { fontSize: 9, letterSpacing: 0.5 },
-  guard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    borderRadius: 10,
-    paddingVertical: 9,
-    paddingHorizontal: 11,
-  },
-  guardText: { flex: 1, fontSize: 10.5, lineHeight: 16 },
   diagRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -396,8 +361,6 @@ const styles = StyleSheet.create({
   },
   diagKey: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
   diagVal: { fontSize: 11, textAlign: 'right', flexShrink: 1 },
-  refRow: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingTop: 4 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  refText: { fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' },
+  refRow: { paddingTop: 4 },
   note: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
 });

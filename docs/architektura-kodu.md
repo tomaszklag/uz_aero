@@ -99,6 +99,22 @@ zera, wariant edu-przekazania („liczniki się nie ruszyły"), przypis zamiast 
 przez zero. `GpsFix` niesie teraz też `lat`/`lon`/`accuracyM` (diagnostyka; detektor
 ich nie czyta).
 
+Audyt UI (2026-07-29, kod aplikacji — nie mockupy) wdrożony: dwa złamane cele
+dotykowe 34 px → 44/46 (akcje banera 05g, steppery pełnego wpisu); `fontWeight`
+wszędzie zastąpiony rodzinami z tokenów (dwa mechanizmy pogrubienia → jeden; Android
+nie musi syntetyzować wag dla fontów z `@expo-google-fonts`); token `colors.overlay`
+kończy dryf scrimów 0.7/0.74 w sześciu arkuszach; duplikaty `.outbox-guard`
+i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` — odmiana liczebników
+przeniesiona do `ui/format.ts`, bo DS nie może zależeć od helperów ekranów); kłódka
+zamiast trójkąta przy zamkniętych dniach (12); `SyncChip` na `AppText`; hitSlopy na
+małych z designu celach (mini-chip edu, „Nie pamiętam PIN", oko podglądu); jawny błąd
+otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** wariant `micro`
+w `AppText` + wspólny `KeyValueRow` (dziś ~8 ręcznych mikro-etykiet i 4 wiersze
+klucz-wartość), awans jednoekranowych prymitywów (NoGpsBanner, SettingsAction,
+ExportedBox, start-btn splasha → prop w ActionButton), karta logowania na `Card`,
+token `radius.btn = 14` i wyrównanie 13/14, motyw per PILOT zamiast per telefon
+(nota na 13 mówi dziś prawdę: per telefon), ujednolicenie `StyleSheet.create`.
+
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
 się różnić liczbami. Podział na grupy robi okno korekty (czysta funkcja
@@ -247,6 +263,8 @@ a nie przez jeden ekran.
 | `Trail` | oś czasu prowadząca do wartości przekazania | `.trail` |
 | `InlineNote` | przypis w kolorowym pudełku (mono 10 px + ikona) | `.certified-row`, `.none-box` |
 | `PeekBanner` | pasek „oglądasz cudzą sesję" ze źródłem i wiekiem danych | `.ro-banner` (04b) |
+| `OutboxGuard` | amber-box ochrony konta przy niepustym outboxie (§3.0) | `.outbox-guard` (00, 13) |
+| `RefDataStamp` | stempel cache referencyjnego: kropka + „sync HH:MM UTC" | `.ref-sync` (01, 13) |
 | `Caption` | wyśrodkowany podpis pod akcją (mono 9 px) | `.takeover-hint`, `.actions-reason` |
 | `CrewRow` | wiersz aktualnej załogi: rola, kod, „od kiedy", block | `.crew-row` (07) |
 | `StepList` | numerowana procedura wychodząca poza ten telefon | `.handover-steps` (07) |

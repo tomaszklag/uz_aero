@@ -97,7 +97,7 @@ export function CorrectionSheet({
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      <Pressable style={styles.overlay} onPress={onCancel} accessibilityLabel="Zamknij" />
+      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
 
       <View style={styles.bottom}>
         <View
@@ -321,7 +321,7 @@ function MinuteButton({
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.7)' },
+  overlay: { ...StyleSheet.absoluteFillObject },
   bottom: { flex: 1, justifyContent: 'flex-end' },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },

@@ -42,6 +42,8 @@ export interface ThemeColors {
   blue: string;
   blueMuted: string;
   blueBorder: string;
+  /** Przyciemnienie pod arkuszami (scrim) — jedna wartość, koniec dryfu 0.7/0.74. */
+  overlay: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,6 +77,7 @@ const nightColors: ThemeColors = {
   blue: '#3498DB',
   blueMuted: 'rgba(52,152,219,0.12)',
   blueBorder: 'rgba(52,152,219,0.28)',
+  overlay: 'rgba(0,0,0,0.74)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,6 +112,7 @@ const paperColors: ThemeColors = {
   blue: '#205C90',
   blueMuted: 'rgba(32,92,144,0.10)',
   blueBorder: 'rgba(32,92,144,0.38)',
+  overlay: 'rgba(0,0,0,0.74)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,6 +143,7 @@ const solarColors: ThemeColors = {
   blue: '#004890',
   blueMuted: 'rgba(0,72,144,0.10)',
   blueBorder: 'rgba(0,72,144,0.40)',
+  overlay: 'rgba(0,0,0,0.74)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -169,6 +174,7 @@ const skyColors: ThemeColors = {
   blue: '#16528E',
   blueMuted: 'rgba(22,82,142,0.10)',
   blueBorder: 'rgba(22,82,142,0.40)',
+  overlay: 'rgba(0,0,0,0.74)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -194,6 +200,7 @@ const amberColors: ThemeColors = {
   blue: '#60A0F0',
   blueMuted: 'rgba(96,160,240,0.10)',
   blueBorder: 'rgba(96,160,240,0.32)',
+  overlay: 'rgba(0,0,0,0.74)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

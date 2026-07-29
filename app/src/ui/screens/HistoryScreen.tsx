@@ -143,7 +143,8 @@ export function HistoryScreen({
             ))}
 
             <View style={styles.lockedNote}>
-              <Icon name="warning" size={14} color={theme.colors.textMuted} />
+              {/* Kłódka, nie trójkąt — „zamknięte" to stan, nie ostrzeżenie (mockup 12). */}
+              <Icon name="lock" size={14} color={theme.colors.textMuted} />
               <AppText variant="body" tone="secondary" style={styles.lockedText}>
                 Dni po oknie 24 h są zamknięte. Jeśli znalazłeś błąd — zgłoś go
                 administratorowi; poprawka zostanie dopisana jako korekta, bez kasowania

@@ -229,7 +229,7 @@ export function CockpitScreen({
 
         <PhaseHero
           // Fazy z GPS nie znamy; „w locie" wiemy ZE ZDARZEŃ — projekcja nie potrzebuje fixa.
-          phase={gpsLost ? (inFlight ? 'In Flight' : PHASE_LABEL[phase.phase]) : PHASE_LABEL[phase.phase]}
+          phase={gpsLost && inFlight ? 'In Flight' : PHASE_LABEL[phase.phase]}
           tone={gpsLost ? 'amber' : PHASE_TONE[phase.phase]}
           detail={
             gpsLost
@@ -496,7 +496,7 @@ function NoGpsBanner({
         />
         <AppText
           variant="mono"
-          style={{ flex: 1, fontSize: 11, fontWeight: '700', color: theme.colors.red, letterSpacing: 0.5 }}
+          style={{ flex: 1, fontSize: 11, fontFamily: theme.fontFamily.monoBold, color: theme.colors.red, letterSpacing: 0.5 }}
         >
           GPS: brak sygnału · autodetekcja wstrzymana
         </AppText>
@@ -531,7 +531,7 @@ function NoGpsLink({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        minHeight: 34,
+        minHeight: 44,
         paddingHorizontal: 11,
         borderRadius: theme.radius.sm,
         borderWidth: theme.borderWidth,

@@ -19,10 +19,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 
 import { REFERENCE_META_CHECKED_AT } from '../../application';
-import { AppText, Brand, Icon, Screen, Tag } from '../components';
+import { AppText, Brand, Icon, RefDataStamp, Screen, Tag } from '../components';
 import { useTheme } from '../theme';
+import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
-import { timeUtc } from '../format';
 import { editableBadge } from './historyDays';
 
 export function SplashScreen({
@@ -117,19 +117,7 @@ export function SplashScreen({
 
       {/* ── `.splash-footer` ──────────────────────────────────────────────── */}
       <View style={styles.footer}>
-        <View style={styles.refRow}>
-          <View
-            style={[
-              styles.dot,
-              { backgroundColor: refCheckedAt != null ? theme.colors.green : theme.colors.amber },
-            ]}
-          />
-          <AppText variant="mono" tone="secondary" style={styles.refText}>
-            {refCheckedAt != null
-              ? `Dane referencyjne · sync ${timeUtc(refCheckedAt)} UTC`
-              : 'Dane referencyjne · jeszcze bez synca'}
-          </AppText>
-        </View>
+        <RefDataStamp checkedAt={refCheckedAt} />
         {version != null && (
           <AppText variant="mono" tone="muted" style={styles.version}>
             v{version}
@@ -166,10 +154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: 12,
   },
-  historyLabel: { fontSize: 13, fontWeight: '600' },
+  historyLabel: { fontSize: 13, fontFamily: fontFamily.bodySemiBold },
   footer: { position: 'absolute', bottom: 36, left: 0, right: 0, alignItems: 'center', gap: 8 },
-  refRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  refText: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
   version: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
 });

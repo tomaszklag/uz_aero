@@ -87,7 +87,7 @@ export function DropSheet({
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      <Pressable style={styles.overlay} onPress={onCancel} accessibilityLabel="Zamknij" />
+      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
 
       <View style={[styles.bottom, { paddingBottom: keyboardHeight }]}>
         <View
@@ -220,7 +220,7 @@ export function DropSheet({
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.7)' },
+  overlay: { ...StyleSheet.absoluteFillObject },
   bottom: { flex: 1, justifyContent: 'flex-end' },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },

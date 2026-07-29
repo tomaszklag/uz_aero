@@ -140,7 +140,7 @@ export function CardPicker<T extends string>({
                   accessibilityRole="button"
                   accessibilityLabel={secondaryLabel}
                   onPress={() => onSecondary(opt.value)}
-                  hitSlop={8}
+                  hitSlop={10}
                   style={[
                     styles.secondary,
                     { borderColor: theme.colors.border, borderWidth: theme.borderWidth },

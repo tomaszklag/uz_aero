@@ -89,7 +89,7 @@ export function ManualEventSheet({
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      <Pressable style={styles.overlay} onPress={onCancel} accessibilityLabel="Zamknij" />
+      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
 
       <View style={styles.bottom}>
         <View
@@ -285,7 +285,7 @@ function MinuteButton({
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.74)' },
+  overlay: { ...StyleSheet.absoluteFillObject },
   bottom: { flex: 1, justifyContent: 'flex-end' },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
   title: { fontSize: 23, lineHeight: 25, letterSpacing: 2 },

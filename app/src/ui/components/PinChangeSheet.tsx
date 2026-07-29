@@ -145,7 +145,7 @@ export function PinChangeSheet({
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      <Pressable style={styles.overlay} onPress={onCancel} accessibilityLabel="Zamknij" />
+      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
 
       <View style={styles.bottom}>
         <View
@@ -194,13 +194,13 @@ export function PinChangeSheet({
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.74)' },
+  overlay: { flex: 1 },
   bottom: { justifyContent: 'flex-end' },
   handle: { width: 36, height: 4, borderRadius: 2 },
   title: { fontSize: 23, letterSpacing: 2, alignSelf: 'flex-start' },
   step: { fontSize: 9, letterSpacing: 2.5, textTransform: 'uppercase' },
   noteRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   note: { fontSize: 8.5, letterSpacing: 0.8 },
-  cancel: { minHeight: 40, paddingHorizontal: 16, justifyContent: 'center' },
+  cancel: { minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' },
   cancelLabel: { fontSize: 11, letterSpacing: 1 },
 });

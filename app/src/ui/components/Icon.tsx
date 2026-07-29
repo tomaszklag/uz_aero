@@ -61,6 +61,7 @@ const REGISTRY = {
   takeoff: f('arrow-up'),
   landing: f('arrow-down'),
   settings: f('settings'),
+  lock: f('lock'), // dni po oknie korekty (12) — „zamknięte", nie „ostrzeżenie"
   more: f('chevron-right'),
 
   // akcje naziemne (siatka na 04)

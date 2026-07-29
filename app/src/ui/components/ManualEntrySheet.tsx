@@ -96,7 +96,7 @@ export function ManualEntrySheet({
       onRequestClose={onCancel}
       statusBarTranslucent
     >
-      <Pressable style={styles.overlay} onPress={onCancel} accessibilityLabel="Zamknij" />
+      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
 
       <View style={styles.bottom}>
         <View
@@ -140,7 +140,11 @@ export function ManualEntrySheet({
                 <AppText variant="mono" tone="muted" style={styles.timeLabel}>
                   {field.label}
                 </AppText>
-                <HoldButton label="−" onStep={() => bump(field.key, -1)} />
+                <HoldButton
+                  label="−"
+                  accessibilityLabel={`${field.label} — minuta wstecz`}
+                  onStep={() => bump(field.key, -1)}
+                />
                 <AppText
                   variant="mono"
                   style={[styles.timeValue, { color: theme.colors.textPrimary }]}
@@ -149,6 +153,7 @@ export function ManualEntrySheet({
                 </AppText>
                 <HoldButton
                   label="+"
+                  accessibilityLabel={`${field.label} — minuta naprzód`}
                   onStep={() => bump(field.key, +1)}
                   disabled={offsets[field.key] >= 0}
                 />
@@ -176,7 +181,11 @@ export function ManualEntrySheet({
               onChangeText={setNotes}
               placeholder="np. GPS bez fixa od startu — czasy ze stopera"
               placeholderTextColor={theme.colors.textMuted}
-              style={[styles.notesInput, { color: theme.colors.textPrimary }]}
+              // Rodzina z tokenów wprost — surowy TextInput wziąłby font systemowy.
+              style={[
+                styles.notesInput,
+                { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.body },
+              ]}
               maxLength={1000}
             />
           </View>
@@ -209,10 +218,13 @@ export function ManualEntrySheet({
 /** Krok ±1 min; przytrzymanie powtarza (czasy bywają godziny wstecz). Cel 46 px. */
 function HoldButton({
   label,
+  accessibilityLabel,
   onStep,
   disabled = false,
 }: {
   label: string;
+  /** Czytnik musi wiedzieć, KTÓRE pole zmienia — samo „+/−" nie niesie kontekstu. */
+  accessibilityLabel: string;
   onStep: () => void;
   disabled?: boolean;
 }) {
@@ -229,6 +241,7 @@ function HoldButton({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       onPress={onStep}
       onLongPress={() => {
@@ -254,7 +267,7 @@ function HoldButton({
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.74)' },
+  overlay: { flex: 1 },
   bottom: { justifyContent: 'flex-end' },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
   title: { fontSize: 23, letterSpacing: 2 },
@@ -269,7 +282,7 @@ const styles = StyleSheet.create({
   },
   timeLabel: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', width: 72 },
   timeValue: { flex: 1, textAlign: 'center', fontSize: 20, letterSpacing: 1.5 },
-  hold: { width: 46, height: 34, alignItems: 'center', justifyContent: 'center' },
+  hold: { width: 46, height: 46, alignItems: 'center', justifyContent: 'center' },
   holdLabel: { fontSize: 18, lineHeight: 20 },
   notesBox: { gap: 6, paddingHorizontal: 12, paddingVertical: 10 },
   notesInput: { fontSize: 13, paddingVertical: 4 },

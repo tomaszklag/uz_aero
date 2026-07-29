@@ -68,7 +68,7 @@ export function Sheet({
       statusBarTranslucent
     >
       {/* Tapnięcie w tło = anuluj. Potwierdzenie wymaga celowego tapnięcia w przycisk. */}
-      <Pressable style={styles.overlay} onPress={onCancel} accessibilityLabel="Zamknij" />
+      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
 
       {/* Klawiatura podnosi arkusz zamiast go zasłaniać — patrz `useKeyboardHeight`. */}
       <View style={[styles.bottom, { paddingBottom: keyboardHeight }]}>
@@ -138,7 +138,7 @@ export function Sheet({
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.7)' },
+  overlay: { ...StyleSheet.absoluteFillObject },
   bottom: { flex: 1, justifyContent: 'flex-end' },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
   title: { fontSize: 22, lineHeight: 24, letterSpacing: 2 },

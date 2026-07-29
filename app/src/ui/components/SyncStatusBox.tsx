@@ -14,6 +14,7 @@ import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
+import { fontFamily } from '../theme/tokens';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
 
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
   },
   info: { flex: 1, gap: 3 },
   label: { fontSize: 8, letterSpacing: 1.5 },
-  value: { fontSize: 12, fontWeight: '600' },
+  value: { fontSize: 12, fontFamily: fontFamily.bodySemiBold },
   time: { fontSize: 9, letterSpacing: 0.5 },
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },
   fill: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: 3 },

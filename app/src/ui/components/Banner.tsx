@@ -71,6 +71,8 @@ export function Banner({
         accessibilityRole="button"
         accessibilityLabel={`Pokaż wyjaśnienie: ${collapsedLabel}`}
         onPress={() => onDismiss?.(false)}
+        // Mini-chip 34 px jest z mockupu (05f) — hitSlop dociąga cel do progu rękawic.
+        hitSlop={6}
         style={[
           styles.mini,
           {

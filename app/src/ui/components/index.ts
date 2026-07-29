@@ -33,6 +33,8 @@ export * from './InlineNote';
 export * from './FreshnessNote';
 export * from './PeekBanner';
 export * from './Caption';
+export * from './OutboxGuard';
+export * from './RefDataStamp';
 export * from './CrewRow';
 export * from './StepList';
 export * from './PillButton';

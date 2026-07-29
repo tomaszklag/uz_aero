@@ -22,11 +22,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText, Brand, Icon, Numpad, PinDots, ProfileChip, Screen } from '../components';
+import {
+  AppText,
+  Brand,
+  Icon,
+  Numpad,
+  OutboxGuard,
+  PinDots,
+  ProfileChip,
+  Screen,
+} from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
-import { eventsCount } from './syncStatus';
 
 const PIN_LENGTH = 4;
 /** Chwila, w której pilot widzi komplet kropek/odmowę, zanim ekran zareaguje. */
@@ -129,6 +137,9 @@ export function PinScreen() {
               accessibilityRole="button"
               disabled={reloginBlocked}
               onPress={requestRelogin}
+              // Mały `.link-item` jest z mockupu — hitSlop dociąga cel do progu rękawic
+              // bez zmiany wyglądu.
+              hitSlop={12}
               style={({ pressed }) => ({ opacity: reloginBlocked ? 0.5 : pressed ? 0.6 : 1 })}
             >
               <AppText
@@ -141,24 +152,11 @@ export function PinScreen() {
             </Pressable>
 
             {reloginBlocked ? (
-              <View
-                style={[
-                  styles.guard,
-                  {
-                    backgroundColor: theme.colors.amberMuted,
-                    borderColor: theme.colors.amberBorder,
-                    borderWidth: theme.borderWidth,
-                  },
-                ]}
-              >
-                <Icon name="warning" size={13} color={theme.colors.amber} />
-                <AppText variant="body" tone="secondary" style={styles.guardText}>
-                  <AppText variant="body" style={[styles.guardText, { color: theme.colors.amber, fontWeight: '600' }]}>
-                    Zmiana konta zablokowana:
-                  </AppText>
-                  {` ${eventsCount(outboxCount)} czeka na wysyłkę. Odblokuj PIN-em i poczekaj na synchronizację — inaczej dane dnia zostałyby bez właściciela.`}
-                </AppText>
-              </View>
+              <OutboxGuard
+                count={outboxCount}
+                tail=" czeka na wysyłkę. Odblokuj PIN-em i poczekaj na synchronizację — inaczej dane dnia zostałyby bez właściciela."
+                style={styles.guard}
+              />
             ) : (
               <View style={styles.noteRow}>
                 <Icon name="offline" size={10} color={theme.colors.textMuted} />
@@ -191,15 +189,5 @@ const styles = StyleSheet.create({
   noteRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   note: { fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase' },
   setupNote: { marginTop: 26 },
-  guard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    maxWidth: 290,
-    borderRadius: 10,
-    paddingVertical: 9,
-    paddingHorizontal: 11,
-    marginTop: 4,
-  },
-  guardText: { fontSize: 10.5, lineHeight: 16, flex: 1 },
+  guard: { maxWidth: 290, marginTop: 4 },
 });

@@ -11,6 +11,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
+import { fontFamily } from '../theme/tokens';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
 
@@ -85,5 +86,5 @@ const styles = StyleSheet.create({
   pad: { gap: 12 },
   row: { flexDirection: 'row', gap: 18, justifyContent: 'center' },
   key: { width: 78, height: 58, alignItems: 'center', justifyContent: 'center' },
-  digit: { fontSize: 20, fontWeight: '500' },
+  digit: { fontSize: 20, fontFamily: fontFamily.monoMedium },
 });

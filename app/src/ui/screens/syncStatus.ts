@@ -12,23 +12,11 @@
 
 import type { SessionState } from '../../domain';
 
-/**
- * Polska liczba mnoga: 1 → `one`, 2–4 (poza 12–14) → `few`, reszta → `many`.
- * Ta sama reguła co `flightsBadge` w `statsDay.ts` — tu uogólniona, bo ekran 11
- * odmienia trzy różne rzeczowniki (zdarzenie, wyniesienie, skoczek).
- */
-export function plural(n: number, one: string, few: string, many: string): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (n === 1) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
-  return many;
-}
+// Odmiana liczebników awansowała do `ui/format.ts` (używają jej też komponenty DS) —
+// re-eksport trzyma dotychczasowe importy ekranów i testów w mocy.
+import { plural } from '../format';
 
-/** „1 zdarzenie" / „3 zdarzenia" / „12 zdarzeń". */
-export function eventsCount(n: number): string {
-  return `${n} ${plural(n, 'zdarzenie', 'zdarzenia', 'zdarzeń')}`;
-}
+export { eventsCount, plural } from '../format';
 
 /**
  * Nazwa dziennej karty arkusza wg konwencji §4.7: `YYYY-MM-DD_SP-XXX` (data UTC).

@@ -10,6 +10,7 @@ import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
+import { fontFamily } from '../theme/tokens';
 import { AppText } from './AppText';
 import { toneColors } from './tone';
 
@@ -88,9 +89,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  initials: { fontSize: 14, fontWeight: '700' },
+  initials: { fontSize: 14, fontFamily: fontFamily.monoBold },
   text: { gap: 4 },
-  name: { fontSize: 15, fontWeight: '600', lineHeight: 16 },
+  name: { fontSize: 15, fontFamily: fontFamily.bodySemiBold, lineHeight: 16 },
   subRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 5, height: 5, borderRadius: 2.5 },
   code: { fontSize: 8.5, letterSpacing: 1.5, textTransform: 'uppercase' },

@@ -38,6 +38,7 @@ import {
   type DataTableRow,
 } from '../components';
 import { useTheme } from '../theme';
+import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { dateUtcLong, duration, motoHours, timeUtc } from '../format';
@@ -382,6 +383,9 @@ function ManualSyncButton({
 function ExportedBox({ url, detail }: { url: string; detail: string }) {
   const { theme } = useTheme();
   const { colors } = theme;
+  // Niepowodzenie otwarcia (brak przeglądarki, zablokowany intent) NIE może być
+  // cichym `catch` — §6 pkt 3. Powód pokazujemy w miejscu linku.
+  const [openError, setOpenError] = useState<string | null>(null);
 
   return (
     <View
@@ -408,7 +412,12 @@ function ExportedBox({ url, detail }: { url: string; detail: string }) {
       </AppText>
       <Pressable
         accessibilityRole="link"
-        onPress={() => void Linking.openURL(url).catch(() => {})}
+        accessibilityLabel="Otwórz arkusz w przeglądarce"
+        onPress={() =>
+          void Linking.openURL(url).catch(() =>
+            setOpenError('Nie udało się otworzyć przeglądarki — link skopiujesz z ekranu administratora.'),
+          )
+        }
         style={styles.exportedLink}
       >
         <AppText variant="mono" style={[styles.exportedLinkText, { color: colors.green }]}>
@@ -416,6 +425,11 @@ function ExportedBox({ url, detail }: { url: string; detail: string }) {
         </AppText>
         <Icon name="next" size={11} color={colors.green} />
       </Pressable>
+      {openError != null && (
+        <AppText variant="mono" tone="amber" style={styles.footSub}>
+          {openError}
+        </AppText>
+      )}
       <AppText variant="mono" tone="muted" style={styles.footSub}>
         Eksport wykonuje serwer po odebraniu danych · kopia lokalna zostaje na urządzeniu
       </AppText>
@@ -464,7 +478,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  exportedTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
-  exportedLink: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  exportedTitle: { fontSize: 11, fontFamily: fontFamily.monoBold, letterSpacing: 0.5 },
+  exportedLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    minHeight: 44,
+  },
   exportedLinkText: { fontSize: 11, textDecorationLine: 'underline', letterSpacing: 0.5 },
 });

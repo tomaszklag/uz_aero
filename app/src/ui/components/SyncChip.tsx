@@ -11,9 +11,10 @@
  */
 
 import React from 'react';
-import { StyleSheet, View, Text, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme/ThemeProvider';
+import { AppText } from './AppText';
 
 export type SyncStatus = 'synced' | 'offline';
 
@@ -54,9 +55,9 @@ export function SyncChip({ status, outboxCount, style }: SyncChipProps) {
       ]}
     >
       <View style={[styles.dot, { backgroundColor: accent }]} />
-      <Text style={[styles.label, { color: accent, fontFamily: theme.fontFamily.monoMedium }]}>
+      <AppText variant="mono" style={[styles.label, { color: accent, fontFamily: theme.fontFamily.monoMedium }]}>
         {label}
-      </Text>
+      </AppText>
     </View>
   );
 }

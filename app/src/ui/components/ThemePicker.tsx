@@ -13,7 +13,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme/ThemeProvider';
-import { THEME_LABELS, THEME_ORDER, THEMES } from '../theme/tokens';
+import { THEME_LABELS, THEME_ORDER, THEMES, fontFamily } from '../theme/tokens';
 import { AppText } from './AppText';
 
 /** Opisy motywów z mockupu 13 (`.theme-desc`) — kiedy który ma sens w kokpicie. */
@@ -61,8 +61,8 @@ export function ThemePicker({ detailed = false, style }: ThemePickerProps) {
             >
               {/* Podwójny swatch (tło + akcent) — kolory INNEGO motywu z jego tokenów. */}
               <View style={styles.swatchPair}>
-                <View style={[styles.swatchHalf, { backgroundColor: swatch.bg, borderColor: theme.colors.borderStrong }]} />
-                <View style={[styles.swatchHalf, { backgroundColor: swatch.green, borderColor: theme.colors.borderStrong }]} />
+                <View style={[styles.swatchHalf, { backgroundColor: swatch.bg, borderColor: theme.colors.borderStrong, borderWidth: theme.borderWidth }]} />
+                <View style={[styles.swatchHalf, { backgroundColor: swatch.green, borderColor: theme.colors.borderStrong, borderWidth: theme.borderWidth }]} />
               </View>
               <View style={styles.cardBody}>
                 <AppText variant="body" style={styles.cardName}>
@@ -162,9 +162,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   swatchPair: { flexDirection: 'row', gap: 3 },
-  swatchHalf: { width: 16, height: 16, borderRadius: 5, borderWidth: 1 },
+  swatchHalf: { width: 16, height: 16, borderRadius: 5 },
   cardBody: { flex: 1, gap: 2 },
-  cardName: { fontSize: 13, fontWeight: '600' },
+  cardName: { fontSize: 13, fontFamily: fontFamily.bodySemiBold },
   cardDesc: { fontSize: 9, letterSpacing: 0.5 },
   cardTag: { fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase' },
 });

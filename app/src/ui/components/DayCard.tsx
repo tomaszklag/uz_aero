@@ -11,6 +11,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
+import { fontFamily } from '../theme/tokens';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
 import { toneColors } from './tone';
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
   stats: { flexDirection: 'row', gap: 14, flexWrap: 'wrap' },
   stat: { gap: 2 },
   statK: { fontSize: 8, letterSpacing: 1.5 },
-  statV: { fontSize: 13, fontWeight: '700' },
+  statV: { fontSize: 13, fontFamily: fontFamily.monoBold },
   foot: {
     flexDirection: 'row',
     alignItems: 'center',
