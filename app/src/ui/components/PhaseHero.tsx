@@ -17,6 +17,7 @@ import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../theme';
+import { radius } from '../theme/tokens';
 import { AppText } from './AppText';
 import { Icon, type IconName } from './Icon';
 import { toneColors, type Tone } from './tone';
@@ -97,7 +98,9 @@ export function PhaseHero({
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center' },
   body: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  iconBox: { width: 52, height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  // Plakietka nie jest przyciskiem, ale mockup (`.phase-hero-icon`, 14 px) rysuje ją tym
+  // samym promieniem co rodzinę kafli — bierzemy kanon `radius.btn`, nie literał.
+  iconBox: { width: 52, height: 52, borderRadius: radius.btn, alignItems: 'center', justifyContent: 'center' },
   texts: { gap: 3 },
   phase: { fontSize: 54, lineHeight: 56, letterSpacing: 6 },
   detail: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },

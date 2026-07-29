@@ -56,7 +56,9 @@ export function CounterRow({
         {
           paddingHorizontal: 11,
           paddingVertical: 9,
-          borderRadius: 13,
+          // Mockup 05e daje `.type-row` promień 13 — znormalizowany do kanonu
+          // `radius.btn`; dryf 13/14 ubity celowo, wzorem `colors.overlay`.
+          borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: theme.colors.border,
           backgroundColor: theme.colors.surface,
@@ -109,7 +111,8 @@ function StepButton({
       style={({ pressed }) => [
         styles.button,
         {
-          borderRadius: 13,
+          // Mockup 05e: `.step-btn` też ma 13 — znormalizowane do `radius.btn` jak wiersz wyżej.
+          borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: pressed ? tone.border : theme.colors.borderStrong,
           backgroundColor: pressed ? tone.muted : theme.colors.surfaceRaised,

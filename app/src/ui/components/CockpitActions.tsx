@@ -73,7 +73,7 @@ export function CockpitActions({
         style={({ pressed }) => [
           styles.primary,
           {
-            borderRadius: 14,
+            borderRadius: theme.radius.btn,
             borderWidth: theme.borderWidth,
             borderColor: primary?.border ?? theme.colors.borderStrong,
             backgroundColor: primary?.muted ?? theme.colors.surfaceRaised,
@@ -150,7 +150,7 @@ function SideButton({
       style={({ pressed }) => [
         styles.side,
         {
-          borderRadius: 14,
+          borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: colors.border,
           backgroundColor: colors.muted,

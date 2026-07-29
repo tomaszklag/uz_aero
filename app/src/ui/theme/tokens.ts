@@ -220,10 +220,17 @@ export const spacing = {
   giant: 48,
 } as const;
 
-/** Promienie zaokrągleń. Karty/pola = 12, przyciski = 14/16, modale = 24, pill = 999. */
+/** Promienie zaokrągleń. Karty/pola = 12 (md), przyciski/kafle/klawisze = 14 (btn), duże CTA = 16 (lg), modale = 24, pill = 999. */
 export const radius = {
   sm: 8,
   md: 12,
+  /**
+   * Kanon dla przycisków, kafli akcji, klawiszy i pól-kontrolek (num-btn, action-card,
+   * step-btn, day-card, time-input…). Mockupy wahają się między 13 a 14 px — steppery
+   * i wiersze 05e/05f dają 13 — dryf 13 → 14 znormalizowany celowo, wzorem
+   * `colors.overlay`, który zakończył dryf scrimów.
+   */
+  btn: 14,
   lg: 16,
   xl: 24,
   pill: 999,

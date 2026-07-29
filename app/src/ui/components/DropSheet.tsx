@@ -119,7 +119,9 @@ export function DropSheet({
             style={[
               styles.altRow,
               {
-                borderRadius: 13,
+                // Mockup 05e daje `.alt-row` promień 13 — znormalizowany do kanonu
+                // `radius.btn`; dryf 13/14 ubity celowo, wzorem `colors.overlay`.
+                borderRadius: theme.radius.btn,
                 borderWidth: theme.borderWidth,
                 borderColor: blue.border,
                 backgroundColor: theme.colors.surface,
@@ -165,7 +167,8 @@ export function DropSheet({
             style={[
               styles.total,
               {
-                borderRadius: 13,
+                // Mockup 05e: `.total-row` też ma 13 — znormalizowane do `radius.btn` jak `.alt-row`.
+                borderRadius: theme.radius.btn,
                 borderWidth: theme.borderWidth,
                 borderColor: blue.border,
                 backgroundColor: blue.muted,

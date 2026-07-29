@@ -39,7 +39,7 @@ export function Numpad({ onDigit, onBackspace, disabled = false, style }: Numpad
       style={({ pressed }) => [
         styles.key,
         {
-          borderRadius: 14,
+          borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: ghost ? 'transparent' : pressed ? theme.colors.greenBorder : theme.colors.border,
           backgroundColor: ghost

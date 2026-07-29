@@ -103,14 +103,17 @@ Audyt UI (2026-07-29, kod aplikacji — nie mockupy) wdrożony: dwa złamane cel
 dotykowe 34 px → 44/46 (akcje banera 05g, steppery pełnego wpisu); `fontWeight`
 wszędzie zastąpiony rodzinami z tokenów (dwa mechanizmy pogrubienia → jeden; Android
 nie musi syntetyzować wag dla fontów z `@expo-google-fonts`); token `colors.overlay`
-kończy dryf scrimów 0.7/0.74 w sześciu arkuszach; duplikaty `.outbox-guard`
+kończy dryf scrimów 0.7/0.74 w sześciu arkuszach, a token `radius.btn = 14` tym samym
+wzorem — dryf promieni 13/14 (18 literałów w 11 komponentach DS; steppery i wiersze
+05e/05f przybijały 13, normalizacja celowa, odnotowana komentarzem przy każdym takim
+miejscu); duplikaty `.outbox-guard`
 i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` — odmiana liczebników
 przeniesiona do `ui/format.ts`, bo DS nie może zależeć od helperów ekranów); kłódka
 zamiast trójkąta przy zamkniętych dniach (12); `SyncChip` na `AppText`; hitSlopy na
 małych z designu celach (mini-chip edu, „Nie pamiętam PIN", oko podglądu); jawny błąd
-otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** token
-`radius.btn = 14` i wyrównanie 13/14, motyw per PILOT zamiast per telefon (nota na 13
-mówi dziś prawdę: per telefon), ujednolicenie `StyleSheet.create`.
+otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** motyw per PILOT
+zamiast per telefon (nota na 13 mówi dziś prawdę: per telefon), ujednolicenie
+`StyleSheet.create`.
 
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
