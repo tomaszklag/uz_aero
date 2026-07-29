@@ -23,7 +23,12 @@ export interface GpsPort {
 
   /**
    * Rozpoczyna nasłuch. Zwraca funkcję zatrzymującą — wołający odpowiada za sprzątanie.
-   * Wywołanie na już uruchomionym porcie ma być bezpieczne (idempotentne).
+   *
+   * Każde wywołanie to OSOBNA subskrypcja tego odbiorcy, a zwrócona funkcja wypisuje
+   * wyłącznie jego. Odbiornik pracuje, dopóki został choć jeden słuchacz. Kontrakt jest
+   * tu twardy, bo w kokpicie słuchają dwa ekrany naraz (autodetekcja i diagnostyka GPS
+   * na 13) — port, który pozwalał drugiemu wołającemu przejąć albo zgasić strumień
+   * pierwszemu, zabierał autodetekcję na resztę dnia lotnego.
    */
   start(listener: GpsListener): Promise<() => void>;
 

@@ -417,6 +417,15 @@ Moduły natywne (`expo-sqlite`, `expo-location`) są importowane **wyłącznie**
 adaptery i nie trafiają do barrela infrastruktury — inaczej testy w Node przestałyby
 działać. Pilnują tego dwa testy w `architecture.test.ts`.
 
+**`GpsPort.start()` = subskrypcja JEDNEGO odbiorcy, nie przełącznik odbiornika.**
+Zwrócona funkcja wypisuje wyłącznie jego; odbiornik gaśnie dopiero, gdy zejdzie ostatni
+(`gps/gpsFanout.ts`, regresja `gpsFanout.test.ts`). Reguła jest twarda, bo słuchaczy jest
+dwóch naraz: autodetekcja w kokpicie i diagnostyka GPS na 13. Adapter z jednym słuchaczem
+oddawał strumień temu, kto wszedł później, i gasił go przy wyjściu — kokpit tracił
+autodetekcję na resztę dnia, a baner „GPS: brak sygnału" nie miał już czym zniknąć.
+Stąd też odbudowa nasłuchu w `useFlightDetection`: po `GPS_STALE_SEC` ciszy hook zdejmuje
+subskrypcję i zakłada nową, bo martwej subskrypcji powrót sygnału nie obudzi.
+
 Portów **nie mnożymy na zapas** — port bez drugiej implementacji lub potrzeby testowej to koszt bez zysku.
 
 ---
