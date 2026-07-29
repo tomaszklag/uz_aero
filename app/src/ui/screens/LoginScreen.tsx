@@ -24,15 +24,13 @@ import {
   AppText,
   Banner,
   Brand,
+  Card,
   Screen,
   TextField,
 } from '../components';
-import { useTheme } from '../theme';
 import { useAuthStore } from '../store/authStore';
 
 export function LoginScreen() {
-  const { theme } = useTheme();
-
   const login = useAuthStore((s) => s.login);
   const busy = useAuthStore((s) => s.busy);
   const loginError = useAuthStore((s) => s.loginError);
@@ -52,17 +50,10 @@ export function LoginScreen() {
         {/* ── znak marki (`.brand`) ───────────────────────────────────── */}
         <Brand />
 
-        {/* ── karta formularza (`.form-card`) ─────────────────────────── */}
-        <View
-          style={[
-            styles.card,
-            {
-              borderWidth: theme.borderWidth,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface,
-            },
-          ]}
-        >
+        {/* ── karta formularza (`.form-card`) — Card bez nagłówka; geometria
+            z mockupu ponad domyślne Cardu: radius 20, padding 22 pion / 20
+            poziom, gap 14 (00a, `.form-card`) ─────────────────────────── */}
+        <Card style={styles.card} contentStyle={styles.cardContent}>
           <TextField
             label="Login"
             autoCapitalize="none"
@@ -96,7 +87,7 @@ export function LoginScreen() {
             }
             onPress={submit}
           />
-        </View>
+        </Card>
 
         {loginError != null && (
           <Banner
@@ -119,7 +110,8 @@ export function LoginScreen() {
 
 const styles = {
   wrap: { flex: 1, justifyContent: 'center' as const, gap: 24, paddingBottom: 40 },
-  card: { borderRadius: 20, padding: 20, gap: 14 },
+  card: { borderRadius: 20 },
+  cardContent: { paddingVertical: 22, paddingHorizontal: 20, gap: 14 },
   error: { marginTop: -8 },
   netNote: { textAlign: 'center' as const },
 };

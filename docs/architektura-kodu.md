@@ -108,9 +108,9 @@ i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` — odmiana liczeb
 przeniesiona do `ui/format.ts`, bo DS nie może zależeć od helperów ekranów); kłódka
 zamiast trójkąta przy zamkniętych dniach (12); `SyncChip` na `AppText`; hitSlopy na
 małych z designu celach (mini-chip edu, „Nie pamiętam PIN", oko podglądu); jawny błąd
-otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** karta logowania
-na `Card`, token `radius.btn = 14` i wyrównanie 13/14, motyw per PILOT zamiast per
-telefon (nota na 13 mówi dziś prawdę: per telefon), ujednolicenie `StyleSheet.create`.
+otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** token
+`radius.btn = 14` i wyrównanie 13/14, motyw per PILOT zamiast per telefon (nota na 13
+mówi dziś prawdę: per telefon), ujednolicenie `StyleSheet.create`.
 
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
@@ -239,7 +239,7 @@ a nie przez jeden ekran.
 | `AppBar` | pasek **dnia lotnego**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
 | `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót, wariant wyśrodkowany | `.app-header` |
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
-| `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` |
+| `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` / `.form-card` (00a) |
 | `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
 | `SyncStatusBox` | przyrząd statusu wysyłki: plakietka, licznik, pasek postępu | `.google-box` (11) / `.sync-box` (11a) |
 | `QueueBox` | kolejka outboxa: aktywna (amber) albo przygaszona do 30% | `.queue-box` (11a) / `.offline-queue` (11) |

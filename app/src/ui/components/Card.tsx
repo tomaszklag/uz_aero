@@ -1,8 +1,9 @@
 /**
  * UZ Aero — Card
  *
- * Powtarzalny pojemnik z mockupów (.section / .card / .day-log): powierzchnia,
- * obramowanie, zaokrąglenie, opcjonalny nagłówek z etykietą mono UPPERCASE.
+ * Powtarzalny pojemnik z mockupów (.section / .card / .day-log / .form-card):
+ * powierzchnia, obramowanie, zaokrąglenie, opcjonalny nagłówek z etykietą mono
+ * UPPERCASE.
  *
  * Używany przez log dnia, siatki parametrów, sekcje formularzy — wszędzie, gdzie
  * w designie występuje „karta".
