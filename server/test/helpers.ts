@@ -14,6 +14,7 @@ import { PGlite } from '@electric-sql/pglite';
 import type { Clock, Database, Queryable, SheetsPort } from '../src/application/ports.ts';
 import { AuthCommands } from '../src/application/commands/auth.ts';
 import { IngestCommands } from '../src/application/commands/ingest.ts';
+import { PrefsCommands } from '../src/application/commands/prefs.ts';
 import { DayExporter } from '../src/application/export/dayExporter.ts';
 import { ReferenceQueries } from '../src/application/queries/reference.ts';
 import { SheetQueries } from '../src/application/queries/sheets.ts';
@@ -25,6 +26,7 @@ import { PgExportLogRepo } from '../src/infrastructure/pg/exportLogRepo.ts';
 import { PgFlagsRepo } from '../src/infrastructure/pg/flagsRepo.ts';
 import { PgSessionsProjection } from '../src/infrastructure/pg/sessionsProjection.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
+import { PgPilotPrefsRepo } from '../src/infrastructure/pg/pilotPrefsRepo.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/refreshTokensRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/referenceRepo.ts';
@@ -95,6 +97,7 @@ export async function testHarness(options: { sheets?: SheetsPort } = {}) {
     ingest: new IngestCommands(db, events, sessions, flags, exporter),
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
+    prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     tokens,
   });
 

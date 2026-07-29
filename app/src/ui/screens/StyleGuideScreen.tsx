@@ -36,7 +36,7 @@ export function StyleGuideScreen() {
       {/* ── Przełącznik motywów ── */}
       <ThemePicker style={styles.block} />
       <AppText variant="body" tone="secondary" style={styles.caption}>
-        Dotknij motywu — cały ekran przemalowuje się z tokenów. Wybór zapisuje się (AsyncStorage).
+        Dotknij motywu — cały ekran przemalowuje się z tokenów. Wybór zapisuje się w profilu pilota.
       </AppText>
 
       {/* ── SyncChip ── */}

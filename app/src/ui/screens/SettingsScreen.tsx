@@ -156,9 +156,9 @@ export function SettingsScreen({
         <Card title="Motyw wyświetlacza" header="inline">
           <ThemePicker detailed />
           <GhostAction label="Podgląd motywów w kokpicie" onPress={() => navigation.navigate('StyleGuide')} />
-          {/* Mockup obiecuje „per pilot" — wybór jest dziś per TELEFON (jeden klucz
-              w AsyncStorage); nota mówi prawdę, kluczowanie po pilocie w backlogu. */}
-          <SectionNote text="Zapisywany na telefonie — działa offline." />
+          {/* Decyzja 2026-07-29: motyw jest preferencją PILOTA — rekord per pilot
+              w AsyncStorage, sync przez /me/prefs (LWW). Mockup 13 mówi to samo. */}
+          <SectionNote text="Motyw zapisuje się w profilu pilota i wędruje między urządzeniami — zmiana działa offline." />
         </Card>
 
         {/* ── bezpieczeństwo ────────────────────────────────────────────────── */}

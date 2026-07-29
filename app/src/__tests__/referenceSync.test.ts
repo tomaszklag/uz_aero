@@ -20,6 +20,7 @@ import {
   type AuthTokens,
   type PushResult,
   type ReferenceFetch,
+  type RemoteThemePrefs,
   type ServerPort,
   type SessionSyncStatus,
   type StoredCredentials,
@@ -92,6 +93,12 @@ class RefServer implements ServerPort {
     lastSyncAt: null,
   });
   getSyncStatus = async (): Promise<SessionSyncStatus> => {
+    throw new Error('nieużywane w tych testach');
+  };
+  getPrefs = async (): Promise<RemoteThemePrefs> => {
+    throw new Error('nieużywane w tych testach');
+  };
+  putPrefs = async (): Promise<RemoteThemePrefs> => {
     throw new Error('nieużywane w tych testach');
   };
 }

@@ -16,6 +16,7 @@ import {
   type AuthTokens,
   type PushResult,
   type RemoteAircraftState,
+  type RemoteThemePrefs,
   type ServerPort,
   type SessionSyncStatus,
   type StoredCredentials,
@@ -84,6 +85,13 @@ class ScriptedServer implements ServerPort {
   }
 
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
+
+  getPrefs = async (): Promise<RemoteThemePrefs> => {
+    throw new Error('nieużywane w tych testach');
+  };
+  putPrefs = async (): Promise<RemoteThemePrefs> => {
+    throw new Error('nieużywane w tych testach');
+  };
 
   /** Skryptowalny jak `statusScript`; domyślnie samolot wolny. */
   aircraftStateScript: Array<RemoteAircraftState | Error> = [];

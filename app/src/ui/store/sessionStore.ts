@@ -38,6 +38,7 @@ import {
   SessionCommands,
   SessionQueries,
   SyncEngine,
+  ThemePrefsSync,
   type ClaimInput,
   type CommandResult,
   type DropInput,
@@ -45,6 +46,7 @@ import {
   type SessionContext,
   type SyncOutcome,
 } from '../../application';
+import { useAuthStore } from './authStore';
 
 export type { ClaimInput, SessionContext };
 
@@ -68,6 +70,8 @@ export interface SessionStore {
   sync: SyncEngine | null;
   /** Odświeżanie cache referencyjnego (§4.8) — podłączane razem z silnikiem. */
   referenceSync: ReferenceSync | null;
+  /** Uzgadnianie motywu pilota przez `/me/prefs` (decyzja 2026-07-29) — ThemeProvider słucha adopcji. */
+  themePrefs: ThemePrefsSync | null;
   /** Wynik ostatniego przebiegu synca — SyncChip i ekran 11 czytają stąd. */
   lastSync: SyncOutcome | null;
   /** Chwila ostatniej UDANEJ wysyłki (epoch ms) — „ostatnia udana wysyłka 14:02 UTC". */
@@ -87,7 +91,7 @@ export interface SessionStore {
    * Podłącza warstwę synca (composition root) — bez niej `syncNow` i `refreshReference`
    * są cichym no-op (testy i StyleGuide żyją bez serwera).
    */
-  attachSync(sync: SyncEngine, referenceSync: ReferenceSync): void;
+  attachSync(sync: SyncEngine, referenceSync: ReferenceSync, themePrefs: ThemePrefsSync): void;
 
   /** Rozpoczyna/przejmuje sesję: emituje `session_claim` i ustawia kontekst (§4.4). */
   claim(input: ClaimInput): Promise<CommandResult>;
@@ -134,6 +138,8 @@ export interface SessionStore {
   syncNow(): Promise<void>;
   /** Odświeża cache referencyjny, jeśli przekroczył bramę wieku (§4.8). */
   refreshReference(): Promise<void>;
+  /** Uzgadnia motyw zalogowanego pilota (push `dirty` od razu, pull za bramą wieku). */
+  syncThemePrefs(): Promise<void>;
   /** Czyści stan w pamięci (wylogowanie / nowy dzień) — nie kasuje bazy. */
   reset(): void;
 }
@@ -202,6 +208,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     synced: true,
     sync: null,
     referenceSync: null,
+    themePrefs: null,
     lastSync: null,
     lastSyncAt: null,
     serverFlags: [],
@@ -220,8 +227,8 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       });
     },
 
-    attachSync(sync, referenceSync) {
-      set({ sync, referenceSync });
+    attachSync(sync, referenceSync, themePrefs) {
+      set({ sync, referenceSync, themePrefs });
     },
 
     claim(input) {
@@ -349,6 +356,16 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       const { referenceSync } = get();
       if (referenceSync == null) return;
       await referenceSync.refreshIfStale();
+    },
+
+    async syncThemePrefs() {
+      const { themePrefs } = get();
+      if (themePrefs == null) return; // testy i StyleGuide żyją bez serwera — to nie błąd
+      // Tożsamość bierzemy ze store'u auth w chwili przebiegu — pętla okazji nie musi
+      // jej znać, a moduł synca i tak weryfikuje profil przed rozmową z serwerem.
+      const pilot = useAuthStore.getState().pilot;
+      if (pilot == null) return;
+      await themePrefs.syncIfStale(pilot.id);
     },
 
     reset() {

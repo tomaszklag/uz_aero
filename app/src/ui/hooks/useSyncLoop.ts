@@ -27,6 +27,7 @@ export function useSyncLoop(): void {
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const syncNow = useSessionStore((s) => s.syncNow);
   const refreshReference = useSessionStore((s) => s.refreshReference);
+  const syncThemePrefs = useSessionStore((s) => s.syncThemePrefs);
 
   // Jedna trwająca obietnica — okazje w trakcie przebiegu są zbędne (silnik i tak
   // dopije outbox do dna), a AppState potrafi strzelić kilka razy pod rząd.
@@ -43,6 +44,9 @@ export function useSyncLoop(): void {
         // cache referencyjnego — z bramą wieku, więc zwykle to darmowy powrót.
         await syncNow();
         await refreshReference();
+        // Motyw pilota (decyzja 2026-07-29): push zaległej zmiany od razu, pull
+        // z własną bramą wieku — puls co 60 s nie zamienia się w odpytywanie.
+        await syncThemePrefs();
       } finally {
         inFlight.current = false;
       }
@@ -59,5 +63,5 @@ export function useSyncLoop(): void {
       clearInterval(timer);
       sub.remove();
     };
-  }, [engine, status, outboxCount, syncNow, refreshReference]);
+  }, [engine, status, outboxCount, syncNow, refreshReference, syncThemePrefs]);
 }

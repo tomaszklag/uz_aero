@@ -53,6 +53,28 @@ pyta o żywy stan (`SyncEngine.fetchAircraftState`) w chwili claimu: odpowiedź 
 cache, albo „już wolny" → zwykłe `free`), brak odpowiedzi → `takeover_offline`;
 decyzja to czysta funkcja `screens/claimMode.ts`.
 
+Motyw aplikacji jest preferencją PILOTA i wędruje między urządzeniami (decyzja
+2026-07-29, ostatnia pozycja audytu UI): lokalnie rekord per pilot
+(`infrastructure/prefs/themePrefsStore.ts` — klucz `uzaero.theme.<pilotId>` jak
+banery edu; klasa dostaje magazyn KV konstruktorem, więc format i łagodna migracja
+starego klucza per telefon są testowane w Node), `ThemeProvider` nakłada motyw razem
+z tożsamością (subskrypcja store'u auth: odblokowanie/przelogowanie = motyw TEGO
+pilota, bez pilota Night; nazwa spoza tokenów zjeżdża do Night), a `ThemePrefsSync`
+(`application/sync/themePrefsSync.ts`, wzorzec `ReferenceSync`, wołany z pętli
+okazji za `refreshReference`) uzgadnia rekord z serwerem przez `/me/prefs`:
+push rekordu `dirty` przy każdej okazji (outbox preferencji — zmiana motywu NIGDY
+nie czeka na sieć), pull za bramą wieku 15 min, LWW po stemplu DECYZJI pilota
+w OBIE strony (adoptujemy wyłącznie stan ściśle nowszy; adopcję ogłasza
+`onApplied`, którym ThemeProvider przemalowuje ekran na żywo), offline/wygasła
+sesja/obcy profil = `skipped`. Po stronie serwera migracja 6 dokłada
+`pilots.theme`/`theme_updated_at` (prefs są 1:1 z pilotem — osobna tabela to
+przerost), a trasy `GET/PUT /me/prefs` (`http/routes/prefs.ts`, tożsamość WYŁĄCZNIE
+z tokenu) piszą przez `PrefsCommands` + `PgPilotPrefsRepo`, gdzie warunek LWW
+siedzi w SQL-u (`theme_updated_at IS NULL OR < $3`) — a odpowiedź PUT jest ZAWSZE
+stanem autorytatywnym po operacji, żeby telefon-przegrany dostosował się zamiast
+wiecznie ponawiać. Serwer nie zna listy motywów (tokeny UI zostają w UI): trasa
+pilnuje tylko niepustego tekstu ≤ 40 znaków i poprawnego ISO stempla.
+
 Wejście do aplikacji (§3.0, mockupy 00/00a/01): bramka `AuthGate` w `App.tsx` ma pięć
 stanów — `signed_out` → 00a login, `pin_setup` → „Ustaw PIN" (ten sam układ co zamek;
 mockupu konfiguracji nie ma, spec §3.0 wymaga PIN-u po provisioning), `locked` → 00
@@ -115,8 +137,9 @@ otwarcia linku arkusza; deklaracje stylów ujednolicone do `StyleSheet.create` �
 ostatnie 5 ekranów (00a, 07, 08, 09, 10) trzymało gołe obiekty z rzutowaniami
 `as const`, teraz całe `ui/` deklaruje style jednym mechanizmem (w 10-statystyki
 wspólna baza wiersza stoi przed arkuszem, bo wpis `firstRow` wyrasta z niej
-spreadem). **Zaległości audytu UI (niższy priorytet):** motyw per PILOT
-zamiast per telefon (nota na 13 mówi dziś prawdę: per telefon).
+spreadem). **Zaległości audytu UI domknięte 2026-07-29** — ostatnia pozycja
+(motyw per PILOT zamiast per telefon) wdrożona syncem `/me/prefs` (akapit wyżej
+przy M3); nota na 13 mówi nową prawdę: profil pilota, wędruje między urządzeniami.
 
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
@@ -482,7 +505,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 312 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 326 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -511,6 +534,8 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `pinCrypto.test.ts` | własnego SHA-256 (wektory NIST + node:crypto dla UTF-8) i solonego skrótu PIN-u — rekord nigdy nie niesie PIN-u wprost |
 | `historyDays.test.ts` | ekranu 12: podział wg okna korekty, dzień otwarty poza historią, tag wysyłki z outboxa sesji, plakietka splasha, odliczanie |
 | `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „— —" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
+| `themePrefsSync.test.ts` | uzgadniania motywu pilota przez `/me/prefs`: LWW po stemplu decyzji w obie strony, `dirty` jak outbox, brama wieku pulla, offline = `skipped` |
+| `themePrefsStore.test.ts` | rekordu motywu per pilot: izolacja pilotów na wspólnym telefonie, migracja starego klucza per telefon, odporność na zepsuty zapis |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:

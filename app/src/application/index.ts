@@ -12,3 +12,4 @@ export * from './queries';
 export * from './auth/authService';
 export * from './sync/syncEngine';
 export * from './sync/referenceSync';
+export * from './sync/themePrefsSync';
