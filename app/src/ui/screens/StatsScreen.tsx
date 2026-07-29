@@ -17,7 +17,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, type ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ActionButton,
@@ -259,7 +259,7 @@ export function StatsScreen({
             label="Średnie zużycie (na block time)"
             value={fuelPerHour(projection.fuel.consumedL, projection.blockTimeMs) ?? '— —'}
             tone="amber"
-            style={rowStyle}
+            style={styles.row}
           />
           {/* 10a: zero nie jest średnią — mówimy, DLACZEGO nie liczymy (§6: nigdy
               cicha kreska tam, gdzie pilot mógłby podejrzewać błąd aplikacji). */}
@@ -276,13 +276,13 @@ export function StatsScreen({
             label="Początek dnia"
             value={motoHours(projection.mh.start, mhFormat)}
             tone="neutral"
-            style={firstRowStyle}
+            style={styles.firstRow}
           />
           <ResultRow
             label="Koniec dnia (przekazanie)"
             value={motoHours(projection.mh.end, mhFormat)}
             tone="neutral"
-            style={rowStyle}
+            style={styles.row}
           />
           {/* Δ MH = block time to inwariant §4.5 — dlatego stoją tu obok siebie
               i dlatego różnica jest wyróżniona zielenią, a nie schowana w tekście. */}
@@ -290,7 +290,7 @@ export function StatsScreen({
             label={`Δ dnia (= block time ${hhmm(projection.blockTimeMs)})`}
             value={mhDelta}
             tone="green"
-            style={rowStyle}
+            style={styles.row}
           />
         </Card>
 
@@ -302,7 +302,7 @@ export function StatsScreen({
               label="Typy skoków"
               value={jumperBreakdown(projection.drops.jumpers)}
               tone="neutral"
-              style={rowStyle}
+              style={styles.row}
             />
             <ResultRow
               label="Średnia wysokość zrzutu"
@@ -312,13 +312,13 @@ export function StatsScreen({
                   : '—'
               }
               tone="neutral"
-              style={rowStyle}
+              style={styles.row}
             />
             <ResultRow
               label="Klient"
               value={projection.client ?? '—'}
               tone="neutral"
-              style={rowStyle}
+              style={styles.row}
             />
           </Card>
         )}
@@ -415,18 +415,21 @@ function amount(value: number | null): string {
 /**
  * `ResultRow` jest projektowany do wnętrza karty z paddingiem; tu karty są `flush`,
  * bo siatki dociągają się do krawędzi — wcięcie wiersza dokładamy stylem.
+ *
+ * Baza stoi poza `StyleSheet.create`, bo wpis `firstRow` wyrasta z niej spreadem —
+ * wewnątrz arkusza wpisy nie widzą się nawzajem.
  */
-const rowStyle: ViewStyle = { paddingHorizontal: 12, marginTop: 0 };
+const row = { paddingHorizontal: 12, marginTop: 0 };
 
-/** Przypis pod średnią (10a) — mono 9, w świetle karty. */
-const styles = {
+const styles = StyleSheet.create({
+  row,
+  /** Pierwszy wiersz sekcji styka się z linią nagłówka karty — własnej nie potrzebuje. */
+  firstRow: { ...row, borderTopWidth: 0 },
+  /** Przypis pod średnią (10a) — mono 9, w świetle karty. */
   avgNote: {
     fontSize: 9,
     letterSpacing: 0.5,
     paddingHorizontal: 12,
     paddingBottom: 10,
-  } as const,
-};
-
-/** Pierwszy wiersz sekcji styka się z linią nagłówka karty — własnej nie potrzebuje. */
-const firstRowStyle: ViewStyle = { ...rowStyle, borderTopWidth: 0 };
+  },
+});

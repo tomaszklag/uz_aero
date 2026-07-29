@@ -17,7 +17,7 @@
  */
 
 import React, { useCallback, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ActionButton,
@@ -108,10 +108,10 @@ export function LoginScreen() {
   );
 }
 
-const styles = {
-  wrap: { flex: 1, justifyContent: 'center' as const, gap: 24, paddingBottom: 40 },
+const styles = StyleSheet.create({
+  wrap: { flex: 1, justifyContent: 'center', gap: 24, paddingBottom: 40 },
   card: { borderRadius: 20 },
   cardContent: { paddingVertical: 22, paddingHorizontal: 20, gap: 14 },
   error: { marginTop: -8 },
-  netNote: { textAlign: 'center' as const },
-};
+  netNote: { textAlign: 'center' },
+});

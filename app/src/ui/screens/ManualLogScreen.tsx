@@ -18,7 +18,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ActionButton,
@@ -299,6 +299,6 @@ function NotesFooter({ notes }: { notes: string | null }) {
   );
 }
 
-const styles = {
-  notesText: { fontSize: 9, flex: 1 } as const,
-};
+const styles = StyleSheet.create({
+  notesText: { fontSize: 9, flex: 1 },
+});

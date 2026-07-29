@@ -111,9 +111,12 @@ i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` — odmiana liczeb
 przeniesiona do `ui/format.ts`, bo DS nie może zależeć od helperów ekranów); kłódka
 zamiast trójkąta przy zamkniętych dniach (12); `SyncChip` na `AppText`; hitSlopy na
 małych z designu celach (mini-chip edu, „Nie pamiętam PIN", oko podglądu); jawny błąd
-otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** motyw per PILOT
-zamiast per telefon (nota na 13 mówi dziś prawdę: per telefon), ujednolicenie
-`StyleSheet.create`.
+otwarcia linku arkusza; deklaracje stylów ujednolicone do `StyleSheet.create` —
+ostatnie 5 ekranów (00a, 07, 08, 09, 10) trzymało gołe obiekty z rzutowaniami
+`as const`, teraz całe `ui/` deklaruje style jednym mechanizmem (w 10-statystyki
+wspólna baza wiersza stoi przed arkuszem, bo wpis `firstRow` wyrasta z niej
+spreadem). **Zaległości audytu UI (niższy priorytet):** motyw per PILOT
+zamiast per telefon (nota na 13 mówi dziś prawdę: per telefon).
 
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą

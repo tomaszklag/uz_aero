@@ -18,7 +18,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ActionButton,
@@ -283,8 +283,8 @@ export function CrewChangeScreen({
   );
 }
 
-const styles = {
-  headerTime: { fontSize: 10, letterSpacing: 1 } as const,
-  readonly: { opacity: 0.45 } as const,
-  explain: { fontSize: 11.5, lineHeight: 18 } as const,
-};
+const styles = StyleSheet.create({
+  headerTime: { fontSize: 10, letterSpacing: 1 },
+  readonly: { opacity: 0.45 },
+  explain: { fontSize: 11.5, lineHeight: 18 },
+});
