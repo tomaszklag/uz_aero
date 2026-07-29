@@ -19,6 +19,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AUTODETECT_TOAST_SEC,
+  GPS_STALE_SEC,
   VS_WINDOW_SEC,
   createDetectorState,
   flightPhase,
@@ -41,7 +42,7 @@ export interface PendingDetection {
 }
 
 export interface FlightDetectionState {
-  /** Ostatni fix — zasila siatkę GPS w kokpicie. */
+  /** Ostatni fix — zasila siatkę GPS w kokpicie. Zostaje też PO utracie sygnału. */
   fix: GpsFix | null;
   /** Faza lotu i prędkość pionowa — napis w `PhaseHero` (mockup 05). */
   phase: PhaseReading;
@@ -49,8 +50,14 @@ export interface FlightDetectionState {
   pending: PendingDetection | null;
   /** Anuluje oczekującą detekcję — nic nie zostaje zapisane. */
   undo: () => void;
-  /** GPS nie dostarcza fixów (brak uprawnień / brak sygnału). */
+  /**
+   * GPS ŻYJE: fixy przychodzą i najświeższy ma mniej niż `GPS_STALE_SEC`.
+   * `false` = brak uprawnień, brak sygnału ALBO sygnał właśnie umilkł (mockup 05g) —
+   * kokpit pokazuje wtedy baner-przyrząd i przestawia zapis na ręczny.
+   */
   gpsAvailable: boolean;
+  /** Chwila ostatniego fixa (czas fixa) — „Ostatni fix 15:58 UTC" na banerze 05g. */
+  lastFixAt: number | null;
 }
 
 export interface UseFlightDetectionOptions {
@@ -78,9 +85,13 @@ export function useFlightDetection({
   const [phase, setPhase] = useState<PhaseReading>({ phase: 'idle', verticalSpeedFpm: null });
   const [pending, setPending] = useState<PendingDetection | null>(null);
   const [gpsAvailable, setGpsAvailable] = useState(false);
+  const [lastFixAt, setLastFixAt] = useState<number | null>(null);
 
   /** Okno fixów do liczenia prędkości pionowej — trzymamy tylko tyle, ile potrzeba. */
   const window = useRef<GpsFix[]>([]);
+  /** Zegar URZĄDZENIA z chwili odbioru fixa — świeżość liczymy własnym zegarem,
+   *  bo martwy GPS z definicji nie powie nam, że umarł (mockup 05g). */
+  const lastFixDeviceMs = useRef<number | null>(null);
 
   const detector = useRef<DetectorState>(createDetectorState(fieldElevationFt));
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -157,6 +168,8 @@ export function useFlightDetection({
       stop = await gps.start((incoming) => {
         setFix(incoming);
         setGpsAvailable(true);
+        setLastFixAt(incoming.time);
+        lastFixDeviceMs.current = Date.now();
 
         const step = stepDetector(detector.current, incoming);
         detector.current = step.state;
@@ -184,12 +197,22 @@ export function useFlightDetection({
       });
     })();
 
+    // Watchdog świeżości (mockup 05g): sam brak KOLEJNYCH fixów nie wywołuje żadnego
+    // callbacku, więc ciszę trzeba zauważyć aktywnie. Po `GPS_STALE_SEC` bez fixa
+    // `gpsAvailable` gaśnie — kokpit wystawia baner-przyrząd i ręczny zapis; powrót
+    // sygnału gasi baner sam (pierwszy świeży fix ustawia flagę z powrotem).
+    const staleTimer = setInterval(() => {
+      const at = lastFixDeviceMs.current;
+      if (at != null && Date.now() - at > GPS_STALE_SEC * 1000) setGpsAvailable(false);
+    }, 2_000);
+
     return () => {
       cancelled = true;
       stop?.();
       clearTimers();
+      clearInterval(staleTimer);
     };
   }, [clearTimers, enabled, gps, schedule, taxi]);
 
-  return { fix, phase, pending, undo, gpsAvailable };
+  return { fix, phase, pending, undo, gpsAvailable, lastFixAt };
 }

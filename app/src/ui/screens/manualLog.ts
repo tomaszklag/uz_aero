@@ -22,11 +22,18 @@ export interface CycleGroup {
   /** Cykl bez `engine_stop` — wyróżniony i z przyciskiem dopisania. */
   active: boolean;
   rows: EventLogRow[];
+  /**
+   * Stopka „Uwagi · …" (§3.8). Cykle z autodetekcji uwag nie mają (null → „—");
+   * dosłowna kolumna nie mieści się w 393 px — stopka per grupa to jej nośnik.
+   */
+  notes: string | null;
 }
 
 export interface GroundGroup {
   kind: 'ground';
   row: EventLogRow;
+  /** Uwagi wpisu ręcznego (`manual_log_entry.notes`); inne zdarzenia naziemne — null. */
+  notes: string | null;
 }
 
 export type LogGroup = CycleGroup | GroundGroup;
@@ -44,6 +51,15 @@ export function buildLogGroups(
   mhFormat: MhFormat,
 ): LogGroup[] {
   const rows = buildLogRows(events, projection, mhFormat);
+  // Uwagi niesie wyłącznie `manual_log_entry`; wiersz logu zna tylko uuid — mapka
+  // spina jedno z drugim bez przemycania payloadów do warstwy wierszy.
+  const notesByUuid = new Map<string, string>();
+  for (const event of events) {
+    if (event.type === 'manual_log_entry' && event.payload.notes != null) {
+      notesByUuid.set(event.uuid, event.payload.notes);
+    }
+  }
+
   const groups: LogGroup[] = [];
   let current: CycleGroup | null = null;
   let cycleNo = 0;
@@ -55,13 +71,13 @@ export function buildLogGroups(
       // Tankowanie w trakcie cyklu (silnik pracuje) formalnie nie występuje — reguła
       // domenowa je odrzuca — więc zdarzenie naziemne zawsze zamyka bieżącą grupę.
       current = null;
-      groups.push({ kind: 'ground', row });
+      groups.push({ kind: 'ground', row, notes: notesByUuid.get(row.id) ?? null });
       continue;
     }
 
     if (row.kind === 'start' || current == null) {
       cycleNo += 1;
-      current = { kind: 'cycle', index: cycleNo, active: false, rows: [] };
+      current = { kind: 'cycle', index: cycleNo, active: false, rows: [], notes: null };
       groups.push(current);
     }
     current.rows.push(row);

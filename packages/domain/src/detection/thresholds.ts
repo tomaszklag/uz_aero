@@ -50,6 +50,14 @@ export const COOLDOWN_AFTER_LANDING_SEC = 30;
 export const AUTODETECT_TOAST_SEC = 5;
 
 /**
+ * Po ilu sekundach BEZ fixa uznajemy, że GPS zamilkł (mockup 05g, ryzyko 🔴 z §8).
+ * Fixy przychodzą co ~1 s; 15 s ciszy to już nie czkawka odbiornika, tylko utrata
+ * sygnału — kokpit przełącza się na baner „autodetekcja wstrzymana" i ręczny zapis.
+ * Do kalibracji z pilotami w fazie 5, jak pozostałe progi.
+ */
+export const GPS_STALE_SEC = 15;
+
+/**
  * Elewację lotniska bierzemy z wysokości GPS w momencie ENGINE START (§3.3, §8).
  * Ta stała to nazwane odniesienie do tej zasady — brak wartości liczbowej.
  */

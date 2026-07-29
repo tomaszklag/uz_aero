@@ -28,6 +28,10 @@ function toFix(loc: Location.LocationObject): GpsFix {
     time: timestamp,
     groundSpeedKt: Math.max(0, (coords.speed ?? 0) * MPS_TO_KNOTS),
     altitudeFt: coords.altitude == null ? null : coords.altitude * METERS_TO_FEET,
+    // Pozycja i dokładność zasilają diagnostykę GPS (ekran 13) — detektor ich nie czyta.
+    lat: coords.latitude,
+    lon: coords.longitude,
+    accuracyM: coords.accuracy ?? null,
   };
 }
 

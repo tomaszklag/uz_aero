@@ -58,9 +58,11 @@ export * from './Trail';
 
 // Warstwy nad ekranem
 export * from './Sheet';
+export * from './PinChangeSheet';
 export * from './ReadingSheet';
 export * from './DropSheet';
 export * from './ManualEventSheet';
+export * from './ManualEntrySheet';
 export * from './CorrectionSheet';
 
 // Dane i akcje

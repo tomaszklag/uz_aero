@@ -43,6 +43,15 @@ interface AuthStore {
    * wraca do zamka, nie do pustego telefonu). Ochronę outboxa egzekwuje ekran.
    */
   requestRelogin(): void;
+  /** Sama weryfikacja PIN-u (krok 1 arkusza zmiany na 13) — bez żadnego zapisu. */
+  verifyPin(pin: string): Promise<boolean>;
+  /** Zmiana PIN-u (ekran 13): obecny → nowy. `false` = obecny PIN błędny. Offline. */
+  changePin(current: string, next: string): Promise<boolean>;
+  /**
+   * Wylogowanie z ekranu 13 (§3.0): dozwolone TYLKO przy pustym outboxie — zwraca
+   * powód blokady albo null po wyczyszczeniu poświadczeń (bramka → 00a-login).
+   */
+  logout(outboxCount: number): Promise<'outbox_not_empty' | null>;
 }
 
 let service: AuthService | null = null;
@@ -108,6 +117,22 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   requestRelogin() {
     set({ status: 'signed_out', loginError: null });
+  },
+
+  verifyPin(pin) {
+    return requireService().verifyPin(pin);
+  },
+
+  async changePin(current, next) {
+    if (!(await requireService().verifyPin(current))) return false;
+    await requireService().setPin(next);
+    return true;
+  },
+
+  async logout(outboxCount) {
+    const block = await requireService().logout(outboxCount);
+    if (block == null) set({ status: 'signed_out', pilot: null, loginError: null });
+    return block;
   },
 }));
 

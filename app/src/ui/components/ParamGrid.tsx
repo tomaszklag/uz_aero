@@ -29,6 +29,13 @@ export interface ParamCell {
   tone?: Tone;
   /** Przygaszone tło w tonie komórki. */
   tint?: boolean;
+  /**
+   * Czujnik martwy (mockup 05g `.param-value.stale`): wartość przygaszona — „— —"
+   * ma wyglądać jak brak odczytu, nie jak odczyt zerowy.
+   */
+  stale?: boolean;
+  /** Przypis pod wartością (`.param-stale-note`): skąd wartość / od kiedy jej brak. */
+  note?: string;
 }
 
 export interface ParamGridProps {
@@ -55,7 +62,11 @@ export function ParamGrid({ cells, style }: ParamGridProps) {
     >
       {cells.map((cell) => {
         const c = toneColors(theme, cell.tone ?? 'neutral');
-        const valueColor = cell.tone == null ? theme.colors.textPrimary : c.accent;
+        const valueColor = cell.stale
+          ? theme.colors.textMuted
+          : cell.tone == null
+            ? theme.colors.textPrimary
+            : c.accent;
 
         return (
           <View
@@ -69,7 +80,10 @@ export function ParamGrid({ cells, style }: ParamGridProps) {
               {cell.label}
             </AppText>
             <View style={styles.valueRow}>
-              <AppText variant="param" style={{ color: valueColor }}>
+              <AppText
+                variant="param"
+                style={[{ color: valueColor }, cell.stale ? styles.staleValue : null]}
+              >
                 {cell.value}
               </AppText>
               {cell.unit != null && (
@@ -77,13 +91,29 @@ export function ParamGrid({ cells, style }: ParamGridProps) {
                   variant="mono"
                   style={[
                     styles.unit,
-                    { color: cell.tone == null ? theme.colors.textSecondary : c.accent },
+                    {
+                      color: cell.stale
+                        ? theme.colors.textMuted
+                        : cell.tone == null
+                          ? theme.colors.textSecondary
+                          : c.accent,
+                    },
                   ]}
                 >
                   {cell.unit}
                 </AppText>
               )}
             </View>
+            {cell.note != null && (
+              <AppText
+                variant="mono"
+                // Nota martwej komórki jest czerwona (alarm czujnika); żywej — muted
+                // (sam kontekst źródła). Dokładnie `.param-stale-note` z 05g.
+                style={[styles.note, { color: cell.stale ? theme.colors.red : theme.colors.textMuted }]}
+              >
+                {cell.note}
+              </AppText>
+            )}
           </View>
         );
       })}
@@ -97,4 +127,6 @@ const styles = StyleSheet.create({
   cell: { width: '49.9%', flexGrow: 1, gap: 4, paddingHorizontal: 14, paddingVertical: 12 },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   unit: { fontSize: 11, letterSpacing: 1 },
+  staleValue: { letterSpacing: 4 },
+  note: { fontSize: 8, letterSpacing: 1, textTransform: 'uppercase' },
 });

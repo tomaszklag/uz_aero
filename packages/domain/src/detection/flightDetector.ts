@@ -36,6 +36,10 @@ export interface GpsFix {
   groundSpeedKt: number;
   /** Wysokość (stopy AMSL); null gdy fix bez wysokości. */
   altitudeFt: number | null;
+  /** Pozycja i dokładność — diagnostyka GPS (ekran 13); detektor ich nie czyta. */
+  lat?: number | null;
+  lon?: number | null;
+  accuracyM?: number | null;
 }
 
 /** Faza lotu z punktu widzenia detektora (nie mylić z fazą wyświetlaną w kokpicie). */

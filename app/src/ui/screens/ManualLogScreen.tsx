@@ -28,6 +28,7 @@ import {
   EventLog,
   GhostAction,
   Icon,
+  ManualEntrySheet,
   ManualEventSheet,
   PillButton,
   Screen,
@@ -58,8 +59,10 @@ export function ManualLogScreen({
   const lastError = useSessionStore((s) => s.lastError);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
+  const manualLogEntry = useSessionStore((s) => s.manualLogEntry);
 
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [entryOpen, setEntryOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const now = Date.now();
   const { openCorrection, correctionSheet } = useEventCorrection();
@@ -106,7 +109,8 @@ export function ManualLogScreen({
             right={
               <>
                 <SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />
-                <PillButton label="Dodaj wpis" icon="manual-log" onPress={() => setSheetOpen(true)} />
+                {/* Mockup 08: „Dodaj wpis" = PEŁNY wpis §3.8 (cztery czasy + uwagi). */}
+                <PillButton label="Dodaj wpis" icon="manual-log" onPress={() => setEntryOpen(true)} />
               </>
             }
           />
@@ -151,6 +155,7 @@ export function ManualLogScreen({
             // Zdarzenie naziemne między cyklami — pełną szerokością, w tonie amber.
             <Card key={`g-${i}`} flush>
               <EventLog rows={[group.row]} onCorrect={openCorrection} />
+              <NotesFooter notes={group.notes} />
             </Card>
           ) : (
             <Card
@@ -174,9 +179,17 @@ export function ManualLogScreen({
                   onPress={() => setSheetOpen(true)}
                 />
               )}
+              <NotesFooter notes={group.notes} />
             </Card>
           ),
         )}
+
+        {/* Drugie wejście „Dodaj wpis" z mockupu — pod rejestrem, nad paliwem. */}
+        <GhostAction
+          label="Dodaj wpis ręczny (§3.8)"
+          icon="manual-log"
+          onPress={() => setEntryOpen(true)}
+        />
 
         {lastError != null && (
           <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
@@ -238,12 +251,55 @@ export function ManualLogScreen({
         onCancel={() => setSheetOpen(false)}
       />
 
+      {/* ── pełny wpis §3.8 (mockup 08: „Nowy wpis ręczny") ─────────────── */}
+      <ManualEntrySheet
+        visible={entryOpen}
+        now={now}
+        formatTime={timeUtc}
+        busy={busy}
+        onConfirm={(payload) => {
+          setEntryOpen(false);
+          setBusy(true);
+          void manualLogEntry(payload)
+            .catch(() => {
+              // Twarde odrzucenie (np. czasy poza porządkiem) jest w `lastError`.
+            })
+            .finally(() => setBusy(false));
+        }}
+        onCancel={() => setEntryOpen(false)}
+      />
+
       {correctionSheet}
     </Screen>
+  );
+}
+
+/** Stopka „Uwagi · …" grupy rejestru (§3.8); puste = „—". */
+function NotesFooter({ notes }: { notes: string | null }) {
+  const { theme } = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+        borderTopWidth: theme.borderWidth,
+        borderTopColor: theme.colors.border,
+      }}
+    >
+      <AppText variant="mono" tone="muted" style={styles.subText}>
+        Uwagi
+      </AppText>
+      <AppText variant="mono" tone={notes != null ? 'secondary' : 'muted'} style={styles.notesText}>
+        {notes ?? '—'}
+      </AppText>
+    </View>
   );
 }
 
 const styles = {
   subText: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' } as const,
   sectionLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' } as const,
+  notesText: { fontSize: 9, flex: 1 } as const,
 };

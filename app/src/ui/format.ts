@@ -121,3 +121,20 @@ export function shortName(name: string): string {
 export function litres(value: number | null): string {
   return value == null ? '—' : `${Math.round(value)} L`;
 }
+
+/**
+ * Pozycja jako „50°04.7'N 019°47.1'E" — stopnie i minuty dziesiętne (mockup 13).
+ *
+ * Format lotniczy, nie geodezyjny: mapy lotnicze i GPS-y pokładowe używają właśnie
+ * DDM (stopnie + minuty z dziesiętną), więc pilot porówna wartość wzrokiem 1:1.
+ */
+export function formatLatLon(lat: number, lon: number): string {
+  const part = (value: number, positive: string, negative: string, degWidth: number): string => {
+    const hemi = value >= 0 ? positive : negative;
+    const abs = Math.abs(value);
+    const deg = Math.floor(abs);
+    const min = (abs - deg) * 60;
+    return `${String(deg).padStart(degWidth, '0')}°${min.toFixed(1).padStart(4, '0')}'${hemi}`;
+  };
+  return `${part(lat, 'N', 'S', 2)} ${part(lon, 'E', 'W', 3)}`;
+}

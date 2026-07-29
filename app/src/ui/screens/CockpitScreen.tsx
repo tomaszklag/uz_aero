@@ -20,7 +20,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import {
   ActionButton,
@@ -34,6 +34,7 @@ import {
   DropSheet,
   DutyStrip,
   EventLog,
+  Icon,
   ManualEventSheet,
   ParamGrid,
   PhaseHero,
@@ -51,6 +52,7 @@ import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useEventCorrection } from '../hooks/useEventCorrection';
 import { duration, litres, timeLocal, timeUtc } from '../format';
 import { buildCycleRows, buildLogRows } from './cockpitLog';
+import { gpsLossText, staleCellNote, unknownPhaseDetail } from './gpsLoss';
 import type { Event, FlightPhase } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */
@@ -126,7 +128,7 @@ export function CockpitScreen({
     return start?.payload.fieldElevationFt ?? null;
   }, [events]);
 
-  const { fix, phase, pending, undo, gpsAvailable } = useFlightDetection({
+  const { fix, phase, pending, undo, gpsAvailable, lastFixAt } = useFlightDetection({
     gps,
     enabled: engineOn,
     fieldElevationFt,
@@ -197,6 +199,9 @@ export function CockpitScreen({
     const cycleRows = buildCycleRows(events, projection, mhFormat, now);
     const landings = cycleRows.filter((r) => r.kind === 'landing').length;
     const takeoffs = cycleRows.filter((r) => r.kind === 'takeoff').length;
+    // Degradacja CZUJNIKA (mockup 05g) — osobna oś od sieci: SyncChip może świecić
+    // zielono, a autodetekcja stoi. Baner-przyrząd + ręczny zapis jako jedyna droga.
+    const gpsLost = !gpsAvailable;
 
     return (
       <Screen padded={false}>
@@ -210,36 +215,68 @@ export function CockpitScreen({
               <StatusChip label="Running" tone="green" />
             </View>
           }
-          onSettings={() => navigation.navigate('StyleGuide')}
+          onSettings={() => navigation.navigate('Settings')}
         />
 
+        {/* ── `.no-gps` (05g): baner typu STATUS — przyrząd, znika sam z powrotem fixa ── */}
+        {gpsLost && (
+          <NoGpsBanner
+            text={gpsLossText(lastFixAt, now)}
+            onManualEvent={() => setManualOpen(true)}
+            onManualList={() => navigation.navigate('ManualLog')}
+          />
+        )}
+
         <PhaseHero
-          phase={PHASE_LABEL[phase.phase]}
-          tone={PHASE_TONE[phase.phase]}
+          // Fazy z GPS nie znamy; „w locie" wiemy ZE ZDARZEŃ — projekcja nie potrzebuje fixa.
+          phase={gpsLost ? (inFlight ? 'In Flight' : PHASE_LABEL[phase.phase]) : PHASE_LABEL[phase.phase]}
+          tone={gpsLost ? 'amber' : PHASE_TONE[phase.phase]}
           detail={
-            gpsAvailable
-              ? (verticalSpeedLabel(phase.verticalSpeedFpm) ?? 'brak danych o wysokości')
-              : 'GPS: brak sygnału — zapisuj ręcznie'
+            gpsLost
+              ? unknownPhaseDetail(lastFixAt)
+              : (verticalSpeedLabel(phase.verticalSpeedFpm) ?? 'brak danych o wysokości')
           }
         />
 
         <ParamGrid
-          cells={[
-            { label: 'Ground speed', value: `${Math.round(fix?.groundSpeedKt ?? 0)}`, unit: 'KT' },
-            {
-              label: 'Altitude',
-              value: fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—',
-              unit: 'FT',
-            },
-            {
-              label: 'Fuel on board',
-              value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
-              unit: 'L',
-              tone: 'amber',
-              tint: true,
-            },
-            { label: 'Flight time', value: duration(liveFlightMs), tone: 'green', tint: true },
-          ]}
+          cells={
+            gpsLost
+              ? [
+                  { label: 'Ground speed', value: '— —', unit: 'KT', stale: true, note: staleCellNote(lastFixAt) },
+                  { label: 'Altitude', value: '— —', unit: 'FT', stale: true, note: staleCellNote(lastFixAt) },
+                  {
+                    label: 'Fuel on board',
+                    value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+                    unit: 'L',
+                    tone: 'amber',
+                    tint: true,
+                    note: 'dane lokalne — bez GPS',
+                  },
+                  {
+                    label: 'Flight time',
+                    value: duration(liveFlightMs),
+                    tone: 'green',
+                    tint: true,
+                    note: 'zegar — liczy normalnie',
+                  },
+                ]
+              : [
+                  { label: 'Ground speed', value: `${Math.round(fix?.groundSpeedKt ?? 0)}`, unit: 'KT' },
+                  {
+                    label: 'Altitude',
+                    value: fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—',
+                    unit: 'FT',
+                  },
+                  {
+                    label: 'Fuel on board',
+                    value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+                    unit: 'L',
+                    tone: 'amber',
+                    tint: true,
+                  },
+                  { label: 'Flight time', value: duration(liveFlightMs), tone: 'green', tint: true },
+                ]
+          }
         />
 
         {/* Log bieżącego cyklu — jedyny element, który się przewija. */}
@@ -255,23 +292,17 @@ export function CockpitScreen({
           </ScrollView>
         </Card>
 
-        {(lastError != null || warnings.length > 0 || !gpsAvailable) && (
+        {(lastError != null || warnings.length > 0) && (
           <View style={{ paddingHorizontal: 14, paddingTop: theme.spacing.sm, gap: theme.spacing.sm }}>
             {messages}
-            {!gpsAvailable && (
-              <Banner
-                kind="status"
-                tone="amber"
-                icon="warning"
-                title="GPS: brak sygnału"
-                text="Starty i lądowania nie będą wykrywane automatycznie — użyj zapisu ręcznego."
-              />
-            )}
           </View>
         )}
 
         <CockpitActions
-          primaryLabel={inFlight ? 'LAND' : 'T/O'}
+          // 05g: bez fixa ręczny zapis to JEDYNA droga — etykieta i amber mówią to
+          // wprost, zanim pilot doczyta baner.
+          primaryLabel={inFlight ? (gpsLost ? 'LAND · RĘCZNIE' : 'LAND') : gpsLost ? 'T/O · RĘCZNIE' : 'T/O'}
+          primaryTone={gpsLost ? 'amber' : undefined}
           primaryIcon={inFlight ? 'landing' : 'takeoff'}
           onPrimary={() => setManualOpen(true)}
           onDrop={() => setDropOpen(true)}
@@ -378,9 +409,9 @@ export function CockpitScreen({
           .filter(Boolean)
           .join(' · ')}
         right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
-        // `.settings-btn` z mockupu 04 — jedyne wejście do ustawień, w tym do wyboru
-        // motywu. Bez niego pięć motywów istniało wyłącznie w kodzie.
-        onSettings={() => navigation.navigate('StyleGuide')}
+        // `.settings-btn` z mockupu 04 → ekran 13 (ustawienia: motyw, PIN, konto,
+        // diagnostyka GPS). Do czasu 13 prowadził do StyleGuide.
+        onSettings={() => navigation.navigate('Settings')}
       />
 
       <View style={{ padding: theme.spacing.lg, gap: 14 }}>
@@ -425,6 +456,94 @@ export function CockpitScreen({
       {correctionSheet}
       {toast}
     </Screen>
+  );
+}
+
+/**
+ * `.no-gps` z mockupu 05g — baner typu STATUS (przyrząd): nie zamyka się ręcznie,
+ * znika sam z pierwszym świeżym fixem. Czerwień, bo w locie niezauważony brak fixa
+ * to niezapisane lądowanie (ryzyko 🔴 z §8). Dwie akcje to dwie skale problemu:
+ * chwilowa dziura → arkusz 05f (jedno zdarzenie), GPS milczy dłużej → lista ręczna 08.
+ */
+function NoGpsBanner({
+  text,
+  onManualEvent,
+  onManualList,
+}: {
+  text: string;
+  onManualEvent: () => void;
+  onManualList: () => void;
+}) {
+  const { theme } = useTheme();
+
+  return (
+    <View
+      style={{
+        marginHorizontal: 14,
+        marginTop: theme.spacing.sm,
+        borderRadius: theme.radius.md,
+        borderWidth: theme.borderWidth,
+        borderColor: theme.colors.redBorder,
+        backgroundColor: theme.colors.redMuted,
+        paddingVertical: 11,
+        paddingHorizontal: 13,
+        gap: 8,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View
+          style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.red }}
+        />
+        <AppText
+          variant="mono"
+          style={{ flex: 1, fontSize: 11, fontWeight: '700', color: theme.colors.red, letterSpacing: 0.5 }}
+        >
+          GPS: brak sygnału · autodetekcja wstrzymana
+        </AppText>
+      </View>
+      <AppText variant="body" tone="secondary" style={{ fontSize: 11, lineHeight: 16.5 }}>
+        {text}
+      </AppText>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <NoGpsLink label="Zapisz zdarzenie" icon="edit" onPress={onManualEvent} />
+        <NoGpsLink label="Lista ręczna" icon="manual-log" onPress={onManualList} />
+      </View>
+    </View>
+  );
+}
+
+/** `.no-gps-link` — pigułkowe wejścia akcji ratunkowych na banerze. */
+function NoGpsLink({
+  label,
+  icon,
+  onPress,
+}: {
+  label: string;
+  icon: 'edit' | 'manual-log';
+  onPress: () => void;
+}) {
+  const { theme } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        minHeight: 34,
+        paddingHorizontal: 11,
+        borderRadius: theme.radius.sm,
+        borderWidth: theme.borderWidth,
+        borderColor: theme.colors.redBorder,
+        backgroundColor: pressed ? theme.colors.redMuted : theme.colors.surface,
+      })}
+    >
+      <Icon name={icon} size={12} color={theme.colors.red} />
+      <AppText variant="mono" style={{ fontSize: 10, color: theme.colors.red, letterSpacing: 0.5 }}>
+        {label}
+      </AppText>
+    </Pressable>
   );
 }
 

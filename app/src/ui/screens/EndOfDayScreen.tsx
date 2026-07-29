@@ -147,6 +147,23 @@ export function EndOfDayScreen({
       }
     >
       <View style={{ padding: 14, gap: theme.spacing.md }}>
+        {/* ── dzień bez lotów (mockup 09a `.zero-box`) — Typ B: ostrzeżenie
+            warunkowe, widoczne tylko przy 0 lotów, znika z warunkiem ────── */}
+        {projection.flights.length === 0 && (
+          <Banner
+            kind="warning"
+            tone="amber"
+            icon="info"
+            title="Żaden lot nie został zapisany"
+            text={
+              `Zamykasz dzień bez lotów (0 startów, 0 lądowań${
+                projection.engineRuns.length === 0 ? ', silnik nie był uruchamiany' : ''
+              }). Odczyty końcowe są mimo to wymagane: to one są przekazaniem dla ` +
+              'następnego pilota.'
+            }
+          />
+        )}
+
         {/* ── czas zakończenia ─────────────────────────────────────────── */}
         <Card title="Czas zakończenia" header="inline">
           <Field label="Godzina zakończenia duty">
@@ -226,8 +243,13 @@ export function EndOfDayScreen({
           icon="check"
           title="Te odczyty zobaczy następny pilot"
           text={
-            `${litres(finalFuelL)} i ${motoHours(mh, mhFormat)} MH staną się przekazaniem dla kolejnej ` +
-            'sesji tego samolotu. Serwer porówna z nimi jej start i oznaczy dziury albo cofnięcia licznika.'
+            projection.flights.length === 0
+              ? // 09a: dzień bez lotów też jest ogniwem łańcucha §4.5 — mówimy to wprost.
+                `${litres(finalFuelL)} i ${motoHours(mh, mhFormat)} MH staną się przekazaniem. ` +
+                'Dzień bez lotów też jest ogniwem: potwierdzasz, że liczniki się nie ruszyły, ' +
+                'a serwer porówna z nimi początek kolejnej sesji zamiast zgłosić dziurę.'
+              : `${litres(finalFuelL)} i ${motoHours(mh, mhFormat)} MH staną się przekazaniem dla kolejnej ` +
+                'sesji tego samolotu. Serwer porówna z nimi jej start i oznaczy dziury albo cofnięcia licznika.'
           }
           collapsedLabel="Co znaczą te odczyty?"
           dismissed={handoverDismissed}

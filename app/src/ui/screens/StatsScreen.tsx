@@ -257,10 +257,17 @@ export function StatsScreen({
           <StatGrid cells={fuelCells} />
           <ResultRow
             label="Średnie zużycie (na block time)"
-            value={fuelPerHour(projection.fuel.consumedL, projection.blockTimeMs) ?? '—'}
+            value={fuelPerHour(projection.fuel.consumedL, projection.blockTimeMs) ?? '— —'}
             tone="amber"
             style={rowStyle}
           />
+          {/* 10a: zero nie jest średnią — mówimy, DLACZEGO nie liczymy (§6: nigdy
+              cicha kreska tam, gdzie pilot mógłby podejrzewać błąd aplikacji). */}
+          {projection.blockTimeMs === 0 && (
+            <AppText variant="mono" tone="muted" style={styles.avgNote}>
+              nie liczymy — block time 0:00 (dzielenie przez zero to nie statystyka)
+            </AppText>
+          )}
         </Card>
 
         {/* ── motogodziny (§3.7: początek / koniec / delta) ─────────────────── */}
@@ -410,6 +417,16 @@ function amount(value: number | null): string {
  * bo siatki dociągają się do krawędzi — wcięcie wiersza dokładamy stylem.
  */
 const rowStyle: ViewStyle = { paddingHorizontal: 12, marginTop: 0 };
+
+/** Przypis pod średnią (10a) — mono 9, w świetle karty. */
+const styles = {
+  avgNote: {
+    fontSize: 9,
+    letterSpacing: 0.5,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+  } as const,
+};
 
 /** Pierwszy wiersz sekcji styka się z linią nagłówka karty — własnej nie potrzebuje. */
 const firstRowStyle: ViewStyle = { ...rowStyle, borderTopWidth: 0 };

@@ -86,6 +86,19 @@ eksporter, treść kart i dziennik nie drgną. Zastrzeżenie: link z ekranu 11 o
 w przeglądarce telefonu dostanie 401 (zasób autoryzowany) — klikalny „na
 zewnątrz" stanie się z adapterem Google.
 
+Backlog UX z audytów wdrożony w RN (2026-07-29, mockupy 2026-07-28): wariant 05g —
+utrata fixa GPS to degradacja CZUJNIKA, osobna oś od sieci (watchdog świeżości
+w `useFlightDetection` na `GPS_STALE_SEC` z domeny; baner-przyrząd z czasem ostatniego
+fixa, siatka „— —", LAND·RĘCZNIE amber; napisy w `screens/gpsLoss.ts`); ekran 13
+Ustawienia (motyw kartami, `PinChangeSheet` offline, wylogowanie z ochroną outboxa
+przez `authStore.logout`, diagnostyka GPS z żywą subskrypcją i pozycją DDM, stempel
+cache referencyjnego) — zębatki kokpitu prowadzą tu zamiast do StyleGuide; 08 — pełny
+wpis §3.8 (`ManualEntrySheet`: 4 czasy + uwagi jedną komendą `manual_log_entry`)
+i stopki „Uwagi · …" na grupach rejestru; 09a/10a — dzień bez lotów: warunkowy baner
+zera, wariant edu-przekazania („liczniki się nie ruszyły"), przypis zamiast dzielenia
+przez zero. `GpsFix` niesie teraz też `lat`/`lon`/`accuracyM` (diagnostyka; detektor
+ich nie czyta).
+
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
 się różnić liczbami. Podział na grupy robi okno korekty (czysta funkcja
@@ -258,13 +271,15 @@ a nie przez jeden ekran.
 | `CorrectionSheet` | arkusz korekty: czas ±1 min, wpływ na czasy, strefa „nie było" | 04c |
 | `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
-| `ParamGrid` | sztywna siatka 2×2 parametrów GPS, komórki na styk | `.param-grid` |
+| `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut, STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami, chipy, cel korekty ≥ 44 px | `.day-log`, `.cycle-log` |
 | `DutyStrip` | licznik czasu służby od meldunku | `.duty-strip` |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine` |
 | `Sheet` | arkusz od dołu dla decyzji dotykających innych | `.modal-overlay` (przejęcie) |
+| `PinChangeSheet` | zmiana PIN w trzech krokach (obecny→nowy→powtórz), offline | arkusz PIN z 13 |
+| `ManualEntrySheet` | pełny wpis §3.8: cztery czasy ze stepperami ±1 min (przytrzymanie powtarza) + uwagi | „Nowy wpis ręczny" (08) |
 | `DetectToast` | toast autodetekcji: duży **COFNIJ** + licznik | `.detect-sheet` |
 | `tone.ts` | mapowanie tonu → (akcent, tło, obramowanie) | wspólne dla wszystkich |
 
@@ -438,7 +453,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 305 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 312 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -466,6 +481,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `claimMode.test.ts` | trybu przejęcia §4.4: `takeover_online` tylko z odpowiedzią serwera, żywy poprzednik wygrywa z cache, „już wolny" gasi przejęcie |
 | `pinCrypto.test.ts` | własnego SHA-256 (wektory NIST + node:crypto dla UTF-8) i solonego skrótu PIN-u — rekord nigdy nie niesie PIN-u wprost |
 | `historyDays.test.ts` | ekranu 12: podział wg okna korekty, dzień otwarty poza historią, tag wysyłki z outboxa sesji, plakietka splasha, odliczanie |
+| `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „— —" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:

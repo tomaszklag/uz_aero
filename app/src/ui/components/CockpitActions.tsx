@@ -26,6 +26,12 @@ export interface CockpitActionsProps {
   /** Akcja szeroka po lewej — zapis ręczny startu albo lądowania. */
   primaryLabel: string;
   primaryIcon?: IconName;
+  /**
+   * Ton akcji głównej. Domyślnie neutralna (podniesiona powierzchnia); mockup 05g
+   * awansuje ją na AMBER, gdy GPS zamilkł — ręczny zapis staje się wtedy JEDYNĄ
+   * drogą i przycisk ma o tym mówić kolorem, zanim pilot przeczyta baner.
+   */
+  primaryTone?: Tone;
   onPrimary: () => void;
   /** Zrzut — dostępny tylko w powietrzu. */
   onDrop: () => void;
@@ -39,6 +45,7 @@ export interface CockpitActionsProps {
 export function CockpitActions({
   primaryLabel,
   primaryIcon = 'landing',
+  primaryTone,
   onPrimary,
   onDrop,
   dropDisabledReason = null,
@@ -49,6 +56,7 @@ export function CockpitActions({
   const { theme } = useTheme();
   const blue = toneColors(theme, 'blue');
   const red = toneColors(theme, 'red');
+  const primary = primaryTone != null ? toneColors(theme, primaryTone) : null;
 
   return (
     <View
@@ -67,14 +75,21 @@ export function CockpitActions({
           {
             borderRadius: 14,
             borderWidth: theme.borderWidth,
-            borderColor: theme.colors.borderStrong,
-            backgroundColor: theme.colors.surfaceRaised,
+            borderColor: primary?.border ?? theme.colors.borderStrong,
+            backgroundColor: primary?.muted ?? theme.colors.surfaceRaised,
             opacity: pressed ? 0.75 : 1,
           },
         ]}
       >
-        <Icon name={primaryIcon} size={20} color={theme.colors.textPrimary} />
-        <AppText variant="button" style={styles.primaryLabel}>
+        <Icon
+          name={primaryIcon}
+          size={20}
+          color={primary?.accent ?? theme.colors.textPrimary}
+        />
+        <AppText
+          variant="button"
+          style={[styles.primaryLabel, primary != null ? { color: primary.accent } : null]}
+        >
           {primaryLabel}
         </AppText>
       </Pressable>

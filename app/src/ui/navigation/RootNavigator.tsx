@@ -29,6 +29,7 @@ import { ManualLogScreen } from '../screens/ManualLogScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { EndOfDayScreen } from '../screens/EndOfDayScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 import { SplashScreen } from '../screens/SplashScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { SyncScreen } from '../screens/SyncScreen';
@@ -51,6 +52,8 @@ export type RootStackParamList = {
   EndOfDay: undefined;
   Stats: undefined;
   Sync: undefined;
+  /** 13 — ustawienia: motyw, PIN, konto, diagnostyka GPS. */
+  Settings: undefined;
   StyleGuide: undefined;
 };
 
@@ -108,6 +111,7 @@ export function RootNavigator({
         <Stack.Screen name="EndOfDay" component={EndOfDayScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Sync" component={SyncScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="StyleGuide" component={StyleGuideScreen} />
       </Stack.Navigator>
     </NavigationContainer>
