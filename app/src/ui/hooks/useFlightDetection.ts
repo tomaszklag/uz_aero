@@ -22,6 +22,7 @@ import {
   GPS_STALE_SEC,
   VS_WINDOW_SEC,
   createDetectorState,
+  fixUsable,
   flightPhase,
   stepDetector,
   type Detection,
@@ -67,6 +68,11 @@ export interface UseFlightDetectionOptions {
   enabled: boolean;
   /** Elewacja lotniska (ft) — z fixa przy ENGINE START. */
   fieldElevationFt?: number | null;
+  /**
+   * Operacja lata Z i NA to samo lotnisko (skoki) — włącza geofence lądowania
+   * w detektorze. Ferry/przelot MUSI zostawić `false`.
+   */
+  sameFieldOnly?: boolean;
   /** Długość okna „COFNIJ" (s). */
   windowSec?: number;
 }
@@ -75,6 +81,7 @@ export function useFlightDetection({
   gps,
   enabled,
   fieldElevationFt = null,
+  sameFieldOnly = false,
   windowSec = AUTODETECT_TOAST_SEC,
 }: UseFlightDetectionOptions): FlightDetectionState {
   const taxi = useSessionStore((s) => s.taxi);
@@ -93,15 +100,15 @@ export function useFlightDetection({
    *  bo martwy GPS z definicji nie powie nam, że umarł (mockup 05g). */
   const lastFixDeviceMs = useRef<number | null>(null);
 
-  const detector = useRef<DetectorState>(createDetectorState(fieldElevationFt));
+  const detector = useRef<DetectorState>(createDetectorState(fieldElevationFt, { sameFieldOnly }));
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tickTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Elewacja pojawia się dopiero przy starcie silnika — aktualizujemy bez resetu fazy,
-  // żeby nie zgubić stanu „w powietrzu" przy ponownym renderze.
+  // żeby nie zgubić stanu „w powietrzu" przy ponownym renderze. Tryb operacji tak samo.
   useEffect(() => {
-    detector.current = { ...detector.current, fieldElevationFt };
-  }, [fieldElevationFt]);
+    detector.current = { ...detector.current, fieldElevationFt, sameFieldOnly };
+  }, [fieldElevationFt, sameFieldOnly]);
 
   const clearTimers = useCallback(() => {
     if (commitTimer.current) clearTimeout(commitTimer.current);
@@ -166,6 +173,12 @@ export function useFlightDetection({
       }
 
       stop = await gps.start((incoming) => {
+        // Kwarantanna śmieciowego fixa (zakłócenia — audyt 2026-07-29): nie karmimy nim
+        // ANI detektora, ani siatki, ani świeżości. Strumień samych śmieci wygasza
+        // `gpsAvailable` watchdogiem → kokpit uczciwie pokaże 05g „autodetekcja
+        // wstrzymana", a diagnostyka na 13 surowe fixy dalej widzi (własna subskrypcja).
+        if (!fixUsable(incoming)) return;
+
         setFix(incoming);
         setGpsAvailable(true);
         setLastFixAt(incoming.time);

@@ -132,6 +132,9 @@ export function CockpitScreen({
     gps,
     enabled: engineOn,
     fieldElevationFt,
+    // Skoki latają z i na to samo lotnisko — geofence odcina „lądowanie" daleko od
+    // pola (artefakt GPS). Ferry/przelot/egzamin lądują gdzie chcą — bez bramki.
+    sameFieldOnly: projection.operation === 'skoki',
   });
   const { openCorrection, correctionSheet } = useEventCorrection();
 

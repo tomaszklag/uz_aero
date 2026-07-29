@@ -54,6 +54,42 @@ export type DetectorPhase = 'ground' | 'airborne';
  */
 export type Detection = 'taxi' | 'takeoff' | 'landing';
 
+/** Pozycja geograficzna (stopnie dziesiętne) — geofence pola i test plauzybilności. */
+export interface LatLon {
+  lat: number;
+  lon: number;
+}
+
+const EARTH_RADIUS_NM = 3440.065;
+const toRad = (deg: number): number => (deg * Math.PI) / 180;
+
+/** Odległość po ortodromie (haversine) w milach morskich. */
+export function distanceNm(a: LatLon, b: LatLon): number {
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_NM * Math.asin(Math.sqrt(s));
+}
+
+const fixPosition = (fix: GpsFix): LatLon | null =>
+  fix.lat != null && fix.lon != null ? { lat: fix.lat, lon: fix.lon } : null;
+
+/**
+ * Bramka JAKOŚCI fixa (audyt 2026-07-29): odbiornik pod zakłóceniami nie milknie —
+ * raportuje śmieci. Fix z dokładnością gorszą niż próg albo z absurdalną prędkością
+ * traktujemy jak BRAK fixa: system ma na to uczciwą ścieżkę (baner 05g + zapis
+ * ręczny), a detekcja karmiona śmieciem umie wyprodukować fałszywe lądowanie w locie.
+ * Brak pola `accuracyM` nie dyskwalifikuje (stare fixy/testy) — odrzucamy tylko
+ * POZYTYWNIE zły pomiar.
+ */
+export function fixUsable(fix: GpsFix, thresholds: GpsThresholds = GPS_THRESHOLDS): boolean {
+  if (fix.accuracyM != null && fix.accuracyM > thresholds.MAX_FIX_ACCURACY_M) return false;
+  if (fix.groundSpeedKt > thresholds.MAX_PLAUSIBLE_SPEED_KT) return false;
+  return true;
+}
+
 export interface DetectorState {
   phase: DetectorPhase;
   /**
@@ -78,6 +114,19 @@ export interface DetectorState {
   cooldownUntil: EpochMillis | null;
   /** Czas ostatniego przetworzonego fixa — do wykrywania przerw w sygnale. */
   lastFixAt: EpochMillis | null;
+  /** Pozycja ostatniego DOBREGO fixa — test plauzybilności skoku (spoofing/multipath). */
+  lastPosition: LatLon | null;
+  /**
+   * Pozycja pola — pierwszy dobry fix na postoju po utworzeniu detektora (analogicznie
+   * do elewacji z ENGINE START). Null, gdy fixy nie niosą pozycji.
+   */
+  fieldPosition: LatLon | null;
+  /**
+   * Operacja lata Z i NA to samo lotnisko (skoki): lądowanie uznajemy tylko przy polu
+   * (`LANDING_FIELD_VICINITY_NM`). Ferry/przelot MUSI mieć `false` — tam lądowanie
+   * gdzie indziej jest normą i bramka odcięłaby prawdziwe przyziemienie.
+   */
+  sameFieldOnly: boolean;
 }
 
 export interface DetectorStep {
@@ -97,7 +146,10 @@ export interface DetectorStep {
 export const MAX_FIX_GAP_SEC = 10;
 
 /** Stan początkowy — zwykle tworzony przy ENGINE START, z elewacją lotniska. */
-export function createDetectorState(fieldElevationFt: number | null = null): DetectorState {
+export function createDetectorState(
+  fieldElevationFt: number | null = null,
+  options: { sameFieldOnly?: boolean } = {},
+): DetectorState {
   return {
     phase: 'ground',
     taxiing: false,
@@ -106,6 +158,9 @@ export function createDetectorState(fieldElevationFt: number | null = null): Det
     candidateSince: null,
     cooldownUntil: null,
     lastFixAt: null,
+    lastPosition: null,
+    fieldPosition: null,
+    sameFieldOnly: options.sameFieldOnly ?? false,
   };
 }
 
@@ -123,16 +178,28 @@ function takeoffConditionMet(fix: GpsFix, state: DetectorState, t: GpsThresholds
 }
 
 /**
- * Warunek lądowania: wolno ORAZ nisko.
+ * Warunek lądowania: wolno ORAZ nisko (ORAZ przy polu, gdy operacja jednolotniskowa).
  *
  * Gdy wysokości brak, świadomie **nie wykrywamy** lądowania — sam niski GS to za mało
  * (ciasny zakręt), a zmyślona detekcja kosztuje więcej niż jej brak: pilot ma ekran
  * wpisu ręcznego (05f) i toast korekty. Milczenie jest tu bezpieczniejsze od zgadywania.
+ *
+ * Geofence (audyt 2026-07-29): w dniu skokowym „wolno i nisko" daleko od pola to
+ * artefakt GPS, nie przyziemienie. Brak pozycji w fixie NIE blokuje (zachowanie jak
+ * dotąd) — bramka odcina wyłącznie pomiar, który POZYTYWNIE wskazuje inne miejsce.
  */
 function landingConditionMet(fix: GpsFix, state: DetectorState, t: GpsThresholds): boolean {
   if (fix.groundSpeedKt >= t.LANDING_SPEED_KT) return false;
   const agl = heightAboveField(fix, state);
-  return agl != null && agl < t.LANDING_ALT_DIFF_FT;
+  if (agl == null || agl >= t.LANDING_ALT_DIFF_FT) return false;
+
+  if (state.sameFieldOnly && state.fieldPosition != null) {
+    const here = fixPosition(fix);
+    if (here != null && distanceNm(here, state.fieldPosition) > t.LANDING_FIELD_VICINITY_NM) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -154,12 +221,44 @@ export function stepDetector(
     return { state, detection: null };
   }
 
+  // 1a. Bramka jakości: śmieciowy fix (dokładność, absurdalna prędkość) = brak fixa.
+  //     Kandydatów zerujemy — nie wiemy, co działo się „pod" śmieciem; `lastFixAt`
+  //     zostaje przy ostatnim DOBRYM fixie, więc ciągłość policzy `MAX_FIX_GAP_SEC`.
+  if (!fixUsable(fix, thresholds)) {
+    return {
+      state: { ...state, candidateSince: null, taxiCandidateSince: null },
+      detection: null,
+    };
+  }
+
+  // 1b. Plauzybilność skoku: pozycja przeskoczyła szybciej, niż samolot umie lecieć
+  //     (spoofing/multipath „teleportuje" odbiornik przy niewinnie wyglądającym GS).
+  const here = fixPosition(fix);
+  if (state.lastPosition != null && state.lastFixAt != null && here != null) {
+    const dtH = (fix.time - state.lastFixAt) / 3_600_000;
+    if (dtH > 0) {
+      const impliedKt = distanceNm(state.lastPosition, here) / dtH;
+      if (impliedKt > thresholds.MAX_PLAUSIBLE_SPEED_KT) {
+        return {
+          state: { ...state, candidateSince: null, taxiCandidateSince: null },
+          detection: null,
+        };
+      }
+    }
+  }
+
   const gapSec = state.lastFixAt == null ? 0 : (fix.time - state.lastFixAt) / 1000;
   const signalBroken = gapSec > MAX_FIX_GAP_SEC;
 
   const next: DetectorState = {
     ...state,
     lastFixAt: fix.time,
+    lastPosition: here ?? state.lastPosition,
+    // Pozycja pola: pierwszy dobry fix NA POSTOJU (analogicznie do elewacji §3.3).
+    // Tylko przed pierwszym startem — po lądowaniu pole już znamy.
+    fieldPosition:
+      state.fieldPosition ??
+      (state.phase === 'ground' && fix.groundSpeedKt < thresholds.TAXI_SPEED_KT ? here : null),
     candidateSince: signalBroken ? null : state.candidateSince,
     taxiCandidateSince: signalBroken ? null : state.taxiCandidateSince,
   };

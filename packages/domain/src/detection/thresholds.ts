@@ -57,6 +57,36 @@ export const AUTODETECT_TOAST_SEC = 5;
  */
 export const GPS_STALE_SEC = 15;
 
+// ── Bramka jakości fixa (audyt algorytmu 2026-07-29) ─────────────────────────
+//
+// Jamming to nie tylko ZANIK sygnału (ten łapie watchdog) — częściej DEGRADACJA:
+// fixy przychodzą, ale z pozycją skaczącą o kilometry i dokładnością trzycyfrową.
+// Detekcja karmiona takim strumieniem umie wyprodukować fałszywe lądowanie w locie.
+// Trzy progi niżej zamieniają śmieciowy fix w „brak fixa" — a brak fixa system
+// obsługuje uczciwie (05g + zapis ręczny).
+
+/**
+ * Fix z deklarowaną dokładnością gorszą niż ten próg traktujemy jak brak fixa.
+ * Zdrowy telefon trzyma 3–10 m; zagłuszany odbiornik raportuje setki metrów.
+ */
+export const MAX_FIX_ACCURACY_M = 50;
+
+/**
+ * Sufit wiarygodnej prędkości (kt) — i deklarowanej przez odbiornik, i IMPLIKOWANEJ
+ * przez skok pozycji między fixami. Cessna 182 nie przekroczy 180 kt; 250 zostawia
+ * zapas na przyszłe maszyny, a odcina teleportacje spoofingu/multipathu (tysiące kt).
+ */
+export const MAX_PLAUSIBLE_SPEED_KT = 250;
+
+/**
+ * Geofence lądowania dla operacji latających Z i NA to samo lotnisko (skoki):
+ * lądowanie uznajemy tylko w tym promieniu (NM) od pozycji pola. Krąg nadlotniskowy
+ * mieści się w 2 NM z zapasem; „wolno i nisko" 20 km od pola to w dniu skokowym
+ * artefakt GPS, nie przyziemienie. Dla operacji ferry/przelot bramka jest WYŁĄCZONA —
+ * tam lądowanie na innym lotnisku jest normą, nie anomalią.
+ */
+export const LANDING_FIELD_VICINITY_NM = 2;
+
 /**
  * Elewację lotniska bierzemy z wysokości GPS w momencie ENGINE START (§3.3, §8).
  * Ta stała to nazwane odniesienie do tej zasady — brak wartości liczbowej.
@@ -76,6 +106,9 @@ export const GPS_THRESHOLDS = {
   COOLDOWN_AFTER_TAKEOFF_SEC,
   COOLDOWN_AFTER_LANDING_SEC,
   AUTODETECT_TOAST_SEC,
+  MAX_FIX_ACCURACY_M,
+  MAX_PLAUSIBLE_SPEED_KT,
+  LANDING_FIELD_VICINITY_NM,
 } as const;
 
 export type GpsThresholds = typeof GPS_THRESHOLDS;

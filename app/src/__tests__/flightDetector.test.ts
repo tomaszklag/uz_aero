@@ -9,6 +9,8 @@
 
 import {
   createDetectorState,
+  distanceNm,
+  fixUsable,
   runDetector,
   stepDetector,
   MAX_FIX_GAP_SEC,
@@ -263,5 +265,113 @@ describe('detekcja kołowania', () => {
     const { detections } = runDetector(airborne(), series(0, 10, 60, FIELD_ELEV + 3000));
 
     expect(detections).toHaveLength(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Zakłócenia GPS (audyt 2026-07-29): jamming to częściej DEGRADACJA niż cisza —
+// fixy przychodzą, ale kłamią. Te testy przybijają bramkę jakości, plauzybilność
+// skoku pozycji i geofence lądowania dla operacji jednolotniskowych.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Pozycja EPKK-okolice; przesunięcie o ~1 NM na północ to +1/60 stopnia szerokości. */
+const FIELD = { lat: 50.078, lon: 19.785 };
+const nmNorth = (nm: number) => ({ lat: FIELD.lat + nm / 60, lon: FIELD.lon });
+
+describe('bramka jakości fixa (zakłócenia)', () => {
+  it('fixUsable: odcina dokładność ponad próg i absurdalną prędkość', () => {
+    expect(fixUsable({ time: t(0), groundSpeedKt: 60, altitudeFt: 900 })).toBe(true);
+    expect(
+      fixUsable({ time: t(0), groundSpeedKt: 60, altitudeFt: 900, accuracyM: T.MAX_FIX_ACCURACY_M + 1 }),
+    ).toBe(false);
+    expect(
+      fixUsable({ time: t(0), groundSpeedKt: T.MAX_PLAUSIBLE_SPEED_KT + 50, altitudeFt: 900 }),
+    ).toBe(false);
+    // Brak pola accuracyM NIE dyskwalifikuje — odrzucamy tylko pozytywnie zły pomiar.
+    expect(fixUsable({ time: t(0), groundSpeedKt: 60, altitudeFt: 900, accuracyM: null })).toBe(true);
+  });
+
+  it('w locie strumień „wolno i nisko" ze śmieciową dokładnością NIE ląduje samolotu', () => {
+    // Zagłuszany odbiornik raportuje niską prędkość i wysokość przy dokładności 120 m —
+    // bez bramki byłoby to podręcznikowe fałszywe lądowanie w powietrzu.
+    const garbage: GpsFix[] = series(0, 20, 15, FIELD_ELEV + 5).map((f) => ({
+      ...f,
+      accuracyM: 120,
+    }));
+    const { detections } = runDetector(airborne(), garbage);
+
+    expect(detections).toHaveLength(0);
+  });
+
+  it('po śmieciach wraca dobry sygnał — detekcja działa od nowa, bez pamięci o śmieciu', () => {
+    const fixes: GpsFix[] = [
+      ...series(0, 5, 15, FIELD_ELEV + 5).map((f) => ({ ...f, accuracyM: 200 })), // śmieci
+      ...series(5, 8, 20, FIELD_ELEV + 5).map((f) => ({ ...f, accuracyM: 5 })), // zdrowy dobieg
+    ];
+    const { detections } = runDetector(airborne(), fixes);
+
+    expect(detections.map((d) => d.detection)).toEqual(['landing']);
+  });
+
+  it('teleportacja pozycji (spoofing) zeruje kandydata — szpilka GS nie robi startu', () => {
+    // Na postoju: pozycja skacze o 5 NM między sekundami (implikowane tysiące kt),
+    // a odbiornik deklaruje niewinne 60 kt — dokładnie profil rozbiegu. Bez testu
+    // plauzybilności trzy takie fixy z rzędu odpaliłyby takeoff.
+    const fixes: GpsFix[] = Array.from({ length: 6 }, (_, i) => ({
+      time: t(i),
+      groundSpeedKt: 60,
+      altitudeFt: FIELD_ELEV,
+      ...(i % 2 === 0 ? FIELD : nmNorth(5)),
+    }));
+    const { detections } = runDetector(onGround(), fixes);
+
+    expect(detections).toHaveLength(0);
+  });
+});
+
+describe('geofence lądowania (operacja jednolotniskowa)', () => {
+  const skoki = () => createDetectorState(FIELD_ELEV, { sameFieldOnly: true });
+
+  /** Postój na płycie utrwala pozycję pola, potem faza w powietrzu. */
+  const airborneAtField = () => {
+    let state = skoki();
+    for (const f of series(0, 3, 0, FIELD_ELEV)) {
+      state = stepDetector(state, { ...f, ...FIELD }).state;
+    }
+    return { ...state, phase: 'airborne' as const, lastPosition: null };
+  };
+
+  it('„wolno i nisko" 5 NM od pola to artefakt, nie przyziemienie — cisza', () => {
+    const far = series(10, 8, 20, FIELD_ELEV + 5).map((f) => ({ ...f, ...nmNorth(5) }));
+    const { detections } = runDetector(airborneAtField(), far);
+
+    expect(detections).toHaveLength(0);
+  });
+
+  it('te same warunki przy polu → landing (krąg mieści się w promieniu)', () => {
+    const near = series(10, 8, 20, FIELD_ELEV + 5).map((f) => ({ ...f, ...nmNorth(1) }));
+    const { detections } = runDetector(airborneAtField(), near);
+
+    expect(detections.map((d) => d.detection)).toEqual(['landing']);
+  });
+
+  it('ferry (bez bramki) ląduje na INNYM lotnisku jak dotąd — regresja niedopuszczalna', () => {
+    // Odległość 150 NM od punktu startu; elewacja docelowa zbliżona do startowej.
+    const away = series(0, 8, 20, FIELD_ELEV + 5).map((f) => ({ ...f, ...nmNorth(150) }));
+    const { detections } = runDetector(airborne(), away);
+
+    expect(detections.map((d) => d.detection)).toEqual(['landing']);
+  });
+
+  it('brak pozycji w fixie nie blokuje lądowania — bramka tnie tylko pozytywnie zły pomiar', () => {
+    const noPos = series(10, 8, 20, FIELD_ELEV + 5); // fixy bez lat/lon
+    const { detections } = runDetector(airborneAtField(), noPos);
+
+    expect(detections.map((d) => d.detection)).toEqual(['landing']);
+  });
+
+  it('distanceNm: minuta szerokości geograficznej = 1 NM (sanity trygonometrii)', () => {
+    expect(distanceNm(FIELD, nmNorth(1))).toBeCloseTo(1, 2);
+    expect(distanceNm(FIELD, FIELD)).toBe(0);
   });
 });

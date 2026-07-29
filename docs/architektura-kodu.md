@@ -471,7 +471,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 312 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 321 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -558,6 +558,20 @@ nie wolno uznać za lądowanie), **turbulencja przy ziemi** (±30 ft nie może u
 **przelot nad pasem** (nisko, ale szybko), **utrata sygnału** (po przerwie nie wolno
 „domknąć" warunku z rozpędu), **skok zegara wstecz**, oraz pełny cykl kołowanie → start
 → przelot → lądowanie. To jedyny sposób, żeby sprawdzić algorytm bez samolotu.
+
+**Zakłócenia GPS (audyt algorytmu 2026-07-29).** Jamming to częściej DEGRADACJA niż
+cisza — fixy przychodzą, ale kłamią. Detektor ma trójstopniową bramkę (`fixUsable` +
+plauzybilność + geofence): fix z dokładnością > `MAX_FIX_ACCURACY_M` albo prędkością
+(deklarowaną LUB implikowaną skokiem pozycji) > `MAX_PLAUSIBLE_SPEED_KT` liczy się jak
+BRAK fixa (hook kwarantannuje go całkowicie — watchdog wygasza `gpsAvailable` i kokpit
+pokazuje 05g); dla operacji jednolotniskowych (skoki) lądowanie dodatkowo wymaga
+pozycji w promieniu `LANDING_FIELD_VICINITY_NM` od pola (pozycja pola = pierwszy dobry
+fix na postoju, jak elewacja §3.3) — ferry/przelot bramki NIE ma, bo tam lądowanie
+gdzie indziej jest normą. Testy przybijają: fałszywe lądowanie ze śmieciowego strumienia,
+teleportację spoofingu przy niewinnym GS, powrót dobrego sygnału i brak regresji ferry.
+Dalsze wzmocnienia (świadomie odłożone po dane z fazy 5): **barometr** jako niezależny
+pionowy tor ziemia/powietrze (expo-sensors — moduł natywny; najlepszy zysk/koszt),
+akcelerometr odrzucony (nieznana orientacja telefonu + wibracje tłokowe).
 
 **`projections.test.ts` to kontrakt z designem, nie zwykły test.** Odwzorowuje kanoniczną oś dnia 22 JUNE z `docs/design-notes.md` — te same liczby, które pokazują mockupy 04/09/10/11: block **6:39** (2:22 + 1:13 + 3:04), 6 lotów, paliwo **150 +48 −110 = 88 L**, MH **1234:30 → 1241:09**, oraz inwariant **Δ MH = block time**. Zmiana tych liczb w teście bez zmiany designu (i odwrotnie) to rozjazd, nie poprawka.
 
