@@ -19,7 +19,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 
 import { REFERENCE_META_CHECKED_AT } from '../../application';
-import { AppText, Brand, Icon, RefDataStamp, Screen, Tag } from '../components';
+import { ActionButton, AppText, Brand, Icon, RefDataStamp, Screen, Tag } from '../components';
 import { useTheme } from '../theme';
 import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
@@ -69,31 +69,16 @@ export function SplashScreen({
       <View style={styles.wrap}>
         <Brand size="hero" style={styles.brand} />
 
-        {/* ── `.start-btn` — jedyna główna akcja ekranu ───────────────────── */}
-        <Pressable
-          accessibilityRole="button"
+        {/* ── `.start-btn` — jedyna główna akcja ekranu; rozmiar `splash` niesie
+            geometrię 20 px / gap 10 / padding 16/24 i pressed-fill z mockupu ─── */}
+        <ActionButton
+          label="NOWY DZIEŃ LOTNY"
+          icon="start"
+          tone="green"
+          size="splash"
           onPress={() => navigation.navigate('PreflightAircraft')}
-          style={({ pressed }) => [
-            styles.startBtn,
-            {
-              backgroundColor: pressed ? theme.colors.green : theme.colors.greenMuted,
-              borderColor: pressed ? theme.colors.green : theme.colors.greenBorder,
-              borderWidth: theme.borderWidth,
-            },
-          ]}
-        >
-          {({ pressed }) => (
-            <>
-              <Icon name="start" size={18} color={pressed ? theme.colors.bg : theme.colors.green} />
-              <AppText
-                variant="display"
-                style={[styles.startLabel, { color: pressed ? theme.colors.bg : theme.colors.green }]}
-              >
-                NOWY DZIEŃ LOTNY
-              </AppText>
-            </>
-          )}
-        </Pressable>
+          style={styles.startBtn}
+        />
 
         {/* ── `.history-link` → 12 Historia ───────────────────────────────── */}
         <Pressable
@@ -132,18 +117,9 @@ export function SplashScreen({
 const styles = StyleSheet.create({
   wrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   brand: { marginBottom: 48 },
-  startBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    alignSelf: 'stretch',
-    minHeight: 56,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-  },
-  startLabel: { fontSize: 20, letterSpacing: 3 },
+  // `wrap` centruje dzieci — przycisk ma iść na całą szerokość jak w mockupie
+  // (`width: calc(100% - 64px)`); resztę geometrii niesie rozmiar `splash`.
+  startBtn: { alignSelf: 'stretch' },
   historyBtn: {
     flexDirection: 'row',
     alignItems: 'center',

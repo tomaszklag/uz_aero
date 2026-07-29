@@ -12,7 +12,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
 
 import { GPS_STALE_SEC, type GpsFix } from '../../domain';
@@ -22,7 +22,6 @@ import {
   Banner,
   Card,
   GhostAction,
-  Icon,
   KeyValueRow,
   OutboxGuard,
   PinChangeSheet,
@@ -30,12 +29,10 @@ import {
   RefDataStamp,
   Screen,
   ScreenHeader,
+  SettingsAction,
   SyncChip,
   ThemePicker,
-  type IconName,
 } from '../components';
-import { useTheme } from '../theme';
-import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { useGps } from '../bootstrap/ServicesProvider';
@@ -264,52 +261,6 @@ export function SettingsScreen({
   );
 }
 
-/** `.action-item` — wiersz akcji sekcji: ikona, nazwa, podpis, strzałka. */
-function SettingsAction({
-  icon,
-  name,
-  sub,
-  disabled = false,
-  onPress,
-}: {
-  icon: IconName;
-  name: string;
-  sub: string;
-  disabled?: boolean;
-  onPress: () => void;
-}) {
-  const { theme } = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.action,
-        {
-          borderRadius: theme.radius.md,
-          borderWidth: theme.borderWidth,
-          borderColor: theme.colors.border,
-          backgroundColor: pressed ? theme.colors.surfaceHover : theme.colors.surfaceRaised,
-          opacity: disabled ? 0.55 : 1,
-        },
-      ]}
-    >
-      <Icon name={icon} size={16} color={disabled ? theme.colors.textMuted : theme.colors.textSecondary} />
-      <View style={styles.actionBody}>
-        <AppText variant="body" style={styles.actionName}>
-          {name}
-        </AppText>
-        <AppText variant="mono" tone={disabled ? 'amber' : 'muted'} style={styles.actionSub}>
-          {sub}
-        </AppText>
-      </View>
-      <Icon name="more" size={14} color={theme.colors.textMuted} />
-    </Pressable>
-  );
-}
-
 /** `.section-note` — przypis sekcji (mono, muted). */
 function SectionNote({ text }: { text: string }) {
   return (
@@ -322,17 +273,6 @@ function SectionNote({ text }: { text: string }) {
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
   profile: { minWidth: 0, alignSelf: 'stretch' },
-  action: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 52,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  actionBody: { flex: 1, gap: 2 },
-  actionName: { fontSize: 13, fontFamily: fontFamily.bodySemiBold },
-  actionSub: { fontSize: 9, letterSpacing: 0.5 },
   refRow: { paddingTop: 4 },
   note: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
 });

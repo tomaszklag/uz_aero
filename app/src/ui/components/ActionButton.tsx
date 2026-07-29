@@ -36,9 +36,19 @@ export type ActionVariant = 'solid' | 'primary' | 'secondary';
  *           Jedyna akcja na ekranie, którą trzeba trafić nie patrząc — stąd ta skala;
  *  `lg`   = `.btn-primary` (22 px / ls 3, wysokość ≥ 56) — główna akcja formularza;
  *  `md`   = `.modal-btn-*` (16 px / ls 2, wysokość ≥ 48) — para akcji w arkuszu, gdzie
- *           dwa przyciski dzielą szerokość i pełny rozmiar rozpychałby arkusz.
+ *           dwa przyciski dzielą szerokość i pełny rozmiar rozpychałby arkusz;
+ *  `splash` = `.start-btn` ze splasha (01): 20 px / ls 3, gap 10 i padding 16/24 wprost
+ *           z mockupu; NACIŚNIĘCIE wypełnia przycisk akcentem (`:hover` mockupu),
+ *           zamiast przygaszać opacity — jedyny rozmiar z tym zachowaniem.
+ *
+ * Rozmiar to klasa przycisku z mockupu (kształt + zachowanie naciśnięcia), nie sama
+ * liczba pikseli — dlatego pressed-fill splasha jest częścią rozmiaru, a nie osobnym
+ * booleanem czy czwartym wariantem: mockup przybija go dla `.start-btn` i tylko dla
+ * niego, osobny przełącznik pozwalałby na kombinacje (np. `solid` + fill) bez pokrycia
+ * w designie, a wariant opisuje schemat kolorów w spoczynku — splash w spoczynku
+ * JEST wariantem `primary`.
  */
-export type ActionSize = 'hero' | 'lg' | 'md';
+export type ActionSize = 'hero' | 'lg' | 'md' | 'splash';
 
 export interface ActionButtonProps {
   label: string;
@@ -120,6 +130,11 @@ export function ActionButton({
 
   const solid = variant === 'solid';
   const hero = size === 'hero';
+  const splash = size === 'splash';
+  // Pressed-fill `.start-btn:hover` (01) — opt-in przez rozmiar `splash` i tylko przy
+  // tapnięciu: z przytrzymaniem (holdMs > 0) feedbackiem jest pasek postępu, którego
+  // pełne wypełnienie by nie pokazało. Pozostałe rozmiary: pressed = opacity 0.7.
+  const fillsOnPress = splash && holdMs === 0;
   const background = disabled
     ? theme.colors.surfaceHover
     : solid
@@ -143,80 +158,99 @@ export function ActionButton({
         onPressIn={holdMs > 0 ? startHold : undefined}
         onPressOut={holdMs > 0 ? cancelHold : undefined}
         onPress={holdMs > 0 ? undefined : startHold}
-        style={({ pressed }) => [
-          styles.button,
-          {
-            // Każdy wariant zostaje powyżej progu 44 px dla rękawic.
-            minHeight: hero ? 132 : size === 'lg' ? 56 : 48,
-            gap: hero ? theme.spacing.sm : theme.spacing.xs,
-            paddingHorizontal: theme.spacing.lg,
-            paddingVertical: hero ? 22 : size === 'lg' ? theme.spacing.md : theme.spacing.sm,
-            borderRadius: hero ? 20 : size === 'lg' ? theme.radius.lg : theme.radius.md,
-            borderWidth: theme.borderWidth,
-            borderColor: disabled ? theme.colors.border : solid ? c.accent : c.border,
-            backgroundColor: background,
-            opacity: disabled ? 0.45 : pressed && holdMs === 0 ? 0.7 : 1,
-          },
-        ]}
+        style={({ pressed }) => {
+          const filled = fillsOnPress && pressed && !disabled;
+          return [
+            styles.button,
+            {
+              // Każdy wariant zostaje powyżej progu 44 px dla rękawic.
+              minHeight: hero ? 132 : size === 'md' ? 48 : 56,
+              gap: hero ? theme.spacing.sm : theme.spacing.xs,
+              // `.start-btn` przybija padding 16/24 — szerszy niż standardowe 16.
+              paddingHorizontal: splash ? theme.spacing.xxl : theme.spacing.lg,
+              paddingVertical: hero
+                ? 22
+                : splash
+                  ? theme.spacing.lg
+                  : size === 'lg'
+                    ? theme.spacing.md
+                    : theme.spacing.sm,
+              borderRadius: hero ? 20 : size === 'md' ? theme.radius.md : theme.radius.lg,
+              borderWidth: theme.borderWidth,
+              borderColor: disabled ? theme.colors.border : solid || filled ? c.accent : c.border,
+              backgroundColor: filled ? c.accent : background,
+              opacity: disabled ? 0.45 : pressed && holdMs === 0 && !fillsOnPress ? 0.7 : 1,
+            },
+          ];
+        }}
       >
-        {/* Pasek postępu przytrzymania — wypełnia przycisk od lewej. */}
-        {holding && (
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                backgroundColor: c.muted,
-                width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-              },
-            ]}
-          />
-        )}
+        {({ pressed }) => {
+          const filled = fillsOnPress && pressed && !disabled;
+          // Na pełnym wypełnieniu akcentem treść musi pociemnieć — jak w `solid`.
+          const contentColor = filled ? theme.colors.bg : labelColor;
+          return (
+            <>
+              {/* Pasek postępu przytrzymania — wypełnia przycisk od lewej. */}
+              {holding && (
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFill,
+                    {
+                      backgroundColor: c.muted,
+                      width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
+                    },
+                  ]}
+                />
+              )}
 
-        {/* `hero`: okrągła plakietka z ikoną nad napisem — cel, w który trzeba trafić,
-            nie patrząc na ekran. */}
-        {hero && icon != null && (
-          <View
-            style={[
-              styles.heroIcon,
-              { backgroundColor: disabled ? theme.colors.surfaceHover : c.accent },
-            ]}
-          >
-            <Icon
-              name={icon}
-              size={24}
-              // Na wypełnionej plakietce napis musi być ciemny, na przygaszonej — muted.
-              color={disabled ? theme.colors.textMuted : theme.colors.bg}
-            />
-          </View>
-        )}
+              {/* `hero`: okrągła plakietka z ikoną nad napisem — cel, w który trzeba trafić,
+                  nie patrząc na ekran. */}
+              {hero && icon != null && (
+                <View
+                  style={[
+                    styles.heroIcon,
+                    { backgroundColor: disabled ? theme.colors.surfaceHover : c.accent },
+                  ]}
+                >
+                  <Icon
+                    name={icon}
+                    size={24}
+                    // Na wypełnionej plakietce napis musi być ciemny, na przygaszonej — muted.
+                    color={disabled ? theme.colors.textMuted : theme.colors.bg}
+                  />
+                </View>
+              )}
 
-        <View style={styles.row}>
-          {!hero && icon != null && (
-            <Icon name={icon} size={size === 'md' ? 16 : 18} color={labelColor} />
-          )}
-          <AppText
-            variant={size === 'md' ? 'buttonSmall' : 'button'}
-            style={[hero ? styles.heroLabel : null, { color: labelColor }]}
-          >
-            {label}
-          </AppText>
-          {trailingIcon != null && (
-            <Icon name={trailingIcon} size={size === 'md' ? 16 : 18} color={labelColor} />
-          )}
-        </View>
+              <View style={[styles.row, splash && styles.splashRow]}>
+                {!hero && icon != null && (
+                  <Icon name={icon} size={size === 'md' ? 16 : 18} color={contentColor} />
+                )}
+                <AppText
+                  variant={size === 'md' ? 'buttonSmall' : 'button'}
+                  style={[hero ? styles.heroLabel : splash ? styles.splashLabel : null, { color: contentColor }]}
+                >
+                  {label}
+                </AppText>
+                {trailingIcon != null && (
+                  <Icon name={trailingIcon} size={size === 'md' ? 16 : 18} color={contentColor} />
+                )}
+              </View>
 
-        {hint != null && (
-          <AppText
-            variant="mono"
-            style={[
-              styles.hint,
-              { color: solid && !disabled ? theme.colors.bg : theme.colors.textMuted },
-            ]}
-          >
-            {hint}
-          </AppText>
-        )}
+              {hint != null && (
+                <AppText
+                  variant="mono"
+                  style={[
+                    styles.hint,
+                    { color: solid && !disabled ? theme.colors.bg : theme.colors.textMuted },
+                  ]}
+                >
+                  {hint}
+                </AppText>
+              )}
+            </>
+          );
+        }}
       </Pressable>
 
       {/* Powód blokady — widoczny tekst, nigdy cichy błąd (§6 pkt 3). */}
@@ -240,6 +274,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroLabel: { fontSize: 28, lineHeight: 30, letterSpacing: 4 },
+  // `.start-btn` (01): mockup przybija gap 10 między ikoną a napisem.
+  splashRow: { gap: 10 },
+  // `.start-btn` (01): Bebas 20 px (ls 3 zostaje z tokenu `button`). lineHeight 36 —
+  // mockup interlinii nie przybija; dotychczasowy splash dziedziczył ją z tokenu
+  // `display` i wymóg 1:1 z obecnym renderem każe ją zachować (wysokość ~68 px).
+  splashLabel: { fontSize: 20, lineHeight: 36 },
   hint: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', textAlign: 'center' },
   reason: { textAlign: 'center', marginTop: 6 },
 });

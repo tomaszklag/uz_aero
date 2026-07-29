@@ -108,11 +108,9 @@ i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` — odmiana liczeb
 przeniesiona do `ui/format.ts`, bo DS nie może zależeć od helperów ekranów); kłódka
 zamiast trójkąta przy zamkniętych dniach (12); `SyncChip` na `AppText`; hitSlopy na
 małych z designu celach (mini-chip edu, „Nie pamiętam PIN", oko podglądu); jawny błąd
-otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** awans
-jednoekranowych prymitywów (NoGpsBanner, SettingsAction,
-ExportedBox, start-btn splasha → prop w ActionButton), karta logowania na `Card`,
-token `radius.btn = 14` i wyrównanie 13/14, motyw per PILOT zamiast per telefon
-(nota na 13 mówi dziś prawdę: per telefon), ujednolicenie `StyleSheet.create`.
+otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** karta logowania
+na `Card`, token `radius.btn = 14` i wyrównanie 13/14, motyw per PILOT zamiast per
+telefon (nota na 13 mówi dziś prawdę: per telefon), ujednolicenie `StyleSheet.create`.
 
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
@@ -245,6 +243,7 @@ a nie przez jeden ekran.
 | `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
 | `SyncStatusBox` | przyrząd statusu wysyłki: plakietka, licznik, pasek postępu | `.google-box` (11) / `.sync-box` (11a) |
 | `QueueBox` | kolejka outboxa: aktywna (amber) albo przygaszona do 30% | `.queue-box` (11a) / `.offline-queue` (11) |
+| `ExportedBox` | pudełko „Serwer zaktualizował arkusz": link do karty, jawny błąd otwarcia (§6 pkt 3) | `.success-box` (11) |
 | `StatusChip` | chipy **stanu sesji** (GROUND, RUNNING, cache) | `.ground-chip` |
 | `Tag` | **przypisy** przy pozycji listy/nagłówku (8–11 px) | `.pic-lock-tag`, `.optional-tag`, `.step-badge` |
 | `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
@@ -274,6 +273,7 @@ a nie przez jeden ekran.
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
 | `KeyValueRow` | wiersz klucz—wartość (kroje `micro`/`mono`, `valueTone`, `divider`) | `.diag-row` (13), `.row` „Dane dnia" (11a) |
+| `SettingsAction` | wiersz akcji ustawień: ikona, nazwa, podpis (przy blokadzie niesie powód), strzałka | `.action-item` (13) |
 | `SummaryStrip` | pasek bilansu dnia poza obszarem przewijania | `.summary-strip` |
 | `ResultRow` | stopka sekcji: opis + wyliczona wartość nad linią | `.result-row` (09) |
 | `ResultBar` | samodzielny pasek wyniku z rachunkiem, na tonowanym tle | `.result-row` (06) |
@@ -290,11 +290,12 @@ a nie przez jeden ekran.
 | `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
+| `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut, STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami, chipy, cel korekty ≥ 44 px | `.day-log`, `.cycle-log` |
 | `DutyStrip` | licznik czasu służby od meldunku | `.duty-strip` |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
-| `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine` |
+| `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
 | `Sheet` | arkusz od dołu dla decyzji dotykających innych | `.modal-overlay` (przejęcie) |
 | `PinChangeSheet` | zmiana PIN w trzech krokach (obecny→nowy→powtórz), offline | arkusz PIN z 13 |
 | `ManualEntrySheet` | pełny wpis §3.8: cztery czasy ze stepperami ±1 min (przytrzymanie powtarza) + uwagi | „Nowy wpis ręczny" (08) |
@@ -338,10 +339,14 @@ przed implementacją, nie na cichą zmianę w kodzie.
 Trzy warianty `ActionButton` odpowiadają trzem klasom z mockupów: `solid` = `.btn-primary`
 (pełna zieleń, ciemny napis — „DALEJ" formularza), `primary` = `.start-engine` (przygaszone
 tło akcentu, bo pełna zieleń świeciłaby nocą w oczy), `secondary` = sam kontur.
-Do tego dwa rozmiary: `lg` (22 px / ls 3, `.btn-primary`) dla głównej akcji ekranu i `md`
-(16 px / ls 2, `.modal-btn-*`) dla pary akcji w arkuszu. Oba mają tokeny `button`
-i `button_small` — napis na przycisku **nigdy** nie używa tokenu `display` (34 px),
-bo to rozmiar tytułu ekranu.
+Do tego rozmiary: `hero` (`.start-engine` w skali kokpitu), `lg` (22 px / ls 3,
+`.btn-primary`) dla głównej akcji ekranu, `md` (16 px / ls 2, `.modal-btn-*`) dla pary
+akcji w arkuszu i `splash` (`.start-btn` z 01: 20 px / ls 3) — jedyny, który przy
+naciśnięciu wypełnia się akcentem zamiast przygaszać opacity, bo tak przybija go mockup;
+rozmiar odpowiada klasie przycisku z mockupu, więc i to zachowanie mieszka w rozmiarze,
+nie w osobnym przełączniku. Etykiety idą z tokenów `button` i `button_small` (`hero`
+i `splash` nadpisują na nich tylko rozmiar) — napis na przycisku **nigdy** nie używa
+tokenu `display` (34 px), bo to rozmiar tytułu ekranu.
 
 `Stepper` istnieje z konkretnego powodu: audyt użyteczności wykazał, że dolewka paliwa
 była ustawiana uchwytem suwaka 16×16 px na torze 312 px — około **1,4 litra na piksel**.
