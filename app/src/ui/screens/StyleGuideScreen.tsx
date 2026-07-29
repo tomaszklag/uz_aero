@@ -63,6 +63,11 @@ export function StyleGuideScreen() {
             Ground Speed
           </AppText>
         </TypeRow>
+        <TypeRow label="micro · mikro-etykiety 9 px">
+          <AppText variant="micro" tone="muted">
+            Log zdarzeń · 22 JUNE 2026
+          </AppText>
+        </TypeRow>
         <TypeRow label="body · Archivo">
           <AppText variant="body">
             Brak sieci nigdy nie blokuje pracy pilota — sieć to okazja do synca.

@@ -108,9 +108,8 @@ i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` — odmiana liczeb
 przeniesiona do `ui/format.ts`, bo DS nie może zależeć od helperów ekranów); kłódka
 zamiast trójkąta przy zamkniętych dniach (12); `SyncChip` na `AppText`; hitSlopy na
 małych z designu celach (mini-chip edu, „Nie pamiętam PIN", oko podglądu); jawny błąd
-otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** wariant `micro`
-w `AppText` + wspólny `KeyValueRow` (dziś ~8 ręcznych mikro-etykiet i 4 wiersze
-klucz-wartość), awans jednoekranowych prymitywów (NoGpsBanner, SettingsAction,
+otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** awans
+jednoekranowych prymitywów (NoGpsBanner, SettingsAction,
 ExportedBox, start-btn splasha → prop w ActionButton), karta logowania na `Card`,
 token `radius.btn = 14` i wyrównanie 13/14, motyw per PILOT zamiast per telefon
 (nota na 13 mówi dziś prawdę: per telefon), ujednolicenie `StyleSheet.create`.
@@ -234,7 +233,7 @@ a nie przez jeden ekran.
 | Komponent | Rola | Skąd w designie |
 |---|---|---|
 | `Screen` | tło, safe area, scroll, **przyklejony nagłówek** | wszystkie ekrany |
-| `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`) | wszystkie |
+| `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`/`micro`) | wszystkie |
 | `Brand` | znak marki (kafel z ikoną, „UZ AERO", tagline), rozmiary `md`/`hero` | `.brand` (00/00a), `.app-icon` (01) |
 | `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
@@ -274,6 +273,7 @@ a nie przez jeden ekran.
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
+| `KeyValueRow` | wiersz klucz—wartość (kroje `micro`/`mono`, `valueTone`, `divider`) | `.diag-row` (13), `.row` „Dane dnia" (11a) |
 | `SummaryStrip` | pasek bilansu dnia poza obszarem przewijania | `.summary-strip` |
 | `ResultRow` | stopka sekcji: opis + wyliczona wartość nad linią | `.result-row` (09) |
 | `ResultBar` | samodzielny pasek wyniku z rachunkiem, na tonowanym tle | `.result-row` (06) |

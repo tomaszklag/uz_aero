@@ -29,6 +29,7 @@ import {
   Card,
   DataTable,
   Icon,
+  KeyValueRow,
   OptionInput,
   QueueBox,
   Screen,
@@ -237,14 +238,22 @@ export function SyncScreen({ navigation }: { navigation: { goBack: () => void } 
         ) : (
           <Card title="Dane dnia · lokalne · kompletne" flush>
             <View style={styles.localRows}>
-              <LocalRow label={`${dayLabel} · ${aircraft}`} value={flightsBadge(projection.flights.length)} />
-              <LocalRow
+              {/* `.row` z karty „Dane dnia" (11a): etykieta i wartość mono 10 px —
+                  krój `mono` wspólnego `KeyValueRow`; odstępy daje rodzic (gap). */}
+              <KeyValueRow
+                labelVariant="mono"
+                label={`${dayLabel} · ${aircraft}`}
+                value={flightsBadge(projection.flights.length)}
+              />
+              <KeyValueRow
+                labelVariant="mono"
                 label="Block time · MH"
                 value={`${duration(projection.blockTimeMs)} · ${motoHours(projection.mh.start, mhFormat)} → ${motoHours(projection.mh.end, mhFormat)}`}
               />
-              <LocalRow label="Paliwo" value={fuelEquation(projection.fuel)} />
+              <KeyValueRow labelVariant="mono" label="Paliwo" value={fuelEquation(projection.fuel)} />
               {showDrops && (
-                <LocalRow
+                <KeyValueRow
+                  labelVariant="mono"
                   label={projection.client != null ? `Zrzuty · klient ${projection.client}` : 'Zrzuty'}
                   value={dropsShort(projection.drops)}
                 />
@@ -437,20 +446,6 @@ function ExportedBox({ url, detail }: { url: string; detail: string }) {
   );
 }
 
-/** `.row` z karty „Dane dnia" (11a): etykieta muted, wartość mono po prawej. */
-function LocalRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.localRow}>
-      <AppText variant="mono" tone="muted" style={styles.localLabel}>
-        {label}
-      </AppText>
-      <AppText variant="mono" tone="secondary" style={styles.localValue}>
-        {value}
-      </AppText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   content: { padding: 14 },
   centerText: { textAlign: 'center' },
@@ -458,14 +453,6 @@ const styles = StyleSheet.create({
   footMain: { fontSize: 9 },
   footSub: { fontSize: 8.5, lineHeight: 13 },
   localRows: { paddingVertical: 11, paddingHorizontal: 13, gap: 7 },
-  localRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    gap: 12,
-  },
-  localLabel: { fontSize: 10, flexShrink: 1 },
-  localValue: { fontSize: 10, textAlign: 'right' },
   note: { fontSize: 9, lineHeight: 15 },
   flagsOk: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   flagsOkText: { fontSize: 10, letterSpacing: 1 },

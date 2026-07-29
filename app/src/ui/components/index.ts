@@ -77,6 +77,7 @@ export * from './CalcBox';
 export * from './DutyHero';
 export * from './CrewCard';
 export * from './DataTable';
+export * from './KeyValueRow';
 export * from './StatGrid';
 export * from './Metric';
 export * from './ParamGrid';

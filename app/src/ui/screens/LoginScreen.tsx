@@ -109,7 +109,7 @@ export function LoginScreen() {
         )}
 
         {/* Wymóg sieci — stała informacja, nie chowamy jej za błędem (§3.0). */}
-        <AppText variant="mono" tone="muted" style={styles.netNote}>
+        <AppText variant="micro" tone="muted" style={styles.netNote}>
           Pierwsze logowanie wymaga internetu — tworzy profil do pracy offline
         </AppText>
       </View>
@@ -121,11 +121,5 @@ const styles = {
   wrap: { flex: 1, justifyContent: 'center' as const, gap: 24, paddingBottom: 40 },
   card: { borderRadius: 20, padding: 20, gap: 14 },
   error: { marginTop: -8 },
-  netNote: {
-    fontSize: 9,
-    letterSpacing: 1,
-    textAlign: 'center' as const,
-    textTransform: 'uppercase' as const,
-    lineHeight: 14,
-  },
+  netNote: { textAlign: 'center' as const },
 };

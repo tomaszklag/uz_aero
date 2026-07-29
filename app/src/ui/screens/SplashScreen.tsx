@@ -119,7 +119,8 @@ export function SplashScreen({
       <View style={styles.footer}>
         <RefDataStamp checkedAt={refCheckedAt} />
         {version != null && (
-          <AppText variant="mono" tone="muted" style={styles.version}>
+          // `.version-tag` — mikro-etykieta 1:1 z tokenu `micro`.
+          <AppText variant="micro" tone="muted">
             v{version}
           </AppText>
         )}
@@ -156,5 +157,4 @@ const styles = StyleSheet.create({
   },
   historyLabel: { fontSize: 13, fontFamily: fontFamily.bodySemiBold },
   footer: { position: 'absolute', bottom: 36, left: 0, right: 0, alignItems: 'center', gap: 8 },
-  version: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
 });

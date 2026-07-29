@@ -164,7 +164,8 @@ export function CrewChangeScreen({
           headerRight={<Tag label="zapis lokalny · offline OK" tone="green" />}
         >
           <View style={{ gap: 5 }}>
-            <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
+            {/* `.field-label` — mikro-etykieta z tokenu (dryf światła 2 → 1.5 celowy). */}
+            <AppText variant="micro" tone="muted">
               Wychodzący DUAL
             </AppText>
             {/* Odczyt, nie kontrolka — kto wychodzi, wynika ze stanu sesji. */}
@@ -178,7 +179,7 @@ export function CrewChangeScreen({
           </View>
 
           <View style={{ gap: 7 }}>
-            <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
+            <AppText variant="micro" tone="muted">
               Nowy DUAL
             </AppText>
             <CardPicker options={options} value={selected} onChange={setSelected} />
@@ -284,7 +285,6 @@ export function CrewChangeScreen({
 
 const styles = {
   headerTime: { fontSize: 10, letterSpacing: 1 } as const,
-  fieldLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' } as const,
   readonly: { opacity: 0.45 } as const,
   explain: { fontSize: 11.5, lineHeight: 18 } as const,
 };

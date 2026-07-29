@@ -129,10 +129,10 @@ export function ManualLogScreen({
             }}
           >
             <Icon name="warning" size={11} color={amber.accent} />
-            <AppText variant="mono" tone="amber" style={styles.subText}>
+            <AppText variant="micro" tone="amber">
               Fallback GPS
             </AppText>
-            <AppText variant="mono" tone="muted" style={styles.subText}>
+            <AppText variant="micro" tone="muted">
               {`· tryb ręczny · ${projection.dutyStart != null ? dateUtcLong(projection.dutyStart) : dateUtcLong(now)}`}
             </AppText>
           </View>
@@ -140,7 +140,8 @@ export function ManualLogScreen({
       }
     >
       <View style={{ padding: 14, gap: theme.spacing.md }}>
-        <AppText variant="mono" tone="muted" style={styles.sectionLabel}>
+        {/* `.section-label` — mikro-etykieta z tokenu (dryf światła 2 → 1.5 celowy). */}
+        <AppText variant="micro" tone="muted">
           {`Log zdarzeń · ${projection.dutyStart != null ? dateUtcLong(projection.dutyStart) : dateUtcLong(now)}`}
         </AppText>
 
@@ -288,7 +289,7 @@ function NotesFooter({ notes }: { notes: string | null }) {
         borderTopColor: theme.colors.border,
       }}
     >
-      <AppText variant="mono" tone="muted" style={styles.subText}>
+      <AppText variant="micro" tone="muted">
         Uwagi
       </AppText>
       <AppText variant="mono" tone={notes != null ? 'secondary' : 'muted'} style={styles.notesText}>
@@ -299,7 +300,5 @@ function NotesFooter({ notes }: { notes: string | null }) {
 }
 
 const styles = {
-  subText: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' } as const,
-  sectionLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' } as const,
   notesText: { fontSize: 9, flex: 1 } as const,
 };

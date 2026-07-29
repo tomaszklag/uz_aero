@@ -23,6 +23,7 @@ import {
   Card,
   GhostAction,
   Icon,
+  KeyValueRow,
   OutboxGuard,
   PinChangeSheet,
   ProfileChip,
@@ -47,7 +48,6 @@ export function SettingsScreen({
 }: {
   navigation: { navigate: (screen: string) => void; goBack: () => void };
 }) {
-  const { theme } = useTheme();
   const gps = useGps();
 
   const pilot = useAuthStore((s) => s.pilot);
@@ -204,20 +204,25 @@ export function SettingsScreen({
 
         {/* ── diagnostyka GPS (czujnik — oś niezależna od sieci) ────────────── */}
         <Card title="Diagnostyka GPS" header="inline">
-          <DiagRow
+          {/* `.diag-row` — wiersze klucz/wartość z DS (KeyValueRow). */}
+          <KeyValueRow
+            divider
             label="Status"
             value={permission === 'denied' ? 'BRAK UPRAWNIEŃ' : gpsFresh ? 'FIX' : 'BRAK FIXA'}
-            tone={permission !== 'denied' && gpsFresh ? 'green' : 'red'}
+            valueTone={permission !== 'denied' && gpsFresh ? 'green' : 'red'}
           />
-          <DiagRow
+          <KeyValueRow
+            divider
             label="Ostatni fix"
             value={fix != null ? `${timeUtc(fix.time)} UTC · ${fixAge(fix.time, now)}` : '—'}
           />
-          <DiagRow
+          <KeyValueRow
+            divider
             label="Dokładność"
             value={fix?.accuracyM != null ? `± ${Math.round(fix.accuracyM)} m` : '—'}
           />
-          <DiagRow
+          <KeyValueRow
+            divider
             label="Pozycja"
             value={fix?.lat != null && fix.lon != null ? formatLatLon(fix.lat, fix.lon) : '—'}
           />
@@ -227,8 +232,9 @@ export function SettingsScreen({
 
         {/* ── o aplikacji ───────────────────────────────────────────────────── */}
         <Card title="O aplikacji" header="inline">
-          <DiagRow label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
-          <DiagRow
+          <KeyValueRow divider label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
+          <KeyValueRow
+            divider
             label="Samolot sesji"
             value={
               projection.aircraftId != null
@@ -304,31 +310,6 @@ function SettingsAction({
   );
 }
 
-/** `.diag-row` — klucz/wartość diagnostyki. */
-function DiagRow({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: 'green' | 'red';
-}) {
-  const { theme } = useTheme();
-  const color =
-    tone === 'green' ? theme.colors.green : tone === 'red' ? theme.colors.red : theme.colors.textSecondary;
-  return (
-    <View style={[styles.diagRow, { borderBottomColor: theme.colors.border, borderBottomWidth: theme.borderWidth }]}>
-      <AppText variant="mono" tone="muted" style={styles.diagKey}>
-        {label}
-      </AppText>
-      <AppText variant="mono" style={[styles.diagVal, { color }]}>
-        {value}
-      </AppText>
-    </View>
-  );
-}
-
 /** `.section-note` — przypis sekcji (mono, muted). */
 function SectionNote({ text }: { text: string }) {
   return (
@@ -352,15 +333,6 @@ const styles = StyleSheet.create({
   actionBody: { flex: 1, gap: 2 },
   actionName: { fontSize: 13, fontFamily: fontFamily.bodySemiBold },
   actionSub: { fontSize: 9, letterSpacing: 0.5 },
-  diagRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    gap: 12,
-    paddingVertical: 7,
-  },
-  diagKey: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
-  diagVal: { fontSize: 11, textAlign: 'right', flexShrink: 1 },
   refRow: { paddingTop: 4 },
   note: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
 });
