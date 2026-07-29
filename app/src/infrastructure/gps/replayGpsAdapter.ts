@@ -10,6 +10,7 @@
 
 import type { GpsFix } from '../../domain';
 import type { GpsListener, GpsPermission, GpsPort } from '../../application/ports';
+import { GpsFanout } from './gpsFanout';
 
 export interface ReplayOptions {
   /**
@@ -20,6 +21,7 @@ export interface ReplayOptions {
 }
 
 export class ReplayGpsAdapter implements GpsPort {
+  private readonly fanout = new GpsFanout();
   private last: GpsFix | null = null;
   private timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -32,8 +34,24 @@ export class ReplayGpsAdapter implements GpsPort {
     return 'granted';
   }
 
+  /**
+   * Jak w adapterze urządzenia: każde wywołanie to własna subskrypcja odbiorcy.
+   * Odtwarzanie rusza z pierwszym słuchaczem i gaśnie z ostatnim — kto dołączy
+   * w trakcie, słyszy resztę serii, bo jeden odbiornik nie odtwarza trasy od nowa
+   * osobno dla każdego ekranu.
+   */
   async start(listener: GpsListener): Promise<() => void> {
-    this.stop();
+    if (this.fanout.add(listener)) this.play();
+    return () => {
+      if (this.fanout.remove(listener)) this.stop();
+    };
+  }
+
+  lastFix(): GpsFix | null {
+    return this.last;
+  }
+
+  private play(): void {
     const interval = this.options.intervalMs ?? 0;
     let index = 0;
 
@@ -41,7 +59,7 @@ export class ReplayGpsAdapter implements GpsPort {
       if (index >= this.fixes.length) return;
       const fix = this.fixes[index++];
       this.last = fix;
-      listener(fix);
+      this.fanout.emit(fix);
       if (index < this.fixes.length) {
         this.timer = setTimeout(emit, interval);
       }
@@ -51,17 +69,11 @@ export class ReplayGpsAdapter implements GpsPort {
       // Bez opóźnień: cała seria synchronicznie — deterministyczne w testach.
       for (const fix of this.fixes) {
         this.last = fix;
-        listener(fix);
+        this.fanout.emit(fix);
       }
     } else {
       emit();
     }
-
-    return () => this.stop();
-  }
-
-  lastFix(): GpsFix | null {
-    return this.last;
   }
 
   private stop(): void {

@@ -175,54 +175,82 @@ export function useFlightDetection({
 
     let stop: (() => void) | null = null;
     let cancelled = false;
+    let attaching = false;
 
-    (async () => {
+    const handleFix = (incoming: GpsFix) => {
+      // Ślad kalibracyjny (faza 5): SUROWY fix, PRZED kwarantanną — śmieci to
+      // najcenniejszy materiał do progów bramki jakości.
+      trace?.fix(incoming, sessionUuid);
+
+      // Kwarantanna śmieciowego fixa (zakłócenia — audyt 2026-07-29): nie karmimy nim
+      // ANI detektora, ani siatki, ani świeżości. Strumień samych śmieci wygasza
+      // `gpsAvailable` watchdogiem → kokpit uczciwie pokaże 05g „autodetekcja
+      // wstrzymana", a diagnostyka na 13 surowe fixy dalej widzi (własna subskrypcja).
+      if (!fixUsable(incoming)) return;
+
+      setFix(incoming);
+      setGpsAvailable(true);
+      setLastFixAt(incoming.time);
+      lastFixDeviceMs.current = Date.now();
+
+      const step = stepDetector(detector.current, incoming);
+      detector.current = step.state;
+
+      // Kołowanie zapisujemy OD RAZU, bez okna „COFNIJ". Okno istnieje po to, żeby
+      // fałszywy start albo lądowanie nie trafiły do czasów lotu — kołowanie żadnego
+      // czasu nie wyznacza, więc pytanie „czy na pewno?" byłoby samym szumem.
+      if (step.detection === 'taxi') {
+        void taxi('auto', null, incoming.time).catch(() => {
+          // Powód odrzucenia trafia do `lastError` w store i jest widoczny w kokpicie.
+        });
+      }
+
+      // Okno prędkości pionowej — z zapasem jednego fixa, żeby po odrzuceniu
+      // przeterminowanych zawsze zostały co najmniej dwa punkty.
+      window.current = [...window.current, incoming].filter(
+        (f) => incoming.time - f.time <= VS_WINDOW_SEC * 1000,
+      );
+      if (window.current.length < 2) window.current = [incoming];
+      setPhase(flightPhase(step.state.phase === 'airborne', window.current));
+
+      if (step.detection === 'takeoff' || step.detection === 'landing') {
+        schedule(step.detection, incoming);
+      }
+    };
+
+    /**
+     * Podnosi nasłuch od nowa. Stara subskrypcja schodzi PRZED założeniem nowej, żeby
+     * przez chwilę nie stały dwie i detektor nie dostał tego samego fixa dwa razy.
+     * Bez pytania o uprawnienia — te załatwia pierwsze wejście; powtarzanie prośby przy
+     * każdej odbudowie potrafiłoby wystawić pilotowi systemowe okno w locie.
+     */
+    const attach = async (): Promise<void> => {
+      if (attaching) return;
+      attaching = true;
+      try {
+        stop?.();
+        stop = null;
+        const release = await gps.start(handleFix);
+        if (cancelled) {
+          release();
+          return;
+        }
+        stop = release;
+        // Cisza liczy się od chwili, gdy nasłuch STOI — inaczej watchdog mierzyłby
+        // czas do fixa, którego nikt jeszcze nie miał komu podać.
+        lastFixDeviceMs.current = Date.now();
+      } finally {
+        attaching = false;
+      }
+    };
+
+    void (async () => {
       const permission = await gps.requestPermission();
       if (cancelled || permission !== 'granted') {
         setGpsAvailable(false);
         return;
       }
-
-      stop = await gps.start((incoming) => {
-        // Ślad kalibracyjny (faza 5): SUROWY fix, PRZED kwarantanną — śmieci to
-        // najcenniejszy materiał do progów bramki jakości.
-        trace?.fix(incoming, sessionUuid);
-
-        // Kwarantanna śmieciowego fixa (zakłócenia — audyt 2026-07-29): nie karmimy nim
-        // ANI detektora, ani siatki, ani świeżości. Strumień samych śmieci wygasza
-        // `gpsAvailable` watchdogiem → kokpit uczciwie pokaże 05g „autodetekcja
-        // wstrzymana", a diagnostyka na 13 surowe fixy dalej widzi (własna subskrypcja).
-        if (!fixUsable(incoming)) return;
-
-        setFix(incoming);
-        setGpsAvailable(true);
-        setLastFixAt(incoming.time);
-        lastFixDeviceMs.current = Date.now();
-
-        const step = stepDetector(detector.current, incoming);
-        detector.current = step.state;
-
-        // Kołowanie zapisujemy OD RAZU, bez okna „COFNIJ". Okno istnieje po to, żeby
-        // fałszywy start albo lądowanie nie trafiły do czasów lotu — kołowanie żadnego
-        // czasu nie wyznacza, więc pytanie „czy na pewno?" byłoby samym szumem.
-        if (step.detection === 'taxi') {
-          void taxi('auto', null, incoming.time).catch(() => {
-            // Powód odrzucenia trafia do `lastError` w store i jest widoczny w kokpicie.
-          });
-        }
-
-        // Okno prędkości pionowej — z zapasem jednego fixa, żeby po odrzuceniu
-        // przeterminowanych zawsze zostały co najmniej dwa punkty.
-        window.current = [...window.current, incoming].filter(
-          (f) => incoming.time - f.time <= VS_WINDOW_SEC * 1000,
-        );
-        if (window.current.length < 2) window.current = [incoming];
-        setPhase(flightPhase(step.state.phase === 'airborne', window.current));
-
-        if (step.detection === 'takeoff' || step.detection === 'landing') {
-          schedule(step.detection, incoming);
-        }
-      });
+      await attach();
     })();
 
     // Watchdog świeżości (mockup 05g): sam brak KOLEJNYCH fixów nie wywołuje żadnego
@@ -231,7 +259,16 @@ export function useFlightDetection({
     // sygnału gasi baner sam (pierwszy świeży fix ustawia flagę z powrotem).
     const staleTimer = setInterval(() => {
       const at = lastFixDeviceMs.current;
-      if (at != null && Date.now() - at > GPS_STALE_SEC * 1000) setGpsAvailable(false);
+      if (at == null || Date.now() - at <= GPS_STALE_SEC * 1000) return;
+      setGpsAvailable(false);
+
+      // Cisza ma dwie przyczyny nie do odróżnienia z zewnątrz: nie ma sygnału ALBO
+      // umarła NASZA subskrypcja (Android potrafi ją ubić po powrocie z tła albo przy
+      // przełączeniu dostawcy lokalizacji). Martwej subskrypcji sygnał już nie obudzi —
+      // baner zostałby na ekranie do końca dnia, choć telefon dawno ma fixa. Dlatego
+      // co `GPS_STALE_SEC` podnosimy nasłuch od nowa; `attach` przestawia zegar ciszy,
+      // więc odbudowa sama się reguluje i nie robi tego częściej.
+      void attach();
     }, 2_000);
 
     return () => {

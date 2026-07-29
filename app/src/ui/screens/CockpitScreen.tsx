@@ -6,13 +6,18 @@
  *
  *   • silnik OFF → GROUND (04): przewijalny ekran — status, wielki START ENGINE,
  *     pasek czasu służby, log całego dnia, siatka akcji naziemnych;
- *   • silnik ON  → LOT (05): układ **stały**, przewija się wyłącznie log cyklu —
- *     faza lotu ogromną czcionką, siatka GPS, log bieżącego cyklu z podziałem na loty,
- *     pasek akcji przyklejony do dołu.
+ *   • silnik ON  → LOT (05): pasek akcji **przypięty do dołu**, reszta przewijalna —
+ *     faza lotu ogromną czcionką, siatka GPS, log bieżącego cyklu z podziałem na loty.
  *
  * Ta różnica układów jest z designu i ma powód: na ziemi pilot czyta, w locie sięga.
  * W powietrzu przyciski muszą być zawsze w tym samym miejscu, niezależnie od tego,
  * ile zdarzeń przybyło w logu.
+ *
+ * Mockup 05 rysuje w locie układ całkiem sztywny, z przewijanym wyłącznie logiem.
+ * Na urządzeniu okazało się to nie do utrzymania (2026-07-29): baner 05g plus większa
+ * skala czcionki systemowej wypychały pasek akcji poza ekran, a bez GPS ręczny T/O–LAND
+ * jest jedyną drogą zapisu. Przypięty pasek + przewijalny środek trzyma obietnicę
+ * mockupu tam, gdzie ona naprawdę jest: przyciski zawsze w tym samym miejscu.
  *
  * Cały ekran jest zbudowany z komponentów Design Systemu — nie ma tu własnych „kart"
  * ani „chipów". Zapis wyłącznie przez komendy; twarde odrzucenie inwariantu i miękkie
@@ -221,85 +226,110 @@ export function CockpitScreen({
           onSettings={() => navigation.navigate('Settings')}
         />
 
-        {/* ── `.no-gps` (05g): baner typu STATUS — przyrząd, znika sam z powrotem fixa ── */}
-        {gpsLost && (
-          <NoGpsBanner
-            text={gpsLossText(lastFixAt, now)}
-            onManualEvent={() => setManualOpen(true)}
-            onManualList={() => navigation.navigate('ManualLog')}
-          />
-        )}
-
-        <PhaseHero
-          // Fazy z GPS nie znamy; „w locie" wiemy ZE ZDARZEŃ — projekcja nie potrzebuje fixa.
-          phase={gpsLost && inFlight ? 'In Flight' : PHASE_LABEL[phase.phase]}
-          tone={gpsLost ? 'amber' : PHASE_TONE[phase.phase]}
-          detail={
-            gpsLost
-              ? unknownPhaseDetail(lastFixAt)
-              : (verticalSpeedLabel(phase.verticalSpeedFpm) ?? 'brak danych o wysokości')
-          }
-        />
-
-        <ParamGrid
-          cells={
-            gpsLost
-              ? [
-                  { label: 'Ground speed', value: '— —', unit: 'KT', stale: true, note: staleCellNote(lastFixAt) },
-                  { label: 'Altitude', value: '— —', unit: 'FT', stale: true, note: staleCellNote(lastFixAt) },
-                  {
-                    label: 'Fuel on board',
-                    value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
-                    unit: 'L',
-                    tone: 'amber',
-                    tint: true,
-                    note: 'dane lokalne — bez GPS',
-                  },
-                  {
-                    label: 'Flight time',
-                    value: duration(liveFlightMs),
-                    tone: 'green',
-                    tint: true,
-                    note: 'zegar — liczy normalnie',
-                  },
-                ]
-              : [
-                  { label: 'Ground speed', value: `${Math.round(fix?.groundSpeedKt ?? 0)}`, unit: 'KT' },
-                  {
-                    label: 'Altitude',
-                    value: fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—',
-                    unit: 'FT',
-                  },
-                  {
-                    label: 'Fuel on board',
-                    value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
-                    unit: 'L',
-                    tone: 'amber',
-                    tint: true,
-                  },
-                  { label: 'Flight time', value: duration(liveFlightMs), tone: 'green', tint: true },
-                ]
-          }
-        />
-
-        {/* Log bieżącego cyklu — jedyny element, który się przewija. */}
-        <Card
-          title={`Cykl bieżący · ${takeoffs} T/O · ${landings} LDG`}
-          headerRight={<Tag label={`Lot #${projection.flights.length + (inFlight ? 1 : 0)}`} />}
-          flush
-          style={{ flex: 1, borderRadius: 0, borderLeftWidth: 0, borderRightWidth: 0 }}
-          contentStyle={{ flex: 1 }}
+        {/*
+          Środek przewija się w całości, pasek akcji jest przypięty do dołu (poprawka
+          z urządzenia, 2026-07-29). Mockup 05 zakłada układ sztywny z przewijanym
+          wyłącznie logiem i przy czterech sekcjach to działa — ale baner 05g plus
+          większa skala czcionki systemowej dokładają tyle, że sztywne sekcje przestają
+          się mieścić. Wypychały wtedy T/O–LAND i STOP poza ekran, a bez GPS ręczny zapis
+          jest JEDYNĄ drogą: pilot tracił i autodetekcję, i przycisk, który ją zastępuje.
+          Gdy treść się mieści, przewijanie nie zmienia niczego wizualnie.
+        */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
         >
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <EventLog rows={cycleRows} emptyText="Cykl dopiero się zaczął." />
-          </ScrollView>
-        </Card>
+          {/* ── `.no-gps` (05g): baner typu STATUS — przyrząd, znika sam z powrotem fixa ── */}
+          {gpsLost && (
+            <NoGpsBanner
+              text={gpsLossText(lastFixAt, now)}
+              onManualEvent={() => setManualOpen(true)}
+              onManualList={() => navigation.navigate('ManualLog')}
+            />
+          )}
 
-        {(lastError != null || warnings.length > 0) && (
-          <View style={{ paddingHorizontal: 14, paddingTop: theme.spacing.sm, gap: theme.spacing.sm }}>
-            {messages}
-          </View>
-        )}
+          <PhaseHero
+            // Fazy z GPS nie znamy; „w locie" wiemy ZE ZDARZEŃ — projekcja nie potrzebuje fixa.
+            phase={gpsLost && inFlight ? 'In Flight' : PHASE_LABEL[phase.phase]}
+            tone={gpsLost ? 'amber' : PHASE_TONE[phase.phase]}
+            detail={
+              gpsLost
+                ? unknownPhaseDetail(lastFixAt)
+                : (verticalSpeedLabel(phase.verticalSpeedFpm) ?? 'brak danych o wysokości')
+            }
+          />
+
+          <ParamGrid
+            cells={
+              gpsLost
+                ? [
+                    { label: 'Ground speed', value: '— —', unit: 'KT', stale: true, note: staleCellNote(lastFixAt) },
+                    { label: 'Altitude', value: '— —', unit: 'FT', stale: true, note: staleCellNote(lastFixAt) },
+                    {
+                      label: 'Fuel on board',
+                      value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+                      unit: 'L',
+                      tone: 'amber',
+                      tint: true,
+                      note: 'dane lokalne — bez GPS',
+                    },
+                    {
+                      label: 'Flight time',
+                      value: duration(liveFlightMs),
+                      tone: 'green',
+                      tint: true,
+                      note: 'zegar — liczy normalnie',
+                    },
+                  ]
+                : [
+                    { label: 'Ground speed', value: `${Math.round(fix?.groundSpeedKt ?? 0)}`, unit: 'KT' },
+                    {
+                      label: 'Altitude',
+                      value: fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—',
+                      unit: 'FT',
+                    },
+                    {
+                      label: 'Fuel on board',
+                      value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+                      unit: 'L',
+                      tone: 'amber',
+                      tint: true,
+                    },
+                    { label: 'Flight time', value: duration(liveFlightMs), tone: 'green', tint: true },
+                  ]
+            }
+          />
+
+          {/* Komunikaty NAD logiem: log rośnie bez ograniczeń, więc wszystko, co ma być
+              przeczytane, stoi przed nim — inaczej „Nie zapisano" lądowałoby poniżej
+              krawędzi ekranu, a §6 pkt 3 nie zna cichego błędu. */}
+          {(lastError != null || warnings.length > 0) && (
+            <View style={{ paddingHorizontal: 14, paddingTop: theme.spacing.sm, gap: theme.spacing.sm }}>
+              {messages}
+            </View>
+          )}
+
+          {/* Log bieżącego cyklu — jedyny element bez własnej wysokości: rośnie z liczbą
+              zdarzeń, a przy krótkim logu rozpycha się do paska akcji (`flexGrow`), więc
+              pełnoekranowa wstęga z mockupu zostaje. `flexShrink: 0` pilnuje, żeby się
+              nie ścisnął, gdy sekcje wyżej zabiorą całą wysokość. */}
+          <Card
+            title={`Cykl bieżący · ${takeoffs} T/O · ${landings} LDG`}
+            headerRight={<Tag label={`Lot #${projection.flights.length + (inFlight ? 1 : 0)}`} />}
+            flush
+            style={{
+              flexGrow: 1,
+              flexShrink: 0,
+              borderRadius: 0,
+              borderLeftWidth: 0,
+              borderRightWidth: 0,
+            }}
+            contentStyle={{ flexGrow: 1 }}
+          >
+            <EventLog rows={cycleRows} emptyText="Cykl dopiero się zaczął." />
+          </Card>
+        </ScrollView>
 
         <CockpitActions
           // 05g: bez fixa ręczny zapis to JEDYNA droga — etykieta i amber mówią to

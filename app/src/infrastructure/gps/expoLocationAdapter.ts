@@ -13,6 +13,7 @@ import * as Location from 'expo-location';
 
 import type { GpsFix } from '../../domain';
 import type { GpsListener, GpsPermission, GpsPort } from '../../application/ports';
+import { GpsFanout } from './gpsFanout';
 
 const METERS_TO_FEET = 3.280839895;
 const MPS_TO_KNOTS = 1.943844492;
@@ -36,7 +37,10 @@ function toFix(loc: Location.LocationObject): GpsFix {
 }
 
 export class ExpoLocationAdapter implements GpsPort {
+  private readonly fanout = new GpsFanout();
   private subscription: Location.LocationSubscription | null = null;
+  /** Trwające otwieranie subskrypcji — dwaj odbiorcy naraz nie mogą jej otworzyć dwa razy. */
+  private opening: Promise<void> | null = null;
   private last: GpsFix | null = null;
 
   async requestPermission(): Promise<GpsPermission> {
@@ -58,11 +62,52 @@ export class ExpoLocationAdapter implements GpsPort {
     return 'granted';
   }
 
+  /**
+   * Każde wywołanie to OSOBNA subskrypcja odbiorcy nad jedną subskrypcją systemową.
+   * Zwrócona funkcja wypisuje wyłącznie tego odbiorcę; odbiornik gaśnie dopiero,
+   * gdy zejdzie ostatni (patrz `GpsFanout` — kokpit i diagnostyka słuchają naraz).
+   */
   async start(listener: GpsListener): Promise<() => void> {
-    // Idempotencja: powtórny start nie mnoży subskrypcji.
-    if (this.subscription) this.stop();
+    this.fanout.add(listener);
+    await this.open();
+    return () => this.release(listener);
+  }
 
-    this.subscription = await Location.watchPositionAsync(
+  lastFix(): GpsFix | null {
+    return this.last;
+  }
+
+  /**
+   * Wypisanie ostatniego odbiorcy gasi odbiornik NATYCHMIAST, jeszcze w tym samym takcie.
+   * To nie jest mikrooptymalizacja: hook detekcji odbudowuje nasłuch przez `stop()` →
+   * `start()`, żeby zerwać ewentualną martwą subskrypcję systemową. Gdyby zamknięcie
+   * czekało na mikrozadanie, nowy `start()` zdążyłby zastać starą subskrypcję na miejscu,
+   * uznać, że wszystko stoi, i odbudowa nie odbudowałaby niczego.
+   */
+  private release(listener: GpsListener): void {
+    if (!this.fanout.remove(listener)) return;
+    if (this.opening != null) {
+      // Subskrypcja jeszcze wstaje — nie ma czego zdejmować; dokończy ją `open()`,
+      // który po fakcie sprawdzi, że nikt już nie słucha.
+      void this.opening.then(
+        () => this.closeIfIdle(),
+        () => undefined,
+      );
+      return;
+    }
+    this.closeIfIdle();
+  }
+
+  private closeIfIdle(): void {
+    // Ktoś mógł dołączyć w międzyczasie — wtedy odbiornik zostaje.
+    if (!this.fanout.empty) return;
+    this.subscription?.remove();
+    this.subscription = null;
+  }
+
+  private async open(): Promise<void> {
+    if (this.subscription != null) return;
+    this.opening ??= Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.High,
         timeInterval: INTERVAL_MS,
@@ -71,19 +116,17 @@ export class ExpoLocationAdapter implements GpsPort {
       (loc) => {
         const fix = toFix(loc);
         this.last = fix;
-        listener(fix);
+        this.fanout.emit(fix);
       },
-    );
-
-    return () => this.stop();
-  }
-
-  lastFix(): GpsFix | null {
-    return this.last;
-  }
-
-  private stop(): void {
-    this.subscription?.remove();
-    this.subscription = null;
+    )
+      .then((subscription) => {
+        this.subscription = subscription;
+      })
+      .finally(() => {
+        this.opening = null;
+      });
+    await this.opening;
+    // Odbiorca mógł wypisać się, zanim subskrypcja wstała — wtedy nikt jej nie zamknie.
+    this.closeIfIdle();
   }
 }
