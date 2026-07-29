@@ -12,7 +12,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Constants from 'expo-constants';
 
 import { GPS_STALE_SEC, type GpsFix } from '../../domain';
@@ -22,19 +22,17 @@ import {
   Banner,
   Card,
   GhostAction,
-  Icon,
+  KeyValueRow,
   OutboxGuard,
   PinChangeSheet,
   ProfileChip,
   RefDataStamp,
   Screen,
   ScreenHeader,
+  SettingsAction,
   SyncChip,
   ThemePicker,
-  type IconName,
 } from '../components';
-import { useTheme } from '../theme';
-import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { useGps, useTrace } from '../bootstrap/ServicesProvider';
@@ -47,7 +45,6 @@ export function SettingsScreen({
 }: {
   navigation: { navigate: (screen: string) => void; goBack: () => void };
 }) {
-  const { theme } = useTheme();
   const gps = useGps();
 
   const pilot = useAuthStore((s) => s.pilot);
@@ -159,9 +156,9 @@ export function SettingsScreen({
         <Card title="Motyw wyświetlacza" header="inline">
           <ThemePicker detailed />
           <GhostAction label="Podgląd motywów w kokpicie" onPress={() => navigation.navigate('StyleGuide')} />
-          {/* Mockup obiecuje „per pilot" — wybór jest dziś per TELEFON (jeden klucz
-              w AsyncStorage); nota mówi prawdę, kluczowanie po pilocie w backlogu. */}
-          <SectionNote text="Zapisywany na telefonie — działa offline." />
+          {/* Decyzja 2026-07-29: motyw jest preferencją PILOTA — rekord per pilot
+              w AsyncStorage, sync przez /me/prefs (LWW). Mockup 13 mówi to samo. */}
+          <SectionNote text="Motyw zapisuje się w profilu pilota i wędruje między urządzeniami — zmiana działa offline." />
         </Card>
 
         {/* ── bezpieczeństwo ────────────────────────────────────────────────── */}
@@ -204,20 +201,25 @@ export function SettingsScreen({
 
         {/* ── diagnostyka GPS (czujnik — oś niezależna od sieci) ────────────── */}
         <Card title="Diagnostyka GPS" header="inline">
-          <DiagRow
+          {/* `.diag-row` — wiersze klucz/wartość z DS (KeyValueRow). */}
+          <KeyValueRow
+            divider
             label="Status"
             value={permission === 'denied' ? 'BRAK UPRAWNIEŃ' : gpsFresh ? 'FIX' : 'BRAK FIXA'}
-            tone={permission !== 'denied' && gpsFresh ? 'green' : 'red'}
+            valueTone={permission !== 'denied' && gpsFresh ? 'green' : 'red'}
           />
-          <DiagRow
+          <KeyValueRow
+            divider
             label="Ostatni fix"
             value={fix != null ? `${timeUtc(fix.time)} UTC · ${fixAge(fix.time, now)}` : '—'}
           />
-          <DiagRow
+          <KeyValueRow
+            divider
             label="Dokładność"
             value={fix?.accuracyM != null ? `± ${Math.round(fix.accuracyM)} m` : '—'}
           />
-          <DiagRow
+          <KeyValueRow
+            divider
             label="Pozycja"
             value={fix?.lat != null && fix.lon != null ? formatLatLon(fix.lat, fix.lon) : '—'}
           />
@@ -228,8 +230,9 @@ export function SettingsScreen({
 
         {/* ── o aplikacji ───────────────────────────────────────────────────── */}
         <Card title="O aplikacji" header="inline">
-          <DiagRow label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
-          <DiagRow
+          <KeyValueRow divider label="Aplikacja" value={`UZ Aero${version != null ? ` · v${version}` : ''}`} />
+          <KeyValueRow
+            divider
             label="Samolot sesji"
             value={
               projection.aircraftId != null
@@ -259,52 +262,6 @@ export function SettingsScreen({
   );
 }
 
-/** `.action-item` — wiersz akcji sekcji: ikona, nazwa, podpis, strzałka. */
-function SettingsAction({
-  icon,
-  name,
-  sub,
-  disabled = false,
-  onPress,
-}: {
-  icon: IconName;
-  name: string;
-  sub: string;
-  disabled?: boolean;
-  onPress: () => void;
-}) {
-  const { theme } = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.action,
-        {
-          borderRadius: theme.radius.md,
-          borderWidth: theme.borderWidth,
-          borderColor: theme.colors.border,
-          backgroundColor: pressed ? theme.colors.surfaceHover : theme.colors.surfaceRaised,
-          opacity: disabled ? 0.55 : 1,
-        },
-      ]}
-    >
-      <Icon name={icon} size={16} color={disabled ? theme.colors.textMuted : theme.colors.textSecondary} />
-      <View style={styles.actionBody}>
-        <AppText variant="body" style={styles.actionName}>
-          {name}
-        </AppText>
-        <AppText variant="mono" tone={disabled ? 'amber' : 'muted'} style={styles.actionSub}>
-          {sub}
-        </AppText>
-      </View>
-      <Icon name="more" size={14} color={theme.colors.textMuted} />
-    </Pressable>
-  );
-}
-
 /**
  * Wiersz rejestratora śladu (faza 5): ile surowych fixów czeka i od kiedy.
  * Rejestrator jest zawsze włączony (decyzja 2026-07-29) — wiersz mówi, że działa,
@@ -327,35 +284,11 @@ function TraceRow() {
 
   if (trace == null || stats == null) return null;
   return (
-    <DiagRow
+    <KeyValueRow
+      divider
       label="Rejestrator śladu"
       value={`${stats.total} fixów · ${stats.pendingUpload} do wysłania`}
     />
-  );
-}
-
-/** `.diag-row` — klucz/wartość diagnostyki. */
-function DiagRow({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: 'green' | 'red';
-}) {
-  const { theme } = useTheme();
-  const color =
-    tone === 'green' ? theme.colors.green : tone === 'red' ? theme.colors.red : theme.colors.textSecondary;
-  return (
-    <View style={[styles.diagRow, { borderBottomColor: theme.colors.border, borderBottomWidth: theme.borderWidth }]}>
-      <AppText variant="mono" tone="muted" style={styles.diagKey}>
-        {label}
-      </AppText>
-      <AppText variant="mono" style={[styles.diagVal, { color }]}>
-        {value}
-      </AppText>
-    </View>
   );
 }
 
@@ -371,26 +304,6 @@ function SectionNote({ text }: { text: string }) {
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
   profile: { minWidth: 0, alignSelf: 'stretch' },
-  action: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 52,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  actionBody: { flex: 1, gap: 2 },
-  actionName: { fontSize: 13, fontFamily: fontFamily.bodySemiBold },
-  actionSub: { fontSize: 9, letterSpacing: 0.5 },
-  diagRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    gap: 12,
-    paddingVertical: 7,
-  },
-  diagKey: { fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
-  diagVal: { fontSize: 11, textAlign: 'right', flexShrink: 1 },
   refRow: { paddingTop: 4 },
   note: { fontSize: 9, lineHeight: 14, letterSpacing: 0.5 },
 });

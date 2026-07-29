@@ -149,7 +149,7 @@ export function CorrectionSheet({
             style={[
               styles.eventCard,
               {
-                borderRadius: 14,
+                borderRadius: theme.radius.btn,
                 borderWidth: theme.borderWidth,
                 borderColor: blue.border,
                 backgroundColor: theme.colors.surface,
@@ -175,7 +175,7 @@ export function CorrectionSheet({
               style={[
                 styles.timeRow,
                 {
-                  borderRadius: 14,
+                  borderRadius: theme.radius.btn,
                   borderWidth: theme.borderWidth,
                   borderColor: green.border,
                   backgroundColor: theme.colors.surface,
@@ -305,7 +305,9 @@ function MinuteButton({
       style={({ pressed }) => [
         styles.minuteButton,
         {
-          borderRadius: 13,
+          // Wzorzec stepperów z 05f niesie promień 13 (`.step-btn`) — znormalizowany
+          // do kanonu `radius.btn`; dryf 13/14 ubity celowo, wzorem `colors.overlay`.
+          borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: pressed ? green.border : theme.colors.borderStrong,
           backgroundColor: pressed ? green.muted : theme.colors.surfaceRaised,

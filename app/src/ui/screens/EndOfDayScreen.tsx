@@ -18,7 +18,7 @@
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ActionButton,
@@ -388,6 +388,6 @@ function parseTimeOnDay(text: string, reference: number): number | null {
   );
 }
 
-const styles = {
-  sub: { fontSize: 9, letterSpacing: 0.5, lineHeight: 13 } as const,
-};
+const styles = StyleSheet.create({
+  sub: { fontSize: 9, letterSpacing: 0.5, lineHeight: 13 },
+});

@@ -19,7 +19,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { SessionSyncStatus } from '../../application/ports';
 import {
@@ -28,7 +28,9 @@ import {
   Banner,
   Card,
   DataTable,
+  ExportedBox,
   Icon,
+  KeyValueRow,
   OptionInput,
   QueueBox,
   Screen,
@@ -38,7 +40,6 @@ import {
   type DataTableRow,
 } from '../components';
 import { useTheme } from '../theme';
-import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { dateUtcLong, duration, motoHours, timeUtc } from '../format';
@@ -237,14 +238,22 @@ export function SyncScreen({ navigation }: { navigation: { goBack: () => void } 
         ) : (
           <Card title="Dane dnia · lokalne · kompletne" flush>
             <View style={styles.localRows}>
-              <LocalRow label={`${dayLabel} · ${aircraft}`} value={flightsBadge(projection.flights.length)} />
-              <LocalRow
+              {/* `.row` z karty „Dane dnia" (11a): etykieta i wartość mono 10 px —
+                  krój `mono` wspólnego `KeyValueRow`; odstępy daje rodzic (gap). */}
+              <KeyValueRow
+                labelVariant="mono"
+                label={`${dayLabel} · ${aircraft}`}
+                value={flightsBadge(projection.flights.length)}
+              />
+              <KeyValueRow
+                labelVariant="mono"
                 label="Block time · MH"
                 value={`${duration(projection.blockTimeMs)} · ${motoHours(projection.mh.start, mhFormat)} → ${motoHours(projection.mh.end, mhFormat)}`}
               />
-              <LocalRow label="Paliwo" value={fuelEquation(projection.fuel)} />
+              <KeyValueRow labelVariant="mono" label="Paliwo" value={fuelEquation(projection.fuel)} />
               {showDrops && (
-                <LocalRow
+                <KeyValueRow
+                  labelVariant="mono"
                   label={projection.client != null ? `Zrzuty · klient ${projection.client}` : 'Zrzuty'}
                   value={dropsShort(projection.drops)}
                 />
@@ -379,78 +388,6 @@ function ManualSyncButton({
   );
 }
 
-/** `.success-box` — serwer wygenerował arkusz; link otwiera go w przeglądarce. */
-function ExportedBox({ url, detail }: { url: string; detail: string }) {
-  const { theme } = useTheme();
-  const { colors } = theme;
-  // Niepowodzenie otwarcia (brak przeglądarki, zablokowany intent) NIE może być
-  // cichym `catch` — §6 pkt 3. Powód pokazujemy w miejscu linku.
-  const [openError, setOpenError] = useState<string | null>(null);
-
-  return (
-    <View
-      style={[
-        styles.exportedBox,
-        {
-          backgroundColor: colors.greenMuted,
-          borderColor: colors.greenBorder,
-          borderWidth: theme.borderWidth,
-          borderRadius: theme.radius.md,
-        },
-      ]}
-    >
-      <View style={styles.exportedTop}>
-        <View style={[styles.exportedIcon, { backgroundColor: colors.green }]}>
-          <Icon name="check" size={11} color={colors.bg} />
-        </View>
-        <AppText variant="mono" style={[styles.exportedTitle, { color: colors.green }]}>
-          Serwer zaktualizował arkusz
-        </AppText>
-      </View>
-      <AppText variant="mono" tone="secondary" style={styles.footSub}>
-        {detail}
-      </AppText>
-      <Pressable
-        accessibilityRole="link"
-        accessibilityLabel="Otwórz arkusz w przeglądarce"
-        onPress={() =>
-          void Linking.openURL(url).catch(() =>
-            setOpenError('Nie udało się otworzyć przeglądarki — link skopiujesz z ekranu administratora.'),
-          )
-        }
-        style={styles.exportedLink}
-      >
-        <AppText variant="mono" style={[styles.exportedLinkText, { color: colors.green }]}>
-          Otwórz arkusz
-        </AppText>
-        <Icon name="next" size={11} color={colors.green} />
-      </Pressable>
-      {openError != null && (
-        <AppText variant="mono" tone="amber" style={styles.footSub}>
-          {openError}
-        </AppText>
-      )}
-      <AppText variant="mono" tone="muted" style={styles.footSub}>
-        Eksport wykonuje serwer po odebraniu danych · kopia lokalna zostaje na urządzeniu
-      </AppText>
-    </View>
-  );
-}
-
-/** `.row` z karty „Dane dnia" (11a): etykieta muted, wartość mono po prawej. */
-function LocalRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.localRow}>
-      <AppText variant="mono" tone="muted" style={styles.localLabel}>
-        {label}
-      </AppText>
-      <AppText variant="mono" tone="secondary" style={styles.localValue}>
-        {value}
-      </AppText>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   content: { padding: 14 },
   centerText: { textAlign: 'center' },
@@ -458,33 +395,7 @@ const styles = StyleSheet.create({
   footMain: { fontSize: 9 },
   footSub: { fontSize: 8.5, lineHeight: 13 },
   localRows: { paddingVertical: 11, paddingHorizontal: 13, gap: 7 },
-  localRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    gap: 12,
-  },
-  localLabel: { fontSize: 10, flexShrink: 1 },
-  localValue: { fontSize: 10, textAlign: 'right' },
   note: { fontSize: 9, lineHeight: 15 },
   flagsOk: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   flagsOkText: { fontSize: 10, letterSpacing: 1 },
-  exportedBox: { paddingVertical: 12, paddingHorizontal: 14, gap: 6 },
-  exportedTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  exportedIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  exportedTitle: { fontSize: 11, fontFamily: fontFamily.monoBold, letterSpacing: 0.5 },
-  exportedLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    alignSelf: 'flex-start',
-    minHeight: 44,
-  },
-  exportedLinkText: { fontSize: 11, textDecorationLine: 'underline', letterSpacing: 0.5 },
 });

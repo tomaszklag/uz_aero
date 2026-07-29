@@ -10,15 +10,23 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { createEventsRepo, seedReferenceIfEmpty } from '../../infrastructure';
+import { createEventsRepo, seedReferenceIfEmpty, ThemePrefsStore } from '../../infrastructure';
 import { ExpoSqliteAdapter } from '../../infrastructure/storage/expoSqliteAdapter';
 import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapter';
 import { HttpServerApi } from '../../infrastructure/api/httpServerApi';
 import { apiBaseUrl } from '../../infrastructure/api/apiBaseUrl';
 import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
 import { PinCrypto } from '../../infrastructure/auth/pinCrypto';
-import { AuthService, ReferenceSync, SyncEngine, TraceRecorder, TraceSync } from '../../application';
+import {
+  AuthService,
+  ReferenceSync,
+  SyncEngine,
+  ThemePrefsSync,
+  TraceRecorder,
+  TraceSync,
+} from '../../application';
 import { defaultClock } from '../../infrastructure/clock';
 import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
@@ -84,6 +92,9 @@ export function useAppBootstrap(): BootstrapStatus {
             new SyncEngine(repo, server, auth),
             new ReferenceSync(repo, server, auth),
             new TraceSync(storage, server, auth),
+            // Motyw pilota (decyzja 2026-07-29): ten sam format klucza czyta
+            // ThemeProvider — jedno miejsce wie, jak wygląda rekord (ThemePrefsStore).
+            new ThemePrefsSync(new ThemePrefsStore(AsyncStorage), server, auth),
           );
 
         setStatus({ phase: 'ready', trace });

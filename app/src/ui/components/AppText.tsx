@@ -14,7 +14,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { type Theme, type TypographyName, type TypographyToken } from '../theme/tokens';
 
 /** Warianty publiczne. Wymagane przez zadanie: display | body | label | mono | timer.
- *  Dodatkowo param / paramLabel — pełna skala tokenów (param_value / param_label). */
+ *  Dodatkowo param / paramLabel — pełna skala tokenów (param_value / param_label) —
+ *  oraz micro: mikro-etykiety 9 px w wersalikach (`.diag-key`, `.header-sub`). */
 export type AppTextVariant =
   | 'display'
   | 'timer'
@@ -24,7 +25,8 @@ export type AppTextVariant =
   | 'buttonSmall'
   | 'body'
   | 'label'
-  | 'mono';
+  | 'mono'
+  | 'micro';
 
 export type AppTextTone =
   | 'primary'
@@ -45,9 +47,11 @@ const VARIANT_TOKEN: Record<AppTextVariant, TypographyName> = {
   body: 'body',
   label: 'label',
   mono: 'mono_code',
+  micro: 'micro',
 };
 
-/** Warianty renderujące cyfry mono — kandydaci do podbicia wagi w motywach jasnych. */
+/** Warianty renderujące cyfry mono — kandydaci do podbicia wagi w motywach jasnych.
+ *  `micro` (jak `paramLabel`) celowo poza zbiorem — etykieta nie jest odczytem. */
 const DIGIT_VARIANTS: ReadonlySet<AppTextVariant> = new Set<AppTextVariant>([
   'timer',
   'param',

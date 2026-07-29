@@ -53,6 +53,28 @@ pyta o żywy stan (`SyncEngine.fetchAircraftState`) w chwili claimu: odpowiedź 
 cache, albo „już wolny" → zwykłe `free`), brak odpowiedzi → `takeover_offline`;
 decyzja to czysta funkcja `screens/claimMode.ts`.
 
+Motyw aplikacji jest preferencją PILOTA i wędruje między urządzeniami (decyzja
+2026-07-29, ostatnia pozycja audytu UI): lokalnie rekord per pilot
+(`infrastructure/prefs/themePrefsStore.ts` — klucz `uzaero.theme.<pilotId>` jak
+banery edu; klasa dostaje magazyn KV konstruktorem, więc format i łagodna migracja
+starego klucza per telefon są testowane w Node), `ThemeProvider` nakłada motyw razem
+z tożsamością (subskrypcja store'u auth: odblokowanie/przelogowanie = motyw TEGO
+pilota, bez pilota Night; nazwa spoza tokenów zjeżdża do Night), a `ThemePrefsSync`
+(`application/sync/themePrefsSync.ts`, wzorzec `ReferenceSync`, wołany z pętli
+okazji za `refreshReference`) uzgadnia rekord z serwerem przez `/me/prefs`:
+push rekordu `dirty` przy każdej okazji (outbox preferencji — zmiana motywu NIGDY
+nie czeka na sieć), pull za bramą wieku 15 min, LWW po stemplu DECYZJI pilota
+w OBIE strony (adoptujemy wyłącznie stan ściśle nowszy; adopcję ogłasza
+`onApplied`, którym ThemeProvider przemalowuje ekran na żywo), offline/wygasła
+sesja/obcy profil = `skipped`. Po stronie serwera migracja 6 dokłada
+`pilots.theme`/`theme_updated_at` (prefs są 1:1 z pilotem — osobna tabela to
+przerost), a trasy `GET/PUT /me/prefs` (`http/routes/prefs.ts`, tożsamość WYŁĄCZNIE
+z tokenu) piszą przez `PrefsCommands` + `PgPilotPrefsRepo`, gdzie warunek LWW
+siedzi w SQL-u (`theme_updated_at IS NULL OR < $3`) — a odpowiedź PUT jest ZAWSZE
+stanem autorytatywnym po operacji, żeby telefon-przegrany dostosował się zamiast
+wiecznie ponawiać. Serwer nie zna listy motywów (tokeny UI zostają w UI): trasa
+pilnuje tylko niepustego tekstu ≤ 40 znaków i poprawnego ISO stempla.
+
 Wejście do aplikacji (§3.0, mockupy 00/00a/01): bramka `AuthGate` w `App.tsx` ma pięć
 stanów — `signed_out` → 00a login, `pin_setup` → „Ustaw PIN" (ten sam układ co zamek;
 mockupu konfiguracji nie ma, spec §3.0 wymaga PIN-u po provisioning), `locked` → 00
@@ -103,17 +125,21 @@ Audyt UI (2026-07-29, kod aplikacji — nie mockupy) wdrożony: dwa złamane cel
 dotykowe 34 px → 44/46 (akcje banera 05g, steppery pełnego wpisu); `fontWeight`
 wszędzie zastąpiony rodzinami z tokenów (dwa mechanizmy pogrubienia → jeden; Android
 nie musi syntetyzować wag dla fontów z `@expo-google-fonts`); token `colors.overlay`
-kończy dryf scrimów 0.7/0.74 w sześciu arkuszach; duplikaty `.outbox-guard`
+kończy dryf scrimów 0.7/0.74 w sześciu arkuszach, a token `radius.btn = 14` tym samym
+wzorem — dryf promieni 13/14 (18 literałów w 11 komponentach DS; steppery i wiersze
+05e/05f przybijały 13, normalizacja celowa, odnotowana komentarzem przy każdym takim
+miejscu); duplikaty `.outbox-guard`
 i `.ref-sync` awansowane do DS (`OutboxGuard`, `RefDataStamp` — odmiana liczebników
 przeniesiona do `ui/format.ts`, bo DS nie może zależeć od helperów ekranów); kłódka
 zamiast trójkąta przy zamkniętych dniach (12); `SyncChip` na `AppText`; hitSlopy na
 małych z designu celach (mini-chip edu, „Nie pamiętam PIN", oko podglądu); jawny błąd
-otwarcia linku arkusza. **Zaległości audytu UI (niższy priorytet):** wariant `micro`
-w `AppText` + wspólny `KeyValueRow` (dziś ~8 ręcznych mikro-etykiet i 4 wiersze
-klucz-wartość), awans jednoekranowych prymitywów (NoGpsBanner, SettingsAction,
-ExportedBox, start-btn splasha → prop w ActionButton), karta logowania na `Card`,
-token `radius.btn = 14` i wyrównanie 13/14, motyw per PILOT zamiast per telefon
-(nota na 13 mówi dziś prawdę: per telefon), ujednolicenie `StyleSheet.create`.
+otwarcia linku arkusza; deklaracje stylów ujednolicone do `StyleSheet.create` —
+ostatnie 5 ekranów (00a, 07, 08, 09, 10) trzymało gołe obiekty z rzutowaniami
+`as const`, teraz całe `ui/` deklaruje style jednym mechanizmem (w 10-statystyki
+wspólna baza wiersza stoi przed arkuszem, bo wpis `firstRow` wyrasta z niej
+spreadem). **Zaległości audytu UI domknięte 2026-07-29** — ostatnia pozycja
+(motyw per PILOT zamiast per telefon) wdrożona syncem `/me/prefs` (akapit wyżej
+przy M3); nota na 13 mówi nową prawdę: profil pilota, wędruje między urządzeniami.
 
 Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
 i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
@@ -234,7 +260,7 @@ a nie przez jeden ekran.
 | Komponent | Rola | Skąd w designie |
 |---|---|---|
 | `Screen` | tło, safe area, scroll, **przyklejony nagłówek** | wszystkie ekrany |
-| `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`) | wszystkie |
+| `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`/`micro`) | wszystkie |
 | `Brand` | znak marki (kafel z ikoną, „UZ AERO", tagline), rozmiary `md`/`hero` | `.brand` (00/00a), `.app-icon` (01) |
 | `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
@@ -242,10 +268,11 @@ a nie przez jeden ekran.
 | `AppBar` | pasek **dnia lotnego**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
 | `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót, wariant wyśrodkowany | `.app-header` |
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
-| `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` |
+| `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` / `.form-card` (00a) |
 | `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
 | `SyncStatusBox` | przyrząd statusu wysyłki: plakietka, licznik, pasek postępu | `.google-box` (11) / `.sync-box` (11a) |
 | `QueueBox` | kolejka outboxa: aktywna (amber) albo przygaszona do 30% | `.queue-box` (11a) / `.offline-queue` (11) |
+| `ExportedBox` | pudełko „Serwer zaktualizował arkusz": link do karty, jawny błąd otwarcia (§6 pkt 3) | `.success-box` (11) |
 | `StatusChip` | chipy **stanu sesji** (GROUND, RUNNING, cache) | `.ground-chip` |
 | `Tag` | **przypisy** przy pozycji listy/nagłówku (8–11 px) | `.pic-lock-tag`, `.optional-tag`, `.step-badge` |
 | `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
@@ -274,6 +301,8 @@ a nie przez jeden ekran.
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
+| `KeyValueRow` | wiersz klucz—wartość (kroje `micro`/`mono`, `valueTone`, `divider`) | `.diag-row` (13), `.row` „Dane dnia" (11a) |
+| `SettingsAction` | wiersz akcji ustawień: ikona, nazwa, podpis (przy blokadzie niesie powód), strzałka | `.action-item` (13) |
 | `SummaryStrip` | pasek bilansu dnia poza obszarem przewijania | `.summary-strip` |
 | `ResultRow` | stopka sekcji: opis + wyliczona wartość nad linią | `.result-row` (09) |
 | `ResultBar` | samodzielny pasek wyniku z rachunkiem, na tonowanym tle | `.result-row` (06) |
@@ -290,11 +319,12 @@ a nie przez jeden ekran.
 | `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
+| `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut, STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami, chipy, cel korekty ≥ 44 px | `.day-log`, `.cycle-log` |
 | `DutyStrip` | licznik czasu służby od meldunku | `.duty-strip` |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
-| `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine` |
+| `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
 | `Sheet` | arkusz od dołu dla decyzji dotykających innych | `.modal-overlay` (przejęcie) |
 | `PinChangeSheet` | zmiana PIN w trzech krokach (obecny→nowy→powtórz), offline | arkusz PIN z 13 |
 | `ManualEntrySheet` | pełny wpis §3.8: cztery czasy ze stepperami ±1 min (przytrzymanie powtarza) + uwagi | „Nowy wpis ręczny" (08) |
@@ -338,10 +368,14 @@ przed implementacją, nie na cichą zmianę w kodzie.
 Trzy warianty `ActionButton` odpowiadają trzem klasom z mockupów: `solid` = `.btn-primary`
 (pełna zieleń, ciemny napis — „DALEJ" formularza), `primary` = `.start-engine` (przygaszone
 tło akcentu, bo pełna zieleń świeciłaby nocą w oczy), `secondary` = sam kontur.
-Do tego dwa rozmiary: `lg` (22 px / ls 3, `.btn-primary`) dla głównej akcji ekranu i `md`
-(16 px / ls 2, `.modal-btn-*`) dla pary akcji w arkuszu. Oba mają tokeny `button`
-i `button_small` — napis na przycisku **nigdy** nie używa tokenu `display` (34 px),
-bo to rozmiar tytułu ekranu.
+Do tego rozmiary: `hero` (`.start-engine` w skali kokpitu), `lg` (22 px / ls 3,
+`.btn-primary`) dla głównej akcji ekranu, `md` (16 px / ls 2, `.modal-btn-*`) dla pary
+akcji w arkuszu i `splash` (`.start-btn` z 01: 20 px / ls 3) — jedyny, który przy
+naciśnięciu wypełnia się akcentem zamiast przygaszać opacity, bo tak przybija go mockup;
+rozmiar odpowiada klasie przycisku z mockupu, więc i to zachowanie mieszka w rozmiarze,
+nie w osobnym przełączniku. Etykiety idą z tokenów `button` i `button_small` (`hero`
+i `splash` nadpisują na nich tylko rozmiar) — napis na przycisku **nigdy** nie używa
+tokenu `display` (34 px), bo to rozmiar tytułu ekranu.
 
 `Stepper` istnieje z konkretnego powodu: audyt użyteczności wykazał, że dolewka paliwa
 była ustawiana uchwytem suwaka 16×16 px na torze 312 px — około **1,4 litra na piksel**.
@@ -480,7 +514,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 326 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 346 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -510,6 +544,8 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `historyDays.test.ts` | ekranu 12: podział wg okna korekty, dzień otwarty poza historią, tag wysyłki z outboxa sesji, plakietka splasha, odliczanie |
 | `traceRecorder.test.ts` | śladu kalibracyjnego: zapis fixów/markerów, retencja po zegarze urządzenia, księgowość wysyłki (offline zostawia wpisy), limit paczki |
 | `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „— —" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
+| `themePrefsSync.test.ts` | uzgadniania motywu pilota przez `/me/prefs`: LWW po stemplu decyzji w obie strony, `dirty` jak outbox, brama wieku pulla, offline = `skipped` |
+| `themePrefsStore.test.ts` | rekordu motywu per pilot: izolacja pilotów na wspólnym telefonie, migracja starego klucza per telefon, odporność na zepsuty zapis |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:

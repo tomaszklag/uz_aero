@@ -667,4 +667,19 @@ w projekcie leżały na ścieżkach awaryjnych.
 **Index**: karty 05G / 09A / 10A w „Warianty i stany", 13 w „Akcje ground";
 opis karty 08 zaktualizowany o arkusz wpisu i kolumnę „Uwagi".
 
+---
+
+## 2026-07-29 — Motyw jest preferencją pilota (nota na 13)
+
+**13-ustawienia — sama treść noty sekcji „Motyw wyświetlacza"** (bez zmian struktury
+i nawigacji): „Zapisywany na telefonie, per pilot — działa offline." → „Motyw zapisuje
+się w profilu pilota i wędruje między urządzeniami — **zmiana działa offline**."
+> Powód: decyzja 2026-07-29 — motyw jest preferencją PILOTA, nie telefonu,
+> i synchronizuje się przez serwer (`/me/prefs`, LWW po stemplu decyzji). Stara nota
+> obiecywała „per pilot", ale zapis był per telefon; po wdrożeniu w RN preferencja
+> naprawdę idzie za pilotem (przelogowanie na wspólnym telefonie przełącza motyw,
+> drugi telefon dostaje wybór przy najbliższym syncu). Zmiana motywu pozostaje
+> offline-first: najpierw zapis lokalny, wysyłka to skutek. Ekran RN i mockup
+> mówią to samo słowo w słowo.
+
 <!-- Dodawaj kolejne iteracje poniżej -->

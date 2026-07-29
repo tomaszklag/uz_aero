@@ -36,7 +36,7 @@ export function StyleGuideScreen() {
       {/* ── Przełącznik motywów ── */}
       <ThemePicker style={styles.block} />
       <AppText variant="body" tone="secondary" style={styles.caption}>
-        Dotknij motywu — cały ekran przemalowuje się z tokenów. Wybór zapisuje się (AsyncStorage).
+        Dotknij motywu — cały ekran przemalowuje się z tokenów. Wybór zapisuje się w profilu pilota.
       </AppText>
 
       {/* ── SyncChip ── */}
@@ -61,6 +61,11 @@ export function StyleGuideScreen() {
         <TypeRow label="paramLabel · param_label">
           <AppText variant="paramLabel" tone="muted">
             Ground Speed
+          </AppText>
+        </TypeRow>
+        <TypeRow label="micro · mikro-etykiety 9 px">
+          <AppText variant="micro" tone="muted">
+            Log zdarzeń · 22 JUNE 2026
           </AppText>
         </TypeRow>
         <TypeRow label="body · Archivo">

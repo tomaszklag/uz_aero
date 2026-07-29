@@ -54,7 +54,7 @@ export function ResultBar({ label, value, formula, tone = 'green', style }: Resu
           gap: theme.spacing.md,
           paddingHorizontal: theme.spacing.lg,
           paddingVertical: 14,
-          borderRadius: 14,
+          borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: c.border,
           backgroundColor: c.muted,

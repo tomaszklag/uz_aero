@@ -53,6 +53,12 @@ class TraceServer implements ServerPort {
   getSyncStatus = async () => {
     throw new Error('nieużywane');
   };
+  getPrefs = async () => {
+    throw new Error('nieużywane');
+  };
+  putPrefs = async () => {
+    throw new Error('nieużywane');
+  };
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
