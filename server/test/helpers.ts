@@ -9,6 +9,10 @@
  * Zegar jest sterowany ręcznie — bez tego testy wygasania tokenów musiałyby spać.
  */
 
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { PGlite } from '@electric-sql/pglite';
 
 import type { Clock, Database, Queryable, SheetsPort } from '../src/application/ports.ts';
@@ -29,6 +33,7 @@ import { PgPilotsRepo } from '../src/infrastructure/pg/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/refreshTokensRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/referenceRepo.ts';
 import { PgSheets } from '../src/infrastructure/pg/sheetsRepo.ts';
+import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
 import { seed } from '../src/infrastructure/pg/seed.ts';
 import { buildServer } from '../src/http/server.ts';
 
@@ -83,6 +88,10 @@ export async function testHarness(options: { sheets?: SheetsPort } = {}) {
     clock,
   );
 
+  // Zrzut śladu (faza 5) — prawdziwy adapter plikowy na katalogu tymczasowym;
+  // testy trasy zaglądają do NDJSON dokładnie tak, jak zrobi to skrypt replay.
+  const tracesDir = mkdtempSync(join(tmpdir(), 'uzaero-traces-'));
+
   const app = buildServer({
     auth: new AuthCommands(
       new PgPilotsRepo(db),
@@ -95,8 +104,9 @@ export async function testHarness(options: { sheets?: SheetsPort } = {}) {
     ingest: new IngestCommands(db, events, sessions, flags, exporter),
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
+    traces: new FsTraceSink(tracesDir),
     tokens,
   });
 
-  return { app, db, clock, tokens };
+  return { app, db, clock, tokens, tracesDir };
 }

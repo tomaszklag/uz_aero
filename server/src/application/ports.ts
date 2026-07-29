@@ -224,6 +224,19 @@ export interface ExportLogPort {
   append(db: Queryable, record: ExportRecord): Promise<void>;
 }
 
+// ── ślad kalibracyjny GPS (faza 5) ─────────────────────────────────────────────
+
+/**
+ * Zrzut śladu kalibracyjnego z telefonów (`POST /traces`): surowe fixy + markery
+ * detektora, materiał do kalibracji progów §3.3 i replayu przez `runDetector`.
+ * To NIE są zdarzenia domenowe — nie dotykają Postgresa ani projekcji; lądują
+ * w plikach NDJSON per sesja, bo analiza i tak jest offline (skrypt replay).
+ */
+export interface TraceSinkPort {
+  /** Dopisuje wpisy (append); grupowanie per sesja robi adapter. */
+  append(pilotId: string, entries: Record<string, unknown>[]): Promise<void>;
+}
+
 // ── zegar ───────────────────────────────────────────────────────────────────────
 
 /** Czas jako port — testy okna refresh tokenów sterują nim jawnie. */

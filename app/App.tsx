@@ -123,7 +123,7 @@ function AppRoot() {
   }
 
   return (
-    <ServicesProvider gps={gps}>
+    <ServicesProvider gps={gps} trace={boot.trace}>
       <StatusBar style={theme.isLight ? 'dark' : 'light'} />
       {/*
         Nieprzezroczyste tło POD nawigatorem.

@@ -38,6 +38,7 @@ import {
   SessionCommands,
   SessionQueries,
   SyncEngine,
+  TraceSync,
   type ClaimInput,
   type CommandResult,
   type DropInput,
@@ -68,6 +69,8 @@ export interface SessionStore {
   sync: SyncEngine | null;
   /** Odświeżanie cache referencyjnego (§4.8) — podłączane razem z silnikiem. */
   referenceSync: ReferenceSync | null;
+  /** Wysyłka śladu kalibracyjnego (faza 5) — ostatni, niskopriorytetowy krok okazji. */
+  traceSync: TraceSync | null;
   /** Wynik ostatniego przebiegu synca — SyncChip i ekran 11 czytają stąd. */
   lastSync: SyncOutcome | null;
   /** Chwila ostatniej UDANEJ wysyłki (epoch ms) — „ostatnia udana wysyłka 14:02 UTC". */
@@ -87,7 +90,7 @@ export interface SessionStore {
    * Podłącza warstwę synca (composition root) — bez niej `syncNow` i `refreshReference`
    * są cichym no-op (testy i StyleGuide żyją bez serwera).
    */
-  attachSync(sync: SyncEngine, referenceSync: ReferenceSync): void;
+  attachSync(sync: SyncEngine, referenceSync: ReferenceSync, traceSync: TraceSync): void;
 
   /** Rozpoczyna/przejmuje sesję: emituje `session_claim` i ustawia kontekst (§4.4). */
   claim(input: ClaimInput): Promise<CommandResult>;
@@ -134,6 +137,8 @@ export interface SessionStore {
   syncNow(): Promise<void>;
   /** Odświeża cache referencyjny, jeśli przekroczył bramę wieku (§4.8). */
   refreshReference(): Promise<void>;
+  /** Wysyła jedną paczkę śladu kalibracyjnego (faza 5) — cicho, bez wpływu na UI. */
+  uploadTraces(): Promise<void>;
   /** Czyści stan w pamięci (wylogowanie / nowy dzień) — nie kasuje bazy. */
   reset(): void;
 }
@@ -202,6 +207,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     synced: true,
     sync: null,
     referenceSync: null,
+    traceSync: null,
     lastSync: null,
     lastSyncAt: null,
     serverFlags: [],
@@ -220,8 +226,8 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       });
     },
 
-    attachSync(sync, referenceSync) {
-      set({ sync, referenceSync });
+    attachSync(sync, referenceSync, traceSync) {
+      set({ sync, referenceSync, traceSync });
     },
 
     claim(input) {
@@ -349,6 +355,12 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       const { referenceSync } = get();
       if (referenceSync == null) return;
       await referenceSync.refreshIfStale();
+    },
+
+    async uploadTraces() {
+      const { traceSync } = get();
+      if (traceSync == null) return;
+      await traceSync.uploadOnce();
     },
 
     reset() {

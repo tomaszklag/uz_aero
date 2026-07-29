@@ -16,7 +16,7 @@
  */
 
 /** Wersja schematu — sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
@@ -72,5 +72,33 @@ export const MIGRATION_1 = `
   );
 `;
 
+/**
+ * Migracja 1 → 2: ślad kalibracyjny GPS (faza 5).
+ *
+ * SUROWE fixy sprzed kwarantanny + markery (detekcja / COFNIJ) — materiał do
+ * kalibracji progów i replayu przez `runDetector`. To NIE są zdarzenia domenowe:
+ * tabela żyje obok rejestru, nigdy nie przechodzi przez outbox (ma WŁASNĄ wysyłkę
+ * na `POST /traces` z własną księgowością `uploaded_at`) i jest przycinana do
+ * `TRACE_RETENTION_DAYS` — rejestr jest wieczny, ślad jest materiałem roboczym.
+ */
+export const MIGRATION_2 = `
+  CREATE TABLE IF NOT EXISTS gps_trace (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_uuid TEXT,
+    kind         TEXT NOT NULL,
+    time         INTEGER NOT NULL,
+    device_time  INTEGER NOT NULL,
+    gs           REAL,
+    alt          REAL,
+    lat          REAL,
+    lon          REAL,
+    accuracy_m   REAL,
+    detail       TEXT,
+    uploaded_at  INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_trace_upload ON gps_trace (uploaded_at);
+  CREATE INDEX IF NOT EXISTS idx_trace_device_time ON gps_trace (device_time);
+`;
+
 /** Migracje w kolejności stosowania: indeks = wersja docelowa − 1. */
-export const MIGRATIONS: readonly string[] = [MIGRATION_1];
+export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2];

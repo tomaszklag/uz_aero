@@ -27,6 +27,7 @@ import { PgPilotsRepo } from './infrastructure/pg/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/refreshTokensRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/referenceRepo.ts';
 import { PgSheets } from './infrastructure/pg/sheetsRepo.ts';
+import { FsTraceSink } from './infrastructure/traces/fsTraceSink.ts';
 import { buildServer } from './http/server.ts';
 
 const env = z
@@ -36,6 +37,8 @@ const env = z
     PORT: z.coerce.number().int().positive().default(3000),
     /** Adres serwera widziany Z TELEFONU — baza linków do kart (`GET /sheets/:tab`). */
     PUBLIC_BASE_URL: z.string().url().optional(),
+    /** Katalog zrzutu śladu kalibracyjnego (faza 5) — NDJSON per sesja. */
+    TRACES_DIR: z.string().default('./traces'),
   })
   .parse(process.env);
 
@@ -67,6 +70,7 @@ const app = buildServer({
   ingest: new IngestCommands(db, events, sessions, flags, exporter),
   state: new StateQueries(db, events, sessions, flags, exportLog),
   sheets: new SheetQueries(sheets),
+  traces: new FsTraceSink(env.TRACES_DIR),
   tokens,
 });
 

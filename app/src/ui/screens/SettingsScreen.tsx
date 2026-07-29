@@ -37,7 +37,7 @@ import { useTheme } from '../theme';
 import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
-import { useGps } from '../bootstrap/ServicesProvider';
+import { useGps, useTrace } from '../bootstrap/ServicesProvider';
 import { formatLatLon, timeUtc } from '../format';
 import { fixAge } from './gpsLoss';
 import { eventsCount } from './syncStatus';
@@ -221,6 +221,7 @@ export function SettingsScreen({
             label="Pozycja"
             value={fix?.lat != null && fix.lon != null ? formatLatLon(fix.lat, fix.lon) : '—'}
           />
+          <TraceRow />
           <GhostAction label="Odśwież" onPress={() => void subscribe()} />
           <SectionNote text="Czujnik lokalny — odczyt działa bez zasięgu. Brak fixa w locie zobaczysz w kokpicie jako czerwony baner." />
         </Card>
@@ -301,6 +302,35 @@ function SettingsAction({
       </View>
       <Icon name="more" size={14} color={theme.colors.textMuted} />
     </Pressable>
+  );
+}
+
+/**
+ * Wiersz rejestratora śladu (faza 5): ile surowych fixów czeka i od kiedy.
+ * Rejestrator jest zawsze włączony (decyzja 2026-07-29) — wiersz mówi, że działa,
+ * i uczciwie pokazuje zaległość wysyłki; retencja 14 dni sprząta sama.
+ */
+function TraceRow() {
+  const trace = useTrace();
+  const [stats, setStats] = useState<{ total: number; pendingUpload: number } | null>(null);
+
+  useEffect(() => {
+    if (trace == null) return;
+    let alive = true;
+    void trace.stats().then((s) => {
+      if (alive) setStats({ total: s.total, pendingUpload: s.pendingUpload });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [trace]);
+
+  if (trace == null || stats == null) return null;
+  return (
+    <DiagRow
+      label="Rejestrator śladu"
+      value={`${stats.total} fixów · ${stats.pendingUpload} do wysłania`}
+    />
   );
 }
 

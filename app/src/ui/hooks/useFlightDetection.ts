@@ -32,6 +32,7 @@ import {
 } from '../../domain';
 import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
+import { useTrace } from '../bootstrap/ServicesProvider';
 
 /** Oczekujące zdarzenie w oknie „COFNIJ". */
 export interface PendingDetection {
@@ -87,6 +88,8 @@ export function useFlightDetection({
   const taxi = useSessionStore((s) => s.taxi);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
+  const sessionUuid = useSessionStore((s) => s.context?.sessionUuid ?? null);
+  const trace = useTrace();
 
   const [fix, setFix] = useState<GpsFix | null>(null);
   const [phase, setPhase] = useState<PhaseReading>({ phase: 'idle', verticalSpeedFpm: null });
@@ -119,8 +122,13 @@ export function useFlightDetection({
 
   const undo = useCallback(() => {
     clearTimers();
-    setPending(null);
-  }, [clearTimers]);
+    setPending((p) => {
+      // Marker COFNIJ do śladu (faza 5): fałszywa detekcja oznaczona przez pilota —
+      // rejestr zdarzeń tego nie widzi, bo COFNIJ z definicji zapobiega zdarzeniu.
+      if (p != null) trace?.marker('undo', p.detection, p.fix.time, sessionUuid);
+      return null;
+    });
+  }, [clearTimers, sessionUuid, trace]);
 
   /** Po upływie okna zapisujemy zdarzenie — metodą `auto`, z czasem z fixa GPS. */
   const commit = useCallback(
@@ -142,6 +150,9 @@ export function useFlightDetection({
   const schedule = useCallback(
     (d: Exclude<Detection, 'taxi'>, at: GpsFix) => {
       clearTimers();
+      // Marker do śladu (faza 5): „toast pokazany". Razem z ewentualnym `undo`
+      // i zdarzeniem w rejestrze daje pełny obraz trafności progu.
+      trace?.marker('detection', d, at.time, sessionUuid);
       setPending({ detection: d, fix: at, secondsLeft: windowSec });
 
       tickTimer.current = setInterval(() => {
@@ -173,6 +184,10 @@ export function useFlightDetection({
       }
 
       stop = await gps.start((incoming) => {
+        // Ślad kalibracyjny (faza 5): SUROWY fix, PRZED kwarantanną — śmieci to
+        // najcenniejszy materiał do progów bramki jakości.
+        trace?.fix(incoming, sessionUuid);
+
         // Kwarantanna śmieciowego fixa (zakłócenia — audyt 2026-07-29): nie karmimy nim
         // ANI detektora, ani siatki, ani świeżości. Strumień samych śmieci wygasza
         // `gpsAvailable` watchdogiem → kokpit uczciwie pokaże 05g „autodetekcja
@@ -225,7 +240,7 @@ export function useFlightDetection({
       clearTimers();
       clearInterval(staleTimer);
     };
-  }, [clearTimers, enabled, gps, schedule, taxi]);
+  }, [clearTimers, enabled, gps, schedule, sessionUuid, taxi, trace]);
 
   return { fix, phase, pending, undo, gpsAvailable, lastFixAt };
 }

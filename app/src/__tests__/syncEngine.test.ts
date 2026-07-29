@@ -84,6 +84,7 @@ class ScriptedServer implements ServerPort {
   }
 
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
+  pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
 
   /** Skryptowalny jak `statusScript`; domyślnie samolot wolny. */
   aircraftStateScript: Array<RemoteAircraftState | Error> = [];

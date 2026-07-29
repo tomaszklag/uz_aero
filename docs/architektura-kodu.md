@@ -471,7 +471,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 
 ## 8. Testy
 
-`app/src/__tests__/` — 321 testów, wszystkie w Node (bez urządzenia):
+`app/src/__tests__/` — 326 testów, wszystkie w Node (bez urządzenia):
 
 | Plik | Czego pilnuje |
 |---|---|
@@ -499,6 +499,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `claimMode.test.ts` | trybu przejęcia §4.4: `takeover_online` tylko z odpowiedzią serwera, żywy poprzednik wygrywa z cache, „już wolny" gasi przejęcie |
 | `pinCrypto.test.ts` | własnego SHA-256 (wektory NIST + node:crypto dla UTF-8) i solonego skrótu PIN-u — rekord nigdy nie niesie PIN-u wprost |
 | `historyDays.test.ts` | ekranu 12: podział wg okna korekty, dzień otwarty poza historią, tag wysyłki z outboxa sesji, plakietka splasha, odliczanie |
+| `traceRecorder.test.ts` | śladu kalibracyjnego: zapis fixów/markerów, retencja po zegarze urządzenia, księgowość wysyłki (offline zostawia wpisy), limit paczki |
 | `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „— —" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
@@ -572,6 +573,22 @@ teleportację spoofingu przy niewinnym GS, powrót dobrego sygnału i brak regre
 Dalsze wzmocnienia (świadomie odłożone po dane z fazy 5): **barometr** jako niezależny
 pionowy tor ziemia/powietrze (expo-sensors — moduł natywny; najlepszy zysk/koszt),
 akcelerometr odrzucony (nieznana orientacja telefonu + wibracje tłokowe).
+
+**Rejestrator śladu kalibracyjnego (faza 5, zawsze włączony — decyzja 2026-07-29).**
+Kalibracja progów bez danych z realnych lotów to zgadywanie — więc telefon nagrywa:
+SUROWE fixy sprzed kwarantanny (śmieci to najcenniejszy materiał do progów bramki)
++ markery detektora (`detection` = toast pokazany, `undo` = COFNIJ pilota — czyli
+fałszywa detekcja oznaczona przez człowieka, której rejestr zdarzeń nie widzi).
+Tor CAŁKOWICIE osobny od rejestru: tabela `gps_trace` (migracja 2 aplikacji, poza
+outboxem, własna księgowość `uploaded_at`), retencja `TRACE_RETENTION_DAYS = 14`
+przy starcie, wysyłka `TraceSync` jako OSTATNI krok pętli okazji (jedna paczka
+≤ 2000/okazję — ślad nie konkuruje o łącze z rejestrem dnia) na `POST /traces`;
+serwer (`FsTraceSink`) odkłada NDJSON per sesja w `TRACES_DIR` z dopisanym
+`pilotId` z JWT. Analiza: `server/scripts/replay.ts` — ten sam `runDetector`
+na nagranym śladzie, z nadpisywalnymi progami i zderzeniem detekcji replayu
+z markerami lotu; najlepsze nagrania staną się złotymi śladami-testami. Wiersz
+„Rejestrator śladu" w diagnostyce na 13. Barometr dopisze się do tej samej
+tabeli jako nowy `kind` — bez zmiany serwera (koperta `/traces` celowo luźna).
 
 **`projections.test.ts` to kontrakt z designem, nie zwykły test.** Odwzorowuje kanoniczną oś dnia 22 JUNE z `docs/design-notes.md` — te same liczby, które pokazują mockupy 04/09/10/11: block **6:39** (2:22 + 1:13 + 3:04), 6 lotów, paliwo **150 +48 −110 = 88 L**, MH **1234:30 → 1241:09**, oraz inwariant **Δ MH = block time**. Zmiana tych liczb w teście bez zmiany designu (i odwrotnie) to rozjazd, nie poprawka.
 

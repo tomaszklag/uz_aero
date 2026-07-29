@@ -18,7 +18,8 @@ import { HttpServerApi } from '../../infrastructure/api/httpServerApi';
 import { apiBaseUrl } from '../../infrastructure/api/apiBaseUrl';
 import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
 import { PinCrypto } from '../../infrastructure/auth/pinCrypto';
-import { AuthService, ReferenceSync, SyncEngine } from '../../application';
+import { AuthService, ReferenceSync, SyncEngine, TraceRecorder, TraceSync } from '../../application';
+import { defaultClock } from '../../infrastructure/clock';
 import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
@@ -26,7 +27,7 @@ import { useAuthStore } from '../store/authStore';
 /** Stan startu aplikacji — UI musi wiedzieć, czy baza jest gotowa. */
 export type BootstrapStatus =
   | { phase: 'loading' }
-  | { phase: 'ready' }
+  | { phase: 'ready'; trace: TraceRecorder }
   | { phase: 'error'; message: string };
 
 /**
@@ -72,11 +73,20 @@ export function useAppBootstrap(): BootstrapStatus {
         const auth = new AuthService(server, new SecureCredentials(), new PinCrypto());
         useAuthStore.getState().attach(auth);
         void useAuthStore.getState().restore();
+
+        // Rejestrator śladu (faza 5): zawsze włączony; retencja przycina przy starcie.
+        const trace = new TraceRecorder(storage, defaultClock);
+        void trace.purgeExpired().catch(() => {});
+
         useSessionStore
           .getState()
-          .attachSync(new SyncEngine(repo, server, auth), new ReferenceSync(repo, server, auth));
+          .attachSync(
+            new SyncEngine(repo, server, auth),
+            new ReferenceSync(repo, server, auth),
+            new TraceSync(storage, server, auth),
+          );
 
-        setStatus({ phase: 'ready' });
+        setStatus({ phase: 'ready', trace });
       } catch (err) {
         if (cancelled) return;
         setStatus({

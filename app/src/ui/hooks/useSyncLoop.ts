@@ -27,6 +27,7 @@ export function useSyncLoop(): void {
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const syncNow = useSessionStore((s) => s.syncNow);
   const refreshReference = useSessionStore((s) => s.refreshReference);
+  const uploadTraces = useSessionStore((s) => s.uploadTraces);
 
   // Jedna trwająca obietnica — okazje w trakcie przebiegu są zbędne (silnik i tak
   // dopije outbox do dna), a AppState potrafi strzelić kilka razy pod rząd.
@@ -39,10 +40,12 @@ export function useSyncLoop(): void {
       if (inFlight.current) return;
       inFlight.current = true;
       try {
-        // Najpierw wysyłka (nasze `day_close` zmienia claimy), potem odświeżenie
-        // cache referencyjnego — z bramą wieku, więc zwykle to darmowy powrót.
+        // Kolejność = priorytet: najpierw rejestr dnia (nasze `day_close` zmienia
+        // claimy), potem cache referencyjny (brama wieku — zwykle darmowy powrót),
+        // NA KOŃCU ślad kalibracyjny — jemu nigdzie się nie śpieszy.
         await syncNow();
         await refreshReference();
+        await uploadTraces();
       } finally {
         inFlight.current = false;
       }
@@ -59,5 +62,5 @@ export function useSyncLoop(): void {
       clearInterval(timer);
       sub.remove();
     };
-  }, [engine, status, outboxCount, syncNow, refreshReference]);
+  }, [engine, status, outboxCount, syncNow, refreshReference, uploadTraces]);
 }

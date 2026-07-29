@@ -67,6 +67,10 @@ export class HttpServerApi implements ServerPort {
     });
   }
 
+  pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }> {
+    return this.request('POST', '/traces', { token, body: { entries } });
+  }
+
   /** Ścieżka standardowa: 2xx z JSON-em albo wyjątek portu. */
   private async request<T>(
     method: 'GET' | 'POST',

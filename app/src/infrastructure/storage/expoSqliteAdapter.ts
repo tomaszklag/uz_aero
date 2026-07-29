@@ -30,7 +30,13 @@ import {
   type ReferencePilot,
   type ServiceStatus,
 } from '../../domain';
-import type { StoragePort } from '../../application/ports';
+import type {
+  NewTraceEntry,
+  StoragePort,
+  TraceEntry,
+  TracePort,
+  TraceStats,
+} from '../../application/ports';
 // Schemat trzymamy osobno, bo dzięki temu da się go uruchomić w Node i przetestować
 // na prawdziwym silniku SQLite — patrz `schema.ts` i `sqliteSchema.test.ts`.
 import { MIGRATIONS, SCHEMA_VERSION } from './schema';
@@ -76,7 +82,7 @@ interface PilotRow {
   fetched_at: number;
 }
 
-export class ExpoSqliteAdapter implements StoragePort {
+export class ExpoSqliteAdapter implements StoragePort, TracePort {
   private db: SQLiteDatabase | null = null;
 
   constructor(private readonly databaseName: string = DB_NAME) {}
@@ -270,14 +276,111 @@ export class ExpoSqliteAdapter implements StoragePort {
     await this.getDb().runAsync('DELETE FROM session_meta WHERE key = ?', [key]);
   }
 
+  // ── ślad kalibracyjny GPS (faza 5) ──────────────────────────────────────────
+
+  async appendTrace(entry: NewTraceEntry): Promise<void> {
+    await this.getDb().runAsync(
+      `INSERT INTO gps_trace (session_uuid, kind, time, device_time, gs, alt, lat, lon, accuracy_m, detail)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        entry.sessionUuid,
+        entry.kind,
+        entry.time,
+        entry.deviceTime,
+        entry.gs,
+        entry.alt,
+        entry.lat,
+        entry.lon,
+        entry.accuracyM,
+        entry.detail,
+      ],
+    );
+  }
+
+  async getTraceBatch(limit: number): Promise<TraceEntry[]> {
+    const rows = await this.getDb().getAllAsync<TraceRow>(
+      'SELECT * FROM gps_trace WHERE uploaded_at IS NULL ORDER BY id LIMIT ?',
+      [limit],
+    );
+    return rows.map(toTraceEntry);
+  }
+
+  async markTraceUploaded(ids: number[], uploadedAt: EpochMillis): Promise<void> {
+    await this.getDb().withTransactionAsync(async () => {
+      const db = this.getDb();
+      for (const id of ids) {
+        await db.runAsync('UPDATE gps_trace SET uploaded_at = ? WHERE id = ?', [uploadedAt, id]);
+      }
+    });
+  }
+
+  async purgeTraceOlderThan(threshold: EpochMillis): Promise<number> {
+    const result = await this.getDb().runAsync('DELETE FROM gps_trace WHERE device_time < ?', [
+      threshold,
+    ]);
+    return result.changes;
+  }
+
+  async traceStats(): Promise<TraceStats> {
+    const row = await this.getDb().getFirstAsync<{
+      total: number;
+      pending: number;
+      oldest: number | null;
+    }>(
+      `SELECT COUNT(*) AS total,
+              SUM(CASE WHEN uploaded_at IS NULL THEN 1 ELSE 0 END) AS pending,
+              MIN(device_time) AS oldest
+       FROM gps_trace`,
+    );
+    return {
+      total: row?.total ?? 0,
+      pendingUpload: row?.pending ?? 0,
+      oldestDeviceTime: row?.oldest ?? null,
+    };
+  }
+
   async clear(): Promise<void> {
     await this.getDb().execAsync(`
       DELETE FROM events;
       DELETE FROM reference_aircraft;
       DELETE FROM reference_pilots;
       DELETE FROM session_meta;
+      DELETE FROM gps_trace;
     `);
   }
+}
+
+/** Wiersz `gps_trace` w bazie (snake_case jak w DDL). */
+interface TraceRow {
+  id: number;
+  session_uuid: string | null;
+  kind: string;
+  time: number;
+  device_time: number;
+  gs: number | null;
+  alt: number | null;
+  lat: number | null;
+  lon: number | null;
+  accuracy_m: number | null;
+  detail: string | null;
+  uploaded_at: number | null;
+}
+
+function toTraceEntry(row: TraceRow): TraceEntry {
+  return {
+    id: row.id,
+    sessionUuid: row.session_uuid,
+    kind: row.kind as TraceEntry['kind'],
+    time: row.time,
+    deviceTime: row.device_time,
+    gs: row.gs,
+    alt: row.alt,
+    lat: row.lat,
+    lon: row.lon,
+    accuracyM: row.accuracy_m,
+    detail: row.detail,
+    uploadedAt: row.uploaded_at,
+  };
 }
 
 // ── mapowanie wiersz → domena ──────────────────────────────────────────────────

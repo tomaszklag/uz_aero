@@ -9,7 +9,13 @@
  */
 
 import type { EpochMillis, Event, ReferenceAircraft, ReferencePilot } from '../../domain';
-import type { StoragePort } from '../../application/ports';
+import type {
+  NewTraceEntry,
+  StoragePort,
+  TraceEntry,
+  TracePort,
+  TraceStats,
+} from '../../application/ports';
 
 /**
  * Głęboka kopia struktur JSON-serializowalnych. Payloady zdarzeń i rekordy cache to
@@ -21,7 +27,7 @@ function deepClone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-export class InMemoryAdapter implements StoragePort {
+export class InMemoryAdapter implements StoragePort, TracePort {
   private events = new Map<string, Event>();
   private order: string[] = [];
   private aircraft = new Map<string, ReferenceAircraft>();
@@ -84,6 +90,40 @@ export class InMemoryAdapter implements StoragePort {
     return [...this.pilots.values()].map(deepClone);
   }
 
+  // ── ślad kalibracyjny GPS (faza 5) ──────────────────────────────────────────
+  private trace: TraceEntry[] = [];
+  private traceSeq = 0;
+
+  async appendTrace(entry: NewTraceEntry): Promise<void> {
+    this.trace.push({ ...entry, id: (this.traceSeq += 1), uploadedAt: null });
+  }
+
+  async getTraceBatch(limit: number): Promise<TraceEntry[]> {
+    return this.trace.filter((e) => e.uploadedAt == null).slice(0, limit).map(deepClone);
+  }
+
+  async markTraceUploaded(ids: number[], uploadedAt: EpochMillis): Promise<void> {
+    const set = new Set(ids);
+    for (const e of this.trace) if (set.has(e.id)) e.uploadedAt = uploadedAt;
+  }
+
+  async purgeTraceOlderThan(threshold: EpochMillis): Promise<number> {
+    const before = this.trace.length;
+    this.trace = this.trace.filter((e) => e.deviceTime >= threshold);
+    return before - this.trace.length;
+  }
+
+  async traceStats(): Promise<TraceStats> {
+    return {
+      total: this.trace.length,
+      pendingUpload: this.trace.filter((e) => e.uploadedAt == null).length,
+      oldestDeviceTime: this.trace.reduce<EpochMillis | null>(
+        (min, e) => (min == null || e.deviceTime < min ? e.deviceTime : min),
+        null,
+      ),
+    };
+  }
+
   async getMeta(key: string): Promise<string | null> {
     return this.meta.has(key) ? this.meta.get(key)! : null;
   }
@@ -102,6 +142,7 @@ export class InMemoryAdapter implements StoragePort {
     this.aircraft.clear();
     this.pilots.clear();
     this.meta.clear();
+    this.trace = [];
   }
 
   /** Zdarzenia w kolejności wstawienia, jako kopie. */

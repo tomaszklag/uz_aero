@@ -99,4 +99,9 @@ export interface ServerPort {
   getReference(token: string, etag?: string | null): Promise<ReferenceFetch>;
   getAircraftState(token: string, aircraftId: string): Promise<RemoteAircraftState>;
   getSyncStatus(token: string, sessionUuid: string): Promise<SessionSyncStatus>;
+  /**
+   * Ślad kalibracyjny GPS (faza 5) na `POST /traces` — osobny, niskopriorytetowy tor
+   * obok outboxa zdarzeń; serwer odkłada NDJSON per sesja do analizy progów.
+   */
+  pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }>;
 }
