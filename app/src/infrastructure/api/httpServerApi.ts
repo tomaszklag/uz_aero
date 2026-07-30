@@ -15,6 +15,7 @@ import type {
   PushResult,
   ReferenceFetch,
   RemoteAircraftState,
+  RemoteThemePrefs,
   ServerPort,
   SessionSyncStatus,
 } from '../../application/ports';
@@ -71,9 +72,20 @@ export class HttpServerApi implements ServerPort {
     return this.request('POST', '/traces', { token, body: { entries } });
   }
 
+  getPrefs(token: string): Promise<RemoteThemePrefs> {
+    return this.request('GET', '/me/prefs', { token });
+  }
+
+  putPrefs(
+    token: string,
+    prefs: { theme: string; themeUpdatedAt: string },
+  ): Promise<RemoteThemePrefs> {
+    return this.request('PUT', '/me/prefs', { token, body: prefs });
+  }
+
   /** Ścieżka standardowa: 2xx z JSON-em albo wyjątek portu. */
   private async request<T>(
-    method: 'GET' | 'POST',
+    method: 'GET' | 'POST' | 'PUT',
     path: string,
     options: { token?: string; body?: unknown },
   ): Promise<T> {
@@ -90,7 +102,7 @@ export class HttpServerApi implements ServerPort {
    * interpretację statusu zostawia wołającemu — `getReference` musi odróżnić 304 od błędu.
    */
   private async send(
-    method: 'GET' | 'POST',
+    method: 'GET' | 'POST' | 'PUT',
     path: string,
     options: { token?: string; body?: unknown; headers?: Record<string, string> },
   ): Promise<Response> {

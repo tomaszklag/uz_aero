@@ -128,7 +128,7 @@ export function ManualEventSheet({
                   style={({ pressed }) => [
                     styles.typeCard,
                     {
-                      borderRadius: 14,
+                      borderRadius: theme.radius.btn,
                       borderWidth: theme.borderWidth,
                       borderColor: selected ? amber.border : theme.colors.border,
                       backgroundColor: selected ? amber.muted : theme.colors.surface,
@@ -160,7 +160,7 @@ export function ManualEventSheet({
             style={[
               styles.timeBlock,
               {
-                borderRadius: 14,
+                borderRadius: theme.radius.btn,
                 borderWidth: theme.borderWidth,
                 borderColor: amber.border,
                 backgroundColor: theme.colors.surface,
@@ -269,7 +269,9 @@ function MinuteButton({
       style={({ pressed }) => [
         styles.minuteButton,
         {
-          borderRadius: 13,
+          // Mockup 05f daje `.step-btn` promień 13 — znormalizowany do kanonu
+          // `radius.btn`; dryf 13/14 ubity celowo, wzorem `colors.overlay`.
+          borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: pressed ? amber.border : theme.colors.borderStrong,
           backgroundColor: pressed ? amber.muted : theme.colors.surfaceRaised,

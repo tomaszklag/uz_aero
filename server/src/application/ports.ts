@@ -52,6 +52,32 @@ export interface PilotsPort {
 }
 
 /**
+ * Preferencje pilota (dziś wyłącznie motyw) — wędrują za pilotem między urządzeniami
+ * (decyzja 2026-07-29). `themeUpdatedAt` to stempel DECYZJI nadany przez telefon:
+ * oś rozstrzygania LWW, celowo różna od `updated_at` konta.
+ */
+export interface PilotPrefs {
+  theme: string | null;
+  themeUpdatedAt: Date | null;
+}
+
+/**
+ * Osobny port od `PilotsPort` nie dla symetrii, tylko dlatego, że tamten jest CZYSTYM
+ * odczytem kont (zapis kont mieszka w seedzie/administratorze) — a preferencje są
+ * jedynym miejscem, w którym pilot pisze do własnego wiersza.
+ */
+export interface PilotPrefsPort {
+  /** `null` = pilot nie istnieje (token przeżył konto — stan patologiczny). */
+  get(pilotId: string): Promise<PilotPrefs | null>;
+  /**
+   * Zapis LWW: skutek WYŁĄCZNIE, gdy `updatedAt` jest ściśle NOWSZY niż zapisany
+   * stempel (brak stempla = każdy wygrywa). Warunek siedzi w SQL-u, nie w odczycie
+   * przed zapisem — dwa telefony tego samego pilota nie prześcigną się timingiem.
+   */
+  setIfNewer(pilotId: string, theme: string, updatedAt: Date): Promise<void>;
+}
+
+/**
  * Hasła: `hash` przy zakładaniu konta (seed/admin), `verify` przy logowaniu.
  * Implementacja na `node:crypto` (scrypt) — patrz adapter, tam jest uzasadnienie.
  */

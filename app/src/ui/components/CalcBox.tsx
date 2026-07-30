@@ -47,7 +47,7 @@ export function CalcBox({ title, rows, total, note, tone = 'amber', style }: Cal
         {
           gap: 7,
           padding: 14,
-          borderRadius: 14,
+          borderRadius: theme.radius.btn,
           borderWidth: theme.borderWidth,
           borderColor: c.border,
           backgroundColor: c.muted,

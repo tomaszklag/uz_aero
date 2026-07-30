@@ -60,7 +60,7 @@ export function ActionGrid({ actions, style }: ActionGridProps) {
                 gap: 10,
                 paddingHorizontal: 16,
                 paddingVertical: 14,
-                borderRadius: 14,
+                borderRadius: theme.radius.btn,
                 borderWidth: theme.borderWidth,
                 borderColor: theme.colors.border,
                 backgroundColor: theme.colors.surface,

@@ -220,10 +220,17 @@ export const spacing = {
   giant: 48,
 } as const;
 
-/** Promienie zaokrągleń. Karty/pola = 12, przyciski = 14/16, modale = 24, pill = 999. */
+/** Promienie zaokrągleń. Karty/pola = 12 (md), przyciski/kafle/klawisze = 14 (btn), duże CTA = 16 (lg), modale = 24, pill = 999. */
 export const radius = {
   sm: 8,
   md: 12,
+  /**
+   * Kanon dla przycisków, kafli akcji, klawiszy i pól-kontrolek (num-btn, action-card,
+   * step-btn, day-card, time-input…). Mockupy wahają się między 13 a 14 px — steppery
+   * i wiersze 05e/05f dają 13 — dryf 13 → 14 znormalizowany celowo, wzorem
+   * `colors.overlay`, który zakończył dryf scrimów.
+   */
+  btn: 14,
   lg: 16,
   xl: 24,
   pill: 999,
@@ -263,6 +270,7 @@ export interface TypographyToken {
  *  - body        → tekst Archivo
  *  - label       → etykiety/przyciski Archivo
  *  - mono_code   → inline kody: ICAO, GPS, MH, kod pilota (.compact-info)
+ *  - micro       → mikro-etykiety 9 px w wersalikach (.diag-key / .header-sub / .version-tag)
  */
 export const typography = {
   display: {
@@ -323,6 +331,18 @@ export const typography = {
     fontSize: 13,
     lineHeight: 18,
     letterSpacing: 1,
+  },
+  // Mikro-etykiety sekcji i pasków (mono 9 / wersaliki): `.diag-key` (13),
+  // `.header-sub` (08), `.version-tag` (01), `.pin-label` (00), `.field-label` (07),
+  // `.group-lbl` (12). Mockupy wahają się między światłem 1.5 a 2 px — kanon to 1.5
+  // (jak `.diag-key`/`.header-sub`); normalizacja jest celowa, wzorem `colors.overlay`,
+  // który zakończył dryf scrimów.
+  micro: {
+    fontFamily: fontFamily.mono,
+    fontSize: 9,
+    lineHeight: 13,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
 } satisfies Record<string, TypographyToken>;
 

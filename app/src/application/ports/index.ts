@@ -6,3 +6,4 @@ export * from './serverPort';
 export * from './credentialsPort';
 export * from './pinCryptoPort';
 export * from './tracePort';
+export * from './themePrefsPort';

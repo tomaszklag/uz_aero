@@ -158,10 +158,10 @@ export function HistoryScreen({
   );
 }
 
-/** `.group-lbl` — etykieta grupy nad kartami. */
+/** `.group-lbl` — etykieta grupy nad kartami (mono, wersaliki — token `micro`). */
 function GroupLabel({ text, style }: { text: string; style?: object }) {
   return (
-    <AppText variant="label" tone="muted" style={[styles.groupLabel, style]}>
+    <AppText variant="micro" tone="muted" style={[styles.groupLabel, style]}>
       {text}
     </AppText>
   );
@@ -174,7 +174,7 @@ function SyncTag({ day }: { day: DayCardSpec | EditableDaySpec }) {
 
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 11 },
-  groupLabel: { fontSize: 9, letterSpacing: 2, paddingHorizontal: 2 },
+  groupLabel: { paddingHorizontal: 2 },
   closedLabel: { marginTop: 4 },
   footNote: { fontSize: 9 },
   lockedNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 2 },

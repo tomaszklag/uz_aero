@@ -57,7 +57,7 @@ export function DayCard({
           backgroundColor: editable ? blue.muted : theme.colors.surface,
           borderColor: editable ? (pressed ? blue.accent : blue.border) : theme.colors.border,
           borderWidth: theme.borderWidth,
-          borderRadius: 14,
+          borderRadius: theme.radius.btn,
           opacity: pressed && onPress != null ? 0.85 : 1,
         },
         style,

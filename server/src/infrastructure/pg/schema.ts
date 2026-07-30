@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -163,10 +163,27 @@ export const MIGRATION_5 = `
   );
 `;
 
+/**
+ * Migracja 6: preferencje pilota — motyw aplikacji (decyzja 2026-07-29: motyw jest
+ * preferencją PILOTA, nie telefonu, i wędruje za nim między urządzeniami).
+ *
+ * Kolumny na `pilots`, nie osobna tabela: preferencje są 1:1 z pilotem, a osobna
+ * tabela z jednym wierszem na pilota to przerost. `theme` jest NULL-owalny —
+ * NULL znaczy „pilot nigdy nie wybrał motywu na żadnym urządzeniu" (telefon zostaje
+ * przy swoim lokalnym stanie). `theme_updated_at` to stempel DECYZJI pilota nadany
+ * przez telefon — oś rozstrzygania LWW w `PUT /me/prefs`, nie czas zapisu w bazie.
+ * Serwer nie zna listy motywów (to tokeny UI aplikacji) — trzyma nazwę jako tekst.
+ */
+export const MIGRATION_6 = `
+  ALTER TABLE pilots ADD COLUMN theme TEXT;
+  ALTER TABLE pilots ADD COLUMN theme_updated_at TIMESTAMPTZ;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
   MIGRATION_3,
   MIGRATION_4,
   MIGRATION_5,
+  MIGRATION_6,
 ];

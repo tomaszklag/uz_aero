@@ -49,6 +49,17 @@ export interface ReferenceFetch {
   etag: string | null;
 }
 
+/**
+ * Preferencje pilota z `/me/prefs` (decyzja 2026-07-29: motyw wędruje za pilotem
+ * między urządzeniami). `theme` jest dla portu NIEPRZEZROCZYSTĄ nazwą — listę
+ * motywów znają wyłącznie tokeny UI; `null` = pilot nigdy nie wybrał motywu.
+ * `themeUpdatedAt` to ISO UTC stempla DECYZJI pilota (zegar telefonu) — oś LWW.
+ */
+export interface RemoteThemePrefs {
+  theme: string | null;
+  themeUpdatedAt: string | null;
+}
+
 /** Stan samolotu z `GET /aircraft/:id/state` — claim + przekazanie (§4.6). */
 export interface RemoteAircraftState {
   aircraftId: string;
@@ -104,4 +115,11 @@ export interface ServerPort {
    * obok outboxa zdarzeń; serwer odkłada NDJSON per sesja do analizy progów.
    */
   pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }>;
+  /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */
+  getPrefs(token: string): Promise<RemoteThemePrefs>;
+  /**
+   * `PUT /me/prefs` — zapis LWW po `themeUpdatedAt`; odpowiedź jest ZAWSZE stanem
+   * autorytatywnym po operacji (przegrany stempel dostaje zwycięzcę do adopcji).
+   */
+  putPrefs(token: string, prefs: { theme: string; themeUpdatedAt: string }): Promise<RemoteThemePrefs>;
 }

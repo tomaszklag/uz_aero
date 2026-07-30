@@ -11,6 +11,7 @@ import { z } from 'zod';
 
 import { AuthCommands } from './application/commands/auth.ts';
 import { IngestCommands } from './application/commands/ingest.ts';
+import { PrefsCommands } from './application/commands/prefs.ts';
 import { DayExporter } from './application/export/dayExporter.ts';
 import { ReferenceQueries } from './application/queries/reference.ts';
 import { SheetQueries } from './application/queries/sheets.ts';
@@ -23,6 +24,7 @@ import { PgExportLogRepo } from './infrastructure/pg/exportLogRepo.ts';
 import { PgFlagsRepo } from './infrastructure/pg/flagsRepo.ts';
 import { PgSessionsProjection } from './infrastructure/pg/sessionsProjection.ts';
 import { migrate } from './infrastructure/pg/migrate.ts';
+import { PgPilotPrefsRepo } from './infrastructure/pg/pilotPrefsRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/refreshTokensRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/referenceRepo.ts';
@@ -71,6 +73,7 @@ const app = buildServer({
   state: new StateQueries(db, events, sessions, flags, exportLog),
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),
+  prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
   tokens,
 });
 

@@ -123,7 +123,7 @@ export function PinScreen() {
 
         {pilot != null && <ProfileChip name={pilot.name} code={pilot.code} style={styles.profile} />}
 
-        <AppText variant="mono" tone="muted" style={styles.label}>
+        <AppText variant="micro" tone="muted" style={styles.label}>
           {label}
         </AppText>
         <PinDots filled={entry.length} length={PIN_LENGTH} error={error > 0} style={styles.dots} />
@@ -160,7 +160,7 @@ export function PinScreen() {
             ) : (
               <View style={styles.noteRow}>
                 <Icon name="offline" size={10} color={theme.colors.textMuted} />
-                <AppText variant="mono" tone="muted" style={styles.note}>
+                <AppText variant="micro" tone="muted" style={styles.note}>
                   Pełne logowanie wymaga internetu
                 </AppText>
               </View>
@@ -169,7 +169,7 @@ export function PinScreen() {
         )}
 
         {setup && (
-          <AppText variant="mono" tone="muted" style={[styles.note, styles.setupNote]}>
+          <AppText variant="micro" tone="muted" style={[styles.note, styles.setupNote]}>
             PIN odblokowuje aplikację bez sieci — zapamiętaj go
           </AppText>
         )}
@@ -182,12 +182,14 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 24 },
   brand: { marginBottom: 26 },
   profile: { marginBottom: 26 },
-  label: { fontSize: 9, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 14 },
+  // `.pin-label` wyraźnie chce szersze światło niż token micro (2.5 vs 1.5) — override.
+  label: { letterSpacing: 2.5, marginBottom: 14 },
   dots: { marginBottom: 30 },
   links: { marginTop: 26, alignItems: 'center', gap: 8 },
   link: { fontSize: 12 },
   noteRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
-  note: { fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase' },
+  // `.links-note` jest o oczko mniejsza od mikro-etykiety (8 px) — reszta z `micro`.
+  note: { fontSize: 8 },
   setupNote: { marginTop: 26 },
   guard: { maxWidth: 290, marginTop: 4 },
 });

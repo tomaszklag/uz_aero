@@ -28,6 +28,7 @@ export function useSyncLoop(): void {
   const syncNow = useSessionStore((s) => s.syncNow);
   const refreshReference = useSessionStore((s) => s.refreshReference);
   const uploadTraces = useSessionStore((s) => s.uploadTraces);
+  const syncThemePrefs = useSessionStore((s) => s.syncThemePrefs);
 
   // Jedna trwająca obietnica — okazje w trakcie przebiegu są zbędne (silnik i tak
   // dopije outbox do dna), a AppState potrafi strzelić kilka razy pod rząd.
@@ -45,6 +46,9 @@ export function useSyncLoop(): void {
         // NA KOŃCU ślad kalibracyjny — jemu nigdzie się nie śpieszy.
         await syncNow();
         await refreshReference();
+        // Motyw pilota (decyzja 2026-07-29): push zaległej zmiany od razu, pull
+        // z własną bramą wieku — puls co 60 s nie zamienia się w odpytywanie.
+        await syncThemePrefs();
         await uploadTraces();
       } finally {
         inFlight.current = false;
@@ -62,5 +66,5 @@ export function useSyncLoop(): void {
       clearInterval(timer);
       sub.remove();
     };
-  }, [engine, status, outboxCount, syncNow, refreshReference, uploadTraces]);
+  }, [engine, status, outboxCount, syncNow, refreshReference, syncThemePrefs, uploadTraces]);
 }
