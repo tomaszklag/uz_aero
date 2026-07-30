@@ -6,29 +6,41 @@
  * importuje `react-native` (zdarzenia klawiatury, `TextInput.State`), a testy w tym
  * projekcie są RN-free z założenia (`jest.config.js`) — arytmetyka musi więc mieszkać
  * tam, gdzie Jest ją widzi.
- */
-
-/**
- * Zapas między dolną krawędzią pola a klawiaturą. Pole ma być widoczne, a nie stykać
- * się z nią pikselem — przy zerze input wygląda jak wciśnięty pod klawiaturę.
- */
-export const KEYBOARD_CLEARANCE = 16;
-
-/**
- * O ile trzeba przewinąć listę, żeby pole wyszło nad klawiaturę. `0` = już widoczne.
  *
- * Wszystkie wielkości w jednym układzie: współrzędne okna, rosnące w dół. `inputTop`
- * i `inputHeight` z `measureInWindow`, `keyboardTop` z `endCoordinates.screenY`
- * (edge-to-edge znosi różnicę między oknem a ekranem, więc nie trzeba ich godzić).
+ * HISTORIA POMYŁKI (warta zapamiętania, bo kosztowała dwie tury zgłoszenia). Pierwsza
+ * wersja liczyła różnicę między dolną krawędzią pola z `measureInWindow` a górną
+ * krawędzią klawiatury z `endCoordinates.screenY`. To DWA różne układy współrzędnych —
+ * okna i ekranu — więc wynik był zaniżony o stałą rzędu wysokości status bara i pole
+ * wyjeżdżało tylko do połowy. Teraz wszystko liczymy w układzie TREŚCI listy
+ * (`measureLayout` względem widoku wewnętrznego `ScrollView`), a wynik jest pozycją
+ * BEZWZGLĘDNĄ — nie zależy ani od bieżącego przewinięcia, ani od tego, gdzie na ekranie
+ * stoi sama lista.
+ */
+
+/**
+ * Zapas pod dolną krawędzią pola. Pole ma być widoczne z powietrzem wokół, a nie
+ * stykać się z klawiaturą pikselem — przy zerze input wygląda jak wciśnięty pod nią.
+ * Przy 24 dp widać jeszcze początek podpowiedzi pod polem (`TextField hint`).
+ */
+export const KEYBOARD_CLEARANCE = 24;
+
+/**
+ * Docelowe przewinięcie listy, przy którym całe pole stoi nad klawiaturą.
+ *
+ * Wszystko w układzie TREŚCI listy (rosnącym w dół, niezależnym od przewinięcia):
+ *  • `inputTop`, `inputHeight` — z `measureLayout` względem widoku wewnętrznego,
+ *  • `viewportHeight` — wysokość WIDOCZNEJ części listy, czyli już po skróceniu
+ *    ekranu o klawiaturę (`Screen` + `useKeyboardHeight`).
  *
  * Liczymy DOŁEM pola, nie górą — pole wieloliniowe potrafi mieć górną krawędź nad
- * klawiaturą, a dolną pod nią, i wtedy nadal jest nieczytelne.
+ * klawiaturą, a dolną pod nią, i wtedy nadal jest nieczytelne. Wynik nigdy nie jest
+ * ujemny: pole mieszczące się w pierwszym ekranie nie wymaga przewijania.
  */
-export function hiddenBelowKeyboard(
+export function scrollTargetForInput(
   inputTop: number,
   inputHeight: number,
-  keyboardTop: number,
+  viewportHeight: number,
   clearance: number = KEYBOARD_CLEARANCE,
 ): number {
-  return Math.max(0, inputTop + inputHeight + clearance - keyboardTop);
+  return Math.max(0, inputTop + inputHeight + clearance - viewportHeight);
 }

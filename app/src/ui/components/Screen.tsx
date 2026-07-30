@@ -63,7 +63,7 @@ export function Screen({
 }: ScreenProps) {
   const { theme } = useTheme();
   const keyboard = useKeyboardHeight();
-  const keyboardScroll = useKeyboardAwareScroll();
+  const keyboardScroll = useKeyboardAwareScroll(keyboard);
   const bg: ViewStyle = { backgroundColor: theme.colors.bg };
   const pad: ViewStyle | null = padded ? { padding: theme.spacing.lg } : null;
 
@@ -86,8 +86,9 @@ export function Screen({
           keyboardShouldPersistTaps="handled"
           {...rest}
           // Po `rest`, bo unoszenie pola nad klawiaturę jest własnością tego kontenera —
-          // przypadkowe `onScroll` z zewnątrz nie ma prawa go wyłączyć.
+          // przypadkowe `onScroll` czy `onLayout` z zewnątrz nie ma prawa go wyłączyć.
           ref={keyboardScroll.ref}
+          onLayout={keyboardScroll.onLayout}
           onScroll={keyboardScroll.onScroll}
           scrollEventThrottle={keyboardScroll.scrollEventThrottle}
         >

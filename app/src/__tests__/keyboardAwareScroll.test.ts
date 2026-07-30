@@ -2,42 +2,61 @@
  * UZ Aero — testy geometrii unoszenia pola nad klawiaturę (`ui/hooks/keyboardGeometry`).
  *
  * Samego zachowania klawiatury tu nie sprawdzimy — jest natywne, w Node nie istnieje.
- * Testowalna jest jedna rzecz, i to ta, która się psuła: decyzja O ILE przewinąć.
- * Scenariusze poniżej to prawdziwa geometria zgłoszenia (telefon 2400×1080 @ 2.75,
- * czyli ~873 dp wysokości okna, klawiatura ~310 dp → krawędź na ~563 dp).
+ * Testowalna jest jedna rzecz, i to ta, która się psuła dwie tury z rzędu: DOKĄD
+ * przewinąć listę. Wszystkie liczby w układzie treści (`measureLayout`), więc wynik
+ * jest pozycją bezwzględną, nie deltą.
+ *
+ * Scenariusze z prawdziwej geometrii zgłoszenia: preflight na telefonie 2400×1080 @ 2.75
+ * (~873 dp okna), klawiatura ~310 dp → widoczna część listy ~490 dp po odjęciu nagłówka.
  */
 
-import { hiddenBelowKeyboard } from '../ui/hooks/keyboardGeometry';
+import { KEYBOARD_CLEARANCE, scrollTargetForInput } from '../ui/hooks/keyboardGeometry';
 
-const KEYBOARD_TOP = 563;
+const VIEWPORT = 490;
 
-describe('hiddenBelowKeyboard', () => {
-  it('pole schowane pod klawiaturą — przewijamy o brakującą różnicę z zapasem', () => {
-    // Dół pola na 600, czyli 37 dp pod krawędzią klawiatury; +16 dp zapasu = 53.
-    expect(hiddenBelowKeyboard(552, 48, KEYBOARD_TOP)).toBe(53);
+describe('scrollTargetForInput', () => {
+  it('pole „Oznaczenie klienta" na dole długiego formularza — przewijamy pod jego dół', () => {
+    // Pole w treści na 1180–1228; żeby dół + zapas 24 był widoczny w 490 dp okna,
+    // trzeba stanąć na 1228 + 24 − 490.
+    expect(scrollTargetForInput(1180, 48, VIEWPORT)).toBe(762);
   });
 
-  it('pole wysoko nad klawiaturą — nie ruszamy przewinięcia', () => {
-    expect(hiddenBelowKeyboard(120, 48, KEYBOARD_TOP)).toBe(0);
+  it('pole mieszczące się w pierwszym ekranie nie wymaga przewijania', () => {
+    expect(scrollTargetForInput(80, 48, VIEWPORT)).toBe(0);
   });
 
-  it('nigdy nie zwraca wartości ujemnej — przewinięcie „w drugą stronę" byłoby szarpnięciem', () => {
-    expect(hiddenBelowKeyboard(0, 48, KEYBOARD_TOP)).toBe(0);
+  it('nigdy nie zwraca wartości ujemnej — przewinięcie „w minus" byłoby szarpnięciem', () => {
+    expect(scrollTargetForInput(0, 48, VIEWPORT)).toBe(0);
   });
 
-  it('pole dokładnie na krawędzi klawiatury liczy się jako zakryte — o szerokość zapasu', () => {
-    // Dół pola == krawędź klawiatury: technicznie widoczne, wizualnie wciśnięte pod nią.
-    expect(hiddenBelowKeyboard(515, 48, KEYBOARD_TOP)).toBe(16);
+  it('pole dokładnie na dolnej krawędzi okna liczy się jako zakryte — o szerokość zapasu', () => {
+    // Dół pola == dolna krawędź widoku: technicznie widoczne, wizualnie wciśnięte
+    // pod klawiaturę. Cel podnosi je o sam zapas.
+    expect(scrollTargetForInput(VIEWPORT - 48, 48, VIEWPORT)).toBe(KEYBOARD_CLEARANCE);
   });
 
-  it('zapas jest odejmowany od widoczności, nie dodawany do niej', () => {
-    // Bez zapasu to samo pole byłoby uznane za widoczne — zapas ma je podnieść.
-    expect(hiddenBelowKeyboard(515, 48, KEYBOARD_TOP, 0)).toBe(0);
-    expect(hiddenBelowKeyboard(515, 48, KEYBOARD_TOP, 40)).toBe(40);
+  it('liczymy DOŁEM pola — wieloliniowe z górą nad krawędzią wciąż trzeba podnieść', () => {
+    // Góra na 400 (widoczna), dół na 520 (pod krawędzią 490): sama góra uznałaby
+    // pole za widoczne i to był błąd, który pilot widział jako „ucięty input".
+    expect(scrollTargetForInput(400, 120, VIEWPORT)).toBe(54);
   });
 
-  it('wysokie pole (wieloliniowe) liczy się dołem, nie górą', () => {
-    // Góra nad klawiaturą, dół pod nią — samo `inputTop` uznałoby je za widoczne.
-    expect(hiddenBelowKeyboard(500, 120, KEYBOARD_TOP)).toBe(73);
+  it('zapas podnosi pole, a nie obniża — zero zapasu daje ciaśniejszy cel', () => {
+    const tight = scrollTargetForInput(1180, 48, VIEWPORT, 0);
+    const roomy = scrollTargetForInput(1180, 48, VIEWPORT, 40);
+    expect(tight).toBe(738);
+    expect(roomy).toBe(778);
+    expect(roomy).toBeGreaterThan(tight);
+  });
+
+  it('mniejsze okno (wyższa klawiatura) wymaga większego przewinięcia', () => {
+    const tallKeyboard = scrollTargetForInput(1180, 48, 380);
+    expect(tallKeyboard).toBeGreaterThan(scrollTargetForInput(1180, 48, VIEWPORT));
+  });
+
+  it('zapas domyślny wystarcza na początek podpowiedzi pod polem', () => {
+    // Regresja na stałą: 16 dp okazało się za mało (pilot: „widać do połowy inputa"),
+    // 24 dp odsłania też pierwszą linię `TextField hint`.
+    expect(KEYBOARD_CLEARANCE).toBeGreaterThanOrEqual(24);
   });
 });
