@@ -48,6 +48,30 @@ export function sentLabel(sent: number, total: number): string {
 }
 
 /**
+ * Stan dnia widziany z ekranu 11 — decyduje o podpisie akcji domykającej.
+ * `none` = wejście bez sesji (outbox niesie ogon poprzednich dni).
+ */
+export type DayDoneState = 'closed' | 'open' | 'none';
+
+/**
+ * Podpis pod „GOTOWE" — jedynym wyjściem w przód z ekranu 11.
+ *
+ * Kolejność warunków to kolejność zaskoczenia. Dzień otwarty jest najbardziej
+ * nieoczekiwany (na 11 wchodzi się po zamknięciu, ale historia potrafi tu przywieźć
+ * dzień sprzed korekty), więc mówi o sobie pierwszy. Dopiero potem kolejka: wyjścia
+ * NIE blokujemy niepustym outboksem (§4.1 — brak sieci nigdy nie blokuje pracy
+ * pilota), więc podpis musi wprost powiedzieć, że wysyłka dokończy się bez pilota.
+ *
+ * Podpisy są krótkie, bo `ActionButton` renderuje je wersalikami — dłuższe zdanie
+ * rozjeżdża się na dwie linie. Rozwinięcie stoi w `QueueBox` obok („nic nie ginie").
+ */
+export function dayDoneHint(day: DayDoneState, outboxCount: number): string {
+  if (day === 'open') return 'Dzień pozostaje otwarty';
+  if (outboxCount > 0) return 'Wysyłka dokończy się sama';
+  return day === 'closed' ? 'Dzień zamknięty i wysłany' : 'Wrócisz na ekran startowy';
+}
+
+/**
  * Flagi §4.5 po polsku — nazwy z mockupu 11 („nakładka czasowa · dziura MH · …").
  * Nieznany typ wraca surowy: lepszy techniczny kod niż zgadywana etykieta.
  */

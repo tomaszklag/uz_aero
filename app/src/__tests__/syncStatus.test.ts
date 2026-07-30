@@ -8,6 +8,7 @@
 
 import type { SessionState } from '../domain';
 import {
+  dayDoneHint,
   dropsShort,
   dropsSummary,
   eventsCount,
@@ -71,6 +72,36 @@ describe('sentProgress + sentLabel', () => {
 
   it('pusta sesja = komplet (nie dzielimy przez zero)', () => {
     expect(sentProgress(0, 0).fraction).toBe(1);
+  });
+});
+
+describe('dayDoneHint — podpis wyjścia z ekranu 11', () => {
+  it('komplet wysłany: dzień domknięty bez zastrzeżeń', () => {
+    expect(dayDoneHint('closed', 0)).toBe('Dzień zamknięty i wysłany');
+  });
+
+  it('zaległość w kolejce NIE blokuje wyjścia — podpis mówi, że wysyłka trwa (§4.1)', () => {
+    expect(dayDoneHint('closed', 12)).toBe('Wysyłka dokończy się sama');
+  });
+
+  it('dzień otwarty wygrywa z kolejką — to fakt najbardziej zaskakujący', () => {
+    expect(dayDoneHint('open', 0)).toBe('Dzień pozostaje otwarty');
+    expect(dayDoneHint('open', 12)).toBe('Dzień pozostaje otwarty');
+  });
+
+  it('bez sesji (sam ogon outboxa) nie udajemy, że coś zamykamy', () => {
+    expect(dayDoneHint('none', 0)).toBe('Wrócisz na ekran startowy');
+    expect(dayDoneHint('none', 3)).toBe('Wysyłka dokończy się sama');
+  });
+
+  it('podpisy mieszczą się w jednej linii wersalików (ActionButton je podnosi)', () => {
+    const all = [
+      dayDoneHint('closed', 0),
+      dayDoneHint('closed', 12),
+      dayDoneHint('open', 0),
+      dayDoneHint('none', 0),
+    ];
+    for (const hint of all) expect(hint.length).toBeLessThanOrEqual(28);
   });
 });
 

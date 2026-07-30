@@ -58,9 +58,12 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 00-login → 01-splash → 02-preflight → 03-preflight-confirm
 → 04-cockpit-ground ⇄ 05-cockpit-running
 → 06-tankowanie / 07-zmiana-zalogi / 08-lista-reczna (akcje ground)
-→ 09-end-of-day → 10-statystyki → 11-eksport
+→ 09-end-of-day → 10-statystyki → 11-eksport → 01-splash (GOTOWE: koniec dnia)
 01-splash → 12-historia (okno korekty 24 h) → 10-statystyki
 ```
+Pętla domyka się na 01: „GOTOWE" na 11 **czyści stos nawigacji**, bo po `day_close` kokpit,
+09 i 10 opisują stan, którego już nie ma. Wyjście działa też offline — niepusty outbox
+nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 
 ## Pilot i samolot — UX
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth — decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)

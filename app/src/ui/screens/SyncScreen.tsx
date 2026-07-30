@@ -16,6 +16,16 @@
  * Pudełko „Serwer zaktualizował arkusz" pojawi się, gdy `exportUrl` przestanie być
  * `null` — czyli razem z serwerowym eksportem do Sheets (faza 4). Ekran niczego
  * nie eksportuje (§4.7: „Pilot niczego nie eksportuje ręcznie").
+ *
+ * ODSTĘPSTWO OD MOCKUPU (zgłoszenie z urządzenia, 2026-07-29): mockupy 11 i 11a kończyły
+ * się na strzałce wstecz — dzień lotny nie miał ostatniego kroku. Pilot po wysyłce zostawał
+ * na ekranie bez wyjścia w przód, a cofanie prowadziło do kokpitu dnia, który przed chwilą
+ * zamknął, z zapraszającym START ENGINE (zapis odrzuca dopiero reguła `DAY_CLOSED`).
+ * Stąd „GOTOWE": RESETUJE stos na 01, więc wstecz nie ma już czego wskrzeszać. Splash jest
+ * właściwym domem tego stanu — ma „NOWY DZIEŃ LOTNY" i „Poprzednie dni" z plakietką okna
+ * korekty 24 h, czyli obie rzeczy, które pilot może jeszcze chcieć zrobić. Dokładnie tam
+ * trafia też zimny start po zamkniętym dniu (`App.tsx` sprawdza `dutyEnd`).
+ * Mockupy zostały uzupełnione o ten przycisk.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -44,6 +54,7 @@ import { useAuthStore } from '../store/authStore';
 import { dateUtcLong, duration, motoHours, timeUtc } from '../format';
 import { buildFlightRows, flightsBadge } from './statsDay';
 import {
+  dayDoneHint,
   dropsShort,
   dropsSummary,
   eventsCount,
@@ -58,7 +69,15 @@ import {
 /** Kolumny podglądu arkusza (mockup 11 `.mini-table`): bez „Typ" i bez ołówków. */
 const PREVIEW_COLUMNS = [{ label: '#', width: 20 }, { label: 'Takeoff' }, { label: 'Landing' }, { label: 'Block' }];
 
-export function SyncScreen({ navigation }: { navigation: { goBack: () => void } }) {
+export function SyncScreen({
+  navigation,
+}: {
+  navigation: {
+    goBack: () => void;
+    /** Podmiana całego stosu — dzień lotny kończy się tu, nie wraca do kokpitu. */
+    reset: (state: { index: number; routes: { name: string }[] }) => void;
+  };
+}) {
   const { theme } = useTheme();
 
   const projection = useSessionStore((s) => s.projection);
@@ -97,6 +116,16 @@ export function SyncScreen({ navigation }: { navigation: { goBack: () => void } 
     }
   }, [syncNow]);
 
+  /**
+   * Koniec dnia lotnego. `reset` zamiast `navigate`, bo za plecami stoi cała droga
+   * zamknięcia (kokpit → 09 → 10 → 11) — po `day_close` żaden z tych ekranów nie
+   * opisuje już stanu prawdziwego. Pętla synca żyje poza nawigacją (`useSyncLoop`
+   * słucha AppState i pulsu), więc zejście z ekranu niczego nie przerywa.
+   */
+  const finishDay = useCallback((): void => {
+    navigation.reset({ index: 0, routes: [{ name: 'Splash' }] });
+  }, [navigation]);
+
   const offline = lastSync?.kind === 'offline';
   const allSent = outboxCount === 0;
   const { sent, total, fraction } = sentProgress(events.length, outboxCount);
@@ -134,6 +163,13 @@ export function SyncScreen({ navigation }: { navigation: { goBack: () => void } 
             sub="Zapisane lokalnie · nic nie ginie · nie wylogowuj się"
           />
           {outboxCount > 0 && <ManualSyncButton offline={offline} busy={syncing} onPress={runManualSync} />}
+          {/* Ten sam warunek prymatu co niżej: `solid` należy się GOTOWE zawsze, gdy
+              obok nie stoi żywa wysyłka (kolejka pusta albo sync wygaszony offline). */}
+          <DayDoneButton
+            hint={dayDoneHint('none', outboxCount)}
+            primary={outboxCount === 0 || offline}
+            onPress={finishDay}
+          />
         </View>
       </Screen>
     );
@@ -336,7 +372,14 @@ export function SyncScreen({ navigation }: { navigation: { goBack: () => void } 
         )}
 
         {/* ── ręczny sync + kolejka ───────────────────────────────────────── */}
-        <ManualSyncButton offline={offline} busy={syncing} onPress={runManualSync} />
+        <ManualSyncButton
+          offline={offline}
+          busy={syncing}
+          // Komplet na serwerze = ręczna wysyłka nie ma czego wysłać; `solid` przechodzi
+          // wtedy na GOTOWE, żeby najgłośniejszy przycisk ekranu nie był pustym gestem.
+          primary={!allSent}
+          onPress={runManualSync}
+        />
         <QueueBox
           active={outboxCount > 0}
           main={
@@ -346,8 +389,52 @@ export function SyncScreen({ navigation }: { navigation: { goBack: () => void } 
           }
           sub="Zapisane lokalnie · nic nie ginie · nie wylogowuj się"
         />
+
+        {/* ── koniec dnia lotnego — jedyne wyjście w przód ─────────────────── */}
+        <DayDoneButton
+          hint={dayDoneHint(dayClosed ? 'closed' : 'open', outboxCount)}
+          // O `solid` walczy tylko ŻYWA wysyłka: przy pustej kolejce nie ma czego wysyłać,
+          // a offline przycisk synca jest i tak wygaszony (11a) — w obu razach GOTOWE
+          // zostaje jedyną sensowną akcją ekranu i to ono ma być najgłośniejsze.
+          primary={allSent || offline}
+          onPress={finishDay}
+        />
       </View>
     </Screen>
+  );
+}
+
+/**
+ * „GOTOWE" — ostatni krok dnia lotnego.
+ *
+ * Stoi POD kolejką, nie nad nią: pilot ma najpierw zobaczyć, ile jeszcze wisi, a dopiero
+ * potem wyjść. Świadomie NIE blokuje się niepustym outboksem — §4.1 („brak sieci nigdy
+ * nie blokuje pracy pilota") nie robi wyjątku dla ostatniego ekranu, a lądowanie poza
+ * zasięgiem jest normą, nie awarią. Podpis mówi wtedy, że wysyłka dokończy się sama.
+ *
+ * Wariant wędruje razem z sensem ekranu, bo `solid` przysługuje jednemu przyciskowi
+ * (patrz `ActionVariant`): przy pustej kolejce ręczna wysyłka jest pustym gestem i to
+ * GOTOWE jest akcją ekranu; z zaległością prymat wraca do wysyłki, a GOTOWE schodzi na
+ * przygaszoną zieleń — nadal w pełni klikalną, tylko nie krzyczy.
+ */
+function DayDoneButton({
+  hint,
+  primary,
+  onPress,
+}: {
+  hint: string;
+  primary: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <ActionButton
+      label="GOTOWE"
+      icon="check"
+      tone="green"
+      variant={primary ? 'solid' : 'primary'}
+      hint={hint}
+      onPress={onPress}
+    />
   );
 }
 
@@ -359,10 +446,13 @@ export function SyncScreen({ navigation }: { navigation: { goBack: () => void } 
 function ManualSyncButton({
   offline,
   busy,
+  primary = true,
   onPress,
 }: {
   offline: boolean;
   busy: boolean;
+  /** `false` = outbox pusty; `solid` oddajemy wtedy akcji GOTOWE (patrz `DayDoneButton`). */
+  primary?: boolean;
   onPress: () => void;
 }) {
   return (
@@ -370,7 +460,7 @@ function ManualSyncButton({
       label="SYNCHRONIZUJ TERAZ"
       icon="sync"
       tone="green"
-      variant="solid"
+      variant={primary ? 'solid' : 'secondary'}
       hint={offline ? 'niedostępne bez sieci' : 'Wysyłka działa automatycznie w tle'}
       busy={busy}
       disabledReason={offline ? 'Brak połączenia — wysyłka ruszy sama, gdy wróci zasięg' : null}
