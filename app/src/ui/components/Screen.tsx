@@ -12,9 +12,13 @@
  *
  * Bierzemy więc wysokość wprost ze zdarzeń klawiatury (`useKeyboardHeight` — ta sama
  * droga, którą już od dawna podnoszą się arkusze) i skracamy o nią obszar treści.
- * To NIE jest samo zrobienie miejsca na końcu listy: mniejszy `ScrollView` znaczy, że
- * natywny Android ma gdzie przewinąć zogniskowane pole (`requestChildFocus` liczy się
- * z widoczną ramką), więc input sam wchodzi nad klawiaturę.
+ *
+ * Samo skrócenie okazało się jednak niewystarczające (druga tura zgłoszenia): treść
+ * przesuwa się, ale pole nadal kończy pod klawiaturą, bo natywny Android przewija je
+ * do widoku w chwili OGNISKOWANIA — z pełną jeszcze wysokością ekranu, więc za mało.
+ * Dociągnięcie robi `useKeyboardAwareScroll`, który czeka na zdarzenie klawiatury,
+ * zna już jej krawędź i przewija listę o brakującą różnicę. Dwa mechanizmy, dwie różne
+ * role: skrócenie daje miejsce, dociągnięcie z niego korzysta.
  *
  * `KeyboardAvoidingView` świadomie odrzucony — patrz nota w `useKeyboardHeight`:
  * zachowuje się różnie na obu systemach i reaguje na translucent status bar.
@@ -24,6 +28,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
+import { useKeyboardAwareScroll } from '../hooks/useKeyboardAwareScroll';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -58,6 +63,7 @@ export function Screen({
 }: ScreenProps) {
   const { theme } = useTheme();
   const keyboard = useKeyboardHeight();
+  const keyboardScroll = useKeyboardAwareScroll();
   const bg: ViewStyle = { backgroundColor: theme.colors.bg };
   const pad: ViewStyle | null = padded ? { padding: theme.spacing.lg } : null;
 
@@ -79,6 +85,11 @@ export function Screen({
           // pilot musi tapnąć DALEJ dwa razy i nie wie dlaczego.
           keyboardShouldPersistTaps="handled"
           {...rest}
+          // Po `rest`, bo unoszenie pola nad klawiaturę jest własnością tego kontenera —
+          // przypadkowe `onScroll` z zewnątrz nie ma prawa go wyłączyć.
+          ref={keyboardScroll.ref}
+          onScroll={keyboardScroll.onScroll}
+          scrollEventThrottle={keyboardScroll.scrollEventThrottle}
         >
           {children}
         </ScrollView>
