@@ -52,8 +52,9 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
-import { useGps } from '../bootstrap/ServicesProvider';
+import { useGps, useSensors } from '../bootstrap/ServicesProvider';
 import { useFlightDetection } from '../hooks/useFlightDetection';
+import { useSensorTrace } from '../hooks/useSensorTrace';
 import { useEventCorrection } from '../hooks/useEventCorrection';
 import { duration, litres, timeLocal, timeUtc } from '../format';
 import { buildCycleRows, buildLogRows } from './cockpitLog';
@@ -103,6 +104,7 @@ export function CockpitScreen({
 }) {
   const { theme } = useTheme();
   const gps = useGps();
+  const sensors = useSensors();
 
   const context = useSessionStore((s) => s.context);
   const projection = useSessionStore((s) => s.projection);
@@ -141,6 +143,9 @@ export function CockpitScreen({
     // pola (artefakt GPS). Ferry/przelot/egzamin lądują gdzie chcą — bez bramki.
     sameFieldOnly: projection.operation === 'skoki',
   });
+  // Nagrywanie czujników pokładowych do śladu kalibracyjnego — ten hook NIC nie decyduje
+  // i celowo stoi obok detekcji, a nie w niej (patrz nagłówek `useSensorTrace`).
+  useSensorTrace({ sensors, enabled: engineOn });
   const { openCorrection, correctionSheet } = useEventCorrection();
 
   const run = useCallback(async (action: () => Promise<unknown>) => {
@@ -193,7 +198,9 @@ export function CockpitScreen({
     pending == null ? null : (
       <DetectToast
         title={pending.detection === 'takeoff' ? 'Takeoff' : 'Landing'}
-        detail={`${timeUtc(pending.fix.time)} UTC · GS ${Math.round(pending.fix.groundSpeedKt)} KT`}
+        detail={`${timeUtc(pending.at)} UTC · GS ${
+          pending.fix.groundSpeedKt != null ? Math.round(pending.fix.groundSpeedKt) : '—'
+        } KT`}
         secondsLeft={pending.secondsLeft}
         undoLabel={pending.detection === 'takeoff' ? 'COFNIJ — NIE BYŁO STARTU' : 'COFNIJ — TO PRZELOT'}
         onUndo={undo}
@@ -283,7 +290,13 @@ export function CockpitScreen({
                     },
                   ]
                 : [
-                    { label: 'Ground speed', value: `${Math.round(fix?.groundSpeedKt ?? 0)}`, unit: 'KT' },
+                    {
+                      label: 'Ground speed',
+                      // Brak prędkości od odbiornika to „—", nie „0" — zero jest odczytem,
+                      // a tego odczytu nikt nie wykonał (patrz `toFix` w adapterze GPS).
+                      value: fix?.groundSpeedKt != null ? `${Math.round(fix.groundSpeedKt)}` : '—',
+                      unit: 'KT',
+                    },
                     {
                       label: 'Altitude',
                       value: fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—',

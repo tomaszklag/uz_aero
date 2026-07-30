@@ -12,7 +12,7 @@
  */
 
 import type { GpsFix } from '../domain';
-import type { ClockPort, TracePort } from './ports';
+import type { ClockPort, SensorSample, TracePort } from './ports';
 
 /** Retencja śladu — po tylu dniach wpisy znikają przy starcie aplikacji. */
 export const TRACE_RETENTION_DAYS = 14;
@@ -33,10 +33,52 @@ export class TraceRecorder {
         deviceTime: this.clock.now(),
         gs: fix.groundSpeedKt,
         alt: fix.altitudeFt,
+        // Kurs jest wejściem weta zakrętu przy lądowaniu, więc replay MUSI go widzieć —
+        // bez niego nagranie nie odtworzyłoby decyzji, którą podjął telefon.
+        trackDeg: fix.trackDeg ?? null,
         lat: fix.lat ?? null,
         lon: fix.lon ?? null,
         accuracyM: fix.accuracyM ?? null,
         detail: null,
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Agregat czujników pokładowych (barometr + inercja) — JEDEN wiersz na okno sekundowe.
+   *
+   * Ten kanał NIE bierze udziału w detekcji i to jest decyzja, nie zapomnienie: progi
+   * dla barometru i akcelerometru mają wyjść z realnych nagrań w fazie 5, a nie z liczb
+   * wymyślonych przy biurku. Dokładanie zgadywanych progów do algorytmu, który właśnie
+   * przestał zgadywać, byłoby krokiem w tył. Najpierw materiał, potem decyzje.
+   *
+   * Surowy strumień (50 Hz ≈ milion próbek na dzień lotny) NIE jest zapisywany nigdzie —
+   * agregat sekundowy jest tego samego rzędu wielkości co ślad GPS i do strojenia progów
+   * wystarcza (średnia, maksimum, miara wibracji).
+   */
+  sensor(sample: SensorSample, sessionUuid: string | null): void {
+    void this.store
+      .appendTrace({
+        sessionUuid,
+        kind: 'sensor',
+        // Czujniki nie mają własnego zegara — `time` i `deviceTime` są tu tym samym
+        // odczytem i tak ma być. Udawanie czasu GPS zamazałoby informację o dryfie,
+        // którą para zegarów przy fixach właśnie pozwala policzyć.
+        time: sample.time,
+        deviceTime: this.clock.now(),
+        gs: null,
+        alt: null,
+        lat: null,
+        lon: null,
+        accuracyM: null,
+        detail: null,
+        pressureHpa: sample.pressureHpa,
+        accelMean: sample.imu?.accelMeanMps2 ?? null,
+        accelMax: sample.imu?.accelMaxMps2 ?? null,
+        vibrationRms: sample.imu?.vibrationRmsMps2 ?? null,
+        gyroMean: sample.imu?.gyroMeanDps ?? null,
+        gyroMax: sample.imu?.gyroMaxDps ?? null,
+        imuSamples: sample.imu?.samples ?? null,
       })
       .catch(() => {});
   }

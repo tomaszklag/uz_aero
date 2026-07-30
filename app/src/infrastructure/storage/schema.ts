@@ -16,7 +16,7 @@
  */
 
 /** Wersja schematu — sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
@@ -100,5 +100,51 @@ export const MIGRATION_2 = `
   CREATE INDEX IF NOT EXISTS idx_trace_device_time ON gps_trace (device_time);
 `;
 
+/**
+ * Migracja 2 → 3: kurs nad ziemią + kanały czujników pokładowych w śladzie.
+ *
+ * DLACZEGO `DROP` I `CREATE`, A NIE `ALTER TABLE ADD COLUMN`: SQLite nie zna
+ * `ADD COLUMN IF NOT EXISTS`, więc migracja z `ALTER` przestałaby być idempotentna —
+ * a idempotencję kompletu migracji pilnuje `sqliteSchema.test.ts` dla realnego
+ * scenariusza „telefon z przerwanym pierwszym startem dostaje wszystko jeszcze raz".
+ * Nie chcę osłabiać tego testu, a mam tu wyjątkowy komfort: `gps_trace` to JEDYNA
+ * tabela, której wolno zniknąć. Ślad jest materiałem roboczym z 14-dniową retencją,
+ * poza outboxem, nigdy źródłem prawdy — utrata niewysłanego nagrania przy jednej
+ * aktualizacji aplikacji nie kosztuje nic, czego nie da się nadrobić następnym lotem.
+ * Gdyby to była tabela `events`, rozmowa byłaby zupełnie inna.
+ *
+ * Kolumny czujników są NULL w wierszach `fix` i odwrotnie — to celowe. Ślad analizujemy
+ * kolumnowo (`replay.ts`, przyszłe zapytania po NDJSON), a nie przez rozpakowywanie JSON-a
+ * z jednego pola; typy trzymają się wtedy end-to-end.
+ */
+export const MIGRATION_3 = `
+  DROP TABLE IF EXISTS gps_trace;
+
+  CREATE TABLE gps_trace (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_uuid  TEXT,
+    kind          TEXT NOT NULL,
+    time          INTEGER NOT NULL,
+    device_time   INTEGER NOT NULL,
+    gs            REAL,
+    alt           REAL,
+    track_deg     REAL,
+    lat           REAL,
+    lon           REAL,
+    accuracy_m    REAL,
+    pressure_hpa  REAL,
+    accel_mean    REAL,
+    accel_max     REAL,
+    vibration_rms REAL,
+    gyro_mean     REAL,
+    gyro_max      REAL,
+    imu_samples   INTEGER,
+    detail        TEXT,
+    uploaded_at   INTEGER
+  );
+  CREATE INDEX IF NOT EXISTS idx_trace_upload ON gps_trace (uploaded_at);
+  CREATE INDEX IF NOT EXISTS idx_trace_device_time ON gps_trace (device_time);
+`;
+
 /** Migracje w kolejności stosowania: indeks = wersja docelowa − 1. */
-export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2];
+export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2, MIGRATION_3];

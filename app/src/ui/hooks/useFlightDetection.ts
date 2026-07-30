@@ -23,6 +23,7 @@ import {
   VS_WINDOW_SEC,
   createDetectorState,
   fixUsable,
+  fixesInWindow,
   flightPhase,
   stepDetector,
   type Detection,
@@ -38,7 +39,12 @@ import { useTrace } from '../bootstrap/ServicesProvider';
 export interface PendingDetection {
   /** Tylko start i lądowanie trafiają do okna „COFNIJ" — kołowanie zapisuje się od razu. */
   detection: Exclude<Detection, 'taxi'>;
-  /** Fix, który wywołał detekcję — z niego bierzemy czas zdarzenia. */
+  /**
+   * RETRO-DATOWANY czas zdarzenia (`DetectorStep.detectedAt`) — ten trafia do rejestru
+   * i ten pokazuje toast. Bywa o kilkanaście sekund wcześniejszy niż fix potwierdzający.
+   */
+  at: number;
+  /** Fix, który detekcję POTWIERDZIŁ — źródło wartości pokazywanych w toaście. */
   fix: GpsFix;
   secondsLeft: number;
 }
@@ -97,8 +103,6 @@ export function useFlightDetection({
   const [gpsAvailable, setGpsAvailable] = useState(false);
   const [lastFixAt, setLastFixAt] = useState<number | null>(null);
 
-  /** Okno fixów do liczenia prędkości pionowej — trzymamy tylko tyle, ile potrzeba. */
-  const window = useRef<GpsFix[]>([]);
   /** Zegar URZĄDZENIA z chwili odbioru fixa — świeżość liczymy własnym zegarem,
    *  bo martwy GPS z definicji nie powie nam, że umarł (mockup 05g). */
   const lastFixDeviceMs = useRef<number | null>(null);
@@ -125,20 +129,21 @@ export function useFlightDetection({
     setPending((p) => {
       // Marker COFNIJ do śladu (faza 5): fałszywa detekcja oznaczona przez pilota —
       // rejestr zdarzeń tego nie widzi, bo COFNIJ z definicji zapobiega zdarzeniu.
-      if (p != null) trace?.marker('undo', p.detection, p.fix.time, sessionUuid);
+      if (p != null) trace?.marker('undo', p.detection, p.at, sessionUuid);
       return null;
     });
   }, [clearTimers, sessionUuid, trace]);
 
-  /** Po upływie okna zapisujemy zdarzenie — metodą `auto`, z czasem z fixa GPS. */
+  /** Po upływie okna zapisujemy zdarzenie — metodą `auto`, z czasem RETRO-DATOWANYM. */
   const commit = useCallback(
-    async (d: Exclude<Detection, 'taxi'>, at: GpsFix) => {
+    async (d: Exclude<Detection, 'taxi'>, at: number) => {
       setPending(null);
       try {
-        // Czas zdarzenia to chwila fixa, NIE moment wyjścia z okna „COFNIJ" — inaczej
-        // każdy start byłby zapisany 10 s za późno, o czym nikt później nie wie (§5.1).
-        if (d === 'takeoff') await takeoff('auto', null, at.time);
-        else await landing('auto', null, at.time);
+        // Czas zdarzenia to moment, w którym rzecz NASTĄPIŁA (`detectedAt` z detektora),
+        // a nie moment wyjścia z okna „COFNIJ" ani nawet fixa potwierdzającego. Inaczej
+        // każde zdarzenie byłoby w dokumentach spóźnione, a nikt później tego nie widzi (§5.1).
+        if (d === 'takeoff') await takeoff('auto', null, at);
+        else await landing('auto', null, at);
       } catch {
         // Twarde odrzucenie inwariantu (np. landing bez startu) trafia do `lastError`
         // w store i jest pokazywane na ekranie — tutaj nie ma czego dodać.
@@ -148,12 +153,12 @@ export function useFlightDetection({
   );
 
   const schedule = useCallback(
-    (d: Exclude<Detection, 'taxi'>, at: GpsFix) => {
+    (d: Exclude<Detection, 'taxi'>, at: number, fix: GpsFix) => {
       clearTimers();
       // Marker do śladu (faza 5): „toast pokazany". Razem z ewentualnym `undo`
       // i zdarzeniem w rejestrze daje pełny obraz trafności progu.
-      trace?.marker('detection', d, at.time, sessionUuid);
-      setPending({ detection: d, fix: at, secondsLeft: windowSec });
+      trace?.marker('detection', d, at, sessionUuid);
+      setPending({ detection: d, at, fix, secondsLeft: windowSec });
 
       tickTimer.current = setInterval(() => {
         setPending((p) => (p == null ? p : { ...p, secondsLeft: p.secondsLeft - 1 }));
@@ -164,7 +169,7 @@ export function useFlightDetection({
         void commit(d, at);
       }, windowSec * 1000);
     },
-    [clearTimers, commit, windowSec],
+    [clearTimers, commit, sessionUuid, trace, windowSec],
   );
 
   useEffect(() => {
@@ -200,21 +205,23 @@ export function useFlightDetection({
       // fałszywy start albo lądowanie nie trafiły do czasów lotu — kołowanie żadnego
       // czasu nie wyznacza, więc pytanie „czy na pewno?" byłoby samym szumem.
       if (step.detection === 'taxi') {
-        void taxi('auto', null, incoming.time).catch(() => {
+        void taxi('auto', null, step.detectedAt ?? incoming.time).catch(() => {
           // Powód odrzucenia trafia do `lastError` w store i jest widoczny w kokpicie.
         });
       }
 
-      // Okno prędkości pionowej — z zapasem jednego fixa, żeby po odrzuceniu
-      // przeterminowanych zawsze zostały co najmniej dwa punkty.
-      window.current = [...window.current, incoming].filter(
-        (f) => incoming.time - f.time <= VS_WINDOW_SEC * 1000,
+      // Okno prędkości pionowej bierzemy z historii DETEKTORA — hook nie prowadzi już
+      // własnego bufora. Dwa bufory tych samych fixów to dwie prawdy o tym, co widział
+      // algorytm, i pierwsza rozbieżność wyszłaby dopiero przy analizie nagrania.
+      setPhase(
+        flightPhase(
+          step.state.phase === 'airborne',
+          fixesInWindow(step.state.history, VS_WINDOW_SEC),
+        ),
       );
-      if (window.current.length < 2) window.current = [incoming];
-      setPhase(flightPhase(step.state.phase === 'airborne', window.current));
 
       if (step.detection === 'takeoff' || step.detection === 'landing') {
-        schedule(step.detection, incoming);
+        schedule(step.detection, step.detectedAt ?? incoming.time, incoming);
       }
     };
 

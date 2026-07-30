@@ -438,7 +438,7 @@ Nazwy pokrywające się z flagami serwera (`MH_REGRESSION`, `FUEL_MISMATCH`, `CL
 
 ## 5. Porty i adaptery
 
-Trzy porty w `application/ports/`, każdy z realnym powodem:
+Porty w `application/ports/`, każdy z realnym powodem:
 
 | Port | Po co istnieje |
 |---|---|
@@ -446,10 +446,11 @@ Trzy porty w `application/ports/`, każdy z realnym powodem:
 | `ClockPort` | Czas musi być deterministyczny w testach; produkcyjnie dwa zegary (device + GPS, §4.5). |
 | `IdPort` | UUID zdarzenia = klucz idempotencji; w testach przewidywalny. |
 | `GpsPort` | Lot trwa 45 minut i wymaga samolotu. Port pozwala **odtworzyć trasę** z serii fixów i sprawdzić detekcję w milisekundach. Implementacje: `expoLocationAdapter` (urządzenie), `replayGpsAdapter` (testy i podgląd). |
+| `SensorPort` | Czujniki pokładowe (barometr, akcelerometr, żyroskop). Osobno od GPS, bo mają inne właściwości: brak własnego zegara, fizyczna NIEOBECNOŚĆ na części urządzeń i próbkowanie 50 Hz. Oddaje **agregaty sekundowe**, nie surowe próbki. Implementacje: `expoSensorsAdapter` (urządzenie), `nullSensorAdapter` (brak czujników / testy). |
 
-Moduły natywne (`expo-sqlite`, `expo-location`) są importowane **wyłącznie** przez swoje
-adaptery i nie trafiają do barrela infrastruktury — inaczej testy w Node przestałyby
-działać. Pilnują tego dwa testy w `architecture.test.ts`.
+Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`) są importowane
+**wyłącznie** przez swoje adaptery i nie trafiają do barrela infrastruktury — inaczej
+testy w Node przestałyby działać. Pilnują tego dwa testy w `architecture.test.ts`.
 
 **`GpsPort.start()` = subskrypcja JEDNEGO odbiorcy, nie przełącznik odbiornika.**
 Zwrócona funkcja wypisuje wyłącznie jego; odbiornik gaśnie dopiero, gdy zejdzie ostatni
@@ -525,6 +526,8 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `repo.test.ts` | append, outbox (`syncedAt IS NULL`), `markSynced`, dedup po uuid, dwa zegary |
 | `store.test.ts` | cienkiej warstwy Zustand nad aplikacją |
 | `flightDetector.test.ts` | automatu detekcji — patrz niżej |
+| `detectionTrends.test.ts` | modułów pomocniczych detekcji w izolacji: bufor historii, cechy trendowe (prędkość z dopplera i z przemieszczenia, przyspieszenie, prędkość kątowa z przejściem przez północ), retro-datowanie |
+| `imu.test.ts` | matematyki czujników inercyjnych: pułapka „3 %", niezmienniczość względem ułożenia telefonu, zamrożenie filtra grawitacji z budżetem, agregaty okna, tor barometryczny |
 | `sqliteSchema.test.ts` | DDL na prawdziwym silniku SQLite — patrz niżej |
 | `format.test.ts` | formatowania i **parsowania** odczytów w obie strony |
 | `cockpitLog.test.ts` | budowania wierszy logu dnia, w tym wyliczenia łańcucha MH |
@@ -605,19 +608,131 @@ nie wolno uznać za lądowanie), **turbulencja przy ziemi** (±30 ft nie może u
 „domknąć" warunku z rozpędu), **skok zegara wstecz**, oraz pełny cykl kołowanie → start
 → przelot → lądowanie. To jedyny sposób, żeby sprawdzić algorytm bez samolotu.
 
+Po przebudowie (§8.1) doszła druga rodzina asercji, równie ważna jak „czy wykryto":
+**KIEDY wykryto**. Detekcja zwraca `at` (retro-datowane) obok `confirmedAt` (fix
+potwierdzający), a do dokumentów idzie `at` — więc różnica między nimi jest przedmiotem
+testu, nie szczegółem implementacji. Doszły też: **static-hold** (odbiornik melduje 0 kt,
+choć pozycja jedzie — kołowanie MUSI zostać wykryte), **brak prędkości w ogóle**, **dryf
+na stanowisku** (kontrola czułości kanału przemieszczeniowego), **dobieg kontra rozbieg**
+przez ten sam próg prędkości, oraz **weto zakrętu** z kontrolą, że nie tnie lądowań na
+kursie stabilnym. `detectionTrends.test.ts` bada moduły pomocnicze w izolacji — tam siedzi
+m.in. przejście kursu przez północ (bez różnicy kołowej weto unieważniałoby lądowania na
+kursach północnych). `imu.test.ts` mierzy liczbowo pułapkę „3 %" i pilnuje
+niezmienniczości względem trzech różnych ułożeń telefonu.
+
 **Zakłócenia GPS (audyt algorytmu 2026-07-29).** Jamming to częściej DEGRADACJA niż
 cisza — fixy przychodzą, ale kłamią. Detektor ma trójstopniową bramkę (`fixUsable` +
 plauzybilność + geofence): fix z dokładnością > `MAX_FIX_ACCURACY_M` albo prędkością
 (deklarowaną LUB implikowaną skokiem pozycji) > `MAX_PLAUSIBLE_SPEED_KT` liczy się jak
 BRAK fixa (hook kwarantannuje go całkowicie — watchdog wygasza `gpsAvailable` i kokpit
 pokazuje 05g); dla operacji jednolotniskowych (skoki) lądowanie dodatkowo wymaga
-pozycji w promieniu `LANDING_FIELD_VICINITY_NM` od pola (pozycja pola = pierwszy dobry
-fix na postoju, jak elewacja §3.3) — ferry/przelot bramki NIE ma, bo tam lądowanie
-gdzie indziej jest normą. Testy przybijają: fałszywe lądowanie ze śmieciowego strumienia,
-teleportację spoofingu przy niewinnym GS, powrót dobrego sygnału i brak regresji ferry.
-Dalsze wzmocnienia (świadomie odłożone po dane z fazy 5): **barometr** jako niezależny
-pionowy tor ziemia/powietrze (expo-sensors — moduł natywny; najlepszy zysk/koszt),
-akcelerometr odrzucony (nieznana orientacja telefonu + wibracje tłokowe).
+pozycji w promieniu `LANDING_FIELD_VICINITY_NM` od pola — ferry/przelot bramki NIE ma,
+bo tam lądowanie gdzie indziej jest normą. Testy przybijają: fałszywe lądowanie ze
+śmieciowego strumienia, teleportację spoofingu przy niewinnym GS, powrót dobrego
+sygnału i brak regresji ferry.
+
+### 8.1 Przebudowa detekcji na okno historii (2026-07-30)
+
+> **Pełna dokumentacja referencyjna algorytmu i wszystkich progów — wraz ze skutkiem
+> zmiany każdego z nich, macierzą trybów porażki i procedurą kalibracji — mieszka
+> w `docs/algorytm-detekcji.md`.** Ta sekcja opisuje tylko DECYZJE i ich uzasadnienie.
+
+Punktem wyjścia była skarga z praktyki: **początek kołowania jest trudny do wykrycia**.
+Diagnoza wskazała trzy przyczyny, z których żadnej nie da się naprawić przesuwaniem progu.
+
+**Przyczyna 1 — adapter zamieniał „nie wiem" na „stoi".** `coords.speed ?? 0` w
+`expoLocationAdapter` mapował brak pomiaru na twarde zero. Android przy małych prędkościach
+albo prędkości nie podaje, albo zeruje ją filtrem *static-hold* w układzie GNSS (żeby
+zaparkowany telefon nie dryfował po mapie). Detektor widział „0 kt" — pomiar, którego nikt
+nie wykonał, w przebraniu pomiaru wiarygodnego. `GpsFix.groundSpeedKt` jest teraz
+`number | null`, a `trends.groundSpeed` odtwarza prędkość z przemieszczenia.
+
+**Przyczyna 2 — próg mierzył najgorszą dostępną wielkość.** 4 kt ≈ 2 m/s przy dokładności
+dopplera ~0,3 m/s to stosunek sygnału do szumu **~7:1**, i to zanim static-hold zbije go do
+zera. To samo zjawisko widziane jako **przemieszczenie w oknie 30 s**: samolot kołujący 8 kt
+przejeżdża ~120 m, stojący dryfuje ~5 m, czyli **~24:1**. Dlatego kanałem podstawowym
+kołowania jest teraz oddalenie od **kotwicy postoju** (`motion.ts`) — centroidu pozycji
+z postoju, odświeżanego, dopóki samolot jest bezspornie na stanowisku. Prędkość zeszła do
+roli kanału wsparcia (fixy bez pozycji) i **została przy 4 kt**: obniżanie progu akurat
+tam, gdzie danych jest najmniej, byłoby odwrotnością tego, co należy zrobić.
+
+**Przyczyna 3 — zdarzenia dostawały zły czas.** Detektor emitował stempel fixa, który
+warunek POTWIERDZIŁ. Każde zdarzenie było systematycznie spóźnione: kołowanie o kilkanaście
+sekund, lądowanie z gałęzi wysokościowej nawet o kilkanaście — a w logu stała po prostu
+jakaś godzina, więc nikt tego nie widział. Rozwiązaniem jest rozdzielenie dwóch pytań:
+**CZY** (decyzja może zapaść późno i pewnie) od **KIEDY** (odpowiedź szukana WSTECZ
+w buforze, `onset.ts`). `DetectorStep` zwraca teraz `detectedAt` — i to on idzie do rejestru.
+
+Skutek uboczny okazał się ważniejszy niż sama poprawka czasu: skoro późna decyzja nie
+pogarsza już dokładności, **okna potwierdzenia wolno było WYDŁUŻYĆ** (start 3→5 s,
+lądowanie 5→8 s). Wcześniej były kompromisem między czułością a dokładnością i nie służyły
+żadnej ze stron.
+
+Architektura: automat trzyma w stanie okno historii (`history.ts`, 120 s) i deleguje pracę
+do modułów o jednej odpowiedzialności — `trends.ts` (przyspieszenie, przemieszczenie,
+prędkość kątowa), `motion.ts` (stoi/jedzie), `onset.ts` (kiedy), `geo.ts`, `regression.ts`.
+Automatowi zostaje to, co naprawdę jego: kolejność decyzji, fazy, histereza. Hook UI
+przestał prowadzić własny bufor fixów — dwa bufory to dwie prawdy o tym, co widział algorytm.
+
+Dwie nowe obrony wzięte **za darmo, bez nowego czujnika**:
+
+- **weto zakrętu przy lądowaniu.** `coords.heading` był w każdym odczycie lokalizacji
+  i szedł do kosza. Daje prędkość kątową, a przyziemienie ma kurs stabilny, gdy krąg
+  nadlotniskowy trzyma 3–5 °/s. To druga, niezależna obrona przed ryzykiem 🔴 „ciasny
+  zakręt udający lądowanie", do tej pory pilnowanym wyłącznie warunkiem wysokości.
+- **weto hamowania przy starcie** (`TAKEOFF_MAX_DECEL_KT_PER_SEC`). Zamyka realną dziurę:
+  po lądowaniu faza wraca na `ground`, histereza trwa 30 s, a dobieg z prędkości
+  przyziemienia do kołowania bywa dłuższy — samolot przechodził wtedy przez próg startu
+  **z góry** i po samej prędkości wyglądał jak rozbieg. Sformułowane jako weto na hamowanie,
+  a nie wymóg przyspieszania: ustabilizowane wznoszenie ma przyspieszenie około zera,
+  więc wymóg dodatniego wyciąłby prawdziwy start.
+
+Po lądowaniu automat emituje parę `landing` → `taxi` (kotwica ustawiana na punkt
+przyziemienia), zgodnie z logiem w mockupie 05: „14:08 Landing", „14:08 Taxi".
+
+### 8.2 Czujniki pokładowe — nagrywanie, nie decydowanie (2026-07-30)
+
+Barometr i czujniki inercyjne są podłączone (`SensorPort`, `expoSensorsAdapter`,
+`useSensorTrace`), ale **wyłącznie do śladu kalibracyjnego**. Detekcja ich nie czyta i nie
+będzie, dopóki progi nie wyjdą z nagrań fazy 5 — dokładanie zgadywanych progów do algorytmu,
+który właśnie przestał zgadywać, byłoby krokiem w tył. `expo-sensors` jest w zestawie SDK 54,
+więc **dev build nie jest potrzebny** (wcześniejsza notatka w tym pliku sugerowała inaczej).
+
+**Sprostowanie do audytu 2026-07-29: akcelerometr NIE jest bezużyteczny.** Odrzucenie
+(„nieznana orientacja + wibracje tłokowe") było słuszne dla surowych osi i dla naiwnego
+modułu, ale nie dla modułu **po odjęciu grawitacji**. Rachunek pułapki: rozbieg to ~0,25 g
+poziomo, więc |a| rośnie z 9,81 do 10,11 m/s² — **trzy procent**, utopione w wibracjach.
+Grawitację da się jednak usunąć bez znajomości orientacji: mocny filtr dolnoprzepustowy
+(τ = 30 s) zbiega do kierunku „w dół", bo wibracja jest zeromodalna. Po odjęciu tego wektora
+te same 2,45 m/s² są sygnałem kilkudziesięciokrotnie nad tłem, wciąż niezmienniczym względem
+obrotu. Z żyroskopu bierzemy analogicznie |ω|, nie osie.
+
+Filtr musi być **zamrażany** przy dużym przyspieszeniu liniowym (zasada równoważności:
+akcelerometr z definicji nie odróżni pochylenia od przyspieszania). Pierwsza wersja zamrażała
+TRWALE i test to złapał: po przełożeniu telefonu w uchwycie skok pionu o ~13,9 m/s² nigdy nie
+spada pod próg, więc estymata zostawała przy starym ułożeniu do końca dnia, a każdy kolejny
+odczyt był śmieciem — bez żadnego sygnału o awarii. Stąd `GRAVITY_FREEZE_MAX_SEC = 60`:
+dłużej niż każdy rozbieg (20–30 s), więc manewr mieści się w budżecie, a trwała zmiana
+ułożenia budżet wyczerpuje i filtr dociąga się sam w czasie ograniczonym z góry (~4,5 min).
+
+Do śladu idą **agregaty sekundowe**, nie surowe próbki: 50 Hz × 6 h ≈ milion próbek dziennie
+byłoby niezapisywalne obok śladu GPS (~30 tys. wierszy). Agregat (średnia i maksimum
+|a_liniowe|, odchylenie standardowe jako miara wibracji, średnia i maksimum |ω|, ciśnienie)
+jest tego samego rzędu wielkości co fixy. Odchylenie standardowe zastępuje FFT celowo —
+interesuje nas ENERGIA pasma szybkozmiennego (jazda po nawierzchni generuje uderzenia,
+których nie ma na postoju z pracującym silnikiem, a oderwanie kół gasi je skokowo), a nie
+jego widmo.
+
+Barometr nie potrzebuje QNH: detektor pracuje na RÓŻNICY względem elewacji pola z ENGINE
+START, a różnica ciśnień daje ją wprost (~27 ft/hPa przy rozdzielczości czujnika rzędu
+pół stopy, wobec 15–50 ft błędu GPS). Dryf pogodowy wymaga przezerowania datum na każdym
+postoju — jedno odniesienie na cały dzień lotny byłoby błędem rzędu 135 ft.
+
+Migracja 3 schematu **usuwa i odtwarza** `gps_trace` zamiast robić `ALTER TABLE ADD COLUMN`.
+Powód: SQLite nie zna `ADD COLUMN IF NOT EXISTS`, więc `ALTER` odebrałby migracjom
+idempotencję, której pilnuje `sqliteSchema.test.ts`. `gps_trace` to jedyna tabela, której
+wolno zniknąć — materiał roboczy z 14-dniową retencją, poza outboxem, nigdy źródło prawdy.
+Gdyby to była `events`, rozmowa byłaby zupełnie inna.
 
 **Rejestrator śladu kalibracyjnego (faza 5, zawsze włączony — decyzja 2026-07-29).**
 Kalibracja progów bez danych z realnych lotów to zgadywanie — więc telefon nagrywa:

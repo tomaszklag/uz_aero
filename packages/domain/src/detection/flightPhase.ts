@@ -15,7 +15,9 @@
  *    z rozpędu — brak danych zwracamy jako `null`, nie jako zero.
  */
 
-import type { GpsFix } from './flightDetector';
+import type { GpsFix } from './fix';
+import { slopePerSecond, type TimePoint } from './regression';
+import { groundSpeed } from './trends';
 
 /** Nazwy faz odpowiadają napisom z mockupu 05 i jego wariantów. */
 export type FlightPhase = 'idle' | 'taxi' | 'climb' | 'cruise' | 'descent';
@@ -64,33 +66,17 @@ export function verticalSpeedFpm(
   if (newest.altitudeFt == null) return null;
 
   // Punkty z wysokością mieszczące się w oknie; czas w sekundach względem najnowszego.
-  const points: { t: number; alt: number }[] = [];
+  const points: TimePoint[] = [];
   for (const fix of fixes) {
     if (fix.altitudeFt == null) continue;
     const ageMs = newest.time - fix.time;
     // Ujemny wiek = fix z przyszłości (cofnięty zegar) — odrzucamy.
     if (ageMs < 0 || ageMs > windowSec * 1000) continue;
-    points.push({ t: -ageMs / 1000, alt: fix.altitudeFt });
+    points.push({ t: -ageMs / 1000, v: fix.altitudeFt });
   }
 
-  if (points.length < 2) return null;
-
-  const span = points[points.length - 1]!.t - points[0]!.t;
-  if (span < VS_MIN_SPAN_SEC) return null;
-
-  const n = points.length;
-  const meanT = points.reduce((s, p) => s + p.t, 0) / n;
-  const meanAlt = points.reduce((s, p) => s + p.alt, 0) / n;
-
-  let covariance = 0;
-  let variance = 0;
-  for (const p of points) {
-    covariance += (p.t - meanT) * (p.alt - meanAlt);
-    variance += (p.t - meanT) ** 2;
-  }
-  if (variance === 0) return null; // wszystkie fixy z tą samą etykietą czasu
-
-  return (covariance / variance) * 60; // ft/s → ft/min
+  const slope = slopePerSecond(points, VS_MIN_SPAN_SEC);
+  return slope == null ? null : slope * 60; // ft/s → ft/min
 }
 
 /**
@@ -106,10 +92,14 @@ export function flightPhase(
   windowSec: number = VS_WINDOW_SEC,
 ): PhaseReading {
   const vs = verticalSpeedFpm(fixes, windowSec);
-  const newest = fixes.length > 0 ? fixes[fixes.length - 1]! : null;
 
   if (!airborne) {
-    const moving = newest != null && newest.groundSpeedKt >= TAXI_MIN_KT;
+    // Prędkość bierzemy z okna, nie z ostatniego fixa: gdy odbiornik jej nie podaje
+    // (na kołowaniu to reguła, nie wyjątek), `groundSpeed` odtworzy ją z przemieszczenia.
+    // Poprzednia wersja czytała pole wprost i przy braku prędkości pokazywała „Engine
+    // Idle" kołującemu samolotowi.
+    const speed = groundSpeed(fixes);
+    const moving = speed != null && speed.kt >= TAXI_MIN_KT;
     return { phase: moving ? 'taxi' : 'idle', verticalSpeedFpm: vs };
   }
 
