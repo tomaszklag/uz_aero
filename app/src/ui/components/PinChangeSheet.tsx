@@ -12,8 +12,10 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../theme';
+import { sheetBottomPad } from '../hooks/keyboardGeometry';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
 import { Numpad } from './Numpad';
@@ -50,6 +52,7 @@ export function PinChangeSheet({
   onCancel,
 }: PinChangeSheetProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [step, setStep] = useState<Step>('current');
   const [entry, setEntry] = useState('');
@@ -153,7 +156,9 @@ export function PinChangeSheet({
             alignItems: 'center',
             gap: theme.spacing.md,
             padding: theme.spacing.lg,
-            paddingBottom: 26,
+            // 26 dp z mockupu jako podłoga; nad paskiem nawigacji arkusz ustępuje więcej
+            // (`sheetBottomPad`). PIN wpisuje się własnym numpadem, nie klawiaturą systemu.
+            paddingBottom: sheetBottomPad(26, insets.bottom, 0, theme.spacing.lg),
             borderTopLeftRadius: theme.radius.xl,
             borderTopRightRadius: theme.radius.xl,
             borderTopWidth: theme.borderWidthStrong,

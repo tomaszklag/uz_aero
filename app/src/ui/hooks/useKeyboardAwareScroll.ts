@@ -7,17 +7,24 @@
  * i zatrzymuje za wcześnie. Klawiatura wjeżdża chwilę później i znowu przykrywa input.
  *
  * Ten hook domyka sprawę z drugiej strony i robi to w JEDNYM układzie współrzędnych —
- * układzie treści listy (patrz nota o pomyłce w `keyboardGeometry`):
+ * układzie okna (patrz nota o pomyłkach w `keyboardGeometry`):
  *   1. czeka na skrócenie ekranu, nie na samo zdarzenie klawiatury — dlatego bierze
  *      `keyboardHeight` parametrem i działa w efekcie, czyli już PO tym, jak układ
  *      przeliczył się na mniejszą wysokość;
- *   2. mierzy pole względem widoku wewnętrznego `ScrollView` (`measureLayout`),
- *      więc dostaje jego pozycję w treści, nie na ekranie;
- *   3. przewija do pozycji BEZWZGLĘDNEJ — nie dodaje delty do bieżącego offsetu,
- *      więc nie da się pomylić o to, ile Android przewinął sam.
+ *   2. mierzy DWIE rzeczy tym samym `measureInWindow` — pole i listę — więc porównuje
+ *      krawędzie z jednego układu i nie potrzebuje referencji węzła nadrzędnego;
+ *   3. przewija o brakującą różnicę względem bieżącego przewinięcia (`onScroll`,
+ *      throttle 16 ms), bo dół listy jest tu jednocześnie górą klawiatury.
  *
- * Bieżące przewinięcie służy wyłącznie do odpowiedzi „czy w ogóle trzeba ruszać" —
- * pole już widoczne nie jest szarpane w górę.
+ * Dlaczego nie `measureLayout` względem widoku treści, choć dawałby pozycję bezwzględną:
+ * na Fabric wymaga referencji węzła nadrzędnego, a dostając cokolwiek innego wypisuje
+ * „ref.measureLayout must be called with a ref to a native component" i nie mierzy nic —
+ * mechanizm był martwy, a pilot widział czerwony błąd. `measureInWindow` nie ma argumentu,
+ * o który można się pomylić, i zachowuje się tak samo na obu architekturach.
+ *
+ * Gdy pilot pisze w arkuszu (`Sheet` żyje w `Modal` i unosi się sam), pomiary są z dwóch
+ * różnych okien i wynik nie ma sensu — ale też nie ma szkody: przewinięcie dotyczy listy
+ * schowanej pod scrimem, a arkusz nie zależy od tego mechanizmu.
  *
  * Dlaczego nie `KeyboardAvoidingView`: patrz nota w `useKeyboardHeight`. Dlaczego nie
  * `react-native-keyboard-controller`: to moduł natywny, wymagałby przebudowy buildu —
@@ -33,10 +40,10 @@ import {
   type ScrollView,
 } from 'react-native';
 
-import { scrollTargetForInput } from './keyboardGeometry';
+import { scrollDeltaForInput } from './keyboardGeometry';
 
 export interface KeyboardAwareScroll {
-  /** Na `ScrollView` — stąd `scrollTo` i uchwyt widoku treści do pomiaru. */
+  /** Na `ScrollView` — stąd `scrollTo` i uchwyt natywnego widoku listy do pomiaru. */
   ref: React.RefObject<React.ComponentRef<typeof ScrollView> | null>;
   /** Na `onLayout` `ScrollView` — wysokość widocznej części listy po skróceniu. */
   onLayout: (event: LayoutChangeEvent) => void;
@@ -72,25 +79,26 @@ export function useKeyboardAwareScroll(keyboardHeight: number): KeyboardAwareScr
     // własne unoszenie). Wtedy nie mamy czego dociągać.
     if (scroll == null || input == null) return;
 
-    // Uchwyt WIDOKU TREŚCI, nie samego `ScrollView` — pomiar względem niego daje
-    // pozycję pola w treści, niezależną od tego, jak lista jest przewinięta.
-    const content: unknown = scroll.getInnerViewNode();
-    if (content == null) return;
+    // Mierzymy natywny widok listy (`getNativeScrollRef`), nie komponent — pomiary są
+    // metodami węzła natywnego i tylko ten uchwyt je wystawia.
+    const scrollHost = scroll.getNativeScrollRef();
+    if (scrollHost == null) return;
 
-    input.measureLayout(
-      content as number,
-      (_x, inputTop, _width, inputHeight) => {
-        const target = scrollTargetForInput(inputTop, inputHeight, viewport);
-        // Przewinięte już dalej niż cel = pole widoczne z zapasem. Jeden piksel
-        // tolerancji na zaokrąglenia gęstości ekranu.
-        if (offset.current >= target - 1) return;
-        scroll.scrollTo({ y: target, animated: true });
-      },
-      // Pomiar zawodzi, gdy pole NIE jest potomkiem tej listy — tak jest za każdym
-      // razem, gdy pilot pisze w arkuszu (`Sheet` żyje w `Modal` i unosi się sam).
-      // To normalny przebieg, nie awaria: bez tej gałęzi RN zgłasza błąd pomiaru.
-      () => undefined,
-    );
+    // Najpierw lista: jej dolna krawędź (już po skróceniu o klawiaturę) jest granicą,
+    // pod którą pole nie może kończyć. Zerowa wysokość = widok jeszcze nie ma układu.
+    scrollHost.measureInWindow((_scrollX, scrollTop, _scrollWidth, scrollHeight) => {
+      if (scrollHeight <= 0) return;
+
+      input.measureInWindow((_inputX, inputTop, _inputWidth, inputHeight) => {
+        if (inputHeight <= 0) return;
+
+        const delta = scrollDeltaForInput(inputTop + inputHeight, scrollTop + scrollHeight);
+        // Jeden piksel tolerancji na zaokrąglenia gęstości ekranu — pole widoczne
+        // z zapasem nie ma być szarpane.
+        if (delta <= 1) return;
+        scroll.scrollTo({ y: offset.current + delta, animated: true });
+      });
+    });
   }, [keyboardHeight, viewport]);
 
   return { ref, onLayout, onScroll, scrollEventThrottle: 16 };

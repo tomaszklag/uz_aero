@@ -13,9 +13,11 @@
 import {
   duration,
   litres,
+  maskTimeUtcInput,
   motoHours,
   parseLitres,
   parseMotoHours,
+  parseTimeUtcOnDay,
   timeUtc,
 } from '../ui/format';
 
@@ -80,6 +82,41 @@ describe('czas', () => {
     // 2026-06-22 08:00 UTC — niezależnie od tego, gdzie stoi telefon (`CLAUDE.md`).
     expect(timeUtc(Date.UTC(2026, 5, 22, 8, 0))).toBe('08:00');
     expect(timeUtc(null)).toBe('—');
+  });
+
+  it('maska stawia dwukropek za pilota — wpisuje same cyfry', () => {
+    // Klawiatura numeryczna nie ma dwukropka; „0800" musi znaczyć 08:00.
+    expect(maskTimeUtcInput('0')).toBe('0');
+    expect(maskTimeUtcInput('08')).toBe('08');
+    expect(maskTimeUtcInput('080')).toBe('08:0');
+    expect(maskTimeUtcInput('0800')).toBe('08:00');
+
+    // Wpis już z dwukropkiem (wartość startowa arkusza) przechodzi bez zmian.
+    expect(maskTimeUtcInput('08:00')).toBe('08:00');
+    // Backspace w „08:00" daje „08:0", a nie skok o dwa znaki.
+    expect(maskTimeUtcInput('08:0')).toBe('08:0');
+    // Piąta cyfra nie ma gdzie trafić — ucinamy zamiast puszczać „08:0012".
+    expect(maskTimeUtcInput('080012')).toBe('08:00');
+    expect(maskTimeUtcInput('')).toBe('');
+  });
+
+  it('wpisaną godzinę osadza w dniu lotnym, nie w dniu „dziś"', () => {
+    // Arkusze meldunku (02) i zakończenia duty (09) dostają tylko „HH:MM" — data musi
+    // przyjść z wartości poprawianej, inaczej korekta przeskakiwałaby dzień lotny.
+    const day = Date.UTC(2026, 5, 22, 9, 41, 30);
+    expect(parseTimeUtcOnDay('08:00', day)).toBe(Date.UTC(2026, 5, 22, 8, 0));
+    expect(parseTimeUtcOnDay('8:05', day)).toBe(Date.UTC(2026, 5, 22, 8, 5));
+    expect(parseTimeUtcOnDay(' 16:45 ', day)).toBe(Date.UTC(2026, 5, 22, 16, 45));
+
+    // Sekundy z „teraz" nie przeżywają korekty — pilot wpisuje pełną minutę.
+    expect(parseTimeUtcOnDay('09:41', day)).toBe(Date.UTC(2026, 5, 22, 9, 41));
+  });
+
+  it('odrzuca godzinę nieczytelną albo nieistniejącą', () => {
+    const day = Date.UTC(2026, 5, 22, 9, 41);
+    for (const bad of ['', '  ', '24:00', '08:60', '0800', '8', '08:0', 'ósma', '08:00:00']) {
+      expect(parseTimeUtcOnDay(bad, day)).toBeNull();
+    }
   });
 
   it('formatuje czas trwania jako H:MM', () => {

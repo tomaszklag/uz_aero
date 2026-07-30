@@ -28,10 +28,10 @@ import {
   Field,
   IdentityStrip,
   OptionGrid,
+  ReadingSheet,
   Screen,
   ScreenHeader,
   Sheet,
-  Stepper,
   SyncChip,
   Tag,
   TextField,
@@ -42,7 +42,7 @@ import {
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
-import { dateUtcLong, timeLocal, timeUtc } from '../format';
+import { dateUtcLong, parseTimeUtcOnDay, timeLocal, timeUtc } from '../format';
 import type { OperationType, ReferenceAircraft, ReferencePilot } from '../../domain';
 
 /** Siatka operacji — etykiety i ikony jak w `.op-grid` mockupu. */
@@ -74,8 +74,13 @@ export function PreflightAircraftScreen({
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
   /** Samolot czekający na potwierdzenie przejęcia (arkusz). */
   const [takeover, setTakeover] = useState<ReferenceAircraft | null>(null);
-  /** Edytor czasu meldowania — domyślnie zwinięty, jak w mockupie. */
-  const [editingDuty, setEditingDuty] = useState(false);
+  /**
+   * Arkusz czasu meldowania — `null` = zamknięty, liczba = „teraz" z chwili otwarcia.
+   *
+   * Snapshot, nie `Date.now()` w renderze: godzina odniesienia w arkuszu ma stać w miejscu,
+   * kiedy pilot wpisuje wartość, a nie przesuwać mu się pod palcami.
+   */
+  const [dutyEditorNow, setDutyEditorNow] = useState<number | null>(null);
 
   useEffect(() => {
     if (!queries) return;
@@ -262,8 +267,9 @@ export function PreflightAircraftScreen({
         {/* ── czas meldowania ─────────────────────────────────────────────
             Mockup pokazuje pole ODCZYTU: „08:00 UTC" dużym mono, obok „10:00 LT"
             i ołówek, pod spodem badge z datą. Sekcja nie ma etykiety — pole samo się
-            przedstawia. Stepper (wzorzec projektu dla wartości liczbowych) odsłaniamy
-            dopiero po tapnięciu, żeby stan spoczynkowy zgadzał się z designem. */}
+            przedstawia. Ołówek otwiera arkusz z wpisaniem godziny (wzorzec 02b/02c dla
+            odczytów): meldunek bywa godziny wstecz wobec chwili wypełniania formularza,
+            a wtedy wpisanie „08:00" jest jednym ruchem zamiast serii tapnięć w stepper. */}
         <Card header="inline">
           <Field label="Czas meldowania (duty start)">
             <ValueBox
@@ -272,25 +278,12 @@ export function PreflightAircraftScreen({
               meta={`${timeLocal(draft.dutyStart)} LT`}
               actionIcon="edit"
               accessibilityLabel={`Czas meldowania ${timeUtc(draft.dutyStart)} UTC — zmień`}
-              onPress={() => setEditingDuty((v) => !v)}
+              onPress={() => setDutyEditorNow(Date.now())}
             />
             <View style={{ flexDirection: 'row' }}>
               <Tag label={dateUtcLong(draft.dutyStart)} size="md" />
             </View>
           </Field>
-
-          {editingDuty && (
-            <Stepper
-              value={draft.dutyStart}
-              onChange={(v) => draft.set('dutyStart', v)}
-              step={5 * 60_000}
-              bigStep={60 * 60_000}
-              tone="blue"
-              format={(v) => timeUtc(v)}
-              unit="UTC"
-              hint="Krok 5 minut · duży krok 1 godzina"
-            />
-          )}
         </Card>
 
         {/* ── opcjonalne ──────────────────────────────────────────────── */}
@@ -320,6 +313,43 @@ export function PreflightAircraftScreen({
           onPress={() => navigation.navigate('PreflightReadings')}
         />
       </View>
+
+      {/* ── godzina meldunku (arkusz jak 02b/02c dla odczytów) ─────────── */}
+      <ReadingSheet
+        visible={dutyEditorNow != null}
+        title="Godzina meldowania"
+        unit="UTC"
+        tone="blue"
+        // Cyfry z klawiatury numerycznej — dwukropek w „HH:MM" stawia maska arkusza.
+        keyboard="time"
+        initialText={timeUtc(draft.dutyStart)}
+        rows={[
+          {
+            label: 'Teraz',
+            value:
+              dutyEditorNow != null
+                ? `${timeUtc(dutyEditorNow)} UTC · ${timeLocal(dutyEditorNow)} LT`
+                : '—',
+          },
+          { label: 'Dzień lotny', value: dateUtcLong(draft.dutyStart) },
+        ]}
+        // Data zostaje z dnia lotnego — pilot poprawia godzinę, nie datę.
+        parse={(text) => parseTimeUtcOnDay(text, draft.dutyStart)}
+        warningFor={(v) => {
+          // Ostrzeżenie miękkie, jak w arkuszach odczytów: meldunek „w przyszłość" bywa
+          // pomyłką (14:00 zamiast 04:00), ale zegarek telefonu nie jest tu wyrocznią.
+          if (dutyEditorNow == null || v <= dutyEditorNow + 60_000) return null;
+          return (
+            `Wpisana godzina jest późniejsza niż teraz (${timeUtc(dutyEditorNow)} UTC). ` +
+            'Sprawdź, czy to godzina meldunku, a nie pomyłka w zapisie.'
+          );
+        }}
+        onConfirm={(v) => {
+          draft.set('dutyStart', v);
+          setDutyEditorNow(null);
+        }}
+        onCancel={() => setDutyEditorNow(null)}
+      />
 
       {/* ── przejęcie samolotu (`#takeover-modal` z mockupu) ───────────── */}
       <Sheet

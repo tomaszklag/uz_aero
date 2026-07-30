@@ -15,8 +15,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../theme';
+import { sheetBottomPad } from '../hooks/keyboardGeometry';
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { AppText } from './AppText';
 import { ActionButton } from './ActionButton';
@@ -66,6 +68,7 @@ export function DropSheet({
   onCancel,
 }: DropSheetProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const blue = toneColors(theme, 'blue');
   const keyboardHeight = useKeyboardHeight();
   const [jumpers, setJumpers] = useState<JumperCounts>(EMPTY);
@@ -95,7 +98,14 @@ export function DropSheet({
             gap: theme.spacing.md,
             paddingHorizontal: theme.spacing.lg,
             paddingTop: theme.spacing.lg,
-            paddingBottom: theme.spacing.xxl + 2,
+            // Zapas z mockupu jako podłoga; nad paskiem nawigacji trzeba ustąpić więcej
+            // (`sheetBottomPad` — pasek jest już wliczony w wysokość klawiatury).
+            paddingBottom: sheetBottomPad(
+              theme.spacing.xxl + 2,
+              insets.bottom,
+              keyboardHeight,
+              theme.spacing.lg,
+            ),
             borderTopLeftRadius: theme.radius.xl,
             borderTopRightRadius: theme.radius.xl,
             borderTopWidth: theme.borderWidthStrong,

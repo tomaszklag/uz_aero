@@ -13,9 +13,12 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ManualLogEntryPayload } from '../../domain';
 import { useTheme } from '../theme';
+import { sheetBottomPad } from '../hooks/keyboardGeometry';
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
 import { AppText } from './AppText';
 import { ActionButton } from './ActionButton';
 import { toneColors } from './tone';
@@ -53,6 +56,8 @@ export function ManualEntrySheet({
   onCancel,
 }: ManualEntrySheetProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardHeight();
   const amber = toneColors(theme, 'amber');
 
   /** Przesunięcia minutowe względem `now`, per pole; wszystkie ≤ 0. */
@@ -104,7 +109,14 @@ export function ManualEntrySheet({
             gap: 12,
             paddingHorizontal: theme.spacing.lg,
             paddingTop: theme.spacing.lg,
-            paddingBottom: theme.spacing.xxl,
+            // Zapas z mockupu jako podłoga; nad paskiem nawigacji arkusz ustępuje więcej
+            // (`sheetBottomPad`), inaczej pasek ucina dolny skraj akcji.
+            paddingBottom: sheetBottomPad(
+              theme.spacing.xxl,
+              insets.bottom,
+              keyboardHeight,
+              theme.spacing.lg,
+            ),
             borderTopLeftRadius: theme.radius.xl,
             borderTopRightRadius: theme.radius.xl,
             borderTopWidth: theme.borderWidthStrong,

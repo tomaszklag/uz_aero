@@ -55,6 +55,14 @@ Cockpit cycle (powtarzalny):
 
 ### Czas meldowania (duty start)
 - Wyświetlany jako **UTC primary** (duża czcionka mono), LT secondary (mała, po prawej)
+- Edycja przez ołówek = **arkusz z wpisaniem godziny** (`ReadingSheet`, ten sam wzorzec co
+  odczyty 02b/02c i zakończenie duty na 09): pole „HH:MM" UTC, pod nim odniesienia
+  („Teraz", „Dzień lotny") i miękkie ostrzeżenie, gdy wpis wypada w przyszłości.
+  Klawiatura **numeryczna** — pilot wbija cztery cyfry (`0800`), dwukropek stawia maska;
+  QWERTY dla czterech cyfr zajmowałaby pół ekranu i podstawiała podpowiedzi słownikowe.
+  Powód: meldunek bywa godziny wstecz wobec chwili wypełniania formularza — wpisanie
+  wartości jest jednym ruchem, stepper wymagałby serii tapnięć. Data pozostaje z dnia
+  lotnego (pilot poprawia godzinę, nie datę) — badge z datą pod polem to potwierdza
 
 ### Strefa czasowa — reguła nadrzędna
 

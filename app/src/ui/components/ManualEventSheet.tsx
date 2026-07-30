@@ -20,8 +20,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../theme';
+import { sheetBottomPad } from '../hooks/keyboardGeometry';
 import { useEduBanner } from '../store/eduBanners';
 import { AppText } from './AppText';
 import { ActionButton } from './ActionButton';
@@ -63,6 +65,7 @@ export function ManualEventSheet({
   onCancel,
 }: ManualEventSheetProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const amber = toneColors(theme, 'amber');
 
   const [type, setType] = useState<ManualEventType>(initialType);
@@ -97,7 +100,9 @@ export function ManualEventSheet({
             gap: 13,
             paddingHorizontal: theme.spacing.lg,
             paddingTop: theme.spacing.lg,
-            paddingBottom: theme.spacing.xxl + 2,
+            // Zapas z mockupu jako podłoga; nad paskiem nawigacji arkusz ustępuje więcej
+            // (`sheetBottomPad`). Arkusz nie ma pól tekstowych — klawiatura go nie dotyczy.
+            paddingBottom: sheetBottomPad(theme.spacing.xxl + 2, insets.bottom, 0, theme.spacing.lg),
             borderTopLeftRadius: theme.radius.xl,
             borderTopRightRadius: theme.radius.xl,
             borderTopWidth: theme.borderWidthStrong,

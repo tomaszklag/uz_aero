@@ -106,6 +106,45 @@ export function parseLitres(text: string): number | null {
 }
 
 /**
+ * Wpis godziny w trakcie pisania → „HH:MM". Dwukropek stawia maska, nie pilot.
+ *
+ * Powód: klawiatura numeryczna Androida nie ma dwukropka, a pełna QWERTY dla czterech
+ * cyfr to zła zamiana — zajmuje pół ekranu i podstawia podpowiedzi słownikowe. Pilot
+ * wbija „0800", maska pokazuje „08:00" (zgłoszenie z urządzenia: arkusz godziny meldunku).
+ *
+ * Liczą się wyłącznie cyfry i tylko cztery pierwsze — resztę ucinamy, zamiast pozwolić
+ * na „08:0012". Wpis krótszy zostaje krótki („08:0"), bo to normalny stan w połowie
+ * pisania; o tym, czy wartość ma sens, orzeka `parseTimeUtcOnDay`.
+ */
+export function maskTimeUtcInput(text: string): string {
+  const digits = text.replace(/\D/g, '').slice(0, 4);
+  return digits.length <= 2 ? digits : `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
+/**
+ * „08:00" → znacznik czasu tego samego dnia UTC (`reference` daje dzień lotny).
+ *
+ * Pilot wpisuje godzinę, nie datę — meldunek i zakończenie duty należą do dnia, który
+ * właśnie poprawia, więc datę bierzemy z wartości sprzed edycji, a nie z „teraz".
+ * `null` = wpis nieczytelny; wołający ma wtedy zablokować zapis (§6 pkt 3: nigdy cichy błąd).
+ */
+export function parseTimeUtcOnDay(text: string, reference: EpochMillis): EpochMillis | null {
+  const match = /^(\d{1,2}):([0-5]\d)$/.exec(text.trim());
+  if (!match) return null;
+  const hours = Number(match[1]);
+  if (hours > 23) return null;
+
+  const day = new Date(reference);
+  return Date.UTC(
+    day.getUTCFullYear(),
+    day.getUTCMonth(),
+    day.getUTCDate(),
+    hours,
+    Number(match[2]),
+  );
+}
+
+/**
  * „Tomasz Małkiewicz" → „T. Małkiewicz".
  *
  * Skrót imienia z podsumowań (mockup 03): w dwukolumnowej siatce pełne imię i nazwisko

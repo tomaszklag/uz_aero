@@ -13,10 +13,15 @@
  *
  * iOS emituje `keyboardWill*` przed animacją (ruch jest płynny), Android tylko
  * `keyboardDid*` — stąd dobór zdarzeń per platforma.
+ *
+ * Sama `height` ze zdarzenia nie wystarcza na Androidzie edge-to-edge — dlaczego,
+ * i skąd bierze się druga miara, mówi `keyboardBottomOffset`.
  */
 
 import { useEffect, useState } from 'react';
-import { Keyboard, Platform } from 'react-native';
+import { Dimensions, Keyboard, Platform } from 'react-native';
+
+import { keyboardBottomOffset } from './keyboardGeometry';
 
 export function useKeyboardHeight(): number {
   const [height, setHeight] = useState(0);
@@ -25,7 +30,14 @@ export function useKeyboardHeight(): number {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const show = Keyboard.addListener(showEvent, (e) => setHeight(e.endCoordinates.height));
+    const show = Keyboard.addListener(showEvent, (e) => {
+      // Wysokość okna czytamy przy każdym zdarzeniu, nie raz — obrót ekranu i tryb
+      // wielookienny zmieniają ją bez odmontowania hooka.
+      const windowHeight = Dimensions.get('window').height;
+      setHeight(
+        keyboardBottomOffset(e.endCoordinates.height, e.endCoordinates.screenY, windowHeight),
+      );
+    });
     const hide = Keyboard.addListener(hideEvent, () => setHeight(0));
 
     return () => {

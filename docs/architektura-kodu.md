@@ -297,7 +297,7 @@ a nie przez jeden ekran.
 | `StepList` | numerowana procedura wychodząca poza ten telefon | `.handover-steps` (07) |
 | `PillButton` | mała akcja nagłówka (pigułka z ikoną) | `.btn-add` (08) |
 | `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
-| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c |
+| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c, godziny duty (02, 09) |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
@@ -380,6 +380,61 @@ tokenu `display` (34 px), bo to rozmiar tytułu ekranu.
 `Stepper` istnieje z konkretnego powodu: audyt użyteczności wykazał, że dolewka paliwa
 była ustawiana uchwytem suwaka 16×16 px na torze 312 px — około **1,4 litra na piksel**.
 W rękawicach to nie precyzja, tylko loteria.
+
+### Klawiatura i pola edycji (Android edge-to-edge, Expo SDK 54 / RN 0.81)
+
+Ta sekcja jest zapisem **pięciu tur zgłoszeń z urządzenia** (2026-07-30). Każda reguła
+niżej ma za sobą konkretny objaw u pilota, więc zanim ją zmienisz — sprawdź, czy nie
+wracasz do stanu, który już raz nie działał. Cała arytmetyka mieszka w RN-free module
+`ui/hooks/keyboardGeometry.ts` i ma testy (`__tests__/keyboardAwareScroll.test.ts`);
+hooki obok tylko dostarczają do niej pomiary.
+
+**Dlaczego to w ogóle jest problem.** Od SDK 54 aplikacja rysuje edge-to-edge, więc
+systemowy `adjustResize` nie zmniejsza już okna — klawiatura wjeżdża NAD treść. Nic nie
+zrobi tego za nas: `KeyboardAvoidingView` zachowuje się różnie na obu systemach i reaguje
+na translucent status bar, a `react-native-keyboard-controller` to moduł natywny (przebudowa
+buildu) — sięgamy po niego dopiero, gdy własna droga okaże się niewystarczająca.
+
+1. **Ekran kurczy się o klawiaturę**, a nie daje się nią zasłonić: `Screen` +
+   `useKeyboardHeight` (`paddingBottom`, przy tym znika dolny inset safe-area — wysunięta
+   klawiatura i tak przykrywa pasek nawigacji).
+2. **Wysokość klawiatury to większa z dwóch miar** — `height` i `windowHeight − screenY`
+   (`keyboardBottomOffset`). Na Androidzie edge-to-edge `height` bywa wysokością samej
+   powierzchni klawiatury, bez paska nawigacji, nad którym ona stoi, a okno sięga już pod
+   pasek. Wynik nierealny (brak `screenY`) odrzucamy, żeby nie wypchnąć arkusza za ekran.
+   **Pasek nawigacji jest już w tej liczbie** — to źródło pomyłki nr 3.
+3. **Zapas pod akcjami arkusza liczy `sheetBottomPad`** i nigdzie indziej. Dwa objawy
+   z jednego cyklu: dolny inset dodany OBOK wysokości klawiatury = pas martwego powietrza
+   między arkuszem a klawiaturą; stały zapas z mockupu (24–32 dp) mniejszy niż pasek
+   trzech przycisków (~48 dp) = ucięty dolny skraj POTWIERDŹ. Reguła: klawiatura
+   wysunięta → sam odstęp; zwinięta → inset paska + odstęp, z zapasem z mockupu jako
+   podłogą (nawigacja gestami daje inset 0–24 dp).
+4. **Arkusz ma sufit wysokości** (miejsce nad klawiaturą minus status bar) i skraca
+   PRZEWIJANĄ treść, nie rząd akcji — przyciski zostają widoczne zawsze.
+5. **Dociąganie zogniskowanego pola: dwa razy `measureInWindow`** (pole i lista), nigdy
+   `measureLayout`. Na Fabric `measureLayout` wymaga REFERENCJI węzła nadrzędnego, a przy
+   czymkolwiek innym (liczbowy tag z `getInnerViewNode`) tylko wypisuje „ref.measureLayout
+   must be called with a ref to a native component" i **nie mierzy nic** — mechanizm był
+   martwy przez cały czas, a pilot widział czerwony błąd. Dwa pomiary w jednym układzie
+   (okna) dają różnicę do dosunięcia; dół widocznej listy jest tu górą klawiatury, bo
+   ekran jest już skrócony. Nie mieszaj układów okna i ekranu — to była pomyłka nr 1.
+
+**Pola edycji w arkuszach** (`ReadingSheet`):
+
+- **Godzina = klawiatura numeryczna + maska**, nie QWERTY: `keyboardType="number-pad"`
+  i `maskTimeUtcInput` składa cztery cyfry w „HH:MM" (klawiatura numeryczna nie ma
+  dwukropka, a pełna zajmuje pół ekranu i podstawia podpowiedzi słownikowe). Licznik MH
+  w formacie `hh:mm` zostaje na `text`, bo liczba cyfr godzin jest dowolna.
+- **Nigdy `selectTextOnFocus` na polu sterowanym.** Na Androidzie to `selectAllOnFocus`,
+  które odnawia zaznaczenie przy KAŻDYM programowym ustawieniu tekstu — a wartość idzie
+  przez JS i wraca, więc pierwsza wpisana cyfra znów była zaznaczona i druga ją wymazywała.
+  Zamiast tego zaznaczamy całość jawnie **raz, przy otwarciu** (`selection`), a potem
+  oddajemy kursor polu; przy masce dosuwamy go na koniec, bo maska przestawia znaki.
+  `onSelectionChange` świadomie NIE jest podłączone: zdarzenie potrafi dojść z pozycją
+  sprzed maski i cofnąć kursor w środek napisu.
+- **Kolor zaznaczenia z tokenu `colors.selection`**, neutralnego per motyw — nigdy akcent
+  tonu. Cyfry mają kolor tonu (mockup 02b), więc akcent w tle dawał jednolity prostokąt
+  bez czytelnego tekstu. Kursor i uchwyty zostają w pełnym kryciu tonu.
 
 ### Stan UI vs rejestr zdarzeń
 
@@ -506,6 +561,9 @@ Wzorzec: `ui/screens/CockpitScreen.tsx` (pierwszy ekran wpięty end-to-end).
 4. Pokaż też `warnings` — zdarzenie zapisane, lecz warte uwagi pilota.
 5. Zarejestruj ekran w `RootStackParamList` i `RootNavigator`.
 6. Liczby formatuj przez `ui/format.ts` (czasy w UTC, MH wg formatu samolotu).
+7. Ekran z polem tekstowym albo arkuszem → przeczytaj wcześniej **„Klawiatura i pola
+   edycji"** w §2. Wysokość klawiatury, zapas pod akcjami arkusza i zaznaczenie tekstu mają
+   po jednym poprawnym rozwiązaniu i po kilka objawów, gdy się je obejdzie własnym kodem.
 
 ### Nowy adapter (np. serwer sync)
 

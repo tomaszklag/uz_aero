@@ -44,6 +44,16 @@ export interface ThemeColors {
   blueBorder: string;
   /** Przyciemnienie pod arkuszami (scrim) — jedna wartość, koniec dryfu 0.7/0.74. */
   overlay: string;
+  /**
+   * Tło zaznaczonego tekstu w polach edycji.
+   *
+   * NEUTRALNE z premedytacją, choć akcent byłby „w tonie": wartości w arkuszach są
+   * pisane kolorem tonu (paliwo bursztynem, godzina błękitem), a zaznaczenie w tym samym
+   * odcieniu zlewa się z cyframi w jednolity prostokąt — pilot nie widzi ani wartości,
+   * ani tego, że jest zaznaczona (zgłoszenie z urządzenia, 2026-07-30). Szara przepuszczalna
+   * podkładka zostawia glify czytelne w każdym tonie.
+   */
+  selection: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,6 +88,7 @@ const nightColors: ThemeColors = {
   blueMuted: 'rgba(52,152,219,0.12)',
   blueBorder: 'rgba(52,152,219,0.28)',
   overlay: 'rgba(0,0,0,0.74)',
+  selection: 'rgba(255,255,255,0.22)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,6 +124,7 @@ const paperColors: ThemeColors = {
   blueMuted: 'rgba(32,92,144,0.10)',
   blueBorder: 'rgba(32,92,144,0.38)',
   overlay: 'rgba(0,0,0,0.74)',
+  selection: 'rgba(36,28,16,0.16)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,6 +156,7 @@ const solarColors: ThemeColors = {
   blueMuted: 'rgba(0,72,144,0.10)',
   blueBorder: 'rgba(0,72,144,0.40)',
   overlay: 'rgba(0,0,0,0.74)',
+  selection: 'rgba(0,0,0,0.16)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -175,6 +188,7 @@ const skyColors: ThemeColors = {
   blueMuted: 'rgba(22,82,142,0.10)',
   blueBorder: 'rgba(22,82,142,0.40)',
   overlay: 'rgba(0,0,0,0.74)',
+  selection: 'rgba(15,30,44,0.16)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -201,6 +215,8 @@ const amberColors: ThemeColors = {
   blueMuted: 'rgba(96,160,240,0.10)',
   blueBorder: 'rgba(96,160,240,0.32)',
   overlay: 'rgba(0,0,0,0.74)',
+  // Motyw NVG nie dopuszcza białego światła — podkładka też jest bursztynowa.
+  selection: 'rgba(255,176,32,0.22)',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -43,6 +43,7 @@ import {
   motoHours,
   parseLitres,
   parseMotoHours,
+  parseTimeUtcOnDay,
   timeUtc,
 } from '../format';
 
@@ -352,10 +353,11 @@ export function EndOfDayScreen({
         title="Godzina zakończenia duty"
         unit="UTC"
         tone="blue"
-        keyboard="text"
+        // Ta sama godzina, ta sama klawiatura co przy meldunku (02) — cyfry plus maska.
+        keyboard="time"
         initialText={timeUtc(dutyEnd)}
         rows={[{ label: 'Meldunek', value: `${timeUtc(projection.dutyStart)} UTC` }]}
-        parse={(text) => parseTimeOnDay(text, dutyEnd)}
+        parse={(text) => parseTimeUtcOnDay(text, dutyEnd)}
         onConfirm={(v) => {
           setDutyEnd(v);
           setEditing(null);
@@ -363,28 +365,6 @@ export function EndOfDayScreen({
         onCancel={() => setEditing(null)}
       />
     </Screen>
-  );
-}
-
-/**
- * „16:45" → znacznik czasu tego samego dnia UTC.
- *
- * Pilot wpisuje godzinę, nie datę — dzień lotny bierzemy z wartości, którą właśnie
- * poprawia. `null` przy wpisie nieczytelnym blokuje potwierdzenie w arkuszu.
- */
-function parseTimeOnDay(text: string, reference: number): number | null {
-  const match = /^(\d{1,2}):([0-5]\d)$/.exec(text.trim());
-  if (!match) return null;
-  const hours = Number(match[1]);
-  if (hours > 23) return null;
-
-  const day = new Date(reference);
-  return Date.UTC(
-    day.getUTCFullYear(),
-    day.getUTCMonth(),
-    day.getUTCDate(),
-    hours,
-    Number(match[2]),
   );
 }
 

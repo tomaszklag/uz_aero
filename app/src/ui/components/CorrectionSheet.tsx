@@ -17,8 +17,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../theme';
+import { sheetBottomPad } from '../hooks/keyboardGeometry';
 import { useEduBanner } from '../store/eduBanners';
 import { AppText } from './AppText';
 import { ActionButton } from './ActionButton';
@@ -75,6 +77,7 @@ export function CorrectionSheet({
   onCancel,
 }: CorrectionSheetProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const blue = toneColors(theme, 'blue');
   const green = toneColors(theme, 'green');
 
@@ -105,7 +108,9 @@ export function CorrectionSheet({
             gap: 13,
             paddingHorizontal: theme.spacing.lg + 2,
             paddingTop: theme.spacing.lg + 2,
-            paddingBottom: 30,
+            // 30 dp z mockupu jako podłoga; na pasku nawigacji arkusz musi ustąpić więcej,
+            // inaczej pasek ucina dolny skraj akcji (`sheetBottomPad`).
+            paddingBottom: sheetBottomPad(30, insets.bottom, 0, theme.spacing.lg),
             borderTopLeftRadius: theme.radius.xl,
             borderTopRightRadius: theme.radius.xl,
             borderTopWidth: theme.borderWidth,
