@@ -280,8 +280,11 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
 
   async appendTrace(entry: NewTraceEntry): Promise<void> {
     await this.getDb().runAsync(
-      `INSERT INTO gps_trace (session_uuid, kind, time, device_time, gs, alt, lat, lon, accuracy_m, detail)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO gps_trace
+         (session_uuid, kind, time, device_time, gs, alt, track_deg, lat, lon, accuracy_m,
+          pressure_hpa, accel_mean, accel_max, vibration_rms, gyro_mean, gyro_max, imu_samples,
+          detail)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         entry.sessionUuid,
         entry.kind,
@@ -289,9 +292,17 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
         entry.deviceTime,
         entry.gs,
         entry.alt,
+        entry.trackDeg ?? null,
         entry.lat,
         entry.lon,
         entry.accuracyM,
+        entry.pressureHpa ?? null,
+        entry.accelMean ?? null,
+        entry.accelMax ?? null,
+        entry.vibrationRms ?? null,
+        entry.gyroMean ?? null,
+        entry.gyroMax ?? null,
+        entry.imuSamples ?? null,
         entry.detail,
       ],
     );
@@ -359,13 +370,34 @@ interface TraceRow {
   device_time: number;
   gs: number | null;
   alt: number | null;
+  track_deg: number | null;
   lat: number | null;
   lon: number | null;
   accuracy_m: number | null;
+  pressure_hpa: number | null;
+  accel_mean: number | null;
+  accel_max: number | null;
+  vibration_rms: number | null;
+  gyro_mean: number | null;
+  gyro_max: number | null;
+  imu_samples: number | null;
   detail: string | null;
   uploaded_at: number | null;
 }
 
+/** Pole trafia do wpisu tylko wtedy, gdy naprawdę coś zmierzono. */
+function present(key: string, value: number | null): Record<string, number> {
+  return value == null ? {} : { [key]: value };
+}
+
+/**
+ * Wiersz bazy → wpis śladu.
+ *
+ * Kolumny bez pomiaru POMIJAMY, nie przepisujemy jako `null`: ten obiekt idzie prosto
+ * do `JSON.stringify` w wysyłce, a jedenaście kolumn czujników zapisanych jako `null`
+ * w każdym z ~30 tys. dziennych wierszy fixa to kilka megabajtów transferu za zdanie
+ * „tu nic nie ma".
+ */
 function toTraceEntry(row: TraceRow): TraceEntry {
   return {
     id: row.id,
@@ -380,6 +412,14 @@ function toTraceEntry(row: TraceRow): TraceEntry {
     accuracyM: row.accuracy_m,
     detail: row.detail,
     uploadedAt: row.uploaded_at,
+    ...present('trackDeg', row.track_deg),
+    ...present('pressureHpa', row.pressure_hpa),
+    ...present('accelMean', row.accel_mean),
+    ...present('accelMax', row.accel_max),
+    ...present('vibrationRms', row.vibration_rms),
+    ...present('gyroMean', row.gyro_mean),
+    ...present('gyroMax', row.gyro_max),
+    ...present('imuSamples', row.imu_samples),
   };
 }
 

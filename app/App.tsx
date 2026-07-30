@@ -31,7 +31,7 @@ import {
 import { ThemeProvider, useTheme } from './src/ui/theme';
 import { AppText } from './src/ui/components';
 import { RootNavigator } from './src/ui/navigation/RootNavigator';
-import { useAppBootstrap, useGpsPort } from './src/ui/bootstrap/appBootstrap';
+import { useAppBootstrap, useGpsPort, useSensorPort } from './src/ui/bootstrap/appBootstrap';
 import { ServicesProvider } from './src/ui/bootstrap/ServicesProvider';
 import { useAuthStore } from './src/ui/store/authStore';
 import { useSessionStore } from './src/ui/store/sessionStore';
@@ -79,6 +79,7 @@ function AppRoot() {
   const { theme, ready: themeReady } = useTheme();
   const boot = useAppBootstrap();
   const gps = useGpsPort();
+  const sensors = useSensorPort();
 
   useSystemBackground(theme.colors.bg);
 
@@ -123,7 +124,7 @@ function AppRoot() {
   }
 
   return (
-    <ServicesProvider gps={gps} trace={boot.trace}>
+    <ServicesProvider gps={gps} sensors={sensors} trace={boot.trace}>
       <StatusBar style={theme.isLight ? 'dark' : 'light'} />
       {/*
         Nieprzezroczyste tło POD nawigatorem.

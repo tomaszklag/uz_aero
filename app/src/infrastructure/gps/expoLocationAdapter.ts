@@ -21,15 +21,31 @@ const MPS_TO_KNOTS = 1.943844492;
 /** Odstęp odczytów: 1 s — tyle zakłada algorytm detekcji (progi w sekundach, §3.3). */
 const INTERVAL_MS = 1000;
 
-/** Konwersja odczytu platformy na fix domeny. */
+/**
+ * Odczyt platformy → fix domeny.
+ *
+ * BRAK POMIARU MAPUJEMY NA `null`, NIGDY NA ZERO (poprawka 2026-07-30). Poprzednia
+ * wersja robiła `coords.speed ?? 0` i to była realna przyczyna spóźnionego wykrywania
+ * kołowania: Android przy małych prędkościach albo nie podaje prędkości wcale, albo
+ * zeruje ją filtrem static-hold w układzie GNSS. Detektor dostawał wtedy twarde „0 kt"
+ * — pomiar, którego nikt nie wykonał, w przebraniu pomiaru wiarygodnego. Teraz brak
+ * jest jawny i domena odtwarza prędkość z przemieszczenia (`trends.groundSpeed`).
+ *
+ * Wartości ujemne to androidowy idiom „niedostępne" (−1) — traktujemy jak brak.
+ */
 function toFix(loc: Location.LocationObject): GpsFix {
   const { coords, timestamp } = loc;
+  const speed = coords.speed;
+  const heading = coords.heading;
   return {
     // `timestamp` pochodzi z fixa, nie z zegara aplikacji — to jest ten „drugi zegar".
     time: timestamp,
-    groundSpeedKt: Math.max(0, (coords.speed ?? 0) * MPS_TO_KNOTS),
+    groundSpeedKt: speed == null || speed < 0 ? null : speed * MPS_TO_KNOTS,
     altitudeFt: coords.altitude == null ? null : coords.altitude * METERS_TO_FEET,
-    // Pozycja i dokładność zasilają diagnostykę GPS (ekran 13) — detektor ich nie czyta.
+    // Kurs nad ziemią: był w każdym odczycie i szedł do kosza. Domena liczy z niego
+    // prędkość kątową — drugą, niezależną obronę przed „ciasnym zakrętem udającym
+    // lądowanie" (§8), za darmo i bez dodatkowego czujnika.
+    trackDeg: heading == null || heading < 0 ? null : heading,
     lat: coords.latitude,
     lon: coords.longitude,
     accuracyM: coords.accuracy ?? null,

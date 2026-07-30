@@ -13,14 +13,46 @@
 
 import type { EpochMillis } from '../../domain';
 
-/** Rodzaj wpisu: surowy fix albo marker pracy detektora. */
-export type TraceKind = 'fix' | 'detection' | 'undo';
+/**
+ * Rodzaj wpisu: surowy fix, marker pracy detektora albo agregat czujników pokładowych.
+ *
+ * `sensor` doszedł 2026-07-30 i jest zapowiedzianym w tym nagłówku „nowym `kind`":
+ * barometr i czujniki inercyjne nagrywają się do tej samej tabeli, tą samą wysyłką,
+ * bez zmiany serwera. NIE wpływają na detekcję — to czysty materiał na fazę 5.
+ */
+export type TraceKind = 'fix' | 'detection' | 'undo' | 'sensor';
 
-export interface TraceEntry {
+/**
+ * Pola czujników pokładowych — obecne WYŁĄCZNIE w wierszach `kind: 'sensor'`
+ * (poza `trackDeg`, który należy do fixa).
+ *
+ * Wszystkie opcjonalne z rozmysłem: pominięte pole nie trafia do NDJSON-a wysyłanego
+ * na serwer. Przy ~30 tys. wierszy fixów dziennie osiem zapisanych `null` na wiersz to
+ * kilka megabajtów transferu za informację „tu nic nie ma" — a ślad z definicji nie
+ * konkuruje o łącze z rejestrem dnia.
+ */
+export interface TraceSensorFields {
+  /** Kurs nad ziemią z fixa (°) — wejście weta zakrętu, więc replay MUSI go widzieć. */
+  trackDeg?: number | null;
+  /** Ciśnienie statyczne (hPa) — barometryczny tor pionowy. */
+  pressureHpa?: number | null;
+  /** Średni i maksymalny moduł przyspieszenia LINIOWEGO w oknie (m/s², bez grawitacji). */
+  accelMean?: number | null;
+  accelMax?: number | null;
+  /** Miara wibracji: odchylenie standardowe modułu przyspieszenia w oknie (m/s²). */
+  vibrationRms?: number | null;
+  /** Średni i maksymalny moduł prędkości kątowej (°/s). */
+  gyroMean?: number | null;
+  gyroMax?: number | null;
+  /** Liczba surowych próbek w oknie — miara jakości agregatu. */
+  imuSamples?: number | null;
+}
+
+export interface TraceEntry extends TraceSensorFields {
   id: number;
   sessionUuid: string | null;
   kind: TraceKind;
-  /** Czas zjawiska (czas fixa / czas fixa wywołującego detekcję). */
+  /** Czas zjawiska (czas fixa / czas fixa wywołującego detekcję / zegar urządzenia). */
   time: EpochMillis;
   /** Zegar urządzenia w chwili zapisu — z pary zegarów wychodzi też dryf. */
   deviceTime: EpochMillis;

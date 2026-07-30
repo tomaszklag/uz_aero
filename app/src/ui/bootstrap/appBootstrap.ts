@@ -28,7 +28,8 @@ import {
   TraceSync,
 } from '../../application';
 import { defaultClock } from '../../infrastructure/clock';
-import type { GpsPort } from '../../application/ports';
+import { ExpoSensorsAdapter } from '../../infrastructure/sensors/expoSensorsAdapter';
+import type { GpsPort, SensorPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 
@@ -44,6 +45,18 @@ export type BootstrapStatus =
  */
 export function useGpsPort(): GpsPort {
   return useMemo(() => new ExpoLocationAdapter(), []);
+}
+
+/**
+ * Port czujników pokładowych. Jak wyżej — adapter trzyma subskrypcje i okno agregacji.
+ *
+ * Zawsze `ExpoSensorsAdapter`, także na telefonach bez barometru: adapter sam pyta
+ * `isAvailableAsync()` i nie zakłada nasłuchu na czujnik, którego nie ma. Rozgałęzianie
+ * tutaj wymagałoby asynchronicznego pytania przed pierwszym renderem, a zysku nie ma
+ * żadnego. `NullSensorAdapter` służy testom i odtwarzaniu tras.
+ */
+export function useSensorPort(): SensorPort {
+  return useMemo(() => new ExpoSensorsAdapter(), []);
 }
 
 /**

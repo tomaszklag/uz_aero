@@ -177,9 +177,17 @@ describe('granice warstw', () => {
     expect(users).toEqual(['infrastructure/gps/expoLocationAdapter.ts']);
   });
 
+  it('tylko adapter czujników dotyka expo-sensors', () => {
+    const users = sourceFiles('.')
+      .filter((f) => importsOf(f).some((s) => s === 'expo-sensors'))
+      .sort();
+    expect(users).toEqual(['infrastructure/sensors/expoSensorsAdapter.ts']);
+  });
+
   it('barrel infrastruktury nie wciąga modułów natywnych (testy w Node)', () => {
     const barrel = importsOf('infrastructure/index.ts');
     expect(barrel).not.toContain('./storage/expoSqliteAdapter');
     expect(barrel).not.toContain('./gps/expoLocationAdapter');
+    expect(barrel).not.toContain('./sensors/expoSensorsAdapter');
   });
 });
