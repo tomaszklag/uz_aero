@@ -80,7 +80,14 @@ export class AuthService {
     return stored.token;
   }
 
-  /** Rotacja po 401: zużywa refresh, zapisuje nową parę. `null` = refresh odrzucony. */
+  /**
+   * Rotacja po 401: zużywa refresh, zapisuje nową parę. `null` = refresh odrzucony.
+   *
+   * PIN PRZEŻYWA rotację — zapis idzie na kopii poświadczeń, nie na świeżym obiekcie.
+   * Magazyn trzyma komplet pod jednym kluczem, więc pominięcie `pin` skasowałoby go
+   * przy pierwszym wygaśnięciu tokenu (ACCESS_TTL = 1 h) i bramka wołałaby „Ustaw PIN"
+   * co dzień. Skrót PIN-u zeruje WYŁĄCZNIE świadome `login()` (§3.0).
+   */
   async rotate(): Promise<string | null> {
     const stored = await this.credentials.load();
     if (stored == null) return null;
@@ -88,6 +95,7 @@ export class AuthService {
     try {
       const tokens = await this.server.refresh(stored.refreshToken);
       const next: StoredCredentials = {
+        ...stored,
         token: tokens.token,
         refreshToken: tokens.refreshToken,
         pilot: tokens.pilot,
