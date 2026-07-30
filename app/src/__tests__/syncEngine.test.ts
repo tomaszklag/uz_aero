@@ -345,4 +345,16 @@ describe('AuthService', () => {
     await auth.login('TMK', 'haslo');
     expect(await auth.verifyPin('1234')).toBe(false);
   });
+
+  it('rotacja tokenu NIE kasuje PIN-u — zamek przeżywa wygaśnięcie sesji (§3.0)', async () => {
+    const credentials = new MemoryCredentials(CREDS);
+    const auth = new AuthService(new ScriptedServer([]), credentials, new PinCrypto());
+    await auth.setPin('1234');
+
+    expect(await auth.rotate()).toBe('jwt-2');
+
+    // Token nowy, PIN ten sam — inaczej pilot dostawałby „Ustaw PIN" co godzinę.
+    expect(await auth.verifyPin('1234')).toBe(true);
+    expect((await credentials.load())?.refreshToken).toBe('r2');
+  });
 });
