@@ -17,15 +17,15 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '../theme';
-import { sheetBottomPad } from '../hooks/keyboardGeometry';
-import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
-import { AppText } from './AppText';
-import { ActionButton } from './ActionButton';
-import { CounterRow } from './CounterRow';
-import { Icon } from './Icon';
-import { InlineNote } from './InlineNote';
-import { toneColors } from './tone';
+import { useTheme } from '../../theme';
+import { sheetBottomPad } from '../../hooks/keyboardGeometry';
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { AppText } from '../foundation/AppText';
+import { ActionButton } from '../data/ActionButton';
+import { CounterRow } from '../input/CounterRow';
+import { Icon } from '../foundation/Icon';
+import { InlineNote } from '../status/InlineNote';
+import { toneColors } from '../tone';
 
 export interface JumperCounts {
   tandem: number;

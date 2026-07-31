@@ -50,7 +50,7 @@ import {
   fuelPerHour,
   hhmm,
   jumperBreakdown,
-} from './statsDay';
+} from './logic/statsDay';
 
 /** Kolumny listy lotów — `#` i `Typ` mają stałą szerokość, czasy dzielą resztę po równo. */
 const FLIGHT_COLUMNS = [

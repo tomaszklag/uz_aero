@@ -11,9 +11,9 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { EVENT_TYPES, type Event } from '@uzaero/domain';
 
-import type { IngestCommands } from '../../application/commands/ingest.ts';
-import type { TokenService } from '../../application/ports.ts';
-import { authorize } from '../authorize.ts';
+import type { IngestCommands } from '../../../application/mobile/commands/ingest.ts';
+import type { TokenService } from '../../../application/common/ports.ts';
+import { authorize } from '../../authorize.ts';
 import { payloadValid } from './eventPayloads.ts';
 
 /** Eksportowana dla testu kontraktowego zod ↔ typ domenowy. */

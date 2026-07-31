@@ -14,10 +14,10 @@
  *    danych, a `CLAUDE.md` stawia licznik fizyczny ponad szacunkami.
  */
 
-import { applyCorrections } from '../../domain';
-import type { Event, EventOf, MhFormat, SessionState } from '../../domain';
-import type { EventLogRow, LogChip, LogKind } from '../components';
-import { duration, durationLong, litres, motoHours, timeUtc } from '../format';
+import { applyCorrections } from '../../../domain';
+import type { Event, EventOf, MhFormat, SessionState } from '../../../domain';
+import type { EventLogRow, LogChip, LogKind } from '../../components';
+import { duration, durationLong, litres, motoHours, timeUtc } from '../../format';
 
 const LABEL: Record<string, string> = {
   session_claim: 'Przejęcie samolotu',

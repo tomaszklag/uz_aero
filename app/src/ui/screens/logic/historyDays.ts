@@ -11,9 +11,9 @@
  * po oknie → „Zamknięte".
  */
 
-import { correctionWindow, type SessionState } from '../../domain';
-import type { HistoryDay } from '../../application';
-import { dateUtcLong, duration } from '../format';
+import { correctionWindow, type SessionState } from '../../../domain';
+import type { HistoryDay } from '../../../application';
+import { dateUtcLong, duration } from '../../format';
 import { dateTimeUtcShort } from './statsDay';
 import { eventsCount } from './syncStatus';
 

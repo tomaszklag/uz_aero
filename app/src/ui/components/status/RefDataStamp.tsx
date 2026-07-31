@@ -9,9 +9,9 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { timeUtc } from '../format';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { timeUtc } from '../../format';
 
 export interface RefDataStampProps {
   /** Chwila ostatniego potwierdzenia cache (`reference.checkedAt`); null = nigdy. */

@@ -17,7 +17,7 @@
 
 import { applyCorrections, type Event } from '@uzaero/domain';
 
-import type { AdminTimelineEntry } from './contracts/sessions.ts';
+import type { AdminTimelineEntry } from '../contracts/sessions.ts';
 
 /** Czas zdarzenia w tej samej konwencji, co domena: GPS przed zegarem telefonu. */
 const at = (e: Event): number => e.gpsTime ?? e.deviceTime;

@@ -10,11 +10,11 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { fontFamily } from '../theme/tokens';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
-import { toneColors } from './tone';
+import { useTheme } from '../../theme';
+import { fontFamily } from '../../theme/tokens';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
+import { toneColors } from '../tone';
 
 export interface DayCardProps {
   /** „22 JUNE 2026". */

@@ -15,12 +15,12 @@
 
 import { projectSession } from '@uzaero/domain';
 
-import type { Database, EventsStorePort } from '../../ports.ts';
+import type { Database, EventsStorePort } from '../../common/ports.ts';
 import type { AdminSessionDetail, AdminSessionPage } from '../contracts/sessions.ts';
-import { eventTimeline } from '../eventTimeline.ts';
-import { flagListItem } from '../flagListItem.ts';
+import { eventTimeline } from '../mappers/eventTimeline.ts';
+import { flagListItem } from '../mappers/flagListItem.ts';
 import type { FlagsAdminPort, SessionListFilter, SessionsAdminPort } from '../ports.ts';
-import { sessionListItem } from '../sessionListItem.ts';
+import { sessionListItem } from '../mappers/sessionListItem.ts';
 
 /**
  * Odmowa jest wariantem wyniku, nie wyjątkiem na granicy HTTP (wzorzec

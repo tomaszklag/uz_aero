@@ -33,7 +33,7 @@ import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { litres, motoHours, shortName, timeLocal, timeUtc } from '../format';
-import { claimDecision } from './claimMode';
+import { claimDecision } from './logic/claimMode';
 
 export function PreflightConfirmScreen({
   navigation,

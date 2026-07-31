@@ -22,11 +22,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { maskTimeUtcInput } from '../format';
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
+import { maskTimeUtcInput } from '../../format';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
 import { Sheet, type SheetRow } from './Sheet';
-import { toneColors, type Tone } from './tone';
+import { toneColors, type Tone } from '../tone';
 
 /**
  * Klawiatura per tryb wpisu. `number-pad` dla godziny: same cyfry, bez paska podpowiedzi

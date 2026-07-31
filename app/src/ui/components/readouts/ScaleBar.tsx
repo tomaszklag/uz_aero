@@ -15,10 +15,10 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
 import { LevelBar } from './LevelBar';
-import type { Tone } from './tone';
+import type { Tone } from '../tone';
 
 export interface ScaleBarProps {
   /** Wypełnienie 0–1 (przycinane przez `LevelBar`). */

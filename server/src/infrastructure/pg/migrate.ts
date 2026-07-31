@@ -20,7 +20,7 @@
  * sensownie ubrać w `IF NOT EXISTS`, przestaje być pułapką.
  */
 
-import type { Queryable } from '../../application/ports.ts';
+import type { Queryable } from '../../application/common/ports.ts';
 import { MIGRATIONS } from './schema.ts';
 
 /**

@@ -14,11 +14,11 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
 import { Tag } from './Tag';
-import { toneColors } from './tone';
+import { toneColors } from '../tone';
 
 export interface CrewRowProps {
   /** Badge roli — „PIC" / „DUAL". */

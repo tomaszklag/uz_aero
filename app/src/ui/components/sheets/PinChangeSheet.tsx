@@ -14,12 +14,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '../theme';
-import { sheetBottomPad } from '../hooks/keyboardGeometry';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
-import { Numpad } from './Numpad';
-import { PinDots } from './PinDots';
+import { useTheme } from '../../theme';
+import { sheetBottomPad } from '../../hooks/keyboardGeometry';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
+import { Numpad } from '../input/Numpad';
+import { PinDots } from '../input/PinDots';
 
 const PIN_LENGTH = 4;
 /** Chwila na zobaczenie kompletu kropek, zanim arkusz przejdzie do następnego kroku. */

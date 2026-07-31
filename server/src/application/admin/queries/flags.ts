@@ -7,9 +7,9 @@
  * w pamięci: lista przycięta limitem musi być przycięta po WŁAŚCIWEJ stronie porządku.
  */
 
-import type { Database } from '../../ports.ts';
+import type { Database } from '../../common/ports.ts';
 import type { AdminFlagPage } from '../contracts/flags.ts';
-import { flagListItem } from '../flagListItem.ts';
+import { flagListItem } from '../mappers/flagListItem.ts';
 import type { FlagListFilter, FlagsAdminPort } from '../ports.ts';
 
 export class AdminFlagQueries {

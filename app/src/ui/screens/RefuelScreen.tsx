@@ -50,7 +50,7 @@ import {
   lastFuelReference,
   maxAddableL,
   refuelScale,
-} from './refuelMath';
+} from './logic/refuelMath';
 import type { ReferenceAircraft } from '../../domain';
 
 /** Krok dolewki. 5 L to podziałka, którą widać na dystrybutorze; 20 L to szybki przeskok. */

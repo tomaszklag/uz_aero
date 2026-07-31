@@ -8,7 +8,7 @@
  * Tekst z bazy nie ma czego przekręcić.
  */
 
-import type { ExportLogPort, ExportRecord, Queryable } from '../../application/ports.ts';
+import type { ExportLogPort, ExportRecord, Queryable } from '../../../application/common/ports.ts';
 
 interface ExportLogDbRow {
   session_uuid: string;

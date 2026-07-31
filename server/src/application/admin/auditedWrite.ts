@@ -24,7 +24,7 @@
  * | nowa komenda = nowa okazja do pomyłki | nowa komenda idzie tą bramą, bo innej nie ma |
  */
 
-import type { Clock, Database, Queryable } from '../ports.ts';
+import type { Clock, Database, Queryable } from '../common/ports.ts';
 import type { Actor, AdminAuditPort, AuditEntry } from './ports.ts';
 
 /** Skutek + jego ślad. Nie da się oddać jednego bez drugiego. */

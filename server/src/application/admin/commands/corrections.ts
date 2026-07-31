@@ -42,14 +42,14 @@ import {
   type SessionState,
 } from '@uzaero/domain';
 
-import { sessionRowFrom } from '../../sessionRow.ts';
-import type { DayExporter, ExportOutcome } from '../../export/dayExporter.ts';
+import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
+import type { DayExporter, ExportOutcome } from '../../common/export/dayExporter.ts';
 import type {
   AircraftConfigPort,
   Clock,
   EventsStorePort,
   SessionsProjectionPort,
-} from '../../ports.ts';
+} from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor } from '../ports.ts';
 

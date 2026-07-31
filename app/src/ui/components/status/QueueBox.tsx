@@ -11,9 +11,9 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
 
 export interface QueueBoxProps {
   /** Kolejka niepusta — pełny amber zamiast przygaszenia. */

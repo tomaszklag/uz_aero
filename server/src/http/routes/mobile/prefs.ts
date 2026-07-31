@@ -12,9 +12,9 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { PrefsCommands } from '../../application/commands/prefs.ts';
-import type { PilotPrefs, TokenService } from '../../application/ports.ts';
-import { authorize } from '../authorize.ts';
+import type { PrefsCommands } from '../../../application/mobile/commands/prefs.ts';
+import type { PilotPrefs, TokenService } from '../../../application/common/ports.ts';
+import { authorize } from '../../authorize.ts';
 
 /**
  * Serwer nie zna listy motywów (tokeny UI aplikacji) — pilnuje tylko, żeby nazwa

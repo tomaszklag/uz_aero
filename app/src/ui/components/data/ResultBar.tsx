@@ -24,9 +24,9 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { toneColors, type Tone } from './tone';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { toneColors, type Tone } from '../tone';
 
 export interface ResultBarProps {
   /** Nazwa wyniku, np. „Stan po tankowaniu". */

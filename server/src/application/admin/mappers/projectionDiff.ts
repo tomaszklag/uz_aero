@@ -9,8 +9,8 @@
  * dokładnie taką tabelę: sesja · pole · wartość w `sessions` · wartość z przeliczenia).
  */
 
-import type { ProjectionFieldDiff } from './contracts/maintenance.ts';
-import type { SessionRow } from '../ports.ts';
+import type { ProjectionFieldDiff } from '../contracts/maintenance.ts';
+import type { SessionRow } from '../../common/ports.ts';
 
 /**
  * Nazwy pól bierzemy z PRZELICZONEGO wiersza (`Object.keys`), a nie z listy zapisanej

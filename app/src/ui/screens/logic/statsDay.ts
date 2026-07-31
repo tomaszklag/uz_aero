@@ -14,8 +14,8 @@
  * cyfr niesie informację, a `duration()` (używane na 04/09) tego zera nie stawia.
  */
 
-import type { DetectionMethod, Flight, JumperCounts, SessionState } from '../../domain';
-import { hhmm, timeUtc } from '../format';
+import type { DetectionMethod, Flight, JumperCounts, SessionState } from '../../../domain';
+import { hhmm, timeUtc } from '../../format';
 
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 

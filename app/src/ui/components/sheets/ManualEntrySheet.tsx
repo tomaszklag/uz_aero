@@ -15,13 +15,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { ManualLogEntryPayload } from '../../domain';
-import { useTheme } from '../theme';
-import { sheetBottomPad } from '../hooks/keyboardGeometry';
-import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
-import { AppText } from './AppText';
-import { ActionButton } from './ActionButton';
-import { toneColors } from './tone';
+import type { ManualLogEntryPayload } from '../../../domain';
+import { useTheme } from '../../theme';
+import { sheetBottomPad } from '../../hooks/keyboardGeometry';
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { AppText } from '../foundation/AppText';
+import { ActionButton } from '../data/ActionButton';
+import { toneColors } from '../tone';
 
 /** Kolejność i etykiety §3.8 — dokładnie jak kolumny rejestru. */
 const FIELDS = [

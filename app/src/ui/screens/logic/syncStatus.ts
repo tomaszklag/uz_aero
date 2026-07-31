@@ -10,13 +10,13 @@
  * nie informacja dla pilota.
  */
 
-import type { SessionState } from '../../domain';
+import type { SessionState } from '../../../domain';
 
 // Odmiana liczebników awansowała do `ui/format.ts` (używają jej też komponenty DS) —
 // re-eksport trzyma dotychczasowe importy ekranów i testów w mocy.
-import { plural } from '../format';
+import { plural } from '../../format';
 
-export { eventsCount, plural } from '../format';
+export { eventsCount, plural } from '../../format';
 
 /**
  * Nazwa dziennej karty arkusza wg konwencji §4.7: `YYYY-MM-DD_SP-XXX` (data UTC).

@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ACCESS_TTL_SEC } from '../src/application/commands/auth.ts';
+import { ACCESS_TTL_SEC } from '../src/application/common/commands/auth.ts';
 import { TEST_PASSWORD, testHarness } from './helpers.ts';
 
 describe('POST /auth/login', () => {

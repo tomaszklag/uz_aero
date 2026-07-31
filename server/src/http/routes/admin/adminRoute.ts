@@ -20,7 +20,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { Actor } from '../../../application/admin/ports.ts';
-import type { Identity, TokenService } from '../../../application/ports.ts';
+import type { Identity, TokenService } from '../../../application/common/ports.ts';
 import type { Capability } from '../../../domain/roles.ts';
 import { authorizeCapability } from '../../authorize.ts';
 

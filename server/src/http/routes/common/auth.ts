@@ -9,7 +9,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { AuthCommands } from '../../application/commands/auth.ts';
+import type { AuthCommands } from '../../../application/common/commands/auth.ts';
 
 const loginBody = z.object({
   login: z.string().min(1).max(200),

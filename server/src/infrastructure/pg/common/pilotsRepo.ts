@@ -5,8 +5,8 @@
  * rejestracji), więc adapter jest czystym odczytem; zapis mieszka w seedzie.
  */
 
-import type { PilotAccount, PilotsPort, Queryable } from '../../application/ports.ts';
-import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
+import type { PilotAccount, PilotsPort, Queryable } from '../../../application/common/ports.ts';
+import { DEFAULT_ROLE, isPilotRole } from '../../../domain/roles.ts';
 
 interface PilotRow {
   id: string;

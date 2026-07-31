@@ -22,7 +22,7 @@ import type {
   AdminCorrectionCommands,
   CorrectionResult,
 } from '../../../application/admin/commands/corrections.ts';
-import type { TokenService } from '../../../application/ports.ts';
+import type { TokenService } from '../../../application/common/ports.ts';
 import { adminRoute } from './adminRoute.ts';
 
 const correctionParams = z.object({ uuid: z.string().min(1).max(100) });

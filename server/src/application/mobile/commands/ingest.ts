@@ -22,10 +22,10 @@
 
 import type { Event } from '@uzaero/domain';
 
-import { clockDriftFlag } from '../../domain/clockDrift.ts';
-import { chainFlags, type ChainLink } from '../../domain/mhChain.ts';
-import { sessionRowFrom } from '../sessionRow.ts';
-import type { DayExporter } from '../export/dayExporter.ts';
+import { clockDriftFlag } from '../../../domain/clockDrift.ts';
+import { chainFlags, type ChainLink } from '../../../domain/mhChain.ts';
+import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
+import type { DayExporter } from '../../common/export/dayExporter.ts';
 import type {
   AircraftConfigPort,
   Database,
@@ -34,7 +34,7 @@ import type {
   FlagsPort,
   Queryable,
   SessionsProjectionPort,
-} from '../ports.ts';
+} from '../../common/ports.ts';
 
 export interface IngestResult {
   accepted: number;

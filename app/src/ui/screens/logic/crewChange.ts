@@ -8,7 +8,7 @@
  * więc przybliżenie „wszyscy mają tyle co dzień" byłoby fałszem rozliczeniowym.
  */
 
-import type { EngineRun, EpochMillis, Event, SessionState } from '../../domain';
+import type { EngineRun, EpochMillis, Event, SessionState } from '../../../domain';
 
 export interface CrewRowModel {
   role: 'PIC' | 'DUAL';

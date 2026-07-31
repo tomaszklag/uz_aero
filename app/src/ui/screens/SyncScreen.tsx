@@ -53,7 +53,7 @@ import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { dateUtcLong, duration, motoHours, timeUtc } from '../format';
-import { buildFlightRows, flightsBadge } from './statsDay';
+import { buildFlightRows, flightsBadge } from './logic/statsDay';
 import {
   dayDoneHint,
   dropsShort,
@@ -65,7 +65,7 @@ import {
   sentLabel,
   sentProgress,
   sheetTabName,
-} from './syncStatus';
+} from './logic/syncStatus';
 
 /** Kolumny podglądu arkusza (mockup 11 `.mini-table`): bez „Typ" i bez ołówków. */
 const PREVIEW_COLUMNS = [{ label: '#', width: 20 }, { label: 'Takeoff' }, { label: 'Landing' }, { label: 'Block' }];

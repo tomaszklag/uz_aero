@@ -15,7 +15,7 @@ import type { FlagStatus, FlagType, MhFormat, OperationType } from '@uzaero/doma
 
 import type { AdminAction } from '../../domain/adminActions.ts';
 import type { PilotRole } from '../../domain/roles.ts';
-import type { FlagRecord, Queryable, SessionRow } from '../ports.ts';
+import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
 
 // ── tożsamość działającego ──────────────────────────────────────────────────────
 

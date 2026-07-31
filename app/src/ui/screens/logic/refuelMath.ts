@@ -18,7 +18,7 @@
  * rachubą, więc gdy danych brakuje, zwracamy `null` zamiast liczby „mniej więcej".
  */
 
-import { eventTime, type EpochMillis, type Event, type SessionState } from '../../domain';
+import { eventTime, type EpochMillis, type Event, type SessionState } from '../../../domain';
 
 /** Ostatni bezpośredni odczyt paliwomierza w strumieniu zdarzeń. */
 export interface FuelReference {

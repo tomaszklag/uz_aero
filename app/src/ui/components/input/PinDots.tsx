@@ -9,7 +9,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
+import { useTheme } from '../../theme';
 
 export interface PinDotsProps {
   /** Ile cyfr już wpisano (0–length). */

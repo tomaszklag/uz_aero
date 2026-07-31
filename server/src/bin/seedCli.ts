@@ -8,9 +8,9 @@
 import { Pool } from 'pg';
 import { z } from 'zod';
 
-import { ScryptHasher } from '../auth/scryptHasher.ts';
-import { migrate } from './migrate.ts';
-import { seed } from './seed.ts';
+import { ScryptHasher } from '../infrastructure/auth/scryptHasher.ts';
+import { migrate } from '../infrastructure/pg/migrate.ts';
+import { seed } from '../infrastructure/pg/seed.ts';
 
 const env = z
   .object({

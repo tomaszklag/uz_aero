@@ -12,8 +12,8 @@
 import React from 'react';
 import { StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
 
 /**
  * `bar`    — `.day-log` z ekranów kokpitu: nagłówek na wyróżnionym tle, oddzielony linią.

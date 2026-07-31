@@ -7,7 +7,7 @@
  * bo „awaria Sheets nie psuje przyjęcia zdarzeń" to twarde wymaganie z testem.
  */
 
-import type { DaySheet, SheetsPort } from '../../src/application/ports.ts';
+import type { DaySheet, SheetsPort } from '../../src/application/common/ports.ts';
 
 export class FakeSheets implements SheetsPort {
   /** Kolejne zapisane karty — ostatnia = aktualna zawartość arkusza. */

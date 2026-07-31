@@ -14,7 +14,7 @@
  * wyłącznie telefon (nieznana nazwa = fallback na Night po stronie UI).
  */
 
-import type { PilotPrefs, PilotPrefsPort } from '../ports.ts';
+import type { PilotPrefs, PilotPrefsPort } from '../../common/ports.ts';
 
 export class PrefsCommands {
   constructor(private readonly prefs: PilotPrefsPort) {}

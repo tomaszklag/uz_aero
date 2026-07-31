@@ -7,7 +7,7 @@
  * tolerancja mogłaby pochodzić z innej wersji konfiguracji niż reszta rachunku.
  */
 
-import type { AircraftConfigPort, Queryable } from '../../application/ports.ts';
+import type { AircraftConfigPort, Queryable } from '../../../application/common/ports.ts';
 
 export class PgAircraftConfigRepo implements AircraftConfigPort {
   async capacityL(db: Queryable, aircraftId: string): Promise<number | null> {

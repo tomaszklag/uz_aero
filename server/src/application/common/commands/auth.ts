@@ -19,7 +19,7 @@ import type {
   RefreshTokensPort,
   TokenService,
 } from '../ports.ts';
-import type { PilotRole } from '../../domain/roles.ts';
+import type { PilotRole } from '../../../domain/roles.ts';
 
 /** Czas życia JWT (s) — krótki, bo odświeżenie jest tanie i automatyczne. */
 export const ACCESS_TTL_SEC = 60 * 60;

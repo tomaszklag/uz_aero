@@ -13,7 +13,7 @@
  */
 
 import type { AdminAuditPort, AuditRecord } from '../../../application/admin/ports.ts';
-import type { Queryable } from '../../../application/ports.ts';
+import type { Queryable } from '../../../application/common/ports.ts';
 
 export class PgAdminAuditRepo implements AdminAuditPort {
   async append(db: Queryable, record: AuditRecord): Promise<void> {

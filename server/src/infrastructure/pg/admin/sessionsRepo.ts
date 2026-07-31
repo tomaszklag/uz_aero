@@ -19,7 +19,7 @@
 
 import { isFlagType, type FlagType, type MhFormat } from '@uzaero/domain';
 
-import type { Queryable } from '../../../application/ports.ts';
+import type { Queryable } from '../../../application/common/ports.ts';
 import type {
   AdminSessionJoin,
   SessionListFilter,

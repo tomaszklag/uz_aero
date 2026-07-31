@@ -12,9 +12,9 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme/ThemeProvider';
-import { THEME_LABELS, THEME_ORDER, THEMES, fontFamily } from '../theme/tokens';
-import { AppText } from './AppText';
+import { useTheme } from '../../theme/ThemeProvider';
+import { THEME_LABELS, THEME_ORDER, THEMES, fontFamily } from '../../theme/tokens';
+import { AppText } from '../foundation/AppText';
 
 /** Opisy motywów z mockupu 13 (`.theme-desc`) — kiedy który ma sens w kokpicie. */
 const THEME_DESC: Record<string, string> = {

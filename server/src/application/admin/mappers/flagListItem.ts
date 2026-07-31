@@ -9,9 +9,9 @@
  * panel i `DayExporter` nie mogły powiedzieć czegoś innego.
  */
 
-import { blocksExport } from '../export/dayExporter.ts';
-import type { AdminFlagListItem } from './contracts/flags.ts';
-import type { AdminFlagJoin } from './ports.ts';
+import { blocksExport } from '../../common/export/dayExporter.ts';
+import type { AdminFlagListItem } from '../contracts/flags.ts';
+import type { AdminFlagJoin } from '../ports.ts';
 
 export function flagListItem(join: AdminFlagJoin): AdminFlagListItem {
   const { flag } = join;

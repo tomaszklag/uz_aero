@@ -21,13 +21,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Avatar } from './Avatar';
-import { CheckIcon } from './CheckIcon';
-import { Icon, type IconName } from './Icon';
-import { Tag } from './Tag';
-import { toneColors, type Tone } from './tone';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Avatar } from '../foundation/Avatar';
+import { CheckIcon } from '../foundation/CheckIcon';
+import { Icon, type IconName } from '../foundation/Icon';
+import { Tag } from '../status/Tag';
+import { toneColors, type Tone } from '../tone';
 
 export interface PickerTag {
   label: string;

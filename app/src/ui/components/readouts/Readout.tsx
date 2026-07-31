@@ -18,12 +18,12 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { FreshnessNote, type Freshness } from './FreshnessNote';
-import { Icon } from './Icon';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { FreshnessNote, type Freshness } from '../status/FreshnessNote';
+import { Icon } from '../foundation/Icon';
 import { Trail, type TrailRow } from './Trail';
-import { toneColors, type Tone } from './tone';
+import { toneColors, type Tone } from '../tone';
 
 export interface ReadoutProps {
   /** Etykieta sekcji, np. „Paliwo na pokładzie". */

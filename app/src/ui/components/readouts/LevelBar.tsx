@@ -13,8 +13,8 @@
 import React from 'react';
 import { View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { toneColors, type Tone } from './tone';
+import { useTheme } from '../../theme';
+import { toneColors, type Tone } from '../tone';
 
 export interface LevelBarProps {
   /** Wypełnienie 0–1; wartości spoza zakresu przycinamy. */

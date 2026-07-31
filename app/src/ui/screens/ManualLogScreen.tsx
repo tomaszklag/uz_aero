@@ -41,7 +41,7 @@ import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useEventCorrection } from '../hooks/useEventCorrection';
 import { dateUtcLong, timeUtc } from '../format';
-import { buildLogGroups, cycleCount } from './manualLog';
+import { buildLogGroups, cycleCount } from './logic/manualLog';
 import { toneColors } from '../components/tone';
 
 export function ManualLogScreen({

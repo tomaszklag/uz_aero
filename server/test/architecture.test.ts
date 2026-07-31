@@ -91,7 +91,7 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(codeOf('infrastructure/pg/schema.ts')).not.toContain('UPDATE admin_audit');
 
     // Wyciąganie nazw z importów działa na pliku, który `Database` faktycznie bierze.
-    expect(importedNames(read('application/commands/ingest.ts'))).toContain('Database');
+    expect(importedNames(read('application/mobile/commands/ingest.ts'))).toContain('Database');
 
     // Katalog kontraktów istnieje i skaner widzi jego import domeny — bez tego
     // przypadek „kontrakty importują wyłącznie domenę" przechodziłby na pustej liście.

@@ -68,7 +68,7 @@ w OBIE strony (adoptujemy wyłącznie stan ściśle nowszy; adopcję ogłasza
 `onApplied`, którym ThemeProvider przemalowuje ekran na żywo), offline/wygasła
 sesja/obcy profil = `skipped`. Po stronie serwera migracja 6 dokłada
 `pilots.theme`/`theme_updated_at` (prefs są 1:1 z pilotem — osobna tabela to
-przerost), a trasy `GET/PUT /me/prefs` (`http/routes/prefs.ts`, tożsamość WYŁĄCZNIE
+przerost), a trasy `GET/PUT /me/prefs` (`http/routes/mobile/prefs.ts`, tożsamość WYŁĄCZNIE
 z tokenu) piszą przez `PrefsCommands` + `PgPilotPrefsRepo`, gdzie warunek LWW
 siedzi w SQL-u (`theme_updated_at IS NULL OR < $3`) — a odpowiedź PUT jest ZAWSZE
 stanem autorytatywnym po operacji, żeby telefon-przegrany dostosował się zamiast
@@ -86,7 +86,7 @@ stemplem cache referencyjnego). „Nie pamiętam PIN" nie czyści poświadczeń 
 je dopiero udany login) i jest zablokowane przy niepustym outboxie. Klawisz biometrii
 z mockupu 00 odłożony (wymagałby `expo-local-authentication`).
 
-Eksport arkuszy (§4.7, serwer): `application/export/` — `buildDaySheet` (czysta funkcja
+Eksport arkuszy (§4.7, serwer): `application/common/export/` — `buildDaySheet` (czysta funkcja
 `SessionState` → karta; nazwa `YYYY-MM-DD_SP-XXX` bajt w bajt zgodna z `sheetTabName`
 aplikacji, treść = ekrany 10/11, MH w formacie samolotu) i `DayExporter` (po commicie
 ingestu, dla sesji zamkniętych po przetworzeniu; bramki: sesja otwarta / otwarta flaga
@@ -96,7 +96,7 @@ ingestu, dla sesji zamkniętych po przetworzeniu; bramki: sesja otwarta / otwart
 dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek.
 
 Karty mieszkają W BAZIE (decyzja 2026-07-28: nie czekamy na Google): adapter
-`PgSheets` (`infrastructure/pg/sheetsRepo.ts`) zapisuje dosłowne wiersze karty do
+`PgSheets` (`infrastructure/pg/common/sheetsRepo.ts`) zapisuje dosłowne wiersze karty do
 `exported_sheets` (migracja 5; UPSERT po `tab` — semantyka jak karta w Google:
 czytelnik widzi wyłącznie aktualny stan, historię rewizji trzyma `export_log`),
 a `GET /sheets/:tab` (autoryzowane, `SheetQueries` + osobny `SheetsReadPort` —
@@ -189,7 +189,7 @@ i wycena: `design/admin/ANALIZA.md`.
   2026-07-31** — przekrój 2, opis niżej. Migracja 11 dokłada `operation` i `client`;
   `duty_start` NIE POWSTAJE, bo `claim_time` niesie tę wartość od pierwszej wersji
   (`sessionRowFrom` mapuje `claimTime: s.dutyStart`) — szczegóły w docblocku
-  `application/sessionRow.ts`.
+  `application/common/mappers/sessionRow.ts`.
 - **Tabela audytu `admin_audit` nie istnieje.** Niezmienność wymuszamy uprawnieniami
   (`GRANT INSERT, SELECT` dla roli aplikacyjnej), nie dyscypliną programisty.
 - **Brak list i filtrów** (sesje, zdarzenia, flagi), zapisu kont i floty, agregatów
@@ -248,7 +248,7 @@ drożej niż w pliku, którego nikt jeszcze nie renderuje.
   platformami przebiega przy czcionkach: `fontFamilyNative` (osiem wariantów, bo RN wybiera
   grubość osobnym plikiem czcionki) obok `fontFamilyCss` (trzy rodziny, bo w przeglądarce
   grubość jest osobną właściwością). `fontFamily` zostaje aliasem wariantu natywnego.
-- **`packages/format`** — powód nie jest teoretyczny: `application/export/daySheetContent.ts`
+- **`packages/format`** — powód nie jest teoretyczny: `application/common/export/daySheetContent.ts`
   trzymał ręczne KOPIE `timeUtc`, `hhmm` i `motoHours` z docblockami „lustro … z
   app/src/ui/format.ts". Umowa utrzymywana dyscypliną, nie kompilatorem. Teraz serwer
   importuje te trzy z pakietu. `litres` **zostało prywatne w serwerze celowo**: aplikacja
@@ -408,7 +408,7 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   — filtr panelu waliduje się katalogiem domeny zamiast trzecią ręczną kopią listy.
   **Kolumny `duty_start` NIE MA i nie będzie bez decyzji człowieka**: `claim_time` niesie
   `SessionState.dutyStart` od pierwszej wersji, więc druga kolumna byłaby duplikatem tej
-  samej liczby (docblock `application/sessionRow.ts` opisuje też konsekwencje tej nazwy).
+  samej liczby (docblock `application/common/mappers/sessionRow.ts` opisuje też konsekwencje tej nazwy).
 - **Przebudowa projekcji ze strumienia** (`AdminMaintenanceCommands.rebuildProjections`,
   CLI `npm run rebuild-projections`) — WARUNEK KONIECZNY migracji 11: `upsert` uruchamia
   dopiero następna paczka zdarzeń sesji, a dla dnia zamkniętego takiej paczki już nie
@@ -438,7 +438,7 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   (`SessionState`, `Event`) jadą bez własnego DTO, zgodnie z regułą granicy typów.
   Wpis `exports` w `server/package.json` czeka na pierwszego konsumenta.
 - **Oś zdarzeń karty dnia liczy adnotacje PORÓWNANIEM z `applyCorrections`**
-  (`application/admin/eventTimeline.ts`), a nie własnym czytaniem korekt: reguła
+  (`application/admin/mappers/eventTimeline.ts`), a nie własnym czytaniem korekt: reguła
   „ostatnia korekta wygrywa" (razem z `void` → `retime`, który przywraca zdarzenie do
   życia) ma jedną implementację, w domenie. Zdarzenia unieważnione ZOSTAJĄ na osi —
   to właśnie one tłumaczą, dlaczego liczby dnia różnią się od tego, co zapisał telefon.
@@ -450,11 +450,66 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   jest zbiorem spraw do zamknięcia, więc dostaje twardy limit i dokładny `total`.
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
-jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób
-(`http/routes/*.ts`); mapowania jako osobne, nazwane moduły (`application/sessionRow.ts`);
+jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób;
+mapowania jako osobne, nazwane moduły (`application/common/mappers/sessionRow.ts`);
 wspólna autoryzacja w jednym miejscu (`http/authorize.ts`). Warstw NIE przybywa —
 kierunek zależności zostaje; chodzi o to, żeby plik dało się przeczytać w całości
 i żeby nazwa mówiła, co w środku.
+
+**Druga oś podziału: POWIERZCHNIA (`admin` / `mobile` / `common`)** — uporządkowane
+2026-07-31. Warstwa zostaje osią główną; wewnątrz `application/`, `http/routes/`
+i `infrastructure/pg/` katalog drugiego poziomu mówi, KOMU dany plik służy:
+
+- **`mobile/`** — istnieje wyłącznie dla aplikacji pilota (ingest, `GET /reference`, prefs),
+- **`admin/`** — istnieje wyłącznie dla panelu i podlega jego regułom: audyt obowiązkowy,
+  brama zdolności, prefiks `/admin/api`,
+- **`common/`** — używane przez OBIE powierzchnie. To znaczenie jest twarde: `common`
+  nie jest workiem na resztę, tylko stwierdzeniem „korzysta z tego panel i telefon"
+  (`export/`, `sessionRow.ts`, `ports.ts`, `commands/auth.ts` — panel loguje się tą samą
+  komendą co telefon).
+
+**Skąd ta zmiana.** Wcześniej `admin/` było wydzielone, a „cała reszta" nie niosła żadnej
+informacji: `application/common/export/dayExporter.ts` (wspólny — woła go ingest ORAZ dwie komendy
+panelu) leżał na tym samym poziomie co `application/mobile/queries/reference.ts` (tylko telefon).
+Ta sama lokalizacja, dwa różne znaczenia, zero sposobu, by je odróżnić bez otwarcia pliku.
+
+**Dlaczego NIE dwie gałęzie najwyższego poziomu (`admin/` + `mobile/`).** Te powierzchnie
+nie są dwoma systemami: dzielą jedną bazę, jeden strumień zdarzeń, jedną projekcję, jedną
+domenę i to samo logowanie. Rozdział po kliencie wymusiłby trzecią gałąź na kod wspólny,
+która wchłonęłaby większość plików — a granica byłaby przekraczana przy każdym żądaniu,
+bo panel czyta to, co zapisał telefon.
+
+**Dlaczego NIE spłaszczenie.** `admin/` nie jest porządkowaniem, tylko granicą sprawdzaną
+maszynowo: `test/architecture.test.ts` skanuje `application/admin/commands` i
+`http/routes/admin` PO ŚCIEŻCE, żeby wymusić „komendy panelu nie mają uchwytu do bazy"
+i „trasy panelu rejestrują się wyłącznie przez `adminRoute`". Usunięcie katalogu usuwa
+egzekucję tych reguł. Przenosząc pliki, aktualizuj te ścieżki w teście.
+
+**Oś powierzchni obowiązuje TYLKO tam, gdzie plik istnieje dla kogoś.** To była druga
+lekcja tego porządkowania: pierwsze podejście wepchnęło pod `common/` również rzeczy, które
+żadnej powierzchni nie mają, i etykieta zaczęła kłamać. Stąd trzy dopowiedzenia:
+
+- **`infrastructure/pg/` w korzeniu = maszyneria Postgresa**, nie adaptery: `schema.ts`
+  (DDL), `migrate.ts` (runner), `seed.ts`, `database.ts`, `keyset.ts`, `sqlFilter.ts`,
+  `sessionDbRow.ts`. Schemat bazy nie służy ani panelowi, ani telefonowi — służy bazie.
+  Katalogi `admin/`, `mobile/`, `common/` trzymają wyłącznie ADAPTERY portów.
+- **`src/bin/` = punkty wejścia.** `seedCli.ts` i `rebuildProjectionsCli.ts` to composition
+  rooty: same składają zależności i same startują. Leżały wśród adapterów, w dwóch różnych
+  katalogach, jakby były adapterami. Trzeci punkt wejścia (`index.ts`) zostaje w korzeniu
+  `src/`, bo jest wejściem serwera, nie narzędziem.
+- **`mappers/` w `application/*/`** — mapowania między reprezentacjami (`sessionRow.ts`:
+  strumień → wiersz projekcji; `sessionListItem.ts`, `flagListItem.ts`, `eventTimeline.ts`:
+  projekcja/strumień → DTO panelu; `projectionDiff.ts`: dwa wiersze → raport różnic).
+  Leżały luzem na wierzchu `application/admin/`, odtwarzając piętro niżej dokładnie ten
+  problem, który ten podział miał usunąć. Na wierzchu modułu zostają tylko `ports.ts`
+  i `auditedWrite.ts` — kontrakt modułu i jego egzekucja.
+
+**Wyjątki, świadome:** `domain/` jest płaskie, bo domena nie ma powierzchni — reguła jest
+regułą niezależnie od tego, kto pyta. `infrastructure/auth/` i `infrastructure/traces/`
+grupujemy po technologii. W `infrastructure/pg/{admin,mobile,common}/` pamiętaj, że
+przynależność adaptera jest POCHODNA (idzie za portem, którego używa) i bywa nietrwała:
+`aircraftConfigRepo` obsługuje dziś ingest, a jutro ekran floty. Gdy się zmieni, przenosimy
+plik — to tańsze niż etykieta, która kłamie.
 
 **Spójność modeli bez ORM:** źródłem prawdy jest `@uzaero/domain`, a styki pilnują testy
 kontraktowe — `test/schema.test.ts` (listy kolumn PG przybite na sztywno, na PGlite;
@@ -523,7 +578,8 @@ Wnętrze `ui/`:
 
 | Katalog | Rola |
 |---|---|
-| `screens/` | ekrany aplikacji |
+| `screens/` | ekrany aplikacji (`.tsx`) |
+| `screens/logic/` | **czysta logika ekranów** (`.ts`) — patrz niżej |
 | `navigation/` | stos nawigacji + `RootStackParamList` |
 | `components/` | **Design System** — patrz katalog niżej |
 | `hooks/` | spoiny między portami a UI (np. `useFlightDetection`) |
@@ -535,12 +591,41 @@ Wnętrze `ui/`:
 `App.tsx` odpowiada wyłącznie za poziom aplikacji: dostawcy kontekstu, fonty, composition
 root i nawigację. Ekran nie wie, skąd biorą się zależności.
 
+### `screens/logic/` — logika wyniesiona z ekranu
+
+Jedenaście czystych modułów (`statsDay`, `refuelMath`, `cockpitLog`, `historyDays`,
+`syncStatus`…) liczących to, co ekran pokazuje: statystyki dnia, arytmetykę dolewki,
+log cyklu, listę dni. **Bez importów z Reacta** — testują się w gołym Node, bez
+urządzenia i bez RNTL, i stąd bierze się większość pokrycia testowego aplikacji.
+
+Wydzielone do podkatalogu 2026-07-31. Wcześniej leżały wymieszane z ekranami w jednym
+płaskim katalogu, więc wzorzec był niewidoczny: nie dało się zobaczyć, który ekran ma
+wyniesioną logikę, a `statsDay.ts` (używany przez `StatsScreen` ORAZ `CockpitReadonlyScreen`)
+wyglądał, jakby należał do jednego z nich.
+
+**To NIE jest warstwa aplikacji.** Te moduły liczą widok, nie przypadek użycia — dlatego
+zostają w `ui/`, a nie wędrują do `application/`. Granica: jeśli moduł zmienia stan albo
+woła port, jest komendą i jego miejsce jest w `application/`.
+
 ### Design System (`ui/components/`)
 
 **Zasada: ekran nie definiuje własnych kart, chipów ani przycisków.** Jeśli czegoś
 brakuje — dokładamy to do DS i używamy wszędzie. Dzięki temu poprawka wzorca (np.
 powiększenie celów dotykowych po audycie użyteczności) przechodzi przez całą aplikację,
 a nie przez jeden ekran.
+
+**Osiem sekcji, jeden katalog na sekcję** (2026-07-31): `foundation/` · `layout/` ·
+`status/` · `input/` · `readouts/` · `sheets/` · `data/` · `settings/`. Podział nie jest
+nowy — barrel `index.ts` deklarował te same sekcje w komentarzach od dawna; do tej pory
+nie egzekwowała ich jednak żadna struktura, więc nowy komponent mógł wylądować gdziekolwiek,
+a sekcja rozjeżdżała się z rzeczywistością przy pierwszym niedopatrzeniu. Teraz nazwa
+katalogu i nagłówek w barrelu opisują to samo, a rozjazd widać od razu.
+
+Ekrany importują **przez barrel** (`from '../components'`) i tak ma zostać: dzięki temu
+przenosiny wewnątrz DS nie dotykają ekranów — to właśnie barrel wchłonął tę zmianę
+niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest normą.
+
+`tone.ts` zostaje w korzeniu `components/` — to pomocnik doboru barwy stanu, nie komponent.
 
 | Komponent | Rola | Skąd w designie |
 |---|---|---|

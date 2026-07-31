@@ -23,16 +23,16 @@
 import { Pool } from 'pg';
 import { z } from 'zod';
 
-import { AdminMaintenanceCommands } from '../../application/admin/commands/maintenance.ts';
-import { AuditedWrite } from '../../application/admin/auditedWrite.ts';
-import type { RebuildReport } from '../../application/admin/contracts/maintenance.ts';
-import { PgAdminAuditRepo } from './admin/auditRepo.ts';
-import { PgAdminMaintenanceRepo } from './admin/maintenanceRepo.ts';
-import { PgDatabase } from './database.ts';
-import { PgEventsStore } from './eventsStore.ts';
-import { PgPilotsRepo } from './pilotsRepo.ts';
-import { PgSessionsProjection } from './sessionsProjection.ts';
-import { migrate } from './migrate.ts';
+import { AdminMaintenanceCommands } from '../application/admin/commands/maintenance.ts';
+import { AuditedWrite } from '../application/admin/auditedWrite.ts';
+import type { RebuildReport } from '../application/admin/contracts/maintenance.ts';
+import { PgAdminAuditRepo } from '../infrastructure/pg/admin/auditRepo.ts';
+import { PgAdminMaintenanceRepo } from '../infrastructure/pg/admin/maintenanceRepo.ts';
+import { PgDatabase } from '../infrastructure/pg/database.ts';
+import { PgEventsStore } from '../infrastructure/pg/common/eventsStore.ts';
+import { PgPilotsRepo } from '../infrastructure/pg/common/pilotsRepo.ts';
+import { PgSessionsProjection } from '../infrastructure/pg/common/sessionsProjection.ts';
+import { migrate } from '../infrastructure/pg/migrate.ts';
 
 const env = z
   .object({

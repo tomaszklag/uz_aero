@@ -9,10 +9,10 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
+import { useTheme } from '../../theme';
 import { AppText } from './AppText';
 import { Icon } from './Icon';
-import { toneColors } from './tone';
+import { toneColors } from '../tone';
 
 export interface BrandProps {
   size?: 'md' | 'hero';

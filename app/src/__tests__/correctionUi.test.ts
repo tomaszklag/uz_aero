@@ -6,7 +6,7 @@
  * pilnuje, żeby obietnica i skutek były jednym kodem, na liczbach z mockupu.
  */
 
-import { correctionImpact, flightNumberOf, methodBadgeFor, voidLabelFor } from '../ui/screens/correction';
+import { correctionImpact, flightNumberOf, methodBadgeFor, voidLabelFor } from '../ui/screens/logic/correction';
 import type { Event } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);

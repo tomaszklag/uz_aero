@@ -24,7 +24,7 @@ import {
   snapshotAgeLabel,
   takeoverHint,
   type PeekSnapshot,
-} from '../ui/screens/cockpitPeek';
+} from '../ui/screens/logic/cockpitPeek';
 import { projectSession, type Event, type SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);

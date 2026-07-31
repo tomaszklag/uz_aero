@@ -8,7 +8,7 @@
 
 import { isFlagType, type FlagType } from '@uzaero/domain';
 
-import type { FlagRecord, FlagsPort, Queryable } from '../../application/ports.ts';
+import type { FlagRecord, FlagsPort, Queryable } from '../../../application/common/ports.ts';
 
 interface FlagDbRow {
   id: number;

@@ -9,10 +9,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { useTheme } from '../theme';
-import { fontFamily } from '../theme/tokens';
-import { AppText } from './AppText';
-import { Icon, type IconName } from './Icon';
+import { useTheme } from '../../theme';
+import { fontFamily } from '../../theme/tokens';
+import { AppText } from '../foundation/AppText';
+import { Icon, type IconName } from '../foundation/Icon';
 
 export interface SettingsActionProps {
   icon: IconName;

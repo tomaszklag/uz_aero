@@ -19,8 +19,8 @@
 import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText, type AppTextTone } from './AppText';
+import { useTheme } from '../../theme';
+import { AppText, type AppTextTone } from '../foundation/AppText';
 
 export interface KeyValueRowProps {
   label: string;

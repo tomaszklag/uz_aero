@@ -17,8 +17,8 @@
  * i na stan wysyłki.
  */
 
-import type { EpochMillis, Event, SessionState } from '../../domain';
-import { timeUtc } from '../format';
+import type { EpochMillis, Event, SessionState } from '../../../domain';
+import { timeUtc } from '../../format';
 // Ten sam format daty co w oknie korekty na ekranie 10 („21 JUN 17:30"). Drugi zestaw
 // skrótów miesięcy dałby dwa różne zapisy tej samej rzeczy w jednej aplikacji.
 import { dateTimeUtcShort } from './statsDay';

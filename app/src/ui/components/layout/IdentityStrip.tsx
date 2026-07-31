@@ -12,11 +12,11 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Avatar } from './Avatar';
-import { Tag } from './Tag';
-import { toneColors, type Tone } from './tone';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Avatar } from '../foundation/Avatar';
+import { Tag } from '../status/Tag';
+import { toneColors, type Tone } from '../tone';
 
 export interface IdentityStripProps {
   name: string;

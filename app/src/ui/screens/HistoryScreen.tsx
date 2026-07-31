@@ -31,7 +31,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
-import { buildHistory, type DayCardSpec, type EditableDaySpec } from './historyDays';
+import { buildHistory, type DayCardSpec, type EditableDaySpec } from './logic/historyDays';
 
 export function HistoryScreen({
   navigation,

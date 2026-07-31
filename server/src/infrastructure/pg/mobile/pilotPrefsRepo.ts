@@ -7,7 +7,7 @@
  * trafia do wiersza; odpowiedź autorytatywną składa komenda z ponownego `get`.
  */
 
-import type { PilotPrefs, PilotPrefsPort, Queryable } from '../../application/ports.ts';
+import type { PilotPrefs, PilotPrefsPort, Queryable } from '../../../application/common/ports.ts';
 
 interface PrefsRow {
   theme: string | null;

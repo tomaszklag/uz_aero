@@ -21,10 +21,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
-import { toneColors, type Tone } from './tone';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
+import { toneColors, type Tone } from '../tone';
 
 export interface DataColumn {
   label: string;

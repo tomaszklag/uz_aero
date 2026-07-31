@@ -12,7 +12,7 @@
 
 import type { Handover } from '@uzaero/domain';
 
-import type { SessionRow } from './ports.ts';
+import type { SessionRow } from '../common/ports.ts';
 
 export interface ActiveClaim {
   picId: string;

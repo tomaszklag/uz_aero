@@ -10,7 +10,7 @@
  * siebie właśnie po to, żeby nikt ich nie sklejał).
  */
 
-import { timeUtc } from '../format';
+import { timeUtc } from '../../format';
 
 /** „12 min temu" / „45 s temu" — wiek ostatniego fixa do nawiasu na banerze. */
 export function fixAge(lastFixAt: number, now: number): string {

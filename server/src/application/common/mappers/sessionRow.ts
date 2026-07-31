@@ -33,7 +33,7 @@
 
 import { projectSession, type Event } from '@uzaero/domain';
 
-import type { SessionRow } from './ports.ts';
+import type { SessionRow } from '../ports.ts';
 
 export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow {
   const s = projectSession(stream);

@@ -13,8 +13,8 @@
  * projekcji wypełniana przez `sessionRowFrom`.
  */
 
-import type { AdminSessionListItem } from './contracts/sessions.ts';
-import type { AdminSessionJoin } from './ports.ts';
+import type { AdminSessionListItem } from '../contracts/sessions.ts';
+import type { AdminSessionJoin } from '../ports.ts';
 
 export function sessionListItem(join: AdminSessionJoin): AdminSessionListItem {
   const { row } = join;

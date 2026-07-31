@@ -9,9 +9,9 @@
 
 import type { FastifyInstance } from 'fastify';
 
-import type { SheetQueries } from '../../application/queries/sheets.ts';
-import type { TokenService } from '../../application/ports.ts';
-import { authorize } from '../authorize.ts';
+import type { SheetQueries } from '../../../application/common/queries/sheets.ts';
+import type { TokenService } from '../../../application/common/ports.ts';
+import { authorize } from '../../authorize.ts';
 
 export function registerSheetsRoutes(
   app: FastifyInstance,

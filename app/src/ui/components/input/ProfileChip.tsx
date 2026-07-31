@@ -9,10 +9,10 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { fontFamily } from '../theme/tokens';
-import { AppText } from './AppText';
-import { toneColors } from './tone';
+import { useTheme } from '../../theme';
+import { fontFamily } from '../../theme/tokens';
+import { AppText } from '../foundation/AppText';
+import { toneColors } from '../tone';
 
 export interface ProfileChipProps {
   name: string;

@@ -20,7 +20,7 @@ import type {
   SheetsPort,
   SheetsReadPort,
   StoredDaySheet,
-} from '../../application/ports.ts';
+} from '../../../application/common/ports.ts';
 
 interface SheetDbRow {
   tab: string;

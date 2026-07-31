@@ -57,10 +57,10 @@ import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { useEventCorrection } from '../hooks/useEventCorrection';
 import { duration, litres, timeLocal, timeUtc } from '../format';
-import { buildCycleRows, buildLogRows } from './cockpitLog';
-import { cyclesLabel } from './cockpitPeek';
-import { flightsBadge } from './statsDay';
-import { gpsLossText, staleCellNote, unknownPhaseDetail } from './gpsLoss';
+import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
+import { cyclesLabel } from './logic/cockpitPeek';
+import { flightsBadge } from './logic/statsDay';
+import { gpsLossText, staleCellNote, unknownPhaseDetail } from './logic/gpsLoss';
 import type { Event, FlightPhase } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */

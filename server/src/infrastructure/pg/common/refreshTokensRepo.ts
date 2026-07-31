@@ -12,7 +12,7 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 
-import type { Clock, Database, RefreshTokensPort } from '../../application/ports.ts';
+import type { Clock, Database, RefreshTokensPort } from '../../../application/common/ports.ts';
 
 const hashToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 

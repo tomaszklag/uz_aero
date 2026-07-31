@@ -16,11 +16,11 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { radius } from '../theme/tokens';
-import { AppText } from './AppText';
-import { Icon, type IconName } from './Icon';
-import { toneColors, type Tone } from './tone';
+import { useTheme } from '../../theme';
+import { radius } from '../../theme/tokens';
+import { AppText } from '../foundation/AppText';
+import { Icon, type IconName } from '../foundation/Icon';
+import { toneColors, type Tone } from '../tone';
 
 export interface PhaseHeroProps {
   /** Nazwa fazy: Taxi, Climb, Cruise, Descent, Engine Idle. */

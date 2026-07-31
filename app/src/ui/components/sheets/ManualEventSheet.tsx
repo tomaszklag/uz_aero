@@ -22,15 +22,15 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '../theme';
-import { sheetBottomPad } from '../hooks/keyboardGeometry';
-import { useEduBanner } from '../store/eduBanners';
-import { AppText } from './AppText';
-import { ActionButton } from './ActionButton';
-import { Banner } from './Banner';
-import { Icon, type IconName } from './Icon';
-import { InlineNote } from './InlineNote';
-import { toneColors } from './tone';
+import { useTheme } from '../../theme';
+import { sheetBottomPad } from '../../hooks/keyboardGeometry';
+import { useEduBanner } from '../../store/eduBanners';
+import { AppText } from '../foundation/AppText';
+import { ActionButton } from '../data/ActionButton';
+import { Banner } from '../status/Banner';
+import { Icon, type IconName } from '../foundation/Icon';
+import { InlineNote } from '../status/InlineNote';
+import { toneColors } from '../tone';
 
 export type ManualEventType = 'takeoff' | 'landing';
 

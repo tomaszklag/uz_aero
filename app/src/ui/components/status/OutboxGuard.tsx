@@ -12,10 +12,10 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
-import { eventsCount } from '../format';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
+import { eventsCount } from '../../format';
 
 export interface OutboxGuardProps {
   /** Liczba zdarzeń czekających na wysyłkę. */

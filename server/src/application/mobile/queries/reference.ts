@@ -19,7 +19,7 @@ import type {
   ReferenceSnapshot,
   SessionRow,
   SessionsProjectionPort,
-} from '../ports.ts';
+} from '../../common/ports.ts';
 
 export interface ReferenceView {
   snapshot: ReferenceSnapshot;

@@ -18,10 +18,10 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
+import { useTheme } from '../../theme';
 import { ActionButton } from './ActionButton';
-import { AppText } from './AppText';
-import { toneColors } from './tone';
+import { AppText } from '../foundation/AppText';
+import { toneColors } from '../tone';
 
 export interface DetectToastProps {
   /** Nazwa wykrytego zdarzenia („Takeoff", „Landing"). */

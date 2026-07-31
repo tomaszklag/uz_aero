@@ -13,8 +13,8 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme/ThemeProvider';
-import { AppText } from './AppText';
+import { useTheme } from '../../theme/ThemeProvider';
+import { AppText } from '../foundation/AppText';
 
 export type SyncStatus = 'synced' | 'offline';
 

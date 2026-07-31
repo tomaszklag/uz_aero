@@ -10,8 +10,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import type { TokenService, TraceSinkPort } from '../../application/ports.ts';
-import { authorize } from '../authorize.ts';
+import type { TokenService, TraceSinkPort } from '../../../application/common/ports.ts';
+import { authorize } from '../../authorize.ts';
 
 const envelope = z.object({
   entries: z.array(z.record(z.unknown())).min(1).max(5000),

@@ -11,7 +11,7 @@ import { CORRECTION_WINDOW_MS } from '../domain';
 import { EventsRepo, SessionQueries } from '../application';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
 import { FixedClock } from '../infrastructure/clock';
-import { buildHistory, editableBadge, remainingLabel } from '../ui/screens/historyDays';
+import { buildHistory, editableBadge, remainingLabel } from '../ui/screens/logic/historyDays';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;

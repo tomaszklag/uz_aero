@@ -12,7 +12,7 @@ import { PGlite } from '@electric-sql/pglite';
 
 import { MIGRATIONS, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
-import type { Queryable } from '../src/application/ports.ts';
+import type { Queryable } from '../src/application/common/ports.ts';
 
 async function migrated(): Promise<Queryable & { exec(sql: string): Promise<unknown> }> {
   const pglite = new PGlite();

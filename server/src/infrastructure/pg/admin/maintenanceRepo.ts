@@ -12,7 +12,7 @@
  */
 
 import type { MaintenanceAdminPort } from '../../../application/admin/ports.ts';
-import type { Queryable } from '../../../application/ports.ts';
+import type { Queryable } from '../../../application/common/ports.ts';
 
 export class PgAdminMaintenanceRepo implements MaintenanceAdminPort {
   async sessionUuids(db: Queryable): Promise<string[]> {

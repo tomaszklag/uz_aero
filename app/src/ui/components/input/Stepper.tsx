@@ -15,9 +15,9 @@
 import React, { useCallback } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { toneColors, type Tone } from './tone';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { toneColors, type Tone } from '../tone';
 
 export interface StepperProps {
   value: number;

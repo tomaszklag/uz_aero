@@ -15,8 +15,8 @@
  * NIE MA jak zapisać czegokolwiek z pominięciem śladu, bo nie ma uchwytu do bazy.
  */
 
-import type { DayExporter, ExportOutcome } from '../../export/dayExporter.ts';
-import type { Clock } from '../../ports.ts';
+import type { DayExporter, ExportOutcome } from '../../common/export/dayExporter.ts';
+import type { Clock } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, AdminFlag, FlagsAdminPort, ResolvedFlag } from '../ports.ts';
 

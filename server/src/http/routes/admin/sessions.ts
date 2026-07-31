@@ -17,7 +17,7 @@ import { OPERATION_TYPES } from '@uzaero/domain';
 
 import type { AdminSessionQueries } from '../../../application/admin/queries/sessions.ts';
 import { PAGE_LIMIT_MAX, type SessionListFilter } from '../../../application/admin/ports.ts';
-import type { TokenService } from '../../../application/ports.ts';
+import type { TokenService } from '../../../application/common/ports.ts';
 import { adminRoute } from './adminRoute.ts';
 
 /**

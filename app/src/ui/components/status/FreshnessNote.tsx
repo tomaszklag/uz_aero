@@ -19,9 +19,9 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { toneColors } from './tone';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { toneColors } from '../tone';
 
 /**
  * Czwarty stan — `manual` — nie jest stanem świeżości danych serwera, tylko jego

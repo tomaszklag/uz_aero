@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
-import type { Queryable } from '../src/application/ports.ts';
+import type { Queryable } from '../src/application/common/ports.ts';
 
 function freshDb(): Queryable {
   const pglite = new PGlite();

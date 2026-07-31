@@ -12,7 +12,7 @@
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-import type { Clock, Identity, TokenService } from '../../application/ports.ts';
+import type { Clock, Identity, TokenService } from '../../application/common/ports.ts';
 import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
 
 const b64url = (data: Buffer | string): string =>

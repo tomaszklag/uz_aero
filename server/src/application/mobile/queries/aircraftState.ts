@@ -20,7 +20,7 @@ import type {
   FlagsPort,
   SessionRow,
   SessionsProjectionPort,
-} from '../ports.ts';
+} from '../../common/ports.ts';
 
 export interface AircraftState {
   aircraftId: string;

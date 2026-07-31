@@ -103,8 +103,8 @@ dowodem: model domenowy nie drgnie ani o pole, a wiersz urośnie o trzy kolumny 
 lista dni ma po czym filtrować. To jest **normalna, zdrowa niezależność**, a nie rozjazd
 do naprawienia.
 
-Pośrednie ogniwo — `SessionRow` w `application/ports.ts` — jest typem **strony zapisu
-projekcji**, nie kontraktem. `sessionRowFrom` (`application/sessionRow.ts`) jest jego
+Pośrednie ogniwo — `SessionRow` w `application/common/ports.ts` — jest typem **strony zapisu
+projekcji**, nie kontraktem. `sessionRowFrom` (`application/common/mappers/sessionRow.ts`) jest jego
 jedynym producentem, a `test/contract.test.ts` pilnuje, że odtwarza liczby
 `projectSession` zamiast liczyć własne.
 
@@ -170,7 +170,7 @@ Model **flagi serwera** jest dziś zadeklarowany **cztery razy**, w tym trzy raz
 inline w aplikacji:
 
 ```
-server/src/application/ports.ts:181     interface FlagRecord { id, type, aircraftId, sessionUuids, details, status }
+server/src/application/common/ports.ts:181     interface FlagRecord { id, type, aircraftId, sessionUuids, details, status }
 app/src/application/ports/serverPort.ts:33   flags: { type: string; sessionUuids: string[] }[]
 app/src/application/ports/serverPort.ts:84   flags: { type: string; sessionUuids: string[] }[]
 app/src/ui/store/sessionStore.ts:83          serverFlags: { type: string; sessionUuids: string[] }[]
@@ -460,7 +460,7 @@ ani drugiej bazy odczytu — powody z `docs/architektura-kodu.md` §6 obowiązuj
 **Jeden nowy poziom zagnieżdżenia `admin/` w trzech warstwach.** Uzasadnienie, bo reguła
 mówi „warstw NIE przybywa" i to nie jest warstwa:
 
-- `application/ports.ts` ma 283 linie i docblock mówiący, czym jest: kontraktem
+- `application/common/ports.ts` ma 283 linie i docblock mówiący, czym jest: kontraktem
   powierzchni telefonu. Dopisanie dziesięciu portów panelu podwoiłoby go i złamało
   cel reguły granulacji („żeby plik dało się przeczytać w całości"). **Jeden plik
   portów na powierzchnię**, nie jeden na projekt.
@@ -481,7 +481,7 @@ tego na `adminFlagsRepo.ts` — powstałby stutter `admin/adminFlagsRepo.ts`.
 | zapytania zasobu | `queries/sessions.ts` | `AdminSessionQueries` | `queries/aircraftState.ts` → `StateQueries` |
 | adapter | `pg/admin/flagsRepo.ts` | `PgAdminFlagsRepo` | `pg/flagsRepo.ts` → `PgFlagsRepo` |
 | trasy zasobu | `routes/admin/flags.ts` | `registerAdminFlagRoutes` | `routes/events.ts` → `registerEventsRoutes` |
-| mapper | `admin/sessionListItem.ts` | funkcja `sessionListItem()` | `application/sessionRow.ts` → `sessionRowFrom()` |
+| mapper | `admin/sessionListItem.ts` | funkcja `sessionListItem()` | `application/common/mappers/sessionRow.ts` → `sessionRowFrom()` |
 
 **Uproszczony CQRS bez zmian:** komendy piszą i zwracają wynik, zapytania czytają
 projekcje; projekcje odświeżane synchronicznie w transakcji. Panel nie zmienia w tym nic
@@ -666,7 +666,7 @@ export interface FlagsAdminPort {
 }
 ```
 
-Korzyść uboczna: `infrastructure/pg/flagsRepo.ts` **nie jest dotykany**, więc ścieżka
+Korzyść uboczna: `infrastructure/pg/common/flagsRepo.ts` **nie jest dotykany**, więc ścieżka
 ingestu nie ma jak zregresować.
 
 ### 5.3 Adapter
@@ -694,7 +694,7 @@ export class PgAdminFlagsRepo implements FlagsAdminPort {
 powiedzieć „arkusz odblokowany · rewizja 2" **albo** „nie da się, bo dzień otwarty".
 
 ```ts
-// server/src/application/export/dayExporter.ts
+// server/src/application/common/export/dayExporter.ts
 export type ExportOutcome =
   | { exported: true;  tab: string; revision: number; url: string }
   /** Odmowa NIE jest błędem — to poprawna odpowiedź o stanie świata (ANALIZA A05). */

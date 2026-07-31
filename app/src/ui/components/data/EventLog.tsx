@@ -25,10 +25,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Icon, type IconName } from './Icon';
-import { toneColors, type Tone } from './tone';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Icon, type IconName } from '../foundation/Icon';
+import { toneColors, type Tone } from '../tone';
 
 /** Rodzaj wiersza — steruje ikoną, kolorem i tym, czy wiersz stoi w szynie cyklu. */
 export type LogKind =

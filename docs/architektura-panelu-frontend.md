@@ -46,7 +46,7 @@ Aplikacja pilota to **React Native**, panel to **web**. To nie jest różnica st
   (`docs/architektura-kodu.md` §2). `.btn` z `SZABLON.html` to `min-height:36px` i `:hover`.
   Wspólny komponent musiałby być sumą tych dwóch, czyli nie służyć żadnemu.
 
-Materiał dowodowy z tego repo, nie z ogólnej wiedzy: `app/src/ui/components/StatusChip.tsx`
+Materiał dowodowy z tego repo, nie z ogólnej wiedzy: `app/src/ui/components/status/StatusChip.tsx`
 ma 73 linie i po odjęciu `View`/`StyleSheet`/`useTheme`/`accessibilityRole` zostaje
 **decyzja** („chip to mono 9 px / ls 2 / wersaliki, kropka w tonie akcentu"). Webowy
 odpowiednik tej samej decyzji to cztery linie `.pill` w `SZABLON.html`. Wspólny jest
@@ -255,7 +255,7 @@ a mockupy otwiera się jako pliki z dysku, także przez osoby spoza repo.
 
 To nie jest propozycja „na zapas" — **duplikat już istnieje i już się rozjechał**.
 
-`server/src/application/export/daySheetContent.ts` ma ręczne kopie funkcji z
+`server/src/application/common/export/daySheetContent.ts` ma ręczne kopie funkcji z
 `app/src/ui/format.ts`, z docblockami przyznającymi to wprost — „lustro `timeUtc`
 z app/src/ui/format.ts", „lustro `motoHours` z app/src/ui/format.ts".
 A rozjazd jest już w kodzie:

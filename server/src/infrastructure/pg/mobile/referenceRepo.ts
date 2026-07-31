@@ -11,7 +11,7 @@
 
 import type { MhFormat, ReferenceAircraft, ReferencePilot, ServiceStatus } from '@uzaero/domain';
 
-import type { Queryable, ReferencePort, ReferenceSnapshot } from '../../application/ports.ts';
+import type { Queryable, ReferencePort, ReferenceSnapshot } from '../../../application/common/ports.ts';
 
 interface AircraftRow {
   id: string;

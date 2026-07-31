@@ -13,9 +13,9 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
 
 export interface NoGpsBannerProps {
   /** Treść pod nagłówkiem — czas i wiek ostatniego fixa (`gpsLossText`). */

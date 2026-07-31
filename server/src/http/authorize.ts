@@ -13,7 +13,7 @@
  * niesie też wymaganą zdolność.
  */
 
-import type { Identity, TokenService } from '../application/ports.ts';
+import type { Identity, TokenService } from '../application/common/ports.ts';
 import { can, type Capability } from '../domain/roles.ts';
 
 export function authorize(tokens: TokenService, header: string | undefined): Identity | null {

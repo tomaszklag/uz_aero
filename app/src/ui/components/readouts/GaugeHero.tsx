@@ -19,11 +19,11 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { useTheme } from '../../theme';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
 import { ScaleBar } from './ScaleBar';
-import { toneColors, type Tone } from './tone';
+import { toneColors, type Tone } from '../tone';
 
 export interface GaugeHeroProps {
   /** Etykieta nad wartością, np. „FOB przed tankowaniem". */

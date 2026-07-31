@@ -9,8 +9,8 @@
  * panelu czyta tę tabelę także `admin/sessionsRepo.ts`.
  */
 
-import type { Queryable, SessionRow, SessionsProjectionPort } from '../../application/ports.ts';
-import { sessionColumns, toSessionRow, type SessionDbRow } from './sessionDbRow.ts';
+import type { Queryable, SessionRow, SessionsProjectionPort } from '../../../application/common/ports.ts';
+import { sessionColumns, toSessionRow, type SessionDbRow } from '../sessionDbRow.ts';
 
 export class PgSessionsProjection implements SessionsProjectionPort {
   async upsert(tx: Queryable, row: SessionRow): Promise<void> {

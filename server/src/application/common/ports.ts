@@ -21,7 +21,7 @@ import type {
   ReferencePilot,
 } from '@uzaero/domain';
 
-import type { PilotRole } from '../domain/roles.ts';
+import type { PilotRole } from '../../domain/roles.ts';
 
 // ── magazyn ─────────────────────────────────────────────────────────────────────
 

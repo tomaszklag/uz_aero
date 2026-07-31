@@ -7,8 +7,8 @@
  * Dzięki temu podgląd wpływu nie może rozjechać się z tym, co korekta faktycznie zrobi.
  */
 
-import { projectSession } from '../../domain';
-import type { Event, EventCorrectionPayload, EventType } from '../../domain';
+import { projectSession } from '../../../domain';
+import type { Event, EventCorrectionPayload, EventType } from '../../../domain';
 
 /** Wpływ korekty na metrykę czasu; `null` = korekta nie zmienia żadnego czasu. */
 export interface CorrectionImpact {

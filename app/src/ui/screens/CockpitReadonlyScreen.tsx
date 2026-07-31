@@ -40,12 +40,12 @@ import {
 } from '../components';
 // `PeekBanner` i `Caption` są nowe w Design Systemie — do `components/index.ts` dopisuje
 // je właściciel barrela (patrz raport), więc na razie importujemy je wprost z plików.
-import { Caption } from '../components/Caption';
-import { PeekBanner } from '../components/PeekBanner';
+import { Caption } from '../components/status/Caption';
+import { PeekBanner } from '../components/status/PeekBanner';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { litres, timeLocal, timeUtc } from '../format';
-import { buildLogRows } from './cockpitLog';
+import { buildLogRows } from './logic/cockpitLog';
 import {
   peekBanner,
   peekFreshness,
@@ -53,10 +53,10 @@ import {
   peekStatusChip,
   takeoverHint,
   type PeekSnapshot,
-} from './cockpitPeek';
+} from './logic/cockpitPeek';
 // Ten sam „HH:MM" z wiodącym zerem, co w tabelach ekranu 10 (`.duty-val` w mockupie
 // pokazuje „02:31") — drugi format tej samej wielkości byłby rozjazdem, nie niuansem.
-import { hhmm } from './statsDay';
+import { hhmm } from './logic/statsDay';
 import { projectSession, type ReferenceAircraft, type ReferencePilot } from '../../domain';
 
 export type { PeekSnapshot };

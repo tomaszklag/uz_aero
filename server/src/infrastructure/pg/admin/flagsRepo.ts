@@ -19,8 +19,8 @@ import type {
   FlagsAdminPort,
   ResolvedFlag,
 } from '../../../application/admin/ports.ts';
-import { EXPORT_BLOCKING_FLAG_TYPES } from '../../../application/export/dayExporter.ts';
-import type { Queryable } from '../../../application/ports.ts';
+import { EXPORT_BLOCKING_FLAG_TYPES } from '../../../application/common/export/dayExporter.ts';
+import type { Queryable } from '../../../application/common/ports.ts';
 import { SqlFilter } from '../sqlFilter.ts';
 
 interface AdminFlagDbRow {

@@ -25,15 +25,15 @@
  * śladu audytu (`auditedWrite.ts`, `test/architecture.test.ts`).
  */
 
-import { sheetDay } from '../../export/daySheetContent.ts';
-import { sessionRowFrom } from '../../sessionRow.ts';
-import type { EventsStorePort, SessionsProjectionPort } from '../../ports.ts';
+import { sheetDay } from '../../common/export/daySheetContent.ts';
+import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
+import type { EventsStorePort, SessionsProjectionPort } from '../../common/ports.ts';
 import type {
   ProjectionRowDiff,
   RebuildMode,
   RebuildReport,
 } from '../contracts/maintenance.ts';
-import { projectionDiff } from '../projectionDiff.ts';
+import { projectionDiff } from '../mappers/projectionDiff.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, MaintenanceAdminPort } from '../ports.ts';
 

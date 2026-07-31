@@ -8,9 +8,9 @@
 
 import type { FastifyInstance } from 'fastify';
 
-import type { ReferenceQueries } from '../../application/queries/reference.ts';
-import type { TokenService } from '../../application/ports.ts';
-import { authorize } from '../authorize.ts';
+import type { ReferenceQueries } from '../../../application/mobile/queries/reference.ts';
+import type { TokenService } from '../../../application/common/ports.ts';
+import { authorize } from '../../authorize.ts';
 
 export function registerReferenceRoutes(
   app: FastifyInstance,

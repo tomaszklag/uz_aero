@@ -12,23 +12,23 @@ import type { AdminCorrectionCommands } from '../application/admin/commands/corr
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
 import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
-import type { AuthCommands } from '../application/commands/auth.ts';
-import type { IngestCommands } from '../application/commands/ingest.ts';
-import type { PrefsCommands } from '../application/commands/prefs.ts';
-import type { ReferenceQueries } from '../application/queries/reference.ts';
-import type { SheetQueries } from '../application/queries/sheets.ts';
-import type { StateQueries } from '../application/queries/aircraftState.ts';
-import type { TokenService, TraceSinkPort } from '../application/ports.ts';
+import type { AuthCommands } from '../application/common/commands/auth.ts';
+import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
+import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
+import type { ReferenceQueries } from '../application/mobile/queries/reference.ts';
+import type { SheetQueries } from '../application/common/queries/sheets.ts';
+import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
+import type { TokenService, TraceSinkPort } from '../application/common/ports.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
-import { registerAuthRoutes } from './routes/auth.ts';
-import { registerEventsRoutes } from './routes/events.ts';
-import { registerPrefsRoutes } from './routes/prefs.ts';
-import { registerReferenceRoutes } from './routes/reference.ts';
-import { registerSheetsRoutes } from './routes/sheets.ts';
-import { registerStateRoutes } from './routes/state.ts';
-import { registerTracesRoutes } from './routes/traces.ts';
+import { registerAuthRoutes } from './routes/common/auth.ts';
+import { registerEventsRoutes } from './routes/mobile/events.ts';
+import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
+import { registerReferenceRoutes } from './routes/mobile/reference.ts';
+import { registerSheetsRoutes } from './routes/common/sheets.ts';
+import { registerStateRoutes } from './routes/mobile/state.ts';
+import { registerTracesRoutes } from './routes/mobile/traces.ts';
 
 export interface ServerDeps {
   auth: AuthCommands;

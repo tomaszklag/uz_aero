@@ -14,7 +14,7 @@
 import { appendFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { TraceSinkPort } from '../../application/ports.ts';
+import type { TraceSinkPort } from '../../application/common/ports.ts';
 
 /** Nazwa pliku nie może przyjść z telefonu dosłownie — tniemy do bezpiecznego zbioru. */
 function safeName(sessionUuid: unknown): string {

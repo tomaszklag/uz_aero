@@ -9,7 +9,7 @@
 
 import type { Event } from '@uzaero/domain';
 
-import type { EventsStorePort, Queryable } from '../../application/ports.ts';
+import type { EventsStorePort, Queryable } from '../../../application/common/ports.ts';
 
 interface EventRow {
   uuid: string;

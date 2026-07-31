@@ -12,7 +12,7 @@ import { FLAG_TYPES } from '@uzaero/domain';
 import type { AdminFlagCommands, ResolveFlagResult } from '../../../application/admin/commands/flags.ts';
 import type { AdminFlagQueries } from '../../../application/admin/queries/flags.ts';
 import { PAGE_LIMIT_MAX, type AdminFlag } from '../../../application/admin/ports.ts';
-import type { TokenService } from '../../../application/ports.ts';
+import type { TokenService } from '../../../application/common/ports.ts';
 import { adminRoute } from './adminRoute.ts';
 
 const resolveParams = z.object({ id: z.coerce.number().int().positive() });

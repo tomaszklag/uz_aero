@@ -9,9 +9,9 @@
 
 import type { FastifyInstance } from 'fastify';
 
-import type { StateQueries } from '../../application/queries/aircraftState.ts';
-import type { TokenService } from '../../application/ports.ts';
-import { authorize } from '../authorize.ts';
+import type { StateQueries } from '../../../application/mobile/queries/aircraftState.ts';
+import type { TokenService } from '../../../application/common/ports.ts';
+import { authorize } from '../../authorize.ts';
 
 export function registerStateRoutes(
   app: FastifyInstance,

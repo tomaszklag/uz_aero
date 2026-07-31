@@ -10,11 +10,11 @@
 import { describe, expect, it } from 'vitest';
 import { EVENT_TYPES, projectSession, type Event } from '@uzaero/domain';
 
-import { eventEnvelope } from '../src/http/routes/events.ts';
-import { sessionRowFrom } from '../src/application/sessionRow.ts';
-import { sessionListItem } from '../src/application/admin/sessionListItem.ts';
+import { eventEnvelope } from '../src/http/routes/mobile/events.ts';
+import { sessionRowFrom } from '../src/application/common/mappers/sessionRow.ts';
+import { sessionListItem } from '../src/application/admin/mappers/sessionListItem.ts';
 import type { AdminSessionJoin } from '../src/application/admin/ports.ts';
-import type { EventsStorePort } from '../src/application/ports.ts';
+import type { EventsStorePort } from '../src/application/common/ports.ts';
 import { TEST_PASSWORD, testHarness } from './helpers.ts';
 
 const DAY = Date.UTC(2026, 5, 22);

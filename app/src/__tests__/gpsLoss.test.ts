@@ -6,7 +6,7 @@
  */
 
 import { formatLatLon } from '../ui/format';
-import { fixAge, gpsLossText, staleCellNote, unknownPhaseDetail } from '../ui/screens/gpsLoss';
+import { fixAge, gpsLossText, staleCellNote, unknownPhaseDetail } from '../ui/screens/logic/gpsLoss';
 
 const T = Date.UTC(2026, 5, 22, 15, 58, 0);
 

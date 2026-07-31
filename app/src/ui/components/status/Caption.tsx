@@ -16,7 +16,7 @@
 import React from 'react';
 import { StyleSheet, type TextStyle } from 'react-native';
 
-import { AppText, type AppTextTone } from './AppText';
+import { AppText, type AppTextTone } from '../foundation/AppText';
 
 export interface CaptionProps {
   text: string;

@@ -11,8 +11,8 @@
  * musiał dopisać ręcznie, jeśli GPS nie wykryje.
  */
 
-import type { Event, MhFormat, SessionState } from '../../domain';
-import type { EventLogRow } from '../components';
+import type { Event, MhFormat, SessionState } from '../../../domain';
+import type { EventLogRow } from '../../components';
 import { buildLogRows } from './cockpitLog';
 
 export interface CycleGroup {

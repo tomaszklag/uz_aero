@@ -9,7 +9,7 @@
 
 import type { Pool } from 'pg';
 
-import type { Database, Queryable } from '../../application/ports.ts';
+import type { Database, Queryable } from '../../application/common/ports.ts';
 
 export class PgDatabase implements Database {
   constructor(private readonly pool: Pool) {}

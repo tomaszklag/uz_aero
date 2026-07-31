@@ -10,10 +10,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme';
-import { fontFamily } from '../theme/tokens';
-import { AppText } from './AppText';
-import { Icon } from './Icon';
+import { useTheme } from '../../theme';
+import { fontFamily } from '../../theme/tokens';
+import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
 
 export interface NumpadProps {
   onDigit: (digit: string) => void;

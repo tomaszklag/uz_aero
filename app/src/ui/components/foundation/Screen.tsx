@@ -28,9 +28,9 @@ import React from 'react';
 import { ScrollView, StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { useKeyboardAwareScroll } from '../hooks/useKeyboardAwareScroll';
-import { useKeyboardHeight } from '../hooks/useKeyboardHeight';
-import { useTheme } from '../theme/ThemeProvider';
+import { useKeyboardAwareScroll } from '../../hooks/useKeyboardAwareScroll';
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export interface ScreenProps extends ViewProps {
   /**

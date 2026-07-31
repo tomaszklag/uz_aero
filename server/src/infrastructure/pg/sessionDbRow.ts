@@ -13,7 +13,7 @@
 
 import { isOperationType } from '@uzaero/domain';
 
-import type { SessionRow } from '../../application/ports.ts';
+import type { SessionRow } from '../../application/common/ports.ts';
 
 export interface SessionDbRow {
   session_uuid: string;
