@@ -10,7 +10,7 @@
 import React, { useMemo } from 'react';
 import { Text, type TextProps, type TextStyle } from 'react-native';
 
-import { useTheme } from '../../theme/ThemeProvider';
+import { useTheme } from '../../theme';
 import { type Theme, type TypographyName, type TypographyToken } from '../../theme/tokens';
 
 /** Warianty publiczne. Wymagane przez zadanie: display | body | label | mono | timer.

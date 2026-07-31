@@ -18,7 +18,7 @@ import { useEffect } from 'react';
 
 import type { SensorPort } from '../../application/ports';
 import { useSessionStore } from '../store';
-import { useTrace } from '../bootstrap/ServicesProvider';
+import { useTrace } from '../bootstrap/servicesContext';
 
 export interface UseSensorTraceOptions {
   /** Port czujników; null = urządzenie bez czujników albo środowisko testowe. */

@@ -190,4 +190,54 @@ describe('granice warstw', () => {
     expect(barrel).not.toContain('./gps/expoLocationAdapter');
     expect(barrel).not.toContain('./sensors/expoSensorsAdapter');
   });
+
+  it('plik .tsx eksportuje WYŁĄCZNIE komponenty (granica Fast Refresh)', () => {
+    // Reguła narzędziowa i — przy kontekstach — reguła POPRAWNOŚCI. Fast Refresh
+    // podmienia moduł w miejscu tylko wtedy, gdy wszystkie jego eksporty są
+    // komponentami; jeden eksport obok (hook, stała, funkcja pomocnicza) odbiera
+    // modułowi status granicy odświeżania.
+    //
+    // Przy zwykłym komponencie kosztem jest utrata stanu ekranu. Przy pliku, który
+    // woła `createContext`, kosztem jest BŁĄD: kontekst re-ewaluuje się razem
+    // z komponentami, zamontowany provider podaje stary obiekt, odświeżony ekran
+    // szuka nowego — i `useContext` zwraca `undefined`. Na ekranie stojącym wewnątrz
+    // providera pojawia się „useTheme() musi być użyty wewnątrz <ThemeProvider>",
+    // albo — ciszej i gorzej — `useGps()` zwraca `null` przy działającym odbiorniku.
+    //
+    // Stąd `ui/theme/themeContext.ts` i `ui/bootstrap/servicesContext.ts` osobno
+    // od swoich providerów. Lustro reguły panelu: `admin/test/architecture.test.ts`
+    // i `docs/architektura-panelu-frontend.md` §2.3.
+    const EXCEPTIONS = new Set([
+      // Hook zwracający GOTOWY element (`correctionSheet`), więc plik musi być `.tsx`,
+      // choć komponentu nie eksportuje. Kontekstu nie tworzy, więc jedynym skutkiem
+      // jest propagacja odświeżenia do trzech ekranów, które go wołają — bez utraty
+      // tożsamości czegokolwiek. Świadomie zostawione.
+      'ui/hooks/useEventCorrection.tsx',
+    ]);
+
+    const exportsOf = (file: string): { kind: string; name: string }[] =>
+      [
+        ...readFileSync(join(SRC, file), 'utf8')
+          .replace(/\/\*[\s\S]*?\*\//g, ' ')
+          .matchAll(/^export\s+(?:async\s+)?(function|const|class|let)\s+(\w+)/gm),
+      ].map((m) => ({ kind: m[1]!, name: m[2]! }));
+
+    const tsx = sourceFiles('ui').filter((f) => f.endsWith('.tsx'));
+
+    // Kontrola samego skanera: gdyby regex przestał łapać, lista naruszeń byłaby
+    // pusta przy dowolnie połamanym drzewie komponentów.
+    expect(tsx.length).toBeGreaterThan(50);
+    expect(exportsOf('ui/theme/ThemeProvider.tsx')).toEqual([
+      { kind: 'function', name: 'ThemeProvider' },
+    ]);
+
+    const offenders: string[] = [];
+    for (const file of tsx.filter((f) => !EXCEPTIONS.has(f))) {
+      for (const { kind, name } of exportsOf(file)) {
+        // Komponent w tej aplikacji to ZAWSZE `export function` z wielkiej litery.
+        if (kind !== 'function' || !/^[A-Z]/.test(name)) offenders.push(`${file} → ${kind} ${name}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
 });

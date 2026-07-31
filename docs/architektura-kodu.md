@@ -892,9 +892,40 @@ Rejestr jest append-only, więc nie wolno do niego wpisywać stanów pośrednich
 może jeszcze zmienić albo porzucić. Zdarzenia `session_claim` i `preflight_confirm`
 powstają dopiero przy potwierdzeniu na ekranie 3.
 
+### `.tsx` eksportuje wyłącznie komponenty
+
+Reguła narzędziowa, a przy kontekstach — reguła **poprawności**.
+
+Fast Refresh podmienia moduł w miejscu tylko wtedy, gdy wszystkie jego eksporty są
+komponentami. Jeden eksport obok — hook, stała, funkcja pomocnicza — i moduł przestaje
+być granicą odświeżania. Przy zwykłym komponencie kosztem jest utrata stanu ekranu.
+Przy pliku, który woła `createContext`, kosztem jest **błąd**: kontekst re-ewaluuje się
+razem z komponentami, zamontowany provider podaje stary obiekt, odświeżony ekran szuka
+nowego, `useContext` zwraca `undefined`. Na ekranie stojącym wewnątrz providera pojawia
+się wtedy „useTheme() musi być użyty wewnątrz `<ThemeProvider>`", albo — ciszej i gorzej —
+`useGps()` zwraca `null` przy działającym odbiorniku.
+
+Dlatego kontekst i jego czytnik mieszkają OSOBNO od providera:
+
+| kontekst + hook | provider (sam komponent) |
+| --- | --- |
+| `ui/theme/themeContext.ts` | `ui/theme/ThemeProvider.tsx` |
+| `ui/bootstrap/servicesContext.ts` | `ui/bootstrap/ServicesProvider.tsx` |
+
+Dla wołających nic się nie zmienia — barrel `ui/theme/index.ts` wystawia jedno i drugie,
+więc `import { useTheme } from '../../theme'` działa jak dotąd (i jest jedyną poprawną
+formą: 82 pliki tak robią, a omijanie barrela to druga konwencja bez powodu).
+
+Jeden świadomy wyjątek: `ui/hooks/useEventCorrection.tsx` zwraca gotowy element
+(`correctionSheet`), więc musi być `.tsx`, choć komponentu nie eksportuje. Kontekstu
+nie tworzy, więc jedynym skutkiem jest propagacja odświeżenia do trzech ekranów,
+które go wołają.
+
+Ta sama reguła po stronie panelu: `docs/architektura-panelu-frontend.md` §2.3.
+
 ### To nie jest tylko obietnica
 
-Granice pilnuje **wykonywalny test** — `src/__tests__/architecture.test.ts` skanuje importy i wywala się, gdy ktoś je złamie. Ma też własny test kontrolny („skaner faktycznie widzi pliki i importy"), żeby nie przechodził dlatego, że niczego nie znalazł. Dodatkowo sprawdza, że **barrel infrastruktury nie wciąga modułu natywnego** — dzięki temu testy działają w Node, bez urządzenia.
+Granice pilnuje **wykonywalny test** — `src/__tests__/architecture.test.ts` skanuje importy i wywala się, gdy ktoś je złamie. Ma też własny test kontrolny („skaner faktycznie widzi pliki i importy"), żeby nie przechodził dlatego, że niczego nie znalazł. Dodatkowo sprawdza, że **barrel infrastruktury nie wciąga modułu natywnego** — dzięki temu testy działają w Node, bez urządzenia — oraz że **żaden `.tsx` w `ui/` nie eksportuje nie-komponentu** (reguła wyżej; komponent w tej aplikacji to zawsze `export function` z wielkiej litery).
 
 Dokument może się zdezaktualizować; test nie.
 

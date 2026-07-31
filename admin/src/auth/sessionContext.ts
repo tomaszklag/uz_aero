@@ -25,7 +25,16 @@ import { createContext, useContext } from 'react';
 
 import type { PanelSessionDto } from '../api/dto';
 
-export interface SessionState {
+/**
+ * Stan sesji PANELU: kto jest zalogowany i czy już to wiemy.
+ *
+ * Przedrostek `Panel` nie jest ozdobą — `SessionState` w tym repozytorium jest już
+ * zajęte przez projekcję dnia lotnego z `@uzaero/domain` (silnik, loty, paliwo,
+ * motogodziny). Obie nazwy spotykają się w `screens/dzien/DzienScreen.tsx`, więc
+ * gołe `SessionState` znaczyłoby tam dwie zupełnie różne rzeczy. Ta sama konwencja
+ * co `PanelSessionDto` w `api/dto.ts`.
+ */
+export interface PanelSessionState {
   /** `null` = nie ma sesji (nie „jeszcze nie wiemy" — od tego jest `loading`). */
   session: PanelSessionDto | null;
   loading: boolean;
@@ -33,9 +42,9 @@ export interface SessionState {
   error: unknown;
 }
 
-export const SessionContext = createContext<SessionState | null>(null);
+export const SessionContext = createContext<PanelSessionState | null>(null);
 
-export function useSessionState(): SessionState {
+export function useSessionState(): PanelSessionState {
   const value = useContext(SessionContext);
   // Rzucamy zamiast zwracać wartość zastępczą: komponent poza providerem to błąd
   // złożenia aplikacji, a cichy „brak sesji" wyglądałby jak wylogowanie.

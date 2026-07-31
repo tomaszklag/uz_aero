@@ -14,12 +14,12 @@
 import type { ReactNode } from 'react';
 
 import { useSession } from '../queries/useSession';
-import { SessionContext, type SessionState } from './sessionContext';
+import { SessionContext, type PanelSessionState } from './sessionContext';
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const query = useSession();
 
-  const value: SessionState = {
+  const value: PanelSessionState = {
     session: query.data ?? null,
     loading: query.isPending,
     error: query.error,

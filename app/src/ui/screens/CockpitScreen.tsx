@@ -52,7 +52,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
-import { useGps, useSensors } from '../bootstrap/ServicesProvider';
+import { useGps, useSensors } from '../bootstrap/servicesContext';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { useEventCorrection } from '../hooks/useEventCorrection';

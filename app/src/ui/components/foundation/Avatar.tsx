@@ -26,8 +26,13 @@ export interface AvatarProps {
   style?: ViewStyle;
 }
 
-/** „Tomasz Małkiewicz" → „TM"; jednoczłonowe → pierwsza litera. */
-export function initialsOf(name: string): string {
+/**
+ * „Tomasz Małkiewicz" → „TM"; jednoczłonowe → pierwsza litera.
+ *
+ * NIE eksportowana: używa jej wyłącznie `Avatar` niżej. Eksport obok komponentu
+ * odbierałby plikowi status granicy Fast Refresh (`docs/architektura-kodu.md` §2).
+ */
+function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
   return parts

@@ -13,7 +13,7 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../../theme/ThemeProvider';
+import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 
 export type SyncStatus = 'synced' | 'offline';

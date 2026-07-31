@@ -12,7 +12,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../../theme/ThemeProvider';
+import { useTheme } from '../../theme';
 import { THEME_LABELS, THEME_ORDER, THEMES, fontFamily } from '../../theme/tokens';
 import { AppText } from '../foundation/AppText';
 
