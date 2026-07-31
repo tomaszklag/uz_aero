@@ -415,7 +415,6 @@
         </div>
       </div>
 
-      <!-- TŁO: szczegół dnia z podświetlonym wierszem osi zdarzeń -->
       <div class="content">
 
         <div class="page-head">
@@ -470,7 +469,6 @@
 
       </div>
 
-      <!-- ══ SZUFLADA KOREKTY ══ -->
       <div class="drawer-scrim"></div>
       <div class="drawer" style="width:660px;">
 
@@ -489,7 +487,6 @@
             <span><b>Rejestr zdarzeń jest append-only — nie ma tu edycji ani kasowania.</b> Ten formularz nie zmienia zdarzenia <code>engine_stop</code>. Dopisuje <b>nowe</b> zdarzenie <code>event_correction</code> z <code>targetUuid</code> wskazującym oryginał. Oryginalny odczyt zostaje w bazie na zawsze i dalej widać go na osi zdarzeń — projekcja tylko przestaje go uwzględniać albo liczy z nowym czasem.</span>
           </div>
 
-          <!-- ORYGINAŁ — nietykalny -->
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Zdarzenie korygowane · oryginalny odczyt <span class="spacer"></span><span class="pill dim">zostaje na zawsze</span></div>
             <div class="kv"><span class="kv-k">Typ</span><span class="kv-v">engine_stop</span></div>
@@ -501,7 +498,6 @@
             <div class="kv"><span class="kv-k">Powiązana flaga</span><span class="kv-v amber"><small>CLOCK_DRIFT · 720 s</small></span></div>
           </div>
 
-          <!-- WYBÓR AKCJI — dokładnie dwie -->
           <div class="field">
             <span class="label">Akcja — dokładnie dwie, obie dopisują zdarzenie</span>
             <div class="opt-list">
@@ -522,7 +518,6 @@
             </div>
           </div>
 
-          <!-- NOWY CZAS — tylko dla retime -->
           <div class="field" data-act="retime">
             <span class="label">Nowy czas zdarzenia (UTC)</span>
             <input class="input mono" value="2026-07-30 13:01:33" />
@@ -534,14 +529,12 @@
             <span><b>Tutaj <code>void</code> jest złym narzędziem.</b> Silnik został wyłączony — pomylona jest tylko godzina. Unieważnienie <code>engine_stop</code> zostawia cykl 3 <b>otwarty</b>, więc jego 01:17:19 wypada z czasu blokowego w całości (patrz podgląd niżej), zamiast skrócić się o 12 minut. <code>void</code> jest dla zdarzeń, których <b>nie było</b> — jak fałszywe lądowanie o 08:14:09.</span>
           </div>
 
-          <!-- POWÓD — obowiązkowy -->
           <div class="field">
             <span class="label">Powód korekty · pole obowiązkowe</span>
             <textarea class="input" rows="4" style="min-height:96px;resize:vertical;font-family:var(--font-body);line-height:1.5;">Zegar telefonu spieszył 12 min (flaga CLOCK_DRIFT, pierwsze przekroczenie 30 JUL 11:56:14 UTC). Ostatni cykl bez fixa GPS, więc czas zdarzenia spadł na device_time. Godzinę wyłączenia potwierdza odczyt licznika MH (3907.8 = Δ 5.7 h) oraz wpis w książce samolotu.</textarea>
             <span class="hint">Bez powodu przycisk zapisu jest nieaktywny. Powód idzie do audit logu razem z obiema wartościami — po roku to jedyna rzecz, która wyjaśni, dlaczego liczby dnia różnią się od tego, co zapisał telefon.</span>
           </div>
 
-          <!-- PODGLĄD WPŁYWU -->
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Wpływ na liczby dnia <span class="spacer"></span><span class="pill dim">przed → po</span></div>
 
@@ -566,7 +559,6 @@
             </div>
           </div>
 
-          <!-- KTO PODPISUJE ZDARZENIE -->
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Czyim nazwiskiem zapisze się korekta</div>
             <div class="kv"><span class="kv-k">W rejestrze jako</span><span class="kv-v">A. Wrzosek <small>PIC sesji (AWR)</small></span></div>
@@ -575,13 +567,11 @@
             <span class="hint">Zdarzenie <code>event_correction</code> musi nieść <code>picId</code> <b>PIC-a tej sesji</b>, nie administratora — do jednej sesji pisze jedna tożsamość (single-writer), więc korekta ostemplowana Twoim kontem zostałaby odrzucona jako <b>WRITER_MISMATCH</b>. Dlatego oś zdarzeń przy Twojej korekcie pokaże nazwisko <b>Anny Wrzosek</b>. Fakt, że zrobił to administrator, żyje w audycie — i tylko tam.</span>
           </div>
 
-          <!-- SYNC JEDNOKIERUNKOWY -->
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span><b>Ta korekta nie wróci na telefon Anny Wrzosek.</b> Synchronizacja jest dziś jednokierunkowa — kontrakt API (§4.6) nie ma endpointu, który oddawałby zdarzenia do aplikacji. Poprawiasz rejestr na serwerze i arkusz; telefon pilotki zostanie ze <b>swoją, starą wersją</b> i po wejściu na ekran 12 (Historia dni) dalej pokaże blok 05:53. Rozjazd utrzyma się do czasu, aż powstanie pobieranie zdarzeń. Jeśli różnica ma dla pilota znaczenie — powiedz mu o niej poza aplikacją.</span>
           </div>
 
-          <!-- KONSEKWENCJE -->
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Co się stanie po zapisie</div>
             <div class="kv"><span class="kv-k">1 · Rejestr</span><span class="kv-v"><small>+1 zdarzenie <code>event_correction</code> (85)</small></span></div>

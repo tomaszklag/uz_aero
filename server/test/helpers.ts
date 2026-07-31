@@ -15,7 +15,10 @@ import { join } from 'node:path';
 
 import { PGlite } from '@electric-sql/pglite';
 
+import type { AdminAuditPort } from '../src/application/admin/ports.ts';
 import type { Clock, Database, Queryable, SheetsPort } from '../src/application/ports.ts';
+import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
+import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/commands/auth.ts';
 import { IngestCommands } from '../src/application/commands/ingest.ts';
 import { PrefsCommands } from '../src/application/commands/prefs.ts';
@@ -25,6 +28,8 @@ import { SheetQueries } from '../src/application/queries/sheets.ts';
 import { StateQueries } from '../src/application/queries/aircraftState.ts';
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
+import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
+import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
 import { PgEventsStore } from '../src/infrastructure/pg/eventsStore.ts';
 import { PgExportLogRepo } from '../src/infrastructure/pg/exportLogRepo.ts';
 import { PgFlagsRepo } from '../src/infrastructure/pg/flagsRepo.ts';
@@ -54,7 +59,14 @@ export const TEST_PASSWORD = 'poprawne-haslo-testowe';
 /** Celowo sztuczny host — nic tu nie nasłuchuje; testy przybijają PEŁNE URL-e kart. */
 export const TEST_BASE_URL = 'http://uzaero.test';
 
-export async function testHarness(options: { sheets?: SheetsPort } = {}) {
+/**
+ * `audit` podmienia się z jednego powodu: żeby WYMUSIĆ awarię zapisu śladu i pokazać,
+ * że skutek komendy cofa się razem z nim (`adminAudit.test.ts`). Poza tym testem
+ * jedzie prawdziwy `PgAdminAuditRepo`, jak wszystko inne tutaj.
+ */
+export async function testHarness(
+  options: { sheets?: SheetsPort; audit?: AdminAuditPort } = {},
+) {
   const pglite = new PGlite();
   // PGlite spełnia `Queryable` wprost, a transakcje ma własne (`transaction(cb)` daje
   // obiekt z `query`) — opakowanie dopasowuje tylko kształt do portu `Database`.
@@ -109,6 +121,12 @@ export async function testHarness(options: { sheets?: SheetsPort } = {}) {
     traces: new FsTraceSink(tracesDir),
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     tokens,
+    adminFlags: new AdminFlagCommands(
+      new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock),
+      new PgAdminFlagsRepo(),
+      exporter,
+      clock,
+    ),
   });
 
   return { app, db, clock, tokens, tracesDir };

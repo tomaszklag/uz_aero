@@ -8,6 +8,7 @@
 
 import Fastify, { type FastifyInstance } from 'fastify';
 
+import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
 import type { AuthCommands } from '../application/commands/auth.ts';
 import type { IngestCommands } from '../application/commands/ingest.ts';
 import type { PrefsCommands } from '../application/commands/prefs.ts';
@@ -15,6 +16,7 @@ import type { ReferenceQueries } from '../application/queries/reference.ts';
 import type { SheetQueries } from '../application/queries/sheets.ts';
 import type { StateQueries } from '../application/queries/aircraftState.ts';
 import type { TokenService, TraceSinkPort } from '../application/ports.ts';
+import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
 import { registerAuthRoutes } from './routes/auth.ts';
 import { registerEventsRoutes } from './routes/events.ts';
 import { registerPrefsRoutes } from './routes/prefs.ts';
@@ -32,6 +34,8 @@ export interface ServerDeps {
   traces: TraceSinkPort;
   prefs: PrefsCommands;
   tokens: TokenService;
+  /** Komendy panelu administracyjnego (`/admin/api/*`) — patrz `routes/admin/`. */
+  adminFlags: AdminFlagCommands;
 }
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
@@ -44,6 +48,10 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerSheetsRoutes(app, deps.sheets, deps.tokens);
   registerTracesRoutes(app, deps.traces, deps.tokens);
   registerPrefsRoutes(app, deps.prefs, deps.tokens);
+
+  // Panel administracyjny — trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
+  // pilnuje `adminRoute`, żeby nie rozjechał się między plikami.
+  registerAdminFlagRoutes(app, deps.adminFlags, deps.tokens);
 
   app.get('/health', async () => ({ ok: true }));
 

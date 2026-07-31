@@ -11,6 +11,19 @@
 > `DEFAULT 'pilot'`), claim w JWT, `src/domain/roles.ts`, `authorizeCapability`
 > w `http/authorize.ts`, test `test/roles.test.ts`. BRAKUJE: cyklu życia flagi,
 > endpointów `/admin/*`, tabeli audytu, sesji przeglądarkowej, list i agregatów.
+>
+> **Aktualizacja 2026-07-31 — przekrój 1 WDROŻONY** (§5): `admin_audit` (migracja 9),
+> `domain/adminActions.ts`, `AuditedWrite`, `FlagsAdminPort` + `PgAdminFlagsRepo`
+> (migracja 10), `AdminFlagCommands.resolve`, `ExportOutcome` z `DayExporter`,
+> `POST /admin/api/flags/:id/resolve`, `test/{adminFlags,adminAudit,architecture}.test.ts`.
+> **Numeracja migracji przesunięta o 1** względem tego dokumentu: `admin_audit` z §4.5
+> to migracja **9** (nie 8 — tę zajął `CHECK` na `flags.type` z przekroju 0), a kolumny
+> rozstrzygnięcia flagi z §5.1 to migracja **10**. Kolejne (`sessions` +5 kolumn,
+> indeksy `events`, `UNIQUE` na `export_log`, klucze obce) przesuwają się tak samo.
+> NIE wdrożone z przekroju 1: `GET /admin/api/flags` i `/flags/:id` (skrzynka A03
+> potrzebuje `SqlFilter`/`keyset` z przekroju 2) oraz sesja przeglądarkowa z §8 —
+> autoryzacja panelu jedzie dziś na `Bearer`, bo klienta w przeglądarce jeszcze nie ma
+> i kodu obsługi ciasteczka nie byłoby czym sprawdzić.
 
 ---
 
@@ -540,7 +553,7 @@ mieszka w panelu; serwer wystawia surowe kody.
 ### 4.5 Niezmienność na poziomie bazy
 
 ```sql
--- migracja 8
+-- migracja 9 (wdrożona; numer 8 zajął CHECK na `flags.type` z przekroju 0)
 CREATE TABLE IF NOT EXISTS admin_audit (
   id              BIGSERIAL PRIMARY KEY,
   actor_pilot_id  TEXT        NOT NULL,
@@ -577,7 +590,8 @@ i nie ma czym jej odblokować.
 ### 5.1 Migracje
 
 ```sql
--- migracja 9: flaga zapamiętuje, KTO i JAK ją rozstrzygnął.
+-- migracja 10 (wdrożona jako 10, nie 9 — patrz nota o numeracji na początku dokumentu):
+-- flaga zapamiętuje, KTO i JAK ją rozstrzygnął.
 -- `resolved_at` już jest (migracja 2). `resolution_note` jest NOT NULL bez wartości
 -- domyślnej dla NOWYCH rozstrzygnięć — pole „Jak rozstrzygnięto" jest wymagane
 -- (ANALIZA A03a), bo za pół roku nikt nie pamięta. Kolumna zostaje NULL-owalna

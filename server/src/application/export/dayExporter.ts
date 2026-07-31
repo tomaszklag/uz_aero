@@ -33,6 +33,20 @@ import type {
   SheetsPort,
 } from '../ports.ts';
 
+/**
+ * Wynik próby eksportu. Do przekroju 1 panelu `exportSession` zwracał `void` i milczał
+ * o powodzie odmowy — wystarczało to jedynemu wołającemu (ingest ignoruje wynik).
+ * Panel musi umieć powiedzieć „arkusz odblokowany · rewizja 2" ALBO „nie da się, bo
+ * dzień jest wciąż otwarty", więc powód wraca wartością.
+ *
+ * **Odmowa NIE jest błędem** — to poprawna odpowiedź o stanie świata. Rzucanie
+ * wyjątku zmusiłoby wołającego do rozróżniania „nie było czego eksportować" od
+ * „Google padło", a to są dwie zupełnie różne wiadomości.
+ */
+export type ExportOutcome =
+  | { exported: true; tab: string; revision: number; url: string }
+  | { exported: false; reason: 'no_events' | 'session_open' | 'no_preflight' | 'overlap_flag' };
+
 export class DayExporter {
   constructor(
     private readonly db: Database,
@@ -44,35 +58,46 @@ export class DayExporter {
     private readonly clock: Clock,
   ) {}
 
-  async exportSession(sessionUuid: string): Promise<void> {
+  async exportSession(sessionUuid: string): Promise<ExportOutcome> {
     const stream = await this.events.sessionEvents(this.db, sessionUuid);
-    if (stream.length === 0) return;
+    if (stream.length === 0) return { exported: false, reason: 'no_events' };
 
     const state = projectSession(stream);
-    if (!state.closed || state.dutyStart == null || state.aircraftId == null) return;
+    if (!state.closed) return { exported: false, reason: 'session_open' };
+    if (state.dutyStart == null || state.aircraftId == null) {
+      return { exported: false, reason: 'no_preflight' };
+    }
 
     const open = await this.flags.openForSession(this.db, sessionUuid);
-    if (open.some((f) => f.type === 'session_overlap')) return;
+    if (open.some((f) => f.type === 'session_overlap')) {
+      return { exported: false, reason: 'overlap_flag' };
+    }
 
     const sheet = buildDaySheet(state, {
       pic: await this.codeOf(state.sessionPicId),
       dual: await this.codeOf(state.dualId),
     });
-    if (sheet == null) return;
+    // Nieosiągalne przy powyższych bramkach (`buildDaySheet` odmawia dokładnie przy
+    // braku duty startu i samolotu) — zostaje jako zawężenie typu, nie jako gałąź
+    // do przetestowania.
+    if (sheet == null) return { exported: false, reason: 'no_preflight' };
 
     const { url } = await this.sheets.writeDaySheet(sheet);
 
     // Wpis do dziennika DOPIERO po udanym zapisie karty — odwrotna kolejność
     // pokazałaby na ekranie 11 link do arkusza, którego nie ma.
     const previous = await this.exportLog.latest(this.db, sessionUuid);
+    const revision = (previous?.revision ?? 0) + 1;
     await this.exportLog.append(this.db, {
       sessionUuid,
       day: sheetDay(state.dutyStart),
       aircraftId: state.aircraftId,
       sheetUrl: url,
-      revision: (previous?.revision ?? 0) + 1,
+      revision,
       exportedAt: this.clock.now(),
     });
+
+    return { exported: true, tab: sheet.tab, revision, url };
   }
 
   /**

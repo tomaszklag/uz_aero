@@ -428,7 +428,6 @@
           <div class="tile"><span class="tile-key">Dni lotne</span><span class="tile-val blue">53</span><span class="tile-note">3 samoloty · 5 pilotów · 30 dni kalendarzowych.</span></div>
         </div>
 
-        <!-- SPARKLINE: nalot dzień po dniu -->
         <div class="card">
           <div class="card-title">Nalot blokowy dzień po dniu · cała flota <span class="spacer"></span><span class="pill dim">max 10.2 h · 27 JUL</span><span class="pill green">suma 186:39</span></div>
           <svg viewBox="0 0 600 96" style="width:100%;height:auto;display:block;overflow:visible;" role="img" aria-label="Wykres nalotu blokowego dzień po dniu, 1–30 lipca 2026">
@@ -449,7 +448,6 @@
           <span class="hint">Cztery dni bez nalotu (05, 11, 18, 26 JUL) to dni bez ani jednej sesji — nie brak danych. Dzień bez <code>session_claim</code> nie istnieje w rejestrze i panel go nie zmyśla.</span>
         </div>
 
-        <!-- WYKRES: blok vs czas lotu per samolot -->
         <div class="cols">
           <div class="card">
             <div class="card-title">Nalot: blok vs czas lotu <span class="spacer"></span><span class="pill green">blok</span><span class="pill blue">lot</span></div>
@@ -504,7 +502,6 @@
           </div>
         </div>
 
-        <!-- UJĘCIE: PER SAMOLOT -->
         <div data-view="aircraft">
           <div class="table-wrap">
             <table>
@@ -577,7 +574,6 @@
           <span class="hint" style="display:block;padding-top:8px;">Kolumna „Śr. L/h" nie sumuje się do wiersza RAZEM — średnia ze średnich nie jest średnią. Dla całej floty policzyłaby 21 436 L / 186.65 h = 114.8 L/h, co nie znaczy nic, bo Caravan i AT-3 palą w innej skali. Dlatego panel stawia tu kreskę zamiast liczby, która wygląda na sensowną.</span>
         </div>
 
-        <!-- UJĘCIE: PER PILOT -->
         <div data-view="pilot" style="display:none;">
           <div class="table-wrap">
             <table>
@@ -660,7 +656,6 @@
           <span class="hint" style="display:block;padding-top:8px;">Blok jako PIC sumuje się do nalotu floty; blok jako Dual <b>nie</b> — te same godziny liczą się drugi raz dla drugiego pilota w kabinie. Godziny Duala wylicza serwer z nagłówków zdarzeń (<code>dual_id</code>), bo w sesji pisze wyłącznie urządzenie PIC-a. Starty i lądowania przypisujemy PIC-owi.</span>
         </div>
 
-        <!-- UJĘCIE: PER OPERACJA -->
         <div data-view="operation" style="display:none;">
           <div class="table-wrap">
             <table>
@@ -746,7 +741,6 @@
           </div>
         </div>
 
-        <!-- STRONA PRZYCHODOWA DNIA: ZRZUTY -->
         <div class="card">
           <div class="card-title" style="color:var(--blue);">Strona przychodowa · zrzuty <span class="spacer"></span><span class="pill blue">operacja SKOKI</span><span class="pill dim">SP-KLM · 21 dni</span></div>
 

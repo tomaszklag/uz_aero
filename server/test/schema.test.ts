@@ -65,13 +65,19 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     [
       'flags',
-      ['id', 'type', 'aircraft_id', 'session_uuids', 'details', 'status', 'created_at', 'resolved_at'],
+      // `resolved_by`/`resolution_note` na końcu — migracja 10 (ALTER) dokłada je
+      // za istniejącymi kolumnami.
+      ['id', 'type', 'aircraft_id', 'session_uuids', 'details', 'status', 'created_at', 'resolved_at', 'resolved_by', 'resolution_note'],
     ],
     [
       'export_log',
       ['id', 'session_uuid', 'day', 'aircraft_id', 'sheet_url', 'revision', 'exported_at'],
     ],
     ['exported_sheets', ['tab', 'rows', 'updated_at']],
+    [
+      'admin_audit',
+      ['id', 'actor_pilot_id', 'actor_role', 'action', 'target_type', 'target_id', 'details', 'ip', 'created_at'],
+    ],
   ])('tabela %s ma dokładnie uzgodnione kolumny', async (table, expected) => {
     const db = await migrated();
     expect(await columnsOf(db, table as string)).toEqual(expected);

@@ -9,6 +9,8 @@
 import { Pool } from 'pg';
 import { z } from 'zod';
 
+import { AdminFlagCommands } from './application/admin/commands/flags.ts';
+import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { AuthCommands } from './application/commands/auth.ts';
 import { IngestCommands } from './application/commands/ingest.ts';
 import { PrefsCommands } from './application/commands/prefs.ts';
@@ -18,6 +20,8 @@ import { SheetQueries } from './application/queries/sheets.ts';
 import { StateQueries } from './application/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
+import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
+import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
 import { PgEventsStore } from './infrastructure/pg/eventsStore.ts';
 import { PgExportLogRepo } from './infrastructure/pg/exportLogRepo.ts';
@@ -66,6 +70,10 @@ const pilots = new PgPilotsRepo(db);
 const sheets = new PgSheets(db, env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`, clock);
 const exporter = new DayExporter(db, events, flags, exportLog, sheets, pilots, clock);
 
+// Panel administracyjny. `AuditedWrite` jest JEDYNĄ drogą zapisu komend panelu —
+// dlatego to ono, a nie `db`, wędruje do konstruktora `AdminFlagCommands`.
+const auditedWrite = new AuditedWrite(db, new PgAdminAuditRepo(), clock);
+
 const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), new ScryptHasher(), tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
@@ -75,6 +83,7 @@ const app = buildServer({
   traces: new FsTraceSink(env.TRACES_DIR),
   prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
   tokens,
+  adminFlags: new AdminFlagCommands(auditedWrite, new PgAdminFlagsRepo(), exporter, clock),
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

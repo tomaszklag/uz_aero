@@ -330,7 +330,6 @@
 
   <div class="shell">
 
-    <!-- ══ SIDEBAR — kanoniczny, identyczny na każdym ekranie panelu ══ -->
     <nav class="sidebar">
       <div class="brand">
         <span class="brand-mark">
@@ -408,7 +407,6 @@
       </div>
     </nav>
 
-    <!-- ══ MAIN — lista pod spodem, nad nią szuflada ══ -->
     <div class="main" style="position:relative;">
       <div class="topbar">
         <div class="crumbs">Panel <span>/</span> Operacje <span>/</span> <a href="A03-flagi.html" style="color:var(--text-muted);text-decoration:none;">Flagi</a> <span>/</span> <b>#1046 · session_overlap</b></div>
@@ -524,7 +522,6 @@
 
       </div>
 
-      <!-- ══ SZUFLADA SZCZEGÓŁU ══ -->
       <a class="drawer-scrim" href="A03-flagi.html" aria-label="Zamknij szufladę"></a>
       <div class="drawer">
         <div class="drawer-head">
@@ -544,7 +541,7 @@
 
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>Ten ekran jest projektem brakującego endpointu.</b> W kodzie serwera nie ma dziś niczego, co ustawia <code>flags.status = 'resolved'</code> — otwarta flaga tego typu blokuje kartę dnia bezterminowo, a jedynym odblokowaniem jest ręczny <code>UPDATE</code> w bazie. <span class="pill amber" style="margin-top:6px;">DO DOROBIENIA NA SERWERZE</span></span>
+            <span><b>Otwarta flaga <code>session_overlap</code> blokuje kartę dnia.</b> Do 2026-07-31 blokowała ją bezterminowo, bo w kodzie serwera nie było niczego, co ustawia <code>flags.status = 'resolved'</code> — jedynym odblokowaniem był ręczny <code>UPDATE</code> w bazie. Endpoint rozwiązania już istnieje i sam wywołuje re-eksport. <span class="pill green" style="margin-top:6px;">WDROŻONE</span></span>
           </div>
 
           <div class="card" style="padding:14px 16px;">
@@ -638,7 +635,7 @@
           </div>
 
           <div class="card" style="padding:14px 16px;">
-            <div class="card-title">Rozwiązanie <span class="spacer"></span><span class="pill dim">open → resolved</span><span class="pill amber">DO DOROBIENIA</span></div>
+            <div class="card-title">Rozwiązanie <span class="spacer"></span><span class="pill dim">open → resolved</span><span class="pill green">WDROŻONE</span></div>
             <div class="field">
               <span class="label">Komentarz — wymagany</span>
               <textarea class="input" rows="4" style="resize:vertical;line-height:1.5;">Rozmowa z A. Wrzosek 31 JUL: dzień zamknęła o 12:10, telefon od tego czasu bez zasięgu i z pustą baterią. Dane sesji A dosłane ręcznie z kopii lokalnej 31 JUL 13:58 — day_close jest w rejestrze, nakładka była pozorna. Odblokowuję kartę 2026-07-30_SP-KLM.</textarea>
@@ -651,7 +648,7 @@
           <div class="banner ok">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
             <span><b>Co się stanie po rozwiązaniu.</b> Bramka <code>dayExporter</code> przestaje trzymać sesję, karta <code>2026-07-30_SP-KLM</code> generuje się po raz pierwszy → <b>rewizja 1</b>, nowy wiersz w <code>export_log</code>, treść karty w <code>exported_sheets</code>. Ślad akcji ląduje w audycie. Przy flagach <code>mh_gap</code> / <code>mh_regression</code>, które eksportu nie blokują, rozwiązanie wymusza <b>re-eksport karty z podbitą rewizją</b> — karta niesie adnotację o otwartej fladze i musi powstać na nowo, inaczej dokument klubu zostaje z nieaktualnym ostrzeżeniem.<br />
-            <span class="pill amber" style="margin-top:6px;">DO DOROBIENIA NA SERWERZE</span> Dziś eksport rusza wyłącznie przy przyjęciu zdarzeń — wyzwalacz „po rozwiązaniu flagi" jest pozycją backlogu. Do czasu jego dodania trzeba ponowić eksport ręcznie na ekranie <a href="A05-eksporty.html" style="color:var(--green);font-weight:600;">Eksporty</a>.</span>
+            <span class="pill green" style="margin-top:6px;">WDROŻONE</span> Rozwiązanie flagi samo uruchamia re-eksport karty — po zatwierdzeniu transakcji, żeby dokument klubu nigdy nie opisał stanu, który się nie zapisał. Ręczne ponowienie na ekranie <a href="A05-eksporty.html" style="color:var(--green);font-weight:600;">Eksporty</a> zostaje na wypadek awarii samego eksportu.</span>
           </div>
 
           <div class="card" style="padding:14px 16px;">

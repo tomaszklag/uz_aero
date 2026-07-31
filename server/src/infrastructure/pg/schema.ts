@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 10;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -224,6 +224,66 @@ export const MIGRATION_8 = `
   );
 `;
 
+/**
+ * Migracja 9: dziennik akcji administratorów (`admin_audit`, przekrój 1 panelu).
+ *
+ * Wiersz powstaje WYŁĄCZNIE przez `AdminAuditPort.append`, wołane z wnętrza
+ * `AuditedWrite` — czyli w tej samej transakcji co skutek, który opisuje. Operacja,
+ * której nie udało się zaudytować, po prostu nie zachodzi.
+ *
+ * **Tabela jest append-only i nie ma tu na to ograniczenia bazodanowego** — docelowo
+ * niezmienność wymusza `GRANT INSERT, SELECT` dla roli aplikacyjnej (wymaga drugiego
+ * connection stringa, decyzja wdrożeniowa `docs/architektura-panelu-serwer.md` §11
+ * pkt 2). Do tego czasu pilnuje jej `test/architecture.test.ts`: żaden plik w `src/`
+ * nie ma prawa zawierać `UPDATE admin_audit` ani `DELETE FROM admin_audit`.
+ *
+ * **`action` i `actor_role` celowo BEZ `CHECK`-a na słowniku** — inaczej niż
+ * `pilots.role` (migracja 7) i `flags.type` (migracja 8). Tamte opisują byt ŻYWY,
+ * który adapter wczytuje z powrotem do zamkniętej unii i musi umieć zinterpretować.
+ * Tu wiersz jest zapisem HISTORYCZNYM: przemianowanie akcji albo wycofanie roli
+ * z katalogu nie może unieważnić tego, co zdarzyło się rok temu, a `CHECK` zmusiłby
+ * wtedy albo do przepisania historii, albo do porzucenia zmiany. Słownika pilnuje
+ * typ `AdminAction` w jedynym miejscu zapisu (`domain/adminActions.ts`), a strona
+ * odczytu (ekran A09) ma pokazać nieznany kod dosłownie, nigdy się nim wywrócić.
+ *
+ * `ip` jest NULL-owalny: akcja może przyjść z narzędzia bez żądania HTTP (skrypt
+ * administracyjny), a wymyślony adres byłby gorszy niż jego brak.
+ */
+export const MIGRATION_9 = `
+  CREATE TABLE IF NOT EXISTS admin_audit (
+    id             BIGSERIAL PRIMARY KEY,
+    actor_pilot_id TEXT        NOT NULL,
+    actor_role     TEXT        NOT NULL,
+    action         TEXT        NOT NULL,
+    target_type    TEXT,
+    target_id      TEXT,
+    details        JSONB       NOT NULL DEFAULT '{}'::jsonb,
+    ip             TEXT,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS idx_audit_created ON admin_audit (created_at DESC, id DESC);
+  CREATE INDEX IF NOT EXISTS idx_audit_actor   ON admin_audit (actor_pilot_id, created_at DESC);
+`;
+
+/**
+ * Migracja 10: flaga zapamiętuje, KTO i JAK ją rozstrzygnął (mockup `A03a-flaga.html`).
+ *
+ * `resolved_at` jest od migracji 2; brakowało tożsamości rozstrzygającego i treści
+ * rozstrzygnięcia. Komentarz jest w UI **wymagany** — za pół roku nikt nie pamięta,
+ * dlaczego nakładka sesji okazała się pozorna — ale kolumna zostaje NULL-owalna:
+ * flagi rozwiązane przed wdrożeniem tego pola istnieć mogą i panel pokazuje wtedy
+ * „rozstrzygnięcie sprzed rejestrowania uzasadnień". Wymóg jest regułą wejścia
+ * (`zod` na trasie), nie ograniczeniem tabeli — te dwie rzeczy dotyczą różnych
+ * zbiorów wierszy.
+ *
+ * Indeks pod skrzynkę flag (A03): sortowanie listy to `(status, created_at DESC, id DESC)`.
+ */
+export const MIGRATION_10 = `
+  ALTER TABLE flags ADD COLUMN IF NOT EXISTS resolved_by     TEXT;
+  ALTER TABLE flags ADD COLUMN IF NOT EXISTS resolution_note TEXT;
+  CREATE INDEX IF NOT EXISTS idx_flags_status_created ON flags (status, created_at DESC, id DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -233,4 +293,6 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_6,
   MIGRATION_7,
   MIGRATION_8,
+  MIGRATION_9,
+  MIGRATION_10,
 ];

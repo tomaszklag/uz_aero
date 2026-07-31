@@ -337,7 +337,6 @@
 
   <div class="shell">
 
-    <!-- ══ SIDEBAR — kanoniczny, identyczny na każdym ekranie panelu ══ -->
     <nav class="sidebar">
       <div class="brand">
         <span class="brand-mark">
@@ -415,7 +414,6 @@
       </div>
     </nav>
 
-    <!-- ══ MAIN ══ -->
     <div class="main">
       <div class="topbar">
         <div class="crumbs">Panel <span>/</span> Konfiguracja <span>/</span> <b>Konserwacja</b></div>
@@ -440,14 +438,11 @@
           </div>
         </div>
 
-        <!-- Baner-przyrząd całego ekranu: nie do zamknięcia, bo to jedyna zasada,
-             która nie ma prawa zniknąć z oczu przy żadnej z tych operacji. -->
         <div class="banner danger">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           <span><b>Rejestr <code>events</code> jest append-only i żadna operacja na tym ekranie go nie dotyka.</b> Przebudowa <b>czyta</b> zdarzenia i nadpisuje wyłącznie projekcje; ponowienie eksportu buduje kartę od nowa z tego samego strumienia; sprzątanie tokenów działa na tabeli sesji. Zdarzenia nie da się z panelu zmienić ani skasować — korekta to zawsze <b>dopisanie</b> <code>event_correction</code> na <a href="A02b-korekta.html" style="color:var(--red);font-weight:700;">A02b</a>, a oryginalny odczyt zostaje w rejestrze na zawsze.</span>
         </div>
 
-        <!-- ══════════════ 1 · PRZEBUDOWA PROJEKCJI ══════════════ -->
         <div class="cols">
 
           <div class="card">
@@ -589,7 +584,6 @@
           </div>
         </div>
 
-        <!-- ══════════════ 2 · KOLEJKA PONOWIEŃ EKSPORTU ══════════════ -->
         <div class="card">
           <div class="card-title">
             2 · Kolejka ponowień eksportu
@@ -653,7 +647,6 @@
           <span class="hint">Ręczne „Ponów teraz" jest akcją administratora i zostawia w audycie nazwę karty, numer próby oraz treść błędu (<code>export_retry</code>). Szef wyszkolenia widzi tę tabelę w trybie odczytu. <a href="A09-audyt.html" style="color:var(--green);">Audyt →</a></span>
         </div>
 
-        <!-- ══════════════ 3 · STREFA KASOWANIA ══════════════ -->
         <div class="card" style="border-color:var(--red-border);background:var(--red-muted);">
           <div class="card-title">
             3 · Wygasłe refresh tokeny — jedyna operacja, która kasuje dane
@@ -703,7 +696,6 @@
           </div>
         </div>
 
-        <!-- ══════════════ 4 · SCHEMAT I MIGRACJE ══════════════ -->
         <div class="card">
           <div class="card-title">
             4 · Stan schematu i migracji

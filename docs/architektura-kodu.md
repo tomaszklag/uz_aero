@@ -163,8 +163,8 @@ przedstawieniu tokenu, `login` wyłącznie wstawia, więc tokeny porzucone zosta
 zawsze); skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń;
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
 ignorowana); `UNIQUE (session_uuid, revision)` na `export_log` + kolejka ponowień
-nieudanych eksportów i re-eksport po rozwiązaniu flagi przez administratora (dziś
-ponowienie robi dopiero następna paczka tej sesji).
+nieudanych eksportów (~~re-eksport po rozwiązaniu flagi przez administratora~~
+**ZROBIONE 2026-07-31**, przekrój 1 — zostaje samo ponawianie eksportów, które padły).
 
 **Czego wymaga panel administracyjny (faza 7, decyzja 2026-07-31)** — braki wykryte przy
 projektowaniu `design/admin/`, ODRĘBNE od listy wyżej. Pełne mapowanie ekran → endpoint
@@ -180,10 +180,7 @@ i wycena: `design/admin/ANALIZA.md`.
   `pilot`, nigdy nie awansuje — odrzucenie wylogowałoby telefony w terenie, a cichy
   awans byłby luką; rola przy odświeżeniu idzie z KONTA, nie ze starego tokenu, więc
   odebranie uprawnień działa od razu, a nie po wygaśnięciu 90-dniowego refresha.
-- **Flaga nie ma jak się zamknąć.** W całym `server/src` nie ma kodu ustawiającego
-  `status='resolved'`, a `application/export/dayExporter.ts` odmawia eksportu przy otwartej
-  `session_overlap` — nakładka sesji **trwale blokuje kartę dnia** i odblokowuje ją wyłącznie
-  ręczny UPDATE. Endpoint rozwiązania + re-eksport to warunek, żeby §4.7 w ogóle się domykało.
+- ~~**Flaga nie ma jak się zamknąć.**~~ **ZROBIONE 2026-07-31** — przekrój 1, opis niżej.
 - **Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a sesji (inaczej
   `WRITER_MISMATCH`), pomijać wyłącznie `CORRECTION_WINDOW_EXPIRED` i wywołać re-eksport.
 - **Projekcja `sessions` nie niesie `operation`, `dutyStart` ani `client`** — wartości siedzą
@@ -246,6 +243,46 @@ cyklem życia flagi, bo obie zmniejszają ryzyko wszystkiego, co po nich:
    pozycji katalogu wywala kompilację zamiast zostawić martwy literał. `FlagRecord.type`
    przestał być `string`, a adapter `flagsRepo` rzuca na wartości spoza katalogu —
    ciche pominięcie flagi byłoby najgorszą opcją, bo flaga istnieje po to, żeby być widoczna.
+
+**Przekrój 1 panelu — cykl życia flagi, zrobione 2026-07-31.** Pierwszy pionowy przekrój
+i wzorzec dla następnych (`docs/architektura-panelu-serwer.md` §5, mockup
+`design/admin/A03a-flaga.html`). Domyka §4.7: otwarta `session_overlap` blokowała kartę
+dnia BEZTERMINOWO, bo nic w `server/src` nie ustawiało `status='resolved'`.
+
+- **Audyt jest wymuszony TYPEM, nie dyscypliną.** `application/admin/auditedWrite.ts` to
+  jedyna droga zapisu panelu: `effect` musi oddać `Audited<T>` (skutek **i** wpis), więc
+  pominięcie śladu jest błędem kompilacji, a nie rzeczą do wyłapania na review; wpis leci
+  TĄ SAMĄ transakcją, więc operacja, której nie udało się zaudytować, nie zachodzi. Druga
+  połowa mechanizmu, bez której pierwsza nic nie znaczy: **komendy panelu nie dostają
+  `Database` ani `Queryable` w konstruktorze**, tylko `AuditedWrite` i porty odczytu —
+  nie mają czym ominąć bramy. Obie własności są wykonywalne: `test/adminAudit.test.ts`
+  (awaria audytu zostawia flagę `open`; nieudany skutek nie zostawia śladu; `actor_role`
+  to rola z CHWILI akcji, nie złączenie z `pilots`) i nowy `test/architecture.test.ts`.
+- **Migracja 9** — `admin_audit` (append-only; słownik akcji `src/domain/adminActions.ts`
+  w duchu `roles.ts`). Celowo **bez `CHECK`-a** na `action`/`actor_role`, inaczej niż
+  `pilots.role` i `flags.type`: tamte opisują byt żywy, wczytywany z powrotem do zamkniętej
+  unii, a wiersz audytu jest zapisem HISTORYCZNYM — przemianowanie akcji nie może
+  unieważnić tego, co zdarzyło się rok temu. **Migracja 10** — `flags.resolved_by`
+  i `resolution_note` (obie NULL-owalne: wymóg komentarza jest regułą wejścia w `zod`,
+  bo dotyczy NOWYCH rozstrzygnięć, a nie wierszy sprzed wdrożenia pola).
+- **Osobny port i osobny adapter dla flag panelu** (`FlagsAdminPort` /
+  `infrastructure/pg/admin/flagsRepo.ts`) — ten sam powód, co `SheetsReadPort` obok
+  `SheetsPort`: inny jest POWÓD istnienia. `FlagsPort` obsługuje gorącą transakcję
+  ingestu, więc ścieżka przyjęcia zdarzeń nie ma jak zregresować od zmian w panelu.
+  Zamknięcie flagi ma warunek `status='open'` w SQL-u — dwie osoby klikające „Rozwiąż"
+  nie prześcigną się timingiem, druga dostaje 409 z aktualnym stanem.
+- **`DayExporter.exportSession` zwraca `ExportOutcome`** zamiast `void`: odmowa nie jest
+  błędem, tylko poprawną odpowiedzią o stanie świata (`session_open`, `overlap_flag`, …).
+  Dzięki temu panel mówi „arkusz odblokowany · rewizja 1", a nie samo „zapisano".
+  `IngestCommands` ignoruje wartość i nie zmienił się o linijkę. Re-eksport leci **po
+  commicie** i wyłącznie dla `session_overlap` — pozostałe typy nie są bramką eksportu,
+  więc udawanie inaczej myliłoby UI (odpowiedź niesie wtedy `exports: []`).
+- **Trasa `POST /admin/api/flags/:id/resolve`** (`http/routes/admin/`), cienka jak reszta:
+  zod → komenda → status. Zdolność jest ATRYBUTEM deklaracji (`adminRoute`), nie zdaniem
+  w ciele handlera, więc „czego wymaga ten endpoint" czyta się z jednej linii. Prefiks
+  **`/admin/api`, nie `/admin`** — to drugie zostaje pod statyczny build panelu i kolidowałoby
+  z wildcardem `@fastify/static`. Autoryzacja zostaje na `Bearer`; sesja przeglądarkowa
+  na ciasteczku czeka na klienta panelu, bo dziś nie byłoby jej czym sprawdzić.
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób

@@ -426,7 +426,6 @@
 
       <div class="content">
 
-        <!-- (a) NAGŁÓWEK DNIA -->
         <div class="page-head">
           <div>
             <h1 class="page-title">30 JUL 2026 · SP-KLM</h1>
@@ -447,7 +446,6 @@
           </div>
         </div>
 
-        <!-- BANER STANU: dzień otwarty (tylko w stanie „open") -->
         <div class="banner status" id="openBanner" data-when="open" data-disp="flex" style="display:none;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           <span><b>Dzień otwarty — telefon dosyła zdarzenia.</b> Sesja nie ma jeszcze <code>day_close</code>; ostatnie zdarzenie dotarło <b>13:58:21 UTC</b> (24 min temu). Liczby poniżej są <b>stanem na ostatni sync, nie stanem końcowym</b> — dojdą kolejne loty, tankowania i odczyt końcowy. Kolumny „koniec" (MH, FOB, duty) wypełni dopiero zamknięcie dnia; do tego czasu panel pokazuje „—" zamiast zgadywać.</span>
@@ -458,7 +456,6 @@
           <span><b>Okno korekty pilota minęło 31 JUL 13:22 UTC</b> (godzinę temu). Do tej chwili Anna Wrzosek mogła poprawiać dzień sama, na ekranie 04C aplikacji — i skorzystała z tego raz (<code>void</code> fałszywego lądowania o 08:14:09). Od teraz zmianę może dopisać wyłącznie administrator, na ekranie <a href="A02b-korekta.html" style="color:var(--amber);">A02B</a>.</span>
         </div>
 
-        <!-- (b) KAFLE PODSUMOWANIA -->
         <div class="tiles">
           <div class="tile">
             <span class="tile-key">Czas blokowy</span>
@@ -507,7 +504,6 @@
 
         <div class="cols">
 
-          <!-- (c) OŚ ZDARZEŃ CAŁEGO DNIA -->
           <div class="card">
             <div class="card-title">
               Oś zdarzeń dnia
@@ -873,7 +869,6 @@
             </div>
           </div>
 
-          <!-- PRAWA KOLUMNA: bilanse -->
           <div style="display:flex;flex-direction:column;gap:16px;">
 
             <div class="card">
@@ -919,7 +914,6 @@
           </div>
         </div>
 
-        <!-- (d) LISTA LOTÓW DNIA -->
         <div class="table-wrap">
           <table>
             <thead>
@@ -949,7 +943,6 @@
           </table>
         </div>
 
-        <!-- (e) FLAGI DOTYCZĄCE TEGO DNIA -->
         <div class="card">
           <div class="card-title">Flagi dotyczące tego dnia <span class="spacer"></span><span class="pill amber">2 otwarte</span></div>
           <div class="table-wrap" style="border:none;border-radius:0;">
