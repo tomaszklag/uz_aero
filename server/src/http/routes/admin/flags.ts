@@ -7,13 +7,34 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { FLAG_TYPES } from '@uzaero/domain';
 
 import type { AdminFlagCommands, ResolveFlagResult } from '../../../application/admin/commands/flags.ts';
-import type { AdminFlag } from '../../../application/admin/ports.ts';
+import type { AdminFlagQueries } from '../../../application/admin/queries/flags.ts';
+import { PAGE_LIMIT_MAX, type AdminFlag } from '../../../application/admin/ports.ts';
 import type { TokenService } from '../../../application/ports.ts';
 import { adminRoute } from './adminRoute.ts';
 
 const resolveParams = z.object({ id: z.coerce.number().int().positive() });
+
+/**
+ * Filtry skrzynki (`A03`). Wszystkie opcjonalne — brak filtra znaczy „pokaż wszystko",
+ * a nie „pokaż otwarte": domyślne zawężenie w API byłoby niewidoczną regułą, o której
+ * panel musiałby wiedzieć, żeby zrozumieć swoje własne liczniki. Domyślny chip
+ * „Otwarte · 7" ustawia panel, jawnie.
+ *
+ * Zakres dat jako epoch ms — filtruje po `created_at` flagi, czyli po chwili WYKRYCIA
+ * rozbieżności, a nie po dniu lotnym, którego dotyczy (jedna flaga potrafi spinać dwa dni).
+ */
+const listQuery = z.object({
+  status: z.enum(['open', 'resolved']).optional(),
+  type: z.enum(FLAG_TYPES).optional(),
+  aircraftId: z.string().min(1).max(50).optional(),
+  sessionUuid: z.string().min(1).max(100).optional(),
+  from: z.coerce.number().int().nonnegative().optional(),
+  to: z.coerce.number().int().nonnegative().optional(),
+  limit: z.coerce.number().int().positive().max(PAGE_LIMIT_MAX).default(100),
+});
 
 /**
  * Komentarz jest WYMAGANY (mockup A03a: „Komentarz — wymagany"), a `.trim()` przed
@@ -48,8 +69,34 @@ const resultToWire = (result: ResolveFlagResult) => ({
 export function registerAdminFlagRoutes(
   app: FastifyInstance,
   flags: AdminFlagCommands,
+  queries: AdminFlagQueries,
   tokens: TokenService,
 ): void {
+  adminRoute(
+    app,
+    tokens,
+    // `panel.access`, nie `flags.resolve`: skrzynkę CZYTA każdy, kto ma wejście do
+    // panelu — zamyka sprawę węższa zdolność, i to jest cały podział.
+    { method: 'GET', url: '/flags', capability: 'panel.access' },
+    async (req, reply) => {
+      const query = listQuery.safeParse(req.query);
+      if (!query.success) return reply.code(400).send({ error: 'bad_request' });
+
+      const q = query.data;
+      return reply.send(
+        await queries.list({
+          status: q.status,
+          type: q.type,
+          aircraftId: q.aircraftId,
+          sessionUuid: q.sessionUuid,
+          fromMs: q.from,
+          toMs: q.to,
+          limit: q.limit,
+        }),
+      );
+    },
+  );
+
   adminRoute(
     app,
     tokens,

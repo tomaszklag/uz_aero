@@ -12,7 +12,14 @@
  * serwer, kilkunastu pilotów) każdy dodatkowy ruchomy element to koszt bez zysku.
  */
 
-import type { Event, FlagStatus, FlagType, ReferenceAircraft, ReferencePilot } from '@uzaero/domain';
+import type {
+  Event,
+  FlagStatus,
+  FlagType,
+  OperationType,
+  ReferenceAircraft,
+  ReferencePilot,
+} from '@uzaero/domain';
 
 import type { PilotRole } from '../domain/roles.ts';
 
@@ -159,8 +166,20 @@ export interface SessionRow {
   picId: string;
   dualId: string | null;
   status: 'active' | 'closed';
+  /**
+   * `SessionState.dutyStart` — czas MELDUNKU z `preflight_confirm`, mimo nazwy kolumny
+   * (`claim_time`, migracja 2). Rozbieżność nazwy z zawartością jest opisana
+   * w `application/sessionRow.ts`; `null` = sesja bez preflightu (realny stan).
+   */
   claimTime: number | null;
   closeTime: number | null;
+  /**
+   * Rodzaj operacji i klient dnia (migracja 11) — wymiary listy dni panelu (`A02`).
+   * Wartości pochodzą z projekcji, nie z ponownego czytania payloadów: reguła
+   * „agreguj wartości projekcji, nigdy nie odtwarzaj projekcji SQL-em".
+   */
+  operation: OperationType | null;
+  client: string | null;
   mhStart: number | null;
   mhEnd: number | null;
   fuelStartL: number | null;

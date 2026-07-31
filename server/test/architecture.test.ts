@@ -7,9 +7,8 @@
  * do komendy panelu albo zarejestrować trasę panelu z pominięciem bramy uprawnień.
  * Dokument może się zdezaktualizować; ten plik nie.
  *
- * Zakres jest dziś węższy niż lista z `docs/architektura-panelu-serwer.md` §9 —
- * pozostałe pozycje (`contracts/`) dotyczą przekrojów, których jeszcze nie ma,
- * a test skanujący nieistniejący katalog przechodziłby dlatego, że niczego nie znalazł.
+ * Zakres rośnie razem z panelem: od przekroju 2 (`contracts/` — kontrakty odczytu)
+ * doszła granica importów katalogu kontraktów.
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -45,6 +44,15 @@ const codeOf = (file: string): string =>
   read(file)
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
     .replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+/** Ścieżki modułów, z których plik importuje (`from '…'`). */
+function importedFrom(code: string): string[] {
+  const out: string[] = [];
+  const re = /from\s+'([^']+)'/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(code)) !== null) out.push(match[1]!);
+  return out;
+}
 
 /** Nazwy importowane w pliku — `import { A, type B as C } from '…'`. */
 function importedNames(code: string): string[] {
@@ -84,6 +92,13 @@ describe('granice, których nie pilnuje kompilator', () => {
 
     // Wyciąganie nazw z importów działa na pliku, który `Database` faktycznie bierze.
     expect(importedNames(read('application/commands/ingest.ts'))).toContain('Database');
+
+    // Katalog kontraktów istnieje i skaner widzi jego import domeny — bez tego
+    // przypadek „kontrakty importują wyłącznie domenę" przechodziłby na pustej liście.
+    expect(filesUnder('application/admin/contracts').length).toBeGreaterThan(2);
+    expect(importedFrom(read('application/admin/contracts/sessions.ts'))).toContain(
+      '@uzaero/domain',
+    );
   });
 
   it('rejestr `events` jest append-only — nigdzie w src/ nie ma UPDATE ani DELETE', () => {
@@ -123,6 +138,21 @@ describe('granice, których nie pilnuje kompilator', () => {
       .filter((f) => codeOf(f).includes("'administrative'"))
       .sort();
     expect(users).toEqual(['application/admin/commands/corrections.ts']);
+  });
+
+  it('kontrakty panelu importują wyłącznie domenę i siebie nawzajem', () => {
+    // `contracts/` to POWIERZCHNIA dla klienta panelu (docelowo `@uzaero/server/admin-contracts`).
+    // Import czegokolwiek spoza domeny wciągnąłby tam wnętrze serwera — w skrajnym
+    // przypadku `pg` do przeglądarki — a przy okazji przywiązałby panel do kształtu
+    // projekcji, czyli do rzeczy, która ma się swobodnie zmieniać.
+    const offenders: string[] = [];
+    for (const file of filesUnder('application/admin/contracts')) {
+      for (const from of importedFrom(codeOf(file))) {
+        const ownFamily = from.startsWith('./');
+        if (from !== '@uzaero/domain' && !ownFamily) offenders.push(`${file} → ${from}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   it('trasy panelu rejestrują się wyłącznie przez `adminRoute`', () => {

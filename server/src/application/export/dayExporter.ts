@@ -20,7 +20,7 @@
  * zdarzenia, żeby zbudować tabelę lotów, a nie tylko sumy).
  */
 
-import { projectSession } from '@uzaero/domain';
+import { projectSession, type FlagStatus, type FlagType } from '@uzaero/domain';
 
 import { buildDaySheet, sheetDay } from './daySheetContent.ts';
 import type {
@@ -32,6 +32,23 @@ import type {
   PilotsPort,
   SheetsPort,
 } from '../ports.ts';
+
+/**
+ * Typy flag, które TRZYMAJĄ kartę dnia poza arkuszem (§4.7).
+ *
+ * Lista jest jedna dla całego systemu i stoi przy bramce, która ją egzekwuje. Czytają
+ * ją trzy miejsca: sama bramka niżej, kolumna „Skutek" skrzynki panelu
+ * (`admin/flagListItem.ts`) i `ORDER BY` tej skrzynki (`pg/admin/flagsRepo.ts` — flagi
+ * blokujące idą na górę). Powtórzenie warunku w którymkolwiek z nich dałoby stan,
+ * w którym lista mówi „blokuje", a eksporter przepuszcza — i nikt by tego nie zauważył,
+ * bo obie strony byłyby „poprawne" osobno.
+ */
+export const EXPORT_BLOCKING_FLAG_TYPES: readonly FlagType[] = ['session_overlap'];
+
+/** Czy TA flaga trzyma kartę dnia poza arkuszem — status ma znaczenie tak samo jak typ. */
+export function blocksExport(flag: { type: FlagType; status: FlagStatus }): boolean {
+  return flag.status === 'open' && EXPORT_BLOCKING_FLAG_TYPES.includes(flag.type);
+}
 
 /**
  * Wynik próby eksportu. Do przekroju 1 panelu `exportSession` zwracał `void` i milczał
@@ -68,8 +85,11 @@ export class DayExporter {
       return { exported: false, reason: 'no_preflight' };
     }
 
+    // Predykat sprawdza też status, choć `openForSession` zwraca wyłącznie otwarte —
+    // dzięki temu jest TĄ SAMĄ funkcją, co w skrzynce panelu, gdzie na liście stoją
+    // również flagi rozwiązane.
     const open = await this.flags.openForSession(this.db, sessionUuid);
-    if (open.some((f) => f.type === 'session_overlap')) {
+    if (open.some((flag) => blocksExport(flag))) {
       return { exported: false, reason: 'overlap_flag' };
     }
 

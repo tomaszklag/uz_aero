@@ -8,6 +8,27 @@
  * `mhEnd`/`fuelEndL` wypełniamy WYŁĄCZNIE dla dnia zamkniętego: to odczyty z `day_close`,
  * czyli przekazanie (§4.5). `fuelLastL`/`mhLast` żyją też w trakcie dnia — z nich
  * `GET /aircraft/:id/state` podpowiada stan bieżący (np. po tankowaniu).
+ *
+ * ── `claim_time` niesie DUTY START, nie czas zdarzenia `session_claim` ───────────
+ * Kolumna nazywa się `claim_time` (migracja 2), a od pierwszej wersji zapisujemy do
+ * niej `SessionState.dutyStart`, czyli czas MELDUNKU wpisany w `preflight_confirm`.
+ * Konsekwencje, które trzeba znać, zanim ktoś zaufa nazwie:
+ *
+ *  • sesja z samym `session_claim` (pilot wziął samolot, nie dokończył preflightu)
+ *    ma `claim_time = NULL`, choć claim NASTĄPIŁ — dlatego kolumna jest NULL-owalna,
+ *    a kursor listy dni ma predykat trójgałęziowy;
+ *  • meldunek bywa WCZEŚNIEJSZY niż przejęcie samolotu, więc to nie jest ta sama
+ *    chwila pod dwiema nazwami;
+ *  • `GET /aircraft/:id/state` wystawia tę wartość jako `claimSince` i telefon
+ *    pokazuje ją jako „od kiedy zajęty" (`aircraftStateView.ts`).
+ *
+ * Panel administracyjny (`A01-pulpit.html`) pokazuje „claim 07:58 · duty 6:24", czyli
+ * STEMPEL i UPŁYW służby — a upływ liczy się właśnie od duty startu, więc jedna
+ * wartość obsługuje oba pola. Osobnej kolumny `duty_start` NIE dokładamy (migracja 11):
+ * byłaby dokładnym duplikatem tej samej liczby. Gdyby panel kiedyś potrzebował czasu
+ * zdarzenia `session_claim` jako osobnej wielkości, właściwym ruchem jest NOWA kolumna
+ * na tę nową wartość i przemianowanie istniejącej na `duty_start` — nie ciche
+ * przestawienie zawartości tej, którą czyta już telefon.
  */
 
 import { projectSession, type Event } from '@uzaero/domain';
@@ -24,6 +45,11 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     status: s.closed ? 'closed' : 'active',
     claimTime: s.dutyStart,
     closeTime: s.closedAt,
+    // Wymiary listy dni (migracja 11). Przepisujemy WARTOŚĆ POLICZONĄ przez projekcję
+    // — razem z jej regułą „klient dziedziczony przez `drop`, gdy preflight go nie
+    // podał". Sięgnięcie po `payload.operation` wprost byłoby drugą implementacją.
+    operation: s.operation,
+    client: s.client,
     mhStart: s.mh.start,
     mhEnd: s.closed ? s.mh.end : null,
     fuelStartL: s.fuel.startL,

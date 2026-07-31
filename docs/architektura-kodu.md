@@ -160,7 +160,8 @@ zmianie wielkości dziury MH (dedupe zostawia pierwszy pomiar); transakcyjne par
 ~~migracji w `migrate.ts`~~ **ZROBIONE 2026-07-31** (patrz niżej); sprzątanie wygasłych
 refresh tokenów (cron/`DELETE` przy logowaniu — `rotate()` kasuje wiersz tylko przy
 przedstawieniu tokenu, `login` wyłącznie wstawia, więc tokeny porzucone zostają na
-zawsze); skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń;
+zawsze); ~~skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń~~
+**ZROBIONE 2026-07-31** (przekrój 2, `npm run rebuild-projections`);
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
 ignorowana); `UNIQUE (session_uuid, revision)` na `export_log` + kolejka ponowień
 nieudanych eksportów (~~re-eksport po rozwiązaniu flagi przez administratora~~
@@ -184,9 +185,11 @@ i wycena: `design/admin/ANALIZA.md`.
 - ~~**Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a sesji (inaczej
   `WRITER_MISMATCH`), pomijać wyłącznie `CORRECTION_WINDOW_EXPIRED` i wywołać re-eksport.~~
   **ZROBIONE 2026-07-31** — przekrój 3, opis niżej.
-- **Projekcja `sessions` nie niesie `operation`, `dutyStart` ani `client`** — wartości siedzą
-  w payloadach `preflight_confirm` / `day_close`, więc to przepisanie projekcji, nie zmiana
-  modelu zdarzeń.
+- ~~**Projekcja `sessions` nie niesie `operation`, `dutyStart` ani `client`**~~ **ZROBIONE
+  2026-07-31** — przekrój 2, opis niżej. Migracja 11 dokłada `operation` i `client`;
+  `duty_start` NIE POWSTAJE, bo `claim_time` niesie tę wartość od pierwszej wersji
+  (`sessionRowFrom` mapuje `claimTime: s.dutyStart`) — szczegóły w docblocku
+  `application/sessionRow.ts`.
 - **Tabela audytu `admin_audit` nie istnieje.** Niezmienność wymuszamy uprawnieniami
   (`GRANT INSERT, SELECT` dla roli aplikacyjnej), nie dyscypliną programisty.
 - **Brak list i filtrów** (sesje, zdarzenia, flagi), zapisu kont i floty, agregatów
@@ -384,6 +387,67 @@ administrator nie miał czym jej wprowadzić.
   od 422 jest celowy: 400 znaczy „popraw formularz", 422 — „domena odmawia i oto powód".
   To pierwsze 422 w repo; wcześniej nie było endpointu, który odrzucałby poprawnie
   zbudowane żądanie regułą domenową.
+
+**Przekrój 2 panelu — czytanie dni, zrobione 2026-07-31.** Trzeci wdrożony przekrój
+pionowy (mockupy `A02-dni.html`, `A02a-dzien.html`, `A03-flagi.html`, `A11-konserwacja.html`;
+`docs/architektura-panelu-serwer.md` §7). Pierwszy, w którym panel CZYTA listy — i dlatego
+pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
+
+- **Zamiast query buildera: dwa nazwane moduły, nie framework.** `infrastructure/pg/sqlFilter.ts`
+  składa `WHERE` z filtrów OPCJONALNYCH (numeracja `$n` powstaje w jednym miejscu — jej
+  przesunięcie o jeden nie jest błędem typów ani składni, tylko cichym porównaniem złej
+  kolumny ze złą wartością), a `infrastructure/pg/keyset.ts` daje kursor **keyset, nie
+  `OFFSET`**: tabele rosną w trakcie przeglądania, a offset na rosnącej tabeli gubi
+  i dubluje wiersze — najgorszy tryb awarii narzędzia diagnostycznego. Razem ~200 linii
+  z testami (`test/sqlFilter.test.ts`, `test/keyset.test.ts`). `addOptional` rozróżnia
+  `undefined` („nie ustawiono filtra") od `null` („ustawiono na nic"), a predykat kursora
+  ma gałąź dla `NULLS LAST`, bo `claim_time` jest NULL-owalne (sesja bez preflightu).
+- **Migracja 11: `sessions.operation` i `sessions.client`** + `CHECK` na słowniku operacji
+  (ten sam powód co przy `flags.type`: adapter wczytuje wartość do zamkniętej unii).
+  `OperationType` jest teraz wyprowadzony z tablicy `OPERATION_TYPES` w `@uzaero/domain`
+  — filtr panelu waliduje się katalogiem domeny zamiast trzecią ręczną kopią listy.
+  **Kolumny `duty_start` NIE MA i nie będzie bez decyzji człowieka**: `claim_time` niesie
+  `SessionState.dutyStart` od pierwszej wersji, więc druga kolumna byłaby duplikatem tej
+  samej liczby (docblock `application/sessionRow.ts` opisuje też konsekwencje tej nazwy).
+- **Przebudowa projekcji ze strumienia** (`AdminMaintenanceCommands.rebuildProjections`,
+  CLI `npm run rebuild-projections`) — WARUNEK KONIECZNY migracji 11: `upsert` uruchamia
+  dopiero następna paczka zdarzeń sesji, a dla dnia zamkniętego takiej paczki już nie
+  będzie, więc bez przeliczenia kolumna „Operacja" byłaby pusta dla całej historii.
+  **Dry-run jest trybem domyślnym, a niezerowa różnica to INCYDENT, nie sukces**: projekcja
+  jest odświeżana w tej samej transakcji co przyjęcie zdarzeń, więc w normalnej pracy
+  różnicy być nie może, a zapis wyrówna liczby i skasuje jedyny ślad po przyczynie —
+  dlatego `write` wymaga jawnego powodu, który trafia do audytu (ślad powstaje także dla
+  dry-runu). Listę sesji bierzemy z `events`, nie z `sessions`: wiersz, którego NIE MA,
+  jest najcięższym przypadkiem dryfu, a lista z projekcji nie umiałaby go zobaczyć.
+  Nadpisywane wiersze biorą `pg_advisory_xact_lock` i są przeliczane po ponownym odczycie
+  strumienia — inaczej narzędzie do wykrywania dryfu samo by go tworzyło, wyścigając się
+  z paczką dosyłaną przez telefon.
+- **Trzy trasy odczytu** (`GET /admin/api/sessions`, `/sessions/:uuid`, `/flags`), wszystkie
+  ze zdolnością `panel.access` — czyta administrator i szef wyszkolenia, piszą węższe
+  zdolności. Odmowy są wariantami wyniku: uszkodzony kursor → **400 `bad_cursor`** (wartość
+  z zewnątrz, nie awaria serwera), nieznana sesja → 404.
+- **Reguła twarda, teraz pilnowana MASZYNOWO:** *agreguj wartości projekcji, nigdy nie
+  odtwarzaj projekcji SQL-em*. `test/contract.test.ts` liczy odczyty `sessionEvents`
+  przez dekorator prawdziwego adaptera: lista dni ma ich ZERO, karta dnia — dokładnie
+  JEDEN. Nowa liczba w panelu = nowa kolumna projekcji wypełniana przez `sessionRowFrom`,
+  nie nowe wyrażenie SQL.
+- **Panel nie widzi kształtu wierszy.** `application/admin/contracts/` zawiera wyłącznie
+  typy DTO i wolno mu importować jedynie `@uzaero/domain` (nowy przypadek w
+  `test/architecture.test.ts`). `AdminSessionListItem` jest PŁASKI, a nie `SessionRow & {…}`
+  — projekcja ma rosnąć swobodnie, a nie łamać panel przy każdej migracji. Byty domenowe
+  (`SessionState`, `Event`) jadą bez własnego DTO, zgodnie z regułą granicy typów.
+  Wpis `exports` w `server/package.json` czeka na pierwszego konsumenta.
+- **Oś zdarzeń karty dnia liczy adnotacje PORÓWNANIEM z `applyCorrections`**
+  (`application/admin/eventTimeline.ts`), a nie własnym czytaniem korekt: reguła
+  „ostatnia korekta wygrywa" (razem z `void` → `retime`, który przywraca zdarzenie do
+  życia) ma jedną implementację, w domenie. Zdarzenia unieważnione ZOSTAJĄ na osi —
+  to właśnie one tłumaczą, dlaczego liczby dnia różnią się od tego, co zapisał telefon.
+- **Skrzynka flag sortuje `blokujące eksport → najstarsze`** w `ORDER BY`, nie w pamięci
+  (limit musi obcinać po właściwej stronie porządku), a `blocksExport` jest funkcją
+  wyliczaną z bramki eksportera (`blocksExport` w `dayExporter.ts`), nie kolumną —
+  rozjazd „panel mówi blokuje, eksporter przepuszcza" byłby niewidoczny. Skrzynka
+  celowo NIE ma kursora: jej porządek ma trzy składowe, a kursor keyset opisuje parę;
+  jest zbiorem spraw do zamknięcia, więc dostaje twardy limit i dokładny `total`.
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób

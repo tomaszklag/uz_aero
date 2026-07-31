@@ -11,11 +11,11 @@
  * implementacje (`infrastructure/pg/admin/*`) wstrzykuje composition root.
  */
 
-import type { FlagType } from '@uzaero/domain';
+import type { FlagStatus, FlagType, MhFormat, OperationType } from '@uzaero/domain';
 
 import type { AdminAction } from '../../domain/adminActions.ts';
 import type { PilotRole } from '../../domain/roles.ts';
-import type { FlagRecord, Queryable } from '../ports.ts';
+import type { FlagRecord, Queryable, SessionRow } from '../ports.ts';
 
 // ── tożsamość działającego ──────────────────────────────────────────────────────
 
@@ -83,6 +83,8 @@ export interface AdminAuditPort {
  * Panel widzi WIĘCEJ niż telefon, nie coś innego — i tak to zapisujemy.
  */
 export interface AdminFlag extends FlagRecord {
+  /** Kiedy serwer wykrył rozbieżność — oś „wieku" w skrzynce (`A03`). */
+  createdAt: Date;
   resolvedAt: Date | null;
   resolvedBy: string | null;
   resolutionNote: string | null;
@@ -104,7 +106,37 @@ export interface ResolvedFlag {
  * inny jest POWÓD istnienia. Korzyść uboczna: `infrastructure/pg/flagsRepo.ts`
  * zostaje nietknięty, więc ścieżka ingestu nie ma jak zregresować.
  */
+/**
+ * Filtr skrzynki flag (`A03`). Pola NIEUSTAWIONE (`undefined`) są pomijane — składa
+ * je `infrastructure/pg/sqlFilter.ts`, żeby numeracja parametrów miała jednego autora.
+ */
+export interface FlagListFilter {
+  status?: FlagStatus;
+  type?: FlagType;
+  aircraftId?: string;
+  /** Flagi obejmujące TĘ sesję — karta dnia (`A02a`), razem z rozwiązanymi. */
+  sessionUuid?: string;
+  /** Zakres po `created_at` (epoch ms UTC), obustronnie domknięty. */
+  fromMs?: number;
+  toMs?: number;
+  limit: number;
+}
+
+/** Flaga razem z tym, czego skrzynka potrzebuje ze złączeń. */
+export interface AdminFlagJoin {
+  flag: AdminFlag;
+  reg: string | null;
+  aircraftType: string | null;
+}
+
 export interface FlagsAdminPort {
+  /**
+   * Lista dla skrzynki. Porządek jest CZĘŚCIĄ KONTRAKTU tego portu, nie parametrem:
+   * `blokujące eksport → najstarsze` (A03). Sortowanie po wieku ma sens tylko razem
+   * z wyniesieniem spraw blokujących na górę — flaga leżąca trzeci dzień jest
+   * problemem sama w sobie, ale karta dnia stojąca poza arkuszem jest pilniejsza.
+   */
+  list(db: Queryable, filter: FlagListFilter): Promise<{ items: AdminFlagJoin[]; total: number }>;
   byId(db: Queryable, id: number): Promise<AdminFlag | null>;
   /**
    * Zamknięcie flagi z OPTYMISTYCZNĄ współbieżnością: warunek `status='open'` siedzi
@@ -119,4 +151,87 @@ export interface FlagsAdminPort {
     note: string,
     at: Date,
   ): Promise<ResolvedFlag | null>;
+}
+
+// ── dni lotne (lista i karta, panel) ────────────────────────────────────────────
+
+/**
+ * Twardy limit strony każdej listy panelu. Ta sama liczba, co maksymalna paczka
+ * `POST /events` — jedna liczba, jedno znaczenie „ile wierszy naraz ma sens w tym
+ * systemie". Stoi przy portach, a nie przy kursorze w adapterze, bo jest polityką
+ * kontraktu (trasa odrzuca większe `limit`), a nie szczegółem SQL-a.
+ */
+export const PAGE_LIMIT_MAX = 500;
+
+/**
+ * Filtr listy dni (`A02`). Pola NIEUSTAWIONE (`undefined`) są pomijane.
+ *
+ * `cursor` jest NIEPRZEZROCZYSTYM napisem — dokładnie tym, co panel dostał w poprzedniej
+ * odpowiedzi. Warstwa aplikacji celowo nie zna jego budowy: kursor koduje klucz
+ * SORTOWANIA SQL-a, więc jego kształt jest sprawą adaptera (`infrastructure/pg/keyset.ts`).
+ */
+export interface SessionListFilter {
+  /** Zakres po duty starcie (`sessions.claim_time`, epoch ms UTC), obustronnie domknięty. */
+  fromMs?: number;
+  toMs?: number;
+  aircraftId?: string;
+  /** Dopasowuje PIC-a **albo** Duala — dzień szkolny należy do obu, nie tylko do PIC-a. */
+  pilotId?: string;
+  status?: 'active' | 'closed';
+  operation?: OperationType;
+  /** `true` = tylko dni z OTWARTĄ flagą; `false` = tylko dni bez. */
+  flagged?: boolean;
+  /** `true` = tylko dni z kartą w `export_log`; `false` = tylko dni bez karty. */
+  exported?: boolean;
+  cursor?: string;
+  direction: 'asc' | 'desc';
+  limit: number;
+}
+
+/**
+ * Wiersz projekcji + to, czego lista potrzebuje ze złączeń i dzienników.
+ *
+ * Port oddaje `SessionRow` (model warstwy aplikacji), a NIE gotowy DTO: mapowanie na
+ * kontrakt panelu jest czystą funkcją (`admin/sessionListItem.ts`) i ma być testowalne
+ * bez bazy — tak samo jak `sessionRowFrom` po stronie zapisu.
+ */
+export interface AdminSessionJoin {
+  row: SessionRow;
+  reg: string | null;
+  aircraftType: string | null;
+  mhFormat: MhFormat | null;
+  picCode: string | null;
+  picName: string | null;
+  dualCode: string | null;
+  dualName: string | null;
+  /** Typy flag OTWARTYCH dla tej sesji (posortowane po id — kolejność powstania). */
+  openFlags: FlagType[];
+  exportRevision: number | null;
+  updatedAt: Date;
+}
+
+export interface SessionsAdminPort {
+  /**
+   * Strona listy dni. `null` = **kursor nieczytelny** — odmowa jest wariantem wyniku,
+   * nie wyjątkiem (wzorzec `FlagsAdminPort.resolve`): kursor przychodzi z zewnątrz,
+   * więc jego uszkodzenie to 400, a nie 500.
+   */
+  list(
+    db: Queryable,
+    filter: SessionListFilter,
+  ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null>;
+  /** Pojedynczy dzień ze złączeniami; `null` = nie ma takiej sesji w projekcji. */
+  byUuid(db: Queryable, sessionUuid: string): Promise<AdminSessionJoin | null>;
+}
+
+// ── konserwacja (przebudowa projekcji, panel) ───────────────────────────────────
+
+export interface MaintenanceAdminPort {
+  /**
+   * Uuidy WSZYSTKICH sesji obecnych w rejestrze `events` — źródłem jest strumień,
+   * nie tabela `sessions`, i to jest cały sens tej metody. Sesja, która jest
+   * w rejestrze, a nie ma wiersza projekcji, to najcięższy przypadek dryfu; lista
+   * budowana z projekcji nie umiałaby go zobaczyć.
+   */
+  sessionUuids(db: Queryable): Promise<string[]>;
 }

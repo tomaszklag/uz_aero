@@ -41,8 +41,24 @@ export interface GpsPosition {
   accuracyM?: number;
 }
 
-/** Rodzaj operacji dnia (§3.1 — siatka kart z ikonami). */
-export type OperationType = 'skoki' | 'ferry' | 'egzamin' | 'techniczny' | 'inne';
+/**
+ * Rodzaj operacji dnia (§3.1 — siatka kart z ikonami).
+ *
+ * Katalog jako TABLICA, a typ z niej wyprowadzony — ten sam wzorzec co `FLAG_TYPES`
+ * i `PILOT_ROLES`, i z tego samego powodu: od 2026-07-31 wartość wraca z bazy
+ * (kolumna `sessions.operation`, projekcja panelu) i filtry panelu muszą znać pełną
+ * listę. Sama unia daje typ, ale nie daje ani listy do walidacji wejścia, ani
+ * strażnika dla wartości spoza systemu — a przepisanie jej ręcznie w trzecim miejscu
+ * byłoby dokładnie tym rozjazdem, który skończył `packages/domain/src/flags.ts`.
+ */
+export const OPERATION_TYPES = ['skoki', 'ferry', 'egzamin', 'techniczny', 'inne'] as const;
+
+export type OperationType = (typeof OPERATION_TYPES)[number];
+
+/** Strażnik wejścia z zewnątrz (kolumna `sessions.operation`, parametr filtra panelu). */
+export function isOperationType(value: unknown): value is OperationType {
+  return typeof value === 'string' && (OPERATION_TYPES as readonly string[]).includes(value);
+}
 
 /** Sposób wykrycia startu/lądowania (§3.3): auto (algorytm GPS) lub manual (pilot). */
 export type DetectionMethod = 'auto' | 'manual';

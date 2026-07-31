@@ -61,7 +61,10 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     [
       'sessions',
-      ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at'],
+      // `operation`/`client` na końcu — migracja 11 (ALTER) dokłada je za istniejącymi
+      // kolumnami. `claim_time` NIESIE DUTY START (uzasadnienie: `application/sessionRow.ts`),
+      // dlatego migracja 11 świadomie NIE dokłada kolumny `duty_start`.
+      ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at', 'operation', 'client'],
     ],
     [
       'flags',

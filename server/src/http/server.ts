@@ -10,6 +10,8 @@ import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AdminCorrectionCommands } from '../application/admin/commands/corrections.ts';
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
+import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
+import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
 import type { AuthCommands } from '../application/commands/auth.ts';
 import type { IngestCommands } from '../application/commands/ingest.ts';
 import type { PrefsCommands } from '../application/commands/prefs.ts';
@@ -19,6 +21,7 @@ import type { StateQueries } from '../application/queries/aircraftState.ts';
 import type { TokenService, TraceSinkPort } from '../application/ports.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
+import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
 import { registerAuthRoutes } from './routes/auth.ts';
 import { registerEventsRoutes } from './routes/events.ts';
 import { registerPrefsRoutes } from './routes/prefs.ts';
@@ -39,6 +42,9 @@ export interface ServerDeps {
   /** Komendy panelu administracyjnego (`/admin/api/*`) — patrz `routes/admin/`. */
   adminFlags: AdminFlagCommands;
   adminCorrections: AdminCorrectionCommands;
+  /** Strona ODCZYTU panelu — uproszczony CQRS: komendy wyżej, zapytania tutaj. */
+  adminSessionQueries: AdminSessionQueries;
+  adminFlagQueries: AdminFlagQueries;
 }
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
@@ -54,8 +60,9 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
 
   // Panel administracyjny — trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
   // pilnuje `adminRoute`, żeby nie rozjechał się między plikami.
-  registerAdminFlagRoutes(app, deps.adminFlags, deps.tokens);
+  registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, deps.tokens);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.tokens);
+  registerAdminSessionRoutes(app, deps.adminSessionQueries, deps.tokens);
 
   app.get('/health', async () => ({ ok: true }));
 

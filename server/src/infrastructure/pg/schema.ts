@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 11;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -284,6 +284,52 @@ export const MIGRATION_10 = `
   CREATE INDEX IF NOT EXISTS idx_flags_status_created ON flags (status, created_at DESC, id DESC);
 `;
 
+/**
+ * Migracja 11: rodzaj operacji i klient w projekcji `sessions` (przekrój 2 panelu,
+ * mockup `A02-dni.html`).
+ *
+ * Powód jest jedną regułą: **nowa liczba/wymiar w panelu = nowa KOLUMNA PROJEKCJI,
+ * nigdy nowe wyrażenie SQL** (`docs/architektura-panelu-serwer.md` §7.2). Lista dni
+ * bez rodzaju operacji jest bezużyteczna, a wyciąganie go w locie z `events.payload`
+ * (`preflight_confirm`) byłoby drugim, równoległym odtwarzaniem projekcji — czyli
+ * dokładnie tym, co zaczyna kłamać, gdy zmieni się reguła. Obie wartości SĄ JUŻ
+ * w `SessionState` (`projections/session.ts`: `operation`, `client`), więc to
+ * przepisanie projekcji, nie zmiana modelu zdarzeń.
+ *
+ * **`duty_start` NIE jest tu dokładany, choć §7.2 dokumentu go wymienia.** Kolumna
+ * `claim_time` (migracja 2) już niesie `SessionState.dutyStart` — `sessionRowFrom`
+ * mapuje `claimTime: s.dutyStart` od początku. Druga kolumna z tą samą wartością
+ * byłaby dublem, który natychmiast zacząłby się rozjeżdżać. Rozbieżność NAZWY
+ * z zawartością jest osobną sprawą, opisaną w docblocku `application/sessionRow.ts`.
+ *
+ * `CHECK` na `operation` — ten sam powód co przy `flags.type` (migracja 8): adapter
+ * wczytuje wartość z powrotem do ZAMKNIĘTEJ unii (`OperationType`), więc bez
+ * ograniczenia w bazie strażnik w adapterze byłby zgadywaniem, a z nim jest asercją,
+ * która nigdy nie powinna wystąpić. `client` zostaje wolnym tekstem — to nazwa
+ * odbiorcy wpisywana przez pilota, nie słownik.
+ *
+ * Indeks `idx_sessions_day` obsługuje sortowanie i kursor keyset listy dni.
+ * `NULLS LAST` jest tu ISTOTNE, nie ozdobne: PostgreSQL domyślnie daje przy `DESC`
+ * porządek `NULLS FIRST`, a `keysetOrderBy` żąda `NULLS LAST` (sesje bez preflightu
+ * mają `claim_time = NULL` i mają lądować na końcu, nie na początku listy). Indeks
+ * w domyślnym porządku NIE obsługiwałby zapytania listy — planer i tak sortowałby
+ * pełny wynik przed `LIMIT`, czyli indeks byłby martwym kosztem zapisu.
+ *
+ * **Migracja wymaga PRZEBUDOWY PROJEKCJI**: nowe kolumny w istniejących wierszach
+ * zostaną puste do najbliższej paczki zdarzeń danej sesji, a dla dni zamkniętych
+ * takiej paczki już nie będzie. Przelicza je `npm run rebuild-projections`
+ * (`AdminMaintenanceCommands.rebuildProjections`, mockup `A11-konserwacja.html`).
+ */
+export const MIGRATION_11 = `
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS operation TEXT;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS client    TEXT;
+  ALTER TABLE sessions ADD CONSTRAINT sessions_operation_known CHECK (
+    operation IS NULL OR operation IN ('skoki', 'ferry', 'egzamin', 'techniczny', 'inne')
+  );
+  CREATE INDEX IF NOT EXISTS idx_sessions_day
+    ON sessions (claim_time DESC NULLS LAST, session_uuid DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -295,4 +341,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_8,
   MIGRATION_9,
   MIGRATION_10,
+  MIGRATION_11,
 ];

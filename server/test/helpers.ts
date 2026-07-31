@@ -17,9 +17,17 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 
 import type { AdminAuditPort } from '../src/application/admin/ports.ts';
-import type { Clock, Database, Queryable, SheetsPort } from '../src/application/ports.ts';
+import type {
+  Clock,
+  Database,
+  EventsStorePort,
+  Queryable,
+  SheetsPort,
+} from '../src/application/ports.ts';
 import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
+import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
+import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/commands/auth.ts';
 import { IngestCommands } from '../src/application/commands/ingest.ts';
@@ -32,6 +40,7 @@ import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
+import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
 import { PgEventsStore } from '../src/infrastructure/pg/eventsStore.ts';
 import { PgExportLogRepo } from '../src/infrastructure/pg/exportLogRepo.ts';
 import { PgFlagsRepo } from '../src/infrastructure/pg/flagsRepo.ts';
@@ -66,9 +75,18 @@ export const TEST_BASE_URL = 'http://uzaero.test';
  * `audit` podmienia się z jednego powodu: żeby WYMUSIĆ awarię zapisu śladu i pokazać,
  * że skutek komendy cofa się razem z nim (`adminAudit.test.ts`). Poza tym testem
  * jedzie prawdziwy `PgAdminAuditRepo`, jak wszystko inne tutaj.
+ *
+ * `events` — z jednego, równie wąskiego powodu: `contract.test.ts` LICZY wywołania
+ * `sessionEvents`, żeby przybić maszynowo regułę „listy panelu nie odtwarzają
+ * projekcji ze strumienia". Dekorator opakowuje PRAWDZIWY adapter, więc test nadal
+ * jedzie na prawdziwym SQL-u — podmieniamy obserwację, nie zachowanie.
  */
 export async function testHarness(
-  options: { sheets?: SheetsPort; audit?: AdminAuditPort } = {},
+  options: {
+    sheets?: SheetsPort;
+    audit?: AdminAuditPort;
+    events?: (real: EventsStorePort) => EventsStorePort;
+  } = {},
 ) {
   const pglite = new PGlite();
   // PGlite spełnia `Queryable` wprost, a transakcje ma własne (`transaction(cb)` daje
@@ -84,7 +102,8 @@ export async function testHarness(
 
   const clock = new TestClock();
   const tokens = new Hs256Tokens(TEST_SECRET, clock);
-  const events = new PgEventsStore();
+  const realEvents = new PgEventsStore();
+  const events = options.events?.(realEvents) ?? realEvents;
   const sessions = new PgSessionsProjection();
   const flags = new PgFlagsRepo();
   const exportLog = new PgExportLogRepo();
@@ -111,6 +130,8 @@ export async function testHarness(
 
   const aircraftConfig = new PgAircraftConfigRepo();
   const auditedWrite = new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock);
+  // Jeden adapter flag dla komend i zapytań — tak jak w produkcyjnym composition root.
+  const adminFlagsRepo = new PgAdminFlagsRepo();
 
   const app = buildServer({
     auth: new AuthCommands(
@@ -127,7 +148,14 @@ export async function testHarness(
     traces: new FsTraceSink(tracesDir),
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     tokens,
-    adminFlags: new AdminFlagCommands(auditedWrite, new PgAdminFlagsRepo(), exporter, clock),
+    adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
+    adminSessionQueries: new AdminSessionQueries(
+      db,
+      new PgAdminSessionsRepo(),
+      events,
+      adminFlagsRepo,
+    ),
+    adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
     // `randomUUID` jak w produkcji — uuid korekty testy czytają z odpowiedzi, więc
     // udawany generator nie kupiłby nic poza rozjazdem z composition rootem.
     adminCorrections: new AdminCorrectionCommands(
@@ -141,5 +169,7 @@ export async function testHarness(
     ),
   });
 
-  return { app, db, clock, tokens, tracesDir };
+  // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
+  // wołanych POZA HTTP (przebudowa projekcji = CLI) składały je z tych samych klas.
+  return { app, db, clock, tokens, tracesDir, auditedWrite, events, sessions };
 }

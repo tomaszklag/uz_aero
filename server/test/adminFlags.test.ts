@@ -330,3 +330,147 @@ describe('rozwiązanie flagi (A03a)', () => {
     expect(await exportRevisions(db)).toEqual(before);
   });
 });
+
+function inbox(app: Harness['app'], token: string, query = '') {
+  return app.inject({
+    method: 'GET',
+    url: `/admin/api/flags${query}`,
+    headers: { authorization: `Bearer ${token}` },
+  });
+}
+
+/** Ten sam dzień, ale na innym samolocie — łańcuchy MH i paliwa są PER SAMOLOT. */
+const onAircraft = (events: ReturnType<typeof event>[], aircraftId: string) =>
+  events.map((e) => ({ ...e, aircraftId }));
+
+/**
+ * Skrzynka z DWOMA typami spraw naraz, na DWÓCH samolotach: nakładka (blokuje kartę
+ * dnia) powstaje jako pierwsza, dziura w łańcuchu MH — później. Porządek skrzynki ma
+ * je odwrócić.
+ *
+ * Rozdzielenie na dwa samoloty nie jest kosmetyczne: łańcuch MH i paliwa liczy się
+ * w obrębie jednego samolotu, więc doklejenie drugiej sprawy do SP-AXA dołożyłoby
+ * flagi, których ten test nie dotyczy.
+ */
+async function mixedInbox() {
+  const harness = await testHarness();
+  const { app, db } = harness;
+  const tmk = await login(app, 'TMK');
+  const krz = await login(app, 'KRZ');
+
+  // 1) Nakładka na SP-AXA: dwie sesje bez `day_close`. Powstaje NAJWCZEŚNIEJ.
+  await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
+  await post(app, krz, openDay({ sessionUuid: 'sess-2', picId: 'KRZ', reading: { fuelL: 150, mh: 1236.87 } }));
+
+  // 2) Dziura MH na SP-FGK w kolejnych dniach — flaga młodsza, ale NIE blokuje karty.
+  // O „młodszej" decyduje `flags.created_at` z zegara BAZY (DEFAULT now()), nie
+  // z `TestClock` — dlatego wiek ustawia tu kolejność wywołań, a nie przesunięcie zegara.
+  await post(app, tmk, onAircraft(openDay({ sessionUuid: 'sess-3', picId: 'TMK', reading: { fuelL: 150, mh: 400 } }), 'SP-FGK'));
+  await post(app, tmk, onAircraft(closeDay({ sessionUuid: 'sess-3', picId: 'TMK', mh: 402 }), 'SP-FGK'));
+  await post(app, tmk, onAircraft(openDay({ sessionUuid: 'sess-4', picId: 'TMK', reading: { fuelL: 88, mh: 410 }, dayOffset: 1 }), 'SP-FGK'));
+  await post(app, tmk, onAircraft(closeDay({ sessionUuid: 'sess-4', picId: 'TMK', mh: 412, dayOffset: 1 }), 'SP-FGK'));
+
+  const { rows } = await db.query<{ id: number; type: string; created_at: Date }>(
+    'SELECT id, type, created_at FROM flags ORDER BY id',
+  );
+  expect(rows.map((r) => r.type)).toEqual(['session_overlap', 'mh_gap']);
+
+  return { ...harness, admin: tmk, flags: rows };
+}
+
+describe('skrzynka flag (A03)', () => {
+  it('sortuje blokujące eksport na górę, potem po wieku — od najstarszych', async () => {
+    const { app, admin } = await mixedInbox();
+
+    const body = (await inbox(app, admin)).json();
+
+    // Nakładka jest tu STARSZA i blokująca, więc sam wiek by nie dowiódł porządku;
+    // dowodzi go dopiero test niżej, w którym blokująca jest MŁODSZA.
+    expect(body.items.map((i: { type: string }) => i.type)).toEqual(['session_overlap', 'mh_gap']);
+    expect(body.items[0]).toMatchObject({
+      type: 'session_overlap',
+      status: 'open',
+      aircraftId: 'SP-AXA',
+      reg: 'SP-AXA',
+      aircraftType: 'Cessna 182',
+      blocksExport: true,
+      resolvedAt: null,
+      resolvedBy: null,
+    });
+    expect(body.items[0].sessionUuids.sort()).toEqual(['sess-1', 'sess-2']);
+    expect(body.items[1]).toMatchObject({ type: 'mh_gap', blocksExport: false });
+    expect(body.total).toBe(2);
+  });
+
+  it('MŁODSZA flaga blokująca wyprzedza starszą nieblokującą', async () => {
+    // To jest właściwy dowód na pierwszy klucz sortowania: gdyby skrzynka szła samym
+    // wiekiem, karta dnia stojąca poza arkuszem czekałaby na dole listy.
+    const harness = await testHarness();
+    const { app, db } = harness;
+    const tmk = await login(app, 'TMK');
+    const krz = await login(app, 'KRZ');
+
+    // Najpierw dziura MH na SP-AXA (flaga starsza, nieblokująca).
+    await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
+    await post(app, tmk, closeDay({ sessionUuid: 'sess-1', picId: 'TMK', mh: 1241.15 }));
+    await post(app, tmk, openDay({ sessionUuid: 'sess-2', picId: 'TMK', reading: { fuelL: 88, mh: 1250 }, dayOffset: 1 }));
+    await post(app, tmk, closeDay({ sessionUuid: 'sess-2', picId: 'TMK', mh: 1252, dayOffset: 1 }));
+
+    // Potem nakładka na INNYM samolocie (flaga młodsza, blokująca).
+    const withFgk = (uuid: string, pic: string, mh: number) =>
+      onAircraft(openDay({ sessionUuid: uuid, picId: pic, reading: { fuelL: 150, mh } }), 'SP-FGK');
+    await post(app, tmk, withFgk('sess-3', 'TMK', 400));
+    await post(app, krz, withFgk('sess-4', 'KRZ', 402));
+
+    const { rows } = await db.query<{ type: string }>('SELECT type FROM flags ORDER BY id');
+    expect(rows.map((r) => r.type)).toEqual(['mh_gap', 'session_overlap']);
+
+    const body = (await inbox(app, tmk)).json();
+    expect(body.items.map((i: { type: string }) => i.type)).toEqual(['session_overlap', 'mh_gap']);
+  });
+
+  it('filtruje po statusie, typie i samolocie; `total` liczy CAŁY wynik filtra', async () => {
+    const { app, admin, flags } = await mixedInbox();
+    const types = async (query: string) =>
+      (await inbox(app, admin, query)).json().items.map((i: { type: string }) => i.type);
+
+    expect(await types('?type=mh_gap')).toEqual(['mh_gap']);
+    expect(await types('?aircraftId=SP-AXA')).toEqual(['session_overlap']);
+    expect(await types('?status=resolved')).toEqual([]);
+    expect(await types('?sessionUuid=sess-4')).toEqual(['mh_gap']);
+
+    await resolve(app, flags[0]!.id, { token: admin, note: 'Nakładka pozorna.' });
+    expect(await types('?status=open')).toEqual(['mh_gap']);
+    expect(await types('?status=resolved')).toEqual(['session_overlap']);
+
+    // Rozwiązana nakładka przestaje blokować kartę — ta sama odpowiedź, co bramka
+    // eksportera. Nie ma jej gdzie zapisać, bo jest wyliczana z typu i statusu.
+    const resolved = (await inbox(app, admin, '?status=resolved')).json();
+    expect(resolved.items[0]).toMatchObject({
+      blocksExport: false,
+      resolvedBy: 'TMK',
+      resolutionNote: 'Nakładka pozorna.',
+    });
+
+    const limited = (await inbox(app, admin, '?limit=1')).json();
+    expect(limited.items).toHaveLength(1);
+    expect(limited.total).toBe(2);
+  });
+
+  it('szef wyszkolenia CZYTA skrzynkę, pilot dostaje 403, brak tokenu 401', async () => {
+    const { app } = await mixedInbox();
+
+    expect((await inbox(app, await login(app, 'AKO'))).statusCode).toBe(200);
+
+    const pilot = await inbox(app, await login(app, 'PWI'));
+    expect(pilot.statusCode).toBe(403);
+    expect(pilot.json()).toEqual({ error: 'forbidden', required: 'panel.access' });
+
+    expect((await app.inject({ method: 'GET', url: '/admin/api/flags' })).statusCode).toBe(401);
+  });
+
+  it('nieznany typ flagi w zapytaniu → 400, nie cicha pusta lista', async () => {
+    const { app, admin } = await mixedInbox();
+    expect((await inbox(app, admin, '?type=cos_wymyslonego')).statusCode).toBe(400);
+  });
+});

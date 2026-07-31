@@ -25,6 +25,30 @@
 > autoryzacja panelu jedzie dziś na `Bearer`, bo klienta w przeglądarce jeszcze nie ma
 > i kodu obsługi ciasteczka nie byłoby czym sprawdzić.
 >
+> **Aktualizacja 2026-07-31 — przekrój 2 WDROŻONY** (§7): `infrastructure/pg/{sqlFilter,keyset}.ts`
+> z testami, migracja **11** (`sessions.operation` + `client` + `CHECK` + `idx_sessions_day`),
+> `OPERATION_TYPES`/`isOperationType` w `@uzaero/domain`, `application/admin/contracts/`,
+> mappery `sessionListItem`/`flagListItem`/`eventTimeline`/`projectionDiff`,
+> `Admin{Session,Flag}Queries`, `AdminMaintenanceCommands.rebuildProjections` + CLI
+> `npm run rebuild-projections`, `PgAdmin{Sessions,Maintenance}Repo` i `FlagsAdminPort.list`,
+> `GET /admin/api/{sessions,sessions/:uuid,flags}`, testy
+> `{sqlFilter,keyset,adminSessions,adminMaintenance}.test.ts` + rozszerzone
+> `{adminFlags,contract,architecture,schema}.test.ts`.
+> **Trzy odstępstwa od §7 tego dokumentu, świadome:**
+> (1) migracja 11 dokłada DWIE kolumny, nie pięć — `duty_start` byłby duplikatem
+> `claim_time` (patrz niżej), a `mh_delta_h`/`fuel_consumed_l` należą do przekroju 8
+> (statystyki), bo dziś nie miałby ich kto sumować;
+> (2) **`claim_time` niesie `SessionState.dutyStart`, nie czas zdarzenia `session_claim`** —
+> tak jest od pierwszej wersji `sessionRowFrom` i tak czyta to `GET /aircraft/:id/state`
+> (`claimSince`) oraz telefon. §7.2 zakładał, że w projekcji brakuje duty startu; brakuje
+> wyłącznie NAZWY, która by o tym mówiła. Rozstrzygnięcie „czy `claim_time` ma nieść czas
+> claimu, a duty osobno" wymaga decyzji człowieka — do tego czasu DTO panelu nazywa to pole
+> `dutyStart`, żeby nie propagować nieporozumienia;
+> (3) skrzynka flag (A03) dostaje limit i `total` zamiast kursora — jej porządek ma trzy
+> składowe (`blokujące → wiek → id`), a `keyset.ts` obsługuje parę; rozciąganie modułu do
+> trzech kluczy dla listy, która ma być OPRÓŻNIANA, a nie przeglądana stronami, byłoby
+> tym „frameworkiem pisanym po cichu" z §2.6.
+>
 > **Aktualizacja 2026-07-31 — przekrój 3 WDROŻONY** (§6): `packages/domain/src/rules/authority.ts`
 > (`WriteAuthority`), czwarty parametr `checkAppend`, `AdminCorrectionCommands`,
 > `POST /admin/api/sessions/:uuid/corrections`, `app/src/__tests__/writeAuthority.test.ts`,
