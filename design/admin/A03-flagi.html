@@ -571,8 +571,8 @@
           <span class="chip">session_overlap · 2</span>
           <span class="chip">mh_gap · 3</span>
           <span class="chip">mh_regression · 2</span>
-          <span class="chip" style="opacity:0.38;cursor:not-allowed;" title="Serwer dziś nie produkuje tej flagi — patrz legenda niżej">fuel_mismatch · 0</span>
-          <span class="chip" style="opacity:0.38;cursor:not-allowed;" title="Serwer dziś nie produkuje tej flagi — patrz legenda niżej">clock_drift · 0</span>
+          <span class="chip" title="Typ liczony od 2026-07-31 — obecnie zero otwartych">fuel_mismatch · 0</span>
+          <span class="chip" title="Typ liczony od 2026-07-31 — obecnie zero otwartych">clock_drift · 0</span>
           <span class="chip">SP-ABC · 3</span>
           <span class="chip">SP-KLM · 2</span>
           <span class="chip">SP-XYZ · 2</span>
@@ -770,10 +770,10 @@
         </div>
 
         <div class="card">
-          <div class="card-title">Zapowiedziane w §4.5, serwer ich nie liczy <span class="spacer"></span><span class="pill amber">DO WDROŻENIA</span></div>
+          <div class="card-title">Dopisane do katalogu 2026-07-31 <span class="spacer"></span><span class="pill green">WDROŻONE</span></div>
           <div class="banner status">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Te dwa fenomeny <b>istnieją dziś wyłącznie jako lokalne ostrzeżenia w telefonie</b> (<code>violations.ts</code>: <code>FUEL_MISMATCH</code>, <code>CLOCK_DRIFT</code> jako <code>severity: warning</code>). Do tabeli <code>flags</code> nigdy nie docierają, więc filtry wyżej pokazują dla nich zero i są nieaktywne. Zostawiamy je na ekranie świadomie — próg jest ustalony, brakuje tylko detektora po stronie serwera.</span>
+            <span>Te dwa fenomeny do 2026-07-31 <b>istniały wyłącznie jako lokalne ostrzeżenia w telefonie</b> (<code>violations.ts</code>: <code>FUEL_MISMATCH</code>, <code>CLOCK_DRIFT</code> jako <code>severity: warning</code>) i nigdy nie docierały do tabeli <code>flags</code>. Serwer liczy je teraz przy ingescie: <code>fuel_mismatch</code> porównuje odczyt startowy z przekazaniem poprzednika wzdłuż tego samego łańcucha co motogodziny, a <code>clock_drift</code> bada rozjazd zegarów w strumieniu dnia i daje <b>jedną flagę na sesję</b>, nie jedną na zdarzenie. Progi są wspólne z telefonem, więc obie strony mówią to samo. brakuje tylko detektora po stronie serwera.</span>
           </div>
           <div class="table-wrap" style="border:none;border-radius:0;background:none;">
             <table>
@@ -790,7 +790,7 @@
                   <td><span class="pill dim">fuel_mismatch</span></td>
                   <td class="dim">Odczyt paliwomierza vs przekazanie poza tolerancją</td>
                   <td class="num" style="color:var(--amber)">±10 L<span class="cell-sub">lub ±5% pojemności</span></td>
-                  <td class="dim">Obowiązuje większa z dwóch wartości: SP-ABC (348 L) → 17 L, SP-KLM (1257 L) → 63 L, SP-XYZ (100 L) → 10 L. Dziś liczy to telefon i mówi pilotowi od razu.</td>
+                  <td class="dim">Obowiązuje większa z dwóch wartości: SP-ABC (348 L) → 17 L, SP-KLM (1257 L) → 63 L, SP-XYZ (100 L) → 10 L. Telefon mówi pilotowi od razu, serwer flaguje przekazanie po fakcie — ten sam próg po obu stronach.</td>
                 </tr>
                 <tr>
                   <td><span class="pill dim">clock_drift</span></td>

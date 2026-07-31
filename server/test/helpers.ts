@@ -39,6 +39,7 @@ import { PgPilotPrefsRepo } from '../src/infrastructure/pg/pilotPrefsRepo.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/refreshTokensRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/referenceRepo.ts';
+import { PgAircraftConfigRepo } from '../src/infrastructure/pg/aircraftConfigRepo.ts';
 import { PgSheets } from '../src/infrastructure/pg/sheetsRepo.ts';
 import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
 import { seed } from '../src/infrastructure/pg/seed.ts';
@@ -115,7 +116,7 @@ export async function testHarness(
       clock,
     ),
     reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-    ingest: new IngestCommands(db, events, sessions, flags, exporter),
+    ingest: new IngestCommands(db, events, sessions, flags, new PgAircraftConfigRepo(), exporter),
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
     traces: new FsTraceSink(tracesDir),

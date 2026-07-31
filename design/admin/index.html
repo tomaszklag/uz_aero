@@ -111,11 +111,13 @@
   <p>
     <b>Rola konta — zrobiona 2026-07-31</b>: migracja 7 dokłada <code>pilots.role</code>, JWT niesie trzeci claim,
     a mapa ról na zdolności mieszka w <code>server/src/domain/roles.ts</code>.
-    <span class="warn">Zostają dwa braki</span>, bez których te ekrany nie zadziałają: kod zamykający flagę
-    (<code>status='resolved'</code> nie ustawia nic w całym <code>server/src</code>) i endpointy <code>/admin/*</code>.
-    Konsekwencja, która uderzy <b>pierwszego dnia testów z pilotami</b>: otwarta flaga <code>session_overlap</code> blokuje
-    eksport karty dnia (<code>dayExporter.ts</code>), a odblokować ją może dziś wyłącznie ręczny UPDATE w bazie —
-    a nakładka sesji powstaje przy przejęciu samolotu offline, czyli dokładnie w scenariuszu, który faza 5 ma sprawdzać.
+    <b>Cykl życia flagi — wdrożony</b>: <code>POST /admin/api/flags/:id/resolve</code> zamyka flagę komentarzem i sam
+    wyzwala re-eksport karty, więc <code>session_overlap</code> przestał blokować dokument klubu bezterminowo.
+    Wpis do dziennika <code>admin_audit</code> powstaje tą samą transakcją co skutek, a mechanizm wymusza go TYPEM —
+    komenda panelu bez śladu nie kompiluje się. <b>Katalog flag kompletny</b>: <code>fuel_mismatch</code>
+    i <code>clock_drift</code> serwer liczy od 2026-07-31.
+    <span class="warn">Zostaje jeden brak</span>: reszta endpointów <code>/admin/api/*</code> — listy, filtry, konta,
+    flota, korekty po oknie 24 h. Bez nich te ekrany nie mają skąd wziąć danych.
   </p>
   <p>
     Pełna analiza — role, mapowanie każdego ekranu na endpoint, braki serwera z wyceną, ryzyka:

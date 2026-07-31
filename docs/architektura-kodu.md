@@ -196,11 +196,28 @@ i wycena: `design/admin/ANALIZA.md`.
 Dwie sprawy z tej analizy są **decyzją produktową, nie robotą do wykonania**: (1) korekta
 administratora **nie wraca na telefon pilota** — sync jest jednokierunkowy, §4.6 nie ma
 endpointu zwracającego zdarzenia do aplikacji, więc pilot zobaczy stare liczby na ekranie 12;
-(2) ~~§4.5 obiecuje 6 typów flag, `domain/mhChain.ts` produkuje 3~~ — **ROZSTRZYGNIĘTE
-2026-07-31: kod dogania dokumentację.** `FUEL_MISMATCH` i `CLOCK_DRIFT` doliczamy przy
-ingescie (dane są — `checkClocks` już porównuje oba zegary), a `session_overlap` zostaje
-następcą `DOUBLE_CLAIM` + `TIME_OVERLAP`. Decyzja musiała zapaść przed cyklem życia flagi,
-bo determinuje kształt `FlagType`.
+(2) ~~§4.5 obiecuje 6 typów flag, `domain/mhChain.ts` produkuje 3~~ — **ZROBIONE
+2026-07-31.** Katalog liczy pięć pozycji (`session_overlap` zastąpił `DOUBLE_CLAIM`
+i `TIME_OVERLAP`) i serwer produkuje wszystkie:
+- `fuel_mismatch` mieszka w `domain/mhChain.ts` razem z flagami motogodzin, bo to **ten
+  sam łańcuch**: te same ogniwa, to samo uporządkowanie po liczniku i ta sama sąsiedniość
+  par. Osobny moduł powtórzyłby sortowanie i parowanie, a rozjazd dwóch kopii tej samej
+  pętli byłby kwestią czasu. Porządek nadaje MH, ale porównywać wzdłuż niego można
+  dowolną wielkość przekazywaną z dnia na dzień. Flagujemy **wartość bezwzględną**
+  różnicy: wzrost znaczy tankowanie poza aplikacją, spadek — spuszczone paliwo albo
+  błędny odczyt. Tolerancja z `fuelToleranceL(capacityL)`, więc ingest dostał wąski
+  port `AircraftConfigPort` (jedna liczba, czytana W TEJ SAMEJ transakcji co reszta
+  rachunku — `ReferenceRepo` buduje całą migawkę floty z ETagiem i czyta poza nią).
+- `clock_drift` dostał własny moduł `domain/clockDrift.ts`, bo jest własnością
+  POJEDYNCZEGO zdarzenia, nie łańcucha. Liczy się na strumieniu dnia, który ingest
+  i tak ma wczytany. **Jedna flaga na sesję, nie jedna na zdarzenie**: przestawiony
+  zegar to własność telefonu na czas dnia, a dwadzieścia flag o tym samym zegarze
+  nauczyłoby wyłącznie ignorowania skrzynki. Raportujemy maksimum rozjazdu i wskazujemy
+  najgorszy zapis — bez tropu administrator ma flagę i nic więcej.
+
+Progi obu są WSPÓLNE z telefonem (`CLOCK_DRIFT_MS`, `fuelToleranceL`), więc lokalne
+ostrzeżenie i flaga serwera mówią to samo — pilot nie dowiaduje się dzień później, że
+serwerowi coś nie pasowało.
 
 **Architektura panelu (decyzje 2026-07-31).** Pełne rozstrzygnięcia: `docs/architektura-panelu-serwer.md`
 (podział modeli, ORM, uproszczony CQRS komend admina, audyt w transakcji, sesja przeglądarkowa)

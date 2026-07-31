@@ -179,6 +179,19 @@ export interface SessionsProjectionPort {
 }
 
 /**
+ * Konfiguracja samolotu potrzebna REGUŁOM serwera (dziś: pojemność zbiorników do
+ * tolerancji `fuel_mismatch`, §4.5).
+ *
+ * Osobny, jednometodowy port zamiast sięgnięcia po `ReferenceRepo`: tamten buduje CAŁĄ
+ * migawkę floty z ETagiem pod cache telefonów i czyta poza transakcją, a ingest
+ * potrzebuje jednej liczby WEWNĄTRZ swojej transakcji.
+ */
+export interface AircraftConfigPort {
+  /** `null` = samolot nieznany albo bez skonfigurowanej pojemności. */
+  capacityL(db: Queryable, aircraftId: string): Promise<number | null>;
+}
+
+/**
  * Wiersz flagi po stronie serwera. Kształt „na drucie" (`type`, `sessionUuids`) idzie
  * z domeny — `SessionFlag` w `@uzaero/domain` — bo telefon czyta dokładnie te pola
  * z `/sessions/:uuid/sync-status`. Reszta (`id`, `details`, `status`) jest sprawą

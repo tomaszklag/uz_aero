@@ -22,10 +22,12 @@
 
 import type { Event } from '@uzaero/domain';
 
+import { clockDriftFlag } from '../../domain/clockDrift.ts';
 import { chainFlags, type ChainLink } from '../../domain/mhChain.ts';
 import { sessionRowFrom } from '../sessionRow.ts';
 import type { DayExporter } from '../export/dayExporter.ts';
 import type {
+  AircraftConfigPort,
   Database,
   EventsStorePort,
   FlagRecord,
@@ -51,6 +53,8 @@ export class IngestCommands {
     private readonly events: EventsStorePort,
     private readonly sessions: SessionsProjectionPort,
     private readonly flags: FlagsPort,
+    /** Pojemność zbiorników → tolerancja `fuel_mismatch` (§4.5). */
+    private readonly aircraft: AircraftConfigPort,
     /** `null` = eksport §4.7 wyłączony (brak konfiguracji Sheets w composition root). */
     private readonly exporter: DayExporter | null,
   ) {}
@@ -103,6 +107,13 @@ export class IngestCommands {
         await this.sessions.upsert(tx, row);
         aircraftIds.add(row.aircraftId);
         if (row.status === 'closed') closedNow.push(sessionUuid);
+
+        // Rozjazd zegarów jest własnością POJEDYNCZEGO zdarzenia, nie łańcucha sesji,
+        // więc liczy się tu — na pełnym strumieniu dnia, który i tak mamy wczytany.
+        const drift = clockDriftFlag(sessionUuid, stream);
+        if (drift != null) {
+          await this.flags.ensureOpen(tx, { ...drift, aircraftId: row.aircraftId });
+        }
       }
 
       // Flagi liczymy per samolot, z CAŁEJ jego historii sesji — anomalia łańcucha
@@ -113,10 +124,13 @@ export class IngestCommands {
             sessionUuid: s.sessionUuid,
             mhStart: s.mhStart,
             mhEnd: s.mhEnd,
+            fuelStartL: s.fuelStartL,
+            fuelEndL: s.fuelEndL,
             closed: s.status === 'closed',
           }),
         );
-        for (const flag of chainFlags(links)) {
+        const capacityL = await this.aircraft.capacityL(tx, aircraftId);
+        for (const flag of chainFlags(links, capacityL)) {
           await this.flags.ensureOpen(tx, { ...flag, aircraftId });
         }
       }

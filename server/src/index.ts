@@ -22,6 +22,7 @@ import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
+import { PgAircraftConfigRepo } from './infrastructure/pg/aircraftConfigRepo.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
 import { PgEventsStore } from './infrastructure/pg/eventsStore.ts';
 import { PgExportLogRepo } from './infrastructure/pg/exportLogRepo.ts';
@@ -77,7 +78,7 @@ const auditedWrite = new AuditedWrite(db, new PgAdminAuditRepo(), clock);
 const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), new ScryptHasher(), tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-  ingest: new IngestCommands(db, events, sessions, flags, exporter),
+  ingest: new IngestCommands(db, events, sessions, flags, new PgAircraftConfigRepo(), exporter),
   state: new StateQueries(db, events, sessions, flags, exportLog),
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),

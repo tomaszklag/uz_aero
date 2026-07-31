@@ -309,7 +309,10 @@ describe('rozwiązanie flagi (A03a)', () => {
     await post(app, tmk, openDay({ sessionUuid: 'sess-1', picId: 'TMK', reading: { fuelL: 150, mh: 1234.5 } }));
     await post(app, tmk, closeDay({ sessionUuid: 'sess-1', picId: 'TMK', mh: 1241.15 }));
     // Następny dzień zaczyna się od licznika wyższego o ~9 h — ktoś latał bez aplikacji.
-    await post(app, tmk, openDay({ sessionUuid: 'sess-3', picId: 'TMK', reading: { fuelL: 200, mh: 1250 }, dayOffset: 1 }));
+    // Paliwo ZGADZA się z przekazaniem (88 L z `closeDay`) celowo: ten test dotyczy
+    // flagi nieblokującej eksportu, a rozjazd paliwa dołożyłby drugą, niezwiązaną
+    // z jego tezą (od 2026-07-31 serwer liczy też `fuel_mismatch`).
+    await post(app, tmk, openDay({ sessionUuid: 'sess-3', picId: 'TMK', reading: { fuelL: 88, mh: 1250 }, dayOffset: 1 }));
     await post(app, tmk, closeDay({ sessionUuid: 'sess-3', picId: 'TMK', mh: 1252, dayOffset: 1 }));
 
     const flags = await flagRows(db);
