@@ -20,12 +20,17 @@ const AIRCRAFT = [
   ['SP-KWA', 'SP-KWA', 'Cessna 172', 2021, 200, 'decimal', false, 'disabled'],
 ] as const;
 
+/**
+ * Role (migracja 7): seed daje po jednym koncie każdej roli, żeby panel dało się
+ * przeklikać bez ręcznego UPDATE-u. Reszta to zwykli piloci — czyli stan, w którym
+ * konto NIE ma dostępu do back-office'u, i taki ma być domyślny.
+ */
 const PILOTS = [
-  ['TMK', 'TMK', 'Tomasz Małkiewicz', 'tomasz@uzaero.pl'],
-  ['AKO', 'AKO', 'Anna Kowalska', 'anna@uzaero.pl'],
-  ['PWI', 'PWI', 'Piotr Wiśniewski', 'piotr@uzaero.pl'],
-  ['JSE', 'JSE', 'Jan Serafin', 'jan@uzaero.pl'],
-  ['KRZ', 'KRZ', 'Krzysztof Zieliński', 'krzysztof@uzaero.pl'],
+  ['TMK', 'TMK', 'Tomasz Małkiewicz', 'tomasz@uzaero.pl', 'admin'],
+  ['AKO', 'AKO', 'Anna Kowalska', 'anna@uzaero.pl', 'training_lead'],
+  ['PWI', 'PWI', 'Piotr Wiśniewski', 'piotr@uzaero.pl', 'pilot'],
+  ['JSE', 'JSE', 'Jan Serafin', 'jan@uzaero.pl', 'pilot'],
+  ['KRZ', 'KRZ', 'Krzysztof Zieliński', 'krzysztof@uzaero.pl', 'pilot'],
 ] as const;
 
 export async function seed(
@@ -46,17 +51,17 @@ export async function seed(
     );
   }
 
-  for (const [id, code, name, email] of PILOTS) {
+  for (const [id, code, name, email, role] of PILOTS) {
     // Hash liczymy per pilot — wspólny hash dla wszystkich zdradzałby w bazie,
     // że hasła startowe są identyczne.
     const hash = await hasher.hash(options.defaultPassword);
     await db.query(
-      `INSERT INTO pilots (id, code, name, email, password_hash, active)
-       VALUES ($1, $2, $3, $4, $5, TRUE)
+      `INSERT INTO pilots (id, code, name, email, password_hash, active, role)
+       VALUES ($1, $2, $3, $4, $5, TRUE, $6)
        ON CONFLICT (id) DO UPDATE SET
          code = EXCLUDED.code, name = EXCLUDED.name, email = EXCLUDED.email,
-         updated_at = now()`,
-      [id, code, name, email, hash],
+         role = EXCLUDED.role, updated_at = now()`,
+      [id, code, name, email, hash, role],
     );
   }
 }

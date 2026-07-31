@@ -6,6 +6,7 @@
  */
 
 import type { PilotAccount, PilotsPort, Queryable } from '../../application/ports.ts';
+import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
 
 interface PilotRow {
   id: string;
@@ -14,6 +15,7 @@ interface PilotRow {
   email: string | null;
   password_hash: string;
   active: boolean;
+  role: string;
 }
 
 const toAccount = (r: PilotRow): PilotAccount => ({
@@ -23,6 +25,9 @@ const toAccount = (r: PilotRow): PilotAccount => ({
   email: r.email,
   passwordHash: r.password_hash,
   active: r.active,
+  // Bazy pilnuje CHECK z migracji 7, ale adapter i tak nie ufa łańcuchowi znaków
+  // z zewnątrz: nierozpoznana rola schodzi do najmniejszej, nigdy nie awansuje.
+  role: isPilotRole(r.role) ? r.role : DEFAULT_ROLE,
 });
 
 export class PgPilotsRepo implements PilotsPort {

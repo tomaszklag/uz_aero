@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -179,6 +179,29 @@ export const MIGRATION_6 = `
   ALTER TABLE pilots ADD COLUMN theme_updated_at TIMESTAMPTZ;
 `;
 
+/**
+ * Migracja 7: rola konta (decyzja 2026-07-31 — panel administracyjny, `design/admin/`).
+ *
+ * Kolumna na `pilots`, nie osobna tabela użytkowników panelu: administrator i szef
+ * wyszkolenia SĄ pilotami, więc drugi byt tożsamości rozjechałby ich nalot na dwa
+ * konta (uzasadnienie w `src/domain/roles.ts`).
+ *
+ * `IF NOT EXISTS` jest tu świadome. Migracje 3 (`ADD CONSTRAINT`) i 6 (`ADD COLUMN`)
+ * go NIE mają, więc powtórzenie po przerwaniu procesu między `runScript` a wpisem
+ * do `schema_migrations` wywala się i blokuje start serwera (zaległość opisana
+ * w `docs/architektura-kodu.md`). Nowa migracja tego długu nie powiększa.
+ *
+ * CHECK zamiast typu ENUM: wartości ról zmieniają się rzadko, ale enum w Postgresie
+ * rozszerza się osobnym DDL-em o własnych ograniczeniach transakcyjnych, a CHECK jest
+ * zwykłym ograniczeniem tabeli — tańszy w utrzymaniu i tak samo nieprzepuszczalny.
+ * `DEFAULT 'pilot'` domyka istniejące konta: podniesienie uprawnień ma być jawną
+ * decyzją administratora, nigdy skutkiem ubocznym wdrożenia.
+ */
+export const MIGRATION_7 = `
+  ALTER TABLE pilots ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'pilot'
+    CHECK (role IN ('pilot', 'training_lead', 'admin'));
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -186,4 +209,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_4,
   MIGRATION_5,
   MIGRATION_6,
+  MIGRATION_7,
 ];

@@ -174,9 +174,16 @@ ponowienie robi dopiero następna paczka tej sesji).
 projektowaniu `design/admin/`, ODRĘBNE od listy wyżej. Pełne mapowanie ekran → endpoint
 i wycena: `design/admin/ANALIZA.md`.
 
-- **Rola nie istnieje nigdzie.** `pilots` nie ma kolumny roli, JWT niesie `{pilotId, code}`,
-  a `http/authorize.ts` nie zna pojęcia uprawnienia. Blokuje każdy inny punkt: migracja
-  + claim w tokenie + brama per rola.
+- ~~**Rola nie istnieje nigdzie.**~~ **ZROBIONE 2026-07-31.** Migracja 7 dokłada
+  `pilots.role` (CHECK na słowniku, `DEFAULT 'pilot'`), JWT niesie trzeci claim, a mapa
+  ról na zdolności mieszka w `src/domain/roles.ts` — jedno miejsce z odpowiedzią na
+  pytanie „kto może co", zamiast `if (role === 'admin')` rozsianych po trasach.
+  `http/authorize.ts` dostał `authorizeCapability`, które rozróżnia 401 od 403 i zwraca
+  wymaganą zdolność (panel ma podawać POWÓD odmowy). Dwie własności pilnowane testem
+  (`test/roles.test.ts`): token bez claimu roli (wydany przed migracją) działa jako
+  `pilot`, nigdy nie awansuje — odrzucenie wylogowałoby telefony w terenie, a cichy
+  awans byłby luką; rola przy odświeżeniu idzie z KONTA, nie ze starego tokenu, więc
+  odebranie uprawnień działa od razu, a nie po wygaśnięciu 90-dniowego refresha.
 - **Flaga nie ma jak się zamknąć.** W całym `server/src` nie ma kodu ustawiającego
   `status='resolved'`, a `application/export/dayExporter.ts` odmawia eksportu przy otwartej
   `session_overlap` — nakładka sesji **trwale blokuje kartę dnia** i odblokowuje ją wyłącznie

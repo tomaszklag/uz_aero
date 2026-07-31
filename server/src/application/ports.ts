@@ -14,6 +14,8 @@
 
 import type { Event, ReferenceAircraft, ReferencePilot } from '@uzaero/domain';
 
+import type { PilotRole } from '../domain/roles.ts';
+
 // ── magazyn ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -44,6 +46,8 @@ export interface PilotAccount {
   email: string | null;
   passwordHash: string;
   active: boolean;
+  /** Uprawnienia w panelu administracyjnym (`src/domain/roles.ts`). */
+  role: PilotRole;
 }
 
 export interface PilotsPort {
@@ -87,11 +91,18 @@ export interface PasswordHasher {
 }
 
 /** Podpisywanie i weryfikacja JWT sesji (HS256). */
+/** Tożsamość odczytana z tokenu — to, na podstawie czego trasy podejmują decyzje. */
+export interface Identity {
+  pilotId: string;
+  code: string;
+  role: PilotRole;
+}
+
 export interface TokenService {
   /** Zwraca podpisany token dostępu dla pilota. */
-  sign(claims: { pilotId: string; code: string }, ttlSec: number): string;
+  sign(claims: Identity, ttlSec: number): string;
   /** Zwraca claims albo `null` — token zły/wygasły. Nigdy nie rzuca. */
-  verify(token: string): { pilotId: string; code: string } | null;
+  verify(token: string): Identity | null;
 }
 
 /**

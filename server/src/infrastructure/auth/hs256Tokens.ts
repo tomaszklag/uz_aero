@@ -12,7 +12,8 @@
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-import type { Clock, TokenService } from '../../application/ports.ts';
+import type { Clock, Identity, TokenService } from '../../application/ports.ts';
+import { DEFAULT_ROLE, isPilotRole } from '../../domain/roles.ts';
 
 const b64url = (data: Buffer | string): string =>
   Buffer.from(data).toString('base64url');
@@ -23,6 +24,8 @@ const HEADER = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
 interface Claims {
   sub: string;
   code: string;
+  /** Rola panelu. Nieobecna w tokenach wydanych przed migracją 7 — patrz `verify`. */
+  role?: string;
   exp: number;
 }
 
@@ -41,17 +44,18 @@ export class Hs256Tokens implements TokenService {
     return createHmac('sha256', this.secret).update(input).digest();
   }
 
-  sign(claims: { pilotId: string; code: string }, ttlSec: number): string {
+  sign(claims: Identity, ttlSec: number): string {
     const payload: Claims = {
       sub: claims.pilotId,
       code: claims.code,
+      role: claims.role,
       exp: Math.floor(this.clock.now().getTime() / 1000) + ttlSec,
     };
     const body = `${HEADER}.${b64url(JSON.stringify(payload))}`;
     return `${body}.${this.hmac(body).toString('base64url')}`;
   }
 
-  verify(token: string): { pilotId: string; code: string } | null {
+  verify(token: string): Identity | null {
     const parts = token.split('.');
     if (parts.length !== 3 || parts[0] !== HEADER) return null;
 
@@ -76,6 +80,12 @@ export class Hs256Tokens implements TokenService {
       return null;
     }
 
-    return { pilotId: claims.sub, code: claims.code };
+    // Rola nieznana → `pilot`, czyli zero uprawnień w panelu. Dotyczy tokenów wydanych
+    // przed migracją 7: mają poprawny podpis, więc odrzucenie wylogowałoby telefony
+    // w terenie bez powodu. Cichy awans do wyższej roli byłby natomiast luką — stąd
+    // domyślną jest NAJMNIEJSZA rola, nie żadna heurystyka. Podpis HMAC gwarantuje,
+    // że nierozpoznana wartość może pochodzić tylko od nas, nigdy od napastnika.
+    const role = isPilotRole(claims.role) ? claims.role : DEFAULT_ROLE;
+    return { pilotId: claims.sub, code: claims.code, role };
   }
 }

@@ -14,10 +14,12 @@
 import type {
   Clock,
   PasswordHasher,
+  PilotAccount,
   PilotsPort,
   RefreshTokensPort,
   TokenService,
 } from '../ports.ts';
+import type { PilotRole } from '../../domain/roles.ts';
 
 /** Czas życia JWT (s) — krótki, bo odświeżenie jest tanie i automatyczne. */
 export const ACCESS_TTL_SEC = 60 * 60;
@@ -28,7 +30,12 @@ export const REFRESH_TTL_DAYS = 90;
 export interface AuthTokens {
   token: string;
   refreshToken: string;
-  pilot: { id: string; code: string; name: string };
+  /**
+   * `role` jedzie w odpowiedzi, a nie tylko w tokenie: panel musi wiedzieć od razu po
+   * zalogowaniu, które sekcje pokazać, a nie zgadywać po odmowach z kolejnych tras.
+   * Aplikacja pilota pole ignoruje — dla niej nic się nie zmienia.
+   */
+  pilot: { id: string; code: string; name: string; role: PilotRole };
 }
 
 export type LoginResult =
@@ -57,7 +64,7 @@ export class AuthCommands {
     if (account == null || !valid) return { ok: false, reason: 'invalid_credentials' };
     if (!account.active) return { ok: false, reason: 'account_disabled' };
 
-    return { ok: true, tokens: await this.issueFor(account.id, account.code, account.name) };
+    return { ok: true, tokens: await this.issueFor(account) };
   }
 
   /** Rotacja: zużywa refresh i wydaje świeżą parę ATOMOWO. `null` = token martwy. */
@@ -73,21 +80,27 @@ export class AuthCommands {
     // dezaktywacja ma odcinać dostęp, nie zostawiać zapasowego refresha.
     if (account == null || !account.active) return null;
 
+    // Rola idzie z KONTA, nie ze starego tokenu: odebranie uprawnień ma zadziałać
+    // przy najbliższym odświeżeniu, a nie dopiero po wygaśnięciu refresha.
     return {
-      token: this.tokens.sign({ pilotId: account.id, code: account.code }, ACCESS_TTL_SEC),
+      token: this.tokens.sign(
+        { pilotId: account.id, code: account.code, role: account.role },
+        ACCESS_TTL_SEC,
+      ),
       refreshToken: rotated.token,
-      pilot: { id: account.id, code: account.code, name: account.name },
+      pilot: { id: account.id, code: account.code, name: account.name, role: account.role },
     };
   }
 
-  private async issueFor(id: string, code: string, name: string): Promise<AuthTokens> {
+  private async issueFor(account: PilotAccount): Promise<AuthTokens> {
     const expiresAt = new Date(
       this.clock.now().getTime() + REFRESH_TTL_DAYS * 24 * 3_600_000,
     );
+    const { id, code, name, role } = account;
     return {
-      token: this.tokens.sign({ pilotId: id, code }, ACCESS_TTL_SEC),
+      token: this.tokens.sign({ pilotId: id, code, role }, ACCESS_TTL_SEC),
       refreshToken: await this.refreshTokens.issue(id, expiresAt),
-      pilot: { id, code, name },
+      pilot: { id, code, name, role },
     };
   }
 }

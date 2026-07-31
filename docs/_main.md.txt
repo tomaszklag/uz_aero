@@ -425,8 +425,11 @@ ze strumienia zdarzeń — przy kilkuset zdarzeniach dziennie tabele agregujące
 ### 5.3 PostgreSQL (serwer)
 
 ```
-pilots       — id, kod, imię i nazwisko, e-mail, password_hash, active
+pilots       — id, kod, imię i nazwisko, e-mail, password_hash, active, role
                (konta zakłada i resetuje administrator — brak samodzielnej rejestracji)
+               role: pilot | training_lead | admin (migracja 7, decyzja 2026-07-31) —
+               uprawnienia panelu siedzą na koncie pilota, bo szef wyszkolenia
+               i administrator SĄ pilotami; mapa ról na zdolności: server/src/domain/roles.ts
 aircraft     — id, reg, typ, rok, capacity_l, mh_format, dual_required, service_status
 events       — uuid PK, session_uuid, aircraft_id, pic_id, dual_id, type,
                device_time, gps_time, payload JSONB, received_at, source_device

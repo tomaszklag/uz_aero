@@ -46,8 +46,9 @@ describe('schemat PostgreSQL (kontrakt)', () => {
   it.each([
     [
       'pilots',
-      // `theme`/`theme_updated_at` na końcu: migracja 6 (ALTER) dokłada kolumny za istniejącymi.
-      ['id', 'code', 'name', 'email', 'password_hash', 'active', 'updated_at', 'theme', 'theme_updated_at'],
+      // `theme`/`theme_updated_at`/`role` na końcu: migracje 6 i 7 (ALTER) dokładają
+      // kolumny za istniejącymi, w kolejności stosowania.
+      ['id', 'code', 'name', 'email', 'password_hash', 'active', 'updated_at', 'theme', 'theme_updated_at', 'role'],
     ],
     [
       'aircraft',

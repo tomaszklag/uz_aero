@@ -22,9 +22,14 @@ describe('POST /auth/login', () => {
 
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.pilot).toEqual({ id: 'TMK', code: 'TMK', name: 'Tomasz Małkiewicz' });
+    expect(body.pilot).toEqual({
+      id: 'TMK',
+      code: 'TMK',
+      name: 'Tomasz Małkiewicz',
+      role: 'admin',
+    });
     // JWT ma być od razu użyteczny…
-    expect(tokens.verify(body.token)).toEqual({ pilotId: 'TMK', code: 'TMK' });
+    expect(tokens.verify(body.token)).toEqual({ pilotId: 'TMK', code: 'TMK', role: 'admin' });
     // …a refresh wystarczająco długi, żeby nie dało się go zgadywać.
     expect(String(body.refreshToken).length).toBeGreaterThanOrEqual(40);
   });

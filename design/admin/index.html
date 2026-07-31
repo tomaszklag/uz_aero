@@ -109,10 +109,13 @@
     (<b>administrator</b> i <b>szef wyszkolenia</b>), stan floty na żywo oraz dane po fakcie.
   </p>
   <p>
-    <span class="warn">Trzy rzeczy, których serwer dziś NIE MA</span>, a bez których żaden z tych ekranów nie zadziała:
-    kolumny roli w <code>pilots</code> i claimu roli w tokenie; kodu zamykającego flagę (<code>status='resolved'</code> nie ustawia nic w całym <code>server/src</code>);
-    endpointów <code>/admin/*</code>. Konsekwencja, która boli już dziś: otwarta flaga <code>session_overlap</code> blokuje eksport karty dnia
-    (<code>dayExporter.ts</code>), a odblokować ją może wyłącznie ręczny UPDATE w bazie.
+    <b>Rola konta — zrobiona 2026-07-31</b>: migracja 7 dokłada <code>pilots.role</code>, JWT niesie trzeci claim,
+    a mapa ról na zdolności mieszka w <code>server/src/domain/roles.ts</code>.
+    <span class="warn">Zostają dwa braki</span>, bez których te ekrany nie zadziałają: kod zamykający flagę
+    (<code>status='resolved'</code> nie ustawia nic w całym <code>server/src</code>) i endpointy <code>/admin/*</code>.
+    Konsekwencja, która uderzy <b>pierwszego dnia testów z pilotami</b>: otwarta flaga <code>session_overlap</code> blokuje
+    eksport karty dnia (<code>dayExporter.ts</code>), a odblokować ją może dziś wyłącznie ręczny UPDATE w bazie —
+    a nakładka sesji powstaje przy przejęciu samolotu offline, czyli dokładnie w scenariuszu, który faza 5 ma sprawdzać.
   </p>
   <p>
     Pełna analiza — role, mapowanie każdego ekranu na endpoint, braki serwera z wyceną, ryzyka:
