@@ -12,17 +12,19 @@ import type { Capability, PanelPilotDto } from '../../api/dto';
 import { can, denialReason } from '../../auth/can';
 import { PlaneIcon } from '../components/icons';
 import { NavItem } from './NavItem';
+import type { NavCount } from './navCounts';
 import { NAV_GROUPS } from './navItems';
 import { WhoBox } from './WhoBox';
 
 interface SidebarProps {
   pilot: PanelPilotDto;
   capabilities: Capability[];
+  navCounts?: Partial<Record<string, NavCount>>;
   onLogout: () => void;
   logoutDisabled?: boolean;
 }
 
-export function Sidebar({ pilot, capabilities, onLogout, logoutDisabled }: SidebarProps) {
+export function Sidebar({ pilot, capabilities, navCounts, onLogout, logoutDisabled }: SidebarProps) {
   return (
     <nav className="sidebar" aria-label="Nawigacja panelu">
       <div className="brand">
@@ -49,6 +51,7 @@ export function Sidebar({ pilot, capabilities, onLogout, logoutDisabled }: Sideb
                   {...item}
                   locked={!allowed}
                   lockReason={allowed ? undefined : denialReason(item.capability)}
+                  count={navCounts?.[item.to]}
                 />
               );
             })}

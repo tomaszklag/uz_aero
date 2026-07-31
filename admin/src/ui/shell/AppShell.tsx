@@ -9,6 +9,7 @@
 import type { ReactNode } from 'react';
 
 import type { Capability, PanelPilotDto } from '../../api/dto';
+import type { NavCount } from './navCounts';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 
@@ -16,6 +17,8 @@ interface AppShellProps {
   pilot: PanelPilotDto;
   capabilities: Capability[];
   trail: string[];
+  /** Plakietki liczbowe przy pozycjach nawigacji, kluczowane adresem pozycji. */
+  navCounts?: Partial<Record<string, NavCount>>;
   onLogout: () => void;
   logoutDisabled?: boolean;
   children: ReactNode;
@@ -25,6 +28,7 @@ export function AppShell({
   pilot,
   capabilities,
   trail,
+  navCounts,
   onLogout,
   logoutDisabled,
   children,
@@ -34,6 +38,7 @@ export function AppShell({
       <Sidebar
         pilot={pilot}
         capabilities={capabilities}
+        navCounts={navCounts}
         onLogout={onLogout}
         logoutDisabled={logoutDisabled}
       />

@@ -220,6 +220,55 @@
   line-height: 1.6;
 }
 
+/* ── wiersz klucz/wartość (szczegóły, audyt) ── */
+.kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.kv:last-child {
+  border-bottom: none;
+}
+
+.kv-k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.kv-v {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: right;
+  letter-spacing: 0.3px;
+}
+
+.kv-v.green {
+  color: var(--green);
+}
+
+.kv-v.amber {
+  color: var(--amber);
+}
+
+.kv-v.red {
+  color: var(--red);
+}
+
+.kv-v small {
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
 /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
 .code-ref {
   font-family: var(--font-mono);

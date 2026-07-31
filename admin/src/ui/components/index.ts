@@ -3,18 +3,31 @@
  *
  * Biblioteka rośnie PACZKAMI pod konkretne ekrany, nie „na zapas"
  * (`docs/architektura-panelu-frontend.md` §10 krok 4). To, czego tu nie ma
- * (`PageHead`, `DataTable`, `Drawer`, `Timeline`, `KeyValue`, `OptionList`, `FilterBar`…),
- * dochodzi razem z pierwszym ekranem, który tego wymaga — razem z arkuszem CSS
- * o klasach 1:1 z szablonem.
+ * (`Timeline`, `Skeleton`, `NoAccess`, `OptionGrid`, `Columns`…), dochodzi razem
+ * z pierwszym ekranem, który tego wymaga — razem z arkuszem CSS o klasach 1:1
+ * z szablonem.
  *
- * Osiem pozycji z dwudziestu czterech i tak ma być: `SZABLON.html` jest inwentarzem
- * DOCELOWYM, a komponent bez ekranu to kod, którego nikt nie sprawdził w użyciu.
+ * `SZABLON.html` jest inwentarzem DOCELOWYM, a komponent bez ekranu to kod,
+ * którego nikt nie sprawdził w użyciu.
  */
 
 export { Banner, type BannerTone } from './Banner';
 export { Button } from './Button';
 export { Card } from './Card';
+export { DataTable, type Column } from './DataTable';
+export { Drawer } from './Drawer';
 export { EmptyState } from './EmptyState';
 export { Field } from './Field';
+export { FilterBar } from './FilterBar';
+export { FilterChip } from './FilterChip';
+export { KeyValue, type KeyValueTone } from './KeyValue';
+export { LinkButton } from './LinkButton';
+export { OptionLink } from './OptionLink';
+export { OptionList } from './OptionList';
+export { PageHead } from './PageHead';
 export { Pill, type PillTone } from './Pill';
+export { SearchInput } from './SearchInput';
+export { TextArea } from './TextArea';
 export { TextInput } from './TextInput';
+export { Tile, type TileTone } from './Tile';
+export { TileGrid } from './TileGrid';

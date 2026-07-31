@@ -16,10 +16,16 @@ import { createHashRouter, Navigate } from 'react-router-dom';
 
 import { LoginRoute } from './auth/LoginRoute';
 import { ShellRoute } from './auth/ShellRoute';
+import { FlagiScreen } from './screens/flagi/FlagiScreen';
 import { WBudowieScreen } from './screens/wBudowie/WBudowieScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
 
-const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items);
+/** Pozycje nawigacji, dla których ekran już istnieje — nie dostają „w budowie". */
+const IMPLEMENTED = new Set(['/flagi']);
+
+const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
+  (item) => !IMPLEMENTED.has(item.to),
+);
 
 export const router = createHashRouter([
   { path: '/logowanie', element: <LoginRoute /> },
@@ -30,11 +36,29 @@ export const router = createHashRouter([
       // Wejście na goły adres panelu ląduje na pulpicie — pierwszej pozycji
       // nawigacji, zgodnie z mockupem `A01`.
       { index: true, element: <Navigate to="/pulpit" replace /> },
+
+      // Skrzynka flag i jej szuflada pod JEDNYM ekranem: `A03a` otwiera się NAD listą,
+      // więc `/flagi/1046` to ten sam widok z dodatkowym parametrem, a nie druga trasa.
+      // Segment opcjonalny (`:id?`) trzyma to w jednym wpisie i nie przemontowuje ekranu
+      // przy otwieraniu szuflady — inaczej lista pod spodem migałaby przy każdym wejściu
+      // w sprawę, czyli traciłaby dokładnie ten kontekst, dla którego szuflada istnieje.
+      { path: 'flagi/:id?', element: <FlagiScreen /> },
+
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.
         path: item.to.slice(1),
         element: <WBudowieScreen title={item.label} mockup={item.mockup} />,
       })),
+
+      // Korekta zdarzenia (`A02b`) — ekran jeszcze nie istnieje, ale link do niego
+      // TAK: szuflada flagi kieruje tu administratora, gdy błędna jest sama liczba.
+      // Bez tego wpisu przycisk lądowałby na „nie znaleziono", czyli byłby martwym
+      // linkiem — a tych w panelu nie zostawiamy.
+      {
+        path: 'dni/:sessionUuid/korekta',
+        element: <WBudowieScreen title="Korekta zdarzenia" mockup="A02b-korekta.html" />,
+      },
+
       {
         path: '*',
         element: <WBudowieScreen title="Nie znaleziono" mockup={null} />,

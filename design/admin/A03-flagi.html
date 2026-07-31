@@ -545,7 +545,7 @@
 
         <div class="banner warn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>Zamykanie flag jest funkcją do dorobienia na serwerze.</b> W kodzie nie ma dziś niczego, co ustawia <code>flags.status = 'resolved'</code> — jedyną drogą jest ręczny <code>UPDATE</code> w bazie, a to znaczy, że nakładka sesji blokuje arkusz trwale. Ten ekran i <a href="A03a-flaga.html" style="color:var(--amber);font-weight:600;">A03a</a> są projektem tego brakującego endpointu.</span>
+          <span><b>Otwarta <code>session_overlap</code> wstrzymuje kartę dnia.</b> Do 2026-07-31 blokowała ją trwale, bo nic w kodzie nie ustawiało <code>flags.status = 'resolved'</code> — jedyną drogą był ręczny <code>UPDATE</code> w bazie. Rozstrzygnięcie z <a href="A03a-flaga.html" style="color:var(--amber);font-weight:600;">A03a</a> zamyka flagę i samo wywołuje re-eksport karty.</span>
         </div>
 
         <div class="tiles">
@@ -676,7 +676,7 @@
         </div>
 
         <div class="card">
-          <div class="card-title">Ostatnio rozwiązane <span class="spacer"></span><span class="pill dim">wpis zostaje w bazie na stałe</span><span class="pill amber">dziś: ręczny UPDATE w bazie</span></div>
+          <div class="card-title">Ostatnio rozwiązane <span class="spacer"></span><span class="pill dim">wpis zostaje w bazie na stałe</span><span class="pill green">WDROŻONE</span></div>
           <div class="table-wrap" style="border:none;border-radius:0;background:none;">
             <table>
               <thead>
@@ -733,7 +733,7 @@
         </div>
 
         <div class="card" id="legenda">
-          <div class="card-title">Typy flag — co serwer liczy dziś <span class="spacer"></span><span class="pill green">3 typy w kodzie</span><span class="pill dim">mhChain.ts</span></div>
+          <div class="card-title">Typy flag — co serwer liczy dziś <span class="spacer"></span><span class="pill green">5 typów w kodzie</span><span class="pill dim">mhChain.ts</span></div>
           <div class="table-wrap" style="border:none;border-radius:0;background:none;">
             <table>
               <thead>
@@ -773,7 +773,7 @@
           <div class="card-title">Dopisane do katalogu 2026-07-31 <span class="spacer"></span><span class="pill green">WDROŻONE</span></div>
           <div class="banner status">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Te dwa fenomeny do 2026-07-31 <b>istniały wyłącznie jako lokalne ostrzeżenia w telefonie</b> (<code>violations.ts</code>: <code>FUEL_MISMATCH</code>, <code>CLOCK_DRIFT</code> jako <code>severity: warning</code>) i nigdy nie docierały do tabeli <code>flags</code>. Serwer liczy je teraz przy ingescie: <code>fuel_mismatch</code> porównuje odczyt startowy z przekazaniem poprzednika wzdłuż tego samego łańcucha co motogodziny, a <code>clock_drift</code> bada rozjazd zegarów w strumieniu dnia i daje <b>jedną flagę na sesję</b>, nie jedną na zdarzenie. Progi są wspólne z telefonem, więc obie strony mówią to samo. brakuje tylko detektora po stronie serwera.</span>
+            <span>Te dwa fenomeny do 2026-07-31 <b>istniały wyłącznie jako lokalne ostrzeżenia w telefonie</b> (<code>violations.ts</code>: <code>FUEL_MISMATCH</code>, <code>CLOCK_DRIFT</code> jako <code>severity: warning</code>) i nigdy nie docierały do tabeli <code>flags</code>. Serwer liczy je teraz przy ingescie: <code>fuel_mismatch</code> porównuje odczyt startowy z przekazaniem poprzednika wzdłuż tego samego łańcucha co motogodziny, a <code>clock_drift</code> bada rozjazd zegarów w strumieniu dnia i daje <b>jedną flagę na sesję</b>, nie jedną na zdarzenie. Progi są wspólne z telefonem, więc obie strony mówią to samo.</span>
           </div>
           <div class="table-wrap" style="border:none;border-radius:0;background:none;">
             <table>

@@ -1,0 +1,136 @@
+/**
+ * UZ Aero — panel: TABELA, kręgosłup back-office'u.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „TABELA"). Reguła,
+ * której nie wolno tu zgubić: **liczby zawsze mono i do prawej** (`.num`), bo panel
+ * czyta się kolumną, a proporcjonalna czcionka przesuwa cyfry względem siebie.
+ */
+
+.table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+/* Tabela zagnieżdżona w karcie (historia rozwiązanych, legenda typów) — bez własnej
+   ramki i tła, bo ramkę niesie już karta. W mockupie stoi to stylem inline; tutaj
+   dostaje nazwę, bo klasa bez nazwy jest klasą, której nikt nie znajdzie greppem. */
+.table-wrap.plain {
+  border: none;
+  border-radius: 0;
+  background: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+  padding: 11px 14px;
+  /* Odcień nagłówka tabeli NIE JEST tokenem — nie ma go ani w `05-themes.html`, ani
+     w `:root` szablonu; stoi tam literałem, tak samo jak `#0a0a0c` sidebara. Kopiujemy
+     wartość zamiast wymyślać token, którego design nie zatwierdził. */
+  background: #101010;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+thead th.sortable {
+  cursor: pointer;
+}
+
+thead th.sortable:hover {
+  color: var(--text-secondary);
+}
+
+thead th .arrow {
+  color: var(--green);
+  margin-left: 4px;
+}
+
+tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 12.5px;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--surface-raised);
+}
+
+tbody tr.clickable {
+  cursor: pointer;
+}
+
+/* Wiersz otwarty w szufladzie — mockup `A03a` zaznacza go tłem i zieloną krawędzią
+   od strony treści, żeby po zamknięciu szuflady wzrok wrócił tam, gdzie był. */
+tbody tr.opened {
+  background: var(--surface-raised);
+  box-shadow: inset 3px 0 0 var(--green);
+}
+
+td.num,
+td.mono,
+th.num {
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
+}
+
+td.num,
+th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+td.dim {
+  color: var(--text-secondary);
+}
+
+.cell-strong {
+  font-weight: 600;
+}
+
+.cell-sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Wiek sprawy, która leży ZA DŁUGO. W mockupie stoi to jako styl inline
+   (`color:var(--red);font-weight:700`) na wybranych wierszach — tutaj jest klasą,
+   bo o tym, które wiersze są stare, rozstrzyga próg w `flagRows.ts`, a nie autor
+   pliku HTML. Wygląd bez zmian. */
+.cell-age.old {
+  color: var(--red);
+  font-weight: 700;
+}
+
+.reg {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}

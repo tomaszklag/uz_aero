@@ -1,0 +1,106 @@
+/**
+ * UZ Aero — panel: nagłówek strony i kafle podsumowań.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „nagłówek strony"
+ * i „karty i kafle" w części kaflowej). Karty (`.card`) mieszkają w `surfaces.css`,
+ * bo są powierzchnią ogólną — kafel jest wskaźnikiem i chodzi w siatce.
+ */
+
+/* ── nagłówek strony ── */
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.page-sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+.page-actions {
+  display: flex;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+/* ── kafle ── */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+/* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+   definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.tile:hover {
+  border-color: var(--border-strong);
+}
+
+.tile-key {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.tile-val {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.5px;
+}
+
+.tile-val small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0;
+}
+
+.tile-val.green {
+  color: var(--green);
+}
+
+.tile-val.amber {
+  color: var(--amber);
+}
+
+.tile-val.red {
+  color: var(--red);
+}
+
+.tile-val.blue {
+  color: var(--blue);
+}
+
+.tile-note {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}

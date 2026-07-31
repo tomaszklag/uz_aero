@@ -12,14 +12,15 @@
 
 import { NavLink } from 'react-router-dom';
 
+import type { NavCount } from './navCounts';
 import type { NavItemSpec } from './navItems';
 
 interface NavItemProps extends NavItemSpec {
   locked: boolean;
   /** Powód blokady — widoczny jako `title`, wymagany, gdy `locked`. */
   lockReason?: string;
-  /** Licznik po prawej (`.nav-count`); dochodzi z pulpitem i skrzynką flag. */
-  count?: { value: number; tone?: 'amber' | 'red' };
+  /** Licznik po prawej (`.nav-count`); o tonie rozstrzyga `navCounts.ts`. */
+  count?: NavCount;
 }
 
 export function NavItem({ to, label, icon, locked, lockReason, count }: NavItemProps) {

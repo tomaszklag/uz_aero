@@ -21,6 +21,10 @@ import './styles/layout.css';
 import './styles/components/shell.css';
 import './styles/components/controls.css';
 import './styles/components/surfaces.css';
+import './styles/components/page.css';
+import './styles/components/filters.css';
+import './styles/components/table.css';
+import './styles/components/drawer.css';
 
 import { SessionProvider } from './auth/SessionProvider';
 import { createQueryClient } from './queries/client';

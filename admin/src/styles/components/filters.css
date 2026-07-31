@@ -1,0 +1,87 @@
+/**
+ * UZ Aero — panel: pasek filtrów list.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „pasek filtrów").
+ * Dwie różnice wobec mockupu i obie są tym samym: `.search` jest `<label>`,
+ * a `.chip` — `<button>`. Wygląd bez zmian; zyskuje klawiatura, bo filtr, którego
+ * nie da się ustawić bez myszy, psuje scenariusz „przygotuj link do tego wycinka".
+ */
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.search {
+  flex: 1;
+  min-width: 220px;
+  max-width: 340px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+}
+
+.search:focus-within {
+  border-color: var(--green-border);
+}
+
+.search svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.search input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  min-width: 0;
+}
+
+.search input::placeholder {
+  color: var(--text-muted);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.chip.on {
+  background: var(--green-muted);
+  border-color: var(--green-border);
+  color: var(--green);
+}
+
+.chip.on.amber {
+  background: var(--amber-muted);
+  border-color: var(--amber-border);
+  color: var(--amber);
+}

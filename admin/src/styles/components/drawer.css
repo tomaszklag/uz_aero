@@ -1,0 +1,107 @@
+/**
+ * UZ Aero — panel: szuflada szczegółu.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcja „szuflada szczegółu").
+ *
+ * **Jedna świadoma różnica: `fixed` zamiast `absolute`.** W mockupie szuflada jest
+ * pozycjonowana względem `.main`, bo `.main` dostaje tam `position:relative` stylem
+ * inline. W panelu ekran renderuje się WEWNĄTRZ `.content`, które ma `overflow-y:auto` —
+ * szuflada `absolute` przewijałaby się razem z listą i kończyła na jej wysokości.
+ * `fixed` z odsunięciem o szerokość sidebara daje dokładnie to samo, co mockup
+ * (warstwa nad całą kolumną treści, razem z topbarem), i nie zależy od przewinięcia.
+ */
+
+.drawer-scrim {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: var(--sidebar-w);
+  /* NIE `var(--overlay)`: token niesie 0,74 (przyciemnienie modala w aplikacji
+     pilota), a szuflada panelu przyciemnia listę słabiej — 0,55 z szablonu — bo
+     lista pod spodem ma dalej być czytelna. To jest sens szuflady: kontekst zostaje. */
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 60;
+  /* Przesłona jest `<button>` (kliknięcie w tło to akcja), więc zdejmujemy z niej
+     wygląd przycisku — zostaje sama powierzchnia. */
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 520px;
+  background: var(--surface);
+  border-left: 1px solid var(--border-strong);
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
+}
+
+.drawer-head {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.drawer-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+
+.drawer-sub {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.drawer-foot {
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 9px;
+  justify-content: flex-end;
+}
+
+.x-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.x-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}

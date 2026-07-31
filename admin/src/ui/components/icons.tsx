@@ -172,6 +172,60 @@ export function SuccessIcon({ size }: IconProps) {
   );
 }
 
+/** Lupa — pasek filtrów list (A02, A03). */
+export function SearchIcon({ size = 13 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </Stroke>
+  );
+}
+
+/** Krzyżyk — zamknięcie szuflady (`.x-btn`). */
+export function CloseIcon({ size = 14 }: IconProps) {
+  return (
+    <Stroke size={size} width={2.5}>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </Stroke>
+  );
+}
+
+/**
+ * Goła „ptaszka" — potwierdzenie akcji i stan pusty skrzynki (A03b).
+ *
+ * ISTNIEJE OBOK `SuccessIcon` (ptaszek w kółku) i to nie jest duplikat: mockupy
+ * używają obu w różnych miejscach — kółko w banerze, sam znak na przycisku
+ * „Rozwiąż i odblokuj kartę" oraz w ikonie stanu pustego.
+ */
+export function CheckIcon({ size = 13 }: IconProps) {
+  return (
+    <Stroke size={size} width={3}>
+      <polyline points="20 6 9 17 4 12" />
+    </Stroke>
+  );
+}
+
+/** Szewron w prawo — pozycja listy prowadząca w głąb. */
+export function ChevronRightIcon({ size = 15 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <polyline points="9 18 15 12 9 6" />
+    </Stroke>
+  );
+}
+
+/** Ołówek — przejście do korekty zdarzenia (A02b). */
+export function EditIcon({ size = 13 }: IconProps) {
+  return (
+    <Stroke size={size}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </Stroke>
+  );
+}
+
 /** Strzałka „wejdź" z przycisku logowania (A00). */
 export function SignInIcon({ size = 14 }: IconProps) {
   return (

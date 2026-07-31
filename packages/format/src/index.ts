@@ -195,6 +195,35 @@ export function eventsCount(n: number): string {
 }
 
 /**
+ * WIEK jako wartość względna: „3 dni 3 h", „6 h 41 min", „26 min".
+ *
+ * Reguła świeżości panelu (`design/admin/SZABLON.html`, sekcja `.fresh`): *„Wiek
+ * podajemy względnie, nie znacznikiem czasu: administrator ocenia, czy dane są
+ * aktualne, a nie o której dotarły"*. Skrzynka flag (`A03`) ma z tego całą kolumnę,
+ * bo flaga leżąca trzeci dzień jest innym problemem niż ta sprzed godziny.
+ *
+ * Dwa człony, nigdy trzy — „3 dni 3 h 12 min" jest dokładniejsze i nieczytelne,
+ * a przy ocenie „czy to pilne" minuty przy dniach nie znaczą nic. Człon drugi znika,
+ * gdy jest zerem („2 dni", nie „2 dni 0 h"), dokładnie jak w mockupach.
+ *
+ * Argumentem jest CZAS TRWANIA w ms, a nie znacznik: chwila odniesienia („teraz",
+ * `resolved_at`) jest decyzją wołającego i tylko on wie, którą wybrać.
+ */
+export function relativeAge(ms: number): string {
+  const totalMin = Math.max(0, Math.floor(ms / 60_000));
+  const days = Math.floor(totalMin / (24 * 60));
+  const hours = Math.floor((totalMin % (24 * 60)) / 60);
+  const minutes = totalMin % 60;
+
+  if (days > 0) {
+    const head = `${days} ${plural(days, 'dzień', 'dni', 'dni')}`;
+    return hours === 0 ? head : `${head} ${hours} h`;
+  }
+  if (hours > 0) return minutes === 0 ? `${hours} h` : `${hours} h ${minutes} min`;
+  return `${minutes} min`;
+}
+
+/**
  * Pozycja jako „50°04.7'N 019°47.1'E" — stopnie i minuty dziesiętne (mockup 13).
  *
  * Format lotniczy, nie geodezyjny: mapy lotnicze i GPS-y pokładowe używają właśnie

@@ -71,8 +71,12 @@ async function request(path: string, init: RequestInit): Promise<unknown> {
 
   const body = await parse(res);
   if (!res.ok) {
-    const dto = body as Partial<ApiErrorDto> | null;
-    throw new HttpError(res.status, { error: dto?.error ?? 'unknown', required: dto?.required });
+    const dto = (body ?? {}) as Partial<ApiErrorDto>;
+    // Ciało odmowy przepisujemy W CAŁOŚCI, a nie pole po polu. Powód jest konkretny:
+    // 409 z wyścigu o flagę niesie `flag` ze stanem i komentarzem ZWYCIĘZCY, a lista
+    // wybranych pól gubiłaby tę treść po cichu — i przy każdej kolejnej odmowie
+    // niosącej dane trzeba by pamiętać, żeby ją tutaj dopisać.
+    throw new HttpError(res.status, { ...dto, error: dto.error ?? 'unknown' });
   }
   return body;
 }

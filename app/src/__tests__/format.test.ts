@@ -18,6 +18,7 @@ import {
   parseLitres,
   parseMotoHours,
   parseTimeUtcOnDay,
+  relativeAge,
   timeUtc,
 } from '../ui/format';
 
@@ -123,5 +124,35 @@ describe('czas', () => {
     expect(duration(90 * 60_000)).toBe('1:30');
     expect(duration(6 * 3_600_000 + 39 * 60_000)).toBe('6:39'); // block time dnia kanonicznego
     expect(duration(-1)).toBe('0:00');
+  });
+});
+
+describe('wiek względny (skrzynka flag panelu)', () => {
+  const h = 3_600_000;
+  const min = 60_000;
+
+  it('daje dokładnie te napisy, co mockupy `design/admin/A03*.html`', () => {
+    expect(relativeAge(3 * 24 * h + 3 * h)).toBe('3 dni 3 h');
+    expect(relativeAge(24 * h + 8 * h)).toBe('1 dzień 8 h');
+    expect(relativeAge(6 * h + 41 * min)).toBe('6 h 41 min');
+    expect(relativeAge(26 * min)).toBe('26 min');
+  });
+
+  it('zjada człon zerowy — „2 dni", nie „2 dni 0 h"', () => {
+    expect(relativeAge(2 * 24 * h)).toBe('2 dni');
+    expect(relativeAge(20 * h)).toBe('20 h');
+  });
+
+  it('odmienia „dzień" po polsku', () => {
+    expect(relativeAge(24 * h)).toBe('1 dzień');
+    expect(relativeAge(5 * 24 * h)).toBe('5 dni');
+    expect(relativeAge(22 * 24 * h)).toBe('22 dni');
+  });
+
+  it('nigdy nie schodzi poniżej zera — zegary bywają przestawione', () => {
+    // Flaga „utworzona za 5 minut" to rozjazd zegarów, a nie ujemny wiek. Panel
+    // ma wtedy pokazać najmniejszą prawdziwą wartość, nie minus.
+    expect(relativeAge(-5 * min)).toBe('0 min');
+    expect(relativeAge(30_000)).toBe('0 min');
   });
 });
