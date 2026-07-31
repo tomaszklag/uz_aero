@@ -194,6 +194,55 @@ describe('granice warstw panelu', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('plik .tsx eksportuje WYŁĄCZNIE komponenty (granica Fast Refresh)', () => {
+    // Reguła narzędziowa, nie estetyczna. Fast Refresh podmienia moduł w miejscu tylko
+    // wtedy, gdy WSZYSTKIE jego eksporty są komponentami; jeden eksport obok — hook,
+    // stała, tablica — i Vite odrzuca cały moduł jako granicę odświeżania:
+    //
+    //     [vite] hmr invalidate /src/auth/SessionProvider.tsx:
+    //     Could not Fast Refresh ("useSessionState" export is incompatible)
+    //
+    // Unieważnienie idzie wtedy w górę drzewa importów aż do `main.tsx`, który niczego
+    // nie przyjmuje — więc kończy się PRZEŁADOWANIEM CAŁEJ STRONY. W panelu znaczy to
+    // utratę stanu ekranu i ponowne `GET /me` przy każdym zapisie pliku. Kosztu nie
+    // widać w testach ani w buildzie, tylko w pracy człowieka, dlatego pilnuje go test.
+    //
+    // Stąd `auth/sessionContext.ts` osobno od `auth/SessionProvider.tsx`.
+    const EXCEPTIONS = new Set([
+      // Tablice KONFIGURACJI, które zawierają JSX (elementy tras, ikony pozycji), więc
+      // muszą być `.tsx` — ale komponentami nie są i odświeżyć się nie mogą. Pełne
+      // przeładowanie po edycji mapy tras albo nawigacji jest tu zachowaniem POPRAWNYM:
+      // zmienia się szkielet aplikacji, a nie ciało komponentu.
+      'routes.tsx',
+      'ui/shell/navItems.tsx',
+    ]);
+
+    const exportsOf = (file: string): { kind: string; name: string }[] =>
+      [...codeOf(file).matchAll(/^export\s+(?:async\s+)?(function|const|class|let)\s+(\w+)/gm)].map(
+        (m) => ({ kind: m[1]!, name: m[2]! }),
+      );
+
+    const tsx = filesUnder('.').filter((f) => f.endsWith('.tsx'));
+
+    // Kontrola samego skanera: gdyby regex przestał cokolwiek łapać, lista naruszeń
+    // byłaby pusta przy dowolnie połamanym panelu.
+    expect(tsx.length).toBeGreaterThan(30);
+    expect(exportsOf('auth/SessionProvider.tsx')).toEqual([
+      { kind: 'function', name: 'SessionProvider' },
+    ]);
+
+    const offenders: string[] = [];
+    for (const file of tsx.filter((f) => !EXCEPTIONS.has(f))) {
+      for (const { kind, name } of exportsOf(file)) {
+        // Komponent w tym panelu to ZAWSZE `export function` z wielkiej litery.
+        // `export const` bywa komponentem (`memo`, `forwardRef`), ale tutaj nie ma
+        // ani jednego takiego — więc reguła zostaje wąska i czytelna.
+        if (kind !== 'function' || !/^[A-Z]/.test(name)) offenders.push(`${file} → ${kind} ${name}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it('kolory wchodzą WYŁĄCZNIE przez zmienne CSS — zero hexów w kodzie', () => {
     // `CLAUDE.md`: „Nie wpisuj hardcoded kolorów — tylko zmienne CSS". W panelu
     // wszystkie pochodzą z generowanego `tokens.css`.

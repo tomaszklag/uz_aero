@@ -9,7 +9,7 @@
 import { Navigate } from 'react-router-dom';
 
 import { LoginScreen } from '../screens/login/LoginScreen';
-import { useSessionState } from './SessionProvider';
+import { useSessionState } from './sessionContext';
 
 export function LoginRoute() {
   const { session, loading } = useSessionState();

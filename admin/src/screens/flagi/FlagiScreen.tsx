@@ -19,7 +19,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { useSessionState } from '../../auth/SessionProvider';
+import { useSessionState } from '../../auth/sessionContext';
 import { useFlagCount, useFlags } from '../../queries/useFlags';
 import {
   Banner,

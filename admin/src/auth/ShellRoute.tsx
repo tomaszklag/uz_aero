@@ -17,7 +17,7 @@ import { useLogout } from '../queries/useSession';
 import { AppShell } from '../ui/shell/AppShell';
 import { openFlagsCount } from '../ui/shell/navCounts';
 import { trailFor } from '../ui/shell/navTrail';
-import { useSessionState } from './SessionProvider';
+import { useSessionState } from './sessionContext';
 
 export function ShellRoute() {
   const { session, loading } = useSessionState();

@@ -17,7 +17,7 @@
 
 import { useParams } from 'react-router-dom';
 
-import { useSessionState } from '../../auth/SessionProvider';
+import { useSessionState } from '../../auth/sessionContext';
 import { useSessionDay } from '../../queries/useSessionDay';
 import {
   Banner,

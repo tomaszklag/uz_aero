@@ -417,6 +417,41 @@ Egzekucja, trzy warstwy (kolejność = malejąca siła):
    z testem obok albo w `@uzaero/format`. To najtańszy sposób złapania momentu,
    w którym „panel zaczyna liczyć po swojemu": zaczyna się od zaokrąglenia.
 
+### 2.3 `.tsx` eksportuje wyłącznie komponenty
+
+Reguła narzędziowa, nie estetyczna — i jedyna w tym dokumencie, której koszt widać
+w pracy człowieka, a nie w testach ani w buildzie.
+
+**Fast Refresh podmienia moduł w miejscu tylko wtedy, gdy WSZYSTKIE jego eksporty są
+komponentami.** Jeden eksport obok — hook, stała, tablica — i Vite odrzuca cały moduł
+jako granicę odświeżania, po czym unieważnienie idzie w górę drzewa importów aż do
+`main.tsx`, który niczego nie przyjmuje. Kończy się to przeładowaniem CAŁEJ strony:
+utratą stanu ekranu i ponownym `GET /me` przy każdym zapisie pliku.
+
+Tak było z `auth/SessionProvider.tsx`, dopóki eksportował komponent razem z hookiem:
+
+```
+[vite] hmr invalidate /src/auth/SessionProvider.tsx:
+Could not Fast Refresh ("useSessionState" export is incompatible)
+[vite] page reload src/auth/SessionProvider.tsx
+```
+
+Stąd podział: `auth/sessionContext.ts` trzyma kontekst i `useSessionState`,
+`auth/SessionProvider.tsx` — sam komponent. **Tożsamość kontekstu MUSI mieszkać poza
+granicą odświeżania**: gdyby `createContext` re-ewaluowało się razem z komponentami,
+zamontowany provider i świeżo odświeżony konsument patrzyłyby na dwa różne obiekty,
+a `useContext` zwróciłby `null` — czyli „wylogowanie" bez wylogowania.
+
+Dwa udokumentowane wyjątki, oba świadome: `routes.tsx` i `ui/shell/navItems.tsx` to
+tablice konfiguracji zawierające JSX (elementy tras, ikony pozycji). Komponentami nie
+są i odświeżyć się nie mogą — pełne przeładowanie po edycji mapy tras albo nawigacji
+jest tu zachowaniem poprawnym, bo zmienia się szkielet aplikacji, a nie ciało komponentu.
+
+Egzekwuje `admin/test/architecture.test.ts` („plik .tsx eksportuje WYŁĄCZNIE komponenty"):
+w `.tsx` każdy eksport musi być `export function` z wielkiej litery. `export const`
+bywa komponentem (`memo`, `forwardRef`), ale w panelu nie ma ani jednego takiego, więc
+reguła zostaje wąska i czytelna — a gdyby taki się pojawił, test wymusi rozmowę.
+
 ---
 
 ## 3. Z 20 mockupów na komponenty, bez utraty reguły „wdrażamy 1:1"
