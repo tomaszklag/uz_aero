@@ -57,6 +57,38 @@
 }
 
 /**
+ * Siatka dwukolumnowa treści (`.cols` z `SZABLON.html`). Po lewej rzecz główna,
+ * po prawej przypisy do niej — stała szerokość prawej kolumny, bo to ona ma się
+ * NIE rozjeżdżać między ekranami, a lewa mieści tabele i musi brać, co zostanie.
+ *
+ * `align-items:start` jest tu istotne: bez niego karta boczna rozciągałaby się na
+ * wysokość osi zdarzeń dnia, czyli na kilkaset pikseli pustego tła.
+ */
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  align-items: start;
+}
+
+.cols.even {
+  grid-template-columns: 1fr 1fr;
+}
+
+/**
+ * Kolumna kart wewnątrz `.cols` — karty jedna pod drugą z tym samym odstępem, co
+ * siatka. W mockupie stoi to stylem inline (`display:flex;flex-direction:column;
+ * gap:16px`); tutaj dostaje nazwę, bo klasa bez nazwy jest klasą, której nikt nie
+ * znajdzie greppem.
+ */
+.cols-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/**
  * Ekran PRZED shellem (logowanie, A00). W mockupie to zwykły `div` ze stylami
  * inline w `.browser`; tutaj dostaje nazwę, bo klasa bez nazwy jest klasą,
  * której nikt nie znajdzie greppem.

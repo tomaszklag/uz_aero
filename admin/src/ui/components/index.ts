@@ -14,7 +14,8 @@
 export { Banner, type BannerTone } from './Banner';
 export { Button } from './Button';
 export { Card } from './Card';
-export { DataTable, type Column } from './DataTable';
+export { Columns } from './Columns';
+export { DataTable, type Column, type ColumnSort } from './DataTable';
 export { Drawer } from './Drawer';
 export { EmptyState } from './EmptyState';
 export { Field } from './Field';
@@ -31,3 +32,5 @@ export { TextArea } from './TextArea';
 export { TextInput } from './TextInput';
 export { Tile, type TileTone } from './Tile';
 export { TileGrid } from './TileGrid';
+export { Timeline } from './Timeline';
+export { TimelineRow, type TimelineTone } from './TimelineRow';

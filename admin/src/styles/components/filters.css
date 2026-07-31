@@ -80,6 +80,17 @@
   color: var(--green);
 }
 
+/* Grupa dosunięta do prawej krawędzi paska filtrów (plakietki „Wszystkie czasy UTC"
+   i licznik wierszy). W mockupie stoi to stylem inline (`margin-left:auto;
+   display:inline-flex;align-items:center;gap:9px`); tutaj dostaje nazwę, bo klasa bez
+   nazwy jest klasą, której nikt nie znajdzie greppem. */
+.list-spacer {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
 .chip.on.amber {
   background: var(--amber-muted);
   border-color: var(--amber-border);

@@ -14,6 +14,21 @@
 
 import type { ReactNode } from 'react';
 
+/**
+ * Kolumna sortowalna (`th.sortable` + `.arrow` z szablonu).
+ *
+ * Nagłówek staje się wtedy `<button>` wewnątrz `<th>`, a nie klikalnym `<th>` jak
+ * w mockupie: `th` z `onClick` jest nieosiągalny z klawiatury, a panel jest po niej
+ * nawigowany. Wygląd zostaje ten sam — przycisk dziedziczy typografię nagłówka.
+ *
+ * Kierunek jest STANEM EKRANU (mieszka w URL-u), więc przychodzi propsem; tabela
+ * niczego nie sortuje sama, bo porządek listy należy do serwera.
+ */
+export interface ColumnSort {
+  direction: 'asc' | 'desc';
+  onToggle: () => void;
+}
+
 export interface Column<Row> {
   key: string;
   header: ReactNode;
@@ -21,6 +36,8 @@ export interface Column<Row> {
   align?: 'num';
   /** Dodatkowe klasy komórki — wyłącznie modyfikatory z szablonu (`mono`, `dim`). */
   cellClass?: string;
+  /** Obecne wyłącznie na kolumnie, po której serwer FAKTYCZNIE umie sortować. */
+  sort?: ColumnSort;
   render: (row: Row) => ReactNode;
 }
 
@@ -51,11 +68,37 @@ export function DataTable<Row>({
         <caption className="visually-hidden">{caption}</caption>
         <thead>
           <tr>
-            {columns.map((column) => (
-              <th key={column.key} className={column.align === 'num' ? 'num' : undefined}>
-                {column.header}
-              </th>
-            ))}
+            {columns.map((column) => {
+              const classes = [column.align === 'num' ? 'num' : null, column.sort == null ? null : 'sortable']
+                .filter((c) => c != null)
+                .join(' ');
+              return (
+                <th
+                  key={column.key}
+                  className={classes === '' ? undefined : classes}
+                  // Czytnik ekranu ma usłyszeć, że tabela JEST posortowana i jak —
+                  // sama strzałka jest informacją wyłącznie dla oka.
+                  aria-sort={
+                    column.sort == null
+                      ? undefined
+                      : column.sort.direction === 'asc'
+                        ? 'ascending'
+                        : 'descending'
+                  }
+                >
+                  {column.sort == null ? (
+                    column.header
+                  ) : (
+                    <button type="button" onClick={column.sort.onToggle}>
+                      {column.header}
+                      <span className="arrow" aria-hidden="true">
+                        {column.sort.direction === 'asc' ? '↑' : '↓'}
+                      </span>
+                    </button>
+                  )}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>

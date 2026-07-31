@@ -13,7 +13,14 @@
  * konkretną trasę i zmienia się razem z nią.
  */
 
-import type { FlagStatus, FlagType } from '@uzaero/domain';
+import type {
+  Event,
+  FlagStatus,
+  FlagType,
+  MhFormat,
+  OperationType,
+  SessionState,
+} from '@uzaero/domain';
 
 /**
  * Role kont. LUSTRO `server/src/domain/roles.ts` — świadome, opisane i tymczasowe.
@@ -165,4 +172,121 @@ export interface ResolveFlagResultDto {
   resolvedAt: string;
   /** Pusta lista = ta flaga nie blokowała eksportu, więc żadnej karty nie ruszano. */
   exports: ExportAttemptDto[];
+}
+
+// ── dni lotne (`A02`) i karta dnia (`A02a`) ─────────────────────────────────────
+
+/**
+ * Jeden dzień lotny na liście — odpowiedź `GET /admin/api/sessions`.
+ *
+ * **Wszystkie liczby są PRZEPISANE z projekcji `sessions`, nie policzone tutaj ani
+ * w SQL-u.** Serwer wypełnia je `sessionRowFrom(projectSession(stream))`, więc kolumna
+ * „Blok" na tej liście, ekran 10 telefonu i karta arkusza pokazują tę samą wielkość
+ * policzoną tym samym kodem. Panel je wyłącznie FORMATUJE (`@uzaero/format`).
+ *
+ * Czasy zdarzeń w epoch ms UTC, stemple serwera w ISO 8601 — i to nie jest
+ * niekonsekwencja: `dutyStart` jest czasem, który zapisał telefon (ta sama domena, co
+ * `Event.gpsTime`), a `updatedAt` chwilą, w której serwer przyjął paczkę.
+ */
+export interface SessionListItemDto {
+  sessionUuid: string;
+
+  aircraftId: string;
+  /** `null` = samolot spoza rejestru floty; dzień zostaje widoczny, rejestracji brak. */
+  reg: string | null;
+  aircraftType: string | null;
+  /**
+   * Format licznika TEGO samolotu. Panel formatuje przez `motoHours(value, mhFormat)`
+   * i nie zgaduje: `1284.6` i `645:06` to ten sam rodzaj wielkości i dwa różne liczniki
+   * w kabinie.
+   */
+  mhFormat: MhFormat | null;
+
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  dualId: string | null;
+  dualCode: string | null;
+  dualName: string | null;
+
+  /**
+   * `active` = brak `day_close` w rejestrze. **To NIE jest „w locie"** — projekcja nie
+   * niesie informacji o pracy silnika (patrz baner `A02-dni.html`), więc panel mówi
+   * „dzień otwarty" i nie udaje wiedzy, której nie dostał.
+   */
+  status: 'active' | 'closed';
+  operation: OperationType | null;
+  client: string | null;
+
+  /**
+   * Początek służby — meldunek z `preflight_confirm`, kolumna „Dzień · UTC".
+   * `null` = sesja bez preflightu; taki dzień NIE MA daty i wypada z filtra zakresu.
+   */
+  dutyStart: number | null;
+  closeTime: number | null;
+
+  blockMs: number;
+  flightMs: number;
+  flightsCount: number;
+  mhStart: number | null;
+  /** `null` dopóki nie ma `day_close` — odczyt końcowy istnieje dopiero z przekazania. */
+  mhEnd: number | null;
+  fuelStartL: number | null;
+  fuelEndL: number | null;
+
+  /** Typy OTWARTYCH flag tej sesji; pusta lista = dzień bez zastrzeżeń. */
+  openFlags: FlagType[];
+  /** Ostatnia rewizja karty arkusza; `null` = nigdy nie eksportowano. */
+  exportRevision: number | null;
+  /** ISO 8601 UTC — ostatnia przyjęta paczka tej sesji, czyli „kiedy ostatni sync". */
+  updatedAt: string;
+}
+
+/**
+ * Strona listy dni. **`nextCursor === null` znaczy „to był koniec", nie „spróbuj
+ * jeszcze raz"** — a `total` opisuje CAŁY wynik filtra, także wtedy, gdy `limit`
+ * obciął stronę.
+ *
+ * Kursor jest NIEPRZEZROCZYSTY i panel nie ma prawa go konstruować: koduje klucz
+ * sortowania SQL-a (`infrastructure/pg/keyset.ts`). Odsyłamy dokładnie ten napis,
+ * który przyszedł.
+ */
+export interface SessionPageDto {
+  items: SessionListItemDto[];
+  nextCursor: string | null;
+  total: number;
+}
+
+/**
+ * Pozycja osi zdarzeń karty dnia.
+ *
+ * Oś pokazuje strumień SUROWY — rejestr jest append-only i widać w nim wszystko,
+ * łącznie ze zdarzeniami unieważnionymi. Adnotacje wylicza serwer PORÓWNANIEM
+ * z wynikiem `applyCorrections`; panel ich nie odtwarza i nie przesortowuje osi.
+ */
+export interface TimelineEntryDto {
+  /** Byt domenowy — jedzie bez własnego DTO (reguła granicy typów serwera). */
+  event: Event;
+  /** `true` = unieważnione korektą; wiersz jest PRZEKREŚLONY, nigdy ukryty. */
+  voided: boolean;
+  /** Czas po korekcie (`retime`); `null` = czas zdarzenia jest oryginalny. */
+  correctedTime: number | null;
+}
+
+/**
+ * Karta jednego dnia — odpowiedź `GET /admin/api/sessions/:uuid`.
+ *
+ * `state` to JEDYNE miejsce panelu, w którym liczby dnia pochodzą z `projectSession`
+ * policzonego na żądanie. Jedzie w całości i jako typ domenowy, żeby panel formatował
+ * liczby serwera zamiast liczyć własne — to ta sama gwarancja, co
+ * `server/test/contract.test.ts`: karta dnia w panelu i ekran 10 telefonu nie mogą
+ * się różnić.
+ */
+export interface SessionDetailDto {
+  session: SessionListItemDto;
+  state: SessionState;
+  /** Porządek CHRONOLOGICZNY nadaje serwer. Panel go NIE zmienia (patrz `dzienTimeline`). */
+  timeline: TimelineEntryDto[];
+  /** Flagi sesji RAZEM z rozwiązanymi — historia decyzji zostaje na karcie. */
+  flags: FlagListItemDto[];
 }

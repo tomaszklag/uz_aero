@@ -16,12 +16,14 @@ import { createHashRouter, Navigate } from 'react-router-dom';
 
 import { LoginRoute } from './auth/LoginRoute';
 import { ShellRoute } from './auth/ShellRoute';
+import { DniScreen } from './screens/dni/DniScreen';
+import { DzienScreen } from './screens/dzien/DzienScreen';
 import { FlagiScreen } from './screens/flagi/FlagiScreen';
 import { WBudowieScreen } from './screens/wBudowie/WBudowieScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
 
 /** Pozycje nawigacji, dla których ekran już istnieje — nie dostają „w budowie". */
-const IMPLEMENTED = new Set(['/flagi']);
+const IMPLEMENTED = new Set(['/dni', '/flagi']);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
   (item) => !IMPLEMENTED.has(item.to),
@@ -43,6 +45,14 @@ export const router = createHashRouter([
       // przy otwieraniu szuflady — inaczej lista pod spodem migałaby przy każdym wejściu
       // w sprawę, czyli traciłaby dokładnie ten kontekst, dla którego szuflada istnieje.
       { path: 'flagi/:id?', element: <FlagiScreen /> },
+
+      // Lista dni i karta dnia to DWA ekrany, nie jeden z parametrem — inaczej niż
+      // przy flagach. Powód jest w mockupach: `A03a` to szuflada NAD listą (kontekst
+      // skrzynki zostaje pod spodem), a `A02a` to pełna strona, która listę zastępuje.
+      // Karta dnia ma własne kafle, oś zdarzeń i tabelę lotów; trzymanie jej w tej samej
+      // trasie kazałoby ekranowi listy pobierać dane, których nigdy nie pokaże.
+      { path: 'dni', element: <DniScreen /> },
+      { path: 'dni/:sessionUuid', element: <DzienScreen /> },
 
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.

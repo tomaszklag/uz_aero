@@ -10,6 +10,7 @@
  */
 
 import type { FlagListQuery } from '../api/flags';
+import type { SessionListQuery } from '../api/sessions';
 
 export const keys = {
   /** Tożsamość i zdolności zalogowanego (`GET /admin/api/me`). */
@@ -23,17 +24,34 @@ export const keys = {
   },
 
   /**
-   * KORZENIE zasobów, które zmienia rozstrzygnięcie flagi — a których ekranów
-   * jeszcze nie ma.
+   * Dni lotne (`A02`, `A02a`).
+   *
+   * `list` NIE zawiera kursora i to jest istota tego klucza: kursor keyset opisuje
+   * pozycję WEWNĄTRZ jednego wyniku filtra, więc jest parametrem strony (`pageParam`
+   * zapytania nieskończonego), a nie częścią jego tożsamości. Wpisanie go do klucza
+   * dałoby osobny wpis cache'u na każdą stronę i pierwszy powrót „wstecz" zaczynałby
+   * listę od nowa.
+   *
+   * `count` odpowiada na INNE pytanie niż lista: kafle nad tabelą („dni z flagą",
+   * „wyeksportowane") potrzebują liczby, którą policzył serwer całym filtrem, a nie
+   * sumy z wierszy pobranej strony — ta kłamałaby przy każdym obcięciu `limit`-em.
+   */
+  sessions: {
+    all: ['sessions'] as const,
+    list: (query: SessionListQuery) => ['sessions', 'list', query] as const,
+    count: (query: SessionListQuery) => ['sessions', 'count', query] as const,
+    detail: (sessionUuid: string) => ['sessions', 'detail', sessionUuid] as const,
+  },
+
+  /**
+   * KORZENIE zasobów, których ekranów jeszcze nie ma.
    *
    * Wygląda na klucze „na zapas" i nimi nie jest: unieważnienie jest własnością
-   * MUTACJI, nie ekranu (§4.3). Rozwiązanie flagi zmienia stan eksportu karty dnia
-   * i kolumnę „Arkusz" na liście dni — jeżeli `useResolveFlag` nie ogłosi tego tutaj
-   * i teraz, to w dniu, w którym powstanie `A02`, nikt nie będzie pamiętał, żeby
-   * dopisać unieważnienie w cudzym pliku. Unieważnienie prefiksu, pod którym nie ma
-   * zapytań, jest operacją pustą — więc ta deklaracja nic nie kosztuje.
+   * MUTACJI, nie ekranu (§4.3). Rozwiązanie flagi zmienia stan eksportu karty dnia,
+   * więc `useResolveFlag` ogłasza to tutaj i teraz — inaczej w dniu, w którym powstanie
+   * ekran eksportów, nikt nie będzie pamiętał, żeby dopisać unieważnienie w cudzym
+   * pliku. Unieważnienie prefiksu, pod którym nie ma zapytań, jest operacją pustą.
    */
-  sessions: { all: ['sessions'] as const },
   exports: { all: ['exports'] as const },
   dashboard: ['dashboard'] as const,
 };

@@ -45,11 +45,35 @@ thead th {
 }
 
 thead th.sortable {
-  cursor: pointer;
+  /* Padding przechodzi na przycisk w środku, żeby cały obszar nagłówka był celem
+     kliknięcia — inaczej klikalna byłaby wyłącznie sama etykieta. */
+  padding: 0;
 }
 
-thead th.sortable:hover {
+/* Nagłówek sortowalny jest PRZYCISKIEM, nie klikalnym `<th>`: mockup rysuje kursor
+   na komórce, ale komórka z `onClick` jest nieosiągalna z klawiatury, a panel jest
+   nią nawigowany. Przycisk dziedziczy całą typografię nagłówka, więc wygląd zostaje
+   ten sam — zmienia się tylko to, że da się go dosięgnąć tabem. */
+thead th.sortable > button {
+  width: 100%;
+  padding: 11px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: inherit;
+  white-space: nowrap;
+}
+
+thead th.sortable > button:hover {
   color: var(--text-secondary);
+}
+
+thead th.num.sortable > button {
+  text-align: right;
 }
 
 thead th .arrow {
@@ -133,4 +157,28 @@ td.dim {
   display: flex;
   gap: 6px;
   justify-content: flex-end;
+}
+
+/* Dzień z OTWARTĄ FLAGĄ. W mockupie `A02-dni.html` stoi to stylem inline
+   (`style="background:var(--amber-muted)"`) na dwóch wierszach — tutaj jest klasą,
+   bo o tym, który wiersz ma flagę, rozstrzyga `openFlags` z odpowiedzi serwera,
+   a nie autor pliku HTML. Wygląd bez zmian.
+   Kolejność ma znaczenie: reguła stoi PO `tbody tr:hover`, żeby najechanie myszą
+   nie zdejmowało bursztynu z wiersza, który jest wyróżniony z powodu. */
+tbody tr.flagged,
+tbody tr.flagged:hover {
+  background: var(--amber-muted);
+}
+
+/* Stopka listy stronicowanej kursorem: podpis „pokazano N z M" i przycisk dokładający
+   kolejną stronę. `SZABLON.html` tej klasy nie ma, bo żaden mockup nie rysuje
+   paginacji — `A02` pokazuje dwanaście wierszy i kończy się banerem. Kursor keyset
+   jest jednak kontraktem serwera (`nextCursor` w każdej odpowiedzi), a lista przycięta
+   po cichu byłaby najgorszym trybem awarii narzędzia nadzoru: wyglądałaby na komplet. */
+.list-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }

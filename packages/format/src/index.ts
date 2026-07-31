@@ -18,6 +18,22 @@ export function timeUtc(t: EpochMillis | null): string {
 }
 
 /**
+ * Czas zdarzenia z SEKUNDAMI jako „HH:MM:SS" UTC — oś zdarzeń panelu (`A02a`).
+ *
+ * ISTNIEJE OBOK `timeUtc` I TO NIE JEST DUPLIKAT. Telefon i arkusz pokazują czasy
+ * z dokładnością do minuty, bo tyle znaczy dla pilota i dla księgowości klubu.
+ * Rejestr czyta się inaczej: różnica między `landing 08:14:09` a `landing 08:14:52`
+ * rozstrzyga, KTÓRE zdarzenie unieważniła korekta, a rozjazd zegara mierzy się
+ * w sekundach (`CLOCK_DRIFT`, próg 120 s). Obcięcie sekund w widoku rejestru
+ * odbierałoby mu to, po co istnieje.
+ */
+export function timeUtcSeconds(t: EpochMillis | null): string {
+  if (t == null) return '—';
+  const d = new Date(t);
+  return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
+}
+
+/**
  * Czas lokalny urządzenia jako „HH:MM" — WYŁĄCZNIE jako wartość drugorzędna przy
  * meldunku (`CLAUDE.md`: „LT tylko jako wartość drugorzędna"). Mockup pokazuje scenariusz
  * UTC+2; tutaj bierzemy prawdziwą strefę telefonu, bo to ona odpowiada na pytanie pilota

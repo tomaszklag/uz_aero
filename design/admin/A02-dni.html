@@ -580,12 +580,17 @@
           <span class="chip">Ferry</span>
           <span class="chip">Techniczny</span>
           <span class="chip">Inne</span>
-          <span class="pill amber" style="margin-left:auto;">DO DOROBIENIA · migracja projekcji</span>
+          <span class="pill dim" style="margin-left:auto;">filtr po stronie bazy · <code>?operation=</code></span>
         </div>
 
         <div class="banner warn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>DO DOROBIENIA: migracja projekcji <code>sessions</code>.</b> Kolumna <b>Operacja</b> (wraz z klientem), filtr operacji i <b>czas służby</b> pokazują stan docelowy — dziś projekcja serwera nie ma kolumn <code>operation</code>, <code>client</code> ani <code>duty_start</code>. Wszystkie trzy wartości są w payloadzie <code>preflight_confirm</code> i <code>day_close</code>, więc migracja to przepisanie projekcji, nie zmiana modelu zdarzeń. Do tego czasu te pola nie są sortowalne ani filtrowalne po stronie bazy.</span>
+          <span><b>DO DOROBIENIA: plakietka „W locie".</b> Kolumna <b>Stan</b> odróżnia dzień otwarty od samolotu, który właśnie leci — a tej różnicy projekcja <code>sessions</code> NIE niesie: ma <code>status</code> (<code>active</code>/<code>closed</code>), nie ma <code>engine_running</code>. „Silnik pracuje" jest polem <code>SessionState</code>, czyli wielkością liczoną ze strumienia; lista celowo go nie czyta (§7.1: listy nie wołają <code>projectSession</code>). Żeby ta plakietka mogła powstać, ktoś musi zdecydować, czy projekcja dostaje kolumnę „silnik pracuje" — i to jest decyzja człowieka, nie brak w migracji. Do tego czasu panel pokazuje <b>„Dzień otwarty"</b> dla każdej sesji bez <code>day_close</code> i niczego nie udaje. Tak samo <b>filtr po kliencie</b> (kolumna jest, parametru trasy nie ma) i <b>sortowanie po kolumnach innych niż „Dzień"</b> — kursor keyset jedzie po <code>claim_time</code>.</span>
+        </div>
+
+        <div class="banner ok">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+          <span><b>Sprostowanie z 2026-07-31: projekcja jest gotowa.</b> Ten ekran nosił wcześniej ostrzeżenie, że serwer nie ma kolumn <code>operation</code>, <code>client</code> ani <code>duty_start</code>. Stan faktyczny: <code>operation</code> i <code>client</code> weszły <b>migracją 11</b> (razem z indeksem <code>idx_sessions_day</code> pod kursor listy), a czasu służby nigdy nie brakowało — niesie go <code>sessions.claim_time</code> od pierwszej wersji projekcji i to on jest kluczem sortowania oraz filtra zakresu dat. Osobnej kolumny <code>duty_start</code> świadomie NIE dokładamy, bo byłaby duplikatem tej samej liczby (uzasadnienie: <code>application/common/mappers/sessionRow.ts</code>). Filtr operacji (<code>?operation=</code>) działa po stronie bazy.</span>
         </div>
 
         <div class="table-wrap">
@@ -594,7 +599,7 @@
               <tr>
                 <th class="sortable">Dzień · UTC <span class="arrow">↓</span></th>
                 <th>Samolot</th>
-                <th>Operacja <span class="arrow" style="color:var(--amber)">△</span></th>
+                <th>Operacja</th>
                 <th>PIC · dual</th>
                 <th class="num">Blok</th>
                 <th class="num">Czas lotu</th>
