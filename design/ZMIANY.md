@@ -682,4 +682,129 @@ się w profilu pilota i wędruje między urządzeniami — **zmiana działa offl
 > offline-first: najpierw zapis lokalny, wysyłka to skutek. Ekran RN i mockup
 > mówią to samo słowo w słowo.
 
+## 2026-07-30 — 02A: samolot raz w nagłówku, przekazanie mówi pełnym zdaniem
+
+**02a (+ wiersze odniesienia w 02b/02c)** — zgłoszenie z urządzenia po wdrożeniu ekranu.
+
+**1. „z konfiguracji SP-AXA" znika z podpisów; rejestracja wchodzi do nagłówka.**
+> Powód: pilot zapytał wprost „po co pisać wszędzie »z konfiguracji«". Fraza wracała
+> cztery razy na jednym ekranie (podpis paliwa, podpis MH, dwa wiersze w arkuszach),
+> a niosła jedną informację — którym samolotem to wszystko jest. To stała ekranu,
+> więc mówimy ją RAZ, w podnagłówku (`SP-AXA · Cessna 182`), tam gdzie 02 ma swój
+> podnagłówek. Zniknąć nie mogła: odczyt wpisany dla złego samolotu zatruwa łańcuch MH.
+> - podpis paliwa: „45% pojemności · 330 L z konfiguracji SP-AXA" → „45% pojemności ·
+>   zbiorniki 330 L"
+> - podpis MH: „format: hh:mm · z konfiguracji SP-AXA" → „licznik w formacie hh:mm"
+> - wiersze arkuszy (02a/02b/02c): „… · konfiguracja SP-AXA" → „… · SP-AXA" — tu
+>   rejestracja zostaje, bo arkusz zasłania nagłówek w chwili nadpisywania odczytu
+
+**2. „Poświadczył J. Kowalski · 21 JUNE · 17:30" → wyjaśnienie, co to za liczby.**
+> Powód: pytanie pilota brzmiało „a co w ogóle mówi ten komunikat? po kim przejmuję
+> samolot?". Pieczątka nie odpowiadała na jedyne pytanie, które w tym miejscu ma
+> znaczenie. Nowa treść: **czyje to odczyty · po kim przejmujesz · kiedy powstały ·
+> co masz z nimi zrobić**. Czas z JAWNĄ strefą (`21 JUNE 17:30 UTC · 19:30 LT`) —
+> to jedyna data, po której pilot ocenia, czy stan jest sprzed godziny czy sprzed
+> tygodnia, a pomyłka o dwie godziny zmienia tę ocenę.
+> Słowo „poświadczył" **usunięte świadomie**: serwer buduje przekazanie albo
+> z zamkniętego dnia, albo z dnia jeszcze trwającego (`latestHandover`), a typ
+> `Handover` tych przypadków nie rozróżnia — na ekranie, którego całą treścią jest
+> zaufanie do liczb, nie stawiamy pieczątki, której nie mamy pokrycia.
+> Zamknięcie zdania od pilota: „Sprawdź go na licznikach. Twój odczyt jest ważniejszy,
+> a ewentualne nieścisłości zostaną rozwiązane przez koordynatora" — rozbieżność ma
+> **adresata**, więc pilot nie zostaje sam z decyzją, czy coś się nie zgadza.
+> `.certified-row` dostaje `align-items:flex-start`, bo tekst ma teraz trzy linie.
+
+**3. Nota łamie się na TRZY AKAPITY** (`.certified-text` = kolumna z `gap:5px`,
+pierwsza linia pogrubiona).
+> Powód: w jednym bloku mono 9 px wyjaśnienie zlewało się w ścianę tekstu i trzeba było
+> przez nią przebrnąć, żeby znaleźć godzinę. Podział idzie po pytaniach pilota:
+> **czyje to liczby → z kiedy → co z nimi zrobić**; godzina dostaje własną linię, bo to
+> jedyna wartość, której szuka się tu wzrokiem. W RN robi to `InlineNote`: dzieli treść
+> po znaku nowej linii, a pierwszy akapit pogrubia (odpowiednik `<b>` z mockupu) —
+> przypisy jednozdaniowe na innych ekranach wyglądają jak dotąd.
+
+---
+
+## 2026-07-30 — Ten sam wzorzec na 06 / 09 / 09a / 10 / 10a
+
+**Rozszerzenie poprzedniej iteracji na pozostałe ekrany z frazą „z konfiguracji".**
+> Powód: fraza żyła na czterech dalszych ekranach dokładnie w tej samej roli — mówiła,
+> którym samolotem rzecz się dzieje, i robiła to po kilka razy w jednym widoku.
+> Reguła jest teraz jedna: **samolot stoi w podnagłówku ekranu, podpisy mówią o rzeczy,
+> nie o samolocie**, a rejestracja wraca tylko w arkuszach, bo te zasłaniają nagłówek.
+> - **06**: podnagłówek `SP-AXA · Cessna 182` (nowy); „Obliczone z ostatnich sesji
+>   silnika · konfiguracja SP-AXA" → „…silnika"; „maks. dolewka: 218 L (do pełna) ·
+>   pojemność 330 L z konfiguracji SP-AXA" → „…· zbiorniki 330 L". W wariancie BEZ
+>   konfiguracji w cache słowo zostaje — tam jest POWODEM (nie znamy pojemności),
+>   nie ozdobnikiem
+> - **09 / 09a**: samolot dołączony do daty w nagłówku (`SP-AXA · 22 June 2026`) —
+>   wcześniej ekran zamykający łańcuch MH nie mówił, czyj licznik pilot przepisuje;
+>   podpisy walidacji i formatu MH bez „z konfiguracji SP-AXA"
+> - **10 / 10a**: „Motogodziny · hh:mm z konfiguracji SP-AXA" → „Motogodziny · licznik
+>   w formacie hh:mm"; samolot był już w podnagłówku, więc w tytule karty stał drugi raz
+
+## 2026-07-30 — 03: karta podsumowania mówi każdą rzecz raz
+
+**03-preflight-confirm** — zgłoszenie z urządzenia, ta sama zasada co na 02a/06/09/10.
+
+**Tagi karty: zostaje operacja, znika data.**
+> Powód: badge `22 JUNE 2026` powtarzał to, co pilot ustawił chwilę wcześniej na 02,
+> a dzień lotny i tak zaczyna się „teraz" — data nie odpowiadała tu na żadne pytanie,
+> tylko zajmowała rząd. Dodatkowo w aplikacji przy **pustej trasie** tytułem karty jest
+> sama operacja, więc tag `SKOKI` stał tuż pod wielkim napisem `SKOKI`; RN pokazuje go
+> teraz tylko wtedy, gdy tytułem jest trasa.
+
+**Klucze siatki: `PIC · zalogowany` → `PIC`, `Dual · drugi pilot` → `Dual`.**
+> Powód: dopowiedzenia tłumaczyły skróty, które pilot zna z licencji, a wartością obok
+> jest jego własne nazwisko — „zalogowany" nie wnosiło nic ponad to, co widać.
+
+**Meldunek: czas lokalny schodzi do WŁASNEJ linii** (`08:00 UTC` / `10:00 LT`).
+> Powód: dopisany za „UTC" łamał się w połowie — pod wartością zostawało samotne „LT",
+> bo kolumna siatki ma pół szerokości ekranu. Hierarchia bez zmian: LT dalej jest
+> wartością drugorzędną (mniejszy stopień, przygaszony), tylko nie rozjeżdża się.
+> W DS: `SummaryEntry.sub` (osobna linia) obok `note` (krótka jednostka przy wartości).
+
+**„WRÓĆ I POPRAW" — USUNIĘTY; zostaje sama akcja potwierdzenia.**
+> Powód: powrót do poprawek prowadzi już z nagłówka („‹ Wróć") i trafia dokładnie tam
+> samo — o krok wstecz w stepperze. Pełnowymiarowy przycisk powtarzał go tuż nad
+> potwierdzeniem, czyli w miejscu zarezerwowanym dla decyzji o zapisie. Ekran zostaje
+> „wyłącznie do odczytu": to, że zmiana wymaga cofnięcia się do właściwego kroku,
+> egzekwuje brak pól do edycji, a nie drugi przycisk.
+
+**Baner „Sprawdź poprawność danych" — USUNIĘTY.**
+> Powód: cały ekran nazywa się POTWIERDŹ DANE i jest sprawdzeniem, więc baner wzywający
+> do sprawdzenia powtarzał jego tytuł. Po drodze próbowaliśmy go ratować treścią —
+> mockup mówił nieprawdę („dane można zmienić tylko w ustawieniach"; korekty robi się
+> w logu dnia), a wersja RN kończyła się urwanym „— nie w formularzu", którego pilot
+> nie umiał odczytać. Rozstrzygnięcie: przepisywanie treści leczyło objaw, a rząd
+> stałego ostrzeżenia i tak stał między siatką danych a przyciskami.
+> Ostrzeżenia **warunkowe** zostają (przejęcie samolotu, odrzucony zapis) — te mówią coś,
+> czego z siatki nie widać, i znikają same, gdy warunek nie zachodzi.
+
+## 2026-07-30 — Preflight ma cztery kroki: nowy 02E „Zadanie dnia"
+
+**Nowy plik: `02e-preflight-zadanie.html`** (krok 2/4). Z kroku 1 wychodzą do niego
+rodzaj operacji, trasa i oznaczenie klienta; stepper przenumerowany na 02, 02a, 02d, 03.
+
+> Powód: 02 był najdłuższym formularzem aplikacji i **rósł dalej** — lista floty i lista
+> pilotów przybierają z każdym samolotem i każdym nowym kontem, więc przejęcie samolotu
+> (najcięższa decyzja preflightu, §4.4) lądowało w jednej kolumnie nad polem „Oznaczenie
+> klienta". Podział idzie po naturze pytań, nie po liczbie pól: **krok 1 = wybory z list**
+> („kto, czym i od kiedy" — samolot, Dual, meldunek), **krok 2 = opis zadania**
+> („co dziś robimy"). Meldunek został w kroku 1 świadomie: mówi, od kiedy pilot jest na
+> służbie, a nie co dziś robi.
+
+**Krok 2 wchodzi z PAMIĘCIĄ ostatniego dnia** — i to jest warunek jego sensu.
+> Żadne pole na 02E nie blokuje przejścia dalej (operacja ma wartość domyślną, trasa
+> i klient są opcjonalne), więc bez pamięci ekran byłby codziennym tapnięciem w pusty
+> formularz, żeby zostawić wszystko jak było — czyli dokładaniem pracy zamiast jej
+> ujmowania. Z pamięcią pilot POTWIERDZA to, co widzi, i wpisuje tylko to, co się
+> faktycznie zmieniło. Zakresy: **operacja i klient per pilot** (chodzą za człowiekiem
+> także po przesiadce), **trasa per samolot** (An-2 lata ze swojego lotniska).
+> Podpowiedź ustępuje bez pytania: pierwsza zmiana któregokolwiek pola wyłącza ją do
+> końca preflightu. Adnotacja na górze mówi wprost, skąd wartości pochodzą — pilot ma
+> wiedzieć, że patrzy na podpowiedź, a nie na fakt.
+
+**Index**: karta 02E w katalogu i w pasku przepływu; opisy kart 02 i 02A z numerami kroków.
+
 <!-- Dodawaj kolejne iteracje poniżej -->

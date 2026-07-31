@@ -20,11 +20,23 @@ import { AppText } from './AppText';
 import { toneColors, type Tone } from './tone';
 
 export interface SummaryEntry {
-  /** Nagłówek pozycji, np. „PIC · zalogowany". */
+  /** Nagłówek pozycji, np. „PIC". */
   key: string;
   value: string;
-  /** Dopisek za wartością — mniejszy i przygaszony („MH", „UTC · 10:00 LT"). */
+  /**
+   * Krótka JEDNOSTKA tuż za wartością („MH", „UTC"). Tylko coś, co na pewno zmieści się
+   * w tej samej linii — kolumna ma połowę szerokości ekranu.
+   */
   note?: string;
+  /**
+   * Wartość drugorzędna w OSOBNEJ linii pod spodem („15:19 LT").
+   *
+   * Wcześniej czas lokalny dopisywał się do `note` i łamał się w połowie: pod „13:19 UTC"
+   * zostawało samotne „LT" wyrzucone do następnej linii (zgłoszenie z urządzenia).
+   * Własna linia nie ma jak się rozjechać, a hierarchia zostaje ta sama — LT jest
+   * wartością drugorzędną przy meldunku (`CLAUDE.md`).
+   */
+  sub?: string;
   tone?: Tone;
   /** Wartość tekstowa (nazwisko, klient) zamiast liczbowej — mniejszy stopień. */
   text?: boolean;
@@ -64,11 +76,17 @@ export function SummaryGrid({ entries, style }: SummaryGridProps) {
                 {entry.value}
               </AppText>
               {entry.note != null && (
-                <AppText variant="mono" tone="muted" style={styles.note}>
+                <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.note}>
                   {entry.note}
                 </AppText>
               )}
             </View>
+
+            {entry.sub != null && (
+              <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.note}>
+                {entry.sub}
+              </AppText>
+            )}
           </View>
         );
       })}

@@ -14,5 +14,6 @@ export * from './createEventsRepo';
 export * from './storage/inMemoryAdapter';
 export * from './gps/replayGpsAdapter';
 export * from './referenceSeed';
-// Czysta klasa (magazyn wstrzykiwany) — AsyncStorage podaje wołający, barrel go nie wciąga.
+// Czyste klasy (magazyn wstrzykiwany) — AsyncStorage podaje wołający, barrel go nie wciąga.
 export * from './prefs/themePrefsStore';
+export * from './prefs/taskMemoryStore';

@@ -36,7 +36,7 @@ export interface ReadoutProps {
   freshness: Freshness;
   /** Czas ostatniej synchronizacji do adnotacji `cache`. */
   syncedAt?: string | null;
-  /** Podpis pod wartością, np. „45% pojemności · 330 L z konfiguracji SP-AXA". */
+  /** Podpis pod wartością, np. „45% pojemności · zbiorniki 330 L". */
   caption?: string;
   /** Wstawka między adnotacją a podpisem — pasek poziomu paliwa. */
   gauge?: React.ReactNode;

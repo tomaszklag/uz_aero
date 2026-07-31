@@ -64,7 +64,7 @@
   .nav-strip span { color:var(--border-strong); }
 
   .app-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
-  .app-header .screen-title { flex:1; text-align:center; }
+  .app-header .header-center { flex:1; text-align:center; }
   .back-btn, .step-badge { min-width:56px; }
   .screen-title { font-family:var(--font-display); font-size:26px; letter-spacing:3px; color:var(--text-primary); line-height:1; }
   .screen-subtitle { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; margin-top:3px; }
@@ -102,10 +102,12 @@
   .trail-meta b { color:var(--text-secondary); font-weight:500; }
 
   /* Certified badge */
-  .certified-row { display:flex; align-items:center; gap:8px; background:var(--green-muted); border:1px solid var(--green-border); border-radius:10px; padding:8px 11px; margin-top:2px; }
+  /* flex-start, nie center: wyjaśnienie ma trzy linie, ikona ma stać przy pierwszej */
+  .certified-row { display:flex; align-items:flex-start; gap:8px; background:var(--green-muted); border:1px solid var(--green-border); border-radius:10px; padding:8px 11px; margin-top:2px; }
   .certified-icon { color:var(--green); flex-shrink:0; }
-  .certified-text { font-family:var(--font-mono); font-size:9px; color:var(--green); line-height:1.5; }
-  .certified-text b { font-weight:700; }
+  /* Akapity, nie jeden blok: odstęp większy niż interlinia, żeby podział było widać */
+  .certified-text { font-family:var(--font-mono); font-size:9px; color:var(--green); line-height:1.5; display:flex; flex-direction:column; gap:5px; }
+  .certified-text b, .certified-lead { font-weight:700; }
 
   .btn-primary { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:18px; border-radius:16px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:22px; letter-spacing:3px; border:none; text-decoration:none; cursor:pointer; box-shadow:0 0 24px rgba(46,204,113,0.3); }
 
@@ -198,13 +200,17 @@
 
   <div class="screen">
     <div class="app-header">
-      <a href="02-preflight.html" class="back-btn">
+      <a href="02e-preflight-zadanie.html" class="back-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Wróć
       </a>
-      <div class="screen-title">PREFLIGHT</div>
+      <!-- Samolot RAZ, w nagłówku — zamiast „z konfiguracji SP-AXA" w każdym podpisie -->
+      <div class="header-center">
+        <div class="screen-title">PREFLIGHT</div>
+        <div class="screen-subtitle">SP-AXA · Cessna 182</div>
+      </div>
       <div class="header-right">
-        <div class="step-badge">2 / 3</div>
+        <div class="step-badge">3 / 4</div>
         <div class="sync-chip only-live" title="Online — przekazanie na żywo z serwera">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           SYNC
@@ -239,7 +245,7 @@
             <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji — stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 JUN 17:30</div>
             <div class="fresh-note only-none">Brak danych — wpisz z licznika</div>
             <div class="hide-none" style="margin-top:6px; width:130px; height:6px; border-radius:3px; background:var(--surface-raised); border:1px solid var(--amber-border); position:relative; overflow:hidden;"><div style="position:absolute; inset:0; width:45%; background:var(--amber); border-radius:3px;"></div></div>
-            <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">45% pojemności · 330 L z konfiguracji SP-AXA</div>
+            <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">45% pojemności · zbiorniki 330 L</div>
           </div>
           <button class="koryguj-btn hide-none" onclick="document.getElementById('fuel-modal').style.display='flex'">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -282,7 +288,7 @@
             </div>
             <div class="fresh-note only-cache" title="Wartość z ostatniej synchronizacji — stan mógł się zmienić; licznik fizyczny pozostaje prawdą">Ostatnie pobrane · 21 JUN 17:30</div>
             <div class="fresh-note only-none">Brak danych — wpisz z licznika</div>
-            <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">format: hh:mm · z konfiguracji SP-AXA</div>
+            <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:4px;">licznik w formacie hh:mm</div>
           </div>
           <button class="koryguj-btn hide-none" onclick="document.getElementById('hours-modal').style.display='flex'">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -313,13 +319,21 @@
         </div>
       </div>
 
-      <!-- Poświadczenie — raz dla obu wartości -->
+      <!-- Skąd te wartości — raz dla obu odczytów.
+           Nie „poświadczył": przekazanie bywa zbudowane z dnia jeszcze trwającego,
+           więc słowo o poświadczeniu byłoby wtedy nieprawdą. Zamiast pieczątki —
+           odpowiedź na pytanie pilota: czyje to liczby i co z nimi zrobić. -->
       <div class="certified-row hide-none">
         <div class="certified-icon">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
+        <!-- Trzy akapity = trzy pytania pilota po kolei: czyje to liczby → z kiedy →
+             co z nimi zrobić. Godzina we własnej linii, bo tej się szuka wzrokiem. -->
         <div class="certified-text">
-          Poświadczył <b>J. Kowalski</b> · 21 JUNE · 17:30
+          <div class="certified-lead">Odczyty powyżej przekazał J. Kowalski — to po nim przejmujesz SP-AXA.</div>
+          <div>Stan z 21 JUNE 17:30 UTC · 19:30 LT</div>
+          <div>Sprawdź go na licznikach. Twój odczyt jest ważniejszy, a ewentualne
+          nieścisłości zostaną rozwiązane przez koordynatora.</div>
         </div>
       </div>
 
@@ -349,7 +363,7 @@
           <span style="color:var(--text-secondary);">150 L</span>
         </div>
         <div class="modal-ref">
-          <span>Pojemność zbiorników · konfiguracja SP-AXA</span>
+          <span>Pojemność zbiorników · SP-AXA</span>
           <span style="color:var(--text-secondary);">330 L</span>
         </div>
         <div class="modal-warning">
@@ -377,7 +391,7 @@
           <span style="color:var(--text-secondary);">1 234:30 MH</span>
         </div>
         <div class="modal-ref">
-          <span>Format licznika · konfiguracja SP-AXA</span>
+          <span>Format licznika · SP-AXA</span>
           <span style="color:var(--text-secondary);">hh:mm</span>
         </div>
         <div class="modal-warning">
@@ -424,6 +438,7 @@
   <a href="index.html">↩ Index</a>
   <span>·</span>
   <a href="02-preflight.html">← 02 Preflight</a>
+  <a href="02e-preflight-zadanie.html">← 02E Zadanie</a>
   <a href="02a-preflight.html" class="active">02A Paliwo/MH</a>
   <a href="02b-preflight-paliwo.html">02B Paliwo modal</a>
   <a href="02c-preflight-motogodziny.html">02C MH modal</a>

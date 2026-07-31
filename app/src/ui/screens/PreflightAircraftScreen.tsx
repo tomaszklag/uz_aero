@@ -1,9 +1,14 @@
 /**
- * UZ Aero — 02 PREFLIGHT · krok 1/3.
+ * UZ Aero — 02 PREFLIGHT · krok 1/4: kto, czym i od kiedy.
  *
  * Odwzorowanie mockupu `design/02-preflight.html` — kolejność i treść sekcji są stamtąd,
- * nie z improwizacji: pasek tożsamości → samolot → drugi pilot → rodzaj operacji → trasa
- * → czas meldowania → oznaczenie klienta → DALEJ.
+ * nie z improwizacji: pasek tożsamości → samolot → drugi pilot → czas meldowania → DALEJ.
+ *
+ * Rodzaj operacji, trasa i klient przeniosły się do kroku 2 (`PreflightTaskScreen`,
+ * decyzja 2026-07-30): ten ekran zbierał WYBORY Z LIST (w tym przejęcie samolotu —
+ * najcięższą decyzję preflightu) razem z opisem zadania, a obie listy rosną z flotą
+ * i liczbą pilotów. Meldunek zostaje tutaj, bo odpowiada na „od kiedy jesteś na służbie",
+ * a nie na „co dziś robisz".
  *
  * Reguły, których ten ekran pilnuje:
  *  • wybór z **listy kart**, nigdy z natywnego selecta; operacje jako **siatka ikon**
@@ -27,32 +32,20 @@ import {
   CardPicker,
   Field,
   IdentityStrip,
-  OptionGrid,
   ReadingSheet,
   Screen,
   ScreenHeader,
   Sheet,
   SyncChip,
   Tag,
-  TextField,
   ValueBox,
-  type GridOption,
   type PickerOption,
 } from '../components';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { dateUtcLong, parseTimeUtcOnDay, timeLocal, timeUtc } from '../format';
-import type { OperationType, ReferenceAircraft, ReferencePilot } from '../../domain';
-
-/** Siatka operacji — etykiety i ikony jak w `.op-grid` mockupu. */
-const OPERATIONS: GridOption<OperationType>[] = [
-  { value: 'skoki', label: 'Skoki', icon: 'op-skoki' },
-  { value: 'ferry', label: 'Ferry', icon: 'op-ferry' },
-  { value: 'egzamin', label: 'Egzamin', icon: 'op-egzamin' },
-  { value: 'techniczny', label: 'Lot tech.', icon: 'op-techniczny' },
-  { value: 'inne', label: 'Inne', icon: 'op-inne' },
-];
+import type { ReferenceAircraft, ReferencePilot } from '../../domain';
 
 export function PreflightAircraftScreen({
   navigation,
@@ -165,9 +158,27 @@ export function PreflightAircraftScreen({
       header={
         <ScreenHeader
           title="PREFLIGHT"
-          subtitle="Uzupełnij dane przed rozpoczęciem dnia lotnego"
-          step="1 / 3"
+          subtitle="Kto, czym i od kiedy"
+          step="1 / 4"
           right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+        />
+      }
+      // Akcja prowadząca dalej stoi przy dolnej krawędzi niezależnie od długości
+      // formularza — kciuk ma stałe miejsce do trafienia (reguła z 2026-07-30).
+      footer={
+        <ActionButton
+          label="DALEJ"
+          tone="green"
+          variant="solid"
+          trailingIcon="next"
+          disabledReason={
+            selected == null
+              ? 'Wybierz samolot, aby przejść dalej'
+              : needsDual
+                ? 'Wybierz drugiego pilota — ten samolot wymaga załogi 2-osobowej'
+                : null
+          }
+          onPress={() => navigation.navigate('PreflightTask')}
         />
       }
     >
@@ -224,46 +235,6 @@ export function PreflightAircraftScreen({
           )}
         </Card>
 
-        {/* ── rodzaj operacji ─────────────────────────────────────────── */}
-        <Card title="Rodzaj operacji" header="inline">
-          <OptionGrid
-            options={OPERATIONS}
-            value={draft.operation}
-            onChange={(v) => draft.set('operation', v)}
-          />
-        </Card>
-
-        {/* ── trasa ───────────────────────────────────────────────────── */}
-        <Card title="Trasa" header="inline">
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: theme.spacing.sm }}>
-            <TextField
-              label="Start ICAO"
-              mono
-              maxLength={4}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              placeholder="EPKK"
-              value={draft.departureIcao}
-              onChangeText={(v) => draft.set('departureIcao', v.toUpperCase())}
-              style={{ flex: 1 }}
-            />
-            <AppText variant="display" tone="muted" style={{ paddingBottom: 10 }}>
-              →
-            </AppText>
-            <TextField
-              label="Lądowanie ICAO"
-              mono
-              maxLength={4}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              placeholder="EPWA"
-              value={draft.arrivalIcao}
-              onChangeText={(v) => draft.set('arrivalIcao', v.toUpperCase())}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </Card>
-
         {/* ── czas meldowania ─────────────────────────────────────────────
             Mockup pokazuje pole ODCZYTU: „08:00 UTC" dużym mono, obok „10:00 LT"
             i ołówek, pod spodem badge z datą. Sekcja nie ma etykiety — pole samo się
@@ -286,32 +257,6 @@ export function PreflightAircraftScreen({
           </Field>
         </Card>
 
-        {/* ── opcjonalne ──────────────────────────────────────────────── */}
-        <Card header="inline">
-          <TextField
-            label="Oznaczenie klienta"
-            tag={{ label: 'opcjonalne' }}
-            hint="Wiąże zrzuty dnia z klientem — trafia do statystyk i arkusza rozliczeniowego"
-            placeholder="np. SKY CAMP · zlec. 2026/114"
-            value={draft.client ?? ''}
-            onChangeText={(v) => draft.set('client', v.length > 0 ? v : null)}
-          />
-        </Card>
-
-        <ActionButton
-          label="DALEJ"
-          tone="green"
-          variant="solid"
-          trailingIcon="next"
-          disabledReason={
-            selected == null
-              ? 'Wybierz samolot, aby przejść dalej'
-              : needsDual
-                ? 'Wybierz drugiego pilota — ten samolot wymaga załogi 2-osobowej'
-                : null
-          }
-          onPress={() => navigation.navigate('PreflightReadings')}
-        />
       </View>
 
       {/* ── godzina meldunku (arkusz jak 02b/02c dla odczytów) ─────────── */}

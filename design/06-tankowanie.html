@@ -74,6 +74,9 @@
   .back-btn { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-decoration: none; letter-spacing: 0.5px; }
   .back-btn:hover { color: var(--text-secondary); }
   .screen-title { font-family: var(--font-display); font-size: 22px; letter-spacing: 3px; color: var(--text-primary); }
+  /* Samolot raz, w nagłówku — zamiast „z konfiguracji SP-AXA" w podpisach niżej */
+  .app-header-center { text-align: center; }
+  .screen-subtitle { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1px; margin-top: 2px; }
   .header-icon { color: var(--amber); }
   .header-right { display:flex; align-items:center; gap:8px; }
   .sync-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
@@ -179,7 +182,10 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Kokpit
       </a>
-      <div class="screen-title">TANKOWANIE</div>
+      <div class="app-header-center">
+        <div class="screen-title">TANKOWANIE</div>
+        <div class="screen-subtitle">SP-AXA · Cessna 182</div>
+      </div>
       <div class="header-right">
         <div class="sync-chip" title="Tankowanie to zdarzenie lokalne — zapis natychmiastowy, offline trafia do outboxa">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -203,7 +209,7 @@
         </div>
         <div class="fob-bar"><div class="fob-bar-fill"></div></div>
         <div class="fob-bar-labels"><span>0 L</span><span>pojemność: 330 L</span></div>
-        <div class="fob-subtext">Obliczone z ostatnich sesji silnika · konfiguracja SP-AXA</div>
+        <div class="fob-subtext">Obliczone z ostatnich sesji silnika</div>
       </div>
 
       <!-- Sekcja: Dolano -->
@@ -216,7 +222,7 @@
             <span style="font-family: var(--font-mono); font-size: 32px; font-weight: 700; color: var(--amber); letter-spacing: -1px;">48</span>
             <span style="font-family: var(--font-mono); font-size: 18px; color: var(--amber); opacity: 0.7;">L</span>
           </div>
-          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted);">maks. dolewka: 218 L (do pełna) · pojemność 330 L z konfiguracji SP-AXA</div>
+          <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted);">maks. dolewka: 218 L (do pełna) · zbiorniki 330 L</div>
         </div>
 
         <!-- Fake Slider -->

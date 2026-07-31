@@ -58,6 +58,8 @@ import { useSensorTrace } from '../hooks/useSensorTrace';
 import { useEventCorrection } from '../hooks/useEventCorrection';
 import { duration, litres, timeLocal, timeUtc } from '../format';
 import { buildCycleRows, buildLogRows } from './cockpitLog';
+import { cyclesLabel } from './cockpitPeek';
+import { flightsBadge } from './statsDay';
 import { gpsLossText, staleCellNote, unknownPhaseDetail } from './gpsLoss';
 import type { Event, FlightPhase } from '../../domain';
 
@@ -431,7 +433,9 @@ export function CockpitScreen({
       id: 'manual',
       icon: 'manual-log',
       label: 'Lista ręczna',
-      sub: `Fallback GPS · ${projection.flights.length} lotów`,
+      // Odmiana z `flightsBadge` — „1 lotów" na żywym kokpicie wyglądało jak literówka
+      // w przyrządzie. Ta sama funkcja liczy badge na 10 i 11.
+      sub: `Fallback GPS · ${flightsBadge(projection.flights.length)}`,
       onPress: () => navigation.navigate('ManualLog'),
     },
     {
@@ -484,7 +488,9 @@ export function CockpitScreen({
         {messages}
 
         <Card
-          title={`Log dnia · UTC · ${projection.engineRuns.length} cykli · ${projection.takeoffCount} T/O`}
+          // `cyclesLabel` — ten sam nagłówek co w podglądzie 04b, gdzie odmiana była
+          // od początku poprawna („1 cykl", nie „1 cykli").
+          title={`Log dnia · UTC · ${cyclesLabel(projection.engineRuns.length)} · ${projection.takeoffCount} T/O`}
           flush
         >
           {/* Ołówek przy każdym wierszu → arkusz korekty (04c). Cel ≥ 44 px: naprawa

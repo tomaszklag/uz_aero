@@ -29,11 +29,32 @@ export interface PreflightDraft {
   mh: number;
   /** Czy odczyty pochodzą z przekazania, czy pilot wpisał je sam. */
   readingSource: 'handover' | 'manual';
+  /**
+   * Czy pilot dotknął pól ZADANIA (operacja, trasa, klient) w tym preflighcie.
+   *
+   * Rozstrzyga, czy krok 02e wolno wypełnić podpowiedzią z ostatniego dnia
+   * (`useTaskMemory`). Bez tej flagi powrót na krok wstecz i ponowne wejście kasowałoby
+   * świeżo wpisaną trasę, bo ekran montuje się od nowa i znowu „pomagał".
+   */
+  taskTouched: boolean;
 }
+
+/** Pola opisujące ZADANIE dnia — ich zmiana wyłącza podpowiadanie (patrz `taskTouched`). */
+const TASK_FIELDS: readonly (keyof PreflightDraft)[] = [
+  'operation',
+  'departureIcao',
+  'arrivalIcao',
+  'client',
+];
 
 interface PreflightDraftStore extends PreflightDraft {
   setAircraft(aircraft: ReferenceAircraft): void;
   set<K extends keyof PreflightDraft>(key: K, value: PreflightDraft[K]): void;
+  /**
+   * Wypełnienie zadania podpowiedzią z ostatniego dnia. Osobno od `set`, bo NIE liczy
+   * się jako dotknięcie pól przez pilota — inaczej podpowiedź zablokowałaby samą siebie.
+   */
+  suggestTask(task: Pick<PreflightDraft, 'operation' | 'client'>, route: Pick<PreflightDraft, 'departureIcao' | 'arrivalIcao'>): void;
   reset(): void;
   /** Format MH wybranego samolotu — steruje wyświetlaniem (§5.4). */
   mhFormat(): MhFormat;
@@ -53,6 +74,7 @@ function initial(): PreflightDraft {
     fuelL: 0,
     mh: 0,
     readingSource: 'manual',
+    taskTouched: false,
   };
 }
 
@@ -76,6 +98,13 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
 
   set(key, value) {
     set({ [key]: value } as Pick<PreflightDraft, typeof key>);
+    // Dotknięcie zadania zamyka drogę podpowiedzi — od tej chwili obowiązuje wpis pilota.
+    if (TASK_FIELDS.includes(key)) set({ taskTouched: true });
+  },
+
+  suggestTask(task, route) {
+    if (get().taskTouched) return;
+    set({ ...task, ...route });
   },
 
   reset() {

@@ -39,6 +39,22 @@ export interface ScreenProps extends ViewProps {
    * widoczne także w połowie długiego formularza.
    */
   header?: React.ReactNode;
+  /**
+   * Akcja kończąca ekran („DALEJ", „ZAPISZ", para z 03). Stoi na KOŃCU TREŚCI, ale gdy
+   * treść nie wypełnia ekranu — dosuwa się do dolnej krawędzi.
+   *
+   * Reguła z 2026-07-30 i jej dwie połowy:
+   *  • formularz DŁUŻSZY niż ekran — przycisk czeka pod ostatnim polem; pilot dojeżdża
+   *    do niego przewijaniem, więc naturalnie widzi po drodze wszystko, co potwierdza.
+   *    Pasek przyklejony na stałe zasłaniałby w tym czasie treść i zabierał wysokość;
+   *  • formularz KRÓTSZY — przycisk nie zawisa w połowie ekranu z pustką pod spodem,
+   *    tylko schodzi na dół, gdzie czeka go kciuk.
+   *
+   * Robi to rozpychacz (`flex: 1`) w przewijanej treści rozciągniętej do pełnej wysokości
+   * (`flexGrow: 1`): przy krótkiej treści zjada wolne miejsce, przy długiej nie ma czego
+   * zjadać i znika. Zero pomiarów, zero warunków w kodzie ekranu.
+   */
+  footer?: React.ReactNode;
   /** Owija zawartość w ScrollView. */
   scroll?: boolean;
   /** Padding wewnętrzny (spacing.lg). Domyślnie true. */
@@ -53,6 +69,7 @@ const DEFAULT_EDGES: readonly Edge[] = ['top', 'bottom', 'left', 'right'];
 
 export function Screen({
   header,
+  footer,
   scroll = false,
   padded = true,
   edges = DEFAULT_EDGES,
@@ -67,6 +84,16 @@ export function Screen({
   const bg: ViewStyle = { backgroundColor: theme.colors.bg };
   const pad: ViewStyle | null = padded ? { padding: theme.spacing.lg } : null;
 
+  // Rozpychacz + akcja. Odstęp nad przyciskiem taki sam jak między sekcjami, żeby przy
+  // długim formularzu wyglądał na kolejny element treści — bo nim wtedy jest.
+  const actionBlock =
+    footer == null ? null : (
+      <>
+        <View style={styles.spacer} />
+        <View style={{ paddingTop: theme.spacing.md }}>{footer}</View>
+      </>
+    );
+
   // Wysunięta klawiatura przykrywa też pasek nawigacji, więc dolny inset przestaje
   // cokolwiek chronić — zostawiony, dokładałby zapas drugi raz. Górnego nie ruszamy:
   // nagłówek ekranu ma zostać pod status barem niezależnie od klawiatury.
@@ -79,7 +106,9 @@ export function Screen({
         {header}
         <ScrollView
           style={styles.flex}
-          contentContainerStyle={[pad, contentContainerStyle]}
+          // `flexGrow` TYLKO z akcją: bez niej rozciąganie treści do pełnej wysokości
+          // niczego nie daje, a mogłoby rozjechać ekrany z własnym układem.
+          contentContainerStyle={[footer != null && styles.grow, pad, contentContainerStyle]}
           showsVerticalScrollIndicator={false}
           // Bez tego pierwsze tapnięcie przy otwartej klawiaturze tylko ją chowa —
           // pilot musi tapnąć DALEJ dwa razy i nie wie dlaczego.
@@ -93,6 +122,7 @@ export function Screen({
           scrollEventThrottle={keyboardScroll.scrollEventThrottle}
         >
           {children}
+          {actionBlock}
         </ScrollView>
       </SafeAreaView>
     );
@@ -101,8 +131,11 @@ export function Screen({
   return (
     <SafeAreaView style={[styles.flex, bg, shrink]} edges={activeEdges}>
       {header}
+      {/* Ekran bez przewijania z definicji mieści się w całości — akcja siedzi pod
+          treścią, a rozpychacz dosuwa ją do dołu. */}
       <View style={[styles.flex, pad, style]} {...rest}>
         {children}
+        {actionBlock}
       </View>
     </SafeAreaView>
   );
@@ -110,4 +143,8 @@ export function Screen({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  grow: { flexGrow: 1 },
+  // Zjada wolne miejsce, gdy treść jest krótsza niż ekran; przy dłuższej ma zero
+  // wysokości i nie robi nic.
+  spacer: { flex: 1 },
 });

@@ -1,18 +1,18 @@
 /**
- * UZ Aero — 03 PREFLIGHT · krok 3/3: podsumowanie i potwierdzenie.
+ * UZ Aero — 03 PREFLIGHT · krok 4/4: podsumowanie i potwierdzenie.
  *
  * Odwzorowanie mockupu `design/03-preflight-confirm.html`: karta podsumowania (samolot,
- * trasa, tagi) → dwukolumnowa siatka szczegółów → ostrzeżenie → para przycisków
- * „WRÓĆ I POPRAW" / „POTWIERDŹ I ZACZNIJ DZIEŃ".
+ * trasa, tag operacji) → dwukolumnowa siatka szczegółów → ostrzeżenia warunkowe →
+ * „POTWIERDŹ I ZACZNIJ DZIEŃ".
  *
  * Tu kończy się szkic, a zaczyna rejestr: potwierdzenie emituje `session_claim`
  * i `preflight_confirm`. Do tej chwili **nic nie zostało zapisane** — pilot mógł wrócić
  * i zmienić każdą wartość.
  *
  * Ekran jest **wyłącznie do odczytu** (§3.1 krok 3): pokazuje to, co za chwilę zostanie
- * utrwalone. Zmiana wymaga cofnięcia się do właściwego kroku — dlatego „WRÓĆ I POPRAW"
- * jest pełnoprawnym przyciskiem obok potwierdzenia, a nie odnośnikiem na marginesie.
- * Dzięki temu podsumowanie nie staje się drugim, konkurencyjnym formularzem.
+ * utrwalone. Zmiana wymaga cofnięcia się do właściwego kroku — podsumowanie nie staje się
+ * przez to drugim, konkurencyjnym formularzem. Powrót prowadzi z nagłówka („‹ Wróć");
+ * bliźniaczy przycisk na dole był tylko jego kopią w miejscu decyzji o zapisie.
  */
 
 import React, { useCallback, useState } from 'react';
@@ -32,7 +32,7 @@ import {
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
-import { dateUtcLong, litres, motoHours, shortName, timeLocal, timeUtc } from '../format';
+import { litres, motoHours, shortName, timeLocal, timeUtc } from '../format';
 import { claimDecision } from './claimMode';
 
 export function PreflightConfirmScreen({
@@ -128,20 +128,25 @@ export function PreflightConfirmScreen({
   const route = [draft.departureIcao, draft.arrivalIcao].filter(Boolean).join(' → ');
 
   const entries: SummaryEntry[] = [
+    // Same role, bez dopowiedzeń: „PIC · zalogowany" i „Dual · drugi pilot" tłumaczyły
+    // skróty, które pilot zna z licencji — a wartością obok jest jego własne nazwisko.
     {
-      key: 'PIC · zalogowany',
+      key: 'PIC',
       value: shortName(pilotProfile?.name ?? pilotId),
       text: true,
     },
     {
-      key: 'Dual · drugi pilot',
+      key: 'Dual',
       value: dualName != null ? shortName(dualName) : '—',
       text: true,
     },
     {
       key: 'Meldunek',
       value: timeUtc(draft.dutyStart),
-      note: `UTC · ${timeLocal(draft.dutyStart)} LT`,
+      note: 'UTC',
+      // Czas lokalny w osobnej linii: dopisany za „UTC" łamał się w połowie i pod
+      // wartością zostawało samotne „LT" (kolumna ma pół szerokości ekranu).
+      sub: `${timeLocal(draft.dutyStart)} LT`,
     },
     { key: 'Paliwo start', value: litres(draft.fuelL), tone: 'amber' },
     { key: 'Motogodziny', value: motoHours(draft.mh, mhFormat), note: 'MH' },
@@ -156,9 +161,25 @@ export function PreflightConfirmScreen({
           title="POTWIERDŹ DANE"
           // Dłuższy tytuł — mockup 03 zmniejsza go do 20 px, żeby nie wchodził na sloty boczne.
           size="md"
-          step="3 / 3"
+          step="4 / 4"
           onBack={navigation.goBack}
           right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+        />
+      }
+      /* Jedna akcja, nie para. Mockup ma tu `.btn-group` z „WRÓĆ I POPRAW" na koncie
+         drugiego przycisku, ale powrót jest już w nagłówku („‹ Wróć") i to on prowadzi
+         dokładnie tam samo — krok wstecz w stepperze. Pełnowymiarowy przycisk powtarzał
+         go tuż nad potwierdzeniem, czyli w miejscu zarezerwowanym dla decyzji.
+         Akcja stoi przy dolnej krawędzi, choćby siatka danych kończyła się w połowie
+         ekranu (patrz `Screen.footer`). */
+      footer={
+        <ActionButton
+          label="POTWIERDŹ I ZACZNIJ DZIEŃ"
+          tone="green"
+          variant="solid"
+          busy={busy}
+          icon="check"
+          onPress={confirm}
         />
       }
     >
@@ -168,7 +189,11 @@ export function PreflightConfirmScreen({
           codeDetail={[aircraft.type, aircraft.year].filter(Boolean).join(' · ')}
           // Bez trasy karta i tak musi coś powiedzieć — wtedy niesie rodzaj operacji.
           title={route.length > 0 ? route : draft.operation.toUpperCase()}
-          tags={[draft.operation.toUpperCase(), dateUtcLong(draft.dutyStart)]}
+          // Tag operacji TYLKO wtedy, gdy tytułem jest trasa. Przy pustej trasie karta
+          // pisała „SKOKI" dwa razy pod rząd — wielkim napisem i tagiem pod nim.
+          // Daty tu nie ma z decyzji pilota: dzień lotny zaczyna się „teraz", więc badge
+          // z dzisiejszą datą zajmował miejsce, nie odpowiadając na żadne pytanie.
+          tags={route.length > 0 ? [draft.operation.toUpperCase()] : []}
         />
 
         <View
@@ -183,13 +208,10 @@ export function PreflightConfirmScreen({
           <SummaryGrid entries={entries} />
         </View>
 
-        <Banner
-          kind="warning"
-          icon="warning"
-          title="Sprawdź poprawność danych"
-          text="Po potwierdzeniu dane dnia można zmienić tylko korektą w logu — nie w formularzu."
-        />
-
+        {/* Banera „Sprawdź poprawność danych" tu NIE MA (decyzja pilota, 2026-07-30):
+            cały ekran jest sprawdzeniem, więc wezwanie do sprawdzenia powtarzało jego
+            tytuł. Zostają ostrzeżenia WARUNKOWE — te mówią coś, czego z siatki nie
+            widać. */}
         {aircraft.claimPicId != null && (
           <Banner
             kind="warning"
@@ -203,26 +225,6 @@ export function PreflightConfirmScreen({
           <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
         )}
 
-        {/* Mockup: `.btn-group` — dwa przyciski pełnej szerokości, jeden pod drugim.
-            Hierarchię niesie wypełnienie (pełna zieleń vs kontur), a nie rozmiar napisu:
-            powrót do poprawek jest tu działaniem oczekiwanym, nie wycofaniem się. */}
-        <View style={{ gap: theme.spacing.sm }}>
-          <ActionButton
-            label="WRÓĆ I POPRAW"
-            tone="neutral"
-            variant="secondary"
-            icon="back"
-            onPress={navigation.goBack}
-          />
-          <ActionButton
-            label="POTWIERDŹ I ZACZNIJ DZIEŃ"
-            tone="green"
-            variant="solid"
-            busy={busy}
-            icon="check"
-            onPress={confirm}
-          />
-        </View>
       </View>
     </Screen>
   );

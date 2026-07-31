@@ -259,7 +259,7 @@ a nie przez jeden ekran.
 
 | Komponent | Rola | Skąd w designie |
 |---|---|---|
-| `Screen` | tło, safe area, scroll, **przyklejony nagłówek** | wszystkie ekrany |
+| `Screen` | tło, safe area, scroll, **przyklejony nagłówek**, akcja kończąca (`footer`) | wszystkie ekrany |
 | `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`/`micro`) | wszystkie |
 | `Brand` | znak marki (kafel z ikoną, „UZ AERO", tagline), rozmiary `md`/`hero` | `.brand` (00/00a), `.app-icon` (01) |
 | `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |

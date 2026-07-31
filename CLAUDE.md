@@ -56,7 +56,7 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 
 ## Screen flow (kolejność ekranów)
 ```
-00-login → 01-splash → 02-preflight → 03-preflight-confirm
+00-login → 01-splash → 02-preflight → 02e-zadanie → 02a-paliwo/mh → 03-preflight-confirm
 → 04-cockpit-ground ⇄ 05-cockpit-running
 → 06-tankowanie / 07-zmiana-zalogi / 08-lista-reczna (akcje ground)
 → 09-end-of-day → 10-statystyki → 11-eksport → 01-splash (GOTOWE: koniec dnia)

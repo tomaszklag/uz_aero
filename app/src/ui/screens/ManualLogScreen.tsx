@@ -138,6 +138,20 @@ export function ManualLogScreen({
           </View>
         </>
       }
+      /* Powrót do kokpitu na końcu listy; przy krótkim logu dosuwa się do dolnej
+         krawędzi. Ekran ma własny padding, więc stopka nakłada go sama. */
+      footer={
+        <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+          <ActionButton
+            label="WRÓĆ DO KOKPITU"
+            tone="neutral"
+            variant="secondary"
+            size="md"
+            icon="back"
+            onPress={navigation.goBack}
+          />
+        </View>
+      }
     >
       <View style={{ padding: 14, gap: theme.spacing.md }}>
         {/* `.section-label` — mikro-etykieta z tokenu (dryf światła 2 → 1.5 celowy). */}
@@ -228,14 +242,6 @@ export function ManualLogScreen({
           />
         </Card>
 
-        <ActionButton
-          label="WRÓĆ DO KOKPITU"
-          tone="neutral"
-          variant="secondary"
-          size="md"
-          icon="back"
-          onPress={navigation.goBack}
-        />
       </View>
 
       {/* ── arkusz wpisu ręcznego — wspólny z 05f ─────────────────────────

@@ -147,10 +147,10 @@ export function RefuelScreen({
       : `${reference.source === 'preflight' ? 'preflight' : 'tankowanie'} ${timeUtc(reference.at)} UTC`;
   const gaugeCaption =
     beforeOverride != null
-      ? `Odczyt z paliwomierza · konfiguracja ${reg}`
+      ? 'Odczyt z paliwomierza'
       : referenceLabel != null
-        ? `Ostatni odczyt: ${referenceLabel} · konfiguracja ${reg}`
-        : `Brak odczytu w tej sesji — wpisz stan z paliwomierza · ${reg}`;
+        ? `Ostatni odczyt: ${referenceLabel}`
+        : 'Brak odczytu w tej sesji — wpisz stan z paliwomierza';
 
   // ── blokada zapisu — zawsze z podanym powodem, nigdy ciche wyszarzenie ─────────
   const disabledReason =
@@ -171,6 +171,9 @@ export function RefuelScreen({
       header={
         <ScreenHeader
           title="TANKOWANIE"
+          // Samolot RAZ, jak na 02a i 10: wcześniej rejestracja wracała w podpisie
+          // wskaźnika, w podpowiedzi dolewki i w arkuszu korekty, choć jest stałą ekranu.
+          subtitle={[reg, aircraft?.type].filter(Boolean).join(' · ')}
           // Mockup nazywa powrót celem, nie czynnością: „‹ Kokpit".
           backLabel="Kokpit"
           onBack={navigation.goBack}
@@ -180,6 +183,21 @@ export function RefuelScreen({
               <Icon name="refuel" size={20} color={theme.colors.amber} />
             </View>
           }
+        />
+      }
+      /* `.btn-amber` z mockupu — na końcu treści, a przy krótkim formularzu dosunięty
+         do dolnej krawędzi (patrz `Screen.footer`). */
+      footer={
+        <ActionButton
+          label="ZAPISZ TANKOWANIE"
+          tone="amber"
+          variant="solid"
+          size="lg"
+          icon="check"
+          hint={synced ? undefined : 'Zapis lokalny — wyśle się, gdy wróci sieć'}
+          busy={busy}
+          disabledReason={disabledReason}
+          onPress={() => void save()}
         />
       }
     >
@@ -203,8 +221,10 @@ export function RefuelScreen({
             label="Ilość dolana"
             hint={
               maxAdd != null
-                ? `maks. dolewka: ${Math.round(maxAdd)} L (do pełna) · pojemność ${capacityL} L z konfiguracji ${reg}`
-                : `brak konfiguracji ${reg} w cache — pojemności nie znamy, kontroluj dolewkę z paliwomierza`
+                ? `maks. dolewka: ${Math.round(maxAdd)} L (do pełna) · zbiorniki ${capacityL} L`
+                // Tu „konfiguracja" zostaje: to nie ozdobnik, tylko POWÓD, dla którego
+                // ekran nie zna pojemności — pilot ma wiedzieć, że pilnuje jej sam.
+                : 'brak konfiguracji w cache — pojemności nie znamy, kontroluj dolewkę z paliwomierza'
             }
           >
             <Stepper
@@ -282,18 +302,6 @@ export function RefuelScreen({
           />
         )}
 
-        {/* ── ZAPISZ TANKOWANIE (`.btn-amber`) ───────────────────────────────── */}
-        <ActionButton
-          label="ZAPISZ TANKOWANIE"
-          tone="amber"
-          variant="solid"
-          size="lg"
-          icon="check"
-          hint={synced ? undefined : 'Zapis lokalny — wyśle się, gdy wróci sieć'}
-          busy={busy}
-          disabledReason={disabledReason}
-          onPress={() => void save()}
-        />
       </View>
 
       {/* ── korekta stanu przed tankowaniem (wzorzec arkusza z 02b) ─────────── */}
@@ -309,7 +317,8 @@ export function RefuelScreen({
             value: computedBeforeL != null ? litres(computedBeforeL) : 'brak odczytu',
           },
           {
-            label: `Pojemność zbiorników · konfiguracja ${reg}`,
+            // Rejestracja zostaje tylko w arkuszu — on zasłania nagłówek (jak na 02a/02b).
+            label: `Pojemność zbiorników · ${reg}`,
             value: capacityL != null ? litres(capacityL) : 'brak danych',
           },
         ]}

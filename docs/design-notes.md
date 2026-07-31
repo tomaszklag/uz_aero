@@ -48,10 +48,23 @@ Cockpit cycle (powtarzalny):
 - Samolot wybieramy z listy zarejestrowanych jednostek (karty do wyboru, nie `<select>`)
 - Samolot może być **wyłączony ze służby** — oznaczony tagiem "Wyłączony", niedostępny do wyboru (`disabled`)
 
-### Stepper 3-krokowy
-- Krok 1: samolot, rodzaj operacji, trasa (ICAO), czas meldowania
-- Krok 2: paliwo na pokładzie, motogodziny
-- Krok 3: podsumowanie tylko do odczytu + przycisk "Potwierdź i zacznij dzień"
+### Stepper 4-krokowy (od 2026-07-30)
+- Krok 1 (02) — **kto, czym i od kiedy**: samolot (z przejęciem po innym PIC), drugi
+  pilot, czas meldowania
+- Krok 2 (02E) — **co dziś robimy**: rodzaj operacji, trasa (ICAO), oznaczenie klienta
+- Krok 3 (02A) — paliwo na pokładzie, motogodziny
+- Krok 4 (03) — podsumowanie tylko do odczytu + „Potwierdź i zacznij dzień"
+
+Podział 1 ↔ 2 idzie po NATURZE pytań: krok 1 to wybory z list, krok 2 to opis zadania.
+Powód wydzielenia: krok 1 był najdłuższym formularzem aplikacji i rósł dalej — lista
+floty i lista pilotów przybierają z każdym samolotem i każdym nowym kontem, a przejęcie
+samolotu (najcięższa decyzja preflightu) lądowało nad polem „Oznaczenie klienta".
+
+**Krok 2 pamięta ostatni dzień** i to jest warunek jego sensu, nie udogodnienie: żadne
+z jego pól nie blokuje przejścia dalej (operacja ma wartość domyślną, trasa i klient są
+opcjonalne), więc bez pamięci byłby codziennym tapnięciem w pusty formularz. Zakresy:
+operacja i klient **per pilot**, trasa **per samolot** (`TaskMemoryStore`). Podpowiedź
+ustępuje bez pytania — pierwsza zmiana któregokolwiek pola wyłącza ją do końca preflightu.
 
 ### Czas meldowania (duty start)
 - Wyświetlany jako **UTC primary** (duża czcionka mono), LT secondary (mała, po prawej)
@@ -147,6 +160,22 @@ Engine Idle → Taxi → Takeoff → Climb → Cruise → Descent → Landing �
 - Pilot **nie musi** potwierdzać zdarzeń przyciskiem
 - Przyciski T/O / Land / Taxi są dostępne jako **manualna korekta** gdy autodetect się pomyli
 - Dwa scenariusze korekty: (1) system zapisał zdarzenie którego nie było → pilot usuwa, (2) system nie wykrył zdarzenia → pilot dodaje ręcznie
+
+### Akcja kończąca ekran — koniec treści, przy krótkiej treści dół ekranu
+
+Reguła z 2026-07-30, obowiązuje każdy ekran z przyciskiem prowadzącym dalej („DALEJ",
+„ZAPISZ…", para z 03, „ZATWIERDŹ → SYNC"):
+
+- formularz **dłuższy niż ekran** — przycisk stoi pod ostatnim polem i dojeżdża się do
+  niego przewijaniem. Pilot widzi po drodze wszystko, co za chwilę potwierdzi, a pasek
+  przyklejony na stałe zasłaniałby w tym czasie treść i zabierał wysokość;
+- formularz **krótszy** — przycisk nie zawisa w połowie ekranu z pustką pod spodem,
+  tylko schodzi do dolnej krawędzi, gdzie czeka go kciuk trzymający telefon.
+
+W implementacji to jeden slot: `Screen footer={…}` (rozpychacz `flex: 1` w treści
+rozciągniętej do pełnej wysokości). Ekran nie mierzy niczego i nie ma warunków —
+to samo drzewo zachowuje się poprawnie w obu przypadkach. Ekrany z własnym paddingiem
+(`padded={false}`: 08, 09, 10) nakładają go również na stopkę.
 
 ### Przyciski akcji — korekta manualna
 - Widoczne **zawsze** — pilot lepiej wie w jakim stanie jest samolot niż system

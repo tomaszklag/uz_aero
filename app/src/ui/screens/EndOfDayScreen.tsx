@@ -126,7 +126,12 @@ export function EndOfDayScreen({
           <ScreenHeader
             title="ZAKOŃCZENIE DNIA"
             size="md"
-            subtitle={dateUtcLong(projection.dutyStart ?? dutyEnd)}
+            // Samolot w podnagłówku, jak na 10 — a tu tym bardziej: to ekran, który
+            // ZAMYKA łańcuch MH (§4.5), więc pilot musi widzieć, czyj licznik przepisuje.
+            // Wcześniej rejestracji nie było na nim w ogóle.
+            subtitle={[projection.aircraftId, dateUtcLong(projection.dutyStart ?? dutyEnd)]
+              .filter(Boolean)
+              .join(' · ')}
             onBack={navigation.goBack}
             backLabel="Kokpit"
             right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
@@ -145,6 +150,21 @@ export function EndOfDayScreen({
             ]}
           />
         </>
+      }
+      /* Ekran ma własny padding (`padded={false}`), więc akcja też go dostaje sama.
+         Na końcu treści, a przy krótkim formularzu przy dolnej krawędzi. */
+      footer={
+        <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
+          <ActionButton
+            label="OBLICZ STATYSTYKI"
+            tone="red"
+            variant="solid"
+            busy={busy}
+            trailingIcon="next"
+            disabledReason={blocker}
+            onPress={close}
+          />
+        </View>
       }
     >
       <View style={{ padding: 14, gap: theme.spacing.md }}>
@@ -274,15 +294,6 @@ export function EndOfDayScreen({
           <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
         )}
 
-        <ActionButton
-          label="OBLICZ STATYSTYKI"
-          tone="red"
-          variant="solid"
-          busy={busy}
-          trailingIcon="next"
-          disabledReason={blocker}
-          onPress={close}
-        />
       </View>
 
       {/* ── arkusze edycji ───────────────────────────────────────────────── */}

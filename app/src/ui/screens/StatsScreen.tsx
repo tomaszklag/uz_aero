@@ -201,6 +201,30 @@ export function StatsScreen({
           }
         />
       }
+      /* Para akcji na końcu treści; przy krótkim dniu (mało lotów) dosuwa się do dołu.
+         Ekran ma własny padding, więc stopka też nakłada go sama.
+         Mockup linkuje 04c — a 04c jest arkuszem NAD logiem, nie ekranem. Pełny log dnia
+         z ołówkami (i dopisaniem brakującego lotu) to lista ręczna; tabela wyżej pokrywa
+         korekty samych lotów. */
+      footer={
+        <View style={{ gap: theme.spacing.sm, paddingHorizontal: 14, paddingBottom: 14 }}>
+          <ActionButton
+            label="EDYTUJ DANE"
+            tone="neutral"
+            variant="secondary"
+            size="md"
+            icon="edit"
+            onPress={() => navigation.navigate('ManualLog')}
+          />
+          <ActionButton
+            label="ZATWIERDŹ → SYNC"
+            tone="green"
+            variant="solid"
+            trailingIcon="next"
+            onPress={() => navigation.navigate('Sync')}
+          />
+        </View>
+      }
     >
       <View style={{ padding: 14, gap: theme.spacing.md }}>
         {/* ── okno korekty ─────────────────────────────────────────────────
@@ -271,7 +295,8 @@ export function StatsScreen({
         </Card>
 
         {/* ── motogodziny (§3.7: początek / koniec / delta) ─────────────────── */}
-        <Card title={`Motogodziny · ${mhFormatLabel} z konfiguracji ${aircraft}`} flush>
+        {/* Samolot stoi w podnagłówku ekranu — w tytule karty byłby drugi raz. */}
+        <Card title={`Motogodziny · licznik w formacie ${mhFormatLabel}`} flush>
           <ResultRow
             label="Początek dnia"
             value={motoHours(projection.mh.start, mhFormat)}
@@ -323,27 +348,6 @@ export function StatsScreen({
           </Card>
         )}
 
-        {/* ── akcje ────────────────────────────────────────────────────────── */}
-        <View style={{ gap: theme.spacing.sm }}>
-          {/* Mockup linkuje 04c — a 04c jest arkuszem NAD logiem, nie ekranem. Pełny
-              log dnia z ołówkami (i możliwością dopisania brakującego lotu) to lista
-              ręczna; tabela wyżej pokrywa korekty samych lotów. */}
-          <ActionButton
-            label="EDYTUJ DANE"
-            tone="neutral"
-            variant="secondary"
-            size="md"
-            icon="edit"
-            onPress={() => navigation.navigate('ManualLog')}
-          />
-          <ActionButton
-            label="ZATWIERDŹ → SYNC"
-            tone="green"
-            variant="solid"
-            trailingIcon="next"
-            onPress={() => navigation.navigate('Sync')}
-          />
-        </View>
       </View>
 
       {correctionSheet}

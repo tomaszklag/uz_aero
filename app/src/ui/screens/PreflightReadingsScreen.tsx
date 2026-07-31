@@ -1,5 +1,5 @@
 /**
- * UZ Aero — 02A PREFLIGHT · krok 2/3: paliwo i motogodziny.
+ * UZ Aero — 02A PREFLIGHT · krok 3/4: paliwo i motogodziny.
  *
  * Odwzorowanie mockupu `design/02a-preflight.html` wraz z arkuszami korekty z 02b/02c.
  * Struktura stamtąd: [box „brak danych"] → sekcja PALIWO → sekcja MOTOGODZINY →
@@ -34,7 +34,7 @@ import {
   type TrailRow,
 } from '../components';
 import { useTheme } from '../theme';
-import { useSessionStore } from '../store';
+import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
 import {
   dateUtcLong,
@@ -43,6 +43,7 @@ import {
   motoHours,
   parseLitres,
   parseMotoHours,
+  timeLocal,
   timeUtc,
 } from '../format';
 import type { HandoverTrailEntry, ReferencePilot } from '../../domain';
@@ -51,9 +52,21 @@ import type { HandoverTrailEntry, ReferencePilot } from '../../domain';
 const FUEL_WARN_L = 10;
 const MH_WARN_H = 0.5;
 
-/** „21 JUNE 09:15" — datownik osi czasu (mockup 02a). */
+/** „21 JUNE 09:15" — datownik osi czasu (mockup 02a). Czas nieoznaczony = UTC. */
 function stamp(t: number): string {
   return `${dateUtcLong(t).replace(/ \d{4}$/, '')} ${timeUtc(t)}`;
+}
+
+/**
+ * „29 JULY 16:50 UTC · 18:50 LT" — moment przekazania z JAWNĄ strefą.
+ *
+ * Tu, w odróżnieniu od osi czasu, strefę wypisujemy wprost: to jedyna data na ekranie,
+ * po której pilot ocenia, czy odczyty są sprzed godziny czy sprzed tygodnia, a mylnie
+ * odczytana o dwie godziny zmienia tę ocenę. LT jako wartość drugorzędna (`CLAUDE.md`),
+ * z prawdziwej strefy telefonu — odpowiada na „a która to była u mnie".
+ */
+function stampUtcLt(t: number): string {
+  return `${stamp(t)} UTC · ${timeLocal(t)} LT`;
 }
 
 export function PreflightReadingsScreen({
@@ -66,6 +79,8 @@ export function PreflightReadingsScreen({
   const outboxCount = useSessionStore((s) => s.outboxCount);
 
   const draft = usePreflightDraft();
+  // Do rozstrzygnięcia, czy przekazanie jest „od kogoś", czy własne sprzed dnia przerwy.
+  const pilotId = useCurrentPilot((s) => s.id);
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
   const [editing, setEditing] = useState<'fuel' | 'mh' | null>(null);
 
@@ -196,9 +211,32 @@ export function PreflightReadingsScreen({
       header={
         <ScreenHeader
           title="PREFLIGHT"
-          step="2 / 3"
+          // Samolot RAZ, w nagłówku. Wcześniej rejestracja wracała w każdym podpisie
+          // („z konfiguracji SP-ANK" pod paliwem, pod MH i w obu arkuszach) — a to jest
+          // stała całego ekranu, nie właściwość pojedynczego odczytu. Zniknąć nie może:
+          // odczyt wpisany dla złego samolotu zatruwa łańcuch MH (§4.5).
+          subtitle={[aircraft.reg, aircraft.type].filter(Boolean).join(' · ')}
+          step="3 / 4"
           onBack={navigation.goBack}
           right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+        />
+      }
+      // Przycisk dalej — przy dolnej krawędzi, niezależnie od tego, ile miejsca zajęła
+      // oś czasu przekazania (reguła z 2026-07-30).
+      footer={
+        <ActionButton
+          label="DALEJ"
+          tone="green"
+          variant="solid"
+          trailingIcon="next"
+          disabledReason={
+            noReadings
+              ? 'Wprowadź odczyty paliwa i MH z liczników — rozpoczną nowe ogniwo łańcucha'
+              : mhDiff < 0
+                ? 'Licznik motogodzin nie może być niższy niż przekazany — popraw odczyt'
+                : null
+          }
+          onPress={() => navigation.navigate('PreflightConfirm')}
         />
       }
     >
@@ -225,7 +263,7 @@ export function PreflightReadingsScreen({
           freshness={freshness}
           syncedAt={syncedAt}
           gauge={<LevelBar ratio={draft.fuelL / capacity} tone="amber" />}
-          caption={`${Math.round((draft.fuelL / capacity) * 100)}% pojemności · ${capacity} L z konfiguracji ${aircraft.reg}`}
+          caption={`${Math.round((draft.fuelL / capacity) * 100)}% pojemności · zbiorniki ${capacity} L`}
           trail={trails.fuel}
           onCorrect={() => setEditing('fuel')}
         />
@@ -237,34 +275,41 @@ export function PreflightReadingsScreen({
           unit="MH"
           freshness={freshness}
           syncedAt={syncedAt}
-          caption={`format: ${mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny'} · z konfiguracji ${aircraft.reg}`}
+          caption={`licznik w formacie ${mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętnym'}`}
           trail={trails.mh}
           onCorrect={() => setEditing('mh')}
         />
 
-        {/* ── poświadczenie (`.certified-row`) ─────────────────────────────── */}
+        {/* ── skąd te wartości (`.certified-row`) ───────────────────────────
+            Mockup miał tu suchą pieczątkę „Poświadczył J. Kowalski · 21 JUNE · 17:30".
+            Pilot zapytał wprost, co ten komunikat mówi i po kim przejmuje samolot —
+            czyli pieczątka nie odpowiadała na jedyne pytanie, które w tym miejscu ma
+            znaczenie: czyje są liczby stojące wyżej i co z nimi zrobić. Teraz mówi to
+            wprost, z jawną strefą czasu.
+
+            Świadomie NIE piszemy „poświadczył": serwer buduje przekazanie albo
+            z zamkniętego dnia, albo z dnia jeszcze trwającego (`latestHandover`), a typ
+            `Handover` tych dwóch przypadków nie rozróżnia. Słowo o poświadczeniu byłoby
+            w drugim przypadku nieprawdą — a to ekran, na którym zaufanie do liczb jest
+            całą treścią. */}
         {handover != null && (
           <InlineNote
             icon="check"
             tone="green"
-            text={`Poświadczył ${pilotName(handover.byPilotId)} · ${stamp(handover.at)}`}
+            // Trzy akapity = trzy pytania w kolejności, w jakiej zadaje je pilot:
+            // czyje to liczby → z kiedy → co mam z nimi zrobić. Godzina we własnej
+            // linii, bo to jedyna wartość, której szuka się tu wzrokiem.
+            text={[
+              handover.byPilotId === pilotId
+                ? `Odczyty powyżej to Twoje własne, z ostatniego dnia na ${aircraft.reg}.`
+                : `Odczyty powyżej przekazał ${pilotName(handover.byPilotId)} — to po nim przejmujesz ${aircraft.reg}.`,
+              `Stan z ${stampUtcLt(handover.at)}`,
+              'Sprawdź go na licznikach. Twój odczyt jest ważniejszy, a ewentualne ' +
+                'nieścisłości zostaną rozwiązane przez koordynatora.',
+            ].join('\n')}
           />
         )}
 
-        <ActionButton
-          label="DALEJ"
-          tone="green"
-          variant="solid"
-          trailingIcon="next"
-          disabledReason={
-            noReadings
-              ? 'Wprowadź odczyty paliwa i MH z liczników — rozpoczną nowe ogniwo łańcucha'
-              : mhDiff < 0
-                ? 'Licznik motogodzin nie może być niższy niż przekazany — popraw odczyt'
-                : null
-          }
-          onPress={() => navigation.navigate('PreflightConfirm')}
-        />
       </View>
 
       {/* ── arkusze korekty (02b / 02c) ──────────────────────────────────── */}
@@ -280,7 +325,9 @@ export function PreflightReadingsScreen({
             value: handover != null ? litres(handover.reading.fuelL) : 'brak danych',
           },
           {
-            label: `Pojemność zbiorników · konfiguracja ${aircraft.reg}`,
+            // Rejestracja zostaje tam, gdzie nagłówek ekranu jest zasłonięty arkuszem,
+            // a pilot właśnie nadpisuje odczyt — samo słowo „konfiguracja" nic nie wnosiło.
+            label: `Pojemność zbiorników · ${aircraft.reg}`,
             value: litres(capacity),
           },
         ]}
@@ -313,7 +360,7 @@ export function PreflightReadingsScreen({
             value: handover != null ? `${motoHours(handover.reading.mh, mhFormat)} MH` : 'brak danych',
           },
           {
-            label: `Format licznika · konfiguracja ${aircraft.reg}`,
+            label: `Format licznika · ${aircraft.reg}`,
             value: mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny',
           },
         ]}
