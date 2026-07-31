@@ -8,9 +8,8 @@
  * Dokument może się zdezaktualizować; ten plik nie.
  *
  * Zakres jest dziś węższy niż lista z `docs/architektura-panelu-serwer.md` §9 —
- * pozostałe pozycje (`contracts/`, literał `'administrative'`) dotyczą przekrojów,
- * których jeszcze nie ma, a test skanujący nieistniejący katalog przechodziłby
- * dlatego, że niczego nie znalazł.
+ * pozostałe pozycje (`contracts/`) dotyczą przekrojów, których jeszcze nie ma,
+ * a test skanujący nieistniejący katalog przechodziłby dlatego, że niczego nie znalazł.
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -109,6 +108,21 @@ describe('granice, których nie pilnuje kompilator', () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  it("tryb administracyjny reguł ma JEDNO miejsce — literał `'administrative'`", () => {
+    // `checkAppend(…, 'administrative')` uchyla regułę `CORRECTION_WINDOW_EXPIRED`.
+    // To jedyna furtka w całej domenie, więc musi mieć jednego użytkownika i nazwisko:
+    // rozlanie literału po komendach byłoby początkiem konstrukcji, w której nikt nie
+    // wie, ile reguł omija panel. Zmiana tej listy to decyzja produktowa, nie refaktor.
+    //
+    // Skanujemy `server/src`, bo tam literał jest UŻYCIEM. W `packages/domain` stoi
+    // jego DEKLARACJA (`rules/authority.ts` — definicja słownika uprawnień) i ona
+    // z natury musi go zawierać.
+    const users = filesUnder('.')
+      .filter((f) => codeOf(f).includes("'administrative'"))
+      .sort();
+    expect(users).toEqual(['application/admin/commands/corrections.ts']);
   });
 
   it('trasy panelu rejestrują się wyłącznie przez `adminRoute`', () => {

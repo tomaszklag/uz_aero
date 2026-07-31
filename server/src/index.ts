@@ -6,9 +6,12 @@
  * konstruktorem — dokładnie jak `bootstrap/` w aplikacji mobilnej.
  */
 
+import { randomUUID } from 'node:crypto';
+
 import { Pool } from 'pg';
 import { z } from 'zod';
 
+import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { AuthCommands } from './application/commands/auth.ts';
@@ -74,17 +77,29 @@ const exporter = new DayExporter(db, events, flags, exportLog, sheets, pilots, c
 // Panel administracyjny. `AuditedWrite` jest JEDYNĄ drogą zapisu komend panelu —
 // dlatego to ono, a nie `db`, wędruje do konstruktora `AdminFlagCommands`.
 const auditedWrite = new AuditedWrite(db, new PgAdminAuditRepo(), clock);
+const aircraftConfig = new PgAircraftConfigRepo();
 
 const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), new ScryptHasher(), tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-  ingest: new IngestCommands(db, events, sessions, flags, new PgAircraftConfigRepo(), exporter),
+  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter),
   state: new StateQueries(db, events, sessions, flags, exportLog),
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),
   prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
   tokens,
   adminFlags: new AdminFlagCommands(auditedWrite, new PgAdminFlagsRepo(), exporter, clock),
+  // Uuid korekty jest FUNKCJĄ, nie portem: nie ma tu adaptera do podmiany, a port
+  // bez drugiej implementacji to koszt bez zysku (`commands/corrections.ts`).
+  adminCorrections: new AdminCorrectionCommands(
+    auditedWrite,
+    events,
+    sessions,
+    aircraftConfig,
+    exporter,
+    clock,
+    randomUUID,
+  ),
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

@@ -9,6 +9,7 @@
  * Zegar jest sterowany ręcznie — bez tego testy wygasania tokenów musiałyby spać.
  */
 
+import { randomUUID } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -17,6 +18,7 @@ import { PGlite } from '@electric-sql/pglite';
 
 import type { AdminAuditPort } from '../src/application/admin/ports.ts';
 import type { Clock, Database, Queryable, SheetsPort } from '../src/application/ports.ts';
+import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/commands/auth.ts';
@@ -107,6 +109,9 @@ export async function testHarness(
   // testy trasy zaglądają do NDJSON dokładnie tak, jak zrobi to skrypt replay.
   const tracesDir = mkdtempSync(join(tmpdir(), 'uzaero-traces-'));
 
+  const aircraftConfig = new PgAircraftConfigRepo();
+  const auditedWrite = new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock);
+
   const app = buildServer({
     auth: new AuthCommands(
       new PgPilotsRepo(db),
@@ -116,17 +121,23 @@ export async function testHarness(
       clock,
     ),
     reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-    ingest: new IngestCommands(db, events, sessions, flags, new PgAircraftConfigRepo(), exporter),
+    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter),
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
     traces: new FsTraceSink(tracesDir),
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     tokens,
-    adminFlags: new AdminFlagCommands(
-      new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock),
-      new PgAdminFlagsRepo(),
+    adminFlags: new AdminFlagCommands(auditedWrite, new PgAdminFlagsRepo(), exporter, clock),
+    // `randomUUID` jak w produkcji — uuid korekty testy czytają z odpowiedzi, więc
+    // udawany generator nie kupiłby nic poza rozjazdem z composition rootem.
+    adminCorrections: new AdminCorrectionCommands(
+      auditedWrite,
+      events,
+      sessions,
+      aircraftConfig,
       exporter,
       clock,
+      randomUUID,
     ),
   });
 

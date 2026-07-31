@@ -24,6 +24,20 @@
 > potrzebuje `SqlFilter`/`keyset` z przekroju 2) oraz sesja przeglądarkowa z §8 —
 > autoryzacja panelu jedzie dziś na `Bearer`, bo klienta w przeglądarce jeszcze nie ma
 > i kodu obsługi ciasteczka nie byłoby czym sprawdzić.
+>
+> **Aktualizacja 2026-07-31 — przekrój 3 WDROŻONY** (§6): `packages/domain/src/rules/authority.ts`
+> (`WriteAuthority`), czwarty parametr `checkAppend`, `AdminCorrectionCommands`,
+> `POST /admin/api/sessions/:uuid/corrections`, `app/src/__tests__/writeAuthority.test.ts`,
+> `server/test/adminCorrections.test.ts` i nowy przypadek w `test/architecture.test.ts`
+> (literał `'administrative'` w jednym pliku). **Sprostowanie do §6 tego dokumentu:**
+> serwer NIE wołał wcześniej `checkAppend` w ogóle (`POST /events` waliduje kształt
+> koperty i payloadu oraz single-writer, a reguły domeny żyją wyłącznie w telefonie —
+> `app/src/application/commands/sessionCommands.ts`). Parametr uprawnienia nie „otwiera
+> istniejącej bramki na serwerze": daje NOWEJ ścieżce administratora te same inwarianty,
+> co telefonowi, minus jedna reguła. Korekta administratora celowo **nie** idzie przez
+> `POST /events` — tamta trasa należy do telefonu i jej single-writer zostaje nietknięty.
+> Odmowy mapujemy 404 / 400 `day_open` / **422 `rule_violation`** (§6.5 mówił tylko o 400
+> dla dnia otwartego; 422 rozdziela „popraw formularz" od „domena odmawia").
 
 ---
 

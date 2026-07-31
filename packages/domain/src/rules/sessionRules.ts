@@ -31,6 +31,7 @@ import type { Event, EventType } from '../events';
 import type { ReferenceAircraft } from '../reference';
 import type { EpochMillis } from '../time';
 import { eventTime, type SessionState } from '../projections';
+import type { WriteAuthority } from './authority';
 import {
   error,
   warning,
@@ -105,17 +106,21 @@ export function correctionWindow(state: SessionState, now: EpochMillis): Correct
  *
  * @param state     projekcja zdarzeń JUŻ zapisanych (bez kandydata),
  * @param candidate zdarzenie ostemplowane (uuid + zegary) — jeszcze niezapisane,
- * @param limits    konfiguracja samolotu; `UNKNOWN_LIMITS` gdy offline bez cache.
+ * @param limits    konfiguracja samolotu; `UNKNOWN_LIMITS` gdy offline bez cache,
+ * @param authority kto dopisuje (`authority.ts`); pominięcie = `'pilot'`, czyli komplet
+ *                  reguł. Wartość `'administrative'` uchyla DOKŁADNIE JEDNĄ gałąź —
+ *                  `CORRECTION_WINDOW_EXPIRED` — i żadnej innej.
  * @returns lista naruszeń (pusta = wolno zapisać). Twarde = `severity: 'error'`.
  */
 export function checkAppend(
   state: SessionState,
   candidate: Event,
   limits: AircraftLimits = UNKNOWN_LIMITS,
+  authority: WriteAuthority = 'pilot',
 ): RuleViolation[] {
   // Naruszenia „koperty" (tożsamość sesji, single-writer, zamknięty dzień) unieważniają
   // sens dalszych sprawdzeń — zwracamy je same, żeby pilot dostał JEDEN konkretny powód.
-  const envelope = checkEnvelope(state, candidate);
+  const envelope = checkEnvelope(state, candidate, authority);
   if (envelope.length > 0) return envelope;
 
   return [...checkClocks(candidate), ...checkByType(state, candidate, limits)];
@@ -125,7 +130,11 @@ export function checkAppend(
 // Koperta: tożsamość sesji, single-writer, zamknięcie dnia
 // ─────────────────────────────────────────────────────────────────────────────
 
-function checkEnvelope(state: SessionState, candidate: Event): RuleViolation[] {
+function checkEnvelope(
+  state: SessionState,
+  candidate: Event,
+  authority: WriteAuthority,
+): RuleViolation[] {
   const v: RuleViolation[] = [];
 
   // Pusta sesja: pierwsze zdarzenie musi otworzyć sesję (§4.4 — claim jest zwykłym
@@ -186,6 +195,13 @@ function checkEnvelope(state: SessionState, candidate: Event): RuleViolation[] {
         ),
       );
     } else if (
+      // JEDYNA gałąź w całym pliku, która pyta o uprawnienie zapisu. Komunikat mówił
+      // „korektę wprowadza administrator" na długo zanim administrator miał czym ją
+      // wprowadzić — ten warunek wreszcie daje regule adresata, zamiast robić z niej
+      // ślepy zaułek. Reszta reguł (tożsamość sesji, single-writer, zamknięty dzień,
+      // gwardie per typ) obowiązuje administratora TAK SAMO: korekta z panelu to nadal
+      // zdarzenie w rejestrze, a nie zapis „obok" domeny.
+      authority === 'pilot' &&
       state.closedAt != null &&
       eventTime(candidate) - state.closedAt > CORRECTION_WINDOW_MS
     ) {

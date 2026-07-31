@@ -181,8 +181,9 @@ i wycena: `design/admin/ANALIZA.md`.
   awans byłby luką; rola przy odświeżeniu idzie z KONTA, nie ze starego tokenu, więc
   odebranie uprawnień działa od razu, a nie po wygaśnięciu 90-dniowego refresha.
 - ~~**Flaga nie ma jak się zamknąć.**~~ **ZROBIONE 2026-07-31** — przekrój 1, opis niżej.
-- **Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a sesji (inaczej
-  `WRITER_MISMATCH`), pomijać wyłącznie `CORRECTION_WINDOW_EXPIRED` i wywołać re-eksport.
+- ~~**Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a sesji (inaczej
+  `WRITER_MISMATCH`), pomijać wyłącznie `CORRECTION_WINDOW_EXPIRED` i wywołać re-eksport.~~
+  **ZROBIONE 2026-07-31** — przekrój 3, opis niżej.
 - **Projekcja `sessions` nie niesie `operation`, `dutyStart` ani `client`** — wartości siedzą
   w payloadach `preflight_confirm` / `day_close`, więc to przepisanie projekcji, nie zmiana
   modelu zdarzeń.
@@ -300,6 +301,59 @@ dnia BEZTERMINOWO, bo nic w `server/src` nie ustawiało `status='resolved'`.
   **`/admin/api`, nie `/admin`** — to drugie zostaje pod statyczny build panelu i kolidowałoby
   z wildcardem `@fastify/static`. Autoryzacja zostaje na `Bearer`; sesja przeglądarkowa
   na ciasteczku czeka na klienta panelu, bo dziś nie byłoby jej czym sprawdzić.
+
+**Przekrój 3 panelu — korekta zdarzenia po oknie 24 h, zrobione 2026-07-31.** Drugi
+przekrój pionowy, zbudowany na wzorcu przekroju 1 (mockup `design/admin/A02b-korekta.html`,
+`docs/architektura-panelu-serwer.md` §6). Domyka lukę, o której mówi sam komunikat reguły:
+`CORRECTION_WINDOW_EXPIRED` od początku brzmi „korektę wprowadza administrator", a do dziś
+administrator nie miał czym jej wprowadzić.
+
+- **Uprawnienie zapisu jest PARAMETREM domeny, nie wyjątkiem obok niej.**
+  `packages/domain/src/rules/authority.ts` — `WriteAuthority = 'pilot' | 'administrative'`,
+  czwarty argument `checkAppend` bramkujący DOKŁADNIE JEDNĄ gałąź. Odrzucone alternatywy
+  i powody: filtrowanie naruszeń z zewnątrz (reguła omijana spoza domeny przestaje być
+  regułą) oraz druga funkcja `checkAdminAppend` (dwie kopie, które muszą pozostać
+  identyczne poza jedną gałęzią, rozjadą się niewidocznie). **Wartość domyślna `'pilot'`
+  jest częścią zabezpieczenia** — pominięcie argumentu nigdy nie poszerza uprawnień, więc
+  aplikacja i jej testy nie zmieniły się o linijkę.
+- **Trzy mechanizmy pilnują, żeby to nie stało się furtką.** (1) `app/src/__tests__/writeAuthority.test.ts`
+  przybija RÓŻNICĘ, nie zachowanie: bateria ~40 strumieni odpala każdy kod z `ViolationCode`
+  poza samym oknem i wymaga wyniku IDENTYCZNEGO w obu trybach (drugie `authority === 'pilot' &&`
+  gdziekolwiek wywala test), a osobna grupa pokazuje, że po 24 h administrator dalej wpada
+  na `CORRECTION_TARGET_NOT_FOUND`, `CORRECTION_TARGET_NOT_ALLOWED`, `CORRECTION_TIME_IN_FUTURE`,
+  `WRITER_MISMATCH`, `DAY_CLOSED` i `DAY_ALREADY_CLOSED`. (2) Test kontrolny wewnątrz tej
+  baterii sprawdza, że pokrycie kodów jest pełne — inaczej „identyczne" mogłoby znaczyć
+  „dwie puste listy". (3) `test/architecture.test.ts`: literał `'administrative'` wolno mieć
+  DOKŁADNIE jednemu plikowi produkcyjnemu serwera.
+- **Korekta administratora NIE idzie przez `POST /events`.** Ta trasa należy do telefonu
+  i jej single-writer (podpis w paczce + porównanie z PIC-em istniejącej sesji) zostaje
+  nietknięty. Panel dostaje własną trasę `POST /admin/api/sessions/:uuid/corrections`
+  ze zdolnością `events.correct` — administrator TAK, szef wyszkolenia NIE (pisanie
+  w cudzym rejestrze to inna odpowiedzialność niż wyjaśnianie rozbieżności).
+- **Zdarzenie stemplujemy PIC-em SESJI, nie administratorem** (`AdminCorrectionCommands`
+  w `application/admin/commands/corrections.ts`). `picId` odpowiada na pytanie „czyja to
+  sesja", nie „kto to wpisał": konto administratora zerwałoby single-writer i zafałszowało
+  atrybucję nalotu. Kto to zrobił, mówią `events.source_device` (`admin:<pilotId>`)
+  i `admin_audit` — i tylko one. Powód korekty (pole obowiązkowe w A02b) idzie do audytu,
+  nie do rejestru: rejestr opisuje lot, nie motywację człowieka przy biurku.
+- **Ścieżka administratora waliduje się SAMA** — `checkAppend(state, candidate, limits,
+  'administrative')` w tej samej transakcji, `insertBatch` tym samym adapterem (korekta
+  jest zwykłym zdarzeniem), przeliczenie projekcji `sessionRowFrom` z pełnego strumienia,
+  ślad audytu, a po commicie wymuszony re-eksport karty (`export_log` +1 rewizja). Limity
+  samolotu czytamy `AircraftConfigPort` W TEJ SAMEJ transakcji — tak jak ingest. Blokada
+  `pg_advisory_xact_lock` per sesja jest tu z tego samego powodu co w `IngestCommands`:
+  bez niej paczka dosyłana równolegle przez telefon nadpisałaby wiersz `sessions` stanem
+  sprzed korekty.
+- **Flag łańcucha NIE przeliczamy.** Ich wejściem są odczyty z `preflight_confirm`
+  i `day_close`, a te są niekorygowalne (`CORRECTION_TARGET_NOT_ALLOWED`), więc korekta
+  nie ma jak ruszyć MH ani przekazania paliwa. Otwarta `clock_drift` też zostaje —
+  A02b mówi to wprost: „zamyka ją człowiek na A03".
+- **Odmowy są wariantami wyniku, nie wyjątkami na granicy HTTP** (wzorzec `ResolveFlagOutcome`):
+  404 nieznana sesja, **400 `day_open`** (dzień otwarty = pilot poprawia sam na 04c, panel
+  nie ma tu czego naprawiać — §6.5), **422 `rule_violation`** z listą naruszeń. Rozdział 400
+  od 422 jest celowy: 400 znaczy „popraw formularz", 422 — „domena odmawia i oto powód".
+  To pierwsze 422 w repo; wcześniej nie było endpointu, który odrzucałby poprawnie
+  zbudowane żądanie regułą domenową.
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób
