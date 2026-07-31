@@ -8,6 +8,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+  /* ══════════════════════════════════════════════════════════════════════
+     UZ AERO — PANEL ADMINA · SZABLON
+     Ten plik jest ŹRÓDŁEM dla wszystkich mockupów `design/admin/A*.html`.
+     Kopiuj <head> w całości; nie zmieniaj tokenów ani ramy okna.
+
+     Czym się różni od mockupów telefonu (`design/*.html`):
+     — ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
+     — skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
+     — tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
+     ══════════════════════════════════════════════════════════════════════ */
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
@@ -17,11 +27,13 @@
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
     --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+    /* wymiary shellu — stałe, żeby wszystkie ekrany siadały w tej samej siatce */
     --sidebar-w: 236px; --topbar-h: 56px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body {
+    /* dokładnie ten sam trik co --phone-scale w mockupach telefonu */
     --app-scale: min(1, calc((100vh - 250px) / 900px), calc((100vw - 60px) / 1440px));
     font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
@@ -29,6 +41,8 @@
     background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
   }
+
+  /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
   .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
@@ -53,6 +67,7 @@
   .nav-strip a:hover, .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
+  /* ══ RAMA OKNA PRZEGLĄDARKI — desktopowy odpowiednik `.phone` ══ */
   .browser {
     width:1440px; height:900px; border-radius:14px; background:var(--bg);
     border:1px solid #1C1E24;
@@ -69,7 +84,9 @@
   .chrome-url svg { color:var(--green); flex-shrink:0; }
   .chrome-url b { color:var(--text-secondary); font-weight:400; }
 
+  /* ══ SHELL: sidebar + topbar + treść ══ */
   .shell { flex:1; display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:0; }
+
   .sidebar { background:#0A0A0C; border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
   .brand { height:var(--topbar-h); flex-shrink:0; display:flex; align-items:center; gap:10px; padding:0 18px; border-bottom:1px solid var(--border); }
   .brand-mark { width:26px; height:26px; border-radius:7px; background:var(--green-muted); border:1px solid var(--green-border); display:flex; align-items:center; justify-content:center; color:var(--green); flex-shrink:0; }
@@ -86,6 +103,10 @@
   .nav-count { margin-left:auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); }
   .nav-count.amber { background:var(--amber-muted); color:var(--amber); border-color:var(--amber-border); }
   .nav-count.red { background:var(--red-muted); color:var(--red); border-color:var(--red-border); }
+  /* pozycja niedostępna dla roli — widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
+  .nav-item.locked { opacity:0.4; cursor:not-allowed; }
+  .nav-item.locked .nav-count { background:transparent; border-color:transparent; }
+
   .side-foot { flex-shrink:0; border-top:1px solid var(--border); padding:10px; display:flex; flex-direction:column; gap:8px; }
   .who { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:10px; background:var(--surface); border:1px solid var(--border); }
   .who-avatar { width:30px; height:30px; border-radius:50%; background:var(--blue-muted); border:1px solid var(--blue-border); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--blue); flex-shrink:0; }
@@ -99,6 +120,7 @@
   .crumbs b { color:var(--text-primary); font-weight:500; }
   .crumbs span { color:var(--border-strong); }
   .topbar-right { display:flex; align-items:center; gap:10px; }
+  /* zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC */
   .utc-clock { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
   .utc-clock b { color:var(--text-primary); font-weight:700; }
   .utc-clock i { font-style:normal; color:var(--blue); font-size:9px; letter-spacing:1.5px; }
@@ -109,43 +131,236 @@
   .content::-webkit-scrollbar { width:10px; }
   .content::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
 
+  /* ── nagłówek strony ── */
   .page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
   .page-title { font-family:var(--font-display); font-size:30px; letter-spacing:2px; line-height:1; }
-  .page-sub { font-size:12.5px; color:var(--text-secondary); margin-top:6px; line-height:1.5; max-width:700px; }
+  .page-sub { font-size:12.5px; color:var(--text-secondary); margin-top:6px; line-height:1.5; max-width:640px; }
   .page-actions { display:flex; gap:9px; flex-shrink:0; }
 
+  /* ── przyciski ── */
   .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:36px; padding:8px 15px; border-radius:10px; font-family:var(--font-body); font-size:12.5px; font-weight:600; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); cursor:pointer; text-decoration:none; white-space:nowrap; }
   .btn:hover { background:var(--surface-hover); }
   .btn.primary { background:var(--green); border-color:var(--green); color:#0A0A0A; }
+  .btn.primary:hover { filter:brightness(1.08); }
+  .btn.danger { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
   .btn.ghost { background:transparent; border-color:var(--border); color:var(--text-secondary); }
-  .btn.sm { min-height:30px; padding:5px 11px; font-size:11.5px; border-radius:8px; }
   .btn:disabled, .btn.disabled { opacity:0.4; cursor:not-allowed; }
+  .btn.sm { min-height:30px; padding:5px 11px; font-size:11.5px; border-radius:8px; }
 
+  /* ── karty i kafle ── */
   .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
   .card-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid var(--border); }
   .card-title::before { content:''; width:3px; height:11px; border-radius:2px; background:var(--border-strong); flex-shrink:0; }
   .card-title .spacer { margin-left:auto; }
 
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+     definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
+  .tile:hover { border-color:var(--border-strong); }
+  .tile-key { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
+  .tile-val { font-family:var(--font-mono); font-size:28px; font-weight:700; line-height:1; letter-spacing:-0.5px; }
+  .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
+  .tile-val.green { color:var(--green); } .tile-val.amber { color:var(--amber); } .tile-val.red { color:var(--red); } .tile-val.blue { color:var(--blue); }
+  .tile-note { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+
+  /* ── pasek filtrów ── */
+  .filters { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .search { flex:1; min-width:220px; max-width:340px; height:36px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); display:flex; align-items:center; gap:9px; padding:0 12px; }
+  .search:focus-within { border-color:var(--green-border); }
+  .search svg { color:var(--text-muted); flex-shrink:0; }
+  .search input { flex:1; background:none; border:none; outline:none; color:var(--text-primary); font-family:var(--font-body); font-size:12.5px; }
+  .search input::placeholder { color:var(--text-muted); }
+  .chip { display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:5px 12px; border-radius:999px; background:var(--surface-raised); border:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-secondary); cursor:pointer; }
+  .chip:hover { border-color:var(--border-strong); color:var(--text-primary); }
+  .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
+
+  /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
+  .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
+  table { width:100%; border-collapse:collapse; }
+  thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
+  thead th.sortable { cursor:pointer; }
+  thead th.sortable:hover { color:var(--text-secondary); }
+  thead th .arrow { color:var(--green); margin-left:4px; }
+  tbody td { padding:11px 14px; border-bottom:1px solid var(--hairline); font-size:12.5px; color:var(--text-primary); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:var(--surface-raised); }
+  tbody tr.clickable { cursor:pointer; }
+  td.num, td.mono, th.num { font-family:var(--font-mono); letter-spacing:0.3px; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td.dim { color:var(--text-secondary); }
+  .cell-strong { font-weight:600; }
+  .cell-sub { display:block; font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; }
+  .reg { font-family:var(--font-mono); font-weight:700; letter-spacing:1px; }
+  .row-actions { display:flex; gap:6px; justify-content:flex-end; }
+
+  /* ── plakietki stanu ── */
   .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; border:1px solid; white-space:nowrap; }
   .pill.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }
   .pill.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
   .pill.red   { color:var(--red);   background:var(--red-muted);   border-color:var(--red-border); }
   .pill.blue  { color:var(--blue);  background:var(--blue-muted);  border-color:var(--blue-border); }
   .pill.dim   { color:var(--text-muted); background:var(--surface-raised); border-color:var(--border); }
+  .pill .dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+  .pill .dot.live { animation:pulse 1800ms ease-in-out infinite; }
 
+  /* ── formularze (wzorzec z aplikacji: --surface-raised, r12, focus zielony) ── */
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .label { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
+  .input { min-height:40px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); padding:10px 13px; color:var(--text-primary); font-family:var(--font-body); font-size:13px; outline:none; width:100%; }
+  .input:focus { border-color:var(--green-border); }
+  .input.mono { font-family:var(--font-mono); letter-spacing:0.5px; }
+  .input::placeholder { color:var(--text-muted); }
+  .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .hint b { color:var(--amber); font-weight:600; }
+  /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
+  .opt-list { display:flex; flex-direction:column; gap:8px; }
+  .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
+  .opt:hover { background:var(--surface-hover); }
+  .opt.selected { border-color:var(--green-border); background:rgba(46,204,113,0.05); box-shadow:0 0 0 3px rgba(46,204,113,0.05); }
+  .opt-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .opt-name { font-size:13px; font-weight:600; }
+  .opt-desc { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
+  .opt-check { color:var(--green); opacity:0; flex-shrink:0; }
+  .opt.selected .opt-check { opacity:1; }
+  .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
+
+  /* ── banery (3 typy — docs/design-notes.md) ── */
   .banner { display:flex; align-items:flex-start; gap:10px; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.55; border:1px solid; }
   .banner svg { flex-shrink:0; margin-top:2px; }
   .banner b { font-weight:700; }
-  .banner.status { background:var(--blue-muted); border-color:var(--blue-border); color:var(--text-secondary); }
+  .banner.status  { background:var(--blue-muted);  border-color:var(--blue-border);  color:var(--text-secondary); }
   .banner.status svg, .banner.status b { color:var(--blue); }
-  .banner.warn { background:var(--amber-muted); border-color:var(--amber-border); color:var(--text-secondary); }
+  .banner.warn    { background:var(--amber-muted); border-color:var(--amber-border); color:var(--text-secondary); }
   .banner.warn svg, .banner.warn b { color:var(--amber); }
-  .banner.danger { background:var(--red-muted); border-color:var(--red-border); color:var(--text-secondary); }
+  .banner.danger  { background:var(--red-muted);   border-color:var(--red-border);   color:var(--text-secondary); }
   .banner.danger svg, .banner.danger b { color:var(--red); }
+  .banner.ok      { background:var(--green-muted); border-color:var(--green-border); color:var(--text-secondary); }
+  .banner.ok svg, .banner.ok b { color:var(--green); }
 
-  .cols { display:grid; grid-template-columns:1fr 400px; gap:16px; align-items:start; }
+  /* ── stany: pusty, ładowanie, brak uprawnień ── */
+  .empty { display:flex; flex-direction:column; align-items:center; gap:10px; padding:52px 20px; text-align:center; }
+  .empty-icon { width:52px; height:52px; border-radius:14px; background:var(--surface-raised); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+  .empty-title { font-family:var(--font-display); font-size:20px; letter-spacing:1.5px; color:var(--text-secondary); }
+  .empty-note { font-size:12px; color:var(--text-muted); max-width:380px; line-height:1.6; }
+  .skel { height:13px; border-radius:6px; background:linear-gradient(90deg,var(--surface-raised) 0%,var(--surface-hover) 50%,var(--surface-raised) 100%); background-size:200% 100%; animation:shimmer 1400ms linear infinite; }
+  @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+  .no-access { display:flex; flex-direction:column; align-items:center; gap:12px; padding:60px 20px; text-align:center; }
 
-  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══ */
+  /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
+  .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
+  .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
+  .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+  .drawer-title { font-family:var(--font-display); font-size:22px; letter-spacing:1.5px; line-height:1; }
+  .drawer-sub { font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+  .drawer-body { flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+  .drawer-foot { flex-shrink:0; padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:9px; justify-content:flex-end; }
+  .x-btn { width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:var(--surface-raised); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+
+  /* ── wiersz klucz/wartość (szczegóły, audyt) ── */
+  .kv { display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:7px 0; border-bottom:1px solid var(--hairline); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
+  .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; letter-spacing:0.3px; }
+  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
+  .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
+
+  /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
+  .tl { display:flex; flex-direction:column; }
+  .tl-row { display:grid; grid-template-columns:74px 20px 1fr auto; align-items:start; gap:10px; padding:8px 0; border-bottom:1px solid var(--hairline); }
+  .tl-time { font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
+  .tl-rail { display:flex; justify-content:center; padding-top:4px; position:relative; }
+  .tl-dot { width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--bg); z-index:1; }
+  .tl-dot.green { background:var(--green); } .tl-dot.amber { background:var(--amber); } .tl-dot.red { background:var(--red); } .tl-dot.blue { background:var(--blue); }
+  .tl-row:not(:last-child) .tl-rail::after { content:''; position:absolute; top:8px; bottom:-14px; width:1px; background:var(--border); }
+  .tl-name { font-size:12.5px; font-weight:600; }
+  .tl-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .tl-row:last-child { border-bottom:none; }
+  .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
+  .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+     zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
+     i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
+     siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
+     kolorów kropek i stan `voided` są identyczne. */
+  .tl.compact .tl-row { grid-template-columns:62px 18px 1fr; gap:9px; padding:7px 0; }
+  .tl.compact .tl-time { font-size:10.5px; letter-spacing:0.4px; }
+  .tl.compact .tl-dot { width:8px; height:8px; }
+  .tl.compact .tl-name { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.3px; }
+  .tl.compact .tl-meta { font-size:8.5px; letter-spacing:0.6px; }
+  .tl.compact .tl-row:not(:last-child) .tl-rail::after { bottom:-12px; }
+
+  /* ── siatka dwukolumnowa treści ── */
+  .cols { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
+  .cols.even { grid-template-columns:1fr 1fr; }
+  /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
+     przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
+     Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
+     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+  .cols.wide { grid-template-columns:1fr 400px; }
+
+  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+     Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
+     ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
+     o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
+     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     ale którego telefon milczy. §4.8 stany świeżości. */
+  .fleet { display:flex; flex-direction:column; gap:8px; }
+  .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
+  .fleet-row:hover { border-color:var(--border-strong); background:var(--surface-hover); }
+  .fleet-row.flying { border-color:var(--green-border); background:rgba(46,204,113,0.04); }
+  .fleet-row.stale  { border-color:var(--amber-border); background:rgba(243,156,18,0.04); }
+  .fleet-row.free   { opacity:0.72; }
+  .fleet-reg { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:1.2px; }
+  .fleet-type { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-who { font-size:13px; font-weight:600; }
+  .fleet-since { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-nums { font-family:var(--font-mono); font-size:11.5px; text-align:right; font-variant-numeric:tabular-nums; line-height:1.7; }
+  .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
+  .fleet-state { display:flex; justify-content:flex-end; }
+
+  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+     Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
+     administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
+  .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .fresh-val { font-family:var(--font-mono); font-size:10px; letter-spacing:0.8px; color:var(--green); }
+  .fresh-val.amber { color:var(--amber); }
+  .fresh-val.dim { color:var(--text-muted); }
+  .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
+
+  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+     Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
+     w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
+     problem niż ta sprzed godziny. */
+  .todo { display:flex; flex-direction:column; }
+  .todo-row { display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--hairline); text-decoration:none; color:inherit; }
+  .todo-row:last-child { border-bottom:none; }
+  .todo-row:hover .todo-name { color:var(--green); }
+  .todo-mark { width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid; }
+  .todo-mark.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .todo-mark.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .todo-mark.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .todo-body { flex:1; min-width:0; }
+  .todo-name { font-size:12.5px; font-weight:600; }
+  .todo-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
+  .todo-age.old { color:var(--amber); }
+
+  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+     Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
+     w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
+  .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
+  .spark i { flex:1; background:var(--green-muted); border:1px solid var(--green-border); border-radius:3px 3px 0 0; min-height:3px; }
+  .spark i.now { background:var(--green); border-color:var(--green); }
+  .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
+  .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+
+  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+     Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
+     wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
+     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     gdzie zmiana ma skutek. */
   .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
   .thr:last-of-type { border-bottom:none; }
   .thr-name { font-size:12.5px; font-weight:600; }
@@ -154,12 +369,13 @@
   .thr-val { font-family:var(--font-mono); font-size:15px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
   .thr-val small { font-size:9.5px; font-weight:400; color:var(--text-secondary); letter-spacing:0.5px; }
   .thr-src { display:flex; justify-content:flex-end; }
-  /* pole edytowalne tylko tam, gdzie zmiana ma sens */
   .thr-input { width:100%; min-height:34px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); padding:6px 10px; color:var(--text-primary); font-family:var(--font-mono); font-size:14px; font-weight:700; text-align:right; outline:none; }
   .thr-input:focus { border-color:var(--green-border); }
   .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
 
-  /* ══ DOWÓD Z REPLAYA — bez tego nie ma zapisu ══ */
+  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+     Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
+     WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
   .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
   .proof-head { display:flex; align-items:center; gap:9px; font-family:var(--font-mono); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; color:var(--amber); }
   .diff { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; }
@@ -169,22 +385,11 @@
   .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
 
-  .kv { display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:7px 0; border-bottom:1px solid var(--hairline); }
-  .kv:last-child { border-bottom:none; }
-  .kv-k { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; }
-  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); }
-  .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
-
-  .field { display:flex; flex-direction:column; gap:6px; }
-  .label { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
-  .input { min-height:40px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); padding:10px 13px; color:var(--text-primary); font-family:var(--font-body); font-size:13px; outline:none; width:100%; }
-  .input:focus { border-color:var(--green-border); }
-  .input::placeholder { color:var(--text-muted); }
-  .hint { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .hint b { color:var(--amber); font-weight:600; }
-
+  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
   .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
+
+  /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
+  .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
 </style>
 </head>
 <body>
@@ -333,7 +538,7 @@
           <span><b>Progów nie stroimy „na wyczucie".</b> Każda zmiana wymaga przebiegu <code>server/scripts/replay.ts</code> na nagraniach ze śladu kalibracyjnego i podania powodu. Zapis bez dowodu jest w tym panelu niemożliwy — przycisk pozostaje nieaktywny.</span>
         </div>
 
-        <div class="cols">
+        <div class="cols wide">
           <div style="display:flex;flex-direction:column;gap:16px;">
 
             <div class="card">

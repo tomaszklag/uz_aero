@@ -154,7 +154,10 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; }
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+     definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
+  .tile:hover { border-color:var(--border-strong); }
   .tile-key { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
   .tile-val { font-family:var(--font-mono); font-size:28px; font-weight:700; line-height:1; letter-spacing:-0.5px; }
   .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
@@ -273,12 +276,117 @@
   .tl-row:not(:last-child) .tl-rail::after { content:''; position:absolute; top:8px; bottom:-14px; width:1px; background:var(--border); }
   .tl-name { font-size:12.5px; font-weight:600; }
   .tl-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+     zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
+     i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
+     siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
+     kolorów kropek i stan `voided` są identyczne. */
+  .tl.compact .tl-row { grid-template-columns:62px 18px 1fr; gap:9px; padding:7px 0; }
+  .tl.compact .tl-time { font-size:10.5px; letter-spacing:0.4px; }
+  .tl.compact .tl-dot { width:8px; height:8px; }
+  .tl.compact .tl-name { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.3px; }
+  .tl.compact .tl-meta { font-size:8.5px; letter-spacing:0.6px; }
+  .tl.compact .tl-row:not(:last-child) .tl-rail::after { bottom:-12px; }
 
   /* ── siatka dwukolumnowa treści ── */
   .cols { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
   .cols.even { grid-template-columns:1fr 1fr; }
+  /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
+     przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
+     Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
+     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+  .cols.wide { grid-template-columns:1fr 400px; }
+
+  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+     Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
+     ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
+     o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
+     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     ale którego telefon milczy. §4.8 stany świeżości. */
+  .fleet { display:flex; flex-direction:column; gap:8px; }
+  .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
+  .fleet-row:hover { border-color:var(--border-strong); background:var(--surface-hover); }
+  .fleet-row.flying { border-color:var(--green-border); background:rgba(46,204,113,0.04); }
+  .fleet-row.stale  { border-color:var(--amber-border); background:rgba(243,156,18,0.04); }
+  .fleet-row.free   { opacity:0.72; }
+  .fleet-reg { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:1.2px; }
+  .fleet-type { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-who { font-size:13px; font-weight:600; }
+  .fleet-since { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-nums { font-family:var(--font-mono); font-size:11.5px; text-align:right; font-variant-numeric:tabular-nums; line-height:1.7; }
+  .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
+  .fleet-state { display:flex; justify-content:flex-end; }
+
+  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+     Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
+     administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
+  .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .fresh-val { font-family:var(--font-mono); font-size:10px; letter-spacing:0.8px; color:var(--green); }
+  .fresh-val.amber { color:var(--amber); }
+  .fresh-val.dim { color:var(--text-muted); }
+  .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
+
+  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+     Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
+     w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
+     problem niż ta sprzed godziny. */
+  .todo { display:flex; flex-direction:column; }
+  .todo-row { display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--hairline); text-decoration:none; color:inherit; }
+  .todo-row:last-child { border-bottom:none; }
+  .todo-row:hover .todo-name { color:var(--green); }
+  .todo-mark { width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid; }
+  .todo-mark.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .todo-mark.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .todo-mark.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .todo-body { flex:1; min-width:0; }
+  .todo-name { font-size:12.5px; font-weight:600; }
+  .todo-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
+  .todo-age.old { color:var(--amber); }
+
+  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+     Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
+     w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
+  .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
+  .spark i { flex:1; background:var(--green-muted); border:1px solid var(--green-border); border-radius:3px 3px 0 0; min-height:3px; }
+  .spark i.now { background:var(--green); border-color:var(--green); }
+  .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
+  .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+
+  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+     Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
+     wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
+     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     gdzie zmiana ma skutek. */
+  .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
+  .thr:last-of-type { border-bottom:none; }
+  .thr-name { font-size:12.5px; font-weight:600; }
+  .thr-name code { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); font-weight:400; }
+  .thr-why { font-size:11px; color:var(--text-secondary); line-height:1.5; margin-top:3px; }
+  .thr-val { font-family:var(--font-mono); font-size:15px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .thr-val small { font-size:9.5px; font-weight:400; color:var(--text-secondary); letter-spacing:0.5px; }
+  .thr-src { display:flex; justify-content:flex-end; }
+  .thr-input { width:100%; min-height:34px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); padding:6px 10px; color:var(--text-primary); font-family:var(--font-mono); font-size:14px; font-weight:700; text-align:right; outline:none; }
+  .thr-input:focus { border-color:var(--green-border); }
+  .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
+
+  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+     Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
+     WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
+  .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
+  .proof-head { display:flex; align-items:center; gap:9px; font-family:var(--font-mono); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; color:var(--amber); }
+  .diff { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; }
+  .diff-side { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:5px; }
+  .diff-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .diff-v { font-family:var(--font-mono); font-size:20px; font-weight:700; line-height:1; }
+  .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
+
+  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
   .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
@@ -623,6 +731,110 @@
               <button class="btn ghost">Anuluj</button>
               <button class="btn primary">Rozwiąż z komentarzem</button>
             </div>
+          </div>
+        </div>
+
+        <div class="demo-note">7 · Flota — faza ORAZ świeżość w jednym wierszu</div>
+        <div class="card">
+          <div class="card-title">Flota teraz <span class="spacer"></span><span class="pill dim">czasy UTC</span></div>
+          <div class="fleet">
+            <a class="fleet-row flying" href="#">
+              <span><div class="fleet-reg">SP-ABC</div><div class="fleet-type">Cessna 182</div></span>
+              <span><div class="fleet-who">Tomasz Małkiewicz</div><div class="fleet-since">claim 07:58 · duty 6:24 · EPMO</div></span>
+              <span class="fleet-nums"><div><span class="k">MH</span> 1284.6</div><div><span class="k">FOB</span> 96 L</div></span>
+              <span class="fleet-state"><span class="pill green"><span class="dot live"></span>W locie</span></span>
+              <span class="fresh"><span class="fresh-val">sync 2 min temu</span><span class="fresh-note">lot 4 · T/O 14:11</span></span>
+            </a>
+            <a class="fleet-row stale" href="#">
+              <span><div class="fleet-reg">SP-KLM</div><div class="fleet-type">Cessna 208 Caravan</div></span>
+              <span><div class="fleet-who">Anna Wrzosek</div><div class="fleet-since">claim 06:40 · duty 7:42 · EPRA</div></span>
+              <span class="fleet-nums"><div><span class="k">MH</span> 3907.8</div><div><span class="k">FOB</span> 210 L</div></span>
+              <span class="fleet-state"><span class="pill amber"><span class="dot"></span>Dane w drodze</span></span>
+              <span class="fresh"><span class="fresh-val amber">sync 47 min temu</span><span class="fresh-note">ostatnie znane: zrzut 3</span></span>
+            </a>
+            <a class="fleet-row free" href="#">
+              <span><div class="fleet-reg">SP-MNO</div><div class="fleet-type">Cessna 182</div></span>
+              <span><div class="fleet-who" style="color:var(--text-secondary);font-weight:500;">Wyłączony ze służby</div><div class="fleet-since">od 19 JUN · remont</div></span>
+              <span class="fleet-nums"><div><span class="k">MH</span> 2210.8</div><div><span class="k">FOB</span> — <span class="k">pusty</span></div></span>
+              <span class="fleet-state"><span class="pill dim">Poza służbą</span></span>
+              <span class="fresh"><span class="fresh-val dim">ostatni lot 18 JUN</span><span class="fresh-note">historia zostaje</span></span>
+            </a>
+          </div>
+        </div>
+
+        <div class="demo-note">8 · Kolejka zadań · napływ zdarzeń · oś w wariancie kompaktowym</div>
+        <div class="cols wide">
+          <div class="card">
+            <div class="card-title">Wymaga uwagi</div>
+            <div class="todo">
+              <a class="todo-row" href="#">
+                <span class="todo-mark amber"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                <span class="todo-body"><span class="todo-name">mh_gap · SP-ABC</span><span class="todo-meta">dziura 0.4 h przy tolerancji 0.1 · możliwy lot bez aplikacji</span></span>
+                <span class="todo-age old">3 dni</span>
+              </a>
+              <a class="todo-row" href="#">
+                <span class="todo-mark red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
+                <span class="todo-body"><span class="todo-name">session_overlap · SP-KLM — blokuje arkusz</span><span class="todo-meta">karta dnia nie powstanie, dopóki flaga jest otwarta</span></span>
+                <span class="todo-age old">2 dni</span>
+              </a>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Napływ zdarzeń <span class="spacer"></span><span class="pill dim">12 h</span></div>
+            <div class="spark">
+              <i style="height:22%"></i><i style="height:38%"></i><i style="height:64%"></i><i style="height:47%"></i>
+              <i style="height:80%"></i><i class="zero" style="height:4%"></i><i class="zero" style="height:4%"></i>
+              <i style="height:35%"></i><i style="height:71%"></i><i class="now" style="height:44%"></i>
+            </div>
+            <div class="spark-axis"><span>02:00</span><span>08:00</span><span>14:00 UTC</span></div>
+            <div class="tl compact">
+              <div class="tl-row">
+                <span class="tl-time">14:19:52</span>
+                <span class="tl-rail"><span class="tl-dot blue"></span></span>
+                <span><span class="tl-name">takeoff</span><span class="tl-meta">SP-ABC · lot 4 · auto</span></span>
+              </div>
+              <div class="tl-row">
+                <span class="tl-time">14:04:31</span>
+                <span class="tl-rail"><span class="tl-dot red"></span></span>
+                <span><span class="tl-name">engine_stop</span><span class="tl-meta">SP-XYZ · P. Czarnecki</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-note">9 · Progi — wartość, jej źródło i dowód zmiany</div>
+        <div class="cols wide">
+          <div class="card">
+            <div class="card-title">Tolerancje <span class="spacer"></span><span class="code-ref">packages/domain/src/rules/tolerances.ts</span></div>
+            <div class="thr">
+              <span>
+                <div class="thr-name">Start — prędkość <code>TAKEOFF_SPEED_KT</code></div>
+                <div class="thr-why">Liczy się na telefonie, offline — zmiana idzie przez kod i wydanie aplikacji.</div>
+              </span>
+              <span class="thr-val">50 <small>kt</small></span>
+              <span class="thr-src"><span class="pill dim">w kodzie</span></span>
+            </div>
+            <div class="thr">
+              <span>
+                <div class="thr-name">Łańcuch motogodzin <code>MH_TOLERANCE_H</code></div>
+                <div class="thr-why">Serwer stosuje przy scalaniu po fakcie, więc wartość da się zmienić z panelu.</div>
+              </span>
+              <span><input class="thr-input changed" value="0.2" /></span>
+              <span class="thr-src"><span class="pill amber">było 0.1</span></span>
+            </div>
+          </div>
+          <div class="proof">
+            <div class="proof-head">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/></svg>
+              Wpływ zmiany — replay na historii
+            </div>
+            <div class="diff">
+              <span class="diff-side"><span class="diff-k">Teraz</span><span class="diff-v">0.1</span><span class="diff-n">41 flag w 90 dniach</span></span>
+              <span class="diff-arrow">→</span>
+              <span class="diff-side" style="border-color:var(--amber-border);"><span class="diff-k">Po zmianie</span><span class="diff-v" style="color:var(--amber)">0.2</span><span class="diff-n">29 flag w 90 dniach</span></span>
+            </div>
+            <div class="kv"><span class="kv-k">Zniknęłoby</span><span class="kv-v green">12 flag</span></div>
+            <div class="kv"><span class="kv-k">Nowych flag</span><span class="kv-v">0</span></div>
           </div>
         </div>
 
