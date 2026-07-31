@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    // Jak w `server/`: `Preserve` + `Bundler`, bo kod wykonuje bundler (Vite),
+    // a typecheck ma widzieć moduły dokładnie tak samo jak runtime.
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "jsx": "react-jsx",
+    "strict": true,
+    // Ten sam rygor co serwer: indeks tablicy zwraca `T | undefined`. Panel czyta
+    // listy z sieci, więc „pierwszy wiersz" bywa niczym częściej niż gdziekolwiek.
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src", "test", "vite.config.ts"]
+}

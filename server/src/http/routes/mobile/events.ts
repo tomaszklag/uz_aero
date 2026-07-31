@@ -14,6 +14,7 @@ import { EVENT_TYPES, type Event } from '@uzaero/domain';
 import type { IngestCommands } from '../../../application/mobile/commands/ingest.ts';
 import type { TokenService } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
+import { tokenFromRequest } from '../../tokenFromRequest.ts';
 import { payloadValid } from './eventPayloads.ts';
 
 /** Eksportowana dla testu kontraktowego zod ↔ typ domenowy. */
@@ -41,7 +42,7 @@ export function registerEventsRoutes(
   tokens: TokenService,
 ): void {
   app.post('/events', async (req, reply) => {
-    const who = authorize(tokens, req.headers.authorization);
+    const who = authorize(tokens, tokenFromRequest(req));
     if (who == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const parsed = eventsBody.safeParse(req.body);

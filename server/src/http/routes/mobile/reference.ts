@@ -11,6 +11,7 @@ import type { FastifyInstance } from 'fastify';
 import type { ReferenceQueries } from '../../../application/mobile/queries/reference.ts';
 import type { TokenService } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
+import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 export function registerReferenceRoutes(
   app: FastifyInstance,
@@ -18,7 +19,7 @@ export function registerReferenceRoutes(
   tokens: TokenService,
 ): void {
   app.get('/reference', async (req, reply) => {
-    if (authorize(tokens, req.headers.authorization) == null) {
+    if (authorize(tokens, tokenFromRequest(req)) == null) {
       return reply.code(401).send({ error: 'unauthorized' });
     }
 

@@ -46,9 +46,9 @@ describe('mapa uprawnień', () => {
 });
 
 describe('brama uprawnień tras panelu', () => {
-  it('bez nagłówka → 401, nie 403 — to dwie różne wiadomości', async () => {
+  it('bez tokenu → 401, nie 403 — to dwie różne wiadomości', async () => {
     const { tokens } = await testHarness();
-    const outcome = authorizeCapability(tokens, undefined, 'panel.access');
+    const outcome = authorizeCapability(tokens, null, 'panel.access');
     expect(outcome).toEqual({ ok: false, status: 401, body: { error: 'unauthorized' } });
   });
 
@@ -57,7 +57,7 @@ describe('brama uprawnień tras panelu', () => {
     const { tokens } = await testHarness();
     const token = tokens.sign({ pilotId: 'PWI', code: 'PWI', role: 'pilot' }, 3600);
 
-    const outcome = authorizeCapability(tokens, `Bearer ${token}`, 'flags.resolve');
+    const outcome = authorizeCapability(tokens, token, 'flags.resolve');
     expect(outcome).toEqual({
       ok: false,
       status: 403,
@@ -68,10 +68,9 @@ describe('brama uprawnień tras panelu', () => {
   it('szef wyszkolenia przechodzi na flagach i odbija się na kontach', async () => {
     const { tokens } = await testHarness();
     const token = tokens.sign({ pilotId: 'AKO', code: 'AKO', role: 'training_lead' }, 3600);
-    const header = `Bearer ${token}`;
 
-    expect(authorizeCapability(tokens, header, 'flags.resolve').ok).toBe(true);
-    expect(authorizeCapability(tokens, header, 'accounts.manage')).toMatchObject({
+    expect(authorizeCapability(tokens, token, 'flags.resolve').ok).toBe(true);
+    expect(authorizeCapability(tokens, token, 'accounts.manage')).toMatchObject({
       status: 403,
       body: { required: 'accounts.manage' },
     });
@@ -101,7 +100,7 @@ describe('zgodność wstecz tokenów', () => {
     // Token jest ważny (podpis się zgadza)…
     expect(tokens.verify(legacyToken)).toEqual({ pilotId: 'TMK', code: 'TMK', role: 'pilot' });
     // …ale mimo że TMK jest w bazie administratorem, sam token panelu nie otwiera.
-    expect(authorizeCapability(tokens, `Bearer ${legacyToken}`, 'panel.access').ok).toBe(false);
+    expect(authorizeCapability(tokens, legacyToken, 'panel.access').ok).toBe(false);
   });
 });
 

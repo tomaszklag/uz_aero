@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFlagQueries } from './application/admin/queries/flags.ts';
+import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
@@ -103,6 +104,9 @@ const app = buildServer({
     adminFlagsRepo,
   ),
   adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
+  // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu —
+  // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
+  adminMeQueries: new AdminMeQueries(pilots),
   // Uuid korekty jest FUNKCJĄ, nie portem: nie ma tu adaptera do podmiany, a port
   // bez drugiej implementacji to koszt bez zysku (`commands/corrections.ts`).
   adminCorrections: new AdminCorrectionCommands(

@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -115,7 +115,10 @@ function resolve(
   return app.inject({
     method: 'POST',
     url: `/admin/api/flags/${id}/resolve`,
-    headers: options.token == null ? {} : { authorization: `Bearer ${options.token}` },
+    headers: {
+      ...ADMIN_CSRF_HEADERS,
+      ...(options.token == null ? {} : { authorization: `Bearer ${options.token}` }),
+    },
     payload: options.note === undefined ? {} : { note: options.note },
   });
 }

@@ -27,6 +27,7 @@ import type {
 import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
+import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
@@ -65,6 +66,13 @@ export class TestClock implements Clock {
     this.current += ms;
   }
 }
+
+/**
+ * Nagłówek CSRF wymagany przez KAŻDĄ mutację `/admin/api/*` (`src/http/adminCsrf.ts`).
+ * Stoi tu, a nie w każdym teście z osobna, żeby zmiana nazwy nagłówka była jedną
+ * poprawką, a nie polowaniem po plikach.
+ */
+export const ADMIN_CSRF_HEADERS = { 'x-uz-admin': '1' } as const;
 
 export const TEST_SECRET = 'test-secret-o-dlugosci-co-najmniej-32-znakow';
 export const TEST_PASSWORD = 'poprawne-haslo-testowe';
@@ -107,6 +115,7 @@ export async function testHarness(
   const sessions = new PgSessionsProjection();
   const flags = new PgFlagsRepo();
   const exportLog = new PgExportLogRepo();
+  const pilots = new PgPilotsRepo(db);
 
   // Jak w produkcyjnym composition root: eksporter §4.7 jest domyślnie WŁĄCZONY
   // i pisze karty bazodanowym `PgSheets` — te same klasy co produkcja. Testy trybu
@@ -120,7 +129,7 @@ export async function testHarness(
     flags,
     exportLog,
     options.sheets ?? pgSheets,
-    new PgPilotsRepo(db),
+    pilots,
     clock,
   );
 
@@ -134,13 +143,7 @@ export async function testHarness(
   const adminFlagsRepo = new PgAdminFlagsRepo();
 
   const app = buildServer({
-    auth: new AuthCommands(
-      new PgPilotsRepo(db),
-      new PgRefreshTokens(db, clock),
-      new ScryptHasher(),
-      tokens,
-      clock,
-    ),
+    auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), new ScryptHasher(), tokens, clock),
     reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
     ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter),
     state: new StateQueries(db, events, sessions, flags, exportLog),
@@ -156,6 +159,7 @@ export async function testHarness(
       adminFlagsRepo,
     ),
     adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
+    adminMeQueries: new AdminMeQueries(pilots),
     // `randomUUID` jak w produkcji — uuid korekty testy czytają z odpowiedzi, więc
     // udawany generator nie kupiłby nic poza rozjazdem z composition rootem.
     adminCorrections: new AdminCorrectionCommands(

@@ -50,6 +50,21 @@ export function dateUtcLong(t: EpochMillis): string {
   return `${d.getUTCDate()} ${MONTHS_UTC[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
+/**
+ * Data jako „31 JUL 2026" (UTC) — zapis GĘSTY, z mockupów panelu (`design/admin/`:
+ * zegar w topbarze, kolumny dat w tabelach, stopki kart).
+ *
+ * ISTNIEJE OBOK `dateUtcLong` i to nie jest niedopatrzenie, tylko różnica powierzchni:
+ * telefon pokazuje datę raz, w plakietce dnia, i stać go na pełną nazwę miesiąca;
+ * panel powtarza ją w każdym wierszu tabeli, gdzie cztery znaki więcej to inna
+ * szerokość kolumny. Skrót jest PREFIKSEM pełnej nazwy, więc jedna tablica miesięcy
+ * obsługuje oba zapisy — i nie ma jak się rozjechać.
+ */
+export function dateUtcShort(t: EpochMillis): string {
+  const d = new Date(t);
+  return `${d.getUTCDate()} ${MONTHS_UTC[d.getUTCMonth()]!.slice(0, 3)} ${d.getUTCFullYear()}`;
+}
+
 /** Czas trwania jako „H:MM" (block time, duty). */
 export function duration(ms: number): string {
   const totalMin = Math.max(0, Math.floor(ms / 60_000));

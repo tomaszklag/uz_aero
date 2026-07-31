@@ -12,6 +12,7 @@ import { z } from 'zod';
 
 import type { TokenService, TraceSinkPort } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
+import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 const envelope = z.object({
   entries: z.array(z.record(z.unknown())).min(1).max(5000),
@@ -23,7 +24,7 @@ export function registerTracesRoutes(
   tokens: TokenService,
 ): void {
   app.post('/traces', async (req, reply) => {
-    const identity = authorize(tokens, req.headers.authorization);
+    const identity = authorize(tokens, tokenFromRequest(req));
     if (identity == null) {
       return reply.code(401).send({ error: 'unauthorized' });
     }

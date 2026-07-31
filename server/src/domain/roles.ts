@@ -77,3 +77,18 @@ export function isPilotRole(value: unknown): value is PilotRole {
 export function can(role: PilotRole, capability: Capability): boolean {
   return CAPABILITIES[role].includes(capability);
 }
+
+/**
+ * Komplet zdolności roli — dla `GET /admin/api/me`.
+ *
+ * Panel MUSI znać tę listę, bo mockup wymaga pozycji nawigacji **widocznych
+ * i wyszarzonych** z podanym powodem, a nie ukrytych (`SZABLON.html`, `.nav-item.locked`).
+ * Wysyłanie listy zamiast samej roli oznacza, że panel nie trzyma DRUGIEJ kopii mapy
+ * uprawnień: zmiana tutaj przemalowuje sidebar bez wydania panelu.
+ *
+ * To nadal WYŁĄCZNIE podpowiedź dla UI — egzekwuje `can` na każdym żądaniu. Ukrycie
+ * przycisku nigdy nie było zabezpieczeniem i tym się nie staje.
+ */
+export function capabilitiesOf(role: PilotRole): readonly Capability[] {
+  return CAPABILITIES[role];
+}

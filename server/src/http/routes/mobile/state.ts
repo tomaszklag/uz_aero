@@ -12,6 +12,7 @@ import type { FastifyInstance } from 'fastify';
 import type { StateQueries } from '../../../application/mobile/queries/aircraftState.ts';
 import type { TokenService } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
+import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 export function registerStateRoutes(
   app: FastifyInstance,
@@ -19,7 +20,7 @@ export function registerStateRoutes(
   tokens: TokenService,
 ): void {
   app.get('/aircraft/:id/state', async (req, reply) => {
-    if (authorize(tokens, req.headers.authorization) == null) {
+    if (authorize(tokens, tokenFromRequest(req)) == null) {
       return reply.code(401).send({ error: 'unauthorized' });
     }
     const { id } = req.params as { id: string };
@@ -27,7 +28,7 @@ export function registerStateRoutes(
   });
 
   app.get('/sessions/:uuid/sync-status', async (req, reply) => {
-    if (authorize(tokens, req.headers.authorization) == null) {
+    if (authorize(tokens, tokenFromRequest(req)) == null) {
       return reply.code(401).send({ error: 'unauthorized' });
     }
     const { uuid } = req.params as { uuid: string };

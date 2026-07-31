@@ -99,6 +99,11 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(importedFrom(read('application/admin/contracts/sessions.ts'))).toContain(
       '@uzaero/domain',
     );
+
+    // Skaner nagłówka `Authorization` faktycznie coś widzi — w JEDYNYM pliku, który
+    // ma prawo go czytać. Bez tego „zero naruszeń" mogłoby znaczyć „zły regex".
+    expect(codeOf('http/tokenFromRequest.ts')).toContain('headers.authorization');
+    expect(filesUnder('http/routes/admin')).toContain('http/routes/admin/auth.ts');
   });
 
   it('rejestr `events` jest append-only — nigdzie w src/ nie ma UPDATE ani DELETE', () => {
@@ -158,9 +163,31 @@ describe('granice, których nie pilnuje kompilator', () => {
   it('trasy panelu rejestrują się wyłącznie przez `adminRoute`', () => {
     // Zdolność ma być ATRYBUTEM deklaracji trasy. `app.post(...)` w pliku tras panelu
     // to trasa bez bramy uprawnień — i nikt by tego nie zauważył przy przeglądzie.
+    //
+    // Wyjątki są WYMIENIONE IMIENNIE, a nie opisane wzorcem ścieżki: dopisanie pliku
+    // do tej listy ma być świadomą decyzją widoczną w diffie, a nie skutkiem nazwania
+    // pliku „jakoś tak".
+    const publicByDesign = [
+      // `adminRoute.ts` — sama brama; `auth.ts` — logowanie i wylogowanie, które
+      // z definicji nie mogą wymagać ważnej sesji (§8.6). Bramą `auth.ts` jest
+      // nagłówek CSRF z `http/adminCsrf.ts`, a nie zdolność.
+      'http/routes/admin/adminRoute.ts',
+      'http/routes/admin/auth.ts',
+    ];
     const offenders = filesUnder('http/routes/admin')
-      .filter((f) => f !== 'http/routes/admin/adminRoute.ts')
+      .filter((f) => !publicByDesign.includes(f))
       .filter((f) => /\bapp\.(get|post|put|patch|delete|route)\s*\(/.test(read(f)));
+    expect(offenders).toEqual([]);
+  });
+
+  it('trasy panelu NIE czytają nagłówka `Authorization` na własną rękę', () => {
+    // Sesja przeglądarkowa dołożyła drugi kanał tego samego poświadczenia (ciasteczko).
+    // Jedno miejsce wie, skąd bierze się token (`http/tokenFromRequest.ts`) — trasa,
+    // która sięgnie po nagłówek sama, wyłączy panel z autoryzacji, nie zauważywszy tego:
+    // przeglądarka nagłówka nie wysyła, więc taki endpoint po prostu zawsze da 401.
+    const offenders = filesUnder('http')
+      .filter((f) => f !== 'http/tokenFromRequest.ts')
+      .filter((f) => /headers\.authorization/.test(codeOf(f)));
     expect(offenders).toEqual([]);
   });
 });

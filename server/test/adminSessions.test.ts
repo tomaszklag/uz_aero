@@ -10,7 +10,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -445,7 +445,7 @@ describe('karta dnia (A02a)', () => {
     const correction = await app.inject({
       method: 'POST',
       url: '/admin/api/sessions/sess-1/corrections',
-      headers: { authorization: `Bearer ${admin}` },
+      headers: { authorization: `Bearer ${admin}`, ...ADMIN_CSRF_HEADERS },
       payload: {
         targetUuid: (
           await app.inject({
@@ -500,7 +500,7 @@ describe('karta dnia (A02a)', () => {
     const correction = await app.inject({
       method: 'POST',
       url: '/admin/api/sessions/sess-1/corrections',
-      headers: { authorization: `Bearer ${admin}` },
+      headers: { authorization: `Bearer ${admin}`, ...ADMIN_CSRF_HEADERS },
       payload: {
         targetUuid: landingUuid,
         action: 'retime',
@@ -551,7 +551,7 @@ describe('karta dnia (A02a)', () => {
     await app.inject({
       method: 'POST',
       url: `/admin/api/flags/${rows[0]!.id}/resolve`,
-      headers: { authorization: `Bearer ${tmk}` },
+      headers: { authorization: `Bearer ${tmk}`, ...ADMIN_CSRF_HEADERS },
       payload: { note: 'Nakładka pozorna — KRZ zamknął dzień telefonicznie.' },
     });
 

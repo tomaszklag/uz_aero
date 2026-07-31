@@ -19,7 +19,7 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -100,7 +100,10 @@ function correct(
   return app.inject({
     method: 'POST',
     url: `/admin/api/sessions/${sessionUuid}/corrections`,
-    headers: options.token == null ? {} : { authorization: `Bearer ${options.token}` },
+    headers: {
+      ...ADMIN_CSRF_HEADERS,
+      ...(options.token == null ? {} : { authorization: `Bearer ${options.token}` }),
+    },
     payload: options.body ?? {},
   });
 }

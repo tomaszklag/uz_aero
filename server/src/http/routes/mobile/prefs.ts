@@ -15,6 +15,7 @@ import { z } from 'zod';
 import type { PrefsCommands } from '../../../application/mobile/commands/prefs.ts';
 import type { PilotPrefs, TokenService } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
+import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /**
  * Serwer nie zna listy motywów (tokeny UI aplikacji) — pilnuje tylko, żeby nazwa
@@ -36,7 +37,7 @@ export function registerPrefsRoutes(
   tokens: TokenService,
 ): void {
   app.get('/me/prefs', async (req, reply) => {
-    const claims = authorize(tokens, req.headers.authorization);
+    const claims = authorize(tokens, tokenFromRequest(req));
     if (claims == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const current = await prefs.get(claims.pilotId);
@@ -45,7 +46,7 @@ export function registerPrefsRoutes(
   });
 
   app.put('/me/prefs', async (req, reply) => {
-    const claims = authorize(tokens, req.headers.authorization);
+    const claims = authorize(tokens, tokenFromRequest(req));
     if (claims == null) return reply.code(401).send({ error: 'unauthorized' });
 
     const parsed = putBody.safeParse(req.body);

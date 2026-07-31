@@ -1,0 +1,133 @@
+/**
+ * UZ Aero — panel: przyciski i pola formularza.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „przyciski"
+ * i „formularze"). Wzorzec pól jest ten sam co w aplikacji pilota:
+ * `--surface-raised`, promień 12, fokus zielony.
+ */
+
+/* ── przyciski ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 15px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--surface-hover);
+}
+
+.btn.primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #0a0a0a;
+}
+
+.btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn.danger {
+  color: var(--red);
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn.sm {
+  min-height: 30px;
+  padding: 5px 11px;
+  font-size: 11.5px;
+  border-radius: 8px;
+}
+
+/* Przycisk na całą szerokość karty — A00: „Zaloguj się" ma `width:100%` i wyższy
+   cel niż standardowe 36 px. W mockupie stoi to inline; tutaj dostaje modyfikator,
+   bo jest własnością WZORCA formularza, a nie tego jednego ekranu. */
+.btn.block {
+  width: 100%;
+  min-height: 42px;
+}
+
+/* ── pola ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.input {
+  min-height: 40px;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  padding: 10px 13px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--green-border);
+}
+
+.input.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Pole odrzucone przez serwer (A00a: obramowanie i tło w czerwieni). Modyfikator,
+   nie styl inline — stan błędu pola wróci na każdym formularzu panelu. */
+.input.invalid {
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.hint b {
+  color: var(--amber);
+  font-weight: 600;
+}

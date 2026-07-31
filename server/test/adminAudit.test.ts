@@ -12,7 +12,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AdminAuditPort } from '../src/application/admin/ports.ts';
-import { TEST_PASSWORD, testHarness } from './helpers.ts';
+import { ADMIN_CSRF_HEADERS, TEST_PASSWORD, testHarness } from './helpers.ts';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
@@ -92,7 +92,7 @@ function resolve(app: Harness['app'], id: number, token: string, note: string) {
   return app.inject({
     method: 'POST',
     url: `/admin/api/flags/${id}/resolve`,
-    headers: { authorization: `Bearer ${token}` },
+    headers: { authorization: `Bearer ${token}`, ...ADMIN_CSRF_HEADERS },
     payload: { note },
   });
 }

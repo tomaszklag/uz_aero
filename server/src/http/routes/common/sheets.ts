@@ -12,6 +12,7 @@ import type { FastifyInstance } from 'fastify';
 import type { SheetQueries } from '../../../application/common/queries/sheets.ts';
 import type { TokenService } from '../../../application/common/ports.ts';
 import { authorize } from '../../authorize.ts';
+import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 export function registerSheetsRoutes(
   app: FastifyInstance,
@@ -19,7 +20,7 @@ export function registerSheetsRoutes(
   tokens: TokenService,
 ): void {
   app.get('/sheets/:tab', async (req, reply) => {
-    if (authorize(tokens, req.headers.authorization) == null) {
+    if (authorize(tokens, tokenFromRequest(req)) == null) {
       return reply.code(401).send({ error: 'unauthorized' });
     }
     const { tab } = req.params as { tab: string };

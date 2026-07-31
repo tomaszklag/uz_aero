@@ -19,13 +19,23 @@ import type {
   RefreshTokensPort,
   TokenService,
 } from '../ports.ts';
-import type { PilotRole } from '../../../domain/roles.ts';
+import { can, type PilotRole } from '../../../domain/roles.ts';
 
 /** Czas życia JWT (s) — krótki, bo odświeżenie jest tanie i automatyczne. */
 export const ACCESS_TTL_SEC = 60 * 60;
 
 /** Czas życia refresh tokenu (dni) — pokrywa sezon pracy w terenie bez logowania. */
 export const REFRESH_TTL_DAYS = 90;
+
+/**
+ * Czas życia sesji panelu (s) — jeden dzień pracy przy biurku.
+ *
+ * Przeglądarka NIE dostaje refresh tokenu (`docs/architektura-panelu-serwer.md` §8.4):
+ * obietnica §3.0 „wygasły token ≠ wylogowanie" istnieje dla pilota w terenie, a nie
+ * dla administratora przy biurku — panelowi wolno powiedzieć „zaloguj się ponownie".
+ * Drugie długożyciowe poświadczenie w przeglądarce kupiłoby wyłącznie powierzchnię ataku.
+ */
+export const ADMIN_SESSION_TTL_SEC = 8 * 60 * 60;
 
 export interface AuthTokens {
   token: string;
@@ -43,6 +53,32 @@ export type LoginResult =
   /** Jeden kod dla złego loginu i złego hasła — nie zdradzamy, które konta istnieją. */
   | { ok: false; reason: 'invalid_credentials' | 'account_disabled' };
 
+/** Konto tak, jak widzi je panel po zalogowaniu — bez hasła i bez pól technicznych. */
+export interface PanelPilot {
+  id: string;
+  code: string;
+  name: string;
+  role: PilotRole;
+}
+
+/** Sesja przeglądarkowa: token do CIASTECZKA (nie do ciała odpowiedzi) + kto się zalogował. */
+export interface PanelSession {
+  token: string;
+  ttlSec: number;
+  pilot: PanelPilot;
+}
+
+export type PanelLoginResult =
+  | { ok: true; session: PanelSession }
+  /**
+   * `no_panel_access` jest ODRĘBNY od `invalid_credentials` i to jest decyzja
+   * produktowa z mockupu A00: konto pilota loguje się POPRAWNIE, a odbija się o rolę —
+   * i ma zobaczyć dlaczego („panel jest dla administratora i szefa wyszkolenia; pilot
+   * pracuje w aplikacji na telefonie"), zamiast dostać nieprawdziwe „złe hasło".
+   * Enumeracji kont to nie otwiera: żeby zobaczyć ten komunikat, trzeba już znać hasło.
+   */
+  | { ok: false; reason: 'invalid_credentials' | 'account_disabled' | 'no_panel_access' };
+
 export class AuthCommands {
   constructor(
     private readonly pilots: PilotsPort,
@@ -53,18 +89,39 @@ export class AuthCommands {
   ) {}
 
   async login(login: string, password: string): Promise<LoginResult> {
-    const account = await this.pilots.findByLogin(login);
-    // Hasło weryfikujemy także dla nieistniejącego konta (stały koszt odpowiedzi) —
-    // inaczej czas odpowiedzi zdradzałby, które loginy istnieją.
-    const valid =
-      account != null
-        ? await this.hasher.verify(password, account.passwordHash)
-        : ((await this.hasher.verify(password, DUMMY_HASH)), false);
+    const checked = await this.verifyCredentials(login, password);
+    if (!checked.ok) return checked;
 
-    if (account == null || !valid) return { ok: false, reason: 'invalid_credentials' };
-    if (!account.active) return { ok: false, reason: 'account_disabled' };
+    return { ok: true, tokens: await this.issueFor(checked.account) };
+  }
 
-    return { ok: true, tokens: await this.issueFor(account) };
+  /**
+   * Logowanie do PANELU: te same poświadczenia, inny wynik.
+   *
+   * Panel loguje się tą samą komendą co telefon (`application/common/` znaczy „obie
+   * powierzchnie"), bo weryfikacja hasła — razem z wyrównaniem czasu odpowiedzi przy
+   * nieznanym loginie — ma jedną implementację. Różnice są dwie i obie są istotne:
+   *  • brama `panel.access` — konto bez roli panelu NIE DOSTAJE sesji (nie tylko
+   *    pustego ekranu): token, którym nic nie wolno, byłby poświadczeniem bez powodu;
+   *  • brak refresh tokenu — przeglądarka nie dostaje drugiego poświadczenia (§8.4).
+   *    Wołanie `login()` „dla wygody" i porzucanie refresha zostawiałoby wiersz
+   *    w `refresh_tokens` po każdym wejściu do panelu, czyli martwe sesje bez końca.
+   */
+  async panelLogin(login: string, password: string): Promise<PanelLoginResult> {
+    const checked = await this.verifyCredentials(login, password);
+    if (!checked.ok) return checked;
+
+    const { id, code, name, role } = checked.account;
+    if (!can(role, 'panel.access')) return { ok: false, reason: 'no_panel_access' };
+
+    return {
+      ok: true,
+      session: {
+        token: this.tokens.sign({ pilotId: id, code, role }, ADMIN_SESSION_TTL_SEC),
+        ttlSec: ADMIN_SESSION_TTL_SEC,
+        pilot: { id, code, name, role },
+      },
+    };
   }
 
   /** Rotacja: zużywa refresh i wydaje świeżą parę ATOMOWO. `null` = token martwy. */
@@ -90,6 +147,32 @@ export class AuthCommands {
       refreshToken: rotated.token,
       pilot: { id: account.id, code: account.code, name: account.name, role: account.role },
     };
+  }
+
+  /**
+   * Wspólny rdzeń obu logowań: konto + hasło → konto ALBO powód odmowy.
+   *
+   * Hasło weryfikujemy TAKŻE dla nieistniejącego konta (stały koszt odpowiedzi) —
+   * inaczej czas odpowiedzi zdradzałby, które loginy istnieją. To zabezpieczenie ma
+   * jedną implementację właśnie dlatego, że druga kopia prędzej czy później zgubiłaby
+   * ten `else`, a różnicy czasów nie widać w żadnym teście funkcjonalnym.
+   */
+  private async verifyCredentials(
+    login: string,
+    password: string,
+  ): Promise<
+    | { ok: true; account: PilotAccount }
+    | { ok: false; reason: 'invalid_credentials' | 'account_disabled' }
+  > {
+    const account = await this.pilots.findByLogin(login);
+    const valid =
+      account != null
+        ? await this.hasher.verify(password, account.passwordHash)
+        : ((await this.hasher.verify(password, DUMMY_HASH)), false);
+
+    if (account == null || !valid) return { ok: false, reason: 'invalid_credentials' };
+    if (!account.active) return { ok: false, reason: 'account_disabled' };
+    return { ok: true, account };
   }
 
   private async issueFor(account: PilotAccount): Promise<AuthTokens> {

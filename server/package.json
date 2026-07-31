@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.0.2",
     "@uzaero/domain": "*",
     "@uzaero/format": "*",
     "fastify": "^5.2.0",

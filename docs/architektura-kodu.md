@@ -449,6 +449,85 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   celowo NIE ma kursora: jej porządek ma trzy składowe, a kursor keyset opisuje parę;
   jest zbiorem spraw do zamknięcia, więc dostaje twardy limit i dokładny `total`.
 
+**Przekrój 4 panelu — workspace `admin/`, sesja przeglądarkowa i logowanie, zrobione
+2026-07-31.** Pierwszy przekrój, w którym panel ISTNIEJE jako aplikacja: da się go
+uruchomić, wygląda jak mockup i da się do niego zalogować (`design/admin/A00-login.html`
+i wariant błędu `A00a`; `docs/architektura-panelu-frontend.md` §10 krok 3,
+`docs/architektura-panelu-serwer.md` §8). Bez skrzynki flag i bez pozostałych ekranów —
+te wchodzą następnym przekrojem.
+
+- **`authorize` przestało czytać nagłówek — czyta TOKEN.** Sesja panelu to ciasteczko,
+  telefon nosi `Bearer`; to dwa kanały tego samego poświadczenia, więc autoryzacji nie
+  dublujemy, tylko zmieniamy jej wejście. Skąd token pochodzi, wie DOKŁADNIE JEDEN plik
+  (`http/tokenFromRequest.ts`, **nagłówek wygrywa z ciasteczkiem** — żądanie niosące oba
+  nie ma prawa podnieść uprawnień drugim poświadczeniem). Nowy przypadek w
+  `test/architecture.test.ts`: żaden plik w `http/` poza tym jednym nie sięga po
+  `headers.authorization`. Trasy telefonu zmieniły się o jedno wywołanie; zachowanie
+  identyczne, bo `Path=/admin` trzyma ciasteczko z dala od `/events`.
+- **`POST /admin/api/auth/login` → ciasteczko, nie token w ciele.** `HttpOnly; Secure;
+  SameSite=Strict; Path=/admin; Max-Age=28800`. Ciało odpowiedzi niesie tożsamość
+  i listę zdolności (`capabilitiesOf` z `domain/roles.ts`) — i to jest cały kontrakt:
+  gdyby niosło token, panel mógłby go „na chwilę" odłożyć do `localStorage`, a ochrona
+  przed XSS-em kończy się na pierwszym takim `const`. **Bez refresh tokenu w przeglądarce**
+  (§8.4): obietnica §3.0 „wygasły token ≠ wylogowanie" istnieje dla pilota w terenie,
+  administratorowi przy biurku wolno powiedzieć „zaloguj się ponownie".
+- **Konto bez `panel.access` nie dostaje sesji panelu** — i dostaje **403 `no_panel_access`**,
+  odróżnialne od 401. To decyzja z mockupu A00: pilot z POPRAWNYM hasłem ma zobaczyć,
+  że odbija go rola, a nie szukać błędu w haśle, którego nie popełnił. Enumeracji kont
+  to nie otwiera (żeby zobaczyć ten komunikat, trzeba już znać hasło), a 401 pozostaje
+  identyczne dla złego hasła i konta, którego nie ma.
+- **`panelLogin` to metoda `AuthCommands`, nie druga komenda** — `application/common/`
+  znaczy „obie powierzchnie". Weryfikacja hasła (razem z wyrównaniem czasu odpowiedzi
+  przy nieznanym loginie) ma jedną implementację w prywatnym `verifyCredentials`; druga
+  kopia prędzej czy później zgubiłaby ten `else`, a różnicy czasów nie widać w żadnym
+  teście funkcjonalnym.
+- **CSRF: nagłówek `X-UZ-Admin` na KAŻDEJ mutacji `/admin/api/*`** (`http/adminCsrf.ts`,
+  hook na całej instancji). `SameSite=Strict` jest polityką przeglądarki, więc stoi obok
+  niego drugi, niezależny mechanizm: nagłówka niestandardowego nie da się wysłać
+  cross-origin bez preflightu, a serwer nie wysyła żadnych nagłówków CORS. Hook, a nie
+  zdanie w `adminRoute`, bo `POST /auth/login` jest trasą PUBLICZNĄ (nie przechodzi przez
+  `adminRoute`) — i to właśnie logowanie jest klasycznym celem login-CSRF.
+- **`GET /admin/api/me`** istnieje z jednego powodu: ciasteczko jest `HttpOnly`, więc po
+  odświeżeniu karty JavaScript panelu nie ma jak odczytać własnej tożsamości.
+- **Workspace `admin/`** (`@uzaero/admin`, React 19 + Vite + TS strict + `noUncheckedIndexedAccess`):
+  `api/` (jedyny `fetch`) → `queries/` (TanStack, zero globalnego store'u) → `screens/`,
+  a `ui/` nie zna żadnej z nich. Granice są WYKONYWALNE (`admin/test/architecture.test.ts`,
+  lustro serwerowego): jedno miejsce z `fetch`, zakaz importów WARTOŚCIOWYCH z
+  `@uzaero/domain` (panel nie ma czym policzyć), zakaz `toFixed`/`Math.round` w widoku,
+  zakaz hexów w kodzie, zakaz importu z `server/src`. Routing na **hashu** — zero
+  fallbacku SPA po stronie serwera.
+- **`admin/src/styles/tokens.css` jest GENEROWANY** z `@uzaero/tokens`
+  (`packages/tokens/scripts/emitCss.ts`, `npm run tokens:css --workspace admin`), jeden
+  blok `:root` z motywu `night` — panel nie ma przełącznika motywów. Równość pliku ze
+  źródłem przybija `admin/test/tokens.generated.test.ts`, bo plik generowany leżący
+  w repozytorium DA SIĘ otworzyć i „poprawić kolor na szybko". Wymiary ramy panelu
+  (`--sidebar-w`, `--topbar-h`) mieszkają w `admin/src/styles/layout.css`: tokeny to
+  wartości produktu wspólne z telefonem, a telefon nie ma sidebara.
+- **Sidebar jest kanoniczny od teraz** — 11 pozycji w czterech grupach, jeden plik
+  (`ui/shell/navItems.tsx`), z którego wyprowadzają się też trasy i okruszki (dwie listy
+  nazw ekranów rozjechałyby się przy pierwszym przemianowaniu). Pozycja niedostępna dla
+  roli jest **widoczna, wyszarzona i przestaje być linkiem** (`<span aria-disabled>`,
+  nie `<a>` z `preventDefault`), z powodem w `title`.
+- **`dateUtcShort` dołożone do `@uzaero/format`** („31 JUL 2026"). Obok `dateUtcLong`
+  („22 JUNE 2026"), bo to różnica POWIERZCHNI: telefon pokazuje datę raz, w plakietce
+  dnia; panel powtarza ją w każdym wierszu tabeli, gdzie cztery znaki to inna szerokość
+  kolumny. Własna kopia tablicy miesięcy w panelu byłaby dokładnie tym trzecim
+  egzemplarzem, dla którego ten pakiet powstał.
+- **Czego w tym przekroju NIE MA, świadomie:** (1) **serwowania builda pod `/admin`
+  przez `@fastify/static`** — dev jedzie na proxy Vite (`/admin/api` → serwer), żeby panel
+  i API były tym samym originem, bo `SameSite=Strict` inaczej nie działa; produkcyjne
+  serwowanie to `base:'/admin/'` (już ustawione), `ADMIN_DIST_DIR` i nagłówki cache
+  z §9. (2) **Rate-limitu na `/auth/*` i `/admin/api/auth/login`** (§8.8) — razem z nim
+  wchodzi licznik prób z A00a, którego mockup sam zabrania przepisywać („5 prób / 15 minut
+  to WARTOŚCI ROBOCZE"). (3) **Świeżej roli przy każdym żądaniu panelu** (§8.5,
+  `requireAdminActor`): rola nadal idzie z tokenu, więc odebranie uprawnień działa
+  z opóźnieniem do 8 h zamiast do 1 h. Pozycja urosła na wadze przez tę sesję i jest
+  odnotowana w docblocku `adminRoute.ts`. (4) **Self-hostowanych czcionek i CSP** —
+  `admin/index.html` ciągnie fonty z CDN jak mockupy; §9 wymaga `.woff2` w `public/fonts/`
+  przed wdrożeniem (brak JetBrains Mono to inna szerokość każdej kolumny liczbowej).
+  (5) **`classInventory.test.ts`** — ma porównywać klasy panelu z `SZABLON.html`, a biblioteka
+  komponentów jest dopiero w budowie (8 z 24), więc dziś świeciłby na czerwono z definicji.
+
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób;
 mapowania jako osobne, nazwane moduły (`application/common/mappers/sessionRow.ts`);
