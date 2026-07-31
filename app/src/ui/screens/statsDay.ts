@@ -15,15 +15,16 @@
  */
 
 import type { DetectionMethod, Flight, JumperCounts, SessionState } from '../../domain';
-import { timeUtc } from '../format';
+import { hhmm, timeUtc } from '../format';
 
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 
-/** Czas trwania jako „HH:MM" z wiodącym zerem — format czasów z mockupu 10. */
-export function hhmm(ms: number): string {
-  const totalMin = Math.max(0, Math.floor(ms / 60_000));
-  return `${pad2(Math.floor(totalMin / 60))}:${pad2(totalMin % 60)}`;
-}
+/**
+ * `hhmm` przeniesione do `@uzaero/format` (2026-07-31) — ten sam napis musi produkować
+ * karta arkusza po stronie serwera, więc format przestał być sprawą jednego ekranu.
+ * Re-eksport zostaje, żeby `StatsScreen` i `CockpitReadonlyScreen` nie zmieniały importu.
+ */
+export { hhmm };
 
 const MONTHS_SHORT = [
   'JAN',

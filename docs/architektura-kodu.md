@@ -229,10 +229,40 @@ na komponenty). Skrót wiążący dla tego dokumentu:
   `sessions` nadpisywane w całości), więc change tracking zaprasza do obejścia strumienia;
 - **panel nie widzi modelu persystencji** — wyłącznie DTO z `/admin/api/*` (nie `/admin/*`:
   kolizja z wildcardem `@fastify/static`); osobnego pakietu „modele z bazy" nie tworzymy;
-- **wspólne pakiety są nie-wizualne**: `@uzaero/tokens` i `@uzaero/format`; komponentów
+- **wspólne pakiety są nie-wizualne**: `@uzaero/tokens` i `@uzaero/format` (**wyciągnięte
+  2026-07-31**, patrz niżej); komponentów
   między RN a webem nie dzielimy;
 - ~~kształt flagi przenieść do `packages/domain/src/flags.ts`~~ — **ZROBIONE 2026-07-31**
   (patrz niżej).
+
+**Wspólne pakiety `@uzaero/tokens` i `@uzaero/format` — zrobione 2026-07-31**, PRZED
+pierwszym ekranem panelu i to jest cała istota terminu: gdyby panel wystartował pierwszy,
+dorobiłby sobie własne kopie palety i formatów, a kopie w działającym UI cofa się dużo
+drożej niż w pliku, którego nikt jeszcze nie renderuje.
+
+- **`packages/tokens`** — pięć motywów, skale, typografia i `themeCssVars()` zamieniające
+  motyw na zmienne CSS, żeby panel nie trzymał DRUGIEJ palety. Jedyny szew między
+  platformami przebiega przy czcionkach: `fontFamilyNative` (osiem wariantów, bo RN wybiera
+  grubość osobnym plikiem czcionki) obok `fontFamilyCss` (trzy rodziny, bo w przeglądarce
+  grubość jest osobną właściwością). `fontFamily` zostaje aliasem wariantu natywnego.
+- **`packages/format`** — powód nie jest teoretyczny: `application/export/daySheetContent.ts`
+  trzymał ręczne KOPIE `timeUtc`, `hhmm` i `motoHours` z docblockami „lustro … z
+  app/src/ui/format.ts". Umowa utrzymywana dyscypliną, nie kompilatorem. Teraz serwer
+  importuje te trzy z pakietu. `litres` **zostało prywatne w serwerze celowo**: aplikacja
+  pisze „88 L", a komórka arkusza niesie jednostkę w nagłówku kolumny — różnica jest
+  zamierzona i udawanie wspólnej funkcji byłoby kłamstwem.
+- **Dwa formaty czasu blokowego zostają dwoma**: `duration` daje `6:39` (kokpit, koniec
+  dnia, historia), `hhmm` daje `06:39` (ekran 10 i karty arkusza). Każdy jest wierny
+  innemu zatwierdzonemu mockupowi; scalenie „w ramach porządków" zepsułoby jeden z nich,
+  dlatego oba mają własną nazwę i własny komentarz zamiast jednej funkcji z flagą.
+- **Migracja bez regresu**: `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są
+  shimami (`export * from …`), więc kilkadziesiąt plików ekranów nie zmieniło ani znaku.
+- **Rozjazd tokenów z mockupami pilnuje test** `app/src/__tests__/tokensCssVars.test.ts`:
+  porównuje `themeCssVars(THEMES.night)` z blokiem `:root` w `design/admin/SZABLON.html`.
+  Ma kontrolę samego siebie (część wspólna > 20 zmiennych), bo bez niej „zgodne" mogłoby
+  znaczyć „zero wspólnych nazw". Sprawdza też, że wymiary ramy panelu (`--sidebar-w`,
+  `--topbar-h`, `--app-scale`) NIE wyciekają do tokenów produktu — to układ jednego
+  ekranu, nie token designu.
 
 **Przekrój 0 panelu — zrobione 2026-07-31.** Dwie rzeczy, które musiały wejść przed
 cyklem życia flagi, bo obie zmniejszają ryzyko wszystkiego, co po nich:

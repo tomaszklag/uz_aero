@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@uzaero/domain": "*",
+    "@uzaero/format": "*",
     "fastify": "^5.2.0",
     "pg": "^8.13.1",
     "zod": "^3.24.1"

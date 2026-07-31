@@ -17,6 +17,11 @@
  */
 
 import type { SessionState } from '@uzaero/domain';
+// Formaty WSPÓLNE z telefonem (2026-07-31). Wcześniej stały tu ręczne kopie
+// z docblockami „lustro … z app/src/ui/format.ts" — czyli umowa utrzymywana
+// dyscypliną, a nie kompilatorem. Karta arkusza musi pokazywać dokładnie te same
+// napisy co ekran 10, bo pilot porównuje jedno z drugim.
+import { hhmm, motoHours, timeUtc } from '@uzaero/format';
 
 import type { DaySheet } from '../ports.ts';
 
@@ -40,36 +45,14 @@ export function sheetTabName(dutyStart: number, aircraftId: string): string {
   return `${sheetDay(dutyStart)}_${aircraftId}`;
 }
 
-/** „HH:MM" UTC — lustro `timeUtc` z `app/src/ui/format.ts`. */
-function timeUtc(t: number | null): string {
-  if (t == null) return '—';
-  const d = new Date(t);
-  return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
-}
-
-/** Czas trwania „HH:MM" z wiodącym zerem — lustro `hhmm` z `statsDay.ts` (ekran 10). */
-function hhmm(ms: number): string {
-  const totalMin = Math.max(0, Math.floor(ms / 60_000));
-  return `${pad2(Math.floor(totalMin / 60))}:${pad2(totalMin % 60)}`;
-}
-
 /**
- * Motogodziny wg formatu samolotu — lustro `motoHours` z `app/src/ui/format.ts`.
- * §5.4 mówi wprost, że `mh_format` obowiązuje też w eksporcie: licznik w kabinie
- * pokazuje `1234:30`, więc arkusz z `1234.5` wyglądałby jak inna wartość.
+ * Litry bez jednostki — jedyny format, którego NIE bierzemy z `@uzaero/format`.
+ *
+ * Aplikacja pokazuje „88 L", bo etykieta stoi obok liczby w jednym wierszu. Komórka
+ * arkusza niesie jednostkę w NAGŁÓWKU kolumny, więc powtórzenie „L" w każdej komórce
+ * byłoby szumem, a przy okazji zepsułoby sumowanie po stronie czytającego arkusz.
+ * Różnica jest zamierzona i dlatego ta funkcja została tu, zamiast udawać wspólną.
  */
-function motoHours(value: number | null, format: 'decimal' | 'hhmm' | null): string {
-  if (value == null) return '—';
-  if (format === 'hhmm') {
-    const h = Math.floor(value);
-    const m = Math.round((value - h) * 60);
-    // Zaokrąglenie 59,6 min → 60 przesuwa godzinę, żeby nie wyszło „1234:60".
-    return m === 60 ? `${h + 1}:00` : `${h}:${pad2(m)}`;
-  }
-  return value.toFixed(1);
-}
-
-/** Litry bez miejsc po przecinku (paliwomierz i tak nie jest precyzyjny). */
 function litres(value: number | null): string {
   return value == null ? '—' : String(Math.round(value));
 }

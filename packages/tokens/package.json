@@ -1,0 +1,10 @@
+{
+  "name": "@uzaero/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "description": "UZ Aero — tokeny designu: palety pięciu motywów, skale, typografia i emiter zmiennych CSS. Czysty TypeScript, zero zależności.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "type": "module",
+  "sideEffects": false
+}
