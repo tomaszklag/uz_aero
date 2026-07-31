@@ -157,12 +157,50 @@ tego samego pilota unieważniają się nawzajem — dziś akceptowalne, bo profi
 jednym telefonie); klucze obce `events`/`sessions` → `pilots`/`aircraft` (dziś spójność
 pilnowana kodem, nie schematem); odświeżanie pola `details` istniejącej flagi przy
 zmianie wielkości dziury MH (dedupe zostawia pierwszy pomiar); transakcyjne pary
-migracji w `migrate.ts`; sprzątanie wygasłych refresh tokenów (cron/`DELETE` przy
-logowaniu); skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń;
+migracji w `migrate.ts` — **ostrzejsze, niż wyglądało**: migracje 3 (`ADD CONSTRAINT`)
+i 6 (`ADD COLUMN`) nie mają `IF NOT EXISTS`, więc powtórzenie po przerwaniu procesu
+między `runScript` a `INSERT INTO schema_migrations` wywala się i **blokuje start
+serwera** (migracje 1–5 na `CREATE TABLE IF NOT EXISTS` przechodzą powtórkę bez szkody;
+ustalone 2026-07-31); sprzątanie wygasłych refresh tokenów (cron/`DELETE` przy
+logowaniu — `rotate()` kasuje wiersz tylko przy przedstawieniu tokenu, `login` wyłącznie
+wstawia, więc tokeny porzucone zostają na zawsze); skrypt administracyjny przebudowy
+projekcji `sessions` ze zdarzeń;
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
 ignorowana); `UNIQUE (session_uuid, revision)` na `export_log` + kolejka ponowień
 nieudanych eksportów i re-eksport po rozwiązaniu flagi przez administratora (dziś
 ponowienie robi dopiero następna paczka tej sesji).
+
+**Czego wymaga panel administracyjny (faza 7, decyzja 2026-07-31)** — braki wykryte przy
+projektowaniu `design/admin/`, ODRĘBNE od listy wyżej. Pełne mapowanie ekran → endpoint
+i wycena: `design/admin/ANALIZA.md`.
+
+- **Rola nie istnieje nigdzie.** `pilots` nie ma kolumny roli, JWT niesie `{pilotId, code}`,
+  a `http/authorize.ts` nie zna pojęcia uprawnienia. Blokuje każdy inny punkt: migracja
+  + claim w tokenie + brama per rola.
+- **Flaga nie ma jak się zamknąć.** W całym `server/src` nie ma kodu ustawiającego
+  `status='resolved'`, a `application/export/dayExporter.ts` odmawia eksportu przy otwartej
+  `session_overlap` — nakładka sesji **trwale blokuje kartę dnia** i odblokowuje ją wyłącznie
+  ręczny UPDATE. Endpoint rozwiązania + re-eksport to warunek, żeby §4.7 w ogóle się domykało.
+- **Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a sesji (inaczej
+  `WRITER_MISMATCH`), pomijać wyłącznie `CORRECTION_WINDOW_EXPIRED` i wywołać re-eksport.
+- **Projekcja `sessions` nie niesie `operation`, `dutyStart` ani `client`** — wartości siedzą
+  w payloadach `preflight_confirm` / `day_close`, więc to przepisanie projekcji, nie zmiana
+  modelu zdarzeń.
+- **Tabela audytu `admin_audit` nie istnieje.** Niezmienność wymuszamy uprawnieniami
+  (`GRANT INSERT, SELECT` dla roli aplikacyjnej), nie dyscypliną programisty.
+- **Brak list i filtrów** (sesje, zdarzenia, flagi), zapisu kont i floty, agregatów
+  statystycznych oraz sesji przeglądarkowej — `authorize` czyta dziś wyłącznie `Bearer`.
+- **Rate-limit na `/auth/*` awansuje** z listy wyżej: panel wystawia formularz logowania
+  w przeglądarce.
+
+Dwie sprawy z tej analizy są **decyzją produktową, nie robotą do wykonania**: (1) korekta
+administratora **nie wraca na telefon pilota** — sync jest jednokierunkowy, §4.6 nie ma
+endpointu zwracającego zdarzenia do aplikacji, więc pilot zobaczy stare liczby na ekranie 12;
+(2) **§4.5 obiecuje 6 typów flag, `domain/mhChain.ts` produkuje 3** (`mh_gap`,
+`mh_regression`, `session_overlap`) — `FUEL_MISMATCH` i `CLOCK_DRIFT` żyją wyłącznie jako
+lokalne ostrzeżenia w telefonie i nigdy nie docierają do tabeli `flags`, a `DOUBLE_CLAIM`
+i `TIME_OVERLAP` są zwinięte w `session_overlap`. Albo dopisujemy je na serwerze, albo
+prostujemy §4.5 — dziś dokumentacja i kod mówią co innego.
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób

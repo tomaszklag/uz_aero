@@ -1,5 +1,10 @@
 # UZ Aero — notatki projektowe
 
+> Ten dokument dotyczy **aplikacji pilota** (`design/*.html`, ramka telefonu).
+> Panel administracyjny to osobna powierzchnia w `design/admin/` (ramka okna 1440×900,
+> te same tokeny) — jego decyzje projektowe opisuje `design/admin/ANALIZA.md`,
+> a zmiany `design/ZMIANY.md` pod datą 2026-07-31.
+
 ## Przepływ ekranów (screen flow)
 
 ```

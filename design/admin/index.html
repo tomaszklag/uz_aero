@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — Panel administracyjny · spis widoków</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(46,204,113,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at 80% 100%, rgba(243,156,18,0.03) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px;
+  }
+
+  .hero { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 48px; }
+  .hero-icon { width: 54px; height: 54px; border-radius: 15px; background: var(--green-muted); border: 1px solid var(--green-border); display: flex; align-items: center; justify-content: center; color: var(--green); }
+  .hero h1 { font-family: var(--font-display); font-size: 46px; letter-spacing: 5px; line-height: 1; font-weight: 400; text-align: center; }
+  .hero h1 span { color: var(--green); }
+  .hero-sub { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 8px; padding: 5px 13px; border-radius: 999px; background: var(--amber-muted); border: 1px solid var(--amber-border); font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--amber); }
+  .hero-tag .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 8px rgba(243,156,18,0.5); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+  .note { width: 100%; max-width: 960px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin-bottom: 44px; display: flex; flex-direction: column; gap: 10px; }
+  .note-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-secondary); }
+  .note p { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+  .note p b { color: var(--text-primary); font-weight: 600; }
+  .note p .warn { color: var(--amber); font-weight: 600; }
+  .note code { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+
+  .section-title {
+    font-family: var(--font-display); font-size: 22px; letter-spacing: 3px; color: var(--text-muted); text-transform: uppercase;
+    width: 100%; max-width: 960px; margin: 0 0 16px 0; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::before { content: ''; width: 4px; height: 22px; border-radius: 2px; background: var(--green); box-shadow: 0 0 10px var(--green-glow); }
+  .section-title small { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; color: var(--text-muted); text-transform: none; margin-left: auto; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; width: 100%; max-width: 960px; margin-bottom: 48px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px;
+    text-decoration: none; color: var(--text-primary); display: flex; align-items: flex-start; gap: 14px;
+    transition: all 0.18s ease; position: relative; overflow: hidden;
+  }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--hairline); }
+  .card:hover { background: var(--surface-hover); border-color: var(--border-strong); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .card.green:hover { border-color: var(--green-border); box-shadow: 0 8px 24px rgba(46,204,113,0.15); }
+  .card.amber:hover { border-color: var(--amber-border); box-shadow: 0 8px 24px rgba(243,156,18,0.15); }
+  .card.red:hover   { border-color: rgba(231,76,60,0.3); box-shadow: 0 8px 24px rgba(231,76,60,0.15); }
+
+  .card-num {
+    font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-muted);
+    background: var(--surface-raised); border: 1px solid var(--border);
+    width: 34px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+  }
+  .card.green .card-num { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
+  .card.amber .card-num { background: var(--amber-muted); border-color: var(--amber-border); color: var(--amber); }
+  .card.red .card-num   { background: rgba(231,76,60,0.1); border-color: rgba(231,76,60,0.28); color: var(--red); }
+  .card.blue .card-num  { background: var(--blue-muted); border-color: var(--blue-border); color: var(--blue); }
+
+  .card-title { font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-primary); margin-bottom: 4px; }
+  .card-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.8px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; background: var(--surface-raised); border: 1px solid var(--border); color: var(--text-muted); }
+  .tag.green { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
+  .tag.amber { background: var(--amber-muted); border-color: var(--amber-border); color: var(--amber); }
+  .tag.red   { background: rgba(231,76,60,0.1); border-color: rgba(231,76,60,0.28); color: var(--red); }
+  .tag.blue  { background: var(--blue-muted); border-color: var(--blue-border); color: var(--blue); }
+
+  footer { margin-top: 24px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; color: var(--text-muted); text-align: center; text-transform: uppercase; line-height: 2; }
+  footer a { color: var(--green); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-icon">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+  </div>
+  <h1>UZ AERO — <span>PANEL</span></h1>
+  <div class="hero-sub">Aplikacja web dla administratora i szefa wyszkolenia · 20 ekranów</div>
+  <div class="hero-tag"><span class="dot"></span> Projekt — do zatwierdzenia, nie wdrożony</div>
+</div>
+
+<div class="note">
+  <div class="note-title">Zanim przeczytasz ekrany</div>
+  <p>
+    Panel odwraca decyzję z <b>2026-07-24</b> („Panel administratora — nie teraz"), która zostawiła zakładanie kont, resety haseł,
+    rozwiązywanie flag i korekty po oknie 24 h jako proces ręczny w SQL. Zakres v1: pełny back-office, dwie role
+    (<b>administrator</b> i <b>szef wyszkolenia</b>), stan floty na żywo oraz dane po fakcie.
+  </p>
+  <p>
+    <span class="warn">Trzy rzeczy, których serwer dziś NIE MA</span>, a bez których żaden z tych ekranów nie zadziała:
+    kolumny roli w <code>pilots</code> i claimu roli w tokenie; kodu zamykającego flagę (<code>status='resolved'</code> nie ustawia nic w całym <code>server/src</code>);
+    endpointów <code>/admin/*</code>. Konsekwencja, która boli już dziś: otwarta flaga <code>session_overlap</code> blokuje eksport karty dnia
+    (<code>dayExporter.ts</code>), a odblokować ją może wyłącznie ręczny UPDATE w bazie.
+  </p>
+  <p>
+    Pełna analiza — role, mapowanie każdego ekranu na endpoint, braki serwera z wyceną, ryzyka:
+    <b>ANALIZA.md</b> w tym katalogu. Rama okna, tokeny i inwentarz komponentów: <b>SZABLON.html</b>.
+  </p>
+</div>
+
+<div class="section-title">Wejście i pulpit <small>A00 – A01</small></div>
+<div class="grid">
+  <a href="A00-login.html" class="card green">
+    <div class="card-num">A00</div>
+    <div class="card-body">
+      <div class="card-title">A00-login</div>
+      <div class="card-desc">Logowanie do panelu — login + hasło → JWT. Bez samodzielnej rejestracji i bez OAuth; konta zakłada administrator. Konto bez roli panelu odbija się z wyjaśnieniem.</div>
+      <div class="card-tags"><span class="tag green">auth</span><span class="tag red">brak roli w bazie</span></div>
+    </div>
+  </a>
+  <a href="A00a-login-blad.html" class="card amber">
+    <div class="card-num">A00A</div>
+    <div class="card-body">
+      <div class="card-title">A00a-login-blad</div>
+      <div class="card-desc">Wariant po 401 — odpowiedź identyczna dla złego hasła i nieistniejącego konta (żeby nie zdradzać, kto ma konto), plus limit prób.</div>
+      <div class="card-tags"><span class="tag amber">wariant</span><span class="tag amber">progi wymyślone</span></div>
+    </div>
+  </a>
+  <a href="A01-pulpit.html" class="card green">
+    <div class="card-num">A01</div>
+    <div class="card-body">
+      <div class="card-title">A01-pulpit</div>
+      <div class="card-desc">Ekran startowy: flota teraz — każdy samolot z fazą ORAZ wiekiem synchronizacji, bo „w locie" przy syncu sprzed 47 minut to nie wiedza o locie. Kolejka „wymaga uwagi" i napływ zdarzeń.</div>
+      <div class="card-tags"><span class="tag green">live</span><span class="tag">świeżość danych</span><span class="tag">kolejka</span></div>
+    </div>
+  </a>
+  <a href="A01a-pulpit-cisza.html" class="card">
+    <div class="card-num">A01A</div>
+    <div class="card-body">
+      <div class="card-title">A01a-pulpit-cisza</div>
+      <div class="card-desc">Nic nie lata, zero flag, zero zaległych eksportów. Ekran rozstrzyga to, co w bazie wygląda identycznie: <b>„dziś nikt nie lata"</b> kontra <b>„nic do nas nie dotarło"</b> — werdykt stoi na czterech sprawdzalnych warunkach, a nie na samym braku danych.</div>
+      <div class="card-tags"><span class="tag">wariant</span><span class="tag green">zero ≠ awaria</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Dni lotne i rejestr <small>A02 – A04</small></div>
+<div class="grid">
+  <a href="A02-dni.html" class="card">
+    <div class="card-num">A02</div>
+    <div class="card-body">
+      <div class="card-title">A02-dni</div>
+      <div class="card-desc">Lista dni lotnych z projekcji <code>sessions</code> — samolot, PIC, blok, czas lotu, MH i FOB start→koniec. Filtry po dacie, samolocie, pilocie i stanie.</div>
+      <div class="card-tags"><span class="tag">tabela</span><span class="tag">UTC</span></div>
+    </div>
+  </a>
+  <a href="A02a-dzien.html" class="card green">
+    <div class="card-num">A02A</div>
+    <div class="card-body">
+      <div class="card-title">A02a-dzien</div>
+      <div class="card-desc">Karta jednego dnia — kafle podsumowania, pełna oś zdarzeń z payloadami, lista lotów, flagi. Zdarzenie unieważnione jest przekreślone, nie usunięte.</div>
+      <div class="card-tags"><span class="tag green">oś zdarzeń</span><span class="tag">append-only</span></div>
+    </div>
+  </a>
+  <a href="A02b-korekta.html" class="card red">
+    <div class="card-num">A02B</div>
+    <div class="card-body">
+      <div class="card-title">A02b-korekta</div>
+      <div class="card-desc">Korekta administratora po oknie 24 h. Nie ma edycji ani kasowania — są dwie akcje dopisujące <code>event_correction</code>: <code>retime</code> i <code>void</code>. Korekta nie wróci na telefon pilota.</div>
+      <div class="card-tags"><span class="tag red">append-only</span><span class="tag amber">sync jednokierunkowy</span></div>
+    </div>
+  </a>
+  <a href="A04-zdarzenia.html" class="card">
+    <div class="card-num">A04</div>
+    <div class="card-body">
+      <div class="card-title">A04-zdarzenia</div>
+      <div class="card-desc">Surowy rejestr <code>events</code> jako narzędzie śledcze: czasy urządzenia vs GPS, rozjazd zegarów, <code>source_device</code>, podgląd payloadu JSONB. Tylko do odczytu.</div>
+      <div class="card-tags"><span class="tag">rejestr</span><span class="tag blue">JSONB</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Flagi i eksport <small>A03 – A05</small></div>
+<div class="grid">
+  <a href="A03-flagi.html" class="card amber">
+    <div class="card-num">A03</div>
+    <div class="card-body">
+      <div class="card-title">A03-flagi</div>
+      <div class="card-desc">Skrzynka niespójności — główne narzędzie szefa wyszkolenia. Blokujące eksport na górze, potem po wieku. Trzy typy z kodu; <code>fuel_mismatch</code> i <code>clock_drift</code> oznaczone jako niewdrożone.</div>
+      <div class="card-tags"><span class="tag amber">kolejka</span><span class="tag red">blokuje arkusz</span></div>
+    </div>
+  </a>
+  <a href="A03a-flaga.html" class="card amber">
+    <div class="card-num">A03A</div>
+    <div class="card-body">
+      <div class="card-title">A03a-flaga</div>
+      <div class="card-desc">Szczegół i rozstrzygnięcie: liczby rozbieżności, obie sesje, oś wokół problemu. Rozwiązanie to komentarz i zmiana statusu — nie edycja danych; odblokowuje kartę arkusza.</div>
+      <div class="card-tags"><span class="tag amber">wariant</span><span class="tag red">endpointu brak</span></div>
+    </div>
+  </a>
+  <a href="A03b-flagi-zero.html" class="card">
+    <div class="card-num">A03B</div>
+    <div class="card-body">
+      <div class="card-title">A03b-flagi-zero</div>
+      <div class="card-desc">Stan pusty — brak otwartych flag. Licznik w nawigacji spada do neutralnego zera; historia rozwiązanych zostaje.</div>
+      <div class="card-tags"><span class="tag">stan pusty</span></div>
+    </div>
+  </a>
+  <a href="A05-eksporty.html" class="card blue">
+    <div class="card-num">A05</div>
+    <div class="card-body">
+      <div class="card-title">A05-eksporty</div>
+      <div class="card-desc">Monitor kart dziennych: w arkuszu / rewizja N / zablokowana flagą / błąd regeneracji / czeka. Wyjaśnia różnicę <code>export_log</code> (historia) vs <code>exported_sheets</code> (stan karty).</div>
+      <div class="card-tags"><span class="tag blue">eksport</span><span class="tag">rewizje</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Raporty <small>A10</small></div>
+<div class="grid">
+  <a href="A10-statystyki.html" class="card green">
+    <div class="card-num">A10</div>
+    <div class="card-body">
+      <div class="card-title">A10-statystyki</div>
+      <div class="card-desc">Naloty, paliwo i MH per samolot, pilot i operacja. Osobna sekcja przychodowa: zrzuty, skoczkowie w rozbiciu tandem / AFF / solo, średnia wysokość, klient.</div>
+      <div class="card-tags"><span class="tag green">raporty</span><span class="tag">zrzuty</span><span class="tag">CSV</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Konfiguracja i serwis <small>A06 – A11 · tylko administrator</small></div>
+<div class="grid">
+  <a href="A06-piloci.html" class="card">
+    <div class="card-num">A06</div>
+    <div class="card-body">
+      <div class="card-title">A06-piloci</div>
+      <div class="card-desc">Konta pilotów — kod, nazwisko, e-mail, rola, status, ostatnie logowanie. Akcje: szczegóły, reset hasła, deaktywacja.</div>
+      <div class="card-tags"><span class="tag">konta</span><span class="tag red">rola do dorobienia</span></div>
+    </div>
+  </a>
+  <a href="A06a-konto.html" class="card">
+    <div class="card-num">A06A</div>
+    <div class="card-body">
+      <div class="card-title">A06a-konto</div>
+      <div class="card-desc">Szuflada konta: tożsamość, rola jako lista kart, hasło startowe pokazane raz. Audyt zapisuje fakt „ustawiono hasło", nigdy wartości. Deaktywacja nie usuwa zdarzeń.</div>
+      <div class="card-tags"><span class="tag">wariant</span><span class="tag amber">hasło raz</span></div>
+    </div>
+  </a>
+  <a href="A07-flota.html" class="card">
+    <div class="card-num">A07</div>
+    <div class="card-body">
+      <div class="card-title">A07-flota</div>
+      <div class="card-desc">Samoloty wprost ze schematu <code>aircraft</code> + stan z telefonów: claim, MH, FOB z adnotacją świeżości. Wyłączony ze służby znika z listy wyboru pilota, ale historia zostaje.</div>
+      <div class="card-tags"><span class="tag">flota</span><span class="tag">stan live</span></div>
+    </div>
+  </a>
+  <a href="A07a-samolot.html" class="card">
+    <div class="card-num">A07A</div>
+    <div class="card-body">
+      <div class="card-title">A07a-samolot</div>
+      <div class="card-desc">Edycja samolotu z sekcją „skutki zmiany": pojemność przesuwa próg <code>fuel_mismatch</code>, <code>mh_format</code> zmienia sposób wpisywania MH. Pola nie przeliczają wstecz.</div>
+      <div class="card-tags"><span class="tag">wariant</span><span class="tag amber">skutki zmiany</span></div>
+    </div>
+  </a>
+  <a href="A08-progi.html" class="card red">
+    <div class="card-num">A08</div>
+    <div class="card-body">
+      <div class="card-title">A08-progi</div>
+      <div class="card-desc">Dwie klasy progów. Detekcja lotu liczy się na telefonie offline — <b>tylko do odczytu</b>, bo suwak nie dotarłby do samolotu w powietrzu. Tolerancje flag: edytowalne, ale wyłącznie z dowodem z replaya.</div>
+      <div class="card-tags"><span class="tag red">tylko odczyt</span><span class="tag amber">replay wymagany</span></div>
+    </div>
+  </a>
+  <a href="A11-konserwacja.html" class="card red">
+    <div class="card-num">A11</div>
+    <div class="card-body">
+      <div class="card-title">A11-konserwacja</div>
+      <div class="card-desc">Przebudowa projekcji <code>sessions</code> (bezpieczna z definicji — to zrzut <code>projectSession(events)</code>, rejestr zostaje nietknięty; dry-run domyślnie, a różnica po przeliczeniu to <b>incydent do zbadania</b>), kolejka ponowień eksportu, sprzątanie wygasłych tokenów, stan migracji.</div>
+      <div class="card-tags"><span class="tag red">operacje na danych</span><span class="tag">dry-run</span><span class="tag">audyt</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Audyt <small>A09</small></div>
+<div class="grid">
+  <a href="A09-audyt.html" class="card blue">
+    <div class="card-num">A09</div>
+    <div class="card-body">
+      <div class="card-title">A09-audyt</div>
+      <div class="card-desc">Dziennik akcji administratorów — kto, co, kiedy, na czym. Projekt tabeli <code>admin_audit</code> z niezmiennością wymuszoną uprawnieniami bazy (tylko INSERT i SELECT), nie dyscypliną programisty.</div>
+      <div class="card-tags"><span class="tag blue">niezmienny</span><span class="tag red">tabela do dorobienia</span></div>
+    </div>
+  </a>
+</div>
+
+<div class="section-title">Podstawa <small>dokumenty źródłowe</small></div>
+<div class="grid">
+  <a href="SZABLON.html" class="card green">
+    <div class="card-num">BAZA</div>
+    <div class="card-body">
+      <div class="card-title">SZABLON.html</div>
+      <div class="card-desc">Rama okna 1440×900 (desktopowy odpowiednik ramki telefonu), shell z kanonicznym sidebarem i inwentarz wszystkich komponentów. Każdy nowy ekran kopiuje stąd <code>&lt;head&gt;</code>.</div>
+      <div class="card-tags"><span class="tag green">design system</span><span class="tag">--app-scale</span></div>
+    </div>
+  </a>
+  <a href="ANALIZA.md" class="card">
+    <div class="card-num">DOC</div>
+    <div class="card-body">
+      <div class="card-title">ANALIZA.md</div>
+      <div class="card-desc">Role i uprawnienia, architektura informacji, mapowanie ekranów na endpointy, braki serwera z wyceną S/M/L, ryzyka i propozycja stosu technicznego.</div>
+      <div class="card-tags"><span class="tag">analiza</span></div>
+    </div>
+  </a>
+  <a href="../index.html" class="card">
+    <div class="card-num">↩</div>
+    <div class="card-body">
+      <div class="card-title">Mockupy telefonu</div>
+      <div class="card-desc">Ekrany pilota (00–13) — ramka 393×852, te same tokeny i czcionki. Panel jest ich rozszerzeniem na inne urządzenie i innego użytkownika, nie osobnym produktem.</div>
+      <div class="card-tags"><span class="tag">aplikacja RN</span></div>
+    </div>
+  </a>
+</div>
+
+<footer>
+  UZ Aero · panel administracyjny · projekt UI<br>
+  <a href="../index.html">← spis widoków aplikacji</a>
+</footer>
+
+</body>
+</html>

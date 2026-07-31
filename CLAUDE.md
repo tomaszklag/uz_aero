@@ -13,7 +13,7 @@ Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny
 
 ## Faza aktualna
 **Monorepo: aplikacja RN w `app/`, backend w `server/`, wspólna domena w `packages/domain`.**
-Fazy z `docs/_main.md.txt` §10: 1–4 ✅ (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE — `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · przed nami: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
+Fazy z `docs/_main.md.txt` §10: 1–4 ✅ (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE — `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · przed nami: 5 testy z pilotami, 6 wdrożenie + backlog audytu, 7 **panel administracyjny (web)** — projekt UI zamknięty (`design/admin/`: 20 ekranów, `SZABLON.html`, `ANALIZA.md`), backend do zrobienia (role, `/admin/*`, cykl życia flagi, audyt).
 - Mockupy w `design/` to **zatwierdzona specyfikacja**: ekran RN wdrażamy 1:1 z odpowiadającego pliku HTML, sekcja po sekcji, bez upraszczania. Wątpliwość do mockupu = rozmowa przed implementacją, nie cicha zmiana w kodzie.
 - Architektura kodu i przepisy (nowy typ zdarzenia / reguła / ekran): `docs/architektura-kodu.md` (tam też zaległości audytu serwera). Po zmianach w `app/`: `npx jest` i `npx tsc --noEmit`; po zmianach w `server/` lub `packages/domain`: `npx vitest run` i `npx tsc --noEmit` w `server/` — wszystko musi przechodzić.
 - **Detekcja stanów lotu (kołowanie / start / lądowanie) i wszystkie progi: `docs/algorytm-detekcji.md`.** Zmieniasz cokolwiek w `packages/domain/src/detection/` — zaktualizuj ten dokument w tym samym commicie. Progów NIE stroimy „na wyczucie": służy do tego `server/scripts/replay.ts` na nagraniach ze śladu kalibracyjnego.
@@ -35,9 +35,19 @@ Fazy z `docs/_main.md.txt` §10: 1–4 ✅ (ekrany 00–12 komplet; sync end-to-
 - `Archivo` — body text, etykiety, przyciski
 - `JetBrains Mono` — cyfry timerów, kody ICAO, wartości GPS, kody pilotów
 
-### Phone frame
+### Phone frame (`design/*.html` — aplikacja pilota)
 Każdy mockup używa ramki telefonu 393×852px (iPhone 14 Pro) z `--phone-scale` do auto-skalowania.
 Struktura: `.canvas-label` → `.phone` (z Dynamic Island `::before`) → `.nav-strip`
+
+### Browser frame (`design/admin/*.html` — panel administracyjny)
+Panel to **aplikacja web**, więc ramką jest okno przeglądarki 1440×900 z `--app-scale`
+(działa dokładnie jak `--phone-scale`) i paskiem chrome zamiast Dynamic Island.
+Struktura: `.canvas-label` → `.browser` (`.chrome` → `.shell` = `.sidebar` + `.main`) → `.nav-strip`.
+**Nowy ekran panelu zaczyna się od skopiowania `<head>` z `design/admin/SZABLON.html`** —
+tam mieszkają tokeny, rama, kanoniczny sidebar i inwentarz komponentów back-office'u
+(tabele, plakietki stanu, szuflada `.drawer`, oś zdarzeń, stany puste). Nowy komponent
+dokładamy do szablonu, nie do pojedynczego ekranu.
+Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo — inne urządzenie, ten sam produkt.
 
 ### Wzorzec formularzy
 - Pola input: `background: var(--surface-raised)`, `border-radius: 12px`, focus = `var(--green-border)`
@@ -89,7 +99,9 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 ## Reguły przy zlecaniu agentom
 Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 1. Pełne design tokeny CSS z `:root` (z sekcji wyżej)
-2. Szablon phone frame (393×852px, `--phone-scale`, Dynamic Island)
+2. Szablon ramki właściwej dla powierzchni: aplikacja pilota → phone frame (393×852px,
+   `--phone-scale`, Dynamic Island); panel administracyjny → `<head>` skopiowany w całości
+   z `design/admin/SZABLON.html` (okno 1440×900, `--app-scale`, kanoniczny sidebar)
 3. Informację że aplikacja = UZ Aero
 4. Linki nawigacyjne do sąsiednich ekranów w `nav-strip`
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`

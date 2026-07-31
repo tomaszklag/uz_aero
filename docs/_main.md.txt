@@ -62,6 +62,7 @@ ręcznie** — jego jedynym obowiązkiem jest rzetelny preflight i zamknięcie d
 | 2026-07-24 | **Utrata telefonu z niepustym outboxem — poza zakresem.** Ryzyko rozpoznane (dzień bez zasięgu istnieje w jednym egzemplarzu, do czasu synchronizacji), świadomie NIE adresowane w tej wersji. Nie proponować ponownie |
 | 2026-07-24 | **Panel administratora — nie teraz.** Zakładanie kont, resety haseł, rozwiązywanie flag i korekty po oknie 24 h zostają procesem ręcznym (SQL/seed). Do rozważenia po backendzie |
 | 2026-07-22 | **Rezygnacja z Google OAuth** (odwraca decyzję z 2026-06-22): konta pilotów zakłada administrator w bazie, logowanie = login + hasło → JWT. Powód: argument za OAuth (Sheets na telefonie) zniknął wraz z eksportem serwerowym; wąskie, zamknięte grono użytkowników; zero konfiguracji OAuth/SHA/Play Console |
+| 2026-07-31 | **Panel administratora — DECYZJA ODWRÓCONA** (odwraca 2026-07-24): powstaje jako **osobna aplikacja web**. Zakres v1 = pełny back-office (konta, flota, skrzynka flag, korekty po oknie 24 h, przegląd dni, rejestr zdarzeń, monitor eksportu, statystyki, audyt, progi), **dwie role** (`administrator` — wszystko; `szef wyszkolenia` — podgląd, statystyki, rozwiązywanie flag), stan floty **na żywo** oraz dane po fakcie. Powód: backend jest gotowy i wymaga obsługi, a §4.7 postawiło bramkę, której **nikt nie może otworzyć** — otwarta flaga `session_overlap` blokuje eksport karty dnia, a `status='resolved'` nie ustawia dziś żaden kod w `server/src`. Projekt UI: `design/admin/` (20 ekranów); zakres, mapowanie na endpointy i braki serwera: `design/admin/ANALIZA.md` |
 
 ---
 
@@ -602,8 +603,12 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 | Deploy | Docker (VPS lub Cloud Run) | Mały, przenośny serwis |
 | Testy | Vitest/Jest — scenariusze scalania | Łańcuch MH, flagi, dedup — rdzeń logiki |
 
-Administracja danymi referencyjnymi (samoloty, konfiguracje, piloci): w pierwszej wersji
-seed/SQL lub prosty panel — do decyzji w fazie backendowej.
+Administracja danymi referencyjnymi (samoloty, konfiguracje, piloci), a także rozwiązywanie
+flag, korekty po oknie 24 h i nadzór nad eksportem: **osobna aplikacja web** (decyzja
+2026-07-31, odwraca 2026-07-24). Projekt UI: `design/admin/` — 20 ekranów w ramce okna
+1440×900 na tych samych tokenach i czcionkach co mockupy telefonu (`design/admin/SZABLON.html`).
+Zakres, role, mapowanie każdego ekranu na endpoint oraz lista braków serwera z wyceną:
+`design/admin/ANALIZA.md`.
 
 ---
 
@@ -618,6 +623,7 @@ seed/SQL lub prosty panel — do decyzji w fazie backendowej.
 | 4 | Sync end-to-end — outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | ✅ zakończona (wariant bazodanowy) — outbox → `/events` (SyncEngine §4.3), auth §3.0, flagi + `sync-status`, ekran 11, cache referencyjny (ETag/304), `takeover_online`; eksport 4.7 działa end-to-end: karty w tabeli `exported_sheets` (`GET /sheets/:tab`), `export_log` z rewizjami, bramka flagi overlap, `exportUrl` w sync-status. Adapter Google Sheets = opcjonalna podmiana portu, gdy będzie klucz konta serwisowego |
 | 5 | Testy z pilotami, korekty UX, kalibracja progów S/L | przed nami · szac. 2 tyg. |
 | 6 | Wdrożenie — Play Store internal track, deploy backendu, dokumentacja | przed nami · szac. 1 tyg. |
+| 7 | **Panel administracyjny (web)** — role w bazie i tokenie, endpointy `/admin/*`, cykl życia flagi (`resolved`), korekta po oknie 24 h, tabela audytu | projekt UI zamknięty (`design/admin/`, 20 ekranów + `ANALIZA.md`); backend do zrobienia. **Kolejność wobec faz 5–6 do ustalenia**: rozwiązywanie flag odblokowuje eksport kart, więc dzień z nakładką sesji jest nie do domknięcia bez tej fazy |
 
 ---
 

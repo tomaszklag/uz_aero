@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — Panel admina · A02 Dni lotne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════
+     UZ AERO — PANEL ADMINA · SZABLON
+     Ten plik jest ŹRÓDŁEM dla wszystkich mockupów `design/admin/A*.html`.
+     Kopiuj <head> w całości; nie zmieniaj tokenów ani ramy okna.
+
+     Czym się różni od mockupów telefonu (`design/*.html`):
+     — ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
+     — skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
+     — tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
+     ══════════════════════════════════════════════════════════════════════ */
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+    /* wymiary shellu — stałe, żeby wszystkie ekrany siadały w tej samej siatce */
+    --sidebar-w: 236px; --topbar-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    /* dokładnie ten sam trik co --phone-scale w mockupach telefonu */
+    --app-scale: min(1, calc((100vh - 250px) / 900px), calc((100vw - 60px) / 1440px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%), linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
+  }
+
+  /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
+  .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+
+  .variants-panel { width:100%; max-width:1440px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:7px; }
+  .vp-title { grid-column:1/-1; font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+
+  .nav-strip { width:100%; max-width:1440px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover, .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ══ RAMA OKNA PRZEGLĄDARKI — desktopowy odpowiednik `.phone` ══ */
+  .browser {
+    width:1440px; height:900px; border-radius:14px; background:var(--bg);
+    border:1px solid #1C1E24;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.03), 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--app-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--app-scale) - 1) * 900px);
+    display:flex; flex-direction:column;
+  }
+  .chrome { height:40px; flex-shrink:0; background:#0A0A0C; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; padding:0 14px; }
+  .chrome-dots { display:flex; gap:7px; flex-shrink:0; }
+  .chrome-dots i { width:11px; height:11px; border-radius:50%; background:var(--border-strong); }
+  .chrome-url { flex:1; max-width:460px; height:24px; border-radius:6px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; gap:7px; padding:0 10px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:0.5px; }
+  .chrome-url svg { color:var(--green); flex-shrink:0; }
+  .chrome-url b { color:var(--text-secondary); font-weight:400; }
+
+  /* ══ SHELL: sidebar + topbar + treść ══ */
+  .shell { flex:1; display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:0; }
+
+  .sidebar { background:#0A0A0C; border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
+  .brand { height:var(--topbar-h); flex-shrink:0; display:flex; align-items:center; gap:10px; padding:0 18px; border-bottom:1px solid var(--border); }
+  .brand-mark { width:26px; height:26px; border-radius:7px; background:var(--green-muted); border:1px solid var(--green-border); display:flex; align-items:center; justify-content:center; color:var(--green); flex-shrink:0; }
+  .brand-name { font-family:var(--font-display); font-size:19px; letter-spacing:2.5px; line-height:1; }
+  .brand-role { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-top:2px; }
+  .side-nav { flex:1; overflow-y:auto; padding:14px 10px; display:flex; flex-direction:column; gap:2px; scrollbar-width:none; }
+  .side-nav::-webkit-scrollbar { display:none; }
+  .nav-group { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:14px 10px 6px; }
+  .nav-group:first-child { padding-top:2px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:9px; text-decoration:none; color:var(--text-secondary); font-size:13px; font-weight:500; border:1px solid transparent; min-height:36px; }
+  .nav-item:hover { background:var(--surface); color:var(--text-primary); }
+  .nav-item.active { background:var(--green-muted); border-color:var(--green-border); color:var(--green); font-weight:600; }
+  .nav-item svg { flex-shrink:0; opacity:0.85; }
+  .nav-count { margin-left:auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); }
+  .nav-count.amber { background:var(--amber-muted); color:var(--amber); border-color:var(--amber-border); }
+  .nav-count.red { background:var(--red-muted); color:var(--red); border-color:var(--red-border); }
+  /* pozycja niedostępna dla roli — widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
+  .nav-item.locked { opacity:0.4; cursor:not-allowed; }
+  .nav-item.locked .nav-count { background:transparent; border-color:transparent; }
+
+  .side-foot { flex-shrink:0; border-top:1px solid var(--border); padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .who { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:10px; background:var(--surface); border:1px solid var(--border); }
+  .who-avatar { width:30px; height:30px; border-radius:50%; background:var(--blue-muted); border:1px solid var(--blue-border); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--blue); flex-shrink:0; }
+  .who-body { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .who-name { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .who-role { font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
+
+  .main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+  .topbar { height:var(--topbar-h); flex-shrink:0; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 22px; }
+  .crumbs { display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .crumbs b { color:var(--text-primary); font-weight:500; }
+  .crumbs span { color:var(--border-strong); }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  /* zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC */
+  .utc-clock { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
+  .utc-clock b { color:var(--text-primary); font-weight:700; }
+  .utc-clock i { font-style:normal; color:var(--blue); font-size:9px; letter-spacing:1.5px; }
+
+  .content { flex:1; overflow-y:auto; padding:22px; display:flex; flex-direction:column; gap:18px; }
+  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć — inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
+  .content > *, .drawer-body > * { flex-shrink:0; }
+  .content::-webkit-scrollbar { width:10px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
+
+  /* ── nagłówek strony ── */
+  .page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+  .page-title { font-family:var(--font-display); font-size:30px; letter-spacing:2px; line-height:1; }
+  .page-sub { font-size:12.5px; color:var(--text-secondary); margin-top:6px; line-height:1.5; max-width:640px; }
+  .page-actions { display:flex; gap:9px; flex-shrink:0; }
+
+  /* ── przyciski ── */
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:36px; padding:8px 15px; border-radius:10px; font-family:var(--font-body); font-size:12.5px; font-weight:600; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .btn:hover { background:var(--surface-hover); }
+  .btn.primary { background:var(--green); border-color:var(--green); color:#0A0A0A; }
+  .btn.primary:hover { filter:brightness(1.08); }
+  .btn.danger { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
+  .btn.ghost { background:transparent; border-color:var(--border); color:var(--text-secondary); }
+  .btn:disabled, .btn.disabled { opacity:0.4; cursor:not-allowed; }
+  .btn.sm { min-height:30px; padding:5px 11px; font-size:11.5px; border-radius:8px; }
+
+  /* ── karty i kafle ── */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+  .card-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+  .card-title::before { content:''; width:3px; height:11px; border-radius:2px; background:var(--border-strong); flex-shrink:0; }
+  .card-title .spacer { margin-left:auto; }
+
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; }
+  .tile-key { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
+  .tile-val { font-family:var(--font-mono); font-size:28px; font-weight:700; line-height:1; letter-spacing:-0.5px; }
+  .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
+  .tile-val.green { color:var(--green); } .tile-val.amber { color:var(--amber); } .tile-val.red { color:var(--red); } .tile-val.blue { color:var(--blue); }
+  .tile-note { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+
+  /* ── pasek filtrów ── */
+  .filters { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .search { flex:1; min-width:220px; max-width:340px; height:36px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); display:flex; align-items:center; gap:9px; padding:0 12px; }
+  .search:focus-within { border-color:var(--green-border); }
+  .search svg { color:var(--text-muted); flex-shrink:0; }
+  .search input { flex:1; background:none; border:none; outline:none; color:var(--text-primary); font-family:var(--font-body); font-size:12.5px; }
+  .search input::placeholder { color:var(--text-muted); }
+  .chip { display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:5px 12px; border-radius:999px; background:var(--surface-raised); border:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-secondary); cursor:pointer; }
+  .chip:hover { border-color:var(--border-strong); color:var(--text-primary); }
+  .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
+
+  /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
+  .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
+  table { width:100%; border-collapse:collapse; }
+  thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
+  thead th.sortable { cursor:pointer; }
+  thead th.sortable:hover { color:var(--text-secondary); }
+  thead th .arrow { color:var(--green); margin-left:4px; }
+  tbody td { padding:11px 14px; border-bottom:1px solid var(--hairline); font-size:12.5px; color:var(--text-primary); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:var(--surface-raised); }
+  tbody tr.clickable { cursor:pointer; }
+  td.num, td.mono, th.num { font-family:var(--font-mono); letter-spacing:0.3px; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td.dim { color:var(--text-secondary); }
+  .cell-strong { font-weight:600; }
+  .cell-sub { display:block; font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; }
+  .reg { font-family:var(--font-mono); font-weight:700; letter-spacing:1px; }
+  .row-actions { display:flex; gap:6px; justify-content:flex-end; }
+
+  /* ── plakietki stanu ── */
+  .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; border:1px solid; white-space:nowrap; }
+  .pill.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }
+  .pill.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .pill.red   { color:var(--red);   background:var(--red-muted);   border-color:var(--red-border); }
+  .pill.blue  { color:var(--blue);  background:var(--blue-muted);  border-color:var(--blue-border); }
+  .pill.dim   { color:var(--text-muted); background:var(--surface-raised); border-color:var(--border); }
+  .pill .dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+  .pill .dot.live { animation:pulse 1800ms ease-in-out infinite; }
+
+  /* ── formularze (wzorzec z aplikacji: --surface-raised, r12, focus zielony) ── */
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .label { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
+  .input { min-height:40px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); padding:10px 13px; color:var(--text-primary); font-family:var(--font-body); font-size:13px; outline:none; width:100%; }
+  .input:focus { border-color:var(--green-border); }
+  .input.mono { font-family:var(--font-mono); letter-spacing:0.5px; }
+  .input::placeholder { color:var(--text-muted); }
+  .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .hint b { color:var(--amber); font-weight:600; }
+  /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
+  .opt-list { display:flex; flex-direction:column; gap:8px; }
+  .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
+  .opt:hover { background:var(--surface-hover); }
+  .opt.selected { border-color:var(--green-border); background:rgba(46,204,113,0.05); box-shadow:0 0 0 3px rgba(46,204,113,0.05); }
+  .opt-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .opt-name { font-size:13px; font-weight:600; }
+  .opt-desc { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
+  .opt-check { color:var(--green); opacity:0; flex-shrink:0; }
+  .opt.selected .opt-check { opacity:1; }
+  .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
+
+  /* ── banery (3 typy — docs/design-notes.md) ── */
+  .banner { display:flex; align-items:flex-start; gap:10px; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.55; border:1px solid; }
+  .banner svg { flex-shrink:0; margin-top:2px; }
+  .banner b { font-weight:700; }
+  .banner.status  { background:var(--blue-muted);  border-color:var(--blue-border);  color:var(--text-secondary); }
+  .banner.status svg, .banner.status b { color:var(--blue); }
+  .banner.warn    { background:var(--amber-muted); border-color:var(--amber-border); color:var(--text-secondary); }
+  .banner.warn svg, .banner.warn b { color:var(--amber); }
+  .banner.danger  { background:var(--red-muted);   border-color:var(--red-border);   color:var(--text-secondary); }
+  .banner.danger svg, .banner.danger b { color:var(--red); }
+  .banner.ok      { background:var(--green-muted); border-color:var(--green-border); color:var(--text-secondary); }
+  .banner.ok svg, .banner.ok b { color:var(--green); }
+
+  /* ── stany: pusty, ładowanie, brak uprawnień ── */
+  .empty { display:flex; flex-direction:column; align-items:center; gap:10px; padding:52px 20px; text-align:center; }
+  .empty-icon { width:52px; height:52px; border-radius:14px; background:var(--surface-raised); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+  .empty-title { font-family:var(--font-display); font-size:20px; letter-spacing:1.5px; color:var(--text-secondary); }
+  .empty-note { font-size:12px; color:var(--text-muted); max-width:380px; line-height:1.6; }
+  .skel { height:13px; border-radius:6px; background:linear-gradient(90deg,var(--surface-raised) 0%,var(--surface-hover) 50%,var(--surface-raised) 100%); background-size:200% 100%; animation:shimmer 1400ms linear infinite; }
+  @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+  .no-access { display:flex; flex-direction:column; align-items:center; gap:12px; padding:60px 20px; text-align:center; }
+
+  /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
+  .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
+  .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
+  .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+  .drawer-title { font-family:var(--font-display); font-size:22px; letter-spacing:1.5px; line-height:1; }
+  .drawer-sub { font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+  .drawer-body { flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+  .drawer-foot { flex-shrink:0; padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:9px; justify-content:flex-end; }
+  .x-btn { width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:var(--surface-raised); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+
+  /* ── wiersz klucz/wartość (szczegóły, audyt) ── */
+  .kv { display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:7px 0; border-bottom:1px solid var(--hairline); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
+  .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; letter-spacing:0.3px; }
+  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
+  .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
+
+  /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
+  .tl { display:flex; flex-direction:column; }
+  .tl-row { display:grid; grid-template-columns:74px 20px 1fr auto; align-items:start; gap:10px; padding:8px 0; border-bottom:1px solid var(--hairline); }
+  .tl-time { font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
+  .tl-rail { display:flex; justify-content:center; padding-top:4px; position:relative; }
+  .tl-dot { width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--bg); z-index:1; }
+  .tl-dot.green { background:var(--green); } .tl-dot.amber { background:var(--amber); } .tl-dot.red { background:var(--red); } .tl-dot.blue { background:var(--blue); }
+  .tl-row:not(:last-child) .tl-rail::after { content:''; position:absolute; top:8px; bottom:-14px; width:1px; background:var(--border); }
+  .tl-name { font-size:12.5px; font-weight:600; }
+  .tl-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
+  .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+
+  /* ── siatka dwukolumnowa treści ── */
+  .cols { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
+  .cols.even { grid-template-columns:1fr 1fr; }
+
+  /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
+  .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — PANEL · A02</span>
+  <span class="slug">dni lotne · lista sesji · czasy UTC</span>
+  <span class="canvas-meta"><span class="pulse"></span>Rodzina A02 · A02a · A02b</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Dzień lotny — trzy ekrany, kiedy który?</div>
+  <a class="vp-item active" href="A02-dni.html">
+    <span class="vp-badge">A02</span>
+    <span class="vp-body">
+      <span class="vp-name">Lista dni lotnych</span>
+      <span class="vp-when">Wejście do operacji: wszystkie sesje w zakresie dat, z filtrami po samolocie, pilocie i stanie. Stąd wchodzi się w konkretny dzień.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="A02a-dzien.html">
+    <span class="vp-badge">A02A</span>
+    <span class="vp-body">
+      <span class="vp-name">Szczegół dnia</span>
+      <span class="vp-when">Kliknięcie wiersza: kafle podsumowania, pełna oś zdarzeń, lista lotów i flagi dnia. Ma też stan „dzień otwarty — telefon dosyła zdarzenia".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="A02b-korekta.html">
+    <span class="vp-badge amber">A02B</span>
+    <span class="vp-body">
+      <span class="vp-name">Korekta administratora</span>
+      <span class="vp-when">Tylko po zamknięciu okna 24 h (do 24 h pilot poprawia sam na ekranie 04C aplikacji). Szuflada nad osią zdarzeń: <code>retime</code> albo <code>void</code>, zawsze z powodem.</span>
+    </span>
+  </a>
+</aside>
+
+<main class="browser" role="region" aria-label="Panel administracyjny — lista dni lotnych">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>admin.uzaero.pl</b>/dni?od=2026-07-25&amp;do=2026-07-31
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <nav class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span>
+          <div class="brand-name">UZ AERO</div>
+          <div class="brand-role">Panel administracyjny</div>
+        </span>
+      </div>
+
+      <div class="side-nav">
+        <div class="nav-group">Operacje</div>
+        <a class="nav-item" href="A01-pulpit.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Pulpit
+        </a>
+        <a class="nav-item active" href="A02-dni.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+          Dni lotne
+        </a>
+        <a class="nav-item" href="A03-flagi.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          Flagi
+          <span class="nav-count amber">7</span>
+        </a>
+
+        <div class="nav-group">Rejestr</div>
+        <a class="nav-item" href="A04-zdarzenia.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Zdarzenia
+        </a>
+        <a class="nav-item" href="A05-eksporty.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Eksporty
+        </a>
+        <a class="nav-item" href="A09-audyt.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+          Audyt
+        </a>
+
+        <div class="nav-group">Raporty</div>
+        <a class="nav-item" href="A10-statystyki.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Statystyki
+        </a>
+
+        <div class="nav-group">Konfiguracja</div>
+        <a class="nav-item" href="A06-piloci.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Piloci
+        </a>
+        <a class="nav-item" href="A07-flota.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+          Flota
+        </a>
+        <a class="nav-item" href="A08-progi.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Progi i ustawienia
+        </a>
+        <a class="nav-item" href="A11-konserwacja.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></svg>
+          Konserwacja
+        </a>
+      </div>
+
+      <div class="side-foot">
+        <div class="who">
+          <span class="who-avatar">TM</span>
+          <span class="who-body">
+            <span class="who-name">Tomasz Małkiewicz</span>
+            <span class="who-role">Administrator</span>
+          </span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs">Panel <span>/</span> Operacje <span>/</span> <b>Dni lotne</b></div>
+        <div class="topbar-right">
+          <span class="utc-clock"><i>UTC</i> <b>14:22:07</b> · 31 JUL 2026</span>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">DNI LOTNE</h1>
+            <p class="page-sub">Jeden wiersz = jedna sesja (<code>session_claim</code> → <code>day_close</code>). Wszystkie liczby to projekcja <code>projectSession</code> ze strumienia zdarzeń — ta sama funkcja, która liczy statystyki w telefonie pilota. Panel niczego nie przelicza po swojemu.</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn ghost">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Eksport CSV
+            </button>
+          </div>
+        </div>
+
+        <div class="tiles">
+          <div class="tile"><span class="tile-key">Dni w zakresie</span><span class="tile-val">12</span><span class="tile-note">25–31 JUL 2026 · 3 samoloty.</span></div>
+          <div class="tile"><span class="tile-key">W locie teraz</span><span class="tile-val green">1<small> / 3</small></span><span class="tile-note">SP-ABC — aktywny claim, silnik pracuje.</span></div>
+          <div class="tile"><span class="tile-key">Dni z flagą</span><span class="tile-val amber">2</span><span class="tile-note">SP-KLM 29 i 30 JUL — <code>MH_GAP</code> spina obie sesje.</span></div>
+          <div class="tile"><span class="tile-key">Wyeksportowane</span><span class="tile-val">8<small> / 9 zamkniętych</small></span><span class="tile-note">SP-XYZ 31 JUL czeka w kolejce eksportu.</span></div>
+        </div>
+
+        <div class="filters">
+          <label class="search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input placeholder="Pilot, rejestracja albo session_uuid…" />
+          </label>
+          <span class="chip on">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            25 JUL → 31 JUL 2026
+          </span>
+          <span class="chip on">Wszystkie samoloty</span>
+          <span class="chip">SP-ABC</span>
+          <span class="chip">SP-KLM</span>
+          <span class="chip">SP-XYZ</span>
+        </div>
+
+        <div class="filters">
+          <span class="chip on">Wszystkie stany</span>
+          <span class="chip">W locie</span>
+          <span class="chip">Dzień otwarty</span>
+          <span class="chip amber">Z flagą</span>
+          <span class="chip">Zamknięte</span>
+          <span class="chip">Wyeksportowane</span>
+          <span style="margin-left:auto;display:inline-flex;align-items:center;gap:9px;">
+            <span class="pill blue"><span class="dot"></span>Wszystkie czasy UTC</span>
+            <span class="pill dim">12 wierszy</span>
+          </span>
+        </div>
+
+        <div class="filters">
+          <span class="chip on">Każda operacja</span>
+          <span class="chip">Skoki</span>
+          <span class="chip">Egzamin</span>
+          <span class="chip">Ferry</span>
+          <span class="chip">Techniczny</span>
+          <span class="chip">Inne</span>
+          <span class="pill amber" style="margin-left:auto;">DO DOROBIENIA · migracja projekcji</span>
+        </div>
+
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><b>DO DOROBIENIA: migracja projekcji <code>sessions</code>.</b> Kolumna <b>Operacja</b> (wraz z klientem), filtr operacji i <b>czas służby</b> pokazują stan docelowy — dziś projekcja serwera nie ma kolumn <code>operation</code>, <code>client</code> ani <code>duty_start</code>. Wszystkie trzy wartości są w payloadzie <code>preflight_confirm</code> i <code>day_close</code>, więc migracja to przepisanie projekcji, nie zmiana modelu zdarzeń. Do tego czasu te pola nie są sortowalne ani filtrowalne po stronie bazy.</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable">Dzień · UTC <span class="arrow">↓</span></th>
+                <th>Samolot</th>
+                <th>Operacja <span class="arrow" style="color:var(--amber)">△</span></th>
+                <th>PIC · dual</th>
+                <th class="num">Blok</th>
+                <th class="num">Czas lotu</th>
+                <th class="num">Loty</th>
+                <th class="num">MH start → koniec</th>
+                <th class="num">FOB start → koniec</th>
+                <th>Stan</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <tr class="clickable">
+                <td class="mono">31 JUL 2026<span class="cell-sub">claim 12:08</span></td>
+                <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
+                <td><span class="pill dim">EGZAMIN</span><span class="cell-sub">EPWA · CPL(A)</span></td>
+                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">TML · dual: —</span></td>
+                <td class="num">02:14</td>
+                <td class="num">01:47</td>
+                <td class="num">3</td>
+                <td class="num">1284.6 → <span style="color:var(--text-muted)">—</span><span class="cell-sub">licznik dziesiętny</span></td>
+                <td class="num">168 → <span style="color:var(--text-muted)">—</span><span class="cell-sub">litry</span></td>
+                <td><span class="pill green"><span class="dot live"></span>W locie</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">31 JUL 2026<span class="cell-sub">claim 05:38</span></td>
+                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
+                <td><span class="pill blue">SKOKI</span><span class="cell-sub">SKY CAMP</span></td>
+                <td class="cell-strong">Anna Wrzosek<span class="cell-sub">AWR · dual: K. Nowak</span></td>
+                <td class="num">04:38</td>
+                <td class="num">03:02</td>
+                <td class="num">8</td>
+                <td class="num">3907.8 → <span style="color:var(--text-muted)">—</span></td>
+                <td class="num">812 → <span style="color:var(--text-muted)">—</span></td>
+                <td><span class="pill blue"><span class="dot"></span>Dzień otwarty</span><span class="cell-sub">dane w drodze · sync 24 min temu</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">31 JUL 2026<span class="cell-sub">zamknięty 11:02</span></td>
+                <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
+                <td><span class="pill dim">INNE</span><span class="cell-sub">szkolenie · EPBC</span></td>
+                <td class="cell-strong">Piotr Czarnecki<span class="cell-sub">PCZ · dual: —</span></td>
+                <td class="num">01:18</td>
+                <td class="num">01:04</td>
+                <td class="num">4</td>
+                <td class="num">645:06 → 646:24<span class="cell-sub">licznik hh:mm</span></td>
+                <td class="num">92 → 68</td>
+                <td><span class="pill dim">Zamknięty</span><span class="cell-sub">eksport w kolejce</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable" style="background:var(--amber-muted);">
+                <td class="mono">30 JUL 2026<span class="cell-sub">zamknięty 13:22</span></td>
+                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
+                <td><span class="pill blue">SKOKI</span><span class="cell-sub">SKY CAMP · zlec. 2026/141</span></td>
+                <td class="cell-strong">Anna Wrzosek<span class="cell-sub">AWR · dual: M. Bąk → K. Nowak</span></td>
+                <td class="num">05:53</td>
+                <td class="num">03:35</td>
+                <td class="num">9</td>
+                <td class="num">3902.1 → 3907.8<span class="cell-sub">Δ 5.7 h vs blok 5:53</span></td>
+                <td class="num">780 → 153</td>
+                <td><span class="pill amber"><span class="dot"></span>2 flagi</span><span class="cell-sub">MH_GAP · CLOCK_DRIFT</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">30 JUL 2026<span class="cell-sub">zamknięty 16:41</span></td>
+                <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
+                <td><span class="pill dim">FERRY</span><span class="cell-sub">EPWA → EPMO</span></td>
+                <td class="cell-strong">Jacek Zieliński<span class="cell-sub">JZI · dual: —</span></td>
+                <td class="num">03:06</td>
+                <td class="num">02:41</td>
+                <td class="num">5</td>
+                <td class="num">1281.5 → 1284.6</td>
+                <td class="num">190 → 84</td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-30_SP-ABC · rewizja 1">Wyeksportowany ↗</a></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">30 JUL 2026<span class="cell-sub">zamknięty 14:09</span></td>
+                <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
+                <td><span class="pill dim">EGZAMIN</span><span class="cell-sub">EPBC · PPL(A)</span></td>
+                <td class="cell-strong">Karolina Nowak<span class="cell-sub">KNO · dual: —</span></td>
+                <td class="num">02:24</td>
+                <td class="num">02:08</td>
+                <td class="num">9</td>
+                <td class="num">642:42 → 645:06<span class="cell-sub">licznik hh:mm</span></td>
+                <td class="num">96 → 52</td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-30_SP-XYZ · rewizja 1">Wyeksportowany ↗</a></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable" style="background:var(--amber-muted);">
+                <td class="mono">29 JUL 2026<span class="cell-sub">zamknięty 15:47</span></td>
+                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
+                <td><span class="pill blue">SKOKI</span><span class="cell-sub">STREFA RADOM</span></td>
+                <td class="cell-strong">Marek Bąk<span class="cell-sub">MBK · dual: —</span></td>
+                <td class="num">04:47</td>
+                <td class="num">02:58</td>
+                <td class="num">7</td>
+                <td class="num">3896.7 → 3901.4</td>
+                <td class="num">720 → 388</td>
+                <td><span class="pill amber"><span class="dot"></span>1 flaga</span><span class="cell-sub">MH_GAP (z 30 JUL)</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">29 JUL 2026<span class="cell-sub">zamknięty 13:12</span></td>
+                <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
+                <td><span class="pill dim">INNE</span><span class="cell-sub">przelot zapoznawczy</span></td>
+                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">TML · dual: —</span></td>
+                <td class="num">02:52</td>
+                <td class="num">02:20</td>
+                <td class="num">4</td>
+                <td class="num">1278.6 → 1281.5</td>
+                <td class="num">176 → 96</td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-29_SP-ABC · rewizja 2">Wyeksportowany ↗</a><span class="cell-sub">rewizja 2</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">28 JUL 2026<span class="cell-sub">zamknięty 17:26</span></td>
+                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
+                <td><span class="pill blue">SKOKI</span><span class="cell-sub">SKY CAMP</span></td>
+                <td class="cell-strong">Anna Wrzosek<span class="cell-sub">AWR · dual: M. Bąk</span></td>
+                <td class="num">06:12</td>
+                <td class="num">04:04</td>
+                <td class="num">10</td>
+                <td class="num">3890.5 → 3896.7</td>
+                <td class="num">806 → 344</td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-28_SP-KLM · rewizja 1">Wyeksportowany ↗</a></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">28 JUL 2026<span class="cell-sub">zamknięty 12:03</span></td>
+                <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
+                <td><span class="pill dim">EGZAMIN</span><span class="cell-sub">EPBC · PPL(A)</span></td>
+                <td class="cell-strong">Piotr Czarnecki<span class="cell-sub">PCZ · dual: K. Nowak</span></td>
+                <td class="num">01:47</td>
+                <td class="num">01:35</td>
+                <td class="num">6</td>
+                <td class="num">640:54 → 642:42<span class="cell-sub">licznik hh:mm</span></td>
+                <td class="num">100 → 74</td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-28_SP-XYZ · rewizja 1">Wyeksportowany ↗</a></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">27 JUL 2026<span class="cell-sub">zamknięty 11:58</span></td>
+                <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
+                <td><span class="pill dim">TECHNICZNY</span><span class="cell-sub">oblot po przeglądzie</span></td>
+                <td class="cell-strong">Anna Wrzosek<span class="cell-sub">AWR · dual: —</span></td>
+                <td class="num">01:34</td>
+                <td class="num">01:12</td>
+                <td class="num">2</td>
+                <td class="num">1277.0 → 1278.6</td>
+                <td class="num">152 → 108</td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-27_SP-ABC · rewizja 1">Wyeksportowany ↗</a></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">27 JUL 2026<span class="cell-sub">zamknięty 10:14</span></td>
+                <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
+                <td><span class="pill dim">INNE</span><span class="cell-sub">szkolenie · EPBC</span></td>
+                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">TML · dual: —</span></td>
+                <td class="num">00:58</td>
+                <td class="num">00:46</td>
+                <td class="num">3</td>
+                <td class="num">639:56 → 640:54<span class="cell-sub">licznik hh:mm</span></td>
+                <td class="num">88 → 74</td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-27_SP-XYZ · rewizja 1">Wyeksportowany ↗</a></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span><b>Dzień otwarty ≠ dzień niekompletny.</b> Sesja bez <code>day_close</code> pokazuje sumy z tego, co dotarło — telefon dosyła zdarzenia w miarę zasięgu, a kolumny „koniec" (MH, FOB) wypełnia dopiero zamknięcie dnia. Do czasu <code>day_close</code> panel niczego nie domyśla i nie ekstrapoluje.</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index panelu</a>
+  <span>·</span>
+  <a href="A01-pulpit.html">← A01 Pulpit</a>
+  <a href="A02-dni.html" class="active">A02 Dni lotne</a>
+  <a href="A02a-dzien.html">A02A Szczegół dnia</a>
+  <a href="A02b-korekta.html">A02B Korekta</a>
+  <span>·</span>
+  <a href="A03-flagi.html">A03 Flagi →</a>
+  <a href="A04-zdarzenia.html">A04 Zdarzenia</a>
+  <a href="A10-statystyki.html">A10 Statystyki</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
+</nav>
+
+</body>
+</html>

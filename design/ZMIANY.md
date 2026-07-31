@@ -808,3 +808,90 @@ rodzaj operacji, trasa i oznaczenie klienta; stepper przenumerowany na 02, 02a, 
 **Index**: karta 02E w katalogu i w pasku przepływu; opisy kart 02 i 02A z numerami kroków.
 
 <!-- Dodawaj kolejne iteracje poniżej -->
+
+---
+
+## 2026-07-31 — Panel administracyjny: nowa powierzchnia, ten sam design system
+
+**Nowy katalog `design/admin/`** — 20 ekranów (A00–A11 z wariantami literowymi), `SZABLON.html`
+jako baza i własny `index.html`. Analiza zakresu, ról i braków serwera: `ANALIZA.md`.
+Odwraca decyzję 2026-07-24 „panel administratora — nie teraz" (§ log decyzji `_main.md.txt`).
+
+**Rama okna przeglądarki 1440×900 zamiast telefonu 393×852.** Desktopowy odpowiednik `.phone`:
+`--app-scale` działa dokładnie jak `--phone-scale`, pasek chrome z URL-em zastępuje Dynamic Island,
+canvas zachowuje układ `canvas-label` → ramka → `variants-panel` → `nav-strip`.
+> Powód: to inne urządzenie i inny użytkownik, ale **nie inny produkt**. Tokeny kolorów, trzy
+> czcionki i reguły projektowe zostają bez jednego wyjątku: zakaz natywnego `<select>` (wybór roli
+> to lista kart), trzy typy banerów, UTC oznaczone jawnie w każdej tabeli. Nowy shell (sidebar
+> 236 px + topbar z zegarem UTC) i komponenty back-office'u (tabele, plakietki stanu, szuflada
+> szczegółu, oś zdarzeń) mieszkają w `SZABLON.html` — każdy ekran kopiuje stamtąd `<head>`.
+
+**A01 Pulpit — każdy samolot niesie fazę ORAZ wiek synchronizacji.**
+> Powód: „w locie" przy syncu sprzed 47 minut to nie jest wiedza o locie, tylko ostatnia znana
+> pozycja. Pilot pracuje offline-first, więc brak zasięgu nie zatrzymuje jego pracy — opóźnia
+> jej widoczność w panelu. Ekran ma się do tego przyznawać, a nie udawać podglądu na żywo:
+> wiersz przechodzi w amber, baner statusu mówi to wprost, a puste słupki na wykresie napływu
+> zdarzeń są podpisane („cisza w rejestrze nie znaczy, że nikt nie lata").
+
+**A08 Progi — dwie klasy, edytowalna tylko jedna.** Progi detekcji (`detection/thresholds.ts`)
+są **tylko do odczytu**; edytowalne są wyłącznie tolerancje flag (`rules/tolerances.ts`), i to
+za dowodem: podglądem wpływu z `replay.ts` na historii plus obowiązkowym powodem.
+> Powód: detekcja liczy się **na telefonie, offline, ze skompilowanej kopii progów**. Suwak
+> w panelu nie dotarłby do samolotu w powietrzu i nie przeliczyłby zapisanych zdarzeń wstecz —
+> dałby złudzenie sterowania. Tolerancje flag serwer stosuje przy scalaniu po fakcie, więc te
+> zmienić można; `CLAUDE.md` zakazuje jednak strojenia „na wyczucie", stąd zapis bez replaya
+> jest w interfejsie niemożliwy, a nie tylko odradzany.
+
+**A02b Korekta — brak edycji z definicji.** Nie ma „edytuj" ani „usuń": są dwie akcje dopisujące
+`event_correction` (`retime` / `void`), oryginał zostaje w rejestrze, a oś zdarzeń pokazuje
+zdarzenie unieważnione **przekreślone, nie usunięte**. Ekran ostrzega, że korekta nie wróci na
+telefon pilota (sync jednokierunkowy) i że zapisze się nazwiskiem PIC-a sesji, bo inaczej serwer
+odrzuci ją jako `WRITER_MISMATCH` — fakt „zrobił to administrator" żyje w audycie.
+
+**Świeżość danych w panelu podajemy WIEKIEM WZGLĘDNYM, nie znacznikiem czasu** (decyzja
+2026-07-31): „sync 3 min temu", „20 godz. temu", „2 dni temu". Znacznik UTC zostaje tam, gdzie
+sam jest wartością (czas zdarzenia, czas eksportu), nie jako adnotacja świeżości.
+> Powód: administrator ocenia, **czy dane są aktualne**, a nie o której dotarły. „31 JUL 14:19
+> UTC" wymaga odjęcia w pamięci od bieżącego zegara; „3 min temu" odpowiada na pytanie od razu.
+> Ujednolicone w A01, A02, A02a, A06, A06a, A07, A07a — wcześniej połowa panelu mówiła skalą
+> dobową, połowa minutową.
+
+**Wartości progowe, których nie ma w żadnym dokumencie, są w mockupach oznaczone jako ROBOCZE.**
+Dotyczy limitu prób logowania na A00a (5 prób / 15 min) — panel wariantów mówi wprost, że mimo
+reguły „mockup wdrażamy 1:1" tych liczb nie wolno przepisać do kodu bez ustalenia.
+> Powód: mockup jest tu zatwierdzoną specyfikacją, więc każda zmyślona liczba staje się
+> wymaganiem przez samo bycie narysowaną. Rate-limit wyjdzie w implementacji i testach z pilotami
+> (faza 5) — do tego czasu ekran ma pokazywać mechanizm, nie udawać, że zna jego parametry.
+
+**A03 Flagi — blokujące eksport na górze listy, przed sortowaniem po wieku.**
+> Powód: otwarta `session_overlap` zatrzymuje eksport karty dnia (`dayExporter.ts`), a dziś nie
+> istnieje kod, który zamknąłby flagę — dokument klubu jest więc nie do wygenerowania. To nie
+> jest niespójność do przejrzenia „kiedyś", tylko zator. Przycisk główny brzmi „Rozwiąż
+> i odblokuj kartę". Typy nieprodukowane przez serwer (`fuel_mismatch`, `clock_drift`) są
+> pokazane jako nieaktywne z etykietą „do wdrożenia" — mockup jest stanem docelowym, ale nie
+> udaje, że coś już działa.
+
+**A01a Cisza i A11 Konserwacja — dwa ekrany dołożone po pierwszym przeglądzie.**
+`A01a` rozstrzyga stan, którego pierwsza tura nie przewidziała: pusty pulpit musi odróżnić
+**„dziś nikt nie lata"** od **„nic do nas nie dotarło"**.
+> Powód: w systemie offline-first oba stany wyglądają w bazie identycznie — brak nowych zdarzeń.
+> Pomylenie ich jest groźne w obie strony: fałszywy spokój, gdy telefony milczą od doby, albo
+> fałszywy alarm w niedzielę bez lotów. Werdykt stoi więc na czterech sprawdzalnych warunkach
+> (wszystkie sesje ostatniego dnia mają `day_close`, zero otwartych claimów, wszystkie karty
+> w arkuszu, wiek ostatniego zdarzenia poniżej progu), a wariant „cisza podejrzana" jest obok
+> jako lista warunków, których pęknięcie przełącza werdykt. Zera są neutralne albo zielone,
+> nigdy czerwone — brak pracy to nie awaria.
+
+`A11` daje ścieżkę operacjom, które dziś robi się ręcznie w bazie: przebudowa projekcji
+`sessions`, kolejka ponowień eksportu, sprzątanie wygasłych tokenów, stan migracji.
+> Powód projektowy: przebudowa projekcji jest **bezpieczna z definicji**, bo `sessions` to
+> zrzut `projectSession(events)` odtwarzalny ze strumienia — rejestr pozostaje nietknięty.
+> Dlatego akcją domyślną jest „przelicz i porównaj bez zapisu", a niezerowa różnica po
+> przeliczeniu jest przedstawiona jako **incydent do zbadania**, nie jako sprzątnięty problem:
+> znaczy, że projekcja dryfowała. Sprzątanie tokenów, jako jedyna operacja naprawdę kasująca
+> dane, dostało osobną strefę z potwierdzeniem i jawną listą tego, czego NIE dotyka.
+
+**Poprawki spójności danych po dołożeniu ekranów**: `A01` używał rejestracji `SP-GHI`, której
+nie ma w kanonicznej piątce floty, i podawał dla `SP-DEF` inny typ oraz motogodziny niż rejestr
+`A07`. Wyrównane do `A07`, bo to on jest w tym zbiorze źródłem prawdy o konfiguracji samolotów —
+wokół jego pojemności zbiorników policzone są tolerancje `fuel_mismatch`.
