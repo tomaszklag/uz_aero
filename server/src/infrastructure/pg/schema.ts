@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -202,6 +202,28 @@ export const MIGRATION_7 = `
     CHECK (role IN ('pilot', 'training_lead', 'admin'));
 `;
 
+/**
+ * Migracja 8: słownik typów flag w bazie (§4.5, katalog w `@uzaero/domain`).
+ *
+ * Powód: `FlagRecord.type` jest od 2026-07-31 typem `FlagType`, a nie `string`, więc
+ * adapter musi wiedzieć, że wartość z kolumny należy do katalogu. Bez ograniczenia
+ * w bazie strażnik w adapterze byłby zgadywaniem; z nim jest asercją, która nigdy
+ * nie powinna wystąpić — i dlatego wolno jej rzucić.
+ *
+ * `ADD CONSTRAINT` nie ma wariantu `IF NOT EXISTS` i do 2026-07-31 była to pułapka:
+ * powtórzenie po przerwanym biegu blokowało start serwera (tak jak migracja 3).
+ * Teraz runner wykonuje skrypt i wpis o zastosowaniu JEDNĄ transakcją, więc stan
+ * „zastosowana, ale nieodnotowana" jest niemożliwy i powtórka nie grozi.
+ *
+ * Katalog liczy pięć pozycji, bo `session_overlap` zastąpił `DOUBLE_CLAIM`
+ * i `TIME_OVERLAP` z §4.5 (uzasadnienie: `packages/domain/src/flags.ts`).
+ */
+export const MIGRATION_8 = `
+  ALTER TABLE flags ADD CONSTRAINT flags_type_known CHECK (
+    type IN ('mh_gap', 'mh_regression', 'session_overlap', 'fuel_mismatch', 'clock_drift')
+  );
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -210,4 +232,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_5,
   MIGRATION_6,
   MIGRATION_7,
+  MIGRATION_8,
 ];

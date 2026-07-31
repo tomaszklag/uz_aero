@@ -17,7 +17,7 @@
  * życia flag należą do warstwy aplikacji.
  */
 
-import { MH_TOLERANCE_H } from '@uzaero/domain';
+import { MH_TOLERANCE_H, type FlagType } from '@uzaero/domain';
 
 export interface ChainLink {
   sessionUuid: string;
@@ -28,8 +28,14 @@ export interface ChainLink {
   closed: boolean;
 }
 
+/**
+ * Kandydat na flagę wykryty w łańcuchu MH — węższy niż katalog domeny, bo ten detektor
+ * produkuje dokładnie trzy typy. `Extract` wiąże go z `FlagType`: przemianowanie
+ * którejkolwiek pozycji w katalogu wywala kompilację tutaj, zamiast zostawić martwy
+ * literał, który nigdy się nie dopasuje.
+ */
 export interface ChainFlag {
-  type: 'mh_gap' | 'mh_regression' | 'session_overlap';
+  type: Extract<FlagType, 'mh_gap' | 'mh_regression' | 'session_overlap'>;
   sessionUuids: string[];
   details: Record<string, number | string>;
 }

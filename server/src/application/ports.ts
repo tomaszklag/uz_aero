@@ -12,7 +12,7 @@
  * serwer, kilkunastu pilotów) każdy dodatkowy ruchomy element to koszt bez zysku.
  */
 
-import type { Event, ReferenceAircraft, ReferencePilot } from '@uzaero/domain';
+import type { Event, FlagStatus, FlagType, ReferenceAircraft, ReferencePilot } from '@uzaero/domain';
 
 import type { PilotRole } from '../domain/roles.ts';
 
@@ -178,13 +178,19 @@ export interface SessionsProjectionPort {
   listByAircraft(db: Queryable, aircraftId: string): Promise<SessionRow[]>;
 }
 
+/**
+ * Wiersz flagi po stronie serwera. Kształt „na drucie" (`type`, `sessionUuids`) idzie
+ * z domeny — `SessionFlag` w `@uzaero/domain` — bo telefon czyta dokładnie te pola
+ * z `/sessions/:uuid/sync-status`. Reszta (`id`, `details`, `status`) jest sprawą
+ * panelu i na telefon nie jedzie.
+ */
 export interface FlagRecord {
   id: number;
-  type: string;
+  type: FlagType;
   aircraftId: string;
   sessionUuids: string[];
   details: Record<string, unknown>;
-  status: 'open' | 'resolved';
+  status: FlagStatus;
 }
 
 export interface FlagsPort {
@@ -194,7 +200,7 @@ export interface FlagsPort {
    */
   ensureOpen(
     tx: Queryable,
-    flag: { type: string; aircraftId: string; sessionUuids: string[]; details: Record<string, unknown> },
+    flag: { type: FlagType; aircraftId: string; sessionUuids: string[]; details: Record<string, unknown> },
   ): Promise<void>;
   openForSession(db: Queryable, sessionUuid: string): Promise<FlagRecord[]>;
   openForAircraft(db: Queryable, aircraftId: string): Promise<FlagRecord[]>;

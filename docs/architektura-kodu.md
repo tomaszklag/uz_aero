@@ -157,14 +157,10 @@ tego samego pilota unieważniają się nawzajem — dziś akceptowalne, bo profi
 jednym telefonie); klucze obce `events`/`sessions` → `pilots`/`aircraft` (dziś spójność
 pilnowana kodem, nie schematem); odświeżanie pola `details` istniejącej flagi przy
 zmianie wielkości dziury MH (dedupe zostawia pierwszy pomiar); transakcyjne pary
-migracji w `migrate.ts` — **ostrzejsze, niż wyglądało**: migracje 3 (`ADD CONSTRAINT`)
-i 6 (`ADD COLUMN`) nie mają `IF NOT EXISTS`, więc powtórzenie po przerwaniu procesu
-między `runScript` a `INSERT INTO schema_migrations` wywala się i **blokuje start
-serwera** (migracje 1–5 na `CREATE TABLE IF NOT EXISTS` przechodzą powtórkę bez szkody;
-ustalone 2026-07-31); sprzątanie wygasłych refresh tokenów (cron/`DELETE` przy
-logowaniu — `rotate()` kasuje wiersz tylko przy przedstawieniu tokenu, `login` wyłącznie
-wstawia, więc tokeny porzucone zostają na zawsze); skrypt administracyjny przebudowy
-projekcji `sessions` ze zdarzeń;
+~~migracji w `migrate.ts`~~ **ZROBIONE 2026-07-31** (patrz niżej); sprzątanie wygasłych
+refresh tokenów (cron/`DELETE` przy logowaniu — `rotate()` kasuje wiersz tylko przy
+przedstawieniu tokenu, `login` wyłącznie wstawia, więc tokeny porzucone zostają na
+zawsze); skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń;
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
 ignorowana); `UNIQUE (session_uuid, revision)` na `export_log` + kolejka ponowień
 nieudanych eksportów i re-eksport po rozwiązaniu flagi przez administratora (dziś
@@ -203,11 +199,53 @@ i wycena: `design/admin/ANALIZA.md`.
 Dwie sprawy z tej analizy są **decyzją produktową, nie robotą do wykonania**: (1) korekta
 administratora **nie wraca na telefon pilota** — sync jest jednokierunkowy, §4.6 nie ma
 endpointu zwracającego zdarzenia do aplikacji, więc pilot zobaczy stare liczby na ekranie 12;
-(2) **§4.5 obiecuje 6 typów flag, `domain/mhChain.ts` produkuje 3** (`mh_gap`,
-`mh_regression`, `session_overlap`) — `FUEL_MISMATCH` i `CLOCK_DRIFT` żyją wyłącznie jako
-lokalne ostrzeżenia w telefonie i nigdy nie docierają do tabeli `flags`, a `DOUBLE_CLAIM`
-i `TIME_OVERLAP` są zwinięte w `session_overlap`. Albo dopisujemy je na serwerze, albo
-prostujemy §4.5 — dziś dokumentacja i kod mówią co innego.
+(2) ~~§4.5 obiecuje 6 typów flag, `domain/mhChain.ts` produkuje 3~~ — **ROZSTRZYGNIĘTE
+2026-07-31: kod dogania dokumentację.** `FUEL_MISMATCH` i `CLOCK_DRIFT` doliczamy przy
+ingescie (dane są — `checkClocks` już porównuje oba zegary), a `session_overlap` zostaje
+następcą `DOUBLE_CLAIM` + `TIME_OVERLAP`. Decyzja musiała zapaść przed cyklem życia flagi,
+bo determinuje kształt `FlagType`.
+
+**Architektura panelu (decyzje 2026-07-31).** Pełne rozstrzygnięcia: `docs/architektura-panelu-serwer.md`
+(podział modeli, ORM, uproszczony CQRS komend admina, audyt w transakcji, sesja przeglądarkowa)
+i `docs/architektura-panelu-frontend.md` (wspólne pakiety, drzewo panelu, mapowanie szablonu
+na komponenty). Skrót wiążący dla tego dokumentu:
+- **bez ORM-a i bez query buildera** — sekcja „Spójność modeli bez ORM" niżej zrewidowana
+  i PODTRZYMANA, z mocniejszym powodem: nie ma tu encji do zarządzania (append-only `events`,
+  `sessions` nadpisywane w całości), więc change tracking zaprasza do obejścia strumienia;
+- **panel nie widzi modelu persystencji** — wyłącznie DTO z `/admin/api/*` (nie `/admin/*`:
+  kolizja z wildcardem `@fastify/static`); osobnego pakietu „modele z bazy" nie tworzymy;
+- **wspólne pakiety są nie-wizualne**: `@uzaero/tokens` i `@uzaero/format`; komponentów
+  między RN a webem nie dzielimy;
+- ~~kształt flagi przenieść do `packages/domain/src/flags.ts`~~ — **ZROBIONE 2026-07-31**
+  (patrz niżej).
+
+**Przekrój 0 panelu — zrobione 2026-07-31.** Dwie rzeczy, które musiały wejść przed
+cyklem życia flagi, bo obie zmniejszają ryzyko wszystkiego, co po nich:
+
+1. **Runner migracji jest transakcyjny.** `migrate.ts` puszcza skrypt i wpis do
+   `schema_migrations` jednym łańcuchem `BEGIN … COMMIT`, więc stan „zmigrowana, ale
+   nieodnotowana" jest niemożliwy. Wcześniej śmierć procesu w szczelinie między tymi
+   poleceniami powodowała, że przy następnym starcie runner puszczał skrypt drugi raz —
+   a migracje 3 (`ADD CONSTRAINT`) i 6 (`ADD COLUMN`) nie mają `IF NOT EXISTS`, więc
+   powtórka wywalała się i **blokowała start serwera**.
+   Naprawa odsłoniła drugą wadę, której nie było widać w kodzie, a którą pokazał
+   prawdziwy silnik w teście: po nieudanej migracji jawne `BEGIN` zostawia sesję
+   w stanie *aborted transaction*, więc każde kolejne polecenie na tym połączeniu
+   dostaje „current transaction is aborted" — jedna zła migracja zatruwała połączenie
+   na resztę jego życia. Runner robi teraz jawny `ROLLBACK` przed przekazaniem błędu
+   dalej. Własności pilnuje `test/migrate.test.ts` (m.in. „nieudana migracja nie
+   zostawia ani wpisu, ani skutków DDL" i „po nieudanej migracji kolejny bieg stosuje
+   poprawioną wersję").
+   Skutek uboczny, dla którego to była pierwsza pozycja: `ADD CONSTRAINT` przestał być
+   pułapką, więc migracja 8 mogła bezpiecznie dołożyć `CHECK` na `flags.type`.
+2. **Kształt flagi ma jedno miejsce.** `packages/domain/src/flags.ts` — katalog
+   `FLAG_TYPES` (pięć pozycji: `session_overlap` zastąpił `DOUBLE_CLAIM` i `TIME_OVERLAP`
+   z §4.5), `FlagType`, `FlagStatus`, `SessionFlag` (kształt „na drucie") i strażnik
+   `isFlagType`. Zastąpił cztery ręcznie przepisane deklaracje. `ChainFlag` w
+   `server/src/domain/mhChain.ts` jest teraz `Extract<FlagType, …>`, więc przemianowanie
+   pozycji katalogu wywala kompilację zamiast zostawić martwy literał. `FlagRecord.type`
+   przestał być `string`, a adapter `flagsRepo` rzuca na wartości spoza katalogu —
+   ciche pominięcie flagi byłoby najgorszą opcją, bo flaga istnieje po to, żeby być widoczna.
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
 jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób

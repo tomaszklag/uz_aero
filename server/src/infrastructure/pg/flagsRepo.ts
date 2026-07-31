@@ -6,6 +6,8 @@
  * a nie kolumna w `sessions`.
  */
 
+import { isFlagType, type FlagType } from '@uzaero/domain';
+
 import type { FlagRecord, FlagsPort, Queryable } from '../../application/ports.ts';
 
 interface FlagDbRow {
@@ -17,19 +19,28 @@ interface FlagDbRow {
   status: string;
 }
 
-const toFlag = (r: FlagDbRow): FlagRecord => ({
-  id: r.id,
-  type: r.type,
-  aircraftId: r.aircraft_id,
-  sessionUuids: r.session_uuids,
-  details: r.details,
-  status: r.status === 'resolved' ? 'resolved' : 'open',
-});
+const toFlag = (r: FlagDbRow): FlagRecord => {
+  // Wartość spoza katalogu jest niemożliwa: pisze tu wyłącznie `ensureOpen` (typowany
+  // na `FlagType`), a od migracji 8 pilnuje tego CHECK w bazie. Jeśli mimo to wystąpi,
+  // znaczy to, że ktoś zdjął ograniczenie albo grzebał ręcznie — i wtedy CICHE
+  // pominięcie byłoby najgorszą z opcji, bo flaga istnieje po to, żeby być widoczna.
+  if (!isFlagType(r.type)) {
+    throw new Error(`Nieznany typ flagi w bazie: ${r.type} (id ${r.id})`);
+  }
+  return {
+    id: r.id,
+    type: r.type,
+    aircraftId: r.aircraft_id,
+    sessionUuids: r.session_uuids,
+    details: r.details,
+    status: r.status === 'resolved' ? 'resolved' : 'open',
+  };
+};
 
 export class PgFlagsRepo implements FlagsPort {
   async ensureOpen(
     tx: Queryable,
-    flag: { type: string; aircraftId: string; sessionUuids: string[]; details: Record<string, unknown> },
+    flag: { type: FlagType; aircraftId: string; sessionUuids: string[]; details: Record<string, unknown> },
   ): Promise<void> {
     const uuids = [...flag.sessionUuids].sort();
     // Dedupe po (typ, zestaw sesji) — CELOWO obejmuje też flagi `resolved`: anomalia
