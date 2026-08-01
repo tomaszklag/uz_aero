@@ -30,7 +30,7 @@ import type { PanelSessionDto } from '../api/dto';
  *
  * Przedrostek `Panel` nie jest ozdobą — `SessionState` w tym repozytorium jest już
  * zajęte przez projekcję dnia lotnego z `@uzaero/domain` (silnik, loty, paliwo,
- * motogodziny). Obie nazwy spotykają się w `screens/dzien/DzienScreen.tsx`, więc
+ * motogodziny). Obie nazwy spotykają się w `screens/day/DayScreen.tsx`, więc
  * gołe `SessionState` znaczyłoby tam dwie zupełnie różne rzeczy. Ta sama konwencja
  * co `PanelSessionDto` w `api/dto.ts`.
  */

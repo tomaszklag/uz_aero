@@ -57,7 +57,7 @@ export type Capability =
  * a panel nigdy nie importuje z wnętrza serwera (§5.2). Różnica jest jednak istotna
  * i dlatego ta kopia dostaje mechanizm, którego `Capability` nie ma: ekran `A09` musi
  * mieć KOMPLET kodów, bo mapuje każdy z nich na plakietkę i opis (`Record<AdminAction,
- * …>` w `screens/audyt/audytActions.ts` wymusza to kompilatorem). Lista przepisana
+ * …>` w `screens/audit/auditActions.ts` wymusza to kompilatorem). Lista przepisana
  * ręcznie i niepilnowana rozjechałaby się przy pierwszej nowej komendzie panelu —
  * i objawiłoby się to dopiero wtedy, gdy ktoś by tej akcji szukał w dzienniku.
  *
@@ -542,7 +542,7 @@ export interface TimelineEntryDto {
 export interface SessionDetailDto {
   session: SessionListItemDto;
   state: SessionState;
-  /** Porządek CHRONOLOGICZNY nadaje serwer. Panel go NIE zmienia (patrz `dzienTimeline`). */
+  /** Porządek CHRONOLOGICZNY nadaje serwer. Panel go NIE zmienia (patrz `dayTimeline`). */
   timeline: TimelineEntryDto[];
   /** Flagi sesji RAZEM z rozwiązanymi — historia decyzji zostaje na karcie. */
   flags: FlagListItemDto[];
@@ -557,7 +557,7 @@ export interface SessionDetailDto {
  * `action` i `actorRole` opisują stan świata Z CHWILI AKCJI. Migracja 9 świadomie nie
  * zakłada na nie `CHECK`-a, żeby przemianowanie akcji albo wycofanie roli nie
  * unieważniało wpisu sprzed roku. Panel idzie za tą decyzją: kod spoza katalogu
- * pokazujemy DOSŁOWNIE (`audytActions.ts`), zamiast go ukrywać albo wywracać się na nim.
+ * pokazujemy DOSŁOWNIE (`auditActions.ts`), zamiast go ukrywać albo wywracać się na nim.
  * Dziennik nadzoru, który nie otwiera się przez własną historię, przestaje być dziennikiem.
  *
  * `details` jest workiem o kształcie zależnym od akcji — serwer wydaje go bez
@@ -597,7 +597,7 @@ export interface AuditPageDto {
    * PIERWSZEJ strony (bez kursora): jest własnością zapytania, a nie strony, więc nie
    * zmienia się przy przewijaniu, a pełny `COUNT(*)` na dzienniku bez górnej granicy
    * jest wielokrotnie droższy od samej strony. Panel niesie wartość z pierwszej strony
-   * (`audytPages.ts`) i nigdy nie zamienia `null` na `0` — zero jest twierdzeniem
+   * (`auditPages.ts`) i nigdy nie zamienia `null` na `0` — zero jest twierdzeniem
    * o świecie, brak odpowiedzi nim nie jest.
    */
   total: number | null;
@@ -708,7 +708,7 @@ export interface PilotChangeDto {
  * Powód, dla którego serwer ODMÓWIŁ zmiany na koncie (`409 refused`).
  *
  * Lustro `AccountRefusal` z `server/src/domain/accountGuards.ts`. Kody są surowe —
- * nazwanie ich po polsku jest sprawą panelu (`screens/piloci/kontoActions.ts`),
+ * nazwanie ich po polsku jest sprawą panelu (`screens/pilots/accountActions.ts`),
  * bo serwer nie zna języka interfejsu.
  */
 export type PilotRefusalDto =
@@ -852,7 +852,7 @@ export interface AircraftChangeDto {
  * Powód, dla którego serwer ODMÓWIŁ zmiany konfiguracji (`409 refused`).
  *
  * Lustro `FleetRefusal` z `server/src/domain/fleetGuards.ts`. Kody są surowe —
- * nazwanie ich po polsku jest sprawą panelu (`screens/flota/samolotActions.ts`),
+ * nazwanie ich po polsku jest sprawą panelu (`screens/fleet/aircraftActions.ts`),
  * bo serwer nie zna języka interfejsu.
  */
 export type FleetRefusalDto = 'capacity_not_positive' | 'open_session';
@@ -985,7 +985,7 @@ export interface DashboardCountsDto {
  * Kolejka „Wymaga uwagi" jako TRZY listy w kontraktach ekranów docelowych.
  *
  * Spłaszczenie ich na serwerze wymagałoby czwartej definicji „sprawy"; złożenie
- * w jeden porządek jest decyzją o treści ekranu i mieszka w `pulpitTodo.ts`.
+ * w jeden porządek jest decyzją o treści ekranu i mieszka w `dashboardTodo.ts`.
  */
 export interface DashboardAttentionDto {
   flags: FlagListItemDto[];

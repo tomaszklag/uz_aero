@@ -16,15 +16,15 @@ import { createHashRouter, Navigate } from 'react-router-dom';
 
 import { LoginRoute } from './auth/LoginRoute';
 import { ShellRoute } from './auth/ShellRoute';
-import { AudytScreen } from './screens/audyt/AudytScreen';
-import { DniScreen } from './screens/dni/DniScreen';
-import { DzienScreen } from './screens/dzien/DzienScreen';
-import { EksportyScreen } from './screens/eksporty/EksportyScreen';
-import { FlagiScreen } from './screens/flagi/FlagiScreen';
-import { FlotaScreen } from './screens/flota/FlotaScreen';
-import { PilociScreen } from './screens/piloci/PilociScreen';
-import { PulpitScreen } from './screens/pulpit/PulpitScreen';
-import { WBudowieScreen } from './screens/wBudowie/WBudowieScreen';
+import { AuditScreen } from './screens/audit/AuditScreen';
+import { DaysScreen } from './screens/days/DaysScreen';
+import { DayScreen } from './screens/day/DayScreen';
+import { ExportsScreen } from './screens/exports/ExportsScreen';
+import { FlagsScreen } from './screens/flags/FlagsScreen';
+import { FleetScreen } from './screens/fleet/FleetScreen';
+import { PilotsScreen } from './screens/pilots/PilotsScreen';
+import { DashboardScreen } from './screens/dashboard/DashboardScreen';
+import { UnderConstructionScreen } from './screens/underConstruction/UnderConstructionScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
 
 /** Pozycje nawigacji, dla których ekran już istnieje — nie dostają „w budowie". */
@@ -56,22 +56,22 @@ export const router = createHashRouter([
       // dwie: cisza nie jest osobnym widokiem, tylko innym stanem tych samych danych.
       // Rozdzielenie ich na dwa adresy kazałoby panelowi rozstrzygać PRZED pobraniem,
       // który pokazać — czyli zgadywać stan, o który dopiero pyta.
-      { path: 'pulpit', element: <PulpitScreen /> },
+      { path: 'pulpit', element: <DashboardScreen /> },
 
       // Skrzynka flag i jej szuflada pod JEDNYM ekranem: `A03a` otwiera się NAD listą,
       // więc `/flagi/1046` to ten sam widok z dodatkowym parametrem, a nie druga trasa.
       // Segment opcjonalny (`:id?`) trzyma to w jednym wpisie i nie przemontowuje ekranu
       // przy otwieraniu szuflady — inaczej lista pod spodem migałaby przy każdym wejściu
       // w sprawę, czyli traciłaby dokładnie ten kontekst, dla którego szuflada istnieje.
-      { path: 'flagi/:id?', element: <FlagiScreen /> },
+      { path: 'flagi/:id?', element: <FlagsScreen /> },
 
       // Lista dni i karta dnia to DWA ekrany, nie jeden z parametrem — inaczej niż
       // przy flagach. Powód jest w mockupach: `A03a` to szuflada NAD listą (kontekst
       // skrzynki zostaje pod spodem), a `A02a` to pełna strona, która listę zastępuje.
       // Karta dnia ma własne kafle, oś zdarzeń i tabelę lotów; trzymanie jej w tej samej
       // trasie kazałoby ekranowi listy pobierać dane, których nigdy nie pokaże.
-      { path: 'dni', element: <DniScreen /> },
-      { path: 'dni/:sessionUuid', element: <DzienScreen /> },
+      { path: 'dni', element: <DaysScreen /> },
+      { path: 'dni/:sessionUuid', element: <DayScreen /> },
 
       // Korekta administratora (`A02b`) — TEN SAM ekran co karta dnia, z dodatkowym
       // parametrem. Mockup pokazuje ją jako szufladę NAD kartą (dzień widać pod
@@ -80,20 +80,20 @@ export const router = createHashRouter([
       // konkretnego wpisu w rejestrze, więc trasa bez `:targetUuid` opisywałaby
       // operację, której nie ma. Wyboru zdarzenia dokonuje oś zdarzeń karty dnia;
       // osobnego ekranu wyboru nie budujemy.
-      { path: 'dni/:sessionUuid/korekta/:targetUuid', element: <DzienScreen /> },
+      { path: 'dni/:sessionUuid/korekta/:targetUuid', element: <DayScreen /> },
 
       // Dziennik audytu (`A09`) — JEDNA trasa bez parametrów ścieżki, bo wpis audytu
       // nie ma ekranu szczegółu: cała jego treść mieści się w wierszu. Zawężenia
       // (konto, obiekt, grupa akcji, zakres dat) jadą query stringiem, żeby link
       // „ślad w audycie" z karty dnia i z korekty dało się wkleić.
-      { path: 'audyt', element: <AudytScreen /> },
+      { path: 'audyt', element: <AuditScreen /> },
 
       // Monitor eksportu (`A05`) — jedna trasa z OPCJONALNYM uuid-em sesji, jak przy
       // flagach i kontach: rozwinięcie wiersza (historia rewizji + podgląd karty)
       // otwiera się POD tabelą, więc lista ma zostać na ekranie. Segment opcjonalny
       // trzyma to w jednym wpisie i nie przemontowuje ekranu przy wyborze wiersza —
       // inaczej tabela migałaby przy każdym kliknięciu.
-      { path: 'eksporty/:sessionUuid?', element: <EksportyScreen /> },
+      { path: 'eksporty/:sessionUuid?', element: <ExportsScreen /> },
 
       // Konta pilotów (`A06`) i szuflada konta (`A06a`) pod JEDNYM ekranem — jak przy
       // flagach, bo szuflada otwiera się NAD listą i kontekst tabeli ma zostać pod
@@ -104,7 +104,7 @@ export const router = createHashRouter([
       // `#/piloci/nowe` jest tym samym widokiem z pustym formularzem (mockup A06a ma
       // ten adres w pasku przeglądarki), a `?akcja=haslo` otwiera wariant „reset hasła"
       // z zablokowaną tożsamością. Oba są deep-linkowalne, bo oba bywają wklejane.
-      { path: 'piloci/:id?', element: <PilociScreen /> },
+      { path: 'piloci/:id?', element: <PilotsScreen /> },
 
       // Flota (`A07`) i szuflada samolotu (`A07a`) pod JEDNYM ekranem — jak przy
       // kontach i flagach, bo szuflada otwiera się NAD listą i kontekst tabeli ma
@@ -115,17 +115,17 @@ export const router = createHashRouter([
       //
       // `#/flota/nowy` jest tym samym widokiem z pustym formularzem — mockup A07a
       // ma ten adres w pasku przeglądarki i bywa wklejany.
-      { path: 'flota/:id?', element: <FlotaScreen /> },
+      { path: 'flota/:id?', element: <FleetScreen /> },
 
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.
         path: item.to.slice(1),
-        element: <WBudowieScreen title={item.label} mockup={item.mockup} />,
+        element: <UnderConstructionScreen title={item.label} mockup={item.mockup} />,
       })),
 
       {
         path: '*',
-        element: <WBudowieScreen title="Nie znaleziono" mockup={null} />,
+        element: <UnderConstructionScreen title="Nie znaleziono" mockup={null} />,
       },
     ],
   },

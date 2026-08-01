@@ -5,7 +5,7 @@
  * jest wykres do odczytywania wartości, tylko PULS: odpowiada na pytanie „czy napływ
  * się urwał", a dokładne liczby stoją w karcie obok.
  *
- * Wysokości i klasy przychodzą policzone z `screens/pulpit/pulpitSpark.ts` — komponent
+ * Wysokości i klasy przychodzą policzone z `screens/dashboard/dashboardSpark.ts` — komponent
  * nie liczy niczego (`admin/test/architecture.test.ts` zakazuje `Math.round` w `.tsx`).
  * Słupek pusty ma WŁASNĄ klasę (`.zero`) i widoczną wysokość, bo cisza w rejestrze musi
  * być widoczna, a nie niewidoczna.

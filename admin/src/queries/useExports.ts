@@ -2,7 +2,7 @@
  * UZ Aero — panel: odczyt MONITORA EKSPORTU (`A05`).
  *
  * Hooki są cienkie z zasady: decyzja o treści ekranu mieszka w czystych modułach
- * `screens/eksporty/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
+ * `screens/exports/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
  *
  * ══ DLACZEGO ZWYKŁE `useQuery`, A NIE KURSOR ══
  * Inaczej niż przy dniach i dzienniku audytu: monitor jest zawężony do ZAKRESU DAT,
@@ -12,7 +12,7 @@
  * odpowiada jedną stroną i jednym kompletem liczników.
  *
  * Kalendarza panel jednak jeszcze NIE MA, więc granicę stawia dziś `?limit=`
- * (`EKSPORTY_PAGE_LIMIT`). Liczniki opisują mimo to cały zakres — liczy je serwer poza
+ * (`EXPORTS_PAGE_LIMIT`). Liczniki opisują mimo to cały zakres — liczy je serwer poza
  * `LIMIT`-em — a `ExportPageDto.truncated` mówi, czy lista jest przycięta. Ekran pokazuje
  * to banerem, bo lista przycięta po cichu wygląda na komplet.
  */

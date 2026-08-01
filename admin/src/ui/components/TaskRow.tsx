@@ -6,7 +6,7 @@
  * problem niż ta sprzed godziny.
  *
  * Komponent nie decyduje ani o tonie znacznika, ani o tym, czy wiek jest „stary":
- * jedno i drugie przychodzi z `screens/pulpit/pulpitTodo.ts` z testem w Node.
+ * jedno i drugie przychodzi z `screens/dashboard/dashboardTodo.ts` z testem w Node.
  */
 
 import { Link } from 'react-router-dom';

@@ -2,7 +2,7 @@
  * UZ Aero — panel: odczyt DZIENNIKA AUDYTU (`A09`).
  *
  * Hooki są cienkie z zasady: decyzja o treści ekranu mieszka w czystych modułach
- * `screens/audyt/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
+ * `screens/audit/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
  *
  * ══ DLACZEGO `useInfiniteQuery`, A NIE „STRONA N" ══
  * Ten sam powód, co przy dniach, tylko mocniejszy: `admin_audit` rośnie w nieskończoność

@@ -8,7 +8,7 @@
  * dla którego kształt tej trasy różni się od dni lotnych i dziennika audytu.
  *
  * Hooki są cienkie z zasady: decyzja o treści ekranu mieszka w czystych modułach
- * `screens/flota/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
+ * `screens/fleet/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
  */
 
 import { useQuery } from '@tanstack/react-query';

@@ -296,7 +296,7 @@ describe('granice warstw panelu', () => {
     //
     // czyli wypisywał `fresh-stale` — klasę, której nie definiuje ani `SZABLON.html`,
     // ani żaden arkusz panelu. Trzy stany świeżości były policzone, przetestowane
-    // (`flotaRows.test.ts`) i NIEWIDOCZNE: odczyt sprzed trzech minut i sprzed dwóch dni
+    // (`fleetRows.test.ts`) i NIEWIDOCZNE: odczyt sprzed trzech minut i sprzed dwóch dni
     // wyglądały identycznie. Ani kompilator, ani testy modułu czystego nie mają jak
     // tego zobaczyć — nazwa klasy powstaje dopiero w przeglądarce.
     //

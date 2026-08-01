@@ -2,7 +2,7 @@
  * UZ Aero — panel: odczyt LISTY dni lotnych (`A02`).
  *
  * Hooki są cienkie z zasady: decyzja o treści ekranu mieszka w czystych modułach
- * `screens/dni/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
+ * `screens/days/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy cache'u.
  *
  * ══ DLACZEGO `useInfiniteQuery`, A NIE „STRONA N" ══
  * Serwer stronicuje KURSOREM keyset, nie offsetem, bo tabela `sessions` rośnie

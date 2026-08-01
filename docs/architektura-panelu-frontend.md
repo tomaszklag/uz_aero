@@ -360,7 +360,7 @@ admin/
 
   test/
     architecture.test.ts · tokens.generated.test.ts · classInventory.test.ts
-    (testy modułów czystych leżą przy nich: screens/dni/dniFilters.test.ts)
+    (testy modułów czystych leżą przy nich: screens/days/daysFilters.test.ts)
 ```
 
 ### 2.1 Kierunek zależności
@@ -640,7 +640,7 @@ export function useResolveFlag() {
 `ANALIZA` §3 nazywa deep linki podstawowym scenariuszem współpracy („wklej mi link do tego
 dnia"). Filtr trzymany w Zustandzie albo w `useState` to filtr, którego nie da się wkleić,
 i lista, która gubi się po `F5`. Dlatego: **`useSearchParams` jest magazynem filtrów**,
-a `screens/dni/dniFilters.ts` (moduł czysty, testowany) tłumaczy query string na obiekt
+a `screens/days/daysFilters.ts` (moduł czysty, testowany) tłumaczy query string na obiekt
 filtra i z powrotem. Bonus, który wychodzi za darmo: klucz zapytania `keys.sessions.list(f)`
 jest funkcją tego samego obiektu, więc powrót „wstecz" trafia w cache.
 

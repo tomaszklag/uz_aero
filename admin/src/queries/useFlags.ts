@@ -2,7 +2,7 @@
  * UZ Aero — panel: odczyt skrzynki flag (`A03`).
  *
  * Hooki są cienkie z zasady: cała decyzja o treści ekranu mieszka w czystych
- * modułach `screens/flagi/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy CACHE'U —
+ * modułach `screens/flags/*.ts`, a tutaj zostaje wyłącznie to, co dotyczy CACHE'U —
  * klucz, zapytanie i nic poza tym.
  *
  * **Porządku listy nie ruszamy.** Skrzynka przychodzi posortowana przez serwer

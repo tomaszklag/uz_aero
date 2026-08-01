@@ -21,7 +21,7 @@
  * Czego ten test NIE łapie: klasy użytej w `.tsx`, która nie ma reguły NIGDZIE.
  * Broni przed tym para z `architecture.test.ts` — zakaz sklejania nazw klas
  * w `.tsx` (nazwa musi być literałem, więc da się ją wygrepować) — oraz test
- * inwentarza klas świeżości w `screens/flota/flotaRows.test.ts`. Pełne skanowanie
+ * inwentarza klas świeżości w `screens/fleet/fleetRows.test.ts`. Pełne skanowanie
  * `className` to osobna praca; ta luka jest tu nazwana, żeby nikt nie uznał,
  * że jest zamknięta.
  */

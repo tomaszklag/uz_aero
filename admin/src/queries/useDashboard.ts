@@ -2,7 +2,7 @@
  * UZ Aero — panel: odczyt pulpitu (`A01`, `A01a`).
  *
  * Hook jest cienki z zasady — decyzja o treści ekranu mieszka w czystych modułach
- * `screens/pulpit/*.ts`. Tutaj zostaje wyłącznie to, co dotyczy cache'u.
+ * `screens/dashboard/*.ts`. Tutaj zostaje wyłącznie to, co dotyczy cache'u.
  *
  * ══ `staleTime: 0` I TO JEST WYJĄTEK OD DOMYŚLNYCH 30 s ══
  * Domyślne 30 s w `queries/client.ts` istnieje po to, żeby seria wejść na tę samą listę

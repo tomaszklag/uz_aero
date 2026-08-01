@@ -20,7 +20,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { AUDIT_ACTIONS } from '../src/screens/audyt/audytActions';
+import { AUDIT_ACTIONS } from '../src/screens/audit/auditActions';
 
 const CATALOG = join(__dirname, '..', '..', 'server', 'src', 'domain', 'adminActions.ts');
 

@@ -7,7 +7,7 @@
  *
  * Karta jest JEDYNYM miejscem, w którym serwer woła `projectSession` na żądanie —
  * i dlatego jedynym, z którego panel dostaje pełny `SessionState`. Wszystko, co ekran
- * z nim robi, to formatowanie (`screens/dzien/*.ts`).
+ * z nim robi, to formatowanie (`screens/day/*.ts`).
  */
 
 import { useQuery } from '@tanstack/react-query';

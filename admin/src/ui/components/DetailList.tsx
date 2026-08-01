@@ -3,7 +3,7 @@
  *
  * ══ POKAZUJE WSZYSTKO, CO DOSTAŁA ══
  * Komponent nie filtruje wierszy i nie ma jak tego zrobić — dostaje gotową listę
- * z modułu czystego (`screens/audyt/audytDetails.ts`). Pole, którego panel nie umie
+ * z modułu czystego (`screens/audit/auditDetails.ts`). Pole, którego panel nie umie
  * nazwać, przychodzi tu z `known: false` i renderuje się WYGASZONE, ale renderuje się:
  * dziennik audytu, który ukrywa pole, bo go nie zna, przestaje być narzędziem nadzoru.
  *

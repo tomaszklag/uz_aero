@@ -78,7 +78,7 @@ export const NAV_GROUPS: NavGroupSpec[] = [
         // „Szef wyszkolenia widzi tę listę, ale bez przycisków — potrzebuje jej do
         // statystyk i flag, nie do zarządzania dostępem". Kłódka na pozycji nawigacji
         // odcinałaby mu odczyt, którego trasa `GET /admin/api/pilots` udziela.
-        // Przyciski akcji wyszarza `screens/piloci/kontoActions.ts`, z powodem.
+        // Przyciski akcji wyszarza `screens/pilots/accountActions.ts`, z powodem.
         capability: 'panel.access',
         mockup: 'A06-piloci.html',
       },
@@ -91,7 +91,7 @@ export const NAV_GROUPS: NavGroupSpec[] = [
         // bez przycisków edycji". Kłódka na pozycji nawigacji odcinałaby mu odczyt,
         // którego trasa `GET /admin/api/fleet` udziela — i przy okazji zabrałaby
         // ekranowi rolę słownika samolotów dla filtrów listy dni. Przyciski akcji
-        // wyszarza `screens/flota/samolotActions.ts`, z powodem.
+        // wyszarza `screens/fleet/aircraftActions.ts`, z powodem.
         capability: 'panel.access',
         mockup: 'A07-flota.html',
       },

@@ -10,7 +10,7 @@
  * technicznie właśnie tyle, że recenzent porówna DOM z plikiem HTML linia w linię.
  *
  * Komponent NIE PODEJMUJE ŻADNEJ DECYZJI: klasa wiersza, klasa świeżości, plakietka
- * i wszystkie napisy przychodzą gotowe z `screens/pulpit/pulpitFleet.ts`, który ma
+ * i wszystkie napisy przychodzą gotowe z `screens/dashboard/dashboardFleet.ts`, który ma
  * test w Node. Tu zostaje wyłącznie układ pięciu torów siatki.
  */
 
