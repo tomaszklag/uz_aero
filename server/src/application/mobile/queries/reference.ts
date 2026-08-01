@@ -12,7 +12,7 @@
 
 import type { ReferenceAircraft } from '@uzaero/domain';
 
-import { activeClaim, latestHandover, sessionsStamp } from '../aircraftStateView.ts';
+import { activeClaim, latestHandover, sessionsStamp } from '../../common/aircraftStateView.ts';
 import type {
   Database,
   ReferencePort,

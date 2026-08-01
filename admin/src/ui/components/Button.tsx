@@ -26,6 +26,17 @@ interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'cla
   size?: 'sm' | 'md';
   /** Przycisk na całą szerokość karty (A00: „Zaloguj się"). */
   block?: boolean;
+  /**
+   * Powód blokady — dopisuje się do ETYKIETY i trafia do `title`, dokładnie jak
+   * w `LinkButton`.
+   *
+   * Nagłówek tego pliku deklarował tę regułę od pierwszego przekroju, a komponent jej
+   * NIE MIAŁ: dopóki wszystkie zablokowane przyciski panelu były linkami, różnicy nie
+   * było widać. Pierwszą prawdziwą akcją z powodem blokady jest „Ponów" na `A05`
+   * („najpierw rozstrzygnij flagę #1046"), więc reguła dostaje wreszcie implementację
+   * zamiast obietnicy w prozie.
+   */
+  reason?: string;
   children: ReactNode;
 }
 
@@ -33,6 +44,7 @@ export function Button({
   variant = 'default',
   size = 'md',
   block = false,
+  reason,
   children,
   ...rest
 }: ButtonProps) {
@@ -45,9 +57,14 @@ export function Button({
     .filter((c) => c != null)
     .join(' ');
 
+  const blocked = rest.disabled === true && reason != null;
+
   return (
-    <button type="button" {...rest} className={classes}>
+    <button type="button" {...rest} {...(blocked ? { title: reason } : {})} className={classes}>
       {children}
+      {/* Powód pokazujemy WYŁĄCZNIE przy faktycznej blokadzie: dopisany do przycisku
+          czynnego byłby zdaniem o stanie, którego nie ma. */}
+      {blocked ? ` — ${reason.toLowerCase()}` : null}
     </button>
   );
 }

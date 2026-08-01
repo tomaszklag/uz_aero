@@ -46,6 +46,12 @@
      `:focus-visible`, nie `:focus`: kliknięcie myszą nie ma rysować obwódki tam, gdzie
      nikt jej nie potrzebuje. Dołożone 2026-07-31 razem z pierwszym ekranem panelu. */
   :focus-visible { outline: 2px solid var(--green-border); outline-offset: 2px; border-radius: 6px; }
+  /* Treść dla CZYTNIKA EKRANU, niewidoczna wzrokowo — w panelu niesie ją `<caption>`
+     każdej tabeli. Czytnik ogłasza tabelę bez podpisu jako „tabela, 8 kolumn", nie mówiąc
+     ani słowa o tym, czego dotyczy; widoczny `<caption>` zmieniłby jednak układ, którego
+     mockupy nie przewidują. Dlatego podpis CHOWAMY, a nie usuwamy — `display:none`
+     i `visibility:hidden` odebrałyby go także czytnikowi, więc ich tu nie ma. */
+  .visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 
   /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
   .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
@@ -120,6 +126,10 @@
   .who-role { font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
 
   .main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+  /* Ekran PRZED ramą — logowanie (`A00`), gdzie nie ma jeszcze ani sidebara, ani topbara,
+     bo nie wiadomo, kto patrzy. Treść wyśrodkowana w oknie przeglądarki zamiast siatki
+     shellu; `overflow-y` własne, bo baner o rolach potrafi nie zmieścić się w 900 px. */
+  .centered { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:24px; overflow-y:auto; }
   .topbar { height:var(--topbar-h); flex-shrink:0; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 22px; }
   .crumbs { display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
   .crumbs b { color:var(--text-primary); font-weight:500; }
@@ -189,9 +199,18 @@
   .chip:hover { border-color:var(--border-strong); color:var(--text-primary); }
   .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
+  /* Rozpórka paska filtrów: odsuwa na prawo to, co NIE filtruje, tylko opisuje wynik
+     (plakietka „czasy UTC", licznik wierszy). Do 2026-08-01 mockupy robiły to stylem
+     inline — klasa bez nazwy jest klasą, której nikt nie znajdzie greppem. */
+  .list-spacer { margin-left:auto; display:inline-flex; align-items:center; gap:9px; }
 
   /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
   .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
+  /* Tabela ZAGNIEŻDŻONA w karcie (historia rozwiązanych flag, legenda typów, historia
+     rewizji karty): bez własnej ramki i tła, bo ramkę niesie już karta — dwie obwódki
+     jedna w drugiej czytają się jak błąd składu. Modyfikator, a nie osobna klasa, bo to
+     nadal ta sama tabela. */
+  .table-wrap.plain { border:none; border-radius:0; background:none; }
   table { width:100%; border-collapse:collapse; }
   thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
   thead th.sortable { cursor:pointer; }
@@ -201,11 +220,37 @@
   tbody tr:last-child td { border-bottom:none; }
   tbody tr:hover { background:var(--surface-raised); }
   tbody tr.clickable { cursor:pointer; }
+  /* Wiersz OTWARTY w szufladzie (`A03a`, `A06a`, `A07a`): tło i zielona krawędź od
+     strony treści, żeby po zamknięciu szuflady wzrok wrócił tam, gdzie był. */
+  tbody tr.opened { background:var(--surface-raised); box-shadow:inset 3px 0 0 var(--green); }
+  /* Wiersz wyróżniony OTWARTĄ FLAGĄ (`A02`, `A05`). Kolejność ma znaczenie: reguła stoi
+     PO `tbody tr:hover`, żeby najechanie myszą nie zdejmowało bursztynu z wiersza, który
+     jest wyróżniony z powodu — powód nie znika dlatego, że ktoś przesunął kursor. */
+  tbody tr.flagged,
+  tbody tr.flagged:hover { background:var(--amber-muted); }
   td.num, td.mono, th.num { font-family:var(--font-mono); letter-spacing:0.3px; }
   td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
   td.dim { color:var(--text-secondary); }
   .cell-strong { font-weight:600; }
   .cell-sub { display:block; font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; }
+  /* ŚWIEŻOŚĆ w komórce tabeli — podpis `.cell-sub` niosący WIEK danych z telefonu.
+     Trzy stany §4.8 dosłownie: `fresh` = live (bez zastrzeżeń), `stale` = cache
+     starszy niż doba, `none` = brak danych. Modyfikator, a nie osobna klasa, bo to
+     nadal ten sam podpis — zmienia się wyłącznie to, co mówi o jego wiarygodności.
+     Do 2026-08-01 ekran A07 malował te trzy stany atrybutem `style` przy każdej
+     komórce; kolor rozsiany po komórkach nie jest komponentem i nie da się go
+     wygrepować. */
+  .cell-sub.fresh { color:var(--green); }
+  .cell-sub.stale { color:var(--amber); }
+  .cell-sub.none  { color:var(--text-muted); }
+  /* Wiek sprawy, która leży ZA DŁUGO (`A03`). Modyfikator, nie styl inline, bo o tym,
+     które wiersze są stare, rozstrzyga próg w kodzie, a nie autor pliku HTML. */
+  .cell-age.old { color:var(--red); font-weight:700; }
+  /* Stopka listy stronicowanej KURSOREM: podpis „pokazano N z M" i przycisk dokładający
+     kolejną stronę. Mockupy rysują dwanaście wierszy i kończą banerem, ale kursor keyset
+     jest kontraktem serwera — a lista przycięta po cichu byłaby najgorszym trybem awarii
+     narzędzia nadzoru: wyglądałaby na komplet. */
+  .list-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   .reg { font-family:var(--font-mono); font-weight:700; letter-spacing:1px; }
   /* Link W TREŚCI komórki — zawęża listę do tej wartości (A09: konto działającego,
      identyfikator obiektu). Wygląda jak treść, nie jak przycisk, i to jest cała jego
@@ -233,6 +278,12 @@
   .input { min-height:40px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); padding:10px 13px; color:var(--text-primary); font-family:var(--font-body); font-size:13px; outline:none; width:100%; }
   .input:focus { border-color:var(--green-border); }
   .input.mono { font-family:var(--font-mono); letter-spacing:0.5px; }
+  /* `<textarea>` jako modyfikator `.input`, a nie osobna klasa — pole ma dzielić ramkę,
+     tło i fokus z resztą formularza. Dokłada wyłącznie to, czego `<input>` nie ma:
+     pionową zmianę rozmiaru i interlinię akapitu. Powód uzasadnienia korekty bywa
+     dłuższy niż linijka, a przycinanie go zniechęcałoby do napisania tego, co za pół
+     roku będzie jedynym śladem decyzji. */
+  .input.area { resize:vertical; line-height:1.5; min-height:92px; }
   .input::placeholder { color:var(--text-muted); }
   /* Pole odrzucone przez serwer. Awansowane ze stylu inline w A00a (hasło po 401) —
      stan błędu pola wraca na każdym formularzu panelu (2026-07-31). */
@@ -389,6 +440,13 @@
      Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
      stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
   .cols.wide { grid-template-columns:1fr 400px; }
+  /* Pionowy STOS kart wewnątrz jednej kolumny siatki. `.cols` układa kolumny obok
+     siebie, ale gdy do jednej z nich wchodzi kilka kart, potrzebują własnego odstępu —
+     bez tego przylegają do siebie i czytają się jak jedna karta z liniami w środku.
+     `min-width:0` jest tu konieczne, nie ozdobne: element siatki domyślnie nie zwęża
+     się poniżej swojej treści, więc szeroka tabela w środku rozpychałaby kolumnę
+     zamiast się przewinąć. Do 2026-08-01 mockupy robiły to stylem inline. */
+  .cols-stack { display:flex; flex-direction:column; gap:16px; min-width:0; }
 
   /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
      Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie

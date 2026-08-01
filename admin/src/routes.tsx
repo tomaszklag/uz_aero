@@ -19,13 +19,15 @@ import { ShellRoute } from './auth/ShellRoute';
 import { AudytScreen } from './screens/audyt/AudytScreen';
 import { DniScreen } from './screens/dni/DniScreen';
 import { DzienScreen } from './screens/dzien/DzienScreen';
+import { EksportyScreen } from './screens/eksporty/EksportyScreen';
 import { FlagiScreen } from './screens/flagi/FlagiScreen';
+import { FlotaScreen } from './screens/flota/FlotaScreen';
 import { PilociScreen } from './screens/piloci/PilociScreen';
 import { WBudowieScreen } from './screens/wBudowie/WBudowieScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
 
 /** Pozycje nawigacji, dla których ekran już istnieje — nie dostają „w budowie". */
-const IMPLEMENTED = new Set(['/dni', '/flagi', '/audyt', '/piloci']);
+const IMPLEMENTED = new Set(['/dni', '/flagi', '/audyt', '/piloci', '/flota', '/eksporty']);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
   (item) => !IMPLEMENTED.has(item.to),
@@ -71,6 +73,13 @@ export const router = createHashRouter([
       // „ślad w audycie" z karty dnia i z korekty dało się wkleić.
       { path: 'audyt', element: <AudytScreen /> },
 
+      // Monitor eksportu (`A05`) — jedna trasa z OPCJONALNYM uuid-em sesji, jak przy
+      // flagach i kontach: rozwinięcie wiersza (historia rewizji + podgląd karty)
+      // otwiera się POD tabelą, więc lista ma zostać na ekranie. Segment opcjonalny
+      // trzyma to w jednym wpisie i nie przemontowuje ekranu przy wyborze wiersza —
+      // inaczej tabela migałaby przy każdym kliknięciu.
+      { path: 'eksporty/:sessionUuid?', element: <EksportyScreen /> },
+
       // Konta pilotów (`A06`) i szuflada konta (`A06a`) pod JEDNYM ekranem — jak przy
       // flagach, bo szuflada otwiera się NAD listą i kontekst tabeli ma zostać pod
       // spodem: decyzja o roli zapada w porównaniu z resztą kont. Segment opcjonalny
@@ -81,6 +90,17 @@ export const router = createHashRouter([
       // ten adres w pasku przeglądarki), a `?akcja=haslo` otwiera wariant „reset hasła"
       // z zablokowaną tożsamością. Oba są deep-linkowalne, bo oba bywają wklejane.
       { path: 'piloci/:id?', element: <PilociScreen /> },
+
+      // Flota (`A07`) i szuflada samolotu (`A07a`) pod JEDNYM ekranem — jak przy
+      // kontach i flagach, bo szuflada otwiera się NAD listą i kontekst tabeli ma
+      // zostać pod spodem: skutki zmiany pojemności czyta się w porównaniu z resztą
+      // floty (progi innych jednostek stoją w karcie obok). Segment opcjonalny
+      // (`:id?`) trzyma to w jednym wpisie i nie przemontowuje ekranu przy otwieraniu
+      // szuflady.
+      //
+      // `#/flota/nowy` jest tym samym widokiem z pustym formularzem — mockup A07a
+      // ma ten adres w pasku przeglądarki i bywa wklejany.
+      { path: 'flota/:id?', element: <FlotaScreen /> },
 
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.

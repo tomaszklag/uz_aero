@@ -46,6 +46,7 @@ import {
 import type { PilotRole } from '../../../domain/roles.ts';
 import type { Clock, PasswordHasher } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
+import { uniqueConflictOn } from './uniqueConflict.ts';
 import type {
   Actor,
   AdminPilotAccount,
@@ -116,38 +117,14 @@ class Refused extends Error {
 /**
  * Naruszenie UNIKALNOŚCI zgłoszone przez bazę (SQLSTATE `23505`) → pole formularza.
  *
- * Sprawdzenie przed zapisem (`PilotsAdminPort.conflict`) nadal jest pierwszą linią
- * i zostaje, bo tylko ono umie powiedzieć KTÓRE pole zajęte jest bez wywracania
- * transakcji. Ale sprawdzenie i `INSERT` to dwa kroki, a między nimi mieści się druga
- * transakcja z tym samym kodem: przed 2026-08-01 przegrany wyścig wychodził z tej
- * komendy jako nieznany błąd i lądował jako **500**, choć jest dokładnie tym samym
- * zdarzeniem, które sprawdzenie opisuje jako 409.
- *
- * Rozpoznajemy po nazwie ograniczenia (`pilots_code_key`, `pilots_email_key`) albo po
- * `detail` (`Key (code)=(TMK) already exists`) — sterowniki podają raz jedno, raz
- * drugie. Ograniczenie NIEROZPOZNANE oddaje `null` i leci dalej jako 500 i to jest
- * właściwe: `pilots_pkey` znaczyłoby kolizję uuid-ów, czyli awarię, a nie zajęty kod.
+ * Rozpoznanie mieszka w `uniqueConflict.ts` — od 2026-08-01 ma DRUGIEGO konsumenta
+ * (rejestracja samolotu, `commands/fleet.ts`), a cała trudność tej funkcji siedzi
+ * w jednej linii regexa, której nie wolno mieć w dwóch kopiach. Tutaj zostaje samo
+ * PIERWSZEŃSTWO pól przy komunikacie wskazującym oba naraz — kolejność zachowana
+ * dokładnie taka, jaka była przed wydzieleniem.
  */
 export function uniqueConflictField(err: unknown): 'code' | 'email' | null {
-  if (typeof err !== 'object' || err === null) return null;
-  const e = err as { code?: unknown; constraint?: unknown; detail?: unknown; message?: unknown };
-  if (e.code !== '23505') return null;
-
-  const where = [e.constraint, e.detail, e.message]
-    .filter((value): value is string => typeof value === 'string')
-    .join(' ');
-  if (mentionsField(where, 'email')) return 'email';
-  if (mentionsField(where, 'code')) return 'code';
-  return null;
-}
-
-/**
- * Nazwa pola w tekście błędu. `\b` tu NIE wystarcza: podkreślenie jest znakiem słowa,
- * więc `\bcode\b` nie widzi `pilots_code_key` — a to najczęstsza postać, w jakiej
- * sterowniki podają ograniczenie. Separatorem jest tu wszystko poza literą i cyfrą.
- */
-function mentionsField(text: string, field: string): boolean {
-  return new RegExp(`(^|[^a-z0-9])${field}([^a-z0-9]|$)`, 'i').test(text);
+  return uniqueConflictOn(err, ['email', 'code'] as const);
 }
 
 /** Jedna zmiana pola w dzienniku audytu: „z czego na co". */

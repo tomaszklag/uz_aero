@@ -11,11 +11,18 @@
  * implementacje (`infrastructure/pg/admin/*`) wstrzykuje composition root.
  */
 
-import type { FlagStatus, FlagType, MhFormat, OperationType } from '@uzaero/domain';
+import type {
+  FlagStatus,
+  FlagType,
+  MhFormat,
+  OperationType,
+  ServiceStatus,
+} from '@uzaero/domain';
 
 import type { AdminAction } from '../../domain/adminActions.ts';
 import type { PilotRole } from '../../domain/roles.ts';
 import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
+import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
 
 // ── tożsamość działającego ──────────────────────────────────────────────────────
 
@@ -301,6 +308,148 @@ export interface SessionsAdminPort {
   byUuid(db: Queryable, sessionUuid: string): Promise<AdminSessionJoin | null>;
 }
 
+// ── eksport kart dziennych (A05) ────────────────────────────────────────────────
+
+/**
+ * Katalog stanów karty jako WARTOŚĆ — `ExportState` jest typem i nie da się po nim
+ * iterować ani niczego nim sprawdzić w czasie działania.
+ *
+ * `Record<ExportState, true>` jest tu WYMUSZENIEM kompilatora, a nie ozdobą: dopisanie
+ * stanu do kontraktu bez dopisania go tutaj przestaje się kompilować. Bez tego zod
+ * w trasie odrzucałby nowy stan czterysetką, a strażnik w adapterze rzucał na własnym
+ * `CASE` — czyli nowy stan byłby jednocześnie zaimplementowany i nieosiągalny.
+ */
+const EXPORT_STATE_CATALOG: Record<ExportState, true> = {
+  waiting: true,
+  blocked: true,
+  impossible: true,
+  missing: true,
+  current: true,
+};
+
+/** Stany w kolejności deklaracji — wejście dla `z.enum` w trasie monitora. */
+export const EXPORT_STATES = Object.keys(EXPORT_STATE_CATALOG) as ExportState[];
+
+/** Czy napis (z SQL-a albo z query stringa) jest znanym stanem karty. */
+export function isExportState(value: string): value is ExportState {
+  return Object.prototype.hasOwnProperty.call(EXPORT_STATE_CATALOG, value);
+}
+
+/**
+ * Filtr monitora eksportu (`A05`). Pola NIEUSTAWIONE (`undefined`) są pomijane.
+ *
+ * ══ `state` JEST TU OD 2026-08-01 I TO JEST ZMIANA DECYZJI ══
+ * Do tej pory zawężenie po stanie robiła warstwa aplikacji na już zmapowanych wierszach,
+ * z uzasadnieniem „stan jest wnioskiem mappera, `CASE` w SQL-u byłby jego drugą
+ * definicją". Uzasadnienie było prawdziwe, ale konsekwencja gorsza od kosztu, przed
+ * którym broniło: zawężenie stało PO `LIMIT`-cie, więc `?state=missing` nie umiało
+ * znaleźć dnia z awarią eksportu sprzed dziewięciu miesięcy — obcięcie zabierało go
+ * przed filtrem. Chip „Bez karty" pokazywał wtedy zero i wyglądało to na dobrą wiadomość.
+ *
+ * Zawężenie i liczenie robi więc SQL, nad CAŁYM zakresem filtra, wzorem `total`
+ * w skrzynce flag. Druga definicja stanu istnieje i jest nazwana — pilnuje jej test
+ * porównujący liczniki z wierszami odpowiedzi (`test/adminExports.test.ts`).
+ */
+export interface ExportListFilter {
+  /** Zakres po duty starcie (`sessions.claim_time`, epoch ms UTC), obustronnie domknięty. */
+  fromMs?: number;
+  toMs?: number;
+  aircraftId?: string;
+  /** Fragment rejestracji, identyfikatora samolotu albo uuid-a sesji. */
+  search?: string;
+  /** Zawężenie do JEDNEGO stanu karty; `undefined` = bez zawężenia. */
+  state?: ExportState;
+  limit: number;
+}
+
+/**
+ * Dzień lotny widziany OD STRONY ARKUSZA: tyle z projekcji, ile trzeba, żeby nazwać
+ * kartę i ocenić jej stan, plus to, czego w `export_log` NIE MA.
+ *
+ * Wiersz powstaje z `sessions`, a nie z `export_log`, i to jest istota tego ekranu:
+ * pytanie brzmi „czy każdy dzień ma aktualny arkusz", więc dzień BEZ ani jednego wpisu
+ * w dzienniku musi być widoczny. Lista budowana z `export_log` nie umiałaby go pokazać.
+ */
+export interface AdminExportJoin {
+  sessionUuid: string;
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  status: 'active' | 'closed';
+  /** Duty start (epoch ms UTC); `null` = sesja bez `preflight_confirm`. */
+  dutyStart: number | null;
+  /** Ostatnia przyjęta paczka tej sesji — oś porównania „karta starsza niż dane". */
+  updatedAt: Date;
+  /**
+   * Identyfikatory OTWARTYCH flag, które trzymają kartę poza arkuszem. Lista typów
+   * blokujących jedzie z `EXPORT_BLOCKING_FLAG_TYPES`, czyli z tego samego miejsca,
+   * co bramka `DayExporter` — powtórzenie warunku w SQL-u dałoby stan, w którym monitor
+   * mówi „zablokowana", a eksporter przepuszcza.
+   */
+  blockingFlagIds: number[];
+  /** Ostatnia rewizja z `export_log`; `null` = karta nigdy nie powstała. */
+  revision: number | null;
+  exportedAt: Date | null;
+  sheetUrl: string | null;
+  /**
+   * INNA sesja zapisała kartę o tej samej nazwie PÓŹNIEJ — wiersz `export_log` o tym
+   * samym `(day, aircraft_id)`, innym `session_uuid` i większym `exported_at`.
+   *
+   * Fakt, nie ocena: `sheetTabName` niesie dzień i samolot, ale nie sesję, więc dwie
+   * zamknięte zmiany na jednym samolocie tego samego dnia budują kartę o tej samej
+   * nazwie, a `exported_sheets` jest po `tab` UPSERT-owane. `null` = ten wiersz jest
+   * ostatnim autorem swojej karty (albo karty jeszcze nie ma).
+   */
+  overwrittenBy: { sessionUuid: string; exportedAt: Date } | null;
+}
+
+/** Jeden wiersz `export_log` — jedna wykonana wysyłka karty. */
+export interface AdminExportRevision {
+  revision: number;
+  day: string;
+  sheetUrl: string;
+  exportedAt: Date;
+}
+
+/**
+ * Port monitora eksportu — osobny od `ExportLogPort`, nie jego rozszerzenie.
+ *
+ * Ta sama decyzja, co przy flagach, kontach i flocie: osobny port wtedy, gdy inny jest
+ * POWÓD istnienia. `ExportLogPort` obsługuje ŚCIEŻKĘ EKSPORTU (`latest` + `append`
+ * + blokada, wołane z `DayExporter` w gorącej sekwencji po zapisie karty) oraz
+ * `sync-status` telefonu. Ten czyta listy ze złączeniem trzech tabel i historię rewizji
+ * — czyli pytania, których na tamtej ścieżce nikt nie zadaje. Korzyścią uboczną jest to,
+ * że eksport nie ma jak zregresować od zmian w ekranie monitora.
+ */
+export interface ExportsAdminPort {
+  /**
+   * Strona monitora RAZEM z licznikami.
+   *
+   * Liczniki jadą stąd, a nie z warstwy aplikacji, i to jest cała zmiana z 2026-08-01:
+   * muszą opisywać CAŁY zakres filtra, a warstwa aplikacji widzi wyłącznie wiersze PO
+   * `LIMIT`-cie. `matched` to liczba dni pasujących do filtra RAZEM z zawężeniem po
+   * stanie — po niej trasa poznaje, że limit obciął listę.
+   */
+  list(
+    db: Queryable,
+    filter: ExportListFilter,
+  ): Promise<{ items: AdminExportJoin[]; counts: AdminExportCounts; matched: number }>;
+  /** Pojedynczy dzień; `null` = nie ma takiej sesji w projekcji. */
+  byUuid(db: Queryable, sessionUuid: string): Promise<AdminExportJoin | null>;
+  /**
+   * WSZYSTKIE wiersze dziennika tej sesji, od najstarszej rewizji.
+   *
+   * Bez limitu i bez kursora, w przeciwieństwie do list panelu: liczba rewizji jednej
+   * karty jest z natury jednocyfrowa (pierwszy eksport + spóźnione paczki + korekty),
+   * a rozwinięcie wiersza ma pokazać HISTORIĘ, nie jej początek. Stronicowanie czegoś,
+   * czego sens polega na kompletności, byłoby wadą udającą ostrożność.
+   */
+  history(db: Queryable, sessionUuid: string): Promise<AdminExportRevision[]>;
+}
+
 // ── rejestr zdarzeń (metadane zapisu, panel) ────────────────────────────────────
 
 /**
@@ -535,6 +684,148 @@ export interface PilotsAdminPort {
  */
 export interface RefreshTokensAdminPort {
   revokeAllFor(tx: Queryable, pilotId: string): Promise<number>;
+}
+
+// ── flota (A07, A07a) ───────────────────────────────────────────────────────────
+
+/**
+ * Samolot tak, jak widzi go PANEL — czysta konfiguracja, bez stanu z telefonów.
+ *
+ * Osobny typ od `ReferenceAircraft` (`@uzaero/domain`) i to jest jego treść: tamten
+ * jest KSZTAŁTEM CACHE'U telefonu, więc niesie `claimPicId`, `handover` i `fetchedAt`
+ * — pola, które przy zapisie konfiguracji nie znaczą nic i których komenda nie ma prawa
+ * dotknąć. Wpuszczenie tamtego typu do komendy dałoby `update`, który potrafi „zapisać"
+ * claim, czyli przepisać stan wyliczany ze strumienia zdarzeń.
+ */
+export interface AdminAircraft {
+  id: string;
+  reg: string;
+  type: string;
+  year: number | null;
+  capacityL: number;
+  mhFormat: MhFormat;
+  dualRequired: boolean;
+  serviceStatus: ServiceStatus;
+}
+
+/**
+ * Samolot + to, czego lista potrzebuje ze złączeń i z rejestru.
+ *
+ * `openSessions`, `openFlags` i `lastEventAt` są AGREGATAMI po tabelach obok
+ * (`sessions`, `flags`, `events`), a nie odtworzeniem projekcji SQL-em — ta sama
+ * granica, co przy `flyingDays` kont (`docs/architektura-panelu-serwer.md` §7.1).
+ * Claim i ostatni odczyt liczników NIE są tutaj, bo ich wybór jest REGUŁĄ
+ * (`application/common/aircraftStateView.ts`), a nie zapytaniem.
+ */
+export interface AdminAircraftJoin {
+  aircraft: AdminAircraft;
+  updatedAt: Date;
+  openSessions: number;
+  openFlags: number;
+  /** Ostatnie przyjęte zdarzenie tego samolotu; `null` = nie ma ani jednego. */
+  lastEventAt: Date | null;
+}
+
+/** Filtr listy floty (`A07`). Pola NIEUSTAWIONE (`undefined`) są pomijane. */
+export interface FleetListFilter {
+  serviceStatus?: ServiceStatus;
+  /**
+   * `true` = tylko jednostki z OTWARTĄ sesją (chip „Z claimem" z mockupu A07).
+   *
+   * Filtr siedzi po stronie SERWERA, mimo że lista i tak jedzie w całości i panel
+   * mógłby odsiać wiersze sam. Powód jest doktrynalny i praktyczny naraz: skład listy
+   * ustala serwer, a chip z liczbą jest obietnicą „tyle wierszy zobaczysz" — dwie
+   * różne definicje „z claimem" (jedna w SQL-u kafla, druga w `.filter()` panelu) to
+   * dokładnie ten rozjazd, który panel ma wykrywać, a nie produkować.
+   */
+  claimed?: boolean;
+  /** Fragment rejestracji albo typu; dopasowanie bez rozróżniania wielkości. */
+  search?: string;
+}
+
+/**
+ * Liczniki kafli — po CAŁEJ flocie, niezależnie od zawężenia listy.
+ *
+ * Ten sam typ obsługuje liczniki CHIPÓW, ale liczone w bieżącym WYSZUKIWANIU
+ * (`FleetAdminPort.scopeCounts`). Osobna metoda, wspólny kształt — bo to są te same
+ * cztery zawężenia, tylko dwa różne pytania: kafel opisuje KLUB („W służbie 4 / 5")
+ * i ma się nie ruszać przy wpisywaniu w wyszukiwarkę, a chip z liczbą jest obietnicą
+ * „tyle wierszy zobaczysz po kliknięciu". Przy kontach pilotów rozjazd tych dwóch
+ * liczb był realną usterką (chip pokazywał 2 i dawał pustą tabelę).
+ */
+export interface FleetCounts {
+  total: number;
+  active: number;
+  disabled: number;
+  claimed: number;
+}
+
+/** Zmiana konfiguracji. Pola nieustawione zostają bez zmian. */
+export interface AircraftPatch {
+  reg?: string;
+  type?: string;
+  year?: number | null;
+  capacityL?: number;
+  mhFormat?: MhFormat;
+  dualRequired?: boolean;
+  serviceStatus?: ServiceStatus;
+}
+
+/**
+ * Port floty po stronie PANELU — osobny od `ReferencePort` i `AircraftConfigPort`.
+ *
+ * Ta sama decyzja, co przy flagach i kontach: osobny port wtedy, gdy inny jest POWÓD
+ * istnienia. `ReferencePort` buduje CAŁĄ migawkę pod cache telefonów i czyta poza
+ * transakcją; `AircraftConfigPort` oddaje jedną liczbę w gorącej transakcji ingestu.
+ * Panel pisze — i musi to robić w transakcji śladu audytu, więc każda metoda bierze
+ * `tx` z zewnątrz. Korzyścią uboczną jest to, że ani ingest, ani `GET /reference` nie
+ * mają jak zregresować od zmian w ekranie floty.
+ */
+export interface FleetAdminPort {
+  list(db: Queryable, filter: FleetListFilter): Promise<AdminAircraftJoin[]>;
+  counts(db: Queryable): Promise<FleetCounts>;
+  /**
+   * Liczniki CHIPÓW — te same cztery zawężenia, ale w bieżącym wyszukiwaniu.
+   * `search` nieustawione = po całej flocie (wtedy zgadzają się z `counts`).
+   */
+  scopeCounts(db: Queryable, filter: { search?: string }): Promise<FleetCounts>;
+  byId(db: Queryable, id: string): Promise<AdminAircraft | null>;
+  /** Wiersz listy dla POJEDYNCZEJ jednostki — odpowiedź mutacji bez drugiej listy. */
+  joinById(db: Queryable, id: string): Promise<AdminAircraftJoin | null>;
+  /**
+   * Kolizja unikalności rejestracji PRZED zapisem; `null` = wolna.
+   *
+   * Sprawdzenie zamiast samego łapania `23505`, dokładnie jak przy kontach: panel ma
+   * dostać nazwę POLA do poprawienia, a nie „naruszenie unikalności". Wyścig i tak
+   * kończy się błędem bazy i tam jest tłumaczony na ten sam wynik.
+   */
+  conflict(tx: Queryable, values: { reg: string; exceptId: string | null }): Promise<'reg' | null>;
+  insert(tx: Queryable, aircraft: AdminAircraft): Promise<void>;
+  update(tx: Queryable, id: string, patch: AircraftPatch): Promise<void>;
+  /**
+   * Ile sesji tego samolotu nie ma `day_close` — wejście do `domain/fleetGuards.ts`.
+   * Czytane w TEJ SAMEJ transakcji co zapis, po wzięciu blokady niżej.
+   */
+  openSessions(tx: Queryable, aircraftId: string): Promise<number>;
+  /**
+   * Blokada advisory na konfiguracji JEDNEJ jednostki, ważna do końca transakcji.
+   *
+   * ══ CZEGO PILNUJE, A CZEGO NIE ══
+   * Pilnuje sekwencji „odczytaj wiersz → policz otwarte sesje → zapisz": bez niej dwie
+   * równoległe zmiany tego samego samolotu czytają ten sam stan wyjściowy, więc DIFF
+   * w dzienniku audytu opisuje przejście, którego nie było („1257 → 1100" zapisane
+   * dwa razy, choć druga zmiana zaczynała od 1100). Dziennik nadzoru, w którym „przed"
+   * bywa nieprawdą, przestaje być dowodem.
+   *
+   * NIE pilnuje wyścigu z INGESTEM: telefon otwierający dzień blokuje sesję, nie
+   * samolot, więc nowa sesja może powstać tuż po sprawdzeniu. To jest świadomie
+   * przyjęte i opisane na ekranie — samolot z dniem pobranym rano dokończy go na
+   * starej konfiguracji (`A07a`).
+   *
+   * Klucz mieszka w adapterze, bo nazwa klucza advisory jest szczegółem Postgresa —
+   * ta sama decyzja, co przy `PilotsAdminPort.lockAdminPopulation`.
+   */
+  lockAircraft(tx: Queryable, aircraftId: string): Promise<void>;
 }
 
 // ── konserwacja (przebudowa projekcji, panel) ───────────────────────────────────

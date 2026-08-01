@@ -26,6 +26,7 @@ import { buildDaySheet, sheetDay } from './daySheetContent.ts';
 import type {
   Clock,
   Database,
+  DaySheet,
   EventsStorePort,
   ExportLogPort,
   FlagsPort,
@@ -63,6 +64,27 @@ export function blocksExport(flag: { type: FlagType; status: FlagStatus }): bool
 export type ExportOutcome =
   | { exported: true; tab: string; revision: number; url: string }
   | { exported: false; reason: 'no_events' | 'session_open' | 'no_preflight' | 'overlap_flag' };
+
+/**
+ * Rzucił ZAPIS KARTY, czyli `SheetsPort.writeDaySheet` — niedostępny Google, padnięta
+ * baza kart, timeout transportu.
+ *
+ * ══ PO CO OSOBNY TYP BŁĘDU ══
+ * Bo bez niego wołający ma do wyboru „złap wszystko" albo „nie łap nic", a oba są złe.
+ * Panel łapał wszystko i nazywał to „Adapter arkuszy zgłosił awarię — spróbuj za chwilę"
+ * (`admin/commands/exports.ts`), więc `TypeError` w `buildDaySheet` i przegrany wyścig
+ * rewizji (`23505`) były raportowane jako awaria Google. Administrator dostawał wtedy
+ * komunikat kierujący dokładnie w złą stronę: czekał, zamiast zgłosić błąd.
+ *
+ * Opakowujemy WYŁĄCZNIE wywołanie portu arkuszy. Wszystko poza nim — projekcja, budowa
+ * karty, transakcja rewizji — leci dalej surowe i ma prawo być nieoczekiwane.
+ */
+export class SheetsAdapterError extends Error {
+  constructor(readonly reason: unknown) {
+    super('adapter arkuszy odmówił zapisu karty dziennej');
+    this.name = 'SheetsAdapterError';
+  }
+}
 
 export class DayExporter {
   constructor(
@@ -102,22 +124,51 @@ export class DayExporter {
     // do przetestowania.
     if (sheet == null) return { exported: false, reason: 'no_preflight' };
 
-    const { url } = await this.sheets.writeDaySheet(sheet);
+    const url = await this.write(sheet);
 
     // Wpis do dziennika DOPIERO po udanym zapisie karty — odwrotna kolejność
     // pokazałaby na ekranie 11 link do arkusza, którego nie ma.
-    const previous = await this.exportLog.latest(this.db, sessionUuid);
-    const revision = (previous?.revision ?? 0) + 1;
-    await this.exportLog.append(this.db, {
-      sessionUuid,
-      day: sheetDay(state.dutyStart),
-      aircraftId: state.aircraftId,
-      sheetUrl: url,
-      revision,
-      exportedAt: this.clock.now(),
+    //
+    // Nadanie rewizji jedzie JEDNĄ TRANSAKCJĄ z blokadą na dzienniku tej sesji, bo
+    // „odczytaj ostatnią → dodaj jeden → zapisz" jest sekwencją, nie operacją atomową.
+    // Bez niej spóźniona paczka z telefonu i kliknięcie „Ponów" w panelu, trafione
+    // w tę samą chwilę, zapisywały DWA wiersze z tym samym numerem — a numer rewizji
+    // jest jedyną osią, po której da się odtworzyć, co i kiedy poszło do arkusza
+    // (od migracji 14 pilnuje tego również `UNIQUE (session_uuid, revision)`).
+    const day = sheetDay(state.dutyStart);
+    const aircraftId = state.aircraftId;
+    const revision = await this.db.transaction(async (tx) => {
+      await this.exportLog.lock(tx, sessionUuid);
+      const previous = await this.exportLog.latest(tx, sessionUuid);
+      const next = (previous?.revision ?? 0) + 1;
+      await this.exportLog.append(tx, {
+        sessionUuid,
+        day,
+        aircraftId,
+        sheetUrl: url,
+        revision: next,
+        exportedAt: this.clock.now(),
+      });
+      return next;
     });
 
     return { exported: true, tab: sheet.tab, revision, url };
+  }
+
+  /**
+   * Zapis karty przez port arkuszy, z awarią NAZWANĄ (`SheetsAdapterError`).
+   *
+   * Jedyne miejsce w tej klasie, które opakowuje wyjątek — i to jest cała reguła:
+   * awaria TRANSPORTU do arkusza jest znanym trybem awarii („minie, spróbuj za chwilę"),
+   * a wszystko inne, co może tu rzucić, jest błędem po naszej stronie i nie ma prawa
+   * podawać się za tamto.
+   */
+  private async write(sheet: DaySheet): Promise<string> {
+    try {
+      return (await this.sheets.writeDaySheet(sheet)).url;
+    } catch (err) {
+      throw new SheetsAdapterError(err);
+    }
   }
 
   /**

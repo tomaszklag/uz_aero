@@ -20,6 +20,18 @@ interface ExportLogDbRow {
 }
 
 export class PgExportLogRepo implements ExportLogPort {
+  /**
+   * Klucz advisory jest PRZESTRZENIĄ NAZW plus identyfikator (`export_log:<uuid>`),
+   * dokładnie jak `aircraft:<id>` przy flocie. `hashtext` zwęża napis do `int4`, więc
+   * kolizja dwóch różnych sesji jest możliwa i nieszkodliwa: kosztuje szeregowanie
+   * dwóch eksportów, które i tak trwają milisekundy. Prefiks jest tu po to, żeby taka
+   * kolizja nie mogła zajść MIĘDZY dziedzinami — blokada dziennika i blokada samolotu
+   * o tym samym haszu zatrzymywałyby się nawzajem bez żadnego powodu.
+   */
+  async lock(tx: Queryable, sessionUuid: string): Promise<void> {
+    await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`export_log:${sessionUuid}`]);
+  }
+
   async latest(db: Queryable, sessionUuid: string): Promise<ExportRecord | null> {
     const { rows } = await db.query<ExportLogDbRow>(
       `SELECT session_uuid, day::text AS day, aircraft_id, sheet_url, revision, exported_at

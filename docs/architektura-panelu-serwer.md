@@ -80,6 +80,74 @@
 > — tam wędrował literał `'administrative'`, więc lista w teście architektury dalej ma
 > **dokładnie jedną** pozycję (dopisanie do niej drugiego pliku byłoby rozluźnieniem
 > reguły, nie jej utrzymaniem).
+>
+> **Aktualizacja 2026-08-01 — przekrój EKSPORTY (A05) WDROŻONY** (§11 poz. 5):
+> migracja **14** (`UNIQUE (session_uuid, revision)` na `export_log` + usunięcie
+> nadmiarowego `idx_export_log_session`), `ExportLogPort.lock` (advisory na sesji) razem
+> z przeniesieniem nadania rewizji w `DayExporter` do JEDNEJ transakcji,
+> `ExportsAdminPort` + `PgAdminExportsRepo`, `AdminExportQueries`,
+> `AdminExportCommands.retry`, `application/admin/mappers/exportListItem.ts`,
+> `contracts/exports.ts`, `GET /admin/api/exports`, `/exports/:uuid`,
+> `/exports/:uuid/sheet`, `POST /exports/:uuid/retry`, `test/adminExports.test.ts`.
+> **Numer migracji w tabeli §11 był NIEAKTUALNY** (mówiła „migracja 12"): 12 zajęły
+> indeksy dziennika audytu, 13 — `credentials_valid_from`. Tabela poprawiona.
+>
+> **Trzy odstępstwa, świadome:**
+> (1) `ExportsAdminPort` NIE dostaje kursora — monitor jest zawężony do zakresu dat,
+> a nie do strony rosnącej bez granicy; kursor keyset zostaje przy `events`, `sessions`
+> i `admin_audit`. Uzasadnienie przy `AdminExportPage`;
+> (2) stanu `NIEAKTUALNY` z §11/`ANALIZA` A07 **nie ma**: wymagałby porównania
+> `export_log.exported_at` (zegar aplikacji) z `sessions.updated_at` (`now()` Postgresa),
+> czyli własności prawdziwej wyłącznie wtedy, gdy oba zegary są zsynchronizowane.
+> Domknięcie tego wymaga kolumny-znacznika „do którego miejsca strumienia zbudowano
+> kartę" — decyzja o schemacie, nie gałąź w mapperze. Mockup `A05` tego stanu nie zna;
+> (3) **kolejność jest odwrócona względem `flag.resolve`**: eksport idzie PRZED śladem
+> audytu, bo eksport JEST tu całym skutkiem, a wpis powstały przed próbą nie mógłby
+> nieść ani rewizji „po", ani powodu odmowy. Uzasadnienie i przyjęte ryzyko —
+> w `application/admin/commands/exports.ts`.
+>
+> **Okno między zapisem karty a transakcją rewizji.** `DayExporter` woła
+> `SheetsPort.writeDaySheet` PRZED transakcją nadającą numer rewizji (kolejność wymuszona:
+> `SheetsPort` nie przyjmuje `Queryable` i jest jawnie projektowany pod adapter HTTP do
+> Google, więc do transakcji Postgresa nie da się go wciągnąć). Wynika z tego stan, który
+> trzeba nazwać, zamiast go odkrywać przy awarii: **`exported_sheets` może przez chwilę —
+> a po awarii zapisu dziennika TRWALE — trzymać treść nowszą niż jakikolwiek wiersz
+> `export_log`.** Karta w bazie jest wtedy aktualna, a dziennik o tej wysyłce nie wie.
+> Kierunek rozbieżności jest bezpieczny i to jest powód, dla którego go przyjmujemy:
+> czytelnik linku z ekranu 11 widzi treść AKTUALNĄ (nigdy starszą, niż mówi dziennik),
+> a monitor eksportu pokazuje wtedy „Brak karty" albo zaniżoną rewizję — czyli myli się
+> w stronę alarmu, a nie w stronę ciszy. Odwrócenie kolejności wymieniałoby to na link
+> z ekranu 11 prowadzący do arkusza, którego nie ma.
+>
+> **Poprawki z przeglądu przyrostu A05 (2026-08-01, ten sam dzień):**
+> (a) **liczniki i zawężenie po stanie przeniesione do SQL-a.** `LIMIT` szedł bez
+> predykatu stanu, a chipy i wszystkie liczby powstawały w JS z okna PO obcięciu:
+> `?state=missing` nie umiało znaleźć dnia z awarią eksportu starszego niż `limit`
+> najnowszych, a kafel „Bez karty" pokazywał wtedy 0. Zrobione wzorem `total` w skrzynce
+> flag (dwa zapytania nad tymi samymi warunkami); odpowiedź niesie `matched` i `truncated`,
+> a ekran mówi o obcięciu banerem. **Cena: stan karty ma teraz DWA wyrażenia** — `exportState`
+> w mapperze i `CASE` w `PgAdminExportsRepo`. Rozjazd łapie `test/adminExports.test.ts`
+> (liczniki vs policzone wiersze, `?state=X` vs wiersze o tym stanie);
+> (b) **kolizja nazw kart tego samego dnia** — `AdminExportListItem.overwrittenBy`. Dwie
+> ZAMKNIĘTE zmiany na jednym samolocie tego samego dnia budują kartę o tej samej nazwie
+> (`sheetTabName` niesie dzień i samolot, nie sesję), a `exported_sheets` jest po `tab`
+> UPSERT-owane — druga nadpisuje pierwszą, `session_overlap` tego nie łapie (dotyczy sesji
+> NIEZAMKNIĘTYCH), a monitor raportował obie jako „W arkuszu". Konwencji nazw ani schematu
+> **nie zmieniamy** (lustro `app/src/ui/screens/syncStatus.ts`, §4.7 — decyzja produktowa
+> dotykająca telefonu, OTWARTA). Serwer wykrywa fakt po `(day, aircraft_id)` w `export_log`,
+> ekran go pokazuje, a podgląd karty ostrzega, że wyświetla treść innej sesji;
+> (c) **awaria adaptera arkuszy odróżniona od błędu po naszej stronie** — `SheetsAdapterError`
+> w `DayExporter` (opakowuje WYŁĄCZNIE wywołanie `writeDaySheet`) i `ExportFailureDto`
+> w kontrakcie. Wcześniej komenda łapała każdy wyjątek i zwracała `outcome: null`, a panel
+> nazywał każdy „Adapter arkuszy zgłosił awarię — spróbuj za chwilę";
+> (d) **`export_log` ma test architektury** (`writesTo` + nowe `upsertsInto`): bez UPDATE,
+> DELETE i bez `ON CONFLICT DO UPDATE`. `exported_sheets` ma regułę ODWROTNĄ i asercję
+> pozytywną — tam UPSERT jest zamierzony;
+> (e) **sprostowane komentarze migracji 14**: `UNIQUE` nie łapie „drugiej instancji procesu"
+> (`pg_advisory_xact_lock` jest blokadą KLASTROWĄ i obejmuje ją tak samo), a przegrany
+> wyścig `23505` NIE jest tłumaczony na odmowę — kończy się pięćsetką i jest raportowany
+> jako `unexpected`. Dopisane też, że blokada advisory nie ma i nie może mieć testu na
+> PGlite (jedno połączenie).
 
 ---
 
@@ -1217,7 +1285,7 @@ niczego, co da się pokazać).
 | **2** | **Czytanie dni** | migracja 10 (5 kolumn + indeks) · rozszerzenie `sessionRowFrom` · `POST maintenance/rebuild-projections` · `SqlFilter` + `keyset` · `SessionsAdminPort.list` · `GET /admin/api/sessions`, `/sessions/:uuid` · rozszerzenie `contract.test.ts` | A02, A02a | przebudowa projekcji **musi** wejść w tym samym przekroju co migracja 10 — inaczej nowe kolumny są puste |
 | **3** | **Korekta administracyjna** | `WriteAuthority` w `@uzaero/domain` · `AdminCorrectionCommands` · `POST /admin/api/sessions/:uuid/corrections` | A02b | wymaga #2 (wybór celu na karcie dnia) i #0 (audyt) |
 | **4** | **Rejestr zdarzeń** | migracja 11 (indeksy) · `EventsAdminPort.list` · `GET /admin/api/events` | A04 | narzędzie diagnostyczne; po #2, bo dzieli `SqlFilter`/`keyset` |
-| **5** | **Eksporty** | migracja 12 `UNIQUE (session_uuid, revision)` · `ExportsAdminPort.list` · `POST /admin/api/exports/:uuid/retry` | A05 | ponowienie to `ExportOutcome` z #1 wystawiony trasą |
+| **5** | **Eksporty** | migracja **14** `UNIQUE (session_uuid, revision)` + `ExportLogPort.lock` (advisory na sesji) · `ExportsAdminPort` (list/byUuid/history) · `AdminExportCommands.retry` · `GET /admin/api/exports`, `/exports/:uuid`, `/exports/:uuid/sheet` · `POST /exports/:uuid/retry` | A05 | ponowienie to `ExportOutcome` z #1 wystawiony trasą |
 | **6** | **Konta** | `PilotsAdminPort` · `AdminPilotCommands` (create/update/reset/deactivate, hasło generowane, kasowanie `refresh_tokens`, blokada „ostatni administrator") · trasy | A06, A06a | pierwszy przekrój czysto CRUD-owy — po nim widać, czy §2.4 się broni w praktyce |
 | **7** | **Flota** | `FleetAdminPort` · `AdminFleetCommands` (z podbiciem `aircraft.updated_at` → ETag `/reference`) · trasy | A07, A07a | test regresji: zmiana `capacity_l` musi dojechać na telefon (ETag) |
 | **8** | **Statystyki** | atrybucja block time per pilot **w `@uzaero/domain`** (wspólna z aplikacją, dziś tylko w `crewChange.test.ts`) · `AdminStatsQueries` z kolumn `sessions` · rozszerzenie `contract.test.ts` | A10 | wymaga kolumn z #2 |

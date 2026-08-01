@@ -192,6 +192,13 @@
   td.dim { color:var(--text-secondary); }
   .cell-strong { font-weight:600; }
   .cell-sub { display:block; font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; }
+  /* ŚWIEŻOŚĆ w komórce tabeli — podpis `.cell-sub` niosący WIEK danych z telefonu.
+     Trzy stany §4.8 dosłownie: `fresh` = live (bez zastrzeżeń), `stale` = cache
+     starszy niż doba, `none` = brak danych. Modyfikator, a nie osobna klasa, bo to
+     nadal ten sam podpis — zmienia się wyłącznie to, co mówi o jego wiarygodności. */
+  .cell-sub.fresh { color:var(--green); }
+  .cell-sub.stale { color:var(--amber); }
+  .cell-sub.none  { color:var(--text-muted); }
   .reg { font-family:var(--font-mono); font-weight:700; letter-spacing:1px; }
   .row-actions { display:flex; gap:6px; justify-content:flex-end; }
 
@@ -583,8 +590,8 @@
                 <td class="dim">—</td>
                 <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
                 <td><span class="pill green"><span class="dot live"></span>W locie</span><span class="cell-sub">Tomasz Małkiewicz · od 07:58 UTC</span></td>
-                <td class="num">1284.6<span class="cell-sub" style="color:var(--green);">sync 3 min temu</span></td>
-                <td class="num">96 L<span class="cell-sub" style="color:var(--green);">sesja otwarta</span></td>
+                <td class="num">1284.6<span class="cell-sub fresh">sync 3 min temu</span></td>
+                <td class="num">96 L<span class="cell-sub fresh">sesja otwarta</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A07a-samolot.html">Edytuj</a></div></td>
               </tr>
               <tr class="clickable">
@@ -595,8 +602,8 @@
                 <td><span class="pill amber">wymagany</span></td>
                 <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
                 <td><span class="pill dim">wolny</span><span class="cell-sub">zwolniony 30 JUL 18:41 UTC</span></td>
-                <td class="num">3907.8<span class="cell-sub" style="color:var(--amber);">sync 20 godz. temu</span></td>
-                <td class="num">210 L<span class="cell-sub" style="color:var(--amber);">przekazanie · 1 dzień</span></td>
+                <td class="num">3907.8<span class="cell-sub stale">sync 20 godz. temu</span></td>
+                <td class="num">210 L<span class="cell-sub stale">przekazanie · 1 dzień</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A07a-samolot.html">Edytuj</a></div></td>
               </tr>
               <tr class="clickable">
@@ -607,8 +614,8 @@
                 <td class="dim">—</td>
                 <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
                 <td><span class="pill dim">wolny</span><span class="cell-sub">zwolniony 30 JUL 17:20 UTC</span></td>
-                <td class="num">645:06<span class="cell-sub" style="color:var(--amber);">sync 21 godz. temu</span></td>
-                <td class="num">48 L<span class="cell-sub" style="color:var(--amber);">przekazanie · 1 dzień</span></td>
+                <td class="num">645:06<span class="cell-sub stale">sync 21 godz. temu</span></td>
+                <td class="num">48 L<span class="cell-sub stale">przekazanie · 1 dzień</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A07a-samolot.html">Edytuj</a></div></td>
               </tr>
               <tr class="clickable">
@@ -619,8 +626,8 @@
                 <td class="dim">—</td>
                 <td><span class="pill green"><span class="dot"></span>W służbie</span></td>
                 <td><span class="pill dim">wolny</span><span class="cell-sub">zwolniony 29 JUL 16:12 UTC</span></td>
-                <td class="num">302.4<span class="cell-sub" style="color:var(--amber);">sync 2 dni temu</span></td>
-                <td class="num">62 L<span class="cell-sub" style="color:var(--amber);">przekazanie · 2 dni</span></td>
+                <td class="num">302.4<span class="cell-sub stale">sync 2 dni temu</span></td>
+                <td class="num">62 L<span class="cell-sub stale">przekazanie · 2 dni</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A07a-samolot.html">Edytuj</a></div></td>
               </tr>
               <tr class="clickable">
@@ -641,7 +648,18 @@
 
         <div class="banner warn" style="flex-shrink:0;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>SP-MNO jest wyłączony ze służby.</b> Znika z listy wyboru samolotu w aplikacji pilota (przestaje wychodzić w <code>GET /reference</code>), więc nikt nie zacznie na nim dnia. <b>Historia zostaje w całości</b> — sesje, zdarzenia, karty dnia i motogodziny liczą się dalej. Wyłączenie to zmiana konfiguracji, nie kasowanie.</span>
+          <span><b>SP-MNO jest wyłączony ze służby.</b> Znika z listy wyboru samolotu w aplikacji pilota. <b>Historia zostaje w całości</b> — sesje, zdarzenia, karty dnia i motogodziny liczą się dalej. Wyłączenie to zmiana konfiguracji, nie kasowanie.</span>
+        </div>
+
+        <!-- SPROSTOWANIE 2026-08-01: cztery adnotacje tego ekranu opisywały stan, którego
+             serwer nie ma. Poprawione po wdrożeniu przekroju A07 (`server/test/adminFleet.test.ts`). -->
+        <div class="banner status" style="flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span><b>Sprostowanie z 2026-08-01 — cztery rzeczy na tym ekranie działają inaczej.</b>
+            <b>(1) Plakietka „W locie" to „Zajęty".</b> Projekcja <code>sessions</code> niesie informację o OTWARTEJ SESJI, nie o pracy silnika — ta sama granica, o którą rozbił się chip „W locie" na <a href="A02-dni.html" style="color:var(--green);">A02</a>. Claim znaczy „ktoś zajął jednostkę na dziś".
+            <b>(2) Wyłączony samolot NADAL wychodzi w <code>GET /reference</code></b>, razem z polem <code>serviceStatus: "disabled"</code>. Rekord, który zniknąłby z odpowiedzi, zostałby w cache telefonu na zawsze (<code>app/src/application/sync/referenceSync.ts</code>) — dlatego wybór blokuje APLIKACJA, a nie zniknięcie rekordu.
+            <b>(3) Kolumna „Stan służby" nie ma podpisu „od 19 JUN 2026 · remont".</b> Tabela <code>aircraft</code> ma <code>service_status</code> i <code>updated_at</code>, i nic poza tym; <code>updated_at</code> mówi „kiedy ruszono wiersz", nie „od kiedy stoi". Datę i sprawcę wyłączenia niesie dziennik audytu (<code>aircraft.disable</code>).
+            <b>(4) „Nikt nie zacznie dnia na wyłączonym samolocie" NIE jest własnością serwera.</b> <code>POST /events</code> nie sprawdza <code>service_status</code> i sprawdzać nie może: rejestr jest append-only i przyjmuje fakty z terenu, a odrzucenie paczki złamałoby regułę „brak sieci nigdy nie blokuje pracy pilota" i zgubiłoby dane o locie, który i tak się odbył. Blokada działa na telefonach, KTÓRE POBRAŁY świeżą konfigurację; telefon z cache'em sprzed wyłączenia jeszcze otworzy dzień. Kolumna „Stan służby" mówi wtedy „wyłączony, a dzień wciąż otwarty", a wśród banerów pod tabelą staje ostrzeżenie z listą takich jednostek — to jedyna informacja, po której administrator się o tym dowie.</span>
         </div>
 
         <div class="cols" style="flex-shrink:0;">

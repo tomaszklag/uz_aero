@@ -10,11 +10,15 @@ import cookie from '@fastify/cookie';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AdminCorrectionCommands } from '../application/admin/commands/corrections.ts';
+import type { AdminExportCommands } from '../application/admin/commands/exports.ts';
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
+import type { AdminFleetCommands } from '../application/admin/commands/fleet.ts';
 import type { AdminPilotCommands } from '../application/admin/commands/pilots.ts';
 import type { AdminAuditQueries } from '../application/admin/queries/audit.ts';
 import type { AdminCorrectionQueries } from '../application/admin/queries/corrections.ts';
+import type { AdminExportQueries } from '../application/admin/queries/exports.ts';
 import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
+import type { AdminFleetQueries } from '../application/admin/queries/fleet.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
@@ -30,7 +34,9 @@ import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
+import { registerAdminExportRoutes } from './routes/admin/exports.ts';
 import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
+import { registerAdminFleetRoutes } from './routes/admin/fleet.ts';
 import { registerAdminMeRoutes } from './routes/admin/me.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
@@ -61,11 +67,25 @@ export interface ServerDeps {
   adminFlags: AdminFlagCommands;
   adminCorrections: AdminCorrectionCommands;
   adminPilots: AdminPilotCommands;
+  /**
+   * Konfiguracja floty (`A07`, `A07a`) — jedyna droga zmiany WEJŚĆ REGUŁ §4.5:
+   * pojemności zbiorników (próg `FUEL_MISMATCH`), formatu motogodzin, wymogu Duala
+   * i stanu służby. Zmiana wychodzi do telefonów wyłącznie przez ETag `GET /reference`.
+   */
+  adminFleet: AdminFleetCommands;
+  /**
+   * Ręczne ponowienie eksportu karty dnia (`A05`) — jedyna droga, którą człowiek może
+   * dopchnąć do arkusza dzień, którego automat nie dowiózł. Bramek eksportera NIE omija.
+   */
+  adminExports: AdminExportCommands;
   /** Strona ODCZYTU panelu — uproszczony CQRS: komendy wyżej, zapytania tutaj. */
   adminSessionQueries: AdminSessionQueries;
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
   adminPilotQueries: AdminPilotQueries;
+  adminFleetQueries: AdminFleetQueries;
+  /** Monitor eksportu (`A05`) — lista dni od strony arkusza, historia rewizji, podgląd karty. */
+  adminExportQueries: AdminExportQueries;
   /** Podgląd „przed → po" korekty (`A02b`) — zapytanie, nie komenda: nic nie zapisuje. */
   adminCorrectionQueries: AdminCorrectionQueries;
   /** Dziennik audytu (`A09`) — WYŁĄCZNIE odczyt; zapisuje go `AuditedWrite`. */
@@ -106,6 +126,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);
+  registerAdminFleetRoutes(app, deps.adminFleet, deps.adminFleetQueries, gate);
+  registerAdminExportRoutes(app, deps.adminExportQueries, deps.adminExports, gate);
 
   app.get('/health', async () => ({ ok: true }));
 

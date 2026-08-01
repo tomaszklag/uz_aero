@@ -72,6 +72,52 @@ function valueImportsFrom(code: string, module: string): boolean {
   return false;
 }
 
+/**
+ * Wyrażenia z `className={…}` — z BILANSEM KLAMER, nie regexem do pierwszej `}`.
+ *
+ * Regex musiałby uciąć `` className={`pill ${map[k] ?? 'dim'}`} `` na klamrze zamykającej
+ * interpolację, czyli przestałby widzieć drugą połowę wyrażenia. Klamry wewnątrz literałów
+ * napisowych mogłyby ten licznik przekręcić — w panelu nie ma ani jednego takiego miejsca,
+ * a udawanie parsera TSX byłoby kosztem większym od reguły, której broni.
+ */
+function classNameExpressions(code: string): string[] {
+  const out: string[] = [];
+  const re = /className=\{/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(code)) !== null) {
+    const start = match.index + match[0].length;
+    let depth = 1;
+    let i = start;
+    while (i < code.length && depth > 0) {
+      if (code[i] === '{') depth += 1;
+      else if (code[i] === '}') depth -= 1;
+      i += 1;
+    }
+    if (depth === 0) out.push(code.slice(start, i - 1));
+  }
+  return out;
+}
+
+/** Wyrażenia `className`, w których nazwa klasy powstaje z KAWAŁKÓW. */
+function classNameOffenders(files: string[], source: (file: string) => string): string[] {
+  const out: string[] = [];
+  for (const file of files) {
+    for (const expression of classNameExpressions(source(file))) {
+      // 1. Literał szablonowy z interpolacją PRZYKLEJONĄ do tekstu (`fresh-${x}`, `${x}px`).
+      const template = /`([^`]*)`/.exec(expression)?.[1];
+      const glued =
+        template != null && (/[^\s`]\$\{/.test(template) || /\}[^\s`]/.test(template));
+      // 2. Dodawanie napisów: `'fresh-' + x` albo `x + '-stale'`.
+      const concatenated = /['"][^'"]*['"]\s*\+|\+\s*['"]/.test(expression);
+      // 3. `join` separatorem, który NIE jest spacją: `['fresh', x].join('-')`.
+      //    `join(' ')` składa listę KLAS i jest wzorcem panelu, nie naruszeniem.
+      const joined = /\.join\(\s*['"][^\s'"]/.test(expression);
+      if (glued || concatenated || joined) out.push(`${file} → ${expression}`);
+    }
+  }
+  return out;
+}
+
 describe('granice warstw panelu', () => {
   // Bez tego zielony wynik pozostałych przypadków nic nie znaczy: pusta lista plików
   // albo zepsuty regex dałyby „brak naruszeń" przy dowolnie połamanej architekturze.
@@ -241,6 +287,61 @@ describe('granice warstw panelu', () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  it('nazwa klasy CSS nie powstaje przez SKLEJENIE w .tsx', () => {
+    // Wada, która to wymusiła (`A07`, przekrój floty): ekran renderował
+    //
+    //     className={`cell-sub fresh-${row.mh.freshness}`}
+    //
+    // czyli wypisywał `fresh-stale` — klasę, której nie definiuje ani `SZABLON.html`,
+    // ani żaden arkusz panelu. Trzy stany świeżości były policzone, przetestowane
+    // (`flotaRows.test.ts`) i NIEWIDOCZNE: odczyt sprzed trzech minut i sprzed dwóch dni
+    // wyglądały identycznie. Ani kompilator, ani testy modułu czystego nie mają jak
+    // tego zobaczyć — nazwa klasy powstaje dopiero w przeglądarce.
+    //
+    // Reguła: nazwa klasy w `className` musi być CAŁYM tokenem. `` `pill ${tone}` `` jest
+    // w porządku (podstawiamy nazwę klasy), `` `fresh-${x}` `` nie jest (sklejamy nazwę
+    // z fragmentu). Nazwa klasy jest decyzją o treści, więc — jak każda inna — mieszka
+    // w module czystym z testem, który może sprawdzić ją wobec arkusza i wobec mockupu.
+    //
+    // ══ TRZY SPOSOBY SKLEJENIA, NIE JEDEN (rozszerzenie 2026-08-01) ══
+    // Do tej pory reguła widziała wyłącznie literał szablonowy, więc `'fresh-' + x`
+    // i `['fresh', x].join('-')` przechodziły bez śladu — a produkują dokładnie tę samą
+    // niewidzialną klasę. Skaner czyta więc CAŁE wyrażenie `className={…}` (z bilansem
+    // klamer, żeby `${…}` w środku nie ucinało go w połowie) i sprawdza wszystkie trzy.
+    const offenders = classNameOffenders(
+      filesUnder('.').filter((f) => f.endsWith('.tsx')),
+      codeOf,
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it('skaner nazw klas faktycznie łapie sklejenia (kontrola samego testu)', () => {
+    // Jedyny przypadek w tym pliku, który do 2026-08-01 nie miał asercji kontrolnej —
+    // a jest jedynym opartym na skanerze WŁASNEJ konstrukcji (bilans klamer), więc
+    // najłatwiej go po cichu zepsuć. Bez tego „zero naruszeń" mogłoby znaczyć „zero
+    // znalezionych wyrażeń".
+    const sample = (code: string): string[] =>
+      classNameOffenders(['x.tsx'], () => code).map((o) => o.split(' → ')[1] ?? '');
+
+    // Skaner w ogóle coś widzi w prawdziwym panelu.
+    expect(classNameExpressions(codeOf('ui/components/Pill.tsx')).length).toBeGreaterThan(0);
+
+    // ZŁE — trzy postaci tego samego błędu.
+    expect(sample('<i className={`fresh-${x}`} />')).toHaveLength(1);
+    expect(sample("<i className={'fresh-' + x} />")).toHaveLength(1);
+    expect(sample("<i className={['fresh', x].join('-')} />")).toHaveLength(1);
+
+    // DOBRE — podstawiamy CAŁE nazwy klas, nie ich kawałki.
+    expect(sample('<i className={`pill ${tone}`} />')).toEqual([]);
+    expect(sample("<i className={[a, b].filter(Boolean).join(' ')} />")).toEqual([]);
+    expect(sample("<i className={live ? 'dot live' : 'dot'} />")).toEqual([]);
+    // Zagnieżdżone klamry w interpolacji nie ucinają wyrażenia w połowie — inaczej
+    // skaner przestawałby widzieć wszystko, co po nich następuje.
+    expect(classNameExpressions('<i className={`pill ${map[k] ?? "dim"}`} />')).toEqual([
+      '`pill ${map[k] ?? "dim"}`',
+    ]);
   });
 
   it('kolory wchodzą WYŁĄCZNIE przez zmienne CSS — zero hexów w kodzie', () => {

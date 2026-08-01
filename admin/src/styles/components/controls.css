@@ -176,6 +176,17 @@
   gap: 8px;
 }
 
+/* Siatka zamiast kolumny — dwie karty wyboru obok siebie ALBO dwa pola formularza
+   w jednym rzędzie (`A07a`: „Rok produkcji" + „Pojemność zbiorników"). Klasa jest
+   w `SZABLON.html` przy wyborze kart, a mockup floty używa jej dla pól — bo to jest
+   ta sama rzecz: rząd, który zwija się na wąskim ekranie. `auto-fit` z minimum 200 px
+   robi to bez media query. */
+.opt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
 /* `font`, `text-align` i `width` obsługują wariant `<button>` (wybór akcji korekty,
    A02b): przeglądarka narzuca przyciskowi własną czcionkę i wyśrodkowanie, a karta
    ma wyglądać identycznie niezależnie od znacznika. `<label>` z mockupu nie jest

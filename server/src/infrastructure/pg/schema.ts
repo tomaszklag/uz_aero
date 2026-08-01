@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -154,6 +154,18 @@ export const MIGRATION_4 = `
  * odtworzyć ze strumienia zdarzeń — pełne kopie dublowałyby rejestr bez zysku.
  * `rows` to DOSŁOWNE wiersze karty (`DaySheet.rows`, string[][]) — karta jest
  * dokumentem w kształcie Excela, nie projekcją do dalszego liczenia.
+ *
+ * ══ CO Z TEGO WYNIKA I JEST NIEROZSTRZYGNIĘTE (2026-08-01) ══
+ * Kluczem jest `tab`, czyli `YYYY-MM-DD_SP-XXX` — DZIEŃ i SAMOLOT, bez sesji. Dwie
+ * ZAMKNIĘTE zmiany na tym samym samolocie tego samego dnia (poranna i popołudniowa)
+ * budują więc kartę o tej samej nazwie i druga NADPISUJE pierwszą. Flaga
+ * `session_overlap` tego nie łapie i nie ma prawa łapać — dotyczy sesji niezamkniętych.
+ * Konwencji nazw nie zmieniamy jednostronnie: jest lustrem `sheetTabName` w telefonie
+ * (`app/src/ui/screens/syncStatus.ts`, ekran 11) i częścią §4.7, więc scalanie sesji
+ * w jedną kartę albo wpuszczenie sesji do nazwy jest DECYZJĄ PRODUKTOWĄ dotykającą obu
+ * końców. Do czasu jej podjęcia monitor eksportu przynajmniej nie milczy: wykrywa
+ * kolizję po `(day, aircraft_id)` w `export_log` i niesie ją jako
+ * `AdminExportListItem.overwrittenBy`.
  */
 export const MIGRATION_5 = `
   CREATE TABLE IF NOT EXISTS exported_sheets (
@@ -413,6 +425,64 @@ export const MIGRATION_13 = `
   ALTER TABLE pilots ADD COLUMN IF NOT EXISTS credentials_valid_from TIMESTAMPTZ;
 `;
 
+/**
+ * Migracja 14: JEDNA REWIZJA KARTY = JEDEN WIERSZ DZIENNIKA (przekrój A05, 2026-08-01).
+ *
+ * ══ CO ZAMYKA ══
+ * `export_log` jest append-only i to jest jego cała wartość: po nim, i tylko po nim, da
+ * się odpowiedzieć na pytanie „co widział skarbnik klubu, kiedy zamykał miesiąc".
+ * Numer rewizji nadawał jednak `DayExporter` sekwencją „odczytaj ostatnią → dodaj jeden
+ * → zapisz", w trzech osobnych zapytaniach bez transakcji. Dwa równoległe eksporty tej
+ * samej sesji (spóźniona paczka z telefonu W CHWILI, gdy administrator klika „Ponów")
+ * czytały ten sam stan i zapisywały DWA wiersze z rewizją 3. Dziennik, w którym numer
+ * rewizji nie jest kluczem, przestaje odpowiadać na pytanie, dla którego istnieje.
+ *
+ * ══ DLACZEGO OGRANICZENIE, A NIE SAMA OSTROŻNOŚĆ W KODZIE ══
+ * Ta sama decyzja, co przy `uq_flags_type_sessions` (migracja 3): dedupe w adapterze
+ * przegrywa wyścig dwóch transakcji, a ograniczenie jest jedyną gwarancją, której nie
+ * da się ominąć timingiem. Serializację (advisory lock na `session_uuid`, wzorzec
+ * `lockAircraft`) dokłada `ExportLogPort.lock`.
+ *
+ * **Czego ogranicznenie łapie NAPRAWDĘ** (sprostowanie 2026-08-01 — poprzednia wersja
+ * tego komentarza mówiła „drugą instancję procesu, której blokada by nie objęła" i było
+ * to po prostu nieprawdą): `pg_advisory_xact_lock` jest blokadą KLASTROWĄ, więc dwie
+ * instancje serwera na tej samej bazie szeregują się na niej dokładnie tak samo jak dwie
+ * transakcje w jednym procesie. `UNIQUE` broni przed czymś innym i węższym:
+ *  • ręcznym `INSERT`-em w `psql` (skrypt naprawczy, migracja danych z zewnątrz),
+ *  • przyszłą ścieżką kodu, która dopisze wiersz, zapominając zawołać `lock()`,
+ *  • starymi duplikatami — ujawnia je przy zakładaniu ograniczenia, zamiast zostawić
+ *    w dzienniku dwa wiersze o tym samym numerze rewizji.
+ *
+ * **Blokada NIE MA testu i tak zostaje zapisane.** Jej jedynym dowodem jest rozumowanie:
+ * PGlite ma JEDNO połączenie i szereguje transakcje własnym mutexem, więc po usunięciu
+ * `pg_advisory_xact_lock` przypadki w `test/adminExports.test.ts` nadal przechodzą
+ * (sprawdzone). Test udający równoległość dawałby fałszywe poczucie pokrycia — dlatego
+ * go nie ma, a ta luka jest tu nazwana.
+ *
+ * **Przegrany wyścig wraca jako `23505` i kończy się PIĘĆSETKĄ** — tłumaczenia na odmowę
+ * NIE MA i nie należy go tu obiecywać (drugie sprostowanie 2026-08-01). `uniqueConflictOn`
+ * (`application/admin/commands/uniqueConflict.ts`) obsługuje formularze kont i floty,
+ * gdzie kolizja jest zajętą wartością do poprawienia przez człowieka; tutaj kolizja
+ * numeru rewizji jest awarią serializacji, a nie polem do zmiany, więc nie ma czego
+ * pokazać w formularzu. Ponowienie z panelu odróżnia ten przypadek od awarii arkuszy
+ * (`ExportFailureDto: 'unexpected'` vs `'sheets_adapter'`), żeby administrator nie
+ * dostał zdania „spróbuj za chwilę" na błąd, który sam nie minie.
+ *
+ * **Migracja WYWALI SIĘ na bazie, w której duplikat rewizji już powstał** — i tak ma
+ * być: to jest dokładnie ten stan, o którym trzeba się dowiedzieć, a nie ten, który
+ * wolno cicho przepuścić. Runner wykonuje skrypt i wpis o zastosowaniu jedną transakcją,
+ * więc nieudana migracja nie zostawia półproduktu.
+ *
+ * `idx_export_log_session` (migracja 4) znika, bo nowy indeks unikalności ma tę samą
+ * kolumnę wiodącą i obsługuje oba pytania dziennika: „wiersze tej sesji" i „ostatnia
+ * rewizja" (`ORDER BY revision DESC`). Dwa indeksy o tym samym prefiksie to koszt
+ * zapisu bez czytelnika.
+ */
+export const MIGRATION_14 = `
+  ALTER TABLE export_log ADD CONSTRAINT uq_export_log_revision UNIQUE (session_uuid, revision);
+  DROP INDEX IF EXISTS idx_export_log_session;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -427,4 +497,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_11,
   MIGRATION_12,
   MIGRATION_13,
+  MIGRATION_14,
 ];

@@ -26,6 +26,7 @@ export { KeyValue, type KeyValueTone } from './KeyValue';
 export { LinkButton } from './LinkButton';
 export { NoAccess } from './NoAccess';
 export { OptionButton } from './OptionButton';
+export { OptionGrid } from './OptionGrid';
 export { OptionLink } from './OptionLink';
 export { OptionList } from './OptionList';
 export { PageHead } from './PageHead';

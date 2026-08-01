@@ -97,6 +97,18 @@ export function refusalText(refusal: PilotRefusalDto): string {
   return REFUSAL_TEXT[refusal];
 }
 
+/**
+ * Czy to odmowa dotycząca KONTA.
+ *
+ * Potrzebne od 2026-08-01, gdy `ApiErrorDto.reason` przestało być polem jednego
+ * ekranu: odmowy floty (`open_session`, `capacity_not_positive`) jadą tą samą kopertą
+ * `409 refused`. Bez tego strażnika ekran kont zawołałby `REFUSAL_TEXT` kluczem, którego
+ * ta mapa nie ma, i pokazał `undefined` w miejscu wyjaśnienia zasady.
+ */
+export function isPilotRefusal(value: unknown): value is PilotRefusalDto {
+  return typeof value === 'string' && Object.hasOwn(REFUSAL_TEXT, value);
+}
+
 export interface AccountFailure {
   tone: 'danger' | 'warn';
   title: string;
@@ -116,7 +128,7 @@ export interface AccountFailure {
  * testuje się w Node, bez sieci (wzorzec `flagResolve.ts`, `korektaResult.ts`).
  */
 export function accountFailure(status: number | null, body: ApiErrorDto | null): AccountFailure {
-  if (status === 409 && body?.error === 'refused' && body.reason != null) {
+  if (status === 409 && body?.error === 'refused' && isPilotRefusal(body.reason)) {
     return {
       tone: 'warn',
       title: 'Serwer odmówił tej zmiany.',

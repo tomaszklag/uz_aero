@@ -11,7 +11,9 @@
 
 import type { AuditListQuery } from '../api/audit';
 import type { CorrectionDraftDto } from '../api/dto';
+import type { ExportListQuery } from '../api/exports';
 import type { FlagListQuery } from '../api/flags';
+import type { FleetListQuery } from '../api/fleet';
 import type { PilotListQuery } from '../api/pilots';
 import type { SessionListQuery } from '../api/sessions';
 
@@ -79,6 +81,41 @@ export const keys = {
   },
 
   /**
+   * Flota (`A07`, `A07a`).
+   *
+   * `tolerance` jest kluczowana POJEMNOŚCIĄ, bo to jest całe pytanie: „jaki próg wyjdzie
+   * dla 1100 L". Dzięki temu poprawianie liczby w formularzu tam i z powrotem wraca do
+   * już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo — a mockup `A07a`
+   * przewiduje właśnie takie poprawianie. Wpis żyje bez końca (`staleTime: Infinity`
+   * w hooku), bo `max(10 L, 5%)` nie zmienia się między żądaniami.
+   *
+   * `detail` nie ma: szuflada samolotu otwiera wiersz, który już jest na liście — trasy
+   * `GET /fleet/:id` serwer nie wystawia, bo flota ma kilka jednostek i pobranie
+   * całości jest tańsze niż druga trasa. Ta sama decyzja, co przy kontach.
+   */
+  fleet: {
+    /**
+     * **Jedyny zasób bez `all` — i to jest treść, nie niekonsekwencja.**
+     *
+     * Pod prefiksem `['fleet']` żyją DWA pytania o różnej naturze: skład listy (starzeje
+     * się przy każdym zapisie) i próg dla pojemności (funkcja czysta, `staleTime:
+     * Infinity`). `invalidateQueries` dopasowuje PREFIKSOWO, więc `all` unieważniałoby
+     * jedno razem z drugim — i tak było do 2026-08-01, mimo że `useFleetCommands`
+     * deklarował w komentarzu, że progu NIE unieważnia. Koszt nie był teoretyczny:
+     * szuflada zapisu jest w tej chwili otwarta, więc jej zapytanie o próg jest AKTYWNE
+     * i unieważnienie kończyło się natychmiastowym żądaniem o liczbę, która nie może
+     * się zmienić.
+     *
+     * Zamiast korzenia obejmującego wszystko mamy więc `lists` — prefiks dokładnie tego,
+     * co po zapisie faktycznie jest nieaktualne. Korzeń, który obiecuje więcej, niż
+     * którakolwiek mutacja chce unieważnić, jest pułapką, a nie wygodą.
+     */
+    lists: ['fleet', 'list'] as const,
+    list: (query: FleetListQuery) => ['fleet', 'list', query] as const,
+    tolerance: (capacityL: number) => ['fleet', 'tolerance', capacityL] as const,
+  },
+
+  /**
    * PODGLĄD korekty (`A02b`) — dry-run, więc zwykłe zapytanie z cache'em.
    *
    * Cały szkic (`targetUuid` + akcja + `newTime`) jest częścią klucza, bo jest częścią
@@ -94,14 +131,24 @@ export const keys = {
   },
 
   /**
-   * KORZENIE zasobów, których ekranów jeszcze nie ma.
+   * Monitor eksportu (`A05`).
    *
-   * Wygląda na klucze „na zapas" i nimi nie jest: unieważnienie jest własnością
-   * MUTACJI, nie ekranu (§4.3). Rozwiązanie flagi zmienia stan eksportu karty dnia,
-   * więc `useResolveFlag` ogłasza to tutaj i teraz — inaczej w dniu, w którym powstanie
-   * ekran eksportów, nikt nie będzie pamiętał, żeby dopisać unieważnienie w cudzym
-   * pliku. Unieważnienie prefiksu, pod którym nie ma zapytań, jest operacją pustą.
+   * `all` jest tu KORZENIEM obejmującym wszystko i to jest właściwe, odwrotnie niż
+   * przy flocie: pod tym prefiksem żyją wyłącznie pytania o STAN arkusza (lista,
+   * historia rewizji, treść karty), a każde z nich starzeje się od tej samej rzeczy —
+   * od wysyłki karty. Rozwiązanie flagi, korekta zdarzenia i ponowienie unieważniają
+   * je razem, bo razem przestają być prawdziwe.
+   *
+   * `sheet` i `history` są kluczowane UUID-em sesji, nie nazwą karty: nazwę liczy
+   * serwer, a panel nie ma prawa jej składać (druga konwencja nazw = link do karty,
+   * której nie ma).
    */
-  exports: { all: ['exports'] as const },
+  exports: {
+    all: ['exports'] as const,
+    list: (query: ExportListQuery) => ['exports', 'list', query] as const,
+    history: (sessionUuid: string) => ['exports', 'history', sessionUuid] as const,
+    sheet: (sessionUuid: string) => ['exports', 'sheet', sessionUuid] as const,
+  },
+
   dashboard: ['dashboard'] as const,
 };

@@ -82,7 +82,19 @@ export const NAV_GROUPS: NavGroupSpec[] = [
         capability: 'panel.access',
         mockup: 'A06-piloci.html',
       },
-      { to: '/flota', label: 'Flota', icon: <PlaneIcon size={15} />, capability: 'fleet.manage', mockup: 'A07-flota.html' },
+      {
+        to: '/flota',
+        label: 'Flota',
+        icon: <PlaneIcon size={15} />,
+        // `panel.access`, nie `fleet.manage` — decyzja produktowa z mockupu A07:
+        // „Szef wyszkolenia czyta tę tabelę (potrzebuje jej do flag i statystyk), ale
+        // bez przycisków edycji". Kłódka na pozycji nawigacji odcinałaby mu odczyt,
+        // którego trasa `GET /admin/api/fleet` udziela — i przy okazji zabrałaby
+        // ekranowi rolę słownika samolotów dla filtrów listy dni. Przyciski akcji
+        // wyszarza `screens/flota/samolotActions.ts`, z powodem.
+        capability: 'panel.access',
+        mockup: 'A07-flota.html',
+      },
       {
         to: '/progi',
         label: 'Progi i ustawienia',

@@ -100,18 +100,20 @@ export function DzienScreen() {
         }
         actions={
           <>
-            <LinkButton
-              to=""
-              variant="ghost"
-              disabled
-              reason={
-                session.exportRevision == null
-                  ? 'ta sesja nie ma jeszcze karty arkusza'
-                  : 'ekran eksportów dopiero powstaje'
-              }
-            >
+            {/* Prowadzi do MONITORA EKSPORTU zawężonego do tej sesji (`A05`), a nie do
+                samej treści karty — i to jest wybór, nie skrót. Pytanie zadawane przy tym
+                przycisku brzmi „co się stało z arkuszem tego dnia", a odpowiadają na nie
+                trzy rzeczy naraz: stan karty, historia rewizji i dopiero potem jej treść.
+                Monitor pokazuje wszystkie trzy w jednym miejscu i ma tam przycisk
+                ponowienia; osobny podgląd samej treści byłby czwartym ślepym zaułkiem,
+                z którego i tak trzeba by wrócić po kontekst.
+
+                Adres jest AKTYWNY także dla dnia bez karty: „dlaczego karty nie ma" jest
+                pytaniem, na które ten ekran odpowiada — wyszarzenie przycisku odbierałoby
+                dostęp do odpowiedzi dokładnie wtedy, gdy jest potrzebna. */}
+            <LinkButton to={`/eksporty/${session.sessionUuid}`} variant="ghost">
               {session.exportRevision == null
-                ? 'Karta arkusza'
+                ? 'Karta arkusza · brak'
                 : `Karta arkusza · rewizja ${session.exportRevision}`}
             </LinkButton>
             {/* Korekta NIE MA tu przycisku „wejdź", bo nie ma dokąd wejść bez wskazania

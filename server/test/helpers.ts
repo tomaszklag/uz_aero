@@ -25,11 +25,15 @@ import type {
   SheetsPort,
 } from '../src/application/common/ports.ts';
 import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
+import { AdminExportCommands } from '../src/application/admin/commands/exports.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
+import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
+import { AdminExportQueries } from '../src/application/admin/queries/exports.ts';
 import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
+import { AdminFleetQueries } from '../src/application/admin/queries/fleet.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
@@ -47,7 +51,9 @@ import { generateStartPassword } from '../src/infrastructure/auth/startPassword.
 import { PgAdminAuditReadRepo } from '../src/infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminEventsRepo } from '../src/infrastructure/pg/admin/eventsRepo.ts';
+import { PgAdminExportsRepo } from '../src/infrastructure/pg/admin/exportsRepo.ts';
 import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
+import { PgAdminFleetRepo } from '../src/infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
@@ -153,6 +159,12 @@ export async function testHarness(
   // Konta mają DWA adaptery, jak w produkcji: logowanie czyta `PgPilotsRepo` (hash),
   // panel pisze `PgAdminPilotsRepo` (transakcja śladu audytu).
   const adminPilotsRepo = new PgAdminPilotsRepo();
+  // Flota ma własny adapter obok `PgReferenceRepo` i `PgAircraftConfigRepo` — jak
+  // w produkcyjnym composition root.
+  const adminFleetRepo = new PgAdminFleetRepo();
+  // Monitor eksportu ma własny adapter obok `PgExportLogRepo` — jak w produkcyjnym
+  // composition root.
+  const adminExportsRepo = new PgAdminExportsRepo();
   const hasher = new ScryptHasher();
 
   const app = buildServer({
@@ -190,6 +202,16 @@ export async function testHarness(
       clock,
     ),
     adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+    // Flota (A07/A07a) — `randomUUID` jak w produkcji: identyfikator jednostki testy
+    // czytają z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd
+    // z composition rootem.
+    adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
+    adminFleetQueries: new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo),
+    // Eksporty (A05). Komenda ponowienia dostaje TEN SAM `exporter`, którym jedzie
+    // ingest — także wtedy, gdy `options.sheets` podmienia arkusze na atrapę awarii.
+    // Podgląd karty czyta ZAWSZE z bazy (`pgSheets`), tak jak `GET /sheets/:tab`.
+    adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock),
+    adminExportQueries: new AdminExportQueries(db, adminExportsRepo, pgSheets),
     // `randomUUID` jak w produkcji — uuid korekty testy czytają z odpowiedzi, więc
     // udawany generator nie kupiłby nic poza rozjazdem z composition rootem.
     adminCorrections: new AdminCorrectionCommands(

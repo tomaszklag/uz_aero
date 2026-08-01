@@ -138,6 +138,26 @@ td.dim {
   margin-top: 2px;
 }
 
+/* ŚWIEŻOŚĆ w komórce tabeli — podpis `.cell-sub` niosący WIEK danych z telefonu.
+   Trzy stany §4.8 dosłownie: `fresh` = live (bez zastrzeżeń), `stale` = cache
+   starszy niż doba, `none` = brak danych. Modyfikator, a nie osobna klasa, bo to
+   nadal ten sam podpis — zmienia się wyłącznie to, co mówi o jego wiarygodności.
+   Nazwy są DOSŁOWNIE te z `SZABLON.html`; do 2026-08-01 ekran `A07` wypisywał
+   `fresh-fresh`/`fresh-stale`/`fresh-none`, czyli klasy, których nie definiował
+   żaden arkusz — odczyt sprzed trzech minut i sprzed dwóch dni wyglądały tak samo,
+   choć karta obok obiecywała amber. */
+.cell-sub.fresh {
+  color: var(--green);
+}
+
+.cell-sub.stale {
+  color: var(--amber);
+}
+
+.cell-sub.none {
+  color: var(--text-muted);
+}
+
 /* Wiek sprawy, która leży ZA DŁUGO. W mockupie stoi to jako styl inline
    (`color:var(--red);font-weight:700`) na wybranych wierszach — tutaj jest klasą,
    bo o tym, które wiersze są stare, rozstrzyga próg w `flagRows.ts`, a nie autor

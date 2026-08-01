@@ -22,6 +22,7 @@ import type {
   MhFormat,
   OperationType,
   RuleViolation,
+  ServiceStatus,
   SessionState,
 } from '@uzaero/domain';
 
@@ -124,16 +125,18 @@ export interface ApiErrorDto {
    */
   flag?: ResolvedFlagWireDto;
   /**
-   * 409 `conflict` z zapisu konta: KTÓRE pole jest zajęte. Bez tego formularz z trzema
-   * polami dostawałby „naruszenie unikalności" i nie wiedziałby, co poprawić.
+   * 409 `conflict` z zapisu konta albo jednostki: KTÓRE pole jest zajęte. Bez tego
+   * formularz z kilkoma polami dostawałby „naruszenie unikalności" i nie wiedziałby,
+   * co poprawić. `reg` dochodzi z ekranu floty (`A07a`) — rejestracja jest unikalna
+   * w całym systemie, bo widać ją w logu dnia, w nazwie karty arkusza i w każdej fladze.
    */
-  field?: 'code' | 'email';
+  field?: 'code' | 'email' | 'reg';
   /**
    * 409 `refused` z zapisu konta: DLACZEGO odmówiono (`self_deactivate`, `last_admin`…).
    * Odmowa bez powodu przy przycisku „Deaktywuj" kazałaby administratorowi zgadywać,
    * czy to awaria, czy zasada — czyli dokładnie w tej chwili sięgnąć po `UPDATE` w psql.
    */
-  reason?: PilotRefusalDto;
+  reason?: PilotRefusalDto | FleetRefusalDto;
 }
 
 // ── skrzynka flag (`A03`, `A03a`) ───────────────────────────────────────────────
@@ -205,6 +208,16 @@ export type ExportOutcomeDto =
   | { exported: false; reason: ExportRefusalDto };
 
 /**
+ * RODZAJ awarii próby eksportu — jedzie razem z `outcome: null`.
+ *
+ * `sheets_adapter` = rzucił zapis karty (niedostępny Google, padnięta baza kart);
+ * ponowienie za chwilę ma sens. `unexpected` = rzuciło cokolwiek innego po stronie
+ * serwera; ponowienie samo z siebie tego nie naprawi i panel ma tak powiedzieć,
+ * zamiast obiecywać, że minie.
+ */
+export type ExportFailureDto = 'sheets_adapter' | 'unexpected';
+
+/**
  * Próba re-eksportu jednej z sesji, których dotyczyła flaga.
  *
  * `outcome: null` znaczy „eksport rzucił" — flaga JEST rozwiązana, a karta nie
@@ -228,6 +241,183 @@ export interface ResolveFlagResultDto {
   resolvedAt: string;
   /** Pusta lista = ta flaga nie blokowała eksportu, więc żadnej karty nie ruszano. */
   exports: ExportAttemptDto[];
+}
+
+// ── monitor eksportu (`A05`) ────────────────────────────────────────────────────
+
+/**
+ * Stan karty dnia — wnioskuje go SERWER, panel wyłącznie nazywa.
+ *
+ * Wniosek składa się z czterech faktów naraz (status sesji, obecność duty startu,
+ * otwarte flagi blokujące, obecność wiersza w `export_log`), a panel widzi każdy z nich
+ * osobno — złożenie ich tutaj byłoby drugą definicją reguły, która i tak musi istnieć
+ * na serwerze, bo to ona bramkuje eksport.
+ *
+ * Stanu „karta nieaktualna" (`NIEAKTUALNY` z `ANALIZA`) **nie ma i to jest świadome**:
+ * wymagałby porównania stempla eksportu ze stemplem projekcji, a te pochodzą z dwóch
+ * różnych zegarów (aplikacji i Postgresa). Mockup `A05` tego stanu zresztą nie zna —
+ * rozróżnia „W arkuszu" i „Rewizja N", a jedno i drugie wynika z numeru rewizji.
+ */
+export type ExportStateDto = 'waiting' | 'blocked' | 'impossible' | 'missing' | 'current';
+
+/**
+ * Jeden dzień lotny widziany OD STRONY ARKUSZA — odpowiedź `GET /admin/api/exports`.
+ *
+ * Wiersz powstaje z projekcji sesji, a nie z `export_log`, i to jest istota tego ekranu:
+ * dzień BEZ ani jednego eksportu jest tu najważniejszym wierszem, a nie brakiem danych.
+ */
+export interface ExportListItemDto {
+  sessionUuid: string;
+
+  /**
+   * Nazwa karty wg konwencji §4.7 (`YYYY-MM-DD_SP-XXX`) — policzona przez serwer TĄ
+   * SAMĄ funkcją, którą eksporter nazywa kartę przy zapisie. Panel jej NIE skleja:
+   * druga konwencja nazw znaczyłaby link do karty, której w bazie nie ma.
+   * `null` = sesja bez `preflight_confirm`, czyli karty nie da się nazwać.
+   */
+  tab: string | null;
+  /** Dzień karty `YYYY-MM-DD` (UTC z duty startu); `null` razem z `tab`. */
+  day: string | null;
+  /** Duty start (epoch ms UTC) — kolumna „Dzień". */
+  dutyStart: number | null;
+
+  aircraftId: string;
+  /** `null` = samolotu nie ma już w rejestrze floty; dzień zostaje widoczny. */
+  reg: string | null;
+  aircraftType: string | null;
+
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+
+  /** `active` = brak `day_close`. NIE znaczy „w locie" — projekcja tego nie niesie. */
+  sessionStatus: 'active' | 'closed';
+  state: ExportStateDto;
+
+  /** Ostatnia rewizja karty; `null` = nigdy nie eksportowano. */
+  revision: number | null;
+  /** ISO 8601 UTC — chwila ostatniej UDANEJ wysyłki. */
+  exportedAt: string | null;
+  sheetUrl: string | null;
+
+  /** Otwarte flagi trzymające kartę poza arkuszem — cel linku „Do flagi". */
+  blockingFlagIds: number[];
+  /** ISO 8601 UTC — ostatnia przyjęta paczka tej sesji („kiedy ostatni sync"). */
+  updatedAt: string;
+
+  /**
+   * INNA sesja zapisała kartę o tej samej nazwie PÓŹNIEJ — treść leżąca dziś pod `tab`
+   * opisuje TAMTEN dzień pracy, nie ten wiersz.
+   *
+   * Nazwa karty (`YYYY-MM-DD_SP-XXX`) niesie dzień i samolot, ale nie sesję, więc dwie
+   * zamknięte zmiany na jednym samolocie tego samego dnia budują kartę o tej samej
+   * nazwie — a `exported_sheets` jest po niej UPSERT-owane. Serwer wykrywa to
+   * w `export_log`; panel niczego tu nie porównuje.
+   */
+  overwrittenBy: { sessionUuid: string; exportedAt: string } | null;
+}
+
+/**
+ * Liczniki kafli i chipów. Liczy je SERWER nad CAŁYM zakresem zapytania — także po
+ * zawężeniu chipem (inaczej po jednym kliknięciu wszystkie pozostałe pokazywałyby zero)
+ * i także wtedy, gdy `limit` obciął listę (inaczej kafel opisywałby okno, a nie rejestr).
+ */
+export interface ExportCountsDto {
+  /** Wszystkie dni w zakresie filtra — NIEZALEŻNIE od zawężenia chipem stanu. */
+  total: number;
+  current: number;
+  blocked: number;
+  missing: number;
+  waiting: number;
+  impossible: number;
+  /**
+   * Karty z rewizją > 1 — wymiar, nie stan. Liczone WYŁĄCZNIE po numerze rewizji, bez
+   * oglądania się na stan karty; chip „Rewizje" zawęża panel dokładnie tak samo.
+   */
+  revised: number;
+  /** Dni, których kartę nadpisała inna sesja tego dnia (`overwrittenBy`). */
+  overwritten: number;
+}
+
+/**
+ * Strona monitora. **Bez kursora i to jest celowe**: ekran jest zawężony do ZAKRESU DAT,
+ * a zakres w skali klubu to kilkadziesiąt dni lotnych. Kursor dokłada się tam, gdzie
+ * lista rośnie bez granicy (dziennik audytu, rejestr zdarzeń); tu granicę stawia kalendarz.
+ *
+ * Kalendarza panel jednak jeszcze nie ma, więc `limit` bywa realną granicą — i wtedy
+ * `truncated` mówi to wprost. Lista przycięta po cichu wygląda na komplet, a to jest
+ * najgorszy tryb awarii narzędzia nadzoru.
+ */
+export interface ExportPageDto {
+  items: ExportListItemDto[];
+  counts: ExportCountsDto;
+  /** Ile dni pasuje do zapytania RAZEM z zawężeniem — także tych poza `limit`. */
+  matched: number;
+  /** `true` = `limit` obciął listę. */
+  truncated: boolean;
+}
+
+/** Jedna wysyłka karty — wiersz `export_log`. */
+export interface ExportRevisionDto {
+  revision: number;
+  day: string;
+  sheetUrl: string;
+  exportedAt: string;
+}
+
+/**
+ * Historia rewizji jednej karty — `GET /admin/api/exports/:sessionUuid`.
+ *
+ * `sheetRows` (0 albo 1) jedzie OSOBNO od `revisions.length` i to jest cała treść tego
+ * rozwinięcia: „3 wiersze dziennika, 1 wiersz karty". `export_log` jest append-only
+ * i pamięta każdą wysyłkę; `exported_sheets` trzyma wyłącznie treść bieżącą, bo czytelnik
+ * linku ma widzieć aktualny stan dnia — tak jak widziałby arkusz.
+ */
+export interface ExportHistoryDto {
+  sessionUuid: string;
+  tab: string | null;
+  state: ExportStateDto;
+  /** Od najstarszej rewizji — to jest oś czasu jednej karty, a nie lista. */
+  revisions: ExportRevisionDto[];
+  sheetRows: number;
+  /**
+   * Ten sam fakt, co w wierszu listy — jedzie tu, bo to PODGLĄD wprowadza w błąd:
+   * gdy kartę zapisała później inna sesja, `rows` opisują tamten dzień pracy.
+   */
+  overwrittenBy: { sessionUuid: string; exportedAt: string } | null;
+}
+
+/** Treść BIEŻĄCEJ karty — dosłowne wiersze dokumentu, nie projekcja do liczenia. */
+export interface SheetPreviewDto {
+  tab: string;
+  rows: string[][];
+  updatedAt: string;
+}
+
+/**
+ * Wynik ponowienia — odpowiedź `POST /admin/api/exports/:sessionUuid/retry`.
+ *
+ * **Odmowa jedzie jako 200, nie jako błąd.** „Dzień jeszcze otwarty" i „flaga trzyma
+ * kartę" to poprawne odpowiedzi o stanie świata; awarią jest dopiero `outcome: null`,
+ * czyli „eksport rzucił" — jedyny stan, w którym mockupowa „Błąd regeneracji" ma
+ * pokrycie w danych. Widać go WYŁĄCZNIE tutaj: nieudany eksport nie zostawia wiersza
+ * w żadnej tabeli, więc lista nie ma z czego go odtworzyć.
+ */
+export interface ExportRetryDto {
+  sessionUuid: string;
+  tab: string | null;
+  revisionBefore: number | null;
+  revisionAfter: number | null;
+  outcome: ExportOutcomeDto | null;
+  /** `null` ⟺ `outcome != null`. RODZAJ awarii, gdy próba rzuciła. */
+  failure: ExportFailureDto | null;
+  retriedAt: string;
+}
+
+/** Odpowiedź ponowienia: wynik próby + ŚWIEŻY wiersz listy, żeby panel nie dopytywał. */
+export interface ExportRetryResultDto {
+  retry: ExportRetryDto;
+  row: ExportListItemDto | null;
 }
 
 // ── dni lotne (`A02`) i karta dnia (`A02a`) ─────────────────────────────────────
@@ -526,6 +716,146 @@ export type PilotRefusalDto =
   | 'self_demote'
   | 'last_admin'
   | 'inactive_account';
+
+// ── flota (`A07`, `A07a`) ───────────────────────────────────────────────────────
+
+/**
+ * Kto trzyma samolot TERAZ — sesja bez `day_close`.
+ *
+ * **To NIE jest „w locie"** i mockup A07 tak to podpisuje wyłącznie skrótem myślowym.
+ * Projekcja `sessions` nie niesie stanu silnika (ta sama granica, co na liście dni
+ * `A02`), więc claim znaczy „ktoś zajął jednostkę na dziś" — a czy w tej chwili kołuje,
+ * czy stoi na płycie, tego serwer nie wie i panel nie zgaduje.
+ */
+export interface AircraftClaimDto {
+  /** Sesja trzymająca claim — stąd link w głąb, na kartę dnia `A02a`. */
+  sessionUuid: string;
+  picId: string;
+  /** `null` = konta nie ma już w `pilots`; claim zostaje z samym identyfikatorem. */
+  picCode: string | null;
+  picName: string | null;
+  /** Duty start (epoch ms UTC); `null` przy sesji bez `preflight_confirm`. */
+  since: number | null;
+}
+
+/**
+ * Ostatni znany odczyt liczników — PODPOWIEDŹ, nie prawda.
+ *
+ * Mockup A07 mówi to wprost: „Liczniki fizyczne wygrywają. Wartości z tej tabeli są
+ * podpowiedzią dla pilota na preflight, nie prawdą". Dlatego `at` jedzie razem
+ * z wartością: odczyt bez wieku byłby twierdzeniem o teraźniejszości, którym nie jest.
+ */
+export interface AircraftReadingDto {
+  /** Godziny dziesiętne — panel formatuje przez `motoHours(value, mhFormat)`. */
+  mh: number;
+  fuelL: number;
+  at: number;
+  byPilotId: string;
+  byPilotName: string | null;
+  /** `handover` = z zamkniętego dnia; `open_session` = z dnia, który jeszcze trwa. */
+  source: 'handover' | 'open_session';
+}
+
+/**
+ * Jedna jednostka na liście `A07` — odpowiedź `GET /admin/api/fleet`.
+ *
+ * ══ `fuelToleranceL` LICZY SERWER I TO JEST TREŚĆ TEJ TRASY ══
+ * Tolerancja flagi `FUEL_MISMATCH` to `max(10 L, 5% pojemności)` — nie stała, tylko
+ * funkcja pojemności. Panelowi wolno importować z `@uzaero/domain` wyłącznie TYPY,
+ * więc gdyby serwer nie podawał wyniku, ekran musiałby albo pominąć kolumnę progu (tak
+ * było przez cztery przekroje), albo policzyć ją sam — czyli zacząć trzymać drugą kopię
+ * reguły §4.5 w przeglądarce.
+ *
+ * ══ CZEGO TU NIE MA ══
+ * **Daty i powodu wyłączenia** („od 19 JUN 2026 · remont" z mockupu). Tabela `aircraft`
+ * ma `service_status` i `updated_at`, i nic poza tym; `updated_at` mówi „kiedy ruszono
+ * wiersz", a nie „od kiedy samolot stoi". Kto i kiedy wyłączył jednostkę, wie dziennik
+ * audytu (`aircraft.disable`) — i tam prowadzi link z szuflady.
+ */
+export interface AircraftListItemDto {
+  id: string;
+  /** Znaki na kadłubie — unikalne. Etykieta, nie klucz zdarzeń (te wiążą `id`). */
+  reg: string;
+  type: string;
+  year: number | null;
+  capacityL: number;
+  /** Efektywna tolerancja `FUEL_MISMATCH` (L) dla tej pojemności — patrz wyżej. */
+  fuelToleranceL: number;
+  mhFormat: MhFormat;
+  dualRequired: boolean;
+  serviceStatus: ServiceStatus;
+  /** ISO 8601 UTC — ostatnia zmiana wiersza konfiguracji, nie: ostatni lot. */
+  updatedAt: string;
+
+  claim: AircraftClaimDto | null;
+  reading: AircraftReadingDto | null;
+  /**
+   * ISO 8601 UTC — kiedy serwer ostatnio przyjął ZDARZENIE tego samolotu.
+   * `null` = ani jednego zdarzenia w rejestrze („brak danych", nigdy „zero").
+   */
+  lastEventAt: string | null;
+
+  /** Sesje bez `day_close` — blokują wyłączenie ze służby. */
+  openSessions: number;
+  /** Otwarte flagi tej jednostki — karta „Skutki zmiany" pokazuje je „bez przeliczenia". */
+  openFlags: number;
+}
+
+/** Liczniki kafli `A07` — po CAŁEJ flocie, nie po zawężeniu listy. */
+export interface FleetCountsDto {
+  total: number;
+  active: number;
+  disabled: number;
+  claimed: number;
+}
+
+/**
+ * Lista floty. **Bez kursora i to jest celowe**: klub ma kilka jednostek, a lista
+ * referencyjna, którą trzeba stronicować, nie nadaje się na słownik do filtra listy
+ * dni (`A02`). Ta sama decyzja, co przy kontach pilotów.
+ */
+export interface FleetPageDto {
+  items: AircraftListItemDto[];
+  counts: FleetCountsDto;
+  /**
+   * Liczniki CHIPÓW — te same cztery zawężenia, ale w bieżącym WYSZUKIWANIU.
+   *
+   * Osobne od `counts`, bo odpowiadają na inne pytanie. Kafel opisuje FLOTĘ („W służbie
+   * 4 / 5") i ma się nie ruszać przy wpisywaniu w wyszukiwarkę; chip z liczbą jest
+   * obietnicą „tyle wierszy zobaczysz po kliknięciu". Przy kontach pilotów sklejenie
+   * tych dwóch liczb było usterką widoczną gołym okiem: chip pokazywał 2 i po kliknięciu
+   * dawał pustą tabelę. Bez wyszukiwania `scopes` zgadza się z `counts`.
+   */
+  scopes: FleetCountsDto;
+}
+
+/**
+ * Próg `FUEL_MISMATCH` rozwiązany dla pojemności, która NIE MUSI być w bazie —
+ * odpowiedź `GET /admin/api/fleet/tolerance`.
+ *
+ * To jest jedyna droga, którą karta „Skutki zmiany" (`A07a`) dostaje liczbę
+ * `±62.9 → ±55.0 L`: panel pyta serwer o próg dla wartości wpisanej w formularzu,
+ * zamiast liczyć 5% po swojemu.
+ */
+export interface AircraftToleranceDto {
+  /** `null` = pytanie bez pojemności; próg schodzi wtedy do podłogi 10 L. */
+  capacityL: number | null;
+  fuelToleranceL: number;
+}
+
+/** Odpowiedź zapisu konfiguracji — pełny, świeży wiersz listy. */
+export interface AircraftChangeDto {
+  aircraft: AircraftListItemDto;
+}
+
+/**
+ * Powód, dla którego serwer ODMÓWIŁ zmiany konfiguracji (`409 refused`).
+ *
+ * Lustro `FleetRefusal` z `server/src/domain/fleetGuards.ts`. Kody są surowe —
+ * nazwanie ich po polsku jest sprawą panelu (`screens/flota/samolotActions.ts`),
+ * bo serwer nie zna języka interfejsu.
+ */
+export type FleetRefusalDto = 'capacity_not_positive' | 'open_session';
 
 // ── korekta administratora (`A02b`) ─────────────────────────────────────────────
 

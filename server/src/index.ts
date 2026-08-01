@@ -12,11 +12,15 @@ import { Pool } from 'pg';
 import { z } from 'zod';
 
 import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
+import { AdminExportCommands } from './application/admin/commands/exports.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
+import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
+import { AdminExportQueries } from './application/admin/queries/exports.ts';
 import { AdminFlagQueries } from './application/admin/queries/flags.ts';
+import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
@@ -34,7 +38,9 @@ import { generateStartPassword } from './infrastructure/auth/startPassword.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminEventsRepo } from './infrastructure/pg/admin/eventsRepo.ts';
+import { PgAdminExportsRepo } from './infrastructure/pg/admin/exportsRepo.ts';
 import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
+import { PgAdminFleetRepo } from './infrastructure/pg/admin/fleetRepo.ts';
 import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
@@ -99,6 +105,14 @@ const adminFlagsRepo = new PgAdminFlagsRepo();
 // `PgPilotsRepo` (hash, własny uchwyt do bazy), panel pisze `PgAdminPilotsRepo`
 // (transakcja śladu audytu). Ścieżka logowania nie ma jak zregresować od panelu kont.
 const adminPilotsRepo = new PgAdminPilotsRepo();
+// Flota ma TRZECI adapter tej samej tabeli i to jest ta sama decyzja, co przy kontach:
+// `PgReferenceRepo` buduje migawkę pod cache telefonów, `PgAircraftConfigRepo` oddaje
+// jedną liczbę w transakcji ingestu, a ten pisze konfigurację w transakcji audytu.
+const adminFleetRepo = new PgAdminFleetRepo();
+// Monitor eksportu (A05) czyta projekcję OD STRONY ARKUSZA (dzień bez karty jest jego
+// najważniejszym wierszem), więc ma własny adapter obok `PgExportLogRepo` — tamten
+// obsługuje ścieżkę eksportu i `sync-status` telefonu, ten listy panelu.
+const adminExportsRepo = new PgAdminExportsRepo();
 const hasher = new ScryptHasher();
 
 const app = buildServer({
@@ -137,6 +151,23 @@ const app = buildServer({
     clock,
   ),
   adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+  // Flota (A07/A07a). `randomUUID` jako identyfikator jednostki — rejestracja jest
+  // etykietą, nie kluczem: zdarzenia wiążą się z `aircraft_id`, więc przemalowanie
+  // znaków na kadłubie nie ma prawa oderwać samolotu od jego nalotu.
+  adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
+  // Zapytania floty dostają projekcję sesji, bo claim i ostatni odczyt liczników są
+  // REGUŁĄ (`application/common/aircraftStateView.ts`) — tą samą, którą `GET /reference`
+  // liczy dla telefonu. Drugie wyliczenie w SQL-u panelu dałoby dwie odpowiedzi na
+  // pytanie „kto trzyma ten samolot".
+  adminFleetQueries: new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo),
+  // Eksporty (A05). Komenda ponowienia woła TEGO SAMEGO `exporter`, którego używa
+  // ingest i rozwiązanie flagi — ponowienie jest powtórzeniem tej samej operacji,
+  // a nie jej wersją uprzywilejowaną, więc bramki §4.7 obowiązują ją tak samo.
+  adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock),
+  // Zapytania monitora dostają `SheetsReadPort`, bo podgląd karty w panelu czyta tę
+  // samą treść, co `GET /sheets/:tab` z telefonu — inaczej panel pokazywałby drugą,
+  // własną wersję dokumentu klubu.
+  adminExportQueries: new AdminExportQueries(db, adminExportsRepo, sheets),
   // Uuid korekty jest FUNKCJĄ, nie portem: nie ma tu adaptera do podmiany, a port
   // bez drugiej implementacji to koszt bez zysku (`commands/corrections.ts`).
   adminCorrections: new AdminCorrectionCommands(

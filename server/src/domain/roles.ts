@@ -38,7 +38,20 @@ export type Capability =
   | 'events.correct'
   /** Zakładanie kont, reset hasła, deaktywacja, zmiana roli. */
   | 'accounts.manage'
-  /** Dodanie i edycja samolotu, wyłączenie ze służby. */
+  /**
+   * Dodanie i edycja samolotu, wyłączenie ze służby — **oraz ręczne ponowienie eksportu
+   * karty dnia** (`POST /admin/api/exports/:sessionUuid/retry`, `A05`).
+   *
+   * Eksport dostał TĘ zdolność, a nie własną, i to jest decyzja do potwierdzenia przez
+   * człowieka (2026-08-01). Powód: konfiguracja floty już dziś rozstrzyga, JAK WYGLĄDA
+   * każda przyszła karta danego samolotu (`mh_format` i pojemność jadą wprost do treści
+   * arkusza), więc pytanie „kto steruje dokumentem klubu" ma dalej JEDNĄ odpowiedź
+   * w jednym pliku. Mnożenie zdolności bez potrzeby rozmywa tę odpowiedź.
+   *
+   * Gdyby ponowienie miało trafić do szefa wyszkolenia, właściwym ruchem jest osobna
+   * zdolność `exports.retry` — a NIE dopisanie `fleet.manage` do jego roli, bo tamta
+   * niesie też edycję wejść reguł §4.5.
+   */
   | 'fleet.manage'
   /** Zmiana tolerancji flag (progi detekcji są tylko do odczytu — patrz A08). */
   | 'thresholds.manage'

@@ -340,6 +340,26 @@ export interface ExportLogPort {
   /** Ostatnia rewizja eksportu sesji; `null` = jeszcze nie eksportowano. */
   latest(db: Queryable, sessionUuid: string): Promise<ExportRecord | null>;
   append(db: Queryable, record: ExportRecord): Promise<void>;
+  /**
+   * Blokada advisory na DZIENNIKU JEDNEJ SESJI, ważna do końca transakcji. Wołana
+   * PRZED `latest` przez każdego, kto zaraz nada kolejną rewizję.
+   *
+   * ══ CZEGO PILNUJE ══
+   * Sekwencji „odczytaj ostatnią rewizję → dodaj jeden → dopisz wiersz". Bez niej
+   * spóźniona paczka z telefonu i kliknięcie „Ponów" w panelu, trafione w tę samą
+   * chwilę, czytają ten sam stan i obie chcą zapisać rewizję 3 — a dziennik, w którym
+   * numer rewizji nie jest jednoznaczny, przestaje odpowiadać na pytanie „co i kiedy
+   * poszło do arkusza". Od migracji 14 drugi zapis odbija się o `UNIQUE`; blokada
+   * sprawia, że do tego odbicia w ogóle nie dochodzi w normalnej pracy.
+   *
+   * ══ CZEGO NIE PILNUJE ══
+   * Treści karty. `exported_sheets` jest UPSERT-em po nazwie i wygrywa zapis późniejszy
+   * — co jest poprawne, bo obie strony budują kartę z TEGO SAMEGO strumienia zdarzeń.
+   *
+   * Klucz mieszka w adapterze, bo nazwa klucza advisory jest szczegółem Postgresa —
+   * ta sama decyzja, co przy `FleetAdminPort.lockAircraft`.
+   */
+  lock(tx: Queryable, sessionUuid: string): Promise<void>;
 }
 
 // ── ślad kalibracyjny GPS (faza 5) ─────────────────────────────────────────────

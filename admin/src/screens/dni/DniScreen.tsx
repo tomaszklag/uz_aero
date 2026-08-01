@@ -10,19 +10,28 @@
  * `operations`), które mają testy w Node. Tutaj zostaje układ i spięcie danych
  * z komponentami.
  *
- * ══ TRZY RZECZY, KTÓRYCH TEN EKRAN ŚWIADOMIE NIE POKAZUJE ══
+ * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE ══
  *  1. **Plakietki „W locie"** — wymaga wiedzy, czy silnik pracuje; projekcja jej nie
  *     niesie, a lista celowo nie woła `projectSession` (§7.1 architektury serwera).
- *  2. **Kalendarza i list wyboru samolotu/pilota** — trasa filtruje po DOKŁADNYCH
- *     identyfikatorach, a listy floty i pilotów panel dostanie dopiero z `A06`/`A07`.
- *     Zakres dat i pilot przychodzą więc z adresu i dają się z niego zdjąć.
+ *  2. **Kalendarza** — trasa filtruje po dniach (`?od=`/`?do=`), ale komponentu wyboru
+ *     dat panel jeszcze nie ma; zakres przychodzi z adresu i daje się z niego zdjąć.
  *  3. **Eksportu CSV** z nagłówka mockupu — nie ma trasy, która by go budował.
  * Wszystkie trzy są opisane na ekranie, a nie przemilczane.
+ *
+ * ══ CO DOSZŁO 2026-08-01 ══
+ * **Filtry po samolocie i po pilocie przestały być martwe.** Serwer miał je od pierwszej
+ * wersji listy (`SessionListFilter.aircraftId`, `.pilotId`), ale panel nie miał skąd
+ * wziąć nazw — jedyną drogą było ręczne sklejenie adresu. Oba słowniki dostarczają
+ * teraz `GET /admin/api/fleet` (`A07`) i `GET /admin/api/pilots` (`A06`), a chipy
+ * składa czysty `dniPickers.ts`. Chip niesie IDENTYFIKATOR do trasy — skład listy
+ * ustala serwer, panel dokłada wyłącznie etykietę.
  */
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useFleet } from '../../queries/useFleet';
+import { usePilots } from '../../queries/usePilots';
 import { useSessionCount, useSessions } from '../../queries/useSessions';
 import {
   Banner,
@@ -51,6 +60,7 @@ import {
   type StateFilter,
 } from './dniFilters';
 import { dayPages, dniEmpty, pagesSummary } from './dniPages';
+import { aircraftChips, pickerLabel, pilotChips } from './dniPickers';
 import { dayRows, type DayRow } from './dniRows';
 import { dniTiles } from './dniTiles';
 import { OPERATION_META, OPERATION_ORDER } from './operations';
@@ -68,6 +78,15 @@ export function DniScreen() {
   const openCount = useSessionCount(sessionCountQuery(filter, 'open'));
   const flaggedCount = useSessionCount(sessionCountQuery(filter, 'flagged'));
   const exportedCount = useSessionCount(sessionCountQuery(filter, 'exported'));
+
+  // Słowniki filtrów. Obie listy są KOMPLETNE i bez kursora, właśnie po to, żeby dało
+  // się z nich zbudować chipy — dlatego trasy floty i kont mają taki kształt. Cache
+  // TanStacka dzieli je z ekranami `A06`/`A07`, więc przejście między listami nie
+  // pobiera ich drugi raz.
+  const fleet = useFleet({});
+  const pilots = usePilots({ limit: PILOT_DICTIONARY_LIMIT });
+  const aircraftOptions = aircraftChips(fleet.data?.items ?? []);
+  const pilotOptions = pilotChips(pilots.data?.items ?? []);
 
   // Wpis w wyszukiwarce żyje lokalnie do naciśnięcia Entera: filtrem jest URL, ale
   // przeładowywanie listy po każdej literze rejestracji byłoby serią żądań, z których
@@ -146,14 +165,61 @@ export function DniScreen() {
             onClick={() => apply({ ...filter, from: null, to: null })}
           />
         )}
-        {filter.pilotId == null ? null : (
+      </FilterBar>
+
+      {/* Rząd samolotów 1:1 z mockupu A02. Chip niesie IDENTYFIKATOR do trasy — panel
+          nie odsiewa wierszy sam, dokłada wyłącznie etykietę, bo `?samolot=ac_7b21…`
+          da się wkleić, ale nie da się przeczytać. */}
+      <FilterBar>
+        {aircraftOptions.map((chip) => (
           <FilterChip
-            label={`pilot: ${filter.pilotId} · zdejmij`}
+            key={chip.id ?? 'all'}
+            label={chip.label}
+            active={filter.aircraftId === chip.id}
+            title={chip.title}
+            onClick={() => apply({ ...filter, aircraftId: chip.id })}
+          />
+        ))}
+        {filter.aircraftId != null &&
+        !aircraftOptions.some((chip) => chip.id === filter.aircraftId) ? (
+          // Adres wskazuje jednostkę spoza słownika (wklejony link, samolot usunięty
+          // z rejestru). Pokazujemy surowy identyfikator zamiast udawać, że filtra nie
+          // ma — inaczej lista byłaby zawężona bez widocznego powodu.
+          <FilterChip
+            label={`${pickerLabel(aircraftOptions, filter.aircraftId)} · zdejmij`}
             active
-            title="Dopasowuje PIC-a albo Duala — dzień szkolny należy do obu."
+            title="Ta jednostka nie jest w rejestrze floty — zawężenie pochodzi z adresu."
+            onClick={() => apply({ ...filter, aircraftId: null })}
+          />
+        ) : null}
+      </FilterBar>
+
+      {/* Rząd pilotów — mockup A02 zapowiada ten filtr w wyszukiwarce („Pilot,
+          rejestracja albo session_uuid…"), ale trasa dopasowuje DOKŁADNY identyfikator,
+          nie frazę. Chipy ze słownika kont są tym, co panel może obiecać uczciwie:
+          każdy z nich na pewno coś zawęża, a wyszukiwanie po nazwisku wymagałoby
+          filtra tekstowego, którego serwer nie ma. */}
+      <FilterBar>
+        {pilotOptions.map((chip) => (
+          <FilterChip
+            key={chip.id ?? 'all'}
+            label={chip.label}
+            active={filter.pilotId === chip.id}
+            title={chip.title}
+            onClick={() => apply({ ...filter, pilotId: chip.id })}
+          />
+        ))}
+        {filter.pilotId != null && !pilotOptions.some((chip) => chip.id === filter.pilotId) ? (
+          <FilterChip
+            label={`${pickerLabel(pilotOptions, filter.pilotId)} · zdejmij`}
+            active
+            title="Tego konta nie ma w słowniku — zawężenie pochodzi z adresu."
             onClick={() => apply({ ...filter, pilotId: null })}
           />
-        )}
+        ) : null}
+        <span className="list-spacer">
+          <Pill tone="dim">dopasowuje PIC-a albo Duala</Pill>
+        </span>
       </FilterBar>
 
       <FilterBar>
@@ -254,16 +320,28 @@ export function DniScreen() {
 
       <Banner tone="warn">
         <b>Czego ta lista jeszcze nie umie.</b> Serwer nie przyjmuje filtra po kliencie ani
-        wyszukiwania po nazwisku pilota i po <code>session_uuid</code>, a sortować da się wyłącznie
-        po dniu — kursor keyset jedzie po <code>claim_time</code>. Zakres dat i pilot ustawia się
-        więc z adresu (<code>?od=2026-07-25&amp;do=2026-07-31&amp;pilot=TML</code>), a kalendarz
-        i listy wyboru dojdą razem z ekranami floty i kont. Plakietki „W locie" nie ma z innego
-        powodu i to nie jest brak w API: projekcja niesie <code>status</code>, nie niesie „silnik
-        pracuje", a to jest decyzja o kształcie projekcji, nie o panelu.
+        wyszukiwania tekstowego po nazwisku pilota i po <code>session_uuid</code>, a sortować da
+        się wyłącznie po dniu — kursor keyset jedzie po <code>claim_time</code>. Zakres dat
+        ustawia się więc z adresu (<code>?od=2026-07-25&amp;do=2026-07-31</code>), bo kalendarza
+        panel jeszcze nie ma. <b>Filtry po samolocie i po pilocie już działają</b> — chipy wyżej
+        biorą słowniki z <code>GET /admin/api/fleet</code> i <code>GET /admin/api/pilots</code>,
+        a zawężenie robi serwer. Plakietki „W locie" nie ma z innego powodu i to nie jest brak
+        w API: projekcja niesie <code>status</code>, nie niesie „silnik pracuje", a to jest
+        decyzja o kształcie projekcji, nie o panelu.
       </Banner>
     </>
   );
 }
+
+/**
+ * Ile kont pobieramy jako SŁOWNIK do chipów pilotów.
+ *
+ * Trasa kont nie ma kursora i domyślnie oddaje 200 wierszy — tyle wystarczy klubowi
+ * z zapasem, a liczba stoi tu jawnie, żeby nie brać jej z domyślnej wartości serwera:
+ * słownik obcięty po cichu dałby filtr, w którym brakuje kilku pilotów i nikt nie wie
+ * dlaczego.
+ */
+const PILOT_DICTIONARY_LIMIT = 200;
 
 const STATE_CHIPS: { value: StateFilter; label: string; title?: string }[] = [
   { value: 'all', label: 'Wszystkie stany' },

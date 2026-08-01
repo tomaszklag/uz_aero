@@ -10,7 +10,7 @@
 
 import type { Handover } from '@uzaero/domain';
 
-import { activeClaim, latestHandover } from '../aircraftStateView.ts';
+import { activeClaim, latestHandover } from '../../common/aircraftStateView.ts';
 
 import type {
   Database,
