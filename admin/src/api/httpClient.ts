@@ -86,12 +86,26 @@ export async function apiGet<T>(path: string): Promise<T> {
 }
 
 export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  return (await request(path, {
-    method: 'POST',
+  return (await request(path, mutation('POST', body))) as T;
+}
+
+/**
+ * `PATCH`, a nie kolejny `POST`: zmiana konta (`A06a`) opisuje RÓŻNICĘ — pola
+ * nieprzysłane zostają bez zmian. `POST /pilots/:id` sugerowałby, że ciało jest pełnym
+ * stanem konta, więc pominięcie pola je czyściło.
+ */
+export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
+  return (await request(path, mutation('PATCH', body))) as T;
+}
+
+/** Nagłówek CSRF i JSON-owe ciało w jednym miejscu — mutacje różnią się metodą. */
+function mutation(method: 'POST' | 'PATCH', body: unknown): RequestInit {
+  return {
+    method,
     headers: {
       [CSRF_HEADER]: '1',
       ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  })) as T;
+  };
 }

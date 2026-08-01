@@ -12,18 +12,17 @@
 import type { FastifyInstance } from 'fastify';
 
 import type { AdminMeQueries } from '../../../application/admin/queries/me.ts';
-import type { TokenService } from '../../../application/common/ports.ts';
-import { adminRoute } from './adminRoute.ts';
+import { adminRoute, type AdminGate } from './adminRoute.ts';
 import { panelSessionToWire } from './auth.ts';
 
 export function registerAdminMeRoutes(
   app: FastifyInstance,
   me: AdminMeQueries,
-  tokens: TokenService,
+  gate: AdminGate,
 ): void {
   adminRoute(
     app,
-    tokens,
+    gate,
     { method: 'GET', url: '/me', capability: 'panel.access' },
     async (_req, reply, actor) => {
       const pilot = await me.get(actor.pilotId);

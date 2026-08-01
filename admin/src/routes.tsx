@@ -20,11 +20,12 @@ import { AudytScreen } from './screens/audyt/AudytScreen';
 import { DniScreen } from './screens/dni/DniScreen';
 import { DzienScreen } from './screens/dzien/DzienScreen';
 import { FlagiScreen } from './screens/flagi/FlagiScreen';
+import { PilociScreen } from './screens/piloci/PilociScreen';
 import { WBudowieScreen } from './screens/wBudowie/WBudowieScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
 
 /** Pozycje nawigacji, dla których ekran już istnieje — nie dostają „w budowie". */
-const IMPLEMENTED = new Set(['/dni', '/flagi', '/audyt']);
+const IMPLEMENTED = new Set(['/dni', '/flagi', '/audyt', '/piloci']);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
   (item) => !IMPLEMENTED.has(item.to),
@@ -69,6 +70,17 @@ export const router = createHashRouter([
       // (konto, obiekt, grupa akcji, zakres dat) jadą query stringiem, żeby link
       // „ślad w audycie" z karty dnia i z korekty dało się wkleić.
       { path: 'audyt', element: <AudytScreen /> },
+
+      // Konta pilotów (`A06`) i szuflada konta (`A06a`) pod JEDNYM ekranem — jak przy
+      // flagach, bo szuflada otwiera się NAD listą i kontekst tabeli ma zostać pod
+      // spodem: decyzja o roli zapada w porównaniu z resztą kont. Segment opcjonalny
+      // (`:id?`) trzyma to w jednym wpisie i nie przemontowuje ekranu przy otwieraniu
+      // szuflady — inaczej lista migałaby przy każdym wejściu w konto.
+      //
+      // `#/piloci/nowe` jest tym samym widokiem z pustym formularzem (mockup A06a ma
+      // ten adres w pasku przeglądarki), a `?akcja=haslo` otwiera wariant „reset hasła"
+      // z zablokowaną tożsamością. Oba są deep-linkowalne, bo oba bywają wklejane.
+      { path: 'piloci/:id?', element: <PilociScreen /> },
 
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.

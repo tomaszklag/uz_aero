@@ -13,10 +13,12 @@ import { z } from 'zod';
 
 import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
+import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminFlagQueries } from './application/admin/queries/flags.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
+import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
@@ -28,10 +30,13 @@ import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
+import { generateStartPassword } from './infrastructure/auth/startPassword.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminEventsRepo } from './infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
+import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
+import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAircraftConfigRepo } from './infrastructure/pg/common/aircraftConfigRepo.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
@@ -90,9 +95,14 @@ const aircraftConfig = new PgAircraftConfigRepo();
 // komendy, bo tylko one zapisują. Adapter flag jest WSPÓLNY dla zapytań i komend:
 // to jeden port, jeden adapter, dwa powody wołania.
 const adminFlagsRepo = new PgAdminFlagsRepo();
+// Konta mają DWA adaptery i to jest ta sama decyzja, co przy flagach: logowanie czyta
+// `PgPilotsRepo` (hash, własny uchwyt do bazy), panel pisze `PgAdminPilotsRepo`
+// (transakcja śladu audytu). Ścieżka logowania nie ma jak zregresować od panelu kont.
+const adminPilotsRepo = new PgAdminPilotsRepo();
+const hasher = new ScryptHasher();
 
 const app = buildServer({
-  auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), new ScryptHasher(), tokens, clock),
+  auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
   ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter),
   state: new StateQueries(db, events, sessions, flags, exportLog),
@@ -100,6 +110,9 @@ const app = buildServer({
   traces: new FsTraceSink(env.TRACES_DIR),
   prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
   tokens,
+  // Brama tras panelu czyta konto przy KAŻDYM żądaniu — bez tego „Deaktywuj" na A06
+  // odcinałby dostęp dopiero po wygaśnięciu 8-godzinnej sesji (`http/authorize.ts`).
+  pilots,
   adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
   adminSessionQueries: new AdminSessionQueries(
     db,
@@ -112,6 +125,18 @@ const app = buildServer({
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu —
   // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
   adminMeQueries: new AdminMeQueries(pilots),
+  // Konta (A06/A06a). Hasło startowe generuje SERWER — panel nigdy go nie wysyła,
+  // a wartość opuszcza system dokładnie raz, w odpowiedzi na akcję, która ją wytworzyła.
+  adminPilots: new AdminPilotCommands(
+    auditedWrite,
+    adminPilotsRepo,
+    new PgAdminRefreshTokensRepo(),
+    hasher,
+    randomUUID,
+    generateStartPassword,
+    clock,
+  ),
+  adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
   // Uuid korekty jest FUNKCJĄ, nie portem: nie ma tu adaptera do podmiany, a port
   // bez drugiej implementacji to koszt bez zysku (`commands/corrections.ts`).
   adminCorrections: new AdminCorrectionCommands(

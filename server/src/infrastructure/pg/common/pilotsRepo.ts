@@ -5,7 +5,12 @@
  * rejestracji), więc adapter jest czystym odczytem; zapis mieszka w seedzie.
  */
 
-import type { PilotAccount, PilotsPort, Queryable } from '../../../application/common/ports.ts';
+import type {
+  PilotAccount,
+  PilotAuthSnapshot,
+  PilotsPort,
+  Queryable,
+} from '../../../application/common/ports.ts';
 import { DEFAULT_ROLE, isPilotRole } from '../../../domain/roles.ts';
 
 interface PilotRow {
@@ -46,5 +51,41 @@ export class PgPilotsRepo implements PilotsPort {
   async findById(id: string): Promise<PilotAccount | null> {
     const { rows } = await this.db.query<PilotRow>('SELECT * FROM pilots WHERE id = $1', [id]);
     return rows[0] ? toAccount(rows[0]) : null;
+  }
+
+  /**
+   * Odczyt BRAMY panelu — kolumny wypisane imiennie i bez `password_hash`.
+   *
+   * `SELECT *` z `findById` jest tu nie do przyjęcia z dwóch powodów naraz: wnosiłby
+   * hash do warstwy HTTP przy każdym żądaniu panelu (a `PilotAuthSnapshot` powstał
+   * właśnie po to, żeby tego nie robić) i milcząco zmieniałby kształt wyniku przy
+   * każdej nowej kolumnie na `pilots`.
+   */
+  async authSnapshot(id: string): Promise<PilotAuthSnapshot | null> {
+    const { rows } = await this.db.query<{
+      id: string;
+      code: string;
+      name: string;
+      active: boolean;
+      role: string;
+      credentials_valid_from: string | Date | null;
+    }>(
+      `SELECT id, code, name, active, role, credentials_valid_from
+         FROM pilots WHERE id = $1`,
+      [id],
+    );
+
+    const row = rows[0];
+    if (row == null) return null;
+    return {
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      active: row.active,
+      // Ta sama nieufność co przy logowaniu: nierozpoznana rola schodzi do najmniejszej.
+      role: isPilotRole(row.role) ? row.role : DEFAULT_ROLE,
+      credentialsValidFrom:
+        row.credentials_valid_from == null ? null : new Date(row.credentials_valid_from),
+    };
   }
 }

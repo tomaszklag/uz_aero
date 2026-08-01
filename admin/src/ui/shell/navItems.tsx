@@ -70,7 +70,18 @@ export const NAV_GROUPS: NavGroupSpec[] = [
   {
     title: 'Konfiguracja',
     items: [
-      { to: '/piloci', label: 'Piloci', icon: <PeopleIcon />, capability: 'accounts.manage', mockup: 'A06-piloci.html' },
+      {
+        to: '/piloci',
+        label: 'Piloci',
+        icon: <PeopleIcon />,
+        // `panel.access`, nie `accounts.manage` — decyzja produktowa z mockupu A06:
+        // „Szef wyszkolenia widzi tę listę, ale bez przycisków — potrzebuje jej do
+        // statystyk i flag, nie do zarządzania dostępem". Kłódka na pozycji nawigacji
+        // odcinałaby mu odczyt, którego trasa `GET /admin/api/pilots` udziela.
+        // Przyciski akcji wyszarza `screens/piloci/kontoActions.ts`, z powodem.
+        capability: 'panel.access',
+        mockup: 'A06-piloci.html',
+      },
       { to: '/flota', label: 'Flota', icon: <PlaneIcon size={15} />, capability: 'fleet.manage', mockup: 'A07-flota.html' },
       {
         to: '/progi',

@@ -12,6 +12,7 @@
 import type { AuditListQuery } from '../api/audit';
 import type { CorrectionDraftDto } from '../api/dto';
 import type { FlagListQuery } from '../api/flags';
+import type { PilotListQuery } from '../api/pilots';
 import type { SessionListQuery } from '../api/sessions';
 
 export const keys = {
@@ -57,6 +58,24 @@ export const keys = {
     all: ['audit'] as const,
     list: (query: AuditListQuery) => ['audit', 'list', query] as const,
     count: (query: AuditListQuery) => ['audit', 'count', query] as const,
+  },
+
+  /**
+   * Konta pilotów (`A06`, `A06a`).
+   *
+   * Bez `count`, inaczej niż przy dniach i dzienniku: liczniki kafli jadą W TEJ SAMEJ
+   * odpowiedzi co lista (`counts`), bo są liczone po CAŁYM klubie jednym zapytaniem,
+   * a nie po zawężeniu. Osobne zapytanie o to samo byłoby drugim żądaniem o liczbę,
+   * którą serwer i tak właśnie przysłał.
+   *
+   * `detail` nie ma, bo szuflada konta (`A06a`) nie pobiera niczego osobno: otwiera
+   * wiersz, który już jest na liście. Konto spoza listy (wklejony link do konta
+   * odfiltrowanego) rozpoznaje ekran i mówi o tym wprost, zamiast pytać serwer
+   * o zasób, którego trasa `GET /pilots/:id` nie wystawia.
+   */
+  pilots: {
+    all: ['pilots'] as const,
+    list: (query: PilotListQuery) => ['pilots', 'list', query] as const,
   },
 
   /**

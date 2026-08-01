@@ -144,6 +144,9 @@
   .btn.primary:hover { filter:brightness(1.08); }
   .btn.danger { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
   .btn.ghost { background:transparent; border-color:var(--border); color:var(--text-secondary); }
+  /* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta),
+     czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. */
+  .btn.ok { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
   .btn:disabled, .btn.disabled { opacity:0.4; cursor:not-allowed; }
   .btn.sm { min-height:30px; padding:5px 11px; font-size:11.5px; border-radius:8px; }
 
@@ -214,6 +217,9 @@
   .input::placeholder { color:var(--text-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
+  /* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" + „generuj nowe". */
+  .field-row { display:flex; gap:8px; align-items:stretch; }
+  .field-row .input { flex:1; }
   /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
   .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
@@ -263,7 +269,7 @@
   .kv:last-child { border-bottom:none; }
   .kv-k { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
   .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; letter-spacing:0.3px; }
-  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
+  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); } .kv-v.blue { color:var(--blue); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
 
   /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
@@ -584,7 +590,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -598,7 +604,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -612,7 +618,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -626,7 +632,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -640,7 +646,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -654,7 +660,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -668,7 +674,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -682,7 +688,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -696,7 +702,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost disabled" href="A06a-konto.html" title="Konto nieaktywne — najpierw aktywuj">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--green);border-color:var(--green-border);">Aktywuj</button>
+                  <button class="btn sm ok">Aktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -710,7 +716,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost disabled" href="A06a-konto.html" title="Konto nieaktywne — najpierw aktywuj">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--green);border-color:var(--green-border);">Aktywuj</button>
+                  <button class="btn sm ok">Aktywuj</button>
                 </div></td>
               </tr>
             </tbody>
@@ -799,10 +805,17 @@
 
         <div class="card" style="flex-shrink:0;padding:0;border:none;background:none;gap:10px;">
           <div class="card-title">Hasło startowe <span class="spacer"></span><span class="pill amber">pokazane raz</span></div>
+
+          <!-- SPROSTOWANIE 2026-08-01: hasło POWSTAJE PRZY ZAPISIE, nie przed nim. -->
+          <div class="banner warn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span><b>Sprostowanie z 2026-08-01: pola z hasłem nie ma, dopóki konto nie istnieje.</b> Wartość generuje <b>serwer</b> i oddaje ją raz — w odpowiedzi na „Utwórz konto" albo „Wygeneruj nowe hasło". Panel nigdy hasła nie wysyła, więc przed zapisem <b>nie ma czego pokazać</b>: wdrożona szuflada zamienia to pole na zdanie „hasło wygeneruje serwer przy zapisie i pokaże je tu raz", a pole z wartością i przyciskiem „Kopiuj" pojawia się PO zapisie. Przycisk „Generuj nowe" jest w niej resetem hasła istniejącego konta (osobna akcja, osobny wpis w audycie), a nie przelosowaniem wartości w polu. Format też jest inny — <code>k7np-r4mx-9tqd</code>, trzy grupy po cztery znaki z alfabetu bez znaków mylących (≈59 bitów): słownik w kodzie serwera byłby publiczny razem z nim, a rate-limitu na <code>/auth/login</code> jeszcze nie ma.</span>
+          </div>
+
           <div class="field">
             <span class="label">Wygenerowane hasło</span>
-            <div style="display:flex;gap:8px;align-items:stretch;">
-              <input class="input mono" value="Kn4-mewa-7213" style="flex:1;font-size:15px;letter-spacing:1px;" readonly />
+            <div class="field-row">
+              <input class="input mono" value="k7np-r4mx-9tqd" style="font-size:15px;letter-spacing:1px;" readonly />
               <button class="btn" title="Kopiuj do schowka">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               </button>
@@ -821,9 +834,15 @@
         <div class="card" style="flex-shrink:0;padding:0;border:none;background:none;gap:8px;">
           <div class="card-title">Przy resecie hasła istniejącego konta</div>
           <div class="kv"><span class="kv-k">Pola tożsamości</span><span class="kv-v"><small>zablokowane</small></span></div>
-          <div class="kv"><span class="kv-k">Aktywne sesje pilota</span><span class="kv-v amber">unieważnione</span></div>
+          <!-- SPROSTOWANIE 2026-08-01: „sesje" to DWA różne byty i dwa różne mechanizmy. -->
+          <div class="kv"><span class="kv-k">Sesje telefonu</span><span class="kv-v amber">skasowane <small>refresh tokeny</small></span></div>
+          <div class="kv"><span class="kv-k">Sesja panelu</span><span class="kv-v amber">unieważniona <small>token sprzed resetu nie przechodzi bramy</small></span></div>
           <div class="kv"><span class="kv-k">PIN na telefonie</span><span class="kv-v amber">do ustawienia od nowa</span></div>
           <div class="kv"><span class="kv-k">Zdarzenia w rejestrze</span><span class="kv-v green">bez zmian</span></div>
+          <div class="banner warn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span><b>Sprostowanie z 2026-08-01: „unieważnione sesje" to dwa różne mechanizmy.</b> Sesje TELEFONU to wiersze w <code>refresh_tokens</code> — serwer je kasuje i potrafi policzyć, więc liczba jedzie do odpowiedzi i do dziennika audytu. Sesja PANELU to podpisany JWT w ciasteczku <code>uzaero_admin</code> z TTL 8 h i <b>nie ma dla niej wiersza w bazie</b>: nie da się jej skasować ani zliczyć. Do 2026-08-01 przeżywała więc reset hasła nawet o osiem godzin, choć ten ekran pisał „unieważnione". Odbiera ją teraz znacznik <code>pilots.credentials_valid_from</code> (migracja 13), który reset i deaktywacja przesuwają — brama odrzuca token wydany wcześniej. Skutek: komunikat po akcji mówi o obu rodzajach OSOBNO i jest prawdziwy także wtedy, gdy zerwanych sesji telefonu było zero.</span>
+          </div>
           <span class="hint">Reset wymaga od pilota <b>pełnego logowania przy sieci</b> — to jedyny świadomy wyjątek od offline-first. Nie resetuj hasła pilotowi, który jest w tej chwili w powietrzu z niepustym outboxem.</span>
         </div>
 

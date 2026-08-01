@@ -17,8 +17,7 @@ import { OPERATION_TYPES } from '@uzaero/domain';
 
 import type { AdminSessionQueries } from '../../../application/admin/queries/sessions.ts';
 import { PAGE_LIMIT_MAX, type SessionListFilter } from '../../../application/admin/ports.ts';
-import type { TokenService } from '../../../application/common/ports.ts';
-import { adminRoute } from './adminRoute.ts';
+import { adminRoute, type AdminGate } from './adminRoute.ts';
 import { dayParam, endOfDay } from './dayRange.ts';
 
 const listQuery = z.object({
@@ -45,11 +44,11 @@ const asBoolean = (value: 'true' | 'false' | undefined): boolean | undefined =>
 export function registerAdminSessionRoutes(
   app: FastifyInstance,
   sessions: AdminSessionQueries,
-  tokens: TokenService,
+  gate: AdminGate,
 ): void {
   adminRoute(
     app,
-    tokens,
+    gate,
     { method: 'GET', url: '/sessions', capability: 'panel.access' },
     async (req, reply) => {
       const query = listQuery.safeParse(req.query);
@@ -83,7 +82,7 @@ export function registerAdminSessionRoutes(
 
   adminRoute(
     app,
-    tokens,
+    gate,
     { method: 'GET', url: '/sessions/:uuid', capability: 'panel.access' },
     async (req, reply) => {
       const params = detailParams.safeParse(req.params);

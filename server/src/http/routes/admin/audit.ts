@@ -16,9 +16,8 @@ import { z } from 'zod';
 
 import type { AdminAuditQueries } from '../../../application/admin/queries/audit.ts';
 import { PAGE_LIMIT_MAX, type AuditListFilter } from '../../../application/admin/ports.ts';
-import type { TokenService } from '../../../application/common/ports.ts';
 import { isAdminAction, type AdminAction } from '../../../domain/adminActions.ts';
-import { adminRoute } from './adminRoute.ts';
+import { adminRoute, type AdminGate } from './adminRoute.ts';
 import { dayParam, endOfDay } from './dayRange.ts';
 
 /**
@@ -70,11 +69,11 @@ const listQuery = z.object({
 export function registerAdminAuditRoutes(
   app: FastifyInstance,
   audit: AdminAuditQueries,
-  tokens: TokenService,
+  gate: AdminGate,
 ): void {
   adminRoute(
     app,
-    tokens,
+    gate,
     { method: 'GET', url: '/audit', capability: 'audit.read' },
     async (req, reply) => {
       const query = listQuery.safeParse(req.query);

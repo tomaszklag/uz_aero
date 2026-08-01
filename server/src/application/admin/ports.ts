@@ -338,6 +338,205 @@ export interface EventsAdminPort {
   adminCorrectionUuids(db: Queryable, sessionUuid: string): Promise<string[]>;
 }
 
+// ── konta pilotów (A06, A06a) ───────────────────────────────────────────────────
+
+/**
+ * Konto tak, jak widzi je PANEL: bez `passwordHash`.
+ *
+ * Osobny typ od `PilotAccount` (`application/common/ports.ts`) i to jest jego cała
+ * treść. Tamten istnieje dla LOGOWANIA, więc niesie hash — a hash nie ma prawa wjechać
+ * do komendy, która go nie weryfikuje, ani tym bardziej do mapowania na kontrakt.
+ * Jeden brak pola jest tu tańszy niż dyscyplina „pamiętaj, żeby go nie serializować".
+ */
+export interface AdminPilotAccount {
+  id: string;
+  code: string;
+  name: string;
+  email: string | null;
+  active: boolean;
+  role: PilotRole;
+}
+
+/**
+ * Konto + to, czego lista potrzebuje ze złączeń.
+ *
+ * `flyingDays` jest AGREGATEM PROJEKCJI (`COUNT` po `sessions`), nie odtworzeniem
+ * projekcji SQL-em — dokładnie ta granica, którą stawia `docs/architektura-panelu-serwer.md`
+ * §7.1. Liczymy dni ZAMKNIĘTE, bo tak mówi mockup A06 („Suma dni z zamkniętymi
+ * sesjami"), i w oknie podanym w filtrze: kolumna nosi nagłówek z miesiącem, więc
+ * liczba bez okna nie znaczyłaby nic.
+ */
+export interface AdminPilotJoin {
+  account: AdminPilotAccount;
+  updatedAt: Date;
+  flyingDays: number;
+}
+
+/**
+ * Filtr listy kont (`A06`). Pola NIEUSTAWIONE (`undefined`) są pomijane.
+ *
+ * Okno `fromMs`/`toMs` NIE filtruje kont — filtruje wyłącznie `flyingDays`. Konto bez
+ * ani jednego dnia w oknie zostaje na liście z zerem; wypadnięcie go stąd znaczyłoby,
+ * że lista kont zależy od tego, kto ostatnio latał, a to jest inna lista.
+ */
+export interface PilotListFilter {
+  active?: boolean;
+  /**
+   * Role jako LISTA, nie pojedyncza wartość, bo ekran filtruje chipem „Z rolą panelu",
+   * a to są DWIE role naraz (`admin` + `training_lead`). Jedna wartość zmusiłaby panel
+   * albo do rezygnacji z chipa z mockupu, albo do sklejania listy z dwóch żądań —
+   * czyli do liczenia po swojemu. Ta sama decyzja, co przy `AuditListFilter.actions`.
+   */
+  roles?: PilotRole[];
+  /** Fragment kodu, nazwiska albo e-maila; dopasowanie bez rozróżniania wielkości. */
+  search?: string;
+  /** Okno „dni lotnych" (epoch ms UTC), obustronnie domknięte. */
+  fromMs: number;
+  toMs: number;
+  /** Kierunek sortowania po NAZWISKU; konta nieaktywne i tak lądują na końcu. */
+  direction: 'asc' | 'desc';
+  limit: number;
+}
+
+/**
+ * Liczniki kafli i karty „Rola w panelu" (`A06`). Liczone po WSZYSTKICH kontach,
+ * niezależnie od filtra listy: kafel opisuje klub, a nie zawężenie, którym ktoś
+ * właśnie patrzy na tabelę.
+ */
+export interface PilotCounts {
+  total: number;
+  active: number;
+  inactive: number;
+  byRole: Record<PilotRole, number>;
+  /**
+   * Dni lotne CAŁEGO klubu w oknie: liczba sesji ZAMKNIĘTYCH, nie suma kolumny
+   * `flyingDays` z wierszy. Różnica jest realna, a nie kosmetyczna — dzień szkolny
+   * liczy się dwóm pilotom naraz, więc suma kolumny byłaby większa od liczby dni.
+   * Kafel „Dni lotne · <miesiąc>" ma pokazywać dni, a nie osobodni.
+   */
+  flyingDays: number;
+}
+
+/**
+ * Liczniki CHIPÓW filtra (`A06`) — cztery zawężenia listy, policzone w bieżącym
+ * WYSZUKIWANIU.
+ *
+ * Osobny typ od `PilotCounts` i to jest jego cała treść: `PilotCounts` opisuje KLUB
+ * (kafle „Konta aktywne 8 / 10"), a te liczby są obietnicą chipa — „tyle wierszy
+ * zobaczysz po kliknięciu". Do 2026-08-01 chipy nosiły liczby z `PilotCounts`, więc
+ * po wpisaniu frazy tabela miała jeden wiersz, a chip „Nieaktywni" nadal pokazywał 2
+ * i po kliknięciu dawał zero wierszy.
+ *
+ * Zawęża je WYŁĄCZNIE wyszukiwanie, nie wybrany chip: liczby na czterech chipach mają
+ * być porównywalne między sobą, a chip zawężony sam sobą pokazywałby zawsze tyle, ile
+ * właśnie widać.
+ */
+export interface PilotScopeCounts {
+  /** Chip „Wszyscy". */
+  total: number;
+  active: number;
+  inactive: number;
+  /** Chip „Z rolą panelu" — role dające wejście do panelu, razem. */
+  panel: number;
+}
+
+/** Nowe konto — hash liczy komenda, adapter go wyłącznie zapisuje. */
+export interface NewPilotAccount {
+  id: string;
+  code: string;
+  name: string;
+  email: string | null;
+  role: PilotRole;
+  passwordHash: string;
+}
+
+/** Zmiana tożsamości albo roli. Pola nieustawione zostają bez zmian. */
+export interface PilotPatch {
+  code?: string;
+  name?: string;
+  email?: string | null;
+  role?: PilotRole;
+}
+
+/**
+ * Port kont po stronie PANELU — osobny od `PilotsPort`, nie jego rozszerzenie.
+ *
+ * `PilotsPort` jest portem LOGOWANIA: dwie metody odczytu, adapter z własnym uchwytem
+ * do bazy, wołany poza transakcją. Panel pisze i musi to robić W TRANSAKCJI śladu
+ * audytu, więc każda metoda bierze `tx` z zewnątrz. Precedens i uzasadnienie takie
+ * samo jak przy `FlagsAdminPort` vs `FlagsPort`: osobny port wtedy, gdy inny jest
+ * POWÓD istnienia — a korzyścią uboczną jest to, że ścieżka logowania nie ma jak
+ * zregresować od zmian w panelu kont.
+ */
+export interface PilotsAdminPort {
+  list(db: Queryable, filter: PilotListFilter): Promise<{ items: AdminPilotJoin[]; total: number }>;
+  /** Liczniki po CAŁYM klubie; okno dotyczy wyłącznie `flyingDays`. */
+  counts(db: Queryable, window: { fromMs: number; toMs: number }): Promise<PilotCounts>;
+  /**
+   * Liczniki CHIPÓW — te same cztery zawężenia, ale w bieżącym wyszukiwaniu.
+   * `search` nieustawione = po całym klubie (wtedy zgadzają się z `counts`).
+   */
+  scopeCounts(db: Queryable, filter: { search?: string }): Promise<PilotScopeCounts>;
+  byId(db: Queryable, id: string): Promise<AdminPilotAccount | null>;
+  /**
+   * Kolizja unikalności PRZED zapisem: `'code'` albo `'email'`, albo `null`.
+   *
+   * Sprawdzenie zamiast łapania błędu `23505` z bazy, bo panel musi wiedzieć, KTÓRE
+   * pole jest zajęte — komunikat „naruszenie unikalności" przy formularzu z trzema
+   * polami nie jest odpowiedzią. Sprawdzenie i zapis jadą tą samą transakcją, więc
+   * wyścig kończy się i tak błędem bazy, a nie cichym nadpisaniem.
+   */
+  conflict(
+    tx: Queryable,
+    values: { code: string; email: string | null; exceptId: string | null },
+  ): Promise<'code' | 'email' | null>;
+  insert(tx: Queryable, account: NewPilotAccount): Promise<void>;
+  update(tx: Queryable, id: string, patch: PilotPatch): Promise<void>;
+  /**
+   * `at` = chwila DEAKTYWACJI, zapisywana jako `credentials_valid_from` (migracja 13).
+   * Bez niej odebranie dostępu nie dotykałoby sesji PANELU, bo ta nie ma wiersza
+   * w bazie — kasowanie `refresh_tokens` zrywa wyłącznie sesje telefonu.
+   * Aktywacja znacznika NIE cofa: token sprzed odcięcia ma zostać martwy.
+   */
+  setActive(tx: Queryable, id: string, active: boolean, at: Date): Promise<void>;
+  /** `at` jak wyżej — reset hasła unieważnia poświadczenia obu powierzchni naraz. */
+  setPasswordHash(tx: Queryable, id: string, passwordHash: string, at: Date): Promise<void>;
+  /** Ile kont AKTYWNYCH ma rolę `admin` — wejście do `domain/accountGuards.ts`. */
+  countActiveAdmins(tx: Queryable): Promise<number>;
+  /**
+   * Blokada advisory na STAŁYM kluczu „populacja administratorów", ważna do końca
+   * transakcji. Wołana PRZED `countActiveAdmins` przez każdą mutację zmieniającą tę
+   * populację.
+   *
+   * ══ DLACZEGO PORT, A NIE `tx.query` W KOMENDZIE ══
+   * Bo klucz musi być JEDEN dla wszystkich wołających, a stała rozsiana po komendach
+   * przestaje być stałą przy pierwszej literówce — a literówka w kluczu nie psuje
+   * niczego widocznego, tylko cicho wyłącza szeregowanie. Nazwa klucza jest szczegółem
+   * Postgresa i mieszka w adapterze, tak jak kształt kursora.
+   */
+  lockAdminPopulation(tx: Queryable): Promise<void>;
+}
+
+/**
+ * Unieważnianie sesji pilota — osobny port, bo `RefreshTokensPort` odpowiada na inne
+ * pytanie i w innym rytmie (wydaj/rotuj, poza transakcją, z własnym uchwytem do bazy).
+ *
+ * ══ DLACZEGO TO W OGÓLE ISTNIEJE ══
+ * Bez tego „Deaktywuj" jest obietnicą bez pokrycia: konto przestaje się logować, ale
+ * pilot z żywym refresh tokenem pracuje dalej przez 90 dni (`REFRESH_TTL_DAYS`).
+ * `AuthCommands.refresh` sprawdza wprawdzie `account.active` i odmawia — ale dopiero
+ * przy próbie rotacji, a JWT wydany wcześniej żyje jeszcze godzinę. Reset hasła też
+ * musi zrywać sesje, inaczej stara sesja przeżywa zmianę poświadczeń, czyli dokładnie
+ * to, przed czym reset ma chronić.
+ *
+ * Liczba unieważnionych tokenów jedzie do audytu (mockup A06a: „Aktywne sesje pilota —
+ * unieważnione"), bo odpowiada na pytanie, którego wpis bez niej nie zamyka: czy ktoś
+ * jeszcze pracował na tym koncie w chwili odcięcia.
+ */
+export interface RefreshTokensAdminPort {
+  revokeAllFor(tx: Queryable, pilotId: string): Promise<number>;
+}
+
 // ── konserwacja (przebudowa projekcji, panel) ───────────────────────────────────
 
 export interface MaintenanceAdminPort {

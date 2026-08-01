@@ -57,9 +57,36 @@ export interface PilotAccount {
   role: PilotRole;
 }
 
+/**
+ * Konto tak, jak widzi je BRAMA UPRAWNIEŃ panelu (`http/authorize.ts`) — bez hasha.
+ *
+ * Osobny typ od `PilotAccount` i to jest cała jego treść. `PilotAccount` istnieje dla
+ * LOGOWANIA, więc niesie `passwordHash`; brama hasła nie weryfikuje, a mimo to czytała
+ * go przy KAŻDYM żądaniu panelu i wnosiła aż do warstwy HTTP (`AuthOutcome.account`).
+ * Hash, który wjeżdża tam, gdzie nie jest potrzebny, prędzej czy później gdzieś się
+ * zserializuje — jeden brak pola jest tańszy niż dyscyplina „pamiętaj, żeby go nie
+ * wypisać". Ta sama zasada, co przy `AdminPilotAccount` po stronie panelu.
+ */
+export interface PilotAuthSnapshot {
+  id: string;
+  code: string;
+  name: string;
+  active: boolean;
+  role: PilotRole;
+  /**
+   * Od kiedy poświadczenia tego konta są ważne (migracja 13). `null` = nigdy ich nie
+   * unieważniano. Token wydany WCZEŚNIEJ nie przechodzi bramy — to jedyny sposób,
+   * w jaki reset hasła i deaktywacja zrywają sesję PANELU, która nie ma wiersza
+   * w bazie (podpisany JWT w ciasteczku `HttpOnly`).
+   */
+  credentialsValidFrom: Date | null;
+}
+
 export interface PilotsPort {
   findByLogin(login: string): Promise<PilotAccount | null>;
   findById(id: string): Promise<PilotAccount | null>;
+  /** Projekcja dla bramy panelu: rola, aktywność i znacznik unieważnienia — bez hasha. */
+  authSnapshot(id: string): Promise<PilotAuthSnapshot | null>;
 }
 
 /**
@@ -105,11 +132,27 @@ export interface Identity {
   role: PilotRole;
 }
 
+/**
+ * Tożsamość ODCZYTANA z tokenu razem z CHWILĄ JEGO WYDANIA.
+ *
+ * `issuedAt` nie jest polem wejściowym `sign` — chwilę wydania zna wyłącznie ten, kto
+ * podpisuje, i sam ją wpisuje z zegara. Osobny typ zamiast pola opcjonalnego w
+ * `Identity`, żeby żaden wołający `sign` nie mógł tej wartości podać ani zapomnieć.
+ */
+export interface VerifiedIdentity extends Identity {
+  /**
+   * `iat` w SEKUNDACH epoki (RFC 7519). `0` = token sprzed wprowadzenia claimu
+   * (migracja 13) — czyli „wydany przed czasem", więc każde unieważnienie poświadczeń
+   * go obejmuje. Domyślna wartość idzie w stronę BEZPIECZNĄ, nigdy w stronę zaufania.
+   */
+  issuedAt: number;
+}
+
 export interface TokenService {
   /** Zwraca podpisany token dostępu dla pilota. */
   sign(claims: Identity, ttlSec: number): string;
   /** Zwraca claims albo `null` — token zły/wygasły. Nigdy nie rzuca. */
-  verify(token: string): Identity | null;
+  verify(token: string): VerifiedIdentity | null;
 }
 
 /**

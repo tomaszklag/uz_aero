@@ -52,6 +52,16 @@
   color: var(--text-secondary);
 }
 
+/* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta
+   na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
+   zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
+   kilkanaście naraz i żadna nie byłaby główna. */
+.btn.ok {
+  color: var(--green);
+  border-color: var(--green-border);
+  background: var(--green-muted);
+}
+
 .btn:disabled,
 .btn.disabled {
   opacity: 0.4;
@@ -141,6 +151,20 @@
 .hint b {
   color: var(--amber);
   font-weight: 600;
+}
+
+/* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" (A06a). Przyciski są
+   RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie ma dzieci; wysokości
+   równa `align-items: stretch`, żeby 40 px pola i 36 px przycisku nie rozjeżdżały się
+   w pionie. */
+.field-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.field-row .input {
+  flex: 1;
 }
 
 /* ── wybór jako lista kart ──

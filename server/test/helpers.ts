@@ -26,10 +26,12 @@ import type {
 } from '../src/application/common/ports.ts';
 import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
+import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
 import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
+import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
@@ -41,10 +43,13 @@ import { SheetQueries } from '../src/application/common/queries/sheets.ts';
 import { StateQueries } from '../src/application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
+import { generateStartPassword } from '../src/infrastructure/auth/startPassword.ts';
 import { PgAdminAuditReadRepo } from '../src/infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminEventsRepo } from '../src/infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
+import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
+import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
 import { PgEventsStore } from '../src/infrastructure/pg/common/eventsStore.ts';
 import { PgExportLogRepo } from '../src/infrastructure/pg/common/exportLogRepo.ts';
@@ -145,9 +150,13 @@ export async function testHarness(
   const auditedWrite = new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock);
   // Jeden adapter flag dla komend i zapytań — tak jak w produkcyjnym composition root.
   const adminFlagsRepo = new PgAdminFlagsRepo();
+  // Konta mają DWA adaptery, jak w produkcji: logowanie czyta `PgPilotsRepo` (hash),
+  // panel pisze `PgAdminPilotsRepo` (transakcja śladu audytu).
+  const adminPilotsRepo = new PgAdminPilotsRepo();
+  const hasher = new ScryptHasher();
 
   const app = buildServer({
-    auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), new ScryptHasher(), tokens, clock),
+    auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
     reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
     ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter),
     state: new StateQueries(db, events, sessions, flags, exportLog),
@@ -155,6 +164,9 @@ export async function testHarness(
     traces: new FsTraceSink(tracesDir),
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     tokens,
+    // Brama tras panelu czyta konto przy KAŻDYM żądaniu; na tym opierają się przypadki
+    // „deaktywacja odcina natychmiast" (`roles.test.ts`, `adminAccounts.test.ts`).
+    pilots,
     adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
     adminSessionQueries: new AdminSessionQueries(
       db,
@@ -165,6 +177,19 @@ export async function testHarness(
     ),
     adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
     adminMeQueries: new AdminMeQueries(pilots),
+    // Konta (A06/A06a). Hasło startowe jedzie PRAWDZIWYM generatorem — testy czytają
+    // wartość z odpowiedzi, a jeden z przypadków sprawdza właśnie to, że nie ma jej
+    // nigdzie indziej (ani w `details` audytu, ani w bazie poza hashem).
+    adminPilots: new AdminPilotCommands(
+      auditedWrite,
+      adminPilotsRepo,
+      new PgAdminRefreshTokensRepo(),
+      hasher,
+      randomUUID,
+      generateStartPassword,
+      clock,
+    ),
+    adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
     // `randomUUID` jak w produkcji — uuid korekty testy czytają z odpowiedzi, więc
     // udawany generator nie kupiłby nic poza rozjazdem z composition rootem.
     adminCorrections: new AdminCorrectionCommands(

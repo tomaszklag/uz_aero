@@ -519,10 +519,15 @@ te wchodzą następnym przekrojem.
   serwowanie to `base:'/admin/'` (już ustawione), `ADMIN_DIST_DIR` i nagłówki cache
   z §9. (2) **Rate-limitu na `/auth/*` i `/admin/api/auth/login`** (§8.8) — razem z nim
   wchodzi licznik prób z A00a, którego mockup sam zabrania przepisywać („5 prób / 15 minut
-  to WARTOŚCI ROBOCZE"). (3) **Świeżej roli przy każdym żądaniu panelu** (§8.5,
-  `requireAdminActor`): rola nadal idzie z tokenu, więc odebranie uprawnień działa
-  z opóźnieniem do 8 h zamiast do 1 h. Pozycja urosła na wadze przez tę sesję i jest
-  odnotowana w docblocku `adminRoute.ts`. (4) **Self-hostowanych czcionek i CSP** —
+  to WARTOŚCI ROBOCZE"). (3) ~~**Świeżej roli przy każdym żądaniu panelu**~~ —
+  **ZROBIONE 2026-08-01 razem z przekrojem A06** (`http/authorize.ts`:
+  `authorizeAccount` czyta konto po kluczu głównym przy każdym żądaniu `/admin/api/*`;
+  `adminRoute` buduje `Actor` z KONTA, nie z claimu). Konto nieaktywne daje 401, rola
+  bez zdolności 403 — obie decyzje natychmiast, a nie po wygaśnięciu 8-godzinnej sesji.
+  Bez tego przycisk „Deaktywuj" na A06 obiecywałby coś, co dzieje się dopiero pod
+  wieczór. Przybite testami: `roles.test.ts` („konto DEAKTYWOWANE po wydaniu tokenu →
+  401", „odebranie roli działa NATYCHMIAST") i `adminAccounts.test.ts` („DEAKTYWACJA
+  ODCINA PANEL NATYCHMIAST"). (4) **Self-hostowanych czcionek i CSP** —
   `admin/index.html` ciągnie fonty z CDN jak mockupy; §9 wymaga `.woff2` w `public/fonts/`
   przed wdrożeniem (brak JetBrains Mono to inna szerokość każdej kolumny liczbowej).
   (5) **`classInventory.test.ts`** — ma porównywać klasy panelu z `SZABLON.html`, a biblioteka

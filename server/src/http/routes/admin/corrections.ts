@@ -23,8 +23,7 @@ import type {
   CorrectionResult,
 } from '../../../application/admin/commands/corrections.ts';
 import type { AdminCorrectionQueries } from '../../../application/admin/queries/corrections.ts';
-import type { TokenService } from '../../../application/common/ports.ts';
-import { adminRoute } from './adminRoute.ts';
+import { adminRoute, type AdminGate } from './adminRoute.ts';
 
 const correctionParams = z.object({ uuid: z.string().min(1).max(100) });
 
@@ -91,7 +90,7 @@ export function registerAdminCorrectionRoutes(
   app: FastifyInstance,
   corrections: AdminCorrectionCommands,
   preview: AdminCorrectionQueries,
-  tokens: TokenService,
+  gate: AdminGate,
 ): void {
   /**
    * PODGLĄD — `POST`, ale ZAPYTANIE: zero zapisów, zero wpisów w audycie, zero
@@ -105,7 +104,7 @@ export function registerAdminCorrectionRoutes(
    */
   adminRoute(
     app,
-    tokens,
+    gate,
     { method: 'POST', url: '/sessions/:uuid/corrections/preview', capability: 'events.correct' },
     async (req, reply) => {
       const params = correctionParams.safeParse(req.params);
@@ -135,7 +134,7 @@ export function registerAdminCorrectionRoutes(
 
   adminRoute(
     app,
-    tokens,
+    gate,
     { method: 'POST', url: '/sessions/:uuid/corrections', capability: 'events.correct' },
     async (req, reply, actor) => {
       const params = correctionParams.safeParse(req.params);

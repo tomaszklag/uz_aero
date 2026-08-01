@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -380,6 +380,39 @@ export const MIGRATION_12 = `
     ON admin_audit (actor_pilot_id, created_at DESC NULLS LAST, id DESC);
 `;
 
+/**
+ * Migracja 13: znacznik UNIEWAŻNIENIA POŚWIADCZEŃ konta (przekrój A06, 2026-08-01).
+ *
+ * ══ CO ZAMYKA ══
+ * Sesja panelu to podpisany JWT w ciasteczku `uzaero_admin` z TTL 8 h — i NIE MA dla
+ * niej wiersza w bazie. `RefreshTokensAdminPort.revokeAllFor` kasuje `refresh_tokens`,
+ * czyli sesje TELEFONU; ciasteczka panelu nie ma czym unieważnić, bo nie ma czego
+ * skasować. Skutek przed tą migracją: wykradzione poświadczenie panelu przeżywało
+ * reset hasła nawet o osiem godzin, a ekran `A06a` pisał „Aktywne sesje pilota —
+ * unieważnione". Obietnica bez pokrycia, dokładnie w operacji, która istnieje po to,
+ * żeby dostęp odebrać.
+ *
+ * ══ DLACZEGO KOLUMNA, A NIE TABELA SESJI PANELU ══
+ * Tabela sesji przeglądarkowych oznaczałaby wiersz na każde logowanie i wpis do
+ * skasowania przy każdym wylogowaniu — a pytanie, na które trzeba odpowiedzieć, brzmi
+ * „czy to poświadczenie jest starsze niż ostatnie unieważnienie". Odpowiada na nie
+ * JEDNA data przy koncie, którą brama i tak czyta przy każdym żądaniu panelu
+ * (`http/authorize.ts`), więc kontrola NIE KOSZTUJE dodatkowego zapytania.
+ *
+ * `NULL` znaczy „poświadczeń tego konta nigdy nie unieważniano" i jest wartością
+ * domyślną dla kont istniejących — inaczej wdrożenie wylogowałoby wszystkich naraz
+ * bez powodu. Znacznik przesuwają DWIE operacje: reset hasła i deaktywacja
+ * (`application/admin/commands/pilots.ts`).
+ *
+ * Porównanie jest po stronie serwera i celowo GRUBOZIARNISTE: token niesie `iat`
+ * w SEKUNDACH (RFC 7519), więc odrzucamy token, którego sekunda wydania jest
+ * WCZEŚNIEJSZA niż znacznik. Zaokrąglenie działa w stronę bezpieczną — token wydany
+ * w tej samej sekundzie co unieważnienie zostaje odrzucony, a nie przepuszczony.
+ */
+export const MIGRATION_13 = `
+  ALTER TABLE pilots ADD COLUMN IF NOT EXISTS credentials_valid_from TIMESTAMPTZ;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -393,4 +426,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_10,
   MIGRATION_11,
   MIGRATION_12,
+  MIGRATION_13,
 ];

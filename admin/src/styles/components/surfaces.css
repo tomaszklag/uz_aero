@@ -263,6 +263,12 @@
   color: var(--red);
 }
 
+/* `.blue` dołożony 2026-08-01 razem z A06: mockup używał go w karcie „Rola w panelu",
+   a szablon go nie definiował. Ton informacyjny, jak `.pill.blue`. */
+.kv-v.blue {
+  color: var(--blue);
+}
+
 .kv-v small {
   font-size: 9.5px;
   font-weight: 400;

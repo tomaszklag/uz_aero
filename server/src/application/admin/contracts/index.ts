@@ -13,4 +13,5 @@ export type * from './audit.ts';
 export type * from './corrections.ts';
 export type * from './flags.ts';
 export type * from './maintenance.ts';
+export type * from './pilots.ts';
 export type * from './sessions.ts';

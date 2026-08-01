@@ -144,6 +144,9 @@
   .btn.primary:hover { filter:brightness(1.08); }
   .btn.danger { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
   .btn.ghost { background:transparent; border-color:var(--border); color:var(--text-secondary); }
+  /* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta),
+     czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. */
+  .btn.ok { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
   .btn:disabled, .btn.disabled { opacity:0.4; cursor:not-allowed; }
   .btn.sm { min-height:30px; padding:5px 11px; font-size:11.5px; border-radius:8px; }
 
@@ -214,6 +217,9 @@
   .input::placeholder { color:var(--text-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
+  /* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" + „generuj nowe". */
+  .field-row { display:flex; gap:8px; align-items:stretch; }
+  .field-row .input { flex:1; }
   /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
   .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
@@ -263,7 +269,7 @@
   .kv:last-child { border-bottom:none; }
   .kv-k { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
   .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; letter-spacing:0.3px; }
-  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
+  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); } .kv-v.blue { color:var(--blue); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
 
   /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
@@ -540,10 +546,20 @@
           <span><b>Sekcja administratora.</b> Zakładanie kont, reset hasła i deaktywacja są dostępne wyłącznie dla roli <code>administrator</code>. Szef wyszkolenia widzi tę listę, ale bez przycisków — potrzebuje jej do statystyk i flag, nie do zarządzania dostępem.</span>
         </div>
 
+        <!-- SPROSTOWANIE 2026-08-01: ekran jest wdrożony (`admin/src/screens/piloci/`),
+             a kolumna „Ostatnie logowanie" z tabeli niżej NIE MA pokrycia w danych. -->
+        <div class="banner warn" style="flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><b>Sprostowanie z 2026-08-01: kolumny „Ostatnie logowanie" nie da się wypełnić.</b> Tabela <code>pilots</code> (migracja 1 + 7) ma <code>id</code>, <code>code</code>, <code>name</code>, <code>email</code>, <code>password_hash</code>, <code>active</code>, <code>role</code>, <code>updated_at</code> i preferencje motywu — <b>nie ma kolumny z czasem logowania i nikt jej nie zapisuje</b>. Wyliczenie jej z <code>refresh_tokens</code> dałoby „ostatnią rotację sesji telefonu" (panel refresh tokenów w ogóle nie dostaje), czyli inną wielkość pod tą samą etykietą. Wdrożony ekran pokazuje w tym miejscu <b>„Zmieniono · UTC"</b> (<code>pilots.updated_at</code>) i mówi o różnicy banerem. Uzupełnienie wymaga decyzji: migracja z kolumną <code>last_login_at</code> + zapis na ścieżce logowania.</span>
+        </div>
+
         <div class="tiles" style="flex-shrink:0;">
           <div class="tile"><span class="tile-key">Konta aktywne</span><span class="tile-val green">8<small> / 10</small></span><span class="tile-note">Zalogują się w aplikacji i w panelu.</span></div>
           <div class="tile"><span class="tile-key">Z rolą panelu</span><span class="tile-val blue">2</span><span class="tile-note">1 administrator · 1 szef wyszkolenia.</span></div>
           <div class="tile"><span class="tile-key">Nieaktywne</span><span class="tile-val">2</span><span class="tile-note">Bez logowania — zdarzenia zostają w rejestrze.</span></div>
+          <!-- Liczba SESJI zamkniętych w oknie, a nie suma kolumny „Dni lotne" z wierszy:
+               dzień szkolny liczy się dwóm pilotom naraz, więc suma kolumny byłaby liczbą
+               osobodni. Serwer liczy oba osobno (`counts.flyingDays` vs `item.flyingDays`). -->
           <div class="tile"><span class="tile-key">Dni lotne · LIP 2026</span><span class="tile-val">59</span><span class="tile-note">Suma dni z zamkniętymi sesjami.</span></div>
         </div>
 
@@ -584,7 +600,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -598,7 +614,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -612,7 +628,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -626,7 +642,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -640,7 +656,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -654,7 +670,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -668,7 +684,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -682,7 +698,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost" href="A06a-konto.html">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--red);border-color:var(--red-border);">Deaktywuj</button>
+                  <button class="btn sm danger">Deaktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -696,7 +712,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost disabled" href="A06a-konto.html" title="Konto nieaktywne — najpierw aktywuj">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--green);border-color:var(--green-border);">Aktywuj</button>
+                  <button class="btn sm ok">Aktywuj</button>
                 </div></td>
               </tr>
               <tr class="clickable">
@@ -710,7 +726,7 @@
                 <td><div class="row-actions" style="gap:5px;">
                   <a class="btn sm ghost" href="A06a-konto.html">Szczegóły</a>
                   <a class="btn sm ghost disabled" href="A06a-konto.html" title="Konto nieaktywne — najpierw aktywuj">Reset hasła</a>
-                  <button class="btn sm ghost" style="color:var(--green);border-color:var(--green-border);">Aktywuj</button>
+                  <button class="btn sm ok">Aktywuj</button>
                 </div></td>
               </tr>
             </tbody>

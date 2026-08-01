@@ -13,7 +13,13 @@
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type Variant = 'primary' | 'ghost' | 'danger' | 'default';
+/**
+ * `ok` to zielona OBRAMÓWKA (`.btn.ok`), czyli odwrotność `danger` — akcja
+ * przywracająca („Aktywuj" konta na A06). `primary` zostaje akcją GŁÓWNĄ ekranu
+ * i w kolumnie tabeli nie ma czego szukać: kilkanaście przycisków głównych naraz
+ * znaczy, że żaden nie jest główny.
+ */
+type Variant = 'primary' | 'ghost' | 'danger' | 'ok' | 'default';
 
 interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
   variant?: Variant;

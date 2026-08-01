@@ -21,13 +21,34 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { Actor } from '../../../application/admin/ports.ts';
-import type { Identity, TokenService } from '../../../application/common/ports.ts';
+import type {
+  PilotAuthSnapshot,
+  PilotsPort,
+  TokenService,
+} from '../../../application/common/ports.ts';
 import type { Capability } from '../../../domain/roles.ts';
-import { authorizeCapability } from '../../authorize.ts';
+import { authorizeAccount } from '../../authorize.ts';
 import { tokenFromRequest } from '../../tokenFromRequest.ts';
 
 /** Ścieżka API panelu. Statyczny build panelu stanie pod `/admin/*`. */
 export const ADMIN_API_PREFIX = '/admin/api';
+
+/**
+ * Zależności BRAMY, wspólne dla wszystkich tras panelu.
+ *
+ * Jeden obiekt zamiast dwóch parametrów w każdej funkcji `register*`: brama ma dziś
+ * dwa wejścia (weryfikacja tokenu i odczyt konta), a trzecie — gdyby kiedyś doszło —
+ * ma się dołożyć TUTAJ, a nie w sześciu sygnaturach naraz.
+ */
+export interface AdminGate {
+  tokens: TokenService;
+  /**
+   * Konta czytane PRZY KAŻDYM ŻĄDANIU panelu — patrz `authorizeAccount`. To ten sam
+   * port, którym loguje się telefon: panel i aplikacja mają jedną tabelę kont, bo to
+   * ci sami ludzie.
+   */
+  accounts: PilotsPort;
+}
 
 export interface AdminRouteSpec {
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE';
@@ -37,24 +58,24 @@ export interface AdminRouteSpec {
 }
 
 /**
- * `Identity` (z tokenu) + adres żądania → `Actor` (do audytu). Jedyne miejsce, w którym
+ * Świeże konto (z bazy) + adres żądania → `Actor` (do audytu). Jedyne miejsce, w którym
  * to złączenie zachodzi.
  *
- * Rola pochodzi dziś z tokenu, tak jak na wszystkich trasach telefonu. ZALEGŁOŚĆ,
- * świadoma: §8.5 chce odczytu roli ze ŚWIEŻEGO konta przy każdym żądaniu panelu
- * (`requireAdminActor`), żeby odebranie uprawnień działało natychmiast. Sesja
- * przeglądarkowa właśnie wydłużyła okno rozjazdu z 1 h (token telefonu) do
- * `ADMIN_SESSION_TTL_SEC` = 8 h, więc pozycja rośnie na wadze — ale jest osobną
- * zmianą (port kont w każdej trasie panelu), nie skutkiem ubocznym ciasteczka.
- * `AuthCommands` już dziś bierze rolę z konta przy logowaniu i odświeżeniu.
+ * Rola pochodzi z KONTA, nie z claimu tokenu (zmiana 2026-08-01, przekrój A06 —
+ * uzasadnienie stoi przy `authorizeAccount`). Dzięki temu jeden odczyt obsługuje naraz
+ * dwie rzeczy: bramę uprawnień i `admin_audit.actor_role`, czyli rolę Z CHWILI AKCJI.
+ *
+ * Wejściem jest PROJEKCJA konta bez hasha (`PilotAuthSnapshot`), nie pełne konto
+ * logowania: warstwa HTTP nie ma powodu widzieć `password_hash`, a przy każdym żądaniu
+ * panelu widziała go do 2026-08-01.
  */
-function actorFrom(identity: Identity, req: FastifyRequest): Actor {
-  return { pilotId: identity.pilotId, role: identity.role, ip: req.ip ?? null };
+function actorFrom(account: PilotAuthSnapshot, req: FastifyRequest): Actor {
+  return { pilotId: account.id, role: account.role, ip: req.ip ?? null };
 }
 
 export function adminRoute(
   app: FastifyInstance,
-  tokens: TokenService,
+  gate: AdminGate,
   spec: AdminRouteSpec,
   handler: (req: FastifyRequest, reply: FastifyReply, actor: Actor) => Promise<unknown>,
 ): void {
@@ -67,10 +88,15 @@ export function adminRoute(
       // nie ma wejścia do panelu, więc druga kontrola nie odrzuciłaby niczego,
       // co przeszło pierwszą. Dwupoziomowa brama z §8.6 ma sens dopiero przy
       // scope'ie z logowaniem panelu (wtedy niesie komunikat ekranu A00).
-      const outcome = authorizeCapability(tokens, tokenFromRequest(req), spec.capability);
+      const outcome = await authorizeAccount(
+        gate.tokens,
+        gate.accounts,
+        tokenFromRequest(req),
+        spec.capability,
+      );
       if (!outcome.ok) return reply.code(outcome.status).send(outcome.body);
 
-      return handler(req, reply, actorFrom(outcome.identity, req));
+      return handler(req, reply, actorFrom(outcome.account, req));
     },
   });
 }

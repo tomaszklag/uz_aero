@@ -149,6 +149,11 @@
   .btn.primary:hover { filter:brightness(1.08); }
   .btn.danger { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
   .btn.ghost { background:transparent; border-color:var(--border); color:var(--text-secondary); }
+  /* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta
+     na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
+     zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
+     kilkanaście naraz i żadna nie byłaby główna. */
+  .btn.ok { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
   .btn:disabled, .btn.disabled { opacity:0.4; cursor:not-allowed; }
   .btn.sm { min-height:30px; padding:5px 11px; font-size:11.5px; border-radius:8px; }
   /* Akcja główna formularza: cała szerokość karty i wyższy cel niż standardowe 36 px.
@@ -234,6 +239,12 @@
   .input.invalid { border-color:var(--red-border); background:var(--red-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
+  /* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" + „generuj nowe"
+     (A06a). Przyciski są RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie
+     ma dzieci; wysokości równa `align-items:stretch`, żeby 40 px pola i 36 px przycisku
+     nie rozjeżdżały się w pionie. */
+  .field-row { display:flex; gap:8px; align-items:stretch; }
+  .field-row .input { flex:1; }
   /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
   /* `font`, `text-align` i `width` są tu dla wariantu, którego mockup mieć nie musiał:
@@ -308,7 +319,11 @@
   .kv:last-child { border-bottom:none; }
   .kv-k { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
   .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; letter-spacing:0.3px; }
-  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
+  /* `.blue` dołożony 2026-08-01: A06 używał go w karcie „Rola w panelu" (liczba kont
+     z dostępem do panelu), a szablon go nie definiował — więc wartość renderowała się
+     kolorem domyślnym. Ton jest ten sam, co `.pill.blue` i `.tile-val.blue`: informacja,
+     nie ostrzeżenie. */
+  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); } .kv-v.blue { color:var(--blue); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
   /* Wartość SPRZED zmiany w zestawieniu „przed → po" (A02b). Wygaszona, bo czyta się
      ją jako punkt odniesienia, a nie jako liczbę do zapamiętania — uwaga ma zostać
@@ -773,8 +788,21 @@
             <div class="field"><span class="label">Kod pilota</span><input class="input mono" value="TML" /></div>
             <div class="field">
               <span class="label">Hasło startowe</span>
-              <input class="input mono" value="•••••••••••" />
+              <!-- `.field-row`: pole + akcje w jednej linii. Hasło GENERUJE SERWER
+                   i oddaje je raz w odpowiedzi, więc pole jest `readonly` — nie ma tu
+                   czego wpisać, a „generuj nowe" to kolejny reset, nie zmiana w polu. -->
+              <div class="field-row">
+                <input class="input mono" value="k7np-r4mx-9tqd" readonly />
+                <button class="btn" title="Kopiuj do schowka">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
               <span class="hint"><b>Uwaga:</b> hasło pokazujemy raz, w tym oknie. Nie trafia do URL-a, logów ani audit logu — audyt zapisuje wyłącznie fakt „ustawiono hasło" i kto to zrobił.</span>
+            </div>
+            <div class="field-row">
+              <button class="btn danger">Deaktywuj</button>
+              <button class="btn ok">Aktywuj</button>
+              <button class="btn ghost disabled" title="Wymaga roli: administrator">Reset hasła</button>
             </div>
           </div>
           <div class="card">

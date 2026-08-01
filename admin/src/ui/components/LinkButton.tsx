@@ -14,7 +14,8 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 
-type Variant = 'primary' | 'ghost' | 'danger' | 'default';
+/** Warianty jak w `Button` — `ok` to zielona obramówka (akcja przywracająca). */
+type Variant = 'primary' | 'ghost' | 'danger' | 'ok' | 'default';
 
 interface LinkButtonProps {
   to: string;

@@ -12,7 +12,12 @@
 
 import type { ReactNode } from 'react';
 
-export type KeyValueTone = 'green' | 'amber' | 'red';
+/**
+ * `blue` znaczy INFORMACJĘ (liczba kont z dostępem do panelu, A06), a nie ostrzeżenie —
+ * ten sam ton, co `.pill.blue`. Modyfikator dołożono do `SZABLON.html` 2026-08-01:
+ * mockup A06 już go używał, a szablon go nie definiował.
+ */
+export type KeyValueTone = 'green' | 'amber' | 'red' | 'blue';
 
 interface KeyValueProps {
   label: string;

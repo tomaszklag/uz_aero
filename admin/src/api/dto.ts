@@ -123,6 +123,17 @@ export interface ApiErrorDto {
    * klikający dopisałby własne uzasadnienie do decyzji, której nie podjął.
    */
   flag?: ResolvedFlagWireDto;
+  /**
+   * 409 `conflict` z zapisu konta: KTÓRE pole jest zajęte. Bez tego formularz z trzema
+   * polami dostawałby „naruszenie unikalności" i nie wiedziałby, co poprawić.
+   */
+  field?: 'code' | 'email';
+  /**
+   * 409 `refused` z zapisu konta: DLACZEGO odmówiono (`self_deactivate`, `last_admin`…).
+   * Odmowa bez powodu przy przycisku „Deaktywuj" kazałaby administratorowi zgadywać,
+   * czy to awaria, czy zasada — czyli dokładnie w tej chwili sięgnąć po `UPDATE` w psql.
+   */
+  reason?: PilotRefusalDto;
 }
 
 // ── skrzynka flag (`A03`, `A03a`) ───────────────────────────────────────────────
@@ -401,6 +412,120 @@ export interface AuditPageDto {
    */
   total: number | null;
 }
+
+// ── konta pilotów (`A06`, `A06a`) ───────────────────────────────────────────────
+
+/**
+ * Jedno konto na liście — odpowiedź `GET /admin/api/pilots`.
+ *
+ * ══ CZEGO TU NIE MA I DLACZEGO ══
+ *  1. **Hasła i hasha.** Hasło jedzie WYŁĄCZNIE w odpowiedzi na akcję, która je
+ *     wytworzyła (`PilotSecretDto`), i tylko raz; hash nie opuszcza serwera nigdy.
+ *  2. **`lastLoginAt`.** Mockup A06 ma kolumnę „Ostatnie logowanie”, a `pilots` nie
+ *     ma takiej kolumny i nikt jej nie zapisuje. Panel tej kolumny NIE pokazuje
+ *     i mówi o tym wprost na ekranie — wyliczanie jej z czegokolwiek innego byłoby
+ *     inną wielkością pod tą samą etykietą.
+ *
+ * `flyingDays` liczy SERWER agregatem po projekcji `sessions`, w oknie, które ta sama
+ * odpowiedź podaje w `daysFrom`/`daysTo`. Panel go wyłącznie wyświetla.
+ */
+export interface PilotListItemDto {
+  id: string;
+  /** Etykieta w logu dnia i w kartach arkusza — NIE klucz zdarzeń (te wiążą `id`). */
+  code: string;
+  name: string;
+  email: string | null;
+  active: boolean;
+  role: PilotRole;
+  /** ISO 8601 UTC — ostatnia zmiana wiersza konta. Nie: ostatnie logowanie. */
+  updatedAt: string;
+  flyingDays: number;
+}
+
+/** Liczniki kafli i karty „Rola w panelu" — po WSZYSTKICH kontach, nie po filtrze. */
+export interface PilotCountsDto {
+  total: number;
+  active: number;
+  inactive: number;
+  admin: number;
+  trainingLead: number;
+  pilot: number;
+  /**
+   * Dni lotne CAŁEGO klubu w oknie `daysFrom`–`daysTo`: liczba sesji ZAMKNIĘTYCH,
+   * a nie suma kolumny `flyingDays` z wierszy. Dzień szkolny liczy się dwóm pilotom
+   * naraz, więc suma kolumny byłaby liczbą osobodni — panel nie ma jak tej różnicy
+   * odgadnąć i dlatego liczbę podaje serwer.
+   */
+  flyingDays: number;
+}
+
+/**
+ * Liczniki CHIPÓW filtra — cztery zawężenia listy w bieżącym WYSZUKIWANIU.
+ *
+ * Osobne od `PilotCountsDto`, bo odpowiadają na inne pytanie. Kafel opisuje KLUB
+ * („Konta aktywne 8 / 10") i ma się nie ruszać przy wpisywaniu w wyszukiwarkę; chip
+ * z liczbą jest obietnicą „tyle wierszy zobaczysz po kliknięciu". Do 2026-08-01 chipy
+ * nosiły liczby kafli, więc po wpisaniu frazy chip „Nieaktywni" pokazywał 2 i po
+ * kliknięciu dawał pustą tabelę.
+ */
+export interface PilotScopeCountsDto {
+  /** Chip „Wszyscy". */
+  total: number;
+  active: number;
+  inactive: number;
+  /** Chip „Z rolą panelu" — konta z rolą dającą wejście do panelu. */
+  panel: number;
+}
+
+/**
+ * Lista kont. **Bez kursora i to jest celowe**: klub ma kilkanaście kont, a lista
+ * referencyjna, którą trzeba stronicować, nie nadaje się na słownik do filtra innego
+ * ekranu. `total` mówi, ile kont spełnia filtr — także gdy `limit` obciął listę.
+ */
+export interface PilotPageDto {
+  items: PilotListItemDto[];
+  total: number;
+  counts: PilotCountsDto;
+  /** Liczniki chipów — patrz `PilotScopeCountsDto`. Bez wyszukiwania = jak `counts`. */
+  scopes: PilotScopeCountsDto;
+  /** Okno, w którym policzono `flyingDays` — dzień UTC `YYYY-MM-DD`, włącznie. */
+  daysFrom: string;
+  daysTo: string;
+}
+
+/**
+ * Odpowiedź akcji, która WYTWORZYŁA hasło (założenie konta, reset hasła).
+ *
+ * `password` widzimy jeden jedyny raz: nie ma go w bazie (jest hash), nie ma
+ * w dzienniku audytu (jest sam fakt) i nie ma trasy „pokaż ponownie". Panel nie ma
+ * prawa go nigdzie zapisać — pokazuje w szufladzie i zapomina razem z jej zamknięciem.
+ */
+export interface PilotSecretDto {
+  pilot: PilotListItemDto;
+  password: string;
+  /** Ile sesji pilota unieważniono przy okazji (reset zrywa wszystkie). */
+  revokedSessions: number;
+}
+
+/** Odpowiedź zmiany konta bez hasła: nowy stan wiersza + skutki uboczne. */
+export interface PilotChangeDto {
+  pilot: PilotListItemDto;
+  /** `0` przy zmianie tożsamości; przy deaktywacji — ile sesji zerwano. */
+  revokedSessions: number;
+}
+
+/**
+ * Powód, dla którego serwer ODMÓWIŁ zmiany na koncie (`409 refused`).
+ *
+ * Lustro `AccountRefusal` z `server/src/domain/accountGuards.ts`. Kody są surowe —
+ * nazwanie ich po polsku jest sprawą panelu (`screens/piloci/kontoActions.ts`),
+ * bo serwer nie zna języka interfejsu.
+ */
+export type PilotRefusalDto =
+  | 'self_deactivate'
+  | 'self_demote'
+  | 'last_admin'
+  | 'inactive_account';
 
 // ── korekta administratora (`A02b`) ─────────────────────────────────────────────
 
