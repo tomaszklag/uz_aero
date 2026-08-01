@@ -238,6 +238,37 @@ describe('timelineRows — payload w opisie', () => {
   });
 });
 
+describe('timelineRows — wejście w korektę (A02b)', () => {
+  it('typy niekorygowalne są oznaczone — lista jest lustrem reguły domeny', () => {
+    // `CORRECTION_TARGET_NOT_ALLOWED` w `packages/domain/src/rules/sessionRules.ts`:
+    // claim to tożsamość dnia, preflight i `day_close` niosą odczyty łańcucha MH,
+    // a korekty się nie poprawia — poprawia się fakt.
+    const entries = [
+      entry(event({ type: 'session_claim', payload: { mode: 'free', previousPicId: null } })),
+      entry(event({ type: 'day_close', payload: { finalReading: { fuelL: 1, mh: 1 }, dutyEnd: at(13, 0) } })),
+      entry(event({ type: 'event_correction', payload: { targetUuid: 'x', action: 'void' } })),
+      entry(takeoff(at(8, 0), 'lot')),
+    ];
+
+    expect(timelineRows(entries).map((row) => row.correctable)).toEqual([
+      false,
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  it('zdarzenie UNIEWAŻNIONE zostaje korygowalne — retime przywraca je do życia', () => {
+    // „Ostatnia korekta wygrywa", a `void` → `retime` cofa unieważnienie. Ukrycie
+    // przejścia przy przekreślonym wierszu odebrałoby administratorowi jedyną drogę
+    // wycofania cudzej pomyłki.
+    const row = timelineRows([entry(takeoff(at(8, 0), 'lot'), { voided: true })])[0]!;
+
+    expect(row.voided).toBe(true);
+    expect(row.correctable).toBe(true);
+  });
+});
+
 describe('timelineSummary', () => {
   it('liczy REJESTR, nie strumień efektywny', () => {
     // `state.eventCount` liczy zdarzenia PO nałożeniu korekt (bez unieważnionych

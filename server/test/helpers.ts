@@ -26,6 +26,7 @@ import type {
 } from '../src/application/common/ports.ts';
 import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
+import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
 import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
@@ -40,6 +41,7 @@ import { StateQueries } from '../src/application/mobile/queries/aircraftState.ts
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
+import { PgAdminEventsRepo } from '../src/infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
 import { PgEventsStore } from '../src/infrastructure/pg/common/eventsStore.ts';
@@ -170,6 +172,13 @@ export async function testHarness(
       exporter,
       clock,
       randomUUID,
+    ),
+    adminCorrectionQueries: new AdminCorrectionQueries(
+      db,
+      events,
+      new PgAdminEventsRepo(),
+      aircraftConfig,
+      clock,
     ),
   });
 

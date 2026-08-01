@@ -11,10 +11,12 @@
  */
 
 import {
+  dateTimeUtc,
   duration,
   litres,
   maskTimeUtcInput,
   motoHours,
+  parseDateTimeUtc,
   parseLitres,
   parseMotoHours,
   parseTimeUtcOnDay,
@@ -124,6 +126,60 @@ describe('czas', () => {
     expect(duration(90 * 60_000)).toBe('1:30');
     expect(duration(6 * 3_600_000 + 39 * 60_000)).toBe('6:39'); // block time dnia kanonicznego
     expect(duration(-1)).toBe('0:00');
+  });
+});
+
+/**
+ * Pole nowego czasu z ekranu korekty administratora (`design/admin/A02b-korekta.html`).
+ * Tu wartość jedzie do REJESTRU KLUBU, więc każdy cichy błąd parsowania kończy się
+ * złą liczbą w arkuszu — i nikt tego nie zauważy, bo napis wygląda poprawnie.
+ */
+describe('data z godziną w UTC (korekta administratora)', () => {
+  it('wypisuje dokładnie zapis z mockupu A02b', () => {
+    expect(dateTimeUtc(Date.UTC(2026, 6, 30, 13, 1, 33))).toBe('2026-07-30 13:01:33');
+    // Jednocyfrowe miesiące i dni dostają wiodące zero — inaczej pole raz ma
+    // 19 znaków, raz 17, i kolumna mono skacze.
+    expect(dateTimeUtc(Date.UTC(2026, 0, 3, 4, 5, 6))).toBe('2026-01-03 04:05:06');
+  });
+
+  it('parsuje JAWNIE w UTC — to jest cały powód istnienia tej funkcji', () => {
+    // `new Date('2026-07-30 13:01:33')` przeglądarka rozumie jako czas LOKALNY;
+    // w Warszawie latem dałoby to przesunięcie o 2 h bez żadnego sygnału.
+    expect(parseDateTimeUtc('2026-07-30 13:01:33')).toBe(Date.UTC(2026, 6, 30, 13, 1, 33));
+    expect(parseDateTimeUtc(' 2026-07-30T13:01:33 ')).toBe(Date.UTC(2026, 6, 30, 13, 1, 33));
+    // Sekundy opcjonalne: godzina przepisana z książki samolotu ich nie ma.
+    expect(parseDateTimeUtc('2026-07-30 13:01')).toBe(Date.UTC(2026, 6, 30, 13, 1, 0));
+  });
+
+  it('jest odwrotnością `dateTimeUtc` w obie strony', () => {
+    const at = Date.UTC(2026, 6, 30, 13, 1, 33);
+    expect(parseDateTimeUtc(dateTimeUtc(at))).toBe(at);
+  });
+
+  it('odrzuca wpis nieczytelny zamiast zgadywać', () => {
+    for (const bad of [
+      '',
+      '   ',
+      '13:01:33',
+      '2026-07-30',
+      '30-07-2026 13:01',
+      '2026-07-30 24:00:00',
+      '2026-07-30 13:60',
+      '2026-07-30 13:01:60',
+      'wczoraj po południu',
+    ]) {
+      expect(parseDateTimeUtc(bad)).toBeNull();
+    }
+  });
+
+  it('odrzuca datę NIEISTNIEJĄCĄ, zamiast przewinąć kalendarz', () => {
+    // `Date.UTC(2026, 1, 30)` daje 2 marca i przeszłoby bez kontroli — a korekta,
+    // która po cichu przesuwa dzień lotny, jest gorsza niż odrzucony formularz.
+    expect(parseDateTimeUtc('2026-02-30 10:00:00')).toBeNull();
+    expect(parseDateTimeUtc('2026-04-31 10:00:00')).toBeNull();
+    expect(parseDateTimeUtc('2026-13-01 10:00:00')).toBeNull();
+    // Rok przestępny zostaje poprawny — to nie jest test na „odrzucaj wszystko".
+    expect(parseDateTimeUtc('2028-02-29 10:00:00')).toBe(Date.UTC(2028, 1, 29, 10, 0, 0));
   });
 });
 

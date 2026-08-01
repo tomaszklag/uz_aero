@@ -176,6 +176,56 @@ export function parseTimeUtcOnDay(text: string, reference: EpochMillis): EpochMi
 }
 
 /**
+ * Znacznik czasu jako „2026-07-30 13:01:33" — PEŁNA data i sekundy, w UTC.
+ *
+ * Zapis pola korekty administratora (`design/admin/A02b-korekta.html`). Istnieje obok
+ * `timeUtcSeconds` i `dateUtcShort`, bo to nie jest ich złożenie: korekta przesuwa
+ * zdarzenie w rejestrze, więc pole musi nieść DZIEŃ (poprawiany czas potrafi przeskoczyć
+ * północ UTC) i musi być zapisem, który da się z powrotem odczytać maszynowo —
+ * „30 JUL 2026 13:01:33" nie jest. Stąd ISO-podobne `YYYY-MM-DD`, a nie zapis lotniczy.
+ *
+ * Para z `parseDateTimeUtc`: co ta funkcja wypisze, tamta przyjmie.
+ */
+export function dateTimeUtc(t: EpochMillis): string {
+  const d = new Date(t);
+  const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+  return `${date} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
+}
+
+/**
+ * „2026-07-30 13:01:33" → znacznik czasu UTC. `null` = wpis nieczytelny.
+ *
+ * ══ PARSUJEMY RĘCZNIE, BO `new Date(napis)` PARSUJE LOKALNIE ══
+ * `new Date('2026-07-30 13:01:33')` to w specyfikacji zapis niestandardowy, więc
+ * przeglądarka rozumie go jako czas LOKALNY — w Warszawie latem wynik jest przesunięty
+ * o dwie godziny i nic tego nie sygnalizuje. Byłaby to najgorsza możliwa awaria tego
+ * pola: korekta czasu zdarzenia, która sama przesuwa czas o strefę, wygląda jak
+ * poprawna i zapisuje kłamstwo do rejestru klubu. Dlatego rozbieramy napis regexem
+ * i składamy `Date.UTC`.
+ *
+ * Sekundy są OPCJONALNE (brak = `:00`), bo przy przepisywaniu godziny z książki
+ * samolotu sekund często po prostu nie ma. Dzień walidujemy przez porównanie z wynikiem
+ * (`31 kwietnia` przewinąłby się na 1 maja i przeszedł bez tego kroku) — cicha zmiana
+ * daty jest tu równie groźna jak cicha zmiana strefy.
+ */
+export function parseDateTimeUtc(text: string): EpochMillis | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/.exec(text.trim());
+  if (!match) return null;
+
+  const [year, month, day, hours, minutes] = [1, 2, 3, 4, 5].map((i) => Number(match[i]));
+  const seconds = match[6] == null ? 0 : Number(match[6]);
+  if (hours! > 23) return null;
+
+  const at = Date.UTC(year!, month! - 1, day!, hours!, minutes!, seconds);
+  // Przewinięcie kalendarza (`2026-02-30` → 2 marca) jest tu błędem, nie uprzejmością.
+  const back = new Date(at);
+  if (back.getUTCFullYear() !== year || back.getUTCMonth() !== month! - 1 || back.getUTCDate() !== day) {
+    return null;
+  }
+  return at;
+}
+
+/**
  * „Tomasz Małkiewicz" → „T. Małkiewicz".
  *
  * Skrót imienia z podsumowań (mockup 03): w dwukolumnowej siatce pełne imię i nazwisko

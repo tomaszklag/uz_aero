@@ -111,3 +111,14 @@
   color: var(--text-muted);
   text-decoration: line-through;
 }
+
+/* Zamknięcie wiersza, gdy niesie PLAKIETKĘ I AKCJĘ naraz. Czwarty tor siatki przyjmuje
+   jedno dziecko, więc bez tego kontenera przycisk spadłby do nowego wiersza.
+   Potrzebne od korekty administratora (`A02b`): oś karty dnia JEST wyborem zdarzenia
+   do poprawienia — zna uuid-y i wie, które typy w ogóle podlegają korekcie. */
+.tl-act {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}

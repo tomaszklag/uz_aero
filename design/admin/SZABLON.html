@@ -228,9 +228,19 @@
   .hint b { color:var(--amber); font-weight:600; }
   /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
-  .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
+  /* `font`, `text-align` i `width` są tu dla wariantu, którego mockup mieć nie musiał:
+     w panelu karta wyboru jest <button>, a nie <label> z onclick — etykieta bez
+     powiązanego <input> nie jest osiągalna z klawiatury ani ogłaszana przez czytnik
+     ekranu, a wybór akcji korekty (A02b: retime vs void) zmienia liczby w rejestrze.
+     Przeglądarka narzuca <button> własną czcionkę i wyśrodkowanie, więc trzy właściwości
+     przywracają wygląd karty. W mockupie nic nie zmieniają (2026-08-01). */
+  .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; font:inherit; color:inherit; text-align:left; width:100%; }
   .opt:hover { background:var(--surface-hover); }
   .opt.selected { border-color:var(--green-border); background:rgba(46,204,113,0.05); box-shadow:0 0 0 3px rgba(46,204,113,0.05); }
+  /* Wybór zablokowany — ta sama para wartości, co `.btn:disabled`. Potrzebny od A02b:
+     po zapisanej korekcie formularz zostaje na ekranie jako zapis tego, co się stało,
+     ale przestaje przyjmować zmiany (2026-08-01). */
+  .opt:disabled { opacity:0.4; cursor:not-allowed; }
   .opt-body { flex:1; display:flex; flex-direction:column; gap:2px; }
   .opt-name { font-size:13px; font-weight:600; }
   .opt-desc { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
@@ -263,11 +273,21 @@
   /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
   .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
   .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
+  /* Szuflada SZERSZA — dla szuflady, która jest formularzem, a nie podglądem:
+     korekta administratora (A02b) niesie kartę „przed → po", pole powodu i pełny opis
+     skutków, a w 520 px każdy wiersz klucz–wartość łamie się na dwie linie. Awansowane
+     ze stylu inline w A02b (2026-08-01); modyfikator, bo szerokość jest własnością
+     TREŚCI szuflady, nie jednego ekranu. */
+  .drawer.wide { width:660px; }
   .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
   .drawer-title { font-family:var(--font-display); font-size:22px; letter-spacing:1.5px; line-height:1; }
   .drawer-sub { font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
   .drawer-body { flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
   .drawer-foot { flex-shrink:0; padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:9px; justify-content:flex-end; }
+  /* Notatka po lewej stronie akcji — stała własność szuflady, nie treść ekranu:
+     stopka mówi, czego to okno NIE zrobi („brak edycji · brak kasowania" w A02b).
+     Awansowane ze stylu inline (2026-08-01). */
+  .drawer-note { margin-right:auto; align-self:center; font-family:var(--font-mono); font-size:9px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
   .x-btn { width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:var(--surface-raised); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
 
   /* ── wiersz klucz/wartość (szczegóły, audyt) ── */
@@ -277,6 +297,10 @@
   .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; letter-spacing:0.3px; }
   .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
+  /* Wartość SPRZED zmiany w zestawieniu „przed → po" (A02b). Wygaszona, bo czyta się
+     ją jako punkt odniesienia, a nie jako liczbę do zapamiętania — uwaga ma zostać
+     przy wartości po prawej. Awansowane ze stylu inline (2026-08-01). */
+  .kv-v .was { color:var(--text-muted); font-weight:400; }
 
   /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
   .tl { display:flex; flex-direction:column; }
@@ -291,6 +315,14 @@
   .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+  /* Zamknięcie wiersza, gdy niesie ono PLAKIETKĘ I AKCJĘ naraz — czwarty tor siatki
+     przyjmuje jedno dziecko, więc bez tego kontenera przycisk spadałby do nowego
+     wiersza. Powstało dla osi karty dnia (A02a), która jest jedynym miejscem, gdzie
+     wybiera się zdarzenie do korekty administratora (A02b): oś zna uuid-y i wie, które
+     typy zdarzeń w ogóle podlegają korekcie, więc osobnego ekranu wyboru nie ma.
+     `align-items:center` trzyma plakietkę i przycisk w jednej linii mimo różnych
+     wysokości (2026-08-01). */
+  .tl-act { display:flex; align-items:center; justify-content:flex-end; gap:7px; }
   /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
      zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
      i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
@@ -655,6 +687,20 @@
                 <span><span class="tl-name">refuel</span><span class="tl-meta">przed 96 L · dolano 84 L · po 180 L</span></span>
                 <span class="pill amber">paliwo</span>
               </div>
+              <!-- Wiersz z PLAKIETKĄ I AKCJĄ naraz (`.tl-act`): oś karty dnia jest
+                   jedynym miejscem, w którym wybiera się zdarzenie do korekty
+                   administratora (A02b). Przejście stoi wyłącznie przy zdarzeniach
+                   KORYGOWALNYCH — claim, preflight, day_close i same korekty jej nie
+                   podlegają, więc tam przycisku nie ma w ogóle. -->
+              <div class="tl-row">
+                <span class="tl-time">10:34:07</span>
+                <span class="tl-rail"><span class="tl-dot red"></span></span>
+                <span><span class="tl-name">engine_stop</span><span class="tl-meta">gps_time: brak fixa · czas z zegara urządzenia</span></span>
+                <span class="tl-act">
+                  <span class="pill red">silnik</span>
+                  <a class="btn sm ghost" href="A02b-korekta.html">Koryguj</a>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -665,6 +711,10 @@
             <div class="kv"><span class="kv-k">Ostatni sync</span><span class="kv-v amber">14:19 <small>UTC · 3 min temu</small></span></div>
             <div class="kv"><span class="kv-k">Zdarzeń</span><span class="kv-v">47</span></div>
             <div class="kv"><span class="kv-k">Starty / lądowania</span><span class="kv-v green">6 / 5</span></div>
+            <!-- Zestawienie „przed → po" (A02b). Wartość SPRZED zmiany jest wygaszona
+                 (`.was`), bo czyta się ją jako punkt odniesienia — uwaga ma zostać
+                 przy liczbie po prawej stronie strzałki. -->
+            <div class="kv"><span class="kv-k">Czas blokowy · po korekcie</span><span class="kv-v"><span class="was">05:53</span> → 05:41 <small>−12 min</small></span></div>
           </div>
         </div>
 
@@ -691,6 +741,15 @@
                 <span class="opt-body"><span class="opt-name">Szef wyszkolenia</span><span class="opt-desc">Podgląd, statystyki, rozwiązywanie flag — bez kont i progów</span></span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
               </label>
+              <!-- Wybór ZABLOKOWANY (`.opt:disabled`) — ta sama para wartości, co
+                   `.btn:disabled`. W panelu karta wyboru jest <button>, bo <label> bez
+                   powiązanego <input> nie jest osiągalny z klawiatury; po zapisanej
+                   korekcie (A02b) formularz zostaje na ekranie, ale przestaje przyjmować
+                   zmiany. -->
+              <button class="opt" disabled>
+                <span class="opt-body"><span class="opt-name">Pilot</span><span class="opt-desc">Bez wejścia do panelu — loguje się w aplikacji na telefonie</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
             </div>
           </div>
         </div>
@@ -740,6 +799,10 @@
               <div class="kv"><span class="kv-k">Dziura</span><span class="kv-v red">0.4 h <small>tolerancja 0.1</small></span></div>
             </div>
             <div class="drawer-foot">
+              <!-- Notatka stopki (`.drawer-note`) — mówi, czego to okno NIE zrobi.
+                   Wariant `.drawer.wide` (660 px) niesie szuflada, która jest
+                   FORMULARZEM, a nie podglądem: korekta administratora (A02b). -->
+              <span class="drawer-note">brak edycji · brak kasowania</span>
               <button class="btn ghost">Anuluj</button>
               <button class="btn primary">Rozwiąż z komentarzem</button>
             </div>

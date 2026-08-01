@@ -15,7 +15,7 @@
  * unieważnione są przekreślone, a same korekty stoją na osi jako zwykłe wpisy.
  */
 
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { useSessionState } from '../../auth/sessionContext';
 import { useSessionDay } from '../../queries/useSessionDay';
@@ -40,13 +40,18 @@ import { DaysIcon, EditIcon } from '../../ui/components/icons';
 import { discrepancyOf } from '../flagi/flagDetails';
 import { shortUuid } from '../flagi/flagRows';
 import { FLAG_TYPE_META } from '../flagi/flagTypes';
+import { KorektaDrawer } from '../korekta/KorektaDrawer';
 import { flightRows, type FlightRow } from './dzienFlights';
-import { correctionAccess, dayBanner, dayHeader } from './dzienHeader';
+import { correctionAccess, correctionPath, dayBanner, dayHeader } from './dzienHeader';
 import { dayTiles, dropRows, fuelRows, mhRows, sessionRows, utcStamp } from './dzienSummary';
 import { timelineRows, timelineSummary } from './dzienTimeline';
 
 export function DzienScreen() {
-  const { sessionUuid } = useParams();
+  // `targetUuid` jest obecny wyłącznie pod trasą korekty (`A02b`) — ta sama trasa,
+  // ten sam ekran, szuflada NAD kartą dnia. Karta zostaje pod spodem, bo po zapisie
+  // wraca się dokładnie do niej, żeby zobaczyć nowy wpis na osi zdarzeń.
+  const { sessionUuid, targetUuid } = useParams();
+  const navigate = useNavigate();
   const { session: panelSession } = useSessionState();
   const day = useSessionDay(sessionUuid ?? '');
 
@@ -70,7 +75,7 @@ export function DzienScreen() {
 
   const header = dayHeader(session, state);
   const banner = dayBanner(session, state, now);
-  const correction = correctionAccess(session.sessionUuid, state, panelSession?.capabilities);
+  const correction = correctionAccess(state, panelSession?.capabilities);
   const rows = timelineRows(timeline);
   const flights = flightRows(state);
   const openFlags = flags.filter((flag) => flag.status === 'open');
@@ -107,11 +112,14 @@ export function DzienScreen() {
                 ? 'Karta arkusza'
                 : `Karta arkusza · rewizja ${session.exportRevision}`}
             </LinkButton>
+            {/* Korekta NIE MA tu przycisku „wejdź", bo nie ma dokąd wejść bez wskazania
+                zdarzenia — wyborem jest oś zdarzeń niżej. Zostaje sama informacja:
+                dostępna czy nie, a jeśli nie, to dlaczego. */}
             <LinkButton
-              to={correction.to}
-              variant="primary"
-              disabled={correction.disabled}
-              reason={correction.reason ?? undefined}
+              to=""
+              variant="ghost"
+              disabled
+              reason={correction.reason ?? 'wybierz zdarzenie na osi zdarzeń dnia'}
             >
               <EditIcon size={13} />
               {correction.label}
@@ -165,6 +173,22 @@ export function DzienScreen() {
                   name={row.name}
                   voided={row.voided}
                   badge={<Pill tone={row.badgeTone}>{row.badge}</Pill>}
+                  // Oś JEST wyborem zdarzenia do korekty (`A02b`) — zna uuid-y i wie,
+                  // które typy w ogóle jej podlegają. Przy zdarzeniu niekorygowalnym
+                  // przycisku NIE MA w ogóle: wyszarzony w każdym drugim wierszu
+                  // zamieniłby oś w płot z powodami, a powód jest tu zawsze ten sam
+                  // i wynika z typu, nie ze stanu konta.
+                  action={
+                    correction.allowed && row.correctable ? (
+                      <LinkButton
+                        to={correctionPath(session.sessionUuid, row.uuid)}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        Koryguj
+                      </LinkButton>
+                    ) : undefined
+                  }
                   meta={row.meta.map((line) => (
                     <span key={line}>
                       {line}
@@ -174,6 +198,13 @@ export function DzienScreen() {
                 />
               ))}
             </Timeline>
+          )}
+          {correction.allowed ? null : (
+            <span className="hint">
+              <b>Korekta administratora jest tu niedostępna:</b> {correction.reason}. Dlatego przy
+              wierszach osi nie ma przejścia do niej — nie jest ukryte, tylko nie ma czego
+              proponować.
+            </span>
           )}
           <span className="hint">
             Oś pokazuje <b>surowy rejestr</b>, w porządku chronologicznym nadanym przez serwer —
@@ -336,6 +367,21 @@ export function DzienScreen() {
           osobno, każdą z własnym komentarzem i własnym śladem w audycie.
         </span>
       </Card>
+
+      {targetUuid == null ? null : (
+        <KorektaDrawer
+          sessionUuid={session.sessionUuid}
+          targetUuid={targetUuid}
+          session={session}
+          state={state}
+          entry={timeline.find((item) => item.event.uuid === targetUuid) ?? null}
+          pilot={panelSession?.pilot ?? null}
+          // Zamknięcie zdejmuje z adresu cel korekty i zostawia kartę dnia — a nie
+          // cofa w historii: po zapisie „wstecz" wróciłoby do formularza z tym samym
+          // zdarzeniem, czyli zapraszało do dopisania drugiej korekty.
+          onClose={() => void navigate(`/dni/${encodeURIComponent(session.sessionUuid)}`)}
+        />
+      )}
     </>
   );
 }

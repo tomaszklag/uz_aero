@@ -11,11 +11,10 @@
  *     zdarzenie zostaje w `events` na zawsze i dalej widać je na osi dnia. Projekcja
  *     przestaje je uwzględniać (`void`) albo liczy z nowym czasem (`retime`) — robi to
  *     `applyCorrections` w domenie, więc panel i telefon liczą dzień tym samym kodem.
- *  2. **Ścieżka administratora waliduje się sama.** Pomijamy DOKŁADNIE jedną regułę
- *     (`CORRECTION_WINDOW_EXPIRED`); cel spoza sesji, cel niekorygowalny, czas
- *     z przyszłości, cudza sesja — wszystko to odrzuca administratora tak samo jak
- *     pilota. Ślepe dopisywanie zdarzeń „bo to admin" byłoby zaprzeczeniem rygoru,
- *     dla którego rejestr w ogóle ma reguły.
+ *  2. **Ścieżka administratora waliduje się sama.** Kandydata buduje i ocenia wspólny
+ *     helper (`../correctionCandidate.ts`), ten sam, którym jedzie podgląd „przed → po"
+ *     (`../queries/corrections.ts`). Tam też mieszka literał `'administrative'`
+ *     i uzasadnienie, dlaczego ta ocena ma DOKŁADNIE jedną implementację.
  *  3. **Zdarzenie stemplujemy PIC-em sesji, nie administratorem.** `picId` w rejestrze
  *     odpowiada na pytanie „czyja to sesja", nie „kto to wpisał" — wpisanie tam konta
  *     administratora zerwałoby single-writer (`WRITER_MISMATCH`, i słusznie) oraz
@@ -31,9 +30,6 @@
  */
 
 import {
-  CURRENT_SCHEMA_VERSION,
-  checkAppend,
-  errorsOf,
   projectSession,
   type AircraftLimits,
   type Event,
@@ -42,6 +38,7 @@ import {
   type SessionState,
 } from '@uzaero/domain';
 
+import { correctionCandidate, correctionViolations } from '../correctionCandidate.ts';
 import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
 import type { DayExporter, ExportOutcome } from '../../common/export/dayExporter.ts';
 import type {
@@ -154,14 +151,12 @@ export class AdminCorrectionCommands {
         // wchodzenie w otwarty dzień rozjeżdżałoby dwa żywe obrazy tej samej sesji.
         if (!before.closed) throw new DayStillOpen();
 
-        const candidate = this.candidateFor(before, stream, input, at);
+        const candidate = correctionCandidate(before, stream, input.correction, this.newId(), at);
         const limits: AircraftLimits = {
           capacityL: await this.aircraft.capacityL(tx, candidate.aircraftId),
         };
 
-        // Uchylamy JEDNĄ regułę. Miękkie naruszenia (ostrzeżenia) nie blokują zapisu
-        // niczyjego — tu również, bo §4.5 daje ostatnie słowo faktowi z terenu.
-        const errors = errorsOf(checkAppend(before, candidate, limits, 'administrative'));
+        const errors = correctionViolations(before, candidate, limits);
         if (errors.length > 0) throw new RuleRejection(errors);
 
         await this.events.insertBatch(tx, [candidate], `admin:${actor.pilotId}`);
@@ -215,39 +210,6 @@ export class AdminCorrectionCommands {
         state: applied.state,
         reexport: await this.reexport(input.sessionUuid),
       },
-    };
-  }
-
-  /**
-   * Kandydat do zapisu — nagłówek bierzemy z SESJI, nie od administratora.
-   *
-   * `deviceTime` = `gpsTime` = teraz: korekta powstaje przy biurku, więc „czas z GPS"
-   * i „czas telefonu" to ta sama chwila i żadnego rozjazdu zegarów tu nie ma. Poprawiany
-   * czas zdarzenia jedzie w payloadzie (`newTime`) — nagłówek korekty mówi tylko, KIEDY
-   * ją wpisano.
-   */
-  private candidateFor(
-    state: SessionState,
-    stream: Event[],
-    input: CorrectionInput,
-    at: Date,
-  ): Event {
-    const now = at.getTime();
-    const first = stream[0]!;
-    return {
-      uuid: this.newId(),
-      sessionUuid: state.sessionUuid ?? first.sessionUuid,
-      aircraftId: state.aircraftId ?? first.aircraftId,
-      // PIC USTALONY PRZY OTWARCIU SESJI — ten sam, z którym porównuje `WRITER_MISMATCH`.
-      picId: state.sessionPicId ?? first.picId,
-      dualId: state.dualId,
-      type: 'event_correction',
-      deviceTime: now,
-      gpsTime: now,
-      payload: input.correction,
-      schemaVersion: CURRENT_SCHEMA_VERSION,
-      // Pole klienckie (księgowość outboxa telefonu) — na serwerze bez znaczenia.
-      syncedAt: null,
     };
   }
 

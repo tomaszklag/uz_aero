@@ -54,20 +54,20 @@ export const router = createHashRouter([
       { path: 'dni', element: <DniScreen /> },
       { path: 'dni/:sessionUuid', element: <DzienScreen /> },
 
+      // Korekta administratora (`A02b`) — TEN SAM ekran co karta dnia, z dodatkowym
+      // parametrem. Mockup pokazuje ją jako szufladę NAD kartą (dzień widać pod
+      // spodem), a adres z paska przeglądarki niesie DWA identyfikatory: sesji
+      // i korygowanego zdarzenia. Korekta nigdy nie dotyczy „dnia" — zawsze
+      // konkretnego wpisu w rejestrze, więc trasa bez `:targetUuid` opisywałaby
+      // operację, której nie ma. Wyboru zdarzenia dokonuje oś zdarzeń karty dnia;
+      // osobnego ekranu wyboru nie budujemy.
+      { path: 'dni/:sessionUuid/korekta/:targetUuid', element: <DzienScreen /> },
+
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.
         path: item.to.slice(1),
         element: <WBudowieScreen title={item.label} mockup={item.mockup} />,
       })),
-
-      // Korekta zdarzenia (`A02b`) — ekran jeszcze nie istnieje, ale link do niego
-      // TAK: szuflada flagi kieruje tu administratora, gdy błędna jest sama liczba.
-      // Bez tego wpisu przycisk lądowałby na „nie znaleziono", czyli byłby martwym
-      // linkiem — a tych w panelu nie zostawiamy.
-      {
-        path: 'dni/:sessionUuid/korekta',
-        element: <WBudowieScreen title="Korekta zdarzenia" mockup="A02b-korekta.html" />,
-      },
 
       {
         path: '*',

@@ -11,7 +11,7 @@ import type { SessionState } from '@uzaero/domain';
 import { describe, expect, it } from 'vitest';
 
 import type { Capability, SessionListItemDto } from '../../api/dto';
-import { correctionAccess, dayBanner, dayHeader } from './dzienHeader';
+import { correctionAccess, correctionPath, dayBanner, dayHeader } from './dzienHeader';
 
 const DAY = Date.UTC(2026, 6, 30);
 const NOW = Date.UTC(2026, 6, 31, 14, 22);
@@ -119,39 +119,54 @@ describe('dayBanner', () => {
 });
 
 describe('correctionAccess', () => {
-  it('administrator dostaje link do ekranu korekty', () => {
-    expect(correctionAccess('sess-1', state(), ADMIN)).toEqual({
-      to: '/dni/sess-1/korekta',
+  it('administrator ma korektę DOSTĘPNĄ — bez adresu, bo cel wybiera oś dnia', () => {
+    // Adresu tu nie ma i to jest treść zmiany: korekta dotyczy KONKRETNEGO zdarzenia,
+    // a wyboru dokonuje się na osi. Link bez celu prowadziłby w ekran, który nie wie,
+    // co poprawia.
+    expect(correctionAccess(state(), ADMIN)).toEqual({
       label: 'Korekta administratora',
-      disabled: false,
+      allowed: true,
       reason: null,
     });
   });
 
-  it('szef wyszkolenia widzi przycisk WYSZARZONY z powodem, nigdy ukryty', () => {
+  it('szef wyszkolenia dostaje POWÓD, nigdy ciche ukrycie akcji', () => {
     // `events.correct` ma TYLKO administrator: korekta dopisuje zdarzenie do cudzego
-    // rejestru. Ukrycie przycisku nigdy nie było ochroną i tym się nie staje —
-    // egzekwuje serwer, przy każdym żądaniu.
-    const access = correctionAccess('sess-1', state(), TRAINING_LEAD);
+    // rejestru. Ukrycie nigdy nie było ochroną i tym się nie staje — egzekwuje serwer,
+    // przy każdym żądaniu.
+    const access = correctionAccess(state(), TRAINING_LEAD);
 
-    expect(access.disabled).toBe(true);
-    expect(access.to).toBe('');
+    expect(access.allowed).toBe(false);
     expect(access.reason).toBe('Wymaga roli: administrator');
     // Etykieta zostaje TA SAMA — człowiek ma widzieć tę samą akcję, tylko zablokowaną.
     expect(access.label).toBe('Korekta administratora');
   });
 
   it('brak sesji (jeszcze nie wiadomo, kto to) też blokuje z powodem', () => {
-    expect(correctionAccess('sess-1', state(), undefined).disabled).toBe(true);
+    const access = correctionAccess(state(), undefined);
+    expect(access.allowed).toBe(false);
+    expect(access.reason).not.toBeNull();
   });
 
   it('DZIEŃ OTWARTY blokuje korektę — i to jest ta sama odmowa, co po stronie serwera', () => {
     // Przy otwartym dniu pilot ma pełne prawo zapisu i poprawia sam, a korekta
     // administratora nie wraca na telefon (sync jest jednokierunkowy). Serwer odmawia
     // tego wprost (`day_open`), więc panel nie zaprasza do żądania, które odbije.
-    const access = correctionAccess('sess-1', state({ closed: false, closedAt: null }), ADMIN);
+    const access = correctionAccess(state({ closed: false, closedAt: null }), ADMIN);
 
-    expect(access.disabled).toBe(true);
+    expect(access.allowed).toBe(false);
     expect(access.reason).toContain('Dzień jeszcze trwa');
+  });
+});
+
+describe('correctionPath', () => {
+  it('celuje w KONKRETNE zdarzenie, zgodnie z paskiem adresu w mockupie A02b', () => {
+    expect(correctionPath('7c1e5a9b-83b4', 'b8d41f27-4c18')).toBe(
+      '/dni/7c1e5a9b-83b4/korekta/b8d41f27-4c18',
+    );
+  });
+
+  it('koduje uuid-y — trasa jest częścią adresu, nie napisem do sklejenia', () => {
+    expect(correctionPath('a/b', 'c d')).toBe('/dni/a%2Fb/korekta/c%20d');
   });
 });

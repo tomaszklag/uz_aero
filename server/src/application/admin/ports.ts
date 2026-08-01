@@ -224,6 +224,30 @@ export interface SessionsAdminPort {
   byUuid(db: Queryable, sessionUuid: string): Promise<AdminSessionJoin | null>;
 }
 
+// ── rejestr zdarzeń (metadane zapisu, panel) ────────────────────────────────────
+
+/**
+ * Port danych, które są w tabeli `events`, ale NIE SĄ zdarzeniem domenowym.
+ *
+ * `EventsStorePort.sessionEvents` oddaje `Event[]` — czysty byt domenowy, bez kolumn
+ * technicznych. `source_device` jest kolumną serwera („czym to przyszło"), nie polem
+ * zdarzenia: telefon go nie zna, projekcja go nie czyta, a reguły nie mają o nim
+ * pojęcia. Dopisanie go do `Event` przemyciłoby szczegół transportu do domeny, którą
+ * dzielimy z aplikacją pilota.
+ *
+ * A panel go potrzebuje: karta „Zdarzenie korygowane" (`A02b`) mówi, czy odczyt zapisał
+ * telefon PIC-a, czy poprzednia korekta z panelu — i to jest pierwsza rzecz, o którą
+ * pyta się przy rozjeździe czasu.
+ */
+export interface EventsAdminPort {
+  /**
+   * `source_device` pojedynczego zdarzenia. Zewnętrzne `null` = nie ma takiego uuid-a
+   * w rejestrze; wewnętrzne = zdarzenie jest, ale bez pola (wpisy sprzed migracji 4).
+   * Dwie różne odpowiedzi na dwa różne pytania, więc opakowane, a nie sklejone.
+   */
+  sourceDeviceOf(db: Queryable, eventUuid: string): Promise<{ sourceDevice: string | null } | null>;
+}
+
 // ── konserwacja (przebudowa projekcji, panel) ───────────────────────────────────
 
 export interface MaintenanceAdminPort {

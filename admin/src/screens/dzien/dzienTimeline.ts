@@ -44,6 +44,14 @@ export interface TimelineRowView {
   /** Opis w liniach — każda renderowana jako TEKST, nigdy jako HTML. */
   meta: string[];
   voided: boolean;
+  /**
+   * Czy z tego wiersza wolno wejść w korektę (`A02b`). Zależy WYŁĄCZNIE od typu
+   * zdarzenia (`EVENT_META.correctable`), nie od jego stanu: ponowna korekta zdarzenia
+   * już unieważnionego jest legalna — „ostatnia wygrywa", a `retime` po `void` wraca
+   * zdarzenie do życia. Ukrycie przejścia przy przekreślonym wierszu odebrałoby
+   * administratorowi jedyną drogę wycofania cudzej pomyłki.
+   */
+  correctable: boolean;
 }
 
 /** Czas zdarzenia w tej samej konwencji, co domena: GPS przed zegarem telefonu. */
@@ -220,6 +228,7 @@ export function timelineRows(entries: readonly TimelineEntryDto[]): TimelineRowV
       badgeTone: entry.voided ? 'red' : meta.badgeTone,
       meta: [...notes, ...describe(entry.event)],
       voided: entry.voided,
+      correctable: meta.correctable,
     };
   });
 }

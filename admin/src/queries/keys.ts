@@ -9,6 +9,7 @@
  * opisanym niżej przy `sessions`/`exports`/`dashboard`.
  */
 
+import type { CorrectionDraftDto } from '../api/dto';
 import type { FlagListQuery } from '../api/flags';
 import type { SessionListQuery } from '../api/sessions';
 
@@ -41,6 +42,21 @@ export const keys = {
     list: (query: SessionListQuery) => ['sessions', 'list', query] as const,
     count: (query: SessionListQuery) => ['sessions', 'count', query] as const,
     detail: (sessionUuid: string) => ['sessions', 'detail', sessionUuid] as const,
+  },
+
+  /**
+   * PODGLĄD korekty (`A02b`) — dry-run, więc zwykłe zapytanie z cache'em.
+   *
+   * Cały szkic (`targetUuid` + akcja + `newTime`) jest częścią klucza, bo jest częścią
+   * PYTANIA: „co się stanie, jeśli przesunę to zdarzenie na 13:01:33" to inne pytanie
+   * niż „…na 13:02:00". Dzięki temu przełączanie `retime` ↔ `void` w formularzu wraca
+   * do już policzonej odpowiedzi zamiast pytać serwer drugi raz o to samo — a mockup
+   * przewiduje właśnie takie przełączanie tam i z powrotem.
+   */
+  corrections: {
+    all: ['corrections'] as const,
+    preview: (sessionUuid: string, draft: CorrectionDraftDto) =>
+      ['corrections', 'preview', sessionUuid, draft] as const,
   },
 
   /**

@@ -229,7 +229,7 @@ function exportLine(attempt: ExportAttemptDto): string {
 }
 
 export interface CorrectionAction {
-  /** Adres ekranu korekty (`A02b`); pusty, gdy akcja jest zablokowana. */
+  /** Adres KARTY DNIA, na której wybiera się zdarzenie; pusty, gdy akcja zablokowana. */
   to: string;
   label: string;
   disabled: boolean;
@@ -239,6 +239,13 @@ export interface CorrectionAction {
 
 /**
  * Przejście do korekty zdarzenia — jedyna droga, którą zmienia się LICZBY.
+ *
+ * ══ PROWADZI NA KARTĘ DNIA, NIE WPROST W FORMULARZ ══
+ * Korekta dotyczy KONKRETNEGO zdarzenia (`/dni/<sesja>/korekta/<zdarzenie>`), a flaga
+ * wskazuje sesję, nie zdarzenie — `session_overlap` opisuje dwie nakładające się sesje,
+ * a nie pojedynczy odczyt. Wyboru dokonuje się więc na osi dnia, która ZNA uuid-y
+ * i wie, które zdarzenia są korygowalne. Adres bez celu prowadziłby w ekran, który nie
+ * wie, co poprawia — a to jest gorsze niż jeden klik więcej.
  *
  * Rozstrzygnięcie flagi jest komentarzem i zmianą statusu; jeżeli błędna jest sama
  * liczba, poprawia ją nowe zdarzenie `event_correction`, a oryginał zostaje
@@ -274,8 +281,8 @@ export function correctionAction(
   }
 
   return {
-    to: `/dni/${sessionUuid}/korekta`,
-    label: `Korekta zdarzenia · ${flag.reg ?? flag.aircraftId}`,
+    to: `/dni/${encodeURIComponent(sessionUuid)}`,
+    label: `Wybierz zdarzenie na osi dnia · ${flag.reg ?? flag.aircraftId}`,
     disabled: false,
     reason: null,
   };

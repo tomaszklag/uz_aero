@@ -11,6 +11,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AdminCorrectionCommands } from '../application/admin/commands/corrections.ts';
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
+import type { AdminCorrectionQueries } from '../application/admin/queries/corrections.ts';
 import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
@@ -51,6 +52,8 @@ export interface ServerDeps {
   adminSessionQueries: AdminSessionQueries;
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
+  /** Podgląd „przed → po" korekty (`A02b`) — zapytanie, nie komenda: nic nie zapisuje. */
+  adminCorrectionQueries: AdminCorrectionQueries;
 }
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
@@ -76,7 +79,12 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerAdminAuthRoutes(app, deps.auth);
   registerAdminMeRoutes(app, deps.adminMeQueries, deps.tokens);
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, deps.tokens);
-  registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.tokens);
+  registerAdminCorrectionRoutes(
+    app,
+    deps.adminCorrections,
+    deps.adminCorrectionQueries,
+    deps.tokens,
+  );
   registerAdminSessionRoutes(app, deps.adminSessionQueries, deps.tokens);
 
   app.get('/health', async () => ({ ok: true }));

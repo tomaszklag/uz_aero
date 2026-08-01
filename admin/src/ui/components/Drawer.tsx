@@ -23,11 +23,18 @@ interface DrawerProps {
   sub: ReactNode;
   /** Stopka z akcjami (`.drawer-foot`) — kolejność jak w mockupie: anuluj, potem akcja. */
   footer?: ReactNode;
+  /**
+   * Szuflada 660 px zamiast 520 (`.drawer.wide`) — dla szuflady, która jest
+   * FORMULARZEM, a nie podglądem. Korekta administratora (`A02b`) niesie kartę
+   * „przed → po", pole powodu i pełny opis skutków; w wąskiej szufladzie każdy wiersz
+   * klucz–wartość łamie się na dwie linie i karta przestaje się czytać kolumnami.
+   */
+  wide?: boolean;
   onClose: () => void;
   children: ReactNode;
 }
 
-export function Drawer({ title, sub, footer, onClose, children }: DrawerProps) {
+export function Drawer({ title, sub, footer, wide = false, onClose, children }: DrawerProps) {
   const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,7 +60,7 @@ export function Drawer({ title, sub, footer, onClose, children }: DrawerProps) {
       <button type="button" className="drawer-scrim" aria-label="Zamknij szufladę" onClick={onClose} />
       <div
         ref={panel}
-        className="drawer"
+        className={wide ? 'drawer wide' : 'drawer'}
         role="dialog"
         aria-modal="true"
         aria-label={title}

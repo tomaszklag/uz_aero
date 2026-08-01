@@ -62,6 +62,24 @@
 > `POST /events` — tamta trasa należy do telefonu i jej single-writer zostaje nietknięty.
 > Odmowy mapujemy 404 / 400 `day_open` / **422 `rule_violation`** (§6.5 mówił tylko o 400
 > dla dnia otwartego; 422 rozdziela „popraw formularz" od „domena odmawia").
+>
+> **Aktualizacja 2026-08-01 — PODGLĄD korekty (dry-run) WDROŻONY**: `POST
+> /admin/api/sessions/:uuid/corrections/preview` (zdolność `events.correct`),
+> `application/admin/queries/corrections.ts` (`AdminCorrectionQueries`),
+> `application/admin/contracts/corrections.ts`, `EventsAdminPort` +
+> `infrastructure/pg/admin/eventsRepo.ts` (`source_device` korygowanego zdarzenia —
+> kolumna serwera, nie pole `Event`), nowy blok w `test/adminCorrections.test.ts`.
+> Podgląd zwraca opis celu, `before`/`after` jako `SessionState` i `violations`; ciało
+> żądania NIE MA `reason`, bo skutek ogląda się przed napisaniem uzasadnienia.
+> **Świadomie NIE idzie przez `AuditedWrite`**: tamta brama wymusza w typie wpis do
+> `admin_audit`, a dziennik nie może opisywać rzeczy, które się nie wydarzyły — stąd
+> zapytanie, nie komenda, i konstruktor bez `AuditedWrite`, projekcji i eksportera.
+> Naruszenia jadą w ciele **200**, nie jako 422: podgląd odpowiedział na pytanie „co się
+> stanie" i odpowiedź „nic, bo tego nie wolno" jest kompletna razem z liczbami `before`.
+> Wspólna ocena komendy i podglądu mieszka w `application/admin/correctionCandidate.ts`
+> — tam wędrował literał `'administrative'`, więc lista w teście architektury dalej ma
+> **dokładnie jedną** pozycję (dopisanie do niej drugiego pliku byłoby rozluźnieniem
+> reguły, nie jej utrzymaniem).
 
 ---
 

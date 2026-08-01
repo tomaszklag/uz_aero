@@ -171,10 +171,13 @@ describe('skutek rozstrzygnięcia', () => {
 });
 
 describe('korekta zdarzenia — zdolności są rozłączne', () => {
-  it('administrator wchodzi w korektę sesji objętej flagą', () => {
+  it('administrator idzie na KARTĘ DNIA — to oś zdarzeń wybiera cel korekty', () => {
+    // Flaga wskazuje sesję, nie zdarzenie (`session_overlap` opisuje dwie nakładki,
+    // a nie pojedynczy odczyt). Korekta celuje w konkretny uuid, więc wybór musi
+    // zapaść tam, gdzie uuid-y są widoczne.
     const action = correctionAction(flag, ['panel.access', 'flags.resolve', 'events.correct']);
     expect(action.disabled).toBe(false);
-    expect(action.to).toBe('/dni/e881-04dc/korekta');
+    expect(action.to).toBe('/dni/e881-04dc');
     expect(action.label).toContain('SP-KLM');
   });
 

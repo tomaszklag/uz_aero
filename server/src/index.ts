@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
+import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminFlagQueries } from './application/admin/queries/flags.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
@@ -27,6 +28,7 @@ import { StateQueries } from './application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
+import { PgAdminEventsRepo } from './infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
 import { PgAircraftConfigRepo } from './infrastructure/pg/common/aircraftConfigRepo.ts';
@@ -117,6 +119,15 @@ const app = buildServer({
     exporter,
     clock,
     randomUUID,
+  ),
+  // Podgląd korekty dostaje `db` wprost i NIE dostaje `AuditedWrite` — nie ma czym
+  // zapisać, bo nie ma czego zapisywać (`queries/corrections.ts`).
+  adminCorrectionQueries: new AdminCorrectionQueries(
+    db,
+    events,
+    new PgAdminEventsRepo(),
+    aircraftConfig,
+    clock,
   ),
 });
 

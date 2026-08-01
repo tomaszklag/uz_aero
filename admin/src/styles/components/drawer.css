@@ -43,6 +43,14 @@
   box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
 }
 
+/* Szuflada SZERSZA — dla szuflady, która jest formularzem, a nie podglądem: korekta
+   administratora (`A02b`) niesie kartę „przed → po", pole powodu i pełny opis skutków,
+   a w 520 px każdy wiersz klucz–wartość łamie się na dwie linie. Modyfikator, bo
+   szerokość jest własnością TREŚCI szuflady, nie jednego ekranu. */
+.drawer.wide {
+  width: 660px;
+}
+
 .drawer-head {
   flex-shrink: 0;
   padding: 16px 20px;
@@ -85,6 +93,18 @@
   display: flex;
   gap: 9px;
   justify-content: flex-end;
+}
+
+/* Notatka po lewej stronie akcji stopki — stała własność szuflady, nie treść ekranu:
+   mówi, czego to okno NIE zrobi („brak edycji · brak kasowania" w `A02b`). */
+.drawer-note {
+  margin-right: auto;
+  align-self: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .x-btn {

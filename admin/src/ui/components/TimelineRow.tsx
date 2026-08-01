@@ -25,10 +25,25 @@ interface TimelineRowProps {
   meta: ReactNode;
   /** Plakietka zamykająca wiersz — rodzaj zdarzenia jednym słowem. */
   badge?: ReactNode;
+  /**
+   * Akcja przy wierszu (przejście do korekty tego zdarzenia, `A02b`). Osobny slot od
+   * `badge`, bo czwarty tor siatki `.tl-row` przyjmuje JEDNO dziecko — dopiero razem
+   * trafiają do wspólnego `.tl-act`. Wiersz bez akcji zostaje w markupie identyczny
+   * jak w mockupie `A02a`.
+   */
+  action?: ReactNode;
   voided?: boolean;
 }
 
-export function TimelineRow({ time, tone, name, meta, badge, voided = false }: TimelineRowProps) {
+export function TimelineRow({
+  time,
+  tone,
+  name,
+  meta,
+  badge,
+  action,
+  voided = false,
+}: TimelineRowProps) {
   return (
     <li className={voided ? 'tl-row voided' : 'tl-row'}>
       <span className="tl-time">{time}</span>
@@ -43,7 +58,14 @@ export function TimelineRow({ time, tone, name, meta, badge, voided = false }: T
         <span className="tl-name">{name}</span>
         <span className="tl-meta">{meta}</span>
       </span>
-      {badge}
+      {action == null ? (
+        badge
+      ) : (
+        <span className="tl-act">
+          {badge}
+          {action}
+        </span>
+      )}
     </li>
   );
 }

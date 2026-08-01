@@ -23,6 +23,7 @@ export { FilterBar } from './FilterBar';
 export { FilterChip } from './FilterChip';
 export { KeyValue, type KeyValueTone } from './KeyValue';
 export { LinkButton } from './LinkButton';
+export { OptionButton } from './OptionButton';
 export { OptionLink } from './OptionLink';
 export { OptionList } from './OptionList';
 export { PageHead } from './PageHead';

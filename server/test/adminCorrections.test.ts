@@ -28,6 +28,8 @@ const HOUR_MS = 3_600_000;
 /** Sesja dnia: PIC to KRZ (zwykły pilot), administratorem panelu jest TMK. */
 const SESSION = 'sess-1';
 const PIC = 'KRZ';
+/** `events.source_device` paczki telefonu — dowolny napis z aplikacji, jak w A02b. */
+const DEVICE = 'Pixel 7a · a41f9c';
 
 /** Uuid zdarzeń są jawne, bo test celuje w nie `targetUuid`-em (koperta: min. 8 znaków). */
 const UUID = {
@@ -108,6 +110,22 @@ function correct(
   });
 }
 
+function preview(
+  app: Harness['app'],
+  sessionUuid: string,
+  options: { token?: string; body?: unknown },
+) {
+  return app.inject({
+    method: 'POST',
+    url: `/admin/api/sessions/${sessionUuid}/corrections/preview`,
+    headers: {
+      ...ADMIN_CSRF_HEADERS,
+      ...(options.token == null ? {} : { authorization: `Bearer ${options.token}` }),
+    },
+    payload: options.body ?? {},
+  });
+}
+
 async function eventRows(db: Harness['db']) {
   const { rows } = await db.query<{
     uuid: string;
@@ -176,7 +194,10 @@ async function flownDay(options: { closed?: boolean } = {}) {
     method: 'POST',
     url: '/events',
     headers: { authorization: `Bearer ${pic}` },
-    payload: { events: payload },
+    // `sourceDevice` jest tu naprawdę wysyłany, bo podgląd korekty go pokazuje
+    // („Zapisane przez: telefon PIC-a") — a pole odczytane z pustej bazy nie
+    // udowodniłoby, że trasa czyta właściwą kolumnę.
+    payload: { events: payload, sourceDevice: DEVICE },
   });
   expect(res.statusCode).toBe(200);
 
@@ -502,5 +523,218 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect((await eventRows(db)).filter((r) => r.type === 'event_correction')).toHaveLength(2);
     expect(await auditRows(db)).toHaveLength(2);
     expect(await exportRevisions(db)).toHaveLength(3);
+  });
+});
+
+/**
+ * PODGLĄD KOREKTY (`POST …/corrections/preview`) — karta „Wpływ na liczby dnia ·
+ * przed → po" z `A02b`.
+ *
+ * Podgląd istnieje, bo panel nie ma prawa policzyć skutku sam: z domeny wolno mu
+ * importować wyłącznie typy. Dwie własności są tu warte testu bardziej niż reszta:
+ * (1) `void` NIE skraca cyklu o różnicę czasów, tylko zostawia go OTWARTYM — to jest
+ * teza amber-banera z mockupu i najłatwiejsza rzecz do zgadnięcia źle; (2) podgląd
+ * NICZEGO nie zapisuje, także dziennika audytu, bo obejrzenie skutku nie jest zmianą.
+ */
+describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
+  it('retime: pokazuje czas blokowy przed i po, bez naruszeń i bez zapisu', async () => {
+    const { app, db } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await preview(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.engineStop, action: 'retime', newTime: at(10, 22) },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({
+      sessionUuid: SESSION,
+      target: {
+        uuid: UUID.engineStop,
+        type: 'engine_stop',
+        deviceTime: at(10, 34),
+        gpsTime: at(10, 34),
+        effectiveTime: at(10, 34),
+        voided: false,
+        // Kolumna techniczna rejestru — panel mówi, CZYM zapisano odczyt.
+        sourceDevice: DEVICE,
+      },
+      before: { blockTimeMs: BLOCK_MS, flightTimeMs: FLIGHT_MS },
+      after: { blockTimeMs: BLOCK_MS - 12 * 60_000, flightTimeMs: FLIGHT_MS },
+      violations: [],
+    });
+
+    // Rejestr, projekcja, audyt i arkusz — wszystko dokładnie tak, jak przed podglądem.
+    expect(await eventRows(db)).toHaveLength(7);
+    expect(await sessionRow(db)).toMatchObject({ blockMs: BLOCK_MS });
+    expect(await auditRows(db)).toEqual([]);
+    expect(await exportRevisions(db)).toEqual([{ session_uuid: SESSION, revision: 1 }]);
+  });
+
+  it('void na engine_stop zostawia cykl OTWARTY — blok wypada w całości, nie skraca się', async () => {
+    // To jest dowód tezy amber-banera z mockupu: `void` jest tu ZŁYM narzędziem.
+    // Silnik został wyłączony, pomylona jest tylko godzina — a unieważnienie
+    // `engine_stop` nie skraca cyklu o 12 minut, tylko usuwa go z czasu blokowego
+    // w całości. Panel nie umiałby tego wyliczyć: reguła mieszka w projekcji.
+    const { app, db } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await preview(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.engineStop, action: 'void' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.before).toMatchObject({ blockTimeMs: BLOCK_MS, engineRunning: false });
+    expect(body.after).toMatchObject({
+      blockTimeMs: 0,
+      engineRunning: true,
+      openEngineStartAt: at(8, 12),
+      // Loty się nie zmieniają — korekta dotyczy silnika, nie startów i lądowań.
+      flightTimeMs: FLIGHT_MS,
+    });
+    expect(body.violations).toEqual([]);
+
+    expect(await eventRows(db)).toHaveLength(7);
+    expect(await auditRows(db)).toEqual([]);
+  });
+
+  it('cel niekorygowalny (day_close) → 200 z naruszeniem, nie kod błędu', async () => {
+    // Naruszenie jest TREŚCIĄ odpowiedzi: administrator ma zobaczyć powód razem
+    // z liczbami `before`, a nie pustą kartę z 422.
+    const { app } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await preview(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.dayClose, action: 'void' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().violations).toMatchObject([
+      { code: 'CORRECTION_TARGET_NOT_ALLOWED', severity: 'error' },
+    ]);
+    expect(res.json().before).toMatchObject({ blockTimeMs: BLOCK_MS });
+  });
+
+  it('cel spoza sesji → brak opisu celu i naruszenie CORRECTION_TARGET_NOT_FOUND', async () => {
+    const { app } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await preview(app, SESSION, {
+      token: admin,
+      body: { targetUuid: 'zdarzenie-z-innego-dnia', action: 'void' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    // `null`, a nie zmyślony wiersz z zerami: nie mamy czym opisać celu, którego nie ma.
+    expect(res.json().target).toBeNull();
+    expect(res.json().violations).toMatchObject([{ code: 'CORRECTION_TARGET_NOT_FOUND' }]);
+  });
+
+  it('czas z przyszłości → naruszenie CORRECTION_TIME_IN_FUTURE', async () => {
+    const { app, clock } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await preview(app, SESSION, {
+      token: admin,
+      body: {
+        targetUuid: UUID.engineStop,
+        action: 'retime',
+        newTime: clock.now().getTime() + HOUR_MS,
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().violations).toMatchObject([{ code: 'CORRECTION_TIME_IN_FUTURE' }]);
+  });
+
+  it('podgląd zdarzenia JUŻ unieważnionego mówi o tym wprost', async () => {
+    // Ponowna korekta unieważnionego jest legalna („ostatnia wygrywa"), więc podgląd
+    // musi umieć opisać taki cel — inaczej administrator nie wie, od jakiego stanu
+    // startuje.
+    const { app } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    await correct(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.landing, action: 'void', reason: 'Przelot nad pasem.' },
+    });
+
+    const res = await preview(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.landing, action: 'retime', newTime: at(9, 20) },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().target).toMatchObject({
+      uuid: UUID.landing,
+      voided: true,
+      // Zdarzenie nie wchodzi dziś do żadnej liczby, więc nie ma „czasu w projekcji".
+      effectiveTime: null,
+    });
+    // `retime` przywraca zdarzenie do życia — stąd lądowanie z powrotem w bilansie.
+    expect(res.json().after).toMatchObject({ landingCount: 1 });
+    expect(res.json().violations).toEqual([]);
+  });
+
+  it('dzień OTWARTY → 400 day_open, tak samo jak przy zapisie', async () => {
+    const { app } = await flownDay({ closed: false });
+    const admin = await login(app, 'TMK');
+
+    const res = await preview(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.landing, action: 'void' },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: 'day_open' });
+  });
+
+  it('nieistniejąca sesja → 404', async () => {
+    const { app } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await preview(app, 'sess-nie-ma', {
+      token: admin,
+      body: { targetUuid: UUID.landing, action: 'void' },
+    });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: 'not_found' });
+  });
+
+  it('szef wyszkolenia NIE zobaczy podglądu — ta sama zdolność, co przy zapisie', async () => {
+    const { app } = await flownDay();
+    const trainingLead = await login(app, 'AKO');
+
+    const res = await preview(app, SESSION, {
+      token: trainingLead,
+      body: { targetUuid: UUID.landing, action: 'void' },
+    });
+
+    expect(res.statusCode).toBe(403);
+    expect(res.json()).toEqual({ error: 'forbidden', required: 'events.correct' });
+  });
+
+  it('podgląd NIE przyjmuje `reason` — i nie wymaga go, żeby odpowiedzieć', async () => {
+    // Kolejność jest celowa: najpierw zobacz skutek, potem wytłumacz decyzję.
+    // Ciało bez uzasadnienia MUSI więc przejść, a `retime` bez czasu — nie.
+    const { app } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const ok = await preview(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.engineStop, action: 'retime', newTime: at(10, 22) },
+    });
+    expect(ok.statusCode).toBe(200);
+
+    const incomplete = await preview(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.engineStop, action: 'retime' },
+    });
+    expect(incomplete.statusCode).toBe(400);
+    expect(incomplete.json()).toEqual({ error: 'bad_request' });
   });
 });

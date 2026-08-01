@@ -113,56 +113,65 @@ export function dayBanner(
 }
 
 export interface CorrectionAccess {
-  /** Adres ekranu korekty (`A02b`); pusty, gdy akcja jest zablokowana. */
-  to: string;
   label: string;
-  disabled: boolean;
-  /** Powód blokady — WIDOCZNY przy przycisku, nigdy ciche ukrycie. */
+  /** `true` = wolno wejść w korektę któregokolwiek zdarzenia tego dnia. */
+  allowed: boolean;
+  /** Powód niedostępności — WIDOCZNY tekst, nigdy ciche ukrycie. `null` gdy wolno. */
   reason: string | null;
 }
 
 /**
- * Brama przejścia do korekty administracyjnej.
+ * Brama przejścia do korekty administracyjnej — informacja, NIE link.
+ *
+ * ══ DLACZEGO BEZ ADRESU ══
+ * Korekta zawsze dotyczy KONKRETNEGO zdarzenia (`/dni/<sesja>/korekta/<zdarzenie>`),
+ * a wyboru zdarzenia dokonuje się na osi dnia — oś JEST tym wyborem i drugiego ekranu
+ * do wybierania nie budujemy. Ta funkcja odpowiada więc na pytanie „czy w ogóle wolno",
+ * a odpowiedź steruje wierszami osi: dostępna korekta dokłada im przejście, niedostępna
+ * zostawia widoczny powód nad nimi. Wcześniej zwracała adres `/dni/<sesja>/korekta`,
+ * który nie znał celu i prowadził w ekran „w budowie".
  *
  * Dwa warunki, oba egzekwowane też przez serwer, więc to jest podpowiedź dla UI,
  * a nie zabezpieczenie:
  *
  *  1. **Zdolność `events.correct` ma TYLKO administrator** — szef wyszkolenia czyta
- *     dni i zamyka flagi, ale nie dopisuje zdarzeń do cudzego rejestru. Przycisk
- *     zostaje dla niego WIDOCZNY i wyszarzony z powodem: ukrycie zmusiłoby go do
- *     zgadywania, czy funkcji nie ma w produkcie, czy nie ma jej on.
+ *     dni i zamyka flagi, ale nie dopisuje zdarzeń do cudzego rejestru. Powód zostaje
+ *     dla niego WIDOCZNY: ukrycie zmusiłoby go do zgadywania, czy funkcji nie ma
+ *     w produkcie, czy nie ma jej on.
  *  2. **Dzień musi być zamknięty.** Przy otwartym pilot ma pełne prawo zapisu
  *     i poprawia sam, a korekta administratora nie wraca na telefon (sync jest
  *     jednokierunkowy) — więc wejście w otwarty dzień rozjechałoby dwa żywe obrazy
  *     tej samej sesji. Serwer odmawia tego wprost (`day_open`).
  */
 export function correctionAccess(
-  sessionUuid: string,
   state: SessionState,
   capabilities: readonly Capability[] | undefined,
 ): CorrectionAccess {
   if (!can(capabilities, 'events.correct')) {
     return {
-      to: '',
       label: 'Korekta administratora',
-      disabled: true,
+      allowed: false,
       reason: denialReason('events.correct'),
     };
   }
 
   if (!state.closed) {
     return {
-      to: '',
       label: 'Korekta administratora',
-      disabled: true,
+      allowed: false,
       reason: 'Dzień jeszcze trwa — do zamknięcia poprawia pilot',
     };
   }
 
-  return {
-    to: `/dni/${sessionUuid}/korekta`,
-    label: 'Korekta administratora',
-    disabled: false,
-    reason: null,
-  };
+  return { label: 'Korekta administratora', allowed: true, reason: null };
+}
+
+/**
+ * Adres ekranu korekty JEDNEGO zdarzenia (`A02b`).
+ *
+ * Jedno miejsce, w którym powstaje ta ścieżka — bo składają ją oś dnia i szuflada
+ * flagi, a rozjazd między nimi kończyłby się martwym linkiem w jednej z dwóch dróg.
+ */
+export function correctionPath(sessionUuid: string, targetUuid: string): string {
+  return `/dni/${encodeURIComponent(sessionUuid)}/korekta/${encodeURIComponent(targetUuid)}`;
 }

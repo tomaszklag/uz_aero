@@ -136,13 +136,19 @@ describe('granice, których nie pilnuje kompilator', () => {
     // rozlanie literału po komendach byłoby początkiem konstrukcji, w której nikt nie
     // wie, ile reguł omija panel. Zmiana tej listy to decyzja produktowa, nie refaktor.
     //
+    // Użytkownikiem jest HELPER, a nie komenda: korektę ocenia się w dwóch miejscach —
+    // przy zapisie (`commands/corrections.ts`) i przy podglądzie „przed → po"
+    // (`queries/corrections.ts`) — a ocena musi być jedna. Obie strony idą przez
+    // `correctionCandidate.ts`, więc lista dalej ma dokładnie jedną pozycję. Dopisanie
+    // do niej drugiego pliku byłoby ROZLUŹNIENIEM tej reguły, nie jej utrzymaniem.
+    //
     // Skanujemy `server/src`, bo tam literał jest UŻYCIEM. W `packages/domain` stoi
     // jego DEKLARACJA (`rules/authority.ts` — definicja słownika uprawnień) i ona
     // z natury musi go zawierać.
     const users = filesUnder('.')
       .filter((f) => codeOf(f).includes("'administrative'"))
       .sort();
-    expect(users).toEqual(['application/admin/commands/corrections.ts']);
+    expect(users).toEqual(['application/admin/correctionCandidate.ts']);
   });
 
   it('kontrakty panelu importują wyłącznie domenę i siebie nawzajem', () => {

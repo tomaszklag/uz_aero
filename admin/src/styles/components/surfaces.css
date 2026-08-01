@@ -269,6 +269,14 @@
   color: var(--text-secondary);
 }
 
+/* Wartość SPRZED zmiany w zestawieniu „przed → po" (`A02b`). Wygaszona, bo czyta się
+   ją jako punkt odniesienia, a nie jako liczbę do zapamiętania — uwaga ma zostać przy
+   wartości po prawej stronie strzałki. */
+.kv-v .was {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
 /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
 .code-ref {
   font-family: var(--font-mono);

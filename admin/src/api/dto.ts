@@ -15,10 +15,13 @@
 
 import type {
   Event,
+  EventCorrectionPayload,
+  EventType,
   FlagStatus,
   FlagType,
   MhFormat,
   OperationType,
+  RuleViolation,
   SessionState,
 } from '@uzaero/domain';
 
@@ -70,6 +73,12 @@ export interface ApiErrorDto {
   error: string;
   /** 403 z bramy zdolności: KTÓREJ zdolności zabrakło (panel ma podać powód). */
   required?: Capability;
+  /**
+   * 422 `rule_violation` z zapisu korekty: KTÓRE reguły domeny odmówiły. Panel ma
+   * pokazać konkretny powód z tej listy, a nie „popraw formularz" — kody i komunikaty
+   * pochodzą z `packages/domain/src/rules/violations.ts` i są pisane dla człowieka.
+   */
+  violations?: RuleViolation[];
   /**
    * 409 `already_resolved`: stan flagi, którą ktoś zamknął PIERWSZY.
    *
@@ -289,4 +298,77 @@ export interface SessionDetailDto {
   timeline: TimelineEntryDto[];
   /** Flagi sesji RAZEM z rozwiązanymi — historia decyzji zostaje na karcie. */
   flags: FlagListItemDto[];
+}
+
+// ── korekta administratora (`A02b`) ─────────────────────────────────────────────
+
+/**
+ * Kształt korekty na drucie — DOKŁADNIE payload domenowy, bez pól panelu.
+ *
+ * Jedzie w podglądzie i w zapisie, więc żyje w jednym miejscu: druga definicja byłaby
+ * pierwszym punktem, w którym karta „przed → po" opisuje inną operację niż ta, którą
+ * panel za chwilę wysyła.
+ */
+export type CorrectionDraftDto = EventCorrectionPayload;
+
+/**
+ * Zdarzenie korygowane — ORYGINALNY ODCZYT z rejestru (karta „oryginalny odczyt").
+ *
+ * Oba zegary stoją obok siebie, bo różnica między nimi jest całą treścią scenariusza:
+ * `gpsTime === null` znaczy „zapisano bez fixa GPS", a wtedy projekcja bierze
+ * `deviceTime` — czyli zegar telefonu ze wszystkimi jego wadami.
+ */
+export interface CorrectionTargetDto {
+  uuid: string;
+  type: EventType;
+  deviceTime: number;
+  /** `null` = brak fixa GPS w chwili zapisu. */
+  gpsTime: number | null;
+  /** Czas, którym projekcja liczy dzień DZIŚ; `null` = zdarzenie już unieważnione. */
+  effectiveTime: number | null;
+  voided: boolean;
+  /** `events.source_device` — dowolny napis z telefonu albo `admin:<id>`. TEKST. */
+  sourceDevice: string | null;
+  /** Pełne zdarzenie — panel opisuje payload tym samym kodem, co oś dnia. */
+  event: Event;
+}
+
+/**
+ * Odpowiedź `POST /admin/api/sessions/:uuid/corrections/preview` — DRY-RUN.
+ *
+ * Serwer liczy `before` i `after` przez `projectSession`, bo panelowi wolno importować
+ * z domeny wyłącznie typy. To nie jest wygoda: `void` na `engine_stop` NIE skraca cyklu
+ * o różnicę czasów, tylko zostawia go otwartym, przez co wypada z czasu blokowego
+ * w całości — tej reguły nie da się odgadnąć z payloadu.
+ *
+ * Podgląd nie przyjmuje `reason`: skutek ogląda się PRZED napisaniem uzasadnienia.
+ */
+export interface CorrectionPreviewDto {
+  sessionUuid: string;
+  /** `null` = celu nie ma w tej sesji; `violations` niesie wtedy powód. */
+  target: CorrectionTargetDto | null;
+  before: SessionState;
+  after: SessionState;
+  /** Naruszenia, które ZABLOKOWAŁYBY zapis. Pusta lista = w tej chwili wolno. */
+  violations: RuleViolation[];
+}
+
+/**
+ * Odpowiedź `POST /admin/api/sessions/:uuid/corrections` — korekta ZAPISANA.
+ *
+ * `reexport: null` znaczy **korekta jest w rejestrze, a karta arkusza NIE powstała** —
+ * eksport rzucił. Panel musi to pokazać wprost: sugerowanie sukcesu byłoby kłamstwem,
+ * a sugerowanie porażki gorszym kłamstwem, bo administrator powtórzyłby korektę.
+ */
+export interface CorrectionResultDto {
+  sessionUuid: string;
+  /** Uuid DOPISANEGO zdarzenia — adres korekty w rejestrze i na osi dnia. */
+  correctionUuid: string;
+  targetUuid: string;
+  action: CorrectionDraftDto['action'];
+  /** ISO 8601 UTC — chwila zapisu wg zegara serwera. */
+  recordedAt: string;
+  /** Stan dnia PO korekcie, policzony `projectSession`. Panel go formatuje. */
+  state: SessionState;
+  reexport: ExportOutcomeDto | null;
 }

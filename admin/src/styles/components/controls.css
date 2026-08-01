@@ -152,6 +152,11 @@
   gap: 8px;
 }
 
+/* `font`, `text-align` i `width` obsługują wariant `<button>` (wybór akcji korekty,
+   A02b): przeglądarka narzuca przyciskowi własną czcionkę i wyśrodkowanie, a karta
+   ma wyglądać identycznie niezależnie od znacznika. `<label>` z mockupu nie jest
+   osiągalny z klawiatury, więc w panelu wybór jest przyciskiem — i to on dyktuje
+   te trzy właściwości. */
 .opt {
   display: flex;
   align-items: center;
@@ -164,6 +169,14 @@
   min-height: 50px;
   text-decoration: none;
   color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.opt:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .opt:hover {
