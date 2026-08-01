@@ -26,6 +26,7 @@ import type {
 } from '../src/application/common/ports.ts';
 import { AdminCorrectionCommands } from '../src/application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
+import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
 import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
@@ -40,6 +41,7 @@ import { SheetQueries } from '../src/application/common/queries/sheets.ts';
 import { StateQueries } from '../src/application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
+import { PgAdminAuditReadRepo } from '../src/infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminEventsRepo } from '../src/infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
@@ -159,6 +161,7 @@ export async function testHarness(
       new PgAdminSessionsRepo(),
       events,
       adminFlagsRepo,
+      new PgAdminEventsRepo(),
     ),
     adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
     adminMeQueries: new AdminMeQueries(pilots),
@@ -180,6 +183,10 @@ export async function testHarness(
       aircraftConfig,
       clock,
     ),
+    // Odczyt dziennika jedzie PRAWDZIWYM adapterem także wtedy, gdy `options.audit`
+    // podmienia stronę zapisu na rzucającą: test „awaria audytu cofa skutek" ma
+    // sprawdzać transakcję, a nie odbierać listę temu, co się faktycznie zapisało.
+    adminAuditQueries: new AdminAuditQueries(db, new PgAdminAuditReadRepo()),
   });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych

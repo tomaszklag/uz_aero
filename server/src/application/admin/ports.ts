@@ -65,11 +65,88 @@ export interface AuditRecord extends AuditEntry {
  * gwarancja niezmienności, którą da się dziś wyrazić w kodzie (docelowo dokłada się
  * do niej `GRANT` bez `UPDATE`/`DELETE`, `docs/architektura-panelu-serwer.md` §11).
  *
+ * Odczyt dziennika (`A09`) mieszka w OSOBNYM porcie niżej — nie dlatego, że czytanie
+ * łamałoby niezmienność, tylko dlatego, że ten port wędruje do `AuditedWrite`, czyli
+ * do bramy ZAPISU. Brama, która przy okazji umie czytać listy z filtrami, przestaje
+ * być bramą i zaczyna być repozytorium.
+ *
  * `tx` jest parametrem, nie polem: wpis MUSI móc pojechać transakcją skutku,
  * który opisuje. Adapter z własnym uchwytem do bazy nie umiałby tego zrobić.
  */
 export interface AdminAuditPort {
   append(tx: Queryable, record: AuditRecord): Promise<void>;
+}
+
+/**
+ * Filtr dziennika (`A09`). Pola NIEUSTAWIONE (`undefined`) są pomijane.
+ *
+ * `actions` jest LISTĄ, a nie pojedynczą wartością, bo ekran filtruje GRUPAMI
+ * („Konta", „Flota", „Konserwacja") — a grupa to kilka kodów katalogu. Jedna wartość
+ * zmusiłaby panel albo do rezygnacji z chipów z mockupu, albo do składania sumy
+ * z kilku żądań i sklejania stron kursora po swojemu.
+ *
+ * Typ `AdminAction` (a nie `string`) jest tu ŚWIADOMY i dotyczy WYŁĄCZNIE wejścia:
+ * po kodzie spoza katalogu nie da się filtrować, bo katalog jest jedyną listą, którą
+ * panel zna. Odczyt jest szerszy — patrz `AdminAuditJoin.action`.
+ */
+export interface AuditListFilter {
+  actions?: AdminAction[];
+  actorPilotId?: string;
+  targetType?: string;
+  targetId?: string;
+  /** Zakres po `created_at` (epoch ms UTC), obustronnie domknięty. */
+  fromMs?: number;
+  toMs?: number;
+  cursor?: string;
+  direction: 'asc' | 'desc';
+  limit: number;
+}
+
+/**
+ * Wiersz dziennika razem z tym, czego lista potrzebuje ze złączenia z `pilots`.
+ *
+ * ══ DLACZEGO `action` I `actor_role` SĄ TU NAPISAMI, A NIE UNIAMI ══
+ * Bo wiersz `admin_audit` jest zapisem HISTORYCZNYM i tak został zaprojektowany:
+ * migracja 9 celowo nie ma `CHECK`-a na tych kolumnach, żeby przemianowanie akcji
+ * albo wycofanie roli z katalogu nie unieważniało tego, co zdarzyło się rok temu.
+ * Zwężenie do `AdminAction`/`PilotRole` przy ODCZYCIE odwróciłoby tę decyzję: adapter
+ * musiałby albo rzucić na nieznanym kodzie (dziennik nadzoru przestałby się otwierać
+ * przez własną historię), albo taki wiersz pominąć (dziennik zacząłby ukrywać wpisy).
+ * Strona odczytu pokazuje kod DOSŁOWNIE — nazywanie go jest sprawą panelu.
+ *
+ * `actorCode`/`actorName` przychodzą z `LEFT JOIN pilots`: konto skasowane albo
+ * przepisane zostawia wpis widoczny z samym identyfikatorem, a nie usuwa go z listy.
+ */
+export interface AdminAuditJoin {
+  id: number;
+  createdAt: Date;
+  actorPilotId: string;
+  actorCode: string | null;
+  actorName: string | null;
+  actorRole: string;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  details: Record<string, unknown>;
+  ip: string | null;
+}
+
+/**
+ * Strona ODCZYTU dziennika (`A09`) — jedna metoda, tak jak port zapisu.
+ *
+ * `null` = **kursor nieczytelny**, wzorem `SessionsAdminPort.list`: kursor przychodzi
+ * z zewnątrz, więc jego uszkodzenie to 400, a nie 500.
+ *
+ * `total: null` znaczy co INNEGO niż `total: 0` i nie wolno tego skleić: to jest
+ * „nie pytaliśmy", a nie „nic nie ma". Licznik powstaje wyłącznie dla pierwszej strony
+ * (uzasadnienie w `infrastructure/pg/admin/auditReadRepo.ts`), więc kolejne strony
+ * oddają `null` i to klient niesie liczbę z pierwszej.
+ */
+export interface AdminAuditReadPort {
+  list(
+    db: Queryable,
+    filter: AuditListFilter,
+  ): Promise<{ items: AdminAuditJoin[]; nextCursor: string | null; total: number | null } | null>;
 }
 
 // ── flagi (cykl życia, panel) ───────────────────────────────────────────────────
@@ -246,6 +323,19 @@ export interface EventsAdminPort {
    * Dwie różne odpowiedzi na dwa różne pytania, więc opakowane, a nie sklejone.
    */
   sourceDeviceOf(db: Queryable, eventUuid: string): Promise<{ sourceDevice: string | null } | null>;
+
+  /**
+   * Uuidy tych zdarzeń `event_correction` sesji, które zapisał PANEL.
+   *
+   * Istnieje, bo `event_correction` emitują DWIE powierzchnie: administrator przez
+   * `POST /admin/api/sessions/:uuid/corrections` (a więc przez `AuditedWrite`, czyli
+   * z wierszem w `admin_audit`) oraz pilot w oknie 24 h przez `POST /events` — tamta
+   * droga bramy audytu nie dotyka i śladu w dzienniku nie zostawia. Z samego strumienia
+   * zdarzeń tych dwóch przypadków rozróżnić się NIE DA: payload jest identyczny.
+   * Rozróżnia je `source_device` (`application/admin/sourceDevice.ts`) i to jest jedyne
+   * miejsce, w którym ten fakt jest zapisany.
+   */
+  adminCorrectionUuids(db: Queryable, sessionUuid: string): Promise<string[]>;
 }
 
 // ── konserwacja (przebudowa projekcji, panel) ───────────────────────────────────

@@ -26,11 +26,16 @@ const page = (uuids: string[], nextCursor: string | null, total: number): Sessio
 });
 
 describe('dayPages', () => {
-  it('nic jeszcze nie przyszło → pusto i BEZ obietnicy ciągu dalszego', () => {
+  it('nic jeszcze nie przyszło → pusto, BEZ obietnicy ciągu dalszego i BEZ liczby', () => {
     // `hasMore: true` na pustym stanie dałby przycisk „pokaż kolejne" zanim
     // ktokolwiek cokolwiek pokazał.
-    expect(dayPages(undefined)).toEqual({ items: [], shown: 0, total: 0, hasMore: false });
-    expect(dayPages([])).toEqual({ items: [], shown: 0, total: 0, hasMore: false });
+    //
+    // `total: null`, a nie `0`: braku odpowiedzi nie da się odróżnić od pustego
+    // rejestru, jeśli oba wyglądają jak zero — a `undefined` przychodzi tu również
+    // wtedy, gdy pobranie się NIE UDAŁO. Zero jest twierdzeniem o świecie i nie ma
+    // prawa stanąć obok banera „nie udało się pobrać listy dni".
+    expect(dayPages(undefined)).toEqual({ items: [], shown: 0, total: null, hasMore: false });
+    expect(dayPages([])).toEqual({ items: [], shown: 0, total: null, hasMore: false });
   });
 
   it('GRANICA STRONY nie ma szwu: żadnego wiersza dwa razy, żadnego pominiętego', () => {
@@ -63,6 +68,13 @@ describe('dayPages', () => {
     expect(dayPages([page(['a'], 'kursor', 3), page(['b'], null, 3)]).hasMore).toBe(false);
   });
 
+  it('`total` z serwera przyjmuje ZERO — pusty rejestr to odpowiedź, a nie jej brak', () => {
+    // Odwrotna strona reguły wyżej: gdyby moduł zamieniał zero na `null` „dla
+    // bezpieczeństwa", kafel przestałby umieć powiedzieć, że w tym zawężeniu
+    // naprawdę nic nie ma.
+    expect(dayPages([page([], null, 0)]).total).toBe(0);
+  });
+
   it('`total` bierze z ostatniej odpowiedzi, bo jest najświeższy', () => {
     // Serwer liczy `total` tym samym filtrem przy każdym żądaniu. Jeśli w trakcie
     // przeglądania telefon dośle nowy dzień, licznik ma to pokazać — sklejona lista
@@ -86,6 +98,12 @@ describe('pagesSummary', () => {
 
   it('pusty wynik nie udaje liczby', () => {
     expect(pagesSummary(dayPages([page([], null, 0)]))).toBe('Brak dni w tym zawężeniu.');
+  });
+
+  it('BRAK odpowiedzi nie mówi „brak dni" — to zdanie o świecie, nie o pobraniu', () => {
+    // „Brak dni w tym zawężeniu." przy nieudanym pobraniu byłoby odpowiedzią na
+    // pytanie, na które nie mamy danych; podpis ma powiedzieć, czego nie wiemy.
+    expect(pagesSummary(dayPages(undefined))).toBe('Liczba dni nieznana — serwer nie odpowiedział.');
   });
 });
 

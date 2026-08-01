@@ -48,6 +48,42 @@ export type Capability =
   | 'thresholds.manage'
   | 'audit.read';
 
+/**
+ * Katalog akcji dziennika audytu. LUSTRO `server/src/domain/adminActions.ts` — świadome,
+ * opisane i PRZYBITE TESTEM (`admin/test/adminActions.mirror.test.ts`).
+ *
+ * Ta sama sytuacja, co przy `Capability` wyżej: katalog mieszka w `server/src/domain/`,
+ * a panel nigdy nie importuje z wnętrza serwera (§5.2). Różnica jest jednak istotna
+ * i dlatego ta kopia dostaje mechanizm, którego `Capability` nie ma: ekran `A09` musi
+ * mieć KOMPLET kodów, bo mapuje każdy z nich na plakietkę i opis (`Record<AdminAction,
+ * …>` w `screens/audyt/audytActions.ts` wymusza to kompilatorem). Lista przepisana
+ * ręcznie i niepilnowana rozjechałaby się przy pierwszej nowej komendzie panelu —
+ * i objawiłoby się to dopiero wtedy, gdy ktoś by tej akcji szukał w dzienniku.
+ *
+ * Czego ta kopia NIE robi: nie decyduje o tym, co wolno zapisać. Zapisuje wyłącznie
+ * serwer, typem `AdminAction` po swojej stronie. Tu są nazwy do nazwania — i do
+ * zbudowania filtra, który serwer i tak waliduje `isAdminAction`.
+ *
+ * **Dziennik może nieść kody SPOZA tej listy** (wpisy historyczne, akcja wycofana
+ * z katalogu — `admin_audit.action` celowo nie ma `CHECK`-a). Dlatego DTO niżej ma
+ * `action: string`, a nie `AdminAction`: unia opisuje katalog, nie zawartość tabeli.
+ */
+export type AdminAction =
+  | 'flag.resolve'
+  | 'event.correct'
+  | 'export.retry'
+  | 'pilot.create'
+  | 'pilot.update'
+  | 'pilot.deactivate'
+  | 'pilot.password_reset'
+  | 'aircraft.create'
+  | 'aircraft.update'
+  | 'aircraft.disable'
+  | 'thresholds.update'
+  | 'maintenance.rebuild_projections'
+  | 'maintenance.retry_exports'
+  | 'maintenance.prune_tokens';
+
 /** Konto zalogowane w panelu — stopka sidebara i decyzje o widoczności pozycji. */
 export interface PanelPilotDto {
   id: string;
@@ -280,6 +316,17 @@ export interface TimelineEntryDto {
   voided: boolean;
   /** Czas po korekcie (`retime`); `null` = czas zdarzenia jest oryginalny. */
   correctedTime: number | null;
+  /**
+   * `true` = to zdarzenie poprawił ADMINISTRATOR z panelu, a nie pilot w oknie 24 h.
+   *
+   * Panelowi tej różnicy nie da się wyliczyć z osi: `event_correction` wygląda
+   * identycznie niezależnie od tego, kto ją dopisał, a rozróżnia je kolumna serwera
+   * `events.source_device`. Konsekwencja jest jednak dla panelu decydująca — korekta
+   * pilota idzie przez `POST /events`, czyli Z POMINIĘCIEM bramy `AuditedWrite`, więc
+   * wpisu w `admin_audit` po niej nie ma. Przejście „ślad w audycie" wiesza się
+   * dokładnie na tym polu.
+   */
+  adminCorrected: boolean;
 }
 
 /**
@@ -298,6 +345,61 @@ export interface SessionDetailDto {
   timeline: TimelineEntryDto[];
   /** Flagi sesji RAZEM z rozwiązanymi — historia decyzji zostaje na karcie. */
   flags: FlagListItemDto[];
+}
+
+// ── dziennik audytu (`A09`) ─────────────────────────────────────────────────────
+
+/**
+ * Jeden wpis dziennika — odpowiedź `GET /admin/api/audit`.
+ *
+ * ══ DWA POLA SĄ NAPISAMI CELOWO I NIE WOLNO ICH ZWĘZIĆ ══
+ * `action` i `actorRole` opisują stan świata Z CHWILI AKCJI. Migracja 9 świadomie nie
+ * zakłada na nie `CHECK`-a, żeby przemianowanie akcji albo wycofanie roli nie
+ * unieważniało wpisu sprzed roku. Panel idzie za tą decyzją: kod spoza katalogu
+ * pokazujemy DOSŁOWNIE (`audytActions.ts`), zamiast go ukrywać albo wywracać się na nim.
+ * Dziennik nadzoru, który nie otwiera się przez własną historię, przestaje być dziennikiem.
+ *
+ * `details` jest workiem o kształcie zależnym od akcji — serwer wydaje go bez
+ * interpretacji. Panel czyta z niego pola po nazwie i **pokazuje także te, których nie
+ * rozumie**: dziennik, który ukrywa pole, bo go nie zna, przestaje być narzędziem nadzoru.
+ */
+export interface AuditEntryDto {
+  /** `admin_audit.id` — rosnący; w kolumnie czasu widać go jako `#8814`. */
+  id: number;
+  /** ISO 8601 UTC — chwila akcji wg zegara serwera. */
+  createdAt: string;
+
+  actorPilotId: string;
+  /** `null` = konta nie ma już w `pilots`; wpis zostaje z samym identyfikatorem. */
+  actorCode: string | null;
+  actorName: string | null;
+  actorRole: string;
+
+  action: string;
+  /** `flag` · `event` · `pilot` · `aircraft` · `sheet` … — `null` przy akcji bez celu. */
+  targetType: string | null;
+  targetId: string | null;
+
+  details: Record<string, unknown>;
+  /** `null` = akcja spoza żądania HTTP (skrypt administracyjny). */
+  ip: string | null;
+}
+
+/** Strona dziennika. Kursor keyset — `nextCursor === null` znaczy „to był koniec". */
+export interface AuditPageDto {
+  items: AuditEntryDto[];
+  nextCursor: string | null;
+  /**
+   * Ile wpisów spełnia CAŁY filtr, także gdy `limit` obciął stronę.
+   *
+   * **`null` = serwer tej liczby nie policzył, a NIE „zero".** Liczy ją wyłącznie dla
+   * PIERWSZEJ strony (bez kursora): jest własnością zapytania, a nie strony, więc nie
+   * zmienia się przy przewijaniu, a pełny `COUNT(*)` na dzienniku bez górnej granicy
+   * jest wielokrotnie droższy od samej strony. Panel niesie wartość z pierwszej strony
+   * (`audytPages.ts`) i nigdy nie zamienia `null` na `0` — zero jest twierdzeniem
+   * o świecie, brak odpowiedzi nim nie jest.
+   */
+  total: number | null;
 }
 
 // ── korekta administratora (`A02b`) ─────────────────────────────────────────────

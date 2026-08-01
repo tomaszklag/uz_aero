@@ -30,16 +30,29 @@ export interface DayPages {
   items: SessionListItemDto[];
   /** Ile wierszy widać. */
   shown: number;
-  /** Ile dni spełnia filtr WEDŁUG SERWERA — także tych jeszcze niepobranych. */
-  total: number;
+  /**
+   * Ile dni spełnia filtr WEDŁUG SERWERA — także tych jeszcze niepobranych.
+   *
+   * **`null` = odpowiedzi NIE MA** (zapytanie w drodze albo zakończone błędem), a nie
+   * „zero". To rozróżnienie jest tu całą treścią: zero jest twierdzeniem o świecie
+   * — „klub nie ma ani jednego dnia lotnego" — i nie wolno go postawić obok banera
+   * o nieudanym pobraniu.
+   *
+   * Bliźniaczy `screens/audyt/audytPages.ts` niesie `null` z DWÓCH powodów, bo serwer
+   * liczy tam wpisy wyłącznie dla pierwszej strony. Tutaj powód jest jeden: dni liczy
+   * `PgAdminSessionsRepo.list` przy KAŻDYM żądaniu, więc `null` znaczy dokładnie tyle,
+   * że nie mamy żadnej odpowiedzi.
+   */
+  total: number | null;
   /** Czy serwer ma dla nas kolejną stronę (kursor ostatniej odpowiedzi). */
   hasMore: boolean;
 }
 
 /**
- * Strony z `useInfiniteQuery` → stan listy. `undefined` (nic jeszcze nie przyszło)
- * daje zera i `hasMore: false` — pusty stan panelu ma być pusty, a nie obiecywać
- * ciąg dalszy, którego nikt nie zapowiedział.
+ * Strony z `useInfiniteQuery` → stan listy. Brak stron (nic jeszcze nie przyszło albo
+ * pobranie się nie udało) daje pustą listę, `hasMore: false` i `total: null` — pusty
+ * stan panelu ma być pusty, a nie obiecywać ciąg dalszy, którego nikt nie zapowiedział,
+ * ani podawać liczbę, której nikt nie przysłał.
  *
  * `total` bierzemy z OSTATNIEJ pobranej strony, a nie z pierwszej: serwer liczy go
  * tym samym filtrem przy każdym żądaniu, więc ostatni jest najświeższy. Jeśli w czasie
@@ -48,7 +61,7 @@ export interface DayPages {
  */
 export function dayPages(pages: readonly SessionPageDto[] | undefined): DayPages {
   if (pages == null || pages.length === 0) {
-    return { items: [], shown: 0, total: 0, hasMore: false };
+    return { items: [], shown: 0, total: null, hasMore: false };
   }
 
   const items = pages.flatMap((page) => page.items);
@@ -69,6 +82,9 @@ export function dayPages(pages: readonly SessionPageDto[] | undefined): DayPages
  * nadzoru: wygląda na komplet.
  */
 export function pagesSummary(state: DayPages): string {
+  // Brak liczby to brak zdania o liczbie. „Brak dni" byłoby tu odpowiedzią na pytanie,
+  // na które nie mamy danych — a pod spodem stoi baner o nieudanym pobraniu.
+  if (state.total == null) return 'Liczba dni nieznana — serwer nie odpowiedział.';
   if (state.total === 0) return 'Brak dni w tym zawężeniu.';
   if (!state.hasMore && state.shown >= state.total) {
     return `Pokazano wszystkie ${state.total}.`;

@@ -47,6 +47,11 @@ export function useResolveFlag() {
       void qc.invalidateQueries({ queryKey: keys.exports.all });
       void qc.invalidateQueries({ queryKey: keys.sessions.all });
 
+      // Dziennik audytu: `AuditedWrite` dopisał wpis TĄ SAMĄ transakcją, co zmianę —
+      // więc ekran `A09` otwarty obok jest nieaktualny dokładnie od tej chwili.
+      // Unieważnia go KAŻDA mutacja panelu, bo każda przechodzi tą samą bramą.
+      void qc.invalidateQueries({ queryKey: keys.audit.all });
+
       // Pulpit unieważnia KAŻDA mutacja panelu: alternatywą jest plakietka „7 flag"
       // kłamiąca zaraz po zamknięciu sprawy, czyli dokładnie ten rodzaj cichego
       // rozjazdu, który panel ma wykrywać, a nie produkować.

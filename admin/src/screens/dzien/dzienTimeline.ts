@@ -52,6 +52,22 @@ export interface TimelineRowView {
    * administratorowi jedyną drogę wycofania cudzej pomyłki.
    */
   correctable: boolean;
+  /**
+   * Czy przy TYM zdarzeniu jest co pokazać w dzienniku audytu.
+   *
+   * **To NIE jest to samo, co „zdarzenie zostało ruszone korektą"** — i ta różnica jest
+   * całym powodem, dla którego pole istnieje. `event_correction` emitują dwie
+   * powierzchnie: administrator z panelu (przez `AuditedWrite`, czyli z wierszem
+   * w `admin_audit`) i pilot w oknie 24 h (przez `POST /events`, z pominięciem tej
+   * bramy — bez żadnego śladu w dzienniku). Zdarzenie unieważnione przez pilota jest
+   * przypadkiem NORMALNYM; administracyjna korekta jest z definicji wyjątkiem. Link
+   * oparty na samym `voided` prowadziłby więc do pustej listy właśnie w typowej
+   * sytuacji, a link do pustki jest gorszy od jego braku.
+   *
+   * Rozróżnia je serwer (`TimelineEntryDto.adminCorrected`, z `events.source_device`) —
+   * z osi zdarzeń nie da się tego wyliczyć.
+   */
+  audited: boolean;
 }
 
 /** Czas zdarzenia w tej samej konwencji, co domena: GPS przed zegarem telefonu. */
@@ -229,6 +245,9 @@ export function timelineRows(entries: readonly TimelineEntryDto[]): TimelineRowV
       meta: [...notes, ...describe(entry.event)],
       voided: entry.voided,
       correctable: meta.correctable,
+      // Ślad w dzienniku zostaje WYŁĄCZNIE po korekcie administratora — patrz docblock
+      // pola. `voided` mówi o skutku, nie o tym, kto go wywołał.
+      audited: entry.adminCorrected,
     };
   });
 }

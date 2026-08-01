@@ -527,6 +527,79 @@ describe('karta dnia (A02a)', () => {
     expect(landing.event.gpsTime).toBe(at(9, 18));
   });
 
+  it('`adminCorrected` odróżnia korektę PANELU od korekty pilota z okna 24 h', async () => {
+    // Oba zdarzenia wyjdą z tej osi UNIEWAŻNIONE i w rejestrze wyglądają identycznie —
+    // `event_correction` ma ten sam kształt niezależnie od tego, kto ją dopisał.
+    // Różnica jest w tym, CZY POWSTAŁ ŚLAD: korekta administratora idzie przez
+    // `AuditedWrite` i zostawia wiersz w `admin_audit`, a korekta pilota przez
+    // `POST /events`, czyli z pominięciem tej bramy — dziennika nie dotyka w ogóle.
+    // Panel wiesza na tym polu przejście „ślad w audycie", więc bez tego rozróżnienia
+    // link prowadzi w pustkę dokładnie w przypadku NORMALNYM (korekt pilota jest
+    // więcej niż administracyjnych, bo tamte są z definicji wyjątkiem).
+    const { app, admin } = await threeDays();
+
+    const card = () =>
+      app
+        .inject({
+          method: 'GET',
+          url: '/admin/api/sessions/sess-1',
+          headers: { authorization: `Bearer ${admin}` },
+        })
+        .then((res) => res.json());
+
+    const flight = (await card()).state.flights[0];
+
+    // 1) KOREKTA ADMINISTRATORA — jedyna droga zapisu panelu, `source_device` = `admin:TMK`.
+    const byAdmin = await app.inject({
+      method: 'POST',
+      url: '/admin/api/sessions/sess-1/corrections',
+      headers: { authorization: `Bearer ${admin}`, ...ADMIN_CSRF_HEADERS },
+      payload: {
+        targetUuid: flight.takeoffUuid,
+        action: 'void',
+        reason: 'Start wykryty przy kołowaniu — potwierdzone z pilotem.',
+      },
+    });
+    expect(byAdmin.statusCode).toBe(200);
+
+    // 2) KOREKTA PILOTA — zwykły `POST /events` z telefonu, z identyfikatorem urządzenia.
+    const pilot = await login(app, 'TMK');
+    const byPilot = await post(app, pilot, [
+      event(
+        'event_correction',
+        at(23, 0),
+        { targetUuid: flight.landingUuid, action: 'void' },
+        { sessionUuid: 'sess-1', picId: 'TMK', aircraftId: 'SP-AXA' },
+      ),
+    ]);
+    expect(byPilot.statusCode).toBe(200);
+
+    const timeline = (await card()).timeline as {
+      event: { uuid: string };
+      voided: boolean;
+      adminCorrected: boolean;
+    }[];
+    const find = (uuid: string) => timeline.find((e) => e.event.uuid === uuid)!;
+
+    // Oba są unieważnione — po tym polu NIE DA SIĘ ich rozróżnić…
+    expect([find(flight.takeoffUuid).voided, find(flight.landingUuid).voided]).toEqual([true, true]);
+    // …a ślad w dzienniku ma tylko jedno z nich.
+    expect(find(flight.takeoffUuid).adminCorrected).toBe(true);
+    expect(find(flight.landingUuid).adminCorrected).toBe(false);
+
+    // Kontrola: w `admin_audit` jest DOKŁADNIE jeden wpis `event.correct` i wskazuje
+    // na zdarzenie poprawione przez panel. To jest ta sama lista, którą po kliknięciu
+    // „Audyt" pokazuje `GET /admin/api/audit?targetType=event&targetId=…`.
+    const audited = (
+      await app.inject({
+        method: 'GET',
+        url: '/admin/api/audit?action=event.correct',
+        headers: { authorization: `Bearer ${admin}` },
+      })
+    ).json() as { items: { targetId: string }[] };
+    expect(audited.items.map((i) => i.targetId)).toEqual([flight.takeoffUuid]);
+  });
+
   it('flagi dnia zawierają także ROZWIĄZANE — historia decyzji zostaje na karcie', async () => {
     const harness = await testHarness();
     const { app, db } = harness;

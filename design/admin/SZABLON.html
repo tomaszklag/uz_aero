@@ -202,6 +202,14 @@
   .cell-strong { font-weight:600; }
   .cell-sub { display:block; font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; }
   .reg { font-family:var(--font-mono); font-weight:700; letter-spacing:1px; }
+  /* Link W TREŚCI komórki — zawęża listę do tej wartości (A09: konto działającego,
+     identyfikator obiektu). Wygląda jak treść, nie jak przycisk, i to jest cała jego
+     racja bytu: dwa `.btn` na wiersz w tabeli o sześciu kolumnach zamieniają listę
+     w farmę guzików. Kreska jest przerywana i wygaszona, więc nie konkuruje z liczbami
+     obok, a pod kursorem i przy fokusie robi się zielona — wtedy dopiero ma znaczyć
+     „to jest klikalne". Dodane 2026-08-01 razem z ekranem A09. */
+  .cell-link { color:inherit; text-decoration:none; border-bottom:1px dashed var(--border-strong); }
+  .cell-link:hover, .cell-link:focus-visible { color:var(--green); border-bottom-color:var(--green-border); }
   .row-actions { display:flex; gap:6px; justify-content:flex-end; }
 
   /* ── plakietki stanu ── */
@@ -246,6 +254,11 @@
   .opt-desc { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
   .opt-check { color:var(--green); opacity:0; flex-shrink:0; }
   .opt.selected .opt-check { opacity:1; }
+  /* Wariant NAWIGACYJNY karty (`.opt` jako <a>): szewron zajmuje miejsce `.opt-check`,
+     bo mówi to samo — „to jest do kliknięcia" — tylko o ruchu w głąb, nie o zaznaczeniu.
+     Używa go A03a do wypisania sesji objętych flagą. Dopisane 2026-08-01: reguła żyła
+     w kodzie panelu od przekroju flag, a w szablonie jej nie było. */
+  .opt-go { color:var(--text-muted); flex-shrink:0; display:flex; }
   .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
 
   /* ── banery (3 typy — docs/design-notes.md) ── */
@@ -301,6 +314,24 @@
      ją jako punkt odniesienia, a nie jako liczbę do zapamiętania — uwaga ma zostać
      przy wartości po prawej. Awansowane ze stylu inline (2026-08-01). */
   .kv-v .was { color:var(--text-muted); font-weight:400; }
+
+  /* ══ LISTA SZCZEGÓŁÓW — pola workowatego JSON-a W KOMÓRCE TABELI (A09) ══
+     Osobny komponent od `.kv`, a nie jego wariant, bo odpowiada na inne pytanie.
+     `.kv` jest zestawieniem liczb w karcie: wartość stoi po prawej, wytłuszczona,
+     żeby czytało się kolumnę. Tu wartością bywa zdanie („Przeloty techniczne po
+     przeglądzie 100 h — wpis w książce statku potwierdza"), a kluczy jest tyle, ile
+     akurat zapisała komenda. Prawe wyrównanie rozjechałoby akapit, a układ dwóch
+     torów pozwala czytać w dół po nazwach pól.
+     `.det-v.raw` niesie regułę, nie ozdobę: pole, którego panel nie umie nazwać,
+     zostaje POKAZANE z surowym kluczem i surową wartością — wygaszone, ale obecne.
+     Dziennik audytu, który ukrywa pole, bo go nie zna, przestaje być narzędziem
+     nadzoru. Dodane 2026-08-01 razem z ekranem A09. */
+  .det { display:flex; flex-direction:column; gap:3px; }
+  .det-row { display:grid; grid-template-columns:132px 1fr; gap:10px; align-items:baseline; }
+  .det-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .det-v { font-family:var(--font-mono); font-size:11px; line-height:1.55; color:var(--text-secondary); overflow-wrap:anywhere; }
+  .det-v.raw { color:var(--text-muted); }
+  .det-empty { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); }
 
   /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
   .tl { display:flex; flex-direction:column; }
@@ -598,7 +629,7 @@
           <span><b>Rejestr zdarzeń jest append-only.</b> Panel nigdy nie edytuje ani nie kasuje zdarzenia — korekta dopisuje <code>event_correction</code> (<code>retime</code> / <code>void</code>). Oryginalny odczyt zostaje w rejestrze na zawsze.</span>
         </div>
 
-        <div class="demo-note">3 · Filtry + tabela + plakietki stanu</div>
+        <div class="demo-note">3 · Filtry + tabela + plakietki stanu (kolumna „Samolot" pokazuje `.cell-link` — klikalną TREŚĆ komórki)</div>
         <div class="filters">
           <label class="search">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -627,7 +658,10 @@
             <tbody>
               <tr class="clickable">
                 <td class="mono">31 JUL 2026<span class="cell-sub">UTC</span></td>
-                <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
+                <!-- `.cell-link` — klikalna TREŚĆ komórki, zawężająca listę do tej
+                     wartości. Nie `.btn`: w tabeli o ośmiu kolumnach przycisk w każdym
+                     wierszu przestaje być akcją, a zaczyna być tłem. -->
+                <td><a class="cell-link reg" href="#">SP-ABC</a><span class="cell-sub">Cessna 182</span></td>
                 <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">PIC · dual: —</span></td>
                 <td class="num">02:14</td>
                 <td class="num">1284.6 → <span style="color:var(--text-muted)">—</span></td>
@@ -716,6 +750,19 @@
                  przy liczbie po prawej stronie strzałki. -->
             <div class="kv"><span class="kv-k">Czas blokowy · po korekcie</span><span class="kv-v"><span class="was">05:53</span> → 05:41 <small>−12 min</small></span></div>
           </div>
+
+          <div class="card">
+            <div class="card-title">Lista szczegółów <span class="spacer"></span><span class="pill dim">details JSONB</span></div>
+            <div class="det">
+              <div class="det-row"><span class="det-k">rodzaj korekty</span><span class="det-v">retime</span></div>
+              <div class="det-row"><span class="det-k">nowy czas zdarzenia</span><span class="det-v">2026-07-30 11:38:00 UTC (1785584280000)</span></div>
+              <div class="det-row"><span class="det-k">powód</span><span class="det-v">Lądowanie wykryte 3 min po dobiegu.</span></div>
+              <!-- Klucza `flightLegIndex` panel nie umie nazwać — i właśnie dlatego
+                   pokazuje go z surową nazwą, wygaszonego (`.raw`), a nie pomija. -->
+              <div class="det-row"><span class="det-k">flightLegIndex</span><span class="det-v raw">3</span></div>
+            </div>
+            <span class="hint">Kolejność pól jest kolejnością z serwera — panel jej nie przestawia, bo <code>details</code> to worek o kształcie zależnym od akcji, a nie rekord o ustalonych polach.</span>
+          </div>
         </div>
 
         <div class="demo-note">4 · Formularz — pola i lista kart (natywny &lt;select&gt; jest zakazany)</div>
@@ -750,6 +797,14 @@
                 <span class="opt-body"><span class="opt-name">Pilot</span><span class="opt-desc">Bez wejścia do panelu — loguje się w aplikacji na telefonie</span></span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
               </button>
+
+              <!-- Wariant NAWIGACYJNY (`.opt` jako <a>, szewron zamiast ptaszka): karta
+                   nie WYBIERA wartości, tylko PROWADZI w głąb. Tak A03a wypisuje sesje
+                   objęte flagą — każda jest linkiem do swojej karty dnia. -->
+              <a class="opt" href="A02a-dzien.html">
+                <span class="opt-body"><span class="opt-name">30 JUL 2026 · SP-KLM</span><span class="opt-desc">sesja 7c1e5a9b…83b4 · 9 lotów · blok 05:53</span></span>
+                <span class="opt-go"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
+              </a>
             </div>
           </div>
         </div>

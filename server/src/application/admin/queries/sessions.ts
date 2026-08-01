@@ -19,7 +19,12 @@ import type { Database, EventsStorePort } from '../../common/ports.ts';
 import type { AdminSessionDetail, AdminSessionPage } from '../contracts/sessions.ts';
 import { eventTimeline } from '../mappers/eventTimeline.ts';
 import { flagListItem } from '../mappers/flagListItem.ts';
-import type { FlagsAdminPort, SessionListFilter, SessionsAdminPort } from '../ports.ts';
+import type {
+  EventsAdminPort,
+  FlagsAdminPort,
+  SessionListFilter,
+  SessionsAdminPort,
+} from '../ports.ts';
 import { sessionListItem } from '../mappers/sessionListItem.ts';
 
 /**
@@ -43,6 +48,13 @@ export class AdminSessionQueries {
     private readonly sessions: SessionsAdminPort,
     private readonly events: EventsStorePort,
     private readonly flags: FlagsAdminPort,
+    /**
+     * Metadane rejestru, których `Event` nie niesie. Karta dnia potrzebuje dokładnie
+     * jednej: czy korektę dopisał panel, czy telefon pilota — bo tylko po tej pierwszej
+     * zostaje wiersz w `admin_audit`, a więc tylko przy niej link „ślad w audycie"
+     * ma co pokazać.
+     */
+    private readonly eventsMeta: EventsAdminPort,
   ) {}
 
   async list(filter: SessionListFilter): Promise<SessionListOutcome> {
@@ -68,12 +80,13 @@ export class AdminSessionQueries {
     // Flagi TEJ sesji razem z rozwiązanymi: karta dnia ma pokazywać także decyzje już
     // podjęte, inaczej historia rozstrzygnięć znika dokładnie tam, gdzie jest potrzebna.
     const { items } = await this.flags.list(this.db, { sessionUuid, limit: FLAGS_PER_DAY });
+    const byAdmin = await this.eventsMeta.adminCorrectionUuids(this.db, sessionUuid);
 
     return {
       session: sessionListItem(join),
       // JEDYNE wywołanie `projectSession` na żądanie w całym panelu.
       state: projectSession(stream),
-      timeline: eventTimeline(stream),
+      timeline: eventTimeline(stream, new Set(byAdmin)),
       flags: items.map(flagListItem),
     };
   }

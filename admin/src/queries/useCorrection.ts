@@ -48,6 +48,10 @@ export function useCorrection() {
       // karty z połowy danych byłoby zgadywaniem reszty.
       void qc.invalidateQueries({ queryKey: keys.sessions.all });
       void qc.invalidateQueries({ queryKey: keys.exports.all });
+      // Dziennik audytu: wpis `event.correct` powstał tą samą transakcją, co korekta.
+      // Ekran `A09` odfiltrowany po tym zdarzeniu jest jedynym miejscem, w którym
+      // widać powód zmiany — musi go pokazać od razu, a nie po odświeżeniu strony.
+      void qc.invalidateQueries({ queryKey: keys.audit.all });
       void qc.invalidateQueries({ queryKey: keys.dashboard });
     },
   });

@@ -94,6 +94,18 @@ export interface AdminTimelineEntry {
   voided: boolean;
   /** Czas po korekcie (`retime`); `null` = czas zdarzenia jest oryginalny. */
   correctedTime: number | null;
+  /**
+   * `true` = to zdarzenie poprawił ADMINISTRATOR z panelu, a nie pilot w oknie 24 h.
+   *
+   * To jest fakt o rejestrze, nie podpowiedź dla interfejsu, i bez serwera nie da się
+   * go ustalić: `event_correction` wygląda identycznie niezależnie od tego, kto ją
+   * dopisał — różni je wyłącznie `events.source_device` (kolumna serwera, spoza
+   * `Event`). Konsekwencja jest jednak dla panelu decydująca: korekta pilota idzie
+   * przez `POST /events`, czyli Z POMINIĘCIEM `AuditedWrite`, więc wiersza
+   * w `admin_audit` po niej NIE MA. Przejście „ślad w audycie" ma sens dokładnie
+   * wtedy, gdy to pole jest `true`.
+   */
+  adminCorrected: boolean;
 }
 
 /**

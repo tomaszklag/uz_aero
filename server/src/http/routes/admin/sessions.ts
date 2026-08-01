@@ -19,26 +19,11 @@ import type { AdminSessionQueries } from '../../../application/admin/queries/ses
 import { PAGE_LIMIT_MAX, type SessionListFilter } from '../../../application/admin/ports.ts';
 import type { TokenService } from '../../../application/common/ports.ts';
 import { adminRoute } from './adminRoute.ts';
-
-/**
- * Dzień jako `YYYY-MM-DD` w UTC — panel filtruje po DNIACH, nie po stemplach, bo tak
- * wygląda kalendarz na A02. Zakres jest obustronnie DOMKNIĘTY: `do=2026-07-31` obejmuje
- * cały 31 lipca do 23:59:59.999 UTC, inaczej „od 25 do 31" gubiłoby ostatni dzień —
- * najbardziej nieoczywisty możliwy sposób na zgubienie danych w narzędziu nadzoru.
- */
-const day = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'oczekiwano daty YYYY-MM-DD (UTC)')
-  .transform((value) => {
-    const [y, m, d] = value.split('-').map(Number) as [number, number, number];
-    return Date.UTC(y, m - 1, d);
-  });
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { dayParam, endOfDay } from './dayRange.ts';
 
 const listQuery = z.object({
-  from: day.optional(),
-  to: day.optional(),
+  from: dayParam.optional(),
+  to: dayParam.optional(),
   aircraftId: z.string().min(1).max(50).optional(),
   pilotId: z.string().min(1).max(50).optional(),
   status: z.enum(['active', 'closed']).optional(),
@@ -73,8 +58,8 @@ export function registerAdminSessionRoutes(
       const q = query.data;
       const filter: SessionListFilter = {
         fromMs: q.from,
-        // Górna granica jako koniec DNIA, nie jego początek (patrz komentarz przy `day`).
-        toMs: q.to === undefined ? undefined : q.to + DAY_MS - 1,
+        // Górna granica jako koniec DNIA, nie jego początek (patrz `dayRange.ts`).
+        toMs: endOfDay(q.to),
         aircraftId: q.aircraftId,
         pilotId: q.pilotId,
         status: q.status,

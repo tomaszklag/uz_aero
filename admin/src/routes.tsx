@@ -16,6 +16,7 @@ import { createHashRouter, Navigate } from 'react-router-dom';
 
 import { LoginRoute } from './auth/LoginRoute';
 import { ShellRoute } from './auth/ShellRoute';
+import { AudytScreen } from './screens/audyt/AudytScreen';
 import { DniScreen } from './screens/dni/DniScreen';
 import { DzienScreen } from './screens/dzien/DzienScreen';
 import { FlagiScreen } from './screens/flagi/FlagiScreen';
@@ -23,7 +24,7 @@ import { WBudowieScreen } from './screens/wBudowie/WBudowieScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
 
 /** Pozycje nawigacji, dla których ekran już istnieje — nie dostają „w budowie". */
-const IMPLEMENTED = new Set(['/dni', '/flagi']);
+const IMPLEMENTED = new Set(['/dni', '/flagi', '/audyt']);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
   (item) => !IMPLEMENTED.has(item.to),
@@ -62,6 +63,12 @@ export const router = createHashRouter([
       // operację, której nie ma. Wyboru zdarzenia dokonuje oś zdarzeń karty dnia;
       // osobnego ekranu wyboru nie budujemy.
       { path: 'dni/:sessionUuid/korekta/:targetUuid', element: <DzienScreen /> },
+
+      // Dziennik audytu (`A09`) — JEDNA trasa bez parametrów ścieżki, bo wpis audytu
+      // nie ma ekranu szczegółu: cała jego treść mieści się w wierszu. Zawężenia
+      // (konto, obiekt, grupa akcji, zakres dat) jadą query stringiem, żeby link
+      // „ślad w audycie" z karty dnia i z korekty dało się wkleić.
+      { path: 'audyt', element: <AudytScreen /> },
 
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.

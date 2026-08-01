@@ -39,6 +39,7 @@ import {
 } from '@uzaero/domain';
 
 import { correctionCandidate, correctionViolations } from '../correctionCandidate.ts';
+import { adminSourceDevice } from '../sourceDevice.ts';
 import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
 import type { DayExporter, ExportOutcome } from '../../common/export/dayExporter.ts';
 import type {
@@ -159,7 +160,10 @@ export class AdminCorrectionCommands {
         const errors = correctionViolations(before, candidate, limits);
         if (errors.length > 0) throw new RuleRejection(errors);
 
-        await this.events.insertBatch(tx, [candidate], `admin:${actor.pilotId}`);
+        // Znacznik zapisu panelu jedzie ze wspólnego modułu, bo ma DRUGIEGO czytelnika:
+        // po nim adapter osi zdarzeń poznaje, że korektę wykonał administrator, a nie
+        // pilot w oknie 24 h (`application/admin/sourceDevice.ts`).
+        await this.events.insertBatch(tx, [candidate], adminSourceDevice(actor.pilotId));
 
         // Projekcję przeliczamy z PEŁNEGO strumienia, nie przyrostowo — korekta zmienia
         // przeszłość dnia (czas cyklu, liczbę lotów), więc żadna arytmetyka „dodaj

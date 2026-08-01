@@ -52,6 +52,7 @@ import {
 } from './dniFilters';
 import { dayPages, dniEmpty, pagesSummary } from './dniPages';
 import { dayRows, type DayRow } from './dniRows';
+import { dniTiles } from './dniTiles';
 import { OPERATION_META, OPERATION_ORDER } from './operations';
 
 export function DniScreen() {
@@ -106,32 +107,22 @@ export function DniScreen() {
       />
 
       <TileGrid>
-        <Tile
-          label="Dni w zawężeniu"
-          value={days.isPending ? '—' : pages.total}
-          note={
-            isNarrowed(filter)
-              ? 'Tyle sesji spełnia filtr z adresu — liczba z serwera, nie z pobranych stron.'
-              : 'Wszystkie sesje w rejestrze, od pierwszego dnia klubu.'
-          }
-        />
-        <Tile
-          label="Dni otwarte"
-          value={openCount.data ?? '—'}
-          tone={openCount.data == null || openCount.data === 0 ? undefined : 'blue'}
-          note="Sesje bez `day_close`. Telefon dosyła do nich zdarzenia — odczyty końcowe są puste."
-        />
-        <Tile
-          label="Z otwartą flagą"
-          value={flaggedCount.data ?? '—'}
-          tone={flaggedCount.data == null ? undefined : flaggedCount.data === 0 ? 'green' : 'amber'}
-          note="Dni z rozbieżnością do wyjaśnienia. Flaga nie zmienia liczb — opisuje je."
-        />
-        <Tile
-          label="Wyeksportowane"
-          value={exportedCount.data ?? '—'}
-          note="Dni z kartą w `export_log`. Karta powstaje po zamknięciu dnia, nie w jego trakcie."
-        />
+        {/* Warunkiem „—" jest OBECNOŚĆ danych, nie faza ładowania. `isPending` jest
+            `false` także wtedy, gdy pobranie się NIE UDAŁO — a `dayPages` bez odpowiedzi
+            oddaje wtedy `total: null`, czyli „nie wiemy". Postawienie tu zera kazałoby
+            ekranowi twierdzić, tuż obok banera o błędzie, że klub nie ma ani jednego
+            dnia lotnego. */}
+        {dniTiles(
+          {
+            total: pages.total,
+            open: openCount.data,
+            flagged: flaggedCount.data,
+            exported: exportedCount.data,
+          },
+          isNarrowed(filter),
+        ).map((tile) => (
+          <Tile key={tile.label} label={tile.label} value={tile.value} tone={tile.tone} note={tile.note} />
+        ))}
       </TileGrid>
 
       <FilterBar>

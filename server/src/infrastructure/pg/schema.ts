@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -248,6 +248,13 @@ export const MIGRATION_8 = `
  *
  * `ip` jest NULL-owalny: akcja może przyjść z narzędzia bez żądania HTTP (skrypt
  * administracyjny), a wymyślony adres byłby gorszy niż jego brak.
+ *
+ * **UWAGA: kształt OBU indeksów niżej jest NIEAKTUALNY — unieważnia go migracja 12.**
+ * Brak `NULLS LAST` i brak `id` w `idx_audit_actor` sprawiały, że planer nie mógł użyć
+ * ich do porządkowania, więc każda strona dziennika kończyła się pełnym `Sort`-em.
+ * Migracja zostaje w tej postaci, bo migracji nie przepisuje się wstecz — ale wzorca
+ * stąd NIE KOPIUJ: dowodem, dlaczego to zdanie tu stoi, jest właśnie `idx_audit_actor`,
+ * powielony z `idx_audit_created` razem z wadą.
  */
 export const MIGRATION_9 = `
   CREATE TABLE IF NOT EXISTS admin_audit (
@@ -262,7 +269,7 @@ export const MIGRATION_9 = `
     created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
   );
   CREATE INDEX IF NOT EXISTS idx_audit_created ON admin_audit (created_at DESC, id DESC);
-  CREATE INDEX IF NOT EXISTS idx_audit_actor   ON admin_audit (actor_pilot_id, created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_audit_actor   ON admin_audit (actor_pilot_id, created_at DESC NULLS LAST, id DESC);
 `;
 
 /**
@@ -330,6 +337,49 @@ export const MIGRATION_11 = `
     ON sessions (claim_time DESC NULLS LAST, session_uuid DESC);
 `;
 
+/**
+ * Migracja 12: OBA indeksy dziennika audytu dopasowane do porządku, którym go czytamy.
+ *
+ * `idx_audit_created` powstał w migracji 9 jako `(created_at DESC, id DESC)` — a `DESC`
+ * w PostgreSQL znaczy `NULLS FIRST`. Tymczasem `keysetOrderBy` (`infrastructure/pg/keyset.ts`)
+ * generuje `DESC NULLS LAST` JAWNIE i celowo: domyślne porządki różnią się między `ASC`
+ * a `DESC`, więc poleganie na nich dałoby dwa różne porządki pod jedną nazwą, a predykat
+ * kursora musi opisywać dokładnie ten sam porządek co sortowanie.
+ *
+ * Skutek rozjazdu jest niewidoczny w wynikach i zabójczy dla wydajności: planer nie może
+ * użyć indeksu do porządkowania, więc KAŻDA strona to `Seq Scan` + pełny `Sort` tabeli.
+ * Zmierzone na PGlite przy 2000 wierszy: koszt pierwszej strony 109 zamiast 4, i rośnie
+ * liniowo z dziennikiem, który z natury tylko przyrasta. Paginacja kursorem istnieje po to,
+ * żeby koszt strony był STAŁY — bez pasującego indeksu wraca dokładnie ten problem,
+ * przed którym miała chronić.
+ *
+ * **`idx_audit_actor` miał tę samą wadę i jeszcze jedną: brakowało mu `id`.** Filtr po
+ * koncie (kolumna „Kto" na `A09` jest linkiem, więc to najczęstsze zawężenie ekranu)
+ * sortuje tak samo — `(created_at DESC NULLS LAST, id DESC)` — a indeks bez tie-breakera
+ * i bez `NULLS LAST` nie obsługuje tego porządku. Planer schodził wtedy na
+ * `idx_audit_created` z filtrem albo na `Seq Scan`, czyli PIERWSZA strona zawężenia
+ * kosztowała tyle, co przejrzenie całego dziennika. Trzy kolumny w tej kolejności
+ * (równość, potem porządek) obsługują filtr i sortowanie jednym przejściem.
+ *
+ * Wada spała od migracji 9, bo do ekranu `A09` nikt tej tabeli nie czytał. Wzorzec
+ * poprawny mieliśmy już obok: `idx_sessions_day` (migracja 11) od początku niesie
+ * `NULLS LAST`. `created_at` jest `NOT NULL`, więc nulli tu nigdy nie będzie — ale
+ * planer dopasowuje porządek indeksu SKŁADNIOWO i o ograniczeniu nie wnioskuje.
+ *
+ * Że oba indeksy faktycznie NIOSĄ porządek, sprawdza `EXPLAIN` w `test/adminAudit.test.ts`
+ * (brak węzła `Sort` w planie obu zapytań listy) — zdanie w prozie już raz nie
+ * powstrzymało powielenia tej wady.
+ */
+export const MIGRATION_12 = `
+  DROP INDEX IF EXISTS idx_audit_created;
+  CREATE INDEX IF NOT EXISTS idx_audit_created
+    ON admin_audit (created_at DESC NULLS LAST, id DESC);
+
+  DROP INDEX IF EXISTS idx_audit_actor;
+  CREATE INDEX IF NOT EXISTS idx_audit_actor
+    ON admin_audit (actor_pilot_id, created_at DESC NULLS LAST, id DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -342,4 +392,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_9,
   MIGRATION_10,
   MIGRATION_11,
+  MIGRATION_12,
 ];

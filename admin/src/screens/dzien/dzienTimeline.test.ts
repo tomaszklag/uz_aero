@@ -35,6 +35,7 @@ const entry = (e: Event, over: Partial<TimelineEntryDto> = {}): TimelineEntryDto
   event: e,
   voided: false,
   correctedTime: null,
+  adminCorrected: false,
   ...over,
 });
 
@@ -109,6 +110,43 @@ describe('timelineRows — zdarzenie poprawione (`retime`)', () => {
     expect(note).toContain('09:30:00');
     expect(note).toContain('09:18:00');
     expect(note).toContain('projekcja liczy dzień z tą wartością');
+  });
+});
+
+describe('timelineRows — wejście do dziennika audytu (`audited`)', () => {
+  it('oznacza WYŁĄCZNIE zdarzenia poprawione przez ADMINISTRATORA', () => {
+    // `target_id` wpisu `event.correct` jest uuid-em zdarzenia POPRAWIANEGO, więc tylko
+    // przy takim wierszu link „Audyt" ma co pokazać. Przy nietkniętym prowadziłby do
+    // pustej listy — a link do pustki jest gorszy od jego braku.
+    const rows = timelineRows([
+      entry(takeoff(at(8, 0), 'nietknięte')),
+      entry(takeoff(at(8, 14), 'unieważnione przez admina'), { voided: true, adminCorrected: true }),
+      entry(takeoff(at(9, 18), 'przestemplowane przez admina'), {
+        correctedTime: at(9, 30),
+        adminCorrected: true,
+      }),
+    ]);
+
+    expect(rows.map((row) => row.audited)).toEqual([false, true, true]);
+  });
+
+  it('KOREKTA PILOTA z okna 24 h NIE daje linku — w dzienniku nie ma po niej śladu', () => {
+    // To jest przypadek NORMALNY, nie brzegowy: `event_correction` emituje też telefon
+    // (ekran 12, okno 24 h) i idzie ona przez `POST /events`, czyli Z POMINIĘCIEM
+    // `AuditedWrite`. Wiersz w `admin_audit` po niej NIE POWSTAJE. Wiersz osi wygląda
+    // wtedy identycznie jak po korekcie administratora — przekreślony albo z nowym
+    // czasem — więc link oparty na `voided`/`correctedTime` prowadził do pustej listy
+    // dokładnie tam, gdzie korekty zdarzają się najczęściej.
+    const rows = timelineRows([
+      entry(takeoff(at(8, 14), 'unieważnione przez pilota'), { voided: true }),
+      entry(takeoff(at(9, 18), 'przestemplowane przez pilota'), { correctedTime: at(9, 30) }),
+    ]);
+
+    // Skutek korekty widać (przekreślenie, nowy czas w opisie)…
+    expect(rows.map((row) => row.voided)).toEqual([true, false]);
+    expect(rows[1]!.meta[0]).toContain('09:30:00');
+    // …ale wejścia do dziennika nie ma, bo nie ma czego pokazać.
+    expect(rows.map((row) => row.audited)).toEqual([false, false]);
   });
 });
 

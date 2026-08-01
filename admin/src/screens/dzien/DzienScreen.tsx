@@ -40,7 +40,9 @@ import { DaysIcon, EditIcon } from '../../ui/components/icons';
 import { discrepancyOf } from '../flagi/flagDetails';
 import { shortUuid } from '../flagi/flagRows';
 import { FLAG_TYPE_META } from '../flagi/flagTypes';
+import { targetHref } from '../audyt/audytFilters';
 import { KorektaDrawer } from '../korekta/KorektaDrawer';
+import { flagAuditHref } from './dzienFlagAudit';
 import { flightRows, type FlightRow } from './dzienFlights';
 import { correctionAccess, correctionPath, dayBanner, dayHeader } from './dzienHeader';
 import { dayTiles, dropRows, fuelRows, mhRows, sessionRows, utcStamp } from './dzienSummary';
@@ -179,14 +181,28 @@ export function DzienScreen() {
                   // zamieniłby oś w płot z powodami, a powód jest tu zawsze ten sam
                   // i wynika z typu, nie ze stanu konta.
                   action={
-                    correction.allowed && row.correctable ? (
-                      <LinkButton
-                        to={correctionPath(session.sessionUuid, row.uuid)}
-                        variant="ghost"
-                        size="sm"
-                      >
-                        Koryguj
-                      </LinkButton>
+                    row.audited || (correction.allowed && row.correctable) ? (
+                      <>
+                        {/* Zdarzenie już ruszone korektą dostaje przejście do
+                            DZIENNIKA AUDYTU: `target_id` wpisu `event.correct` jest
+                            uuid-em zdarzenia poprawianego, więc to jedyne miejsce,
+                            w którym widać, KTO i DLACZEGO zmienił tę liczbę. Powód
+                            korekty żyje wyłącznie w audycie — do rejestru nie trafia. */}
+                        {row.audited ? (
+                          <LinkButton to={targetHref('event', row.uuid)} variant="ghost" size="sm">
+                            Audyt
+                          </LinkButton>
+                        ) : null}
+                        {correction.allowed && row.correctable ? (
+                          <LinkButton
+                            to={correctionPath(session.sessionUuid, row.uuid)}
+                            variant="ghost"
+                            size="sm"
+                          >
+                            Koryguj
+                          </LinkButton>
+                        ) : null}
+                      </>
                     ) : undefined
                   }
                   meta={row.meta.map((line) => (
@@ -314,6 +330,7 @@ export function DzienScreen() {
                   const meta = FLAG_TYPE_META[flag.type];
                   const discrepancy = discrepancyOf(flag);
                   const created = Date.parse(flag.createdAt);
+                  const auditHref = flagAuditHref(flag);
                   return (
                     <tr key={flag.id}>
                       <td>
@@ -348,6 +365,15 @@ export function DzienScreen() {
                       </td>
                       <td>
                         <div className="row-actions">
+                          {/* Wejście z kontekstem do dziennika audytu — ale TYLKO przy
+                              sprawie rozstrzygniętej: wpis `flag.resolve` powstaje
+                              dopiero w chwili rozstrzygnięcia, więc przy fladze otwartej
+                              dziennik jest pusty z definicji (`dzienFlagAudit.ts`). */}
+                          {auditHref == null ? null : (
+                            <LinkButton to={auditHref} variant="ghost" size="sm">
+                              Audyt
+                            </LinkButton>
+                          )}
                           <LinkButton to={`/flagi/${flag.id}`} variant="ghost" size="sm">
                             {flag.status === 'open' ? 'Rozwiąż' : 'Szczegóły'}
                           </LinkButton>

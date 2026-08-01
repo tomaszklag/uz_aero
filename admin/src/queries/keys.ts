@@ -9,6 +9,7 @@
  * opisanym niżej przy `sessions`/`exports`/`dashboard`.
  */
 
+import type { AuditListQuery } from '../api/audit';
 import type { CorrectionDraftDto } from '../api/dto';
 import type { FlagListQuery } from '../api/flags';
 import type { SessionListQuery } from '../api/sessions';
@@ -42,6 +43,20 @@ export const keys = {
     list: (query: SessionListQuery) => ['sessions', 'list', query] as const,
     count: (query: SessionListQuery) => ['sessions', 'count', query] as const,
     detail: (sessionUuid: string) => ['sessions', 'detail', sessionUuid] as const,
+  },
+
+  /**
+   * Dziennik audytu (`A09`).
+   *
+   * Tak samo jak przy dniach: `list` NIE zawiera kursora (to parametr strony, nie
+   * tożsamość pytania), a `count` odpowiada na inne pytanie niż lista — kafle nad
+   * tabelą („wpisy dziś") potrzebują liczby policzonej przez serwer całym filtrem,
+   * a nie sumy z pobranej strony.
+   */
+  audit: {
+    all: ['audit'] as const,
+    list: (query: AuditListQuery) => ['audit', 'list', query] as const,
+    count: (query: AuditListQuery) => ['audit', 'count', query] as const,
   },
 
   /**

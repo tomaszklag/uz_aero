@@ -11,6 +11,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { AdminCorrectionCommands } from '../application/admin/commands/corrections.ts';
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
+import type { AdminAuditQueries } from '../application/admin/queries/audit.ts';
 import type { AdminCorrectionQueries } from '../application/admin/queries/corrections.ts';
 import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
@@ -23,6 +24,7 @@ import type { SheetQueries } from '../application/common/queries/sheets.ts';
 import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
 import type { TokenService, TraceSinkPort } from '../application/common/ports.ts';
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
+import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
@@ -54,6 +56,8 @@ export interface ServerDeps {
   adminMeQueries: AdminMeQueries;
   /** Podgląd „przed → po" korekty (`A02b`) — zapytanie, nie komenda: nic nie zapisuje. */
   adminCorrectionQueries: AdminCorrectionQueries;
+  /** Dziennik audytu (`A09`) — WYŁĄCZNIE odczyt; zapisuje go `AuditedWrite`. */
+  adminAuditQueries: AdminAuditQueries;
 }
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
@@ -86,6 +90,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     deps.tokens,
   );
   registerAdminSessionRoutes(app, deps.adminSessionQueries, deps.tokens);
+  registerAdminAuditRoutes(app, deps.adminAuditQueries, deps.tokens);
 
   app.get('/health', async () => ({ ok: true }));
 

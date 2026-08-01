@@ -9,6 +9,7 @@
  * a nie działającą granicą.
  */
 
+export type * from './audit.ts';
 export type * from './corrections.ts';
 export type * from './flags.ts';
 export type * from './maintenance.ts';

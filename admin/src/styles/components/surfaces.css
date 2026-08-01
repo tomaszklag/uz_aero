@@ -277,6 +277,69 @@
   font-weight: 400;
 }
 
+/* ══ LISTA SZCZEGÓŁÓW — pola workowatego JSON-a w komórce tabeli (`A09`) ══
+   Osobny komponent od `.kv`, a nie jego wariant, bo odpowiada na inne pytanie. `.kv`
+   jest zestawieniem liczb w karcie: wartość stoi po prawej i wytłuszczona, żeby czytało
+   się kolumnę. Tu wartością bywa całe zdanie (komentarz do flagi, powód korekty),
+   a kluczy jest tyle, ile akurat zapisała komenda — prawe wyrównanie rozjechałoby
+   akapit, a dwa tory pozwalają czytać w dół po nazwach pól. */
+.det {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.det-row {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.det-k {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.det-v {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  /* UUID-y i base64 nie mają spacji, a kolumna „Szczegóły" jest wąska — bez tego
+     jeden identyfikator rozpycha całą tabelę. */
+  overflow-wrap: anywhere;
+}
+
+/* Pole, którego panel nie umie NAZWAĆ: zostaje pokazane z surowym kluczem i surową
+   wartością, wygaszone — ale obecne. Dziennik audytu, który ukrywa pole, bo go nie zna,
+   przestaje być narzędziem nadzoru. */
+.det-v.raw {
+  color: var(--text-muted);
+}
+
+.det-empty {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+/* Stan „twoja rola tego nie obejmuje" (`.no-access` z `SZABLON.html`). Bliźniak
+   `.empty`, ale osobna klasa: pusty ekran i ekran zamknięty to dwie różne wiadomości,
+   a jedna klasa na oba kazałaby zgadywać, czy danych nie ma, czy się ich nie widzi. */
+.no-access {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
 /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
 .code-ref {
   font-family: var(--font-mono);

@@ -12,6 +12,7 @@
  */
 
 import type { EventsAdminPort } from '../../../application/admin/ports.ts';
+import { isAdminSourceDevice } from '../../../application/admin/sourceDevice.ts';
 import type { Queryable } from '../../../application/common/ports.ts';
 
 export class PgAdminEventsRepo implements EventsAdminPort {
@@ -25,5 +26,20 @@ export class PgAdminEventsRepo implements EventsAdminPort {
     );
     const row = rows[0];
     return row === undefined ? null : { sourceDevice: row.source_device };
+  }
+
+  async adminCorrectionUuids(db: Queryable, sessionUuid: string): Promise<string[]> {
+    const { rows } = await db.query<{ uuid: string; source_device: string | null }>(
+      `SELECT uuid, source_device
+         FROM events
+        WHERE session_uuid = $1
+          AND type = 'event_correction'`,
+      [sessionUuid],
+    );
+    // Rozpoznanie znacznika zostaje po stronie TypeScriptu, a nie w `LIKE 'admin:%'`:
+    // format znacznika ma jedno miejsce (`application/admin/sourceDevice.ts`), a korekt
+    // w jednym dniu lotnym są jednostki, więc filtrowanie tej garstki w pamięci nie
+    // kupuje nic drugiego zapytania ani drugiej definicji prefiksu.
+    return rows.filter((r) => isAdminSourceDevice(r.source_device)).map((r) => r.uuid);
   }
 }

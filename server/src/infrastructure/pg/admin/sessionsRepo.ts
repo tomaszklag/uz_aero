@@ -25,12 +25,32 @@ import type {
   SessionListFilter,
   SessionsAdminPort,
 } from '../../../application/admin/ports.ts';
-import { decodeCursor, encodeCursor, keysetOrderBy, keysetPredicate } from '../keyset.ts';
+import {
+  decodeCursor,
+  encodeCursor,
+  keysetOrderBy,
+  keysetPredicate,
+  type CursorShape,
+  type KeysetDirection,
+} from '../keyset.ts';
 import { sessionColumns, toSessionRow, type SessionDbRow } from '../sessionDbRow.ts';
 import { SqlFilter } from '../sqlFilter.ts';
 
 /** Klucz porządku listy dni. `claim_time` jest NULL-owalne — stąd `NULLS LAST` i kursor. */
 const KEY: readonly [string, string] = ['s.claim_time', 's.session_uuid'];
+
+/**
+ * Kształt kursora listy dni: `claim_time` to `BIGINT` z epoką w ms (NULL-owalny —
+ * sesja bez preflightu nie ma duty startu), a tie-breakerem jest `session_uuid`, czyli
+ * zwykły tekst. Jeden obiekt dla dekodowania i dla predykatu, żeby deklaracja klucza
+ * była w tym pliku jedna.
+ */
+const shapeOf = (direction: KeysetDirection): CursorShape => ({
+  k1: 'number',
+  k1Nullable: true,
+  k2: 'string',
+  direction,
+});
 
 interface JoinedDbRow extends SessionDbRow {
   updated_at: string | Date;
@@ -106,7 +126,8 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     db: Queryable,
     filter: SessionListFilter,
   ): Promise<{ items: AdminSessionJoin[]; nextCursor: string | null; total: number } | null> {
-    const cursor = filter.cursor == null ? null : decodeCursor(filter.cursor, 'number');
+    const shape = shapeOf(filter.direction);
+    const cursor = filter.cursor == null ? null : decodeCursor(filter.cursor, shape);
     if (filter.cursor != null && cursor == null) return null;
 
     // Warunki BEZ kursora — te same jadą do `COUNT(*)`, żeby licznik „pokazano 50
@@ -116,7 +137,7 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
 
     const page = new SqlFilter();
     this.applyFilters(page, filter);
-    keysetPredicate(KEY, cursor, page, { direction: filter.direction });
+    keysetPredicate(KEY, cursor, page, shape);
 
     // +1 wiersz ponad limit to cała detekcja „czy jest następna strona": pytanie
     // „czy coś jeszcze zostało" ma tę samą odpowiedź co „czy przyszło o jeden więcej",
@@ -131,7 +152,7 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     const last = items[items.length - 1];
     const nextCursor =
       rows.length > filter.limit && last != null
-        ? encodeCursor({ k1: last.row.claimTime, k2: last.row.sessionUuid })
+        ? encodeCursor({ k1: last.row.claimTime, k2: last.row.sessionUuid }, shape)
         : null;
 
     // `COUNT` bez złączeń: żaden filtr nie sięga do `aircraft` ani `pilots`, więc

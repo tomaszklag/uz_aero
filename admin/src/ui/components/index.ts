@@ -3,9 +3,8 @@
  *
  * Biblioteka rośnie PACZKAMI pod konkretne ekrany, nie „na zapas"
  * (`docs/architektura-panelu-frontend.md` §10 krok 4). To, czego tu nie ma
- * (`Timeline`, `Skeleton`, `NoAccess`, `OptionGrid`, `Columns`…), dochodzi razem
- * z pierwszym ekranem, który tego wymaga — razem z arkuszem CSS o klasach 1:1
- * z szablonem.
+ * (`Skeleton`, `OptionGrid`…), dochodzi razem z pierwszym ekranem, który tego
+ * wymaga — razem z arkuszem CSS o klasach 1:1 z szablonem.
  *
  * `SZABLON.html` jest inwentarzem DOCELOWYM, a komponent bez ekranu to kod,
  * którego nikt nie sprawdził w użyciu.
@@ -14,8 +13,10 @@
 export { Banner, type BannerTone } from './Banner';
 export { Button } from './Button';
 export { Card } from './Card';
+export { CellLink } from './CellLink';
 export { Columns } from './Columns';
 export { DataTable, type Column, type ColumnSort } from './DataTable';
+export { DetailList, type DetailItem } from './DetailList';
 export { Drawer } from './Drawer';
 export { EmptyState } from './EmptyState';
 export { Field } from './Field';
@@ -23,6 +24,7 @@ export { FilterBar } from './FilterBar';
 export { FilterChip } from './FilterChip';
 export { KeyValue, type KeyValueTone } from './KeyValue';
 export { LinkButton } from './LinkButton';
+export { NoAccess } from './NoAccess';
 export { OptionButton } from './OptionButton';
 export { OptionLink } from './OptionLink';
 export { OptionList } from './OptionList';

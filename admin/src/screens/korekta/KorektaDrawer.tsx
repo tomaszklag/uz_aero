@@ -37,6 +37,7 @@ import {
   Drawer,
   Field,
   KeyValue,
+  LinkButton,
   OptionButton,
   OptionList,
   Pill,
@@ -44,6 +45,7 @@ import {
   TextInput,
 } from '../../ui/components';
 import { roleLabel } from '../../ui/shell/whoLabels';
+import { targetHref } from '../audyt/audytFilters';
 import {
   ACTION_OPTIONS,
   REASON_MAX_LENGTH,
@@ -419,7 +421,19 @@ function CorrectionForm({
           tone="green"
           {...(pilot == null ? {} : { unit: roleLabel(pilot.role).toLowerCase() })}
         />
-        <KeyValue label="Ślad" value="wpis w dzienniku audytu" unit="tą samą transakcją" />
+        {/* Obietnica z mockupu („Ślad → A09") jest tu LINKIEM, a nie zdaniem: dziennik
+            odfiltrowany po uuid-zie tego zdarzenia pokazuje wszystkie korekty, które
+            już na nim zrobiono — razem z powodami, których w rejestrze nie ma.
+            Wejście na surową listę wszystkiego byłoby odesłaniem po igłę. */}
+        <KeyValue
+          label="Ślad"
+          value={
+            <LinkButton to={targetHref('event', targetUuid)} variant="ghost" size="sm">
+              wpis w dzienniku audytu → A09
+            </LinkButton>
+          }
+          unit="tą samą transakcją"
+        />
         <span className="hint">
           Zdarzenie <code>event_correction</code> musi nieść <code>picId</code> <b>PIC-a tej
           sesji</b>, nie administratora — do jednej sesji pisze jedna tożsamość (single-writer),

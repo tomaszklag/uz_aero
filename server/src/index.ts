@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
+import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminFlagQueries } from './application/admin/queries/flags.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
@@ -27,6 +28,7 @@ import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
+import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminEventsRepo } from './infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
@@ -104,6 +106,7 @@ const app = buildServer({
     new PgAdminSessionsRepo(),
     events,
     adminFlagsRepo,
+    new PgAdminEventsRepo(),
   ),
   adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu —
@@ -129,6 +132,10 @@ const app = buildServer({
     aircraftConfig,
     clock,
   ),
+  // Dziennik audytu ma DWA adaptery i to jest celowe: zapis (`PgAdminAuditRepo`)
+  // wędruje do bramy `AuditedWrite`, odczyt (`PgAdminAuditReadRepo`) do zapytań.
+  // Brama, która przy okazji umie czytać listy, przestaje być bramą.
+  adminAuditQueries: new AdminAuditQueries(db, new PgAdminAuditReadRepo()),
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });
