@@ -18,6 +18,7 @@ import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
+import { AdminDashboardQueries } from './application/admin/queries/dashboard.ts';
 import { AdminExportQueries } from './application/admin/queries/exports.ts';
 import { AdminFlagQueries } from './application/admin/queries/flags.ts';
 import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
@@ -37,6 +38,7 @@ import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
 import { generateStartPassword } from './infrastructure/auth/startPassword.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
+import { PgAdminDashboardRepo } from './infrastructure/pg/admin/dashboardRepo.ts';
 import { PgAdminEventsRepo } from './infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminExportsRepo } from './infrastructure/pg/admin/exportsRepo.ts';
 import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
@@ -115,6 +117,13 @@ const adminFleetRepo = new PgAdminFleetRepo();
 const adminExportsRepo = new PgAdminExportsRepo();
 const hasher = new ScryptHasher();
 
+// Zapytania floty stoją TU, a nie w literale niżej, bo mają DWÓCH konsumentów: trasy
+// `A07` i pulpit. Pulpit dostaje całą klasę, nie jej adapter — to ona zna regułę wyboru
+// claimu i przekazania (`application/common/aircraftStateView.ts`) oraz rozwiązuje próg
+// flagi funkcją domeny. Drugie wyliczenie tych rzeczy na pulpicie dałoby dwie odpowiedzi
+// na pytanie „kto trzyma ten samolot".
+const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo);
+
 const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
@@ -159,7 +168,7 @@ const app = buildServer({
   // REGUŁĄ (`application/common/aircraftStateView.ts`) — tą samą, którą `GET /reference`
   // liczy dla telefonu. Drugie wyliczenie w SQL-u panelu dałoby dwie odpowiedzi na
   // pytanie „kto trzyma ten samolot".
-  adminFleetQueries: new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo),
+  adminFleetQueries,
   // Eksporty (A05). Komenda ponowienia woła TEGO SAMEGO `exporter`, którego używa
   // ingest i rozwiązanie flagi — ponowienie jest powtórzeniem tej samej operacji,
   // a nie jej wersją uprzywilejowaną, więc bramki §4.7 obowiązują ją tak samo.
@@ -192,6 +201,21 @@ const app = buildServer({
   // wędruje do bramy `AuditedWrite`, odczyt (`PgAdminAuditReadRepo`) do zapytań.
   // Brama, która przy okazji umie czytać listy, przestaje być bramą.
   adminAuditQueries: new AdminAuditQueries(db, new PgAdminAuditReadRepo()),
+  // Pulpit (A01/A01a). Dostaje ZAPYTANIA innych ekranów, a nie ich adaptery — bo jego
+  // treścią jest właśnie to, że każda liczba pochodzi z tego samego kodu, co ekran
+  // docelowy. `events` jedzie osobno i wyłącznie po to, żeby policzyć stan silnika
+  // jednostek z otwartą sesją; `PgAdminDashboardRepo` obsługuje puls rejestru.
+  adminDashboardQueries: new AdminDashboardQueries(
+    db,
+    adminFleetQueries,
+    new PgAdminSessionsRepo(),
+    adminFlagsRepo,
+    adminExportsRepo,
+    new PgAdminDashboardRepo(),
+    events,
+    adminPilotsRepo,
+    clock,
+  ),
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

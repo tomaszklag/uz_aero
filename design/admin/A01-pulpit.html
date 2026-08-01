@@ -554,6 +554,17 @@
           <span><b>To nie jest podgląd lotu na żywo.</b> Panel pokazuje ostatnie zdarzenia, które dotarły z telefonów. Pilot pracuje offline-first — brak zasięgu nie zatrzymuje jego pracy, tylko opóźnia jej widoczność tutaj. Przy każdym samolocie stoi wiek ostatniej synchronizacji.</span>
         </div>
 
+        <!-- SPROSTOWANIE 2026-08-01: trzy adnotacje tego ekranu opisywały stan, którego
+             serwer nie ma, albo przejście, którego nie ma. Poprawione po wdrożeniu
+             przekroju A01 (`server/test/adminDashboard.test.ts`, `admin/test/pulpitRender.test.ts`). -->
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><b>Sprostowanie z 2026-08-01 — trzy rzeczy na tym ekranie działają inaczej.</b>
+            <b>(1) Plakietka „W locie" JEST prawdziwa — i to jedyny taki ekran w panelu.</b> Na <a href="A02-dni.html" style="color:var(--green);">A02</a> i <a href="A07-flota.html" style="color:var(--green);">A07</a> mówi „Zajęty", bo projekcja <code>sessions</code> nie niesie stanu silnika, a tamte listy są NIEOGRANICZONE. Tutaj serwer liczy <code>projectSession</code> na strumieniu otwartej sesji wyłącznie dla jednostek Z CLAIMEM — koszt jest ograniczony wielkością floty, nie długością historii. Stąd trzeci stan wiersza, którego mockup nie miał: <b>„Silnik pracuje"</b> (silnik chodzi, samolot na ziemi) obok „W locie" i „Na ziemi".
+            <b>(2) „Zrzuty · skoczkowie" w karcie „Dziś w liczbach" pokazuje kreskę.</b> <code>DropSummary</code> liczy <code>projectSession</code> w pamięci, a projekcja <code>sessions</code> takich kolumn NIE MA. Podanie tej liczby wymagałoby migracji projekcji (czyli zmiany ścieżki ingestu telefonu) albo <code>projectSession</code> na każdej dzisiejszej sesji. Zero byłoby twierdzeniem, że nikt dziś nie skakał — a tego nie wiemy.
+            <b>(3) Przejście „REJESTR →" jest ZABLOKOWANE z powodem.</b> Ekran <code>A04</code> nie powstał, a link do strony „w budowie" byłby czwartym ślepym zaułkiem w panelu. Wiersze osi prowadzą za to na <b>kartę dnia</b> (<a href="A02a-dzien.html" style="color:var(--green);">A02a</a>), do którego zdarzenie należy — czyli tam, gdzie widać je w pełnym kontekście.</span>
+        </div>
+
         <div class="tiles">
           <a class="tile" href="A02-dni.html">
             <span class="tile-key">Samoloty w ruchu</span>
@@ -776,7 +787,10 @@
             </div>
 
             <div class="card">
-              <div class="card-title">Ostatnio przyjęte <span class="spacer"></span><a href="A04-zdarzenia.html" style="font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--green);text-decoration:none;">REJESTR →</a></div>
+              <!-- Przejście do rejestru zdarzeń (A04) jest ZABLOKOWANE z powodem, a nie
+                   linkiem: ekran nie powstał, a link do strony „w budowie" byłby ślepym
+                   zaułkiem. Patrz sprostowanie z 2026-08-01 wyżej. -->
+              <div class="card-title">Ostatnio przyjęte <span class="spacer"></span><span class="btn sm ghost disabled" aria-disabled="true">Rejestr — rejestr zdarzeń (a04) jeszcze nie powstał</span></div>
               <div class="tl compact">
                 <div class="tl-row">
                   <span class="tl-time">14:19:52</span>

@@ -839,3 +839,83 @@ export interface MaintenanceAdminPort {
    */
   sessionUuids(db: Queryable): Promise<string[]>;
 }
+
+// ── pulpit (A01, A01a) ──────────────────────────────────────────────────────────
+
+/**
+ * Jedno zdarzenie w karcie „Ostatnio przyjęte" tak, jak leży w bazie: nagłówek plus
+ * złączenia z rejestrem floty i kont.
+ *
+ * Port oddaje ten kształt, a nie gotowy DTO — mapowanie na kontrakt jest czystą
+ * funkcją (`mappers/recentEvent.ts`) i ma być testowalne bez bazy, tak samo jak
+ * `sessionListItem` i `aircraftListItem`.
+ */
+export interface AdminRecentEventRow {
+  uuid: string;
+  sessionUuid: string;
+  aircraftId: string;
+  reg: string | null;
+  type: string;
+  /** Czas zdarzenia z telefonu (epoch ms UTC). */
+  deviceTime: number;
+  /** Czas z GPS-u, gdy był — domena preferuje go przed zegarem telefonu. */
+  gpsTime: number | null;
+  /** Kiedy SERWER przyjął zdarzenie. */
+  receivedAt: Date;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+}
+
+/** Sumy jednej doby z projekcji `sessions` plus liczba zdarzeń przyjętych w tej dobie. */
+export interface AdminDayTotalsRow {
+  sessions: number;
+  aircraft: number;
+  flights: number;
+  blockMs: number;
+  eventsAccepted: number;
+}
+
+/**
+ * Port PULSU SYSTEMU — trzy pytania, których nie zadaje żadna inna powierzchnia.
+ *
+ * Osobny port, a nie rozszerzenie `EventsStorePort`, i to z tego samego powodu, co przy
+ * `ExportsAdminPort` obok `ExportLogPort`: tamten obsługuje ŚCIEŻKĘ INGESTU (wstawienie
+ * paczki, strumień sesji do `projectSession`) i jest wołany w gorącej transakcji.
+ * Ten czyta agregaty po `received_at` na potrzeby jednego ekranu. Korzyścią uboczną
+ * jest to, że ingest nie ma jak zregresować od zmian w pulpicie.
+ *
+ * **Wszystkie trzy metody chodzą po `events.received_at`, więc wymagają indeksu**
+ * (`idx_events_received`, migracja 15). Bez niego „ostatnie sześć zdarzeń" to pełne
+ * skanowanie rejestru, który rośnie bez granicy — czyli pulpit wolniejszy z każdym
+ * miesiącem pracy klubu.
+ */
+export interface DashboardAdminPort {
+  /**
+   * Histogram przyjęć w oknie `[fromMs, toMs)` podzielonym na wiadra po `bucketMs`.
+   *
+   * Adapter oddaje TYLKO wiadra niepuste (`GROUP BY`), a dopełnienie zerami robi
+   * warstwa aplikacji — inaczej „nic nie przyszło o 09:00" byłoby brakiem wiersza,
+   * czyli stanem, którego wykres nie umie narysować.
+   */
+  inflow(
+    db: Queryable,
+    window: { fromMs: number; toMs: number; bucketMs: number },
+  ): Promise<{ bucket: number; count: number }[]>;
+
+  /** Ostatnio przyjęte zdarzenia, od najnowszego. Pusta tablica = pusty rejestr. */
+  recent(db: Queryable, limit: number): Promise<AdminRecentEventRow[]>;
+
+  /**
+   * Sumy doby `[fromMs, toMs]` — dni lotne po duty starcie, zdarzenia po przyjęciu.
+   * Dwa różne zegary w jednym wyniku i to jest świadome: kontrakt nazywa je osobno.
+   */
+  dayTotals(db: Queryable, range: { fromMs: number; toMs: number }): Promise<AdminDayTotalsRow>;
+
+  /**
+   * Duty start NAJNOWSZEGO dnia lotnego (epoch ms UTC); `null` = projekcja jest pusta
+   * albo żadna sesja nie ma preflightu. Po nim pulpit wskazuje „ostatni dzień lotny",
+   * gdy dziś nic nie lata.
+   */
+  lastFlyingDayStart(db: Queryable): Promise<number | null>;
+}

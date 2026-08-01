@@ -929,3 +929,132 @@ export interface CorrectionResultDto {
   state: SessionState;
   reexport: ExportOutcomeDto | null;
 }
+
+// ── pulpit (`A01`, `A01a`) ──────────────────────────────────────────────────────
+
+/**
+ * Stan silnika jednostki z OTWARTĄ sesją — policzony na serwerze `projectSession`.
+ *
+ * Panel nie ma jak tego wyliczyć i to jest cały powód istnienia tego pola: zakaz
+ * importów wartościowych z `@uzaero/domain` (§5.1) odcina mu `projectSession`, więc
+ * „W locie" albo przychodzi z serwera, albo nie istnieje. Na `A02` i `A07` NIE
+ * istniało; tutaj przychodzi, bo zbiór jest ograniczony do floty klubu.
+ *
+ * `null` na tym polu znaczy DOKŁADNIE „ta jednostka nie ma otwartej sesji", nigdy
+ * „nie wiemy, czy silnik pracuje".
+ */
+export interface EngineStateDto {
+  sessionUuid: string;
+  engineRunning: boolean;
+  inFlight: boolean;
+  /** Numer bieżącego (albo ostatniego) lotu dnia — podpis „lot 4". */
+  flightsCount: number;
+  /** Czas OTWARTEGO startu (epoch ms UTC); `null` = nie ma lotu w toku. */
+  openTakeoffAt: number | null;
+  /** Koniec ostatniego ZAMKNIĘTEGO cyklu silnika; `null` = silnik nigdy nie stanął. */
+  engineStoppedAt: number | null;
+  lastEventAt: number | null;
+  dutyStart: number | null;
+  departureIcao: string | null;
+  dualId: string | null;
+  dualName: string | null;
+  /** `0` przy otwartym claimie = ktoś zajął samolot i nic od niego nie dotarło. */
+  eventCount: number;
+}
+
+/** Jednostka na pulpicie: wiersz floty `A07` plus stan silnika, gdy dzień trwa. */
+export interface DashboardAircraftDto {
+  aircraft: AircraftListItemDto;
+  engine: EngineStateDto | null;
+}
+
+/**
+ * Liczniki kafli. Każdy pochodzi z zapytania ekranu docelowego — kafel jest przejściem,
+ * więc jego liczba musi być obietnicą „tyle wierszy tam zobaczysz".
+ */
+export interface DashboardCountsDto {
+  aircraftTotal: number;
+  aircraftActive: number;
+  aircraftClaimed: number;
+  openDays: number;
+  openFlags: number;
+  exports: ExportCountsDto;
+}
+
+/**
+ * Kolejka „Wymaga uwagi" jako TRZY listy w kontraktach ekranów docelowych.
+ *
+ * Spłaszczenie ich na serwerze wymagałoby czwartej definicji „sprawy"; złożenie
+ * w jeden porządek jest decyzją o treści ekranu i mieszka w `pulpitTodo.ts`.
+ */
+export interface DashboardAttentionDto {
+  flags: FlagListItemDto[];
+  failedExports: ExportListItemDto[];
+  staleOpenDays: SessionListItemDto[];
+}
+
+/** Histogram „Napływ zdarzeń" liczony po `received_at` — zegarze SERWERA. */
+export interface DashboardInflowDto {
+  fromMs: number;
+  toMs: number;
+  bucketMs: number;
+  /** Zawsze PEŁNA tablica; godzina bez zdarzeń to `0`, nie brak wiadra. */
+  buckets: number[];
+}
+
+/**
+ * Jedno zdarzenie w karcie „Ostatnio przyjęte". Bez `payload` — pulpit odpowiada na
+ * pytanie „czy coś do nas dociera", a nie „co dokładnie przyszło" (od tego jest oś
+ * karty dnia).
+ */
+export interface RecentEventDto {
+  uuid: string;
+  sessionUuid: string;
+  aircraftId: string;
+  reg: string | null;
+  type: EventType;
+  /** Czas ZDARZENIA (GPS przed zegarem telefonu), epoch ms UTC. */
+  eventTime: number;
+  /** Kiedy SERWER je przyjął (ISO 8601 UTC) — oś porządku tej listy. */
+  receivedAt: string;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+}
+
+/** Sumy jednej doby UTC — „Dziś w liczbach" i „Ostatni dzień lotny". */
+export interface DayTotalsDto {
+  day: string;
+  fromMs: number;
+  toMs: number;
+  sessions: number;
+  aircraft: number;
+  flights: number;
+  blockMs: number;
+  /** Zdarzenia PRZYJĘTE w tej dobie — nie „zdarzenia z tego dnia". */
+  eventsAccepted: number;
+}
+
+/**
+ * Odpowiedź `GET /admin/api/dashboard` — cały pulpit jednym żądaniem.
+ *
+ * `at` jest tu polem UŻYTKOWYM, nie metadaną: wszystkie wieki („sync 2 min temu",
+ * „flaga czeka 3 dni") panel liczy WZGLĘDEM NIEGO, a nie względem `Date.now()`
+ * przeglądarki. Powód jest konkretny — stemple, z którymi je porównujemy, nadaje
+ * baza, więc zegar przeglądarki jest w tym równaniu trzecim, niepotrzebnym i jedynym
+ * niesprawdzonym. Administrator z przestawionym zegarem widziałby „sync 3 h temu"
+ * przy telefonie, który zsynchronizował się przed chwilą.
+ */
+export interface DashboardDto {
+  at: string;
+  /** Okno samodzielnej korekty pilota (ms) — z domeny, bo panel nie ma jej skąd wziąć. */
+  correctionWindowMs: number;
+  counts: DashboardCountsDto;
+  fleet: DashboardAircraftDto[];
+  attention: DashboardAttentionDto;
+  inflow: DashboardInflowDto;
+  recent: RecentEventDto[];
+  today: DayTotalsDto;
+  /** `null` = w projekcji nie ma ani jednego dnia lotnego. */
+  lastFlyingDay: DayTotalsDto | null;
+}

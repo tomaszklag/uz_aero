@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 14;
+export const SCHEMA_VERSION = 15;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -483,6 +483,26 @@ export const MIGRATION_14 = `
   DROP INDEX IF EXISTS idx_export_log_session;
 `;
 
+/**
+ * Migracja 15: indeks po `events.received_at` — oś PULSU SYSTEMU (`A01`).
+ *
+ * Pulpit zadaje rejestrowi trzy pytania po ZEGARZE SERWERA: „co przyszło ostatnio"
+ * (`ORDER BY received_at DESC LIMIT 6`), „ile przyszło w każdej z ostatnich dwunastu
+ * godzin" i „ile przyszło dziś". Rejestr `events` ma dziś indeksy po `session_uuid`
+ * i `aircraft_id` — żaden z nich nie obsługuje ani sortowania, ani zakresu po czasie
+ * przyjęcia, więc każde z tych pytań byłoby PEŁNYM SKANOWANIEM tabeli, która rośnie
+ * bez granicy.
+ *
+ * To jest dokładnie ten rodzaj kosztu, którego nie widać na starcie: pulpit ładuje się
+ * natychmiast w pierwszym miesiącu i coraz wolniej w każdym następnym, a jest ekranem,
+ * na którym KAŻDY zalogowany ląduje jako pierwszym. `uuid` jako druga kolumna, bo
+ * porządek listy jest po parze `(received_at, uuid)` — cała paczka z jednego synca ma
+ * identyczny `received_at`, więc bez rozstrzygnięcia sortowanie byłoby niestabilne.
+ */
+export const MIGRATION_15 = `
+  CREATE INDEX IF NOT EXISTS idx_events_received ON events (received_at DESC, uuid DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -498,4 +518,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_12,
   MIGRATION_13,
   MIGRATION_14,
+  MIGRATION_15,
 ];

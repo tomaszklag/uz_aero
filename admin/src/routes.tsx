@@ -23,11 +23,20 @@ import { EksportyScreen } from './screens/eksporty/EksportyScreen';
 import { FlagiScreen } from './screens/flagi/FlagiScreen';
 import { FlotaScreen } from './screens/flota/FlotaScreen';
 import { PilociScreen } from './screens/piloci/PilociScreen';
+import { PulpitScreen } from './screens/pulpit/PulpitScreen';
 import { WBudowieScreen } from './screens/wBudowie/WBudowieScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
 
 /** Pozycje nawigacji, dla których ekran już istnieje — nie dostają „w budowie". */
-const IMPLEMENTED = new Set(['/dni', '/flagi', '/audyt', '/piloci', '/flota', '/eksporty']);
+const IMPLEMENTED = new Set([
+  '/pulpit',
+  '/dni',
+  '/flagi',
+  '/audyt',
+  '/piloci',
+  '/flota',
+  '/eksporty',
+]);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
   (item) => !IMPLEMENTED.has(item.to),
@@ -42,6 +51,12 @@ export const router = createHashRouter([
       // Wejście na goły adres panelu ląduje na pulpicie — pierwszej pozycji
       // nawigacji, zgodnie z mockupem `A01`.
       { index: true, element: <Navigate to="/pulpit" replace /> },
+
+      // Pulpit (`A01`) i wariant „cisza" (`A01a`) to JEDNA trasa i jeden ekran, a nie
+      // dwie: cisza nie jest osobnym widokiem, tylko innym stanem tych samych danych.
+      // Rozdzielenie ich na dwa adresy kazałoby panelowi rozstrzygać PRZED pobraniem,
+      // który pokazać — czyli zgadywać stan, o który dopiero pyta.
+      { path: 'pulpit', element: <PulpitScreen /> },
 
       // Skrzynka flag i jej szuflada pod JEDNYM ekranem: `A03a` otwiera się NAD listą,
       // więc `/flagi/1046` to ten sam widok z dodatkowym parametrem, a nie druga trasa.

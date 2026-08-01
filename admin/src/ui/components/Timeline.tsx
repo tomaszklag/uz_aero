@@ -13,6 +13,12 @@
 
 import type { ReactNode } from 'react';
 
-export function Timeline({ children }: { children: ReactNode }) {
-  return <ol className="tl">{children}</ol>;
+/**
+ * `compact` to wariant osi w WĄSKIEJ kolumnie bocznej (pulpit, `A01`): trzy tory
+ * siatki zamiast czterech i stopień mniejsze rozmiary. Modyfikator, nie osobny
+ * komponent — zachowanie, znaczenie kolorów kropek i stan `voided` są identyczne,
+ * zmienia się wyłącznie ilość miejsca.
+ */
+export function Timeline({ compact = false, children }: { compact?: boolean; children: ReactNode }) {
+  return <ol className={compact ? 'tl compact' : 'tl'}>{children}</ol>;
 }

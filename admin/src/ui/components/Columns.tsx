@@ -5,8 +5,13 @@
  * do niej (kafle sesji, paliwa, motogodzin). `even` daje `1fr 1fr` tam, gdzie obie
  * kolumny są równorzędne.
  *
- * Wariantu `wide` (`1fr 400px`) tu nie ma, bo nie ma jeszcze ekranu, który go używa
- * (pulpit, progi) — biblioteka rośnie paczkami pod konkretne ekrany, nie „na zapas".
+ * `wide` (`1fr 400px`) doszedł razem z pulpitem (`A01`) — jedynym ekranem, na którym
+ * prawa kolumna niesie WŁASNĄ treść (puls rejestru: napływ zdarzeń, ostatnio przyjęte,
+ * dziś w liczbach), a nie przypis do lewej. Baza zostaje bez zmian, bo szersza prawa
+ * znaczy węższa lewa, a w lewej stoją tabele — 20 px mniej potrafi przyciąć kolumnę.
+ *
+ * Warianty są PROPSAMI LOGICZNYMI, a nie napisem: `variant="wide"` z literówką byłoby
+ * cichym powrotem do bazy, a `wide` niebędące `true` po prostu się nie kompiluje.
  */
 
 import type { ReactNode } from 'react';
@@ -14,9 +19,17 @@ import type { ReactNode } from 'react';
 interface ColumnsProps {
   /** `even` = `1fr 1fr`; bez tego prawa kolumna ma stałe 380 px. */
   even?: boolean;
+  /** `wide` = `1fr 400px`. Wyklucza się z `even` — pierwszeństwo ma `even`. */
+  wide?: boolean;
   children: ReactNode;
 }
 
-export function Columns({ even = false, children }: ColumnsProps) {
-  return <div className={even ? 'cols even' : 'cols'}>{children}</div>;
+/** Pełne literały klas, nigdy sklejenie — reguła z `admin/test/architecture.test.ts`. */
+function columnsClass(even: boolean, wide: boolean): string {
+  if (even) return 'cols even';
+  return wide ? 'cols wide' : 'cols';
+}
+
+export function Columns({ even = false, wide = false, children }: ColumnsProps) {
+  return <div className={columnsClass(even, wide)}>{children}</div>;
 }

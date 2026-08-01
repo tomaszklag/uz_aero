@@ -26,6 +26,7 @@ import './styles/components/filters.css';
 import './styles/components/table.css';
 import './styles/components/timeline.css';
 import './styles/components/drawer.css';
+import './styles/components/dashboard.css';
 
 import { SessionProvider } from './auth/SessionProvider';
 import { createQueryClient } from './queries/client';

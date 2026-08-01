@@ -104,3 +104,10 @@
   color: var(--text-secondary);
   line-height: 1.45;
 }
+
+/* Wartość w SIATCE liczb (`.day-grid`), a nie w kaflu — 28 px rozbija czterokomórkową
+   kratkę w wąskiej kolumnie bocznej pulpitu. Modyfikator, nie druga klasa wartości:
+   kolor, rodzina i światło zostają te same, zmienia się wyłącznie stopień. */
+.tile-val.sm {
+  font-size: 22px;
+}

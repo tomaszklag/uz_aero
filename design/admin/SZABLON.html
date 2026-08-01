@@ -187,6 +187,16 @@
   .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
   .tile-val.green { color:var(--green); } .tile-val.amber { color:var(--amber); } .tile-val.red { color:var(--red); } .tile-val.blue { color:var(--blue); }
   .tile-note { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  /* Wartość w SIATCE liczb (`.day-grid`), a nie w kaflu — 28 px rozbija czterokomórkową
+     kratkę w wąskiej kolumnie bocznej. Modyfikator dołożony 2026-08-01 razem z pulpitem:
+     mockupy A01/A01a robiły to stylem inline (`font-size:22px`), więc klasy nie dało się
+     wygrepować ani powtórzyć na A10. */
+  .tile-val.sm { font-size:22px; }
+  /* Siatka liczb doby („Dziś w liczbach", „Ostatni dzień lotny"). Cztery komórki
+     klucz+wartość bez ramek — to NIE są kafle: nie prowadzą nigdzie osobno i czyta się
+     je razem, jako jedno podsumowanie. */
+  .day-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .day-grid > span { display:flex; flex-direction:column; gap:4px; }
 
   /* ── pasek filtrów ── */
   .filters { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
@@ -494,6 +504,13 @@
   .todo-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
   .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
   .todo-age.old { color:var(--amber); }
+
+  /* Lista WARUNKÓW wewnątrz banera („kiedy ta sama pustka znaczy »cisza podejrzana«",
+     A01a). Mono i bez punktorów, bo to nie jest proza, tylko wyliczenie faktów, które
+     panel sprawdził. Dołożona 2026-08-01: mockup robił to stylem inline z `<br />`,
+     więc lista nie miała nazwy, a przez to nie dało się jej powtórzyć ani wygrepować. */
+  .reason-list { display:flex; flex-direction:column; gap:4px; padding-top:6px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; line-height:1.7; color:var(--text-secondary); list-style:none; }
+  .reason-list li::before { content:'· '; color:var(--text-muted); }
 
   /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
      Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza

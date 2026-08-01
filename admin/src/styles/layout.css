@@ -103,3 +103,13 @@
   padding: 24px;
   overflow-y: auto;
 }
+
+/**
+ * Szersza kolumna boczna (400 px) tam, gdzie niesie ona WŁASNĄ treść, a nie przypis
+ * do lewej: puls systemu na pulpicie (`A01`), dowód z replaya przy progach (`A08`).
+ * Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej stoją
+ * tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`.
+ */
+.cols.wide {
+  grid-template-columns: 1fr 400px;
+}

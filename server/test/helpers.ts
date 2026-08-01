@@ -31,6 +31,7 @@ import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
+import { AdminDashboardQueries } from '../src/application/admin/queries/dashboard.ts';
 import { AdminExportQueries } from '../src/application/admin/queries/exports.ts';
 import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminFleetQueries } from '../src/application/admin/queries/fleet.ts';
@@ -50,6 +51,7 @@ import { ScryptHasher } from '../src/infrastructure/auth/scryptHasher.ts';
 import { generateStartPassword } from '../src/infrastructure/auth/startPassword.ts';
 import { PgAdminAuditReadRepo } from '../src/infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from '../src/infrastructure/pg/admin/auditRepo.ts';
+import { PgAdminDashboardRepo } from '../src/infrastructure/pg/admin/dashboardRepo.ts';
 import { PgAdminEventsRepo } from '../src/infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminExportsRepo } from '../src/infrastructure/pg/admin/exportsRepo.ts';
 import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
@@ -166,6 +168,9 @@ export async function testHarness(
   // composition root.
   const adminExportsRepo = new PgAdminExportsRepo();
   const hasher = new ScryptHasher();
+  // Zapytania floty mają DWÓCH konsumentów (trasy `A07` i pulpit) — jak w produkcyjnym
+  // composition root, więc stoją w zmiennej, a nie w literale.
+  const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo);
 
   const app = buildServer({
     auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
@@ -206,7 +211,7 @@ export async function testHarness(
     // czytają z odpowiedzi, więc udawany generator kupiłby wyłącznie rozjazd
     // z composition rootem.
     adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
-    adminFleetQueries: new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo),
+    adminFleetQueries,
     // Eksporty (A05). Komenda ponowienia dostaje TEN SAM `exporter`, którym jedzie
     // ingest — także wtedy, gdy `options.sheets` podmienia arkusze na atrapę awarii.
     // Podgląd karty czyta ZAWSZE z bazy (`pgSheets`), tak jak `GET /sheets/:tab`.
@@ -234,6 +239,20 @@ export async function testHarness(
     // podmienia stronę zapisu na rzucającą: test „awaria audytu cofa skutek" ma
     // sprawdzać transakcję, a nie odbierać listę temu, co się faktycznie zapisało.
     adminAuditQueries: new AdminAuditQueries(db, new PgAdminAuditReadRepo()),
+    // Pulpit (A01/A01a) — składany z TYCH SAMYCH zapytań i adapterów, co ekrany
+    // docelowe. `events` jedzie tu przez dekorator z `options.events`, więc
+    // `contract.test.ts` widzi także odczyty strumienia robione przez pulpit.
+    adminDashboardQueries: new AdminDashboardQueries(
+      db,
+      adminFleetQueries,
+      new PgAdminSessionsRepo(),
+      adminFlagsRepo,
+      adminExportsRepo,
+      new PgAdminDashboardRepo(),
+      events,
+      adminPilotsRepo,
+      clock,
+    ),
   });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych

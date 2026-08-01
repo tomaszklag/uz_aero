@@ -548,6 +548,16 @@
           <span><b>Cisza spodziewana.</b> Ostatnie zdarzenie przyjęliśmy <b style="color:var(--text-primary)">19 godz. temu</b> — <code>day_close</code> SP-DEF, 30 JUL 19:42 UTC. Każda sesja z ostatniego dnia lotnego jest domknięta, żaden samolot nie ma otwartego claimu, wszystkie karty dnia są w arkuszu. Rejestr milczy, bo nie ma czego zapisywać — nie dlatego, że coś przestało działać.</span>
         </div>
 
+        <!-- SPROSTOWANIE 2026-08-01: dwie rzeczy z tego wariantu działają inaczej.
+             Poprawione po wdrożeniu przekroju A01 (`admin/src/screens/pulpit/pulpitCisza.ts`,
+             `admin/src/screens/pulpit/pulpitCisza.test.ts`). -->
+        <div class="banner warn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span><b>Sprostowanie z 2026-08-01 — dwie rzeczy w tym wariancie działają inaczej.</b>
+            <b>(1) Cisza ma TRZY werdykty, nie dwa.</b> Obok „spodziewanej" i „podejrzanej" istnieje <b>„rejestr pusty"</b>: serwer nie przyjął jeszcze ani jednego zdarzenia. To NIE jest cisza po dniu lotnym — to stan sprzed pierwszego synchronizowania telefonu, a nazwanie go „spodziewanym" byłoby uspokajaniem w sprawie, o której nic nie wiadomo. Panel mówi wtedy wprost, że nie ma czego nazwać ciszą.
+            <b>(2) Werdykt jest KOLOREM, a nie decyzją serwera.</b> Wszystkie fakty w karcie „Cisza spodziewana czy podejrzana" liczy serwer (<code>GET /admin/api/dashboard</code>) i mają tam testy; samo zdanie składa z nich panel, bo nie wystawia flagi, nie zmienia żadnej liczby i nie ma konsumenta poza tym ekranem. Gdyby werdykt kiedyś miał SKUTEK — powiadomienie, wpis w dzienniku — jego miejsce jest po stronie serwera.</span>
+        </div>
+
         <div class="tiles">
           <a class="tile" href="A07-flota.html" style="text-decoration:none;color:inherit;">
             <span class="tile-key">Samoloty w ruchu</span>
@@ -760,7 +770,9 @@
             </div>
 
             <div class="card">
-              <div class="card-title">Ostatnio przyjęte <span class="spacer"></span><a href="A04-zdarzenia.html" style="font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--green);text-decoration:none;">REJESTR →</a></div>
+              <!-- Przejście do rejestru zdarzeń (A04) jest ZABLOKOWANE z powodem, a nie
+                   linkiem: ekran nie powstał. Patrz sprostowanie na `A01-pulpit.html`. -->
+              <div class="card-title">Ostatnio przyjęte <span class="spacer"></span><span class="btn sm ghost disabled" aria-disabled="true">Rejestr — rejestr zdarzeń (a04) jeszcze nie powstał</span></div>
               <div class="tl">
                 <div class="tl-row">
                   <span class="tl-time">30 JUL<br />19:42:11</span>

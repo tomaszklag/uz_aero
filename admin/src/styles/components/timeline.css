@@ -122,3 +122,40 @@
   justify-content: flex-end;
   gap: 7px;
 }
+
+/* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+   zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
+   i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory siatki
+   zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie kolorów
+   kropek i stan `voided` są identyczne. */
+.tl.compact .tl-row {
+  grid-template-columns: 62px 18px 1fr;
+  gap: 9px;
+  padding: 7px 0;
+}
+
+.tl.compact .tl-time {
+  font-size: 10.5px;
+  letter-spacing: 0.4px;
+}
+
+.tl.compact .tl-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.tl.compact .tl-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.tl.compact .tl-meta {
+  font-size: 8.5px;
+  letter-spacing: 0.6px;
+}
+
+.tl.compact .tl-row:not(:last-child) .tl-rail::after {
+  bottom: -12px;
+}
