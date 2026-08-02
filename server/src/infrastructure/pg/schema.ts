@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 16;
+export const SCHEMA_VERSION = 17;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -381,6 +381,12 @@ export const MIGRATION_11 = `
  * Że oba indeksy faktycznie NIOSĄ porządek, sprawdza `EXPLAIN` w `test/adminAudit.test.ts`
  * (brak węzła `Sort` w planie obu zapytań listy) — zdanie w prozie już raz nie
  * powstrzymało powielenia tej wady.
+ *
+ * **SPROSTOWANIE (migracja 17, 2026-08-02): kierunek naprawy był ODWROTNY.** `NULLS LAST`
+ * na kolumnie `NOT NULL` nie opisuje żadnego realnego porządku, a odbiera indeks w drugim
+ * kierunku sortowania. Oba indeksy dziennika wracają do postaci bez tego dopisku, a
+ * `keysetOrderBy` emituje `NULLS` wyłącznie dla klucza NULL-owalnego. Uzasadnienie
+ * i pomiary: `MIGRATION_17` niżej.
  */
 export const MIGRATION_12 = `
   DROP INDEX IF EXISTS idx_audit_created;
@@ -526,6 +532,13 @@ export const MIGRATION_15 = `
  * Dlatego `PgAdminDashboardRepo.recent` (karta „Ostatnio przyjęte", `A01`) dostaje
  * `NULLS LAST` w tym samym commicie — inaczej naprawa listy zepsułaby pulpit.
  *
+ * **SPROSTOWANIE (migracja 17, 2026-08-02): to nie była naprawa, tylko przesunięcie
+ * wady na `?sort=asc`.** Indeks `DESC NULLS LAST` skanowany wstecz daje `ASC NULLS
+ * FIRST`, a `keysetOrderBy` prosił wtedy o `ASC NULLS LAST` — więc jeden klik
+ * w nagłówek kolumny sortował cały rejestr przed `LIMIT`-em (koszt 442 zamiast ~10).
+ * Migracja 17 zdejmuje `NULLS LAST` z tego indeksu i z obu indeksów audytu, a `NULLS`
+ * emitujemy odtąd wyłącznie dla klucza NULL-owalnego. `recent` wraca razem z nimi.
+ *
  * ══ 2. `idx_events_correction_target` — SKĄD WIADOMO, ŻE ZDARZENIE UNIEWAŻNIONO ══
  * Rejestr pokazuje zdarzenie unieważnione korektą PRZEKREŚLONE, ale obecne — to
  * właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się od tego, co zapisał
@@ -548,6 +561,54 @@ export const MIGRATION_16 = `
     WHERE type = 'event_correction';
 `;
 
+/**
+ * Migracja 17: KONIEC z `NULLS LAST` na kluczach `NOT NULL` (2026-08-02).
+ *
+ * ══ CO TU NAPRAWDĘ BYŁO ZEPSUTE ══
+ * Migracja 16 „naprawiła" rozjazd indeksu rejestru, dopisując `NULLS LAST` do
+ * `idx_events_received` — bo tyle emitował `keysetOrderBy`. Wada nie zniknęła, tylko
+ * przeniosła się na DRUGI kierunek: indeks `(received_at DESC NULLS LAST, uuid DESC)`
+ * skanowany wstecz daje `ASC NULLS FIRST`, a `?sort=asc` prosi o `ASC NULLS LAST`.
+ * Zmierzone `EXPLAIN`-em na 5 000 wierszy: `?sort=asc` sortował CAŁY rejestr przed
+ * `LIMIT`-em (koszt 442 zamiast ~10). Wystarczył jeden klik w nagłówek kolumny.
+ *
+ * To był trzeci nawrót tej samej pułapki (migracje 12, 16 i ta), więc naprawa idzie
+ * do ŹRÓDŁA: `keysetOrderBy` emituje `NULLS` wyłącznie dla klucza, który faktycznie
+ * bywa `NULL` (`CursorShape.k1Nullable`). Dla kolumny `NOT NULL` zostaje czyste
+ * `DESC`/`ASC`, a to są zapisy DOMYŚLNE — więc jeden indeks `(x DESC, y DESC)`
+ * obsługuje OBA kierunki: skanem w przód `DESC, DESC`, skanem wstecz `ASC, ASC`.
+ *
+ * ══ CO Z TEGO WYNIKA DLA INDEKSÓW ══
+ * Trzy indeksy stojące pod kluczami `NOT NULL` wracają do postaci bez `NULLS LAST` —
+ * inaczej przestałyby pasować do zapytań PO naprawie. Wynik był i jest identyczny;
+ * zmienia się wyłącznie to, czy planer może użyć indeksu do porządkowania:
+ *
+ *  • `idx_events_received`  — rejestr `A04` (oba kierunki) i pulpit `A01` (`recent`);
+ *  • `idx_audit_created`    — dziennik audytu `A09` bez zawężenia;
+ *  • `idx_audit_actor`      — dziennik audytu zawężony po koncie działającego.
+ *
+ * `idx_sessions_day` (migracja 11) zostaje BEZ ZMIAN i to jest cała pointa reguły:
+ * `sessions.claim_time` jest NULL-owalne (dzień bez `preflight_confirm` nie ma duty
+ * startu), więc tam `NULLS LAST` opisuje realny porządek, a nie ozdobę.
+ *
+ * Że wszystkie cztery kombinacje rejestru (`desc`/`asc` × z kursorem/bez) faktycznie
+ * NIOSĄ porządek z indeksu, sprawdza `EXPLAIN` w `test/adminEvents.test.ts`. Poprzednia
+ * wersja testu badała wyłącznie `desc` — i dlatego wada przeszła.
+ */
+export const MIGRATION_17 = `
+  DROP INDEX IF EXISTS idx_events_received;
+  CREATE INDEX IF NOT EXISTS idx_events_received
+    ON events (received_at DESC, uuid DESC);
+
+  DROP INDEX IF EXISTS idx_audit_created;
+  CREATE INDEX IF NOT EXISTS idx_audit_created
+    ON admin_audit (created_at DESC, id DESC);
+
+  DROP INDEX IF EXISTS idx_audit_actor;
+  CREATE INDEX IF NOT EXISTS idx_audit_actor
+    ON admin_audit (actor_pilot_id, created_at DESC, id DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -565,4 +626,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_14,
   MIGRATION_15,
   MIGRATION_16,
+  MIGRATION_17,
 ];

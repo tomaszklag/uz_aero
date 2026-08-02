@@ -14,12 +14,14 @@
  * granicy — pulpit działałby świetnie w pierwszym miesiącu i coraz gorzej w każdym
  * następnym, czyli w sposób najtrudniejszy do zauważenia.
  *
- * **`NULLS LAST` w `ORDER BY` niżej NIE JEST ozdobą.** Migracja 16 przestawiła
- * `idx_events_received` na `(received_at DESC NULLS LAST, uuid DESC)`, bo tego wymaga
- * paginacja kursorowa rejestru (`A04`), a planer PostgreSQL-a dopasowuje porządek
- * SKŁADNIOWO — także wtedy, gdy kolumna jest `NOT NULL` i różnica nie ma jak niczego
- * zmienić. Bez tych dwóch słów tutaj naprawa listy zdarzeń zabrałaby pulpitowi indeks
- * i „ostatnie sześć zdarzeń" zaczęłoby sortować cały rejestr.
+ * **`ORDER BY` niżej jest BEZ `NULLS LAST` i to jest decyzja, nie przeoczenie.**
+ * `events.received_at` jest `NOT NULL`, więc dopisek nie zmienia wyniku — a planer
+ * dopasowuje porządek SKŁADNIOWO i o ograniczeniu kolumny nie wnioskuje. Po migracji 17
+ * `idx_events_received` stoi jako `(received_at DESC, uuid DESC)`, czyli w postaci
+ * DOMYŚLNEJ, którą ten sam indeks obsługuje w obie strony. Zapytanie z `NULLS LAST`
+ * przestałoby do niego pasować i „ostatnie sześć zdarzeń" zaczęłoby sortować cały
+ * rejestr — pulpit ładowałby się natychmiast w pierwszym miesiącu i coraz wolniej
+ * w każdym następnym. Krótka historia tej pomyłki: migracje 12, 16 i 17.
  */
 
 import type {
@@ -90,7 +92,7 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
          FROM events e
          LEFT JOIN aircraft a ON a.id = e.aircraft_id
          LEFT JOIN pilots   p ON p.id = e.pic_id
-        ORDER BY e.received_at DESC NULLS LAST, e.uuid DESC
+        ORDER BY e.received_at DESC, e.uuid DESC
         LIMIT $1`,
       [limit],
     );

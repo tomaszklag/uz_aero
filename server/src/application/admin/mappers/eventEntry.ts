@@ -73,16 +73,28 @@ export function eventEntries(
   const effective = new Map(applyCorrections([...stream.values()]).map((e) => [e.uuid, e]));
 
   /**
-   * Cele ruszone korektą ZAPISANĄ Z PANELU — niezależnie od tego, czy ostatecznie
-   * wygrała. Pytamy o istnienie śladu, nie o wynik: wpis `event.correct` w dzienniku
-   * audytu wskazuje zdarzenie POPRAWIANE, więc ma treść także wtedy, gdy późniejsza
-   * korekta odwróciła skutek. Ta sama reguła, co na osi karty dnia.
+   * Dwa zbiory celów, oba budowane z ISTNIENIA korekty, nie z jej wyniku.
+   *
+   *  • `corrected` — ktoś to zdarzenie RUSZAŁ. To jest fakt niezależny od tego, czy
+   *    liczba się zmieniła: para `void` → `retime` na czas PIERWOTNY nie zmienia ani
+   *    jednej wartości, a mimo to zdarzenie ma za sobą dwie decyzje administratora
+   *    i nie jest tym samym, co zdarzenie nietknięte. Porównanie wartości (`after.gpsTime
+   *    !== row.gpsTime`) dawało tu `null`, czyli wiersz nieodróżnialny od surowego —
+   *    i sprzeczność na jednym ekranie, bo kolumna `source_device` mówiła o korekcie,
+   *    a rozwinięcie „zdarzenia nikt nie ruszał".
+   *  • `adminCorrected` — tę korektę zapisał PANEL, a nie pilot w oknie 24 h. Wpis
+   *    `event.correct` w dzienniku audytu wskazuje zdarzenie POPRAWIANE, więc ma treść
+   *    także wtedy, gdy późniejsza korekta odwróciła skutek. Ta sama reguła, co na osi
+   *    karty dnia.
    */
+  const corrected = new Set<string>();
   const adminCorrected = new Set<string>();
   for (const row of [...rows, ...corrections]) {
-    if (row.type !== 'event_correction' || !isAdminSourceDevice(row.sourceDevice)) continue;
+    if (row.type !== 'event_correction') continue;
     const target = (row.payload as { targetUuid?: unknown } | null)?.targetUuid;
-    if (typeof target === 'string') adminCorrected.add(target);
+    if (typeof target !== 'string') continue;
+    corrected.add(target);
+    if (isAdminSourceDevice(row.sourceDevice)) adminCorrected.add(target);
   }
 
   return rows.map((row) => {
@@ -91,6 +103,15 @@ export function eventEntries(
     // `event_correction` wyglądałby na unieważniony.
     const isCorrection = row.type === 'event_correction';
     const after = isCorrection ? undefined : effective.get(row.uuid);
+
+    /**
+     * Zdarzenie w postaci, KTÓRĄ LICZY PROJEKCJA — po korektach, gdy jakaś wygrała.
+     *
+     * Wiersz unieważniony i sama korekta nie mają takiej postaci (`after` jest wtedy
+     * `undefined`), więc czas efektywny opisuje dla nich zapis surowy: projekcja
+     * pierwszego nie liczy wcale, a drugi nie jest jej wejściem.
+     */
+    const projected = after ?? row;
 
     return {
       uuid: row.uuid,
@@ -107,17 +128,24 @@ export function eventEntries(
       deviceTime: row.deviceTime,
       gpsTime: row.gpsTime,
       driftMs: driftOf(row),
-      effectiveTime: row.gpsTime ?? row.deviceTime,
-      effectiveClock: row.gpsTime == null ? 'device' : 'gps',
+      // Czas, KTÓRYM LICZY PROJEKCJA — czyli po korekcie, jeśli jakaś wygrała. Liczony
+      // z kolumn surowych kłamał dokładnie tam, gdzie ekran ma wyjaśniać liczby: zaraz
+      // po korekcie `retime` z `A02b` rejestr pisał „czas efektywny 00:00:01 · z zegara
+      // telefonu", choć projekcja liczyła już czasem nadanym.
+      effectiveTime: projected.gpsTime ?? projected.deviceTime,
+      effectiveClock: projected.gpsTime == null ? 'device' : 'gps',
       payload: row.payload,
       schemaVersion: row.schemaVersion,
       receivedAt: row.receivedAt.toISOString(),
       sourceDevice: row.sourceDevice,
+      /** Ten WIERSZ zapisał panel — fakt o pochodzeniu zapisu, nie o jego korekcie. */
+      writtenByPanel: isAdminSourceDevice(row.sourceDevice),
       voided: !isCorrection && after === undefined,
-      // Korekta `retime` wchodzi w `gpsTime` (tak robi domena), więc RÓŻNICA wobec
-      // surowego `gpsTime` jest jedynym śladem, że czas ktoś nadał. Porównujemy
-      // z wartością surową, nie z `effectiveTime`: zdarzenie bez fixa, któremu korekta
-      // nadała czas, ma `gpsTime: null` w bazie i konkretną wartość po korekcie.
+      /** Zdarzenie ruszała korekta — z ISTNIENIA zapisu, nie z nierówności wartości. */
+      corrected: !isCorrection && corrected.has(row.uuid),
+      // Korekta `retime` wchodzi w `gpsTime` (tak robi domena), więc czas nadany
+      // odczytujemy ze strumienia efektywnego. `null` znaczy „czasu nie nadano" —
+      // bo zdarzenie jest unieważnione albo korekta w ogóle nie ruszyła zegara.
       correctedTime:
         after != null && after.gpsTime !== row.gpsTime ? (after.gpsTime ?? null) : null,
       adminCorrected: adminCorrected.has(row.uuid),

@@ -26,17 +26,31 @@ import { z } from 'zod';
  * z wejściem. To jedyny sposób, który odsiewa PRZEWINIĘTE daty (`2026-02-30`,
  * `2026-00-10`, `2026-12-32`) bez przepisywania kalendarza gregoriańskiego.
  *
- * Znalezione przy `A04` (2026-08-01); ta sama luka siedziała w panelu i została tam
- * naprawiona w tym samym przekroju.
+ * ══ PARSUJEMY NAPIS ISO, A NIE `Date.UTC(y, m, d)` — I TO NIE JEST KOSMETYKA ══
+ * `Date.UTC` ma drugą, osobną własność przewijania: **lata 0–99 mapuje na 1900 + rok**.
+ * `Date.UTC(99, 0, 1)` to 1 stycznia 1999, więc round-trip odrzucał `0099-01-01` jako
+ * datę nieistniejącą — mimo że jest to poprawna data ISO. Panel takiego zakresu NIE
+ * odrzucał (waliduje `new Date('0099-01-01T00:00:00.000Z')`, czyli parsowanie ISO, które
+ * roku nie przewija), więc filtr z adresu przechodził walidację ekranu i dostawał 400 od
+ * serwera. Skutek widoczny dla człowieka: baner **„Panel działa wyłącznie online"**, czyli
+ * komunikat o SIECI przy błędzie walidacji zakresu dat.
+ *
+ * Obie strony liczą teraz tak samo, tym samym mechanizmem: parsowanie ISO 8601 UTC
+ * i porównanie wyniku z wejściem.
+ *
+ * Znalezione przy `A04` (2026-08-01), rozjazd `Date.UTC` ↔ `Date.parse` domknięty
+ * 2026-08-02.
  */
 export const dayParam = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'oczekiwano daty YYYY-MM-DD (UTC)')
   .transform((value, ctx) => {
-    const [y, m, d] = value.split('-').map(Number) as [number, number, number];
-    const ms = Date.UTC(y, m - 1, d);
+    const parsed = new Date(`${value}T00:00:00.000Z`);
+    const ms = parsed.getTime();
 
-    if (new Date(ms).toISOString().slice(0, 10) !== value) {
+    // `Number.isNaN` PRZED `toISOString`, bo na dacie nieprawidłowej ta metoda RZUCA
+    // (`RangeError`) — a wartość z query stringa nie ma prawa dać 500.
+    if (Number.isNaN(ms) || !parsed.toISOString().startsWith(value)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: `data nie istnieje: ${value}` });
       return z.NEVER;
     }

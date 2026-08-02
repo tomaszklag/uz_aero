@@ -36,7 +36,9 @@ function entry(over: Partial<EventEntryDto>): EventEntryDto {
     schemaVersion: 1,
     receivedAt: new Date(at(14, 19, 8)).toISOString(),
     sourceDevice: 'Pixel 7a · a41f9c',
+    writtenByPanel: false,
     voided: false,
+    corrected: false,
     correctedTime: null,
     adminCorrected: false,
     ...over,
@@ -77,7 +79,32 @@ export function eventsFixture(): EventsPageDto {
         uuid: '5e2b91c7-0000-0000-0000-0000000000ab',
         type: 'landing',
         voided: true,
+        corrected: true,
         adminCorrected: true,
+      }),
+      // 4a. Zdarzenie z korektą `retime` — czas NADANY, wiersz NIE unieważniony.
+      //     Bez tego przypadku w fixture test renderu nie łapał najdroższej pomyłki
+      //     tego ekranu: stanu policzonego, przetestowanego i NIEWIDOCZNEGO w tabeli.
+      entry({
+        uuid: '3a71dd08-0000-0000-0000-00000000c2e5',
+        type: 'takeoff',
+        deviceTime: at(12, 41, 6),
+        gpsTime: at(12, 41, 5),
+        // Kontrakt: `effectiveTime` opisuje stan PO korekcie, więc idzie za `correctedTime`.
+        effectiveTime: at(12, 44, 0),
+        effectiveClock: 'gps',
+        corrected: true,
+        correctedTime: at(12, 44, 0),
+        adminCorrected: true,
+      }),
+      // 4b. Sam WIERSZ KOREKTY zapisany przez panel — to jego zapisał panel, a jego
+      //     samego nikt nie poprawiał. Dwa różne fakty w dwóch różnych polach.
+      entry({
+        uuid: 'ac10f4b6-0000-0000-0000-000000000d31',
+        type: 'event_correction',
+        sourceDevice: 'admin:TMK',
+        writtenByPanel: true,
+        payload: { targetUuid: '3a71dd08-0000-0000-0000-00000000c2e5', action: 'retime' },
       }),
       // 5. Typ SPOZA katalogu i payload NIEBĘDĄCY obiektem — dwa kształty naraz,
       //    których panel nie zna i nie ma prawa się na nich wywrócić.

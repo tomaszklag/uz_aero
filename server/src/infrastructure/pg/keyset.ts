@@ -166,16 +166,36 @@ export function decodeCursor(raw: string, shape: CursorShape): CursorKey | null 
 
 /**
  * `ORDER BY` zgodny z predykatem — obie rzeczy muszą opisywać TEN SAM porządek,
- * więc powstają w jednym pliku. `NULLS LAST` piszemy JAWNIE w obu kierunkach:
+ * więc powstają w jednym pliku.
+ *
+ * ══ `NULLS LAST` WYŁĄCZNIE DLA KLUCZA NULLOWALNEGO — I TO NIE JEST DROBIAZG ══
  * PostgreSQL domyślnie daje `NULLS LAST` dla `ASC` i `NULLS FIRST` dla `DESC`, więc
- * poleganie na domyślnym zachowaniu znaczyłoby dwa różne porządki pod jedną nazwą.
+ * dla kolumny, która NAPRAWDĘ bywa `NULL` (`sessions.claim_time` — dzień bez preflightu),
+ * dopisek jest konieczny: bez niego jedna nazwa opisywałaby dwa różne porządki, a wiersze
+ * bez wartości raz stałyby na początku listy, raz na końcu.
+ *
+ * Dla kolumny `NOT NULL` ten sam dopisek nie znaczy NIC dla wyniku, a **odbiera indeks
+ * w jednym z dwóch kierunków** — bo planer dopasowuje porządek SKŁADNIOWO i o `NOT NULL`
+ * nie wnioskuje. Indeks `(x DESC, y DESC)` obsługuje wtedy:
+ *
+ *  • skanem w przód — `ORDER BY x DESC, y DESC` (czyli `DESC NULLS FIRST`);
+ *  • skanem wstecz  — `ORDER BY x ASC,  y ASC`  (czyli `ASC NULLS LAST`),
+ *
+ * a to są dokładnie zapisy DOMYŚLNE. Dopisanie `NULLS LAST` do `DESC` wyłamuje pierwszy
+ * z nich, dopisanie go do `ASC` — drugi. Ta pułapka wróciła w tym projekcie trzy razy
+ * (migracje 12, 16 i 17): naprawa jednego kierunku przesuwała wadę na drugi, bo indeks
+ * pod `DESC NULLS LAST` przestaje pasować do `ASC NULLS LAST` skanowany wstecz.
+ *
+ * Stąd reguła: **`NULLS` emitujemy tylko wtedy, gdy klucz faktycznie bywa `NULL`.**
+ * Kształt kursora i tak niesie tę wiedzę (`k1Nullable`), więc źródło jest jedno.
  */
 export function keysetOrderBy(
   columns: readonly [string, string],
-  direction: KeysetDirection = 'desc',
+  shape: Pick<CursorShape, 'direction' | 'k1Nullable'>,
 ): string {
-  const dir = direction === 'asc' ? 'ASC' : 'DESC';
-  return `ORDER BY ${columns[0]} ${dir} NULLS LAST, ${columns[1]} ${dir}`;
+  const dir = shape.direction === 'asc' ? 'ASC' : 'DESC';
+  const nulls = shape.k1Nullable ? ' NULLS LAST' : '';
+  return `ORDER BY ${columns[0]} ${dir}${nulls}, ${columns[1]} ${dir}`;
 }
 
 /**
@@ -193,7 +213,9 @@ export function keysetOrderBy(
  *
  * `k1Nullable: false` (kolumna `NOT NULL`, np. `admin_audit.created_at`) zwęża pierwszy
  * przypadek do dwóch gałęzi — gałąź `IS NULL` byłaby wtedy martwa, a martwy warunek
- * w `WHERE` potrafi odciąć planerowi indeks.
+ * w `WHERE` potrafi odciąć planerowi indeks. Ta sama deklaracja zdejmuje wtedy `NULLS
+ * LAST` z `ORDER BY` (patrz `keysetOrderBy`), więc obie strony dalej opisują JEDEN
+ * porządek: bez NULL-i „ogon NULL-i" po prostu nie istnieje.
  *
  * Ten sam obiekt `shape` jedzie do `decodeCursor`, więc deklaracja kształtu klucza jest
  * w zapytaniu JEDNA — wyjątek niżej może więc powstać wyłącznie z pomyłki programisty

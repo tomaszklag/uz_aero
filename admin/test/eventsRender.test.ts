@@ -235,6 +235,32 @@ describe('rejestr: korekta przekreśla, nie usuwa', () => {
     expect(open).toContain('unieważnione korektą');
     expect(open).toContain('Korektę zapisał panel.');
   });
+
+  it('zdarzenie z `retime` jest ODRÓŻNIALNE W TABELI, nie tylko w rozwinięciu', () => {
+    // Najdroższa pomyłka tego ekranu miałaby dokładnie ten kształt: stan policzony,
+    // przetestowany w module czystym i NIEWIDOCZNY. Wiersz z korektą `retime` wyglądał
+    // jak nietknięty — bez przekreślenia, z wartościami surowymi w kolumnach, a jedyna
+    // wzmianka mieszkała w rozwinięciu otwieranym osobno dla każdego wiersza.
+    expect(html).toContain('class="clock-val struck"');
+    expect(html).toContain('korekta → 12:44:00');
+    // Wartość SUROWA zostaje widoczna obok — rejestr pamięta, co przysłał telefon.
+    expect(html).toContain('12:41:05');
+  });
+
+  it('modyfikator przekreślenia MA regułę w arkuszu panelu I w szablonie', () => {
+    const css = cssOf('components', 'table.css');
+    expect(css).toContain('.clock-val.struck {');
+    expect(SZABLON()).toContain('.clock-val.struck');
+  });
+
+  it('kolumna `source_device` mówi o POCHODZENIU wiersza, nie o jego korekcie', () => {
+    // Zdarzenie z telefonu, którego korektę zapisał panel, dostawało pod nazwą telefonu
+    // podpis „korekta z panelu"; sam wiersz korekty zapisany przez panel — żadnego.
+    // Dwa różne fakty, dwa różne pola.
+    expect(html).toContain('admin:TMK');
+    expect(html).toContain('zapis z panelu');
+    expect(html).not.toContain('>korekta z panelu<');
+  });
 });
 
 describe('rejestr: kafle i braki, o których mówimy wprost', () => {
@@ -340,7 +366,7 @@ describe('rejestr: przejścia i paginacja — zero martwych linków', () => {
     // Lista przycięta po cichu wygląda na komplet — najgorszy tryb awarii narzędzia
     // śledczego.
     expect(html).toContain('Pokaż starsze zdarzenia');
-    expect(html).toContain('Pokazano 6 z 247.');
+    expect(html).toContain('Pokazano 8 z 247.');
     expect(html).toContain('kursor keyset');
   });
 

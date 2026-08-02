@@ -13,6 +13,22 @@
  * pilot poprawił się drugi raz — i to jest jego aktualna wersja. Działa to też dla pary
  * `void` → `retime`: ponowna zmiana czasu przywraca zdarzenie do życia, bo skoro pilot
  * podaje mu nowy czas, to uznaje, że jednak zaszło.
+ *
+ * ══ KOREKTA NIECZYTELNA JEST POMIJANA, A NIE WYWRACA STRUMIENIA ══
+ * Typ `EventCorrectionPayload` jest obietnicą WEJŚCIA (`POST /events` waliduje kształt
+ * zodem), a nie faktem odczytu: kolumna `events.payload` to `JSONB` bez `CHECK`-a, więc
+ * do strumienia trafia też wiersz wpisany ręcznie w psql, odtworzony ze zrzutu albo
+ * przysłany przez starszą wersję telefonu. Taki wiersz nie ma prawa zabrać widoku
+ * WSZYSTKIM pozostałym — a zabierał: `payload` równy JSON-owemu `null` dawał
+ * `TypeError` przy sięgnięciu po `targetUuid`, czyli 500 z całego rejestru zdarzeń,
+ * i to bez możliwości obejścia filtrem (wiersz wchodzi na każdą stronę w swoim zakresie).
+ *
+ * Pomijamy więc korektę, która NIE ADRESUJE celu (`targetUuid` inne niż napis) i taką,
+ * której akcji nie znamy. To drugie jest równie ważne: gałąź „wszystko, co nie jest
+ * `void`" traktowała po cichu KAŻDĄ nieznaną akcję jak `retime` i brała z niej
+ * `newTime` — czyli podejmowała decyzję za kształt, którego nie rozumie. Nieznana
+ * akcja może w przyszłej wersji znaczyć cokolwiek; jedyna uczciwa odpowiedź brzmi
+ * „nie wiem, więc nie ruszam zdarzenia".
  */
 
 import type { EpochMillis } from '../time';
@@ -20,6 +36,35 @@ import type { Event, EventOf } from '../events/events';
 
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
 const at = (e: Event): EpochMillis => e.gpsTime ?? e.deviceTime;
+
+/** Korekta CZYTELNA — adresuje cel i niesie akcję, którą ta wersja domeny zna. */
+type ReadableCorrection =
+  | { targetUuid: string; action: 'void' }
+  | { targetUuid: string; action: 'retime'; newTime: EpochMillis };
+
+/**
+ * `payload` korekty → korekta czytelna albo `null`.
+ *
+ * Kształt wejścia opisujemy `unknown`-ami, a nie `EventCorrectionPayload`, bo to jest
+ * dokładnie ta różnica, o którą chodzi: typ mówi, co OBIECAŁO wejście, a ta funkcja
+ * czyta, co FAKTYCZNIE leży w bazie. `retime` bez liczbowego `newTime` też jest
+ * nieczytelny — wpisałby zdarzeniu `gpsTime`, którego nikt nie podał.
+ */
+function readCorrection(correction: EventOf<'event_correction'>): ReadableCorrection | null {
+  const payload = correction.payload as
+    | { targetUuid?: unknown; action?: unknown; newTime?: unknown }
+    | null
+    | undefined;
+
+  const targetUuid = payload?.targetUuid;
+  if (typeof targetUuid !== 'string') return null;
+
+  if (payload?.action === 'void') return { targetUuid, action: 'void' };
+  if (payload?.action === 'retime' && typeof payload.newTime === 'number') {
+    return { targetUuid, action: 'retime', newTime: payload.newTime };
+  }
+  return null;
+}
 
 /**
  * Strumień efektywny: bez zdarzeń `event_correction`, bez celów unieważnionych,
@@ -36,9 +81,14 @@ export function applyCorrections(events: readonly Event[]): Event[] {
     .filter((e): e is EventOf<'event_correction'> => e.type === 'event_correction')
     .sort((a, b) => at(a) - at(b));
 
-  const effective = new Map<string, EventOf<'event_correction'>>();
+  const effective = new Map<string, ReadableCorrection>();
   for (const correction of corrections) {
-    effective.set(correction.payload.targetUuid, correction);
+    // Nieczytelna korekta wypada TUTAJ, a nie przy nakładaniu — dzięki temu poprzednia,
+    // czytelna korekta tego samego celu dalej obowiązuje. „Ostatnia wygrywa" znaczy
+    // „ostatnia, którą da się przeczytać", a nie „ostatnia, która skasuje poprzednią".
+    const readable = readCorrection(correction);
+    if (readable == null) continue;
+    effective.set(readable.targetUuid, readable);
   }
 
   const out: Event[] = [];
@@ -48,11 +98,11 @@ export function applyCorrections(events: readonly Event[]): Event[] {
     const correction = effective.get(event.uuid);
     if (correction == null) {
       out.push(event);
-    } else if (correction.payload.action === 'void') {
+    } else if (correction.action === 'void') {
       // Unieważnione = nie zaszło. Wiersz zostaje w rejestrze, znika z wyliczeń.
       continue;
     } else {
-      out.push({ ...event, gpsTime: correction.payload.newTime });
+      out.push({ ...event, gpsTime: correction.newTime });
     }
   }
   return out;

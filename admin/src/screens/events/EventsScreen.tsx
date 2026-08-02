@@ -26,6 +26,17 @@
  *     rosnącej tabeli w systemie. Podpowiedź pola mówi to wprost.
  * Wszystkie trzy są opisane na ekranie, nie przemilczane.
  *
+ * ══ CO TEN EKRAN POKAZUJE PONAD MOCKUP ══
+ * Pominięcia były nazwane, dodania nie — a rozjazd liczy się w obie strony.
+ *  1. **Dwunasta kolumna „Dzień lotny"** (`thead` mockupu ma jedenaście). Skrót
+ *     `session_uuid` z linkiem na kartę dnia: pytanie „do którego dnia należy to
+ *     zdarzenie" pada przy każdym dochodzeniu, a bez kolumny odpowiedź wymagałaby
+ *     rozwinięcia każdego wiersza z osobna.
+ *  2. **Widoczny w tabeli ślad korekty `retime`** — przekreślona wartość `gps_time`
+ *     i czas nadany korektą pod nią. Mockup pokazuje korektę wyłącznie w rozwinięciu.
+ * Oba dodania są sprostowane w `design/admin/A04-zdarzenia.html` (`SPROSTOWANIE
+ * 2026-08-02`), bo mockup jest specyfikacją i to on ma być prawdą.
+ *
  * ══ ROZWINIĘCIE, NIE SZUFLADA ══
  * Payload otwiera się DOKŁADNIE pod swoim wierszem (`DataTable.expanded`), a nie
  * w szufladzie z boku jak na `A03a`: przy dochodzeniu porównuje się sąsiednie
@@ -521,10 +532,14 @@ function columns(
       key: 'gps',
       header: 'gps_time',
       align: 'num',
+      // Kolumna, w której WIDAĆ korektę: `retime` wchodzi domenowo w `gps_time`, więc
+      // wartość surowa jest tu przekreślana, a czas nadany stoi pod nią podpisem.
+      // Klasa i podpis przychodzą gotowe z modułu czystego — ekran niczego nie skleja.
       render: (row) => (
-        <span className={row.gps.tone == null ? undefined : `clock-val ${row.gps.tone}`}>
-          {row.gps.text}
-        </span>
+        <>
+          <span className={row.gps.className ?? undefined}>{row.gps.text}</span>
+          {row.gps.note == null ? null : <span className="cell-sub">{row.gps.note}</span>}
+        </>
       ),
     },
     {
@@ -590,7 +605,7 @@ function columns(
       render: (row) => (
         <>
           {row.sourceDevice.text}
-          {row.sourceDevice.fromPanel ? <span className="cell-sub">korekta z panelu</span> : null}
+          {row.sourceDevice.fromPanel ? <span className="cell-sub">zapis z panelu</span> : null}
         </>
       ),
     },

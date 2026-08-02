@@ -116,6 +116,30 @@ describe('payload: głębokie zagnieżdżenie nie wywraca wypisu', () => {
     const lines = payloadLines({ a: { x: 1 }, b: [1, 2], c: 'y' });
     expect(new Set(lines.map((l) => l.id)).size).toBe(lines.length);
   });
+
+  it('klucz ze ZNAKAMI ŚCIEŻKI nie skleja się z zagnieżdżeniem w ten sam identyfikator', () => {
+    // Klucze przychodzą z telefonu i NIE SĄ niczym ograniczone. Ścieżka sklejana kropką
+    // dawała dla `{"a.b": …}` i `{"a": {"b": …}}` ten sam `id`; poprzedni test tego nie
+    // łapał, bo badał payload bez ani jednej kropki w kluczu. Nawiasy zamykające bloków
+    // dokładają do ścieżki `}` i `]`, więc te znaki też muszą być bezpieczne.
+    const lines = payloadLines({
+      'a.b': 1,
+      a: { b: 2 },
+      'c}': { d: 3 },
+      c: { '}d': 4 },
+      'e]': [5],
+      e: { '0': 6 },
+    });
+
+    expect(new Set(lines.map((l) => l.id)).size).toBe(lines.length);
+    // Kontrola samego testu: wypis faktycznie ma linie, których unikalność badamy.
+    expect(lines.length).toBeGreaterThan(10);
+  });
+
+  it('klucz `"0"` i element tablicy `[0]` to DWIE różne linie, nie jedna', () => {
+    const lines = payloadLines({ a: { '0': 'obiekt' }, b: ['tablica'] });
+    expect(new Set(lines.map((l) => l.id)).size).toBe(lines.length);
+  });
 });
 
 describe('payload: kontrola samego testu', () => {

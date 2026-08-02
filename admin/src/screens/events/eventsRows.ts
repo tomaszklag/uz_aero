@@ -31,14 +31,27 @@ export type CellTone = 'amber' | 'red' | 'dim';
 export interface EventRow {
   uuid: string;
   sessionUuid: string;
-  /** Skrót uuid-a SESJI — kolumna „Dzień lotny" stoi w tabeli o jedenastu kolumnach. */
+  /**
+   * Skrót uuid-a SESJI — kolumna „Dzień lotny".
+   *
+   * **To jest DWUNASTA kolumna, dołożona wobec `A04-zdarzenia.html`** (mockup ma
+   * jedenaście). Powód jest tym samym powodem, dla którego ekran istnieje: rejestr
+   * to narzędzie śledcze, a pytanie „do którego dnia lotnego należy to zdarzenie"
+   * pada przy każdym dochodzeniu — bez tej kolumny odpowiedź wymagałaby rozwinięcia
+   * każdego wiersza z osobna. Dodanie jest odnotowane sprostowaniem W MOCKUPIE
+   * (`SPROSTOWANIE 2026-08-02`), bo mockup jest specyfikacją i to on ma być prawdą.
+   */
   shortSession: string;
   /** Kiedy SERWER przyjął — po tym idzie porządek listy. */
   received: { text: string; sub: string };
   /** Zegar telefonu; ton bursztynowy, gdy to on się rozjechał. */
   device: { text: string; tone: CellTone | null };
-  /** Zegar z fixa GPS albo „—" z wyjaśnieniem w podpisie. */
-  gps: { text: string; tone: CellTone | null };
+  /**
+   * Zegar z fixa GPS — wartość SUROWA, plus ślad korekty, jeśli jakaś to zdarzenie
+   * ruszała. `className` jest PEŁNY (reguła: `.tsx` nie skleja nazw klas), a `note`
+   * jest podpisem `.cell-sub` pod wartością.
+   */
+  gps: { text: string; className: string | null; note: string | null };
   /**
    * Różnica zegarów. `text` to napis do wypisania, a `missing` mówi, że różnicy
    * NIE MA CZEGO liczyć — to dwa różne stany i ekran ma je pokazać inaczej.
@@ -47,14 +60,17 @@ export interface EventRow {
   type: EventTypeView;
   aircraft: { reg: string; sub: string | null };
   pilot: { name: string; sub: string };
+  /** `fromPanel` = TEN WIERSZ zapisał panel; o korekcie mówi `adminCorrected`. */
   sourceDevice: { text: string; fromPanel: boolean };
   schemaVersion: number;
   /** Skrót uuid-a do rozpoznania wiersza; pełna wartość jest w rozwinięciu. */
   short: string;
   /** Korekta unieważniła zdarzenie — wiersz ZOSTAJE, ale przekreślony. */
   voided: boolean;
-  /** Czas nadany korektą (`retime`) albo `null`. */
-  corrected: string | null;
+  /** Zdarzenie RUSZAŁA korekta — z istnienia zapisu, nie z nierówności wartości. */
+  corrected: boolean;
+  /** Czas nadany korektą (`retime`), sformatowany; `null` = czasu nie nadano. */
+  correctedTime: string | null;
   adminCorrected: boolean;
   /** Czy zdarzenie tego typu w ogóle podlega korekcie administratora (`A02b`). */
   correctable: boolean;
@@ -85,6 +101,44 @@ export function driftSeconds(ms: number): string {
  * pierwszym strojeniu tolerancji, a rozjazd byłby cichy: kolor po prostu przestałby
  * odpowiadać skrzynce flag.
  */
+/**
+ * Ślad korekty w komórce `gps_time` — tam, gdzie korekta `retime` FAKTYCZNIE ląduje
+ * (domena wpisuje nowy czas w `gpsTime`).
+ *
+ * Bez tego zdarzenie z korektą było w tabeli nieodróżnialne od nietkniętego: kolumny
+ * pokazywały wartości surowe, a jedyna wzmianka mieszkała w rozwinięciu, które trzeba
+ * otworzyć osobno dla każdego wiersza. Przekreślamy więc wartość, która przestała być
+ * prawdą, i dopisujemy pod nią tę, którą liczy projekcja.
+ *
+ * Klasy są PEŁNYMI literałami, bo nazwa klasy nie ma prawa powstawać przez sklejenie
+ * w `.tsx` — recenzent grepuje po niej mockup i arkusz naraz.
+ */
+function gpsCell(entry: EventEntryDto): EventRow['gps'] {
+  const text = entry.gpsTime == null ? '—' : timeUtcSeconds(entry.gpsTime);
+
+  if (entry.correctedTime != null) {
+    return {
+      text,
+      className: entry.gpsTime == null ? 'clock-val red struck' : 'clock-val struck',
+      note: `korekta → ${timeUtcSeconds(entry.correctedTime)}`,
+    };
+  }
+  if (entry.voided) {
+    return { text, className: entry.gpsTime == null ? 'clock-val red' : null, note: 'unieważnione korektą' };
+  }
+  if (entry.corrected) {
+    // Para `void` → `retime` na czas pierwotny nie zmienia ani jednej liczby, a mimo to
+    // zdarzenie ma za sobą dwie decyzje administratora. Milczenie o tym byłoby tym
+    // samym błędem, co przekreślenie: wiersz wyglądałby na nietknięty.
+    return {
+      text,
+      className: entry.gpsTime == null ? 'clock-val red' : null,
+      note: 'korekta · czas bez zmiany',
+    };
+  }
+  return { text, className: entry.gpsTime == null ? 'clock-val red' : null, note: null };
+}
+
 export function eventsRows(
   items: readonly EventEntryDto[],
   driftThresholdMs: number | null,
@@ -111,10 +165,7 @@ export function eventsRows(
         // odniesieniem. Odwrotne pomalowanie sugerowałoby błąd fixa.
         tone: over ? 'amber' : null,
       },
-      gps:
-        entry.gpsTime == null
-          ? { text: '—', tone: 'red' }
-          : { text: timeUtcSeconds(entry.gpsTime), tone: null },
+      gps: gpsCell(entry),
       drift:
         entry.driftMs == null
           ? // Nie „0 s" i nie sama kreska: bez fixa nie ma DRUGIEGO zegara, więc
@@ -133,14 +184,19 @@ export function eventsRows(
       },
       sourceDevice: {
         text: entry.sourceDevice ?? '—',
-        // Znacznik panelu rozpoznaje SERWER (`adminCorrected`); tutaj mówimy wyłącznie
-        // o tym, że pole jest puste — wiersze sprzed migracji 4 go nie mają.
-        fromPanel: entry.adminCorrected,
+        // Kolumna mówi, CZYM zdarzenie przyszło, więc podpis pod nią musi opisywać
+        // POCHODZENIE TEGO wiersza (`writtenByPanel`), a nie pochodzenie jego korekty.
+        // Wcześniej stał tu `adminCorrected` i skutek był dokładnie odwrotny do sensu:
+        // pod nazwą telefonu pojawiało się „korekta z panelu", a sam wiersz korekty
+        // zapisany przez panel podpisu nie dostawał. Rozpoznanie znacznika należy
+        // do SERWERA — panel go wypisuje, a nie zna jego formatu.
+        fromPanel: entry.writtenByPanel,
       },
       schemaVersion: entry.schemaVersion,
       short: shortUuid(entry.uuid),
       voided: entry.voided,
-      corrected: entry.correctedTime == null ? null : timeUtcSeconds(entry.correctedTime),
+      corrected: entry.corrected,
+      correctedTime: entry.correctedTime == null ? null : timeUtcSeconds(entry.correctedTime),
       adminCorrected: entry.adminCorrected,
       correctable: isCorrectable(entry.type),
     };
@@ -212,10 +268,13 @@ export function headerRows(entry: EventEntryDto, driftThresholdMs: number | null
     {
       label: 'czas efektywny',
       value: timeUtcSeconds(entry.effectiveTime),
-      // Który zegar dał tę wartość — to jest zdanie, którego mockup nie ma, a bez
-      // którego kolumna czasu jest zagadką przy każdym wierszu bez fixa.
-      unit: entry.effectiveClock === 'gps' ? 'z GPS — tym liczy projekcja' : 'z zegara telefonu — GPS nie było',
-      tone: entry.effectiveClock === 'gps' ? null : 'amber',
+      // SKĄD wzięła się ta wartość — zdanie, którego mockup nie ma, a bez którego
+      // kolumna czasu jest zagadką przy każdym wierszu bez fixa. Trzy źródła, bo są
+      // trzy: korekta administratora, fix GPS i zegar telefonu. Do 2026-08-02 wiersz
+      // po korekcie `retime` twierdził „z zegara telefonu — GPS nie było", choć
+      // projekcja liczyła już czasem nadanym.
+      unit: effectiveSource(entry),
+      tone: effectiveTone(entry),
     },
     { label: 'schema_version', value: String(entry.schemaVersion), unit: null, tone: null },
     {
@@ -237,10 +296,37 @@ export function headerRows(entry: EventEntryDto, driftThresholdMs: number | null
 }
 
 /**
+ * Skąd wziął się `effectiveTime` — czyli czym liczy projekcja.
+ *
+ * Korekta jest tu ŹRÓDŁEM PIERWSZYM, bo wygrywa nad obydwoma zegarami: domena wpisuje
+ * nadany czas w `gpsTime`, więc po korekcie `effectiveClock` mówi „gps", choć fixa
+ * mogło w ogóle nie być. Podpis „z GPS" byłby wtedy nieprawdą o pochodzeniu liczby —
+ * na ekranie, którego jedynym zadaniem jest wyjaśnić, skąd ta liczba się wzięła.
+ */
+function effectiveSource(entry: EventEntryDto): string {
+  if (entry.correctedTime != null) return 'czas nadany korektą — tym liczy projekcja';
+  if (entry.voided) return 'zdarzenie unieważnione — projekcja go NIE liczy';
+  return entry.effectiveClock === 'gps'
+    ? 'z GPS — tym liczy projekcja'
+    : 'z zegara telefonu — GPS nie było';
+}
+
+function effectiveTone(entry: EventEntryDto): HeaderRow['tone'] {
+  if (entry.voided) return 'red';
+  if (entry.correctedTime != null) return 'amber';
+  return entry.effectiveClock === 'gps' ? null : 'amber';
+}
+
+/**
  * Wiersz „Korekta" — jedyne miejsce rozwinięcia, w którym panel mówi coś o SKUTKU,
- * a nie o zapisie. Trzy stany, bo znaczą trzy różne rzeczy: brak korekty, przesunięcie
- * czasu i unieważnienie. Sklejenie ich w jedno „skorygowane" kazałoby otwierać kartę
- * dnia, żeby dowiedzieć się, czy zdarzenie w ogóle się liczy.
+ * a nie o zapisie. Cztery stany, bo znaczą cztery różne rzeczy: brak korekty,
+ * przesunięcie czasu, unieważnienie i korekta, która czasu nie zmieniła. Sklejenie ich
+ * w jedno „skorygowane" kazałoby otwierać kartę dnia, żeby dowiedzieć się, czy
+ * zdarzenie w ogóle się liczy.
+ *
+ * Rozróżnienie „brak" ↔ „bez zmiany" wynika z `corrected`, czyli z ISTNIENIA zapisu —
+ * porównanie wartości dawało tu „zdarzenia nikt nie ruszał" dla pary `void` → `retime`
+ * na czas pierwotny, czyli po dwóch decyzjach administratora.
  */
 function correctionRow(entry: EventEntryDto): HeaderRow {
   const source = entry.adminCorrected ? 'korekta z panelu' : 'korekta z telefonu (okno 24 h)';
@@ -253,6 +339,14 @@ function correctionRow(entry: EventEntryDto): HeaderRow {
       label: 'korekta',
       value: `czas → ${timeUtcSeconds(entry.correctedTime)}`,
       unit: source,
+      tone: 'amber',
+    };
+  }
+  if (entry.corrected) {
+    return {
+      label: 'korekta',
+      value: 'czas bez zmiany',
+      unit: `${source} — zapis został, liczba nie`,
       tone: 'amber',
     };
   }

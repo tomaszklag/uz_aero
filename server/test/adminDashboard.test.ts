@@ -34,6 +34,8 @@
 
 import { describe, expect, it } from 'vitest';
 
+import type { Queryable } from '../src/application/common/ports.ts';
+import { PgAdminDashboardRepo } from '../src/infrastructure/pg/admin/dashboardRepo.ts';
 import { TEST_PASSWORD, testHarness } from './helpers.ts';
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
@@ -558,6 +560,45 @@ describe('pulpit — puls rejestru', () => {
     // Złączenia z rejestrem floty i kont — wiersz ma nazwać samolot i pilota.
     expect(recent[0]?.reg).toBe('SP-FGK');
     expect(recent[0]?.picCode).toBe('KRZ');
+  });
+
+  it('„ostatnio przyjęte" bierze porządek z `idx_events_received`, nie z sortowania', async () => {
+    // Pulpit jest ekranem, na którym każdy ląduje jako pierwszym, a `events` rośnie bez
+    // granicy — więc `Sort` w tym planie znaczy „ładuje się natychmiast w pierwszym
+    // miesiącu i coraz wolniej w każdym następnym". Dokładnie takie zniszczenie groziło
+    // przy migracji 16 (`ORDER BY` dostał wtedy `NULLS LAST` w ślad za indeksem)
+    // i przy migracji 17 (indeks wrócił do postaci domyślnej). Ani razu nie pilnował
+    // tego test — dlatego stoi tu teraz.
+    const { db } = await testHarness();
+    await db.query(
+      `INSERT INTO events
+         (uuid, session_uuid, aircraft_id, pic_id, type, device_time, gps_time,
+          payload, schema_version, received_at)
+       SELECT 'puls-' || g, 'sess-puls', 'SP-AXA', 'KRZ', 'taxi', 0, 0, '{}'::jsonb, 1,
+              TIMESTAMPTZ '2026-01-01 00:00:00+00' + (g * INTERVAL '1 second')
+         FROM generate_series(1, 5000) AS g`,
+    );
+    for (const table of ['events', 'pilots', 'aircraft']) await db.query(`ANALYZE ${table}`);
+
+    const sent: { text: string; params: unknown[] }[] = [];
+    const spy: Queryable = {
+      query<R>(text: string, params?: unknown[]): Promise<{ rows: R[] }> {
+        sent.push({ text, params: params ?? [] });
+        return db.query<R>(text, params);
+      },
+    };
+    await new PgAdminDashboardRepo().recent(spy, 6);
+
+    const query = sent.find((q) => q.text.includes('ORDER BY'));
+    if (query == null) throw new Error('adapter nie wysłał zapytania „ostatnio przyjęte"');
+    const { rows } = await db.query<Record<string, string>>(
+      `EXPLAIN ${query.text}`,
+      query.params,
+    );
+    const plan = rows.map((row) => Object.values(row).join(' ')).join('\n');
+
+    expect(plan).not.toMatch(/\bSort\b/);
+    expect(plan).toContain('idx_events_received');
   });
 
   it('„dziś w liczbach" sumuje KOLUMNY PROJEKCJI, a nie zdarzenia', async () => {

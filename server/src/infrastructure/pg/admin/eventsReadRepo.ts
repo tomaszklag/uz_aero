@@ -39,9 +39,11 @@ import { SqlFilter } from '../sqlFilter.ts';
 
 /**
  * Klucz porządku rejestru — dokładnie ten, pod który stoi `idx_events_received`
- * po migracji 16. Obie kolumny są `NOT NULL` (`uuid` jest kluczem głównym), stąd
+ * po migracji 17. Obie kolumny są `NOT NULL` (`uuid` jest kluczem głównym), stąd
  * `k1Nullable: false`: gałąź `IS NULL` byłaby martwym warunkiem, a martwy warunek
- * w `WHERE` potrafi odciąć planerowi indeks.
+ * w `WHERE` potrafi odciąć planerowi indeks. Ta sama deklaracja zdejmuje `NULLS LAST`
+ * z `ORDER BY`, dzięki czemu jeden indeks obsługuje `?sort=desc` skanem w przód
+ * i `?sort=asc` skanem wstecz (`keysetOrderBy`, migracja 17).
  *
  * `uuid` jako tie-breaker, bo CAŁA paczka z jednego synca ma identyczny `received_at`
  * — `now()` w Postgresie zwraca czas rozpoczęcia transakcji. Bez rozstrzygnięcia
@@ -158,7 +160,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
     // `COUNT` na to nie odpowiada, bo mógłby się zmienić między zapytaniami.
     const limitParam = page.bind(filter.limit + 1);
     const { rows } = await db.query<EventDbRow>(
-      `${SELECT} ${page.where()} ${keysetOrderBy(KEY, filter.direction)} LIMIT ${limitParam}`,
+      `${SELECT} ${page.where()} ${keysetOrderBy(KEY, shape)} LIMIT ${limitParam}`,
       page.params(),
     );
 
@@ -194,6 +196,15 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
    * `IN (…)` składamy z osobnych miejsc na wartości, a nie przez `= ANY ($n)` z tablicą:
    * tablicę trzeba by serializować do literału Postgresa, co jest zachowaniem STEROWNIKA
    * (testy jadą na PGlite, produkcja na `pg`). Kilka `$n` znaczy to samo w obu.
+   *
+   * ══ `ORDER BY` JEST TU DEKLARACJĄ PORZĄDKU, A NIE OPTYMALIZACJĄ ══
+   * `applyCorrections` sortuje strumień STABILNIE po czasie zdarzenia, więc przy REMISIE
+   * czasu o zwycięzcy decyduje kolejność, w jakiej korekty weszły do strumienia — czyli
+   * kolejność wierszy z bazy. Bez `ORDER BY` daje ją układ sterty: ta sama para korekt
+   * dawała raz wiersz przekreślony, raz nie, a zmieniało się to po `VACUUM` albo po
+   * przepakowaniu tabeli. W testach z zamrożonym zegarem remis jest stanem DOMYŚLNYM,
+   * a nie przypadkiem brzegowym. Porządkujemy po `received_at, uuid`, czyli po tym samym
+   * kluczu, co strona: przy równym czasie zdarzenia wygrywa korekta przyjęta PÓŹNIEJ.
    */
   private async correctionsFor(
     db: Queryable,
@@ -206,7 +217,10 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
     filter.add(`e.type = 'event_correction'`);
     filter.add(`e.payload->>'targetUuid' IN (${holes})`, ...items.map((i) => i.uuid));
 
-    const { rows } = await db.query<EventDbRow>(`${SELECT} ${filter.where()}`, filter.params());
+    const { rows } = await db.query<EventDbRow>(
+      `${SELECT} ${filter.where()} ORDER BY e.received_at, e.uuid`,
+      filter.params(),
+    );
     return rows.map(toRow);
   }
 

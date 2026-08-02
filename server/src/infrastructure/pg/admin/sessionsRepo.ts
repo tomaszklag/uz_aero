@@ -144,7 +144,7 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
     // a drugi `COUNT` na to nie odpowiada (mógłby się zmienić między zapytaniami).
     const limitParam = page.bind(filter.limit + 1);
     const { rows } = await db.query<JoinedDbRow>(
-      `${SELECT} ${page.where()} ${keysetOrderBy(KEY, filter.direction)} LIMIT ${limitParam}`,
+      `${SELECT} ${page.where()} ${keysetOrderBy(KEY, shape)} LIMIT ${limitParam}`,
       page.params(),
     );
 

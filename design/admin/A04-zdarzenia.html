@@ -517,6 +517,19 @@
           <span><b>Widok tylko do odczytu — rejestr jest append-only.</b> Nie ma tu „edytuj wiersz" ani kosza, i nie będzie: zdarzenie raz przyjęte zostaje w bazie na zawsze. Jedyna droga zmiany to dopisanie <code>event_correction</code> (<code>retime</code> / <code>void</code>) na ekranie <a href="A02b-korekta.html" style="color:var(--blue);">A02B</a> — i sama korekta też jest tu widoczna jako zwykły wiersz.</span>
         </div>
 
+        <!-- SPROSTOWANIE 2026-08-02: tabela niżej ma JEDENAŚCIE kolumn, a wdrożony ekran
+             DWANAŚCIE. Dodanie jest świadome i nazwane w banerze poniżej — reguła
+             „mockup wygrywa" wymaga, żeby rozjazd był zapisany TUTAJ, a nie tylko
+             w kodzie. Doszła też widoczna w tabeli oznaka korekty `retime`
+             (`.clock-val.struck` w SZABLON.html). -->
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span><b>Sprostowanie z 2026-08-02 — wdrożona tabela ma o jedną kolumnę więcej.</b>
+            <b>(1) Doszła kolumna „Dzień lotny"</b> ze skrótem <code>session_uuid</code>, linkująca na <a href="A02a-dzien.html" style="color:var(--green);">A02A</a>. Pytanie „do którego dnia lotnego należy to zdarzenie" pada przy każdym dochodzeniu, a bez tej kolumny odpowiedź wymagałaby rozwinięcia każdego wiersza z osobna. Jedenaście kolumn w <code>thead</code> niżej to stan sprzed wdrożenia.
+            <b>(2) Korekta <code>retime</code> jest widoczna W TABELI, nie tylko w rozwinięciu.</b> Wartość <code>gps_time</code> zostaje przekreślona (<code>.clock-val.struck</code>), a czas nadany korektą stoi pod nią podpisem <code>korekta → 12:44:00</code>. Wcześniej wiersz po korekcie wyglądał identycznie jak nietknięty — a to jest jedyny ekran, na którym różnica między zapisem a wyliczeniem ma być widoczna.
+            <b>(3) Podpis pod <code>source_device</code> mówi „zapis z panelu"</b>, czyli opisuje POCHODZENIE tego wiersza. „Korekta z panelu" to inny fakt i stoi w rozwinięciu, w wierszu <code>korekta</code>.</span>
+        </div>
+
         <div class="tiles">
           <div class="tile"><span class="tile-key">Zdarzeń w zakresie</span><span class="tile-val">247</span><span class="tile-note">30–31 JUL 2026 · 3 samoloty · 5 pilotów.</span></div>
           <div class="tile"><span class="tile-key">Przyjęte / duplikaty</span><span class="tile-val green">247<small> / 18</small></span><span class="tile-note">Duplikaty odsiane po <code>uuid</code> — retry outboxa działa.</span></div>

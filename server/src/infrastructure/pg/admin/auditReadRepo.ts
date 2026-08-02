@@ -134,7 +134,7 @@ export class PgAdminAuditReadRepo implements AdminAuditReadPort {
     // `COUNT` na to nie odpowiada, bo mógłby się zmienić między zapytaniami.
     const limitParam = page.bind(filter.limit + 1);
     const { rows } = await db.query<AuditDbRow>(
-      `${SELECT} ${page.where()} ${keysetOrderBy(KEY, filter.direction)} LIMIT ${limitParam}`,
+      `${SELECT} ${page.where()} ${keysetOrderBy(KEY, shape)} LIMIT ${limitParam}`,
       page.params(),
     );
 

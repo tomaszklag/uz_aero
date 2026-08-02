@@ -596,8 +596,12 @@ export interface EventEntryDto {
   gpsTime: number | null;
   /** `|device − gps|` w ms; `null` = brak fixa, więc różnica NIE ISTNIEJE. */
   driftMs: number | null;
-  /** Czas, którym liczy projekcja: `gpsTime ?? deviceTime`. */
+  /**
+   * Czas, którym liczy projekcja — **PO nałożeniu korekt**, nie z kolumn surowych.
+   * Surowe zegary stoją w `deviceTime`/`gpsTime` obok, więc nic nie ginie.
+   */
   effectiveTime: number;
+  /** Który zegar dał `effectiveTime` — w TYM SAMYM stanie (po korektach). */
   effectiveClock: EventClockDto;
 
   /** Treść zdarzenia DOSŁOWNIE z `JSONB`, dowolnego kształtu. */
@@ -607,12 +611,16 @@ export interface EventEntryDto {
   /** ISO 8601 UTC — kiedy SERWER przyjął zdarzenie. Po tym idzie porządek listy. */
   receivedAt: string;
   sourceDevice: string | null;
+  /** TEN WIERSZ zapisał panel, a nie telefon — fakt o pochodzeniu zapisu. */
+  writtenByPanel: boolean;
 
   /** Korekta unieważniła zdarzenie. Wiersz ZOSTAJE — przekreślony, nie usunięty. */
   voided: boolean;
-  /** Czas nadany korektą `retime` (epoch ms UTC); `null` = czasu nikt nie ruszał. */
+  /** Zdarzenie RUSZAŁA korekta — z istnienia zapisu, nie z nierówności wartości. */
+  corrected: boolean;
+  /** Czas NADANY korektą `retime` (epoch ms UTC); `null` = czasu nie nadano. */
   correctedTime: number | null;
-  /** Korektę zapisał PANEL, nie pilot w oknie 24 h (rozstrzyga `source_device`). */
+  /** Korektę TEGO ZDARZENIA zapisał PANEL, nie pilot w oknie 24 h (`source_device`). */
   adminCorrected: boolean;
 }
 

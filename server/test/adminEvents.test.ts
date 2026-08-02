@@ -184,9 +184,11 @@ interface EntryDto {
   reg: string | null;
   picName: string | null;
   voided: boolean;
+  corrected: boolean;
   correctedTime: number | null;
   adminCorrected: boolean;
   sourceDevice: string | null;
+  writtenByPanel: boolean;
   receivedAt: string;
 }
 
@@ -634,6 +636,204 @@ describe('rejestr jest append-only: korekta przekreśla, nie usuwa', () => {
     expect(page.items.map((i) => i.uuid)).toEqual(['ev-daleki']);
     expect(entry(page, 'ev-daleki').voided).toBe(true);
   });
+
+  it('`effectiveTime` mówi to, czym liczy PROJEKCJA — czyli czas PO korekcie', async () => {
+    // Scenariusz flagowy `A04`: ekran odsyła administratora do korekty `A02b`, a zaraz
+    // po jej wykonaniu zaczynał o tym zdarzeniu mówić nieprawdę. Wiersz bez fixa GPS
+    // z nadanym czasem pisał „czas efektywny 13:13:33 · z zegara telefonu" i baner
+    // „projekcja spadła na `device_time`", podczas gdy projekcja liczyła już czasem
+    // nadanym — w narzędziu, którego jedynym zadaniem jest wyjaśnić, skąd wzięła się
+    // liczba.
+    const { app, db } = await testHarness();
+    await rawEvent(db, {
+      uuid: 'ev-bez-fixa',
+      type: 'landing',
+      payload: {},
+      deviceTime: at(13, 13, 33),
+      gpsTime: null,
+    });
+
+    const before = entry(
+      (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto,
+      'ev-bez-fixa',
+    );
+    expect(before.effectiveTime).toBe(at(13, 13, 33));
+    expect(before.effectiveClock).toBe('device');
+
+    await rawEvent(db, {
+      uuid: 'ev-bez-fixa-k',
+      type: 'event_correction',
+      payload: { targetUuid: 'ev-bez-fixa', action: 'retime', newTime: at(13, 20) },
+      deviceTime: at(20, 0),
+      gpsTime: at(20, 0),
+    });
+
+    const after = entry(
+      (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto,
+      'ev-bez-fixa',
+    );
+    expect(after.effectiveTime).toBe(at(13, 20));
+    expect(after.effectiveClock).toBe('gps');
+    // Surowe zegary ZOSTAJĄ nietknięte — rejestr pamięta, co przyszło z telefonu.
+    expect(after.deviceTime).toBe(at(13, 13, 33));
+    expect(after.gpsTime).toBeNull();
+  });
+
+  it('para `void` → `retime` na czas PIERWOTNY zostawia ślad, choć nie zmienia liczby', async () => {
+    // „Skorygowane" wynika z ISTNIENIA korekty, nie z nierówności wartości. Liczone
+    // porównaniem dawało tu wiersz nieodróżnialny od nietkniętego — i sprzeczność
+    // na jednym ekranie: `source_device` mówił o korekcie z panelu, a rozwinięcie
+    // „zdarzenia nikt nie ruszał".
+    const { app, db } = await testHarness();
+    await ingest(app, flyingDay());
+    const target = uuidOf('landing');
+
+    await rawEvent(db, {
+      uuid: 'ev-p1',
+      type: 'event_correction',
+      payload: { targetUuid: target, action: 'void' },
+      sourceDevice: 'admin:TMK',
+      deviceTime: at(20, 0),
+      gpsTime: at(20, 0),
+    });
+    await rawEvent(db, {
+      uuid: 'ev-p2',
+      type: 'event_correction',
+      payload: { targetUuid: target, action: 'retime', newTime: at(7, 10) },
+      sourceDevice: 'admin:TMK',
+      deviceTime: at(21, 0),
+      gpsTime: at(21, 0),
+    });
+
+    const row = entry(
+      (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto,
+      target,
+    );
+    expect(row.voided).toBe(false);
+    // Czasu nikt nie NADAŁ (wrócił pierwotny), ale zdarzenie ktoś RUSZAŁ — i to jest
+    // fakt, który ekran ma pokazać.
+    expect(row.correctedTime).toBeNull();
+    expect(row.corrected).toBe(true);
+    expect(row.adminCorrected).toBe(true);
+  });
+
+  it('„zapisał panel" i „korektę zapisał panel" to DWA różne fakty', async () => {
+    // `writtenByPanel` opisuje POCHODZENIE wiersza, `adminCorrected` — pochodzenie jego
+    // korekty. Sklejone w jedno dawały w kolumnie `source_device` podpis „korekta
+    // z panelu" pod nazwą telefonu, a sam wiersz korekty zapisany przez panel takiego
+    // podpisu nie dostawał.
+    const { app, db } = await testHarness();
+    await ingest(app, flyingDay());
+    const target = uuidOf('landing');
+    await rawEvent(db, {
+      uuid: 'ev-z-panelu',
+      type: 'event_correction',
+      payload: { targetUuid: target, action: 'void' },
+      sourceDevice: 'admin:TMK',
+      deviceTime: at(20, 0),
+      gpsTime: at(20, 0),
+    });
+
+    const page = (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto;
+
+    // Zdarzenie przyszło z telefonu, choć jego korektę zapisał panel.
+    expect(entry(page, target).writtenByPanel).toBe(false);
+    expect(entry(page, target).adminCorrected).toBe(true);
+    // Wiersz korekty jest odwrotnie: to JEGO zapisał panel, a jego samego nikt nie
+    // poprawiał (korekta korekty nie istnieje).
+    expect(entry(page, 'ev-z-panelu').writtenByPanel).toBe(true);
+    expect(entry(page, 'ev-z-panelu').adminCorrected).toBe(false);
+    expect(entry(page, 'ev-z-panelu').corrected).toBe(false);
+  });
+
+  it('REMIS czasu dwóch korekt rozstrzyga porządek zapytania, nie układ sterty', async () => {
+    // `applyCorrections` sortuje STABILNIE po czasie zdarzenia, więc przy równym czasie
+    // o zwycięzcy decyduje kolejność wierszy z bazy. Bez `ORDER BY` daje ją układ sterty:
+    // ta sama para korekt dawała raz wiersz przekreślony, raz nie — i zmieniało się to
+    // po `VACUUM`. Wstawiamy je tak, żeby kolejność wstawienia była ODWROTNA do
+    // `received_at`: z jawnym porządkiem wygrywa korekta przyjęta później (`retime`),
+    // bez niego — ta wstawiona później (`void`).
+    const { app, db } = await testHarness();
+    const tie = at(20, 0);
+    await rawEvent(db, {
+      uuid: 'ev-remis',
+      type: 'landing',
+      payload: {},
+      receivedAt: new Date(Date.UTC(2026, 0, 5, 12, 0, 0)),
+    });
+    await rawEvent(db, {
+      uuid: 'ev-remis-retime',
+      type: 'event_correction',
+      payload: { targetUuid: 'ev-remis', action: 'retime', newTime: at(9, 21) },
+      deviceTime: tie,
+      gpsTime: tie,
+      receivedAt: new Date(Date.UTC(2026, 5, 1, 12, 0, 0)),
+    });
+    await rawEvent(db, {
+      uuid: 'ev-remis-void',
+      type: 'event_correction',
+      payload: { targetUuid: 'ev-remis', action: 'void' },
+      deviceTime: tie,
+      gpsTime: tie,
+      receivedAt: new Date(Date.UTC(2026, 5, 1, 11, 0, 0)),
+    });
+
+    const page = (
+      await getEvents(app, await token(app, 'TMK'), '?from=2026-01-05&to=2026-01-05')
+    ).json() as PageDto;
+    expect(entry(page, 'ev-remis').voided).toBe(false);
+    expect(entry(page, 'ev-remis').correctedTime).toBe(at(9, 21));
+  });
+
+  it('korekta z payloadem `null` NIE ZABIERA listy wszystkim pozostałym', async () => {
+    // Najgorszy możliwy tryb awarii narzędzia śledczego: JEDEN wiersz wpisany ręcznie
+    // do bazy wywracał `applyCorrections` (`TypeError` na `payload.targetUuid`), więc
+    // trasa oddawała 500 z CAŁEGO rejestru — i nie dało się tego obejść filtrem, bo
+    // taki wiersz wchodzi na każdą stronę w swoim zakresie. Garda stoi w domenie
+    // (`packages/domain/src/projections/corrections.ts`), a tu sprawdzamy, że skutek
+    // dojeżdża aż do odpowiedzi HTTP.
+    const { app, db } = await testHarness();
+    await ingest(app, flyingDay());
+    await rawEvent(db, {
+      uuid: 'ev-korekta-null',
+      type: 'event_correction',
+      payload: null,
+      deviceTime: at(20, 0),
+      gpsTime: at(20, 0),
+    });
+
+    const res = await getEvents(app, await token(app, 'TMK'), '?limit=500');
+    expect(res.statusCode).toBe(200);
+
+    const page = res.json() as PageDto;
+    // Wiersz nieczytelny jedzie DOSŁOWNIE, jak każdy inny — z `payload: null`.
+    expect(entry(page, 'ev-korekta-null').payload).toBeNull();
+    // …a dzień lotny zostaje nietknięty: nikt nie zgadł, co ta korekta miała znaczyć.
+    expect(entry(page, uuidOf('landing')).voided).toBe(false);
+    expect(entry(page, uuidOf('landing')).correctedTime).toBeNull();
+  });
+
+  it('NIEZNANA akcja korekty nie jest po cichu traktowana jak `retime`', async () => {
+    // Rejestr obiecuje pokazywać nieznane kształty dosłownie, więc nie ma prawa
+    // podejmować za nie decyzji. Gałąź „wszystko, co nie jest `void`" brała `newTime`
+    // z KAŻDEJ akcji — czyli kształt z przyszłej wersji telefonu przestawiłby czas
+    // zdarzenia, choć nikt nie wie, co ta akcja miała znaczyć.
+    const { app, db } = await testHarness();
+    await ingest(app, flyingDay());
+    const target = uuidOf('takeoff');
+    await rawEvent(db, {
+      uuid: 'ev-akcja-obca',
+      type: 'event_correction',
+      payload: { targetUuid: target, action: 'przesun_o_strefe', newTime: at(6, 33) },
+      deviceTime: at(20, 0),
+      gpsTime: at(20, 0),
+    });
+
+    const page = (await getEvents(app, await token(app, 'TMK'), '?limit=500')).json() as PageDto;
+    expect(entry(page, target).correctedTime).toBeNull();
+    expect(entry(page, target).voided).toBe(false);
+    expect(entry(page, target).effectiveTime).toBe(at(6, 30));
+  });
 });
 
 // ── plan zapytania ──────────────────────────────────────────────────────────────
@@ -681,29 +881,51 @@ describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
     return rows.map((row) => Object.values(row).join(' ')).join('\n');
   }
 
-  it('pierwsza strona idzie `idx_events_received` — w planie NIE MA węzła `Sort`', async () => {
-    // To jest wykonywalna postać migracji 16. Indeks z migracji 15 stał jako
-    // `(received_at DESC, uuid DESC)`, czyli `NULLS FIRST`, a kursor emituje
-    // `ORDER BY … DESC NULLS LAST` — te dwa zapisy nie pasują do siebie SKŁADNIOWO,
-    // a planer nie skraca tego przez `NOT NULL` kolumny. Przed migracją 16 plan
-    // schodził na `Sort` CAŁEJ tabeli przed `LIMIT`-em, więc koszt strony rósł
-    // liniowo z rejestrem — dokładnie to, czemu kursor miał zapobiec.
+  /**
+   * CZTERY kombinacje, a nie dwie — i to jest sedno tego przekroju.
+   *
+   * Poprzednia wersja tego testu badała wyłącznie `desc`, więc migracja 16 przeszła
+   * z wadą: dopisanie `NULLS LAST` do `idx_events_received` naprawiło jeden kierunek
+   * i zabrało indeks drugiemu (indeks `DESC NULLS LAST` skanowany wstecz daje
+   * `ASC NULLS FIRST`, a `keysetOrderBy` prosił o `ASC NULLS LAST`). Zmierzone na 5 000
+   * wierszy: `?sort=asc` sortował CAŁY rejestr przed `LIMIT`-em, koszt 442 zamiast 11,3
+   * — i wystarczał do tego jeden klik w nagłówek kolumny.
+   *
+   * Po migracji 17 indeks stoi w postaci DOMYŚLNEJ `(received_at DESC, uuid DESC)`,
+   * a `keysetOrderBy` nie dopisuje `NULLS` dla klucza `NOT NULL`. Jeden indeks obsługuje
+   * wtedy oba kierunki: `desc` skanem w przód, `asc` skanem wstecz.
+   */
+  it.each([
+    ['desc', 'pierwsza strona', false],
+    ['desc', 'strona kursorowa', true],
+    ['asc', 'pierwsza strona', false],
+    ['asc', 'strona kursorowa', true],
+  ] as const)(
+    '`?sort=%s`, %s — plan idzie `idx_events_received`, BEZ węzła `Sort`',
+    async (direction, _label, withCursor) => {
+      const { db } = await bigRegistry();
+      const repo = new PgAdminEventsReadRepo();
+
+      let cursor: string | undefined;
+      if (withCursor) {
+        const first = await repo.list(db, { direction, limit: 50 }, 120_000);
+        expect(first?.nextCursor).not.toBeNull();
+        cursor = first!.nextCursor!;
+      }
+
+      const plan = await planOf(db, { direction, limit: 50, ...(cursor == null ? {} : { cursor }) });
+      expect(plan).not.toMatch(/\bSort\b/);
+      expect(plan).toContain('idx_events_received');
+    },
+  );
+
+  it('kontrola samego testu: `Sort` w planie faktycznie DA SIĘ zobaczyć', async () => {
+    // Bez tego cztery asercje wyżej przechodziłyby też wtedy, gdyby wzorzec `\bSort\b`
+    // nigdy nie mógł trafić — a to jest test, który raz już przepuścił wadę.
     const { db } = await bigRegistry();
-
-    const plan = await planOf(db, { direction: 'desc', limit: 50 });
-    expect(plan).not.toMatch(/\bSort\b/);
-    expect(plan).toContain('idx_events_received');
-  });
-
-  it('strona KURSOROWA też idzie indeksem — predykat go nie unieważnia', async () => {
-    const { db } = await bigRegistry();
-    const repo = new PgAdminEventsReadRepo();
-    const first = await repo.list(db, { direction: 'desc', limit: 50 }, 120_000);
-    const cursor = first?.nextCursor;
-    expect(cursor).not.toBeNull();
-
-    const plan = await planOf(db, { direction: 'desc', limit: 50, cursor: cursor! });
-    expect(plan).not.toMatch(/\bSort\b/);
-    expect(plan).toContain('idx_events_received');
+    const { rows } = await db.query<Record<string, string>>(
+      `EXPLAIN SELECT uuid FROM events ORDER BY payload::text, uuid LIMIT 50`,
+    );
+    expect(rows.map((r) => Object.values(r).join(' ')).join('\n')).toMatch(/\bSort\b/);
   });
 });

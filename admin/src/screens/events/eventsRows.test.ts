@@ -43,7 +43,9 @@ function entry(over: Partial<EventEntryDto> = {}): EventEntryDto {
     schemaVersion: 1,
     receivedAt: new Date(at(14, 19, 8)).toISOString(),
     sourceDevice: 'Pixel 7a · a41f9c',
+    writtenByPanel: false,
     voided: false,
+    corrected: false,
     correctedTime: null,
     adminCorrected: false,
     ...over,
@@ -68,7 +70,7 @@ describe('wiersz rejestru: dwa zegary', () => {
     // różnica nie istnieje — a projekcja spadła na czas z telefonu.
     const r = row({ gpsTime: null });
     expect(r.gps.text).toBe('—');
-    expect(r.gps.tone).toBe('red');
+    expect(r.gps.className).toBe('clock-val red');
     expect(r.drift.text).toBe('brak fixa');
     expect(r.drift.text).not.toContain('0');
     expect(r.drift.missing).toBe(true);
@@ -81,7 +83,7 @@ describe('wiersz rejestru: dwa zegary', () => {
     expect(r.drift.text).toBe('720 s');
     expect(r.drift.tone).toBe('amber');
     expect(r.device.tone).toBe('amber');
-    expect(r.gps.tone).toBeNull();
+    expect(r.gps.className).toBeNull();
   });
 
   it('próg przychodzi z SERWERA — bez niego nic nie jest ostrzeżeniem', () => {
@@ -142,15 +144,60 @@ describe('wiersz rejestru: nieznane i brakujące jedzie dosłownie', () => {
 
 describe('wiersz rejestru: korekta przekreśla, nie usuwa', () => {
   it('unieważnione zdarzenie ZOSTAJE, oznaczone', () => {
-    const r = row({ voided: true, adminCorrected: true });
+    const r = row({ voided: true, corrected: true, adminCorrected: true });
     expect(r.voided).toBe(true);
     expect(r.adminCorrected).toBe(true);
+    expect(r.gps.note).toBe('unieważnione korektą');
   });
 
   it('`retime` niesie NOWY czas, a zdarzenie nie jest unieważnione', () => {
-    const r = row({ correctedTime: at(6, 33), voided: false });
-    expect(r.corrected).toBe('06:33:00');
+    const r = row({ corrected: true, correctedTime: at(6, 33), voided: false });
+    expect(r.correctedTime).toBe('06:33:00');
+    expect(r.corrected).toBe(true);
     expect(r.voided).toBe(false);
+  });
+
+  it('korekta WIDAĆ w kolumnie `gps_time`: wartość przekreślona, nowy czas pod spodem', () => {
+    // Bez tego zdarzenie z korektą było w tabeli nieodróżnialne od nietkniętego —
+    // jedyna wzmianka mieszkała w rozwinięciu, otwieranym osobno dla każdego wiersza.
+    const r = row({ corrected: true, correctedTime: at(6, 33) });
+    expect(r.gps.className).toBe('clock-val struck');
+    expect(r.gps.note).toBe('korekta → 06:33:00');
+
+    // Zdarzenie BEZ fixa, któremu korekta NADAŁA czas, niesie obie klasy naraz.
+    const noFix = row({ gpsTime: null, corrected: true, correctedTime: at(6, 33) });
+    expect(noFix.gps.text).toBe('—');
+    expect(noFix.gps.className).toBe('clock-val red struck');
+
+    // Kontrola z drugiej strony: wiersz nietknięty nie dostaje ani klasy, ani podpisu.
+    expect(row().gps.className).toBeNull();
+    expect(row().gps.note).toBeNull();
+  });
+
+  it('korekta na czas PIERWOTNY zostawia ślad, choć nie zmienia ani jednej liczby', () => {
+    // Para `void` → `retime` na czas pierwotny: `correctedTime` jest `null`, bo czasu
+    // nie nadano, ale zdarzenie ktoś RUSZAŁ — i wiersz ma to powiedzieć. Inaczej ekran
+    // sam sobie przeczy: kolumna mówi o korekcie, a rozwinięcie „nikt nie ruszał".
+    const r = row({ corrected: true, correctedTime: null, voided: false });
+    expect(r.corrected).toBe(true);
+    expect(r.gps.note).toBe('korekta · czas bez zmiany');
+    expect(r.gps.className).toBeNull();
+  });
+
+  it('„zapisał panel" bierze się z POCHODZENIA wiersza, nie z pochodzenia jego korekty', () => {
+    // Zdarzenie z telefonu, którego korektę zapisał panel — kolumna `source_device`
+    // opisuje telefon i nie ma prawa twierdzić niczego o panelu.
+    const target = row({ adminCorrected: true, corrected: true, writtenByPanel: false });
+    expect(target.sourceDevice.fromPanel).toBe(false);
+
+    // I odwrotnie: sam wiersz korekty zapisany przez panel — podpis należy się JEMU.
+    const correction = row({
+      type: 'event_correction',
+      sourceDevice: 'admin:TMK',
+      writtenByPanel: true,
+      adminCorrected: false,
+    });
+    expect(correction.sourceDevice.fromPanel).toBe(true);
   });
 
   it('typ niekorygowalny odbiera przycisk „Popraw" — lustro reguły domeny', () => {
@@ -184,6 +231,32 @@ describe('nagłówek zdarzenia: rozwinięcie mówi, KTÓRY zegar liczy', () => {
     expect(noFix.tone).toBe('amber');
   });
 
+  it('po korekcie podpis mówi o KOREKCIE, a nie o zegarze, którego nie było', () => {
+    // Domena wpisuje nadany czas w `gpsTime`, więc `effectiveClock` mówi wtedy „gps"
+    // także dla zdarzenia, które fixa nigdy nie miało. Podpis „z GPS" byłby nieprawdą
+    // o pochodzeniu liczby — na ekranie, który istnieje po to, żeby ją wytłumaczyć.
+    const of = (over: Partial<EventEntryDto>) =>
+      headerRows(entry(over), THRESHOLD).find((r) => r.label === 'czas efektywny')!;
+
+    const retimed = of({
+      gpsTime: null,
+      effectiveTime: at(6, 33),
+      effectiveClock: 'gps',
+      corrected: true,
+      correctedTime: at(6, 33),
+    });
+    expect(retimed.value).toBe('06:33:00');
+    expect(retimed.unit).toContain('nadany korektą');
+    expect(retimed.unit).not.toContain('z GPS');
+    expect(retimed.tone).toBe('amber');
+
+    // Zdarzenie unieważnione: projekcja go NIE liczy i podpis ma to powiedzieć,
+    // zamiast wskazywać zegar, którego wynik i tak nie wchodzi do rachunku.
+    const voided = of({ voided: true, corrected: true });
+    expect(voided.unit).toContain('NIE liczy');
+    expect(voided.tone).toBe('red');
+  });
+
   it('`gps_time` bez fixa to jawny `null` z wyjaśnieniem, nie pusta komórka', () => {
     const gps = headerRows(entry({ gpsTime: null }), THRESHOLD).find((r) => r.label === 'gps_time')!;
     expect(gps.value).toBe('null');
@@ -198,16 +271,20 @@ describe('nagłówek zdarzenia: rozwinięcie mówi, KTÓRY zegar liczy', () => {
     expect(device.unit).toContain(String(at(14, 18, 52)));
   });
 
-  it('wiersz „korekta" ma TRZY różne stany, nie jeden', () => {
+  it('wiersz „korekta" ma CZTERY różne stany, nie jeden', () => {
     const of = (over: Partial<EventEntryDto>) =>
       headerRows(entry(over), THRESHOLD).find((r) => r.label === 'korekta')!;
 
     expect(of({}).value).toBe('brak');
-    expect(of({ voided: true }).value).toBe('unieważnione');
-    expect(of({ correctedTime: at(6, 33) }).value).toContain('06:33:00');
+    expect(of({ voided: true, corrected: true }).value).toBe('unieważnione');
+    expect(of({ corrected: true, correctedTime: at(6, 33) }).value).toContain('06:33:00');
+    // Czwarty stan: korekta BYŁA, ale czasu nie zmieniła (`void` → `retime` na czas
+    // pierwotny). Liczone porównaniem wartości wychodziło tu „zdarzenia nikt nie
+    // ruszał" — po dwóch decyzjach administratora.
+    expect(of({ corrected: true, correctedTime: null }).value).toBe('czas bez zmiany');
     // Skąd korekta przyszła — panel czy telefon pilota.
-    expect(of({ voided: true, adminCorrected: true }).unit).toContain('panelu');
-    expect(of({ voided: true, adminCorrected: false }).unit).toContain('telefonu');
+    expect(of({ voided: true, corrected: true, adminCorrected: true }).unit).toContain('panelu');
+    expect(of({ voided: true, corrected: true, adminCorrected: false }).unit).toContain('telefonu');
   });
 
   it('`source_device` pusty mówi, że pola nie było — a nie że nie wiadomo', () => {

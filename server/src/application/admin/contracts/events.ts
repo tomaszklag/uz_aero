@@ -60,9 +60,21 @@ export interface AdminEventEntry {
    * zabrakło — a nie „zero". Zero jest twierdzeniem, że zegary się zgadzały.
    */
   driftMs: number | null;
-  /** Czas, którym liczy projekcja: `gpsTime ?? deviceTime`. */
+  /**
+   * Czas, którym liczy projekcja — **PO nałożeniu korekt**, nie z kolumn surowych.
+   *
+   * Nazwa jest tu obietnicą, którą trzeba dotrzymać: ekran wypisuje przy tej wartości
+   * „tym liczy projekcja", a rejestr istnieje po to, żeby wyjaśnić, skąd wzięła się
+   * liczba. Liczony z surowego `gpsTime ?? deviceTime` kłamał zaraz po korekcie
+   * `retime` z `A02b` — czyli po operacji, do której ten sam ekran odsyła
+   * administratora. Surowe `gpsTime` i `deviceTime` stoją w swoich polach obok,
+   * więc nic nie ginie.
+   *
+   * Dla wiersza unieważnionego i dla samej korekty opisuje zapis surowy: projekcja
+   * pierwszego nie liczy wcale, a drugi nie jest jej wejściem.
+   */
   effectiveTime: number;
-  /** Który z dwóch zegarów dał `effectiveTime` — ekran ma to powiedzieć wprost. */
+  /** Który z dwóch zegarów dał `effectiveTime` — w TYM SAMYM stanie (po korektach). */
   effectiveClock: EventClock;
 
   /** Treść zdarzenia DOSŁOWNIE z `JSONB`, dowolnego kształtu (patrz nagłówek). */
@@ -73,6 +85,14 @@ export interface AdminEventEntry {
   receivedAt: string;
   /** `null` = wiersz sprzed migracji 4; napis = czym przyszło (także panel). */
   sourceDevice: string | null;
+  /**
+   * **TEN WIERSZ** zapisał panel administracyjny (`source_device` = `admin:<pilotId>`),
+   * a nie telefon. To jest fakt o POCHODZENIU zapisu i nie ma nic wspólnego z tym, kto
+   * zapisał korektę tego zdarzenia (`adminCorrected` niżej) — mylenie tych dwóch rzeczy
+   * dawało w kolumnie `source_device` podpis „korekta z panelu" pod nazwą telefonu,
+   * a sam wiersz korekty zapisany przez panel takiego podpisu nie dostawał.
+   */
+  writtenByPanel: boolean;
 
   /**
    * Korekta UNIEWAŻNIŁA to zdarzenie. Wiersz **zostaje w rejestrze** i ma zostać
@@ -80,7 +100,19 @@ export interface AdminEventEntry {
    * liczby dnia różnią się od tego, co zapisał telefon.
    */
   voided: boolean;
-  /** Czas nadany korektą `retime` (epoch ms UTC); `null` = czasu nikt nie ruszał. */
+  /**
+   * Zdarzenie RUSZAŁA korekta — z ISTNIENIA zapisu `event_correction`, nie z tego, czy
+   * jakaś liczba się zmieniła. Para `void` → `retime` na czas pierwotny nie zmienia ani
+   * jednej wartości, a mimo to zdarzenie ma za sobą dwie decyzje i nie jest tym samym,
+   * co zdarzenie nietknięte. Wiersz `event_correction` ma tu `false`: poprawia się fakt,
+   * nie poprawkę.
+   */
+  corrected: boolean;
+  /**
+   * Czas NADANY korektą `retime` (epoch ms UTC). `null` = czasu nie nadano — bo korekt
+   * nie było, bo zdarzenie jest unieważnione, albo bo korekta przywróciła czas pierwotny.
+   * Odpowiedzią na pytanie „czy ktoś to zdarzenie ruszał" jest `corrected`, nie to pole.
+   */
   correctedTime: number | null;
   /**
    * Korektę tego zdarzenia zapisał PANEL, a nie pilot w oknie 24 h. Z samego strumienia

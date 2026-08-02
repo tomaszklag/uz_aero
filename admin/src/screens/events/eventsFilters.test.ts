@@ -66,6 +66,21 @@ describe('filtry rejestru: adres → filtr', () => {
     expect(parse('sort=bokiem').sort).toBe('desc');
   });
 
+  it('data ISTNIEJĄCA przechodzi — także rok trzycyfrowy, który serwer też przyjmuje', () => {
+    // Lustro `server/src/http/routes/admin/dayRange.ts`. Obie strony walidują ten sam
+    // napis TYM SAMYM mechanizmem (parsowanie ISO 8601 UTC), więc zakres przepuszczony
+    // przez ekran nie może dostać 400 od trasy. Do 2026-08-02 tak nie było: serwer
+    // liczył `Date.UTC(y, m-1, d)`, a ta funkcja mapuje lata 0–99 na 1900 + rok, więc
+    // `0099-01-01` przechodziło walidację panelu i wracało czterysetką — a ekran
+    // pokazywał wtedy baner „Panel działa wyłącznie online", czyli komunikat o SIECI
+    // przy błędzie walidacji.
+    expect(parse('od=0099-01-01').from).toBe('0099-01-01');
+    expect(parse('od=2024-02-29').from).toBe('2024-02-29');
+    // Kontrola z drugiej strony: gdyby walidacja przepuszczała wszystko, asercje
+    // o datach nieistniejących wyżej i tak by przeszły.
+    expect(parse('od=2026-02-30').from).toBeNull();
+  });
+
   it('białe znaki wokół wklejonego uuid-a są ucinane', () => {
     // Uuid wkleja się ze zgłoszenia albo z czatu, więc spacja na końcu to norma.
     expect(parse('uuid=%20ev-1%20').uuid).toBe('ev-1');

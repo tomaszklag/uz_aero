@@ -214,6 +214,19 @@ td.dim {
   color: var(--text-secondary);
 }
 
+/* Wartość zegara, którą KOREKTA przestawiła (`A04`, `retime`). Przekreślenie znaczy
+   „to już nie jest liczba, którą liczy projekcja"; nowy czas stoi pod spodem jako
+   `.cell-sub`. Bez tego zdarzenie po korekcie było w tabeli nieodróżnialne od
+   nietkniętego — kolumny pokazywały wartości surowe, a jedyna wzmianka mieszkała
+   w rozwinięciu, które trzeba otworzyć osobno dla każdego wiersza.
+   Reguła stoi PO tonach, żeby wygaszenie wygrywało z czerwienią „brak fixa": wiersz
+   bez fixa, któremu korekta NADAŁA czas, ma obie klasy naraz.
+   Ta sama semantyka, co `.tl-row.voided` na osi karty dnia i `tbody tr.voided` niżej. */
+.clock-val.struck {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
 /* Zdarzenie UNIEWAŻNIONE korektą (`A04`). Wiersz ZOSTAJE w tabeli — rejestr jest
    append-only i to właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się
    od tego, co zapisał telefon. Przekreślamy czasy i identyfikatory, nie całą treść:

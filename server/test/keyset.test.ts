@@ -148,14 +148,32 @@ describe('kursor', () => {
 });
 
 describe('porządek i predykat', () => {
-  it('`NULLS LAST` jest JAWNE w obu kierunkach', () => {
+  it('klucz NULL-owalny dostaje `NULLS LAST` JAWNIE w obu kierunkach', () => {
     // PostgreSQL domyślnie daje NULLS LAST dla ASC i NULLS FIRST dla DESC — poleganie
-    // na domyślnym zachowaniu znaczyłoby dwa różne porządki pod jedną nazwą.
-    expect(keysetOrderBy(KEY, 'desc')).toBe(
+    // na domyślnym zachowaniu znaczyłoby dwa różne porządki pod jedną nazwą. Dla
+    // `claim_time` (dzień bez preflightu nie ma duty startu) to nie jest teoria:
+    // wiersze bez wartości raz stałyby na początku listy, raz na końcu.
+    expect(keysetOrderBy(KEY, shape({ direction: 'desc' }))).toBe(
       'ORDER BY s.claim_time DESC NULLS LAST, s.session_uuid DESC',
     );
-    expect(keysetOrderBy(KEY, 'asc')).toBe(
+    expect(keysetOrderBy(KEY, shape({ direction: 'asc' }))).toBe(
       'ORDER BY s.claim_time ASC NULLS LAST, s.session_uuid ASC',
+    );
+  });
+
+  it('klucz `NOT NULL` NIE dostaje `NULLS` — dopisek odbierałby indeks w jedną stronę', () => {
+    // Dla kolumny bez NULL-i dopisek nie zmienia WYNIKU, ale planer dopasowuje porządek
+    // SKŁADNIOWO: indeks `(x DESC, y DESC)` obsługuje `DESC, DESC` skanem w przód
+    // i `ASC, ASC` skanem wstecz — czyli dokładnie zapisy DOMYŚLNE. `DESC NULLS LAST`
+    // wyłamuje pierwszy, `ASC NULLS LAST` drugi. Ta pułapka wróciła trzy razy
+    // (migracje 12, 16, 17), za każdym razem przesuwając wadę na drugi kierunek.
+    const AUDIT_KEY: readonly [string, string] = ['a.created_at', 'a.id'];
+
+    expect(keysetOrderBy(AUDIT_KEY, { ...AUDIT, direction: 'desc' })).toBe(
+      'ORDER BY a.created_at DESC, a.id DESC',
+    );
+    expect(keysetOrderBy(AUDIT_KEY, { ...AUDIT, direction: 'asc' })).toBe(
+      'ORDER BY a.created_at ASC, a.id ASC',
     );
   });
 

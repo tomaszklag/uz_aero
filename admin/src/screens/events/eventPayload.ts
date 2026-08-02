@@ -25,7 +25,16 @@
 export type PayloadTone = 'green' | 'blue' | 'red';
 
 export interface PayloadLine {
-  /** Stabilny klucz Reacta — ścieżka w drzewie, unikalna w obrębie payloadu. */
+  /**
+   * Stabilny klucz Reacta — ścieżka w drzewie, unikalna w obrębie payloadu.
+   *
+   * Segmenty obiektu jadą w ścieżce **w cudzysłowach z escape'em**, a nie gołym
+   * napisem: klucze przychodzą z telefonu i nie są niczym ograniczone, więc payload
+   * `{"a.b": 1, "a": {"b": 2}}` sklejany kropką dawał DWIE linie o tym samym `id`.
+   * React wypisuje wtedy ostrzeżenie i gubi wiersze przy przerysowaniu — a to jest
+   * ekran, na którym „gdzie się podziała linia" jest pytaniem dochodzeniowym.
+   * `JSON.stringify` na segmencie zamienia to sklejenie w odwzorowanie różnowartościowe.
+   */
   id: string;
   /** Gotowe wcięcie w spacjach; liczy je TEN moduł, żeby `.tsx` nie liczył nic. */
   indent: string;
@@ -133,7 +142,9 @@ function walk(
         {
           key: quoted(key),
           depth: context.depth + 1,
-          path: `${context.path}.${key}`,
+          // Segment W CUDZYSŁOWACH — patrz `PayloadLine.id`. Indeks tablicy zostaje
+          // gołą cyfrą, więc klucz `"0"` i element `[0]` też się nie zlewają.
+          path: `${context.path}.${quoted(key)}`,
           comma: index < entries.length - 1,
         },
         out,

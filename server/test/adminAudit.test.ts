@@ -775,30 +775,50 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
     ...over,
   });
 
-  it('pierwsza strona BEZ filtra idzie indeksem — w planie nie ma węzła `Sort`', async () => {
-    // To jest wykonywalna postać zdania z migracji 12. Dopóki istniało wyłącznie
-    // w prozie, ta sama wada zdążyła się powielić na drugi indeks: `DESC` bez
-    // `NULLS LAST` nie pasuje SKŁADNIOWO do `ORDER BY … DESC NULLS LAST`, więc planer
-    // nie może użyć indeksu do porządkowania i sortuje CAŁĄ tabelę przed `LIMIT`-em.
-    // Wynik jest wtedy poprawny, a koszt strony rośnie liniowo z dziennikiem — czyli
-    // dokładnie to, czemu paginacja kursorem miała zapobiec.
+  it.each(['desc', 'asc'] as const)(
+    'pierwsza strona BEZ filtra (`%s`) idzie indeksem — w planie nie ma węzła `Sort`',
+    async (direction) => {
+      // To jest wykonywalna postać zdania z migracji 12. Dopóki istniało wyłącznie
+      // w prozie, ta sama wada zdążyła się powielić na drugi indeks, a potem na rejestr
+      // zdarzeń — za każdym razem w postaci „naprawmy indeks pod `NULLS LAST`".
+      //
+      // OBA KIERUNKI, bo naprawa migracji 12 działała tylko dla `desc`: indeks
+      // `created_at DESC NULLS LAST` skanowany wstecz daje `ASC NULLS FIRST`, a zapytanie
+      // prosiło o `ASC NULLS LAST`. Zmierzone na 4 000 wierszy: `?sort=asc` sortował CAŁY
+      // dziennik przed `LIMIT`-em, koszt 527 zamiast 5,3. Migracja 17 zdejmuje `NULLS
+      // LAST` z indeksów kolumn `NOT NULL`, a `keysetOrderBy` przestaje go emitować —
+      // wtedy jeden indeks obsługuje oba kierunki.
+      const { db } = await bigJournal();
+
+      const plan = await planOf(db, filter({ direction }));
+      expect(plan).not.toMatch(/Sort/);
+      expect(plan).toContain('idx_audit_created');
+    },
+  );
+
+  it.each(['desc', 'asc'] as const)(
+    'zawężenie po AKTORZE (`%s`) idzie własnym indeksem — też bez `Sort`',
+    async (direction) => {
+      // Kolumna „Kto" na `A09` jest linkiem, więc to najczęstsze zawężenie ekranu.
+      // `idx_audit_actor` z migracji 9 nie miał ani `id`, ani porządku pasującego do
+      // zapytania, więc planer schodził na indeks czasu z filtrem albo na `Seq Scan`:
+      // PIERWSZA strona zawężenia kosztowała tyle, co cały dziennik.
+      const { db } = await bigJournal();
+
+      const plan = await planOf(db, filter({ direction, actorPilotId: 'TMK' }));
+      expect(plan).not.toMatch(/Sort/);
+      expect(plan).toContain('idx_audit_actor');
+    },
+  );
+
+  it('kontrola samego testu: `Sort` w planie faktycznie DA SIĘ zobaczyć', async () => {
+    // Bez tego cztery asercje wyżej przechodziłyby także wtedy, gdyby wzorzec nigdy
+    // nie mógł trafić — a to jest test, który raz już przepuścił tę wadę.
     const { db } = await bigJournal();
-
-    const plan = await planOf(db, filter());
-    expect(plan).not.toMatch(/Sort/);
-    expect(plan).toContain('idx_audit_created');
-  });
-
-  it('zawężenie po AKTORZE idzie własnym indeksem — też bez `Sort`', async () => {
-    // Kolumna „Kto" na `A09` jest linkiem, więc to najczęstsze zawężenie ekranu.
-    // `idx_audit_actor` z migracji 9 nie miał ani `NULLS LAST`, ani `id`, więc tego
-    // porządku nie obsługiwał: planer schodził na indeks czasu z filtrem albo na
-    // `Seq Scan`, czyli PIERWSZA strona zawężenia kosztowała tyle, co cały dziennik.
-    const { db } = await bigJournal();
-
-    const plan = await planOf(db, filter({ actorPilotId: 'TMK' }));
-    expect(plan).not.toMatch(/Sort/);
-    expect(plan).toContain('idx_audit_actor');
+    const { rows } = await db.query<Record<string, string>>(
+      `EXPLAIN SELECT id FROM admin_audit ORDER BY details::text, id LIMIT 50`,
+    );
+    expect(rows.map((r) => Object.values(r).join(' ')).join('\n')).toMatch(/Sort/);
   });
 });
 
@@ -829,5 +849,16 @@ describe('zakres dat: data NIEISTNIEJĄCA to 400, nie cichy inny okres', () => {
     const { app, admin } = await journal();
     expect((await getAudit(app, admin, '?from=2024-02-29')).statusCode).toBe(200);
     expect((await getAudit(app, admin, '?from=2026-07-01&to=2026-07-31')).statusCode).toBe(200);
+  });
+
+  it('rok trzycyfrowy przechodzi tak samo jak w panelu — 400 tylko przy dacie NIEISTNIEJĄCEJ', async () => {
+    // `Date.UTC(y, m-1, d)` mapuje lata 0–99 na 1900 + rok, więc `0099-01-01` wracało
+    // czterysetką, choć panel ten sam napis PRZEPUSZCZAŁ (waliduje parsowaniem ISO).
+    // Skutek na ekranie był mylący podwójnie: baner „Panel działa wyłącznie online",
+    // czyli komunikat o SIECI przy błędzie walidacji zakresu dat. Obie strony liczą
+    // teraz tym samym mechanizmem — lustro: `admin/src/screens/events/eventsFilters.ts`.
+    const { app, admin } = await journal();
+    expect((await getAudit(app, admin, '?from=0099-01-01')).statusCode).toBe(200);
+    expect((await getAudit(app, admin, '?from=0001-01-01&to=0001-12-31')).statusCode).toBe(200);
   });
 });
