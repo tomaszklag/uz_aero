@@ -56,7 +56,27 @@ export type Capability =
   /** Zmiana tolerancji flag (progi detekcji są tylko do odczytu — patrz A08). */
   | 'thresholds.manage'
   /** Odczyt dziennika akcji administratorów. */
-  | 'audit.read';
+  | 'audit.read'
+  /**
+   * Narzędzia serwisowe z `A11`: porównanie i **nadpisanie** projekcji `sessions`
+   * ze strumienia zdarzeń oraz odczyt stanu schematu.
+   *
+   * ══ DLACZEGO NOWA POZYCJA, A NIE KTÓRAŚ Z ISTNIEJĄCYCH (2026-08-02) ══
+   * **To jest decyzja do potwierdzenia przez człowieka**, tak jak `fleet.manage`
+   * przy ponowieniu eksportu. Przeglądnięcie katalogu nie dało dopasowania: każda
+   * dotychczasowa zdolność nazywa ZASÓB (flagi, rejestr, konta, flota, progi,
+   * dziennik), a przebudowa nie dotyczy żadnego z nich — nadpisuje PROJEKCJĘ
+   * wszystkich dni klubu naraz. Wpisanie jej pod `fleet.manage` („kto steruje
+   * dokumentem klubu") albo `thresholds.manage` („kto stroi reguły") dałoby fałszywą
+   * odpowiedź na pytanie, po które ten plik istnieje: „co panel potrafi zmienić".
+   *
+   * Zakres jest WĄSKI i celowo nie obejmuje dwóch pozostałych operacji ekranu A11:
+   * sprzątanie wygasłych tokenów jedzie na `accounts.manage` (ta sama tabela i ta
+   * sama władza, co unieważnianie sesji przy deaktywacji konta), a ponowienie
+   * eksportu na `fleet.manage` (dokładnie jak na `A05` — druga zdolność dla tego
+   * samego przycisku byłaby rozjazdem).
+   */
+  | 'maintenance.run';
 
 const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
   // Pilot pracuje wyłącznie w aplikacji na telefonie. Panel go nie dotyczy —
@@ -78,6 +98,7 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
     'fleet.manage',
     'thresholds.manage',
     'audit.read',
+    'maintenance.run',
   ],
 };
 

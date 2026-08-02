@@ -10,7 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 
-import { MIGRATIONS, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
+import { MIGRATIONS, MIGRATION_TITLES, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import type { Queryable } from '../src/application/common/ports.ts';
 
@@ -36,6 +36,14 @@ async function columnsOf(db: Queryable, table: string): Promise<string[]> {
 describe('schemat PostgreSQL (kontrakt)', () => {
   it('SCHEMA_VERSION zgadza się z liczbą migracji', () => {
     expect(SCHEMA_VERSION).toBe(MIGRATIONS.length);
+  });
+
+  it('KAŻDA migracja ma opis — inaczej `A11` wypisuje cudzy przy nowej pozycji', () => {
+    // Ekran konserwacji sklejał do 2026-08-02 numer z bazy z opisem z kodu PO INDEKSIE.
+    // Dopisanie migracji bez dopisania opisu przesunęłoby całą kolumnę „Co wprowadza"
+    // o jeden i nikt by tego nie zauważył: tabela dalej wyglądałaby poprawnie.
+    expect(MIGRATION_TITLES).toHaveLength(MIGRATIONS.length);
+    for (const title of MIGRATION_TITLES) expect(title.trim().length).toBeGreaterThan(10);
   });
 
   it('migracje są idempotentne — ponowne wołanie niczego nie psuje', async () => {

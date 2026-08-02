@@ -4,14 +4,17 @@
  *
  * Wzorzec `seedCli.ts`: własna pula, walidacja env przez `zod`, jeden przebieg, koniec.
  * Ten skrypt jest MINI COMPOSITION ROOTEM — składa te same klasy co `index.ts`, tylko
- * bez serwera HTTP. Trasa panelu (`POST /admin/api/maintenance/rebuild-projections`,
- * przekrój 9) będzie drugim wołającym TEJ SAMEJ komendy; wtedy ten plik zostaje jako
- * droga awaryjna, bo przebudowa bywa potrzebna dokładnie wtedy, gdy panel nie wstaje.
+ * bez serwera HTTP. Od 2026-08-02 panel woła TE SAME klasy trasami
+ * `GET /admin/api/maintenance/projections/compare` i `POST …/projections/rebuild`;
+ * ten plik zostaje jako droga awaryjna, bo przebudowa bywa potrzebna dokładnie wtedy,
+ * gdy panel nie wstaje.
  *
  * ── Dwa kroki, nie jeden ────────────────────────────────────────────────────────
- * Domyślnie `dry_run`: przelicza i porównuje, NICZEGO nie zapisując. Zapis wymaga
- * jawnego `REBUILD_MODE=write` **i** `REBUILD_REASON`, bo nadpisanie wyrównuje liczby
- * i tym samym kasuje jedyny ślad po tym, co je rozjechało.
+ * Domyślnie `dry_run`: przelicza i porównuje, NICZEGO nie zapisując — i od 2026-08-02
+ * robi to ZAPYTANIE (`AdminMaintenanceQueries`), nie komenda. Porównanie nie zostawia
+ * już wpisu w `admin_audit`, bo dziennik nadzoru nie może opisywać rzeczy, które się
+ * nie wydarzyły. Zapis wymaga jawnego `REBUILD_MODE=write` **i** `REBUILD_REASON`, bo
+ * nadpisanie wyrównuje liczby i tym samym kasuje jedyny ślad po tym, co je rozjechało.
  *
  * ── Kto to zrobił ───────────────────────────────────────────────────────────────
  * `REBUILD_ACTOR` musi wskazywać ISTNIEJĄCE konto — rola do dziennika audytu idzie
@@ -24,6 +27,7 @@ import { Pool } from 'pg';
 import { z } from 'zod';
 
 import { AdminMaintenanceCommands } from '../application/admin/commands/maintenance.ts';
+import { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import { AuditedWrite } from '../application/admin/auditedWrite.ts';
 import type { RebuildReport } from '../application/admin/contracts/maintenance.ts';
 import { PgAdminAuditRepo } from '../infrastructure/pg/admin/auditRepo.ts';
@@ -60,21 +64,40 @@ if (actor == null) {
   process.exit(1);
 }
 
+const maintenanceRepo = new PgAdminMaintenanceRepo();
+const events = new PgEventsStore();
+const sessions = new PgSessionsProjection();
+
+// Dwie drogi, bo dwie natury operacji: porównanie jest ODCZYTEM (bez `AuditedWrite`,
+// więc bez możliwości zapisu i bez wpisu w dzienniku), a nadpisanie idzie przez bramę
+// audytu. Ocena różnic jest wspólna (`application/admin/projectionScan.ts`), więc
+// dwie drogi nie mogą powiedzieć dwóch różnych rzeczy o tej samej bazie.
+const queries = new AdminMaintenanceQueries(db, maintenanceRepo, events, sessions, clock);
 const commands = new AdminMaintenanceCommands(
   new AuditedWrite(db, new PgAdminAuditRepo(), clock),
-  new PgAdminMaintenanceRepo(),
-  new PgEventsStore(),
-  new PgSessionsProjection(),
+  maintenanceRepo,
+  events,
+  sessions,
+  clock,
 );
 
-const outcome = await commands.rebuildProjections(
-  { pilotId: actor.id, role: actor.role, ip: null },
-  { mode: env.REBUILD_MODE, reason: env.REBUILD_REASON },
-);
+const outcome =
+  env.REBUILD_MODE === 'write'
+    ? await commands.rebuildProjections(
+        { pilotId: actor.id, role: actor.role, ip: null },
+        { reason: env.REBUILD_REASON },
+      )
+    : ({ ok: true, report: await queries.compareProjections() } as const);
 
 await pool.end();
 
 if (!outcome.ok) {
+  if (outcome.reason === 'nothing_to_rebuild') {
+    // Nie jest to awaria: projekcja się zgadza, więc zapis nie ma czego zapisać
+    // i świadomie NIE zostawia wpisu w dzienniku. Kod 0, bo cron ma milczeć.
+    console.log('\nProjekcja zgadza się ze strumieniem. Nic do nadpisania — bez wpisu w audycie.\n');
+    process.exit(0);
+  }
   console.error('REBUILD_REASON jest wymagany dla REBUILD_MODE=write (trafia do audytu).');
   process.exit(1);
 }
@@ -95,6 +118,13 @@ function report(r: RebuildReport): void {
   if (r.rowsDiffering === 0) {
     console.log('\nProjekcja zgadza się ze strumieniem. Nic do zrobienia.\n');
     return;
+  }
+
+  if (r.remaining > 0) {
+    // Limit jest bezpiecznikiem, nie całością — i nie ma prawa być cichy. Bez tego
+    // zdania przebieg z crona wyglądałby na komplet przy 1091 nietkniętych sesjach.
+    const co = r.mode === 'write' ? 'NIE ZOSTAŁO nadpisanych' : 'nie mieści się w raporcie';
+    console.log(`  ${co}: ${r.remaining} — uruchom ponownie, żeby dojść do reszty`);
   }
 
   console.log('\n  sesja                                 dzień       pole            w sessions → z przeliczenia');

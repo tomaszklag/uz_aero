@@ -47,7 +47,9 @@ export type Capability =
   | 'accounts.manage'
   | 'fleet.manage'
   | 'thresholds.manage'
-  | 'audit.read';
+  | 'audit.read'
+  /** Narzędzia serwisowe `A11`: porównanie i nadpisanie projekcji, stan schematu. */
+  | 'maintenance.run';
 
 /**
  * Katalog akcji dziennika audytu. LUSTRO `server/src/domain/adminActions.ts` — świadome,
@@ -1160,4 +1162,110 @@ export interface DashboardDto {
   today: DayTotalsDto;
   /** `null` = w projekcji nie ma ani jednego dnia lotnego. */
   lastFlyingDay: DayTotalsDto | null;
+}
+
+// ── konserwacja (A11) ───────────────────────────────────────────────────────────
+
+/**
+ * Tryb raportu przebudowy. `dry_run` powstaje w ZAPYTANIU
+ * (`GET /maintenance/projections/compare` — zero zapisów, zero wpisów w dzienniku),
+ * `write` w KOMENDZIE (`POST /maintenance/projections/rebuild`, przez `AuditedWrite`).
+ * Pole zostaje, bo dwa identycznie wyglądające raporty różnią się wyłącznie tym,
+ * czego już nie widać.
+ */
+export type RebuildModeDto = 'dry_run' | 'write';
+
+/** Jedna rozbieżność: pole projekcji, wartość zapisana i wartość z przeliczenia. */
+export interface ProjectionFieldDiffDto {
+  field: string;
+  stored: unknown;
+  computed: unknown;
+}
+
+/** Jedna sesja, która nie zgadza się z przeliczeniem ze strumienia. */
+export interface ProjectionRowDiffDto {
+  sessionUuid: string;
+  aircraftId: string;
+  /** Dzień karty (`YYYY-MM-DD`, UTC); `null` = sesja bez preflightu. */
+  day: string | null;
+  /** `true` = wiersza projekcji NIE MA w ogóle, choć sesja jest w rejestrze. */
+  missing: boolean;
+  fields: ProjectionFieldDiffDto[];
+}
+
+/**
+ * Raport przebiegu.
+ *
+ * **Niezerowe `rowsDiffering` to INCYDENT, nie sukces** — projekcja jest odświeżana
+ * w tej samej transakcji, w której serwer przyjmuje zdarzenia, więc w normalnej pracy
+ * różnicy być NIE MOŻE. Ekran mówi to wprost, zamiast zachęcać do kliknięcia „napraw".
+ */
+export interface RebuildReportDto {
+  mode: RebuildModeDto;
+  sessions: number;
+  /** Liczba PEŁNA, policzona nad całym rejestrem — niezależna od limitu raportu. */
+  rowsDiffering: number;
+  fieldsDiffering: number;
+  /** Ile wierszy FAKTYCZNIE nadpisano; w `dry_run` zawsze 0. */
+  written: number;
+  /**
+   * Ile rozjechanych sesji ZOSTAŁO poza tym raportem (`rowsDiffering - diffs.length`).
+   *
+   * Przy `write` ta sama liczba znaczy dodatkowo „tyle sesji nadal się różni i czeka na
+   * kolejne uruchomienie": jeden przebieg nadpisuje najwyżej tyle sesji, ile opisuje
+   * raport, bo każda z nich jest na czas transakcji zamknięta dla przyjmowania zdarzeń,
+   * a blokady advisory idą ze wspólnej puli klastra.
+   *
+   * Zero znaczy „raport jest kompletny", a nie „nie wiadomo".
+   */
+  remaining: number;
+  /** Lista PRZYCIĘTA po stronie serwera; ile jej brakuje, mówi `remaining`. */
+  diffs: ProjectionRowDiffDto[];
+}
+
+/**
+ * Stan tabeli `refresh_tokens` PRZED czyszczeniem.
+ *
+ * Same liczby i daty — wartości ani skrótów tokenów nie ma tu i nie może być
+ * (`A09`: „Tokeny i refresh tokeny — nigdy").
+ */
+export interface RefreshTokenScanDto {
+  total: number;
+  expired: number;
+  valid: number;
+  oldestExpiredAt: string | null;
+  newestExpiredAt: string | null;
+  /** Chwila, wobec której serwer policzył „wygasły" — granica jest ruchoma. */
+  at: string;
+  ttlDays: number;
+}
+
+/** Skutek czyszczenia; te same liczby stoją w `admin_audit.details`. */
+export interface TokenPurgeReportDto {
+  deleted: number;
+  oldestExpiredAt: string | null;
+  newestExpiredAt: string | null;
+  /** Policzone PO skasowaniu — wykonywalna postać „nikt nie został wylogowany". */
+  remainingValid: number;
+  at: string;
+}
+
+/** Jedna migracja: numer, opis stojący przy DDL-u i chwila zastosowania. */
+export interface SchemaMigrationDto {
+  version: number;
+  title: string;
+  appliedAt: string | null;
+  applied: boolean;
+}
+
+/**
+ * Stan schematu bazy. `pending > 0` znaczy, że baza jest STARSZA niż kod — stan możliwy
+ * wyłącznie po awarii runnera migracji w starcie serwera.
+ */
+export interface SchemaStateDto {
+  schemaVersion: number;
+  applied: number;
+  pending: number;
+  lastAppliedAt: string | null;
+  migrations: SchemaMigrationDto[];
 }

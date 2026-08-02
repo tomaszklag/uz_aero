@@ -13,6 +13,7 @@ import type { AdminCorrectionCommands } from '../application/admin/commands/corr
 import type { AdminExportCommands } from '../application/admin/commands/exports.ts';
 import type { AdminFlagCommands } from '../application/admin/commands/flags.ts';
 import type { AdminFleetCommands } from '../application/admin/commands/fleet.ts';
+import type { AdminMaintenanceCommands } from '../application/admin/commands/maintenance.ts';
 import type { AdminPilotCommands } from '../application/admin/commands/pilots.ts';
 import type { AdminAuditQueries } from '../application/admin/queries/audit.ts';
 import type { AdminCorrectionQueries } from '../application/admin/queries/corrections.ts';
@@ -21,6 +22,7 @@ import type { AdminEventQueries } from '../application/admin/queries/events.ts';
 import type { AdminExportQueries } from '../application/admin/queries/exports.ts';
 import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
 import type { AdminFleetQueries } from '../application/admin/queries/fleet.ts';
+import type { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
@@ -41,6 +43,7 @@ import { registerAdminEventRoutes } from './routes/admin/events.ts';
 import { registerAdminExportRoutes } from './routes/admin/exports.ts';
 import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
 import { registerAdminFleetRoutes } from './routes/admin/fleet.ts';
+import { registerAdminMaintenanceRoutes } from './routes/admin/maintenance.ts';
 import { registerAdminMeRoutes } from './routes/admin/me.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
@@ -82,6 +85,12 @@ export interface ServerDeps {
    * dopchnąć do arkusza dzień, którego automat nie dowiózł. Bramek eksportera NIE omija.
    */
   adminExports: AdminExportCommands;
+  /**
+   * Operacje serwisowe (`A11`) — NADPISANIE projekcji `sessions` przeliczonej ze
+   * strumienia i sprzątanie WYGASŁYCH refresh tokenów. Jedyna komenda panelu, która
+   * cokolwiek kasuje; rejestru `events` nie dotyka ani jedna z dwóch operacji.
+   */
+  adminMaintenance: AdminMaintenanceCommands;
   /** Strona ODCZYTU panelu — uproszczony CQRS: komendy wyżej, zapytania tutaj. */
   adminSessionQueries: AdminSessionQueries;
   adminFlagQueries: AdminFlagQueries;
@@ -105,6 +114,12 @@ export interface ServerDeps {
    * co ekrany docelowe. Kafel jest przejściem, więc jego liczba ma być obietnicą.
    */
   adminDashboardQueries: AdminDashboardQueries;
+  /**
+   * Odczytowa strona konserwacji (`A11`): PORÓWNANIE projekcji bez zapisu, stan tabeli
+   * refresh tokenów i stan schematu. Bez `AuditedWrite`, więc bez czym zapisać —
+   * podgląd różnic nie ma prawa dopisywać do dziennika akcji, które się nie wydarzyły.
+   */
+  adminMaintenanceQueries: AdminMaintenanceQueries;
 }
 
 export function buildServer(deps: ServerDeps): FastifyInstance {
@@ -145,6 +160,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerAdminExportRoutes(app, deps.adminExportQueries, deps.adminExports, gate);
   registerAdminEventRoutes(app, deps.adminEventQueries, gate);
   registerAdminDashboardRoutes(app, deps.adminDashboardQueries, gate);
+  registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
 
   app.get('/health', async () => ({ ok: true }));
 

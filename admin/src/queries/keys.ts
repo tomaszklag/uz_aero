@@ -169,5 +169,34 @@ export const keys = {
     sheet: (sessionUuid: string) => ['exports', 'sheet', sessionUuid] as const,
   },
 
+  /**
+   * Konserwacja (`A11`).
+   *
+   * `projections` to PORÓWNANIE różnic — zapytanie kosztowne (pełny skan rejestru),
+   * więc ekran nie odpala go przy wejściu: uruchamia je człowiek przyciskiem, a klucz
+   * służy do trzymania odpowiedzi między przełączeniami ekranu. Klucz nie ma parametrów,
+   * bo pytanie nie ma parametrów: „czy projekcja zgadza się ze strumieniem" dotyczy
+   * CAŁEJ bazy i innego zakresu nie ma.
+   *
+   * **Bez korzenia `all` — z tego samego powodu, co przy flocie i mocniejszego.**
+   * Pod prefiksem `['maintenance']` żyją trzy pytania, których NIC nie starzeje razem:
+   * porównanie projekcji (pełny skan rejestru, ~4 min), stan tabeli tokenów (jedno
+   * `COUNT`) i stan schematu (zmienia go wyłącznie START SERWERA). Korzeń był tu
+   * pułapką dosłownie: `invalidateQueries` dopasowuje PREFIKSOWO i refetchuje ZAPYTANIA
+   * AKTYWNE niezależnie od `staleTime`, więc unieważnienie po nadpisaniu projekcji
+   * odpalało drugi czterominutowy skan rejestru — a jego wynik i tak był wyrzucany,
+   * bo ekran pokazuje wtedy raport z ZAPISU. Skan świadomie zdjęto z automatu
+   * (`useMaintenance.ts`: „żeby nie zamienić ekranu diagnostycznego w generator
+   * obciążenia"); wywołanie go ubocznie kasowało tę decyzję.
+   *
+   * Każda mutacja unieważnia więc dokładnie ten klucz, który zdezaktualizowała —
+   * i ani jednego więcej (`useMaintenanceCommands.test.ts`).
+   */
+  maintenance: {
+    projections: ['maintenance', 'projections'] as const,
+    refreshTokens: ['maintenance', 'refresh-tokens'] as const,
+    schema: ['maintenance', 'schema'] as const,
+  },
+
   dashboard: ['dashboard'] as const,
 };

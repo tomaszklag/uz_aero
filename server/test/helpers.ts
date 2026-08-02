@@ -28,6 +28,7 @@ import { AdminCorrectionCommands } from '../src/application/admin/commands/corre
 import { AdminExportCommands } from '../src/application/admin/commands/exports.ts';
 import { AdminFlagCommands } from '../src/application/admin/commands/flags.ts';
 import { AdminFleetCommands } from '../src/application/admin/commands/fleet.ts';
+import { AdminMaintenanceCommands } from '../src/application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from '../src/application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from '../src/application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from '../src/application/admin/queries/corrections.ts';
@@ -36,6 +37,7 @@ import { AdminEventQueries } from '../src/application/admin/queries/events.ts';
 import { AdminExportQueries } from '../src/application/admin/queries/exports.ts';
 import { AdminFlagQueries } from '../src/application/admin/queries/flags.ts';
 import { AdminFleetQueries } from '../src/application/admin/queries/fleet.ts';
+import { AdminMaintenanceQueries } from '../src/application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
@@ -58,6 +60,7 @@ import { PgAdminEventsRepo } from '../src/infrastructure/pg/admin/eventsRepo.ts'
 import { PgAdminExportsRepo } from '../src/infrastructure/pg/admin/exportsRepo.ts';
 import { PgAdminFlagsRepo } from '../src/infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from '../src/infrastructure/pg/admin/fleetRepo.ts';
+import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
@@ -169,6 +172,8 @@ export async function testHarness(
   // Monitor eksportu ma własny adapter obok `PgExportLogRepo` — jak w produkcyjnym
   // composition root.
   const adminExportsRepo = new PgAdminExportsRepo();
+  // Konserwacja (A11) — jeden adapter na dwie drogi (podgląd i zapis), jak w produkcji.
+  const adminMaintenanceRepo = new PgAdminMaintenanceRepo();
   const hasher = new ScryptHasher();
   // Zapytania floty mają DWÓCH konsumentów (trasy `A07` i pulpit) — jak w produkcyjnym
   // composition root, więc stoją w zmiennej, a nie w literale.
@@ -249,6 +254,24 @@ export async function testHarness(
     // Pulpit (A01/A01a) — składany z TYCH SAMYCH zapytań i adapterów, co ekrany
     // docelowe. `events` jedzie tu przez dekorator z `options.events`, więc
     // `contract.test.ts` widzi także odczyty strumienia robione przez pulpit.
+    // Konserwacja (A11) — PORÓWNANIE jedzie zapytaniem bez `AuditedWrite` (zero
+    // zapisów, zero wpisów w dzienniku), NADPISANIE komendą przez bramę audytu.
+    // `options.events` obejmuje obie drogi, więc `contract.test.ts` widzi odczyty
+    // strumienia robione przez przebudowę.
+    adminMaintenance: new AdminMaintenanceCommands(
+      auditedWrite,
+      adminMaintenanceRepo,
+      events,
+      sessions,
+      clock,
+    ),
+    adminMaintenanceQueries: new AdminMaintenanceQueries(
+      db,
+      adminMaintenanceRepo,
+      events,
+      sessions,
+      clock,
+    ),
     adminDashboardQueries: new AdminDashboardQueries(
       db,
       adminFleetQueries,

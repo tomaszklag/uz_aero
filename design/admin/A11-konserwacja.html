@@ -428,7 +428,7 @@
     <span class="vp-badge">A09</span>
     <span class="vp-body">
       <span class="vp-name">Audyt — druga strona każdej akcji stąd</span>
-      <span class="vp-when">Trzy akcje piszące z tego ekranu (<code>projection_rebuild</code>, <code>export_retry</code>, <code>refresh_tokens_purge</code>) zostawiają wpis w <code>admin_audit</code>. Wpisu nie da się z panelu skasować — rola aplikacyjna ma na tej tabeli tylko INSERT i SELECT.</span>
+      <span class="vp-when">Dwie akcje piszące z tego ekranu (<code>maintenance.rebuild_projections</code>, <code>maintenance.prune_tokens</code>) oraz ponowienie eksportu (<code>export.retry</code>, ta sama komenda co na A05) zostawiają wpis w <code>admin_audit</code>. Wpisu nie da się z panelu skasować — rola aplikacyjna ma na tej tabeli tylko INSERT i SELECT. <b>Sprostowanie 2026-08-02:</b> kody pochodzą z katalogu <code>server/src/domain/adminActions.ts</code>, który jest źródłem prawdy — wcześniejsze <code>projection_rebuild</code>/<code>export_retry</code>/<code>refresh_tokens_purge</code> nigdy nie istniały w kodzie.</span>
     </span>
   </a>
 </aside>
@@ -558,7 +558,7 @@
               1 · Przebudowa projekcji <code style="font-family:var(--font-mono);color:var(--text-primary);">sessions</code>
               <span class="spacer"></span>
               <span class="pill green">operacja odwracalna</span>
-              <span class="pill dim">infrastructure/pg/sessionsProjection.ts</span>
+              <span class="pill dim">infrastructure/pg/common/sessionsProjection.ts</span>
             </div>
 
             <div class="banner status">
@@ -684,10 +684,10 @@
 
             <div class="card">
               <div class="card-title">Ślad w audycie <span class="spacer"></span><a href="A09-audyt.html" style="font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--green);text-decoration:none;">AUDYT →</a></div>
-              <div class="kv"><span class="kv-k">Akcja</span><span class="kv-v"><small>projection_rebuild</small></span></div>
+              <div class="kv"><span class="kv-k">Akcja</span><span class="kv-v"><small>maintenance.rebuild_projections</small></span></div>
               <div class="kv"><span class="kv-k">Zapisujemy</span><span class="kv-v"><small>zakres · liczba sesji<br />liczba różnic · powód</small></span></div>
               <div class="kv"><span class="kv-k">Kto</span><span class="kv-v"><small>Tomasz Małkiewicz</small></span></div>
-              <span class="hint">Dry-run też zostawia wpis, choć nic nie zapisuje — bo sama informacja „projekcja dryfowała o 2 wiersze" jest faktem, który ktoś kiedyś będzie chciał odtworzyć.</span>
+              <span class="hint"><b>Sprostowanie 2026-08-02: dry-run NIE zostawia wpisu.</b> Ten mockup obiecywał ślad także dla porównania („bo sama informacja »projekcja dryfowała o 2 wiersze« jest faktem"), ale <code>admin_audit</code> jest jedynym dokumentem odpowiadającym na pytanie „kto co ZMIENIŁ", a podgląd niczego nie zmienia. Wpis o nim rozmywałby tę odpowiedź — to ta sama decyzja, co przy podglądzie korekty na <a href="A02b-korekta.html" style="color:var(--green);">A02b</a>. Cena jest nazwana: informacja „ktoś sprawdził i się zgadzało" nie jest odtwarzalna z dziennika. Porównanie idzie więc ZAPYTANIEM (<code>GET …/maintenance/projections/compare</code>), a nie komendą; wpis powstaje wyłącznie przy nadpisaniu.</span>
             </div>
           </div>
         </div>
@@ -698,7 +698,7 @@
             <span class="spacer"></span>
             <span class="pill red">1 błąd</span>
             <span class="pill amber">2 zablokowane flagą</span>
-            <span class="pill dim">application/export/dayExporter.ts</span>
+            <span class="pill dim">application/common/export/dayExporter.ts</span>
           </div>
 
           <div class="banner warn">
@@ -749,10 +749,10 @@
 
           <div class="cols even">
             <span class="hint"><b>Dlaczego przy dwóch pozycjach „Ponów" jest wyszarzone.</b> <code>dayExporter</code> sprawdza otwarte flagi <b>przed</b> zapisem karty i przy <code>session_overlap</code> wychodzi po cichu, bez błędu — sporny dzień nie ma prawa utrwalić się w dokumencie klubu. Ponowienie dostałoby więc dokładnie ten sam wynik i tylko podbiłoby licznik prób. Droga wiedzie przez <a href="A03-flagi.html" style="color:var(--green);">skrzynkę flag</a>: rozwiązanie flagi jest tu jedyną skuteczną „akcją naprawczą", a eksport rusza po niej sam.</span>
-            <span class="hint"><b>Zaległość, którą ten ekran zakłada za wykonaną.</b> Kolejki ponowień i re-eksportu po rozwiązaniu flagi dziś w serwerze nie ma — ponowienie robi dopiero następna paczka zdarzeń tej sesji, a <code>export_log</code> nie ma jeszcze <code>UNIQUE (session_uuid, revision)</code>, który chroniłby przed dwiema równoległymi próbami tej samej rewizji. Bez tych dwóch rzeczy kolumny „Próba" i „Następna" nie mają skąd wziąć wartości.</span>
+            <span class="hint"><b>Zaległość, którą ten ekran zakładał za wykonaną — stan na 2026-08-02.</b> Dwie z trzech rzeczy są już zrobione: re-eksport po rozwiązaniu flagi działa (<a href="A03a-flaga.html" style="color:var(--green);">A03a</a>), a <code>export_log</code> ma <code>UNIQUE (session_uuid, revision)</code> razem z blokadą advisory (migracja 14). <b>Kolejki ponowień z backoffem nadal NIE MA</b> i to jest decyzja o schemacie, nie pole do wypełnienia: nieudana próba nie zostawia wiersza w żadnej tabeli, więc kolumny „Próba" i „Następna" nie mają skąd wziąć wartości. Wdrożony ekran ich nie rysuje i mówi o tym wprost, zamiast pokazywać liczby wzięte znikąd.</span>
           </div>
 
-          <span class="hint">Ręczne „Ponów teraz" jest akcją administratora i zostawia w audycie nazwę karty, numer próby oraz treść błędu (<code>export_retry</code>). Szef wyszkolenia widzi tę tabelę w trybie odczytu. <a href="A09-audyt.html" style="color:var(--green);">Audyt →</a></span>
+          <span class="hint">Ręczne „Ponów teraz" jest akcją administratora i zostawia w audycie nazwę karty, rewizję przed i po oraz wynik próby (<code>export.retry</code>) — <b>tą samą komendą, co przycisk na <a href="A05-eksporty.html" style="color:var(--green);">A05</a></b>, bo druga implementacja ponowienia byłaby gorsza niż brak drugiego przycisku. Szef wyszkolenia widzi tę tabelę w trybie odczytu. <a href="A09-audyt.html" style="color:var(--green);">Audyt →</a></span>
         </div>
 
         <div class="card" style="border-color:var(--red-border);background:var(--red-muted);">
@@ -760,7 +760,7 @@
             3 · Wygasłe refresh tokeny — jedyna operacja, która kasuje dane
             <span class="spacer"></span>
             <span class="pill red">nieodwracalne</span>
-            <span class="pill dim">infrastructure/pg/refreshTokensRepo.ts</span>
+            <span class="pill dim">infrastructure/pg/admin/maintenanceRepo.ts</span>
           </div>
 
           <div class="banner danger">
@@ -794,7 +794,7 @@
               </div>
               <div class="kv"><span class="kv-k">Skasuje</span><span class="kv-v red">37 wierszy</span></div>
               <div class="kv"><span class="kv-k">Nie ruszy</span><span class="kv-v green">15 ważnych</span></div>
-              <div class="kv"><span class="kv-k">Wpis w audycie</span><span class="kv-v"><small>refresh_tokens_purge</small></span></div>
+              <div class="kv"><span class="kv-k">Wpis w audycie</span><span class="kv-v"><small>maintenance.prune_tokens</small></span></div>
               <button class="btn danger disabled" disabled style="width:100%;">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M19 6l-1 14H6L5 6"/></svg>
                 Usuń 37 wygasłych tokenów
@@ -876,8 +876,10 @@
 
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>Zaległość: transakcyjne pary migracji w <code>migrate.ts</code>.</b> Skrypt migracji i wpis do <code>schema_migrations</code> idą dziś jako dwa osobne polecenia — przerwanie procesu między nimi zostawia bazę PO zmianie, ale BEZ odnotowanego numeru, więc przy następnym starcie runner powtórzy tę samą migrację. Dla migracji budowanych z <code>CREATE TABLE IF NOT EXISTS</code> powtórka przechodzi bez szkody, ale <b>migracja 3 (<code>ADD CONSTRAINT</code>) i migracja 6 (<code>ADD COLUMN</code>) nie mają klauzuli IF NOT EXISTS</b> — powtórzone wywalą się błędem i zablokują start serwera do ręcznej interwencji.</span>
+            <span><b>Sprostowanie 2026-08-02: ta zaległość jest ZAMKNIĘTA.</b> Mockup opisywał stan, w którym skrypt migracji i wpis do <code>schema_migrations</code> szły jako dwa osobne polecenia, więc przerwanie procesu między nimi zostawiało bazę PO zmianie, ale BEZ odnotowanego numeru — a powtórzona migracja 3 (<code>ADD CONSTRAINT</code>) blokowała start serwera. Od 2026-07-31 runner wykonuje skrypt i wpis <b>jedną transakcją</b> (<code>migrate.ts</code>), więc stan „zastosowana, ale nieodnotowana" jest niemożliwy, a `ADD CONSTRAINT` przestał być pułapką. Kolumna „Stan" niżej może więc pokazać wyłącznie dwie rzeczy: migrację odnotowaną albo taką, której runner jeszcze nie doszedł.</span>
           </div>
+
+          <span class="hint"><b>Sprostowanie 2026-08-02: liczby i lista wyżej to migawka sprzed roku panelu.</b> W chwili rysowania mockupu schemat miał sześć migracji; dziś ma ich siedemnaście (audyt, role, kolumny projekcji, indeksy rejestru). Panel <b>nie ma własnej listy</b> i mieć jej nie może — wiersze przychodzą z serwera razem z opisem stojącym przy DDL-u (<code>MIGRATION_TITLES</code> w <code>schema.ts</code>), a równości długości obu tablic pilnuje test. Lista opisów po stronie panelu rozjechałaby się przy pierwszej nowej migracji i wypisywała opis migracji 17 przy migracji 18.</span>
 
           <span class="hint">Ten ekran <b>nie uruchamia migracji</b> i nie ma tu przycisku, który by to robił. Schemat wprowadza <code>migrate()</code> przy starcie serwera — wdrożenie schematu jest wydaniem, nie akcją administratora. Panel pokazuje wyłącznie, na czym baza stoi teraz, żeby przy diagnozie nie trzeba było zaglądać do SQL-a.</span>
         </div>

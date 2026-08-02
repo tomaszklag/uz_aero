@@ -44,6 +44,7 @@ const GRANTED_BY: Record<Capability, string> = {
   'fleet.manage': 'administrator',
   'thresholds.manage': 'administrator',
   'audit.read': 'administrator',
+  'maintenance.run': 'administrator',
 };
 
 /** „Wymaga roli: administrator" — dokładnie ten napis nosi `title` w `SZABLON.html`. */

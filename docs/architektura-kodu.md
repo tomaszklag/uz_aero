@@ -158,10 +158,15 @@ jednym telefonie); klucze obce `events`/`sessions` → `pilots`/`aircraft` (dzi�
 pilnowana kodem, nie schematem); odświeżanie pola `details` istniejącej flagi przy
 zmianie wielkości dziury MH (dedupe zostawia pierwszy pomiar); transakcyjne pary
 ~~migracji w `migrate.ts`~~ **ZROBIONE 2026-07-31** (patrz niżej); sprzątanie wygasłych
-refresh tokenów (cron/`DELETE` przy logowaniu — `rotate()` kasuje wiersz tylko przy
-przedstawieniu tokenu, `login` wyłącznie wstawia, więc tokeny porzucone zostają na
-zawsze); ~~skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń~~
-**ZROBIONE 2026-07-31** (przekrój 2, `npm run rebuild-projections`);
+refresh tokenów — **RĘCZNIE ZROBIONE 2026-08-02** (`POST /admin/api/maintenance/refresh-tokens/purge`,
+ekran `A11`: kasuje wyłącznie `expires_at <= now`, wymaga jawnego potwierdzenia w ciele
+żądania, do audytu idą liczby i zakres dat wygaśnięcia). **Automatu nadal NIE MA**:
+`rotate()` kasuje wiersz tylko przy przedstawieniu tokenu, `login` wyłącznie wstawia,
+więc tokeny porzucone zbierają się między jednym a drugim ręcznym sprzątaniem;
+~~skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń~~
+**ZROBIONE 2026-07-31** (przekrój 2, `npm run rebuild-projections`; od 2026-08-02
+także trasami panelu — porównanie `GET …/maintenance/projections/compare` jako
+ZAPYTANIE bez śladu w audycie, nadpisanie `POST …/projections/rebuild` przez `AuditedWrite`);
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
 ignorowana); `UNIQUE (session_uuid, revision)` na `export_log` + kolejka ponowień
 nieudanych eksportów (~~re-eksport po rozwiązaniu flagi przez administratora~~

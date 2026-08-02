@@ -23,6 +23,7 @@ import { EventsScreen } from './screens/events/EventsScreen';
 import { ExportsScreen } from './screens/exports/ExportsScreen';
 import { FlagsScreen } from './screens/flags/FlagsScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
+import { MaintenanceScreen } from './screens/maintenance/MaintenanceScreen';
 import { PilotsScreen } from './screens/pilots/PilotsScreen';
 import { DashboardScreen } from './screens/dashboard/DashboardScreen';
 import { UnderConstructionScreen } from './screens/underConstruction/UnderConstructionScreen';
@@ -38,6 +39,7 @@ const IMPLEMENTED = new Set([
   '/flota',
   '/eksporty',
   '/zdarzenia',
+  '/konserwacja',
 ]);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
@@ -130,6 +132,14 @@ export const router = createHashRouter([
       // `#/flota/nowy` jest tym samym widokiem z pustym formularzem — mockup A07a
       // ma ten adres w pasku przeglądarki i bywa wklejany.
       { path: 'flota/:id?', element: <FleetScreen /> },
+
+      // Konserwacja (`A11`) — JEDNA trasa bez parametrów i bez stanu w URL-u, inaczej
+      // niż wszystkie listy panelu. Powód: na tym ekranie nie ma czego deep-linkować.
+      // Raport różnic powstaje na żądanie i opisuje chwilę uruchomienia, a nie zawężenie,
+      // które dałoby się komuś wkleić; wklejony link do „porównania" obiecywałby wynik,
+      // a odtworzyłby wyłącznie pusty formularz. Przejścia W GŁĄB (do dnia, do flagi,
+      // do karty) prowadzą stąd na ekrany, które adresy mają.
+      { path: 'konserwacja', element: <MaintenanceScreen /> },
 
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.

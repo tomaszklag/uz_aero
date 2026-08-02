@@ -931,6 +931,47 @@ export interface FleetAdminPort {
 
 // ── konserwacja (przebudowa projekcji, panel) ───────────────────────────────────
 
+/**
+ * Stan tabeli `refresh_tokens` — same LICZBY i DATY.
+ *
+ * Metody portu nie oddają ani jednej kolumny z hashem i to jest część kontraktu,
+ * nie oszczędność: `A09` wymienia tokeny na liście rzeczy, które nigdy nie opuszczają
+ * swojej tabeli, a `admin_audit.details` powstaje z tego, co odda port. Adapter, który
+ * odda hashe „na wszelki wypadek", tworzy okazję do wpisania ich do dziennika.
+ */
+export interface RefreshTokenScan {
+  total: number;
+  expired: number;
+  valid: number;
+  oldestExpiredAt: Date | null;
+  newestExpiredAt: Date | null;
+}
+
+/** Skutek czyszczenia: ile wierszy zniknęło i z jakiego zakresu dat wygaśnięcia. */
+export interface PurgedTokens {
+  deleted: number;
+  oldestExpiredAt: Date | null;
+  newestExpiredAt: Date | null;
+  /** Policzone PO skasowaniu, w tej samej transakcji — obietnica „nikt nie wypadł". */
+  remainingValid: number;
+}
+
+/** Jedna migracja tak, jak widzi ją baza plus opis stojący przy DDL-u. */
+export interface SchemaMigrationRow {
+  version: number;
+  title: string;
+  /** `null` = migracja jest w kodzie, ale `schema_migrations` jej nie odnotowało. */
+  appliedAt: Date | null;
+}
+
+/**
+ * Port operacji serwisowych panelu (`A11`).
+ *
+ * Trzy tematy w jednym porcie i to jest świadome: łączy je nie tabela (są trzy różne),
+ * tylko POWÓD istnienia — narzędzia, po które sięga się rzadko, świadomie i wyłącznie
+ * z jednego ekranu. Ta sama zasada, co przy `ExportsAdminPort` czy `DashboardAdminPort`:
+ * osobny port wtedy, gdy inny jest powód, a nie wtedy, gdy inna jest tabela.
+ */
 export interface MaintenanceAdminPort {
   /**
    * Uuidy WSZYSTKICH sesji obecnych w rejestrze `events` — źródłem jest strumień,
@@ -939,6 +980,35 @@ export interface MaintenanceAdminPort {
    * budowana z projekcji nie umiałaby go zobaczyć.
    */
   sessionUuids(db: Queryable): Promise<string[]>;
+
+  /**
+   * Ile tokenów leży w tabeli i ile z nich jest MARTWYCH wobec podanej chwili.
+   *
+   * `at` jest parametrem, a nie `now()` w SQL-u, bo granica „wygasły" musi być tą samą
+   * chwilą w podglądzie i w audycie skasowania — a zegar aplikacji jest sterowalny
+   * (testy), zegar bazy nie.
+   */
+  scanRefreshTokens(db: Queryable, at: Date): Promise<RefreshTokenScan>;
+
+  /**
+   * Kasuje WYŁĄCZNIE wiersze, których `expires_at` już minęło.
+   *
+   * ══ WARUNEK JEST W SQL-U I TAM MA ZOSTAĆ ══
+   * Token WAŻNY skasowany przez pomyłkę wylogowuje pilota w terenie, a ponowne
+   * logowanie jest jedyną czynnością w systemie, która wymaga sieci (§3.0). Filtr
+   * wpisany po stronie aplikacji („pobierz i skasuj te, które…") miałby dwie okazje
+   * do pomyłki i jedno okno wyścigu; tutaj jest jedno polecenie i jeden predykat.
+   */
+  purgeExpiredRefreshTokens(tx: Queryable, at: Date): Promise<PurgedTokens>;
+
+  /**
+   * Migracje znane KODOWI, wzbogacone o chwilę zastosowania z `schema_migrations`.
+   *
+   * Opis migracji przychodzi z adaptera, bo tam mieszka DDL (`infrastructure/pg/schema.ts`)
+   * — warstwa aplikacji nie ma prawa go znać, a rozdzielenie „numer z bazy" od „opis
+   * z kodu" na dwa źródła dałoby ekran, na którym trzeba je sklejać po indeksie.
+   */
+  schemaMigrations(db: Queryable): Promise<{ version: number; rows: SchemaMigrationRow[] }>;
 }
 
 // ── pulpit (A01, A01a) ──────────────────────────────────────────────────────────

@@ -148,6 +148,74 @@
 > wyścig `23505` NIE jest tłumaczony na odmowę — kończy się pięćsetką i jest raportowany
 > jako `unexpected`. Dopisane też, że blokada advisory nie ma i nie może mieć testu na
 > PGlite (jedno połączenie).
+>
+> **Aktualizacja 2026-08-02 — przekrój KONSERWACJA (A11) WDROŻONY** (§10 poz. 9, część):
+> `application/admin/projectionScan.ts` (wspólna ocena różnic), `AdminMaintenanceQueries`
+> (porównanie projekcji, stan tokenów, stan schematu), `AdminMaintenanceCommands` bez
+> trybu `dry_run` + `pruneRefreshTokens`, `MaintenanceAdminPort` o trzy metody bogatszy,
+> `MIGRATION_TITLES` w `schema.ts`, trasy `GET/POST /admin/api/maintenance/*`, rozszerzone
+> `test/{adminMaintenance,roles,schema,adminAuth}.test.ts`. **Bez migracji** — ekran operuje
+> na tym, co już jest w bazie.
+>
+> **Trzy rozstrzygnięcia, z których dwa wymagają potwierdzenia człowieka:**
+> (1) **`dry_run` przestał być trybem KOMENDY i nie zostawia już wpisu w `admin_audit`.**
+> Do 2026-08-02 porównanie szło przez `AuditedWrite`, więc każdy podgląd dopisywał wiersz
+> do dziennika. To jest ta sama decyzja, co przy podglądzie korekty (`A02b`) i z tego samego
+> powodu: brama wymusza ślad w TYPIE, a dziennik nadzoru nie może opisywać rzeczy, które się
+> nie wydarzyły. Cena jest nazwana: „ktoś sprawdził i się zgadzało" przestaje być odtwarzalne
+> z dziennika. Mockup `A11` obiecywał odwrotnie i został sprostowany;
+> (2) **nowa zdolność `maintenance.run`** (admin) — DECYZJA DO POTWIERDZENIA. Katalog nie
+> miał pozycji opisującej narzędzia serwisowe, a każda istniejąca nazywa ZASÓB (flagi,
+> rejestr, konta, flota, progi, dziennik); przebudowa nie dotyczy żadnego z nich, tylko
+> projekcji wszystkich dni naraz. Zakres jest wąski: sprzątanie tokenów jedzie na
+> `accounts.manage` (ta sama tabela i ta sama władza, co unieważnianie sesji przy
+> deaktywacji konta), a ponowienie eksportu na `fleet.manage` — dokładnie jak na `A05`;
+> (3) **kolejki ponowień z backoffem NIE MA i nie powstała.** Nieudany eksport nie zostawia
+> wiersza w żadnej tabeli (dziennik dostaje wpis po UDANYM zapisie karty, §4.7), więc
+> kolumny „Próba" i „Następna" z mockupu nie mają skąd wziąć wartości. Kolejka `A11` jest
+> złączeniem dwóch zawężeń `GET /admin/api/exports` (`?state=missing` i `?state=blocked`),
+> a jej przycisk woła `AdminExportCommands.retry` z `A05` — bez drugiej implementacji.
+>
+> **Blokada advisory przy przebudowie ma wreszcie test** — ograniczony i nazwany. PGlite
+> ma jedno połączenie, więc wyścigu z ingestem nie odtworzy; testowalna jest KOLEJNOŚĆ
+> (blokada wzięta przed odczytem strumienia, który zostanie nadpisany), i to sprawdza
+> dekorator `EventsStorePort` pytający `pg_locks` w chwili odczytu.
+>
+> **Poprawki z przeglądu przyrostu A11 (2026-08-02, ten sam dzień):**
+> (a) **przebudowa ma LIMIT na wywołanie** — `PROJECTION_DIFF_LIMIT` (200) w
+> `application/admin/projectionScan.ts`. Komentarz uzasadniał branie blokady advisory na
+> każdą różnicę zdaniem „typowo zero albo kilka", ale scenariusz, dla którego ta funkcja
+> powstała i który ma własny test („wypełnia kolumny dołożone migracją 11"), to N =
+> **wszystkie** sesje. Przy 1291 sesjach jedna transakcja brałaby ~1291 blokad ze WSPÓLNEJ
+> tablicy klastra (domyślnie ~6400 slotów → realny `out of shared memory`), a każda z tych
+> sesji byłaby zamknięta dla ingestu aż do COMMIT-u, czyli przez cały ~4-minutowy przebieg.
+> Limit trzyma JEDNĄ transakcję (skutek i ślad zostają nierozdzielne), a reszta jedzie
+> w odpowiedzi jako `RebuildReport.remaining` i w `admin_audit.details` — administrator
+> powtarza przebudowę. Blokada wierszowa na `sessions` i porcjowanie transakcji zostały
+> ROZWAŻONE i odrzucone: pierwsza nie szereguje się z ingestem (ten bierze advisory),
+> druga rozrywa niezmiennik „skutek i ślad w jednej transakcji";
+> (b) **zapis bez różnic jest ODMAWIANY** — `409 nothing_to_rebuild`, przerwanie
+> wyjątkiem wewnątrz `AuditedWrite.run` (wzorzec `commands/flags.ts`), więc transakcja
+> się wycofuje i dziennik zostaje pusty. Nadpisanie zera wierszy nie jest operacją,
+> a wpis o nim rozmywałby jedyny dokument odpowiadający na pytanie „kto co zmienił" —
+> ta sama zasada, dla której podgląd nie audytuje. Wada, którą to zamyka: drugie
+> kliknięcie „Nadpisz" zaraz po pierwszym dopisywało DRUGI wpis o zerowym skutku;
+> (c) **raport ma granicę objętości** — `diffs` przycięte do `PROJECTION_DIFF_LIMIT`,
+> a liczby (`rowsDiffering`, `fieldsDiffering`) dalej opisują CAŁY rejestr, jak `matched`
+> na `A05`. Do audytu szło `slice(0, AUDIT_UUID_LIMIT)`, czyli objętość dziennika była
+> przemyślana, a objętość odpowiedzi i tabeli nie była wcale.
+>
+> **Otwarte po tym przeglądzie (wymaga decyzji człowieka):**
+> (1) wartość `PROJECTION_DIFF_LIMIT` wyprowadzono z DOMYŚLNYCH `max_locks_per_transaction`
+> i `max_connections`; przed wdrożeniem warto ją skonfrontować z konfiguracją docelowego
+> Postgresa;
+> (2) mockup `A11` nie zna ani limitu przebiegu, ani stanu „nadpisano N z M, zostało R" —
+> ekran je pokazuje, mockup nie. Sprostowanie mockupu ŚWIADOMIE nie zostało zrobione
+> w tym przyroście, bo zmienia zatwierdzoną specyfikację;
+> (3) grupa `konserwacja` w katalogu akcji audytu (`screens/audit/auditActions.ts`) nie
+> obejmuje `export.retry`, więc ponowienia zrobione z kolejki `A11` nie znajdują się pod
+> linkiem „Ślad akcji w audycie" z tego ekranu. Katalogu NIE zmieniono (reguła: bez
+> zgłoszenia ani `adminActions.ts`, ani `roles.ts`) — propozycje w raporcie z przeglądu.
 
 ---
 

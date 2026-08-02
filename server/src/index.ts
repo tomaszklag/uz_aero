@@ -15,6 +15,7 @@ import { AdminCorrectionCommands } from './application/admin/commands/correction
 import { AdminExportCommands } from './application/admin/commands/exports.ts';
 import { AdminFlagCommands } from './application/admin/commands/flags.ts';
 import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
+import { AdminMaintenanceCommands } from './application/admin/commands/maintenance.ts';
 import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
@@ -23,6 +24,7 @@ import { AdminEventQueries } from './application/admin/queries/events.ts';
 import { AdminExportQueries } from './application/admin/queries/exports.ts';
 import { AdminFlagQueries } from './application/admin/queries/flags.ts';
 import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
+import { AdminMaintenanceQueries } from './application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
@@ -45,6 +47,7 @@ import { PgAdminEventsRepo } from './infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminExportsRepo } from './infrastructure/pg/admin/exportsRepo.ts';
 import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
 import { PgAdminFleetRepo } from './infrastructure/pg/admin/fleetRepo.ts';
+import { PgAdminMaintenanceRepo } from './infrastructure/pg/admin/maintenanceRepo.ts';
 import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
@@ -117,6 +120,11 @@ const adminFleetRepo = new PgAdminFleetRepo();
 // najważniejszym wierszem), więc ma własny adapter obok `PgExportLogRepo` — tamten
 // obsługuje ścieżkę eksportu i `sync-status` telefonu, ten listy panelu.
 const adminExportsRepo = new PgAdminExportsRepo();
+// Konserwacja (A11) ma JEDEN adapter na dwie drogi: zapytania (porównanie projekcji,
+// stan tokenów i schematu) i komendę (nadpisanie, czyszczenie). To jeden port i jeden
+// powód istnienia — narzędzia serwisowe jednego ekranu — więc drugi adapter kupiłby
+// wyłącznie okazję do rozjazdu między tym, co pokazuje podgląd, a tym, co zapisze zapis.
+const adminMaintenanceRepo = new PgAdminMaintenanceRepo();
 const hasher = new ScryptHasher();
 
 // Zapytania floty stoją TU, a nie w literale niżej, bo mają DWÓCH konsumentów: trasy
@@ -212,6 +220,25 @@ const app = buildServer({
   // treścią jest właśnie to, że każda liczba pochodzi z tego samego kodu, co ekran
   // docelowy. `events` jedzie osobno i wyłącznie po to, żeby policzyć stan silnika
   // jednostek z otwartą sesją; `PgAdminDashboardRepo` obsługuje puls rejestru.
+  // Konserwacja (A11). Dwie drogi i to jest cała treść tego przekroju: PORÓWNANIE
+  // projekcji jest zapytaniem (bez `AuditedWrite`, więc bez czym zapisać i bez wpisu
+  // w dzienniku o akcji, której nie było), NADPISANIE — komendą przez bramę audytu.
+  // Ocena różnic jest wspólna (`application/admin/projectionScan.ts`), więc podgląd
+  // i zapis nie mogą powiedzieć dwóch różnych rzeczy o tej samej bazie.
+  adminMaintenance: new AdminMaintenanceCommands(
+    auditedWrite,
+    adminMaintenanceRepo,
+    events,
+    sessions,
+    clock,
+  ),
+  adminMaintenanceQueries: new AdminMaintenanceQueries(
+    db,
+    adminMaintenanceRepo,
+    events,
+    sessions,
+    clock,
+  ),
   adminDashboardQueries: new AdminDashboardQueries(
     db,
     adminFleetQueries,

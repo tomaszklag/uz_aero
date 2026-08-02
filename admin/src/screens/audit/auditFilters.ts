@@ -134,6 +134,24 @@ export function targetHref(targetType: string, targetId: string): string {
   return auditHref({ ...DEFAULT_AUDIT_FILTER, targetType, targetId });
 }
 
+/**
+ * Skrót dla wejścia z ekranu obszaru: „pokaż ślad wszystkiego, co robi ta sekcja panelu".
+ *
+ * ══ DLACZEGO FUNKCJA, A NIE NAPIS W EKRANIE ══
+ * Do 2026-08-02 `A11` składał ten adres u siebie i wychodziło mu `?akcja=konserwacja`
+ * — w liczbie pojedynczej. Filtr czyta `akcje`, więc parametr był PO CICHU pomijany
+ * (`filterFromParams` traktuje nieznaną wartość jak jej brak) i oba linki „Ślad akcji
+ * w audycie" prowadziły na pełną listę wszystkich akcji panelu pod etykietą zawężenia.
+ * Ani kompilator, ani żaden test nie miał jak tego zobaczyć: literówka w napisie nie
+ * jest błędem typów.
+ *
+ * Poprawienie samej literówki wróciłoby przy następnym ekranie. Ta funkcja nie wróci —
+ * i dlatego link do audytu powstaje TYLKO tutaj, tak jak zapowiada nagłówek pliku.
+ */
+export function groupHref(id: AuditGroupId): string {
+  return auditHref({ ...DEFAULT_AUDIT_FILTER, scope: { kind: 'group', id } });
+}
+
 /** Wybór z paska akcji → lista kodów dla trasy; `undefined` = bez zawężenia. */
 export function actionsOf(scope: AuditScope | null): AdminAction[] | undefined {
   if (scope == null) return undefined;

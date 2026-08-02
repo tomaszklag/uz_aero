@@ -30,6 +30,9 @@ describe('mapa uprawnień', () => {
     expect(can('training_lead', 'accounts.manage')).toBe(false);
     expect(can('training_lead', 'thresholds.manage')).toBe(false);
     expect(can('training_lead', 'audit.read')).toBe(false);
+    // Narzędzia serwisowe (`A11`) — nadpisanie projekcji dotyka liczb WSZYSTKICH dni
+    // klubu naraz, więc zostaje przy jednej roli, tak jak korekta rejestru.
+    expect(can('training_lead', 'maintenance.run')).toBe(false);
   });
 
   it('administrator ma komplet', () => {
@@ -41,6 +44,7 @@ describe('mapa uprawnień', () => {
       'fleet.manage',
       'thresholds.manage',
       'audit.read',
+      'maintenance.run',
     ] as const) {
       expect(can('admin', capability)).toBe(true);
     }

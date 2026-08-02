@@ -15,6 +15,7 @@ import {
   actionsOf,
   DEFAULT_AUDIT_FILTER,
   filterFromParams,
+  groupHref,
   isNarrowed,
   paramsFromFilter,
   scopeFrom,
@@ -91,6 +92,20 @@ describe('filtry dziennika audytu', () => {
     // i wiersz flagi na karcie dnia.
     expect(targetHref('event', '4c88-9a01')).toBe('/audyt?typ=event&obiekt=4c88-9a01');
     expect(targetHref('flag', '1044')).toBe('/audyt?typ=flag&obiekt=1044');
+  });
+
+  it('`groupHref` buduje link „ślad akcji tej sekcji" — z parametrem, który filtr CZYTA', () => {
+    // Wada, która to wymusiła (`A11`): ekran składał adres u siebie i wychodziło mu
+    // `?akcja=konserwacja` w liczbie pojedynczej. Nieznany parametr jest po cichu
+    // pomijany, więc link prowadził na PEŁNĄ listę wszystkich akcji panelu — czyli
+    // dokładnie tam, skąd miał odesłać. Literówka w napisie nie jest błędem typów.
+    expect(groupHref('konserwacja')).toBe('/audyt?akcje=konserwacja');
+
+    // Asercja dowodowa: adres nie tylko wygląda dobrze, ale FILTR go rozumie i zawęża
+    // do trzech kodów katalogu. Bez tego test przybijałby napis, a nie zachowanie.
+    const query = groupHref('konserwacja').split('?')[1]!;
+    expect(filterFromParams(params(query)).scope).toEqual({ kind: 'group', id: 'konserwacja' });
+    expect(actionsOf(filterFromParams(params(query)).scope)).toHaveLength(3);
   });
 
   it('grupa rozwija się na LISTĘ kodów, pojedynczy kod na listę jednoelementową', () => {

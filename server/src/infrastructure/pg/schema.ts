@@ -628,3 +628,35 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_16,
   MIGRATION_17,
 ];
+
+/**
+ * Jednozdaniowy opis KAŻDEJ migracji — kolumna „Co wprowadza" z ekranu `A11`.
+ *
+ * ══ DLACZEGO TO STOI TUTAJ, A NIE W PANELU ══
+ * Bo tutaj stoi DDL. Lista opisów trzymana po drugiej stronie drutu rozjeżdżałaby się
+ * przy pierwszej nowej migracji i nikt by tego nie zauważył — panel wypisywałby wtedy
+ * opis migracji 17 przy migracji 18. Tu rozjazd jest niemożliwy do przeoczenia: długość
+ * tej tablicy musi się równać długości `MIGRATIONS` i pilnuje tego `test/schema.test.ts`.
+ *
+ * Opisy są streszczeniem docbloków wyżej, a nie ich powtórzeniem: ekran ma powiedzieć,
+ * CO migracja wprowadza, a nie dlaczego — uzasadnienia zostają przy kodzie.
+ */
+export const MIGRATION_TITLES: readonly string[] = [
+  'Fundament: pilots, aircraft, refresh_tokens, events',
+  'Projekcje serwera: sessions i flags',
+  'Unikalność flag na poziomie bazy (UNIQUE po typie i sesjach)',
+  'Dziennik eksportu export_log — append-only, rewizja +1',
+  'Treść kart exported_sheets — bazodanowy adapter SheetsPort',
+  'Motyw jako preferencja pilota: pilots.theme + theme_updated_at',
+  'Rola konta: pilots.role z CHECK i domyślnym `pilot`',
+  'Słownik typów flag w bazie (CHECK na flags.type)',
+  'Dziennik akcji administratorów: admin_audit',
+  'Flaga pamięta, KTO i JAK ją rozstrzygnął (resolved_by, resolution_note)',
+  'Rodzaj operacji i klient w projekcji: sessions.operation, sessions.client',
+  'Indeksy dziennika audytu dopasowane do porządku odczytu',
+  'Znacznik unieważnienia poświadczeń: pilots.credentials_valid_from',
+  'Jedna rewizja karty = jeden wiersz dziennika (UNIQUE na export_log)',
+  'Indeks po events.received_at — oś pulsu systemu',
+  'Rejestr zdarzeń pod listę śledczą (indeksy typu, pilota i urządzenia)',
+  'Koniec z NULLS LAST na kluczach NOT NULL (rejestr i audyt)',
+];

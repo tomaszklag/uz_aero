@@ -107,11 +107,14 @@ export const NAV_GROUPS: NavGroupSpec[] = [
         label: 'Konserwacja',
         icon: <WrenchIcon />,
         mockup: 'A11-konserwacja.html',
-        // ZALEŻNOŚĆ DO ROZSTRZYGNIĘCIA: `server/src/domain/roles.ts` nie ma zdolności
-        // opisującej narzędzia konserwacyjne (przebudowa projekcji jest dziś CLI,
-        // bez trasy HTTP). Do czasu decyzji pozycja jest widoczna dla każdego, kto
-        // ma wejście do panelu — czyli tak, jak rysuje ją mockup A11.
-        capability: 'panel.access',
+        // `maintenance.run` — pozycja katalogu dołożona 2026-08-02 razem z trasami
+        // konserwacji (`server/src/domain/roles.ts`, decyzja do potwierdzenia).
+        // Kłódka, a nie `panel.access` jak przy kontach i flocie, i to jest różnica
+        // merytoryczna: tam szef wyszkolenia CZYTA tabelę (potrzebuje jej do flag
+        // i statystyk), a tutaj każda z czterech sekcji jest operacją administratora.
+        // Mockup A11 nosi w topbarze plakietkę „Tylko administrator" i to jest ta sama
+        // decyzja, zapisana w kodzie.
+        capability: 'maintenance.run',
       },
     ],
   },

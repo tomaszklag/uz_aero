@@ -58,6 +58,12 @@ describe('logowanie do panelu wydaje ciasteczko, nie token w ciele', () => {
         'fleet.manage',
         'thresholds.manage',
         'audit.read',
+        // Narzędzia serwisowe (`A11`) — dopisane 2026-08-02 razem z trasami
+        // konserwacji. Ten przypadek jest jedynym miejscem, które zauważa nową
+        // pozycję katalogu, i dlatego lista jest tu wypisana, a nie porównana
+        // z `capabilitiesOf('admin')`: porównanie z tą samą funkcją, którą trasa
+        // woła, przechodziłoby przy każdej zmianie i nie mówiłoby nic.
+        'maintenance.run',
       ],
     });
 
