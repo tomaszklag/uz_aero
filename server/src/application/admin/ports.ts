@@ -12,6 +12,7 @@
  */
 
 import type {
+  EventType,
   FlagStatus,
   FlagType,
   MhFormat,
@@ -22,6 +23,7 @@ import type {
 import type { AdminAction } from '../../domain/adminActions.ts';
 import type { PilotRole } from '../../domain/roles.ts';
 import type { FlagRecord, Queryable, SessionRow } from '../common/ports.ts';
+import type { AdminEventCounts } from './contracts/events.ts';
 import type { AdminExportCounts, ExportState } from './contracts/exports.ts';
 
 // ── tożsamość działającego ──────────────────────────────────────────────────────
@@ -485,6 +487,105 @@ export interface EventsAdminPort {
    * miejsce, w którym ten fakt jest zapisany.
    */
   adminCorrectionUuids(db: Queryable, sessionUuid: string): Promise<string[]>;
+}
+
+// ── rejestr zdarzeń (lista śledcza, A04) ────────────────────────────────────────
+
+/**
+ * Filtr rejestru (`A04`). Pola NIEUSTAWIONE (`undefined`) są pomijane.
+ *
+ * ══ ZAKRES DAT IDZIE PO `received_at`, NIE PO CZASIE ZDARZENIA ══
+ * I to jest decyzja, nie skrót. Po pierwsze: porządek listy i kursor jadą po
+ * `(received_at, uuid)`, więc zakres po innej kolumnie kazałby stronie i filtrowi
+ * mówić o dwóch różnych osiach czasu — a wtedy „następna strona" przestaje znaczyć
+ * cokolwiek. Po drugie: ekran odpowiada między innymi na pytanie „czy to zdarzenie
+ * w ogóle DOTARŁO", a to jest pytanie o zegar serwera. Zakres po czasie zdarzenia
+ * wymagałby drugiego indeksu i drugiego kursora; ekran nazywa tę oś wprost.
+ */
+export interface EventListFilter {
+  /** Zakres po `received_at` (epoch ms UTC), obustronnie domknięty. */
+  fromMs?: number;
+  toMs?: number;
+  aircraftId?: string;
+  /** Dopasowuje PIC-a **albo** Duala — dzień szkolny należy do obu, nie tylko do PIC-a. */
+  pilotId?: string;
+  sessionUuid?: string;
+  /** DOKŁADNY uuid zdarzenia — wklejenie go z telefonu to główny scenariusz `A04`. */
+  uuid?: string;
+  /**
+   * Typy zdarzeń jako LISTA, wzorem `AuditListFilter.actions`: ekran filtruje chipami,
+   * a chip bywa grupą. Typ `EventType` (a nie `string`) dotyczy WYŁĄCZNIE wejścia —
+   * po kodzie spoza katalogu nie da się filtrować, bo katalog jest jedyną listą, którą
+   * panel zna. Odczyt jest szerszy, patrz `AdminEventRow.type`.
+   */
+  types?: EventType[];
+  /** Dokładna wartość `source_device` — „czym to przyszło". */
+  sourceDevice?: string;
+  cursor?: string;
+  direction: 'asc' | 'desc';
+  limit: number;
+}
+
+/**
+ * Wiersz `events` razem z tym, czego lista potrzebuje ze złączeń.
+ *
+ * `type` i `payload` jadą SUROWO (napis i `unknown`) — pełne uzasadnienie stoi
+ * w nagłówku `contracts/events.ts`. Adapter nie ma tu ani jednego strażnika i nie wolno
+ * go dodać: rejestr, który wywraca się na własnej historii, przestaje być narzędziem
+ * śledczym dokładnie wtedy, gdy jest potrzebny.
+ */
+export interface AdminEventRow {
+  uuid: string;
+  sessionUuid: string;
+  aircraftId: string;
+  reg: string | null;
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  dualId: string | null;
+  dualCode: string | null;
+  dualName: string | null;
+  type: string;
+  deviceTime: number;
+  gpsTime: number | null;
+  payload: unknown;
+  schemaVersion: number;
+  receivedAt: Date;
+  sourceDevice: string | null;
+}
+
+/**
+ * Strona rejestru RAZEM z korektami celującymi w jej wiersze.
+ *
+ * ══ DLACZEGO KOREKTY JADĄ OSOBNO, A NIE JAKO GOTOWA FLAGA `voided` ══
+ * Bo o tym, czy zdarzenie zaszło, rozstrzyga `applyCorrections` z `@uzaero/domain`
+ * — razem z regułą „gdy jedno zdarzenie ma kilka korekt, wygrywa ostatnia" i z parą
+ * `void` → `retime`, która przywraca zdarzenie do życia. Ta reguła ma mieć JEDNĄ
+ * implementację; `CASE` w SQL-u byłby jej drugą i rozjechałby się przy pierwszej
+ * zmianie. Adapter dostarcza więc FAKTY (wiersze korekt celujących w stronę),
+ * a wniosek wyciąga czysta funkcja `mappers/eventEntry.ts`.
+ *
+ * Korekta z tej listy bywa spoza strony — i o to chodzi: zdarzenie sprzed miesiąca
+ * unieważnione wczoraj musi być przekreślone także wtedy, gdy sama korekta wypadła
+ * poza bieżące zawężenie.
+ *
+ * `null` = **kursor nieczytelny**, wzorem `SessionsAdminPort.list`: kursor przychodzi
+ * z zewnątrz, więc jego uszkodzenie to 400, a nie 500.
+ *
+ * `counts: null` znaczy „nie pytaliśmy" (strona kursorowa), a nie „nic nie ma".
+ */
+export interface AdminEventsReadPort {
+  list(
+    db: Queryable,
+    filter: EventListFilter,
+    /** Próg `CLOCK_DRIFT` (ms) — jedzie z domeny, żeby SQL nie miał własnej kopii. */
+    driftThresholdMs: number,
+  ): Promise<{
+    items: AdminEventRow[];
+    corrections: AdminEventRow[];
+    nextCursor: string | null;
+    counts: AdminEventCounts | null;
+  } | null>;
 }
 
 // ── konta pilotów (A06, A06a) ───────────────────────────────────────────────────

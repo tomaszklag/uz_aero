@@ -19,6 +19,7 @@ import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
 import { AdminAuditQueries } from './application/admin/queries/audit.ts';
 import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
 import { AdminDashboardQueries } from './application/admin/queries/dashboard.ts';
+import { AdminEventQueries } from './application/admin/queries/events.ts';
 import { AdminExportQueries } from './application/admin/queries/exports.ts';
 import { AdminFlagQueries } from './application/admin/queries/flags.ts';
 import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
@@ -39,6 +40,7 @@ import { generateStartPassword } from './infrastructure/auth/startPassword.ts';
 import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
 import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
 import { PgAdminDashboardRepo } from './infrastructure/pg/admin/dashboardRepo.ts';
+import { PgAdminEventsReadRepo } from './infrastructure/pg/admin/eventsReadRepo.ts';
 import { PgAdminEventsRepo } from './infrastructure/pg/admin/eventsRepo.ts';
 import { PgAdminExportsRepo } from './infrastructure/pg/admin/exportsRepo.ts';
 import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
@@ -201,6 +203,11 @@ const app = buildServer({
   // wędruje do bramy `AuditedWrite`, odczyt (`PgAdminAuditReadRepo`) do zapytań.
   // Brama, która przy okazji umie czytać listy, przestaje być bramą.
   adminAuditQueries: new AdminAuditQueries(db, new PgAdminAuditReadRepo()),
+  // Rejestr zdarzeń (A04). Trzeci adapter nad `events` obok magazynu ingestu
+  // (`PgEventsStore`) i metadanych karty dnia (`PgAdminEventsRepo`) — bo trzecie jest
+  // pytanie: lista śledcza z kursorem i licznikami. Ingest nie ma jak zregresować
+  // od zmian w tym ekranie.
+  adminEventQueries: new AdminEventQueries(db, new PgAdminEventsReadRepo()),
   // Pulpit (A01/A01a). Dostaje ZAPYTANIA innych ekranów, a nie ich adaptery — bo jego
   // treścią jest właśnie to, że każda liczba pochodzi z tego samego kodu, co ekran
   // docelowy. `events` jedzie osobno i wyłącznie po to, żeby policzyć stan silnika

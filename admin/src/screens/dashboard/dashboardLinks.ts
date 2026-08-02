@@ -6,28 +6,36 @@
  * (§4.4), i ma test. Wzorce: `targetHref` w `screens/audit/auditFilters.ts`
  * i `dayLink` w `screens/fleet/fleetFilters.ts`.
  *
- * ══ EKRAN, KTÓREGO NIE MA, NIE DOSTAJE LINKU ══
- * Mockup `A01` prowadzi z karty „Ostatnio przyjęte" do REJESTRU ZDARZEŃ (`A04`).
- * Tego ekranu nie ma — `#/zdarzenia` renderuje dziś stronę „w budowie". Link do niej
- * byłby czwartym ślepym zaułkiem w panelu, więc zamiast niego stoi przycisk
- * ZABLOKOWANY Z POWODEM (`MISSING_SCREENS.zdarzenia`), a same wiersze prowadzą
- * w miejsce, które istnieje i jest merytorycznie właściwe: na kartę DNIA, do którego
- * zdarzenie należy. Sprostowanie mockupu opisane na ekranie, nie po cichu.
+ * ══ REJESTR ZDARZEŃ JUŻ ISTNIEJE (2026-08-02) ══
+ * Do przekroju `A04` karta „Ostatnio przyjęte" miała przycisk ZABLOKOWANY z powodem
+ * „rejestr zdarzeń (A04) jeszcze nie powstał", bo `#/zdarzenia` renderowało stronę
+ * „w budowie", a link do niej byłby ślepym zaułkiem. Ekran powstał, więc przycisk
+ * prowadzi tam, gdzie obiecuje mockup — i to **zawężony do tego, co pulpit właśnie
+ * pokazywał**: karta wypisuje ostatnio PRZYJĘTE zdarzenia, więc rejestr ma otworzyć
+ * się w tym samym porządku i po tej samej osi czasu (`received_at`, malejąco), czyli
+ * w stanie domyślnym. Wiersze nadal prowadzą na kartę DNIA — to jest pełny kontekst
+ * jednego zdarzenia, a nie jego surowy zapis.
+ *
+ * Lista `MISSING_SCREENS` zniknęła razem z jedynym wpisem. Gdy któryś ekran znowu
+ * będzie prowadził donikąd, wraca tu jako DANE, a nie jako napis w JSX-ie.
  */
 
+import { DEFAULT_EVENTS_FILTER, eventsHref } from '../events/eventsFilters';
 import { DEFAULT_EXPORTS_FILTER, exportsHref } from '../exports/exportsFilters';
 import { DEFAULT_FLEET_FILTER, dayHref, aircraftHref } from '../fleet/fleetFilters';
 
 /**
- * Powody blokad przejść do ekranów, które jeszcze nie powstały.
+ * Rejestr zdarzeń w stanie DOMYŚLNYM (`#/zdarzenia`) — czyli po czasie przyjęcia,
+ * najnowsze na górze.
  *
- * Trzymane jako DANE, a nie jako napis w JSX-ie: powód jest treścią, a treść ma mieć
- * jedno miejsce i test. Gdy `A04` powstanie, znika stąd jeden wpis i jeden warunek —
- * a nie trzeba szukać po ekranach, gdzie ktoś wpisał to samo zdanie.
+ * To nie jest „byle jaki link do A04": karta pulpitu pokazuje sześć ostatnio
+ * PRZYJĘTYCH zdarzeń, a domyślny porządek rejestru jest dokładnie ten sam. Człowiek
+ * klikający „REJESTR →" ma zobaczyć te same wiersze, tylko w pełnej postaci — każde
+ * inne zawężenie kazałoby mu szukać, gdzie się podziały.
  */
-export const MISSING_SCREENS = {
-  zdarzenia: 'rejestr zdarzeń (A04) jeszcze nie powstał',
-} as const;
+export function eventsRegisterHref(): string {
+  return eventsHref(DEFAULT_EVENTS_FILTER);
+}
 
 /** Skrzynka flag w stanie domyślnym — czyli sprawy OTWARTE (`#/flagi`). */
 export function flagsHref(): string {

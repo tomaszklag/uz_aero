@@ -19,6 +19,7 @@ import { ShellRoute } from './auth/ShellRoute';
 import { AuditScreen } from './screens/audit/AuditScreen';
 import { DaysScreen } from './screens/days/DaysScreen';
 import { DayScreen } from './screens/day/DayScreen';
+import { EventsScreen } from './screens/events/EventsScreen';
 import { ExportsScreen } from './screens/exports/ExportsScreen';
 import { FlagsScreen } from './screens/flags/FlagsScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
@@ -36,6 +37,7 @@ const IMPLEMENTED = new Set([
   '/piloci',
   '/flota',
   '/eksporty',
+  '/zdarzenia',
 ]);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
@@ -87,6 +89,18 @@ export const router = createHashRouter([
       // (konto, obiekt, grupa akcji, zakres dat) jadą query stringiem, żeby link
       // „ślad w audycie" z karty dnia i z korekty dało się wkleić.
       { path: 'audyt', element: <AuditScreen /> },
+
+      // Rejestr zdarzeń (`A04`) — jedna trasa z OPCJONALNYM uuid-em zdarzenia, jak przy
+      // flagach i kontach: rozwinięcie (surowy payload + nagłówek zdarzenia) otwiera się
+      // POD wierszem, więc lista ma zostać na ekranie. Segment opcjonalny trzyma to
+      // w jednym wpisie i nie przemontowuje ekranu przy rozwijaniu wiersza — inaczej
+      // tabela migałaby przy każdym kliknięciu, czyli traciłaby dokładnie ten kontekst,
+      // dla którego rozwinięcie jest rozwinięciem, a nie osobną stroną.
+      //
+      // Zawężenia (samolot, pilot, sesja, typ, zakres dat, urządzenie) jadą query
+      // stringiem po polsku, żeby link „gdzie jest zdarzenie uuid=…" dało się wkleić
+      // w zgłoszeniu — `ANALIZA` §3 nazywa to podstawowym scenariuszem współpracy.
+      { path: 'zdarzenia/:uuid?', element: <EventsScreen /> },
 
       // Monitor eksportu (`A05`) — jedna trasa z OPCJONALNYM uuid-em sesji, jak przy
       // flagach i kontach: rozwinięcie wiersza (historia rewizji + podgląd karty)

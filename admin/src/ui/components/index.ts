@@ -31,6 +31,7 @@ export { OptionGrid } from './OptionGrid';
 export { OptionLink } from './OptionLink';
 export { OptionList } from './OptionList';
 export { PageHead } from './PageHead';
+export { PayloadView, type PayloadViewLine } from './PayloadView';
 export { Pill, type PillTone } from './Pill';
 export { SearchInput } from './SearchInput';
 export { Sparkline } from './Sparkline';

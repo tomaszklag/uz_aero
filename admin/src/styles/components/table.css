@@ -196,6 +196,50 @@ td.dim {
   justify-content: flex-end;
 }
 
+/* WARTOŚĆ ZEGARA w komórce tabeli (`A04`: `device_time`, `gps_time`, `Δ zegarów`).
+   W mockupie stoi to stylem inline (`style="color:var(--amber)"`); tutaj jest klasą,
+   bo o tym, który zegar się rozjechał, rozstrzyga PRÓG Z SERWERA, a nie autor pliku
+   HTML. Trzy tony, trzy różne zdania: `dim` — zegary się zgadzają, `amber` — rozjazd
+   ponad próg `CLOCK_DRIFT`, `red` — nie ma czego porównać, bo nie było fixa GPS. */
+.clock-val.amber {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.clock-val.red {
+  color: var(--red);
+}
+
+.clock-val.dim {
+  color: var(--text-secondary);
+}
+
+/* Zdarzenie UNIEWAŻNIONE korektą (`A04`). Wiersz ZOSTAJE w tabeli — rejestr jest
+   append-only i to właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się
+   od tego, co zapisał telefon. Przekreślamy czasy i identyfikatory, nie całą treść:
+   plakietka typu i nazwisko pilota mają być czytelne, bo po nich się szuka.
+   Ta sama semantyka, co `.tl-row.voided` na osi karty dnia. */
+tbody tr.voided td.num,
+tbody tr.voided td.mono {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* ROZWINIĘCIE WIERSZA (`A04`: payload + nagłówek zdarzenia) — wiersz-satelita pod
+   wierszem właściwym, przez całą szerokość tabeli. Osobny `<tr>`, a nie szuflada
+   z boku, bo mockup pokazuje treść DOKŁADNIE pod wierszem, którego dotyczy:
+   przy dochodzeniu porównuje się sąsiednie zdarzenia, a szuflada zasłania listę.
+   Kolejność ma znaczenie — reguła stoi PO `tbody tr:hover`, żeby najechanie myszą
+   nie podświetlało satelity jak osobnego wiersza listy. */
+tbody tr.row-expand:hover {
+  background: none;
+}
+
+tbody tr.row-expand > td {
+  padding: 0 14px 16px;
+  background: var(--surface-raised);
+}
+
 /* Dzień z OTWARTĄ FLAGĄ. W mockupie `A02-dni.html` stoi to stylem inline
    (`style="background:var(--amber-muted)"`) na dwóch wierszach — tutaj jest klasą,
    bo o tym, który wiersz ma flagę, rozstrzyga `openFlags` z odpowiedzi serwera,

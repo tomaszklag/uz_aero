@@ -272,6 +272,40 @@
   .cell-link:hover, .cell-link:focus-visible { color:var(--green); border-bottom-color:var(--green-border); }
   .row-actions { display:flex; gap:6px; justify-content:flex-end; }
 
+  /* WARTOŚĆ ZEGARA w komórce tabeli (A04: `device_time`, `gps_time`, `Δ zegarów`).
+     W mockupie stoi to stylem inline (`style="color:var(--amber)"`); tutaj jest klasą,
+     bo o tym, który zegar się rozjechał, rozstrzyga PRÓG Z SERWERA, a nie autor pliku
+     HTML. Trzy tony, trzy różne zdania: `dim` — zegary się zgadzają, `amber` — rozjazd
+     ponad próg CLOCK_DRIFT, `red` — nie ma czego porównać, bo nie było fixa GPS. */
+  .clock-val.amber { color:var(--amber); font-weight:700; }
+  .clock-val.red { color:var(--red); }
+  .clock-val.dim { color:var(--text-secondary); }
+
+  /* Zdarzenie UNIEWAŻNIONE korektą (A04). Wiersz ZOSTAJE w tabeli — rejestr jest
+     append-only i to właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się
+     od tego, co zapisał telefon. Przekreślamy czasy i identyfikatory, nie całą treść:
+     plakietka typu i pilot mają nadal być czytelni, bo po nich się szuka.
+     Ta sama semantyka, co `.tl-row.voided` na osi karty dnia. */
+  tbody tr.voided td.num, tbody tr.voided td.mono { text-decoration:line-through; color:var(--text-muted); }
+
+  /* ROZWINIĘCIE WIERSZA (A04: payload + nagłówek zdarzenia). Wiersz-satelita pod
+     wierszem właściwym, przez całą szerokość tabeli. Osobny `<tr>`, a nie szuflada
+     z boku, bo mockup pokazuje treść DOKŁADNIE pod wierszem, którego dotyczy —
+     przy dochodzeniu porównuje się sąsiednie zdarzenia, a szuflada zasłania listę. */
+  tbody tr.row-expand:hover { background:none; }
+  tbody tr.row-expand > td { padding:0 14px 16px; background:var(--surface-raised); }
+
+  /* WYPIS JSON-a — surowy payload zdarzenia (A04). W mockupie stoi stylem inline;
+     tutaj ma nazwę, bo klasa bez nazwy jest klasą, której nikt nie znajdzie greppem.
+     Kolory kluczy i wartości są MODYFIKATORAMI, a nie hexami w kodzie: o tym, że
+     liczba jest niebieska, a `null` czerwony, rozstrzyga moduł czysty z testem. */
+  .payload { font-family:var(--font-mono); font-size:11px; line-height:1.75; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px; overflow-x:auto; color:var(--text-secondary); margin:0; }
+  .payload-line { display:block; white-space:pre; }
+  .payload-key { color:var(--text-primary); font-weight:500; }
+  .payload-val.green { color:var(--green); }
+  .payload-val.blue { color:var(--blue); }
+  .payload-val.red { color:var(--red); }
+
   /* ── plakietki stanu ── */
   .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; border:1px solid; white-space:nowrap; }
   .pill.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }

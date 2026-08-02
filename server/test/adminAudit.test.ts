@@ -801,3 +801,33 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
     expect(plan).toContain('idx_audit_actor');
   });
 });
+
+describe('zakres dat: data NIEISTNIEJĄCA to 400, nie cichy inny okres', () => {
+  // `Date.UTC` nie waliduje, tylko PRZEWIJA — `Date.UTC(2026, 12, 45)` to 14 lutego
+  // 2027. Kształt `YYYY-MM-DD` przepuszczał więc `2026-13-45`, a trasa odpowiadała 200
+  // na zakres cofnięty o ponad pół roku. W narzędziu nadzoru to najgorszy tryb awarii:
+  // nie ma komunikatu ani pustej listy, jest wiarygodnie wyglądająca odpowiedź
+  // o INNYM okresie, a administrator sprawdzający „czy w lipcu czegoś nie
+  // przegapiliśmy" dostawał luty i nie miał jak tego zauważyć.
+  //
+  // Parser jest wspólny (`http/routes/admin/dayRange.ts`), więc ten przypadek broni
+  // także listy dni (`A02`) i eksportów (`A05`).
+  it.each([
+    ['2026-13-45', 'miesiąc i dzień poza kalendarzem'],
+    ['2026-02-30', 'luty bez trzydziestego'],
+    ['2026-00-10', 'miesiąc zerowy'],
+    ['2026-12-32', 'dzień poza grudniem'],
+  ])('%s → 400 (%s)', async (day) => {
+    const { app, admin } = await journal();
+    expect((await getAudit(app, admin, `?from=${day}`)).statusCode).toBe(400);
+    expect((await getAudit(app, admin, `?to=${day}`)).statusCode).toBe(400);
+  });
+
+  it('data ISTNIEJĄCA nadal przechodzi — łącznie z 29 lutego roku przestępnego', async () => {
+    // Kontrola samego przypadku wyżej: gdyby round-trip odrzucał wszystko, cztery
+    // asercje `400` przechodziłyby przy zepsutym parserze.
+    const { app, admin } = await journal();
+    expect((await getAudit(app, admin, '?from=2024-02-29')).statusCode).toBe(200);
+    expect((await getAudit(app, admin, '?from=2026-07-01&to=2026-07-31')).statusCode).toBe(200);
+  });
+});

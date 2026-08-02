@@ -269,11 +269,13 @@ describe('pulpit: przejścia — zero martwych linków', () => {
     expect(html).toContain('href="/eksporty?stan=missing"');
   });
 
-  it('przejście do rejestru zdarzeń (`A04`) jest ZABLOKOWANE Z POWODEM, nie martwe', () => {
-    // Ekran nie powstał. Link do strony „w budowie" byłby czwartym ślepym zaułkiem
-    // w panelu, a przycisk bez wyjaśnienia — zagadką.
-    expect(html).toContain('rejestr zdarzeń (a04) jeszcze nie powstał');
-    expect(html).not.toContain('href="/zdarzenia"');
+  it('przejście do rejestru zdarzeń (`A04`) jest ŻYWYM linkiem, nie blokadą z powodem', () => {
+    // Do 2026-08-02 stał tu przycisk zablokowany z powodem „rejestr zdarzeń (A04)
+    // jeszcze nie powstał", bo `#/zdarzenia` renderowało stronę „w budowie". Ekran
+    // powstał, więc przycisk prowadzi do rejestru — i to w stanie DOMYŚLNYM, czyli
+    // w tym samym porządku (`received_at` malejąco), który pokazuje karta obok.
+    expect(html).toContain('href="/zdarzenia"');
+    expect(html).not.toContain('jeszcze nie powstał');
   });
 
   it('wiersz „ostatnio przyjęte" prowadzi na kartę DNIA, do którego zdarzenie należy', () => {

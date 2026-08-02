@@ -8,11 +8,18 @@
  * latał" — i mockup opisuje ten przypadek wprost.
  *
  * ══ INDEKS NIE JEST OPTYMALIZACJĄ, TYLKO WARUNKIEM ══
- * `idx_events_received` (migracja 15) obsługuje oba wzorce tego pliku: `ORDER BY
- * received_at DESC LIMIT 6` (karta „Ostatnio przyjęte") i zakres `received_at >= …`
- * (histogram, licznik doby). Bez niego każde wejście na pulpit skanowałoby CAŁY rejestr,
- * który rośnie bez granicy — pulpit działałby świetnie w pierwszym miesiącu i coraz
- * gorzej w każdym następnym, czyli w sposób najtrudniejszy do zauważenia.
+ * `idx_events_received` obsługuje oba wzorce tego pliku: `ORDER BY received_at DESC
+ * LIMIT 6` (karta „Ostatnio przyjęte") i zakres `received_at >= …` (histogram, licznik
+ * doby). Bez niego każde wejście na pulpit skanowałoby CAŁY rejestr, który rośnie bez
+ * granicy — pulpit działałby świetnie w pierwszym miesiącu i coraz gorzej w każdym
+ * następnym, czyli w sposób najtrudniejszy do zauważenia.
+ *
+ * **`NULLS LAST` w `ORDER BY` niżej NIE JEST ozdobą.** Migracja 16 przestawiła
+ * `idx_events_received` na `(received_at DESC NULLS LAST, uuid DESC)`, bo tego wymaga
+ * paginacja kursorowa rejestru (`A04`), a planer PostgreSQL-a dopasowuje porządek
+ * SKŁADNIOWO — także wtedy, gdy kolumna jest `NOT NULL` i różnica nie ma jak niczego
+ * zmienić. Bez tych dwóch słów tutaj naprawa listy zdarzeń zabrałaby pulpitowi indeks
+ * i „ostatnie sześć zdarzeń" zaczęłoby sortować cały rejestr.
  */
 
 import type {
@@ -83,7 +90,7 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
          FROM events e
          LEFT JOIN aircraft a ON a.id = e.aircraft_id
          LEFT JOIN pilots   p ON p.id = e.pic_id
-        ORDER BY e.received_at DESC, e.uuid DESC
+        ORDER BY e.received_at DESC NULLS LAST, e.uuid DESC
         LIMIT $1`,
       [limit],
     );

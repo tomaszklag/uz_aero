@@ -1,0 +1,54 @@
+/**
+ * UZ Aero — panel: WYPIS SUROWEGO `payload`-u zdarzenia (`A04`).
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html`. W mockupie blok stoi stylem
+ * inline; tutaj ma nazwę, bo klasa bez nazwy jest klasą, której nikt nie znajdzie
+ * greppem — a ten wypis jest jedynym miejscem w panelu, gdzie widać treść przysłaną
+ * przez telefon dosłownie.
+ *
+ * Kolory kluczy i wartości są MODYFIKATORAMI, nie hexami w kodzie: o tym, że liczba
+ * jest niebieska, a `null` czerwony, rozstrzyga moduł czysty z testem
+ * (`screens/events/eventPayload.ts`), a nie autor komponentu.
+ *
+ * Osobny plik od `table.css`, mimo że wypis żyje wewnątrz rozwiniętego wiersza:
+ * to jest komponent treści (bywa też w karcie), a nie część siatki tabeli.
+ */
+
+.payload {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.75;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  /* Payload z telefonu bywa szerszy niż kolumna — przewijamy BLOK, nie stronę.
+     Bez tego jedno długie pole (ślad GPS, nazwa klienta) rozpycha całą tabelę. */
+  overflow-x: auto;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* `white-space: pre` na LINII, a nie na `<pre>`: wcięcia niesie treść linii, a każda
+   linia jest osobnym elementem, żeby dało się pokolorować klucz i wartość osobno. */
+.payload-line {
+  display: block;
+  white-space: pre;
+}
+
+.payload-key {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.payload-val.green {
+  color: var(--green);
+}
+
+.payload-val.blue {
+  color: var(--blue);
+}
+
+.payload-val.red {
+  color: var(--red);
+}

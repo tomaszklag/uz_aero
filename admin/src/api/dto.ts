@@ -548,6 +548,101 @@ export interface SessionDetailDto {
   flags: FlagListItemDto[];
 }
 
+// ── rejestr zdarzeń (`A04`) ─────────────────────────────────────────────────────
+
+/** Który zegar dał czas efektywny — ten, którym liczy projekcja serwera. */
+export type EventClockDto = 'gps' | 'device';
+
+/**
+ * Jedno zdarzenie w rejestrze — odpowiedź `GET /admin/api/events`.
+ *
+ * ══ DWA POLA SĄ CELOWO SZERSZE, NIŻ WYGLĄDAJĄ ══
+ *  1. **`type` jest napisem, nie `EventType`.** Kolumna `events.type` nie ma `CHECK`-a,
+ *     a walidacja katalogu zachodzi na WEJŚCIU (`POST /events`). Rejestr pokazuje więc
+ *     typ spoza katalogu DOSŁOWNIE — narzędzie śledcze, które wywraca się na własnej
+ *     historii, jest bezużyteczne dokładnie wtedy, gdy jest potrzebne. Ta sama decyzja,
+ *     co przy `AuditEntryDto.action`.
+ *  2. **`payload` jest `unknown`, nie `Record<string, unknown>`.** `JSONB` przyjmuje też
+ *     tablicę, liczbę i `null`. Obietnica „to zawsze obiekt" jest obietnicą, której baza
+ *     nie składa, a panel ma pokazać to, co przyszło z telefonu, a nie to, czego się
+ *     spodziewa.
+ *
+ * ══ DWA ZEGARY ══
+ * `driftMs === null` znaczy **„różnicy nie ma czego liczyć"** (brak fixa GPS), a nie
+ * „zero". Zero jest twierdzeniem, że zegary się zgadzały — i to jest cała treść kolumny
+ * `Δ zegarów` z mockupu `A04`.
+ */
+export interface EventEntryDto {
+  uuid: string;
+  sessionUuid: string;
+
+  aircraftId: string;
+  /** `null` = jednostki nie ma już w rejestrze floty; zdarzenie zostaje. */
+  reg: string | null;
+
+  picId: string;
+  picCode: string | null;
+  picName: string | null;
+  dualId: string | null;
+  dualCode: string | null;
+  dualName: string | null;
+
+  /** Surowy kod typu — także spoza katalogu (patrz nagłówek). */
+  type: string;
+
+  /** Zegar telefonu (epoch ms UTC) — zawsze obecny. */
+  deviceTime: number;
+  /** Czas z fixa GPS (epoch ms UTC); `null` = brak fixa w chwili zapisu. */
+  gpsTime: number | null;
+  /** `|device − gps|` w ms; `null` = brak fixa, więc różnica NIE ISTNIEJE. */
+  driftMs: number | null;
+  /** Czas, którym liczy projekcja: `gpsTime ?? deviceTime`. */
+  effectiveTime: number;
+  effectiveClock: EventClockDto;
+
+  /** Treść zdarzenia DOSŁOWNIE z `JSONB`, dowolnego kształtu. */
+  payload: unknown;
+  schemaVersion: number;
+
+  /** ISO 8601 UTC — kiedy SERWER przyjął zdarzenie. Po tym idzie porządek listy. */
+  receivedAt: string;
+  sourceDevice: string | null;
+
+  /** Korekta unieważniła zdarzenie. Wiersz ZOSTAJE — przekreślony, nie usunięty. */
+  voided: boolean;
+  /** Czas nadany korektą `retime` (epoch ms UTC); `null` = czasu nikt nie ruszał. */
+  correctedTime: number | null;
+  /** Korektę zapisał PANEL, nie pilot w oknie 24 h (rozstrzyga `source_device`). */
+  adminCorrected: boolean;
+}
+
+/**
+ * Liczniki kafli `A04`. Liczy je SERWER nad CAŁYM zakresem zapytania — także wtedy,
+ * gdy `limit` obciął listę. Kafel opisuje rejestr, a nie okno, przez które właśnie
+ * ktoś patrzy.
+ */
+export interface EventCountsDto {
+  total: number;
+  withoutGpsFix: number;
+  clockDrift: number;
+  /** Próg, którym policzono `clockDrift` — panel go WYPISUJE, a nie zna. */
+  driftThresholdMs: number;
+}
+
+/** Strona rejestru. Kursor keyset po `(received_at, uuid)`. */
+export interface EventsPageDto {
+  items: EventEntryDto[];
+  nextCursor: string | null;
+  /**
+   * **`null` = serwer tych liczb nie policzył, a NIE „zero".** Liczy je wyłącznie dla
+   * PIERWSZEJ strony (bez kursora): są własnością zapytania, a nie strony, a pełny
+   * `COUNT(*)` na najszybciej rosnącej tabeli w systemie jest wielokrotnie droższy
+   * od samej strony. Panel niesie wartości z pierwszej strony i nigdy nie zamienia
+   * `null` na `0`.
+   */
+  counts: EventCountsDto | null;
+}
+
 // ── dziennik audytu (`A09`) ─────────────────────────────────────────────────────
 
 /**

@@ -12,7 +12,7 @@
  * myszy; drogą właściwą jest link w kolumnie akcji.
  */
 
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
 /**
  * Kolumna sortowalna (`th.sortable` + `.arrow` z szablonu).
@@ -49,6 +49,17 @@ interface DataTableProps<Row> {
   onRowClick?: (row: Row) => void;
   /** Wiersz wyróżniony (np. otwarty w szufladzie) — klasa modyfikatora. */
   rowClass?: (row: Row) => string | undefined;
+  /**
+   * ROZWINIĘCIE wiersza — treść wypisana w wierszu-satelicie POD wierszem właściwym,
+   * przez całą szerokość tabeli. `null`/`undefined` = wiersz się nie rozwija.
+   *
+   * Doszło razem z rejestrem zdarzeń (`A04`), gdzie mockup pokazuje payload DOKŁADNIE
+   * pod wierszem, którego dotyczy. Szuflada z boku (wzorzec `A03a`) tu nie pasuje:
+   * przy dochodzeniu porównuje się SĄSIEDNIE zdarzenia, a szuflada zasłania listę.
+   * `A05` rozwija wiersz pod całą tabelą — tam treścią jest karta arkusza, czyli
+   * dokument, a nie szczegół jednego wiersza.
+   */
+  expanded?: (row: Row) => ReactNode;
   caption: string;
 }
 
@@ -58,6 +69,7 @@ export function DataTable<Row>({
   rowKey,
   onRowClick,
   rowClass,
+  expanded,
   caption,
 }: DataTableProps<Row>) {
   return (
@@ -107,23 +119,33 @@ export function DataTable<Row>({
             const classes = [onRowClick == null ? null : 'clickable', extra]
               .filter((c) => c != null)
               .join(' ');
+            const detail = expanded?.(row);
             return (
-              <tr
-                key={rowKey(row)}
-                className={classes === '' ? undefined : classes}
-                onClick={onRowClick == null ? undefined : () => onRowClick(row)}
-              >
-                {columns.map((column) => {
-                  const cell = [column.align === 'num' ? 'num' : null, column.cellClass]
-                    .filter((c) => c != null)
-                    .join(' ');
-                  return (
-                    <td key={column.key} className={cell === '' ? undefined : cell}>
-                      {column.render(row)}
-                    </td>
-                  );
-                })}
-              </tr>
+              // Fragment, a nie `<tbody>` na wiersz: rozwinięcie jest DRUGIM `<tr>`
+              // w tym samym `<tbody>`, więc selektory `tbody tr:last-child` i pasy
+              // hovera z szablonu działają dalej tak, jak w mockupie.
+              <Fragment key={rowKey(row)}>
+                <tr
+                  className={classes === '' ? undefined : classes}
+                  onClick={onRowClick == null ? undefined : () => onRowClick(row)}
+                >
+                  {columns.map((column) => {
+                    const cell = [column.align === 'num' ? 'num' : null, column.cellClass]
+                      .filter((c) => c != null)
+                      .join(' ');
+                    return (
+                      <td key={column.key} className={cell === '' ? undefined : cell}>
+                        {column.render(row)}
+                      </td>
+                    );
+                  })}
+                </tr>
+                {detail == null ? null : (
+                  <tr className="row-expand">
+                    <td colSpan={columns.length}>{detail}</td>
+                  </tr>
+                )}
+              </Fragment>
             );
           })}
         </tbody>

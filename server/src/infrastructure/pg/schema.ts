@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 15;
+export const SCHEMA_VERSION = 16;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -503,6 +503,51 @@ export const MIGRATION_15 = `
   CREATE INDEX IF NOT EXISTS idx_events_received ON events (received_at DESC, uuid DESC);
 `;
 
+/**
+ * Migracja 16: rejestr zdarzeń pod LISTĘ ŚLEDCZĄ (`A04`, 2026-08-01).
+ *
+ * ══ 1. `idx_events_received` DOSTAJE `NULLS LAST` — TA SAMA WADA, CO W MIGRACJI 12 ══
+ * Indeks z migracji 15 stoi jako `(received_at DESC, uuid DESC)`, czyli — bo taka jest
+ * wartość domyślna dla `DESC` — `NULLS FIRST`. Paginacja kursorowa panelu emituje
+ * `ORDER BY … DESC NULLS LAST` **jawnie w obu kierunkach** (`keysetOrderBy`: poleganie
+ * na domyślnych oznaczałoby dwa różne porządki pod jedną nazwą). Te dwa zapisy NIE
+ * PASUJĄ do siebie składniowo, a planer PostgreSQL-a **nie skraca tego przez `NOT NULL`
+ * kolumny** — sprawdzone `EXPLAIN`-em, nie z lektury (`test/adminEvents.test.ts`):
+ * przy 5 000 wierszy plan schodzi z `Index Only Scan` na `Bitmap Heap Scan` + `Sort`
+ * CAŁEJ tabeli przed `LIMIT`-em. Wynik jest wtedy poprawny, a koszt strony rośnie
+ * liniowo z rejestrem — czyli dokładnie to, czemu kursor miał zapobiec.
+ *
+ * Ta sama wada zdążyła się już raz powielić na drugi indeks dziennika audytu, dopóki
+ * istniała wyłącznie w prozie. Dlatego tutaj pilnuje jej `EXPLAIN` w teście, a nie
+ * zdanie w komentarzu.
+ *
+ * **Skutek uboczny, o którym trzeba wiedzieć:** dopasowanie działa w OBIE strony, więc
+ * po tej zmianie zapytanie bez `NULLS LAST` przestaje dostawać porządek z indeksu.
+ * Dlatego `PgAdminDashboardRepo.recent` (karta „Ostatnio przyjęte", `A01`) dostaje
+ * `NULLS LAST` w tym samym commicie — inaczej naprawa listy zepsułaby pulpit.
+ *
+ * ══ 2. `idx_events_correction_target` — SKĄD WIADOMO, ŻE ZDARZENIE UNIEWAŻNIONO ══
+ * Rejestr pokazuje zdarzenie unieważnione korektą PRZEKREŚLONE, ale obecne — to
+ * właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się od tego, co zapisał
+ * telefon. Żeby to rozstrzygnąć, strona dobiera korekty celujące w swoje wiersze
+ * (`payload->>'targetUuid'`), także spoza zakresu dat: zdarzenie sprzed miesiąca mogło
+ * zostać unieważnione wczoraj.
+ *
+ * Indeks jest CZĘŚCIOWY (`WHERE type = 'event_correction'`) i wyrażeniowy, bo korekty
+ * są ułamkiem rejestru — pełny indeks po wyrażeniu z `JSONB` kosztowałby przy każdym
+ * przyjęciu paczki, a odpowiadałby na pytanie zadawane wyłącznie o korekty. Bez niego
+ * to zapytanie jest pełnym skanowaniem rejestru RAZ NA STRONĘ.
+ */
+export const MIGRATION_16 = `
+  DROP INDEX IF EXISTS idx_events_received;
+  CREATE INDEX IF NOT EXISTS idx_events_received
+    ON events (received_at DESC NULLS LAST, uuid DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_events_correction_target
+    ON events ((payload->>'targetUuid'))
+    WHERE type = 'event_correction';
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -519,4 +564,5 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_13,
   MIGRATION_14,
   MIGRATION_15,
+  MIGRATION_16,
 ];

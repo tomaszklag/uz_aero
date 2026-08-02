@@ -25,9 +25,10 @@
  * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE (i mówi o tym wprost) ══
  *  1. **Zrzutów i skoczków** w „Dziś w liczbach" — projekcja `sessions` nie ma takich
  *     kolumn. Komórka stoi z kreską, nie z zerem.
- *  2. **Przejścia do rejestru zdarzeń** (`A04`) — ekran nie powstał, więc przycisk jest
- *     zablokowany z powodem, a wiersze prowadzą na kartę DNIA, do którego zdarzenie
- *     należy. Martwego linku nie zostawiamy.
+ *  2. **Pełnej treści zdarzenia** w karcie „Ostatnio przyjęte" — oś pokazuje nagłówek,
+ *     a surowy payload stoi w rejestrze (`A04`, przycisk „Rejestr"). Wiersze prowadzą
+ *     na kartę DNIA, bo tam zdarzenie ma kontekst; rejestr ma jego zapis.
+ *     Do 2026-08-02 przycisk „Rejestr" był zablokowany z powodem, bo `A04` nie istniał.
  */
 
 import type { ReactNode } from 'react';
@@ -60,7 +61,7 @@ import {
 } from '../../ui/components/icons';
 import { quietView, isQuiet } from './dashboardQuiet';
 import { FLEET_EMPTY, fleetNowRows } from './dashboardFleet';
-import { MISSING_SCREENS, openDaysHref, flagsHref } from './dashboardLinks';
+import { eventsRegisterHref, openDaysHref, flagsHref } from './dashboardLinks';
 import { RECENT_EMPTY, recentRows } from './dashboardRecent';
 import { sparkNote, sparkView } from './dashboardSpark';
 import { dashboardTiles } from './dashboardTiles';
@@ -310,13 +311,14 @@ export function DashboardScreen() {
           <Card
             title="Ostatnio przyjęte"
             actions={
-              // Mockup prowadzi stąd do rejestru zdarzeń (`A04`). Tego ekranu nie ma,
-              // więc przycisk jest ZABLOKOWANY Z POWODEM, a nie linkiem do strony
-              // „w budowie". Wiersze prowadzą na kartę dnia — miejsce, które istnieje
-              // i pokazuje zdarzenie w pełnym kontekście.
-              <Button variant="ghost" size="sm" disabled reason={MISSING_SCREENS.zdarzenia}>
+              // Rejestr zdarzeń (`A04`) powstał 2026-08-02, więc przycisk prowadzi tam,
+              // gdzie obiecuje mockup — i to w stanie DOMYŚLNYM, czyli po czasie
+              // przyjęcia, najnowsze na górze. Karta pokazuje sześć ostatnio przyjętych
+              // zdarzeń; rejestr otwiera te same wiersze w pełnej postaci. Wiersze karty
+              // nadal prowadzą na kartę DNIA — tam zdarzenie ma kontekst, tu ma zapis.
+              <LinkButton to={eventsRegisterHref()} variant="ghost" size="sm">
                 Rejestr
-              </Button>
+              </LinkButton>
             }
           >
             {recent.length === 0 ? (

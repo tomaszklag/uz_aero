@@ -12,6 +12,7 @@
 export type * from './audit.ts';
 export type * from './corrections.ts';
 export type * from './dashboard.ts';
+export type * from './events.ts';
 export type * from './exports.ts';
 export type * from './flags.ts';
 export type * from './fleet.ts';

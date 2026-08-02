@@ -11,6 +11,7 @@
 
 import type { AuditListQuery } from '../api/audit';
 import type { CorrectionDraftDto } from '../api/dto';
+import type { EventListQuery } from '../api/events';
 import type { ExportListQuery } from '../api/exports';
 import type { FlagListQuery } from '../api/flags';
 import type { FleetListQuery } from '../api/fleet';
@@ -60,6 +61,24 @@ export const keys = {
     all: ['audit'] as const,
     list: (query: AuditListQuery) => ['audit', 'list', query] as const,
     count: (query: AuditListQuery) => ['audit', 'count', query] as const,
+  },
+
+  /**
+   * Rejestr zdarzeń (`A04`).
+   *
+   * Tak samo jak przy dniach i dzienniku: `list` NIE zawiera kursora — kursor keyset
+   * opisuje pozycję WEWNĄTRZ jednego wyniku filtra, więc jest parametrem strony,
+   * a nie częścią tożsamości pytania. Wpisanie go do klucza dałoby osobny wpis cache'u
+   * na każdą stronę i pierwszy powrót „wstecz" zaczynałby rejestr od nowa.
+   *
+   * Bez `count`, inaczej niż przy dzienniku audytu: liczniki kafli jadą W TEJ SAMEJ
+   * odpowiedzi co lista (`counts`), bo serwer liczy je jednym zapytaniem nad całym
+   * zakresem filtra. Osobne zapytanie byłoby drugim żądaniem o liczbę, którą serwer
+   * i tak właśnie przysłał.
+   */
+  events: {
+    all: ['events'] as const,
+    list: (query: EventListQuery) => ['events', 'list', query] as const,
   },
 
   /**

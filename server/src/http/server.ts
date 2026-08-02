@@ -17,6 +17,7 @@ import type { AdminPilotCommands } from '../application/admin/commands/pilots.ts
 import type { AdminAuditQueries } from '../application/admin/queries/audit.ts';
 import type { AdminCorrectionQueries } from '../application/admin/queries/corrections.ts';
 import type { AdminDashboardQueries } from '../application/admin/queries/dashboard.ts';
+import type { AdminEventQueries } from '../application/admin/queries/events.ts';
 import type { AdminExportQueries } from '../application/admin/queries/exports.ts';
 import type { AdminFlagQueries } from '../application/admin/queries/flags.ts';
 import type { AdminFleetQueries } from '../application/admin/queries/fleet.ts';
@@ -36,6 +37,7 @@ import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
 import { registerAdminCorrectionRoutes } from './routes/admin/corrections.ts';
 import { registerAdminDashboardRoutes } from './routes/admin/dashboard.ts';
+import { registerAdminEventRoutes } from './routes/admin/events.ts';
 import { registerAdminExportRoutes } from './routes/admin/exports.ts';
 import { registerAdminFlagRoutes } from './routes/admin/flags.ts';
 import { registerAdminFleetRoutes } from './routes/admin/fleet.ts';
@@ -93,6 +95,11 @@ export interface ServerDeps {
   /** Dziennik audytu (`A09`) — WYŁĄCZNIE odczyt; zapisuje go `AuditedWrite`. */
   adminAuditQueries: AdminAuditQueries;
   /**
+   * Rejestr zdarzeń (`A04`) — jedyne zapytanie panelu czytające SUROWY strumień zamiast
+   * projekcji. Wyłącznie odczyt: `events` jest append-only i żadna trasa tego nie zmienia.
+   */
+  adminEventQueries: AdminEventQueries;
+  /**
    * Pulpit (`A01`, `A01a`) — jedyne zapytanie panelu, które AGREGUJE inne: liczniki
    * kafli, kolejka „wymaga uwagi" i puls rejestru pochodzą z tych samych zapytań,
    * co ekrany docelowe. Kafel jest przejściem, więc jego liczba ma być obietnicą.
@@ -136,6 +143,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);
   registerAdminFleetRoutes(app, deps.adminFleet, deps.adminFleetQueries, gate);
   registerAdminExportRoutes(app, deps.adminExportQueries, deps.adminExports, gate);
+  registerAdminEventRoutes(app, deps.adminEventQueries, gate);
   registerAdminDashboardRoutes(app, deps.adminDashboardQueries, gate);
 
   app.get('/health', async () => ({ ok: true }));

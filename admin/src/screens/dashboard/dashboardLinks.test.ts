@@ -17,8 +17,9 @@ import { describe, expect, it } from 'vitest';
 import { filterFromParams as exportsFilter } from '../exports/exportsFilters';
 import { filterFromParams as fleetFilter } from '../fleet/fleetFilters';
 import { filterFromParams as daysFilter } from '../days/daysFilters';
+import { filterFromParams as eventsFilter, DEFAULT_EVENTS_FILTER } from '../events/eventsFilters';
 import {
-  MISSING_SCREENS,
+  eventsRegisterHref,
   daysForDayHref,
   openDaysHref,
   dayCardLink,
@@ -100,12 +101,17 @@ describe('wiersze prowadzą w miejsce, które ISTNIEJE', () => {
   });
 });
 
-describe('ekran, którego nie ma, NIE dostaje linku', () => {
-  it('rejestr zdarzeń (`A04`) ma powód blokady, a nie adres', () => {
-    // Link do strony „w budowie" byłby czwartym ślepym zaułkiem w panelu. Powód jest
-    // DANĄ, a nie napisem w JSX-ie, żeby dało się go usunąć w jednym miejscu, gdy
-    // ekran powstanie.
-    expect(MISSING_SCREENS.zdarzenia).toContain('A04');
-    expect(Object.values(MISSING_SCREENS)).not.toContain('/zdarzenia');
+describe('przejście do rejestru zdarzeń (`A04`)', () => {
+  it('prowadzi do rejestru w stanie DOMYŚLNYM — tego samego, co pokazuje karta', () => {
+    // Karta „Ostatnio przyjęte" wypisuje sześć ostatnio PRZYJĘTYCH zdarzeń, a domyślny
+    // porządek rejestru jest dokładnie ten sam (`received_at`, malejąco). Każde inne
+    // zawężenie kazałoby człowiekowi szukać, gdzie podziały się wiersze, które właśnie
+    // widział. Adres rozkładamy PARSEREM ekranu docelowego, a nie porównaniem napisów:
+    // literówka w nazwie parametru daje poprawnie wyglądającą listę bez zawężenia.
+    const href = eventsRegisterHref();
+    expect(href).toBe('/zdarzenia');
+    expect(eventsFilter(new URLSearchParams(href.split('?')[1] ?? ''))).toEqual(
+      DEFAULT_EVENTS_FILTER,
+    );
   });
 });
