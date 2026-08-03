@@ -76,6 +76,8 @@ import { PgReferenceRepo } from '../src/infrastructure/pg/mobile/referenceRepo.t
 import { PgAircraftConfigRepo } from '../src/infrastructure/pg/common/aircraftConfigRepo.ts';
 import { PgSheets } from '../src/infrastructure/pg/common/sheetsRepo.ts';
 import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
+import { FsTraceSource } from '../src/infrastructure/traces/fsTraceSource.ts';
+import { AdminFlightTrackQueries } from '../src/application/admin/queries/flightTrack.ts';
 import { seed } from '../src/infrastructure/pg/seed.ts';
 import { buildServer } from '../src/http/server.ts';
 
@@ -186,6 +188,10 @@ export async function testHarness(
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
     traces: new FsTraceSink(tracesDir),
+    // Odczyt śladu wskazuje na TEN SAM katalog co zapis — dzięki temu test może wysłać
+    // ślad przez `POST /traces` i przeczytać go przez trasę mapy, czyli przejść dokładnie
+    // tę drogę, którą przechodzą dane w produkcji.
+    adminFlightTrackQueries: new AdminFlightTrackQueries(db, events, new FsTraceSource(tracesDir)),
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
     tokens,
     // Brama tras panelu czyta konto przy KAŻDYM żądaniu; na tym opierają się przypadki
