@@ -7,12 +7,12 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { ACCESS_TTL_SEC } from '../src/application/commands/auth.ts';
+import { ACCESS_TTL_SEC } from '../src/application/common/commands/auth.ts';
 import { TEST_PASSWORD, testHarness } from './helpers.ts';
 
 describe('POST /auth/login', () => {
   it('poprawne dane → para tokenów i tożsamość pilota', async () => {
-    const { app, tokens } = await testHarness();
+    const { app, tokens, clock } = await testHarness();
 
     const res = await app.inject({
       method: 'POST',
@@ -29,7 +29,15 @@ describe('POST /auth/login', () => {
       role: 'admin',
     });
     // JWT ma być od razu użyteczny…
-    expect(tokens.verify(body.token)).toEqual({ pilotId: 'TMK', code: 'TMK', role: 'admin' });
+    expect(tokens.verify(body.token)).toEqual({
+      pilotId: 'TMK',
+      code: 'TMK',
+      role: 'admin',
+      // CHWILA WYDANIA (`iat`, sekundy epoki) — dołożona 2026-08-01 razem z migracją 13.
+      // Bez niej brama panelu nie umiałaby odpowiedzieć na pytanie „czy to poświadczenie
+      // jest starsze niż reset hasła", bo JWT nie ma jak unieważnić inaczej.
+      issuedAt: Math.floor(clock.now().getTime() / 1000),
+    });
     // …a refresh wystarczająco długi, żeby nie dało się go zgadywać.
     expect(String(body.refreshToken).length).toBeGreaterThanOrEqual(40);
   });

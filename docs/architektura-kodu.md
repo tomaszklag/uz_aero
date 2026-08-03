@@ -68,7 +68,7 @@ w OBIE strony (adoptujemy wyłącznie stan ściśle nowszy; adopcję ogłasza
 `onApplied`, którym ThemeProvider przemalowuje ekran na żywo), offline/wygasła
 sesja/obcy profil = `skipped`. Po stronie serwera migracja 6 dokłada
 `pilots.theme`/`theme_updated_at` (prefs są 1:1 z pilotem — osobna tabela to
-przerost), a trasy `GET/PUT /me/prefs` (`http/routes/prefs.ts`, tożsamość WYŁĄCZNIE
+przerost), a trasy `GET/PUT /me/prefs` (`http/routes/mobile/prefs.ts`, tożsamość WYŁĄCZNIE
 z tokenu) piszą przez `PrefsCommands` + `PgPilotPrefsRepo`, gdzie warunek LWW
 siedzi w SQL-u (`theme_updated_at IS NULL OR < $3`) — a odpowiedź PUT jest ZAWSZE
 stanem autorytatywnym po operacji, żeby telefon-przegrany dostosował się zamiast
@@ -86,7 +86,7 @@ stemplem cache referencyjnego). „Nie pamiętam PIN" nie czyści poświadczeń 
 je dopiero udany login) i jest zablokowane przy niepustym outboxie. Klawisz biometrii
 z mockupu 00 odłożony (wymagałby `expo-local-authentication`).
 
-Eksport arkuszy (§4.7, serwer): `application/export/` — `buildDaySheet` (czysta funkcja
+Eksport arkuszy (§4.7, serwer): `application/common/export/` — `buildDaySheet` (czysta funkcja
 `SessionState` → karta; nazwa `YYYY-MM-DD_SP-XXX` bajt w bajt zgodna z `sheetTabName`
 aplikacji, treść = ekrany 10/11, MH w formacie samolotu) i `DayExporter` (po commicie
 ingestu, dla sesji zamkniętych po przetworzeniu; bramki: sesja otwarta / otwarta flaga
@@ -96,7 +96,7 @@ ingestu, dla sesji zamkniętych po przetworzeniu; bramki: sesja otwarta / otwart
 dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek.
 
 Karty mieszkają W BAZIE (decyzja 2026-07-28: nie czekamy na Google): adapter
-`PgSheets` (`infrastructure/pg/sheetsRepo.ts`) zapisuje dosłowne wiersze karty do
+`PgSheets` (`infrastructure/pg/common/sheetsRepo.ts`) zapisuje dosłowne wiersze karty do
 `exported_sheets` (migracja 5; UPSERT po `tab` — semantyka jak karta w Google:
 czytelnik widzi wyłącznie aktualny stan, historię rewizji trzyma `export_log`),
 a `GET /sheets/:tab` (autoryzowane, `SheetQueries` + osobny `SheetsReadPort` —
@@ -157,18 +157,20 @@ tego samego pilota unieważniają się nawzajem — dziś akceptowalne, bo profi
 jednym telefonie); klucze obce `events`/`sessions` → `pilots`/`aircraft` (dziś spójność
 pilnowana kodem, nie schematem); odświeżanie pola `details` istniejącej flagi przy
 zmianie wielkości dziury MH (dedupe zostawia pierwszy pomiar); transakcyjne pary
-migracji w `migrate.ts` — **ostrzejsze, niż wyglądało**: migracje 3 (`ADD CONSTRAINT`)
-i 6 (`ADD COLUMN`) nie mają `IF NOT EXISTS`, więc powtórzenie po przerwaniu procesu
-między `runScript` a `INSERT INTO schema_migrations` wywala się i **blokuje start
-serwera** (migracje 1–5 na `CREATE TABLE IF NOT EXISTS` przechodzą powtórkę bez szkody;
-ustalone 2026-07-31); sprzątanie wygasłych refresh tokenów (cron/`DELETE` przy
-logowaniu — `rotate()` kasuje wiersz tylko przy przedstawieniu tokenu, `login` wyłącznie
-wstawia, więc tokeny porzucone zostają na zawsze); skrypt administracyjny przebudowy
-projekcji `sessions` ze zdarzeń;
+~~migracji w `migrate.ts`~~ **ZROBIONE 2026-07-31** (patrz niżej); sprzątanie wygasłych
+refresh tokenów — **RĘCZNIE ZROBIONE 2026-08-02** (`POST /admin/api/maintenance/refresh-tokens/purge`,
+ekran `A11`: kasuje wyłącznie `expires_at <= now`, wymaga jawnego potwierdzenia w ciele
+żądania, do audytu idą liczby i zakres dat wygaśnięcia). **Automatu nadal NIE MA**:
+`rotate()` kasuje wiersz tylko przy przedstawieniu tokenu, `login` wyłącznie wstawia,
+więc tokeny porzucone zbierają się między jednym a drugim ręcznym sprzątaniem;
+~~skrypt administracyjny przebudowy projekcji `sessions` ze zdarzeń~~
+**ZROBIONE 2026-07-31** (przekrój 2, `npm run rebuild-projections`; od 2026-08-02
+także trasami panelu — porównanie `GET …/maintenance/projections/compare` jako
+ZAPYTANIE bez śladu w audycie, nadpisanie `POST …/projections/rebuild` przez `AuditedWrite`);
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
 ignorowana); `UNIQUE (session_uuid, revision)` na `export_log` + kolejka ponowień
-nieudanych eksportów i re-eksport po rozwiązaniu flagi przez administratora (dziś
-ponowienie robi dopiero następna paczka tej sesji).
+nieudanych eksportów (~~re-eksport po rozwiązaniu flagi przez administratora~~
+**ZROBIONE 2026-07-31**, przekrój 1 — zostaje samo ponawianie eksportów, które padły).
 
 **Czego wymaga panel administracyjny (faza 7, decyzja 2026-07-31)** — braki wykryte przy
 projektowaniu `design/admin/`, ODRĘBNE od listy wyżej. Pełne mapowanie ekran → endpoint
@@ -184,15 +186,15 @@ i wycena: `design/admin/ANALIZA.md`.
   `pilot`, nigdy nie awansuje — odrzucenie wylogowałoby telefony w terenie, a cichy
   awans byłby luką; rola przy odświeżeniu idzie z KONTA, nie ze starego tokenu, więc
   odebranie uprawnień działa od razu, a nie po wygaśnięciu 90-dniowego refresha.
-- **Flaga nie ma jak się zamknąć.** W całym `server/src` nie ma kodu ustawiającego
-  `status='resolved'`, a `application/export/dayExporter.ts` odmawia eksportu przy otwartej
-  `session_overlap` — nakładka sesji **trwale blokuje kartę dnia** i odblokowuje ją wyłącznie
-  ręczny UPDATE. Endpoint rozwiązania + re-eksport to warunek, żeby §4.7 w ogóle się domykało.
-- **Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a sesji (inaczej
-  `WRITER_MISMATCH`), pomijać wyłącznie `CORRECTION_WINDOW_EXPIRED` i wywołać re-eksport.
-- **Projekcja `sessions` nie niesie `operation`, `dutyStart` ani `client`** — wartości siedzą
-  w payloadach `preflight_confirm` / `day_close`, więc to przepisanie projekcji, nie zmiana
-  modelu zdarzeń.
+- ~~**Flaga nie ma jak się zamknąć.**~~ **ZROBIONE 2026-07-31** — przekrój 1, opis niżej.
+- ~~**Korekta administracyjna** musi stemplować zdarzenie `picId` PIC-a sesji (inaczej
+  `WRITER_MISMATCH`), pomijać wyłącznie `CORRECTION_WINDOW_EXPIRED` i wywołać re-eksport.~~
+  **ZROBIONE 2026-07-31** — przekrój 3, opis niżej.
+- ~~**Projekcja `sessions` nie niesie `operation`, `dutyStart` ani `client`**~~ **ZROBIONE
+  2026-07-31** — przekrój 2, opis niżej. Migracja 11 dokłada `operation` i `client`;
+  `duty_start` NIE POWSTAJE, bo `claim_time` niesie tę wartość od pierwszej wersji
+  (`sessionRowFrom` mapuje `claimTime: s.dutyStart`) — szczegóły w docblocku
+  `application/common/mappers/sessionRow.ts`.
 - **Tabela audytu `admin_audit` nie istnieje.** Niezmienność wymuszamy uprawnieniami
   (`GRANT INSERT, SELECT` dla roli aplikacyjnej), nie dyscypliną programisty.
 - **Brak list i filtrów** (sesje, zdarzenia, flagi), zapisu kont i floty, agregatów
@@ -203,18 +205,400 @@ i wycena: `design/admin/ANALIZA.md`.
 Dwie sprawy z tej analizy są **decyzją produktową, nie robotą do wykonania**: (1) korekta
 administratora **nie wraca na telefon pilota** — sync jest jednokierunkowy, §4.6 nie ma
 endpointu zwracającego zdarzenia do aplikacji, więc pilot zobaczy stare liczby na ekranie 12;
-(2) **§4.5 obiecuje 6 typów flag, `domain/mhChain.ts` produkuje 3** (`mh_gap`,
-`mh_regression`, `session_overlap`) — `FUEL_MISMATCH` i `CLOCK_DRIFT` żyją wyłącznie jako
-lokalne ostrzeżenia w telefonie i nigdy nie docierają do tabeli `flags`, a `DOUBLE_CLAIM`
-i `TIME_OVERLAP` są zwinięte w `session_overlap`. Albo dopisujemy je na serwerze, albo
-prostujemy §4.5 — dziś dokumentacja i kod mówią co innego.
+(2) ~~§4.5 obiecuje 6 typów flag, `domain/mhChain.ts` produkuje 3~~ — **ZROBIONE
+2026-07-31.** Katalog liczy pięć pozycji (`session_overlap` zastąpił `DOUBLE_CLAIM`
+i `TIME_OVERLAP`) i serwer produkuje wszystkie:
+- `fuel_mismatch` mieszka w `domain/mhChain.ts` razem z flagami motogodzin, bo to **ten
+  sam łańcuch**: te same ogniwa, to samo uporządkowanie po liczniku i ta sama sąsiedniość
+  par. Osobny moduł powtórzyłby sortowanie i parowanie, a rozjazd dwóch kopii tej samej
+  pętli byłby kwestią czasu. Porządek nadaje MH, ale porównywać wzdłuż niego można
+  dowolną wielkość przekazywaną z dnia na dzień. Flagujemy **wartość bezwzględną**
+  różnicy: wzrost znaczy tankowanie poza aplikacją, spadek — spuszczone paliwo albo
+  błędny odczyt. Tolerancja z `fuelToleranceL(capacityL)`, więc ingest dostał wąski
+  port `AircraftConfigPort` (jedna liczba, czytana W TEJ SAMEJ transakcji co reszta
+  rachunku — `ReferenceRepo` buduje całą migawkę floty z ETagiem i czyta poza nią).
+- `clock_drift` dostał własny moduł `domain/clockDrift.ts`, bo jest własnością
+  POJEDYNCZEGO zdarzenia, nie łańcucha. Liczy się na strumieniu dnia, który ingest
+  i tak ma wczytany. **Jedna flaga na sesję, nie jedna na zdarzenie**: przestawiony
+  zegar to własność telefonu na czas dnia, a dwadzieścia flag o tym samym zegarze
+  nauczyłoby wyłącznie ignorowania skrzynki. Raportujemy maksimum rozjazdu i wskazujemy
+  najgorszy zapis — bez tropu administrator ma flagę i nic więcej.
+
+Progi obu są WSPÓLNE z telefonem (`CLOCK_DRIFT_MS`, `fuelToleranceL`), więc lokalne
+ostrzeżenie i flaga serwera mówią to samo — pilot nie dowiaduje się dzień później, że
+serwerowi coś nie pasowało.
+
+**Architektura panelu (decyzje 2026-07-31).** Pełne rozstrzygnięcia: `docs/architektura-panelu-serwer.md`
+(podział modeli, ORM, uproszczony CQRS komend admina, audyt w transakcji, sesja przeglądarkowa)
+i `docs/architektura-panelu-frontend.md` (wspólne pakiety, drzewo panelu, mapowanie szablonu
+na komponenty). Skrót wiążący dla tego dokumentu:
+- **bez ORM-a i bez query buildera** — sekcja „Spójność modeli bez ORM" niżej zrewidowana
+  i PODTRZYMANA, z mocniejszym powodem: nie ma tu encji do zarządzania (append-only `events`,
+  `sessions` nadpisywane w całości), więc change tracking zaprasza do obejścia strumienia;
+- **panel nie widzi modelu persystencji** — wyłącznie DTO z `/admin/api/*` (nie `/admin/*`:
+  kolizja z wildcardem `@fastify/static`); osobnego pakietu „modele z bazy" nie tworzymy;
+- **wspólne pakiety są nie-wizualne**: `@uzaero/tokens` i `@uzaero/format` (**wyciągnięte
+  2026-07-31**, patrz niżej); komponentów
+  między RN a webem nie dzielimy;
+- ~~kształt flagi przenieść do `packages/domain/src/flags.ts`~~ — **ZROBIONE 2026-07-31**
+  (patrz niżej).
+
+**Wspólne pakiety `@uzaero/tokens` i `@uzaero/format` — zrobione 2026-07-31**, PRZED
+pierwszym ekranem panelu i to jest cała istota terminu: gdyby panel wystartował pierwszy,
+dorobiłby sobie własne kopie palety i formatów, a kopie w działającym UI cofa się dużo
+drożej niż w pliku, którego nikt jeszcze nie renderuje.
+
+- **`packages/tokens`** — pięć motywów, skale, typografia i `themeCssVars()` zamieniające
+  motyw na zmienne CSS, żeby panel nie trzymał DRUGIEJ palety. Jedyny szew między
+  platformami przebiega przy czcionkach: `fontFamilyNative` (osiem wariantów, bo RN wybiera
+  grubość osobnym plikiem czcionki) obok `fontFamilyCss` (trzy rodziny, bo w przeglądarce
+  grubość jest osobną właściwością). `fontFamily` zostaje aliasem wariantu natywnego.
+- **`packages/format`** — powód nie jest teoretyczny: `application/common/export/daySheetContent.ts`
+  trzymał ręczne KOPIE `timeUtc`, `hhmm` i `motoHours` z docblockami „lustro … z
+  app/src/ui/format.ts". Umowa utrzymywana dyscypliną, nie kompilatorem. Teraz serwer
+  importuje te trzy z pakietu. `litres` **zostało prywatne w serwerze celowo**: aplikacja
+  pisze „88 L", a komórka arkusza niesie jednostkę w nagłówku kolumny — różnica jest
+  zamierzona i udawanie wspólnej funkcji byłoby kłamstwem.
+- **Dwa formaty czasu blokowego zostają dwoma**: `duration` daje `6:39` (kokpit, koniec
+  dnia, historia), `hhmm` daje `06:39` (ekran 10 i karty arkusza). Każdy jest wierny
+  innemu zatwierdzonemu mockupowi; scalenie „w ramach porządków" zepsułoby jeden z nich,
+  dlatego oba mają własną nazwę i własny komentarz zamiast jednej funkcji z flagą.
+- **Migracja bez regresu**: `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są
+  shimami (`export * from …`), więc kilkadziesiąt plików ekranów nie zmieniło ani znaku.
+- **Rozjazd tokenów z mockupami pilnuje test** `app/src/__tests__/tokensCssVars.test.ts`:
+  porównuje `themeCssVars(THEMES.night)` z blokiem `:root` w `design/admin/SZABLON.html`.
+  Ma kontrolę samego siebie (część wspólna > 20 zmiennych), bo bez niej „zgodne" mogłoby
+  znaczyć „zero wspólnych nazw". Sprawdza też, że wymiary ramy panelu (`--sidebar-w`,
+  `--topbar-h`, `--app-scale`) NIE wyciekają do tokenów produktu — to układ jednego
+  ekranu, nie token designu.
+
+**Przekrój 0 panelu — zrobione 2026-07-31.** Dwie rzeczy, które musiały wejść przed
+cyklem życia flagi, bo obie zmniejszają ryzyko wszystkiego, co po nich:
+
+1. **Runner migracji jest transakcyjny.** `migrate.ts` puszcza skrypt i wpis do
+   `schema_migrations` jednym łańcuchem `BEGIN … COMMIT`, więc stan „zmigrowana, ale
+   nieodnotowana" jest niemożliwy. Wcześniej śmierć procesu w szczelinie między tymi
+   poleceniami powodowała, że przy następnym starcie runner puszczał skrypt drugi raz —
+   a migracje 3 (`ADD CONSTRAINT`) i 6 (`ADD COLUMN`) nie mają `IF NOT EXISTS`, więc
+   powtórka wywalała się i **blokowała start serwera**.
+   Naprawa odsłoniła drugą wadę, której nie było widać w kodzie, a którą pokazał
+   prawdziwy silnik w teście: po nieudanej migracji jawne `BEGIN` zostawia sesję
+   w stanie *aborted transaction*, więc każde kolejne polecenie na tym połączeniu
+   dostaje „current transaction is aborted" — jedna zła migracja zatruwała połączenie
+   na resztę jego życia. Runner robi teraz jawny `ROLLBACK` przed przekazaniem błędu
+   dalej. Własności pilnuje `test/migrate.test.ts` (m.in. „nieudana migracja nie
+   zostawia ani wpisu, ani skutków DDL" i „po nieudanej migracji kolejny bieg stosuje
+   poprawioną wersję").
+   Skutek uboczny, dla którego to była pierwsza pozycja: `ADD CONSTRAINT` przestał być
+   pułapką, więc migracja 8 mogła bezpiecznie dołożyć `CHECK` na `flags.type`.
+2. **Kształt flagi ma jedno miejsce.** `packages/domain/src/flags.ts` — katalog
+   `FLAG_TYPES` (pięć pozycji: `session_overlap` zastąpił `DOUBLE_CLAIM` i `TIME_OVERLAP`
+   z §4.5), `FlagType`, `FlagStatus`, `SessionFlag` (kształt „na drucie") i strażnik
+   `isFlagType`. Zastąpił cztery ręcznie przepisane deklaracje. `ChainFlag` w
+   `server/src/domain/mhChain.ts` jest teraz `Extract<FlagType, …>`, więc przemianowanie
+   pozycji katalogu wywala kompilację zamiast zostawić martwy literał. `FlagRecord.type`
+   przestał być `string`, a adapter `flagsRepo` rzuca na wartości spoza katalogu —
+   ciche pominięcie flagi byłoby najgorszą opcją, bo flaga istnieje po to, żeby być widoczna.
+
+**Przekrój 1 panelu — cykl życia flagi, zrobione 2026-07-31.** Pierwszy pionowy przekrój
+i wzorzec dla następnych (`docs/architektura-panelu-serwer.md` §5, mockup
+`design/admin/A03a-flaga.html`). Domyka §4.7: otwarta `session_overlap` blokowała kartę
+dnia BEZTERMINOWO, bo nic w `server/src` nie ustawiało `status='resolved'`.
+
+- **Audyt jest wymuszony TYPEM, nie dyscypliną.** `application/admin/auditedWrite.ts` to
+  jedyna droga zapisu panelu: `effect` musi oddać `Audited<T>` (skutek **i** wpis), więc
+  pominięcie śladu jest błędem kompilacji, a nie rzeczą do wyłapania na review; wpis leci
+  TĄ SAMĄ transakcją, więc operacja, której nie udało się zaudytować, nie zachodzi. Druga
+  połowa mechanizmu, bez której pierwsza nic nie znaczy: **komendy panelu nie dostają
+  `Database` ani `Queryable` w konstruktorze**, tylko `AuditedWrite` i porty odczytu —
+  nie mają czym ominąć bramy. Obie własności są wykonywalne: `test/adminAudit.test.ts`
+  (awaria audytu zostawia flagę `open`; nieudany skutek nie zostawia śladu; `actor_role`
+  to rola z CHWILI akcji, nie złączenie z `pilots`) i nowy `test/architecture.test.ts`.
+- **Migracja 9** — `admin_audit` (append-only; słownik akcji `src/domain/adminActions.ts`
+  w duchu `roles.ts`). Celowo **bez `CHECK`-a** na `action`/`actor_role`, inaczej niż
+  `pilots.role` i `flags.type`: tamte opisują byt żywy, wczytywany z powrotem do zamkniętej
+  unii, a wiersz audytu jest zapisem HISTORYCZNYM — przemianowanie akcji nie może
+  unieważnić tego, co zdarzyło się rok temu. **Migracja 10** — `flags.resolved_by`
+  i `resolution_note` (obie NULL-owalne: wymóg komentarza jest regułą wejścia w `zod`,
+  bo dotyczy NOWYCH rozstrzygnięć, a nie wierszy sprzed wdrożenia pola).
+- **Osobny port i osobny adapter dla flag panelu** (`FlagsAdminPort` /
+  `infrastructure/pg/admin/flagsRepo.ts`) — ten sam powód, co `SheetsReadPort` obok
+  `SheetsPort`: inny jest POWÓD istnienia. `FlagsPort` obsługuje gorącą transakcję
+  ingestu, więc ścieżka przyjęcia zdarzeń nie ma jak zregresować od zmian w panelu.
+  Zamknięcie flagi ma warunek `status='open'` w SQL-u — dwie osoby klikające „Rozwiąż"
+  nie prześcigną się timingiem, druga dostaje 409 z aktualnym stanem.
+- **`DayExporter.exportSession` zwraca `ExportOutcome`** zamiast `void`: odmowa nie jest
+  błędem, tylko poprawną odpowiedzią o stanie świata (`session_open`, `overlap_flag`, …).
+  Dzięki temu panel mówi „arkusz odblokowany · rewizja 1", a nie samo „zapisano".
+  `IngestCommands` ignoruje wartość i nie zmienił się o linijkę. Re-eksport leci **po
+  commicie** i wyłącznie dla `session_overlap` — pozostałe typy nie są bramką eksportu,
+  więc udawanie inaczej myliłoby UI (odpowiedź niesie wtedy `exports: []`).
+- **Trasa `POST /admin/api/flags/:id/resolve`** (`http/routes/admin/`), cienka jak reszta:
+  zod → komenda → status. Zdolność jest ATRYBUTEM deklaracji (`adminRoute`), nie zdaniem
+  w ciele handlera, więc „czego wymaga ten endpoint" czyta się z jednej linii. Prefiks
+  **`/admin/api`, nie `/admin`** — to drugie zostaje pod statyczny build panelu i kolidowałoby
+  z wildcardem `@fastify/static`. Autoryzacja zostaje na `Bearer`; sesja przeglądarkowa
+  na ciasteczku czeka na klienta panelu, bo dziś nie byłoby jej czym sprawdzić.
+
+**Przekrój 3 panelu — korekta zdarzenia po oknie 24 h, zrobione 2026-07-31.** Drugi
+przekrój pionowy, zbudowany na wzorcu przekroju 1 (mockup `design/admin/A02b-korekta.html`,
+`docs/architektura-panelu-serwer.md` §6). Domyka lukę, o której mówi sam komunikat reguły:
+`CORRECTION_WINDOW_EXPIRED` od początku brzmi „korektę wprowadza administrator", a do dziś
+administrator nie miał czym jej wprowadzić.
+
+- **Uprawnienie zapisu jest PARAMETREM domeny, nie wyjątkiem obok niej.**
+  `packages/domain/src/rules/authority.ts` — `WriteAuthority = 'pilot' | 'administrative'`,
+  czwarty argument `checkAppend` bramkujący DOKŁADNIE JEDNĄ gałąź. Odrzucone alternatywy
+  i powody: filtrowanie naruszeń z zewnątrz (reguła omijana spoza domeny przestaje być
+  regułą) oraz druga funkcja `checkAdminAppend` (dwie kopie, które muszą pozostać
+  identyczne poza jedną gałęzią, rozjadą się niewidocznie). **Wartość domyślna `'pilot'`
+  jest częścią zabezpieczenia** — pominięcie argumentu nigdy nie poszerza uprawnień, więc
+  aplikacja i jej testy nie zmieniły się o linijkę.
+- **Trzy mechanizmy pilnują, żeby to nie stało się furtką.** (1) `app/src/__tests__/writeAuthority.test.ts`
+  przybija RÓŻNICĘ, nie zachowanie: bateria ~40 strumieni odpala każdy kod z `ViolationCode`
+  poza samym oknem i wymaga wyniku IDENTYCZNEGO w obu trybach (drugie `authority === 'pilot' &&`
+  gdziekolwiek wywala test), a osobna grupa pokazuje, że po 24 h administrator dalej wpada
+  na `CORRECTION_TARGET_NOT_FOUND`, `CORRECTION_TARGET_NOT_ALLOWED`, `CORRECTION_TIME_IN_FUTURE`,
+  `WRITER_MISMATCH`, `DAY_CLOSED` i `DAY_ALREADY_CLOSED`. (2) Test kontrolny wewnątrz tej
+  baterii sprawdza, że pokrycie kodów jest pełne — inaczej „identyczne" mogłoby znaczyć
+  „dwie puste listy". (3) `test/architecture.test.ts`: literał `'administrative'` wolno mieć
+  DOKŁADNIE jednemu plikowi produkcyjnemu serwera.
+- **Korekta administratora NIE idzie przez `POST /events`.** Ta trasa należy do telefonu
+  i jej single-writer (podpis w paczce + porównanie z PIC-em istniejącej sesji) zostaje
+  nietknięty. Panel dostaje własną trasę `POST /admin/api/sessions/:uuid/corrections`
+  ze zdolnością `events.correct` — administrator TAK, szef wyszkolenia NIE (pisanie
+  w cudzym rejestrze to inna odpowiedzialność niż wyjaśnianie rozbieżności).
+- **Zdarzenie stemplujemy PIC-em SESJI, nie administratorem** (`AdminCorrectionCommands`
+  w `application/admin/commands/corrections.ts`). `picId` odpowiada na pytanie „czyja to
+  sesja", nie „kto to wpisał": konto administratora zerwałoby single-writer i zafałszowało
+  atrybucję nalotu. Kto to zrobił, mówią `events.source_device` (`admin:<pilotId>`)
+  i `admin_audit` — i tylko one. Powód korekty (pole obowiązkowe w A02b) idzie do audytu,
+  nie do rejestru: rejestr opisuje lot, nie motywację człowieka przy biurku.
+- **Ścieżka administratora waliduje się SAMA** — `checkAppend(state, candidate, limits,
+  'administrative')` w tej samej transakcji, `insertBatch` tym samym adapterem (korekta
+  jest zwykłym zdarzeniem), przeliczenie projekcji `sessionRowFrom` z pełnego strumienia,
+  ślad audytu, a po commicie wymuszony re-eksport karty (`export_log` +1 rewizja). Limity
+  samolotu czytamy `AircraftConfigPort` W TEJ SAMEJ transakcji — tak jak ingest. Blokada
+  `pg_advisory_xact_lock` per sesja jest tu z tego samego powodu co w `IngestCommands`:
+  bez niej paczka dosyłana równolegle przez telefon nadpisałaby wiersz `sessions` stanem
+  sprzed korekty.
+- **Flag łańcucha NIE przeliczamy.** Ich wejściem są odczyty z `preflight_confirm`
+  i `day_close`, a te są niekorygowalne (`CORRECTION_TARGET_NOT_ALLOWED`), więc korekta
+  nie ma jak ruszyć MH ani przekazania paliwa. Otwarta `clock_drift` też zostaje —
+  A02b mówi to wprost: „zamyka ją człowiek na A03".
+- **Odmowy są wariantami wyniku, nie wyjątkami na granicy HTTP** (wzorzec `ResolveFlagOutcome`):
+  404 nieznana sesja, **400 `day_open`** (dzień otwarty = pilot poprawia sam na 04c, panel
+  nie ma tu czego naprawiać — §6.5), **422 `rule_violation`** z listą naruszeń. Rozdział 400
+  od 422 jest celowy: 400 znaczy „popraw formularz", 422 — „domena odmawia i oto powód".
+  To pierwsze 422 w repo; wcześniej nie było endpointu, który odrzucałby poprawnie
+  zbudowane żądanie regułą domenową.
+
+**Przekrój 2 panelu — czytanie dni, zrobione 2026-07-31.** Trzeci wdrożony przekrój
+pionowy (mockupy `A02-dni.html`, `A02a-dzien.html`, `A03-flagi.html`, `A11-konserwacja.html`;
+`docs/architektura-panelu-serwer.md` §7). Pierwszy, w którym panel CZYTA listy — i dlatego
+pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
+
+- **Zamiast query buildera: dwa nazwane moduły, nie framework.** `infrastructure/pg/sqlFilter.ts`
+  składa `WHERE` z filtrów OPCJONALNYCH (numeracja `$n` powstaje w jednym miejscu — jej
+  przesunięcie o jeden nie jest błędem typów ani składni, tylko cichym porównaniem złej
+  kolumny ze złą wartością), a `infrastructure/pg/keyset.ts` daje kursor **keyset, nie
+  `OFFSET`**: tabele rosną w trakcie przeglądania, a offset na rosnącej tabeli gubi
+  i dubluje wiersze — najgorszy tryb awarii narzędzia diagnostycznego. Razem ~200 linii
+  z testami (`test/sqlFilter.test.ts`, `test/keyset.test.ts`). `addOptional` rozróżnia
+  `undefined` („nie ustawiono filtra") od `null` („ustawiono na nic"), a predykat kursora
+  ma gałąź dla `NULLS LAST`, bo `claim_time` jest NULL-owalne (sesja bez preflightu).
+- **Migracja 11: `sessions.operation` i `sessions.client`** + `CHECK` na słowniku operacji
+  (ten sam powód co przy `flags.type`: adapter wczytuje wartość do zamkniętej unii).
+  `OperationType` jest teraz wyprowadzony z tablicy `OPERATION_TYPES` w `@uzaero/domain`
+  — filtr panelu waliduje się katalogiem domeny zamiast trzecią ręczną kopią listy.
+  **Kolumny `duty_start` NIE MA i nie będzie bez decyzji człowieka**: `claim_time` niesie
+  `SessionState.dutyStart` od pierwszej wersji, więc druga kolumna byłaby duplikatem tej
+  samej liczby (docblock `application/common/mappers/sessionRow.ts` opisuje też konsekwencje tej nazwy).
+- **Przebudowa projekcji ze strumienia** (`AdminMaintenanceCommands.rebuildProjections`,
+  CLI `npm run rebuild-projections`) — WARUNEK KONIECZNY migracji 11: `upsert` uruchamia
+  dopiero następna paczka zdarzeń sesji, a dla dnia zamkniętego takiej paczki już nie
+  będzie, więc bez przeliczenia kolumna „Operacja" byłaby pusta dla całej historii.
+  **Dry-run jest trybem domyślnym, a niezerowa różnica to INCYDENT, nie sukces**: projekcja
+  jest odświeżana w tej samej transakcji co przyjęcie zdarzeń, więc w normalnej pracy
+  różnicy być nie może, a zapis wyrówna liczby i skasuje jedyny ślad po przyczynie —
+  dlatego `write` wymaga jawnego powodu, który trafia do audytu (ślad powstaje także dla
+  dry-runu). Listę sesji bierzemy z `events`, nie z `sessions`: wiersz, którego NIE MA,
+  jest najcięższym przypadkiem dryfu, a lista z projekcji nie umiałaby go zobaczyć.
+  Nadpisywane wiersze biorą `pg_advisory_xact_lock` i są przeliczane po ponownym odczycie
+  strumienia — inaczej narzędzie do wykrywania dryfu samo by go tworzyło, wyścigając się
+  z paczką dosyłaną przez telefon.
+- **Trzy trasy odczytu** (`GET /admin/api/sessions`, `/sessions/:uuid`, `/flags`), wszystkie
+  ze zdolnością `panel.access` — czyta administrator i szef wyszkolenia, piszą węższe
+  zdolności. Odmowy są wariantami wyniku: uszkodzony kursor → **400 `bad_cursor`** (wartość
+  z zewnątrz, nie awaria serwera), nieznana sesja → 404.
+- **Reguła twarda, teraz pilnowana MASZYNOWO:** *agreguj wartości projekcji, nigdy nie
+  odtwarzaj projekcji SQL-em*. `test/contract.test.ts` liczy odczyty `sessionEvents`
+  przez dekorator prawdziwego adaptera: lista dni ma ich ZERO, karta dnia — dokładnie
+  JEDEN. Nowa liczba w panelu = nowa kolumna projekcji wypełniana przez `sessionRowFrom`,
+  nie nowe wyrażenie SQL.
+- **Panel nie widzi kształtu wierszy.** `application/admin/contracts/` zawiera wyłącznie
+  typy DTO i wolno mu importować jedynie `@uzaero/domain` (nowy przypadek w
+  `test/architecture.test.ts`). `AdminSessionListItem` jest PŁASKI, a nie `SessionRow & {…}`
+  — projekcja ma rosnąć swobodnie, a nie łamać panel przy każdej migracji. Byty domenowe
+  (`SessionState`, `Event`) jadą bez własnego DTO, zgodnie z regułą granicy typów.
+  Wpis `exports` w `server/package.json` czeka na pierwszego konsumenta.
+- **Oś zdarzeń karty dnia liczy adnotacje PORÓWNANIEM z `applyCorrections`**
+  (`application/admin/mappers/eventTimeline.ts`), a nie własnym czytaniem korekt: reguła
+  „ostatnia korekta wygrywa" (razem z `void` → `retime`, który przywraca zdarzenie do
+  życia) ma jedną implementację, w domenie. Zdarzenia unieważnione ZOSTAJĄ na osi —
+  to właśnie one tłumaczą, dlaczego liczby dnia różnią się od tego, co zapisał telefon.
+- **Skrzynka flag sortuje `blokujące eksport → najstarsze`** w `ORDER BY`, nie w pamięci
+  (limit musi obcinać po właściwej stronie porządku), a `blocksExport` jest funkcją
+  wyliczaną z bramki eksportera (`blocksExport` w `dayExporter.ts`), nie kolumną —
+  rozjazd „panel mówi blokuje, eksporter przepuszcza" byłby niewidoczny. Skrzynka
+  celowo NIE ma kursora: jej porządek ma trzy składowe, a kursor keyset opisuje parę;
+  jest zbiorem spraw do zamknięcia, więc dostaje twardy limit i dokładny `total`.
+
+**Przekrój 4 panelu — workspace `admin/`, sesja przeglądarkowa i logowanie, zrobione
+2026-07-31.** Pierwszy przekrój, w którym panel ISTNIEJE jako aplikacja: da się go
+uruchomić, wygląda jak mockup i da się do niego zalogować (`design/admin/A00-login.html`
+i wariant błędu `A00a`; `docs/architektura-panelu-frontend.md` §10 krok 3,
+`docs/architektura-panelu-serwer.md` §8). Bez skrzynki flag i bez pozostałych ekranów —
+te wchodzą następnym przekrojem.
+
+- **`authorize` przestało czytać nagłówek — czyta TOKEN.** Sesja panelu to ciasteczko,
+  telefon nosi `Bearer`; to dwa kanały tego samego poświadczenia, więc autoryzacji nie
+  dublujemy, tylko zmieniamy jej wejście. Skąd token pochodzi, wie DOKŁADNIE JEDEN plik
+  (`http/tokenFromRequest.ts`, **nagłówek wygrywa z ciasteczkiem** — żądanie niosące oba
+  nie ma prawa podnieść uprawnień drugim poświadczeniem). Nowy przypadek w
+  `test/architecture.test.ts`: żaden plik w `http/` poza tym jednym nie sięga po
+  `headers.authorization`. Trasy telefonu zmieniły się o jedno wywołanie; zachowanie
+  identyczne, bo `Path=/admin` trzyma ciasteczko z dala od `/events`.
+- **`POST /admin/api/auth/login` → ciasteczko, nie token w ciele.** `HttpOnly; Secure;
+  SameSite=Strict; Path=/admin; Max-Age=28800`. Ciało odpowiedzi niesie tożsamość
+  i listę zdolności (`capabilitiesOf` z `domain/roles.ts`) — i to jest cały kontrakt:
+  gdyby niosło token, panel mógłby go „na chwilę" odłożyć do `localStorage`, a ochrona
+  przed XSS-em kończy się na pierwszym takim `const`. **Bez refresh tokenu w przeglądarce**
+  (§8.4): obietnica §3.0 „wygasły token ≠ wylogowanie" istnieje dla pilota w terenie,
+  administratorowi przy biurku wolno powiedzieć „zaloguj się ponownie".
+- **Konto bez `panel.access` nie dostaje sesji panelu** — i dostaje **403 `no_panel_access`**,
+  odróżnialne od 401. To decyzja z mockupu A00: pilot z POPRAWNYM hasłem ma zobaczyć,
+  że odbija go rola, a nie szukać błędu w haśle, którego nie popełnił. Enumeracji kont
+  to nie otwiera (żeby zobaczyć ten komunikat, trzeba już znać hasło), a 401 pozostaje
+  identyczne dla złego hasła i konta, którego nie ma.
+- **`panelLogin` to metoda `AuthCommands`, nie druga komenda** — `application/common/`
+  znaczy „obie powierzchnie". Weryfikacja hasła (razem z wyrównaniem czasu odpowiedzi
+  przy nieznanym loginie) ma jedną implementację w prywatnym `verifyCredentials`; druga
+  kopia prędzej czy później zgubiłaby ten `else`, a różnicy czasów nie widać w żadnym
+  teście funkcjonalnym.
+- **CSRF: nagłówek `X-UZ-Admin` na KAŻDEJ mutacji `/admin/api/*`** (`http/adminCsrf.ts`,
+  hook na całej instancji). `SameSite=Strict` jest polityką przeglądarki, więc stoi obok
+  niego drugi, niezależny mechanizm: nagłówka niestandardowego nie da się wysłać
+  cross-origin bez preflightu, a serwer nie wysyła żadnych nagłówków CORS. Hook, a nie
+  zdanie w `adminRoute`, bo `POST /auth/login` jest trasą PUBLICZNĄ (nie przechodzi przez
+  `adminRoute`) — i to właśnie logowanie jest klasycznym celem login-CSRF.
+- **`GET /admin/api/me`** istnieje z jednego powodu: ciasteczko jest `HttpOnly`, więc po
+  odświeżeniu karty JavaScript panelu nie ma jak odczytać własnej tożsamości.
+- **Workspace `admin/`** (`@uzaero/admin`, React 19 + Vite + TS strict + `noUncheckedIndexedAccess`):
+  `api/` (jedyny `fetch`) → `queries/` (TanStack, zero globalnego store'u) → `screens/`,
+  a `ui/` nie zna żadnej z nich. Granice są WYKONYWALNE (`admin/test/architecture.test.ts`,
+  lustro serwerowego): jedno miejsce z `fetch`, zakaz importów WARTOŚCIOWYCH z
+  `@uzaero/domain` (panel nie ma czym policzyć), zakaz `toFixed`/`Math.round` w widoku,
+  zakaz hexów w kodzie, zakaz importu z `server/src`. Routing na **hashu** — zero
+  fallbacku SPA po stronie serwera.
+- **`admin/src/styles/tokens.css` jest GENEROWANY** z `@uzaero/tokens`
+  (`packages/tokens/scripts/emitCss.ts`, `npm run tokens:css --workspace admin`), jeden
+  blok `:root` z motywu `night` — panel nie ma przełącznika motywów. Równość pliku ze
+  źródłem przybija `admin/test/tokens.generated.test.ts`, bo plik generowany leżący
+  w repozytorium DA SIĘ otworzyć i „poprawić kolor na szybko". Wymiary ramy panelu
+  (`--sidebar-w`, `--topbar-h`) mieszkają w `admin/src/styles/layout.css`: tokeny to
+  wartości produktu wspólne z telefonem, a telefon nie ma sidebara.
+- **Sidebar jest kanoniczny od teraz** — 11 pozycji w czterech grupach, jeden plik
+  (`ui/shell/navItems.tsx`), z którego wyprowadzają się też trasy i okruszki (dwie listy
+  nazw ekranów rozjechałyby się przy pierwszym przemianowaniu). Pozycja niedostępna dla
+  roli jest **widoczna, wyszarzona i przestaje być linkiem** (`<span aria-disabled>`,
+  nie `<a>` z `preventDefault`), z powodem w `title`.
+- **`dateUtcShort` dołożone do `@uzaero/format`** („31 JUL 2026"). Obok `dateUtcLong`
+  („22 JUNE 2026"), bo to różnica POWIERZCHNI: telefon pokazuje datę raz, w plakietce
+  dnia; panel powtarza ją w każdym wierszu tabeli, gdzie cztery znaki to inna szerokość
+  kolumny. Własna kopia tablicy miesięcy w panelu byłaby dokładnie tym trzecim
+  egzemplarzem, dla którego ten pakiet powstał.
+- **Czego w tym przekroju NIE MA, świadomie:** (1) **serwowania builda pod `/admin`
+  przez `@fastify/static`** — dev jedzie na proxy Vite (`/admin/api` → serwer), żeby panel
+  i API były tym samym originem, bo `SameSite=Strict` inaczej nie działa; produkcyjne
+  serwowanie to `base:'/admin/'` (już ustawione), `ADMIN_DIST_DIR` i nagłówki cache
+  z §9. (2) **Rate-limitu na `/auth/*` i `/admin/api/auth/login`** (§8.8) — razem z nim
+  wchodzi licznik prób z A00a, którego mockup sam zabrania przepisywać („5 prób / 15 minut
+  to WARTOŚCI ROBOCZE"). (3) ~~**Świeżej roli przy każdym żądaniu panelu**~~ —
+  **ZROBIONE 2026-08-01 razem z przekrojem A06** (`http/authorize.ts`:
+  `authorizeAccount` czyta konto po kluczu głównym przy każdym żądaniu `/admin/api/*`;
+  `adminRoute` buduje `Actor` z KONTA, nie z claimu). Konto nieaktywne daje 401, rola
+  bez zdolności 403 — obie decyzje natychmiast, a nie po wygaśnięciu 8-godzinnej sesji.
+  Bez tego przycisk „Deaktywuj" na A06 obiecywałby coś, co dzieje się dopiero pod
+  wieczór. Przybite testami: `roles.test.ts` („konto DEAKTYWOWANE po wydaniu tokenu →
+  401", „odebranie roli działa NATYCHMIAST") i `adminAccounts.test.ts` („DEAKTYWACJA
+  ODCINA PANEL NATYCHMIAST"). (4) **Self-hostowanych czcionek i CSP** —
+  `admin/index.html` ciągnie fonty z CDN jak mockupy; §9 wymaga `.woff2` w `public/fonts/`
+  przed wdrożeniem (brak JetBrains Mono to inna szerokość każdej kolumny liczbowej).
+  (5) **`classInventory.test.ts`** — ma porównywać klasy panelu z `SZABLON.html`, a biblioteka
+  komponentów jest dopiero w budowie (8 z 24), więc dziś świeciłby na czerwono z definicji.
 
 **Granulacja plików (reguła twarda, dotyczy całego repo):** jeden adapter / jedna klasa /
-jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób
-(`http/routes/*.ts`); mapowania jako osobne, nazwane moduły (`application/sessionRow.ts`);
+jedna odpowiedzialność = jeden plik o nazwie równej roli; trasy HTTP per zasób;
+mapowania jako osobne, nazwane moduły (`application/common/mappers/sessionRow.ts`);
 wspólna autoryzacja w jednym miejscu (`http/authorize.ts`). Warstw NIE przybywa —
 kierunek zależności zostaje; chodzi o to, żeby plik dało się przeczytać w całości
 i żeby nazwa mówiła, co w środku.
+
+**Druga oś podziału: POWIERZCHNIA (`admin` / `mobile` / `common`)** — uporządkowane
+2026-07-31. Warstwa zostaje osią główną; wewnątrz `application/`, `http/routes/`
+i `infrastructure/pg/` katalog drugiego poziomu mówi, KOMU dany plik służy:
+
+- **`mobile/`** — istnieje wyłącznie dla aplikacji pilota (ingest, `GET /reference`, prefs),
+- **`admin/`** — istnieje wyłącznie dla panelu i podlega jego regułom: audyt obowiązkowy,
+  brama zdolności, prefiks `/admin/api`,
+- **`common/`** — używane przez OBIE powierzchnie. To znaczenie jest twarde: `common`
+  nie jest workiem na resztę, tylko stwierdzeniem „korzysta z tego panel i telefon"
+  (`export/`, `sessionRow.ts`, `ports.ts`, `commands/auth.ts` — panel loguje się tą samą
+  komendą co telefon).
+
+**Skąd ta zmiana.** Wcześniej `admin/` było wydzielone, a „cała reszta" nie niosła żadnej
+informacji: `application/common/export/dayExporter.ts` (wspólny — woła go ingest ORAZ dwie komendy
+panelu) leżał na tym samym poziomie co `application/mobile/queries/reference.ts` (tylko telefon).
+Ta sama lokalizacja, dwa różne znaczenia, zero sposobu, by je odróżnić bez otwarcia pliku.
+
+**Dlaczego NIE dwie gałęzie najwyższego poziomu (`admin/` + `mobile/`).** Te powierzchnie
+nie są dwoma systemami: dzielą jedną bazę, jeden strumień zdarzeń, jedną projekcję, jedną
+domenę i to samo logowanie. Rozdział po kliencie wymusiłby trzecią gałąź na kod wspólny,
+która wchłonęłaby większość plików — a granica byłaby przekraczana przy każdym żądaniu,
+bo panel czyta to, co zapisał telefon.
+
+**Dlaczego NIE spłaszczenie.** `admin/` nie jest porządkowaniem, tylko granicą sprawdzaną
+maszynowo: `test/architecture.test.ts` skanuje `application/admin/commands` i
+`http/routes/admin` PO ŚCIEŻCE, żeby wymusić „komendy panelu nie mają uchwytu do bazy"
+i „trasy panelu rejestrują się wyłącznie przez `adminRoute`". Usunięcie katalogu usuwa
+egzekucję tych reguł. Przenosząc pliki, aktualizuj te ścieżki w teście.
+
+**Oś powierzchni obowiązuje TYLKO tam, gdzie plik istnieje dla kogoś.** To była druga
+lekcja tego porządkowania: pierwsze podejście wepchnęło pod `common/` również rzeczy, które
+żadnej powierzchni nie mają, i etykieta zaczęła kłamać. Stąd trzy dopowiedzenia:
+
+- **`infrastructure/pg/` w korzeniu = maszyneria Postgresa**, nie adaptery: `schema.ts`
+  (DDL), `migrate.ts` (runner), `seed.ts`, `database.ts`, `keyset.ts`, `sqlFilter.ts`,
+  `sessionDbRow.ts`. Schemat bazy nie służy ani panelowi, ani telefonowi — służy bazie.
+  Katalogi `admin/`, `mobile/`, `common/` trzymają wyłącznie ADAPTERY portów.
+- **`src/bin/` = punkty wejścia.** `seedCli.ts` i `rebuildProjectionsCli.ts` to composition
+  rooty: same składają zależności i same startują. Leżały wśród adapterów, w dwóch różnych
+  katalogach, jakby były adapterami. Trzeci punkt wejścia (`index.ts`) zostaje w korzeniu
+  `src/`, bo jest wejściem serwera, nie narzędziem.
+- **`mappers/` w `application/*/`** — mapowania między reprezentacjami (`sessionRow.ts`:
+  strumień → wiersz projekcji; `sessionListItem.ts`, `flagListItem.ts`, `eventTimeline.ts`:
+  projekcja/strumień → DTO panelu; `projectionDiff.ts`: dwa wiersze → raport różnic).
+  Leżały luzem na wierzchu `application/admin/`, odtwarzając piętro niżej dokładnie ten
+  problem, który ten podział miał usunąć. Na wierzchu modułu zostają tylko `ports.ts`
+  i `auditedWrite.ts` — kontrakt modułu i jego egzekucja.
+
+**Wyjątki, świadome:** `domain/` jest płaskie, bo domena nie ma powierzchni — reguła jest
+regułą niezależnie od tego, kto pyta. `infrastructure/auth/` i `infrastructure/traces/`
+grupujemy po technologii. W `infrastructure/pg/{admin,mobile,common}/` pamiętaj, że
+przynależność adaptera jest POCHODNA (idzie za portem, którego używa) i bywa nietrwała:
+`aircraftConfigRepo` obsługuje dziś ingest, a jutro ekran floty. Gdy się zmieni, przenosimy
+plik — to tańsze niż etykieta, która kłamie.
 
 **Spójność modeli bez ORM:** źródłem prawdy jest `@uzaero/domain`, a styki pilnują testy
 kontraktowe — `test/schema.test.ts` (listy kolumn PG przybite na sztywno, na PGlite;
@@ -283,7 +667,8 @@ Wnętrze `ui/`:
 
 | Katalog | Rola |
 |---|---|
-| `screens/` | ekrany aplikacji |
+| `screens/` | ekrany aplikacji (`.tsx`) |
+| `screens/logic/` | **czysta logika ekranów** (`.ts`) — patrz niżej |
 | `navigation/` | stos nawigacji + `RootStackParamList` |
 | `components/` | **Design System** — patrz katalog niżej |
 | `hooks/` | spoiny między portami a UI (np. `useFlightDetection`) |
@@ -295,12 +680,41 @@ Wnętrze `ui/`:
 `App.tsx` odpowiada wyłącznie za poziom aplikacji: dostawcy kontekstu, fonty, composition
 root i nawigację. Ekran nie wie, skąd biorą się zależności.
 
+### `screens/logic/` — logika wyniesiona z ekranu
+
+Jedenaście czystych modułów (`statsDay`, `refuelMath`, `cockpitLog`, `historyDays`,
+`syncStatus`…) liczących to, co ekran pokazuje: statystyki dnia, arytmetykę dolewki,
+log cyklu, listę dni. **Bez importów z Reacta** — testują się w gołym Node, bez
+urządzenia i bez RNTL, i stąd bierze się większość pokrycia testowego aplikacji.
+
+Wydzielone do podkatalogu 2026-07-31. Wcześniej leżały wymieszane z ekranami w jednym
+płaskim katalogu, więc wzorzec był niewidoczny: nie dało się zobaczyć, który ekran ma
+wyniesioną logikę, a `statsDay.ts` (używany przez `StatsScreen` ORAZ `CockpitReadonlyScreen`)
+wyglądał, jakby należał do jednego z nich.
+
+**To NIE jest warstwa aplikacji.** Te moduły liczą widok, nie przypadek użycia — dlatego
+zostają w `ui/`, a nie wędrują do `application/`. Granica: jeśli moduł zmienia stan albo
+woła port, jest komendą i jego miejsce jest w `application/`.
+
 ### Design System (`ui/components/`)
 
 **Zasada: ekran nie definiuje własnych kart, chipów ani przycisków.** Jeśli czegoś
 brakuje — dokładamy to do DS i używamy wszędzie. Dzięki temu poprawka wzorca (np.
 powiększenie celów dotykowych po audycie użyteczności) przechodzi przez całą aplikację,
 a nie przez jeden ekran.
+
+**Osiem sekcji, jeden katalog na sekcję** (2026-07-31): `foundation/` · `layout/` ·
+`status/` · `input/` · `readouts/` · `sheets/` · `data/` · `settings/`. Podział nie jest
+nowy — barrel `index.ts` deklarował te same sekcje w komentarzach od dawna; do tej pory
+nie egzekwowała ich jednak żadna struktura, więc nowy komponent mógł wylądować gdziekolwiek,
+a sekcja rozjeżdżała się z rzeczywistością przy pierwszym niedopatrzeniu. Teraz nazwa
+katalogu i nagłówek w barrelu opisują to samo, a rozjazd widać od razu.
+
+Ekrany importują **przez barrel** (`from '../components'`) i tak ma zostać: dzięki temu
+przenosiny wewnątrz DS nie dotykają ekranów — to właśnie barrel wchłonął tę zmianę
+niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest normą.
+
+`tone.ts` zostaje w korzeniu `components/` — to pomocnik doboru barwy stanu, nie komponent.
 
 | Komponent | Rola | Skąd w designie |
 |---|---|---|
@@ -488,9 +902,40 @@ Rejestr jest append-only, więc nie wolno do niego wpisywać stanów pośrednich
 może jeszcze zmienić albo porzucić. Zdarzenia `session_claim` i `preflight_confirm`
 powstają dopiero przy potwierdzeniu na ekranie 3.
 
+### `.tsx` eksportuje wyłącznie komponenty
+
+Reguła narzędziowa, a przy kontekstach — reguła **poprawności**.
+
+Fast Refresh podmienia moduł w miejscu tylko wtedy, gdy wszystkie jego eksporty są
+komponentami. Jeden eksport obok — hook, stała, funkcja pomocnicza — i moduł przestaje
+być granicą odświeżania. Przy zwykłym komponencie kosztem jest utrata stanu ekranu.
+Przy pliku, który woła `createContext`, kosztem jest **błąd**: kontekst re-ewaluuje się
+razem z komponentami, zamontowany provider podaje stary obiekt, odświeżony ekran szuka
+nowego, `useContext` zwraca `undefined`. Na ekranie stojącym wewnątrz providera pojawia
+się wtedy „useTheme() musi być użyty wewnątrz `<ThemeProvider>`", albo — ciszej i gorzej —
+`useGps()` zwraca `null` przy działającym odbiorniku.
+
+Dlatego kontekst i jego czytnik mieszkają OSOBNO od providera:
+
+| kontekst + hook | provider (sam komponent) |
+| --- | --- |
+| `ui/theme/themeContext.ts` | `ui/theme/ThemeProvider.tsx` |
+| `ui/bootstrap/servicesContext.ts` | `ui/bootstrap/ServicesProvider.tsx` |
+
+Dla wołających nic się nie zmienia — barrel `ui/theme/index.ts` wystawia jedno i drugie,
+więc `import { useTheme } from '../../theme'` działa jak dotąd (i jest jedyną poprawną
+formą: 82 pliki tak robią, a omijanie barrela to druga konwencja bez powodu).
+
+Jeden świadomy wyjątek: `ui/hooks/useEventCorrection.tsx` zwraca gotowy element
+(`correctionSheet`), więc musi być `.tsx`, choć komponentu nie eksportuje. Kontekstu
+nie tworzy, więc jedynym skutkiem jest propagacja odświeżenia do trzech ekranów,
+które go wołają.
+
+Ta sama reguła po stronie panelu: `docs/architektura-panelu-frontend.md` §2.3.
+
 ### To nie jest tylko obietnica
 
-Granice pilnuje **wykonywalny test** — `src/__tests__/architecture.test.ts` skanuje importy i wywala się, gdy ktoś je złamie. Ma też własny test kontrolny („skaner faktycznie widzi pliki i importy"), żeby nie przechodził dlatego, że niczego nie znalazł. Dodatkowo sprawdza, że **barrel infrastruktury nie wciąga modułu natywnego** — dzięki temu testy działają w Node, bez urządzenia.
+Granice pilnuje **wykonywalny test** — `src/__tests__/architecture.test.ts` skanuje importy i wywala się, gdy ktoś je złamie. Ma też własny test kontrolny („skaner faktycznie widzi pliki i importy"), żeby nie przechodził dlatego, że niczego nie znalazł. Dodatkowo sprawdza, że **barrel infrastruktury nie wciąga modułu natywnego** — dzięki temu testy działają w Node, bez urządzenia — oraz że **żaden `.tsx` w `ui/` nie eksportuje nie-komponentu** (reguła wyżej; komponent w tej aplikacji to zawsze `export function` z wielkiej litery).
 
 Dokument może się zdezaktualizować; test nie.
 

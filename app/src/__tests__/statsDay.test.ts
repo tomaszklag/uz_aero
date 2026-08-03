@@ -17,7 +17,7 @@ import {
   fuelPerHour,
   hhmm,
   jumperBreakdown,
-} from '../ui/screens/statsDay';
+} from '../ui/screens/logic/statsDay';
 import type { Flight, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);

@@ -1,0 +1,33 @@
+{
+  "name": "@uzaero/admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "UZ Aero — panel administracyjny (web): React + Vite. Klient serwera, zero własnej arytmetyki.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tokens:css": "tsx ../packages/tokens/scripts/emitCss.ts src/styles/tokens.css",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "@uzaero/domain": "*",
+    "@uzaero/format": "*",
+    "@uzaero/tokens": "*",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-router-dom": "^7.18.2"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.10",
+    "@types/react-dom": "~19.1.9",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tsx": "^4.19.2",
+    "typescript": "~5.9.2",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.8"
+  }
+}

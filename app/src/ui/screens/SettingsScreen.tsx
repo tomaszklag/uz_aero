@@ -35,10 +35,10 @@ import {
 } from '../components';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
-import { useGps, useTrace } from '../bootstrap/ServicesProvider';
+import { useGps, useTrace } from '../bootstrap/servicesContext';
 import { formatLatLon, timeUtc } from '../format';
-import { fixAge } from './gpsLoss';
-import { eventsCount } from './syncStatus';
+import { fixAge } from './logic/gpsLoss';
+import { eventsCount } from './logic/syncStatus';
 
 export function SettingsScreen({
   navigation,

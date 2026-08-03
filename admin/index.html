@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UZ Aero — panel administracyjny</title>
+
+    <!--
+      Czcionki z CDN — TYMCZASOWO, dokładnie jak w mockupach `design/admin/*.html`.
+      `docs/architektura-panelu-frontend.md` §9 wymaga self-hostowanych `.woff2`
+      w `public/fonts/` przed wdrożeniem: panel bywa uruchamiany w sieci klubowej,
+      a brak JetBrains Mono to inna szerokość każdej kolumny liczbowej, czyli ZMIANA
+      UKŁADU TABEL, nie kosmetyka. Razem z podmianą znika też jedyny powód, dla którego
+      CSP `default-src 'self'` nie może dziś wejść.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

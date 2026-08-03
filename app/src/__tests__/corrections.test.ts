@@ -59,6 +59,29 @@ function correction(
   } as EventOf<'event_correction'>;
 }
 
+/**
+ * Korekta o SUROWYM, niesprawdzonym payloadzie — tak, jak potrafi leżeć w bazie:
+ * `events.payload` to `JSONB` bez `CHECK`-a, więc wiersz wpisany ręcznie w psql,
+ * odtworzony ze zrzutu albo przysłany przez starszą wersję telefonu może mieć
+ * dowolny kształt. Typ jest obietnicą WEJŚCIA, nie faktem odczytu.
+ */
+function rawCorrection(payload: unknown, recordedAt: number): Event {
+  seq += 1;
+  return {
+    uuid: `craw-${seq}`,
+    sessionUuid: 's1',
+    aircraftId: 'SP-AXA',
+    picId: 'TMK',
+    dualId: null,
+    type: 'event_correction',
+    deviceTime: recordedAt,
+    gpsTime: null,
+    payload,
+    schemaVersion: 1,
+    syncedAt: null,
+  } as Event;
+}
+
 /** Cykl z mockupu: start silnika, lot 08:25 → 09:18, stop. */
 function day(): { events: Event[]; landing: Event; takeoff: Event } {
   const takeoff = event('takeoff', at(8, 25), { method: 'auto' });
@@ -128,6 +151,74 @@ describe('nakładanie korekt na strumień', () => {
     const state = projectSession(stream);
     expect(state.landingCount).toBe(0);
     expect(state.takeoffCount).toBe(1); // start pozostał — pilot uzupełni albo unieważni osobno
+  });
+});
+
+/**
+ * Wiersz `event_correction`, którego payloadu nie da się przeczytać, jest POMIJANY —
+ * nie wywraca strumienia i nie zgaduje się za niego akcji.
+ *
+ * To nie jest przypadek teoretyczny: `applyCorrections` jest jedyną drogą, którą
+ * rejestr zdarzeń panelu (`A04`) nakłada korekty na CAŁĄ stronę naraz. Wyjątek na
+ * jednym wierszu znaczył tam 500 z całej listy — narzędzie śledcze przestawało się
+ * otwierać przez własną historię, dokładnie wtedy, gdy było potrzebne.
+ */
+describe('korekta nieczytelna jest pomijana, a nie wywraca strumienia', () => {
+  it('korekta, która nie adresuje celu, nie rzuca — strumień wraca w całości', () => {
+    const { events, landing } = day();
+    // Payload równy JSON-owemu `null` to ten kształt, który wywracał CAŁY rejestr:
+    // sięgnięcie po `targetUuid` dawało `TypeError`, czyli 500 z listy.
+    const nullPayload = [...events, rawCorrection(null, at(10, 40))];
+    expect(() => applyCorrections(nullPayload)).not.toThrow();
+    expect(applyCorrections(nullPayload).map((e) => e.uuid)).toEqual(events.map((e) => e.uuid));
+
+    // Ten sam wniosek dla payloadu z akcją, ale bez celu: nie ma czego poprawiać.
+    const noTarget = [...events, rawCorrection({ action: 'void' }, at(10, 40))];
+    expect(applyCorrections(noTarget).find((e) => e.uuid === landing.uuid)?.gpsTime).toBe(
+      at(9, 18),
+    );
+  });
+
+  it('NIEZNANA akcja nie jest po cichu traktowana jak `retime`', () => {
+    // Gałąź „wszystko, co nie jest `void`" brała `newTime` z KAŻDEJ akcji — więc
+    // kształt z przyszłej wersji telefonu przestawiłby czas lądowania, choć nikt
+    // nie wie, co ta akcja miała znaczyć.
+    const { events, landing } = day();
+    const stream = [
+      ...events,
+      rawCorrection(
+        { targetUuid: landing.uuid, action: 'przesun_o_strefe', newTime: at(9, 21) },
+        at(10, 40),
+      ),
+    ];
+
+    const corrected = applyCorrections(stream).find((e) => e.uuid === landing.uuid);
+    expect(corrected?.gpsTime).toBe(at(9, 18));
+  });
+
+  it('`retime` bez liczbowego `newTime` nie wpisuje zdarzeniu czasu, którego nikt nie podał', () => {
+    const { events, landing } = day();
+    const stream = [
+      ...events,
+      rawCorrection({ targetUuid: landing.uuid, action: 'retime' }, at(10, 40)),
+    ];
+
+    const corrected = applyCorrections(stream).find((e) => e.uuid === landing.uuid);
+    expect(corrected?.gpsTime).toBe(at(9, 18));
+  });
+
+  it('nieczytelna korekta NIE KASUJE wcześniejszej czytelnej korekty tego samego celu', () => {
+    // „Ostatnia wygrywa" znaczy „ostatnia, którą da się przeczytać". Inaczej jeden
+    // popsuty wiersz cofałby skutek korekty, którą ktoś świadomie zapisał.
+    const { events, landing } = day();
+    const stream = [
+      ...events,
+      correction(landing, at(10, 40), { action: 'retime', newTime: at(9, 21) }),
+      rawCorrection({ targetUuid: landing.uuid }, at(10, 45)),
+    ];
+
+    const corrected = applyCorrections(stream).find((e) => e.uuid === landing.uuid);
+    expect(corrected?.gpsTime).toBe(at(9, 21));
   });
 });
 

@@ -1,0 +1,48 @@
+/* ══════════════════════════════════════════════════════════════════════
+   PLIK GENEROWANY — NIE EDYTUJ RĘCZNIE.
+   Źródło: packages/tokens (THEMES.night) · generator: packages/tokens/scripts/emitCss.ts
+   Odtworzenie: npm run tokens:css --workspace admin
+   Równość pliku ze źródłem przybija admin/test/tokens.generated.test.ts.
+
+   Panel ma JEDEN motyw (night) i nie ma przełącznika: pięć motywów aplikacji
+   istnieje dla kokpitu w słońcu i nocą w kabinie, a administrator siedzi przy
+   biurku (docs/architektura-panelu-frontend.md §1.6).
+
+   Wymiarów ramy panelu (--sidebar-w, --topbar-h) TU NIE MA i nie będzie —
+   to układ jednej powierzchni, a nie token produktu. Mieszkają w layout.css.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #0D0D0D;
+  --bg-tint: #111318;
+  --surface: #141414;
+  --surface-raised: #1A1A1A;
+  --surface-hover: #222222;
+  --border: #252525;
+  --border-strong: #333333;
+  --hairline: rgba(255,255,255,0.04);
+  --text-primary: #E8E8E8;
+  --text-secondary: #888888;
+  --text-muted: #7A7A7A;
+  --green: #2ECC71;
+  --green-hover: #3DDC82;
+  --green-muted: rgba(46,204,113,0.12);
+  --green-border: rgba(46,204,113,0.28);
+  --green-glow: rgba(46,204,113,0.4);
+  --amber: #F39C12;
+  --amber-muted: rgba(243,156,18,0.12);
+  --amber-border: rgba(243,156,18,0.28);
+  --amber-glow: rgba(243,156,18,0.35);
+  --red: #E74C3C;
+  --red-muted: rgba(231,76,60,0.12);
+  --red-border: rgba(231,76,60,0.28);
+  --red-glow: rgba(231,76,60,0.4);
+  --blue: #3498DB;
+  --blue-muted: rgba(52,152,219,0.12);
+  --blue-border: rgba(52,152,219,0.28);
+  --overlay: rgba(0,0,0,0.74);
+  --selection: rgba(255,255,255,0.22);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}

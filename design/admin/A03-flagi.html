@@ -154,7 +154,10 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; }
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+     definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
+  .tile:hover { border-color:var(--border-strong); }
   .tile-key { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
   .tile-val { font-family:var(--font-mono); font-size:28px; font-weight:700; line-height:1; letter-spacing:-0.5px; }
   .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
@@ -273,12 +276,117 @@
   .tl-row:not(:last-child) .tl-rail::after { content:''; position:absolute; top:8px; bottom:-14px; width:1px; background:var(--border); }
   .tl-name { font-size:12.5px; font-weight:600; }
   .tl-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+     zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
+     i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
+     siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
+     kolorów kropek i stan `voided` są identyczne. */
+  .tl.compact .tl-row { grid-template-columns:62px 18px 1fr; gap:9px; padding:7px 0; }
+  .tl.compact .tl-time { font-size:10.5px; letter-spacing:0.4px; }
+  .tl.compact .tl-dot { width:8px; height:8px; }
+  .tl.compact .tl-name { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.3px; }
+  .tl.compact .tl-meta { font-size:8.5px; letter-spacing:0.6px; }
+  .tl.compact .tl-row:not(:last-child) .tl-rail::after { bottom:-12px; }
 
   /* ── siatka dwukolumnowa treści ── */
   .cols { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
   .cols.even { grid-template-columns:1fr 1fr; }
+  /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
+     przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
+     Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
+     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+  .cols.wide { grid-template-columns:1fr 400px; }
+
+  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+     Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
+     ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
+     o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
+     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     ale którego telefon milczy. §4.8 stany świeżości. */
+  .fleet { display:flex; flex-direction:column; gap:8px; }
+  .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
+  .fleet-row:hover { border-color:var(--border-strong); background:var(--surface-hover); }
+  .fleet-row.flying { border-color:var(--green-border); background:rgba(46,204,113,0.04); }
+  .fleet-row.stale  { border-color:var(--amber-border); background:rgba(243,156,18,0.04); }
+  .fleet-row.free   { opacity:0.72; }
+  .fleet-reg { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:1.2px; }
+  .fleet-type { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-who { font-size:13px; font-weight:600; }
+  .fleet-since { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-nums { font-family:var(--font-mono); font-size:11.5px; text-align:right; font-variant-numeric:tabular-nums; line-height:1.7; }
+  .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
+  .fleet-state { display:flex; justify-content:flex-end; }
+
+  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+     Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
+     administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
+  .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .fresh-val { font-family:var(--font-mono); font-size:10px; letter-spacing:0.8px; color:var(--green); }
+  .fresh-val.amber { color:var(--amber); }
+  .fresh-val.dim { color:var(--text-muted); }
+  .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
+
+  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+     Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
+     w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
+     problem niż ta sprzed godziny. */
+  .todo { display:flex; flex-direction:column; }
+  .todo-row { display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--hairline); text-decoration:none; color:inherit; }
+  .todo-row:last-child { border-bottom:none; }
+  .todo-row:hover .todo-name { color:var(--green); }
+  .todo-mark { width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid; }
+  .todo-mark.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .todo-mark.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .todo-mark.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .todo-body { flex:1; min-width:0; }
+  .todo-name { font-size:12.5px; font-weight:600; }
+  .todo-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
+  .todo-age.old { color:var(--amber); }
+
+  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+     Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
+     w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
+  .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
+  .spark i { flex:1; background:var(--green-muted); border:1px solid var(--green-border); border-radius:3px 3px 0 0; min-height:3px; }
+  .spark i.now { background:var(--green); border-color:var(--green); }
+  .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
+  .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+
+  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+     Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
+     wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
+     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     gdzie zmiana ma skutek. */
+  .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
+  .thr:last-of-type { border-bottom:none; }
+  .thr-name { font-size:12.5px; font-weight:600; }
+  .thr-name code { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); font-weight:400; }
+  .thr-why { font-size:11px; color:var(--text-secondary); line-height:1.5; margin-top:3px; }
+  .thr-val { font-family:var(--font-mono); font-size:15px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .thr-val small { font-size:9.5px; font-weight:400; color:var(--text-secondary); letter-spacing:0.5px; }
+  .thr-src { display:flex; justify-content:flex-end; }
+  .thr-input { width:100%; min-height:34px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); padding:6px 10px; color:var(--text-primary); font-family:var(--font-mono); font-size:14px; font-weight:700; text-align:right; outline:none; }
+  .thr-input:focus { border-color:var(--green-border); }
+  .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
+
+  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+     Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
+     WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
+  .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
+  .proof-head { display:flex; align-items:center; gap:9px; font-family:var(--font-mono); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; color:var(--amber); }
+  .diff { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; }
+  .diff-side { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:5px; }
+  .diff-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .diff-v { font-family:var(--font-mono); font-size:20px; font-weight:700; line-height:1; }
+  .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
+
+  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
   .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
@@ -330,7 +438,6 @@
 
   <div class="shell">
 
-    <!-- ══ SIDEBAR — kanoniczny, identyczny na każdym ekranie panelu ══ -->
     <nav class="sidebar">
       <div class="brand">
         <span class="brand-mark">
@@ -408,7 +515,6 @@
       </div>
     </nav>
 
-    <!-- ══ MAIN ══ -->
     <div class="main">
       <div class="topbar">
         <div class="crumbs">Panel <span>/</span> Operacje <span>/</span> <b>Flagi</b></div>
@@ -439,7 +545,7 @@
 
         <div class="banner warn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>Zamykanie flag jest funkcją do dorobienia na serwerze.</b> W kodzie nie ma dziś niczego, co ustawia <code>flags.status = 'resolved'</code> — jedyną drogą jest ręczny <code>UPDATE</code> w bazie, a to znaczy, że nakładka sesji blokuje arkusz trwale. Ten ekran i <a href="A03a-flaga.html" style="color:var(--amber);font-weight:600;">A03a</a> są projektem tego brakującego endpointu.</span>
+          <span><b>Otwarta <code>session_overlap</code> wstrzymuje kartę dnia.</b> Do 2026-07-31 blokowała ją trwale, bo nic w kodzie nie ustawiało <code>flags.status = 'resolved'</code> — jedyną drogą był ręczny <code>UPDATE</code> w bazie. Rozstrzygnięcie z <a href="A03a-flaga.html" style="color:var(--amber);font-weight:600;">A03a</a> zamyka flagę i samo wywołuje re-eksport karty.</span>
         </div>
 
         <div class="tiles">
@@ -465,8 +571,8 @@
           <span class="chip">session_overlap · 2</span>
           <span class="chip">mh_gap · 3</span>
           <span class="chip">mh_regression · 2</span>
-          <span class="chip" style="opacity:0.38;cursor:not-allowed;" title="Serwer dziś nie produkuje tej flagi — patrz legenda niżej">fuel_mismatch · 0</span>
-          <span class="chip" style="opacity:0.38;cursor:not-allowed;" title="Serwer dziś nie produkuje tej flagi — patrz legenda niżej">clock_drift · 0</span>
+          <span class="chip" title="Typ liczony od 2026-07-31 — obecnie zero otwartych">fuel_mismatch · 0</span>
+          <span class="chip" title="Typ liczony od 2026-07-31 — obecnie zero otwartych">clock_drift · 0</span>
           <span class="chip">SP-ABC · 3</span>
           <span class="chip">SP-KLM · 2</span>
           <span class="chip">SP-XYZ · 2</span>
@@ -570,7 +676,7 @@
         </div>
 
         <div class="card">
-          <div class="card-title">Ostatnio rozwiązane <span class="spacer"></span><span class="pill dim">wpis zostaje w bazie na stałe</span><span class="pill amber">dziś: ręczny UPDATE w bazie</span></div>
+          <div class="card-title">Ostatnio rozwiązane <span class="spacer"></span><span class="pill dim">wpis zostaje w bazie na stałe</span><span class="pill green">WDROŻONE</span></div>
           <div class="table-wrap" style="border:none;border-radius:0;background:none;">
             <table>
               <thead>
@@ -627,7 +733,7 @@
         </div>
 
         <div class="card" id="legenda">
-          <div class="card-title">Typy flag — co serwer liczy dziś <span class="spacer"></span><span class="pill green">3 typy w kodzie</span><span class="pill dim">mhChain.ts</span></div>
+          <div class="card-title">Typy flag — co serwer liczy dziś <span class="spacer"></span><span class="pill green">5 typów w kodzie</span><span class="pill dim">mhChain.ts</span></div>
           <div class="table-wrap" style="border:none;border-radius:0;background:none;">
             <table>
               <thead>
@@ -664,10 +770,10 @@
         </div>
 
         <div class="card">
-          <div class="card-title">Zapowiedziane w §4.5, serwer ich nie liczy <span class="spacer"></span><span class="pill amber">DO WDROŻENIA</span></div>
+          <div class="card-title">Dopisane do katalogu 2026-07-31 <span class="spacer"></span><span class="pill green">WDROŻONE</span></div>
           <div class="banner status">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Te dwa fenomeny <b>istnieją dziś wyłącznie jako lokalne ostrzeżenia w telefonie</b> (<code>violations.ts</code>: <code>FUEL_MISMATCH</code>, <code>CLOCK_DRIFT</code> jako <code>severity: warning</code>). Do tabeli <code>flags</code> nigdy nie docierają, więc filtry wyżej pokazują dla nich zero i są nieaktywne. Zostawiamy je na ekranie świadomie — próg jest ustalony, brakuje tylko detektora po stronie serwera.</span>
+            <span>Te dwa fenomeny do 2026-07-31 <b>istniały wyłącznie jako lokalne ostrzeżenia w telefonie</b> (<code>violations.ts</code>: <code>FUEL_MISMATCH</code>, <code>CLOCK_DRIFT</code> jako <code>severity: warning</code>) i nigdy nie docierały do tabeli <code>flags</code>. Serwer liczy je teraz przy ingescie: <code>fuel_mismatch</code> porównuje odczyt startowy z przekazaniem poprzednika wzdłuż tego samego łańcucha co motogodziny, a <code>clock_drift</code> bada rozjazd zegarów w strumieniu dnia i daje <b>jedną flagę na sesję</b>, nie jedną na zdarzenie. Progi są wspólne z telefonem, więc obie strony mówią to samo.</span>
           </div>
           <div class="table-wrap" style="border:none;border-radius:0;background:none;">
             <table>
@@ -684,7 +790,7 @@
                   <td><span class="pill dim">fuel_mismatch</span></td>
                   <td class="dim">Odczyt paliwomierza vs przekazanie poza tolerancją</td>
                   <td class="num" style="color:var(--amber)">±10 L<span class="cell-sub">lub ±5% pojemności</span></td>
-                  <td class="dim">Obowiązuje większa z dwóch wartości: SP-ABC (348 L) → 17 L, SP-KLM (1257 L) → 63 L, SP-XYZ (100 L) → 10 L. Dziś liczy to telefon i mówi pilotowi od razu.</td>
+                  <td class="dim">Obowiązuje większa z dwóch wartości: SP-ABC (348 L) → 17 L, SP-KLM (1257 L) → 63 L, SP-XYZ (100 L) → 10 L. Telefon mówi pilotowi od razu, serwer flaguje przekazanie po fakcie — ten sam próg po obu stronach.</td>
                 </tr>
                 <tr>
                   <td><span class="pill dim">clock_drift</span></td>

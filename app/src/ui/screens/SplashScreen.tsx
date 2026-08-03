@@ -23,7 +23,7 @@ import { ActionButton, AppText, Brand, Icon, RefDataStamp, Screen, Tag } from '.
 import { useTheme } from '../theme';
 import { fontFamily } from '../theme/tokens';
 import { useSessionStore } from '../store';
-import { editableBadge } from './historyDays';
+import { editableBadge } from './logic/historyDays';
 
 export function SplashScreen({
   navigation,

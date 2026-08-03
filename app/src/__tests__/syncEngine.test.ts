@@ -21,6 +21,7 @@ import {
   type SessionSyncStatus,
   type StoredCredentials,
 } from '../application/ports';
+import type { SessionFlag } from '../domain';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
 import { PinCrypto } from '../infrastructure/auth/pinCrypto';
 import { FixedClock } from '../infrastructure/clock';
@@ -235,7 +236,7 @@ describe('SyncEngine.syncOnce', () => {
 
   it('flagi z odpowiedzi serwera wypływają do wołającego (ekran 11)', async () => {
     const repo = await repoWithEvents(1);
-    const flags = [{ type: 'mh_gap', sessionUuids: ['sess-0', 'sess-1'] }];
+    const flags: SessionFlag[] = [{ type: 'mh_gap', sessionUuids: ['sess-0', 'sess-1'] }];
     const server = new ScriptedServer([{ accepted: 1, duplicates: 0, flags }]);
 
     const outcome = await engineWith(repo, server).syncOnce();

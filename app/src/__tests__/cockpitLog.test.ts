@@ -10,7 +10,7 @@
  * To ta sama zależność, którą `projections.test.ts` sprawdza jako inwariant „Δ MH = block".
  */
 
-import { buildLogRows } from '../ui/screens/cockpitLog';
+import { buildLogRows } from '../ui/screens/logic/cockpitLog';
 import type { Event, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);

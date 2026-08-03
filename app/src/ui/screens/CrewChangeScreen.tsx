@@ -39,7 +39,7 @@ import {
 import { useTheme } from '../theme';
 import { useCurrentPilot, useEduBanner, useSessionStore } from '../store';
 import { duration, timeUtc } from '../format';
-import { NO_DUAL, crewRows, dualChangeBlocker } from './crewChange';
+import { NO_DUAL, crewRows, dualChangeBlocker } from './logic/crewChange';
 import type { ReferenceAircraft, ReferencePilot } from '../../domain';
 
 export function CrewChangeScreen({

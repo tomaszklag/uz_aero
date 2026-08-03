@@ -12,10 +12,23 @@ Dokumentacja: `docs/_main.md.txt`
 Stack: React Native + Expo · Zustand · expo-sqlite · expo-location · własny backend (Node/TS + PostgreSQL) · eksport do Google Sheets po stronie serwera
 
 ## Faza aktualna
-**Monorepo: aplikacja RN w `app/`, backend w `server/`, wspólna domena w `packages/domain`.**
+**Monorepo: aplikacja RN w `app/`, backend w `server/`, wspólne pakiety w `packages/`** —
+`@uzaero/domain` (zdarzenia, reguły, projekcje, detekcja), `@uzaero/tokens` (palety
+pięciu motywów, skale, typografia, emiter zmiennych CSS) i `@uzaero/format` (czasy UTC,
+czas blokowy, motogodziny, litry). Wszystkie trzy to czysty TypeScript bez importów
+z RN/DOM. `app/src/ui/theme/tokens.ts` i `app/src/ui/format.ts` są shimami zgodności —
+kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE — `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · przed nami: 5 testy z pilotami, 6 wdrożenie + backlog audytu, 7 **panel administracyjny (web)** — projekt UI zamknięty (`design/admin/`: 20 ekranów, `SZABLON.html`, `ANALIZA.md`), backend do zrobienia (role, `/admin/*`, cykl życia flagi, audyt).
 - Mockupy w `design/` to **zatwierdzona specyfikacja**: ekran RN wdrażamy 1:1 z odpowiadającego pliku HTML, sekcja po sekcji, bez upraszczania. Wątpliwość do mockupu = rozmowa przed implementacją, nie cicha zmiana w kodzie.
-- Architektura kodu i przepisy (nowy typ zdarzenia / reguła / ekran): `docs/architektura-kodu.md` (tam też zaległości audytu serwera). Po zmianach w `app/`: `npx jest` i `npx tsc --noEmit`; po zmianach w `server/` lub `packages/domain`: `npx vitest run` i `npx tsc --noEmit` w `server/` — wszystko musi przechodzić.
+- **Gdzie położyć nowy plik** (reguła od 2026-07-31, pełne uzasadnienie w `docs/architektura-kodu.md`):
+  warstwa jest osią główną, a wewnątrz `application/`, `http/routes/` i `infrastructure/pg/`
+  drugi poziom mówi, KOMU plik służy — `admin/` (tylko panel), `mobile/` (tylko aplikacja
+  pilota), `common/` (obie powierzchnie; to twarde znaczenie, nie worek na resztę). Rzeczy
+  bez powierzchni tam NIE trafiają: maszyneria Postgresa siedzi w korzeniu `infrastructure/pg/`,
+  punkty wejścia w `server/src/bin/`, mapowania w `application/*/mappers/`. W aplikacji:
+  komponenty w `ui/components/<sekcja>/` (osiem sekcji zgodnych z barrelem), czysta logika
+  ekranów w `ui/screens/logic/`. Przenosisz plik — zaktualizuj ścieżki w `server/test/architecture.test.ts`, bo egzekwuje reguły PO ŚCIEŻCE.
+- Architektura kodu i przepisy (nowy typ zdarzenia / reguła / ekran): `docs/architektura-kodu.md` (tam też zaległości audytu serwera). Po zmianach w `app/`: `npx jest` i `npx tsc --noEmit`; po zmianach w `server/` lub `packages/*`: `npx vitest run` i `npx tsc --noEmit` w `server/` — wszystko musi przechodzić. Zmiana w `packages/` dotyka OBU stron, więc uruchamiaj oba zestawy.
 - **Detekcja stanów lotu (kołowanie / start / lądowanie) i wszystkie progi: `docs/algorytm-detekcji.md`.** Zmieniasz cokolwiek w `packages/domain/src/detection/` — zaktualizuj ten dokument w tym samym commicie. Progów NIE stroimy „na wyczucie": służy do tego `server/scripts/replay.ts` na nagraniach ze śladu kalibracyjnego.
 - `design/PLAN.md` nie jest już aktywną checklistą (został backlog UX). Reguły designu niżej nadal obowiązują przy każdej zmianie mockupów.
 

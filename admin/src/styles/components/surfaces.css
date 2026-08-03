@@ -1,0 +1,359 @@
+/**
+ * UZ Aero — panel: karty, plakietki, banery i stany puste.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html`. Jeden plik dla całej rodziny
+ * „powierzchni i etykiet", bo to jedna warstwa wizualna i jeden zestaw tonów —
+ * rozbicie na pięć plików po kilkanaście linii utrudniałoby porównanie z szablonem,
+ * a to porównanie jest tu jedyną formą kontroli.
+ *
+ * Są tu WYŁĄCZNIE klasy komponentów, które już istnieją. Reszta inwentarza szablonu
+ * (`.page-head`, `.no-access`, `.table-wrap`, `.drawer`, `.tl`, `.kv`, `.tiles`…)
+ * dochodzi razem z ekranem, który jej wymaga — arkusz stylów dla komponentu,
+ * którego nie ma, jest martwym kodem udającym postęp.
+ */
+
+/* ── karta ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title::before {
+  content: '';
+  width: 3px;
+  height: 11px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  flex-shrink: 0;
+}
+
+.card-title .spacer {
+  margin-left: auto;
+}
+
+/* ── plakietki stanu ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.pill.green {
+  color: var(--green);
+  background: var(--green-muted);
+  border-color: var(--green-border);
+}
+
+.pill.amber {
+  color: var(--amber);
+  background: var(--amber-muted);
+  border-color: var(--amber-border);
+}
+
+.pill.red {
+  color: var(--red);
+  background: var(--red-muted);
+  border-color: var(--red-border);
+}
+
+.pill.blue {
+  color: var(--blue);
+  background: var(--blue-muted);
+  border-color: var(--blue-border);
+}
+
+.pill.dim {
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border-color: var(--border);
+}
+
+.pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pill .dot.live {
+  animation: pulse 1800ms ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px var(--green-muted);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+    opacity: 0.6;
+  }
+}
+
+/* ── banery: trzy typy z `docs/design-notes.md` + `ok` ── */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  border: 1px solid;
+}
+
+.banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.banner b {
+  font-weight: 700;
+}
+
+.banner.status {
+  background: var(--blue-muted);
+  border-color: var(--blue-border);
+  color: var(--text-secondary);
+}
+
+.banner.status svg,
+.banner.status b {
+  color: var(--blue);
+}
+
+.banner.warn {
+  background: var(--amber-muted);
+  border-color: var(--amber-border);
+  color: var(--text-secondary);
+}
+
+.banner.warn svg,
+.banner.warn b {
+  color: var(--amber);
+}
+
+.banner.danger {
+  background: var(--red-muted);
+  border-color: var(--red-border);
+  color: var(--text-secondary);
+}
+
+.banner.danger svg,
+.banner.danger b {
+  color: var(--red);
+}
+
+.banner.ok {
+  background: var(--green-muted);
+  border-color: var(--green-border);
+  color: var(--text-secondary);
+}
+
+.banner.ok svg,
+.banner.ok b {
+  color: var(--green);
+}
+
+/* ── stan pusty ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 52px 20px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  color: var(--text-secondary);
+}
+
+.empty-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 380px;
+  line-height: 1.6;
+}
+
+/* ── wiersz klucz/wartość (szczegóły, audyt) ── */
+.kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.kv:last-child {
+  border-bottom: none;
+}
+
+.kv-k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.kv-v {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: right;
+  letter-spacing: 0.3px;
+}
+
+.kv-v.green {
+  color: var(--green);
+}
+
+.kv-v.amber {
+  color: var(--amber);
+}
+
+.kv-v.red {
+  color: var(--red);
+}
+
+/* `.blue` dołożony 2026-08-01 razem z A06: mockup używał go w karcie „Rola w panelu",
+   a szablon go nie definiował. Ton informacyjny, jak `.pill.blue`. */
+.kv-v.blue {
+  color: var(--blue);
+}
+
+.kv-v small {
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* Wartość SPRZED zmiany w zestawieniu „przed → po" (`A02b`). Wygaszona, bo czyta się
+   ją jako punkt odniesienia, a nie jako liczbę do zapamiętania — uwaga ma zostać przy
+   wartości po prawej stronie strzałki. */
+.kv-v .was {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ══ LISTA SZCZEGÓŁÓW — pola workowatego JSON-a w komórce tabeli (`A09`) ══
+   Osobny komponent od `.kv`, a nie jego wariant, bo odpowiada na inne pytanie. `.kv`
+   jest zestawieniem liczb w karcie: wartość stoi po prawej i wytłuszczona, żeby czytało
+   się kolumnę. Tu wartością bywa całe zdanie (komentarz do flagi, powód korekty),
+   a kluczy jest tyle, ile akurat zapisała komenda — prawe wyrównanie rozjechałoby
+   akapit, a dwa tory pozwalają czytać w dół po nazwach pól. */
+.det {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.det-row {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.det-k {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.det-v {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  /* UUID-y i base64 nie mają spacji, a kolumna „Szczegóły" jest wąska — bez tego
+     jeden identyfikator rozpycha całą tabelę. */
+  overflow-wrap: anywhere;
+}
+
+/* Pole, którego panel nie umie NAZWAĆ: zostaje pokazane z surowym kluczem i surową
+   wartością, wygaszone — ale obecne. Dziennik audytu, który ukrywa pole, bo go nie zna,
+   przestaje być narzędziem nadzoru. */
+.det-v.raw {
+  color: var(--text-muted);
+}
+
+.det-empty {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+/* Stan „twoja rola tego nie obejmuje" (`.no-access` z `SZABLON.html`). Bliźniak
+   `.empty`, ale osobna klasa: pusty ekran i ekran zamknięty to dwie różne wiadomości,
+   a jedna klasa na oba kazałaby zgadywać, czy danych nie ma, czy się ich nie widzi. */
+.no-access {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+/* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+.code-ref {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 3px 8px;
+  letter-spacing: 0.3px;
+}

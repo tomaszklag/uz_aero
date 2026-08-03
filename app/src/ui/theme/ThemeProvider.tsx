@@ -16,36 +16,20 @@
  *
  * Nazwa motywu spoza tokenów (stary zapis, literówka w bazie) NIE wywraca niczego —
  * nakładamy wyłącznie nazwy znane `THEMES`, reszta zjeżdża do Night.
+ *
+ * Plik eksportuje WYŁĄCZNIE komponent — kontekst i hook `useTheme` mieszkają
+ * w `themeContext.ts` (powód zapisany tam). Dla wołających nic się nie zmienia:
+ * barrel `ui/theme/index.ts` wystawia jedno i drugie.
  */
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { ThemePrefsStore } from '../../infrastructure/prefs/themePrefsStore';
 import { useAuthStore } from '../store/authStore';
 import { useSessionStore } from '../store/sessionStore';
-import { DEFAULT_THEME, THEMES, type Theme, type ThemeName } from './tokens';
-
-export interface ThemeContextValue {
-  /** Komplet tokenów aktywnego motywu (colors, spacing, radius, typography, ...). */
-  theme: Theme;
-  /** Nazwa aktywnego motywu. */
-  themeName: ThemeName;
-  /** Ustawia i persystuje motyw (pod zalogowanego pilota; zapis lokalny, sync przy okazji). */
-  setTheme: (name: ThemeName) => void;
-  /** true po odczytaniu zapisanego wyboru pilota z magazynu. */
-  ready: boolean;
-}
-
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+import { ThemeContext, type ThemeContextValue } from './themeContext';
+import { DEFAULT_THEME, THEMES, type ThemeName } from './tokens';
 
 export interface ThemeProviderProps {
   children: ReactNode;
@@ -122,12 +106,4 @@ export function ThemeProvider({ children, initialTheme }: ThemeProviderProps) {
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
-}
-
-export function useTheme(): ThemeContextValue {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error('useTheme() musi być użyty wewnątrz <ThemeProvider>.');
-  }
-  return ctx;
 }

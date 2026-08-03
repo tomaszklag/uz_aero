@@ -154,7 +154,10 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; }
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+     definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
+  .tile:hover { border-color:var(--border-strong); }
   .tile-key { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
   .tile-val { font-family:var(--font-mono); font-size:28px; font-weight:700; line-height:1; letter-spacing:-0.5px; }
   .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
@@ -273,12 +276,117 @@
   .tl-row:not(:last-child) .tl-rail::after { content:''; position:absolute; top:8px; bottom:-14px; width:1px; background:var(--border); }
   .tl-name { font-size:12.5px; font-weight:600; }
   .tl-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+     zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
+     i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
+     siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
+     kolorów kropek i stan `voided` są identyczne. */
+  .tl.compact .tl-row { grid-template-columns:62px 18px 1fr; gap:9px; padding:7px 0; }
+  .tl.compact .tl-time { font-size:10.5px; letter-spacing:0.4px; }
+  .tl.compact .tl-dot { width:8px; height:8px; }
+  .tl.compact .tl-name { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.3px; }
+  .tl.compact .tl-meta { font-size:8.5px; letter-spacing:0.6px; }
+  .tl.compact .tl-row:not(:last-child) .tl-rail::after { bottom:-12px; }
 
   /* ── siatka dwukolumnowa treści ── */
   .cols { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
   .cols.even { grid-template-columns:1fr 1fr; }
+  /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
+     przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
+     Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
+     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+  .cols.wide { grid-template-columns:1fr 400px; }
+
+  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+     Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
+     ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
+     o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
+     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     ale którego telefon milczy. §4.8 stany świeżości. */
+  .fleet { display:flex; flex-direction:column; gap:8px; }
+  .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
+  .fleet-row:hover { border-color:var(--border-strong); background:var(--surface-hover); }
+  .fleet-row.flying { border-color:var(--green-border); background:rgba(46,204,113,0.04); }
+  .fleet-row.stale  { border-color:var(--amber-border); background:rgba(243,156,18,0.04); }
+  .fleet-row.free   { opacity:0.72; }
+  .fleet-reg { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:1.2px; }
+  .fleet-type { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-who { font-size:13px; font-weight:600; }
+  .fleet-since { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-nums { font-family:var(--font-mono); font-size:11.5px; text-align:right; font-variant-numeric:tabular-nums; line-height:1.7; }
+  .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
+  .fleet-state { display:flex; justify-content:flex-end; }
+
+  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+     Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
+     administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
+  .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .fresh-val { font-family:var(--font-mono); font-size:10px; letter-spacing:0.8px; color:var(--green); }
+  .fresh-val.amber { color:var(--amber); }
+  .fresh-val.dim { color:var(--text-muted); }
+  .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
+
+  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+     Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
+     w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
+     problem niż ta sprzed godziny. */
+  .todo { display:flex; flex-direction:column; }
+  .todo-row { display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--hairline); text-decoration:none; color:inherit; }
+  .todo-row:last-child { border-bottom:none; }
+  .todo-row:hover .todo-name { color:var(--green); }
+  .todo-mark { width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid; }
+  .todo-mark.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .todo-mark.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .todo-mark.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .todo-body { flex:1; min-width:0; }
+  .todo-name { font-size:12.5px; font-weight:600; }
+  .todo-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
+  .todo-age.old { color:var(--amber); }
+
+  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+     Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
+     w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
+  .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
+  .spark i { flex:1; background:var(--green-muted); border:1px solid var(--green-border); border-radius:3px 3px 0 0; min-height:3px; }
+  .spark i.now { background:var(--green); border-color:var(--green); }
+  .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
+  .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+
+  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+     Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
+     wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
+     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     gdzie zmiana ma skutek. */
+  .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
+  .thr:last-of-type { border-bottom:none; }
+  .thr-name { font-size:12.5px; font-weight:600; }
+  .thr-name code { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); font-weight:400; }
+  .thr-why { font-size:11px; color:var(--text-secondary); line-height:1.5; margin-top:3px; }
+  .thr-val { font-family:var(--font-mono); font-size:15px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .thr-val small { font-size:9.5px; font-weight:400; color:var(--text-secondary); letter-spacing:0.5px; }
+  .thr-src { display:flex; justify-content:flex-end; }
+  .thr-input { width:100%; min-height:34px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); padding:6px 10px; color:var(--text-primary); font-family:var(--font-mono); font-size:14px; font-weight:700; text-align:right; outline:none; }
+  .thr-input:focus { border-color:var(--green-border); }
+  .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
+
+  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+     Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
+     WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
+  .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
+  .proof-head { display:flex; align-items:center; gap:9px; font-family:var(--font-mono); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; color:var(--amber); }
+  .diff { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; }
+  .diff-side { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:5px; }
+  .diff-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .diff-v { font-family:var(--font-mono); font-size:20px; font-weight:700; line-height:1; }
+  .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
+
+  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
   .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
@@ -288,7 +396,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — PANEL · A09 AUDYT</span>
-  <span class="slug">dziennik akcji administratorów · niezmienny · tabela do dorobienia</span>
+  <span class="slug">dziennik akcji administratorów · niezmienny · tabela wdrożona (migracja 9)</span>
   <span class="canvas-meta"><span class="pulse"></span>append-only · bez UPDATE i DELETE</span>
 </header>
 
@@ -304,7 +412,6 @@
 
   <div class="shell">
 
-    <!-- ══ SIDEBAR — kanoniczny, identyczny na każdym ekranie panelu ══ -->
     <nav class="sidebar">
       <div class="brand">
         <span class="brand-mark">
@@ -382,7 +489,6 @@
       </div>
     </nav>
 
-    <!-- ══ MAIN ══ -->
     <div class="main">
       <div class="topbar">
         <div class="crumbs">Panel <span>/</span> Rejestr <span>/</span> <b>Audyt</b></div>
@@ -401,13 +507,13 @@
           </div>
           <div class="page-actions">
             <a class="btn ghost" href="#slownik">Słownik akcji</a>
-            <a class="btn ghost" href="#schemat">Projekt tabeli</a>
+            <a class="btn ghost" href="#schemat">Schemat tabeli</a>
           </div>
         </div>
 
         <div class="banner danger">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          <span><b>Wiersze audytu są niezmienne i nieusuwalne.</b> Nie ma tu edycji, kasowania, „archiwizuj", „wyczyść starsze niż" ani eksportu, który by coś pomijał. Rola aplikacyjna bazy dostaje na tej tabeli wyłącznie <code>INSERT</code> i <code>SELECT</code> — administrator nie może usunąć własnego śladu, i to jest cel, nie skutek uboczny.</span>
+          <span><b>Wiersze audytu są niezmienne i nieusuwalne.</b> Nie ma tu edycji, kasowania, „archiwizuj", „wyczyść starsze niż" ani eksportu, który by coś pomijał. W całym <code>server/src</code> nie ma ani jednego <code>UPDATE admin_audit</code> ani <code>DELETE FROM admin_audit</code> — pilnuje tego <code>server/test/architecture.test.ts</code>, a docelowo dołoży się do niego <code>GRANT INSERT, SELECT</code> dla roli aplikacyjnej (wymaga drugiego connection stringa, decyzja wdrożeniowa). Administrator nie może usunąć własnego śladu i to jest cel, nie skutek uboczny.</span>
         </div>
 
         <div class="banner warn">
@@ -415,39 +521,55 @@
           <span><b>Audyt nigdy nie zapisuje wartości hasła.</b> Przy resecie zostaje wyłącznie fakt „ustawiono hasło", kto to zrobił, komu i kiedy. Ani hasło, ani jego hash, ani token, ani PIN nie mają prawa trafić do kolumny <code>details</code> — hasło pokazujemy administratorowi raz, w oknie, w którym powstało, i nigdzie indziej nie zostaje.</span>
         </div>
 
+        <div class="banner ok">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+          <span><b>Sprostowanie z 2026-08-01: tabela istnieje i zapisuje się od przekroju 1.</b> Ten ekran nosił wcześniej ostrzeżenie „tej tabeli jeszcze nie ma" i nazywał się jej projektem — to jest już nieaktualne. <code>admin_audit</code> weszła <b>migracją 9</b> (razem z indeksami <code>idx_audit_created</code> i <code>idx_audit_actor</code>), a wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, w tej samej transakcji co skutek. Kolumny w karcie na dole to <b>stan faktyczny</b>, nie propozycja; różnią się od pierwotnego projektu (<code>created_at</code> zamiast <code>at</code>, <code>actor_pilot_id NOT NULL</code> zamiast <code>actor_id</code> + <code>actor_login</code>, <code>target_*</code> zamiast <code>object_*</code>, <code>ip TEXT</code> zamiast <code>INET</code>). Odczyt: <code>GET /admin/api/audit</code>, zdolność <code>audit.read</code> — wyłącznie administrator.</span>
+        </div>
+
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Tej tabeli jeszcze nie ma.</b> Schemat serwera (migracje 1–6) zna <code>pilots</code>, <code>aircraft</code>, <code>events</code>, <code>sessions</code>, <code>flags</code>, <code>export_log</code> i <code>exported_sheets</code> — dziennika akcji panelu wśród nich nie ma. Ten ekran jest jednocześnie projektem tabeli <code>admin_audit</code>; propozycja kolumn na dole strony. <span class="pill amber" style="margin-left:6px;">DO DOROBIENIA NA SERWERZE</span></span>
+          <span><b>Logowań do panelu w tym dzienniku NIE MA — i nie będzie tutaj.</b> Wcześniejsza wersja tego ekranu pokazywała wiersze <code>auth.login</code> i <code>auth.login_failed</code>; obu tych akcji nie ma w katalogu <code>ADMIN_ACTIONS</code> i nie da się ich dopisać bez zmiany konstrukcji dziennika. Wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, czyli razem ze <b>skutkiem w danych</b> — udane logowanie takiego skutku nie ma, a nieudane nie ma nawet aktora (<code>actor_pilot_id NOT NULL</code>). Śledzenie prób logowania to <b>osobny dziennik bezpieczeństwa</b>, z własną tabelą, własnym cyklem życia i własną retencją. <span class="pill amber" style="margin-left:6px;">DECYZJA CZŁOWIEKA — POZA TYM EKRANEM</span></span>
         </div>
 
         <div class="tiles">
-          <div class="tile"><span class="tile-key">Wpisy dziś</span><span class="tile-val">7</span><span class="tile-note">Ostatni 14:19 UTC · ponowienie eksportu.</span></div>
-          <div class="tile"><span class="tile-key">Nieudane logowania · 7 dni</span><span class="tile-val amber">2</span><span class="tile-note">Oba z 89.64.20.7 · konta niezablokowane.</span></div>
-          <div class="tile"><span class="tile-key">Korekty po oknie 24 h · 30 dni</span><span class="tile-val blue">3</span><span class="tile-note">Wyłącznie administrator.</span></div>
-          <div class="tile"><span class="tile-key">Retencja</span><span class="tile-val green">∞</span><span class="tile-note">Bez limitu — wiersze zostają na zawsze.</span></div>
+          <div class="tile"><span class="tile-key">Wpisy w zawężeniu</span><span class="tile-val">13</span><span class="tile-note">Liczba z serwera (<code>total</code> całym filtrem), nie z pobranej strony.</span></div>
+          <div class="tile"><span class="tile-key">Wpisy dziś · UTC</span><span class="tile-val blue">7</span><span class="tile-note">Doba UTC, nie lokalna — przy zachowanym pozostałym zawężeniu.</span></div>
+          <div class="tile"><span class="tile-key">Korekty rejestru · 30 dni</span><span class="tile-val amber">3</span><span class="tile-note">Dopisania <code>event_correction</code> po oknie 24 h. Wyłącznie administrator.</span></div>
+          <div class="tile"><span class="tile-key">Retencja</span><span class="tile-val green">∞</span><span class="tile-note">Bez limitu i bez czyszczenia — w kodzie nie ma <code>UPDATE</code> ani <code>DELETE</code> na tej tabeli.</span></div>
         </div>
 
+        <!-- Filtry jadą przez ADRES (`?akcje=&kto=&typ=&obiekt=&od=&do=&sort=`), bo linki
+             „ślad w audycie" z karty dnia (A02a) i z korekty (A02b) muszą prowadzić do
+             dziennika ODFILTROWANEGO po obiekcie, a nie do surowej listy wszystkiego.
+             Chipy zawężeń są ZDEJMOWALNE — pokazują to, co niesie adres. Wyszukiwarka
+             dopasowuje identyfikator obiektu DOKŁADNIE: trasa nie ma wyszukiwania
+             pełnotekstowego po nazwisku, rejestracji ani po adresie IP. -->
         <div class="filters">
           <label class="search">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input placeholder="Szukaj: użytkownik, obiekt, rejestracja, UUID, adres IP…" />
+            <input placeholder="Identyfikator obiektu: uuid zdarzenia, numer flagi, kod pilota — Enter filtruje" />
           </label>
-          <span class="chip on">Wszyscy</span>
-          <span class="chip">T. Małkiewicz · 10</span>
-          <span class="chip">A. Wrzosek · 3</span>
-          <span class="chip">bez uwierzytelnienia · 2</span>
-          <span class="chip">27 → 31 JUL <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg></span>
+          <span class="chip on">typ: event · zdejmij</span>
+          <span class="chip on">konto: TMK · zdejmij</span>
+          <span class="chip on">2026-07-27 → 2026-07-31 · zdejmij</span>
+          <span class="pill blue" style="margin-left:auto;"><span class="dot"></span>Wszystkie czasy UTC</span>
+          <span class="pill dim">Pokazano 13 z 13.</span>
         </div>
 
+        <!-- Chip grupy to KILKA kodów katalogu naraz (`?action=` powtórzony) — grupy
+             powstają z pola `group` w katalogu panelu, więc nowa akcja wpada do właściwego
+             chipa bez drugiej listy. Liczników przy chipach NIE MA: serwer nie wystawia
+             agregatu `GROUP BY action`, a liczba policzona z widocznej strony kłamałaby
+             przy każdym obcięciu kursorem. -->
         <div class="filters">
           <span class="chip on">Wszystkie akcje</span>
-          <span class="chip">Konta · 4</span>
-          <span class="chip">Flota · 3</span>
-          <span class="chip">Flagi · 2</span>
-          <span class="chip">Korekty · 1</span>
-          <span class="chip">Progi · 1</span>
-          <span class="chip">Eksport · 1</span>
-          <span class="chip amber">Logowania · 3</span>
+          <span class="chip">Flagi</span>
+          <span class="chip">Korekty rejestru</span>
+          <span class="chip">Eksport</span>
+          <span class="chip">Konta</span>
+          <span class="chip">Flota</span>
+          <span class="chip">Progi</span>
+          <span class="chip">Konserwacja</span>
         </div>
 
         <div class="table-wrap">
@@ -465,141 +587,206 @@
             <tbody>
 
               <tr>
-                <td class="num">31 JUL 14:19:02<span class="cell-sub">#8814</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
+                <td class="num">31 JUL 2026 14:19:02<span class="cell-sub">#8814</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
                 <td><span class="pill blue">export.retry</span><span class="cell-sub">ponowienie eksportu</span></td>
-                <td class="mono">2026-07-29_SP-KLM<span class="cell-sub">karta arkusza</span></td>
-                <td class="dim">Ręczne ponowienie rewizji 3. Poprzedni błąd: <code>sheets_write_timeout (30 s)</code>, próba 3/6. W arkuszu pozostawała rewizja 2 z 29 JUL 20:44. <a href="A05-eksporty.html" style="color:var(--green)">Monitor eksportu →</a></td>
+                <td class="mono"><a class="cell-link" href="#">2026-07-29_SP-KLM</a><span class="cell-sub">sheet</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">rewizja karty</span><span class="det-v">3</span></span>
+                    <span class="det-row"><span class="det-k">attempt</span><span class="det-v raw">3</span></span>
+                    <span class="det-row"><span class="det-k">lastError</span><span class="det-v raw">sheets_write_timeout (30 s)</span></span>
+                  </span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">31 JUL 14:07:44<span class="cell-sub">#8813</span></td>
-                <td class="cell-strong">Anna Wrzosek<span class="cell-sub">szef wyszkolenia</span></td>
+                <td class="num">31 JUL 2026 14:07:44<span class="cell-sub">#8813</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Anna Kowalska</a><span class="cell-sub">training_lead · AKO</span></td>
                 <td><span class="pill green">flag.resolve</span><span class="cell-sub">rozwiązanie flagi</span></td>
-                <td class="mono">#1044 · mh_gap<span class="cell-sub">SP-XYZ · 2 sesje</span></td>
-                <td class="dim">Status <code>open → resolved</code>. Komentarz: „Przeloty techniczne po przeglądzie 100 h — 0.4 h bez sesji, wpis w książce statku potwierdza. Bez korekty." Sesje <span class="mono">c3b8…5a17</span>, <span class="mono">5d02…1f7a</span>. Re-eksport karty <code>2026-07-29_SP-XYZ</code> nie ruszył — dzień wciąż blokuje flaga #1043.</td>
+                <td class="mono"><a class="cell-link" href="#">1044</a><span class="cell-sub">flag</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">komentarz</span><span class="det-v">Przeloty techniczne po przeglądzie 100 h — 0.4 h bez sesji, wpis w książce statku potwierdza. Bez korekty.</span></span>
+                    <span class="det-row"><span class="det-k">typ flagi</span><span class="det-v">mh_gap</span></span>
+                    <span class="det-row"><span class="det-k">sesje</span><span class="det-v">c3b8…5a17 · 5d02…1f7a</span></span>
+                  </span>
+                </td>
                 <td class="num mono dim">10.20.4.63</td>
               </tr>
 
               <tr>
-                <td class="num">31 JUL 11:02:10<span class="cell-sub">#8812</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
-                <td><span class="pill amber">event.correction</span><span class="cell-sub">korekta po oknie 24 h</span></td>
-                <td class="mono">4c88…9a01 · landing<span class="cell-sub">sesja 30 JUL · SP-ABC</span></td>
-                <td class="dim"><code>retime</code> 11:41 → 11:38 UTC. Powód: „lądowanie wykryte 3 min po dobiegu". Okno samodzielnej korekty pilota (24 h) minęło 31 JUL 06:05. <b>Dopisano zdarzenie <code>event_correction</code> — oryginalny odczyt zostaje w rejestrze.</b> <a href="A02b-korekta.html" style="color:var(--green)">Ekran korekty →</a></td>
+                <td class="num">31 JUL 2026 11:02:10<span class="cell-sub">#8812</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
+                <td><span class="pill amber">event.correct</span><span class="cell-sub">korekta po oknie 24 h</span></td>
+                <td class="mono"><a class="cell-link" href="#">4c88…9a01</a><span class="cell-sub">event</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">sesja</span><span class="det-v">a3f9c210-0000-4000-8000-0000000015bd</span></span>
+                    <span class="det-row"><span class="det-k">uuid korekty</span><span class="det-v">7e21b904-0000-4000-8000-000000004c10</span></span>
+                    <span class="det-row"><span class="det-k">rodzaj korekty</span><span class="det-v">retime</span></span>
+                    <span class="det-row"><span class="det-k">nowy czas zdarzenia</span><span class="det-v">2026-07-30 11:38:00 UTC (1785411480000)</span></span>
+                    <span class="det-row"><span class="det-k">powód</span><span class="det-v">Lądowanie wykryte 3 min po dobiegu.</span></span>
+                  </span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">31 JUL 09:36:51<span class="cell-sub">#8811</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
-                <td><span class="pill red">pilot.password_set</span><span class="cell-sub">reset hasła</span></td>
-                <td class="mono">Marek Bąk · MBK<span class="cell-sub">konto pilota</span></td>
-                <td class="dim">Ustawiono hasło startowe. <b style="color:var(--amber)">Wartość hasła nie jest zapisywana — ani jawnie, ani jako hash.</b> Pilot ustawi PIN przy pierwszym odblokowaniu aplikacji. Unieważniono 1 refresh token.</td>
+                <td class="num">31 JUL 2026 09:36:51<span class="cell-sub">#8811</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
+                <td><span class="pill red">pilot.password_reset</span><span class="cell-sub">reset hasła</span></td>
+                <td class="mono"><a class="cell-link" href="#">MBK</a><span class="cell-sub">pilot</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">revokedTokens</span><span class="det-v raw">1</span></span>
+                  </span>
+                  <span class="hint" style="margin-top:6px;"><b>Wartości hasła nie ma i nie będzie</b> — ani jawnie, ani jako hash. W dzienniku zostaje fakt, komu i kiedy.</span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">31 JUL 09:35:12<span class="cell-sub">#8810</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
+                <td class="num">31 JUL 2026 09:35:12<span class="cell-sub">#8810</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
                 <td><span class="pill green">pilot.create</span><span class="cell-sub">założenie konta</span></td>
-                <td class="mono">Marek Bąk · MBK<span class="cell-sub">konto pilota</span></td>
-                <td class="dim">Rola: <code>pilot</code> · e-mail <span class="mono">m.bak@aeroklub-uz.pl</span> · <code>active = true</code>. Konta zakłada wyłącznie administrator — aplikacja nie ma samodzielnej rejestracji.</td>
+                <td class="mono"><a class="cell-link" href="#">MBK</a><span class="cell-sub">pilot</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">code</span><span class="det-v raw">MBK</span></span>
+                    <span class="det-row"><span class="det-k">name</span><span class="det-v raw">Marek Bąk</span></span>
+                    <span class="det-row"><span class="det-k">role</span><span class="det-v raw">pilot</span></span>
+                  </span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">31 JUL 08:12:44<span class="cell-sub">#8809</span></td>
-                <td class="cell-strong">Anna Wrzosek<span class="cell-sub">szef wyszkolenia</span></td>
-                <td><span class="pill dim">auth.login</span><span class="cell-sub">logowanie do panelu</span></td>
-                <td class="mono dim">sesja panelu<span class="cell-sub">token 12 h</span></td>
-                <td class="dim">Logowanie udane. Chrome 141 / Windows. Zakres uprawnień: podgląd, statystyki, rozwiązywanie flag.</td>
-                <td class="num mono dim">10.20.4.63</td>
-              </tr>
-
-              <tr>
-                <td class="num">31 JUL 08:11:20<span class="cell-sub">#8808</span></td>
-                <td class="cell-strong dim">— <span class="cell-sub">bez uwierzytelnienia</span></td>
-                <td><span class="pill red">auth.login_failed</span><span class="cell-sub">nieudane logowanie</span></td>
-                <td class="mono">login: a.wrzosek</td>
-                <td class="dim">Błędne hasło · próba 1/5 · konto niezablokowane. Wpisanej wartości nie zapisujemy — ani prawidłowej, ani błędnej.</td>
-                <td class="num mono" style="color:var(--amber)">89.64.20.7</td>
-              </tr>
-
-              <tr>
-                <td class="num">30 JUL 17:22:09<span class="cell-sub">#8807</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
-                <td><span class="pill amber">threshold.change</span><span class="cell-sub">zmiana progu detekcji</span></td>
-                <td class="mono">CLOCK_DRIFT_MS<span class="cell-sub">tolerances.ts · dziś liczy telefon</span></td>
-                <td class="dim">150 s → <b>120 s</b>. Powód: powrót do wartości z §4.5 po odtworzeniu nagrania kalibracyjnego (<code>replay.ts</code>, ślad z 28 JUL). Progów nie stroimy „na wyczucie". <a href="A08-progi.html" style="color:var(--green)">Progi i ustawienia →</a></td>
+                <td class="num">30 JUL 2026 17:22:09<span class="cell-sub">#8807</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
+                <td><span class="pill amber">thresholds.update</span><span class="cell-sub">zmiana tolerancji flag</span></td>
+                <td class="mono"><a class="cell-link" href="#">FUEL_TOLERANCE_PCT</a><span class="cell-sub">threshold</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">from</span><span class="det-v raw">7</span></span>
+                    <span class="det-row"><span class="det-k">to</span><span class="det-v raw">5</span></span>
+                    <span class="det-row"><span class="det-k">powód</span><span class="det-v">Powrót do wartości z §4.5 po odtworzeniu nagrania kalibracyjnego.</span></span>
+                  </span>
+                  <span class="hint" style="margin-top:6px;">Progi <b>detekcji</b> (kołowanie, start, lądowanie) są tylko do odczytu — liczy je telefon offline. Z panelu zmieniają się wyłącznie tolerancje flag.</span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">30 JUL 15:04:18<span class="cell-sub">#8806</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
-                <td><span class="pill amber">aircraft.service_status</span><span class="cell-sub">wyłączenie ze służby</span></td>
-                <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
-                <td class="dim"><code>active → maintenance</code>. Powód: przegląd 100 h. Samolot znika z listy wyboru w aplikacji przy następnym odświeżeniu <code>/reference</code>; sesje historyczne bez zmian.</td>
+                <td class="num">30 JUL 2026 15:04:18<span class="cell-sub">#8806</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
+                <td><span class="pill red">aircraft.disable</span><span class="cell-sub">wyłączenie ze służby</span></td>
+                <td class="mono"><a class="cell-link" href="#">SP-XYZ</a><span class="cell-sub">aircraft</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">serviceStatus</span><span class="det-v raw">{"from":"active","to":"maintenance"}</span></span>
+                    <span class="det-row"><span class="det-k">powód</span><span class="det-v">Przegląd 100 h.</span></span>
+                  </span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">30 JUL 10:58:02<span class="cell-sub">#8805</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
+                <td class="num">30 JUL 2026 10:58:02<span class="cell-sub">#8805</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
                 <td><span class="pill blue">aircraft.update</span><span class="cell-sub">edycja samolotu</span></td>
-                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
-                <td class="dim"><code>capacity_l</code> 1240 → <b>1257</b> (pojemność z instrukcji użytkowania). <code>mh_format: decimal</code> bez zmian. Zmiana pojemności przesuwa tolerancję paliwa: 62 L → <b>63 L</b> (5%).</td>
+                <td class="mono"><a class="cell-link" href="#">SP-KLM</a><span class="cell-sub">aircraft</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">capacityL</span><span class="det-v raw">{"from":1240,"to":1257}</span></span>
+                  </span>
+                  <span class="hint" style="margin-top:6px;">Pole <code>capacityL</code> nie ma jeszcze nazwy w słowniku panelu, więc widać je z <b>surowym kluczem</b> i surową wartością. Tak ma być: najpierw widać wszystko, potem się to nazywa.</span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">29 JUL 19:40:55<span class="cell-sub">#8804</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
-                <td><span class="pill blue">pilot.role_change</span><span class="cell-sub">zmiana roli</span></td>
-                <td class="mono">Anna Wrzosek · AWR</td>
-                <td class="dim"><code>pilot → szef wyszkolenia</code>. Zyskuje: podgląd panelu, statystyki, rozwiązywanie flag. Nie zyskuje: konta, flota, progi, korekty po oknie 24 h.</td>
+                <td class="num">29 JUL 2026 19:40:55<span class="cell-sub">#8804</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
+                <td><span class="pill blue">pilot.update</span><span class="cell-sub">edycja konta</span></td>
+                <td class="mono"><a class="cell-link" href="#">AKO</a><span class="cell-sub">pilot</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">role</span><span class="det-v raw">{"from":"pilot","to":"training_lead"}</span></span>
+                  </span>
+                  <span class="hint" style="margin-top:6px;">Zmiana roli <b>nie ma osobnego kodu</b> w katalogu — jest zwykłą edycją konta. Mockup pokazywał tu <code>pilot.role_change</code>; taka akcja nie istnieje.</span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">29 JUL 14:02:31<span class="cell-sub">#8803</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
+                <td class="num">29 JUL 2026 14:02:31<span class="cell-sub">#8803</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
                 <td><span class="pill red">pilot.deactivate</span><span class="cell-sub">deaktywacja konta</span></td>
-                <td class="mono">Krzysztof Zawada · KRZ</td>
-                <td class="dim"><code>active true → false</code>. Konto <b>zostaje w bazie</b> — zdarzenia historyczne wskazują na <code>pic_id</code>, więc usunięcie pilota rozwaliłoby rejestr. Unieważniono 2 refresh tokeny.</td>
+                <td class="mono"><a class="cell-link" href="#">KRZ</a><span class="cell-sub">pilot</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">active</span><span class="det-v raw">{"from":true,"to":false}</span></span>
+                    <span class="det-row"><span class="det-k">revokedTokens</span><span class="det-v raw">2</span></span>
+                  </span>
+                  <span class="hint" style="margin-top:6px;">Konto <b>zostaje w bazie</b> — zdarzenia historyczne wskazują na <code>pic_id</code>, więc usunięcie pilota rozwaliłoby rejestr.</span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
               <tr>
-                <td class="num">28 JUL 08:02:31<span class="cell-sub">#8802</span></td>
-                <td class="cell-strong">Anna Wrzosek<span class="cell-sub">szef wyszkolenia</span></td>
+                <td class="num">28 JUL 2026 08:02:31<span class="cell-sub">#8802</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Anna Kowalska</a><span class="cell-sub">training_lead · AKO</span></td>
                 <td><span class="pill green">flag.resolve</span><span class="cell-sub">rozwiązanie flagi</span></td>
-                <td class="mono">#1038 · session_overlap<span class="cell-sub">SP-ABC · 2 sesje</span></td>
-                <td class="dim">Status <code>open → resolved</code>. Komentarz: „Telefon KRZ dosłał <code>day_close</code> o 07:58 — nakładka pozorna." <b>Odblokowana karta <code>2026-07-27_SP-ABC</code></b>, eksport rew. 1 poszedł 08:04.</td>
+                <td class="mono"><a class="cell-link" href="#">1038</a><span class="cell-sub">flag</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">komentarz</span><span class="det-v">Telefon KRZ dosłał day_close o 07:58 — nakładka pozorna.</span></span>
+                    <span class="det-row"><span class="det-k">typ flagi</span><span class="det-v">session_overlap</span></span>
+                    <span class="det-row"><span class="det-k">sesje</span><span class="det-v">9a11…77c4 · 2f60…01ab</span></span>
+                  </span>
+                </td>
                 <td class="num mono dim">10.20.4.63</td>
               </tr>
 
+              <!-- WPIS HISTORYCZNY: kod akcji SPOZA katalogu `ADMIN_ACTIONS` i konto,
+                   którego nie ma już w `pilots`. Kolumna `action` celowo nie ma `CHECK`-a
+                   (migracja 9), więc taki wiersz jest legalny — a ekran ma go pokazać
+                   DOSŁOWNIE, zamiast się nim wywrócić albo go ukryć. Plakietka jest
+                   wygaszona, kod zostaje surowy, wiersz zostaje na liście. -->
               <tr>
-                <td class="num">27 JUL 22:14:08<span class="cell-sub">#8801</span></td>
-                <td class="cell-strong dim">— <span class="cell-sub">bez uwierzytelnienia</span></td>
-                <td><span class="pill red">auth.login_failed</span><span class="cell-sub">nieudane logowanie</span></td>
-                <td class="mono">login: t.malkiewicz</td>
-                <td class="dim">Błędne hasło · próba 2/5 · konto niezablokowane. Ten sam adres co wpis #8808 — warto sprawdzić.</td>
-                <td class="num mono" style="color:var(--amber)">89.64.20.7</td>
+                <td class="num">27 JUL 2026 12:31:09<span class="cell-sub">#8801</span></td>
+                <td class="cell-strong dim">ZZZ<span class="cell-sub">superadmin · konta nie ma już w rejestrze</span></td>
+                <td><span class="pill dim">pilot.merge</span><span class="cell-sub">kod spoza katalogu — wpis historyczny</span></td>
+                <td class="mono"><a class="cell-link" href="#">JSE</a><span class="cell-sub">pilot</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">mergedFrom</span><span class="det-v raw">JS2</span></span>
+                    <span class="det-row"><span class="det-k">note</span><span class="det-v raw">Akcja wycofana z katalogu 2026-05.</span></span>
+                  </span>
+                </td>
+                <td class="num mono dim">—<span class="cell-sub">akcja spoza żądania HTTP</span></td>
               </tr>
 
               <tr>
-                <td class="num">27 JUL 07:15:00<span class="cell-sub">#8800</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
+                <td class="num">27 JUL 2026 07:15:00<span class="cell-sub">#8800</span></td>
+                <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
                 <td><span class="pill green">aircraft.create</span><span class="cell-sub">dodanie samolotu</span></td>
-                <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
-                <td class="dim"><code>capacity_l 100</code> · <code>mh_format hhmm</code> · <code>dual_required false</code> · rok 2011. Tolerancja paliwa dla tej pojemności: <b>10 L</b> (minimum wygrywa z 5%).</td>
+                <td class="mono"><a class="cell-link" href="#">SP-XYZ</a><span class="cell-sub">aircraft</span></td>
+                <td>
+                  <span class="det">
+                    <span class="det-row"><span class="det-k">reg</span><span class="det-v raw">SP-XYZ</span></span>
+                    <span class="det-row"><span class="det-k">capacityL</span><span class="det-v raw">100</span></span>
+                    <span class="det-row"><span class="det-k">mhFormat</span><span class="det-v raw">hhmm</span></span>
+                    <span class="det-row"><span class="det-k">dualRequired</span><span class="det-v raw">false</span></span>
+                  </span>
+                </td>
                 <td class="num mono dim">10.20.4.11</td>
               </tr>
 
             </tbody>
+
           </table>
         </div>
 
@@ -613,39 +800,48 @@
                   <tr><th>Kod</th><th>Akcja</th><th>Rola</th><th>Co dokładnie zapisujemy</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td class="mono">pilot.create</td><td class="dim">Założenie konta</td><td><span class="pill dim">admin</span></td><td class="dim">Kod pilota, imię i nazwisko, e-mail, rola startowa.</td></tr>
-                  <tr><td class="mono">pilot.password_set</td><td class="dim">Reset / ustawienie hasła</td><td><span class="pill dim">admin</span></td><td style="color:var(--amber)">Wyłącznie fakt i komu. <b>Nigdy wartości ani hashu.</b></td></tr>
-                  <tr><td class="mono">pilot.deactivate</td><td class="dim">Deaktywacja konta</td><td><span class="pill dim">admin</span></td><td class="dim">Zmiana <code>active</code>, liczba unieważnionych tokenów. Konto zostaje w bazie.</td></tr>
-                  <tr><td class="mono">pilot.role_change</td><td class="dim">Zmiana roli</td><td><span class="pill dim">admin</span></td><td class="dim">Rola przed i po, wraz z listą zyskiwanych uprawnień.</td></tr>
-                  <tr><td class="mono">aircraft.create</td><td class="dim">Dodanie samolotu</td><td><span class="pill dim">admin</span></td><td class="dim">Rejestracja, typ, pojemność, format MH, wymóg dual.</td></tr>
-                  <tr><td class="mono">aircraft.update</td><td class="dim">Edycja samolotu</td><td><span class="pill dim">admin</span></td><td class="dim">Każde pole przed → po; przy pojemności także nowa tolerancja paliwa.</td></tr>
-                  <tr><td class="mono">aircraft.service_status</td><td class="dim">Wyłączenie ze służby</td><td><span class="pill dim">admin</span></td><td class="dim">Status przed → po i powód. Sesje historyczne bez zmian.</td></tr>
-                  <tr><td class="mono">flag.resolve</td><td class="dim">Rozwiązanie flagi</td><td><span class="pill green">admin + szef</span></td><td class="dim">Numer i typ flagi, obie sesje, pełna treść komentarza, odblokowane karty.</td></tr>
-                  <tr><td class="mono">event.correction</td><td class="dim">Korekta po oknie 24 h</td><td><span class="pill dim">admin</span></td><td class="dim">UUID zdarzenia, rodzaj (<code>retime</code>/<code>void</code>), wartość przed → po, powód.</td></tr>
-                  <tr><td class="mono">threshold.change</td><td class="dim">Zmiana progu detekcji</td><td><span class="pill dim">admin</span></td><td class="dim">Nazwa progu, wartość przed → po, uzasadnienie kalibracyjne.</td></tr>
-                  <tr><td class="mono">export.retry</td><td class="dim">Ponowienie eksportu</td><td><span class="pill dim">admin</span></td><td class="dim">Nazwa karty, numer rewizji i próby, treść poprzedniego błędu.</td></tr>
-                  <tr><td class="mono">auth.login</td><td class="dim">Logowanie do panelu</td><td><span class="pill green">admin + szef</span></td><td class="dim">Przeglądarka, system, czas życia tokenu.</td></tr>
-                  <tr><td class="mono">auth.login_failed</td><td class="dim">Nieudane logowanie</td><td><span class="pill dim">—</span></td><td class="dim">Podany login (nie hasło), numer próby, adres IP.</td></tr>
+                  <tr><td><span class="pill green">flag.resolve</span></td><td class="dim">rozwiązanie flagi</td><td><span class="pill green">admin + szef</span></td><td class="dim">Numer i typ flagi, sesje, których dotyczyła, oraz pełna treść komentarza.</td></tr>
+                  <tr><td><span class="pill amber">event.correct</span></td><td class="dim">korekta po oknie 24 h</td><td><span class="pill dim">admin</span></td><td class="dim">UUID poprawianego zdarzenia, rodzaj (<code>retime</code>/<code>void</code>), nowy czas i powód.</td></tr>
+                  <tr><td><span class="pill blue">export.retry</span></td><td class="dim">ponowienie eksportu</td><td><span class="pill dim">admin</span></td><td class="dim">Nazwa karty, numer rewizji i próby, treść poprzedniego błędu.</td></tr>
+                  <tr><td><span class="pill green">pilot.create</span></td><td class="dim">założenie konta</td><td><span class="pill dim">admin</span></td><td class="dim">Kod pilota, imię i nazwisko, e-mail, rola startowa.</td></tr>
+                  <tr><td><span class="pill blue">pilot.update</span></td><td class="dim">edycja konta</td><td><span class="pill dim">admin</span></td><td class="dim">Każde zmienione pole przed → po — razem ze <b>zmianą roli</b>, która nie ma osobnego kodu.</td></tr>
+                  <tr><td><span class="pill red">pilot.deactivate</span></td><td class="dim">deaktywacja konta</td><td><span class="pill dim">admin</span></td><td class="dim">Zmiana <code>active</code>, liczba unieważnionych tokenów. Konto zostaje w bazie.</td></tr>
+                  <tr><td><span class="pill red">pilot.password_reset</span></td><td class="dim">reset hasła</td><td><span class="pill dim">admin</span></td><td style="color:var(--amber)">Wyłącznie fakt i komu. <b>Nigdy wartości, hashu, tokenu ani PIN-u.</b></td></tr>
+                  <tr><td><span class="pill green">aircraft.create</span></td><td class="dim">dodanie samolotu</td><td><span class="pill dim">admin</span></td><td class="dim">Rejestracja, typ, pojemność, format licznika MH, wymóg dual.</td></tr>
+                  <tr><td><span class="pill blue">aircraft.update</span></td><td class="dim">edycja samolotu</td><td><span class="pill dim">admin</span></td><td class="dim">Każde pole przed → po; przy pojemności także wynikająca z niej tolerancja paliwa.</td></tr>
+                  <tr><td><span class="pill red">aircraft.disable</span></td><td class="dim">wyłączenie ze służby</td><td><span class="pill dim">admin</span></td><td class="dim">Status przed → po i powód. Sesje historyczne bez zmian.</td></tr>
+                  <tr><td><span class="pill amber">thresholds.update</span></td><td class="dim">zmiana tolerancji flag</td><td><span class="pill dim">admin</span></td><td class="dim">Nazwa progu, wartość przed → po, uzasadnienie. Progi <b>detekcji</b> są tylko do odczytu.</td></tr>
+                  <tr><td><span class="pill amber">maintenance.rebuild_projections</span></td><td class="dim">przebudowa projekcji</td><td><span class="pill dim">admin</span></td><td class="dim">Liczba przeliczonych sesji. Zmienia liczby w panelu, nie zmieniając ani jednego zdarzenia.</td></tr>
+                  <tr><td><span class="pill blue">maintenance.retry_exports</span></td><td class="dim">ponowienie zaległych eksportów</td><td><span class="pill dim">admin</span></td><td class="dim">Liczba kart w kolejce i wynik każdej próby.</td></tr>
+                  <tr><td><span class="pill dim">maintenance.prune_tokens</span></td><td class="dim">czyszczenie wygasłych tokenów</td><td><span class="pill dim">admin</span></td><td class="dim">Liczba skasowanych wierszy i zakres dat wygaśnięcia — nigdy same tokeny.</td></tr>
                 </tbody>
               </table>
             </div>
+            <span class="hint">Katalog jest <b>pełny od początku</b>, choć część akcji nie ma jeszcze ekranu, który by je wywoływał — odpowiada na pytanie o ZAKRES panelu, nie o stan wdrożenia (<span class="code-ref">server/src/domain/adminActions.ts</span>). Kody są surowe (<code>zasób.czynność</code>); nazwy po polsku, plakietki i grupy chipów są własnością panelu, bo <b>serwer nie zna języka interfejsu</b>. Ton plakietki mówi, jak głęboko akcja sięga: czerwony odbiera dostęp albo wyłącza byt, bursztynowy zmienia liczby dokumentu klubu, zielony powołuje byt do życia albo zamyka sprawę, niebieski to edycja opisowa i powtórzenie operacji.</span>
+            <span class="hint"><b>Rozjazd sprostowany 2026-08-01.</b> Wcześniejsza wersja tego słownika miała kody, których serwer nigdy nie znał: <code>event.correction</code> (jest <code>event.correct</code>), <code>threshold.change</code> (jest <code>thresholds.update</code>), <code>pilot.password_set</code> (jest <code>pilot.password_reset</code>), <code>aircraft.service_status</code> (jest <code>aircraft.disable</code>) i <code>pilot.role_change</code> (nie istnieje — zmiana roli to <code>pilot.update</code>). Brakowało też trzech akcji <code>maintenance.*</code>. Źródłem prawdy jest <code>ADMIN_ACTIONS</code>, a zgodność panelu z nim przybija test lustra.</span>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:16px;">
 
+            <!-- SPROSTOWANIE 2026-08-01: to nie jest już „projekt tabeli”. Kolumny niżej
+                 są przepisane z `MIGRATION_9` w `server/src/infrastructure/pg/schema.ts`
+                 i pilnuje ich `server/test/schema.test.ts`. Cztery nazwy różnią się od
+                 pierwotnego projektu — `at`→`created_at`, `actor_id`+`actor_login`→
+                 `actor_pilot_id NOT NULL`, `object_*`→`target_*`, `INET`→`TEXT`. -->
             <div class="card" id="schemat">
-              <div class="card-title">Projekt tabeli <code style="font-family:var(--font-mono);color:var(--text-primary);">admin_audit</code> <span class="spacer"></span><span class="pill amber">DO DOROBIENIA</span></div>
+              <div class="card-title">Tabela <code style="font-family:var(--font-mono);color:var(--text-primary);">admin_audit</code> <span class="spacer"></span><span class="pill green">MIGRACJA 9</span></div>
               <div class="kv"><span class="kv-k">id</span><span class="kv-v"><small>BIGSERIAL PRIMARY KEY</small></span></div>
-              <div class="kv"><span class="kv-k">at</span><span class="kv-v"><small>TIMESTAMPTZ NOT NULL — UTC</small></span></div>
-              <div class="kv"><span class="kv-k">actor_id</span><span class="kv-v"><small>TEXT REFERENCES pilots(id)<br />NULL przy nieudanym logowaniu</small></span></div>
-              <div class="kv"><span class="kv-k">actor_login</span><span class="kv-v"><small>TEXT — surowy login z próby</small></span></div>
-              <div class="kv"><span class="kv-k">actor_role</span><span class="kv-v"><small>TEXT NOT NULL</small></span></div>
-              <div class="kv"><span class="kv-k">action</span><span class="kv-v"><small>TEXT NOT NULL — słownik obok</small></span></div>
-              <div class="kv"><span class="kv-k">object_type</span><span class="kv-v"><small>pilot · aircraft · flag<br />event · sheet · threshold · session</small></span></div>
-              <div class="kv"><span class="kv-k">object_id</span><span class="kv-v"><small>TEXT</small></span></div>
+              <div class="kv"><span class="kv-k">created_at</span><span class="kv-v"><small>TIMESTAMPTZ NOT NULL<br />DEFAULT now() — UTC</small></span></div>
+              <div class="kv"><span class="kv-k">actor_pilot_id</span><span class="kv-v"><small>TEXT <b style="color:var(--amber)">NOT NULL</b><br />bez klucza obcego — wpis przeżywa konto</small></span></div>
+              <div class="kv"><span class="kv-k">actor_role</span><span class="kv-v"><small>TEXT NOT NULL — rola z chwili akcji</small></span></div>
+              <div class="kv"><span class="kv-k">action</span><span class="kv-v"><small>TEXT NOT NULL — <b>bez CHECK-a</b></small></span></div>
+              <div class="kv"><span class="kv-k">target_type</span><span class="kv-v"><small>TEXT — flag · event · pilot<br />aircraft · sheet · threshold</small></span></div>
+              <div class="kv"><span class="kv-k">target_id</span><span class="kv-v"><small>TEXT</small></span></div>
               <div class="kv"><span class="kv-k">details</span><span class="kv-v"><small>JSONB NOT NULL DEFAULT '{}'</small></span></div>
-              <div class="kv"><span class="kv-k">ip</span><span class="kv-v"><small>INET</small></span></div>
-              <span class="hint"><b>Bez <code>UPDATE</code> i <code>DELETE</code>:</b> rola aplikacyjna dostaje <code>GRANT INSERT, SELECT</code> i nic więcej — niezmienność wymuszona uprawnieniami bazy, nie dyscypliną programisty. Bez unikalności: dwa identyczne wpisy z tej samej sekundy to dwie realne akcje, nie duplikat. Bez retencji: dziennik nie ma daty ważności.</span>
+              <div class="kv"><span class="kv-k">ip</span><span class="kv-v"><small>TEXT — NULL przy akcji spoza HTTP</small></span></div>
+              <span class="hint"><b>Bez <code>CHECK</code>-a na <code>action</code> i <code>actor_role</code>:</b> wiersz jest zapisem HISTORYCZNYM, więc przemianowanie akcji albo wycofanie roli z katalogu nie może unieważnić tego, co zdarzyło się rok temu. Dlatego ten ekran pokazuje nieznany kod <b>dosłownie</b> (wiersz #8801), zamiast się nim wywrócić albo go ukryć.</span>
+              <span class="hint"><b>Bez <code>UPDATE</code> i <code>DELETE</code>:</b> docelowo rola aplikacyjna dostaje <code>GRANT INSERT, SELECT</code> i nic więcej; do czasu rozdzielenia connection stringów pilnuje tego <code>server/test/architecture.test.ts</code> — żaden plik w <code>src/</code> nie ma prawa zawierać zapisu do tej tabeli. Bez unikalności: dwa identyczne wpisy z tej samej sekundy to dwie realne akcje. Bez retencji: dziennik nie ma daty ważności.</span>
+              <span class="hint">Odczyt: <code>GET /admin/api/audit</code>, paginacja <b>kursorem keyset</b> po <code>(created_at, id)</code> pod indeksem <code>idx_audit_created</code>. Nie <code>OFFSET</code> — dziennik rośnie w trakcie przeglądania, a offset na rosnącej tabeli gubi wiersze.</span>
             </div>
 
             <div class="card">
@@ -654,7 +850,9 @@
               <div class="kv"><span class="kv-k">Tokeny i refresh tokeny</span><span class="kv-v red">nigdy</span></div>
               <div class="kv"><span class="kv-k">Kasowanie wierszy</span><span class="kv-v red">nigdy</span></div>
               <div class="kv"><span class="kv-k">Edycja wpisu</span><span class="kv-v red">nigdy</span></div>
+              <div class="kv"><span class="kv-k">Logowania do panelu</span><span class="kv-v amber">nie powstają</span></div>
               <div class="kv"><span class="kv-k">Ślad pozycji GPS pilota</span><span class="kv-v dim">nie dotyczy</span></div>
+              <span class="hint"><b>Logowań nie ma i to jest granica konstrukcji, nie brak.</b> Wiersz powstaje wyłącznie przez <code>AuditedWrite</code>, w tej samej transakcji co skutek — a udane logowanie żadnego skutku w danych nie ma, nieudane nie ma zaś nawet aktora (<code>actor_pilot_id NOT NULL</code>). Gdyby te wpisy miały powstawać, musiałby to być <b>osobny dziennik bezpieczeństwa</b>, z własną tabelą i własnym cyklem życia. To decyzja do podjęcia, a nie poprawka do tego ekranu.</span>
               <span class="hint">Audyt opisuje akcje <b>panelu</b>, nie ruch samolotów — to, co robił pilot, jest w <a href="A04-zdarzenia.html" style="color:var(--green)">rejestrze zdarzeń</a> i tam też zostaje na zawsze. Dwa różne dzienniki, dwie różne odpowiedzialności; żadnego z nich nie da się posprzątać.</span>
             </div>
 

@@ -154,7 +154,10 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; }
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+     definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
+  .tile:hover { border-color:var(--border-strong); }
   .tile-key { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
   .tile-val { font-family:var(--font-mono); font-size:28px; font-weight:700; line-height:1; letter-spacing:-0.5px; }
   .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
@@ -273,12 +276,117 @@
   .tl-row:not(:last-child) .tl-rail::after { content:''; position:absolute; top:8px; bottom:-14px; width:1px; background:var(--border); }
   .tl-name { font-size:12.5px; font-weight:600; }
   .tl-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+     zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
+     i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
+     siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
+     kolorów kropek i stan `voided` są identyczne. */
+  .tl.compact .tl-row { grid-template-columns:62px 18px 1fr; gap:9px; padding:7px 0; }
+  .tl.compact .tl-time { font-size:10.5px; letter-spacing:0.4px; }
+  .tl.compact .tl-dot { width:8px; height:8px; }
+  .tl.compact .tl-name { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.3px; }
+  .tl.compact .tl-meta { font-size:8.5px; letter-spacing:0.6px; }
+  .tl.compact .tl-row:not(:last-child) .tl-rail::after { bottom:-12px; }
 
   /* ── siatka dwukolumnowa treści ── */
   .cols { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
   .cols.even { grid-template-columns:1fr 1fr; }
+  /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
+     przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
+     Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
+     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+  .cols.wide { grid-template-columns:1fr 400px; }
+
+  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+     Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
+     ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
+     o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
+     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     ale którego telefon milczy. §4.8 stany świeżości. */
+  .fleet { display:flex; flex-direction:column; gap:8px; }
+  .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
+  .fleet-row:hover { border-color:var(--border-strong); background:var(--surface-hover); }
+  .fleet-row.flying { border-color:var(--green-border); background:rgba(46,204,113,0.04); }
+  .fleet-row.stale  { border-color:var(--amber-border); background:rgba(243,156,18,0.04); }
+  .fleet-row.free   { opacity:0.72; }
+  .fleet-reg { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:1.2px; }
+  .fleet-type { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-who { font-size:13px; font-weight:600; }
+  .fleet-since { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-nums { font-family:var(--font-mono); font-size:11.5px; text-align:right; font-variant-numeric:tabular-nums; line-height:1.7; }
+  .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
+  .fleet-state { display:flex; justify-content:flex-end; }
+
+  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+     Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
+     administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
+  .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .fresh-val { font-family:var(--font-mono); font-size:10px; letter-spacing:0.8px; color:var(--green); }
+  .fresh-val.amber { color:var(--amber); }
+  .fresh-val.dim { color:var(--text-muted); }
+  .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
+
+  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+     Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
+     w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
+     problem niż ta sprzed godziny. */
+  .todo { display:flex; flex-direction:column; }
+  .todo-row { display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--hairline); text-decoration:none; color:inherit; }
+  .todo-row:last-child { border-bottom:none; }
+  .todo-row:hover .todo-name { color:var(--green); }
+  .todo-mark { width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid; }
+  .todo-mark.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .todo-mark.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .todo-mark.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .todo-body { flex:1; min-width:0; }
+  .todo-name { font-size:12.5px; font-weight:600; }
+  .todo-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
+  .todo-age.old { color:var(--amber); }
+
+  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+     Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
+     w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
+  .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
+  .spark i { flex:1; background:var(--green-muted); border:1px solid var(--green-border); border-radius:3px 3px 0 0; min-height:3px; }
+  .spark i.now { background:var(--green); border-color:var(--green); }
+  .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
+  .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+
+  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+     Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
+     wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
+     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     gdzie zmiana ma skutek. */
+  .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
+  .thr:last-of-type { border-bottom:none; }
+  .thr-name { font-size:12.5px; font-weight:600; }
+  .thr-name code { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); font-weight:400; }
+  .thr-why { font-size:11px; color:var(--text-secondary); line-height:1.5; margin-top:3px; }
+  .thr-val { font-family:var(--font-mono); font-size:15px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .thr-val small { font-size:9.5px; font-weight:400; color:var(--text-secondary); letter-spacing:0.5px; }
+  .thr-src { display:flex; justify-content:flex-end; }
+  .thr-input { width:100%; min-height:34px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); padding:6px 10px; color:var(--text-primary); font-family:var(--font-mono); font-size:14px; font-weight:700; text-align:right; outline:none; }
+  .thr-input:focus { border-color:var(--green-border); }
+  .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
+
+  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+     Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
+     WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
+  .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
+  .proof-head { display:flex; align-items:center; gap:9px; font-family:var(--font-mono); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; color:var(--amber); }
+  .diff { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; }
+  .diff-side { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:5px; }
+  .diff-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .diff-v { font-family:var(--font-mono); font-size:20px; font-weight:700; line-height:1; }
+  .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
+
+  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
   .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
@@ -415,7 +523,6 @@
         </div>
       </div>
 
-      <!-- TŁO: szczegół dnia z podświetlonym wierszem osi zdarzeń -->
       <div class="content">
 
         <div class="page-head">
@@ -470,7 +577,6 @@
 
       </div>
 
-      <!-- ══ SZUFLADA KOREKTY ══ -->
       <div class="drawer-scrim"></div>
       <div class="drawer" style="width:660px;">
 
@@ -489,7 +595,6 @@
             <span><b>Rejestr zdarzeń jest append-only — nie ma tu edycji ani kasowania.</b> Ten formularz nie zmienia zdarzenia <code>engine_stop</code>. Dopisuje <b>nowe</b> zdarzenie <code>event_correction</code> z <code>targetUuid</code> wskazującym oryginał. Oryginalny odczyt zostaje w bazie na zawsze i dalej widać go na osi zdarzeń — projekcja tylko przestaje go uwzględniać albo liczy z nowym czasem.</span>
           </div>
 
-          <!-- ORYGINAŁ — nietykalny -->
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Zdarzenie korygowane · oryginalny odczyt <span class="spacer"></span><span class="pill dim">zostaje na zawsze</span></div>
             <div class="kv"><span class="kv-k">Typ</span><span class="kv-v">engine_stop</span></div>
@@ -501,7 +606,6 @@
             <div class="kv"><span class="kv-k">Powiązana flaga</span><span class="kv-v amber"><small>CLOCK_DRIFT · 720 s</small></span></div>
           </div>
 
-          <!-- WYBÓR AKCJI — dokładnie dwie -->
           <div class="field">
             <span class="label">Akcja — dokładnie dwie, obie dopisują zdarzenie</span>
             <div class="opt-list">
@@ -522,7 +626,6 @@
             </div>
           </div>
 
-          <!-- NOWY CZAS — tylko dla retime -->
           <div class="field" data-act="retime">
             <span class="label">Nowy czas zdarzenia (UTC)</span>
             <input class="input mono" value="2026-07-30 13:01:33" />
@@ -534,14 +637,12 @@
             <span><b>Tutaj <code>void</code> jest złym narzędziem.</b> Silnik został wyłączony — pomylona jest tylko godzina. Unieważnienie <code>engine_stop</code> zostawia cykl 3 <b>otwarty</b>, więc jego 01:17:19 wypada z czasu blokowego w całości (patrz podgląd niżej), zamiast skrócić się o 12 minut. <code>void</code> jest dla zdarzeń, których <b>nie było</b> — jak fałszywe lądowanie o 08:14:09.</span>
           </div>
 
-          <!-- POWÓD — obowiązkowy -->
           <div class="field">
             <span class="label">Powód korekty · pole obowiązkowe</span>
             <textarea class="input" rows="4" style="min-height:96px;resize:vertical;font-family:var(--font-body);line-height:1.5;">Zegar telefonu spieszył 12 min (flaga CLOCK_DRIFT, pierwsze przekroczenie 30 JUL 11:56:14 UTC). Ostatni cykl bez fixa GPS, więc czas zdarzenia spadł na device_time. Godzinę wyłączenia potwierdza odczyt licznika MH (3907.8 = Δ 5.7 h) oraz wpis w książce samolotu.</textarea>
             <span class="hint">Bez powodu przycisk zapisu jest nieaktywny. Powód idzie do audit logu razem z obiema wartościami — po roku to jedyna rzecz, która wyjaśni, dlaczego liczby dnia różnią się od tego, co zapisał telefon.</span>
           </div>
 
-          <!-- PODGLĄD WPŁYWU -->
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Wpływ na liczby dnia <span class="spacer"></span><span class="pill dim">przed → po</span></div>
 
@@ -566,7 +667,6 @@
             </div>
           </div>
 
-          <!-- KTO PODPISUJE ZDARZENIE -->
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Czyim nazwiskiem zapisze się korekta</div>
             <div class="kv"><span class="kv-k">W rejestrze jako</span><span class="kv-v">A. Wrzosek <small>PIC sesji (AWR)</small></span></div>
@@ -575,13 +675,11 @@
             <span class="hint">Zdarzenie <code>event_correction</code> musi nieść <code>picId</code> <b>PIC-a tej sesji</b>, nie administratora — do jednej sesji pisze jedna tożsamość (single-writer), więc korekta ostemplowana Twoim kontem zostałaby odrzucona jako <b>WRITER_MISMATCH</b>. Dlatego oś zdarzeń przy Twojej korekcie pokaże nazwisko <b>Anny Wrzosek</b>. Fakt, że zrobił to administrator, żyje w audycie — i tylko tam.</span>
           </div>
 
-          <!-- SYNC JEDNOKIERUNKOWY -->
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <span><b>Ta korekta nie wróci na telefon Anny Wrzosek.</b> Synchronizacja jest dziś jednokierunkowa — kontrakt API (§4.6) nie ma endpointu, który oddawałby zdarzenia do aplikacji. Poprawiasz rejestr na serwerze i arkusz; telefon pilotki zostanie ze <b>swoją, starą wersją</b> i po wejściu na ekran 12 (Historia dni) dalej pokaże blok 05:53. Rozjazd utrzyma się do czasu, aż powstanie pobieranie zdarzeń. Jeśli różnica ma dla pilota znaczenie — powiedz mu o niej poza aplikacją.</span>
           </div>
 
-          <!-- KONSEKWENCJE -->
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Co się stanie po zapisie</div>
             <div class="kv"><span class="kv-k">1 · Rejestr</span><span class="kv-v"><small>+1 zdarzenie <code>event_correction</code> (85)</small></span></div>

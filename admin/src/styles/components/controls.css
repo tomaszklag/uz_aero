@@ -1,0 +1,265 @@
+/**
+ * UZ Aero — panel: przyciski i pola formularza.
+ *
+ * Klasy i wartości 1:1 z `design/admin/SZABLON.html` (sekcje „przyciski"
+ * i „formularze"). Wzorzec pól jest ten sam co w aplikacji pilota:
+ * `--surface-raised`, promień 12, fokus zielony.
+ */
+
+/* ── przyciski ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 15px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--surface-hover);
+}
+
+.btn.primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #0a0a0a;
+}
+
+.btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+.btn.danger {
+  color: var(--red);
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+/* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta
+   na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
+   zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
+   kilkanaście naraz i żadna nie byłaby główna. */
+.btn.ok {
+  color: var(--green);
+  border-color: var(--green-border);
+  background: var(--green-muted);
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn.sm {
+  min-height: 30px;
+  padding: 5px 11px;
+  font-size: 11.5px;
+  border-radius: 8px;
+}
+
+/* Przycisk na całą szerokość karty — A00: „Zaloguj się" ma `width:100%` i wyższy
+   cel niż standardowe 36 px. W mockupie stoi to inline; tutaj dostaje modyfikator,
+   bo jest własnością WZORCA formularza, a nie tego jednego ekranu. */
+.btn.block {
+  width: 100%;
+  min-height: 42px;
+}
+
+/* ── pola ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.input {
+  min-height: 40px;
+  border-radius: 12px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  padding: 10px 13px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  outline: none;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: var(--green-border);
+}
+
+.input.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Pole odrzucone przez serwer (A00a: obramowanie i tło w czerwieni). Modyfikator,
+   nie styl inline — stan błędu pola wróci na każdym formularzu panelu. */
+.input.invalid {
+  border-color: var(--red-border);
+  background: var(--red-muted);
+}
+
+/* Pole wieloliniowe (komentarz rozstrzygnięcia flagi, A03a). Mockup używa na nim
+   klasy `.input`; modyfikator dokłada tylko to, czego `<input>` nie ma — pionową
+   zmianę rozmiaru i interlinię akapitu. Komentarz do flagi bywa dłuższy niż linijka,
+   a przycinanie go do czterech wierszy zniechęcałoby do napisania tego, co za pół
+   roku będzie jedynym śladem decyzji. */
+.input.area {
+  resize: vertical;
+  line-height: 1.5;
+  min-height: 92px;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.hint b {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" (A06a). Przyciski są
+   RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie ma dzieci; wysokości
+   równa `align-items: stretch`, żeby 40 px pola i 36 px przycisku nie rozjeżdżały się
+   w pionie. */
+.field-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.field-row .input {
+  flex: 1;
+}
+
+/* ── wybór jako lista kart ──
+   ZAKAZ natywnego `<select>` (`CLAUDE.md`) — wybór to zawsze widoczna lista kart.
+   W szufladzie flagi ta sama lista służy do nawigacji w głąb (sesje objęte sprawą). */
+.opt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Siatka zamiast kolumny — dwie karty wyboru obok siebie ALBO dwa pola formularza
+   w jednym rzędzie (`A07a`: „Rok produkcji" + „Pojemność zbiorników"). Klasa jest
+   w `SZABLON.html` przy wyborze kart, a mockup floty używa jej dla pól — bo to jest
+   ta sama rzecz: rząd, który zwija się na wąskim ekranie. `auto-fit` z minimum 200 px
+   robi to bez media query. */
+.opt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+/* `font`, `text-align` i `width` obsługują wariant `<button>` (wybór akcji korekty,
+   A02b): przeglądarka narzuca przyciskowi własną czcionkę i wyśrodkowanie, a karta
+   ma wyglądać identycznie niezależnie od znacznika. `<label>` z mockupu nie jest
+   osiągalny z klawiatury, więc w panelu wybór jest przyciskiem — i to on dyktuje
+   te trzy właściwości. */
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 13px;
+  cursor: pointer;
+  min-height: 50px;
+  text-decoration: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.opt:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.opt:hover {
+  background: var(--surface-hover);
+}
+
+.opt.selected {
+  border-color: var(--green-border);
+  background: rgba(46, 204, 113, 0.05);
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.05);
+}
+
+.opt-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.opt-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.opt-desc {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.opt-check {
+  color: var(--green);
+  opacity: 0;
+  flex-shrink: 0;
+}
+
+.opt.selected .opt-check {
+  opacity: 1;
+}
+
+/* Szewron pozycji prowadzącej w głąb — zajmuje miejsce `.opt-check`, bo mówi to
+   samo („to jest do kliknięcia”), tylko o ruchu, a nie o zaznaczeniu. */
+.opt-go {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  display: flex;
+}

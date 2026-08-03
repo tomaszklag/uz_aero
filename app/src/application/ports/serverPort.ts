@@ -16,7 +16,13 @@
  * powód).
  */
 
-import type { Event, Handover, ReferenceAircraft, ReferencePilot } from '../../domain';
+import type {
+  Event,
+  Handover,
+  ReferenceAircraft,
+  ReferencePilot,
+  SessionFlag,
+} from '../../domain';
 
 /** Para tokenów + tożsamość — wynik logowania i odświeżenia (§3.0). */
 export interface AuthTokens {
@@ -30,7 +36,7 @@ export interface PushResult {
   accepted: number;
   duplicates: number;
   /** Otwarte flagi dotykające wysłanych sesji — do pokazania na ekranie 11. */
-  flags: { type: string; sessionUuids: string[] }[];
+  flags: SessionFlag[];
 }
 
 /** Migawka `GET /reference` — wejście do cache referencyjnego (§4.8). */
@@ -81,7 +87,7 @@ export interface SessionSyncStatus {
   received: number;
   /** Stan wg PROJEKCJI serwera; `unknown` = serwer nie widział jeszcze tej sesji. */
   status: 'active' | 'closed' | 'unknown';
-  flags: { type: string; sessionUuids: string[] }[];
+  flags: SessionFlag[];
   exportUrl: string | null;
 }
 

@@ -7,7 +7,7 @@
  * jedyny powód istnienia tego ekranu.
  */
 
-import { buildLogGroups, cycleCount } from '../ui/screens/manualLog';
+import { buildLogGroups, cycleCount } from '../ui/screens/logic/manualLog';
 import type { Event, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);

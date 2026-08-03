@@ -290,6 +290,112 @@ describe('flagi łańcucha MH (§4.5)', () => {
   });
 });
 
+/**
+ * Dwa typy dopisane 2026-07-31 (decyzja „kod dogania §4.5"). Do tej pory żyły wyłącznie
+ * jako lokalne ostrzeżenia w telefonie i nigdy nie docierały do tabeli `flags`, więc po
+ * fakcie nie było ich widać nigdzie.
+ *
+ * Tolerancja paliwa NIE jest tu stałą 10 L: `SP-AXA` ma w seedzie 330 L pojemności,
+ * a §4.5 mówi „±10 L lub ±5% pojemności" — wygrywa większa, czyli 16,5 L. Testy liczą
+ * właśnie z tej wartości, bo to ona obowiązuje dla tego samolotu.
+ */
+describe('flagi dopisane do katalogu (§4.5)', () => {
+  /** Dzień 2 zaczynający się od podanego stanu paliwa; MH równe końcowi dnia 1. */
+  const nextDayWithFuel = (fuelL: number) =>
+    day('sess-2').map((e) =>
+      e.type === 'preflight_confirm'
+        ? { ...e, payload: { ...(e.payload as object), reading: { fuelL, mh: 1241.15 } } }
+        : e,
+    );
+
+  it('odczyt paliwa rozjechany z przekazaniem → fuel_mismatch z liczbami rozbieżności', async () => {
+    const { app } = await testHarness();
+    const token = await login(app);
+    await post(app, token, day('sess-1')); // przekazanie: 88 L
+
+    // 140 L na starcie przy 88 L przekazanych: ktoś tankował poza aplikacją albo
+    // któryś odczyt jest zmyślony. 52 L przy tolerancji 16,5 L (5% z 330 L).
+    const res = await post(app, token, nextDayWithFuel(140));
+
+    const fuel = res.json().flags.find((f: { type: string }) => f.type === 'fuel_mismatch');
+    expect(fuel).toBeDefined();
+    expect(fuel.sessionUuids.sort()).toEqual(['sess-1', 'sess-2']);
+    expect(fuel.details).toMatchObject({ handoverL: 88, readingL: 140, toleranceL: 16.5 });
+    expect(fuel.details.diffL).toBeCloseTo(52, 1);
+  });
+
+  it('SPADEK paliwa poza tolerancją też flagujemy — podejrzane są obie strony', async () => {
+    // Wzrost znaczy tankowanie poza aplikacją, spadek — spuszczone paliwo albo błędny
+    // odczyt. Żadna z tych rzeczy nie powinna przejść niezauważona.
+    const { app } = await testHarness();
+    const token = await login(app);
+    await post(app, token, day('sess-1'));
+
+    const res = await post(app, token, nextDayWithFuel(30));
+
+    const fuel = res.json().flags.find((f: { type: string }) => f.type === 'fuel_mismatch');
+    expect(fuel).toBeDefined();
+    expect(fuel.details.diffL).toBeCloseTo(-58, 1);
+  });
+
+  it('różnica w granicach tolerancji paliwomierza nie daje flagi', async () => {
+    const { app } = await testHarness();
+    const token = await login(app);
+    await post(app, token, day('sess-1'));
+
+    // 7 L przy tolerancji 16,5 L — paliwomierz nie jest precyzyjny i to jest normalne.
+    const res = await post(app, token, nextDayWithFuel(95));
+
+    expect(res.json().flags).toEqual([]);
+  });
+
+  it('zegar telefonu rozjechany z GPS → clock_drift ze wskazaniem najgorszego zapisu', async () => {
+    const { app } = await testHarness();
+    const token = await login(app);
+
+    // Jedno zdarzenie ze stemplem urządzenia spóźnionym o 5 minut względem fixa.
+    const drifting = day('sess-1').map((e) =>
+      e.type === 'takeoff' ? { ...e, gpsTime: (e.deviceTime as number) - 300_000 } : e,
+    );
+    const res = await post(app, token, drifting);
+
+    const drift = res.json().flags.find((f: { type: string }) => f.type === 'clock_drift');
+    expect(drift).toBeDefined();
+    expect(drift.sessionUuids).toEqual(['sess-1']);
+    expect(drift.details).toMatchObject({ maxDriftSec: 300, eventType: 'takeoff' });
+  });
+
+  it('rozjazd poniżej progu 120 s nie daje flagi', async () => {
+    const { app } = await testHarness();
+    const token = await login(app);
+
+    const slight = day('sess-1').map((e) =>
+      e.type === 'takeoff' ? { ...e, gpsTime: (e.deviceTime as number) - 90_000 } : e,
+    );
+    const res = await post(app, token, slight);
+
+    expect(res.json().flags).toEqual([]);
+  });
+
+  it('przestawiony zegar daje JEDNĄ flagę na sesję, nie jedną na zdarzenie', async () => {
+    // Przestawiony zegar jest własnością telefonu na czas dnia. Flaga per zdarzenie
+    // uczyłaby wyłącznie ignorowania skrzynki.
+    const { app, db } = await testHarness();
+    const token = await login(app);
+
+    const allDrifting = day('sess-1').map((e) => ({
+      ...e,
+      gpsTime: (e.deviceTime as number) - 300_000,
+    }));
+    await post(app, token, allDrifting);
+
+    const { rows } = await db.query<{ n: string }>(
+      "SELECT COUNT(*) AS n FROM flags WHERE type = 'clock_drift'",
+    );
+    expect(Number(rows[0]!.n)).toBe(1);
+  });
+});
+
 describe('GET /aircraft/:id/state i sync-status', () => {
   it('po zamkniętym dniu stan niesie przekazanie, bez aktywnego claimu', async () => {
     const { app } = await testHarness();

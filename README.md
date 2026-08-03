@@ -5,8 +5,11 @@ Elektroniczny chronometraż lotów: aplikacja Android (React Native + Expo), bac
 
 ```
 app/              aplikacja mobilna (Expo)
-server/           backend (auth, sync zdarzeń, flagi)
+admin/            panel administracyjny (web: React + Vite)
+server/           backend (auth, sync zdarzeń, flagi, API panelu)
 packages/domain   wspólna domena — zdarzenia, reguły, projekcje
+packages/tokens   tokeny designu (palety, skale, typografia, emiter zmiennych CSS)
+packages/format   wspólne formatowanie liczb domeny na napisy
 docs/             architektura systemu i kodu
 design/           mockupy HTML = specyfikacja ekranów
 ```
@@ -26,6 +29,7 @@ możesz zostawić, na produkcji zmień `JWT_SECRET` i `SEED_PASSWORD`).
 |---|---|
 | `npm run app` | Metro bundler — telefon z dev clientem łapie go sam / QR |
 | `npm run server` | backend na `http://localhost:3000` (watch) |
+| `npm run admin` | panel na `http://localhost:5173/admin/` (proxy `/admin/api` → serwer; **wymaga uruchomionego serwera**) |
 | `npm run db:up` | Postgres w Dockerze (tworzy kontener przy pierwszym razie) |
 | `npm run db:down` | zatrzymanie bazy |
 | `npm run seed` | migracje + konta pilotów (TMK/AKO/PWI/JSE/KRZ) i flota |
@@ -46,4 +50,7 @@ curl -s -X POST localhost:3000/auth/login -H "content-type: application/json" -d
 - Mockupy w `design/` są specyfikacją — ekran wdraża się 1:1 (`CLAUDE.md`).
 - Architektura kodu i przepisy na nowe elementy: `docs/architektura-kodu.md`.
 - Po zmianach w `app/`: `npx jest` i `npx tsc --noEmit` muszą przechodzić;
-  w `server/`: `npm test` i `npm run typecheck`.
+  w `server/` i `admin/`: `npx vitest run` i `npx tsc --noEmit`.
+  Zmiana w `packages/*` dotyka wszystkich trzech — uruchom każdy zestaw.
+- `admin/src/styles/tokens.css` jest GENEROWANY: po zmianie palety w `packages/tokens`
+  uruchom `npm run tokens:css --workspace admin` (inaczej test zgodności świeci na czerwono).

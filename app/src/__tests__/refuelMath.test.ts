@@ -18,7 +18,7 @@ import {
   lastFuelReference,
   maxAddableL,
   refuelScale,
-} from '../ui/screens/refuelMath';
+} from '../ui/screens/logic/refuelMath';
 import { projectSession, type Event } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);

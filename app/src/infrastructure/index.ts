@@ -4,8 +4,8 @@
  * Uwaga: adaptery modułów NATYWNYCH nie są tu re-eksportowane celowo — import tego
  * barrela nie może wciągać `expo-sqlite` ani `expo-location` (inaczej padłyby testy
  * Node/Jest oraz konteksty czysto-JS). Importuj je wprost:
- *   `import { ExpoSqliteAdapter } from '../infrastructure/storage/expoSqliteAdapter';`
- *   `import { ExpoLocationAdapter } from '../infrastructure/gps/expoLocationAdapter';`
+ *   `import { ExpoSqliteAdapter } from './storage/expoSqliteAdapter';`
+ *   `import { ExpoLocationAdapter } from './gps/expoLocationAdapter';`
  */
 
 export * from './clock';

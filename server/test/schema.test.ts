@@ -10,9 +10,9 @@
 import { describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 
-import { MIGRATIONS, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
+import { MIGRATIONS, MIGRATION_TITLES, SCHEMA_VERSION } from '../src/infrastructure/pg/schema.ts';
 import { migrate } from '../src/infrastructure/pg/migrate.ts';
-import type { Queryable } from '../src/application/ports.ts';
+import type { Queryable } from '../src/application/common/ports.ts';
 
 async function migrated(): Promise<Queryable & { exec(sql: string): Promise<unknown> }> {
   const pglite = new PGlite();
@@ -38,6 +38,14 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     expect(SCHEMA_VERSION).toBe(MIGRATIONS.length);
   });
 
+  it('KAŻDA migracja ma opis — inaczej `A11` wypisuje cudzy przy nowej pozycji', () => {
+    // Ekran konserwacji sklejał do 2026-08-02 numer z bazy z opisem z kodu PO INDEKSIE.
+    // Dopisanie migracji bez dopisania opisu przesunęłoby całą kolumnę „Co wprowadza"
+    // o jeden i nikt by tego nie zauważył: tabela dalej wyglądałaby poprawnie.
+    expect(MIGRATION_TITLES).toHaveLength(MIGRATIONS.length);
+    for (const title of MIGRATION_TITLES) expect(title.trim().length).toBeGreaterThan(10);
+  });
+
   it('migracje są idempotentne — ponowne wołanie niczego nie psuje', async () => {
     const db = await migrated();
     await expect(migrate(db as Queryable)).resolves.toBeUndefined();
@@ -46,9 +54,9 @@ describe('schemat PostgreSQL (kontrakt)', () => {
   it.each([
     [
       'pilots',
-      // `theme`/`theme_updated_at`/`role` na końcu: migracje 6 i 7 (ALTER) dokładają
-      // kolumny za istniejącymi, w kolejności stosowania.
-      ['id', 'code', 'name', 'email', 'password_hash', 'active', 'updated_at', 'theme', 'theme_updated_at', 'role'],
+      // `theme`/`theme_updated_at`/`role`/`credentials_valid_from` na końcu: migracje
+      // 6, 7 i 13 (ALTER) dokładają kolumny za istniejącymi, w kolejności stosowania.
+      ['id', 'code', 'name', 'email', 'password_hash', 'active', 'updated_at', 'theme', 'theme_updated_at', 'role', 'credentials_valid_from'],
     ],
     [
       'aircraft',
@@ -61,17 +69,26 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     [
       'sessions',
-      ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at'],
+      // `operation`/`client` na końcu — migracja 11 (ALTER) dokłada je za istniejącymi
+      // kolumnami. `claim_time` NIESIE DUTY START (uzasadnienie: `application/sessionRow.ts`),
+      // dlatego migracja 11 świadomie NIE dokłada kolumny `duty_start`.
+      ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at', 'operation', 'client'],
     ],
     [
       'flags',
-      ['id', 'type', 'aircraft_id', 'session_uuids', 'details', 'status', 'created_at', 'resolved_at'],
+      // `resolved_by`/`resolution_note` na końcu — migracja 10 (ALTER) dokłada je
+      // za istniejącymi kolumnami.
+      ['id', 'type', 'aircraft_id', 'session_uuids', 'details', 'status', 'created_at', 'resolved_at', 'resolved_by', 'resolution_note'],
     ],
     [
       'export_log',
       ['id', 'session_uuid', 'day', 'aircraft_id', 'sheet_url', 'revision', 'exported_at'],
     ],
     ['exported_sheets', ['tab', 'rows', 'updated_at']],
+    [
+      'admin_audit',
+      ['id', 'actor_pilot_id', 'actor_role', 'action', 'target_type', 'target_id', 'details', 'ip', 'created_at'],
+    ],
   ])('tabela %s ma dokładnie uzgodnione kolumny', async (table, expected) => {
     const db = await migrated();
     expect(await columnsOf(db, table as string)).toEqual(expected);

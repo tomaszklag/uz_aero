@@ -18,7 +18,7 @@ import {
   sentLabel,
   sentProgress,
   sheetTabName,
-} from '../ui/screens/syncStatus';
+} from '../ui/screens/logic/syncStatus';
 
 describe('eventsCount — polska liczba mnoga', () => {
   it.each([

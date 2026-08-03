@@ -38,12 +38,45 @@ export type Capability =
   | 'events.correct'
   /** Zakładanie kont, reset hasła, deaktywacja, zmiana roli. */
   | 'accounts.manage'
-  /** Dodanie i edycja samolotu, wyłączenie ze służby. */
+  /**
+   * Dodanie i edycja samolotu, wyłączenie ze służby — **oraz ręczne ponowienie eksportu
+   * karty dnia** (`POST /admin/api/exports/:sessionUuid/retry`, `A05`).
+   *
+   * Eksport dostał TĘ zdolność, a nie własną, i to jest decyzja do potwierdzenia przez
+   * człowieka (2026-08-01). Powód: konfiguracja floty już dziś rozstrzyga, JAK WYGLĄDA
+   * każda przyszła karta danego samolotu (`mh_format` i pojemność jadą wprost do treści
+   * arkusza), więc pytanie „kto steruje dokumentem klubu" ma dalej JEDNĄ odpowiedź
+   * w jednym pliku. Mnożenie zdolności bez potrzeby rozmywa tę odpowiedź.
+   *
+   * Gdyby ponowienie miało trafić do szefa wyszkolenia, właściwym ruchem jest osobna
+   * zdolność `exports.retry` — a NIE dopisanie `fleet.manage` do jego roli, bo tamta
+   * niesie też edycję wejść reguł §4.5.
+   */
   | 'fleet.manage'
   /** Zmiana tolerancji flag (progi detekcji są tylko do odczytu — patrz A08). */
   | 'thresholds.manage'
   /** Odczyt dziennika akcji administratorów. */
-  | 'audit.read';
+  | 'audit.read'
+  /**
+   * Narzędzia serwisowe z `A11`: porównanie i **nadpisanie** projekcji `sessions`
+   * ze strumienia zdarzeń oraz odczyt stanu schematu.
+   *
+   * ══ DLACZEGO NOWA POZYCJA, A NIE KTÓRAŚ Z ISTNIEJĄCYCH (2026-08-02) ══
+   * **To jest decyzja do potwierdzenia przez człowieka**, tak jak `fleet.manage`
+   * przy ponowieniu eksportu. Przeglądnięcie katalogu nie dało dopasowania: każda
+   * dotychczasowa zdolność nazywa ZASÓB (flagi, rejestr, konta, flota, progi,
+   * dziennik), a przebudowa nie dotyczy żadnego z nich — nadpisuje PROJEKCJĘ
+   * wszystkich dni klubu naraz. Wpisanie jej pod `fleet.manage` („kto steruje
+   * dokumentem klubu") albo `thresholds.manage` („kto stroi reguły") dałoby fałszywą
+   * odpowiedź na pytanie, po które ten plik istnieje: „co panel potrafi zmienić".
+   *
+   * Zakres jest WĄSKI i celowo nie obejmuje dwóch pozostałych operacji ekranu A11:
+   * sprzątanie wygasłych tokenów jedzie na `accounts.manage` (ta sama tabela i ta
+   * sama władza, co unieważnianie sesji przy deaktywacji konta), a ponowienie
+   * eksportu na `fleet.manage` (dokładnie jak na `A05` — druga zdolność dla tego
+   * samego przycisku byłaby rozjazdem).
+   */
+  | 'maintenance.run';
 
 const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
   // Pilot pracuje wyłącznie w aplikacji na telefonie. Panel go nie dotyczy —
@@ -65,6 +98,7 @@ const CAPABILITIES: Readonly<Record<PilotRole, readonly Capability[]>> = {
     'fleet.manage',
     'thresholds.manage',
     'audit.read',
+    'maintenance.run',
   ],
 };
 
@@ -76,4 +110,19 @@ export function isPilotRole(value: unknown): value is PilotRole {
 /** Jedyne miejsce, w którym system odpowiada na pytanie „czy wolno mu to zrobić". */
 export function can(role: PilotRole, capability: Capability): boolean {
   return CAPABILITIES[role].includes(capability);
+}
+
+/**
+ * Komplet zdolności roli — dla `GET /admin/api/me`.
+ *
+ * Panel MUSI znać tę listę, bo mockup wymaga pozycji nawigacji **widocznych
+ * i wyszarzonych** z podanym powodem, a nie ukrytych (`SZABLON.html`, `.nav-item.locked`).
+ * Wysyłanie listy zamiast samej roli oznacza, że panel nie trzyma DRUGIEJ kopii mapy
+ * uprawnień: zmiana tutaj przemalowuje sidebar bez wydania panelu.
+ *
+ * To nadal WYŁĄCZNIE podpowiedź dla UI — egzekwuje `can` na każdym żądaniu. Ukrycie
+ * przycisku nigdy nie było zabezpieczeniem i tym się nie staje.
+ */
+export function capabilitiesOf(role: PilotRole): readonly Capability[] {
+  return CAPABILITIES[role];
 }

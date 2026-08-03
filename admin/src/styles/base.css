@@ -1,0 +1,73 @@
+/**
+ * UZ Aero — panel: reset, korzeń dokumentu i stany globalne.
+ *
+ * Odpowiednik `<style>` z `design/admin/SZABLON.html` w części, która w mockupie
+ * dotyczy `body` i `.browser`. Różnica jest jedna i wynika z natury rzeczy: w mockupie
+ * `body` jest KANWĄ wokół obrazka przeglądarki (stąd gradienty i `--app-scale`),
+ * a w panelu `body` JEST tą przeglądarką. Dlatego tło korzenia to `var(--bg)`,
+ * czyli tło `.browser`, a skalowania mockupu nie ma tu w ogóle.
+ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/**
+ * Widoczny fokus klawiatury — DOCHODZI do design systemu razem z pierwszym ekranem
+ * (`docs/architektura-panelu-frontend.md` §7). Szablon miał dotąd tylko `:focus-within`
+ * na `.search` i `.input:focus`, a panel jest nawigowany klawiaturą: tabele, filtry,
+ * formularze. `:focus-visible`, nie `:focus`, żeby kliknięcie myszą nie rysowało
+ * obwódki tam, gdzie nikt jej nie potrzebuje.
+ */
+:focus-visible {
+  outline: 2px solid var(--green-border);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Pasek przewijania treści — jak w szablonie (`.content::-webkit-scrollbar`). */
+::selection {
+  background: var(--selection);
+}
+
+/**
+ * Treść WYŁĄCZNIE dla czytnika ekranu — podpis tabeli (`<caption>`).
+ *
+ * DOCHODZI do design systemu razem z pierwszą tabelą, tak jak `:focus-visible`
+ * doszedł razem z pierwszym formularzem. W mockupie tabelę nazywa nagłówek strony
+ * stojący nad nią; czytnik ekranu potrzebuje tej nazwy WEWNĄTRZ tabeli, bo czyta ją
+ * jako osobny obiekt i inaczej ogłasza „tabela, 8 kolumn" bez słowa o tym, czego
+ * dotyczy. Widoczny `<caption>` zmieniłby wygląd, więc go chowamy — nie usuwamy.
+ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

@@ -15,7 +15,7 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
-import type { PasswordHasher } from '../../application/ports.ts';
+import type { PasswordHasher } from '../../application/common/ports.ts';
 
 const scrypt = promisify(scryptCb) as (
   password: string,

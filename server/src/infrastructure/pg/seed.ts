@@ -11,7 +11,7 @@
  * (decyzja 2026-07-22: brak samodzielnej rejestracji).
  */
 
-import type { PasswordHasher, Queryable } from '../../application/ports.ts';
+import type { PasswordHasher, Queryable } from '../../application/common/ports.ts';
 
 const AIRCRAFT = [
   ['SP-AXA', 'SP-AXA', 'Cessna 182', 2019, 330, 'hhmm', false, 'active'],

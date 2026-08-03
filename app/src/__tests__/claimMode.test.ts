@@ -6,7 +6,7 @@
  * serwera twierdziłoby, że wiedzieliśmy, czego nie wiedzieliśmy.
  */
 
-import { claimDecision } from '../ui/screens/claimMode';
+import { claimDecision } from '../ui/screens/logic/claimMode';
 
 describe('claimDecision (§4.4)', () => {
   it('cache „wolny" → zwykłe free, bez pytania o żywy stan', () => {

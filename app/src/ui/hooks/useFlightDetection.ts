@@ -33,7 +33,7 @@ import {
 } from '../../domain';
 import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
-import { useTrace } from '../bootstrap/ServicesProvider';
+import { useTrace } from '../bootstrap/servicesContext';
 
 /** Oczekujące zdarzenie w oknie „COFNIJ". */
 export interface PendingDetection {

@@ -6,29 +6,63 @@
  * konstruktorem — dokładnie jak `bootstrap/` w aplikacji mobilnej.
  */
 
+import { randomUUID } from 'node:crypto';
+
 import { Pool } from 'pg';
 import { z } from 'zod';
 
-import { AuthCommands } from './application/commands/auth.ts';
-import { IngestCommands } from './application/commands/ingest.ts';
-import { PrefsCommands } from './application/commands/prefs.ts';
-import { DayExporter } from './application/export/dayExporter.ts';
-import { ReferenceQueries } from './application/queries/reference.ts';
-import { SheetQueries } from './application/queries/sheets.ts';
-import { StateQueries } from './application/queries/aircraftState.ts';
+import { AdminCorrectionCommands } from './application/admin/commands/corrections.ts';
+import { AdminExportCommands } from './application/admin/commands/exports.ts';
+import { AdminFlagCommands } from './application/admin/commands/flags.ts';
+import { AdminFleetCommands } from './application/admin/commands/fleet.ts';
+import { AdminMaintenanceCommands } from './application/admin/commands/maintenance.ts';
+import { AdminPilotCommands } from './application/admin/commands/pilots.ts';
+import { AdminAuditQueries } from './application/admin/queries/audit.ts';
+import { AdminCorrectionQueries } from './application/admin/queries/corrections.ts';
+import { AdminDashboardQueries } from './application/admin/queries/dashboard.ts';
+import { AdminEventQueries } from './application/admin/queries/events.ts';
+import { AdminExportQueries } from './application/admin/queries/exports.ts';
+import { AdminFlagQueries } from './application/admin/queries/flags.ts';
+import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
+import { AdminMaintenanceQueries } from './application/admin/queries/maintenance.ts';
+import { AdminMeQueries } from './application/admin/queries/me.ts';
+import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
+import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
+import { AuditedWrite } from './application/admin/auditedWrite.ts';
+import { AuthCommands } from './application/common/commands/auth.ts';
+import { IngestCommands } from './application/mobile/commands/ingest.ts';
+import { PrefsCommands } from './application/mobile/commands/prefs.ts';
+import { DayExporter } from './application/common/export/dayExporter.ts';
+import { ReferenceQueries } from './application/mobile/queries/reference.ts';
+import { SheetQueries } from './application/common/queries/sheets.ts';
+import { StateQueries } from './application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
 import { ScryptHasher } from './infrastructure/auth/scryptHasher.ts';
+import { generateStartPassword } from './infrastructure/auth/startPassword.ts';
+import { PgAdminAuditReadRepo } from './infrastructure/pg/admin/auditReadRepo.ts';
+import { PgAdminAuditRepo } from './infrastructure/pg/admin/auditRepo.ts';
+import { PgAdminDashboardRepo } from './infrastructure/pg/admin/dashboardRepo.ts';
+import { PgAdminEventsReadRepo } from './infrastructure/pg/admin/eventsReadRepo.ts';
+import { PgAdminEventsRepo } from './infrastructure/pg/admin/eventsRepo.ts';
+import { PgAdminExportsRepo } from './infrastructure/pg/admin/exportsRepo.ts';
+import { PgAdminFlagsRepo } from './infrastructure/pg/admin/flagsRepo.ts';
+import { PgAdminFleetRepo } from './infrastructure/pg/admin/fleetRepo.ts';
+import { PgAdminMaintenanceRepo } from './infrastructure/pg/admin/maintenanceRepo.ts';
+import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
+import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
+import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
+import { PgAircraftConfigRepo } from './infrastructure/pg/common/aircraftConfigRepo.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
-import { PgEventsStore } from './infrastructure/pg/eventsStore.ts';
-import { PgExportLogRepo } from './infrastructure/pg/exportLogRepo.ts';
-import { PgFlagsRepo } from './infrastructure/pg/flagsRepo.ts';
-import { PgSessionsProjection } from './infrastructure/pg/sessionsProjection.ts';
+import { PgEventsStore } from './infrastructure/pg/common/eventsStore.ts';
+import { PgExportLogRepo } from './infrastructure/pg/common/exportLogRepo.ts';
+import { PgFlagsRepo } from './infrastructure/pg/common/flagsRepo.ts';
+import { PgSessionsProjection } from './infrastructure/pg/common/sessionsProjection.ts';
 import { migrate } from './infrastructure/pg/migrate.ts';
-import { PgPilotPrefsRepo } from './infrastructure/pg/pilotPrefsRepo.ts';
-import { PgPilotsRepo } from './infrastructure/pg/pilotsRepo.ts';
-import { PgRefreshTokens } from './infrastructure/pg/refreshTokensRepo.ts';
-import { PgReferenceRepo } from './infrastructure/pg/referenceRepo.ts';
-import { PgSheets } from './infrastructure/pg/sheetsRepo.ts';
+import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
+import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
+import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
+import { PgReferenceRepo } from './infrastructure/pg/mobile/referenceRepo.ts';
+import { PgSheets } from './infrastructure/pg/common/sheetsRepo.ts';
 import { FsTraceSink } from './infrastructure/traces/fsTraceSink.ts';
 import { buildServer } from './http/server.ts';
 
@@ -66,15 +100,156 @@ const pilots = new PgPilotsRepo(db);
 const sheets = new PgSheets(db, env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`, clock);
 const exporter = new DayExporter(db, events, flags, exportLog, sheets, pilots, clock);
 
+// Panel administracyjny. `AuditedWrite` jest JEDYNĄ drogą zapisu komend panelu —
+// dlatego to ono, a nie `db`, wędruje do konstruktora `AdminFlagCommands`.
+const auditedWrite = new AuditedWrite(db, new PgAdminAuditRepo(), clock);
+const aircraftConfig = new PgAircraftConfigRepo();
+// Strona ODCZYTU panelu dostaje `db` wprost — bramy `AuditedWrite` wymagają wyłącznie
+// komendy, bo tylko one zapisują. Adapter flag jest WSPÓLNY dla zapytań i komend:
+// to jeden port, jeden adapter, dwa powody wołania.
+const adminFlagsRepo = new PgAdminFlagsRepo();
+// Konta mają DWA adaptery i to jest ta sama decyzja, co przy flagach: logowanie czyta
+// `PgPilotsRepo` (hash, własny uchwyt do bazy), panel pisze `PgAdminPilotsRepo`
+// (transakcja śladu audytu). Ścieżka logowania nie ma jak zregresować od panelu kont.
+const adminPilotsRepo = new PgAdminPilotsRepo();
+// Flota ma TRZECI adapter tej samej tabeli i to jest ta sama decyzja, co przy kontach:
+// `PgReferenceRepo` buduje migawkę pod cache telefonów, `PgAircraftConfigRepo` oddaje
+// jedną liczbę w transakcji ingestu, a ten pisze konfigurację w transakcji audytu.
+const adminFleetRepo = new PgAdminFleetRepo();
+// Monitor eksportu (A05) czyta projekcję OD STRONY ARKUSZA (dzień bez karty jest jego
+// najważniejszym wierszem), więc ma własny adapter obok `PgExportLogRepo` — tamten
+// obsługuje ścieżkę eksportu i `sync-status` telefonu, ten listy panelu.
+const adminExportsRepo = new PgAdminExportsRepo();
+// Konserwacja (A11) ma JEDEN adapter na dwie drogi: zapytania (porównanie projekcji,
+// stan tokenów i schematu) i komendę (nadpisanie, czyszczenie). To jeden port i jeden
+// powód istnienia — narzędzia serwisowe jednego ekranu — więc drugi adapter kupiłby
+// wyłącznie okazję do rozjazdu między tym, co pokazuje podgląd, a tym, co zapisze zapis.
+const adminMaintenanceRepo = new PgAdminMaintenanceRepo();
+const hasher = new ScryptHasher();
+
+// Zapytania floty stoją TU, a nie w literale niżej, bo mają DWÓCH konsumentów: trasy
+// `A07` i pulpit. Pulpit dostaje całą klasę, nie jej adapter — to ona zna regułę wyboru
+// claimu i przekazania (`application/common/aircraftStateView.ts`) oraz rozwiązuje próg
+// flagi funkcją domeny. Drugie wyliczenie tych rzeczy na pulpicie dałoby dwie odpowiedzi
+// na pytanie „kto trzyma ten samolot".
+const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, adminPilotsRepo);
+
 const app = buildServer({
-  auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), new ScryptHasher(), tokens, clock),
+  auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-  ingest: new IngestCommands(db, events, sessions, flags, exporter),
+  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter),
   state: new StateQueries(db, events, sessions, flags, exportLog),
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),
   prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
   tokens,
+  // Brama tras panelu czyta konto przy KAŻDYM żądaniu — bez tego „Deaktywuj" na A06
+  // odcinałby dostęp dopiero po wygaśnięciu 8-godzinnej sesji (`http/authorize.ts`).
+  pilots,
+  adminFlags: new AdminFlagCommands(auditedWrite, adminFlagsRepo, exporter, clock),
+  adminSessionQueries: new AdminSessionQueries(
+    db,
+    new PgAdminSessionsRepo(),
+    events,
+    adminFlagsRepo,
+    new PgAdminEventsRepo(),
+  ),
+  adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
+  // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu —
+  // panel i telefon logują się do tej samej tabeli kont, bo to ci sami ludzie.
+  adminMeQueries: new AdminMeQueries(pilots),
+  // Konta (A06/A06a). Hasło startowe generuje SERWER — panel nigdy go nie wysyła,
+  // a wartość opuszcza system dokładnie raz, w odpowiedzi na akcję, która ją wytworzyła.
+  adminPilots: new AdminPilotCommands(
+    auditedWrite,
+    adminPilotsRepo,
+    new PgAdminRefreshTokensRepo(),
+    hasher,
+    randomUUID,
+    generateStartPassword,
+    clock,
+  ),
+  adminPilotQueries: new AdminPilotQueries(db, adminPilotsRepo, clock),
+  // Flota (A07/A07a). `randomUUID` jako identyfikator jednostki — rejestracja jest
+  // etykietą, nie kluczem: zdarzenia wiążą się z `aircraft_id`, więc przemalowanie
+  // znaków na kadłubie nie ma prawa oderwać samolotu od jego nalotu.
+  adminFleet: new AdminFleetCommands(auditedWrite, adminFleetRepo, randomUUID),
+  // Zapytania floty dostają projekcję sesji, bo claim i ostatni odczyt liczników są
+  // REGUŁĄ (`application/common/aircraftStateView.ts`) — tą samą, którą `GET /reference`
+  // liczy dla telefonu. Drugie wyliczenie w SQL-u panelu dałoby dwie odpowiedzi na
+  // pytanie „kto trzyma ten samolot".
+  adminFleetQueries,
+  // Eksporty (A05). Komenda ponowienia woła TEGO SAMEGO `exporter`, którego używa
+  // ingest i rozwiązanie flagi — ponowienie jest powtórzeniem tej samej operacji,
+  // a nie jej wersją uprzywilejowaną, więc bramki §4.7 obowiązują ją tak samo.
+  adminExports: new AdminExportCommands(auditedWrite, adminExportsRepo, exporter, clock),
+  // Zapytania monitora dostają `SheetsReadPort`, bo podgląd karty w panelu czyta tę
+  // samą treść, co `GET /sheets/:tab` z telefonu — inaczej panel pokazywałby drugą,
+  // własną wersję dokumentu klubu.
+  adminExportQueries: new AdminExportQueries(db, adminExportsRepo, sheets),
+  // Uuid korekty jest FUNKCJĄ, nie portem: nie ma tu adaptera do podmiany, a port
+  // bez drugiej implementacji to koszt bez zysku (`commands/corrections.ts`).
+  adminCorrections: new AdminCorrectionCommands(
+    auditedWrite,
+    events,
+    sessions,
+    aircraftConfig,
+    exporter,
+    clock,
+    randomUUID,
+  ),
+  // Podgląd korekty dostaje `db` wprost i NIE dostaje `AuditedWrite` — nie ma czym
+  // zapisać, bo nie ma czego zapisywać (`queries/corrections.ts`).
+  adminCorrectionQueries: new AdminCorrectionQueries(
+    db,
+    events,
+    new PgAdminEventsRepo(),
+    aircraftConfig,
+    clock,
+  ),
+  // Dziennik audytu ma DWA adaptery i to jest celowe: zapis (`PgAdminAuditRepo`)
+  // wędruje do bramy `AuditedWrite`, odczyt (`PgAdminAuditReadRepo`) do zapytań.
+  // Brama, która przy okazji umie czytać listy, przestaje być bramą.
+  adminAuditQueries: new AdminAuditQueries(db, new PgAdminAuditReadRepo()),
+  // Rejestr zdarzeń (A04). Trzeci adapter nad `events` obok magazynu ingestu
+  // (`PgEventsStore`) i metadanych karty dnia (`PgAdminEventsRepo`) — bo trzecie jest
+  // pytanie: lista śledcza z kursorem i licznikami. Ingest nie ma jak zregresować
+  // od zmian w tym ekranie.
+  adminEventQueries: new AdminEventQueries(db, new PgAdminEventsReadRepo()),
+  // Pulpit (A01/A01a). Dostaje ZAPYTANIA innych ekranów, a nie ich adaptery — bo jego
+  // treścią jest właśnie to, że każda liczba pochodzi z tego samego kodu, co ekran
+  // docelowy. `events` jedzie osobno i wyłącznie po to, żeby policzyć stan silnika
+  // jednostek z otwartą sesją; `PgAdminDashboardRepo` obsługuje puls rejestru.
+  // Konserwacja (A11). Dwie drogi i to jest cała treść tego przekroju: PORÓWNANIE
+  // projekcji jest zapytaniem (bez `AuditedWrite`, więc bez czym zapisać i bez wpisu
+  // w dzienniku o akcji, której nie było), NADPISANIE — komendą przez bramę audytu.
+  // Ocena różnic jest wspólna (`application/admin/projectionScan.ts`), więc podgląd
+  // i zapis nie mogą powiedzieć dwóch różnych rzeczy o tej samej bazie.
+  adminMaintenance: new AdminMaintenanceCommands(
+    auditedWrite,
+    adminMaintenanceRepo,
+    events,
+    sessions,
+    clock,
+  ),
+  adminMaintenanceQueries: new AdminMaintenanceQueries(
+    db,
+    adminMaintenanceRepo,
+    events,
+    sessions,
+    clock,
+  ),
+  adminDashboardQueries: new AdminDashboardQueries(
+    db,
+    adminFleetQueries,
+    new PgAdminSessionsRepo(),
+    adminFlagsRepo,
+    adminExportsRepo,
+    new PgAdminDashboardRepo(),
+    events,
+    adminPilotsRepo,
+    clock,
+  ),
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

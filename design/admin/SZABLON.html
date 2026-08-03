@@ -41,6 +41,17 @@
     background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
   }
+  /* Widoczny fokus klawiatury — panel jest nawigowany klawiaturą (tabele, filtry,
+     formularze), a szablon miał dotąd tylko `:focus-within` na `.search` i `.input:focus`.
+     `:focus-visible`, nie `:focus`: kliknięcie myszą nie ma rysować obwódki tam, gdzie
+     nikt jej nie potrzebuje. Dołożone 2026-07-31 razem z pierwszym ekranem panelu. */
+  :focus-visible { outline: 2px solid var(--green-border); outline-offset: 2px; border-radius: 6px; }
+  /* Treść dla CZYTNIKA EKRANU, niewidoczna wzrokowo — w panelu niesie ją `<caption>`
+     każdej tabeli. Czytnik ogłasza tabelę bez podpisu jako „tabela, 8 kolumn", nie mówiąc
+     ani słowa o tym, czego dotyczy; widoczny `<caption>` zmieniłby jednak układ, którego
+     mockupy nie przewidują. Dlatego podpis CHOWAMY, a nie usuwamy — `display:none`
+     i `visibility:hidden` odebrałyby go także czytnikowi, więc ich tu nie ma. */
+  .visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 
   /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
   .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
@@ -115,6 +126,10 @@
   .who-role { font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
 
   .main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+  /* Ekran PRZED ramą — logowanie (`A00`), gdzie nie ma jeszcze ani sidebara, ani topbara,
+     bo nie wiadomo, kto patrzy. Treść wyśrodkowana w oknie przeglądarki zamiast siatki
+     shellu; `overflow-y` własne, bo baner o rolach potrafi nie zmieścić się w 900 px. */
+  .centered { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:24px; overflow-y:auto; }
   .topbar { height:var(--topbar-h); flex-shrink:0; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 22px; }
   .crumbs { display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
   .crumbs b { color:var(--text-primary); font-weight:500; }
@@ -144,8 +159,17 @@
   .btn.primary:hover { filter:brightness(1.08); }
   .btn.danger { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
   .btn.ghost { background:transparent; border-color:var(--border); color:var(--text-secondary); }
+  /* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta
+     na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
+     zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
+     kilkanaście naraz i żadna nie byłaby główna. */
+  .btn.ok { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
   .btn:disabled, .btn.disabled { opacity:0.4; cursor:not-allowed; }
   .btn.sm { min-height:30px; padding:5px 11px; font-size:11.5px; border-radius:8px; }
+  /* Akcja główna formularza: cała szerokość karty i wyższy cel niż standardowe 36 px.
+     Awansowane ze stylu inline w A00 („Zaloguj się") — to własność WZORCA formularza,
+     a nie tego jednego ekranu (2026-07-31). */
+  .btn.block { width:100%; min-height:42px; }
 
   /* ── karty i kafle ── */
   .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
@@ -154,12 +178,25 @@
   .card-title .spacer { margin-left:auto; }
 
   .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
-  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; }
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+     definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
+  .tile:hover { border-color:var(--border-strong); }
   .tile-key { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
   .tile-val { font-family:var(--font-mono); font-size:28px; font-weight:700; line-height:1; letter-spacing:-0.5px; }
   .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
   .tile-val.green { color:var(--green); } .tile-val.amber { color:var(--amber); } .tile-val.red { color:var(--red); } .tile-val.blue { color:var(--blue); }
   .tile-note { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  /* Wartość w SIATCE liczb (`.day-grid`), a nie w kaflu — 28 px rozbija czterokomórkową
+     kratkę w wąskiej kolumnie bocznej. Modyfikator dołożony 2026-08-01 razem z pulpitem:
+     mockupy A01/A01a robiły to stylem inline (`font-size:22px`), więc klasy nie dało się
+     wygrepować ani powtórzyć na A10. */
+  .tile-val.sm { font-size:22px; }
+  /* Siatka liczb doby („Dziś w liczbach", „Ostatni dzień lotny"). Cztery komórki
+     klucz+wartość bez ramek — to NIE są kafle: nie prowadzą nigdzie osobno i czyta się
+     je razem, jako jedno podsumowanie. */
+  .day-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .day-grid > span { display:flex; flex-direction:column; gap:4px; }
 
   /* ── pasek filtrów ── */
   .filters { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
@@ -172,9 +209,18 @@
   .chip:hover { border-color:var(--border-strong); color:var(--text-primary); }
   .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
+  /* Rozpórka paska filtrów: odsuwa na prawo to, co NIE filtruje, tylko opisuje wynik
+     (plakietka „czasy UTC", licznik wierszy). Do 2026-08-01 mockupy robiły to stylem
+     inline — klasa bez nazwy jest klasą, której nikt nie znajdzie greppem. */
+  .list-spacer { margin-left:auto; display:inline-flex; align-items:center; gap:9px; }
 
   /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
   .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
+  /* Tabela ZAGNIEŻDŻONA w karcie (historia rozwiązanych flag, legenda typów, historia
+     rewizji karty): bez własnej ramki i tła, bo ramkę niesie już karta — dwie obwódki
+     jedna w drugiej czytają się jak błąd składu. Modyfikator, a nie osobna klasa, bo to
+     nadal ta sama tabela. */
+  .table-wrap.plain { border:none; border-radius:0; background:none; }
   table { width:100%; border-collapse:collapse; }
   thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
   thead th.sortable { cursor:pointer; }
@@ -184,13 +230,90 @@
   tbody tr:last-child td { border-bottom:none; }
   tbody tr:hover { background:var(--surface-raised); }
   tbody tr.clickable { cursor:pointer; }
+  /* Wiersz OTWARTY w szufladzie (`A03a`, `A06a`, `A07a`): tło i zielona krawędź od
+     strony treści, żeby po zamknięciu szuflady wzrok wrócił tam, gdzie był. */
+  tbody tr.opened { background:var(--surface-raised); box-shadow:inset 3px 0 0 var(--green); }
+  /* Wiersz wyróżniony OTWARTĄ FLAGĄ (`A02`, `A05`). Kolejność ma znaczenie: reguła stoi
+     PO `tbody tr:hover`, żeby najechanie myszą nie zdejmowało bursztynu z wiersza, który
+     jest wyróżniony z powodu — powód nie znika dlatego, że ktoś przesunął kursor. */
+  tbody tr.flagged,
+  tbody tr.flagged:hover { background:var(--amber-muted); }
   td.num, td.mono, th.num { font-family:var(--font-mono); letter-spacing:0.3px; }
   td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
   td.dim { color:var(--text-secondary); }
   .cell-strong { font-weight:600; }
   .cell-sub { display:block; font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; }
+  /* ŚWIEŻOŚĆ w komórce tabeli — podpis `.cell-sub` niosący WIEK danych z telefonu.
+     Trzy stany §4.8 dosłownie: `fresh` = live (bez zastrzeżeń), `stale` = cache
+     starszy niż doba, `none` = brak danych. Modyfikator, a nie osobna klasa, bo to
+     nadal ten sam podpis — zmienia się wyłącznie to, co mówi o jego wiarygodności.
+     Do 2026-08-01 ekran A07 malował te trzy stany atrybutem `style` przy każdej
+     komórce; kolor rozsiany po komórkach nie jest komponentem i nie da się go
+     wygrepować. */
+  .cell-sub.fresh { color:var(--green); }
+  .cell-sub.stale { color:var(--amber); }
+  .cell-sub.none  { color:var(--text-muted); }
+  /* Wiek sprawy, która leży ZA DŁUGO (`A03`). Modyfikator, nie styl inline, bo o tym,
+     które wiersze są stare, rozstrzyga próg w kodzie, a nie autor pliku HTML. */
+  .cell-age.old { color:var(--red); font-weight:700; }
+  /* Stopka listy stronicowanej KURSOREM: podpis „pokazano N z M" i przycisk dokładający
+     kolejną stronę. Mockupy rysują dwanaście wierszy i kończą banerem, ale kursor keyset
+     jest kontraktem serwera — a lista przycięta po cichu byłaby najgorszym trybem awarii
+     narzędzia nadzoru: wyglądałaby na komplet. */
+  .list-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
   .reg { font-family:var(--font-mono); font-weight:700; letter-spacing:1px; }
+  /* Link W TREŚCI komórki — zawęża listę do tej wartości (A09: konto działającego,
+     identyfikator obiektu). Wygląda jak treść, nie jak przycisk, i to jest cała jego
+     racja bytu: dwa `.btn` na wiersz w tabeli o sześciu kolumnach zamieniają listę
+     w farmę guzików. Kreska jest przerywana i wygaszona, więc nie konkuruje z liczbami
+     obok, a pod kursorem i przy fokusie robi się zielona — wtedy dopiero ma znaczyć
+     „to jest klikalne". Dodane 2026-08-01 razem z ekranem A09. */
+  .cell-link { color:inherit; text-decoration:none; border-bottom:1px dashed var(--border-strong); }
+  .cell-link:hover, .cell-link:focus-visible { color:var(--green); border-bottom-color:var(--green-border); }
   .row-actions { display:flex; gap:6px; justify-content:flex-end; }
+
+  /* WARTOŚĆ ZEGARA w komórce tabeli (A04: `device_time`, `gps_time`, `Δ zegarów`).
+     W mockupie stoi to stylem inline (`style="color:var(--amber)"`); tutaj jest klasą,
+     bo o tym, który zegar się rozjechał, rozstrzyga PRÓG Z SERWERA, a nie autor pliku
+     HTML. Trzy tony, trzy różne zdania: `dim` — zegary się zgadzają, `amber` — rozjazd
+     ponad próg CLOCK_DRIFT, `red` — nie ma czego porównać, bo nie było fixa GPS. */
+  .clock-val.amber { color:var(--amber); font-weight:700; }
+  .clock-val.red { color:var(--red); }
+  .clock-val.dim { color:var(--text-secondary); }
+
+  /* Wartość zegara, którą KOREKTA przestawiła (A04, `retime`). Przekreślenie znaczy
+     „to już nie jest liczba, którą liczy projekcja"; nowy czas stoi pod spodem jako
+     `.cell-sub`. Bez tego zdarzenie po korekcie było w tabeli nieodróżnialne od
+     nietkniętego — kolumny pokazywały wartości surowe, a jedyna wzmianka mieszkała
+     w rozwinięciu, które trzeba otworzyć osobno dla każdego wiersza (2026-08-02).
+     Reguła stoi PO tonach, żeby wygaszenie wygrywało z czerwienią „brak fixa":
+     wiersz bez fixa, któremu korekta NADAŁA czas, ma obie klasy naraz. */
+  .clock-val.struck { text-decoration:line-through; color:var(--text-muted); }
+
+  /* Zdarzenie UNIEWAŻNIONE korektą (A04). Wiersz ZOSTAJE w tabeli — rejestr jest
+     append-only i to właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się
+     od tego, co zapisał telefon. Przekreślamy czasy i identyfikatory, nie całą treść:
+     plakietka typu i pilot mają nadal być czytelni, bo po nich się szuka.
+     Ta sama semantyka, co `.tl-row.voided` na osi karty dnia. */
+  tbody tr.voided td.num, tbody tr.voided td.mono { text-decoration:line-through; color:var(--text-muted); }
+
+  /* ROZWINIĘCIE WIERSZA (A04: payload + nagłówek zdarzenia). Wiersz-satelita pod
+     wierszem właściwym, przez całą szerokość tabeli. Osobny `<tr>`, a nie szuflada
+     z boku, bo mockup pokazuje treść DOKŁADNIE pod wierszem, którego dotyczy —
+     przy dochodzeniu porównuje się sąsiednie zdarzenia, a szuflada zasłania listę. */
+  tbody tr.row-expand:hover { background:none; }
+  tbody tr.row-expand > td { padding:0 14px 16px; background:var(--surface-raised); }
+
+  /* WYPIS JSON-a — surowy payload zdarzenia (A04). W mockupie stoi stylem inline;
+     tutaj ma nazwę, bo klasa bez nazwy jest klasą, której nikt nie znajdzie greppem.
+     Kolory kluczy i wartości są MODYFIKATORAMI, a nie hexami w kodzie: o tym, że
+     liczba jest niebieska, a `null` czerwony, rozstrzyga moduł czysty z testem. */
+  .payload { font-family:var(--font-mono); font-size:11px; line-height:1.75; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px; overflow-x:auto; color:var(--text-secondary); margin:0; }
+  .payload-line { display:block; white-space:pre; }
+  .payload-key { color:var(--text-primary); font-weight:500; }
+  .payload-val.green { color:var(--green); }
+  .payload-val.blue { color:var(--blue); }
+  .payload-val.red { color:var(--red); }
 
   /* ── plakietki stanu ── */
   .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; border:1px solid; white-space:nowrap; }
@@ -208,19 +331,49 @@
   .input { min-height:40px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); padding:10px 13px; color:var(--text-primary); font-family:var(--font-body); font-size:13px; outline:none; width:100%; }
   .input:focus { border-color:var(--green-border); }
   .input.mono { font-family:var(--font-mono); letter-spacing:0.5px; }
+  /* `<textarea>` jako modyfikator `.input`, a nie osobna klasa — pole ma dzielić ramkę,
+     tło i fokus z resztą formularza. Dokłada wyłącznie to, czego `<input>` nie ma:
+     pionową zmianę rozmiaru i interlinię akapitu. Powód uzasadnienia korekty bywa
+     dłuższy niż linijka, a przycinanie go zniechęcałoby do napisania tego, co za pół
+     roku będzie jedynym śladem decyzji. */
+  .input.area { resize:vertical; line-height:1.5; min-height:92px; }
   .input::placeholder { color:var(--text-muted); }
+  /* Pole odrzucone przez serwer. Awansowane ze stylu inline w A00a (hasło po 401) —
+     stan błędu pola wraca na każdym formularzu panelu (2026-07-31). */
+  .input.invalid { border-color:var(--red-border); background:var(--red-muted); }
   .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .hint b { color:var(--amber); font-weight:600; }
+  /* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" + „generuj nowe"
+     (A06a). Przyciski są RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie
+     ma dzieci; wysokości równa `align-items:stretch`, żeby 40 px pola i 36 px przycisku
+     nie rozjeżdżały się w pionie. */
+  .field-row { display:flex; gap:8px; align-items:stretch; }
+  .field-row .input { flex:1; }
   /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
   .opt-list { display:flex; flex-direction:column; gap:8px; }
-  .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; }
+  /* `font`, `text-align` i `width` są tu dla wariantu, którego mockup mieć nie musiał:
+     w panelu karta wyboru jest <button>, a nie <label> z onclick — etykieta bez
+     powiązanego <input> nie jest osiągalna z klawiatury ani ogłaszana przez czytnik
+     ekranu, a wybór akcji korekty (A02b: retime vs void) zmienia liczby w rejestrze.
+     Przeglądarka narzuca <button> własną czcionkę i wyśrodkowanie, więc trzy właściwości
+     przywracają wygląd karty. W mockupie nic nie zmieniają (2026-08-01). */
+  .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; font:inherit; color:inherit; text-align:left; width:100%; }
   .opt:hover { background:var(--surface-hover); }
   .opt.selected { border-color:var(--green-border); background:rgba(46,204,113,0.05); box-shadow:0 0 0 3px rgba(46,204,113,0.05); }
+  /* Wybór zablokowany — ta sama para wartości, co `.btn:disabled`. Potrzebny od A02b:
+     po zapisanej korekcie formularz zostaje na ekranie jako zapis tego, co się stało,
+     ale przestaje przyjmować zmiany (2026-08-01). */
+  .opt:disabled { opacity:0.4; cursor:not-allowed; }
   .opt-body { flex:1; display:flex; flex-direction:column; gap:2px; }
   .opt-name { font-size:13px; font-weight:600; }
   .opt-desc { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
   .opt-check { color:var(--green); opacity:0; flex-shrink:0; }
   .opt.selected .opt-check { opacity:1; }
+  /* Wariant NAWIGACYJNY karty (`.opt` jako <a>): szewron zajmuje miejsce `.opt-check`,
+     bo mówi to samo — „to jest do kliknięcia" — tylko o ruchu w głąb, nie o zaznaczeniu.
+     Używa go A03a do wypisania sesji objętych flagą. Dopisane 2026-08-01: reguła żyła
+     w kodzie panelu od przekroju flag, a w szablonie jej nie było. */
+  .opt-go { color:var(--text-muted); flex-shrink:0; display:flex; }
   .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
 
   /* ── banery (3 typy — docs/design-notes.md) ── */
@@ -248,11 +401,21 @@
   /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
   .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
   .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
+  /* Szuflada SZERSZA — dla szuflady, która jest formularzem, a nie podglądem:
+     korekta administratora (A02b) niesie kartę „przed → po", pole powodu i pełny opis
+     skutków, a w 520 px każdy wiersz klucz–wartość łamie się na dwie linie. Awansowane
+     ze stylu inline w A02b (2026-08-01); modyfikator, bo szerokość jest własnością
+     TREŚCI szuflady, nie jednego ekranu. */
+  .drawer.wide { width:660px; }
   .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
   .drawer-title { font-family:var(--font-display); font-size:22px; letter-spacing:1.5px; line-height:1; }
   .drawer-sub { font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
   .drawer-body { flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
   .drawer-foot { flex-shrink:0; padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:9px; justify-content:flex-end; }
+  /* Notatka po lewej stronie akcji — stała własność szuflady, nie treść ekranu:
+     stopka mówi, czego to okno NIE zrobi („brak edycji · brak kasowania" w A02b).
+     Awansowane ze stylu inline (2026-08-01). */
+  .drawer-note { margin-right:auto; align-self:center; font-family:var(--font-mono); font-size:9px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
   .x-btn { width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:var(--surface-raised); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
 
   /* ── wiersz klucz/wartość (szczegóły, audyt) ── */
@@ -260,8 +423,34 @@
   .kv:last-child { border-bottom:none; }
   .kv-k { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
   .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; letter-spacing:0.3px; }
-  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); }
+  /* `.blue` dołożony 2026-08-01: A06 używał go w karcie „Rola w panelu" (liczba kont
+     z dostępem do panelu), a szablon go nie definiował — więc wartość renderowała się
+     kolorem domyślnym. Ton jest ten sam, co `.pill.blue` i `.tile-val.blue`: informacja,
+     nie ostrzeżenie. */
+  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); } .kv-v.blue { color:var(--blue); }
   .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
+  /* Wartość SPRZED zmiany w zestawieniu „przed → po" (A02b). Wygaszona, bo czyta się
+     ją jako punkt odniesienia, a nie jako liczbę do zapamiętania — uwaga ma zostać
+     przy wartości po prawej. Awansowane ze stylu inline (2026-08-01). */
+  .kv-v .was { color:var(--text-muted); font-weight:400; }
+
+  /* ══ LISTA SZCZEGÓŁÓW — pola workowatego JSON-a W KOMÓRCE TABELI (A09) ══
+     Osobny komponent od `.kv`, a nie jego wariant, bo odpowiada na inne pytanie.
+     `.kv` jest zestawieniem liczb w karcie: wartość stoi po prawej, wytłuszczona,
+     żeby czytało się kolumnę. Tu wartością bywa zdanie („Przeloty techniczne po
+     przeglądzie 100 h — wpis w książce statku potwierdza"), a kluczy jest tyle, ile
+     akurat zapisała komenda. Prawe wyrównanie rozjechałoby akapit, a układ dwóch
+     torów pozwala czytać w dół po nazwach pól.
+     `.det-v.raw` niesie regułę, nie ozdobę: pole, którego panel nie umie nazwać,
+     zostaje POKAZANE z surowym kluczem i surową wartością — wygaszone, ale obecne.
+     Dziennik audytu, który ukrywa pole, bo go nie zna, przestaje być narzędziem
+     nadzoru. Dodane 2026-08-01 razem z ekranem A09. */
+  .det { display:flex; flex-direction:column; gap:3px; }
+  .det-row { display:grid; grid-template-columns:132px 1fr; gap:10px; align-items:baseline; }
+  .det-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .det-v { font-family:var(--font-mono); font-size:11px; line-height:1.55; color:var(--text-secondary); overflow-wrap:anywhere; }
+  .det-v.raw { color:var(--text-muted); }
+  .det-empty { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); }
 
   /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
   .tl { display:flex; flex-direction:column; }
@@ -273,12 +462,139 @@
   .tl-row:not(:last-child) .tl-rail::after { content:''; position:absolute; top:8px; bottom:-14px; width:1px; background:var(--border); }
   .tl-name { font-size:12.5px; font-weight:600; }
   .tl-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .tl-row:last-child { border-bottom:none; }
   .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
   .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+  /* Zamknięcie wiersza, gdy niesie ono PLAKIETKĘ I AKCJĘ naraz — czwarty tor siatki
+     przyjmuje jedno dziecko, więc bez tego kontenera przycisk spadałby do nowego
+     wiersza. Powstało dla osi karty dnia (A02a), która jest jedynym miejscem, gdzie
+     wybiera się zdarzenie do korekty administratora (A02b): oś zna uuid-y i wie, które
+     typy zdarzeń w ogóle podlegają korekcie, więc osobnego ekranu wyboru nie ma.
+     `align-items:center` trzyma plakietkę i przycisk w jednej linii mimo różnych
+     wysokości (2026-08-01). */
+  .tl-act { display:flex; align-items:center; justify-content:flex-end; gap:7px; }
+  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+     zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
+     i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
+     siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
+     kolorów kropek i stan `voided` są identyczne. */
+  .tl.compact .tl-row { grid-template-columns:62px 18px 1fr; gap:9px; padding:7px 0; }
+  .tl.compact .tl-time { font-size:10.5px; letter-spacing:0.4px; }
+  .tl.compact .tl-dot { width:8px; height:8px; }
+  .tl.compact .tl-name { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.3px; }
+  .tl.compact .tl-meta { font-size:8.5px; letter-spacing:0.6px; }
+  .tl.compact .tl-row:not(:last-child) .tl-rail::after { bottom:-12px; }
 
   /* ── siatka dwukolumnowa treści ── */
   .cols { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
   .cols.even { grid-template-columns:1fr 1fr; }
+  /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
+     przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
+     Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
+     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+  .cols.wide { grid-template-columns:1fr 400px; }
+  /* Pionowy STOS kart wewnątrz jednej kolumny siatki. `.cols` układa kolumny obok
+     siebie, ale gdy do jednej z nich wchodzi kilka kart, potrzebują własnego odstępu —
+     bez tego przylegają do siebie i czytają się jak jedna karta z liniami w środku.
+     `min-width:0` jest tu konieczne, nie ozdobne: element siatki domyślnie nie zwęża
+     się poniżej swojej treści, więc szeroka tabela w środku rozpychałaby kolumnę
+     zamiast się przewinąć. Do 2026-08-01 mockupy robiły to stylem inline. */
+  .cols-stack { display:flex; flex-direction:column; gap:16px; min-width:0; }
+
+  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+     Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
+     ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
+     o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
+     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     ale którego telefon milczy. §4.8 stany świeżości. */
+  .fleet { display:flex; flex-direction:column; gap:8px; }
+  .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
+  .fleet-row:hover { border-color:var(--border-strong); background:var(--surface-hover); }
+  .fleet-row.flying { border-color:var(--green-border); background:rgba(46,204,113,0.04); }
+  .fleet-row.stale  { border-color:var(--amber-border); background:rgba(243,156,18,0.04); }
+  .fleet-row.free   { opacity:0.72; }
+  .fleet-reg { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:1.2px; }
+  .fleet-type { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-who { font-size:13px; font-weight:600; }
+  .fleet-since { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-nums { font-family:var(--font-mono); font-size:11.5px; text-align:right; font-variant-numeric:tabular-nums; line-height:1.7; }
+  .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
+  .fleet-state { display:flex; justify-content:flex-end; }
+
+  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+     Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
+     administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
+  .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .fresh-val { font-family:var(--font-mono); font-size:10px; letter-spacing:0.8px; color:var(--green); }
+  .fresh-val.amber { color:var(--amber); }
+  .fresh-val.dim { color:var(--text-muted); }
+  .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
+
+  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+     Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
+     w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
+     problem niż ta sprzed godziny. */
+  .todo { display:flex; flex-direction:column; }
+  .todo-row { display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--hairline); text-decoration:none; color:inherit; }
+  .todo-row:last-child { border-bottom:none; }
+  .todo-row:hover .todo-name { color:var(--green); }
+  .todo-mark { width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid; }
+  .todo-mark.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .todo-mark.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .todo-mark.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .todo-body { flex:1; min-width:0; }
+  .todo-name { font-size:12.5px; font-weight:600; }
+  .todo-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
+  .todo-age.old { color:var(--amber); }
+
+  /* Lista WARUNKÓW wewnątrz banera („kiedy ta sama pustka znaczy »cisza podejrzana«",
+     A01a). Mono i bez punktorów, bo to nie jest proza, tylko wyliczenie faktów, które
+     panel sprawdził. Dołożona 2026-08-01: mockup robił to stylem inline z `<br />`,
+     więc lista nie miała nazwy, a przez to nie dało się jej powtórzyć ani wygrepować. */
+  .reason-list { display:flex; flex-direction:column; gap:4px; padding-top:6px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; line-height:1.7; color:var(--text-secondary); list-style:none; }
+  .reason-list li::before { content:'· '; color:var(--text-muted); }
+
+  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+     Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
+     w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
+  .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
+  .spark i { flex:1; background:var(--green-muted); border:1px solid var(--green-border); border-radius:3px 3px 0 0; min-height:3px; }
+  .spark i.now { background:var(--green); border-color:var(--green); }
+  .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
+  .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+
+  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+     Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
+     wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
+     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     gdzie zmiana ma skutek. */
+  .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
+  .thr:last-of-type { border-bottom:none; }
+  .thr-name { font-size:12.5px; font-weight:600; }
+  .thr-name code { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); font-weight:400; }
+  .thr-why { font-size:11px; color:var(--text-secondary); line-height:1.5; margin-top:3px; }
+  .thr-val { font-family:var(--font-mono); font-size:15px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .thr-val small { font-size:9.5px; font-weight:400; color:var(--text-secondary); letter-spacing:0.5px; }
+  .thr-src { display:flex; justify-content:flex-end; }
+  .thr-input { width:100%; min-height:34px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); padding:6px 10px; color:var(--text-primary); font-family:var(--font-mono); font-size:14px; font-weight:700; text-align:right; outline:none; }
+  .thr-input:focus { border-color:var(--green-border); }
+  .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
+
+  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+     Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
+     WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
+  .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
+  .proof-head { display:flex; align-items:center; gap:9px; font-family:var(--font-mono); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; color:var(--amber); }
+  .diff { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; }
+  .diff-side { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:5px; }
+  .diff-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .diff-v { font-family:var(--font-mono); font-size:20px; font-weight:700; line-height:1; }
+  .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
+
+  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
   .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
@@ -323,7 +639,6 @@
 
   <div class="shell">
 
-    <!-- ══ SIDEBAR ══ -->
     <nav class="sidebar">
       <div class="brand">
         <span class="brand-mark">
@@ -401,7 +716,6 @@
       </div>
     </nav>
 
-    <!-- ══ MAIN ══ -->
     <div class="main">
       <div class="topbar">
         <div class="crumbs">Panel <span>/</span> <b>Szablon i komponenty</b></div>
@@ -448,7 +762,7 @@
           <span><b>Rejestr zdarzeń jest append-only.</b> Panel nigdy nie edytuje ani nie kasuje zdarzenia — korekta dopisuje <code>event_correction</code> (<code>retime</code> / <code>void</code>). Oryginalny odczyt zostaje w rejestrze na zawsze.</span>
         </div>
 
-        <div class="demo-note">3 · Filtry + tabela + plakietki stanu</div>
+        <div class="demo-note">3 · Filtry + tabela + plakietki stanu (kolumna „Samolot" pokazuje `.cell-link` — klikalną TREŚĆ komórki)</div>
         <div class="filters">
           <label class="search">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -477,7 +791,10 @@
             <tbody>
               <tr class="clickable">
                 <td class="mono">31 JUL 2026<span class="cell-sub">UTC</span></td>
-                <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
+                <!-- `.cell-link` — klikalna TREŚĆ komórki, zawężająca listę do tej
+                     wartości. Nie `.btn`: w tabeli o ośmiu kolumnach przycisk w każdym
+                     wierszu przestaje być akcją, a zaczyna być tłem. -->
+                <td><a class="cell-link reg" href="#">SP-ABC</a><span class="cell-sub">Cessna 182</span></td>
                 <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">PIC · dual: —</span></td>
                 <td class="num">02:14</td>
                 <td class="num">1284.6 → <span style="color:var(--text-muted)">—</span></td>
@@ -537,6 +854,20 @@
                 <span><span class="tl-name">refuel</span><span class="tl-meta">przed 96 L · dolano 84 L · po 180 L</span></span>
                 <span class="pill amber">paliwo</span>
               </div>
+              <!-- Wiersz z PLAKIETKĄ I AKCJĄ naraz (`.tl-act`): oś karty dnia jest
+                   jedynym miejscem, w którym wybiera się zdarzenie do korekty
+                   administratora (A02b). Przejście stoi wyłącznie przy zdarzeniach
+                   KORYGOWALNYCH — claim, preflight, day_close i same korekty jej nie
+                   podlegają, więc tam przycisku nie ma w ogóle. -->
+              <div class="tl-row">
+                <span class="tl-time">10:34:07</span>
+                <span class="tl-rail"><span class="tl-dot red"></span></span>
+                <span><span class="tl-name">engine_stop</span><span class="tl-meta">gps_time: brak fixa · czas z zegara urządzenia</span></span>
+                <span class="tl-act">
+                  <span class="pill red">silnik</span>
+                  <a class="btn sm ghost" href="A02b-korekta.html">Koryguj</a>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -547,6 +878,23 @@
             <div class="kv"><span class="kv-k">Ostatni sync</span><span class="kv-v amber">14:19 <small>UTC · 3 min temu</small></span></div>
             <div class="kv"><span class="kv-k">Zdarzeń</span><span class="kv-v">47</span></div>
             <div class="kv"><span class="kv-k">Starty / lądowania</span><span class="kv-v green">6 / 5</span></div>
+            <!-- Zestawienie „przed → po" (A02b). Wartość SPRZED zmiany jest wygaszona
+                 (`.was`), bo czyta się ją jako punkt odniesienia — uwaga ma zostać
+                 przy liczbie po prawej stronie strzałki. -->
+            <div class="kv"><span class="kv-k">Czas blokowy · po korekcie</span><span class="kv-v"><span class="was">05:53</span> → 05:41 <small>−12 min</small></span></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Lista szczegółów <span class="spacer"></span><span class="pill dim">details JSONB</span></div>
+            <div class="det">
+              <div class="det-row"><span class="det-k">rodzaj korekty</span><span class="det-v">retime</span></div>
+              <div class="det-row"><span class="det-k">nowy czas zdarzenia</span><span class="det-v">2026-07-30 11:38:00 UTC (1785584280000)</span></div>
+              <div class="det-row"><span class="det-k">powód</span><span class="det-v">Lądowanie wykryte 3 min po dobiegu.</span></div>
+              <!-- Klucza `flightLegIndex` panel nie umie nazwać — i właśnie dlatego
+                   pokazuje go z surową nazwą, wygaszonego (`.raw`), a nie pomija. -->
+              <div class="det-row"><span class="det-k">flightLegIndex</span><span class="det-v raw">3</span></div>
+            </div>
+            <span class="hint">Kolejność pól jest kolejnością z serwera — panel jej nie przestawia, bo <code>details</code> to worek o kształcie zależnym od akcji, a nie rekord o ustalonych polach.</span>
           </div>
         </div>
 
@@ -558,8 +906,21 @@
             <div class="field"><span class="label">Kod pilota</span><input class="input mono" value="TML" /></div>
             <div class="field">
               <span class="label">Hasło startowe</span>
-              <input class="input mono" value="•••••••••••" />
+              <!-- `.field-row`: pole + akcje w jednej linii. Hasło GENERUJE SERWER
+                   i oddaje je raz w odpowiedzi, więc pole jest `readonly` — nie ma tu
+                   czego wpisać, a „generuj nowe" to kolejny reset, nie zmiana w polu. -->
+              <div class="field-row">
+                <input class="input mono" value="k7np-r4mx-9tqd" readonly />
+                <button class="btn" title="Kopiuj do schowka">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
               <span class="hint"><b>Uwaga:</b> hasło pokazujemy raz, w tym oknie. Nie trafia do URL-a, logów ani audit logu — audyt zapisuje wyłącznie fakt „ustawiono hasło" i kto to zrobił.</span>
+            </div>
+            <div class="field-row">
+              <button class="btn danger">Deaktywuj</button>
+              <button class="btn ok">Aktywuj</button>
+              <button class="btn ghost disabled" title="Wymaga roli: administrator">Reset hasła</button>
             </div>
           </div>
           <div class="card">
@@ -573,6 +934,23 @@
                 <span class="opt-body"><span class="opt-name">Szef wyszkolenia</span><span class="opt-desc">Podgląd, statystyki, rozwiązywanie flag — bez kont i progów</span></span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
               </label>
+              <!-- Wybór ZABLOKOWANY (`.opt:disabled`) — ta sama para wartości, co
+                   `.btn:disabled`. W panelu karta wyboru jest <button>, bo <label> bez
+                   powiązanego <input> nie jest osiągalny z klawiatury; po zapisanej
+                   korekcie (A02b) formularz zostaje na ekranie, ale przestaje przyjmować
+                   zmiany. -->
+              <button class="opt" disabled>
+                <span class="opt-body"><span class="opt-name">Pilot</span><span class="opt-desc">Bez wejścia do panelu — loguje się w aplikacji na telefonie</span></span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </button>
+
+              <!-- Wariant NAWIGACYJNY (`.opt` jako <a>, szewron zamiast ptaszka): karta
+                   nie WYBIERA wartości, tylko PROWADZI w głąb. Tak A03a wypisuje sesje
+                   objęte flagą — każda jest linkiem do swojej karty dnia. -->
+              <a class="opt" href="A02a-dzien.html">
+                <span class="opt-body"><span class="opt-name">30 JUL 2026 · SP-KLM</span><span class="opt-desc">sesja 7c1e5a9b…83b4 · 9 lotów · blok 05:53</span></span>
+                <span class="opt-go"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
+              </a>
             </div>
           </div>
         </div>
@@ -622,9 +1000,117 @@
               <div class="kv"><span class="kv-k">Dziura</span><span class="kv-v red">0.4 h <small>tolerancja 0.1</small></span></div>
             </div>
             <div class="drawer-foot">
+              <!-- Notatka stopki (`.drawer-note`) — mówi, czego to okno NIE zrobi.
+                   Wariant `.drawer.wide` (660 px) niesie szuflada, która jest
+                   FORMULARZEM, a nie podglądem: korekta administratora (A02b). -->
+              <span class="drawer-note">brak edycji · brak kasowania</span>
               <button class="btn ghost">Anuluj</button>
               <button class="btn primary">Rozwiąż z komentarzem</button>
             </div>
+          </div>
+        </div>
+
+        <div class="demo-note">7 · Flota — faza ORAZ świeżość w jednym wierszu</div>
+        <div class="card">
+          <div class="card-title">Flota teraz <span class="spacer"></span><span class="pill dim">czasy UTC</span></div>
+          <div class="fleet">
+            <a class="fleet-row flying" href="#">
+              <span><div class="fleet-reg">SP-ABC</div><div class="fleet-type">Cessna 182</div></span>
+              <span><div class="fleet-who">Tomasz Małkiewicz</div><div class="fleet-since">claim 07:58 · duty 6:24 · EPMO</div></span>
+              <span class="fleet-nums"><div><span class="k">MH</span> 1284.6</div><div><span class="k">FOB</span> 96 L</div></span>
+              <span class="fleet-state"><span class="pill green"><span class="dot live"></span>W locie</span></span>
+              <span class="fresh"><span class="fresh-val">sync 2 min temu</span><span class="fresh-note">lot 4 · T/O 14:11</span></span>
+            </a>
+            <a class="fleet-row stale" href="#">
+              <span><div class="fleet-reg">SP-KLM</div><div class="fleet-type">Cessna 208 Caravan</div></span>
+              <span><div class="fleet-who">Anna Wrzosek</div><div class="fleet-since">claim 06:40 · duty 7:42 · EPRA</div></span>
+              <span class="fleet-nums"><div><span class="k">MH</span> 3907.8</div><div><span class="k">FOB</span> 210 L</div></span>
+              <span class="fleet-state"><span class="pill amber"><span class="dot"></span>Dane w drodze</span></span>
+              <span class="fresh"><span class="fresh-val amber">sync 47 min temu</span><span class="fresh-note">ostatnie znane: zrzut 3</span></span>
+            </a>
+            <a class="fleet-row free" href="#">
+              <span><div class="fleet-reg">SP-MNO</div><div class="fleet-type">Cessna 182</div></span>
+              <span><div class="fleet-who" style="color:var(--text-secondary);font-weight:500;">Wyłączony ze służby</div><div class="fleet-since">od 19 JUN · remont</div></span>
+              <span class="fleet-nums"><div><span class="k">MH</span> 2210.8</div><div><span class="k">FOB</span> — <span class="k">pusty</span></div></span>
+              <span class="fleet-state"><span class="pill dim">Poza służbą</span></span>
+              <span class="fresh"><span class="fresh-val dim">ostatni lot 18 JUN</span><span class="fresh-note">historia zostaje</span></span>
+            </a>
+          </div>
+        </div>
+
+        <div class="demo-note">8 · Kolejka zadań · napływ zdarzeń · oś w wariancie kompaktowym</div>
+        <div class="cols wide">
+          <div class="card">
+            <div class="card-title">Wymaga uwagi</div>
+            <div class="todo">
+              <a class="todo-row" href="#">
+                <span class="todo-mark amber"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                <span class="todo-body"><span class="todo-name">mh_gap · SP-ABC</span><span class="todo-meta">dziura 0.4 h przy tolerancji 0.1 · możliwy lot bez aplikacji</span></span>
+                <span class="todo-age old">3 dni</span>
+              </a>
+              <a class="todo-row" href="#">
+                <span class="todo-mark red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
+                <span class="todo-body"><span class="todo-name">session_overlap · SP-KLM — blokuje arkusz</span><span class="todo-meta">karta dnia nie powstanie, dopóki flaga jest otwarta</span></span>
+                <span class="todo-age old">2 dni</span>
+              </a>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Napływ zdarzeń <span class="spacer"></span><span class="pill dim">12 h</span></div>
+            <div class="spark">
+              <i style="height:22%"></i><i style="height:38%"></i><i style="height:64%"></i><i style="height:47%"></i>
+              <i style="height:80%"></i><i class="zero" style="height:4%"></i><i class="zero" style="height:4%"></i>
+              <i style="height:35%"></i><i style="height:71%"></i><i class="now" style="height:44%"></i>
+            </div>
+            <div class="spark-axis"><span>02:00</span><span>08:00</span><span>14:00 UTC</span></div>
+            <div class="tl compact">
+              <div class="tl-row">
+                <span class="tl-time">14:19:52</span>
+                <span class="tl-rail"><span class="tl-dot blue"></span></span>
+                <span><span class="tl-name">takeoff</span><span class="tl-meta">SP-ABC · lot 4 · auto</span></span>
+              </div>
+              <div class="tl-row">
+                <span class="tl-time">14:04:31</span>
+                <span class="tl-rail"><span class="tl-dot red"></span></span>
+                <span><span class="tl-name">engine_stop</span><span class="tl-meta">SP-XYZ · P. Czarnecki</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-note">9 · Progi — wartość, jej źródło i dowód zmiany</div>
+        <div class="cols wide">
+          <div class="card">
+            <div class="card-title">Tolerancje <span class="spacer"></span><span class="code-ref">packages/domain/src/rules/tolerances.ts</span></div>
+            <div class="thr">
+              <span>
+                <div class="thr-name">Start — prędkość <code>TAKEOFF_SPEED_KT</code></div>
+                <div class="thr-why">Liczy się na telefonie, offline — zmiana idzie przez kod i wydanie aplikacji.</div>
+              </span>
+              <span class="thr-val">50 <small>kt</small></span>
+              <span class="thr-src"><span class="pill dim">w kodzie</span></span>
+            </div>
+            <div class="thr">
+              <span>
+                <div class="thr-name">Łańcuch motogodzin <code>MH_TOLERANCE_H</code></div>
+                <div class="thr-why">Serwer stosuje przy scalaniu po fakcie, więc wartość da się zmienić z panelu.</div>
+              </span>
+              <span><input class="thr-input changed" value="0.2" /></span>
+              <span class="thr-src"><span class="pill amber">było 0.1</span></span>
+            </div>
+          </div>
+          <div class="proof">
+            <div class="proof-head">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/></svg>
+              Wpływ zmiany — replay na historii
+            </div>
+            <div class="diff">
+              <span class="diff-side"><span class="diff-k">Teraz</span><span class="diff-v">0.1</span><span class="diff-n">41 flag w 90 dniach</span></span>
+              <span class="diff-arrow">→</span>
+              <span class="diff-side" style="border-color:var(--amber-border);"><span class="diff-k">Po zmianie</span><span class="diff-v" style="color:var(--amber)">0.2</span><span class="diff-n">29 flag w 90 dniach</span></span>
+            </div>
+            <div class="kv"><span class="kv-k">Zniknęłoby</span><span class="kv-v green">12 flag</span></div>
+            <div class="kv"><span class="kv-k">Nowych flag</span><span class="kv-v">0</span></div>
           </div>
         </div>
 

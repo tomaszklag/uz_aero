@@ -7,7 +7,7 @@
  * nikt nie zauważy aż do kontroli.
  */
 
-import { NO_DUAL, blockSince, crewRows, dualChangeBlocker, dualSince } from '../ui/screens/crewChange';
+import { NO_DUAL, blockSince, crewRows, dualChangeBlocker, dualSince } from '../ui/screens/logic/crewChange';
 import type { EngineRun, Event, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);

@@ -31,6 +31,7 @@ import {
   type PreflightConfirmPayload,
   type RefuelPayload,
   type RuleViolation,
+  type SessionFlag,
   type SessionState,
 } from '../../domain';
 import {
@@ -80,7 +81,7 @@ export interface SessionStore {
   /** Chwila ostatniej UDANEJ wysyłki (epoch ms) — „ostatnia udana wysyłka 14:02 UTC". */
   lastSyncAt: number | null;
   /** Otwarte flagi serwera dotykające naszych sesji (§4.5) — do pokazania na 11. */
-  serverFlags: { type: string; sessionUuids: string[] }[];
+  serverFlags: SessionFlag[];
   /** Miękkie flagi ostatniej udanej komendy (banner „zapisane, ale sprawdź"). */
   warnings: RuleViolation[];
   /** Komunikat ostatniego odrzucenia (twarda reguła) — null po udanej komendzie. */

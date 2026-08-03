@@ -15,7 +15,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { applyCorrections } from '../../domain';
 import type { Event } from '../../domain';
-import { CorrectionSheet, type CorrectionRef } from '../components/CorrectionSheet';
+import { CorrectionSheet, type CorrectionRef } from '../components/sheets/CorrectionSheet';
 import { useSessionStore } from '../store';
 import { duration, timeUtc } from '../format';
 import {
@@ -23,7 +23,7 @@ import {
   flightNumberOf,
   methodBadgeFor,
   voidLabelFor,
-} from '../screens/correction';
+} from '../screens/logic/correction';
 
 /** Etykiety zdarzeń w karcie korekty — spójne z logiem dnia. */
 const LABEL: Partial<Record<Event['type'], string>> = {

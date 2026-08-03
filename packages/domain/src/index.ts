@@ -10,6 +10,7 @@
 
 export * from './time';
 export * from './events';
+export * from './flags';
 export * from './reference';
 export * from './projections';
 export * from './rules';

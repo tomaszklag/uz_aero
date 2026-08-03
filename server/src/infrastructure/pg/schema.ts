@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 17;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -154,6 +154,18 @@ export const MIGRATION_4 = `
  * odtworzyć ze strumienia zdarzeń — pełne kopie dublowałyby rejestr bez zysku.
  * `rows` to DOSŁOWNE wiersze karty (`DaySheet.rows`, string[][]) — karta jest
  * dokumentem w kształcie Excela, nie projekcją do dalszego liczenia.
+ *
+ * ══ CO Z TEGO WYNIKA I JEST NIEROZSTRZYGNIĘTE (2026-08-01) ══
+ * Kluczem jest `tab`, czyli `YYYY-MM-DD_SP-XXX` — DZIEŃ i SAMOLOT, bez sesji. Dwie
+ * ZAMKNIĘTE zmiany na tym samym samolocie tego samego dnia (poranna i popołudniowa)
+ * budują więc kartę o tej samej nazwie i druga NADPISUJE pierwszą. Flaga
+ * `session_overlap` tego nie łapie i nie ma prawa łapać — dotyczy sesji niezamkniętych.
+ * Konwencji nazw nie zmieniamy jednostronnie: jest lustrem `sheetTabName` w telefonie
+ * (`app/src/ui/screens/syncStatus.ts`, ekran 11) i częścią §4.7, więc scalanie sesji
+ * w jedną kartę albo wpuszczenie sesji do nazwy jest DECYZJĄ PRODUKTOWĄ dotykającą obu
+ * końców. Do czasu jej podjęcia monitor eksportu przynajmniej nie milczy: wykrywa
+ * kolizję po `(day, aircraft_id)` w `export_log` i niesie ją jako
+ * `AdminExportListItem.overwrittenBy`.
  */
 export const MIGRATION_5 = `
   CREATE TABLE IF NOT EXISTS exported_sheets (
@@ -202,6 +214,401 @@ export const MIGRATION_7 = `
     CHECK (role IN ('pilot', 'training_lead', 'admin'));
 `;
 
+/**
+ * Migracja 8: słownik typów flag w bazie (§4.5, katalog w `@uzaero/domain`).
+ *
+ * Powód: `FlagRecord.type` jest od 2026-07-31 typem `FlagType`, a nie `string`, więc
+ * adapter musi wiedzieć, że wartość z kolumny należy do katalogu. Bez ograniczenia
+ * w bazie strażnik w adapterze byłby zgadywaniem; z nim jest asercją, która nigdy
+ * nie powinna wystąpić — i dlatego wolno jej rzucić.
+ *
+ * `ADD CONSTRAINT` nie ma wariantu `IF NOT EXISTS` i do 2026-07-31 była to pułapka:
+ * powtórzenie po przerwanym biegu blokowało start serwera (tak jak migracja 3).
+ * Teraz runner wykonuje skrypt i wpis o zastosowaniu JEDNĄ transakcją, więc stan
+ * „zastosowana, ale nieodnotowana" jest niemożliwy i powtórka nie grozi.
+ *
+ * Katalog liczy pięć pozycji, bo `session_overlap` zastąpił `DOUBLE_CLAIM`
+ * i `TIME_OVERLAP` z §4.5 (uzasadnienie: `packages/domain/src/flags.ts`).
+ */
+export const MIGRATION_8 = `
+  ALTER TABLE flags ADD CONSTRAINT flags_type_known CHECK (
+    type IN ('mh_gap', 'mh_regression', 'session_overlap', 'fuel_mismatch', 'clock_drift')
+  );
+`;
+
+/**
+ * Migracja 9: dziennik akcji administratorów (`admin_audit`, przekrój 1 panelu).
+ *
+ * Wiersz powstaje WYŁĄCZNIE przez `AdminAuditPort.append`, wołane z wnętrza
+ * `AuditedWrite` — czyli w tej samej transakcji co skutek, który opisuje. Operacja,
+ * której nie udało się zaudytować, po prostu nie zachodzi.
+ *
+ * **Tabela jest append-only i nie ma tu na to ograniczenia bazodanowego** — docelowo
+ * niezmienność wymusza `GRANT INSERT, SELECT` dla roli aplikacyjnej (wymaga drugiego
+ * connection stringa, decyzja wdrożeniowa `docs/architektura-panelu-serwer.md` §11
+ * pkt 2). Do tego czasu pilnuje jej `test/architecture.test.ts`: żaden plik w `src/`
+ * nie ma prawa zawierać `UPDATE admin_audit` ani `DELETE FROM admin_audit`.
+ *
+ * **`action` i `actor_role` celowo BEZ `CHECK`-a na słowniku** — inaczej niż
+ * `pilots.role` (migracja 7) i `flags.type` (migracja 8). Tamte opisują byt ŻYWY,
+ * który adapter wczytuje z powrotem do zamkniętej unii i musi umieć zinterpretować.
+ * Tu wiersz jest zapisem HISTORYCZNYM: przemianowanie akcji albo wycofanie roli
+ * z katalogu nie może unieważnić tego, co zdarzyło się rok temu, a `CHECK` zmusiłby
+ * wtedy albo do przepisania historii, albo do porzucenia zmiany. Słownika pilnuje
+ * typ `AdminAction` w jedynym miejscu zapisu (`domain/adminActions.ts`), a strona
+ * odczytu (ekran A09) ma pokazać nieznany kod dosłownie, nigdy się nim wywrócić.
+ *
+ * `ip` jest NULL-owalny: akcja może przyjść z narzędzia bez żądania HTTP (skrypt
+ * administracyjny), a wymyślony adres byłby gorszy niż jego brak.
+ *
+ * **UWAGA: kształt OBU indeksów niżej jest NIEAKTUALNY — unieważnia go migracja 12.**
+ * Brak `NULLS LAST` i brak `id` w `idx_audit_actor` sprawiały, że planer nie mógł użyć
+ * ich do porządkowania, więc każda strona dziennika kończyła się pełnym `Sort`-em.
+ * Migracja zostaje w tej postaci, bo migracji nie przepisuje się wstecz — ale wzorca
+ * stąd NIE KOPIUJ: dowodem, dlaczego to zdanie tu stoi, jest właśnie `idx_audit_actor`,
+ * powielony z `idx_audit_created` razem z wadą.
+ */
+export const MIGRATION_9 = `
+  CREATE TABLE IF NOT EXISTS admin_audit (
+    id             BIGSERIAL PRIMARY KEY,
+    actor_pilot_id TEXT        NOT NULL,
+    actor_role     TEXT        NOT NULL,
+    action         TEXT        NOT NULL,
+    target_type    TEXT,
+    target_id      TEXT,
+    details        JSONB       NOT NULL DEFAULT '{}'::jsonb,
+    ip             TEXT,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+  CREATE INDEX IF NOT EXISTS idx_audit_created ON admin_audit (created_at DESC, id DESC);
+  CREATE INDEX IF NOT EXISTS idx_audit_actor   ON admin_audit (actor_pilot_id, created_at DESC NULLS LAST, id DESC);
+`;
+
+/**
+ * Migracja 10: flaga zapamiętuje, KTO i JAK ją rozstrzygnął (mockup `A03a-flaga.html`).
+ *
+ * `resolved_at` jest od migracji 2; brakowało tożsamości rozstrzygającego i treści
+ * rozstrzygnięcia. Komentarz jest w UI **wymagany** — za pół roku nikt nie pamięta,
+ * dlaczego nakładka sesji okazała się pozorna — ale kolumna zostaje NULL-owalna:
+ * flagi rozwiązane przed wdrożeniem tego pola istnieć mogą i panel pokazuje wtedy
+ * „rozstrzygnięcie sprzed rejestrowania uzasadnień". Wymóg jest regułą wejścia
+ * (`zod` na trasie), nie ograniczeniem tabeli — te dwie rzeczy dotyczą różnych
+ * zbiorów wierszy.
+ *
+ * Indeks pod skrzynkę flag (A03): sortowanie listy to `(status, created_at DESC, id DESC)`.
+ */
+export const MIGRATION_10 = `
+  ALTER TABLE flags ADD COLUMN IF NOT EXISTS resolved_by     TEXT;
+  ALTER TABLE flags ADD COLUMN IF NOT EXISTS resolution_note TEXT;
+  CREATE INDEX IF NOT EXISTS idx_flags_status_created ON flags (status, created_at DESC, id DESC);
+`;
+
+/**
+ * Migracja 11: rodzaj operacji i klient w projekcji `sessions` (przekrój 2 panelu,
+ * mockup `A02-dni.html`).
+ *
+ * Powód jest jedną regułą: **nowa liczba/wymiar w panelu = nowa KOLUMNA PROJEKCJI,
+ * nigdy nowe wyrażenie SQL** (`docs/architektura-panelu-serwer.md` §7.2). Lista dni
+ * bez rodzaju operacji jest bezużyteczna, a wyciąganie go w locie z `events.payload`
+ * (`preflight_confirm`) byłoby drugim, równoległym odtwarzaniem projekcji — czyli
+ * dokładnie tym, co zaczyna kłamać, gdy zmieni się reguła. Obie wartości SĄ JUŻ
+ * w `SessionState` (`projections/session.ts`: `operation`, `client`), więc to
+ * przepisanie projekcji, nie zmiana modelu zdarzeń.
+ *
+ * **`duty_start` NIE jest tu dokładany, choć §7.2 dokumentu go wymienia.** Kolumna
+ * `claim_time` (migracja 2) już niesie `SessionState.dutyStart` — `sessionRowFrom`
+ * mapuje `claimTime: s.dutyStart` od początku. Druga kolumna z tą samą wartością
+ * byłaby dublem, który natychmiast zacząłby się rozjeżdżać. Rozbieżność NAZWY
+ * z zawartością jest osobną sprawą, opisaną w docblocku `application/sessionRow.ts`.
+ *
+ * `CHECK` na `operation` — ten sam powód co przy `flags.type` (migracja 8): adapter
+ * wczytuje wartość z powrotem do ZAMKNIĘTEJ unii (`OperationType`), więc bez
+ * ograniczenia w bazie strażnik w adapterze byłby zgadywaniem, a z nim jest asercją,
+ * która nigdy nie powinna wystąpić. `client` zostaje wolnym tekstem — to nazwa
+ * odbiorcy wpisywana przez pilota, nie słownik.
+ *
+ * Indeks `idx_sessions_day` obsługuje sortowanie i kursor keyset listy dni.
+ * `NULLS LAST` jest tu ISTOTNE, nie ozdobne: PostgreSQL domyślnie daje przy `DESC`
+ * porządek `NULLS FIRST`, a `keysetOrderBy` żąda `NULLS LAST` (sesje bez preflightu
+ * mają `claim_time = NULL` i mają lądować na końcu, nie na początku listy). Indeks
+ * w domyślnym porządku NIE obsługiwałby zapytania listy — planer i tak sortowałby
+ * pełny wynik przed `LIMIT`, czyli indeks byłby martwym kosztem zapisu.
+ *
+ * **Migracja wymaga PRZEBUDOWY PROJEKCJI**: nowe kolumny w istniejących wierszach
+ * zostaną puste do najbliższej paczki zdarzeń danej sesji, a dla dni zamkniętych
+ * takiej paczki już nie będzie. Przelicza je `npm run rebuild-projections`
+ * (`AdminMaintenanceCommands.rebuildProjections`, mockup `A11-konserwacja.html`).
+ */
+export const MIGRATION_11 = `
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS operation TEXT;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS client    TEXT;
+  ALTER TABLE sessions ADD CONSTRAINT sessions_operation_known CHECK (
+    operation IS NULL OR operation IN ('skoki', 'ferry', 'egzamin', 'techniczny', 'inne')
+  );
+  CREATE INDEX IF NOT EXISTS idx_sessions_day
+    ON sessions (claim_time DESC NULLS LAST, session_uuid DESC);
+`;
+
+/**
+ * Migracja 12: OBA indeksy dziennika audytu dopasowane do porządku, którym go czytamy.
+ *
+ * `idx_audit_created` powstał w migracji 9 jako `(created_at DESC, id DESC)` — a `DESC`
+ * w PostgreSQL znaczy `NULLS FIRST`. Tymczasem `keysetOrderBy` (`infrastructure/pg/keyset.ts`)
+ * generuje `DESC NULLS LAST` JAWNIE i celowo: domyślne porządki różnią się między `ASC`
+ * a `DESC`, więc poleganie na nich dałoby dwa różne porządki pod jedną nazwą, a predykat
+ * kursora musi opisywać dokładnie ten sam porządek co sortowanie.
+ *
+ * Skutek rozjazdu jest niewidoczny w wynikach i zabójczy dla wydajności: planer nie może
+ * użyć indeksu do porządkowania, więc KAŻDA strona to `Seq Scan` + pełny `Sort` tabeli.
+ * Zmierzone na PGlite przy 2000 wierszy: koszt pierwszej strony 109 zamiast 4, i rośnie
+ * liniowo z dziennikiem, który z natury tylko przyrasta. Paginacja kursorem istnieje po to,
+ * żeby koszt strony był STAŁY — bez pasującego indeksu wraca dokładnie ten problem,
+ * przed którym miała chronić.
+ *
+ * **`idx_audit_actor` miał tę samą wadę i jeszcze jedną: brakowało mu `id`.** Filtr po
+ * koncie (kolumna „Kto" na `A09` jest linkiem, więc to najczęstsze zawężenie ekranu)
+ * sortuje tak samo — `(created_at DESC NULLS LAST, id DESC)` — a indeks bez tie-breakera
+ * i bez `NULLS LAST` nie obsługuje tego porządku. Planer schodził wtedy na
+ * `idx_audit_created` z filtrem albo na `Seq Scan`, czyli PIERWSZA strona zawężenia
+ * kosztowała tyle, co przejrzenie całego dziennika. Trzy kolumny w tej kolejności
+ * (równość, potem porządek) obsługują filtr i sortowanie jednym przejściem.
+ *
+ * Wada spała od migracji 9, bo do ekranu `A09` nikt tej tabeli nie czytał. Wzorzec
+ * poprawny mieliśmy już obok: `idx_sessions_day` (migracja 11) od początku niesie
+ * `NULLS LAST`. `created_at` jest `NOT NULL`, więc nulli tu nigdy nie będzie — ale
+ * planer dopasowuje porządek indeksu SKŁADNIOWO i o ograniczeniu nie wnioskuje.
+ *
+ * Że oba indeksy faktycznie NIOSĄ porządek, sprawdza `EXPLAIN` w `test/adminAudit.test.ts`
+ * (brak węzła `Sort` w planie obu zapytań listy) — zdanie w prozie już raz nie
+ * powstrzymało powielenia tej wady.
+ *
+ * **SPROSTOWANIE (migracja 17, 2026-08-02): kierunek naprawy był ODWROTNY.** `NULLS LAST`
+ * na kolumnie `NOT NULL` nie opisuje żadnego realnego porządku, a odbiera indeks w drugim
+ * kierunku sortowania. Oba indeksy dziennika wracają do postaci bez tego dopisku, a
+ * `keysetOrderBy` emituje `NULLS` wyłącznie dla klucza NULL-owalnego. Uzasadnienie
+ * i pomiary: `MIGRATION_17` niżej.
+ */
+export const MIGRATION_12 = `
+  DROP INDEX IF EXISTS idx_audit_created;
+  CREATE INDEX IF NOT EXISTS idx_audit_created
+    ON admin_audit (created_at DESC NULLS LAST, id DESC);
+
+  DROP INDEX IF EXISTS idx_audit_actor;
+  CREATE INDEX IF NOT EXISTS idx_audit_actor
+    ON admin_audit (actor_pilot_id, created_at DESC NULLS LAST, id DESC);
+`;
+
+/**
+ * Migracja 13: znacznik UNIEWAŻNIENIA POŚWIADCZEŃ konta (przekrój A06, 2026-08-01).
+ *
+ * ══ CO ZAMYKA ══
+ * Sesja panelu to podpisany JWT w ciasteczku `uzaero_admin` z TTL 8 h — i NIE MA dla
+ * niej wiersza w bazie. `RefreshTokensAdminPort.revokeAllFor` kasuje `refresh_tokens`,
+ * czyli sesje TELEFONU; ciasteczka panelu nie ma czym unieważnić, bo nie ma czego
+ * skasować. Skutek przed tą migracją: wykradzione poświadczenie panelu przeżywało
+ * reset hasła nawet o osiem godzin, a ekran `A06a` pisał „Aktywne sesje pilota —
+ * unieważnione". Obietnica bez pokrycia, dokładnie w operacji, która istnieje po to,
+ * żeby dostęp odebrać.
+ *
+ * ══ DLACZEGO KOLUMNA, A NIE TABELA SESJI PANELU ══
+ * Tabela sesji przeglądarkowych oznaczałaby wiersz na każde logowanie i wpis do
+ * skasowania przy każdym wylogowaniu — a pytanie, na które trzeba odpowiedzieć, brzmi
+ * „czy to poświadczenie jest starsze niż ostatnie unieważnienie". Odpowiada na nie
+ * JEDNA data przy koncie, którą brama i tak czyta przy każdym żądaniu panelu
+ * (`http/authorize.ts`), więc kontrola NIE KOSZTUJE dodatkowego zapytania.
+ *
+ * `NULL` znaczy „poświadczeń tego konta nigdy nie unieważniano" i jest wartością
+ * domyślną dla kont istniejących — inaczej wdrożenie wylogowałoby wszystkich naraz
+ * bez powodu. Znacznik przesuwają DWIE operacje: reset hasła i deaktywacja
+ * (`application/admin/commands/pilots.ts`).
+ *
+ * Porównanie jest po stronie serwera i celowo GRUBOZIARNISTE: token niesie `iat`
+ * w SEKUNDACH (RFC 7519), więc odrzucamy token, którego sekunda wydania jest
+ * WCZEŚNIEJSZA niż znacznik. Zaokrąglenie działa w stronę bezpieczną — token wydany
+ * w tej samej sekundzie co unieważnienie zostaje odrzucony, a nie przepuszczony.
+ */
+export const MIGRATION_13 = `
+  ALTER TABLE pilots ADD COLUMN IF NOT EXISTS credentials_valid_from TIMESTAMPTZ;
+`;
+
+/**
+ * Migracja 14: JEDNA REWIZJA KARTY = JEDEN WIERSZ DZIENNIKA (przekrój A05, 2026-08-01).
+ *
+ * ══ CO ZAMYKA ══
+ * `export_log` jest append-only i to jest jego cała wartość: po nim, i tylko po nim, da
+ * się odpowiedzieć na pytanie „co widział skarbnik klubu, kiedy zamykał miesiąc".
+ * Numer rewizji nadawał jednak `DayExporter` sekwencją „odczytaj ostatnią → dodaj jeden
+ * → zapisz", w trzech osobnych zapytaniach bez transakcji. Dwa równoległe eksporty tej
+ * samej sesji (spóźniona paczka z telefonu W CHWILI, gdy administrator klika „Ponów")
+ * czytały ten sam stan i zapisywały DWA wiersze z rewizją 3. Dziennik, w którym numer
+ * rewizji nie jest kluczem, przestaje odpowiadać na pytanie, dla którego istnieje.
+ *
+ * ══ DLACZEGO OGRANICZENIE, A NIE SAMA OSTROŻNOŚĆ W KODZIE ══
+ * Ta sama decyzja, co przy `uq_flags_type_sessions` (migracja 3): dedupe w adapterze
+ * przegrywa wyścig dwóch transakcji, a ograniczenie jest jedyną gwarancją, której nie
+ * da się ominąć timingiem. Serializację (advisory lock na `session_uuid`, wzorzec
+ * `lockAircraft`) dokłada `ExportLogPort.lock`.
+ *
+ * **Czego ogranicznenie łapie NAPRAWDĘ** (sprostowanie 2026-08-01 — poprzednia wersja
+ * tego komentarza mówiła „drugą instancję procesu, której blokada by nie objęła" i było
+ * to po prostu nieprawdą): `pg_advisory_xact_lock` jest blokadą KLASTROWĄ, więc dwie
+ * instancje serwera na tej samej bazie szeregują się na niej dokładnie tak samo jak dwie
+ * transakcje w jednym procesie. `UNIQUE` broni przed czymś innym i węższym:
+ *  • ręcznym `INSERT`-em w `psql` (skrypt naprawczy, migracja danych z zewnątrz),
+ *  • przyszłą ścieżką kodu, która dopisze wiersz, zapominając zawołać `lock()`,
+ *  • starymi duplikatami — ujawnia je przy zakładaniu ograniczenia, zamiast zostawić
+ *    w dzienniku dwa wiersze o tym samym numerze rewizji.
+ *
+ * **Blokada NIE MA testu i tak zostaje zapisane.** Jej jedynym dowodem jest rozumowanie:
+ * PGlite ma JEDNO połączenie i szereguje transakcje własnym mutexem, więc po usunięciu
+ * `pg_advisory_xact_lock` przypadki w `test/adminExports.test.ts` nadal przechodzą
+ * (sprawdzone). Test udający równoległość dawałby fałszywe poczucie pokrycia — dlatego
+ * go nie ma, a ta luka jest tu nazwana.
+ *
+ * **Przegrany wyścig wraca jako `23505` i kończy się PIĘĆSETKĄ** — tłumaczenia na odmowę
+ * NIE MA i nie należy go tu obiecywać (drugie sprostowanie 2026-08-01). `uniqueConflictOn`
+ * (`application/admin/commands/uniqueConflict.ts`) obsługuje formularze kont i floty,
+ * gdzie kolizja jest zajętą wartością do poprawienia przez człowieka; tutaj kolizja
+ * numeru rewizji jest awarią serializacji, a nie polem do zmiany, więc nie ma czego
+ * pokazać w formularzu. Ponowienie z panelu odróżnia ten przypadek od awarii arkuszy
+ * (`ExportFailureDto: 'unexpected'` vs `'sheets_adapter'`), żeby administrator nie
+ * dostał zdania „spróbuj za chwilę" na błąd, który sam nie minie.
+ *
+ * **Migracja WYWALI SIĘ na bazie, w której duplikat rewizji już powstał** — i tak ma
+ * być: to jest dokładnie ten stan, o którym trzeba się dowiedzieć, a nie ten, który
+ * wolno cicho przepuścić. Runner wykonuje skrypt i wpis o zastosowaniu jedną transakcją,
+ * więc nieudana migracja nie zostawia półproduktu.
+ *
+ * `idx_export_log_session` (migracja 4) znika, bo nowy indeks unikalności ma tę samą
+ * kolumnę wiodącą i obsługuje oba pytania dziennika: „wiersze tej sesji" i „ostatnia
+ * rewizja" (`ORDER BY revision DESC`). Dwa indeksy o tym samym prefiksie to koszt
+ * zapisu bez czytelnika.
+ */
+export const MIGRATION_14 = `
+  ALTER TABLE export_log ADD CONSTRAINT uq_export_log_revision UNIQUE (session_uuid, revision);
+  DROP INDEX IF EXISTS idx_export_log_session;
+`;
+
+/**
+ * Migracja 15: indeks po `events.received_at` — oś PULSU SYSTEMU (`A01`).
+ *
+ * Pulpit zadaje rejestrowi trzy pytania po ZEGARZE SERWERA: „co przyszło ostatnio"
+ * (`ORDER BY received_at DESC LIMIT 6`), „ile przyszło w każdej z ostatnich dwunastu
+ * godzin" i „ile przyszło dziś". Rejestr `events` ma dziś indeksy po `session_uuid`
+ * i `aircraft_id` — żaden z nich nie obsługuje ani sortowania, ani zakresu po czasie
+ * przyjęcia, więc każde z tych pytań byłoby PEŁNYM SKANOWANIEM tabeli, która rośnie
+ * bez granicy.
+ *
+ * To jest dokładnie ten rodzaj kosztu, którego nie widać na starcie: pulpit ładuje się
+ * natychmiast w pierwszym miesiącu i coraz wolniej w każdym następnym, a jest ekranem,
+ * na którym KAŻDY zalogowany ląduje jako pierwszym. `uuid` jako druga kolumna, bo
+ * porządek listy jest po parze `(received_at, uuid)` — cała paczka z jednego synca ma
+ * identyczny `received_at`, więc bez rozstrzygnięcia sortowanie byłoby niestabilne.
+ */
+export const MIGRATION_15 = `
+  CREATE INDEX IF NOT EXISTS idx_events_received ON events (received_at DESC, uuid DESC);
+`;
+
+/**
+ * Migracja 16: rejestr zdarzeń pod LISTĘ ŚLEDCZĄ (`A04`, 2026-08-01).
+ *
+ * ══ 1. `idx_events_received` DOSTAJE `NULLS LAST` — TA SAMA WADA, CO W MIGRACJI 12 ══
+ * Indeks z migracji 15 stoi jako `(received_at DESC, uuid DESC)`, czyli — bo taka jest
+ * wartość domyślna dla `DESC` — `NULLS FIRST`. Paginacja kursorowa panelu emituje
+ * `ORDER BY … DESC NULLS LAST` **jawnie w obu kierunkach** (`keysetOrderBy`: poleganie
+ * na domyślnych oznaczałoby dwa różne porządki pod jedną nazwą). Te dwa zapisy NIE
+ * PASUJĄ do siebie składniowo, a planer PostgreSQL-a **nie skraca tego przez `NOT NULL`
+ * kolumny** — sprawdzone `EXPLAIN`-em, nie z lektury (`test/adminEvents.test.ts`):
+ * przy 5 000 wierszy plan schodzi z `Index Only Scan` na `Bitmap Heap Scan` + `Sort`
+ * CAŁEJ tabeli przed `LIMIT`-em. Wynik jest wtedy poprawny, a koszt strony rośnie
+ * liniowo z rejestrem — czyli dokładnie to, czemu kursor miał zapobiec.
+ *
+ * Ta sama wada zdążyła się już raz powielić na drugi indeks dziennika audytu, dopóki
+ * istniała wyłącznie w prozie. Dlatego tutaj pilnuje jej `EXPLAIN` w teście, a nie
+ * zdanie w komentarzu.
+ *
+ * **Skutek uboczny, o którym trzeba wiedzieć:** dopasowanie działa w OBIE strony, więc
+ * po tej zmianie zapytanie bez `NULLS LAST` przestaje dostawać porządek z indeksu.
+ * Dlatego `PgAdminDashboardRepo.recent` (karta „Ostatnio przyjęte", `A01`) dostaje
+ * `NULLS LAST` w tym samym commicie — inaczej naprawa listy zepsułaby pulpit.
+ *
+ * **SPROSTOWANIE (migracja 17, 2026-08-02): to nie była naprawa, tylko przesunięcie
+ * wady na `?sort=asc`.** Indeks `DESC NULLS LAST` skanowany wstecz daje `ASC NULLS
+ * FIRST`, a `keysetOrderBy` prosił wtedy o `ASC NULLS LAST` — więc jeden klik
+ * w nagłówek kolumny sortował cały rejestr przed `LIMIT`-em (koszt 442 zamiast ~10).
+ * Migracja 17 zdejmuje `NULLS LAST` z tego indeksu i z obu indeksów audytu, a `NULLS`
+ * emitujemy odtąd wyłącznie dla klucza NULL-owalnego. `recent` wraca razem z nimi.
+ *
+ * ══ 2. `idx_events_correction_target` — SKĄD WIADOMO, ŻE ZDARZENIE UNIEWAŻNIONO ══
+ * Rejestr pokazuje zdarzenie unieważnione korektą PRZEKREŚLONE, ale obecne — to
+ * właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się od tego, co zapisał
+ * telefon. Żeby to rozstrzygnąć, strona dobiera korekty celujące w swoje wiersze
+ * (`payload->>'targetUuid'`), także spoza zakresu dat: zdarzenie sprzed miesiąca mogło
+ * zostać unieważnione wczoraj.
+ *
+ * Indeks jest CZĘŚCIOWY (`WHERE type = 'event_correction'`) i wyrażeniowy, bo korekty
+ * są ułamkiem rejestru — pełny indeks po wyrażeniu z `JSONB` kosztowałby przy każdym
+ * przyjęciu paczki, a odpowiadałby na pytanie zadawane wyłącznie o korekty. Bez niego
+ * to zapytanie jest pełnym skanowaniem rejestru RAZ NA STRONĘ.
+ */
+export const MIGRATION_16 = `
+  DROP INDEX IF EXISTS idx_events_received;
+  CREATE INDEX IF NOT EXISTS idx_events_received
+    ON events (received_at DESC NULLS LAST, uuid DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_events_correction_target
+    ON events ((payload->>'targetUuid'))
+    WHERE type = 'event_correction';
+`;
+
+/**
+ * Migracja 17: KONIEC z `NULLS LAST` na kluczach `NOT NULL` (2026-08-02).
+ *
+ * ══ CO TU NAPRAWDĘ BYŁO ZEPSUTE ══
+ * Migracja 16 „naprawiła" rozjazd indeksu rejestru, dopisując `NULLS LAST` do
+ * `idx_events_received` — bo tyle emitował `keysetOrderBy`. Wada nie zniknęła, tylko
+ * przeniosła się na DRUGI kierunek: indeks `(received_at DESC NULLS LAST, uuid DESC)`
+ * skanowany wstecz daje `ASC NULLS FIRST`, a `?sort=asc` prosi o `ASC NULLS LAST`.
+ * Zmierzone `EXPLAIN`-em na 5 000 wierszy: `?sort=asc` sortował CAŁY rejestr przed
+ * `LIMIT`-em (koszt 442 zamiast ~10). Wystarczył jeden klik w nagłówek kolumny.
+ *
+ * To był trzeci nawrót tej samej pułapki (migracje 12, 16 i ta), więc naprawa idzie
+ * do ŹRÓDŁA: `keysetOrderBy` emituje `NULLS` wyłącznie dla klucza, który faktycznie
+ * bywa `NULL` (`CursorShape.k1Nullable`). Dla kolumny `NOT NULL` zostaje czyste
+ * `DESC`/`ASC`, a to są zapisy DOMYŚLNE — więc jeden indeks `(x DESC, y DESC)`
+ * obsługuje OBA kierunki: skanem w przód `DESC, DESC`, skanem wstecz `ASC, ASC`.
+ *
+ * ══ CO Z TEGO WYNIKA DLA INDEKSÓW ══
+ * Trzy indeksy stojące pod kluczami `NOT NULL` wracają do postaci bez `NULLS LAST` —
+ * inaczej przestałyby pasować do zapytań PO naprawie. Wynik był i jest identyczny;
+ * zmienia się wyłącznie to, czy planer może użyć indeksu do porządkowania:
+ *
+ *  • `idx_events_received`  — rejestr `A04` (oba kierunki) i pulpit `A01` (`recent`);
+ *  • `idx_audit_created`    — dziennik audytu `A09` bez zawężenia;
+ *  • `idx_audit_actor`      — dziennik audytu zawężony po koncie działającego.
+ *
+ * `idx_sessions_day` (migracja 11) zostaje BEZ ZMIAN i to jest cała pointa reguły:
+ * `sessions.claim_time` jest NULL-owalne (dzień bez `preflight_confirm` nie ma duty
+ * startu), więc tam `NULLS LAST` opisuje realny porządek, a nie ozdobę.
+ *
+ * Że wszystkie cztery kombinacje rejestru (`desc`/`asc` × z kursorem/bez) faktycznie
+ * NIOSĄ porządek z indeksu, sprawdza `EXPLAIN` w `test/adminEvents.test.ts`. Poprzednia
+ * wersja testu badała wyłącznie `desc` — i dlatego wada przeszła.
+ */
+export const MIGRATION_17 = `
+  DROP INDEX IF EXISTS idx_events_received;
+  CREATE INDEX IF NOT EXISTS idx_events_received
+    ON events (received_at DESC, uuid DESC);
+
+  DROP INDEX IF EXISTS idx_audit_created;
+  CREATE INDEX IF NOT EXISTS idx_audit_created
+    ON admin_audit (created_at DESC, id DESC);
+
+  DROP INDEX IF EXISTS idx_audit_actor;
+  CREATE INDEX IF NOT EXISTS idx_audit_actor
+    ON admin_audit (actor_pilot_id, created_at DESC, id DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -210,4 +617,46 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_5,
   MIGRATION_6,
   MIGRATION_7,
+  MIGRATION_8,
+  MIGRATION_9,
+  MIGRATION_10,
+  MIGRATION_11,
+  MIGRATION_12,
+  MIGRATION_13,
+  MIGRATION_14,
+  MIGRATION_15,
+  MIGRATION_16,
+  MIGRATION_17,
+];
+
+/**
+ * Jednozdaniowy opis KAŻDEJ migracji — kolumna „Co wprowadza" z ekranu `A11`.
+ *
+ * ══ DLACZEGO TO STOI TUTAJ, A NIE W PANELU ══
+ * Bo tutaj stoi DDL. Lista opisów trzymana po drugiej stronie drutu rozjeżdżałaby się
+ * przy pierwszej nowej migracji i nikt by tego nie zauważył — panel wypisywałby wtedy
+ * opis migracji 17 przy migracji 18. Tu rozjazd jest niemożliwy do przeoczenia: długość
+ * tej tablicy musi się równać długości `MIGRATIONS` i pilnuje tego `test/schema.test.ts`.
+ *
+ * Opisy są streszczeniem docbloków wyżej, a nie ich powtórzeniem: ekran ma powiedzieć,
+ * CO migracja wprowadza, a nie dlaczego — uzasadnienia zostają przy kodzie.
+ */
+export const MIGRATION_TITLES: readonly string[] = [
+  'Fundament: pilots, aircraft, refresh_tokens, events',
+  'Projekcje serwera: sessions i flags',
+  'Unikalność flag na poziomie bazy (UNIQUE po typie i sesjach)',
+  'Dziennik eksportu export_log — append-only, rewizja +1',
+  'Treść kart exported_sheets — bazodanowy adapter SheetsPort',
+  'Motyw jako preferencja pilota: pilots.theme + theme_updated_at',
+  'Rola konta: pilots.role z CHECK i domyślnym `pilot`',
+  'Słownik typów flag w bazie (CHECK na flags.type)',
+  'Dziennik akcji administratorów: admin_audit',
+  'Flaga pamięta, KTO i JAK ją rozstrzygnął (resolved_by, resolution_note)',
+  'Rodzaj operacji i klient w projekcji: sessions.operation, sessions.client',
+  'Indeksy dziennika audytu dopasowane do porządku odczytu',
+  'Znacznik unieważnienia poświadczeń: pilots.credentials_valid_from',
+  'Jedna rewizja karty = jeden wiersz dziennika (UNIQUE na export_log)',
+  'Indeks po events.received_at — oś pulsu systemu',
+  'Rejestr zdarzeń pod listę śledczą (indeksy typu, pilota i urządzenia)',
+  'Koniec z NULLS LAST na kluczach NOT NULL (rejestr i audyt)',
 ];

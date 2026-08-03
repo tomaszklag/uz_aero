@@ -12,7 +12,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { projectSession, type Event } from '@uzaero/domain';
 
-import { buildDaySheet, sheetTabName } from '../src/application/export/daySheetContent.ts';
+import { buildDaySheet, sheetTabName } from '../src/application/common/export/daySheetContent.ts';
 import { FakeSheets } from './fakes/fakeSheets.ts';
 import { TEST_PASSWORD, testHarness } from './helpers.ts';
 
