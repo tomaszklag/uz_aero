@@ -188,6 +188,19 @@
     display:inline-flex; align-items:center;
   }
   .edit-btn:hover { border-color:var(--border-strong); color:var(--text-secondary); }
+  /* Numer lotu = wejście w ślad (13). Cel dotykowy 44 px bez dokładania drugiej
+     ikony do wąskiej tabeli — kropka pod cyfrą mówi, że to jest klikalne. */
+  .flight-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:44px; min-height:44px; text-decoration:none;
+    color:var(--text-secondary); position:relative;
+  }
+  .flight-btn::after {
+    content:''; position:absolute; bottom:9px; left:50%; transform:translateX(-50%);
+    width:12px; height:1.5px; border-radius:1px; background:var(--green); opacity:0.5;
+  }
+  .flight-btn.no-track { color:var(--text-muted); }
+  .flight-btn.no-track::after { background:var(--border-strong); opacity:1; }
 
   /* Fuel grid */
   .fuel-grid-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
@@ -352,7 +365,7 @@
           </thead>
           <tbody>
             <tr>
-              <td class="num">1</td>
+              <td><a href="14-slad.html" class="flight-btn" title="Ślad lotu 1">1</a></td>
               <td>08:25</td>
               <td>09:18</td>
               <td>00:53</td>
@@ -360,7 +373,7 @@
               <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
-              <td class="num">2</td>
+              <td><a href="14-slad.html" class="flight-btn" title="Ślad lotu 2">2</a></td>
               <td>09:35</td>
               <td>10:22</td>
               <td>00:47</td>
@@ -368,7 +381,7 @@
               <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
-              <td class="num">3</td>
+              <td><a href="14-slad.html" class="flight-btn" title="Ślad lotu 3">3</a></td>
               <td>11:28</td>
               <td>12:15</td>
               <td>00:47</td>
@@ -376,7 +389,7 @@
               <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
-              <td class="num">4</td>
+              <td><a href="14-slad.html" class="flight-btn" title="Ślad lotu 4">4</a></td>
               <td>13:24</td>
               <td>14:08</td>
               <td>00:44</td>
@@ -384,7 +397,7 @@
               <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
-              <td class="num">5</td>
+              <td><a href="14b-slad-brak.html" class="flight-btn no-track" title="Lot wpisany ręcznie — brak zapisu GPS">5</a></td>
               <td>14:21</td>
               <td>15:03</td>
               <td>00:42</td>
@@ -392,7 +405,7 @@
               <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
-              <td class="num">6</td>
+              <td><a href="14-slad.html" class="flight-btn" title="Ślad lotu 6">6</a></td>
               <td>15:17</td>
               <td>16:10</td>
               <td>00:53</td>
@@ -522,6 +535,8 @@
   <span>·</span>
   <a href="10-statystyki.html" class="active">10 Statystyki</a>
   <a href="10a-statystyki-zero.html">10A Bez lotów</a>
+  <span>·</span>
+  <a href="14-slad.html">13 Ślad lotu</a>
   <span>·</span>
   <a href="11-eksport.html">11 Synchronizacja →</a>
 </nav>
