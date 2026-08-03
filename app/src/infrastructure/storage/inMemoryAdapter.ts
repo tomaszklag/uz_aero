@@ -102,6 +102,23 @@ export class InMemoryAdapter implements StoragePort, TracePort {
     return this.trace.filter((e) => e.uploadedAt == null).slice(0, limit).map(deepClone);
   }
 
+  async readTraceFixes(
+    sessionUuid: string,
+    fromTime: EpochMillis,
+    toTime: EpochMillis,
+  ): Promise<TraceEntry[]> {
+    return this.trace
+      .filter(
+        (e) =>
+          e.sessionUuid === sessionUuid &&
+          e.kind === 'fix' &&
+          e.time >= fromTime &&
+          e.time <= toTime,
+      )
+      .sort((a, b) => a.time - b.time)
+      .map(deepClone);
+  }
+
   async markTraceUploaded(ids: number[], uploadedAt: EpochMillis): Promise<void> {
     const set = new Set(ids);
     for (const e of this.trace) if (set.has(e.id)) e.uploadedAt = uploadedAt;

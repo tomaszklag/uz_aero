@@ -38,6 +38,7 @@ import {
   ReferenceSync,
   SessionCommands,
   SessionQueries,
+  FlightTrackQueries,
   SyncEngine,
   ThemePrefsSync,
   TraceSync,
@@ -57,6 +58,13 @@ export interface SessionStore {
   repo: EventsRepo | null;
   commands: SessionCommands | null;
   queries: SessionQueries | null;
+  /**
+   * Zapytania o ślad lotu (ekran 14) — podłączane osobno, bo potrzebują `TracePort`,
+   * czyli magazynu stojącego OBOK rejestru (własna retencja, własna wysyłka). Ekran
+   * bez podłączonej warstwy pokazuje stan pusty zamiast się wywalać: ślad jest
+   * materiałem badawczym i jego brak nigdy nie może zablokować pracy.
+   */
+  trackQueries: FlightTrackQueries | null;
 
   /** Tożsamość bieżącej sesji (null przed claimem). */
   context: SessionContext | null;
@@ -91,6 +99,8 @@ export interface SessionStore {
   attach(deps: { repo: EventsRepo; commands: SessionCommands; queries: SessionQueries }): void;
   /** Skrót: buduje komendy i zapytania z repozytorium. */
   attachRepo(repo: EventsRepo): void;
+  /** Podłącza zapytania o ślad (composition root — potrzebują magazynu śladu). */
+  attachTrack(queries: FlightTrackQueries): void;
   /**
    * Podłącza warstwę synca (composition root) — bez niej `syncNow` i `refreshReference`
    * są cichym no-op (testy i StyleGuide żyją bez serwera).
@@ -212,6 +222,7 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     repo: null,
     commands: null,
     queries: null,
+    trackQueries: null,
     context: null,
     events: [],
     projection: emptySessionState(),
@@ -241,6 +252,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     attachSync(sync, referenceSync, traceSync, themePrefs) {
       set({ sync, referenceSync, traceSync, themePrefs });
+    },
+
+    attachTrack(trackQueries) {
+      set({ trackQueries });
     },
 
     claim(input) {

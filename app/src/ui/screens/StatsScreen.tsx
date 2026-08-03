@@ -64,7 +64,7 @@ const FLIGHT_COLUMNS = [
 export function StatsScreen({
   navigation,
 }: {
-  navigation: { navigate: (screen: string) => void };
+  navigation: { navigate: (screen: string, params?: object) => void };
 }) {
   const { theme } = useTheme();
 
@@ -95,6 +95,16 @@ export function StatsScreen({
 
   const codeOf = useCallback((id: string) => codes[id] ?? id, [codes]);
 
+  /** Wejście w ślad lotu (14) — numer lotu w tabeli jest celem dotykowym. */
+  const openTrack = useCallback(
+    (flightIndex: number) => {
+      const sessionUuid = projection.sessionUuid;
+      if (sessionUuid == null) return;
+      navigation.navigate('Track', { sessionUuid, flightIndex });
+    },
+    [navigation, projection.sessionUuid],
+  );
+
   /**
    * Okno korekty (§decyzja 2026-07-23). Termin jest wartością BEZWZGLĘDNĄ, więc nie
    * potrzebuje tykającego zegara — liczymy go raz na zmianę projekcji.
@@ -114,14 +124,22 @@ export function StatsScreen({
         id: row.id,
         label: row.label,
         cells: [
-          { text: row.no, muted: true },
+          // Numer lotu otwiera ślad (14) — wejście z mockupu 10. Lot ręczny też jest
+          // klikalny: ekran 14 tłumaczy wtedy, DLACZEGO trasy nie ma (wariant 14B),
+          // a martwy numer kazałby pilotowi zgadywać, czy to brak danych, czy awaria.
+          {
+            text: row.no,
+            muted: true,
+            pressLabel: `Ślad lotu ${row.no}`,
+            onPress: () => openTrack(Number(row.no)),
+          },
           { text: row.takeoff },
           { text: row.landing },
           { text: row.time },
           { text: row.methodLabel, chip: row.method === 'auto' ? 'green' : 'amber' },
         ],
       })),
-    [projection.flights],
+    [projection.flights, openTrack],
   );
 
   // Dzień bez sesji nie ma czego podsumowywać — pokazujemy to wprost, zamiast
