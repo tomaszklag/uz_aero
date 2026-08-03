@@ -28,6 +28,7 @@ import './styles/components/payload.css';
 import './styles/components/timeline.css';
 import './styles/components/drawer.css';
 import './styles/components/dashboard.css';
+import './styles/components/track.css';
 
 import { SessionProvider } from './auth/SessionProvider';
 import { createQueryClient } from './queries/client';

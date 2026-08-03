@@ -19,11 +19,14 @@ import type {
   EventType,
   FlagStatus,
   FlagType,
+  FlightProfile,
   MhFormat,
   OperationType,
   RuleViolation,
   ServiceStatus,
   SessionState,
+  TrackPoint,
+  TrackVertex,
 } from '@uzaero/domain';
 
 /**
@@ -1268,4 +1271,31 @@ export interface SchemaStateDto {
   pending: number;
   lastAppliedAt: string | null;
   migrations: SchemaMigrationDto[];
+}
+
+// ── ślad lotu (A02c) ──────────────────────────────────────────────────────────
+
+/**
+ * Trasa jednego lotu: geometria, log punktów i profil pionowy.
+ *
+ * `TrackVertex`, `TrackPoint` i `FlightProfile` biorzemy jako TYPY z domeny — to byty
+ * domenowe, liczone tym samym kodem, którym liczy je telefon. Własny DTO dostaje
+ * wyłącznie koperta, bo złączenie śladu (pliki NDJSON) z lotem (projekcja rejestru)
+ * istnieje tylko na tej trasie.
+ */
+export interface FlightTrackDto {
+  sessionUuid: string;
+  flightIndex: number;
+  takeoffAt: number;
+  landingAt: number | null;
+  /** `auto` / `manual` — lot ręczny nigdy nie ma śladu i to nie jest błąd. */
+  method: string;
+  line: TrackVertex[];
+  /** Próbka co 30 s PLUS wszystkie punkty odrzucone przez bramkę jakości. */
+  log: TrackPoint[];
+  profile: FlightProfile;
+  distanceNm: number;
+  maxAltitudeFt: number | null;
+  totalCount: number;
+  usableCount: number;
 }

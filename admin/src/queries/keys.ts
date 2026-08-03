@@ -47,6 +47,13 @@ export const keys = {
     list: (query: SessionListQuery) => ['sessions', 'list', query] as const,
     count: (query: SessionListQuery) => ['sessions', 'count', query] as const,
     detail: (sessionUuid: string) => ['sessions', 'detail', sessionUuid] as const,
+    /**
+     * Ślad jednego lotu (`A02c`). Pod prefiksem `sessions`, bo to zasób TEJ sesji —
+     * korekta czasu startu zmienia okno lotu, więc unieważnienie `sessions.all`
+     * ma pociągnąć za sobą także mapę. Osobny prefiks rozerwałby ten związek.
+     */
+    track: (sessionUuid: string, flightIndex: number) =>
+      ['sessions', 'track', sessionUuid, flightIndex] as const,
   },
 
   /**
