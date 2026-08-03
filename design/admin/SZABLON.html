@@ -596,6 +596,63 @@
   /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
   .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
+  /* ══ STATYSTYKI (A10) — cztery wykresy z czystego CSS/SVG ══
+     Dołożone 2026-08-03 razem z przekrojem A10: mockup budował je stylami inline,
+     przez co wzorce nie miały NAZW i nie dało się ich powtórzyć ani wygrepować
+     (ta sama historia, co `.reason-list` przy A01a). Szerokości segmentów i punkty
+     polyline liczy moduł czysty ekranu i podaje stylem inline — klasa niesie
+     wszystko poza geometrią. */
+
+  /* Szereg „dzień po dniu" — SVG polyline; oś z podpisami dat pod spodem. */
+  .trend { width:100%; height:auto; display:block; overflow:visible; }
+  .trend-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--text-muted); padding-top:2px; }
+
+  /* Zestawienie DWÓCH wielkości jednej pozycji (blok vs czas lotu) — para pasków. */
+  .duo { display:flex; align-items:center; gap:14px; }
+  .duo-name { width:74px; font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:1px; flex-shrink:0; }
+  .duo-bars { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .duo-line { display:flex; align-items:center; gap:9px; }
+  .duo-bar { height:15px; border-radius:4px; display:block; }
+  .duo-bar.green { background:var(--green); }
+  .duo-bar.blue { background:var(--blue); }
+  .duo-val { font-family:var(--font-mono); font-size:10.5px; width:52px; text-align:right; flex-shrink:0; }
+  .duo-val.green { color:var(--green); }
+  .duo-val.blue { color:var(--blue); }
+
+  /* Miernik udziału (wykorzystanie floty) — tor z wypełnieniem i twardą krawędzią. */
+  .meter { display:flex; align-items:center; gap:12px; }
+  .meter-track { flex:1; height:22px; border-radius:6px; background:var(--surface-raised); border:1px solid var(--border); overflow:hidden; }
+  .meter-fill { display:block; height:100%; background:var(--green-muted); border-right:2px solid var(--green); }
+  .meter-fill.amber { background:var(--amber-muted); border-right-color:var(--amber); }
+  .meter-val { font-family:var(--font-mono); font-size:11px; font-weight:700; width:58px; text-align:right; flex-shrink:0; }
+
+  /* Pasek udziału W KOMÓRCE tabeli („Udział w nalocie") — cieńszy niż miernik. */
+  .share { display:flex; align-items:center; gap:9px; }
+  .share-track { flex:1; height:9px; border-radius:99px; background:var(--surface-raised); overflow:hidden; }
+  .share-fill { display:block; height:100%; background:var(--text-muted); }
+  .share-fill.blue { background:var(--blue); }
+  .share-val { font-family:var(--font-mono); font-size:10.5px; width:42px; text-align:right; flex-shrink:0; }
+
+  /* Wstęga rozkładu (typy skoków) — segmenty sumujące się do całości. */
+  .ribbon { display:flex; height:26px; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+  .ribbon-seg { display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10px; font-weight:700; border-right:1px solid var(--border); min-width:0; white-space:nowrap; overflow:hidden; }
+  .ribbon-seg:last-child { border-right:none; }
+  .ribbon-seg.blue { background:var(--blue-muted); color:var(--blue); }
+  .ribbon-seg.green { background:var(--green-muted); color:var(--green); }
+  .ribbon-seg.amber { background:var(--amber-muted); color:var(--amber); }
+
+  /* Pionowa kreska między grupami chipów i element dobity do prawej (mockup: inline). */
+  .filters-sep { width:1px; height:22px; background:var(--border); margin:0 4px; }
+  .filters-end { margin-left:auto; }
+  /* Przypis POD tabelą — odsunięty od jej krawędzi (mockup: styl inline). */
+  .table-hint { display:block; padding-top:8px; }
+  /* Wiersz RAZEM tabeli — wyróżnione tło; mockupy robiły to stylem inline na <tr>. */
+  .row-total td { background:var(--surface-raised); }
+  /* Tony komórek wiersza RAZEM — te same barwy, co kafle nad tabelą. */
+  .cell-green { color:var(--green); }
+  .cell-blue { color:var(--blue); }
+  .cell-amber { color:var(--amber); }
+
   /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
   .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
 </style>
@@ -1111,6 +1168,44 @@
             </div>
             <div class="kv"><span class="kv-k">Zniknęłoby</span><span class="kv-v green">12 flag</span></div>
             <div class="kv"><span class="kv-k">Nowych flag</span><span class="kv-v">0</span></div>
+          </div>
+        </div>
+
+        <div class="demo-note">10 · Statystyki (A10) — trend, para pasków, miernik, udział, wstęga</div>
+        <div class="cols even">
+          <div class="card">
+            <div class="card-title">Nalot dzień po dniu <span class="spacer"></span><span class="pill green">suma 12:34</span></div>
+            <svg class="trend" viewBox="0 0 600 96" role="img" aria-label="Przykładowy szereg dzienny">
+              <line x1="0" y1="85" x2="600" y2="85" stroke="var(--border)" stroke-width="1"/>
+              <line x1="0" y1="45" x2="600" y2="45" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3 4"/>
+              <polyline fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="0,60 150,30 300,85 450,20 600,40"/>
+              <circle cx="300" cy="85" r="2.5" fill="var(--border-strong)"/>
+              <circle cx="600" cy="40" r="3" fill="var(--green)"/>
+            </svg>
+            <div class="trend-axis"><span>01 JUL</span><span>15 JUL</span><span>30 JUL</span></div>
+            <div class="duo">
+              <span class="duo-name">SP-KLM</span>
+              <span class="duo-bars">
+                <span class="duo-line"><span class="duo-bar green" style="width:100%;"></span><span class="duo-val green">112:38</span></span>
+                <span class="duo-line"><span class="duo-bar blue" style="width:63.4%;"></span><span class="duo-val blue">71:24</span></span>
+              </span>
+            </div>
+            <div class="meter">
+              <span class="duo-name">SP-XYZ</span>
+              <span class="meter-track"><span class="meter-fill amber" style="width:47%;"></span></span>
+              <span class="meter-val">14 · 47 %</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Udział i rozkład</div>
+            <span class="share"><span class="share-track"><span class="share-fill blue" style="width:60.3%;"></span></span><span class="share-val">60.3 %</span></span>
+            <span class="share"><span class="share-track"><span class="share-fill" style="width:13.3%;"></span></span><span class="share-val">13.3 %</span></span>
+            <span class="ribbon">
+              <span class="ribbon-seg blue" style="width:43.8%;">TANDEM 421</span>
+              <span class="ribbon-seg green" style="width:17.5%;">AFF 168</span>
+              <span class="ribbon-seg amber" style="width:38.7%;">SOLO 373</span>
+            </span>
+            <span class="hint">Geometrię (szerokości, punkty polyline) liczy moduł czysty ekranu z liczb SERWERA — klasa niesie wszystko poza geometrią.</span>
           </div>
         </div>
 

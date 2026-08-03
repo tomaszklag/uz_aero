@@ -33,8 +33,10 @@ import { AppText } from './src/ui/components';
 import { RootNavigator } from './src/ui/navigation/RootNavigator';
 import { useAppBootstrap, useGpsPort, useSensorPort } from './src/ui/bootstrap/appBootstrap';
 import { ServicesProvider } from './src/ui/bootstrap/ServicesProvider';
+import { useGps } from './src/ui/bootstrap/servicesContext';
 import { useAuthStore } from './src/ui/store/authStore';
 import { useSessionStore } from './src/ui/store/sessionStore';
+import { useBackgroundTracking } from './src/ui/hooks/useBackgroundTracking';
 import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
 import { LoginScreen } from './src/ui/screens/LoginScreen';
 import { PinScreen } from './src/ui/screens/PinScreen';
@@ -208,7 +210,25 @@ function ResumeGate() {
     );
   }
 
-  return <RootNavigator initialRouteName={initial} />;
+  return (
+    <>
+      <BackgroundTrackingBinder />
+      <RootNavigator initialRouteName={initial} />
+    </>
+  );
+}
+
+/**
+ * Usługa GPS w tle chodzi za `engineRunning` (start silnika = start usługi, stop =
+ * stop). Binder montuje się CELOWO tutaj, obok nawigatora — czyli dopiero po
+ * `loadSession` — bo jego pierwszy odczyt stanu też jest komendą: zamontowany wyżej
+ * (AppRoot) widziałby jeszcze `engineRunning=false` i przy każdym otwarciu aplikacji
+ * w locie gasiłby adoptowaną usługę (mrugnięcie powiadomienia + dziura w śladzie).
+ * Ekran blokady PIN usługi nie dotyka — binder żyje dopiero za bramką tożsamości.
+ */
+function BackgroundTrackingBinder() {
+  useBackgroundTracking(useGps());
+  return null;
 }
 
 const styles = StyleSheet.create({

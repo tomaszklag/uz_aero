@@ -993,9 +993,11 @@ Porty w `application/ports/`, każdy z realnym powodem:
 | `GpsPort` | Lot trwa 45 minut i wymaga samolotu. Port pozwala **odtworzyć trasę** z serii fixów i sprawdzić detekcję w milisekundach. Implementacje: `expoLocationAdapter` (urządzenie), `replayGpsAdapter` (testy i podgląd). |
 | `SensorPort` | Czujniki pokładowe (barometr, akcelerometr, żyroskop). Osobno od GPS, bo mają inne właściwości: brak własnego zegara, fizyczna NIEOBECNOŚĆ na części urządzeń i próbkowanie 50 Hz. Oddaje **agregaty sekundowe**, nie surowe próbki. Implementacje: `expoSensorsAdapter` (urządzenie), `nullSensorAdapter` (brak czujników / testy). |
 
-Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`) są importowane
-**wyłącznie** przez swoje adaptery i nie trafiają do barrela infrastruktury — inaczej
-testy w Node przestałyby działać. Pilnują tego dwa testy w `architecture.test.ts`.
+Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`, `expo-task-manager`)
+są importowane **wyłącznie** przez swoje adaptery/moduły i nie trafiają do barrela
+infrastruktury — inaczej testy w Node przestałyby działać. Pilnuje tego rodzina
+testów exact-list w `architecture.test.ts` (po jednym na moduł natywny + wykluczenia
+barrela + strażnik importu taska w `app/index.ts`).
 
 **`GpsPort.start()` = subskrypcja JEDNEGO odbiorcy, nie przełącznik odbiornika.**
 Zwrócona funkcja wypisuje wyłącznie jego; odbiornik gaśnie dopiero, gdy zejdzie ostatni
@@ -1005,6 +1007,46 @@ oddawał strumień temu, kto wszedł później, i gasił go przy wyjściu — ko
 autodetekcję na resztę dnia, a baner „GPS: brak sygnału" nie miał już czym zniknąć.
 Stąd też odbudowa nasłuchu w `useFlightDetection`: po `GPS_STALE_SEC` ciszy hook zdejmuje
 subskrypcję i zakłada nową, bo martwej subskrypcji powrót sygnału nie obudzi.
+
+### GPS w tle (usługa pierwszoplanowa + start headless)
+
+Zapis lotu działa przy wygaszonym ekranie (ryzyko 🔴 z `_main.md.txt` §8 — battery
+saver zabija proces). Konstrukcja, warstwa po warstwie:
+
+- **Okno usługi = `projection.engineRunning`** (start silnika = start usługi i
+  powiadomienia „UZ Aero — rejestracja lotu"; stop = koniec obu; między lotami zero
+  GPS). Spoiną jest `ui/hooks/useBackgroundTracking.ts` — subskrypcja store'u wołająca
+  `GpsPort.setBackgroundMode(...)` na zboczach. Binder montuje się w `ResumeGate`
+  **po** `loadSession`, bo pierwszy odczyt stanu też jest komendą: zamontowany wyżej
+  gasiłby adoptowaną usługę przy każdym otwarciu aplikacji w locie.
+- **Adapter ma dwa źródła za jednym fanoutem**: `watchPositionAsync` (tryb `watch`,
+  ekran włączony) ↔ `startLocationUpdatesAsync` + task `uzaero-location` (tryb
+  `service`). Odbiorcy (kokpit, 13, ślad) nie widzą różnicy. Kadencja obu źródeł
+  identyczna (1 s, bez `deferredUpdates*` — inaczej watchdog `GPS_STALE_SEC`
+  i `MAX_FIX_GAP_SEC` czytałyby dosyłkę paczkami jako utratę sygnału).
+- **Decyzje uzbrajania to czysta funkcja** (`gps/backgroundModePolicy.ts`): działającą
+  usługę ADOPTUJEMY (`none` — restart mrugałby powiadomieniem i ciął ślad), startu
+  z tła Android zakazuje → `retry-later` ponowione przy `AppState 'active'`.
+- **Task rejestruje się z `app/index.ts`** (`gps/backgroundLocationTask.ts`,
+  `defineTask` na poziomie modułu) — w starcie headless po śmierci procesu ładuje się
+  bundle, ale React i bootstrap NIE. Usługa przeżywa proces (`killServiceOnDestroy:
+  false`); paczki bez żywego sinka idą przez `gps/backgroundFixRouting.ts` do
+  `gps/headlessTraceWriter.ts`, który pisze do `gps_trace` **tym samym**
+  `TraceRecorder` + `appendTrace` co ścieżka żywa — `TraceSync` i `replay.ts` nie
+  odróżniają trybów. Sesję wskazuje meta `active_session_uuid` (zapis w `claim`,
+  czyszczenie w `dayClose`, uzgodnienie w `loadSession`); bez niej paczka idzie do
+  kosza — fix bez atrybucji mógłby trafić do cudzej sesji.
+- **Uprawnienia**: usłudze pierwszoplanowej wystarcza while-in-use — o „w tle" NIE
+  prosimy (na Androidzie 11+ to wycieczka do ustawień bez korzyści). Dialogi
+  (lokalizacja + powiadomienia 13+) wychodzą przy zatwierdzeniu preflight na 03,
+  nie przy pierwszym START ENGINE; odmowa niczego nie blokuje (§4.1).
+
+Znane zachowania (świadome): wiersze `sensor` nie powstają headless (hooki UI śpią);
+detekcja wraca dopiero po otwarciu aplikacji (od zdarzeń jest korekta ręczna + okno
+24 h); `useSyncLoop` tyka dalej, gdy usługa trzyma proces; po reboocie telefonu usługa
+NIE wstaje sama (bez `RECEIVE_BOOT_COMPLETED`) — wznawia ją resume przy otwarciu;
+nawigacja poza kokpit przy pracującym silniku nadal usypia detekcję i ślad (hook
+odmontowany — jak przed zmianą; usługa trzyma tylko GPS ciepły).
 
 Portów **nie mnożymy na zapas** — port bez drugiej implementacji lub potrzeby testowej to koszt bez zysku.
 
@@ -1097,6 +1139,9 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „— —" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
 | `themePrefsSync.test.ts` | uzgadniania motywu pilota przez `/me/prefs`: LWW po stemplu decyzji w obie strony, `dirty` jak outbox, brama wieku pulla, offline = `skipped` |
 | `themePrefsStore.test.ts` | rekordu motywu per pilot: izolacja pilotów na wspólnym telefonie, migracja starego klucza per telefon, odporność na zepsuty zapis |
+| `locationToFix.test.ts` | translacji odczytu platformy: null-nie-zero (regres do `?? 0`), `−1` = brak, jednostki m→ft i m/s→kt, czas z fixa zamiast zegara urządzenia |
+| `backgroundFixRouting.test.ts` | routingu paczek z taska tła: żywy sink > zapis headless > kosz — fix bez sesji nie wchodzi do śladu |
+| `backgroundModePolicy.test.ts` | usługi pierwszoplanowej GPS: adopcja bez restartu po headless, `retry-later` przy próbie startu z tła, sprzątanie osieroconej usługi |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:

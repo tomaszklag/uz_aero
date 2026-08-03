@@ -30,9 +30,13 @@ import {
   type SummaryEntry,
 } from '../components';
 import { useTheme } from '../theme';
+import { useGps } from '../bootstrap/servicesContext';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { litres, motoHours, shortName, timeLocal, timeUtc } from '../format';
+// Import wprost z infrastruktury (jak composition root w `appBootstrap`) — moduł
+// dotyka `react-native`, więc nie ma go w barrelu.
+import { requestNotificationPermission } from '../../infrastructure/permissions/notificationPermission';
 import { claimDecision } from './logic/claimMode';
 
 export function PreflightConfirmScreen({
@@ -51,6 +55,7 @@ export function PreflightConfirmScreen({
 
   const pilotId = useCurrentPilot((s) => s.id);
   const pilotProfile = useCurrentPilot((s) => s.profile);
+  const gps = useGps();
 
   const draft = usePreflightDraft();
   const [busy, setBusy] = useState(false);
@@ -72,6 +77,21 @@ export function PreflightConfirmScreen({
 
   const confirm = useCallback(async () => {
     if (aircraft == null) return;
+
+    // Rozgrzewka uprawnień na dzień lotny (lokalizacja + powiadomienia) — TUTAJ,
+    // na ziemi, a nie przy pierwszym START ENGINE w środku checklisty silnika.
+    // Sekwencyjnie (dwa systemowe dialogi naraz się gryzą), bez `await` w torze
+    // potwierdzenia i bez patrzenia na wynik: odmowa NICZEGO nie blokuje (§4.1) —
+    // kokpit sam pokaże tryb ręczny, a pasek usługi najwyżej schowa system.
+    void (async () => {
+      try {
+        await gps?.requestPermission();
+        await requestNotificationPermission();
+      } catch {
+        // Miękka prośba — cisza jest tu decyzją, nie przeoczeniem.
+      }
+    })();
+
     setBusy(true);
     try {
       // 1. Claim — od tej chwili to urządzenie jest jedynym piszącym dla tego samolotu.
@@ -113,7 +133,7 @@ export function PreflightConfirmScreen({
     } finally {
       setBusy(false);
     }
-  }, [aircraft, claim, confirmPreflight, draft, mhFormat, navigation, pilotId, sync]);
+  }, [aircraft, claim, confirmPreflight, draft, gps, mhFormat, navigation, pilotId, sync]);
 
   if (aircraft == null) {
     return (

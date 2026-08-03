@@ -1011,6 +1011,151 @@ export interface MaintenanceAdminPort {
   schemaMigrations(db: Queryable): Promise<{ version: number; rows: SchemaMigrationRow[] }>;
 }
 
+// ── statystyki (A10) ────────────────────────────────────────────────────────────
+
+/** Zakres statystyk po DNIU ZAMKNIĘCIA (`sessions.close_time`), obustronnie domknięty. */
+export interface StatsRange {
+  fromMs: number;
+  toMs: number;
+}
+
+/**
+ * Wspólny rdzeń wiersza agregatu — te same liczby w każdym ujęciu, bo to ten sam
+ * zbiór dni policzony w trzech przekrojach (sumy MUSZĄ się zgadzać między ujęciami).
+ *
+ * `staleRows` = wiersze projekcji sprzed migracji 18 (`takeoff_count IS NULL` —
+ * kolumny statystyk wypełnia się razem, więc jedna wystarcza za wskaźnik).
+ * `fuelKnownSessions`/`mhKnownSessions` liczą wiersze, które WESZŁY do sumy —
+ * mapper odróżnia nimi „bilansu nie ma z czego policzyć" od „wiersz nieprzeliczony".
+ */
+export interface AdminStatsGroupRow {
+  sessions: number;
+  blockMs: number;
+  flightMs: number;
+  takeoffs: number;
+  landings: number;
+  fuelConsumedL: number;
+  fuelKnownSessions: number;
+  /** Blok WYŁĄCZNIE dni, które weszły do sumy paliwa — mianownik Śr. L/h. */
+  fuelBlockMs: number;
+  mhDeltaH: number;
+  mhKnownSessions: number;
+  /** Blok WYŁĄCZNIE dni ze znanym Δ MH — mianownik rozjazdu Δ MH vs blok. */
+  mhBlockMs: number;
+  staleRows: number;
+}
+
+/** Sumy całego zakresu plus wymiary kafli (`aircraft`, `pilots`). */
+export interface AdminStatsTotalsRow extends AdminStatsGroupRow {
+  aircraft: number;
+  /**
+   * PIC ∪ Dual — pilotów BIORĄCYCH UDZIAŁ, nie tylko piszących sesję. Uwaga:
+   * `dual_id` niesie OSTATNIEGO duala dnia, więc dual zastąpiony w środku dnia
+   * może nie być policzony (przypis pod tabelą pilotów mówi to wprost).
+   */
+  pilots: number;
+}
+
+/**
+ * Dni OTWARTE: `inRange` — z duty startem w zakresie; `undated` — z SAMYM
+ * `session_claim` (`claim_time IS NULL`), których nie da się przypisać do żadnego
+ * zakresu, więc liczone są ZAWSZE.
+ */
+export interface AdminStatsOpenSessionsRow {
+  inRange: number;
+  undated: number;
+}
+
+export interface AdminStatsAircraftRow extends AdminStatsGroupRow {
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  capacityL: number | null;
+  mhFormat: MhFormat | null;
+  /** Dni kalendarzowe (UTC, po dniu zamknięcia) z co najmniej jedną zamkniętą sesją. */
+  activeDays: number;
+  /** Odczyty skrajnych sesji zakresu — surowe, bez szukania „pierwszego niepustego". */
+  mhFirstStart: number | null;
+  mhLastEnd: number | null;
+}
+
+export interface AdminStatsPilotRow {
+  pilotId: string;
+  code: string | null;
+  name: string | null;
+  sessions: number;
+  blockMs: number;
+  flightMs: number;
+  takeoffs: number;
+  landings: number;
+  staleRows: number;
+  /** Rejestracje jednostek (bez `null` po `LEFT JOIN`), alfabetycznie. */
+  regs: string[];
+}
+
+export interface AdminStatsOperationRow extends AdminStatsGroupRow {
+  operation: OperationType | null;
+  regs: string[];
+  clients: number;
+}
+
+/** Numer doby UTC (`close_time / 86400000`) — na dzień zamienia go warstwa aplikacji. */
+export interface AdminStatsDailyRow {
+  dayIndex: number;
+  blockMs: number;
+}
+
+export interface AdminStatsDropsRow {
+  sessions: number;
+  flightMs: number;
+  lifts: number;
+  tandem: number;
+  aff: number;
+  solo: number;
+  altSumFt: number;
+  altCount: number;
+  /**
+   * Wiersze, przez które sum zrzutów nie da się uczciwie podać: dni skokowe sprzed
+   * migracji 18 ORAZ dni z `operation IS NULL` w zakresie — rodzaju operacji nie
+   * znamy, więc KAŻDY z nich mógł być dniem skokowym. To domyślny stan bazy
+   * migrującej ze starego schematu, aż do przebudowy projekcji (`A11`).
+   */
+  staleRows: number;
+}
+
+export interface AdminStatsClientRow {
+  client: string | null;
+  lifts: number;
+  tandem: number;
+  aff: number;
+  solo: number;
+  altSumFt: number;
+  altCount: number;
+}
+
+/**
+ * Port statystyk (`A10`) — WYŁĄCZNIE agregacja kolumn projekcji `sessions`.
+ *
+ * Reguła twarda z `docs/architektura-panelu-serwer.md` §7.5: wolno SUMOWAĆ wartości,
+ * które wyprodukowała projekcja (`sessionRowFrom(projectSession(...))`), nie wolno
+ * ODTWARZAĆ projekcji SQL-em (`COUNT(*) FROM events WHERE type='takeoff'` byłoby
+ * drugim, równoległym wyliczeniem — i to ono zaczyna kłamać). Dlatego każda liczba
+ * tego portu ma swoją kolumnę w `sessions`, a brak kolumny = brak liczby.
+ */
+export interface StatsAdminPort {
+  totals(db: Queryable, range: StatsRange): Promise<AdminStatsTotalsRow>;
+  /** Dni OTWARTE — licznik pominiętych (w zakresie + bez daty), nie składnik sum. */
+  openSessions(db: Queryable, range: StatsRange): Promise<AdminStatsOpenSessionsRow>;
+  /** Tylko doby NIEPUSTE — zer nie zmyśla baza, dopełnia je warstwa aplikacji. */
+  daily(db: Queryable, range: StatsRange): Promise<AdminStatsDailyRow[]>;
+  byAircraft(db: Queryable, range: StatsRange): Promise<AdminStatsAircraftRow[]>;
+  byPilot(db: Queryable, range: StatsRange): Promise<AdminStatsPilotRow[]>;
+  byOperation(db: Queryable, range: StatsRange): Promise<AdminStatsOperationRow[]>;
+  /** Strona przychodowa — zakres zawężony do `operation = 'skoki'` (podpis mockupu). */
+  drops(db: Queryable, range: StatsRange): Promise<AdminStatsDropsRow>;
+  dropsByClient(db: Queryable, range: StatsRange): Promise<AdminStatsClientRow[]>;
+}
+
 // ── pulpit (A01, A01a) ──────────────────────────────────────────────────────────
 
 /**

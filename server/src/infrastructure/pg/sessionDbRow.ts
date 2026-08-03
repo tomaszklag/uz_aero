@@ -34,6 +34,16 @@ export interface SessionDbRow {
   block_ms: string;
   flight_ms: string;
   flights_count: number;
+  takeoff_count: number | null;
+  landing_count: number | null;
+  mh_delta_h: number | null;
+  fuel_consumed_l: number | null;
+  drop_count: number | null;
+  jumpers_tandem: number | null;
+  jumpers_aff: number | null;
+  jumpers_solo: number | null;
+  drop_alt_sum_ft: number | null;
+  drop_alt_count: number | null;
 }
 
 /**
@@ -61,6 +71,16 @@ export const sessionColumns = (alias: string): string =>
     'block_ms',
     'flight_ms',
     'flights_count',
+    'takeoff_count',
+    'landing_count',
+    'mh_delta_h',
+    'fuel_consumed_l',
+    'drop_count',
+    'jumpers_tandem',
+    'jumpers_aff',
+    'jumpers_solo',
+    'drop_alt_sum_ft',
+    'drop_alt_count',
   ]
     .map((column) => `${alias}.${column}`)
     .join(', ');
@@ -97,5 +117,17 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     blockMs: Number(r.block_ms),
     flightMs: Number(r.flight_ms),
     flightsCount: r.flights_count,
+    // `NULL` w kolumnach migracji 18 zostaje `null` — to „wiersz sprzed migracji,
+    // nieprzeliczony", a nie zero. Zamiana na 0 zafałszowałaby agregaty `A10`.
+    takeoffCount: r.takeoff_count,
+    landingCount: r.landing_count,
+    mhDeltaH: r.mh_delta_h,
+    fuelConsumedL: r.fuel_consumed_l,
+    dropCount: r.drop_count,
+    jumpersTandem: r.jumpers_tandem,
+    jumpersAff: r.jumpers_aff,
+    jumpersSolo: r.jumpers_solo,
+    dropAltSumFt: r.drop_alt_sum_ft,
+    dropAltCount: r.drop_alt_count,
   };
 }

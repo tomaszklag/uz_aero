@@ -41,6 +41,7 @@ import { AdminMaintenanceQueries } from '../src/application/admin/queries/mainte
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
+import { AdminStatsQueries } from '../src/application/admin/queries/stats.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
@@ -64,6 +65,7 @@ import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenan
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
+import { PgAdminStatsRepo } from '../src/infrastructure/pg/admin/statsRepo.ts';
 import { PgEventsStore } from '../src/infrastructure/pg/common/eventsStore.ts';
 import { PgExportLogRepo } from '../src/infrastructure/pg/common/exportLogRepo.ts';
 import { PgFlagsRepo } from '../src/infrastructure/pg/common/flagsRepo.ts';
@@ -283,6 +285,9 @@ export async function testHarness(
       adminPilotsRepo,
       clock,
     ),
+    // Statystyki (A10) — jak w produkcyjnym composition root: czysty odczyt agregatów
+    // kolumn projekcji, zegar rozstrzyga zakres domyślny.
+    adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
   });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych

@@ -171,10 +171,26 @@ describe('granice warstw', () => {
   });
 
   it('tylko adapter GPS dotyka expo-location', () => {
+    // Lista jest CELOWO jednoelementowa także po dodaniu usługi w tle: moduł taska
+    // opisuje odczyt strukturalnym `RawLocation` i nie potrzebuje expo-location.
     const users = sourceFiles('.')
       .filter((f) => importsOf(f).some((s) => s === 'expo-location'))
       .sort();
     expect(users).toEqual(['infrastructure/gps/expoLocationAdapter.ts']);
+  });
+
+  it('tylko moduł taska dotyka expo-task-manager', () => {
+    const users = sourceFiles('.')
+      .filter((f) => importsOf(f).some((s) => s === 'expo-task-manager'))
+      .sort();
+    expect(users).toEqual(['infrastructure/gps/backgroundLocationTask.ts']);
+  });
+
+  it('index.ts rejestruje task lokalizacji (start headless nie montuje Reacta)', () => {
+    // Jedyna widoczna w Node gwarancja ścieżki headless: bez tego importu task
+    // nigdy nie zostanie zdefiniowany w bundle'u i Android ubije usługę po restarcie.
+    const entry = readFileSync(join(SRC, '..', 'index.ts'), 'utf8');
+    expect(entry).toContain('./src/infrastructure/gps/backgroundLocationTask');
   });
 
   it('tylko adapter czujników dotyka expo-sensors', () => {
@@ -189,6 +205,11 @@ describe('granice warstw', () => {
     expect(barrel).not.toContain('./storage/expoSqliteAdapter');
     expect(barrel).not.toContain('./gps/expoLocationAdapter');
     expect(barrel).not.toContain('./sensors/expoSensorsAdapter');
+    // Moduły usługi GPS w tle: task (expo-task-manager), writer headless (wciąga
+    // adapter SQLite) i prośba o uprawnienie powiadomień (react-native).
+    expect(barrel).not.toContain('./gps/backgroundLocationTask');
+    expect(barrel).not.toContain('./gps/headlessTraceWriter');
+    expect(barrel).not.toContain('./permissions/notificationPermission');
   });
 
   it('plik .tsx eksportuje WYŁĄCZNIE komponenty (granica Fast Refresh)', () => {

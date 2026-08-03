@@ -568,7 +568,7 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 
 | Ryzyko | Poziom | Mitygacja |
 |--------|--------|-----------|
-| GPS w tle — Android battery saver zabija proces | 🔴 wysoki | Foreground Service z powiadomieniem; `expo-task-manager` |
+| GPS w tle — Android battery saver zabija proces | 🔴 wysoki | ✅ WDROŻONE (2026-08-03): Foreground Service z powiadomieniem (okno = silnik pracuje); `expo-task-manager`; po śmierci procesu usługa wstaje headless i pisze ślad do `gps_trace` (`active_session_uuid` z meta). Szczegóły: `docs/architektura-kodu.md` §5 „GPS w tle" |
 | Fałszywe detekcje S/L (ciasne zakręty, słaby GPS) | 🔴 wysoki | Histereza, podwójny warunek (GS + alt), toast z Cofnij, ręczna korekta |
 | Przestawiony zegar telefonu (offline) | 🟡 średni | `gps_time` przy każdym zdarzeniu; flaga `CLOCK_DRIFT`; czasy blokowe z GPS |
 | Spóźniony sync poprzednika przy przejęciu | 🟡 średni | Append-only + łańcuch MH + flagi zamiast blokad (sekcje 4.4–4.5) |
@@ -580,8 +580,12 @@ per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`
 ### Wymagania systemowe
 
 - Android 10+ (API 29+)
-- Uprawnienia: `ACCESS_FINE_LOCATION`, `FOREGROUND_SERVICE`, `INTERNET`
-- Działa w tle (GPS tracking gdy ekran wygaszony)
+- Uprawnienia: `ACCESS_FINE_LOCATION`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`
+  (API 34+), `POST_NOTIFICATIONS` (13+; miękkie — odmowa chowa pasek usługi, zapis działa),
+  `INTERNET`. `ACCESS_BACKGROUND_LOCATION` celowo NIE — usłudze pierwszoplanowej
+  wystarcza while-in-use
+- Działa w tle (GPS tracking gdy ekran wygaszony) — usługa pierwszoplanowa przy
+  pracującym silniku; przeżywa śmierć procesu (zapis headless do `gps_trace`)
 - Offline-first: wszystkie dane lokalne w SQLite, sync automatyczny gdy sieć
 
 ---

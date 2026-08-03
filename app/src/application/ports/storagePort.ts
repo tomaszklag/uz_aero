@@ -67,6 +67,13 @@ export const SESSION_META_KEYS = {
   currentSessionUuid: 'current_session_uuid',
   currentPilotId: 'current_pilot_id',
   currentAircraftId: 'current_aircraft_id',
+  /**
+   * Sesja OTWARTEGO dnia — dla writera headless (GPS w tle po śmierci procesu).
+   * Inny cykl życia niż `current_session_uuid` (ten nigdy nie jest czyszczony,
+   * o wznowieniu decyduje `dutyEnd`): zapis przy claimie, czyszczenie przy
+   * `day_close`, uzgodnienie przy wznowieniu. Brak klucza = fixy do kosza.
+   */
+  activeSessionUuid: 'active_session_uuid',
 } as const;
 
 export type SessionMetaKey = (typeof SESSION_META_KEYS)[keyof typeof SESSION_META_KEYS];

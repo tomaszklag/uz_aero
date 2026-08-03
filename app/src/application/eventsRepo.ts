@@ -212,6 +212,10 @@ export class EventsRepo {
     return this.adapter.setMeta(key, value);
   }
 
+  deleteMeta(key: string): Promise<void> {
+    return this.adapter.deleteMeta(key);
+  }
+
   /** Zapamiętuje bieżącą sesję (przetrwanie restartu aplikacji). */
   async setCurrentSession(session: CurrentSession): Promise<void> {
     await this.adapter.setMeta(SESSION_META_KEYS.currentSessionUuid, session.sessionUuid);

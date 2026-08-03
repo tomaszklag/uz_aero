@@ -159,6 +159,66 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
     });
     expect(projection.client).toBe('SKY CAMP');
   });
+
+  it('kolumny STATYSTYK (migracja 18) też są przepisane z projekcji, nie policzone', () => {
+    // Ta sama reguła, co przy migracji 11: agregaty `A10` sumują wartości projekcji,
+    // więc każda z nich musi mieć kolumnę wypełnianą przez `sessionRowFrom` — razem
+    // z regułami projekcji („bilans istnieje dopiero z `day_close`", „zrzut bez
+    // wysokości nie wchodzi ani do sumy, ani do licznika fixów").
+    const openStream = [
+      event('preflight_confirm', at(8, 0), {
+        operation: 'skoki',
+        dutyStart: at(8, 0),
+        reading: { fuelL: 150, mh: 1234.5 },
+        mhFormat: 'hhmm',
+      }),
+      event('engine_start', at(8, 12)),
+      event('takeoff', at(8, 25), { method: 'auto' }),
+      event('drop', at(8, 48), {
+        dropNumber: 1,
+        jumpers: { tandem: 2, aff: 1, solo: 0 },
+        altitudeFt: 3200,
+      }),
+      event('drop', at(9, 2), {
+        dropNumber: 2,
+        jumpers: { tandem: 0, aff: 0, solo: 4 },
+        // Celowo BEZ `altitudeFt` — nie może wejść ani do sumy, ani do licznika.
+      }),
+      event('landing', at(9, 18), { method: 'auto' }),
+      event('engine_stop', at(10, 34)),
+    ];
+
+    const open = projectSession(openStream);
+    expect(sessionRowFrom('sess-1', openStream)).toMatchObject({
+      takeoffCount: open.takeoffCount,
+      landingCount: open.landingCount,
+      dropCount: open.drops.count,
+      jumpersTandem: open.drops.jumpers.tandem,
+      jumpersAff: open.drops.jumpers.aff,
+      jumpersSolo: open.drops.jumpers.solo,
+      dropAltSumFt: open.drops.altitudeSumFt,
+      dropAltCount: open.drops.altitudeFixCount,
+      // Dzień OTWARTY: bilansów NIE MA — null projekcji zostaje null-em wiersza.
+      mhDeltaH: null,
+      fuelConsumedL: null,
+    });
+    expect(open.drops.altitudeSumFt).toBe(3200);
+    expect(open.drops.altitudeFixCount).toBe(1);
+
+    const closedStream = [
+      ...openStream,
+      event('day_close', at(16, 45), {
+        finalReading: { fuelL: 88, mh: 1241.15 },
+        dutyEnd: at(16, 45),
+      }),
+    ];
+    const closed = projectSession(closedStream);
+    expect(sessionRowFrom('sess-1', closedStream)).toMatchObject({
+      mhDeltaH: closed.mh.deltaH,
+      fuelConsumedL: closed.fuel.consumedL,
+    });
+    expect(closed.fuel.consumedL).toBe(150 - 88);
+  });
 });
 
 describe('DTO listy dni ↔ wiersz projekcji', () => {
@@ -299,5 +359,104 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
     });
     expect(detail.statusCode).toBe(200);
     expect(counter.reads).toBe(1);
+  });
+});
+
+describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie liczy po swojemu")', () => {
+  /** Zdarzenie w formacie DRUTU (`POST /events`) — bez `syncedAt`. */
+  let wireSeq = 0;
+  function wire(
+    sessionUuid: string,
+    aircraftId: string,
+    type: string,
+    time: number,
+    payload: object = {},
+  ) {
+    wireSeq += 1;
+    return {
+      uuid: `stat-${wireSeq}-${type}`,
+      sessionUuid,
+      aircraftId,
+      picId: 'TMK',
+      dualId: null,
+      type,
+      deviceTime: time,
+      gpsTime: time,
+      payload,
+      schemaVersion: 1,
+    };
+  }
+
+  const closedDay = (sessionUuid: string, aircraftId: string, mh: number, fuelEnd: number) => [
+    wire(sessionUuid, aircraftId, 'preflight_confirm', at(8, 0), {
+      operation: 'skoki',
+      dutyStart: at(8, 0),
+      reading: { fuelL: 150, mh },
+      client: 'SKY CAMP',
+      mhFormat: 'hhmm',
+    }),
+    wire(sessionUuid, aircraftId, 'engine_start', at(8, 12)),
+    wire(sessionUuid, aircraftId, 'takeoff', at(8, 25), { method: 'auto' }),
+    wire(sessionUuid, aircraftId, 'drop', at(8, 48), {
+      dropNumber: 1,
+      jumpers: { tandem: 2, aff: 1, solo: 1 },
+      altitudeFt: 3200,
+    }),
+    wire(sessionUuid, aircraftId, 'landing', at(9, 18), { method: 'auto' }),
+    wire(sessionUuid, aircraftId, 'engine_stop', at(10, 34)),
+    wire(sessionUuid, aircraftId, 'day_close', at(16, 45), {
+      finalReading: { fuelL: fuelEnd, mh: mh + 2.2 },
+      dutyEnd: at(16, 45),
+    }),
+  ];
+
+  it('GET /admin/api/stats oddaje DOKŁADNIE sumy projectSession policzone w teście', async () => {
+    // To jest przypadek z `docs/architektura-panelu-serwer.md` §7.6 pkt 2: dwa zamknięte
+    // dni, agregat trasy vs suma `projectSession` policzona TUTAJ, na tych samych
+    // strumieniach. Gdyby SQL zaczął liczyć po swojemu (np. `SUM(mh_end - mh_start)`
+    // zamiast `SUM(mh_delta_h)`), ta równość pęka pierwsza.
+    const { app } = await testHarness();
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { login: 'TMK', password: TEST_PASSWORD },
+    });
+    const auth = { authorization: `Bearer ${login.json().token as string}` };
+
+    const dayA = closedDay('stat-a', 'SP-AXA', 1200, 88);
+    const dayB = closedDay('stat-b', 'SP-FGK', 500, 96);
+    for (const events of [dayA, dayB]) {
+      const res = await app.inject({ method: 'POST', url: '/events', headers: auth, payload: { events } });
+      expect(res.statusCode).toBe(200);
+    }
+
+    const projections = [dayA, dayB].map((events) => projectSession(events as unknown as Event[]));
+    const sum = (pick: (s: ReturnType<typeof projectSession>) => number): number =>
+      projections.reduce((acc, s) => acc + pick(s), 0);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/admin/api/stats?from=2026-06-22&to=2026-06-22',
+      headers: auth,
+    });
+    expect(res.statusCode).toBe(200);
+    const totals = res.json().totals;
+
+    expect(totals.sessions).toBe(2);
+    expect(totals.blockMs).toBe(sum((s) => s.blockTimeMs));
+    expect(totals.flightMs).toBe(sum((s) => s.flightTimeMs));
+    expect(totals.takeoffs).toBe(sum((s) => s.takeoffCount));
+    expect(totals.landings).toBe(sum((s) => s.landingCount));
+    expect(totals.fuelConsumedL).toBeCloseTo(sum((s) => s.fuel.consumedL!), 9);
+    expect(totals.mhDeltaH).toBeCloseTo(sum((s) => s.mh.deltaH!), 9);
+
+    const drops = res.json().drops;
+    expect(drops.lifts).toBe(sum((s) => s.drops.count));
+    expect(drops.jumpers).toBe(sum((s) => s.drops.totalJumpers));
+    // Średnia zakresu z SUM wysokości i LICZNIKA fixów — nie ze średnich per sesja.
+    expect(drops.avgAltitudeFt).toBeCloseTo(
+      sum((s) => s.drops.altitudeSumFt) / sum((s) => s.drops.altitudeFixCount),
+      9,
+    );
   });
 });

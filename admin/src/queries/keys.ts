@@ -17,6 +17,7 @@ import type { FlagListQuery } from '../api/flags';
 import type { FleetListQuery } from '../api/fleet';
 import type { PilotListQuery } from '../api/pilots';
 import type { SessionListQuery } from '../api/sessions';
+import type { StatsQuery } from '../api/stats';
 
 export const keys = {
   /** Tożsamość i zdolności zalogowanego (`GET /admin/api/me`). */
@@ -199,4 +200,16 @@ export const keys = {
   },
 
   dashboard: ['dashboard'] as const,
+
+  /**
+   * Statystyki (`A10`). Klucz niesie CAŁY zakres dat, bo zakres jest tożsamością
+   * pytania — „lipiec" i „ostatnie 30 dni" to dwa różne raporty i oba mają prawo żyć
+   * w cache'u obok siebie (przełączanie presetów wraca wtedy do policzonej odpowiedzi).
+   * Ujęcia (samolot / pilot / operacja) w kluczu NIE MA: to jeden raport, a przełącznik
+   * tylko wybiera tabelę z tej samej odpowiedzi.
+   */
+  stats: {
+    all: ['stats'] as const,
+    report: (query: StatsQuery) => ['stats', 'report', query] as const,
+  },
 };

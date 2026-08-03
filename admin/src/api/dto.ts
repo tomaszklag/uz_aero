@@ -1164,6 +1164,168 @@ export interface DashboardDto {
   lastFlyingDay: DayTotalsDto | null;
 }
 
+// ── statystyki (`A10`) ──────────────────────────────────────────────────────────
+
+/**
+ * Zakres raportu — obustronnie domknięty, po DNIU ZAMKNIĘCIA sesji (`close_time`):
+ * dzień wchodzi do sum tam, gdzie został domknięty, bo dopiero wtedy jego liczby są
+ * ostateczne. `defaulted` = serwer zastosował zakres domyślny (ostatnie 30 dni od
+ * DZIŚ zegara SERWERA — panel bez parametrów w adresie nie rozstrzyga, co znaczy „dziś").
+ */
+export interface StatsRangeDto {
+  fromDay: string;
+  toDay: string;
+  fromMs: number;
+  toMs: number;
+  calendarDays: number;
+  defaulted: boolean;
+}
+
+/**
+ * Sumy zakresu. KAŻDA liczba — także ilorazy (procenty, średnie) — pochodzi z serwera:
+ * konstytucja ekranu mówi „panel sumuje gotowe wyniki, nie liczy własnych metryk",
+ * a dzielenie dwóch sum po swojemu byłoby właśnie własną metryką.
+ *
+ * `null` znaczy „nie wiemy" i ma tu DWA źródła, oba nazwane: `staleRows` (wiersze
+ * projekcji sprzed migracji 18 — naprawia przebudowa na `A11`) oraz
+ * `fuelUnknownSessions`/`mhUnknownSessions` (dni zamknięte, których bilansu nie da
+ * się policzyć). Panel nigdy nie zamienia `null` na zero.
+ */
+export interface StatsTotalsDto {
+  sessions: number;
+  aircraft: number;
+  /** PIC ∪ OSTATNI dual każdego dnia — dual zastąpiony w środku dnia może wypaść. */
+  pilots: number;
+  blockMs: number;
+  flightMs: number;
+  flightVsBlockPct: number | null;
+  takeoffs: number | null;
+  landings: number | null;
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  mhDeltaH: number | null;
+  mhUnknownSessions: number;
+  /** Blok dni ZE ZNANYM Δ MH (h dziesiętne) — mianownik rozjazdu z tego samego zbioru dni. */
+  mhBlockHours: number;
+  mhVsBlockH: number | null;
+  staleRows: number;
+  /** Dni OTWARTE z duty startem w zakresie — celowo poza sumami. */
+  openSessionsInRange: number;
+  /** Dni OTWARTE bez duty startu (sam claim) — bez daty, więc liczone ZAWSZE. */
+  openSessionsUndated: number;
+}
+
+/** Punkt szeregu „nalot dzień po dniu". Dzień bez sesji to PRAWDZIWE zero. */
+export interface StatsDailyPointDto {
+  day: string;
+  blockMs: number;
+}
+
+export interface StatsAircraftItemDto {
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  capacityL: number | null;
+  mhFormat: MhFormat | null;
+  sessions: number;
+  blockMs: number;
+  flightMs: number;
+  takeoffs: number | null;
+  landings: number | null;
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  avgLitresPerBlockHour: number | null;
+  mhFirstStart: number | null;
+  mhLastEnd: number | null;
+  mhDeltaH: number | null;
+  mhUnknownSessions: number;
+  activeDays: number;
+  utilizationPct: number | null;
+  staleRows: number;
+}
+
+/**
+ * Ujęcie „per pilot" — atrybucja po PIC-u (starty i lądowania też). Kolumny „Blok
+ * jako Dual" TU NIE MA: projekcja niesie OSTATNIEGO duala dnia, a zmiana załogi
+ * w środku dnia przypisałaby mu cudze godziny — atrybucja per członek załogi czeka
+ * na projekcję domenową (ekran mówi to wprost).
+ */
+export interface StatsPilotItemDto {
+  pilotId: string;
+  code: string | null;
+  name: string | null;
+  sessions: number;
+  blockMs: number;
+  flightMs: number;
+  takeoffs: number | null;
+  landings: number | null;
+  regs: string[];
+  staleRows: number;
+}
+
+export interface StatsOperationItemDto {
+  operation: OperationType | null;
+  sessions: number;
+  blockMs: number;
+  flightMs: number;
+  takeoffs: number | null;
+  landings: number | null;
+  fuelConsumedL: number | null;
+  fuelUnknownSessions: number;
+  avgLitresPerBlockHour: number | null;
+  blockSharePct: number | null;
+  regs: string[];
+  clients: number;
+  staleRows: number;
+}
+
+export interface StatsClientItemDto {
+  client: string | null;
+  lifts: number;
+  jumpers: number;
+  tandem: number;
+  aff: number;
+  solo: number;
+  avgAltitudeFt: number | null;
+  jumpersPerLift: number | null;
+}
+
+/** Strona przychodowa — zakres zawężony do operacji `skoki` (podpis mockupu). */
+export interface StatsDropsDto {
+  sessions: number;
+  flightMs: number;
+  lifts: number | null;
+  jumpers: number | null;
+  tandem: number | null;
+  aff: number | null;
+  solo: number | null;
+  liftsPerSession: number | null;
+  jumpersPerLift: number | null;
+  /** Średnia WYŁĄCZNIE ze zrzutów z fixem — liczona z SUMY i LICZNIKA, nie ze średnich. */
+  avgAltitudeFt: number | null;
+  /** Zrzuty Z fixem — licznik SERWERA; panel nie odtwarza go odejmowaniem. */
+  dropsWithAltitude: number | null;
+  dropsWithoutAltitude: number | null;
+  jumpersPerFlightHour: number | null;
+  /** Dni skokowe sprzed migracji 18 ORAZ dni bez rodzaju operacji (mogły być skokowe). */
+  staleRows: number;
+  /** Pusta przy `staleRows > 0` — częściowa tabela wyglądałaby na kompletną. */
+  clients: StatsClientItemDto[];
+}
+
+/** Odpowiedź `GET /admin/api/stats` — trzy ujęcia jednego zbioru dni naraz. */
+export interface StatsReportDto {
+  /** Zegar serwera (ISO 8601 UTC) — presety dat liczą „dziś" od niego. */
+  at: string;
+  range: StatsRangeDto;
+  totals: StatsTotalsDto;
+  daily: StatsDailyPointDto[];
+  aircraft: StatsAircraftItemDto[];
+  pilots: StatsPilotItemDto[];
+  operations: StatsOperationItemDto[];
+  drops: StatsDropsDto;
+}
+
 // ── konserwacja (A11) ───────────────────────────────────────────────────────────
 
 /**

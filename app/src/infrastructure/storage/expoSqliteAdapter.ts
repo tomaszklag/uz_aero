@@ -91,6 +91,10 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     const db = await openDatabaseAsync(this.databaseName);
     this.db = db;
     await db.execAsync('PRAGMA journal_mode = WAL;');
+    // Dwa połączenia współistnieją przez chwilę przy zimnym starcie z działającą
+    // usługą GPS w tle (writer headless + bootstrap aplikacji). Oba robią pojedyncze
+    // INSERT-y — krótki czekacz zamienia rzadki SQLITE_BUSY w niezauważalną pauzę.
+    await db.execAsync('PRAGMA busy_timeout = 2000;');
 
     const versionRow = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version;');
     const current = versionRow?.user_version ?? 0;

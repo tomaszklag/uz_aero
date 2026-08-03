@@ -502,7 +502,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">STATYSTYKI FLOTY I PILOTÓW</h1>
-            <p class="page-sub">Suma dni zamkniętych w zakresie. Każda liczba to złożenie projekcji <code>projectSession</code> z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk. Dni jeszcze otwarte (dziś: SP-ABC i SP-KLM) są celowo poza zakresem, bo ich sumy zmieniłyby się po zamknięciu.</p>
+            <p class="page-sub">Suma dni zamkniętych w zakresie. Każda liczba to złożenie projekcji <code>projectSession</code> z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk. Sumy liczą się po dniu zamknięcia sesji, więc zbiór dni może różnić się od listy dni (A02) z tym samym zakresem — tam dzień stoi pod duty startem. Dni jeszcze otwarte (dziś: SP-ABC i SP-KLM) są celowo poza zakresem, bo ich sumy zmieniłyby się po zamknięciu.</p>
           </div>
           <div class="page-actions">
             <button class="btn primary">
@@ -843,9 +843,13 @@
               </tbody>
             </table>
           </div>
-          <div class="banner warn" style="margin-top:12px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>DO DOROBIENIA: migracja projekcji <code>sessions</code>.</b> Ujęcie „per operacja" wymaga kolumny <code>operation</code>, której projekcja serwera dziś nie ma — wartość siedzi w payloadzie <code>preflight_confirm</code>. Do czasu migracji to zestawienie trzeba by liczyć przeglądem strumienia zdarzeń, więc na produkcji zakres dat byłby ograniczony.</span>
+          <!-- SPROSTOWANIE 2026-08-03: poprzednia adnotacja („DO DOROBIENIA: migracja
+               projekcji sessions") była NIEAKTUALNA od migracji 11 — kolumny operation
+               i client istnieją od przekroju A02. Poprawione przy wdrożeniu przekroju
+               A10 (`server/test/adminStats.test.ts`). -->
+          <div class="banner status" style="margin-top:12px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span><b>Sprostowanie z 2026-08-03 — kolumna <code>operation</code> ISTNIEJE od migracji 11.</b> Poprzednia adnotacja „DO DOROBIENIA: migracja projekcji <code>sessions</code>" była nieaktualna: kolumny <code>operation</code> i <code>client</code> weszły do projekcji razem z przekrojem A02, a wiersze sprzed migracji wypełnia przebudowa projekcji z ekranu <a href="A11-konserwacja.html" style="color:var(--green);">A11</a>. Ujęcie „per operacja" liczy się wprost z kolumn projekcji — bez przeglądu strumienia zdarzeń i bez ograniczania zakresu dat. Podpisy wierszy tej tabeli (lotniska przy FERRY, nazwy egzaminów) to dane przykładowe: projekcja niesie rejestracje jednostek i liczbę klientów operacji, nie lotniska.</span>
           </div>
         </div>
 
@@ -901,9 +905,11 @@
             </table>
           </div>
 
-          <div class="banner warn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>DO DOROBIENIA: migracja projekcji <code>sessions</code>.</b> Podział na klientów wymaga kolumny <code>client</code>, której projekcja serwera dziś nie ma — wartość jest w payloadzie <code>preflight_confirm</code> i denormalizowana w każdym <code>drop</code>. Same zrzuty (liczba wyniesień, skoczkowie, wysokość) liczy już <code>projectSession</code> i one są dostępne od ręki.</span>
+          <!-- SPROSTOWANIE 2026-08-03: kolumna client istnieje od migracji 11, a agregaty
+               zrzutów weszły do projekcji migracją 18 (przekrój A10). -->
+          <div class="banner status">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span><b>Sprostowanie z 2026-08-03 — projekcja NIESIE agregaty zrzutów (migracja 18).</b> Kolumna <code>client</code> istnieje od migracji 11, a wyniesienia, skoczkowie wg typów oraz <b>SUMA wysokości zrzutów z fixem i ich LICZNIK</b> (<code>drop_alt_sum_ft</code> / <code>drop_alt_count</code>) — od migracji 18. Para suma+licznik zamiast średniej per sesja jest celowa: średnich nie da się składać, a zrzut bez wysokości nie wchodzi ani do sumy, ani do licznika. Licznik wierszy do przebudowy obejmuje <b>także dni z <code>operation IS NULL</code></b> (sprzed migracji 11 albo bez preflightu): rodzaju operacji nie znamy, więc każdy z nich mógł być dniem skokowym — a na bazie migrującej ze starego schematu to jest stan DOMYŚLNY, aż do przebudowy. Wiersze wypełnia przebudowa projekcji (<a href="A11-konserwacja.html" style="color:var(--green);">A11</a>); do tego czasu panel pokazuje w tej sekcji <b>kreski i licznik wierszy do przebudowy — nigdy zera i nigdy sumy z części wierszy podanej jako całość</b>.</span>
           </div>
         </div>
 

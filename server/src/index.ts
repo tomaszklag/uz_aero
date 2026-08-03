@@ -28,6 +28,7 @@ import { AdminMaintenanceQueries } from './application/admin/queries/maintenance
 import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
+import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
 import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
@@ -51,6 +52,7 @@ import { PgAdminMaintenanceRepo } from './infrastructure/pg/admin/maintenanceRep
 import { PgAdminPilotsRepo } from './infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from './infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from './infrastructure/pg/admin/sessionsRepo.ts';
+import { PgAdminStatsRepo } from './infrastructure/pg/admin/statsRepo.ts';
 import { PgAircraftConfigRepo } from './infrastructure/pg/common/aircraftConfigRepo.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
 import { PgEventsStore } from './infrastructure/pg/common/eventsStore.ts';
@@ -250,6 +252,9 @@ const app = buildServer({
     adminPilotsRepo,
     clock,
   ),
+  // Statystyki (A10) — czysty odczyt agregatów kolumn projekcji; zegar rozstrzyga
+  // zakres domyślny „ostatnie 30 dni od dziś".
+  adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

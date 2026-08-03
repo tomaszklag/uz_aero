@@ -36,6 +36,7 @@ import {
 } from '../../domain';
 import {
   ReferenceSync,
+  SESSION_META_KEYS,
   SessionCommands,
   SessionQueries,
   SyncEngine,
@@ -333,6 +334,22 @@ export const useSessionStore = create<SessionStore>((set, get) => {
         warnings: [],
         lastError: null,
       });
+
+      // Uzgodnienie klucza usługi GPS w tle: leczy upgrade w środku otwartego dnia
+      // (klucza jeszcze nie było) i crash między `day_close` a czyszczeniem. Błąd meta
+      // nie może wywrócić wznowienia — dzień pilota jest ważniejszy niż ślad.
+      try {
+        const repo = get().repo;
+        if (repo != null && projection.sessionUuid != null) {
+          if (projection.dutyEnd == null) {
+            await repo.setMeta(SESSION_META_KEYS.activeSessionUuid, projection.sessionUuid);
+          } else {
+            await repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
+          }
+        }
+      } catch {
+        // Świadomie cicho — patrz komentarz wyżej.
+      }
     },
 
     async markSynced(uuids) {

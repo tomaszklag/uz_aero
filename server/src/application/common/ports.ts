@@ -232,6 +232,27 @@ export interface SessionRow {
   blockMs: number;
   flightMs: number;
   flightsCount: number;
+  /**
+   * Kolumny statystyk (migracja 18) — wejście agregatów `A10`.
+   *
+   * Wszystkie są NULL-owalne z JEDNEGO powodu: wiersz zapisany przed migracją ma tu
+   * `NULL` do czasu przebudowy projekcji (`A11`) i agregat musi umieć to odróżnić od
+   * zera. `sessionRowFrom` NIGDY nie pisze `null` w liczniki (`takeoffCount`,
+   * `dropCount`, …) — `null` czytany z bazy znaczy więc zawsze „nieprzeliczone".
+   * `mhDeltaH`/`fuelConsumedL` bywają `null` także w świeżym wierszu: bilans dnia
+   * istnieje dopiero z odczytem końcowym `day_close` (reguła projekcji).
+   */
+  takeoffCount: number | null;
+  landingCount: number | null;
+  mhDeltaH: number | null;
+  fuelConsumedL: number | null;
+  dropCount: number | null;
+  jumpersTandem: number | null;
+  jumpersAff: number | null;
+  jumpersSolo: number | null;
+  /** Suma wysokości zrzutów Z FIXEM i ich licznik — średnia zakresu = suma / licznik. */
+  dropAltSumFt: number | null;
+  dropAltCount: number | null;
 }
 
 export interface SessionsProjectionPort {

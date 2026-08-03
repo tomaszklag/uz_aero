@@ -19,8 +19,12 @@ export class PgSessionsProjection implements SessionsProjectionPort {
          (session_uuid, aircraft_id, pic_id, dual_id, status, claim_time, close_time,
           operation, client,
           mh_start, mh_end, fuel_start_l, fuel_end_l, fuel_last_l, mh_last,
-          block_ms, flight_ms, flights_count, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18, now())
+          block_ms, flight_ms, flights_count,
+          takeoff_count, landing_count, mh_delta_h, fuel_consumed_l,
+          drop_count, jumpers_tandem, jumpers_aff, jumpers_solo,
+          drop_alt_sum_ft, drop_alt_count, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
+               $19,$20,$21,$22,$23,$24,$25,$26,$27,$28, now())
        ON CONFLICT (session_uuid) DO UPDATE SET
          aircraft_id = EXCLUDED.aircraft_id, pic_id = EXCLUDED.pic_id,
          dual_id = EXCLUDED.dual_id, status = EXCLUDED.status,
@@ -30,7 +34,13 @@ export class PgSessionsProjection implements SessionsProjectionPort {
          fuel_start_l = EXCLUDED.fuel_start_l, fuel_end_l = EXCLUDED.fuel_end_l,
          fuel_last_l = EXCLUDED.fuel_last_l, mh_last = EXCLUDED.mh_last,
          block_ms = EXCLUDED.block_ms, flight_ms = EXCLUDED.flight_ms,
-         flights_count = EXCLUDED.flights_count, updated_at = now()`,
+         flights_count = EXCLUDED.flights_count,
+         takeoff_count = EXCLUDED.takeoff_count, landing_count = EXCLUDED.landing_count,
+         mh_delta_h = EXCLUDED.mh_delta_h, fuel_consumed_l = EXCLUDED.fuel_consumed_l,
+         drop_count = EXCLUDED.drop_count, jumpers_tandem = EXCLUDED.jumpers_tandem,
+         jumpers_aff = EXCLUDED.jumpers_aff, jumpers_solo = EXCLUDED.jumpers_solo,
+         drop_alt_sum_ft = EXCLUDED.drop_alt_sum_ft, drop_alt_count = EXCLUDED.drop_alt_count,
+         updated_at = now()`,
       [
         row.sessionUuid,
         row.aircraftId,
@@ -50,6 +60,16 @@ export class PgSessionsProjection implements SessionsProjectionPort {
         row.blockMs,
         row.flightMs,
         row.flightsCount,
+        row.takeoffCount,
+        row.landingCount,
+        row.mhDeltaH,
+        row.fuelConsumedL,
+        row.dropCount,
+        row.jumpersTandem,
+        row.jumpersAff,
+        row.jumpersSolo,
+        row.dropAltSumFt,
+        row.dropAltCount,
       ],
     );
   }

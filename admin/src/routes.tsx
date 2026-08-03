@@ -25,6 +25,7 @@ import { FlagsScreen } from './screens/flags/FlagsScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
 import { MaintenanceScreen } from './screens/maintenance/MaintenanceScreen';
 import { PilotsScreen } from './screens/pilots/PilotsScreen';
+import { StatsScreen } from './screens/stats/StatsScreen';
 import { DashboardScreen } from './screens/dashboard/DashboardScreen';
 import { UnderConstructionScreen } from './screens/underConstruction/UnderConstructionScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
@@ -40,6 +41,7 @@ const IMPLEMENTED = new Set([
   '/eksporty',
   '/zdarzenia',
   '/konserwacja',
+  '/statystyki',
 ]);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
@@ -140,6 +142,11 @@ export const router = createHashRouter([
       // a odtworzyłby wyłącznie pusty formularz. Przejścia W GŁĄB (do dnia, do flagi,
       // do karty) prowadzą stąd na ekrany, które adresy mają.
       { path: 'konserwacja', element: <MaintenanceScreen /> },
+
+      // Statystyki (`A10`) — JEDNA trasa; zakres dat i ujęcie (samolot / pilot /
+      // operacja) jadą query stringiem po polsku (`?od=…&do=…&ujecie=…`), jak w pasku
+      // adresu mockupu — raport „lipiec per pilot" ma być linkiem do wklejenia.
+      { path: 'statystyki', element: <StatsScreen /> },
 
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.

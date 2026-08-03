@@ -15,6 +15,7 @@ import { DomainRuleError, projectSession } from '../domain';
 import { EventsRepo } from '../application/eventsRepo';
 import { SessionCommands, type SessionContext } from '../application/commands';
 import { SessionQueries } from '../application/queries';
+import { SESSION_META_KEYS } from '../application/ports';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
 import { FixedClock } from '../infrastructure/clock';
 
@@ -252,5 +253,57 @@ describe('SessionCommands — pełny dzień przez komendy', () => {
       pilotId: PIC,
       aircraftId: AC,
     });
+  });
+});
+
+describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle)', () => {
+  // Klucz żyje dokładnie tak długo jak OTWARTY dzień: writer headless czyta go po
+  // śmierci procesu, więc osierocona wartość przypisałaby fixy do cudzej sesji,
+  // a brakująca — wyrzuciła ślad do kosza. Inny cykl życia niż `current_session_uuid`,
+  // którego nikt nie czyści (ResumeGate decyduje po `dutyEnd`).
+
+  it('claim zapisuje klucz, udane day_close go czyści', async () => {
+    const { adapter, commands, clock, seedCache } = setup();
+    await seedCache();
+    await openDay(commands, clock);
+
+    expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBe(SESSION);
+
+    clock.set(min(300));
+    await commands.dayClose(CTX, {
+      finalReading: { fuelL: 150, mh: MH_START },
+      dutyEnd: min(300),
+    });
+
+    expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBeNull();
+  });
+
+  it('odrzucone day_close NIE czyści klucza (dzień wciąż trwa)', async () => {
+    const { adapter, commands, clock, seedCache } = setup();
+    await seedCache();
+    await openDay(commands, clock);
+    clock.set(min(12));
+    await commands.startEngine(CTX, { fieldElevationFt: 780 });
+
+    // Zamknięcie dnia przy pracującym silniku jest odrzucane — usługa tła ma dalej
+    // wiedzieć, do której sesji pisać.
+    clock.set(min(30));
+    await expect(
+      commands.dayClose(CTX, { finalReading: { fuelL: 150, mh: MH_START }, dutyEnd: min(30) }),
+    ).rejects.toBeInstanceOf(DomainRuleError);
+
+    expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBe(SESSION);
+  });
+
+  it('odrzucony claim niczego nie zapisuje', async () => {
+    const { adapter, commands, clock, seedCache } = setup();
+    await seedCache();
+    clock.set(min(-5));
+    await commands.claim({ ...CTX, mode: 'free' });
+    // Czysty stan klucza — inaczej nie odróżnimy „nie zapisał" od „zapisał to samo".
+    await adapter.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
+
+    await expect(commands.claim({ ...CTX, mode: 'free' })).rejects.toBeInstanceOf(DomainRuleError);
+    expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBeNull();
   });
 });
