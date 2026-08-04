@@ -84,9 +84,6 @@
   .start-engine-label { font-family:var(--font-display); font-size:32px; letter-spacing:4px; color:var(--green); text-align:center; position:relative; z-index:1; text-shadow:0 0 20px rgba(46,204,113,0.3); }
   .start-engine-hint { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); text-align:center; position:relative; z-index:1; }
 
-  .ground-chip { display:inline-flex; align-items:center; gap:6px; align-self:center; padding:4px 12px; border-radius:999px; background:var(--surface); border:1px solid var(--border); font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
-  .ground-chip .dot { width:6px; height:6px; border-radius:50%; background:var(--text-muted); }
-
   .duty-strip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; }
   .duty-left { display:flex; align-items:center; gap:8px; }
   .duty-icon { color:var(--blue); }
@@ -180,11 +177,8 @@
 
     <div class="scroll">
 
-      <div class="ground-chip">
-        <span class="dot"></span>
-        GROUND · SILNIK WYŁĄCZONY
-      </div>
-
+      <!-- Bez chipa „GROUND · SILNIK WYŁĄCZONY" — hero START ENGINE mówi to samo mocniej
+           (decyzja 2026-08-04, jak na 04). Chip stanu zostaje tylko na 04b („wg serwera"). -->
       <!-- START ENGINE — główna akcja, bardziej prominentna niż w trakcie dnia -->
       <a href="05-cockpit-running.html" class="start-engine">
         <div class="start-icon">

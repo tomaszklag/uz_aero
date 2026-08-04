@@ -465,8 +465,6 @@ export function CockpitScreen({
       />
 
       <View style={{ padding: theme.spacing.lg, gap: 14 }}>
-        <StatusChip label="Ground · silnik wyłączony" tone="neutral" style={{ alignSelf: 'center' }} />
-
         <ActionButton
           label="START ENGINE"
           tone="green"
