@@ -21,7 +21,6 @@ import { duration, durationLong, litres, motoHours, timeUtc } from '../../format
 
 const LABEL: Record<string, string> = {
   session_claim: 'Przejęcie samolotu',
-  preflight_confirm: 'Preflight',
   engine_start: 'Start engine',
   engine_stop: 'Stop engine',
   taxi: 'Taxi',
@@ -82,7 +81,11 @@ export function buildLogRows(
 
   for (const event of ordered) {
     // Zdarzenia organizacyjne nie są przebiegiem dnia — nie zaśmiecamy nimi osi czasu.
-    if (event.type === 'session_claim') continue;
+    // Preflight też zostaje poza logiem: odczyty początkowe ustala się wyłącznie
+    // stepperami 02a i potwierdzeniem 03, a wiersz dawałby im ołówek korekty 04c.
+    // Jego MH i paliwo niesie pierwszy `engine_start` (mockup 04); świeży dzień
+    // zaczyna od pustej osi (04a).
+    if (event.type === 'session_claim' || event.type === 'preflight_confirm') continue;
 
     const time = timeUtc(at(event));
     const base = {
@@ -94,19 +97,6 @@ export function buildLogRows(
     };
 
     switch (event.type) {
-      case 'preflight_confirm': {
-        rows.push({
-          ...base,
-          kind: 'event',
-          chips: [
-            { label: `MH ${motoHours(event.payload.reading.mh, mhFormat)}` },
-            { label: litres(event.payload.reading.fuelL), tone: 'amber' },
-          ],
-        });
-        fuelShown = true;
-        break;
-      }
-
       case 'engine_start': {
         openStart = at(event);
         const chips: EventLogRow['chips'] = [];

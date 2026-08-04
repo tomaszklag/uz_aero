@@ -162,6 +162,25 @@ describe('projectSession — pojedynczy cykl', () => {
   it('pusty strumień daje pusty stan', () => {
     expect(projectSession([])).toEqual(emptySessionState());
   });
+
+  it('taxi otwiera kołowanie; zamyka je start albo wyłączenie silnika', () => {
+    const start = [ev('engine_start', '08:12', {}), ev('taxi', '08:14', { method: 'auto' })];
+    expect(projectSession(start).taxiing).toBe(true);
+
+    // Start zamyka kołowanie — po lądowaniu zjazd z pasa to NOWE taxi.
+    const flying = [...start, ev('takeoff', '08:25', { method: 'auto' })];
+    expect(projectSession(flying).taxiing).toBe(false);
+
+    const backOnGround = [
+      ...flying,
+      ev('landing', '09:18', { method: 'auto' }),
+      ev('taxi', '09:19', { method: 'auto' }),
+    ];
+    expect(projectSession(backOnGround).taxiing).toBe(true);
+
+    const shutdown = [...backOnGround, ev('engine_stop', '09:25', {})];
+    expect(projectSession(shutdown).taxiing).toBe(false);
+  });
 });
 
 describe('projectSession — kanoniczny dzień 22 JUNE (zgodność z design-notes)', () => {

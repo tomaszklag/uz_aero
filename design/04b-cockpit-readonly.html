@@ -86,12 +86,14 @@
   .ro-meta { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
   .ro-meta .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
 
-  /* ===== STATUS GROUND CHIP ===== */
+  /* ===== STATUS GROUND CHIP =====
+     Kanon pilla jak `.sync-chip`/`.running-badge` (3×9, ls 1.5, gap 5) — jedna
+     rodzina chipów, jedna metryka (2026-08-04). */
   .ground-chip {
-    display: inline-flex; align-items: center; gap: 6px; align-self: center;
-    padding: 4px 12px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px; align-self: center;
+    padding: 3px 9px; border-radius: 999px;
     background: var(--surface); border: 1px solid var(--border);
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
     color: var(--text-muted);
   }
   .ground-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }

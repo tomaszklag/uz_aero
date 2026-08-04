@@ -363,6 +363,7 @@ export function stepDetector(
       motion: {
         anchor: detection === 'landing' ? (here ?? next.lastPosition) : null,
         moving: true,
+        moveCandidateSince: null,
         speedCandidateSince: null,
       },
     },

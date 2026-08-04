@@ -243,6 +243,17 @@ export function litres(value: number | null): string {
 }
 
 /**
+ * „3 500" — tysiące rozdzielone spacją (mockup 05: Altitude w FT).
+ * Ujemne dostają minus typograficzny „−" jak pozostałe odczyty; GPS potrafi
+ * oddać wysokość pod poziomem morza.
+ */
+export function thousands(value: number): string {
+  const rounded = Math.round(value);
+  const digits = String(Math.abs(rounded)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return rounded < 0 ? `−${digits}` : digits;
+}
+
+/**
  * Polska liczba mnoga: 1 → `one`, 2–4 (poza 12–14) → `few`, reszta → `many`.
  * Mieszka tu (nie w helperze jednego ekranu), bo odmieniają: ekran 11, 12, zamek 00,
  * ustawienia 13 i komponenty DS (`OutboxGuard`).

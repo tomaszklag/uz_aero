@@ -120,6 +120,12 @@ export interface SessionState {
 
   engineRunning: boolean;
   inFlight: boolean;
+  /**
+   * Czy trwa kołowanie: `taxi` bez późniejszego startu/wyłączenia silnika.
+   * Gwardia `ALREADY_TAXIING` blokuje tym stanem drugie `taxi` z rzędu — po kołowaniu
+   * legalny jest wyłącznie `takeoff` albo `engine_stop` (decyzja 2026-08-04).
+   */
+  taxiing: boolean;
   /** Start otwartego cyklu silnika (do liczenia block time „na żywo"). */
   openEngineStartAt: EpochMillis | null;
   /** Start otwartego lotu (do liczenia flight time „na żywo"). */
@@ -178,6 +184,7 @@ export function emptySessionState(): SessionState {
     dutyEnd: null,
     engineRunning: false,
     inFlight: false,
+    taxiing: false,
     openEngineStartAt: null,
     openTakeoffAt: null,
     engineRuns: [],
@@ -275,6 +282,7 @@ export function projectSession(events: Event[]): SessionState {
           state.blockTimeMs += run.durationMs;
         }
         state.engineRunning = false;
+        state.taxiing = false;
         state.openEngineStartAt = null;
         break;
       }
@@ -294,6 +302,7 @@ export function projectSession(events: Event[]): SessionState {
           state.inFlight = true;
           state.openTakeoffAt = t;
         }
+        state.taxiing = false;
         break;
       }
 
@@ -307,6 +316,9 @@ export function projectSession(events: Event[]): SessionState {
           state.flightTimeMs += flight.durationMs;
         }
         state.inFlight = false;
+        // Kołowanie jest już zamknięte startem; zerujemy też tu, żeby korekta
+        // unieważniająca takeoff nie zakleszczyła stanu „wiecznego kołowania".
+        state.taxiing = false;
         state.openTakeoffAt = null;
         break;
       }
@@ -376,9 +388,11 @@ export function projectSession(events: Event[]): SessionState {
 
       case 'taxi':
         // Kołowanie nie wpływa na ŻADEN bilans: czas blokowy wyznaczają `engine_start`
-        // i `engine_stop`, czas lotu — `takeoff` i `landing`. To wpis czysto opisowy,
-        // odczytywany wprost ze strumienia przy budowaniu logu cyklu (mockup 05).
-        // Gdyby kiedyś wszedł do statystyk, jego miejsce jest tutaj.
+        // i `engine_stop`, czas lotu — `takeoff` i `landing`. Jedyne, co niesie, to
+        // stan „kołowanie trwa" dla gwardii ALREADY_TAXIING — zamyka go dopiero start
+        // albo wyłączenie silnika. Sam wpis jest opisowy, odczytywany wprost ze
+        // strumienia przy budowaniu logu cyklu (mockup 05).
+        state.taxiing = true;
         break;
 
       case 'event_correction':

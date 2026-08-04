@@ -46,6 +46,12 @@ export interface ParamGridProps {
 export function ParamGrid({ cells, style }: ParamGridProps) {
   const { theme } = useTheme();
 
+  // Pary jako jawne wiersze z komórkami `flex: 1` — NIE `width: '49.9%'` + zawijanie:
+  // 2 × 49.9% plus 1 px odstępu na linię to ponad 100% przy szerokościach telefonów
+  // (< 500 pt), więc siatka składała się w pion 1×4.
+  const pairs: ParamCell[][] = [];
+  for (let i = 0; i < cells.length; i += 2) pairs.push(cells.slice(i, i + 2));
+
   return (
     <View
       style={[
@@ -60,71 +66,88 @@ export function ParamGrid({ cells, style }: ParamGridProps) {
         style,
       ]}
     >
-      {cells.map((cell) => {
-        const c = toneColors(theme, cell.tone ?? 'neutral');
-        const valueColor = cell.stale
-          ? theme.colors.textMuted
-          : cell.tone == null
-            ? theme.colors.textPrimary
-            : c.accent;
+      {pairs.map((pair) => (
+        <View key={pair[0]!.label} style={styles.gridRow}>
+          {pair.map((cell) => (
+            <Cell key={cell.label} cell={cell} />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
 
-        return (
-          <View
-            key={cell.label}
+function Cell({ cell }: { cell: ParamCell }) {
+  const { theme } = useTheme();
+  const c = toneColors(theme, cell.tone ?? 'neutral');
+  const valueColor = cell.stale
+    ? theme.colors.textMuted
+    : cell.tone == null
+      ? theme.colors.textPrimary
+      : c.accent;
+
+  return (
+    <View
+      style={[
+        styles.cell,
+        {
+          // `.amber-bg`/`.green-bg` z mockupu 05 to akcent w 4% alfy — szept
+          // przyrządu. `c.muted` (12%) robił z komórek kolorowe plakietki.
+          // Akcenty wszystkich pięciu motywów są 6-cyfrowym hexem, więc
+          // dosztukowanie kanału alfa „0A" (10/255 ≈ 0.04) jest bezpieczne.
+          backgroundColor: cell.tint === true ? `${c.accent}0A` : theme.colors.surface,
+        },
+      ]}
+    >
+      <AppText variant="paramLabel" tone="muted">
+        {cell.label}
+      </AppText>
+      <View style={styles.valueRow}>
+        <AppText
+          variant="param"
+          style={[{ color: valueColor }, cell.stale ? styles.staleValue : null]}
+        >
+          {cell.value}
+        </AppText>
+        {cell.unit != null && (
+          <AppText
+            variant="mono"
             style={[
-              styles.cell,
-              { backgroundColor: cell.tint === true ? c.muted : theme.colors.surface },
+              styles.unit,
+              {
+                color: cell.stale
+                  ? theme.colors.textMuted
+                  : cell.tone == null
+                    ? theme.colors.textSecondary
+                    : c.accent,
+              },
             ]}
           >
-            <AppText variant="paramLabel" tone="muted">
-              {cell.label}
-            </AppText>
-            <View style={styles.valueRow}>
-              <AppText
-                variant="param"
-                style={[{ color: valueColor }, cell.stale ? styles.staleValue : null]}
-              >
-                {cell.value}
-              </AppText>
-              {cell.unit != null && (
-                <AppText
-                  variant="mono"
-                  style={[
-                    styles.unit,
-                    {
-                      color: cell.stale
-                        ? theme.colors.textMuted
-                        : cell.tone == null
-                          ? theme.colors.textSecondary
-                          : c.accent,
-                    },
-                  ]}
-                >
-                  {cell.unit}
-                </AppText>
-              )}
-            </View>
-            {cell.note != null && (
-              <AppText
-                variant="mono"
-                // Nota martwej komórki jest czerwona (alarm czujnika); żywej — muted
-                // (sam kontekst źródła). Dokładnie `.param-stale-note` z 05g.
-                style={[styles.note, { color: cell.stale ? theme.colors.red : theme.colors.textMuted }]}
-              >
-                {cell.note}
-              </AppText>
-            )}
-          </View>
-        );
-      })}
+            {cell.unit}
+          </AppText>
+        )}
+      </View>
+      {cell.note != null && (
+        <AppText
+          variant="mono"
+          // Nota martwej komórki jest czerwona (alarm czujnika); żywej — muted
+          // (sam kontekst źródła). Dokładnie `.param-stale-note` z 05g.
+          style={[styles.note, { color: cell.stale ? theme.colors.red : theme.colors.textMuted }]}
+        >
+          {cell.note}
+        </AppText>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 1 },
-  // Dwie kolumny; 49.9% zostawia miejsce na włosową linię między nimi.
-  cell: { width: '49.9%', flexGrow: 1, gap: 4, paddingHorizontal: 14, paddingVertical: 12 },
+  // Kolumna wierszy; tło kontenera prześwituje przez 1 px odstępy jako włosowe linie.
+  grid: { gap: 1 },
+  gridRow: { flexDirection: 'row', gap: 1 },
+  // `flex: 1` w jawnym wierszu — obie komórki dzielą szerokość po równo niezależnie
+  // od szerokości ekranu i skali czcionki (wady wariantu `width: %` — patrz wyżej).
+  cell: { flex: 1, gap: 4, paddingHorizontal: 14, paddingVertical: 12 },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   unit: { fontSize: 11, letterSpacing: 1 },
   staleValue: { letterSpacing: 4 },

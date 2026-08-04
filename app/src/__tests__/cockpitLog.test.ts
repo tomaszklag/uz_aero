@@ -65,6 +65,33 @@ describe('log dnia', () => {
     expect(rows.map((r) => r.kind)).toEqual(['start', 'stop']);
   });
 
+  it('preflight nie wchodzi do logu — dzień zaczyna się pustą osią (mockup 04a)', () => {
+    // Odczyty początkowe ustala się WYŁĄCZNIE stepperami 02a i potwierdzeniem 03 —
+    // wiersz w logu dawałby preflightowi ołówek korekty 04c, czyli tylną furtkę
+    // do zmiany tego, co pilot świadomie zatwierdził.
+    const rows = buildLogRows(
+      [event('preflight_confirm', at(8, 0), { reading: { mh: 1234.5, fuelL: 150 } })],
+      projection(),
+      'hhmm',
+    );
+    expect(rows).toEqual([]);
+  });
+
+  it('odczyt z preflightu niesie pierwszy start silnika, nie osobny wiersz', () => {
+    // Mockup 04: pierwszy „Start engine" ma chipy „MH 1234:30" i „150 L".
+    const rows = buildLogRows(
+      [
+        event('preflight_confirm', at(8, 0), { reading: { mh: 1234.5, fuelL: 150 } }),
+        event('engine_start', at(8, 12)),
+      ],
+      projection(),
+      'hhmm',
+    );
+
+    expect(rows.map((r) => r.label)).toEqual(['Start engine']);
+    expect(rows[0]!.chips?.map((c) => c.label)).toEqual(['MH 1234:30', '150 L']);
+  });
+
   it('porządkuje chronologicznie, nie w kolejności zapisu', () => {
     // Wpis ręczny (05f) zapisuje zdarzenie z COFNIĘTYM czasem — kolejność wstawienia
     // rozjechałaby oś czasu.

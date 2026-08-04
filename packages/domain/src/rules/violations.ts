@@ -44,6 +44,7 @@ export type ViolationCode =
   | 'ENGINE_STOP_IN_FLIGHT'
   | 'ENGINE_RUNNING_AT_DAY_CLOSE'
   | 'ALREADY_IN_FLIGHT'
+  | 'ALREADY_TAXIING'
   | 'NOT_IN_FLIGHT'
   // ── paliwo ─────────────────────────────────────────────────────────────────
   | 'FUEL_NEGATIVE'

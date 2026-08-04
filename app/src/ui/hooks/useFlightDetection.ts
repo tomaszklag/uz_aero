@@ -204,7 +204,12 @@ export function useFlightDetection({
       // Kołowanie zapisujemy OD RAZU, bez okna „COFNIJ". Okno istnieje po to, żeby
       // fałszywy start albo lądowanie nie trafiły do czasów lotu — kołowanie żadnego
       // czasu nie wyznacza, więc pytanie „czy na pewno?" byłoby samym szumem.
-      if (step.detection === 'taxi') {
+      //
+      // Gdy projekcja już wie o trwającym kołowaniu, detekcja jest duplikatem z odrodzonego
+      // detektora (powrót na ekran, restart aplikacji) — pomijamy ją PO CICHU. Gwardia
+      // `ALREADY_TAXIING` odrzuciłaby zapis i tak, ale jej odmowa ląduje w `lastError`,
+      // a pilot nie powinien oglądać błędu za zdarzenie, którego sam nie wywołał.
+      if (step.detection === 'taxi' && !useSessionStore.getState().projection.taxiing) {
         void taxi('auto', null, step.detectedAt ?? incoming.time).catch(() => {
           // Powód odrzucenia trafia do `lastError` w store i jest widoczny w kokpicie.
         });

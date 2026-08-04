@@ -24,6 +24,8 @@ export interface StatusChipProps {
   dot?: boolean;
   /** Wypełnienie tłem tonu (domyślnie tak); false = sam kontur. */
   filled?: boolean;
+  /** Opis dla czytnika — domyślnie czytana jest sama etykieta. */
+  accessibilityLabel?: string;
   style?: ViewStyle;
 }
 
@@ -32,6 +34,7 @@ export function StatusChip({
   tone = 'neutral',
   dot = true,
   filled = true,
+  accessibilityLabel,
   style,
 }: StatusChipProps) {
   const { theme } = useTheme();
@@ -40,12 +43,16 @@ export function StatusChip({
   return (
     <View
       accessibilityRole="text"
+      accessibilityLabel={accessibilityLabel}
       style={[
         styles.chip,
         {
-          gap: theme.spacing.xs,
-          paddingHorizontal: theme.spacing.md,
-          paddingVertical: theme.spacing.xs,
+          // Kanon pilla z mockupów (`.sync-chip`, `.running-badge`): padding 3×9,
+          // odstęp 5. Wcześniejsze paddingi z tokenów (xs/md) pochodziły z usuniętego
+          // `.ground-chip` i rozjeżdżały wysokość SYNC i RUNNING w jednym wierszu.
+          gap: 5,
+          paddingHorizontal: 9,
+          paddingVertical: 3,
           borderRadius: theme.radius.pill,
           borderWidth: theme.borderWidth,
           borderColor: c.border,
@@ -55,9 +62,9 @@ export function StatusChip({
       ]}
     >
       {dot && <View style={[styles.dot, { backgroundColor: c.accent }]} />}
-      {/* Wszystkie chipy w mockupach (`.ground-chip`, `.running-badge`, `.sync-chip`) to
-          mono 9 px / ls 2 / WERSALIKI. Wariant `label` (Archivo 13 px) renderował
-          „Ground · silnik wyłączony" zamiast „GROUND · SILNIK WYŁĄCZONY". */}
+      {/* Chipy w mockupach (`.running-badge`, `.sync-chip`) to mono 9 px / WERSALIKI —
+          wariant `label` (Archivo 13 px) psuł ten język. `lineHeight` podany jawnie,
+          bo odziedziczona wysokość linii tokenu mono rozpychała pill w pionie. */}
       <AppText variant="mono" style={[styles.label, { color: c.accent }]}>
         {label}
       </AppText>
@@ -68,5 +75,5 @@ export function StatusChip({
 const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
   dot: { width: 6, height: 6, borderRadius: 3 },
-  label: { fontSize: 9, lineHeight: 13, letterSpacing: 2, textTransform: 'uppercase' },
+  label: { fontSize: 9, lineHeight: 13, letterSpacing: 1.5, textTransform: 'uppercase' },
 });

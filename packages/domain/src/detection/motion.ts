@@ -32,12 +32,14 @@ export interface MotionState {
   anchor: LatLon | null;
   /** Czy samolot jest w ruchu. */
   moving: boolean;
+  /** Od kiedy nieprzerwanie trzyma się warunek przemieszczeniowy (kanał główny). */
+  moveCandidateSince: EpochMillis | null;
   /** Od kiedy nieprzerwanie trzyma się warunek prędkościowy (tor wsparcia). */
   speedCandidateSince: EpochMillis | null;
 }
 
 export function createMotionState(): MotionState {
-  return { anchor: null, moving: false, speedCandidateSince: null };
+  return { anchor: null, moving: false, moveCandidateSince: null, speedCandidateSince: null };
 }
 
 /**
@@ -60,6 +62,7 @@ export function stepMotion(
   const here = fixPosition(fix);
   const next: MotionState = {
     ...state,
+    moveCandidateSince: signalBroken ? null : state.moveCandidateSince,
     speedCandidateSince: signalBroken ? null : state.speedCandidateSince,
   };
 
@@ -80,20 +83,45 @@ export function stepMotion(
   const speed = groundSpeed(fixesInWindow(history, t.SPEED_WINDOW_SEC));
 
   if (!next.moving) {
-    // Kanał główny: oddalenie od kotwicy ponad próg. Jedna decyzja, bez okna
-    // potwierdzenia — przejechane 25 metrów SAMO w sobie jest potwierdzeniem,
-    // czego o chwilowej prędkości powiedzieć się nie da.
-    if (here != null && next.anchor != null && distanceM(here, next.anchor) > t.TAXI_DISPLACEMENT_M) {
-      return { ...next, moving: true, speedCandidateSince: null };
+    // Kanał główny: oddalenie od kotwicy ponad próg. Dwa zabezpieczenia dopisane po
+    // zgłoszeniu z terenu (2026-08-04: telefon odłożony na stole „kołował"):
+    //
+    //  • próg POWIĘKSZONY o deklarowaną niepewność fixa — bramka jakości wpuszcza
+    //    dokładność do 50 m, a próg ruchu to 25 m, więc pojedynczy słaby fix umiał
+    //    „przenieść" odbiornik za próg; fix przyznający się do ±40 m nie może
+    //    dowodzić ruchu o 25 m,
+    //  • warunek musi się UTRZYMAĆ przez okno potwierdzenia — odskok multipathu
+    //    wraca do kotwicy po paru sekundach, prawdziwe kołowanie tylko się oddala.
+    //    Późniejsze potwierdzenie nic nie kosztuje: do rejestru idzie moment
+    //    retro-datowany (`taxiOnset`), nie moment decyzji.
+    if (here != null && next.anchor != null) {
+      const marginM = fix.accuracyM ?? 0;
+      if (distanceM(here, next.anchor) > t.TAXI_DISPLACEMENT_M + marginM) {
+        const since = next.moveCandidateSince ?? fix.time;
+        if ((fix.time - since) / 1000 >= t.TAXI_CONFIRM_SEC) {
+          return { ...next, moving: true, moveCandidateSince: null, speedCandidateSince: null };
+        }
+        next.moveCandidateSince = since;
+      } else {
+        next.moveCandidateSince = null;
+      }
+    } else {
+      next.moveCandidateSince = null;
     }
 
-    // Kanał wsparcia: prędkość ponad progiem utrzymana przez okno potwierdzenia.
-    if (speed != null && speed.kt >= t.TAXI_SPEED_KT) {
-      const since = next.speedCandidateSince ?? fix.time;
-      if ((fix.time - since) / 1000 >= t.TAXI_CONFIRM_SEC) {
-        return { ...next, moving: true, speedCandidateSince: null };
+    // Kanał wsparcia: prędkość ponad progiem utrzymana przez okno potwierdzenia —
+    // WYŁĄCZNIE gdy przemieszczenia nie da się policzyć (fix bez pozycji). Gdy pozycja
+    // jest i mówi „przy kotwicy", szum dopplera nie ma prawa jej przegłosować: kanał
+    // o kontraście ~24:1 nie może przegrywać z kanałem ~7:1 (rachunek: `trends.ts`).
+    if (here == null || next.anchor == null) {
+      if (speed != null && speed.kt >= t.TAXI_SPEED_KT) {
+        const since = next.speedCandidateSince ?? fix.time;
+        if ((fix.time - since) / 1000 >= t.TAXI_CONFIRM_SEC) {
+          return { ...next, moving: true, moveCandidateSince: null, speedCandidateSince: null };
+        }
+        return { ...next, speedCandidateSince: since };
       }
-      return { ...next, speedCandidateSince: since };
+      return { ...next, speedCandidateSince: null };
     }
     return { ...next, speedCandidateSince: null };
   }
@@ -115,7 +143,7 @@ export function stepMotion(
 
   if (slow && still) {
     // Nowy postój = nowa kotwica; poprzednia opisywała stanowisko sprzed lotu.
-    return { anchor: here, moving: false, speedCandidateSince: null };
+    return { anchor: here, moving: false, moveCandidateSince: null, speedCandidateSince: null };
   }
   return next;
 }

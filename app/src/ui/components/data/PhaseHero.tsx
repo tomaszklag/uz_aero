@@ -1,8 +1,8 @@
 /**
  * UZ Aero — PhaseHero (`.phase-hero` z mockupu 05)
  *
- * Główny display kokpitu w locie: kwadratowa plakietka z sylwetką samolotu i obok niej
- * nazwa fazy ogromną czcionką (54 px / ls 6) z jedną linią kontekstu pod spodem.
+ * Główny display kokpitu w locie: kwadratowa plakietka z ikoną fazy przy lewej
+ * krawędzi i obok nazwa fazy ogromną czcionką (54 px / ls 6) z linią kontekstu.
  *
  * Dlaczego faza dominuje nad wszystkim innym: w powietrzu pilot ma jedno spojrzenie,
  * a nie chwilę na czytanie. Nazwa fazy odpowiada na pytanie „co się teraz dzieje",
@@ -96,7 +96,10 @@ export function PhaseHero({
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center' },
+  // Kotwica po LEWEJ (2026-08-04, jak w mockupie): nazwa fazy zmienia długość
+  // (TAXI vs ENGINE IDLE) i wcześniejsze `center` przesuwało ikonę w bok przy każdej
+  // zmianie fazy. Ikona przy lewej krawędzi stoi w miejscu, tekst rośnie w prawo.
+  wrap: { alignItems: 'flex-start' },
   body: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   // Plakietka nie jest przyciskiem, ale mockup (`.phase-hero-icon`, 14 px) rysuje ją tym
   // samym promieniem co rodzinę kafli — bierzemy kanon `radius.btn`, nie literał.

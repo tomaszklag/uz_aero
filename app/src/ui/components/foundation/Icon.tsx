@@ -18,16 +18,36 @@
 
 import React from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
+import { createIconSet } from '@expo/vector-icons';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 type FeatherName = React.ComponentProps<typeof Feather>['name'];
 type MciName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-type Glyph = { set: 'feather'; glyph: FeatherName } | { set: 'mci'; glyph: MciName };
+/**
+ * Fazy lotu (hero 05) potrzebują dwóch glifów, których nie ma w żadnym z zestawów:
+ * śmigła i samolotu kołującego. Żyją we własnym foncie generowanym ze źródeł
+ * `assets/phase-icons/` przez `npm run build:phase-font` — font, a nie SVG, bo
+ * projekt nie dokłada modułów natywnych ponad expo-font (patrz wyżej).
+ * Punkty kodowe są kontraktem z generatorem — zmieniasz tu, zmień i tam.
+ */
+const PHASE_GLYPHS = { 'plane-taxi': 0xe001, propeller: 0xe002 } as const;
+type PhaseName = keyof typeof PHASE_GLYPHS;
+const PhaseIcons = createIconSet(
+  PHASE_GLYPHS,
+  'UZAeroPhases',
+  require('../../../../assets/fonts/UZAeroPhases.ttf'),
+);
+
+type Glyph =
+  | { set: 'feather'; glyph: FeatherName; rotateDeg?: number }
+  | { set: 'mci'; glyph: MciName; rotateDeg?: number }
+  | { set: 'phase'; glyph: PhaseName; rotateDeg?: number };
 
 const f = (glyph: FeatherName): Glyph => ({ set: 'feather', glyph });
-const m = (glyph: MciName): Glyph => ({ set: 'mci', glyph });
+const m = (glyph: MciName, rotateDeg?: number): Glyph => ({ set: 'mci', glyph, rotateDeg });
+const p = (glyph: PhaseName): Glyph => ({ set: 'phase', glyph });
 
 /**
  * Rejestr znaczeniowy. Zestaw Feather (te same kształty co w mockupach) uzupełniamy
@@ -74,6 +94,15 @@ const REGISTRY = {
   // obiekty
   aircraft: m('airplane'),
 
+  // fazy lotu — hero kokpitu 05 (komplet zatwierdzony 2026-08-04)
+  'phase-idle': p('propeller'),
+  'phase-taxi': p('plane-taxi'),
+  'phase-climb': m('airplane-takeoff'),
+  // Dziób pionowo w górę — symbol „w powietrzu", nie trajektoria: naturalna
+  // orientacja glifu (45° w prawo-górę) sugerowała wznoszenie obok `takeoff`.
+  'phase-cruise': m('airplane', -45),
+  'phase-descent': m('airplane-landing'),
+
   // rodzaje operacji (siatka kart — `CLAUDE.md`: ikony, nie select)
   'op-skoki': m('parachute'),
   'op-ferry': m('airplane'),
@@ -94,10 +123,21 @@ export interface IconProps {
 
 export function Icon({ name, size = 16, color, style }: IconProps) {
   const entry: Glyph = REGISTRY[name];
-  const common = { size, color, style, allowFontScaling: false };
+  const common = {
+    size,
+    color,
+    // Obrót mieszka w rejestrze (np. cruise −45°), nie w ekranach — glif i jego
+    // orientacja to jedna decyzja designu, nie dwie.
+    style: (entry.rotateDeg != null
+      ? [style, { transform: [{ rotate: `${entry.rotateDeg}deg` }] }]
+      : style) as StyleProp<TextStyle>,
+    allowFontScaling: false,
+  };
 
   return entry.set === 'feather' ? (
     <Feather name={entry.glyph} {...common} />
+  ) : entry.set === 'phase' ? (
+    <PhaseIcons name={entry.glyph} {...common} />
   ) : (
     <MaterialCommunityIcons name={entry.glyph} {...common} />
   );

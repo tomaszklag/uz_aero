@@ -6,7 +6,8 @@
 > Kontekst architektoniczny: `docs/architektura-kodu.md` §8.1–8.2.
 > Wymagania produktowe: `docs/_main.md.txt` §3.3.
 > Kod: `packages/domain/src/detection/`.
-> Stan na 2026-07-30 (po przebudowie na okno historii).
+> Stan na 2026-08-04 (odczulenie kanału ruchu + gwardia `ALREADY_TAXIING`;
+> przebudowa na okno historii: 2026-07-30).
 
 ---
 
@@ -73,6 +74,7 @@ ani dokładności.
 |---|---|
 | `anchor` | kotwica postoju: centroid pozycji ze stanowiska |
 | `moving` | czy samolot jest w ruchu |
+| `moveCandidateSince` | odkąd trzyma się warunek przemieszczeniowy (kanał główny) |
 | `speedCandidateSince` | odkąd trzyma się warunek prędkościowy (kanał wsparcia) |
 
 ### 2.1 Skąd bierze się elewacja lotniska
@@ -307,10 +309,22 @@ gdzie stał; bez tego warunku goniłaby samolot i próg ruchu nigdy by nie padł
 
 **Ruszył** (`moving: false → true`), gdy zajdzie **którykolwiek**:
 
-- **kanał główny:** `distanceM(here, anchor) > TAXI_DISPLACEMENT_M` — bez okna potwierdzenia,
-  bo przejechane 25 metrów **samo w sobie** jest potwierdzeniem, czego o chwilowej prędkości
-  powiedzieć się nie da;
-- **kanał wsparcia:** `groundSpeed ≥ TAXI_SPEED_KT` utrzymane `TAXI_CONFIRM_SEC`.
+- **kanał główny:** `distanceM(here, anchor) > TAXI_DISPLACEMENT_M + accuracyM` utrzymane
+  `TAXI_CONFIRM_SEC` (fixy bez `accuracyM` liczą sam próg). Obie części dopisano po
+  zgłoszeniu z terenu 2026-08-04 („telefon odłożony na stole kołował"):
+  - **margines niepewności** — bramka jakości wpuszcza fixy o dokładności do
+    `MAX_FIX_ACCURACY_M` = 50 m, a próg ruchu to 25 m; pojedynczy słaby fix umiał
+    „przenieść" odbiornik za próg. Fix przyznający się do ±40 m nie może dowodzić
+    ruchu o 25 m;
+  - **utrzymanie warunku** — odskok multipathu wraca do kotwicy po paru sekundach,
+    prawdziwe kołowanie tylko się oddala. Późniejsza decyzja nic nie kosztuje, bo do
+    rejestru idzie moment retro-datowany (`taxiOnset`), nie moment potwierdzenia
+    (pierwsza wersja — „25 m samo w sobie jest potwierdzeniem" — została przez teren
+    sfalsyfikowana);
+- **kanał wsparcia:** `groundSpeed ≥ TAXI_SPEED_KT` utrzymane `TAXI_CONFIRM_SEC` —
+  **wyłącznie gdy fix nie ma pozycji** (przemieszczenia nie da się policzyć). Gdy pozycja
+  jest i mówi „przy kotwicy", szum dopplera nie ma prawa jej przegłosować: kanał
+  o kontraście ~24:1 nie może przegrywać z kanałem ~7:1 (§7.1).
 
 **Stanął** (`true → false`), gdy zajdą **oba naraz**:
 
@@ -324,6 +338,15 @@ Zatrzymanie ustawia **nową kotwicę** — poprzednia opisywała stanowisko sprz
 **Zdarzenie `taxi`** emituje `stepDetector`, gdy `phase === 'ground'`, `!taxiing`
 i `motion.moving`. Flaga `taxiing` zeruje się przy starcie i przy lądowaniu, więc kołowanie
 jest **jednym wpisem otwierającym lot**.
+
+**Druga linia obrony mieszka w domenie** (decyzja 2026-08-04): projekcja sesji prowadzi
+własny stan `taxiing` (otwiera `taxi`, zamyka dopiero `takeoff` albo `engine_stop`),
+a gwardia `ALREADY_TAXIING` w `sessionRules.ts` twardo odrzuca drugie `taxi` z rzędu.
+Flaga detektora żyje bowiem tylko tak długo, jak zamontowany ekran kokpitu — po powrocie
+na ekran albo restarcie aplikacji odrodzony detektor emitował kołowanie jeszcze raz.
+`useFlightDetection` dodatkowo pomija emisję **po cichu**, gdy projekcja już kołuje —
+duplikat z odrodzonego detektora nie jest błędem pilota i nie ma czego pokazywać
+w `lastError`.
 
 ### 7.4 Para „landing → taxi"
 
@@ -470,13 +493,13 @@ Wszystkie w `packages/domain/src/detection/thresholds.ts`, wstrzykiwane jako `GP
 
 | Stała | Wartość | Znaczenie | Podniesienie → | Obniżenie → |
 |---|---|---|---|---|
-| `TAXI_DISPLACEMENT_M` | 25 m | oddalenie od kotwicy = ruszył | późniejsze taxi, mniej fałszywek z dryfu | wcześniejsze taxi, ryzyko reakcji na dryf/multipath |
+| `TAXI_DISPLACEMENT_M` | 25 m | oddalenie od kotwicy = ruszył; **powiększane o `accuracyM` fixa** i wymagające utrzymania `TAXI_CONFIRM_SEC` (2026-08-04) | późniejsze taxi, mniej fałszywek z dryfu | wcześniejsze taxi, ryzyko reakcji na dryf/multipath |
 | `TAXI_ANCHOR_RADIUS_M` | 10 m | promień odświeżania kotwicy **i** szukania onsetu | kotwica goni samolot; onset przesuwa się późno | kotwica zamarza na szumie; onset wcześniej |
 | `ANCHOR_WINDOW_SEC` | 20 s | okno centroidu postoju | stabilniejsza kotwica, wolniejsza reakcja na przestawienie | kotwica podatna na dryf |
 | `STOP_WINDOW_SEC` | 15 s | okno badania bezruchu | późniejsze uznanie postoju | ciasny zakręt może udać postój |
 | `STOP_DISPLACEMENT_M` | 10 m | przemieszczenie „stoi" w tym oknie | łatwiej uznać postój | wolne kołowanie może udać postój |
-| `TAXI_SPEED_KT` | 4 kt | próg kanału **wsparcia** (i warunek postoju) | kołowanie gubione przy braku pozycji | szum dopplera (do ~3 kt) kołuje zaparkowanym |
-| `TAXI_CONFIRM_SEC` | 4 s | utrzymanie warunku prędkościowego | mniej fałszywek, późniejsza detekcja | odwrotnie |
+| `TAXI_SPEED_KT` | 4 kt | próg kanału **wsparcia** (i warunek postoju); kanał głosuje **tylko przy fixach bez pozycji** (2026-08-04) | kołowanie gubione przy braku pozycji | szum dopplera (do ~3 kt) kołuje zaparkowanym |
+| `TAXI_CONFIRM_SEC` | 4 s | utrzymanie warunku ruchu (przemieszczeniowego **i** prędkościowego) | mniej fałszywek, późniejsza detekcja | odwrotnie |
 | `SPEED_WINDOW_SEC` | 5 s | okno mediany prędkości | mniejszy szum, większe opóźnienie | szybsza reakcja, więcej szpilek |
 
 > **Dlaczego `TAXI_SPEED_KT` zostało przy 4 kt**, choć czułość kanału przemieszczeniowego
@@ -548,8 +571,9 @@ Do śladu idą **agregaty sekundowe** (`IMU_AGGREGATE_SEC`), nie surowe próbki:
 
 ## 13. Przykładowa oś czasu
 
-Rzeczywisty przebieg z odtworzenia nagrania (`replay.ts`, elewacja 800 ft). Odbiornik
-w trybie static-hold — **deklaruje 0 kt przez cały postój i całe kołowanie**.
+Rzeczywisty przebieg z odtworzenia nagrania (`replay.ts`, elewacja 800 ft; sekcja kołowania
+przeliczona pod reguły 2026-08-04 przy założeniu `accuracyM` ≈ 5 m). Odbiornik w trybie
+static-hold — **deklaruje 0 kt przez cały postój i całe kołowanie**.
 
 ```
 t=0…29 s   postój, pozycja pływa ±3 m, gs = 0
@@ -557,9 +581,11 @@ t=0…29 s   postój, pozycja pływa ±3 m, gs = 0
 t=30 s     samolot rusza, 8 kt (4,1 m/s), gs NADAL 0
 t=32 s     8,2 m od kotwicy — wciąż w promieniu 10 m
 t=33 s     12,3 m — kotwica przestaje się odświeżać, zamarza
-t=37 s     28,8 m > TAXI_DISPLACEMENT_M (25 m)  ⇒  DETEKCJA taxi
+t=38 s     32,9 m > próg efektywny 30 m (25 m + accuracyM 5 m)
+           ⇒  licznik utrzymania warunku ruchu startuje
+t=42 s     warunek trzyma się 4 s = TAXI_CONFIRM_SEC  ⇒  DETEKCJA taxi
            onset = ostatni fix ≤ 10 m od kotwicy = t=32
-           → zapisane 08:00:32, potwierdzone 08:00:37
+           → zapisane 08:00:32, potwierdzone 08:00:42
 t=55…64 s  rozbieg, gs 15 → 69 kt, AGL 0
 t=63 s     mediana gs w oknie 5 s = 51 > 50  ⇒  candidateSince
            accel = +6 kt/s ≥ −0,5  ⇒  weto hamowania nie blokuje
@@ -574,9 +600,10 @@ Dwa wnioski, które ta oś pokazuje wprost:
 
 - **kołowanie zostało wykryte przy `gs = 0`** — poprzedni algorytm nie wykryłby go wcale,
   bo jego jedynym kanałem była prędkość, a odbiornik jej nie podawał;
-- **retro-datowanie odjęło 5 s kołowaniu i 3 s startowi.** Rezydualny błąd kołowania to +2 s
+- **retro-datowanie odjęło 10 s kołowaniu i 3 s startowi.** Rezydualny błąd kołowania to +2 s
   (samolot ruszył w t=30, onset wskazał t=32) — ograniczony rozdzielczością kotwicy
-  i odstępem fixów, nie progiem.
+  i odstępem fixów, nie progiem. Margines dokładności i utrzymanie warunku (2026-08-04)
+  opóźniły wyłącznie POTWIERDZENIE (t=37 → t=42); czas zapisany do rejestru nie drgnął.
 
 ---
 
@@ -593,6 +620,10 @@ Co bronimy, czym i gdzie jest test.
 | Static-hold (0 kt w ruchu) | **przegapione kołowanie** | kanał przemieszczeniowy | `flightDetector.test.ts` |
 | Brak prędkości w fixie | przegapione kołowanie | `groundSpeed` z pozycji | `detectionTrends.test.ts` |
 | Dryf na stanowisku | fałszywe kołowanie | kotwica-centroid + próg 25 m | `flightDetector.test.ts` |
+| Odskok multipathu (fix za progiem, wraca po sekundach) | fałszywe kołowanie 🔴 | utrzymanie warunku ruchu `TAXI_CONFIRM_SEC` | `flightDetector.test.ts` |
+| Słaby fix „przenosi" odbiornik (accuracy 25–50 m) | fałszywe kołowanie 🔴 | próg ruchu powiększany o `accuracyM` | `flightDetector.test.ts` |
+| Szum dopplera przy dostępnej pozycji | fałszywe kołowanie | kanał wsparcia głosuje tylko bez pozycji | `flightDetector.test.ts` |
+| Odrodzony detektor (powrót na ekran, restart) | zdublowane `taxi` | projekcja `taxiing` + gwardia `ALREADY_TAXIING`; hook pomija duplikat po cichu | `rules.test.ts`, `projections.test.ts` |
 | Jamming (dokładność 120 m) | fałszywe lądowanie w locie | bramka jakości; fix nie wchodzi do historii | `flightDetector.test.ts` |
 | Spoofing / multipath (teleportacja) | fałszywy start | plauzybilność skoku pozycji | `flightDetector.test.ts` |
 | Utrata sygnału | detekcja „z rozpędu" | `MAX_FIX_GAP_SEC` zeruje kandydatów | `flightDetector.test.ts` |
