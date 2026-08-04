@@ -7,11 +7,10 @@
  * Dlatego moduł jest importowany z `app/index.ts` przed `registerRootComponent`
  * (pilnuje tego test architektury).
  *
- * JEDYNY importer `expo-task-manager` (exact-list w teście architektury). Celowo
- * bez importu `expo-location` — kształt odczytu opisuje strukturalny `RawLocation`.
+ * JEDYNY importer `expo-task-manager` (exact-list w teście architektury liczy też
+ * `require`). Celowo bez importu `expo-location` — kształt odczytu opisuje
+ * strukturalny `RawLocation`.
  */
-
-import * as TaskManager from 'expo-task-manager';
 
 import type { GpsFix } from '../../domain';
 import { routeBackgroundFixes } from './backgroundFixRouting';
@@ -33,22 +32,35 @@ export function setBackgroundFixSink(next: BackgroundFixSink): void {
   sink = next;
 }
 
-TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
-  // Task nie ma prawa rzucić — wyjątek w callbacku to crash procesu usługi.
-  // Błąd platformy zostawiamy bez śladu (konwencja śladu: materiał badawczy,
-  // nie rejestr; fire-and-forget jak w `TraceRecorder`).
-  if (error != null || data == null) return;
-  const locations = (data as { locations?: RawLocation[] }).locations ?? [];
-  if (locations.length === 0) return;
+try {
+  // MIĘKKI require zamiast importu na górze (wzorzec `useSystemBackground` w App.tsx):
+  // `expo-task-manager` robi twardy `requireNativeModule` w chwili ładowania, więc
+  // zwykły import wywracałby CAŁĄ aplikację na starym dev clencie i w środowiskach
+  // bez modułu (Expo Go na Androidzie nie wspiera lokalizacji w tle). Brak taska
+  // nie może odbierać pilotowi zwykłego nasłuchu — degradację dopina fallback
+  // w `expoLocationAdapter.armService`.
+  const TaskManager = require('expo-task-manager') as typeof import('expo-task-manager');
 
-  const fixes = locations.map(locationToFix);
-  const live = sink;
-  const route = routeBackgroundFixes(live != null, null);
-  if (route.kind === 'sink' && live != null) {
-    // Aplikacja żyje: adapter rozprowadzi fixy fanoutem (detekcja, kokpit, 13, ślad).
-    live(fixes);
-    return;
-  }
-  // Proces wskrzeszony headless: prosto do `gps_trace` (sesję ustali writer z meta).
-  await appendHeadlessFixes(fixes);
-});
+  TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
+    // Task nie ma prawa rzucić — wyjątek w callbacku to crash procesu usługi.
+    // Błąd platformy zostawiamy bez śladu (konwencja śladu: materiał badawczy,
+    // nie rejestr; fire-and-forget jak w `TraceRecorder`).
+    if (error != null || data == null) return;
+    const locations = (data as { locations?: RawLocation[] }).locations ?? [];
+    if (locations.length === 0) return;
+
+    const fixes = locations.map(locationToFix);
+    const live = sink;
+    const route = routeBackgroundFixes(live != null, null);
+    if (route.kind === 'sink' && live != null) {
+      // Aplikacja żyje: adapter rozprowadzi fixy fanoutem (detekcja, kokpit, 13, ślad).
+      live(fixes);
+      return;
+    }
+    // Proces wskrzeszony headless: prosto do `gps_trace` (sesję ustali writer z meta).
+    await appendHeadlessFixes(fixes);
+  });
+} catch {
+  // Stary dev client / brak modułu natywnego: trybu tła nie ma, aplikacja startuje
+  // normalnie, GPS działa zwykłym nasłuchem przy włączonym ekranie.
+}

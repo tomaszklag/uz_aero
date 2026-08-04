@@ -21,7 +21,11 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.tomekklag.uzaero",
       "permissions": [
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -36,6 +40,12 @@
           "isAndroidForegroundServiceEnabled": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7f130401-7aa0-48bf-87a0-0841f3f0231d"
+      }
+    },
+    "owner": "tomekklag"
   }
 }

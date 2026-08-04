@@ -1041,6 +1041,13 @@ saver zabija proces). Konstrukcja, warstwa po warstwie:
   (lokalizacja + powiadomienia 13+) wychodzą przy zatwierdzeniu preflight na 03,
   nie przy pierwszym START ENGINE; odmowa niczego nie blokuje (§4.1).
 
+Degradacja bez modułu natywnego (stary dev client, Expo Go na Androidzie — tam
+lokalizacja w tle nie działa wcale): `backgroundLocationTask` robi MIĘKKI `require`
+w try/catch (wzorzec `useSystemBackground`), więc aplikacja startuje normalnie,
+a gdy uzbrojenie usługi twardo padnie, `armService` otwiera z powrotem zwykły nasłuch
+(`serviceUnavailable`) — usługa jest ulepszeniem (ekran wygaszony), nie warunkiem
+działania GPS.
+
 Znane zachowania (świadome): wiersze `sensor` nie powstają headless (hooki UI śpią);
 detekcja wraca dopiero po otwarciu aplikacji (od zdarzeń jest korekta ręczna + okno
 24 h); `useSyncLoop` tyka dalej, gdy usługa trzyma proces; po reboocie telefonu usługa

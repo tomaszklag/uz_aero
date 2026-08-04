@@ -60,6 +60,13 @@ export class ExpoLocationAdapter implements GpsPort {
   private mode: GpsSourceMode = 'watch';
   /** Uzbrojenie usługi nie wyszło (np. aplikacja w tle) — ponowimy przy `active`. */
   private rearmPending = false;
+  /**
+   * Usługa TWARDO nie wstała (stary dev client bez task-managera, Expo Go na
+   * Androidzie). Wtedy tryb `service` degraduje do zwykłego nasłuchu — pilot nie
+   * może zostać bez GPS przy włączonym ekranie tylko dlatego, że tło jest
+   * niedostępne. Flaga otwiera `open()` mimo trybu `service`.
+   */
+  private serviceUnavailable = false;
 
   constructor() {
     // Adapter jest żywym odbiorcą taska usługi: fixy z tła płyną tym samym fanoutem,
@@ -123,6 +130,9 @@ export class ExpoLocationAdapter implements GpsPort {
       return;
     }
     this.rearmPending = false;
+    // Czysty stan na następny cykl silnika — niedostępność usługi nie jest wieczna
+    // (użytkownik mógł w międzyczasie przebudować dev client).
+    this.serviceUnavailable = false;
     await this.disarmService();
     if (!this.fanout.empty) await this.open();
   }
@@ -201,10 +211,22 @@ export class ExpoLocationAdapter implements GpsPort {
         await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, SERVICE_OPTIONS);
       }
       this.rearmPending = cmd === 'retry-later';
+      if (this.mode === 'service' && (cmd === 'start' || cmd === 'none')) {
+        // Usługa stoi — fallbackowy watch (jeśli zdążył wstać) schodzi, żeby nie
+        // dublować fixów; wcześniejsza niedostępność przestaje obowiązywać.
+        this.serviceUnavailable = false;
+        this.closeWatch();
+      }
     } catch {
-      // Np. `ForegroundServiceStartNotAllowed` (wyścig z przejściem w tło) albo stary
-      // dev client bez task-managera — ponowimy przy `active`, o ile tryb wciąż chce.
+      // Np. `ForegroundServiceStartNotAllowed` (wyścig z przejściem w tło), stary
+      // dev client bez task-managera albo Expo Go — ponowimy przy `active`, o ile
+      // tryb wciąż chce, a DO TEGO CZASU pilot dostaje zwykły nasłuch: usługa jest
+      // ulepszeniem (ekran wygaszony), nie warunkiem działania GPS (§4.1).
       this.rearmPending = this.mode === 'service';
+      if (this.mode === 'service') {
+        this.serviceUnavailable = true;
+        if (!this.fanout.empty) await this.open();
+      }
     }
   }
 
@@ -219,8 +241,9 @@ export class ExpoLocationAdapter implements GpsPort {
   }
 
   private async open(): Promise<void> {
-    // W trybie usługi fixy przynosi task — watch zostaje zamknięty.
-    if (this.mode === 'service') return;
+    // W trybie usługi fixy przynosi task — watch zostaje zamknięty. Wyjątek:
+    // usługa twardo niedostępna → watch jest jedynym źródłem (degradacja).
+    if (this.mode === 'service' && !this.serviceUnavailable) return;
     if (this.subscription != null) return;
     this.opening ??= Location.watchPositionAsync(
       {
