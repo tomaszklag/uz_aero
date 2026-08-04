@@ -446,4 +446,16 @@ const FLIGHT_COLUMNS: Column<FlightRow>[] = [
     render: (row) => <Pill tone={row.method.tone}>{row.method.label}</Pill>,
   },
   { key: 'cycle', header: 'Cykl silnika', align: 'num', render: (row) => row.cycle },
+  {
+    key: 'track',
+    header: '',
+    render: (row) =>
+      row.trackHref == null ? null : (
+        <div className="row-actions">
+          <LinkButton to={row.trackHref} variant="ghost" size="sm">
+            Ślad
+          </LinkButton>
+        </div>
+      ),
+  },
 ];

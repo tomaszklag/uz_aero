@@ -25,6 +25,7 @@ import type { AdminFleetQueries } from '../application/admin/queries/fleet.ts';
 import type { AdminMaintenanceQueries } from '../application/admin/queries/maintenance.ts';
 import type { AdminMeQueries } from '../application/admin/queries/me.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
+import type { AdminFlightTrackQueries } from '../application/admin/queries/flightTrack.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
 import type { AdminStatsQueries } from '../application/admin/queries/stats.ts';
 import type { AuthCommands } from '../application/common/commands/auth.ts';
@@ -49,6 +50,7 @@ import { registerAdminMeRoutes } from './routes/admin/me.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
 import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
+import { registerAdminTrackRoutes } from './routes/admin/tracks.ts';
 import { registerAuthRoutes } from './routes/common/auth.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
@@ -95,6 +97,8 @@ export interface ServerDeps {
   adminMaintenance: AdminMaintenanceCommands;
   /** Strona ODCZYTU panelu — uproszczony CQRS: komendy wyżej, zapytania tutaj. */
   adminSessionQueries: AdminSessionQueries;
+  /** Ślad lotu (`A02c`) — rejestr wyznacza okno, pliki NDJSON dają geometrię. */
+  adminFlightTrackQueries: AdminFlightTrackQueries;
   adminFlagQueries: AdminFlagQueries;
   adminMeQueries: AdminMeQueries;
   adminPilotQueries: AdminPilotQueries;
@@ -161,6 +165,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerAdminFlagRoutes(app, deps.adminFlags, deps.adminFlagQueries, gate);
   registerAdminCorrectionRoutes(app, deps.adminCorrections, deps.adminCorrectionQueries, gate);
   registerAdminSessionRoutes(app, deps.adminSessionQueries, gate);
+  registerAdminTrackRoutes(app, deps.adminFlightTrackQueries, gate);
   registerAdminAuditRoutes(app, deps.adminAuditQueries, gate);
   registerAdminPilotRoutes(app, deps.adminPilots, deps.adminPilotQueries, gate);
   registerAdminFleetRoutes(app, deps.adminFleet, deps.adminFleetQueries, gate);

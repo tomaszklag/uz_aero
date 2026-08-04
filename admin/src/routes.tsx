@@ -26,6 +26,7 @@ import { FleetScreen } from './screens/fleet/FleetScreen';
 import { MaintenanceScreen } from './screens/maintenance/MaintenanceScreen';
 import { PilotsScreen } from './screens/pilots/PilotsScreen';
 import { StatsScreen } from './screens/stats/StatsScreen';
+import { TrackScreen } from './screens/track/TrackScreen';
 import { DashboardScreen } from './screens/dashboard/DashboardScreen';
 import { UnderConstructionScreen } from './screens/underConstruction/UnderConstructionScreen';
 import { NAV_GROUPS } from './ui/shell/navItems';
@@ -78,6 +79,13 @@ export const router = createHashRouter([
       // trasie kazałoby ekranowi listy pobierać dane, których nigdy nie pokaże.
       { path: 'dni', element: <DaysScreen /> },
       { path: 'dni/:sessionUuid', element: <DayScreen /> },
+
+      // Ślad lotu (`A02c`) — PEŁNA STRONA, nie szuflada nad kartą dnia, inaczej niż
+      // korekta. Powód jest w treści: mapa i profil potrzebują całej szerokości okna,
+      // a szuflada zostawiłaby na nie pas, w którym trasa lotu po kręgu jest nieczytelna.
+      // Numer lotu siedzi w adresie, bo link „zobacz ślad lotu 3" bywa wklejany
+      // w rozmowie z pilotem — tak samo jak link do zdarzenia w rejestrze.
+      { path: 'dni/:sessionUuid/slad/:flightIndex', element: <TrackScreen /> },
 
       // Korekta administratora (`A02b`) — TEN SAM ekran co karta dnia, z dodatkowym
       // parametrem. Mockup pokazuje ją jako szufladę NAD kartą (dzień widać pod

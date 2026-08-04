@@ -21,6 +21,7 @@ import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
 import { PinCrypto } from '../../infrastructure/auth/pinCrypto';
 import {
   AuthService,
+  FlightTrackQueries,
   ReferenceSync,
   SyncEngine,
   ThemePrefsSync,
@@ -98,6 +99,11 @@ export function useAppBootstrap(): BootstrapStatus {
         // Rejestrator śladu (faza 5): zawsze włączony; retencja przycina przy starcie.
         const trace = new TraceRecorder(storage, defaultClock);
         void trace.purgeExpired().catch(() => {});
+
+        // Odczyt śladu dla ekranu 14 — ten sam magazyn, przeciwny kierunek. Podłączany
+        // osobno od `attachRepo`, bo łączy rejestr (repo) ze śladem (storage), czyli
+        // dwa magazyny o różnych gwarancjach.
+        useSessionStore.getState().attachTrack(new FlightTrackQueries(repo, storage));
 
         useSessionStore
           .getState()

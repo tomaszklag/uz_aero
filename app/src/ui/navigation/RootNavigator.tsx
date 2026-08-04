@@ -33,6 +33,7 @@ import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { SplashScreen } from '../screens/SplashScreen';
 import { StatsScreen } from '../screens/StatsScreen';
+import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
 import { SyncScreen } from '../screens/SyncScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
@@ -54,6 +55,8 @@ export type RootStackParamList = {
   ManualLog: undefined;
   EndOfDay: undefined;
   Stats: undefined;
+  /** 14 — ślad lotu: trasa, profil pionowy i log punktów. Wejście z tabeli lotów na 10. */
+  Track: TrackScreenParams;
   Sync: undefined;
   /** 13 — ustawienia: motyw, PIN, konto, diagnostyka GPS. */
   Settings: undefined;
@@ -114,6 +117,7 @@ export function RootNavigator({
         <Stack.Screen name="ManualLog" component={ManualLogScreen} />
         <Stack.Screen name="EndOfDay" component={EndOfDayScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
+        <Stack.Screen name="Track" component={TrackScreen} />
         <Stack.Screen name="Sync" component={SyncScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="StyleGuide" component={StyleGuideScreen} />

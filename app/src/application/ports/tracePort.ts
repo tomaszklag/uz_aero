@@ -78,6 +78,23 @@ export interface TracePort {
   appendTrace(entry: NewTraceEntry): Promise<void>;
   /** Wpisy jeszcze niewysłane, w kolejności zapisu (własna księgowość, jak outbox). */
   getTraceBatch(limit: number): Promise<TraceEntry[]>;
+  /**
+   * Fixy jednej sesji z przedziału czasu — wejście ekranu śladu lotu (14).
+   *
+   * Zawężamy po `time`, a nie po `deviceTime`, bo okno lotu przychodzi z rejestru,
+   * a rejestr liczy czasy zdarzeń z zegara GPS (`eventTime`: `gpsTime ?? deviceTime`).
+   * Filtrowanie po zegarze telefonu ucinałoby ślad dokładnie o tyle, o ile ten zegar
+   * dryfuje — czyli o wielkość, którą ten ślad ma pomagać zmierzyć.
+   *
+   * Zwraca WYŁĄCZNIE `kind = 'fix'`: agregaty czujników nie mają pozycji i nie mają
+   * czego wnieść do mapy, a przy 30 tys. wierszy dziennie ich odsianie w SQL jest
+   * tańsze niż przeniesienie ich do pamięci po to, żeby je odrzucić.
+   */
+  readTraceFixes(
+    sessionUuid: string,
+    fromTime: EpochMillis,
+    toTime: EpochMillis,
+  ): Promise<TraceEntry[]>;
   markTraceUploaded(ids: number[], uploadedAt: EpochMillis): Promise<void>;
   /** Retencja: kasuje wpisy z `deviceTime` starszym niż próg. Zwraca liczbę usuniętych. */
   purgeTraceOlderThan(threshold: EpochMillis): Promise<number>;

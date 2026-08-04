@@ -218,8 +218,24 @@ describe('granice warstw panelu', () => {
     // Zakaz ma jeden konkretny cel: odciąć panelowi możliwość liczenia. Skoro
     // `projectSession` jest nieosiągalne, jedynym źródłem liczby jest odpowiedź
     // serwera (`docs/architektura-panelu-frontend.md` §5.1).
-    const offenders = filesUnder('.').filter((f) => valueImportsFrom(codeOf(f), '@uzaero/domain'));
+    //
+    // JEDEN wyjątek, dopisany 2026-08-03 razem z mapą śladu (`A02c`): odwzorowanie
+    // Web Mercator przelicza stopnie na PIKSELE i nie dotyka ani jednej liczby
+    // domenowej — dystans, wysokości i czasy nadal przychodzą policzone z serwera.
+    // Ten moduł nie może więc „policzyć po swojemu" niczego, o co ten zakaz chodzi.
+    // Alternatywą była kopia tej matematyki w panelu, a kopia znaczy, że ślad prędzej
+    // czy później wygląda inaczej w panelu niż w telefonie — przy narzędziu, którego
+    // wartość polega na wspólnej rozmowie o TYM SAMYM locie, to gorsze niż wyjątek.
+    const MAP_PROJECTION = 'screens/track/trackChart.ts';
+
+    const offenders = filesUnder('.')
+      .filter((f) => f !== MAP_PROJECTION)
+      .filter((f) => valueImportsFrom(codeOf(f), '@uzaero/domain'));
     expect(offenders).toEqual([]);
+
+    // Wyjątek jest WĄSKI z premedytacją: gdyby ten plik przestał istnieć albo przestał
+    // importować odwzorowanie, wyjątek ma zniknąć razem z nim, a nie zostać na zapas.
+    expect(valueImportsFrom(codeOf(MAP_PROJECTION), '@uzaero/domain')).toBe(true);
   });
 
   it('nigdzie nie importujemy z `server/src` — panel nie widzi wnętrza serwera', () => {

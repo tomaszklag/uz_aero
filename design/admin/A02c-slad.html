@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — A02c Ślad lotu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════
+     UZ AERO — PANEL ADMINA · SZABLON
+     Ten plik jest ŹRÓDŁEM dla wszystkich mockupów `design/admin/A*.html`.
+     Kopiuj <head> w całości; nie zmieniaj tokenów ani ramy okna.
+
+     Czym się różni od mockupów telefonu (`design/*.html`):
+     — ramka to OKNO PRZEGLĄDARKI 1440×900, nie telefon 393×852;
+     — skalowanie `--app-scale` działa identycznie jak `--phone-scale`;
+     — tokeny kolorów i czcionki są TE SAME, bo to ten sam produkt.
+     ══════════════════════════════════════════════════════════════════════ */
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+    /* wymiary shellu — stałe, żeby wszystkie ekrany siadały w tej samej siatce */
+    --sidebar-w: 236px; --topbar-h: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    /* dokładnie ten sam trik co --phone-scale w mockupach telefonu */
+    --app-scale: min(1, calc((100vh - 250px) / 900px), calc((100vw - 60px) / 1440px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%), linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 44px 24px 80px; gap: 26px;
+  }
+  /* Widoczny fokus klawiatury — panel jest nawigowany klawiaturą (tabele, filtry,
+     formularze), a szablon miał dotąd tylko `:focus-within` na `.search` i `.input:focus`.
+     `:focus-visible`, nie `:focus`: kliknięcie myszą nie ma rysować obwódki tam, gdzie
+     nikt jej nie potrzebuje. Dołożone 2026-07-31 razem z pierwszym ekranem panelu. */
+  :focus-visible { outline: 2px solid var(--green-border); outline-offset: 2px; border-radius: 6px; }
+  /* Treść dla CZYTNIKA EKRANU, niewidoczna wzrokowo — w panelu niesie ją `<caption>`
+     każdej tabeli. Czytnik ogłasza tabelę bez podpisu jako „tabela, 8 kolumn", nie mówiąc
+     ani słowa o tym, czego dotyczy; widoczny `<caption>` zmieniłby jednak układ, którego
+     mockupy nie przewidują. Dlatego podpis CHOWAMY, a nie usuwamy — `display:none`
+     i `visibility:hidden` odebrałyby go także czytnikowi, więc ich tu nie ma. */
+  .visually-hidden { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+
+  /* ── canvas: etykieta, panel wariantów, nav-strip — jak w design/*.html, tylko szersze ── */
+  .canvas-label { width:100%; max-width:1440px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+
+  .variants-panel { width:100%; max-width:1440px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:7px; }
+  .vp-title { grid-column:1/-1; font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+
+  .nav-strip { width:100%; max-width:1440px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover, .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ══ RAMA OKNA PRZEGLĄDARKI — desktopowy odpowiednik `.phone` ══ */
+  .browser {
+    width:1440px; height:900px; border-radius:14px; background:var(--bg);
+    border:1px solid #1C1E24;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.03), 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--app-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--app-scale) - 1) * 900px);
+    display:flex; flex-direction:column;
+  }
+  .chrome { height:40px; flex-shrink:0; background:#0A0A0C; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; padding:0 14px; }
+  .chrome-dots { display:flex; gap:7px; flex-shrink:0; }
+  .chrome-dots i { width:11px; height:11px; border-radius:50%; background:var(--border-strong); }
+  .chrome-url { flex:1; max-width:460px; height:24px; border-radius:6px; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; gap:7px; padding:0 10px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:0.5px; }
+  .chrome-url svg { color:var(--green); flex-shrink:0; }
+  .chrome-url b { color:var(--text-secondary); font-weight:400; }
+
+  /* ══ SHELL: sidebar + topbar + treść ══ */
+  .shell { flex:1; display:grid; grid-template-columns:var(--sidebar-w) 1fr; min-height:0; }
+
+  .sidebar { background:#0A0A0C; border-right:1px solid var(--border); display:flex; flex-direction:column; min-height:0; }
+  .brand { height:var(--topbar-h); flex-shrink:0; display:flex; align-items:center; gap:10px; padding:0 18px; border-bottom:1px solid var(--border); }
+  .brand-mark { width:26px; height:26px; border-radius:7px; background:var(--green-muted); border:1px solid var(--green-border); display:flex; align-items:center; justify-content:center; color:var(--green); flex-shrink:0; }
+  .brand-name { font-family:var(--font-display); font-size:19px; letter-spacing:2.5px; line-height:1; }
+  .brand-role { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-top:2px; }
+  .side-nav { flex:1; overflow-y:auto; padding:14px 10px; display:flex; flex-direction:column; gap:2px; scrollbar-width:none; }
+  .side-nav::-webkit-scrollbar { display:none; }
+  .nav-group { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:14px 10px 6px; }
+  .nav-group:first-child { padding-top:2px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:9px; text-decoration:none; color:var(--text-secondary); font-size:13px; font-weight:500; border:1px solid transparent; min-height:36px; }
+  .nav-item:hover { background:var(--surface); color:var(--text-primary); }
+  .nav-item.active { background:var(--green-muted); border-color:var(--green-border); color:var(--green); font-weight:600; }
+  .nav-item svg { flex-shrink:0; opacity:0.85; }
+  .nav-count { margin-left:auto; font-family:var(--font-mono); font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:999px; background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); }
+  .nav-count.amber { background:var(--amber-muted); color:var(--amber); border-color:var(--amber-border); }
+  .nav-count.red { background:var(--red-muted); color:var(--red); border-color:var(--red-border); }
+  /* pozycja niedostępna dla roli — widoczna, ale wyjaśniona (nie chowamy, żeby nie zgadywał) */
+  .nav-item.locked { opacity:0.4; cursor:not-allowed; }
+  .nav-item.locked .nav-count { background:transparent; border-color:transparent; }
+
+  .side-foot { flex-shrink:0; border-top:1px solid var(--border); padding:10px; display:flex; flex-direction:column; gap:8px; }
+  .who { display:flex; align-items:center; gap:9px; padding:7px 8px; border-radius:10px; background:var(--surface); border:1px solid var(--border); }
+  .who-avatar { width:30px; height:30px; border-radius:50%; background:var(--blue-muted); border:1px solid var(--blue-border); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:700; color:var(--blue); flex-shrink:0; }
+  .who-body { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .who-name { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .who-role { font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
+
+  .main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+  /* Ekran PRZED ramą — logowanie (`A00`), gdzie nie ma jeszcze ani sidebara, ani topbara,
+     bo nie wiadomo, kto patrzy. Treść wyśrodkowana w oknie przeglądarki zamiast siatki
+     shellu; `overflow-y` własne, bo baner o rolach potrafi nie zmieścić się w 900 px. */
+  .centered { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:24px; overflow-y:auto; }
+  .topbar { height:var(--topbar-h); flex-shrink:0; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 22px; }
+  .crumbs { display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .crumbs b { color:var(--text-primary); font-weight:500; }
+  .crumbs span { color:var(--border-strong); }
+  .topbar-right { display:flex; align-items:center; gap:10px; }
+  /* zegar UTC — w panelu, jak w aplikacji, czas nieoznaczony = UTC */
+  .utc-clock { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); display:inline-flex; align-items:center; gap:7px; }
+  .utc-clock b { color:var(--text-primary); font-weight:700; }
+  .utc-clock i { font-style:normal; color:var(--blue); font-size:9px; letter-spacing:1.5px; }
+
+  .content { flex:1; overflow-y:auto; padding:22px; display:flex; flex-direction:column; gap:18px; }
+  /* Kolumna scrollowana: dzieci NIE mogą się kurczyć — inaczej .table-wrap z overflow:hidden obcina wiersze, zamiast pozwolić .content przewinąć. */
+  .content > *, .drawer-body > * { flex-shrink:0; }
+  .content::-webkit-scrollbar { width:10px; }
+  .content::-webkit-scrollbar-thumb { background:var(--border-strong); border-radius:99px; border:3px solid var(--bg); }
+
+  /* ── nagłówek strony ── */
+  .page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+  .page-title { font-family:var(--font-display); font-size:30px; letter-spacing:2px; line-height:1; }
+  .page-sub { font-size:12.5px; color:var(--text-secondary); margin-top:6px; line-height:1.5; max-width:640px; }
+  .page-actions { display:flex; gap:9px; flex-shrink:0; }
+
+  /* ── przyciski ── */
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:36px; padding:8px 15px; border-radius:10px; font-family:var(--font-body); font-size:12.5px; font-weight:600; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .btn:hover { background:var(--surface-hover); }
+  .btn.primary { background:var(--green); border-color:var(--green); color:#0A0A0A; }
+  .btn.primary:hover { filter:brightness(1.08); }
+  .btn.danger { color:var(--red); border-color:var(--red-border); background:var(--red-muted); }
+  .btn.ghost { background:transparent; border-color:var(--border); color:var(--text-secondary); }
+  /* Zielona OBRAMÓWKA, nie zielone wypełnienie — akcja PRZYWRACAJĄCA („Aktywuj" konta
+     na A06), czyli odwrotność `.btn.danger` i o tej samej wadze wizualnej. `.primary`
+     zostaje zarezerwowana dla akcji głównej ekranu; w kolumnie tabeli byłoby jej
+     kilkanaście naraz i żadna nie byłaby główna. */
+  .btn.ok { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
+  .btn:disabled, .btn.disabled { opacity:0.4; cursor:not-allowed; }
+  .btn.sm { min-height:30px; padding:5px 11px; font-size:11.5px; border-radius:8px; }
+  /* Akcja główna formularza: cała szerokość karty i wyższy cel niż standardowe 36 px.
+     Awansowane ze stylu inline w A00 („Zaloguj się") — to własność WZORCA formularza,
+     a nie tego jednego ekranu (2026-07-31). */
+  .btn.block { width:100%; min-height:42px; }
+
+  /* ── karty i kafle ── */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+  .card-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary); display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+  .card-title::before { content:''; width:3px; height:11px; border-radius:2px; background:var(--border-strong); flex-shrink:0; }
+  .card-title .spacer { margin-left:auto; }
+
+  .tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+  /* Kafel bywa linkiem w głąb (pulpit) i zwykłym pudełkiem (podsumowania) — jedna
+     definicja obsługuje oba, bo `text-decoration`/`color` na nie-linku nic nie robi. */
+  .tile { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; text-decoration:none; color:inherit; }
+  .tile:hover { border-color:var(--border-strong); }
+  .tile-key { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
+  .tile-val { font-family:var(--font-mono); font-size:28px; font-weight:700; line-height:1; letter-spacing:-0.5px; }
+  .tile-val small { font-size:12px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
+  .tile-val.green { color:var(--green); } .tile-val.amber { color:var(--amber); } .tile-val.red { color:var(--red); } .tile-val.blue { color:var(--blue); }
+  .tile-note { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  /* Wartość w SIATCE liczb (`.day-grid`), a nie w kaflu — 28 px rozbija czterokomórkową
+     kratkę w wąskiej kolumnie bocznej. Modyfikator dołożony 2026-08-01 razem z pulpitem:
+     mockupy A01/A01a robiły to stylem inline (`font-size:22px`), więc klasy nie dało się
+     wygrepować ani powtórzyć na A10. */
+  .tile-val.sm { font-size:22px; }
+  /* Siatka liczb doby („Dziś w liczbach", „Ostatni dzień lotny"). Cztery komórki
+     klucz+wartość bez ramek — to NIE są kafle: nie prowadzą nigdzie osobno i czyta się
+     je razem, jako jedno podsumowanie. */
+  .day-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .day-grid > span { display:flex; flex-direction:column; gap:4px; }
+
+  /* ── pasek filtrów ── */
+  .filters { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .search { flex:1; min-width:220px; max-width:340px; height:36px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); display:flex; align-items:center; gap:9px; padding:0 12px; }
+  .search:focus-within { border-color:var(--green-border); }
+  .search svg { color:var(--text-muted); flex-shrink:0; }
+  .search input { flex:1; background:none; border:none; outline:none; color:var(--text-primary); font-family:var(--font-body); font-size:12.5px; }
+  .search input::placeholder { color:var(--text-muted); }
+  .chip { display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:5px 12px; border-radius:999px; background:var(--surface-raised); border:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--text-secondary); cursor:pointer; }
+  .chip:hover { border-color:var(--border-strong); color:var(--text-primary); }
+  .chip.on { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
+  .chip.on.amber { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
+  /* Rozpórka paska filtrów: odsuwa na prawo to, co NIE filtruje, tylko opisuje wynik
+     (plakietka „czasy UTC", licznik wierszy). Do 2026-08-01 mockupy robiły to stylem
+     inline — klasa bez nazwy jest klasą, której nikt nie znajdzie greppem. */
+  .list-spacer { margin-left:auto; display:inline-flex; align-items:center; gap:9px; }
+
+  /* ── TABELA — kręgosłup panelu; liczby zawsze mono ── */
+  .table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); }
+  /* Tabela ZAGNIEŻDŻONA w karcie (historia rozwiązanych flag, legenda typów, historia
+     rewizji karty): bez własnej ramki i tła, bo ramkę niesie już karta — dwie obwódki
+     jedna w drugiej czytają się jak błąd składu. Modyfikator, a nie osobna klasa, bo to
+     nadal ta sama tabela. */
+  .table-wrap.plain { border:none; border-radius:0; background:none; }
+  table { width:100%; border-collapse:collapse; }
+  thead th { text-align:left; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); font-weight:500; padding:11px 14px; background:#101010; border-bottom:1px solid var(--border); white-space:nowrap; }
+  thead th.sortable { cursor:pointer; }
+  thead th.sortable:hover { color:var(--text-secondary); }
+  thead th .arrow { color:var(--green); margin-left:4px; }
+  tbody td { padding:11px 14px; border-bottom:1px solid var(--hairline); font-size:12.5px; color:var(--text-primary); vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:var(--surface-raised); }
+  tbody tr.clickable { cursor:pointer; }
+  /* Wiersz OTWARTY w szufladzie (`A03a`, `A06a`, `A07a`): tło i zielona krawędź od
+     strony treści, żeby po zamknięciu szuflady wzrok wrócił tam, gdzie był. */
+  tbody tr.opened { background:var(--surface-raised); box-shadow:inset 3px 0 0 var(--green); }
+  /* Wiersz wyróżniony OTWARTĄ FLAGĄ (`A02`, `A05`). Kolejność ma znaczenie: reguła stoi
+     PO `tbody tr:hover`, żeby najechanie myszą nie zdejmowało bursztynu z wiersza, który
+     jest wyróżniony z powodu — powód nie znika dlatego, że ktoś przesunął kursor. */
+  tbody tr.flagged,
+  tbody tr.flagged:hover { background:var(--amber-muted); }
+  td.num, td.mono, th.num { font-family:var(--font-mono); letter-spacing:0.3px; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  td.dim { color:var(--text-secondary); }
+  .cell-strong { font-weight:600; }
+  .cell-sub { display:block; font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; }
+  /* ŚWIEŻOŚĆ w komórce tabeli — podpis `.cell-sub` niosący WIEK danych z telefonu.
+     Trzy stany §4.8 dosłownie: `fresh` = live (bez zastrzeżeń), `stale` = cache
+     starszy niż doba, `none` = brak danych. Modyfikator, a nie osobna klasa, bo to
+     nadal ten sam podpis — zmienia się wyłącznie to, co mówi o jego wiarygodności.
+     Do 2026-08-01 ekran A07 malował te trzy stany atrybutem `style` przy każdej
+     komórce; kolor rozsiany po komórkach nie jest komponentem i nie da się go
+     wygrepować. */
+  .cell-sub.fresh { color:var(--green); }
+  .cell-sub.stale { color:var(--amber); }
+  .cell-sub.none  { color:var(--text-muted); }
+  /* Wiek sprawy, która leży ZA DŁUGO (`A03`). Modyfikator, nie styl inline, bo o tym,
+     które wiersze są stare, rozstrzyga próg w kodzie, a nie autor pliku HTML. */
+  .cell-age.old { color:var(--red); font-weight:700; }
+  /* Stopka listy stronicowanej KURSOREM: podpis „pokazano N z M" i przycisk dokładający
+     kolejną stronę. Mockupy rysują dwanaście wierszy i kończą banerem, ale kursor keyset
+     jest kontraktem serwera — a lista przycięta po cichu byłaby najgorszym trybem awarii
+     narzędzia nadzoru: wyglądałaby na komplet. */
+  .list-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .reg { font-family:var(--font-mono); font-weight:700; letter-spacing:1px; }
+  /* Link W TREŚCI komórki — zawęża listę do tej wartości (A09: konto działającego,
+     identyfikator obiektu). Wygląda jak treść, nie jak przycisk, i to jest cała jego
+     racja bytu: dwa `.btn` na wiersz w tabeli o sześciu kolumnach zamieniają listę
+     w farmę guzików. Kreska jest przerywana i wygaszona, więc nie konkuruje z liczbami
+     obok, a pod kursorem i przy fokusie robi się zielona — wtedy dopiero ma znaczyć
+     „to jest klikalne". Dodane 2026-08-01 razem z ekranem A09. */
+  .cell-link { color:inherit; text-decoration:none; border-bottom:1px dashed var(--border-strong); }
+  .cell-link:hover, .cell-link:focus-visible { color:var(--green); border-bottom-color:var(--green-border); }
+  .row-actions { display:flex; gap:6px; justify-content:flex-end; }
+
+  /* WARTOŚĆ ZEGARA w komórce tabeli (A04: `device_time`, `gps_time`, `Δ zegarów`).
+     W mockupie stoi to stylem inline (`style="color:var(--amber)"`); tutaj jest klasą,
+     bo o tym, który zegar się rozjechał, rozstrzyga PRÓG Z SERWERA, a nie autor pliku
+     HTML. Trzy tony, trzy różne zdania: `dim` — zegary się zgadzają, `amber` — rozjazd
+     ponad próg CLOCK_DRIFT, `red` — nie ma czego porównać, bo nie było fixa GPS. */
+  .clock-val.amber { color:var(--amber); font-weight:700; }
+  .clock-val.red { color:var(--red); }
+  .clock-val.dim { color:var(--text-secondary); }
+
+  /* Wartość zegara, którą KOREKTA przestawiła (A04, `retime`). Przekreślenie znaczy
+     „to już nie jest liczba, którą liczy projekcja"; nowy czas stoi pod spodem jako
+     `.cell-sub`. Bez tego zdarzenie po korekcie było w tabeli nieodróżnialne od
+     nietkniętego — kolumny pokazywały wartości surowe, a jedyna wzmianka mieszkała
+     w rozwinięciu, które trzeba otworzyć osobno dla każdego wiersza (2026-08-02).
+     Reguła stoi PO tonach, żeby wygaszenie wygrywało z czerwienią „brak fixa":
+     wiersz bez fixa, któremu korekta NADAŁA czas, ma obie klasy naraz. */
+  .clock-val.struck { text-decoration:line-through; color:var(--text-muted); }
+
+  /* Zdarzenie UNIEWAŻNIONE korektą (A04). Wiersz ZOSTAJE w tabeli — rejestr jest
+     append-only i to właśnie te wiersze tłumaczą, dlaczego liczby dnia różnią się
+     od tego, co zapisał telefon. Przekreślamy czasy i identyfikatory, nie całą treść:
+     plakietka typu i pilot mają nadal być czytelni, bo po nich się szuka.
+     Ta sama semantyka, co `.tl-row.voided` na osi karty dnia. */
+  tbody tr.voided td.num, tbody tr.voided td.mono { text-decoration:line-through; color:var(--text-muted); }
+
+  /* ROZWINIĘCIE WIERSZA (A04: payload + nagłówek zdarzenia). Wiersz-satelita pod
+     wierszem właściwym, przez całą szerokość tabeli. Osobny `<tr>`, a nie szuflada
+     z boku, bo mockup pokazuje treść DOKŁADNIE pod wierszem, którego dotyczy —
+     przy dochodzeniu porównuje się sąsiednie zdarzenia, a szuflada zasłania listę. */
+  tbody tr.row-expand:hover { background:none; }
+  tbody tr.row-expand > td { padding:0 14px 16px; background:var(--surface-raised); }
+
+  /* WYPIS JSON-a — surowy payload zdarzenia (A04). W mockupie stoi stylem inline;
+     tutaj ma nazwę, bo klasa bez nazwy jest klasą, której nikt nie znajdzie greppem.
+     Kolory kluczy i wartości są MODYFIKATORAMI, a nie hexami w kodzie: o tym, że
+     liczba jest niebieska, a `null` czerwony, rozstrzyga moduł czysty z testem. */
+  .payload { font-family:var(--font-mono); font-size:11px; line-height:1.75; background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:14px 16px; overflow-x:auto; color:var(--text-secondary); margin:0; }
+  .payload-line { display:block; white-space:pre; }
+  .payload-key { color:var(--text-primary); font-weight:500; }
+  .payload-val.green { color:var(--green); }
+  .payload-val.blue { color:var(--blue); }
+  .payload-val.red { color:var(--red); }
+
+  /* ── plakietki stanu ── */
+  .pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; border:1px solid; white-space:nowrap; }
+  .pill.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }
+  .pill.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .pill.red   { color:var(--red);   background:var(--red-muted);   border-color:var(--red-border); }
+  .pill.blue  { color:var(--blue);  background:var(--blue-muted);  border-color:var(--blue-border); }
+  .pill.dim   { color:var(--text-muted); background:var(--surface-raised); border-color:var(--border); }
+  .pill .dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+  .pill .dot.live { animation:pulse 1800ms ease-in-out infinite; }
+
+  /* ── formularze (wzorzec z aplikacji: --surface-raised, r12, focus zielony) ── */
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .label { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--text-muted); }
+  .input { min-height:40px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); padding:10px 13px; color:var(--text-primary); font-family:var(--font-body); font-size:13px; outline:none; width:100%; }
+  .input:focus { border-color:var(--green-border); }
+  .input.mono { font-family:var(--font-mono); letter-spacing:0.5px; }
+  /* `<textarea>` jako modyfikator `.input`, a nie osobna klasa — pole ma dzielić ramkę,
+     tło i fokus z resztą formularza. Dokłada wyłącznie to, czego `<input>` nie ma:
+     pionową zmianę rozmiaru i interlinię akapitu. Powód uzasadnienia korekty bywa
+     dłuższy niż linijka, a przycinanie go zniechęcałoby do napisania tego, co za pół
+     roku będzie jedynym śladem decyzji. */
+  .input.area { resize:vertical; line-height:1.5; min-height:92px; }
+  .input::placeholder { color:var(--text-muted); }
+  /* Pole odrzucone przez serwer. Awansowane ze stylu inline w A00a (hasło po 401) —
+     stan błędu pola wraca na każdym formularzu panelu (2026-07-31). */
+  .input.invalid { border-color:var(--red-border); background:var(--red-muted); }
+  .hint { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .hint b { color:var(--amber); font-weight:600; }
+  /* Pole z przyciskami W JEDNEJ LINII — hasło startowe + „kopiuj" + „generuj nowe"
+     (A06a). Przyciski są RODZEŃSTWEM pola, a nie jego zawartością, bo `<input>` nie
+     ma dzieci; wysokości równa `align-items:stretch`, żeby 40 px pola i 36 px przycisku
+     nie rozjeżdżały się w pionie. */
+  .field-row { display:flex; gap:8px; align-items:stretch; }
+  .field-row .input { flex:1; }
+  /* ZAKAZ natywnego <select> (CLAUDE.md) — wybór to zawsze lista kart */
+  .opt-list { display:flex; flex-direction:column; gap:8px; }
+  /* `font`, `text-align` i `width` są tu dla wariantu, którego mockup mieć nie musiał:
+     w panelu karta wyboru jest <button>, a nie <label> z onclick — etykieta bez
+     powiązanego <input> nie jest osiągalna z klawiatury ani ogłaszana przez czytnik
+     ekranu, a wybór akcji korekty (A02b: retime vs void) zmienia liczby w rejestrze.
+     Przeglądarka narzuca <button> własną czcionkę i wyśrodkowanie, więc trzy właściwości
+     przywracają wygląd karty. W mockupie nic nie zmieniają (2026-08-01). */
+  .opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; min-height:50px; font:inherit; color:inherit; text-align:left; width:100%; }
+  .opt:hover { background:var(--surface-hover); }
+  .opt.selected { border-color:var(--green-border); background:rgba(46,204,113,0.05); box-shadow:0 0 0 3px rgba(46,204,113,0.05); }
+  /* Wybór zablokowany — ta sama para wartości, co `.btn:disabled`. Potrzebny od A02b:
+     po zapisanej korekcie formularz zostaje na ekranie jako zapis tego, co się stało,
+     ale przestaje przyjmować zmiany (2026-08-01). */
+  .opt:disabled { opacity:0.4; cursor:not-allowed; }
+  .opt-body { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .opt-name { font-size:13px; font-weight:600; }
+  .opt-desc { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
+  .opt-check { color:var(--green); opacity:0; flex-shrink:0; }
+  .opt.selected .opt-check { opacity:1; }
+  /* Wariant NAWIGACYJNY karty (`.opt` jako <a>): szewron zajmuje miejsce `.opt-check`,
+     bo mówi to samo — „to jest do kliknięcia" — tylko o ruchu w głąb, nie o zaznaczeniu.
+     Używa go A03a do wypisania sesji objętych flagą. Dopisane 2026-08-01: reguła żyła
+     w kodzie panelu od przekroju flag, a w szablonie jej nie było. */
+  .opt-go { color:var(--text-muted); flex-shrink:0; display:flex; }
+  .opt-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; }
+
+  /* ── banery (3 typy — docs/design-notes.md) ── */
+  .banner { display:flex; align-items:flex-start; gap:10px; border-radius:12px; padding:11px 14px; font-size:12.5px; line-height:1.55; border:1px solid; }
+  .banner svg { flex-shrink:0; margin-top:2px; }
+  .banner b { font-weight:700; }
+  .banner.status  { background:var(--blue-muted);  border-color:var(--blue-border);  color:var(--text-secondary); }
+  .banner.status svg, .banner.status b { color:var(--blue); }
+  .banner.warn    { background:var(--amber-muted); border-color:var(--amber-border); color:var(--text-secondary); }
+  .banner.warn svg, .banner.warn b { color:var(--amber); }
+  .banner.danger  { background:var(--red-muted);   border-color:var(--red-border);   color:var(--text-secondary); }
+  .banner.danger svg, .banner.danger b { color:var(--red); }
+  .banner.ok      { background:var(--green-muted); border-color:var(--green-border); color:var(--text-secondary); }
+  .banner.ok svg, .banner.ok b { color:var(--green); }
+
+  /* ── stany: pusty, ładowanie, brak uprawnień ── */
+  .empty { display:flex; flex-direction:column; align-items:center; gap:10px; padding:52px 20px; text-align:center; }
+  .empty-icon { width:52px; height:52px; border-radius:14px; background:var(--surface-raised); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+  .empty-title { font-family:var(--font-display); font-size:20px; letter-spacing:1.5px; color:var(--text-secondary); }
+  .empty-note { font-size:12px; color:var(--text-muted); max-width:380px; line-height:1.6; }
+  .skel { height:13px; border-radius:6px; background:linear-gradient(90deg,var(--surface-raised) 0%,var(--surface-hover) 50%,var(--surface-raised) 100%); background-size:200% 100%; animation:shimmer 1400ms linear infinite; }
+  @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+  .no-access { display:flex; flex-direction:column; align-items:center; gap:12px; padding:60px 20px; text-align:center; }
+
+  /* ── szuflada szczegółu (drawer) — otwiera wiersz tabeli bez utraty kontekstu listy ── */
+  .drawer-scrim { position:absolute; inset:0; background:rgba(0,0,0,0.55); z-index:60; }
+  .drawer { position:absolute; top:0; right:0; bottom:0; width:520px; background:var(--surface); border-left:1px solid var(--border-strong); z-index:61; display:flex; flex-direction:column; box-shadow:-24px 0 60px rgba(0,0,0,0.5); }
+  /* Szuflada SZERSZA — dla szuflady, która jest formularzem, a nie podglądem:
+     korekta administratora (A02b) niesie kartę „przed → po", pole powodu i pełny opis
+     skutków, a w 520 px każdy wiersz klucz–wartość łamie się na dwie linie. Awansowane
+     ze stylu inline w A02b (2026-08-01); modyfikator, bo szerokość jest własnością
+     TREŚCI szuflady, nie jednego ekranu. */
+  .drawer.wide { width:660px; }
+  .drawer-head { flex-shrink:0; padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+  .drawer-title { font-family:var(--font-display); font-size:22px; letter-spacing:1.5px; line-height:1; }
+  .drawer-sub { font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+  .drawer-body { flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+  .drawer-foot { flex-shrink:0; padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:9px; justify-content:flex-end; }
+  /* Notatka po lewej stronie akcji — stała własność szuflady, nie treść ekranu:
+     stopka mówi, czego to okno NIE zrobi („brak edycji · brak kasowania" w A02b).
+     Awansowane ze stylu inline (2026-08-01). */
+  .drawer-note { margin-right:auto; align-self:center; font-family:var(--font-mono); font-size:9px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
+  .x-btn { width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:var(--surface-raised); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+
+  /* ── wiersz klucz/wartość (szczegóły, audyt) ── */
+  .kv { display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:7px 0; border-bottom:1px solid var(--hairline); }
+  .kv:last-child { border-bottom:none; }
+  .kv-k { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
+  .kv-v { font-family:var(--font-mono); font-size:12.5px; font-weight:700; text-align:right; letter-spacing:0.3px; }
+  /* `.blue` dołożony 2026-08-01: A06 używał go w karcie „Rola w panelu" (liczba kont
+     z dostępem do panelu), a szablon go nie definiował — więc wartość renderowała się
+     kolorem domyślnym. Ton jest ten sam, co `.pill.blue` i `.tile-val.blue`: informacja,
+     nie ostrzeżenie. */
+  .kv-v.green { color:var(--green); } .kv-v.amber { color:var(--amber); } .kv-v.red { color:var(--red); } .kv-v.blue { color:var(--blue); }
+  .kv-v small { font-size:9.5px; font-weight:400; color:var(--text-secondary); }
+  /* Wartość SPRZED zmiany w zestawieniu „przed → po" (A02b). Wygaszona, bo czyta się
+     ją jako punkt odniesienia, a nie jako liczbę do zapamiętania — uwaga ma zostać
+     przy wartości po prawej. Awansowane ze stylu inline (2026-08-01). */
+  .kv-v .was { color:var(--text-muted); font-weight:400; }
+
+  /* ══ LISTA SZCZEGÓŁÓW — pola workowatego JSON-a W KOMÓRCE TABELI (A09) ══
+     Osobny komponent od `.kv`, a nie jego wariant, bo odpowiada na inne pytanie.
+     `.kv` jest zestawieniem liczb w karcie: wartość stoi po prawej, wytłuszczona,
+     żeby czytało się kolumnę. Tu wartością bywa zdanie („Przeloty techniczne po
+     przeglądzie 100 h — wpis w książce statku potwierdza"), a kluczy jest tyle, ile
+     akurat zapisała komenda. Prawe wyrównanie rozjechałoby akapit, a układ dwóch
+     torów pozwala czytać w dół po nazwach pól.
+     `.det-v.raw` niesie regułę, nie ozdobę: pole, którego panel nie umie nazwać,
+     zostaje POKAZANE z surowym kluczem i surową wartością — wygaszone, ale obecne.
+     Dziennik audytu, który ukrywa pole, bo go nie zna, przestaje być narzędziem
+     nadzoru. Dodane 2026-08-01 razem z ekranem A09. */
+  .det { display:flex; flex-direction:column; gap:3px; }
+  .det-row { display:grid; grid-template-columns:132px 1fr; gap:10px; align-items:baseline; }
+  .det-k { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .det-v { font-family:var(--font-mono); font-size:11px; line-height:1.55; color:var(--text-secondary); overflow-wrap:anywhere; }
+  .det-v.raw { color:var(--text-muted); }
+  .det-empty { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); }
+
+  /* ── oś zdarzeń (log dnia w panelu — czyta się jak rejestr, nie jak lista) ── */
+  .tl { display:flex; flex-direction:column; }
+  .tl-row { display:grid; grid-template-columns:74px 20px 1fr auto; align-items:start; gap:10px; padding:8px 0; border-bottom:1px solid var(--hairline); }
+  .tl-time { font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
+  .tl-rail { display:flex; justify-content:center; padding-top:4px; position:relative; }
+  .tl-dot { width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--bg); z-index:1; }
+  .tl-dot.green { background:var(--green); } .tl-dot.amber { background:var(--amber); } .tl-dot.red { background:var(--red); } .tl-dot.blue { background:var(--blue); }
+  .tl-row:not(:last-child) .tl-rail::after { content:''; position:absolute; top:8px; bottom:-14px; width:1px; background:var(--border); }
+  .tl-name { font-size:12.5px; font-weight:600; }
+  .tl-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:2px; line-height:1.5; }
+  .tl-row:last-child { border-bottom:none; }
+  .tl-row.voided .tl-name { text-decoration:line-through; color:var(--text-muted); }
+  .tl-row.voided .tl-time { color:var(--text-muted); text-decoration:line-through; }
+  /* Zamknięcie wiersza, gdy niesie ono PLAKIETKĘ I AKCJĘ naraz — czwarty tor siatki
+     przyjmuje jedno dziecko, więc bez tego kontenera przycisk spadałby do nowego
+     wiersza. Powstało dla osi karty dnia (A02a), która jest jedynym miejscem, gdzie
+     wybiera się zdarzenie do korekty administratora (A02b): oś zna uuid-y i wie, które
+     typy zdarzeń w ogóle podlegają korekcie, więc osobnego ekranu wyboru nie ma.
+     `align-items:center` trzyma plakietkę i przycisk w jednej linii mimo różnych
+     wysokości (2026-08-01). */
+  .tl-act { display:flex; align-items:center; justify-content:flex-end; gap:7px; }
+  /* Wariant KOMPAKTOWY — oś w wąskiej kolumnie bocznej (pulpit), bez plakietki
+     zamykającej wiersz. Pełna oś jest projektowana pod szeroką kolumnę karty dnia
+     i w 400 px robi się rozstrzelona, stąd stopień mniejsze rozmiary i trzy tory
+     siatki zamiast czterech. Modyfikator, nie osobny komponent: zachowanie, znaczenie
+     kolorów kropek i stan `voided` są identyczne. */
+  .tl.compact .tl-row { grid-template-columns:62px 18px 1fr; gap:9px; padding:7px 0; }
+  .tl.compact .tl-time { font-size:10.5px; letter-spacing:0.4px; }
+  .tl.compact .tl-dot { width:8px; height:8px; }
+  .tl.compact .tl-name { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.3px; }
+  .tl.compact .tl-meta { font-size:8.5px; letter-spacing:0.6px; }
+  .tl.compact .tl-row:not(:last-child) .tl-rail::after { bottom:-12px; }
+
+  /* ── siatka dwukolumnowa treści ── */
+  .cols { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
+  .cols.even { grid-template-columns:1fr 1fr; }
+  /* Szersza kolumna boczna (400 px) tam, gdzie niesie ona własną treść, a nie
+     przypis do lewej: puls systemu na pulpicie, dowód z replaya przy progach.
+     Modyfikator zamiast zmiany bazy, bo szersza prawa = węższa lewa, a w lewej
+     stoją tabele — 20 px mniej potrafi przyciąć kolumnę w `.table-wrap`. */
+  .cols.wide { grid-template-columns:1fr 400px; }
+  /* Pionowy STOS kart wewnątrz jednej kolumny siatki. `.cols` układa kolumny obok
+     siebie, ale gdy do jednej z nich wchodzi kilka kart, potrzebują własnego odstępu —
+     bez tego przylegają do siebie i czytają się jak jedna karta z liniami w środku.
+     `min-width:0` jest tu konieczne, nie ozdobne: element siatki domyślnie nie zwęża
+     się poniżej swojej treści, więc szeroka tabela w środku rozpychałaby kolumnę
+     zamiast się przewinąć. Do 2026-08-01 mockupy robiły to stylem inline. */
+  .cols-stack { display:flex; flex-direction:column; gap:16px; min-width:0; }
+
+  /* ══ FLOTA — wiersz samolotu niosący DWIE warstwy naraz ══
+     Co samolot robi (faza) i SKĄD to wiemy (świeżość). Druga warstwa jest równie
+     ważna jak pierwsza: „w locie" przy syncu sprzed 47 minut to nie jest wiedza
+     o locie, tylko ostatnia znana pozycja. Klasa stanu na wierszu (`flying`/`stale`)
+     mówi o JAKOŚCI danych, nie o fazie lotu — `stale` nosi samolot, który leci,
+     ale którego telefon milczy. §4.8 stany świeżości. */
+  .fleet { display:flex; flex-direction:column; gap:8px; }
+  .fleet-row { display:grid; grid-template-columns:96px 1fr 132px 118px 150px; align-items:center; gap:14px; padding:12px 14px; border-radius:12px; background:var(--surface-raised); border:1px solid var(--border); text-decoration:none; color:inherit; }
+  .fleet-row:hover { border-color:var(--border-strong); background:var(--surface-hover); }
+  .fleet-row.flying { border-color:var(--green-border); background:rgba(46,204,113,0.04); }
+  .fleet-row.stale  { border-color:var(--amber-border); background:rgba(243,156,18,0.04); }
+  .fleet-row.free   { opacity:0.72; }
+  .fleet-reg { font-family:var(--font-mono); font-size:15px; font-weight:700; letter-spacing:1.2px; }
+  .fleet-type { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-who { font-size:13px; font-weight:600; }
+  .fleet-since { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; }
+  .fleet-nums { font-family:var(--font-mono); font-size:11.5px; text-align:right; font-variant-numeric:tabular-nums; line-height:1.7; }
+  .fleet-nums .k { color:var(--text-muted); font-size:8.5px; letter-spacing:1.2px; }
+  .fleet-state { display:flex; justify-content:flex-end; }
+
+  /* Świeżość — jedyne miejsce, w którym panel przyznaje się do NIEWIEDZY.
+     Wiek podajemy względnie („3 min temu", „2 dni temu"), nie znacznikiem czasu:
+     administrator ocenia, czy dane są aktualne, a nie o której dotarły. */
+  .fresh { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .fresh-val { font-family:var(--font-mono); font-size:10px; letter-spacing:0.8px; color:var(--green); }
+  .fresh-val.amber { color:var(--amber); }
+  .fresh-val.dim { color:var(--text-muted); }
+  .fresh-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.8px; color:var(--text-muted); text-align:right; }
+
+  /* ══ KOLEJKA „WYMAGA UWAGI" — jedyne miejsce mówiące, co ZROBIĆ ══
+     Reszta panelu opisuje stan; ta lista stawia zadania. Dlatego wiersz jest linkiem
+     w głąb, a wiek pozycji ma własną kolumnę: flaga leżąca trzeci dzień to inny
+     problem niż ta sprzed godziny. */
+  .todo { display:flex; flex-direction:column; }
+  .todo-row { display:flex; align-items:flex-start; gap:11px; padding:11px 0; border-bottom:1px solid var(--hairline); text-decoration:none; color:inherit; }
+  .todo-row:last-child { border-bottom:none; }
+  .todo-row:hover .todo-name { color:var(--green); }
+  .todo-mark { width:28px; height:28px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid; }
+  .todo-mark.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .todo-mark.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .todo-mark.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .todo-body { flex:1; min-width:0; }
+  .todo-name { font-size:12.5px; font-weight:600; }
+  .todo-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .todo-age { font-family:var(--font-mono); font-size:9.5px; font-weight:700; color:var(--text-secondary); flex-shrink:0; text-align:right; }
+  .todo-age.old { color:var(--amber); }
+
+  /* Lista WARUNKÓW wewnątrz banera („kiedy ta sama pustka znaczy »cisza podejrzana«",
+     A01a). Mono i bez punktorów, bo to nie jest proza, tylko wyliczenie faktów, które
+     panel sprawdził. Dołożona 2026-08-01: mockup robił to stylem inline z `<br />`,
+     więc lista nie miała nazwy, a przez to nie dało się jej powtórzyć ani wygrepować. */
+  .reason-list { display:flex; flex-direction:column; gap:4px; padding-top:6px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; line-height:1.7; color:var(--text-secondary); list-style:none; }
+  .reason-list li::before { content:'· '; color:var(--text-muted); }
+
+  /* ══ NAPŁYW ZDARZEŃ — puls systemu ══
+     Słupek `zero` jest osobną klasą, a nie słupkiem o wysokości zero, bo cisza
+     w rejestrze wymaga podpisu: nie znaczy „nikt nie latał", tylko „nic nie dotarło". */
+  .spark { display:flex; align-items:flex-end; gap:3px; height:56px; }
+  .spark i { flex:1; background:var(--green-muted); border:1px solid var(--green-border); border-radius:3px 3px 0 0; min-height:3px; }
+  .spark i.now { background:var(--green); border-color:var(--green); }
+  .spark i.zero { background:var(--surface-raised); border-color:var(--border); }
+  .spark-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); margin-top:6px; }
+
+  /* ══ PRÓG — wiersz w dwóch odmianach: przybity w kodzie vs. dana serwera ══
+     Trzecia kolumna (`thr-src`) niesie różnicę, która jest tu najważniejsza: czy
+     wartość da się w ogóle zmienić z panelu. Progi detekcji liczą się na telefonie
+     offline, więc są tylko do odczytu — pole `thr-input` pojawia się wyłącznie tam,
+     gdzie zmiana ma skutek. */
+  .thr { display:grid; grid-template-columns:1fr 128px 96px; align-items:center; gap:14px; padding:11px 0; border-bottom:1px solid var(--hairline); }
+  .thr:last-of-type { border-bottom:none; }
+  .thr-name { font-size:12.5px; font-weight:600; }
+  .thr-name code { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); font-weight:400; }
+  .thr-why { font-size:11px; color:var(--text-secondary); line-height:1.5; margin-top:3px; }
+  .thr-val { font-family:var(--font-mono); font-size:15px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .thr-val small { font-size:9.5px; font-weight:400; color:var(--text-secondary); letter-spacing:0.5px; }
+  .thr-src { display:flex; justify-content:flex-end; }
+  .thr-input { width:100%; min-height:34px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); padding:6px 10px; color:var(--text-primary); font-family:var(--font-mono); font-size:14px; font-weight:700; text-align:right; outline:none; }
+  .thr-input:focus { border-color:var(--green-border); }
+  .thr-input.changed { border-color:var(--amber-border); color:var(--amber); background:rgba(243,156,18,0.06); }
+
+  /* ══ DOWÓD ZMIANY — „przed → po" na danych historycznych ══
+     Amber obramowanie nie jest ostrzeżeniem o błędzie, tylko sygnałem, że to blok
+     WARUNKOWY: bez wypełnionego dowodu zapis nie ma prawa dojść do skutku. */
+  .proof { border:1px solid var(--amber-border); background:rgba(243,156,18,0.05); border-radius:12px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
+  .proof-head { display:flex; align-items:center; gap:9px; font-family:var(--font-mono); font-size:9px; letter-spacing:1.8px; text-transform:uppercase; color:var(--amber); }
+  .diff { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:14px; }
+  .diff-side { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:5px; }
+  .diff-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .diff-v { font-family:var(--font-mono); font-size:20px; font-weight:700; line-height:1; }
+  .diff-n { font-size:11px; color:var(--text-secondary); line-height:1.5; }
+  .diff-arrow { color:var(--text-muted); font-family:var(--font-mono); font-size:16px; }
+
+  /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
+  .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
+
+  /* ── sekcja demonstracyjna szablonu (TYLKO w tym pliku) ── */
+  .demo-note { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); padding:2px 0; }
+
+  /* ══ ŚLAD LOTU — komponenty mapy (dokładane też do SZABLON.html) ══════════ */
+
+  /* Płótno mapy. Wysokość stała, bo ślad ma być czytelny bez przewijania —
+     panel ogląda się na biurku, nie w kokpicie. */
+  .map-canvas { position:relative; height:430px; background:#0F1216; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .map-canvas svg { display:block; width:100%; height:100%; }
+  .map-attrib { position:absolute; right:8px; bottom:7px; font-family:var(--font-mono); font-size:8px; color:var(--text-muted); background:rgba(13,13,13,0.72); padding:3px 7px; border-radius:5px; letter-spacing:0.3px; }
+  .map-scale { position:absolute; left:12px; bottom:9px; display:flex; flex-direction:column; gap:3px; }
+  .map-scale-bar { width:88px; height:5px; border:1px solid var(--text-secondary); border-top:none; }
+  .map-scale-label { font-family:var(--font-mono); font-size:8px; color:var(--text-secondary); letter-spacing:1px; }
+  .map-legend { position:absolute; left:12px; top:12px; display:flex; flex-direction:column; gap:6px; background:rgba(13,13,13,0.78); border:1px solid var(--border); border-radius:9px; padding:9px 11px; }
+  .map-legend-title { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .legend-row { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:9px; color:var(--text-secondary); letter-spacing:0.3px; }
+  .legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .legend-dot.line { width:14px; height:2.5px; border-radius:2px; }
+
+  /* Pasek wyboru lotu nad mapą — przeglądanie dnia lot po locie bez wracania do tabeli. */
+  .flight-picker { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .flight-picker-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-right:4px; }
+  .fp-item { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:5px 10px; text-decoration:none; cursor:pointer; }
+  .fp-item:hover { border-color:var(--border-strong); color:var(--text-primary); }
+  .fp-item.active { color:var(--green); border-color:var(--green-border); background:var(--green-muted); }
+  .fp-item.none { color:var(--text-muted); border-style:dashed; cursor:not-allowed; }
+
+  /* Profil pionowy — ten sam wykres co w aplikacji, na szerokości panelu. */
+  .profile-chart { position:relative; height:220px; padding:14px 16px 6px; }
+  .profile-chart svg { display:block; width:100%; height:100%; overflow:visible; }
+  .axis-label { font-family:var(--font-mono); font-size:8px; fill:var(--text-muted); letter-spacing:0.5px; }
+  .grid-line { stroke:var(--border); stroke-width:1; }
+  .grid-line.dashed { stroke-dasharray:2 4; }
+  .profile-foot { display:flex; gap:26px; padding:8px 16px 14px; font-family:var(--font-mono); font-size:9px; color:var(--text-muted); letter-spacing:1px; }
+  .profile-foot b { color:var(--text-secondary); font-weight:500; }
+
+  /* Wiersz odrzucony przez bramkę jakości — czytelny, ale wyraźnie drugorzędny. */
+  tr.rejected td { color:var(--text-muted); }
+  td.pos { font-family:var(--font-mono); font-size:10.5px; letter-spacing:-0.2px; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">A02C — ŚLAD LOTU</span>
+  <span class="slug">panel / dni lotne / dzień / ślad</span>
+  <span class="canvas-meta"><span class="pulse"></span>UZ AERO</span>
+</header>
+
+<aside class="variants-panel">
+  <div class="vp-title">Skąd się tu wchodzi</div>
+  <a class="vp-item" href="A02a-dzien.html">
+    <span class="vp-badge">A02A</span>
+    <span class="vp-body">
+      <span class="vp-name">Karta dnia — tabela lotów</span>
+      <span class="vp-when">Wejście właściwe: przycisk „Ślad" w wierszu lotu. Ekran śladu zastępuje kartę dnia (pełna strona), bo mapa i profil nie zmieszczą się w szufladzie nad tabelą.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="A02c-slad.html">
+    <span class="vp-badge">A02C</span>
+    <span class="vp-body">
+      <span class="vp-name">Ślad lotu — mapa, profil, log</span>
+      <span class="vp-when">Ten ekran. Trasa na kafelkach OSM, profil pionowy i log przeliczonych punktów ze stanem bramki jakości. Loty dnia przełącza się paskiem nad mapą — bez wracania do tabeli.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="../14-slad.html">
+    <span class="vp-badge amber">13</span>
+    <span class="vp-body">
+      <span class="vp-name">Ten sam ślad u pilota</span>
+      <span class="vp-when">Aplikacja pokazuje własny lot z zapisu na telefonie (działa offline, retencja 14 dni). Panel czyta ślad przysłany na serwer i widzi wszystkie samoloty.</span>
+    </span>
+  </a>
+</aside>
+
+<main class="browser" role="region" aria-label="Ślad lotu">
+
+  <div class="chrome">
+    <span class="chrome-dots"><i></i><i></i><i></i></span>
+    <span class="chrome-url">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <b>admin.uzaero.pl</b>/#/dni/8f3c1a90/slad/3
+    </span>
+  </div>
+
+  <div class="shell">
+
+    <nav class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+        </span>
+        <span>
+          <div class="brand-name">UZ AERO</div>
+          <div class="brand-role">Panel administracyjny</div>
+        </span>
+      </div>
+
+      <div class="side-nav">
+        <div class="nav-group">Operacje</div>
+        <a class="nav-item" href="A01-pulpit.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Pulpit
+        </a>
+        <a class="nav-item active" href="A02-dni.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+          Dni lotne
+        </a>
+        <a class="nav-item" href="A03-flagi.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+          Flagi
+          <span class="nav-count amber">7</span>
+        </a>
+
+        <div class="nav-group">Rejestr</div>
+        <a class="nav-item" href="A04-zdarzenia.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Zdarzenia
+        </a>
+        <a class="nav-item" href="A05-eksporty.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Eksporty
+        </a>
+        <a class="nav-item" href="A09-audyt.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+          Audyt
+        </a>
+
+        <div class="nav-group">Raporty</div>
+        <a class="nav-item" href="A10-statystyki.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Statystyki
+        </a>
+
+        <div class="nav-group">Konfiguracja</div>
+        <a class="nav-item" href="A06-piloci.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Piloci
+        </a>
+        <a class="nav-item" href="A07-flota.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+          Flota
+        </a>
+        <a class="nav-item locked" href="A08-progi.html" title="Wymaga roli: administrator">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Progi i ustawienia
+        </a>
+        <a class="nav-item" href="A11-konserwacja.html">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9l-3.8 3.8z"/></svg>
+          Konserwacja
+        </a>
+      </div>
+
+      <div class="side-foot">
+        <div class="who">
+          <span class="who-avatar">TM</span>
+          <span class="who-body">
+            <span class="who-name">Tomasz Małkiewicz</span>
+            <span class="who-role">Administrator</span>
+          </span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="crumbs">
+          Panel <span>/</span> <a class="cell-link" href="A02-dni.html">Dni lotne</a> <span>/</span>
+          <a class="cell-link" href="A02a-dzien.html">30 JUL · SP-KLM</a> <span>/</span> <b>Ślad lotu 3</b>
+        </div>
+        <div class="topbar-right">
+          <span class="utc-clock"><i>UTC</i> <b>14:22:07</b> · 31 JUL 2026</span>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">ŚLAD LOTU 3</h1>
+            <p class="page-sub">
+              SP-KLM · 30 JUL 2026 · PIC Tomasz Małkiewicz · 08:02:30 → 08:26:12 UTC.
+              Trasa odtworzona z fixów przysłanych przez telefon, po bramce jakości.
+              Zapis jest materiałem badawczym, nie rejestrem — czasy w rejestrze zdarzeń
+              są źródłem prawdy niezależnie od tego, co widać na mapie.
+            </p>
+          </div>
+          <div class="page-actions">
+            <a class="btn ghost" href="A04-zdarzenia.html">Zdarzenia lotu</a>
+            <a class="btn ghost" href="A02a-dzien.html">Wróć do dnia</a>
+          </div>
+        </div>
+
+        <!-- ── kafle ─────────────────────────────────────────────────────── -->
+        <div class="tiles">
+          <div class="tile">
+            <span class="tile-key">Czas lotu</span>
+            <span class="tile-val green">00:23:42</span>
+            <span class="tile-note">takeoff 08:02:30 → landing 08:26:12 UTC</span>
+          </div>
+          <div class="tile">
+            <span class="tile-key">Dystans po ziemi</span>
+            <span class="tile-val">19.7<small> NM</small></span>
+            <span class="tile-note">Suma odcinków między punktami po bramce.</span>
+          </div>
+          <div class="tile">
+            <span class="tile-key">Maksymalna wysokość</span>
+            <span class="tile-val">12 640<small> ft</small></span>
+            <span class="tile-note">Wysokość GPS, nie ciśnieniowa — zrzut 08:19:44.</span>
+          </div>
+          <div class="tile">
+            <span class="tile-key">Punkty śladu</span>
+            <span class="tile-val">1 388<small> / 1 462</small></span>
+            <span class="tile-note">74 odrzucone przez bramkę jakości.</span>
+          </div>
+        </div>
+
+        <!-- ── wybór lotu + mapa ─────────────────────────────────────────── -->
+        <div class="card">
+          <div class="card-title">
+            Trasa
+            <span class="spacer"></span>
+            <span class="chip">kafelki OpenStreetMap</span>
+          </div>
+
+          <div class="flight-picker" style="margin-bottom:12px;">
+            <span class="flight-picker-label">Loty dnia</span>
+            <a class="fp-item" href="#">1</a>
+            <a class="fp-item" href="#">2</a>
+            <a class="fp-item active" href="#">3</a>
+            <a class="fp-item" href="#">4</a>
+            <a class="fp-item" href="#">5</a>
+            <a class="fp-item" href="#">6</a>
+            <a class="fp-item" href="#">7</a>
+            <a class="fp-item" href="#">8</a>
+            <a class="fp-item none" href="#" title="Lot 9 wpisany ręcznie — brak zapisu GPS">9</a>
+          </div>
+
+          <div class="map-canvas">
+            <svg viewBox="0 0 1000 430" preserveAspectRatio="xMidYMid slice">
+              <!-- Tło: kafelki OSM w stylu ciemnym. W implementacji warstwa z serwera kafelków. -->
+              <rect x="0" y="0" width="1000" height="430" fill="#12161B"/>
+              <rect x="0" y="0" width="380" height="170" fill="#141A16"/>
+              <rect x="560" y="40" width="440" height="150" fill="#141A16"/>
+              <rect x="80" y="260" width="300" height="170" fill="#151812"/>
+              <rect x="640" y="280" width="360" height="150" fill="#141A16"/>
+              <circle cx="220" cy="90" r="70" fill="#16211A"/>
+              <circle cx="810" cy="350" r="58" fill="#16211A"/>
+              <circle cx="480" cy="60" r="42" fill="#16211A"/>
+
+              <!-- rzeka -->
+              <path d="M0 232 C160 222, 250 262, 400 248 S680 206, 1000 236" stroke="#1B2C3A" stroke-width="11" fill="none" stroke-linecap="round"/>
+              <!-- drogi -->
+              <path d="M0 300 L1000 278" stroke="#232A31" stroke-width="5" fill="none"/>
+              <path d="M330 0 L378 430" stroke="#232A31" stroke-width="4" fill="none"/>
+              <path d="M700 0 L664 430" stroke="#1E242A" stroke-width="3" fill="none"/>
+              <path d="M0 132 L1000 110" stroke="#1E242A" stroke-width="3" fill="none"/>
+              <path d="M0 380 L1000 366" stroke="#1E242A" stroke-width="2.5" fill="none"/>
+
+              <!-- lotnisko EPZG: pas + oznaczenie -->
+              <g transform="rotate(-24 430 306)">
+                <rect x="330" y="300" width="210" height="13" fill="#2A3038" rx="2"/>
+                <rect x="330" y="305" width="210" height="2" fill="#3A424C"/>
+              </g>
+              <text x="392" y="352" class="axis-label" fill="#5A646E" font-size="11">EPZG · Zielona Góra</text>
+
+              <!-- ŚLAD: start, spirala wznoszenia nad lotniskiem, zrzut, zejście, lądowanie -->
+              <path d="M416 312
+                       C470 288, 520 268, 556 236
+                       C604 194, 618 132, 576 96
+                       C534 60, 452 62, 410 98
+                       C364 138, 372 206, 420 234
+                       C472 264, 552 244, 586 196
+                       C620 148, 606 84, 558 54
+                       C506 22, 424 30, 384 74
+                       C346 116, 356 180, 400 210"
+                    fill="none" stroke="var(--green)" stroke-width="3.4"
+                    stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+              <!-- zejście po zrzucie -->
+              <path d="M400 210 C438 244, 414 282, 428 306"
+                    fill="none" stroke="var(--green)" stroke-width="3.4"
+                    stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+
+              <!-- punkt zrzutu -->
+              <circle cx="400" cy="210" r="9" fill="none" stroke="var(--blue)" stroke-width="2.4"/>
+              <circle cx="400" cy="210" r="3.4" fill="var(--blue)"/>
+              <text x="414" y="206" class="axis-label" fill="#3498DB" font-size="11">ZRZUT · 08:19:44 · 12 640 ft · 6 skoczków</text>
+
+              <!-- T/O -->
+              <circle cx="416" cy="312" r="10" fill="var(--green)"/>
+              <circle cx="416" cy="312" r="17" fill="none" stroke="var(--green)" stroke-width="1.6" opacity="0.4"/>
+              <text x="300" y="338" class="axis-label" fill="#2ECC71" font-size="11">T/O 08:02:30</text>
+
+              <!-- LDG -->
+              <circle cx="428" cy="306" r="9" fill="var(--red)"/>
+              <text x="440" y="330" class="axis-label" fill="#E74C3C" font-size="11">LDG 08:26:12</text>
+
+              <!-- odrzucony fix (spoofing/multipath) — pokazujemy, bo panel służy diagnostyce -->
+              <circle cx="700" cy="150" r="5" fill="none" stroke="var(--amber)" stroke-width="2" stroke-dasharray="2 2"/>
+              <text x="712" y="146" class="axis-label" fill="#F39C12" font-size="10">odrzucony fix 08:11:07 · skok 3.2 km</text>
+            </svg>
+
+            <div class="map-legend">
+              <div class="map-legend-title">Legenda</div>
+              <div class="legend-row"><span class="legend-dot line" style="background:var(--green);"></span>Wznoszenie i przelot</div>
+              <div class="legend-row"><span class="legend-dot line" style="background:var(--green);opacity:0.5;"></span>Zejście po zrzucie</div>
+              <div class="legend-row"><span class="legend-dot" style="background:var(--blue);"></span>Zrzut skoczków</div>
+              <div class="legend-row"><span class="legend-dot" style="background:var(--red);"></span>Lądowanie</div>
+              <div class="legend-row"><span class="legend-dot" style="border:1.5px dashed var(--amber);background:none;"></span>Fix odrzucony</div>
+            </div>
+
+            <div class="map-scale">
+              <span class="map-scale-label">2 km</span>
+              <span class="map-scale-bar"></span>
+            </div>
+            <div class="map-attrib">© OpenStreetMap contributors</div>
+          </div>
+        </div>
+
+        <!-- ── profil pionowy ────────────────────────────────────────────── -->
+        <div class="card">
+          <div class="card-title">
+            Profil pionowy
+            <span class="spacer"></span>
+            <span class="chip">wysokość GPS · ft · oś czasu UTC</span>
+          </div>
+          <div class="profile-chart">
+            <svg viewBox="0 0 940 190" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="alt-fill-panel" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2ECC71" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#2ECC71" stop-opacity="0.02"/>
+                </linearGradient>
+              </defs>
+
+              <line x1="52" y1="10"  x2="936" y2="10"  class="grid-line dashed"/>
+              <line x1="52" y1="48"  x2="936" y2="48"  class="grid-line dashed"/>
+              <line x1="52" y1="86"  x2="936" y2="86"  class="grid-line dashed"/>
+              <line x1="52" y1="124" x2="936" y2="124" class="grid-line dashed"/>
+              <line x1="52" y1="158" x2="936" y2="158" class="grid-line"/>
+              <text x="0" y="13"  class="axis-label">13 000</text>
+              <text x="0" y="51"  class="axis-label">10 000</text>
+              <text x="0" y="89"  class="axis-label">6 500</text>
+              <text x="0" y="127" class="axis-label">3 000</text>
+              <text x="0" y="161" class="axis-label">400</text>
+
+              <path d="M60 158 C120 152, 180 136, 250 110 C330 80, 420 42, 520 20 C560 12, 590 11, 616 14 L616 158 Z" fill="url(#alt-fill-panel)"/>
+              <path d="M616 14 C660 22, 700 52, 760 92 C820 132, 880 152, 920 158 L616 158 Z" fill="url(#alt-fill-panel)" opacity="0.55"/>
+
+              <path d="M60 158 C120 152, 180 136, 250 110 C330 80, 420 42, 520 20 C560 12, 590 11, 616 14"
+                    fill="none" stroke="var(--green)" stroke-width="2.6" stroke-linecap="round"/>
+              <path d="M616 14 C660 22, 700 52, 760 92 C820 132, 880 152, 920 158"
+                    fill="none" stroke="var(--green)" stroke-width="2.6" stroke-linecap="round" opacity="0.55"/>
+
+              <line x1="616" y1="6" x2="616" y2="168" stroke="#3498DB" stroke-width="1.2" stroke-dasharray="4 4"/>
+              <circle cx="616" cy="14" r="5" fill="var(--blue)"/>
+              <text x="624" y="30" class="axis-label" fill="#3498DB" font-size="9.5">zrzut 08:19:44 · 12 640 ft</text>
+
+              <circle cx="60" cy="158" r="5" fill="var(--green)"/>
+              <circle cx="920" cy="158" r="5" fill="var(--red)"/>
+
+              <line x1="52" y1="168" x2="936" y2="168" class="grid-line"/>
+              <text x="52"  y="184" class="axis-label">08:02</text>
+              <text x="270" y="184" class="axis-label">08:08</text>
+              <text x="490" y="184" class="axis-label">08:14</text>
+              <text x="700" y="184" class="axis-label">08:20</text>
+              <text x="895" y="184" class="axis-label">08:26</text>
+            </svg>
+          </div>
+          <div class="profile-foot">
+            <span>Wznoszenie średnio <b>710 ft/min</b></span>
+            <span>Zejście średnio <b>−1 340 ft/min</b></span>
+            <span>Czas do wysokości zrzutu <b>17 min 14 s</b></span>
+            <span>Wysokość z GPS — <b>nie</b> ciśnieniowa, bez korekty QNH</span>
+          </div>
+        </div>
+
+        <!-- ── log punktów ───────────────────────────────────────────────── -->
+        <div class="card">
+          <div class="card-title">
+            Log przeliczonych punktów
+            <span class="spacer"></span>
+            <span class="chip">próbka co 30 s · pełny zapis 1 462 wierszy</span>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="num">Czas UTC</th>
+                  <th class="num">Szerokość</th>
+                  <th class="num">Długość</th>
+                  <th class="num">GS</th>
+                  <th class="num">Wysokość</th>
+                  <th class="num">Kurs</th>
+                  <th class="num">Dokładność</th>
+                  <th>Stan</th>
+                  <th>Uwagi</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="num">08:02:30</td><td class="num pos">52.13871</td><td class="num pos">15.79862</td>
+                  <td class="num">38 <small>kt</small></td><td class="num">394</td><td class="num">238°</td><td class="num">4 m</td>
+                  <td><span class="pill green">takeoff</span></td>
+                  <td class="cell-sub">Zdarzenie <code>takeoff</code> · metoda auto · retro-datowane o 6 s</td>
+                </tr>
+                <tr>
+                  <td class="num">08:03:00</td><td class="num pos">52.14210</td><td class="num pos">15.80541</td>
+                  <td class="num">71 <small>kt</small></td><td class="num">1 180</td><td class="num">241°</td><td class="num">4 m</td>
+                  <td><span class="pill dim">ok</span></td><td class="dim">—</td>
+                </tr>
+                <tr>
+                  <td class="num">08:03:30</td><td class="num pos">52.14887</td><td class="num pos">15.81302</td>
+                  <td class="num">78 <small>kt</small></td><td class="num">1 940</td><td class="num">252°</td><td class="num">5 m</td>
+                  <td><span class="pill dim">ok</span></td><td class="dim">—</td>
+                </tr>
+                <tr class="rejected">
+                  <td class="num">08:04:00</td><td class="num pos">52.15022</td><td class="num pos">15.81664</td>
+                  <td class="num">77 <small>kt</small></td><td class="num">2 610</td><td class="num">264°</td><td class="num">68 m</td>
+                  <td><span class="pill amber">odrzucony</span></td>
+                  <td class="cell-sub">Dokładność gorsza niż próg 50 m — spirala wznoszenia, antena pod skrzydłem</td>
+                </tr>
+                <tr class="rejected">
+                  <td class="num">08:11:07</td><td class="num pos">52.19140</td><td class="num pos">15.86930</td>
+                  <td class="num">81 <small>kt</small></td><td class="num">8 020</td><td class="num">118°</td><td class="num">9 m</td>
+                  <td><span class="pill red">odrzucony</span></td>
+                  <td class="cell-sub">Skok pozycji 3.2 km w 1 s — test plauzybilności, multipath albo spoofing</td>
+                </tr>
+                <tr>
+                  <td class="num">08:19:44</td><td class="num pos">52.13612</td><td class="num pos">15.79021</td>
+                  <td class="num">74 <small>kt</small></td><td class="num">12 640</td><td class="num">187°</td><td class="num">6 m</td>
+                  <td><span class="pill blue">zrzut</span></td>
+                  <td class="cell-sub">Zdarzenie <code>drop</code> · 6 skoczków (4 tandem, 2 AFF)</td>
+                </tr>
+                <tr>
+                  <td class="num">08:20:14</td><td class="num pos">52.13381</td><td class="num pos">15.78712</td>
+                  <td class="num">96 <small>kt</small></td><td class="num">11 720</td><td class="num">203°</td><td class="num">6 m</td>
+                  <td><span class="pill dim">ok</span></td><td class="dim">—</td>
+                </tr>
+                <tr>
+                  <td class="num">08:26:12</td><td class="num pos">52.13902</td><td class="num pos">15.79941</td>
+                  <td class="num">31 <small>kt</small></td><td class="num">402</td><td class="num">061°</td><td class="num">4 m</td>
+                  <td><span class="pill red">landing</span></td>
+                  <td class="cell-sub">Zdarzenie <code>landing</code> · metoda auto · weto zakrętu nie zadziałało</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="list-foot">
+            Pokazano 8 z 1 462 wierszy (próbka co 30 s). <b>74 punkty odrzucone</b> przez bramkę
+            jakości nie wchodzą do dystansu ani do profilu, ale zostają w zapisie — to materiał
+            do strojenia progów (<code>server/scripts/replay.ts</code>).
+          </div>
+        </div>
+
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <div>
+            <b>Ślad nie jest rejestrem.</b> Zapis GPS przychodzi z telefonu osobnym,
+            niskopriorytetowym torem i może mieć dziury — brak fragmentu trasy nie znaczy,
+            że lot się nie odbył. Czasy rozliczeniowe pochodzą wyłącznie z rejestru zdarzeń;
+            mapa służy diagnostyce detekcji i rozmowie z pilotem.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index panelu</a>
+  <span>·</span>
+  <a href="A02-dni.html">← A02 Dni lotne</a>
+  <a href="A02a-dzien.html">A02A Karta dnia</a>
+  <span>·</span>
+  <a href="A02c-slad.html" class="active">A02C Ślad lotu</a>
+  <span>·</span>
+  <a href="A04-zdarzenia.html">A04 Zdarzenia →</a>
+</nav>
+
+</body>
+</html>

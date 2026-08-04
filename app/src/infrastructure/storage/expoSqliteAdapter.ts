@@ -320,6 +320,23 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     return rows.map(toTraceEntry);
   }
 
+  async readTraceFixes(
+    sessionUuid: string,
+    fromTime: EpochMillis,
+    toTime: EpochMillis,
+  ): Promise<TraceEntry[]> {
+    // `kind = 'fix'` odsiewamy w SQL, nie w pamięci: agregaty czujników to połowa
+    // wierszy śladu i nie mają pozycji, więc przenoszenie ich tylko po to, żeby je
+    // odrzucić, byłoby najdroższą częścią tego zapytania.
+    const rows = await this.getDb().getAllAsync<TraceRow>(
+      `SELECT * FROM gps_trace
+        WHERE session_uuid = ? AND kind = 'fix' AND time >= ? AND time <= ?
+        ORDER BY time`,
+      [sessionUuid, fromTime, toTime],
+    );
+    return rows.map(toTraceEntry);
+  }
+
   async markTraceUploaded(ids: number[], uploadedAt: EpochMillis): Promise<void> {
     await this.getDb().withTransactionAsync(async () => {
       const db = this.getDb();

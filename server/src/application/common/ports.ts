@@ -396,6 +396,27 @@ export interface TraceSinkPort {
   append(pilotId: string, entries: Record<string, unknown>[]): Promise<void>;
 }
 
+/**
+ * ODCZYT śladu jednej sesji — do mapy lotu w panelu (`A02c-slad.html`).
+ *
+ * Osobny port od `TraceSinkPort`, mimo wspólnego magazynu, bo to dwie różne
+ * odpowiedzialności o różnych wymaganiach: zapis jest gorący (kilkanaście telefonów
+ * dopisuje w kółko) i musi być tani, odczyt jest rzadki (administrator otwiera mapę)
+ * i może sobie pozwolić na przeczytanie całego pliku sesji. Sklejenie ich w jeden port
+ * kazałoby adapterowi zapisu deklarować metodę, której zapis nigdy nie użyje.
+ *
+ * Zwracamy SUROWE wiersze — filtrowanie po oknie lotu i bramkę jakości robi domena
+ * (`buildFlightTrack`), tym samym kodem, którym liczy je telefon.
+ */
+export interface TraceSourcePort {
+  /**
+   * Wpisy śladu jednej sesji, w kolejności zapisu. Pusta tablica, gdy sesja nie ma
+   * zapisu — brak pliku NIE jest błędem: lot mógł być wpisany ręcznie, telefon mógł
+   * nie zdążyć wysłać, a ślad i tak nigdy nie był rejestrem (wariant 14B).
+   */
+  read(sessionUuid: string): Promise<Record<string, unknown>[]>;
+}
+
 // ── zegar ───────────────────────────────────────────────────────────────────────
 
 /** Czas jako port — testy okna refresh tokenów sterują nim jawnie. */

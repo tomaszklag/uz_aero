@@ -27,6 +27,7 @@ import { AdminFleetQueries } from './application/admin/queries/fleet.ts';
 import { AdminMaintenanceQueries } from './application/admin/queries/maintenance.ts';
 import { AdminMeQueries } from './application/admin/queries/me.ts';
 import { AdminPilotQueries } from './application/admin/queries/pilots.ts';
+import { AdminFlightTrackQueries } from './application/admin/queries/flightTrack.ts';
 import { AdminSessionQueries } from './application/admin/queries/sessions.ts';
 import { AdminStatsQueries } from './application/admin/queries/stats.ts';
 import { AuditedWrite } from './application/admin/auditedWrite.ts';
@@ -66,6 +67,7 @@ import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts
 import { PgReferenceRepo } from './infrastructure/pg/mobile/referenceRepo.ts';
 import { PgSheets } from './infrastructure/pg/common/sheetsRepo.ts';
 import { FsTraceSink } from './infrastructure/traces/fsTraceSink.ts';
+import { FsTraceSource } from './infrastructure/traces/fsTraceSource.ts';
 import { buildServer } from './http/server.ts';
 
 const env = z
@@ -155,6 +157,14 @@ const app = buildServer({
     events,
     adminFlagsRepo,
     new PgAdminEventsRepo(),
+  ),
+  // Ślad lotu (A02c): okno lotu z rejestru, geometria z plików NDJSON. Ten sam katalog,
+  // do którego pisze `FsTraceSink` — dwa porty nad jednym magazynem, bo zapis jest
+  // gorący i tani, a odczyt rzadki i może przeczytać cały plik sesji.
+  adminFlightTrackQueries: new AdminFlightTrackQueries(
+    db,
+    events,
+    new FsTraceSource(env.TRACES_DIR),
   ),
   adminFlagQueries: new AdminFlagQueries(db, adminFlagsRepo),
   // Sesja przeglądarkowa czyta konto tym samym adapterem co logowanie telefonu —

@@ -38,6 +38,16 @@ export interface DataCell {
   chip?: Tone;
   /** Przygaszona kolumna porządkowa („#"). */
   muted?: boolean;
+  /**
+   * Zamienia komórkę w cel dotykowy (mockup 14: numer lotu otwiera ślad).
+   *
+   * Świadomie na KOMÓRCE, a nie na całym wierszu: wiersz lotu ma już jeden cel —
+   * ołówek korekty — i drugi, obejmujący całą szerokość, przechwytywałby dotknięcia
+   * przeznaczone dla niego. Podkreślenie pod tekstem mówi, że tu się klika.
+   */
+  onPress?: () => void;
+  /** Etykieta dostępności celu z `onPress` („ślad lotu 3"). */
+  pressLabel?: string;
 }
 
 export interface DataTableRow {
@@ -133,6 +143,19 @@ export function DataTable({
                       {cell.text}
                     </AppText>
                   </View>
+                ) : cell.onPress != null ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={cell.pressLabel ?? cell.text}
+                    onPress={cell.onPress}
+                    // Cel dotykowy 44 px także wtedy, gdy tekstem jest jedna cyfra.
+                    style={({ pressed }) => [styles.pressCell, { opacity: pressed ? 0.6 : 1 }]}
+                  >
+                    <AppText variant="mono" numberOfLines={1} style={styles.value}>
+                      {cell.text}
+                    </AppText>
+                    <View style={[styles.pressUnderline, { backgroundColor: theme.colors.green }]} />
+                  </Pressable>
                 ) : (
                   <AppText
                     variant="mono"
@@ -203,6 +226,10 @@ const styles = StyleSheet.create({
   headLabel: { fontSize: 8, lineHeight: 12, letterSpacing: 1.5, textTransform: 'uppercase' },
   bodyCell: { paddingHorizontal: 4, paddingVertical: 6, minHeight: 44, justifyContent: 'center' },
   value: { fontSize: 11, lineHeight: 15, letterSpacing: 0.5 },
+  // Cel dotykowy komórki-przycisku (numer lotu → ślad): pełna wysokość wiersza,
+  // żeby dotknięcie nie wymagało trafiania w jedną cyfrę.
+  pressCell: { minHeight: 44, justifyContent: 'center', alignItems: 'flex-start', gap: 2 },
+  pressUnderline: { width: 12, height: 1.5, borderRadius: 1, opacity: 0.5 },
   chip: { alignSelf: 'flex-start', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4 },
   chipLabel: { fontSize: 8, lineHeight: 12, letterSpacing: 1 },
   correctSlot: {

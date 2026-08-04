@@ -36,6 +36,14 @@ export interface FlightRow {
   cycle: string;
   /** Lot jeszcze trwa — czas lotu nie wchodzi do sumy dnia. */
   open: boolean;
+  /**
+   * Adres śladu tego lotu (`A02c`). Wypełniony ZAWSZE, także dla wpisu ręcznego —
+   * ekran śladu tłumaczy wtedy, dlaczego trasy nie ma, a wyszarzony przycisk kazałby
+   * administratorowi zgadywać, czy to brak danych, czy niedziałająca funkcja.
+   * `null` wyłącznie wtedy, gdy projekcja nie zna uuid-a sesji (stan niemożliwy dla
+   * dnia, który ma loty — ale typ tego nie gwarantuje).
+   */
+  trackHref: string | null;
 }
 
 /**
@@ -72,5 +80,9 @@ export function flightRows(state: SessionState): FlightRow[] {
         : { label: 'auto', tone: 'dim' },
     cycle: cycleOf(state, flight.takeoffAt),
     open: flight.landingAt == null,
+    trackHref:
+      state.sessionUuid == null
+        ? null
+        : `/dni/${encodeURIComponent(state.sessionUuid)}/slad/${flight.index}`,
   }));
 }
