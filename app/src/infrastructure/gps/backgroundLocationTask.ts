@@ -12,9 +12,11 @@
  * strukturalny `RawLocation`.
  */
 
+import { AppState } from 'react-native';
+
 import type { GpsFix } from '../../domain';
 import { routeBackgroundFixes } from './backgroundFixRouting';
-import { appendHeadlessFixes } from './headlessTraceWriter';
+import { appendHeadlessFixes, closeHeadlessStorage } from './headlessTraceWriter';
 import { locationToFix, type RawLocation } from './locationToFix';
 
 /**
@@ -30,6 +32,9 @@ let sink: BackgroundFixSink | null = null;
 
 export function setBackgroundFixSink(next: BackgroundFixSink): void {
   sink = next;
+  // Aplikacja ożyła — writer headless oddaje plik bazy (dwa żywe połączenia do
+  // tego samego pliku potrafią unieważnić główne; patrz `closeHeadlessStorage`).
+  void closeHeadlessStorage();
 }
 
 try {
@@ -55,6 +60,14 @@ try {
     if (route.kind === 'sink' && live != null) {
       // Aplikacja żyje: adapter rozprowadzi fixy fanoutem (detekcja, kokpit, 13, ślad).
       live(fixes);
+      return;
+    }
+    if (AppState.currentState === 'active') {
+      // Brak sinka, ale aplikacja jest NA EKRANIE — to okno startu/reloadu (bundle już
+      // się wykonuje, React i adapter jeszcze nie wstały), nie prawdziwy headless.
+      // Otwarcie tu drugiego połączenia SQLite unieważniało główne połączenie
+      // bootstrapu (NPE w `prepareAsync` przy każdym zapisie zdarzeń). Paczka idzie
+      // do kosza — za chwilę sink wstanie i przejmie strumień bez dziury.
       return;
     }
     // Proces wskrzeszony headless: prosto do `gps_trace` (sesję ustali writer z meta).

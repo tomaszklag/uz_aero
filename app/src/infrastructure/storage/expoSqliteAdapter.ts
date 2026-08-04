@@ -110,6 +110,18 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
   }
 
 
+  /**
+   * Zamyka połączenie. Potrzebne wyłącznie writerowi headless: gdy aplikacja wstaje,
+   * jej bootstrap otwiera własne połączenie do TEGO SAMEGO pliku — drugie żywe
+   * połączenie potrafi unieważnić pierwsze po stronie natywnej
+   * (`NativeDatabase.prepareAsync → NullPointerException` na głównym zapisie).
+   */
+  async close(): Promise<void> {
+    const db = this.db;
+    this.db = null;
+    if (db != null) await db.closeAsync();
+  }
+
   private getDb(): SQLiteDatabase {
     if (!this.db) {
       throw new Error('ExpoSqliteAdapter.init() nie został wywołany.');

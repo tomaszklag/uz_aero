@@ -58,3 +58,21 @@ export async function appendHeadlessFixes(fixes: readonly GpsFix[]): Promise<voi
     // Świadomie cicho — patrz nagłówek modułu.
   }
 }
+
+/**
+ * Oddaje plik bazy aplikacji: zamyka awaryjne połączenie i czyści cache otwarcia.
+ * Wołane, gdy aplikacja OŻYŁA (adapter zarejestrował sink) — od tej chwili ślad
+ * pisze ścieżka żywa, a drugie połączenie do tego samego pliku groziłoby
+ * unieważnieniem głównego (NPE w `prepareAsync` przy każdym zapisie zdarzeń).
+ */
+export async function closeHeadlessStorage(): Promise<void> {
+  const pending = opening;
+  opening = null;
+  if (pending == null) return;
+  try {
+    const ctx = await pending;
+    await ctx?.storage.close();
+  } catch {
+    // Zamknięcie jest best-effort — brak połączenia to stan docelowy.
+  }
+}

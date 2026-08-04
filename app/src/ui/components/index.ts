@@ -90,6 +90,7 @@ export * from './data/ParamGrid';
 export * from './data/PhaseHero';
 export * from './data/CockpitActions';
 export * from './data/EventLog';
+export * from './data/DayLog';
 export * from './data/DutyStrip';
 export * from './data/ActionGrid';
 export * from './data/ActionButton';

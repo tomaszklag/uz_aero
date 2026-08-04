@@ -21,7 +21,11 @@ export function useBackgroundTracking(gps: GpsPort | null): void {
     if (gps == null) return;
 
     // Kontrakt portu: nigdy nie odrzuca — void jest tu świadome, nie przeoczone.
-    const apply = (engineOn: boolean): void => void gps.setBackgroundMode(engineOn);
+    const apply = (engineOn: boolean): void => {
+      // TYMCZASOWA DIAGNOSTYKA (do zdjęcia po weryfikacji na urządzeniu).
+      console.log(`[bg-gps] hook apply(engineOn=${engineOn})`);
+      void gps.setBackgroundMode(engineOn);
+    };
 
     apply(useSessionStore.getState().projection.engineRunning);
     return useSessionStore.subscribe((state, prev) => {

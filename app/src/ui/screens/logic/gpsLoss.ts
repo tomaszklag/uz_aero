@@ -12,6 +12,46 @@
 
 import { timeUtc } from '../../format';
 
+/**
+ * Stan sygnału na potrzeby banera (decyzja UX 2026-08-04, rozmowa z właścicielem
+ * designu — doprecyzowanie mockupu 05g): zimny rozruch odbiornika po START ENGINE
+ * to NIE awaria i nie wolno go pokazywać czerwienią. Czerwień zostaje wyłącznie
+ * tam, gdzie fixy BYŁY i umilkły (prawdziwa utrata) albo pilot odmówił uprawnienia.
+ *
+ *  - `live`       — fixy płyną, banera nie ma,
+ *  - `acquiring`  — od startu silnika ani jednego fixa: odbiornik się rozgrzewa
+ *                   (amber, informacyjnie; w budynku może trwać długo — to fizyka),
+ *  - `lost`       — fixy były i umilkły > GPS_STALE_SEC (czerwony 05g),
+ *  - `permission` — brak uprawnienia lokalizacji (czerwony, z instrukcją).
+ */
+export type GpsSignalState = 'live' | 'acquiring' | 'lost' | 'permission';
+
+export function gpsSignalState(
+  gpsAvailable: boolean,
+  lastFixAt: number | null,
+  permissionDenied: boolean,
+): GpsSignalState {
+  if (permissionDenied) return 'permission';
+  if (gpsAvailable) return 'live';
+  return lastFixAt == null ? 'acquiring' : 'lost';
+}
+
+/** Treść banera rozruchu — spokojna: nic się nie zepsuło, odbiornik szuka nieba. */
+export function gpsAcquiringText(): string {
+  return (
+    'Odbiornik wyszukuje sygnał — autodetekcja uzbroi się z pierwszym fixem. ' +
+    'Do tego czasu start i lądowanie zapiszesz przyciskiem T-O / LAND.'
+  );
+}
+
+/** Treść banera braku uprawnienia — jedyny stan, którego fix nie naprawi sam. */
+export function gpsPermissionText(): string {
+  return (
+    'Aplikacja nie ma uprawnienia lokalizacji. Nadaj je w ustawieniach systemu ' +
+    '(Aplikacje → UZ Aero → Uprawnienia → Lokalizacja) i wróć do kokpitu.'
+  );
+}
+
 /** „12 min temu" / „45 s temu" — wiek ostatniego fixa do nawiasu na banerze. */
 export function fixAge(lastFixAt: number, now: number): string {
   const ageMs = Math.max(0, now - lastFixAt);

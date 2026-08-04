@@ -6,7 +6,15 @@
  */
 
 import { formatLatLon } from '../ui/format';
-import { fixAge, gpsLossText, staleCellNote, unknownPhaseDetail } from '../ui/screens/logic/gpsLoss';
+import {
+  fixAge,
+  gpsAcquiringText,
+  gpsLossText,
+  gpsPermissionText,
+  gpsSignalState,
+  staleCellNote,
+  unknownPhaseDetail,
+} from '../ui/screens/logic/gpsLoss';
 
 const T = Date.UTC(2026, 5, 22, 15, 58, 0);
 
@@ -33,6 +41,34 @@ describe('gpsLoss — baner i adnotacje 05g', () => {
   it('adnotacje siatki i fazy niosą czas ostatniego fixa', () => {
     expect(staleCellNote(T)).toBe('brak fixa od 15:58');
     expect(unknownPhaseDetail(T)).toBe('FAZA NIEZNANA · BEZ FIXA OD 15:58');
+  });
+});
+
+describe('gpsSignalState — rozruch to nie awaria (decyzja UX 2026-08-04)', () => {
+  it('fixy płyną → live (bez banera)', () => {
+    expect(gpsSignalState(true, T, false)).toBe('live');
+    expect(gpsSignalState(true, null, false)).toBe('live');
+  });
+
+  it('zimny start silnika (ani jednego fixa) → acquiring, NIE czerwona utrata', () => {
+    expect(gpsSignalState(false, null, false)).toBe('acquiring');
+  });
+
+  it('fixy były i umilkły → lost (czerwony 05g)', () => {
+    expect(gpsSignalState(false, T, false)).toBe('lost');
+  });
+
+  it('odmowa uprawnienia wygrywa ze wszystkim — fix jej nie naprawi', () => {
+    expect(gpsSignalState(false, null, true)).toBe('permission');
+    expect(gpsSignalState(false, T, true)).toBe('permission');
+  });
+
+  it('treści rozruchu i uprawnień mówią, co robić, bez języka awarii', () => {
+    expect(gpsAcquiringText()).toContain('wyszukuje sygnał');
+    expect(gpsAcquiringText()).toContain('T-O / LAND');
+    expect(gpsAcquiringText()).not.toMatch(/brak sygnału|awari/i);
+    expect(gpsPermissionText()).toContain('uprawnienia lokalizacji');
+    expect(gpsPermissionText()).toContain('ustawieniach systemu');
   });
 });
 

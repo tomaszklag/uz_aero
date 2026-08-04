@@ -66,6 +66,11 @@ export interface FlightDetectionState {
   gpsAvailable: boolean;
   /** Chwila ostatniego fixa (czas fixa) — „Ostatni fix 15:58 UTC" na banerze 05g. */
   lastFixAt: number | null;
+  /**
+   * Pilot odmówił uprawnienia lokalizacji — jedyny powód ciszy, którego sygnał
+   * nie naprawi sam (baner dostaje wtedy instrukcję ustawień, nie „szukam nieba").
+   */
+  permissionDenied: boolean;
 }
 
 export interface UseFlightDetectionOptions {
@@ -102,6 +107,7 @@ export function useFlightDetection({
   const [pending, setPending] = useState<PendingDetection | null>(null);
   const [gpsAvailable, setGpsAvailable] = useState(false);
   const [lastFixAt, setLastFixAt] = useState<number | null>(null);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   /** Zegar URZĄDZENIA z chwili odbioru fixa — świeżość liczymy własnym zegarem,
    *  bo martwy GPS z definicji nie powie nam, że umarł (mockup 05g). */
@@ -258,10 +264,15 @@ export function useFlightDetection({
 
     void (async () => {
       const permission = await gps.requestPermission();
-      if (cancelled || permission !== 'granted') {
+      if (cancelled) return;
+      if (permission !== 'granted') {
+        // Odmowa to INNY stan niż cisza sygnału: baner dostaje instrukcję ustawień
+        // zamiast „szukam nieba" (rozróżnienie stanów — decyzja UX 2026-08-04).
+        setPermissionDenied(true);
         setGpsAvailable(false);
         return;
       }
+      setPermissionDenied(false);
       await attach();
     })();
 
@@ -291,5 +302,5 @@ export function useFlightDetection({
     };
   }, [clearTimers, enabled, gps, schedule, sessionUuid, taxi, trace]);
 
-  return { fix, phase, pending, undo, gpsAvailable, lastFixAt };
+  return { fix, phase, pending, undo, gpsAvailable, lastFixAt, permissionDenied };
 }

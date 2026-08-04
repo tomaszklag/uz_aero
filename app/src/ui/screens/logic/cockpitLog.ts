@@ -16,7 +16,7 @@
 
 import { applyCorrections } from '../../../domain';
 import type { Event, EventOf, MhFormat, SessionState } from '../../../domain';
-import type { EventLogRow, LogChip, LogKind } from '../../components';
+import type { DayCycleSection, DaySection, EventLogRow, LogChip, LogKind } from '../../components';
 import { duration, durationLong, litres, motoHours, timeUtc } from '../../format';
 
 const LABEL: Record<string, string> = {
@@ -169,6 +169,59 @@ export function buildLogRows(
   }
 
   return rows;
+}
+
+/**
+ * Log dnia pocięty na sekcje do zwijania (mockup 04 `.cycle-head`): cykl START→…→STOP
+ * jako całość z nagłówkiem-podsumowaniem, zdarzenia naziemne między cyklami luzem.
+ *
+ * Wszystko w nagłówku pochodzi z gotowych wierszy `buildLogRows` — czasy, blok
+ * i MH mają jedno źródło, więc zwinięty nagłówek nie może rozjechać się z tym,
+ * co pilot zobaczy po rozwinięciu.
+ */
+export function buildDaySections(
+  events: Event[],
+  projection: SessionState,
+  mhFormat: MhFormat,
+): DaySection[] {
+  const sections: DaySection[] = [];
+  let current: DayCycleSection | null = null;
+  let no = 0;
+
+  for (const row of buildLogRows(events, projection, mhFormat)) {
+    if (row.kind === 'start') {
+      no += 1;
+      current = {
+        kind: 'cycle',
+        id: row.id,
+        no,
+        range: `${row.time}–…`,
+        takeoffs: 0,
+        block: null,
+        closed: false,
+        pending: row.pending === true,
+        rows: [row],
+      };
+      sections.push(current);
+      continue;
+    }
+
+    if (current != null && !current.closed) {
+      current.rows.push(row);
+      if (row.pending === true) current.pending = true;
+      if (row.kind === 'takeoff') current.takeoffs += 1;
+      if (row.kind === 'stop') {
+        current.closed = true;
+        current.range = `${current.rows[0]!.time}–${row.time}`;
+        current.block = row.meta ?? null;
+      }
+      continue;
+    }
+
+    sections.push({ kind: 'loose', row });
+  }
+
+  return sections;
 }
 
 /**

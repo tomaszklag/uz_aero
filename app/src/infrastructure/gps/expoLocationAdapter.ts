@@ -67,6 +67,30 @@ export class ExpoLocationAdapter implements GpsPort {
    * niedostępne. Flaga otwiera `open()` mimo trybu `service`.
    */
   private serviceUnavailable = false;
+  /**
+   * Operacje na usłudze idą SZEREGOWO. Uzbrajanie wołają równolegle dwa miejsca
+   * (spoina `engineRunning` i `start()` z hooka detekcji) — dwa współbieżne
+   * `startLocationUpdatesAsync` dublowały natywne wiązanie usługi, a przeplot
+   * start/stop potrafił zostawić ją bez właściciela (wiszące powiadomienie).
+   */
+  private serviceOp: Promise<void> = Promise.resolve();
+
+  private queueServiceOp(op: () => Promise<void>): Promise<void> {
+    const next = this.serviceOp.then(op, op);
+    this.serviceOp = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    return next;
+  }
+
+  private armService(): Promise<void> {
+    return this.queueServiceOp(() => this.armServiceNow());
+  }
+
+  private disarmService(): Promise<void> {
+    return this.queueServiceOp(() => this.disarmServiceNow());
+  }
 
   constructor() {
     // Adapter jest żywym odbiorcą taska usługi: fixy z tła płyną tym samym fanoutem,
@@ -123,6 +147,8 @@ export class ExpoLocationAdapter implements GpsPort {
    * po poprzednim życiu procesu) i wraca do watcha, jeśli ktoś jeszcze słucha.
    */
   async setBackgroundMode(enabled: boolean): Promise<void> {
+    // TYMCZASOWA DIAGNOSTYKA (do zdjęcia po weryfikacji na urządzeniu).
+    console.log(`[bg-gps] setBackgroundMode(${enabled})`);
     this.mode = enabled ? 'service' : 'watch';
     if (enabled) {
       this.closeWatch();
@@ -199,7 +225,7 @@ export class ExpoLocationAdapter implements GpsPort {
    * działającą usługę ADOPTUJE (zero mrugnięć powiadomieniem po headless-restarcie).
    * Każde niepowodzenie kończy się `rearmPending` — nigdy wyjątkiem w górę.
    */
-  private async armService(): Promise<void> {
+  private async armServiceNow(): Promise<void> {
     try {
       const started = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
       const cmd = serviceCommand({
@@ -207,6 +233,8 @@ export class ExpoLocationAdapter implements GpsPort {
         started,
         appActive: AppState.currentState === 'active',
       });
+      // TYMCZASOWA DIAGNOSTYKA (do zdjęcia po weryfikacji na urządzeniu).
+      console.log(`[bg-gps] arm: started=${started} cmd=${cmd} appActive=${AppState.currentState === 'active'}`);
       if (cmd === 'start') {
         await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, SERVICE_OPTIONS);
       }
@@ -230,13 +258,24 @@ export class ExpoLocationAdapter implements GpsPort {
     }
   }
 
-  private async disarmService(): Promise<void> {
+  private async disarmServiceNow(): Promise<void> {
+    // TYMCZASOWA DIAGNOSTYKA (do zdjęcia po weryfikacji na urządzeniu).
     try {
-      if (await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK)) {
-        await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
-      }
-    } catch {
-      // Brak task-managera w starym dev clencie nie może wywrócić aplikacji.
+      const started = await Location.hasStartedLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+      console.log(`[bg-gps] disarm: hasStarted=${started}`);
+    } catch (e) {
+      console.log(`[bg-gps] disarm: hasStarted BLAD ${String(e)}`);
+    }
+    // Gaszenie BEZWARUNKOWE — nie ufamy `hasStarted`: rejestr zadań w dev clencie
+    // jest per adres URL projektu, więc usługa odpalona pod innym adresem Metro
+    // jest stąd „niewidoczna", choć fizycznie działa. Stop nieistniejącego zadania
+    // rzuca — i dokładnie to połykamy; żaden błąd nie może wywrócić aplikacji
+    // (stary dev client bez task-managera też tędy przechodzi).
+    try {
+      await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK);
+      console.log('[bg-gps] disarm: stop wykonany');
+    } catch (e) {
+      console.log(`[bg-gps] disarm: stop pominięty (${String(e)})`);
     }
   }
 

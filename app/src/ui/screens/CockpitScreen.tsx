@@ -35,6 +35,7 @@ import {
   Banner,
   Card,
   CockpitActions,
+  DayLog,
   DetectToast,
   DropSheet,
   DutyStrip,
@@ -57,10 +58,17 @@ import { useGps, useSensors } from '../bootstrap/servicesContext';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
-import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
+import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
 import { cyclesLabel } from './logic/cockpitPeek';
 import { flightsBadge } from './logic/statsDay';
-import { gpsLossText, staleCellNote, unknownPhaseDetail } from './logic/gpsLoss';
+import {
+  gpsAcquiringText,
+  gpsLossText,
+  gpsPermissionText,
+  gpsSignalState,
+  staleCellNote,
+  unknownPhaseDetail,
+} from './logic/gpsLoss';
 import type { Event, FlightPhase } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */
@@ -143,14 +151,15 @@ export function CockpitScreen({
     return start?.payload.fieldElevationFt ?? null;
   }, [events]);
 
-  const { fix, phase, pending, undo, gpsAvailable, lastFixAt } = useFlightDetection({
-    gps,
-    enabled: engineOn,
-    fieldElevationFt,
-    // Skoki latają z i na to samo lotnisko — geofence odcina „lądowanie" daleko od
-    // pola (artefakt GPS). Ferry/przelot/egzamin lądują gdzie chcą — bez bramki.
-    sameFieldOnly: projection.operation === 'skoki',
-  });
+  const { fix, phase, pending, undo, gpsAvailable, lastFixAt, permissionDenied } =
+    useFlightDetection({
+      gps,
+      enabled: engineOn,
+      fieldElevationFt,
+      // Skoki latają z i na to samo lotnisko — geofence odcina „lądowanie" daleko od
+      // pola (artefakt GPS). Ferry/przelot/egzamin lądują gdzie chcą — bez bramki.
+      sameFieldOnly: projection.operation === 'skoki',
+    });
   // Nagrywanie czujników pokładowych do śladu kalibracyjnego — ten hook NIC nie decyduje
   // i celowo stoi obok detekcji, a nie w niej (patrz nagłówek `useSensorTrace`).
   useSensorTrace({ sensors, enabled: engineOn });
@@ -223,7 +232,11 @@ export function CockpitScreen({
     const takeoffs = cycleRows.filter((r) => r.kind === 'takeoff').length;
     // Degradacja CZUJNIKA (mockup 05g) — osobna oś od sieci: SyncChip może świecić
     // zielono, a autodetekcja stoi. Baner-przyrząd + ręczny zapis jako jedyna droga.
+    // `gpsLost` steruje degradacją danych (siatka, faza, etykiety ręczne) — brak
+    // danych to brak danych. TON banera różnicuje dopiero `signal`: rozruch
+    // odbiornika po START ENGINE to nie awaria (decyzja UX 2026-08-04).
     const gpsLost = !gpsAvailable;
+    const signal = gpsSignalState(gpsAvailable, lastFixAt, permissionDenied);
 
     return (
       <Screen padded={false}>
@@ -254,8 +267,27 @@ export function CockpitScreen({
           contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* ── `.no-gps` (05g): baner typu STATUS — przyrząd, znika sam z powrotem fixa ── */}
-          {gpsLost && (
+          {/* ── `.no-gps` (05g): baner typu STATUS — przyrząd, znika sam z powrotem fixa.
+               Trzy stany: rozruch (amber, spokojny), utrata (czerwony 05g), brak
+               uprawnienia (czerwony + instrukcja ustawień). ── */}
+          {signal === 'acquiring' && (
+            <NoGpsBanner
+              tone="amber"
+              title="GPS: wyszukiwanie sygnału · autodetekcja uzbraja się"
+              text={gpsAcquiringText()}
+              onManualEvent={() => setManualOpen(true)}
+              onManualList={() => navigation.navigate('ManualLog')}
+            />
+          )}
+          {signal === 'permission' && (
+            <NoGpsBanner
+              title="GPS: brak uprawnienia · autodetekcja wyłączona"
+              text={gpsPermissionText()}
+              onManualEvent={() => setManualOpen(true)}
+              onManualList={() => navigation.navigate('ManualLog')}
+            />
+          )}
+          {signal === 'lost' && (
             <NoGpsBanner
               text={gpsLossText(lastFixAt, now)}
               onManualEvent={() => setManualOpen(true)}
@@ -413,7 +445,7 @@ export function CockpitScreen({
   // ─────────────────────────────────────────────────────────────────────────
   // TRYB GROUND (mockup 04) — przewijalny ekran dnia.
   // ─────────────────────────────────────────────────────────────────────────
-  const logRows = buildLogRows(events, projection, mhFormat);
+  const daySections = buildDaySections(events, projection, mhFormat);
 
   /**
    * Akcje naziemne (`.action-grid`). Każda niesie podpis ze stanem, żeby pilot widział,
@@ -500,11 +532,15 @@ export function CockpitScreen({
           title={`Log dnia · UTC · ${cyclesLabel(projection.engineRuns.length)} · ${projection.takeoffCount} T/O`}
           flush
         >
-          {/* Log dnia jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków.
-              Korekta to świadoma operacja poza trybem kokpitu: Lista ręczna (08)
-              i statystyki (10), tam mieszka arkusz 04c. Decyzja 2026-08-04 — odwraca
-              wcześniejszy wniosek audytu §8 o ołówku przy każdym wierszu. */}
-          <EventLog rows={logRows} emptyText="Brak zdarzeń — zacznij od START ENGINE." />
+          {/* Log dnia jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków
+              (korekta = świadoma operacja w Liście ręcznej 08 i statystykach 10; tam
+              mieszka arkusz 04c). Zamknięte cykle zwijają się do nagłówków, ostatni
+              zostaje rozwinięty — świeża pamięć dnia (obie decyzje 2026-08-04). */}
+          <DayLog
+            sections={daySections}
+            initiallyExpanded="last"
+            emptyText="Brak zdarzeń — zacznij od START ENGINE."
+          />
         </Card>
 
         <ActionGrid actions={groundActions} />
