@@ -45,9 +45,9 @@ import {
 } from './trackChart';
 import { trackLogRows, trackLogSummary, type TrackLogRow } from './trackRows';
 
-/** Szablon kafelków. Do podmiany na dostawcę z kluczem przed wdrożeniem. */
-const TILE_URL =
-  import.meta.env.VITE_TILE_URL ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+
+
 
 /** Wymiary z mockupu A02c — płótno mapy 430 px, profil 220 px. */
 const MAP_WIDTH = 1000;
@@ -105,6 +105,10 @@ export function TrackScreen() {
   const flights = day.data?.state.flights ?? [];
   const rows = trackLogRows(data.log);
   const manual = data.method === 'manual';
+  // ICAO bierzemy z karty dnia, a nie z odpowiedzi śladu: to informacja o SESJI
+  // (pilot wpisał ją w preflighcie), więc dokładanie jej do koperty trasy dublowałoby
+  // dane, które panel i tak już ma na ekranie obok.
+  const departureIcao = day.data?.state.departureIcao ?? null;
 
   const markers: MapMarkerInput[] =
     data.line.length === 0
@@ -124,7 +128,7 @@ export function TrackScreen() {
         ];
 
   // Geometria ekranowa powstaje w module czystym — widok jej nie liczy (§ reguła panelu).
-  const plot = mapPlot(data.line, markers, MAP_WIDTH, MAP_HEIGHT, TILE_URL);
+  const plot = mapPlot(data.line, markers, MAP_WIDTH, MAP_HEIGHT, departureIcao);
   const profile = profilePlot(data.profile, PROFILE_WIDTH, PROFILE_HEIGHT);
   const footer = profileFooter(data.profile);
   const tiles = trackTiles(data);
@@ -173,7 +177,7 @@ export function TrackScreen() {
         />
       </TileGrid>
 
-      <Card title="Trasa" actions={<Pill tone="dim">kafelki OpenStreetMap</Pill>}>
+      <Card title="Trasa" actions={<Pill tone="dim">siatka współrzędnych · bez pobierania z sieci</Pill>}>
         {flights.length > 1 && (
           <div className="flight-picker">
             <span className="flight-picker-label">Loty dnia</span>

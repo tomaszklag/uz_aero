@@ -34,6 +34,8 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     dutyEnd: at(13, 20),
     engineRunning: false,
     inFlight: false,
+    // Doszło do `SessionState` razem z detekcją kołowania — dzień zamknięty nie kołuje.
+    taxiing: false,
     openEngineStartAt: null,
     openTakeoffAt: null,
     engineRuns: [

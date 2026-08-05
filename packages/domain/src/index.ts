@@ -32,3 +32,5 @@ export * from './track/flightTrack';
 export * from './track/profile';
 export * from './track/sample';
 export * from './track/mercator';
+export * from './airfields';
+export * from './track/airfieldsInView';

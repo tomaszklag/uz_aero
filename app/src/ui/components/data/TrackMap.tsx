@@ -1,34 +1,38 @@
 /**
- * UZ Aero — mapa śladu lotu (mockupy `14-slad.html`, `14a-slad-offline.html`).
+ * UZ Aero — mapa śladu lotu (mockup `14-slad.html`).
  *
- * Kafelki to zwykłe `<Image>` ułożone w siatkę wyliczoną przez `tilesFor` — bez
- * biblioteki mapowej, bo ta jest modułem natywnym, a ekran jest retrospektywny
- * (pokazuje zamknięty lot, nie prowadzi nawigacji). Pełne uzasadnienie stoi
- * w `packages/domain/src/track/mercator.ts`.
+ * **Bez kafelków** (decyzja 2026-08-04). Ślad rysuje się na siatce współrzędnych,
+ * a odniesienie w terenie dają LOTNISKA z katalogu (`packages/domain/src/airfields.ts`):
+ * pas startowy z podpisem ICAO. Zysk jest podwójny — ekran przestał zależeć od sieci
+ * w jakimkolwiek stopniu, a przy okazji zniknął problem dostawcy kafelków, jego klucza
+ * i regulaminu.
  *
- * **Brak kafelków nie jest błędem.** Gdy sieci nie ma, `<Image>` po prostu się nie
- * ładuje, a pod spodem zostaje siatka współrzędnych — czyli wariant 14A rysuje się
- * sam, bez osobnej gałęzi kodu. To najważniejsza własność tego komponentu: ślad
- * pochodzi z telefonu i jest kompletny zawsze, tło bywa i to nikomu nie przeszkadza.
+ * Rysunek nadal bez modułów natywnych: siatka i pasy to `<View>`, ślad to łamana
+ * z obróconych prostokątów (`TrackPolyline`), jak ptaszek w `CheckIcon`.
+ *
+ * Podziałka pod mapą nie jest ozdobą: bez kafelków to jedyna rzecz, która mówi, czy
+ * krąg ma dwa kilometry, czy dwadzieścia.
  */
 
 import React, { useMemo } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
+  airfieldsInView,
   boundsOf,
   fitBounds,
   scaleBar,
-  tilesFor,
   toScreen,
-  TILE_SIZE,
+  type Airfield,
   type LatLon,
   type TrackVertex,
 } from '../../../domain';
-import { tileUrl, tileUrlTemplate, TILE_ATTRIBUTION } from '../../../infrastructure/api/tileUrl';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
+
+/** Odstęp linii siatki (px) — gęściej robi się szum pod śladem. */
+const GRID_STEP = 60;
 
 export interface TrackMapMarker {
   position: LatLon;
@@ -43,72 +47,72 @@ export interface TrackMapProps {
   markers?: readonly TrackMapMarker[];
   width: number;
   height: number;
-  /** Wyłącza pobieranie kafelków — do podglądu bez sieci i w testach. */
-  tilesEnabled?: boolean;
+  /** ICAO z preflightu — to lotnisko pokazujemy zawsze, także spoza kadru. */
+  departureIcao?: string | null;
 }
 
-export function TrackMap({ line, markers = [], width, height, tilesEnabled = true }: TrackMapProps) {
+export function TrackMap({
+  line,
+  markers = [],
+  width,
+  height,
+  departureIcao = null,
+}: TrackMapProps) {
   const { theme } = useTheme();
-  const template = tileUrlTemplate();
 
-  const view = useMemo(() => {
-    // Widok obejmuje ślad ORAZ znaczniki: lądowanie potrafi wypaść poza uproszczoną
-    // linię o kilkadziesiąt metrów i bez tego wyjechałoby poza kadr.
+  const frame = useMemo(() => {
+    // Kadr obejmuje ślad ORAZ znaczniki: lądowanie potrafi wypaść poza uproszczoną
+    // linię o kilkadziesiąt metrów i bez tego wyjechałoby poza ekran.
     const positions: LatLon[] = [...line, ...markers.map((m) => m.position)];
     const bounds = boundsOf(positions);
     if (bounds == null) return null;
-    return fitBounds(bounds, width, height, 30);
+    return { view: fitBounds(bounds, width, height, 30), bounds };
   }, [line, markers, width, height]);
 
+  const airfields = useMemo<Airfield[]>(
+    () => (frame == null ? [] : airfieldsInView(frame.bounds, { preferredIcao: departureIcao })),
+    [frame, departureIcao],
+  );
+
   const screenPoints: Point2D[] = useMemo(
-    () => (view == null ? [] : line.map((p) => toScreen(p, view))),
-    [line, view],
+    () => (frame == null ? [] : line.map((p) => toScreen(p, frame.view))),
+    [line, frame],
   );
 
   const bar = useMemo(
-    () => (view == null ? null : scaleBar(view, line[0]?.lat ?? 52, Math.min(90, width * 0.3))),
-    [view, line, width],
+    () =>
+      frame == null ? null : scaleBar(frame.view, line[0]?.lat ?? 52, Math.min(90, width * 0.3)),
+    [frame, line, width],
   );
 
   return (
     <View style={[styles.frame, { width, height, backgroundColor: theme.colors.bgTint }]}>
-      {/* ── siatka współrzędnych: podkład, który jest ZAWSZE ─────────────── */}
       <CoordinateGrid width={width} height={height} color={theme.colors.border} />
 
-      {/* ── kafelki: warstwa, która bywa ─────────────────────────────────── */}
-      {tilesEnabled &&
-        view != null &&
-        tilesFor(view).map((tile) => (
-          <Image
-            key={`${tile.z}/${tile.x}/${tile.y}`}
-            source={{ uri: tileUrl(template, tile.x, tile.y, tile.z) }}
-            style={{
-              position: 'absolute',
-              left: tile.left,
-              top: tile.top,
-              width: TILE_SIZE,
-              height: TILE_SIZE,
-            }}
-            // Kafelek, który nie doszedł, zostaje przezroczysty — pod spodem jest siatka.
-            onError={() => {}}
+      {/* ── lotniska: pas i podpis, POD śladem ──────────────────────────── */}
+      {frame != null &&
+        airfields.map((airfield) => (
+          <AirfieldMark
+            key={airfield.icao}
+            airfield={airfield}
+            point={toScreen(airfield, frame.view)}
+            metersPerPixel={bar != null && bar.pixels > 0 ? bar.meters / bar.pixels : null}
+            surface={theme.colors.borderStrong}
+            labelColor={theme.colors.textMuted}
           />
         ))}
 
-      {/* ── ślad ─────────────────────────────────────────────────────────── */}
       <TrackPolyline points={screenPoints} color={theme.colors.green} width={2.5} />
 
-      {/* ── znaczniki ────────────────────────────────────────────────────── */}
-      {view != null &&
+      {/* ── znaczniki startu i lądowania ─────────────────────────────────── */}
+      {frame != null &&
         markers.map((marker) => {
-          const p = toScreen(marker.position, view);
+          const p = toScreen(marker.position, frame.view);
           return (
             <View key={marker.label} pointerEvents="none">
               {marker.ring === true && (
                 <View
-                  style={[
-                    styles.ring,
-                    { left: p.x - 10, top: p.y - 10, borderColor: marker.color },
-                  ]}
+                  style={[styles.ring, { left: p.x - 10, top: p.y - 10, borderColor: marker.color }]}
                 />
               )}
               <View
@@ -124,29 +128,83 @@ export function TrackMap({ line, markers = [], width, height, tilesEnabled = tru
           );
         })}
 
-      {/* ── podziałka i atrybucja ────────────────────────────────────────── */}
+      {/* ── podziałka: bez kafelków jedyne odniesienie odległości ────────── */}
       {bar != null && (
         <View style={styles.scale}>
           <AppText variant="micro" tone="secondary">
             {bar.meters >= 1000 ? `${bar.meters / 1000} km` : `${bar.meters} m`}
           </AppText>
-          <View style={[styles.scaleBar, { width: bar.pixels, borderColor: theme.colors.textSecondary }]} />
+          <View
+            style={[
+              styles.scaleBar,
+              { width: bar.pixels, borderColor: theme.colors.textSecondary },
+            ]}
+          />
         </View>
       )}
-
-      <View style={[styles.attrib, { backgroundColor: theme.colors.bg }]}>
-        <AppText variant="micro" tone="muted">
-          {TILE_ATTRIBUTION}
-        </AppText>
-      </View>
     </View>
   );
 }
 
 /**
- * Siatka pod kafelkami — nie ozdoba, tylko gwarancja, że ślad ZAWSZE ma odniesienie.
- * To ona zamienia „mapa się nie wczytała" w czytelny wykres trasy (wariant 14A).
+ * Lotnisko: pas startowy w skali mapy plus kod ICAO.
+ *
+ * Pas rysujemy PROSTOKĄTEM obróconym o kurs progu — w tej skali to jedyny szczegół,
+ * który daje się rozpoznać, a przy okazji mówi pilotowi, z której strony podchodził.
+ * Gdy skala nie jest znana albo pas wyszedłby krótszy niż kilka pikseli, zostaje sam
+ * znacznik: kreska nie do odczytania jest gorsza niż jej brak.
  */
+function AirfieldMark({
+  airfield,
+  point,
+  metersPerPixel,
+  surface,
+  labelColor,
+}: {
+  airfield: Airfield;
+  point: Point2D;
+  metersPerPixel: number | null;
+  surface: string;
+  labelColor: string;
+}) {
+  const runway = airfield.runway;
+  const lengthPx =
+    runway != null && metersPerPixel != null && metersPerPixel > 0
+      ? runway.lengthM / metersPerPixel
+      : 0;
+
+  return (
+    <View pointerEvents="none">
+      {lengthPx >= 8 && runway != null ? (
+        <View
+          style={{
+            position: 'absolute',
+            left: point.x - lengthPx / 2,
+            top: point.y - 1.5,
+            width: lengthPx,
+            height: 3,
+            backgroundColor: surface,
+            // Kurs geograficzny liczy się od północy zgodnie z ruchem wskazówek,
+            // a obrót w układzie ekranu od osi X — stąd −90°.
+            transform: [{ rotate: `${runway.headingDeg - 90}deg` }],
+          }}
+        />
+      ) : (
+        <View
+          style={[styles.airfieldDot, { left: point.x - 3, top: point.y - 3, backgroundColor: surface }]}
+        />
+      )}
+      <AppText
+        variant="micro"
+        style={[styles.airfieldLabel, { left: point.x + 7, top: point.y + 3, color: labelColor }]}
+      >
+        {airfield.icao}
+      </AppText>
+    </View>
+  );
+}
+
+/** Siatka współrzędnych — podkład, który zastąpił kafelki. */
 function CoordinateGrid({
   width,
   height,
@@ -156,28 +214,45 @@ function CoordinateGrid({
   height: number;
   color: string;
 }) {
-  const step = 60;
   const lines: React.ReactNode[] = [];
 
-  for (let x = step; x < width; x += step) {
+  for (let x = GRID_STEP; x < width; x += GRID_STEP) {
     lines.push(
-      <View key={`v${x}`} style={{ position: 'absolute', left: x, top: 0, width: 1, height, backgroundColor: color }} />,
+      <View
+        key={`v${x}`}
+        style={{ position: 'absolute', left: x, top: 0, width: 1, height, backgroundColor: color }}
+      />,
     );
   }
-  for (let y = step; y < height; y += step) {
+  for (let y = GRID_STEP; y < height; y += GRID_STEP) {
     lines.push(
-      <View key={`h${y}`} style={{ position: 'absolute', left: 0, top: y, width, height: 1, backgroundColor: color }} />,
+      <View
+        key={`h${y}`}
+        style={{ position: 'absolute', left: 0, top: y, width, height: 1, backgroundColor: color }}
+      />,
     );
   }
-  return <View pointerEvents="none" style={StyleSheet.absoluteFill}>{lines}</View>;
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {lines}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   frame: { position: 'relative', overflow: 'hidden' },
   dot: { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
-  ring: { position: 'absolute', width: 20, height: 20, borderRadius: 10, borderWidth: 1, opacity: 0.45 },
+  ring: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    opacity: 0.45,
+  },
   markerLabel: { position: 'absolute' },
+  airfieldDot: { position: 'absolute', width: 6, height: 6, borderRadius: 1 },
+  airfieldLabel: { position: 'absolute', letterSpacing: 1 },
   scale: { position: 'absolute', left: 8, bottom: 6, gap: 2 },
   scaleBar: { height: 4, borderWidth: 1, borderTopWidth: 0 },
-  attrib: { position: 'absolute', right: 6, bottom: 5, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, opacity: 0.85 },
 });

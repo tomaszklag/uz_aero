@@ -17,10 +17,10 @@
  */
 
 import {
+  airfieldsInView,
   boundsOf,
   fitBounds,
   scaleBar,
-  tilesFor,
   toScreen,
   type FlightProfile,
   type LatLon,
@@ -40,15 +40,19 @@ export interface MapMarkerInput {
 }
 
 /**
- * Układa ślad, kafelki i znaczniki na płótnie `width`×`height`.
+ * Układa ślad, lotniska i znaczniki na płótnie `width`×`height`.
  * `null`, gdy nie ma ani jednego punktu — wtedy ekran pokazuje stan pusty, nie pustą mapę.
+ *
+ * Kafelków NIE MA (decyzja 2026-08-04): tłem jest siatka współrzędnych, a odniesienie
+ * w terenie dają pasy startowe lotnisk z katalogu. Skala pod mapą przestaje więc być
+ * ozdobą — to jedyna rzecz, która mówi, czy krąg ma dwa kilometry, czy dwadzieścia.
  */
 export function mapPlot(
   line: readonly TrackVertex[],
   markers: readonly MapMarkerInput[],
   width: number,
   height: number,
-  tileTemplate: string,
+  departureIcao: string | null = null,
 ): MapPlot | null {
   const positions: LatLon[] = [...line, ...markers.map((m) => m.position)];
   const bounds = boundsOf(positions);
@@ -56,6 +60,7 @@ export function mapPlot(
 
   const view = fitBounds(bounds, width, height, 40);
   const bar = scaleBar(view, line[0]?.lat ?? bounds.north);
+  const metersPerPixel = bar.pixels > 0 ? bar.meters / bar.pixels : null;
 
   return {
     polyline: line
@@ -65,15 +70,26 @@ export function mapPlot(
       })
       .join(' '),
 
-    tiles: tilesFor(view).map((tile) => ({
-      key: `${tile.z}/${tile.x}/${tile.y}`,
-      url: tileTemplate
-        .replace('{z}', String(tile.z))
-        .replace('{x}', String(tile.x))
-        .replace('{y}', String(tile.y)),
-      left: tile.left,
-      top: tile.top,
-    })),
+    airfields: airfieldsInView(bounds, { preferredIcao: departureIcao }).map((airfield) => {
+      const p = toScreen(airfield, view);
+      // Pas krótszy niż kilka pikseli jest nieczytelny — wtedy zostaje sam znacznik.
+      const lengthPx =
+        airfield.runway != null && metersPerPixel != null
+          ? airfield.runway.lengthM / metersPerPixel
+          : 0;
+      return {
+        icao: airfield.icao,
+        name: airfield.name,
+        x: p.x,
+        y: p.y,
+        // Kurs geograficzny liczy się od północy zgodnie z ruchem wskazówek,
+        // a obrót w układzie ekranu od osi X — stąd −90°.
+        runway:
+          lengthPx >= 10 && airfield.runway != null
+            ? { lengthPx, rotateDeg: airfield.runway.headingDeg - 90 }
+            : null,
+      };
+    }),
 
     markers: markers.map((marker) => {
       const p = toScreen(marker.position, view);

@@ -658,10 +658,13 @@
      warstwą wymienną — nie wolno im przesuwać układu, gdy się nie doczytają. */
   .map-canvas { position:relative; height:430px; background:#0F1216; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
   .map-canvas svg { display:block; width:100%; height:100%; }
-  /* Kafelki leżą POD śladem, w osobnej warstwie: brak pokrycia nie może ruszyć geometrii. */
-  .map-tiles { position:absolute; inset:0; overflow:hidden; }
-  .map-tiles img { position:absolute; width:256px; height:256px; color:transparent; }
+
   .map-overlay { position:absolute; inset:0; }
+  /* Siatka współrzędnych — podkład, który zastąpił kafelki (decyzja 2026-08-04). */
+  .map-grid line { stroke:var(--border); stroke-width:1; }
+  /* Pas startowy lotniska: jedyny szczegół terenu, jaki rysujemy. */
+  .map-runway { fill:var(--border-strong); }
+  .map-airfield-dot { fill:var(--border-strong); }
   .map-attrib { position:absolute; right:8px; bottom:7px; font-family:var(--font-mono); font-size:8px; color:var(--text-muted); background:rgba(13,13,13,0.72); padding:3px 7px; border-radius:5px; letter-spacing:0.3px; }
   .map-scale { position:absolute; left:12px; bottom:9px; display:flex; flex-direction:column; gap:3px; }
   .map-scale-bar { width:88px; height:5px; border:1px solid var(--text-secondary); border-top:none; }

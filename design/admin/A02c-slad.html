@@ -605,7 +605,11 @@
      panel ogląda się na biurku, nie w kokpicie. */
   .map-canvas { position:relative; height:430px; background:#0F1216; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
   .map-canvas svg { display:block; width:100%; height:100%; }
-  .map-attrib { position:absolute; right:8px; bottom:7px; font-family:var(--font-mono); font-size:8px; color:var(--text-muted); background:rgba(13,13,13,0.72); padding:3px 7px; border-radius:5px; letter-spacing:0.3px; }
+  /* Siatka współrzędnych — podkład, który zastąpił kafelki (decyzja 2026-08-04). */
+  .map-grid line { stroke:var(--border); stroke-width:1; }
+  /* Pas startowy lotniska: jedyny szczegół terenu, jaki rysujemy. */
+  .map-runway { fill:var(--border-strong); }
+  .map-airfield-dot { fill:var(--border-strong); }
   .map-scale { position:absolute; left:12px; bottom:9px; display:flex; flex-direction:column; gap:3px; }
   .map-scale-bar { width:88px; height:5px; border:1px solid var(--text-secondary); border-top:none; }
   .map-scale-label { font-family:var(--font-mono); font-size:8px; color:var(--text-secondary); letter-spacing:1px; }
@@ -818,7 +822,7 @@
           <div class="card-title">
             Trasa
             <span class="spacer"></span>
-            <span class="chip">kafelki OpenStreetMap</span>
+            <span class="chip">siatka współrzędnych · bez pobierania z sieci</span>
           </div>
 
           <div class="flight-picker" style="margin-bottom:12px;">
@@ -836,31 +840,32 @@
 
           <div class="map-canvas">
             <svg viewBox="0 0 1000 430" preserveAspectRatio="xMidYMid slice">
-              <!-- Tło: kafelki OSM w stylu ciemnym. W implementacji warstwa z serwera kafelków. -->
-              <rect x="0" y="0" width="1000" height="430" fill="#12161B"/>
-              <rect x="0" y="0" width="380" height="170" fill="#141A16"/>
-              <rect x="560" y="40" width="440" height="150" fill="#141A16"/>
-              <rect x="80" y="260" width="300" height="170" fill="#151812"/>
-              <rect x="640" y="280" width="360" height="150" fill="#141A16"/>
-              <circle cx="220" cy="90" r="70" fill="#16211A"/>
-              <circle cx="810" cy="350" r="58" fill="#16211A"/>
-              <circle cx="480" cy="60" r="42" fill="#16211A"/>
-
-              <!-- rzeka -->
-              <path d="M0 232 C160 222, 250 262, 400 248 S680 206, 1000 236" stroke="#1B2C3A" stroke-width="11" fill="none" stroke-linecap="round"/>
-              <!-- drogi -->
-              <path d="M0 300 L1000 278" stroke="#232A31" stroke-width="5" fill="none"/>
-              <path d="M330 0 L378 430" stroke="#232A31" stroke-width="4" fill="none"/>
-              <path d="M700 0 L664 430" stroke="#1E242A" stroke-width="3" fill="none"/>
-              <path d="M0 132 L1000 110" stroke="#1E242A" stroke-width="3" fill="none"/>
-              <path d="M0 380 L1000 366" stroke="#1E242A" stroke-width="2.5" fill="none"/>
-
-              <!-- lotnisko EPZG: pas + oznaczenie -->
-              <g transform="rotate(-24 430 306)">
-                <rect x="330" y="300" width="210" height="13" fill="#2A3038" rx="2"/>
-                <rect x="330" y="305" width="210" height="2" fill="#3A424C"/>
+              <!-- TŁO: siatka współrzędnych, BEZ kafelków (decyzja 2026-08-04).
+                   Panel nie pobiera niczego z zewnątrz, dokładnie tak samo jak telefon. -->
+              <rect x="0" y="0" width="1000" height="430" fill="#0F1216"/>
+              <g class="map-grid">
+                <line x1="0" y1="60"  x2="1000" y2="60"/>
+                <line x1="0" y1="120" x2="1000" y2="120"/>
+                <line x1="0" y1="180" x2="1000" y2="180"/>
+                <line x1="0" y1="240" x2="1000" y2="240"/>
+                <line x1="0" y1="300" x2="1000" y2="300"/>
+                <line x1="0" y1="360" x2="1000" y2="360"/>
+                <line x1="120" y1="0" x2="120" y2="430"/>
+                <line x1="240" y1="0" x2="240" y2="430"/>
+                <line x1="360" y1="0" x2="360" y2="430"/>
+                <line x1="480" y1="0" x2="480" y2="430"/>
+                <line x1="600" y1="0" x2="600" y2="430"/>
+                <line x1="720" y1="0" x2="720" y2="430"/>
+                <line x1="840" y1="0" x2="840" y2="430"/>
+                <line x1="960" y1="0" x2="960" y2="430"/>
               </g>
-              <text x="392" y="352" class="axis-label" fill="#5A646E" font-size="11">EPZG · Zielona Góra</text>
+
+              <!-- LOTNISKA z katalogu (`packages/domain/src/airfields.ts`, dane OurAirports):
+                   pas w skali mapy, obrócony o kurs progu. Bez kafelków to jedyne
+                   odniesienie w terenie — i jedyne, którego pilot naprawdę potrzebuje. -->
+              <rect class="map-runway" x="330" y="304" width="210" height="4"
+                    transform="rotate(-25 435 306)"/>
+              <text x="446" y="322" class="axis-label" font-size="11">EPZG · Zielona Góra-Babimost</text>
 
               <!-- ŚLAD: start, spirala wznoszenia nad lotniskiem, zrzut, zejście, lądowanie -->
               <path d="M416 312
@@ -905,13 +910,13 @@
               <div class="legend-row"><span class="legend-dot" style="background:var(--blue);"></span>Zrzut skoczków</div>
               <div class="legend-row"><span class="legend-dot" style="background:var(--red);"></span>Lądowanie</div>
               <div class="legend-row"><span class="legend-dot" style="border:1.5px dashed var(--amber);background:none;"></span>Fix odrzucony</div>
+              <div class="legend-row"><span class="legend-dot line" style="background:var(--border-strong);"></span>Pas startowy</div>
             </div>
 
             <div class="map-scale">
               <span class="map-scale-label">2 km</span>
               <span class="map-scale-bar"></span>
             </div>
-            <div class="map-attrib">© OpenStreetMap contributors</div>
           </div>
         </div>
 

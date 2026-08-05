@@ -8,7 +8,8 @@
  *
  * Ślad liczy się CAŁKOWICIE lokalnie — z zapisu na telefonie i z rejestru na telefonie.
  * Ekran 14 działa więc bez sieci w pełnym zakresie: linia, profil i log są kompletne.
- * Sieci wymaga wyłącznie TŁO mapy (kafelki), i to jest jedyna różnica wariantu 14A.
+ * Ekran nie potrzebuje sieci w ogóle: mapa rysuje siatkę współrzędnych i lotniska
+ * z katalogu wbudowanego w aplikację, bez kafelków (decyzja 2026-08-04).
  */
 
 import {
@@ -37,6 +38,12 @@ export type MissingTrackReason =
 /** Ślad jednego lotu gotowy do narysowania. */
 export interface FlightTrackView {
   flight: Flight;
+  /**
+   * Kod ICAO z preflightu. Mapa rysuje to lotnisko ZAWSZE, także gdy wypada poza kadr —
+   * pilot podał je ręcznie, więc jest odpowiedzią na pytanie „gdzie to było", a nie
+   * przypadkowym sąsiadem trasy. `null`, gdy preflight go nie niósł.
+   */
+  departureIcao: string | null;
   track: FlightTrack;
   profile: FlightProfile;
   /** Log do tabeli: próbka co 30 s plus wszystkie odrzucone. */
@@ -61,7 +68,7 @@ export class FlightTrackQueries {
     if (flight == null) return null;
 
     if (flight.method === 'manual') {
-      return this.empty(flight, 'manual');
+      return this.empty(flight, 'manual', state.departureIcao);
     }
 
     // Lot otwarty (jeszcze w powietrzu) nie ma górnej granicy — bierzemy do teraz.
@@ -73,7 +80,7 @@ export class FlightTrackQueries {
     )) as unknown as RawTrackEntry[];
 
     if (entries.length === 0) {
-      return this.empty(flight, 'no-record');
+      return this.empty(flight, 'no-record', state.departureIcao);
     }
 
     const track = buildFlightTrack(entries, {
@@ -83,6 +90,7 @@ export class FlightTrackQueries {
 
     return {
       flight,
+      departureIcao: state.departureIcao,
       track,
       profile: buildFlightProfile(track.points),
       log: sampleTrackLog(track.points),
@@ -93,9 +101,14 @@ export class FlightTrackQueries {
     };
   }
 
-  private empty(flight: Flight, reason: MissingTrackReason): FlightTrackView {
+  private empty(
+    flight: Flight,
+    reason: MissingTrackReason,
+    departureIcao: string | null,
+  ): FlightTrackView {
     return {
       flight,
+      departureIcao,
       track: emptyFlightTrack(),
       profile: emptyFlightProfile(),
       log: [],
