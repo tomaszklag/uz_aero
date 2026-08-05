@@ -179,3 +179,58 @@ a nie test.
 
 Zmiana kursu dotknęła dokładnie tych dwudziestu rekordów, które miały wpisane zero;
 żaden pas z poprawnym kursem nie zmienił wartości.
+
+---
+
+## 7. Katalog jako KONTROLA pozycji (issue #6)
+
+Katalog ma drugie zastosowanie obok rysowania mapy: jest jedynym źródłem, które wie
+o położeniu lotnisk **niezależnie od pilota**. Można nim więc sprawdzić deklarację —
+czy samolot faktycznie stoi tam, gdzie wpisana jest trasa.
+
+Kod: `packages/domain/src/airfieldProximity.ts` (werdykt) i
+`app/src/ui/screens/logic/airfieldProximityNote.ts` (komunikat).
+Próg: `AIRFIELD_VICINITY_NM` = 2 NM — ta sama skala co geofence lądowania.
+
+### 7.1 Sprawdzenie mieszka w PREFLIGHCIE, nie przy silniku
+
+Zgłoszenie mówiło o walidacji przy włączaniu i wyłączaniu silnika. Rozpoznanie pokazało,
+że to za późno: **trasy nie da się poprawić po `preflight_confirm`**. Rejestr jest
+append-only, a `event_correction` zna wyłącznie `retime` (inna godzina) i `void`
+(zdarzenia nie było) — korekty trasy nie ma w ogóle. Ostrzeżenie w kokpicie byłoby więc
+problemem bez wyjścia.
+
+Dlatego główne sprawdzenie odbywa się na ekranie 02E, gdzie pole ICAO jest jeszcze
+edytowalne, a komunikat prowadzi do poprawki jednym tapnięciem (mockup `02g`). W kokpicie
+zostaje ostatnia deska ratunku: ten sam werdykt, ale komunikat mówi to, co pilot MOŻE
+zrobić naprawdę — zgłosić rozjazd administratorowi.
+
+Powód, dla którego to się w ogóle zdarza, jest wbudowany w produkt: preflight PODPOWIADA
+trasę z ostatniego dnia na tym samolocie, więc wczorajsze ICAO przenosi się na dziś samo,
+a formularz wygląda na wypełniony.
+
+### 7.2 Jedna pozycja, nie nasłuch
+
+Preflight bierze **jeden** fix (`ui/hooks/useOneShotPosition.ts`): nasłuch wstaje, czeka na
+pierwszy fix przechodzący bramkę jakości i schodzi. Ciągły odbiornik przy formularzu
+wypełnianym w klubie chodziłby kwadransami.
+
+To także jedyne miejsce, w którym GPS pracuje przed uruchomieniem silnika — kokpit
+uzbraja odbiornik dopiero razem z silnikiem (`enabled: engineOn`).
+
+### 7.3 Kiedy MILCZYMY (najważniejsza część)
+
+Sprawdzenie jest darmowe i nigdy nie jest warunkiem przejścia dalej:
+
+- **brak pozycji** — zimny odbiornik, brak zgody na lokalizację, formularz w budynku;
+- **kod spoza katalogu** — 106 pozycji obejmuje tylko Polskę, więc ferry do EDDB nie ma
+  z czym być porównane; ocenianie go byłoby zgadywaniem;
+- **pusty kod z dala od wszystkiego** — lądowisko prywatne ma prawo istnieć poza
+  katalogiem i jest dla części operacji miejscem codziennym;
+- **zgodność** — stan normalny nie zasługuje na komunikat;
+- **lot w powietrzu** — samolot Z DEFINICJI oddala się od lotniska startu, więc baner
+  świeciłby cały lot i nauczyłby pilota ignorowania ostrzeżeń
+  (`groundReferenceIcao` zwraca wtedy `null`).
+
+Po pierwszym locie odniesieniem staje się lotnisko DOCELOWE, o ile pilot je podał: dzień
+skokowy ma je równe startowemu, a ferry kończy się gdzie indziej.

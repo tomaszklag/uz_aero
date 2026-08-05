@@ -25,6 +25,7 @@ import {
   AirfieldSuggestions,
   AppText,
   Card,
+  GhostAction,
   InlineNote,
   OptionGrid,
   Screen,
@@ -33,12 +34,15 @@ import {
   TextField,
   type GridOption,
 } from '../components';
+import { useGps } from '../bootstrap/servicesContext';
+import { useOneShotPosition } from '../hooks/useOneShotPosition';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useTaskMemory } from '../store/taskMemory';
 import { usePreflightDraft } from '../store/preflightDraft';
+import { proximityNote } from './logic/airfieldProximityNote';
 import { airfieldRow, routeConfirmations, routeSuggestions } from './logic/routeSuggestions';
-import type { OperationType } from '../../domain';
+import { checkAirfieldProximity, type OperationType } from '../../domain';
 
 /** Siatka operacji — etykiety i ikony jak w `.op-grid` mockupu 02. */
 const OPERATIONS: GridOption<OperationType>[] = [
@@ -94,6 +98,20 @@ export function PreflightTaskScreen({
   const confirmations = useMemo(
     () => routeConfirmations({ departureIcao, arrivalIcao }),
     [departureIcao, arrivalIcao],
+  );
+
+  // Sprawdzenie „czy stoję tam, gdzie wpisałem" (issue #6). Robimy je TUTAJ, a nie przy
+  // starcie silnika, bo tutaj pole ICAO jest jeszcze edytowalne — po `preflight_confirm`
+  // trasy nie da się już poprawić (rejestr jest append-only i nie zna korekty trasy).
+  //
+  // Jedna pozycja, nie nasłuch: przy formularzu wypełnianym w klubie ciągły odbiornik
+  // chodziłby kwadransami. Brak zgody na lokalizację albo brak odbioru to CISZA, nie błąd
+  // — sprawdzenie ma być darmowe, nigdy warunkiem przejścia dalej.
+  const gps = useGps();
+  const position = useOneShotPosition(gps, true);
+  const note = useMemo(
+    () => proximityNote(checkAirfieldProximity({ position, icao: departureIcao }), 'preflight'),
+    [position, departureIcao],
   );
 
   if (aircraft == null) {
@@ -211,6 +229,27 @@ export function PreflightTaskScreen({
                   )
                 }
               />
+            )}
+
+            {/* ── gdzie samolot NAPRAWDĘ stoi ──────────────────────────────────
+                Amber, gdy wpisany kod nie zgadza się z pozycją (najczęstszy powód:
+                podpowiedziana trasa z wczoraj), blue, gdy pole jest puste, a odbiornik
+                rozpoznaje lotnisko. Kod spoza katalogu i brak pozycji milczą. */}
+            {note != null && (
+              <>
+                <InlineNote
+                  icon={note.tone === 'amber' ? 'warning' : 'info'}
+                  tone={note.tone === 'amber' ? 'amber' : 'blue'}
+                  text={note.text}
+                />
+                {note.suggestedIcao != null && (
+                  <GhostAction
+                    label={`Wpisz ${note.suggestedIcao} jako start`}
+                    icon="edit"
+                    onPress={() => draft.set('departureIcao', note.suggestedIcao!)}
+                  />
+                )}
+              </>
             )}
           </View>
         </Card>

@@ -61,6 +61,7 @@ import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
 import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
+import { groundReferenceIcao, proximityNote } from './logic/airfieldProximityNote';
 import { enduranceLabel } from './logic/fuelNorm';
 import { cyclesLabel } from './logic/cockpitPeek';
 import { flightsBadge } from './logic/statsDay';
@@ -72,7 +73,7 @@ import {
   staleCellNote,
   unknownPhaseDetail,
 } from './logic/gpsLoss';
-import type { Event, FlightPhase } from '../../domain';
+import { checkAirfieldProximity, type Event, type FlightPhase } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */
 function useTicker(active: boolean): number {
@@ -200,11 +201,37 @@ export function CockpitScreen({
     projection.openTakeoffAt != null ? now - projection.openTakeoffAt : projection.flightTimeMs;
   const dutyMs = projection.dutyStart != null ? now - projection.dutyStart : 0;
 
+  // Czy samolot stoi tam, gdzie mówi trasa dnia (issue #6). Ostatnia deska ratunku:
+  // właściwe sprawdzenie odbywa się w preflighcie, gdzie kod ICAO jest jeszcze edytowalny.
+  // Tutaj trasa jest już zapisana, więc baner mówi to, co pilot MOŻE zrobić naprawdę.
+  const proximity = useMemo(() => {
+    const icao = groundReferenceIcao({
+      inFlight: projection.inFlight,
+      flightsCount: projection.flights.length,
+      departureIcao: projection.departureIcao,
+      arrivalIcao: projection.arrivalIcao,
+    });
+    if (icao == null) return null;
+
+    const position = fix?.lat != null && fix.lon != null ? { lat: fix.lat, lon: fix.lon } : null;
+    return proximityNote(checkAirfieldProximity({ position, icao }), 'cockpit');
+  }, [fix, projection.inFlight, projection.flights.length, projection.departureIcao, projection.arrivalIcao]);
+
   /** Komunikaty wspólne dla obu trybów — nigdy cichy błąd (§6 pkt 3). */
   const messages = (
     <>
       {lastError != null && (
         <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
+      )}
+      {/* Ostrzeżenie WARUNKOWE (typ 2): znika samo, gdy pozycja zacznie się zgadzać —
+          na przykład po przekołowaniu na właściwe lotnisko. Nie zamyka się ręcznie. */}
+      {proximity != null && (
+        <Banner
+          kind="warning"
+          icon="warning"
+          title="Trasa dnia a pozycja"
+          text={proximity.text}
+        />
       )}
       {warnings.length > 0 && (
         <Banner
