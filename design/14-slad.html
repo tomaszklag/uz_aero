@@ -112,6 +112,13 @@
   }
   .legend-row { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:8px; color:var(--text-secondary); letter-spacing:0.5px; }
   .legend-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  /* Atrybucja: pasy lotnisk aeroklubowych pochodzą z OpenStreetMap (licencja ODbL),
+     więc podpis jest wymogiem licencji, a nie ozdobą — stąd przy samych danych.
+     Nazwa klasy ta sama, co kanoniczna w panelu (`design/admin/SZABLON.html`). */
+  .map-attrib {
+    position:absolute; right:8px; bottom:6px; font-family:var(--font-mono); font-size:7px;
+    letter-spacing:0.5px; color:var(--text-muted);
+  }
 
   /* ===== KAFLE METRYK ===== */
   .metric-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1px; background:var(--border); }
@@ -251,9 +258,10 @@
               <line x1="300" y1="0" x2="300" y2="300"/>
             </g>
 
-            <!-- LOTNISKO z katalogu (`packages/domain/src/airfields.ts`, dane OurAirports):
-                 pas w skali mapy, obrócony o kurs progu, i kod ICAO. Bez kafelków to
-                 jedyne odniesienie w terenie — mówi też, z której strony było podejście. -->
+            <!-- LOTNISKO z katalogu (`packages/domain/src/airfields.ts`, dane OurAirports
+                 uzupełnione o pasy z OpenStreetMap): pas w skali mapy, obrócony o kurs progu,
+                 i kod ICAO. Bez kafelków to jedyne odniesienie w terenie — mówi też,
+                 z której strony było podejście. -->
             <g transform="rotate(-25 152 218)">
               <rect x="110" y="216" width="84" height="4" fill="#3A424C" rx="1"/>
             </g>
@@ -302,6 +310,8 @@
             <span class="map-scale-label">2 km</span>
             <span class="map-scale-bar"></span>
           </div>
+
+          <div class="map-attrib">lotniska: OurAirports · © OpenStreetMap</div>
         </div>
 
         <div class="metric-grid">
@@ -510,7 +520,7 @@
     <span class="vp-badge">14</span>
     <span class="vp-body">
       <span class="vp-name">Ślad lotu — pełny</span>
-      <span class="vp-when">Standard: jest zasięg i jest zapis GPS. Mapa z kafelkami, profil pionowy, log punktów ze stanem bramki jakości (scenariusz 22 JUN, lot 3 — zrzut z 12 800 ft).</span>
+      <span class="vp-when">Standard: jest zapis GPS. Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy, log punktów ze stanem bramki jakości (scenariusz 22 JUN, lot 3 — zrzut z 12 800 ft). Ekran nie pobiera niczego z sieci.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

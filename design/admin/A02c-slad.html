@@ -613,6 +613,10 @@
   .map-scale { position:absolute; left:12px; bottom:9px; display:flex; flex-direction:column; gap:3px; }
   .map-scale-bar { width:88px; height:5px; border:1px solid var(--text-secondary); border-top:none; }
   .map-scale-label { font-family:var(--font-mono); font-size:8px; color:var(--text-secondary); letter-spacing:1px; }
+  /* Atrybucja katalogu: pasy lotnisk aeroklubowych pochodzą z OpenStreetMap (ODbL),
+     a ta licencja wymaga podpisu przy publicznym użyciu danych. Klasa kanoniczna
+     z `SZABLON.html` — ta sama, która wcześniej podpisywała kafelki. */
+  .map-attrib { position:absolute; right:8px; bottom:7px; font-family:var(--font-mono); font-size:8px; color:var(--text-muted); background:rgba(13,13,13,0.72); padding:3px 7px; border-radius:5px; letter-spacing:0.3px; }
   .map-legend { position:absolute; left:12px; top:12px; display:flex; flex-direction:column; gap:6px; background:rgba(13,13,13,0.78); border:1px solid var(--border); border-radius:9px; padding:9px 11px; }
   .map-legend-title { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .legend-row { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:9px; color:var(--text-secondary); letter-spacing:0.3px; }
@@ -662,7 +666,7 @@
     <span class="vp-badge">A02C</span>
     <span class="vp-body">
       <span class="vp-name">Ślad lotu — mapa, profil, log</span>
-      <span class="vp-when">Ten ekran. Trasa na kafelkach OSM, profil pionowy i log przeliczonych punktów ze stanem bramki jakości. Loty dnia przełącza się paskiem nad mapą — bez wracania do tabeli.</span>
+      <span class="vp-when">Ten ekran. Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy i log przeliczonych punktów ze stanem bramki jakości. Loty dnia przełącza się paskiem nad mapą — bez wracania do tabeli.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -860,9 +864,10 @@
                 <line x1="960" y1="0" x2="960" y2="430"/>
               </g>
 
-              <!-- LOTNISKA z katalogu (`packages/domain/src/airfields.ts`, dane OurAirports):
-                   pas w skali mapy, obrócony o kurs progu. Bez kafelków to jedyne
-                   odniesienie w terenie — i jedyne, którego pilot naprawdę potrzebuje. -->
+              <!-- LOTNISKA z katalogu (`packages/domain/src/airfields.ts`, dane OurAirports
+                   uzupełnione o pasy z OpenStreetMap): pas w skali mapy, obrócony o kurs
+                   progu. Bez kafelków to jedyne odniesienie w terenie — i jedyne, którego
+                   pilot naprawdę potrzebuje. -->
               <rect class="map-runway" x="330" y="304" width="210" height="4"
                     transform="rotate(-25 435 306)"/>
               <text x="446" y="322" class="axis-label" font-size="11">EPZG · Zielona Góra-Babimost</text>
@@ -917,6 +922,8 @@
               <span class="map-scale-label">2 km</span>
               <span class="map-scale-bar"></span>
             </div>
+
+            <div class="map-attrib">lotniska: OurAirports · © OpenStreetMap</div>
           </div>
         </div>
 

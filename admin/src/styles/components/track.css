@@ -57,6 +57,22 @@
   color: var(--text-secondary);
   letter-spacing: 1px;
 }
+/* Atrybucja katalogu lotnisk: licencja ODbL wymaga podpisu przy publicznym użyciu
+   danych OSM, więc stoi przy mapie, a nie w odległej stopce. Klasa jest kanoniczna
+   (`design/admin/SZABLON.html`) — została po kafelkach i wraca do użycia z tą samą
+   geometrią, żeby nie mnożyć dwóch plakietek robiących to samo. */
+.map-attrib {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-muted);
+  background: rgba(13, 13, 13, 0.72);
+  padding: 3px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.3px;
+}
 .map-legend {
   position: absolute;
   left: 12px;

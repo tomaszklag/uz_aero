@@ -78,7 +78,7 @@ describe('airfieldRow', () => {
       lat: 52.1385,
       lon: 15.7986,
       elevationFt: 194,
-      runway: { headingDeg: 65, lengthM: 2500 },
+      runway: { headingDeg: 65, lengthM: 2500, source: 'ourairports' },
     });
 
     // Katalog trzyma 65° geograficznych (mapa obraca nimi pas na siatce zorientowanej
@@ -93,13 +93,13 @@ describe('airfieldRow', () => {
       ...airfield('EPSC', 'Szczecin'),
       lat: 53.58,
       lon: 14.9,
-      runway: { headingDeg: 100, lengthM: 2500 },
+      runway: { headingDeg: 100, lengthM: 2500, source: 'ourairports' },
     });
     const east = airfieldRow({
       ...airfield('EPSU', 'Suwałki'),
       lat: 54.07,
       lon: 22.9,
-      runway: { headingDeg: 100, lengthM: 2500 },
+      runway: { headingDeg: 100, lengthM: 2500, source: 'ourairports' },
     });
 
     expect(west.meta).not.toBe(east.meta);

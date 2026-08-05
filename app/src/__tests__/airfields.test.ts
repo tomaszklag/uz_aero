@@ -49,6 +49,44 @@ describe('katalog lotnisk', () => {
     }
   });
 
+  it('prawie każde lotnisko ma pas — bez tego mapa daje samą kropkę', () => {
+    // Do issue #3 pas miało 68 ze 106 lotnisk, a brakowało akurat aeroklubowych,
+    // czyli tych, z których lata się najczęściej. Uzupełnia je OSM.
+    const withRunway = POLISH_AIRFIELDS.filter((a) => a.runway != null);
+
+    expect(withRunway.length).toBeGreaterThanOrEqual(POLISH_AIRFIELDS.length - 3);
+  });
+
+  it('każdy pas mówi, z którego źródła pochodzi (atrybucja ODbL)', () => {
+    for (const a of POLISH_AIRFIELDS) {
+      if (a.runway == null) continue;
+      expect(['ourairports', 'osm']).toContain(a.runway.source);
+    }
+  });
+
+  it('kursy znanych pasów zgadzają się z ich oznaczeniem', () => {
+    // Test na FAKTY, nie na kształt danych: to jedyny rodzaj sprawdzenia, który łapie
+    // błąd z issue #3. Pusta komórka CSV dawała `Number('') === 0` i EPZP — pas 06/24 —
+    // trafiało do katalogu z kursem 0°, czyli narysowane na północ.
+    const known: Record<string, number> = {
+      EPZP: 60, // Zielona Góra-Przylep, 06/24
+      EPZG: 60, // Zielona Góra-Babimost, 06/24
+      EPKA: 110, // Kielce-Masłów, 11/29
+      EPSU: 80, // Suwałki, 08/26
+      EPKW: 130, // Bielsko-Biała Kaniów, 13/31
+      EPKK: 70, // Kraków-Balice, 07/25
+    };
+
+    for (const [icao, expected] of Object.entries(known)) {
+      const runway = airfieldByIcao(icao)?.runway;
+      expect(runway).not.toBeNull();
+      // Oznaczenie progu jest magnetyczne i zaokrąglone do 10°, katalog trzyma kurs
+      // geograficzny — 15° zapasu mieści deklinację i zaokrąglenie, a wyłapuje pomyłkę
+      // o rząd wielkości.
+      expect(Math.abs(runway!.headingDeg - expected)).toBeLessThanOrEqual(15);
+    }
+  });
+
   it('kody są unikalne', () => {
     const codes = POLISH_AIRFIELDS.map((a) => a.icao);
     expect(new Set(codes).size).toBe(codes.length);
