@@ -83,8 +83,9 @@ export interface DetectorState {
    */
   taxiing: boolean;
   /**
-   * Elewacja lotniska = wysokość GPS w chwili ENGINE START (§3.3, §8 mitygacja).
-   * Null, gdy przy starcie silnika nie było fixa z wysokością.
+   * Elewacja lotniska = wysokość GPS w chwili ENGINE START (§3.3, §8 mitygacja), a gdy
+   * wtedy nie było fixa z wysokością — z pierwszego fixa NA POSTOJU (§2.1).
+   * Null tylko wtedy, gdy przed startem nie było ani jednego takiego fixa.
    */
   fieldElevationFt: number | null;
   /** Od kiedy nieprzerwanie trzyma się warunek zmiany fazy (null = nie trzyma się). */
@@ -282,6 +283,32 @@ export function stepDetector(
   next.fieldPosition =
     state.fieldPosition ??
     (next.phase === 'ground' && !next.motion.moving ? next.motion.anchor : null);
+
+  // Elewacja pola: DOBIERANA z pierwszego fixa na postoju, gdy przy ENGINE START nie było
+  // jej z czego wziąć (§2.1). Bez tego jeden brakujący fix — silnik odpalony w hangarze,
+  // odbiornik jeszcze bez wysokości — wyłączał gałąź wysokościową na CAŁY lot, a wraz z nią
+  // lądowanie, które bez AGL świadomie milczy (§8.2).
+  //
+  // Warunek jest MOCNIEJSZY niż „faza ground i nie w ruchu" i to jest jego sedno. `moving`
+  // wymaga potwierdzenia przez `TAXI_CONFIRM_SEC`, więc na pierwszym fixie jest fałszywe
+  // niezależnie od tego, co samolot naprawdę robi — sama ta para wzięłaby za „elewację
+  // lotniska" wysokość przelotową odbiornika ożywionego w powietrzu, a stąd AGL ≈ 0
+  // i natychmiastowe fałszywe lądowanie. Dlatego żądamy ZMIERZONEGO postoju: prędkość musi
+  // być znana i niższa od progu „stoi".
+  //
+  // Wartość ZOSTAJE Z GPS, nie z katalogu lotnisk: wysokość fixa i elewacja pola muszą
+  // pochodzić z tego samego układu odniesienia, bo w `heightAboveField()` się odejmują
+  // i wspólny błąd odbiornika się skraca. Elewacja z mapy (AMSL) przy wysokości znad
+  // elipsoidy WGS84 wniosłaby stały błąd rzędu 100 ft — więcej niż każdy próg wysokościowy
+  // w tym pliku (uzasadnienie: issue #5).
+  const standstillSpeed = groundSpeed(fixesInWindow(history, thresholds.SPEED_WINDOW_SEC));
+  const standingStill =
+    next.phase === 'ground' &&
+    !next.motion.moving &&
+    standstillSpeed != null &&
+    standstillSpeed.kt < thresholds.TAXI_SPEED_KT;
+
+  next.fieldElevationFt = state.fieldElevationFt ?? (standingStill ? fix.altitudeFt : null);
 
   // 4. Histereza po poprzedniej detekcji — dotyczy WYŁĄCZNIE zmian fazy.
   //
