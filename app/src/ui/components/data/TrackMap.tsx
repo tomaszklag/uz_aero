@@ -128,6 +128,14 @@ export function TrackMap({
           );
         })}
 
+      {/* ── atrybucja źródeł katalogu ────────────────────────────────────── */}
+      {/* Pasy lotnisk aeroklubowych pochodzą z OpenStreetMap (ODbL), a ta licencja
+          wymaga podpisu przy publicznym użyciu danych. Stąd stała adnotacja przy
+          samej mapie, a nie w odległym „o aplikacji". */}
+      <AppText variant="micro" tone="muted" style={styles.attribution}>
+        lotniska: OurAirports · © OpenStreetMap
+      </AppText>
+
       {/* ── podziałka: bez kafelków jedyne odniesienie odległości ────────── */}
       {bar != null && (
         <View style={styles.scale}>
@@ -255,4 +263,5 @@ const styles = StyleSheet.create({
   airfieldLabel: { position: 'absolute', letterSpacing: 1 },
   scale: { position: 'absolute', left: 8, bottom: 6, gap: 2 },
   scaleBar: { height: 4, borderWidth: 1, borderTopWidth: 0 },
+  attribution: { position: 'absolute', right: 8, bottom: 6 },
 });

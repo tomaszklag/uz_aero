@@ -38,7 +38,10 @@ const DTO = join(__dirname, '..', 'src', 'api', 'dto.ts');
  */
 function capabilitiesIn(file: string): string[] {
   const source = readFileSync(file, 'utf8');
-  const block = /export type Capability =([\s\S]*?);\n/.exec(source);
+  // `\r?` NIE jest ozdobą: przy `core.autocrlf=true` (domyślnym na Windows) pliki leżą
+  // na dysku z CRLF, więc wzorzec kończący się na `;\n` nie trafiał w `;\r\n` i test
+  // wywracał się na wyjątku — u każdego, kto pracuje na Windows.
+  const block = /export type Capability =([\s\S]*?);\r?\n/.exec(source);
   if (block == null) {
     throw new Error(`Nie znaleziono deklaracji Capability w ${file} — zmienił się kształt pliku`);
   }
