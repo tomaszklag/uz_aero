@@ -58,7 +58,7 @@ ani dokładności.
 |---|---|---|
 | `phase` | `'ground' \| 'airborne'` | jedyne źródło prawdy o tym, czy samolot jest w powietrzu |
 | `taxiing` | `boolean` | czy kołowanie tego lotu już odnotowano (jeden wpis, nie jeden na fix) |
-| `fieldElevationFt` | `number \| null` | elewacja lotniska; **wysokość GPS z chwili ENGINE START** |
+| `fieldElevationFt` | `number \| null` | elewacja lotniska; **wysokość GPS z chwili ENGINE START**, a w jej braku — z pierwszego fixa na POSTOJU (§2.1) |
 | `candidateSince` | `EpochMillis \| null` | odkąd nieprzerwanie trzyma się warunek ZMIANY FAZY |
 | `cooldownUntil` | `EpochMillis \| null` | do kiedy histereza blokuje zmiany fazy |
 | `lastFixAt` | `EpochMillis \| null` | czas ostatniego **dobrego** fixa (wykrywanie przerw) |
@@ -79,15 +79,44 @@ ani dokładności.
 
 ### 2.1 Skąd bierze się elewacja lotniska
 
-Z **wysokości GPS w chwili ENGINE START**, zapisanej do payloadu zdarzenia
-(`engine_start.fieldElevationFt`), a nie trzymanej w pamięci — musi przetrwać restart
-aplikacji. Kokpit odczytuje ją z rejestru (`CockpitScreen.tsx`).
+Z dwóch źródeł, w tej kolejności:
 
-Konsekwencja, którą trzeba znać: **gdy przy starcie silnika nie było fixa z wysokością,
-elewacja jest `null` na cały lot**. Wtedy `heightAboveField()` zwraca `null`, a to wyłącza
-całą gałąź wysokościową — start wykrywa się wyłącznie po prędkości, a **lądowanie nie
-wykrywa się wcale** (§8.2). Jest to decyzja świadoma, nie luka: pilot ma wpis ręczny (05f)
-i korektę (04c), a zmyślone lądowanie kosztuje więcej niż jego brak.
+1. **Wysokość GPS w chwili ENGINE START**, zapisana do payloadu zdarzenia
+   (`engine_start.fieldElevationFt`), a nie trzymana w pamięci — musi przetrwać restart
+   aplikacji. Kokpit odczytuje ją z rejestru (`CockpitScreen.tsx`).
+2. **Wysokość pierwszego fixa na POSTOJU**, gdy przy starcie silnika jej nie było
+   (dobierana w `stepDetector`, krok 4).
+
+Drugie źródło doszło przy issue #5 i zamyka dziurę, która wcześniej kosztowała cały lot:
+silnik odpalony w hangarze albo przy zimnym odbiorniku zostawiał elewację `null`, a wtedy
+`heightAboveField()` zwracał `null` **do końca lotu** — start wykrywał się jeszcze po
+prędkości, ale **lądowanie nie wykrywało się wcale** (§8.2).
+
+**Warunek dobrania jest mocniejszy niż „faza `ground` i nie w ruchu"** i to jest jego
+sedno. `moving` wymaga potwierdzenia przez `TAXI_CONFIRM_SEC`, więc na pierwszym fixie
+jest fałszywe niezależnie od tego, co samolot naprawdę robi — sama ta para wzięłaby za
+„elewację lotniska" wysokość przelotową odbiornika ożywionego w powietrzu, a stąd AGL ≈ 0
+i natychmiastowe fałszywe lądowanie. Dlatego wymagamy **zmierzonego postoju**: prędkość
+musi być znana i niższa od `TAXI_SPEED_KT`.
+
+**Wartość zostaje z GPS — nigdy z katalogu lotnisk** (`airfields.ts`), i to również jest
+wynik issue #5. Wysokość fixa i elewacja pola **odejmują się** w `heightAboveField()`, więc
+muszą pochodzić z tego samego układu odniesienia: wspólny błąd odbiornika się skraca.
+Elewacja z katalogu jest AMSL, a `expo-location` na Androidzie podaje wysokość nad
+elipsoidą WGS84 — undulacja geoidy w Polsce to ~35 m, czyli **~115 ft stałego błędu AGL**,
+więcej niż `TAKEOFF_ALT_DIFF_FT` (50 ft) i `LANDING_ALT_DIFF_FT` (30 ft) razem wzięte.
+Podstawienie elewacji z mapy dałoby fałszywy start na postoju i lądowanie, które nigdy nie
+zapada.
+
+Gdy **nie było ani jednego fixa na postoju**, elewacja zostaje `null` i automat dalej
+świadomie milczy przy lądowaniu: pilot ma wpis ręczny (05f) i korektę (04c), a zmyślone
+lądowanie kosztuje więcej niż jego brak.
+
+Weryfikacja na nagraniach (`server/traces/`, 6 sesji, w tym pełny lot z 6671 fixami):
+przebieg z elewacją `null` daje **identyczne** detekcje co przebieg z elewacją podaną
+z góry, a dobrana wartość zgadza się co do cyfry z medianą wysokości postojowych, której
+używa `server/scripts/replay.ts`. Narzędzie kalibracyjne liczyło elewację „z ziemi" od
+początku — teraz robi to samo runtime.
 
 ---
 
@@ -117,6 +146,7 @@ komentarzom w `stepDetector`.
                         │ 4. history.push(fix)        │
                         │    motion = stepMotion(...) │  ◄── podautomat ruchu (§7)
                         │    fieldPosition ??= anchor │
+                        │    fieldElevation ??= alt   │  ◄── tylko na POSTOJU (§2.1)
                         └──────────────┬──────────────┘
                         ┌──────────────▼──────────────┐
                         │ 5. histereza (cooldown)?    │──► TAK: żadnych zmian fazy
@@ -632,7 +662,9 @@ Co bronimy, czym i gdzie jest test.
 | Kurs przez północ (355° → 5°) | weto tnie prawdziwe lądowania | różnica kołowa `headingDeltaDeg` | `detectionTrends.test.ts` |
 | Szpilka wysokości 30 ft | fałszywe „Climb" | regresja + `VS_MIN_SPAN_SEC` | `flightPhase.test.ts` |
 | Przełożenie telefonu w uchwycie | trwale zepsuty kanał IMU | budżet `GRAVITY_FREEZE_MAX_SEC` | `imu.test.ts` |
-| Brak elewacji lotniska | fałszywe lądowanie | świadome MILCZENIE (nie zgadujemy) | `flightDetector.test.ts` |
+| Brak elewacji przy ENGINE START | **cały lot bez lądowania** | dobranie z pierwszego fixa na postoju (§2.1) | `flightDetector.test.ts` |
+| Elewacja dobrana w powietrzu (odbiornik ożywiony w locie) | AGL ≈ 0 ⇒ fałszywe lądowanie 🔴 | wymóg ZMIERZONEGO postoju (`TAXI_SPEED_KT`), nie samego `!moving` | `flightDetector.test.ts` |
+| Brak elewacji i brak postoju | fałszywe lądowanie | świadome MILCZENIE (nie zgadujemy) | `flightDetector.test.ts` |
 
 ---
 

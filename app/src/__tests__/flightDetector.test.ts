@@ -449,14 +449,49 @@ describe('odporność na sygnał', () => {
     expect(s2.state.history.fixes).toHaveLength(1); // do bufora też nie wszedł
   });
 
-  it('brak elewacji lotniska: start wykrywany po GS, lądowanie wcale', () => {
+  it('brak elewacji i brak postoju: start wykrywany po GS, lądowanie wcale', () => {
+    // Automat od pierwszego fixa widzi rozpędzony samolot, więc nie ma postoju, z którego
+    // dałoby się dobrać elewację — i wtedy nadal świadomie milczy przy lądowaniu.
     const noElev = createDetectorState(null);
 
     const up = runDetector(noElev, series(0, 8, 60, 1200));
     expect(up.detections.map((d) => d.detection)).toEqual(['takeoff']);
+    expect(up.state.fieldElevationFt).toBeNull();
 
     const down = runDetector(up.state, series(100, 16, 5, 810));
     expect(down.detections).toHaveLength(0);
+  });
+
+  it('brak elewacji przy ENGINE START: dobiera ją z pierwszego fixa na postoju', () => {
+    // Silnik odpalony w hangarze albo przy zimnym odbiorniku — wysokości w tej chwili nie
+    // ma. Do issue #5 zostawało to `null` na CAŁY lot i wyłączało lądowanie.
+    const noElev = createDetectorState(null);
+
+    const { state } = runDetector(noElev, parked(0, 6));
+
+    expect(state.fieldElevationFt).toBe(FIELD_ELEV);
+  });
+
+  it('dobrana elewacja przywraca wykrywanie lądowania', () => {
+    // Sedno poprawki: bez tego cały lot kończył się bez wpisu LDG, a pilot musiał go
+    // dopisywać ręcznie (05f).
+    const parkedFirst = runDetector(createDetectorState(null), parked(0, 6));
+    const up = runDetector(parkedFirst.state, rolling(10, 10, 60, FIELD_ELEV + 20));
+    expect(up.state.phase).toBe('airborne');
+
+    const down = runDetector(up.state, rolling(200, 20, 20, FIELD_ELEV + 10, { doppler: 20 }));
+
+    expect(down.detections.map((d) => d.detection)).toContain('landing');
+  });
+
+  it('nie bierze elewacji z powietrza, gdy samolot jest w ruchu', () => {
+    // Gdyby wystarczyła sama faza `ground`, automat ze spóźnionym startem zapisałby jako
+    // „elewację lotniska" wysokość przelotową — a stąd AGL ≈ 0 i fałszywe lądowanie.
+    const noElev = createDetectorState(null);
+
+    const { state } = runDetector(noElev, rolling(0, 8, 90, 4000));
+
+    expect(state.fieldElevationFt).toBeNull();
   });
 });
 
