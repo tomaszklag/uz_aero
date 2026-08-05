@@ -212,6 +212,36 @@ describe('granice, których nie pilnuje kompilator', () => {
     expect(users).toEqual(['application/admin/correctionCandidate.ts']);
   });
 
+  it('`sessionStreams` woła WYŁĄCZNIE analityka zużycia — obie jej strony', () => {
+    // Odczyt strumieni WIELU sesji naraz jest jedynym miejscem, w którym serwer sięga do
+    // rejestru poza kartą dnia i śladem lotu (§7.5, §7.7). Metoda jest wygodna i właśnie
+    // dlatego groźna: użyta w liście zamieniłaby stronę wyników w pełny przegląd
+    // rejestru, a nikt by tego nie zauważył, bo wynik byłby poprawny.
+    //
+    // Licznik w `contract.test.ts` pilnuje ZACHOWANIA (ile razy trasa czyta), ta reguła
+    // pilnuje DOSTĘPU (kto w ogóle może zawołać). Deklaracja portu i jego adapter są
+    // z listy wyłączone — tam metoda z natury musi wystąpić.
+    //
+    // Lista ma DWIE pozycje i obie są tym samym rachunkiem policzonym dla innego odbiorcy:
+    // `queries/consumption.ts` liczy pełen raport dla panelu (`A10a`), a
+    // `common/consumptionNorm.ts` — skróconą normę dla telefonów (`GET /reference`,
+    // ekrany 04/06/10). Druga pozycja weszła świadomie razem z etapem 3; **dopisanie
+    // trzeciej jest decyzją, nie refaktorem** — każdy nowy wołający otwiera rejestr
+    // kolejnej ścieżce odczytu.
+    const users = filesUnder('.')
+      .filter((f) => codeOf(f).includes('sessionStreams'))
+      .filter(
+        (f) =>
+          f !== 'application/common/ports.ts' &&
+          f !== 'infrastructure/pg/common/eventsStore.ts',
+      )
+      .sort();
+    expect(users).toEqual([
+      'application/admin/queries/consumption.ts',
+      'application/common/consumptionNorm.ts',
+    ]);
+  });
+
   it('kontrakty panelu importują wyłącznie domenę i siebie nawzajem', () => {
     // `contracts/` to POWIERZCHNIA dla klienta panelu (docelowo `@uzaero/server/admin-contracts`).
     // Import czegokolwiek spoza domeny wciągnąłby tam wnętrze serwera — w skrajnym

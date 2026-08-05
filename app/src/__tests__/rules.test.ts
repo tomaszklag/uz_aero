@@ -196,6 +196,55 @@ describe('lot: takeoff / landing', () => {
   });
 });
 
+describe('kołowanie (taxi)', () => {
+  /** Silnik pracuje, kołowanie rozpoczęte (08:14). */
+  const taxiing = (): Event[] => [...running(), ev('taxi', { method: 'auto' }, { t: min(14) })];
+
+  it('taxi wymaga pracującego silnika, w locie nie ma sensu', () => {
+    expect(hard(check(ground(), ev('taxi', { method: 'auto' }, { t: min(13) })))).toEqual([
+      'ENGINE_NOT_RUNNING',
+    ]);
+    expect(hard(check(inFlight(), ev('taxi', { method: 'auto' }, { t: min(40) })))).toEqual([
+      'ALREADY_IN_FLIGHT',
+    ]);
+    expect(check(running(), ev('taxi', { method: 'auto' }, { t: min(14) }))).toEqual([]);
+  });
+
+  it('drugie taxi z rzędu jest odrzucane — kołowanie już trwa', () => {
+    // Duplikat z odrodzonego detektora (remont ekranu, restart aplikacji) albo z dryfu
+    // GPS — po otwartym kołowaniu legalny jest tylko start albo wyłączenie silnika.
+    expect(hard(check(taxiing(), ev('taxi', { method: 'auto' }, { t: min(16) })))).toEqual([
+      'ALREADY_TAXIING',
+    ]);
+    expect(hard(check(taxiing(), ev('taxi', { method: 'manual' }, { t: min(20) })))).toEqual([
+      'ALREADY_TAXIING',
+    ]);
+  });
+
+  it('po taxi wolno wystartować i wolno wyłączyć silnik', () => {
+    expect(check(taxiing(), ev('takeoff', { method: 'auto' }, { t: min(25) }))).toEqual([]);
+    expect(check(taxiing(), ev('engine_stop', {}, { t: min(30) }))).toEqual([]);
+  });
+
+  it('start zamyka kołowanie — po lądowaniu taxi zapada ponownie (zjazd z pasa)', () => {
+    const afterLanding = [
+      ...taxiing(),
+      ev('takeoff', { method: 'auto' }, { t: min(25) }),
+      ev('landing', { method: 'auto' }, { t: min(78) }),
+    ];
+    expect(check(afterLanding, ev('taxi', { method: 'auto' }, { t: min(79) }))).toEqual([]);
+  });
+
+  it('wyłączenie silnika zamyka kołowanie — nowy cykl zaczyna od czystego stanu', () => {
+    const nextCycle = [
+      ...taxiing(),
+      ev('engine_stop', {}, { t: min(30) }),
+      ev('engine_start', {}, { t: min(45) }),
+    ];
+    expect(check(nextCycle, ev('taxi', { method: 'auto' }, { t: min(46) }))).toEqual([]);
+  });
+});
+
 describe('paliwo', () => {
   const refuel = (payload: EventPayloadMap['refuel'], t = min(168)): Event =>
     ev('refuel', payload, { t });

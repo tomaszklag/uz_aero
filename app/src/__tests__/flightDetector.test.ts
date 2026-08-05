@@ -336,6 +336,68 @@ describe('kołowanie wykrywane z przemieszczenia', () => {
   });
 });
 
+/**
+ * KANAŁ RUCHU KONTRA NIERUCHOMY TELEFON — zgłoszenie z terenu 2026-08-04: telefon
+ * odłożony na stole, pozycja realnie bez zmian, a w logu wylądowało `taxi`.
+ *
+ * Trzy tryby porażki, każdy z własnym testem: pojedynczy odskok pozycji (multipath)
+ * wyzwalał ruch JEDNYM fixem; fix o niepewności większej niż próg ruchu „dowodził"
+ * przemieszczenia, którego sam nie umiał zmierzyć; szum dopplera przegłosowywał
+ * pozycję mówiącą „stoi przy kotwicy".
+ */
+describe('kanał ruchu kontra nieruchomy telefon (zgłoszenie 2026-08-04)', () => {
+  it('pojedynczy odskok pozycji (35 m przez 2 s, multipath) NIE wywołuje kołowania', () => {
+    // Implikowana prędkość odskoku (~68 kt) przechodzi bramkę plauzybilności, więc
+    // jedyną obroną jest wymóg UTRZYMANIA warunku — prawdziwe kołowanie się oddala,
+    // odbicie wraca do kotwicy po paru sekundach.
+    const fixes: GpsFix[] = [
+      ...parked(0, 30, { doppler: 0 }),
+      { time: t(30), groundSpeedKt: 0, altitudeFt: FIELD_ELEV, ...mNorth(35) },
+      { time: t(31), groundSpeedKt: 0, altitudeFt: FIELD_ELEV, ...mNorth(35) },
+      ...parked(32, 15, { doppler: 0 }),
+    ];
+
+    expect(runDetector(onGround(), fixes).detections).toHaveLength(0);
+  });
+
+  it('offset mniejszy niż deklarowana niepewność (30 m przy accuracyM 40) NIE wywołuje kołowania', () => {
+    // Odbiornik sam przyznaje, że może mylić się o 40 m — taki fix nie może dowodzić
+    // ruchu o 30 m, choćby utrzymywał się dowolnie długo. Bramka jakości go wpuszcza
+    // (50 m), więc próg ruchu musi uwzględnić niepewność pomiaru.
+    const offset: GpsFix[] = Array.from({ length: 12 }, (_, i) => ({
+      time: t(30 + i),
+      groundSpeedKt: 0,
+      altitudeFt: FIELD_ELEV,
+      accuracyM: 40,
+      ...mNorth(30),
+    }));
+
+    expect(
+      runDetector(onGround(), [...parked(0, 30, { doppler: 0 }), ...offset]).detections,
+    ).toHaveLength(0);
+  });
+
+  it('szum dopplera (6 kt) przy pozycji stojącej przy kotwicy NIE wywołuje kołowania', () => {
+    // Kanał wsparcia nie może przegłosować kanału głównego: gdy pozycja jest i mówi
+    // „przy kotwicy", doppler decyduje wyłącznie tam, gdzie pozycji brak.
+    expect(runDetector(onGround(), parked(0, 30, { doppler: 6 })).detections).toHaveLength(0);
+  });
+
+  it('prawdziwe kołowanie z dobrą dokładnością: wykryte, onset wciąż przy zwolnieniu hamulców', () => {
+    // Kontrola kosztu odczulenia: potwierdzenie przychodzi później, ale do rejestru
+    // idzie moment retro-datowany — czas w logu nie ma prawa się pogorszyć.
+    const fixes = [
+      ...parked(0, 20).map((f) => ({ ...f, accuracyM: 5 })),
+      ...rolling(20, 15, 8, FIELD_ELEV).map((f) => ({ ...f, accuracyM: 5 })),
+    ];
+    const { detections } = runDetector(onGround(), fixes);
+
+    expect(detections.map((d) => d.detection)).toEqual(['taxi']);
+    expect(detections[0]!.at).toBeGreaterThanOrEqual(t(19));
+    expect(detections[0]!.at).toBeLessThanOrEqual(t(24));
+  });
+});
+
 describe('histereza (cooldown)', () => {
   it('po starcie ignoruje kolejne detekcje przez czas histerezy', () => {
     // Start, a zaraz po nim warunki „lądowania" — bez histerezy powstałby lot 0-sekundowy.

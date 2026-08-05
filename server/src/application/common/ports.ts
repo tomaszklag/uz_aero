@@ -13,10 +13,12 @@
  */
 
 import type {
+  ConsumptionNorm,
   Event,
   FlagStatus,
   FlagType,
   OperationType,
+  PhaseSegment,
   ReferenceAircraft,
   ReferencePilot,
 } from '@uzaero/domain';
@@ -185,6 +187,56 @@ export interface ReferencePort {
   snapshot(): Promise<ReferenceSnapshot>;
 }
 
+/**
+ * OŚ FAZ PIONOWYCH lotu (wznoszenie / przelot / zniżanie) dla sesji.
+ *
+ * Wynik zależy WYŁĄCZNIE od śladu GPS — nie od rejestru zdarzeń. Dzięki temu da się go
+ * cache'ować obok nagrania: korekta czasu startu zmienia okno lotu, ale nie zmienia ani
+ * jednego odcinka tej osi. Pusta lista znaczy „ten dzień nie ma nagrania" i jest wynikiem
+ * pełnoprawnym: interwały tej sesji zostają wtedy bez rozbicia na fazy pionowe.
+ */
+export interface PhaseTimelinePort {
+  read(sessionUuid: string): Promise<PhaseSegment[]>;
+}
+
+/**
+ * NORMA ZUŻYCIA per samolot (migracja 19) — materializacja modelu dla telefonów.
+ *
+ * Port jest w `common/`, bo normę PRODUKUJE analityka panelu, a KONSUMUJE aplikacja
+ * pilota (`GET /reference`). Liczenie jej na żądanie telefonu odpada: `/reference`
+ * odpytuje każdy telefon co kwadrans, a model czyta strumienie kilkudziesięciu sesji.
+ */
+export interface ConsumptionNormPort {
+  /** Uuidy zamkniętych dni samolotu w oknie — wejście przeliczenia. */
+  closedSessionUuids(
+    db: Queryable,
+    aircraftId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<string[]>;
+
+  /**
+   * Zapisuje normę; `norm === null` KASUJE wiersz. Model, który przestał się publikować,
+   * nie ma prawa dalej podpowiadać starej liczby.
+   */
+  save(
+    db: Queryable,
+    aircraftId: string,
+    windowDays: number,
+    norm: ConsumptionNorm | null,
+    computedAt: Date,
+  ): Promise<void>;
+
+  /** Normy całej floty, po `aircraft_id` — wejście `GET /reference`. */
+  all(db: Queryable): Promise<Map<string, ConsumptionNorm>>;
+
+  /**
+   * Najświeższy stempel policzenia — trzeci składnik ETagu referencji. Bez niego
+   * przeliczenie modeli (bez zmiany sesji ani konfiguracji) nie dotarłoby do telefonów,
+   * bo `304` zamroziłoby poprzednią odpowiedź.
+   */
+  latestComputedAt(db: Queryable): Promise<Date | null>;
+}
+
 // ── zdarzenia, sesje, flagi (M2) ────────────────────────────────────────────────
 
 export interface EventsStorePort {
@@ -196,6 +248,22 @@ export interface EventsStorePort {
   ): Promise<{ accepted: number; duplicates: number }>;
   /** Pełny strumień sesji — wejście `projectSession`. */
   sessionEvents(db: Queryable, sessionUuid: string): Promise<Event[]>;
+  /**
+   * Strumienie WIELU sesji jednym zapytaniem — wejście analityki zużycia (`A10a`).
+   *
+   * DLACZEGO OSOBNA METODA, A NIE `sessionEvents` W PĘTLI: okno 90 dni to ~50 sesji
+   * na samolot, a rok — ponad 200. Pętla oznaczałaby tyleż round-tripów na jedno
+   * otwarcie ekranu; `WHERE session_uuid = ANY($1)` załatwia to jednym.
+   *
+   * DLACZEGO W TYM PORCIE, A NIE W NOWYM: `contract.test.ts` liczy wywołania tego
+   * portu, żeby pilnować reguły „listy panelu nie odtwarzają projekcji ze strumienia"
+   * (§7.5). Nowy port byłby furtką POZA tym licznikiem — tutaj gwarancja robi się
+   * mocniejsza, nie słabsza.
+   */
+  sessionStreams(
+    db: Queryable,
+    sessionUuids: readonly string[],
+  ): Promise<Map<string, Event[]>>;
   /** Znacznik ostatniego przyjęcia zdarzenia samolotu (do `last_sync_at`). */
   lastReceivedAt(db: Queryable, aircraftId: string): Promise<Date | null>;
   /** Liczba zdarzeń sesji przyjętych przez serwer (do `sync-status`). */
@@ -232,6 +300,27 @@ export interface SessionRow {
   blockMs: number;
   flightMs: number;
   flightsCount: number;
+  /**
+   * Kolumny statystyk (migracja 18) — wejście agregatów `A10`.
+   *
+   * Wszystkie są NULL-owalne z JEDNEGO powodu: wiersz zapisany przed migracją ma tu
+   * `NULL` do czasu przebudowy projekcji (`A11`) i agregat musi umieć to odróżnić od
+   * zera. `sessionRowFrom` NIGDY nie pisze `null` w liczniki (`takeoffCount`,
+   * `dropCount`, …) — `null` czytany z bazy znaczy więc zawsze „nieprzeliczone".
+   * `mhDeltaH`/`fuelConsumedL` bywają `null` także w świeżym wierszu: bilans dnia
+   * istnieje dopiero z odczytem końcowym `day_close` (reguła projekcji).
+   */
+  takeoffCount: number | null;
+  landingCount: number | null;
+  mhDeltaH: number | null;
+  fuelConsumedL: number | null;
+  dropCount: number | null;
+  jumpersTandem: number | null;
+  jumpersAff: number | null;
+  jumpersSolo: number | null;
+  /** Suma wysokości zrzutów Z FIXEM i ich licznik — średnia zakresu = suma / licznik. */
+  dropAltSumFt: number | null;
+  dropAltCount: number | null;
 }
 
 export interface SessionsProjectionPort {

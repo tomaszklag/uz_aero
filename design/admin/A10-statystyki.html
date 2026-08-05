@@ -400,6 +400,32 @@
   <span class="canvas-meta"><span class="pulse"></span>Wykresy: czysty CSS i SVG</span>
 </header>
 
+<aside class="variants-panel">
+  <div class="vp-title">Rodzina ekranu statystyk — kiedy który?</div>
+  <a class="vp-item active" href="A10-statystyki.html">
+    <span class="vp-badge">A10</span>
+    <span class="vp-body">
+      <span class="vp-name">Statystyki zakresu</span>
+      <span class="vp-when">Sumy dni zamkniętych per samolot / pilot / operacja. Wejście z nawigacji „Statystyki".</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="A10a-analityka.html">
+    <span class="vp-badge">A10A</span>
+    <span class="vp-body">
+      <span class="vp-name">Analityka zużycia jednego samolotu</span>
+      <span class="vp-when">Po „Analityka" z wiersza tabeli samolotów: stawki fazowe paliwa (regresja na interwałach), przelicznik MH per faza, trend, interwały ze źródłami.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="A10b-analityka-brak-danych.html">
+    <span class="vp-badge amber">A10B</span>
+    <span class="vp-body">
+      <span class="vp-name">Analityka — za mało danych</span>
+      <span class="vp-when">Samolot poniżej progu publikacji stawek (5 interwałów i 10 h silnika w oknie): progi, postęp zbierania i zebrane interwały zamiast liczb.</span>
+    </span>
+  </a>
+</aside>
+
 <main class="browser" role="region" aria-label="Panel administracyjny — statystyki floty i pilotów">
 
   <div class="chrome">
@@ -502,7 +528,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">STATYSTYKI FLOTY I PILOTÓW</h1>
-            <p class="page-sub">Suma dni zamkniętych w zakresie. Każda liczba to złożenie projekcji <code>projectSession</code> z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk. Dni jeszcze otwarte (dziś: SP-ABC i SP-KLM) są celowo poza zakresem, bo ich sumy zmieniłyby się po zamknięciu.</p>
+            <p class="page-sub">Suma dni zamkniętych w zakresie. Każda liczba to złożenie projekcji <code>projectSession</code> z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk. Sumy liczą się po dniu zamknięcia sesji, więc zbiór dni może różnić się od listy dni (A02) z tym samym zakresem — tam dzień stoi pod duty startem. Dni jeszcze otwarte (dziś: SP-ABC i SP-KLM) są celowo poza zakresem, bo ich sumy zmieniłyby się po zamknięciu.</p>
           </div>
           <div class="page-actions">
             <button class="btn primary">
@@ -532,7 +558,7 @@
           <div class="tile"><span class="tile-key">Czas lotu</span><span class="tile-val">133:45</span><span class="tile-note">71,7 % nalotu blokowego — reszta to kołowanie i postoje z pracującym silnikiem.</span></div>
           <div class="tile"><span class="tile-key">Starty / lądowania</span><span class="tile-val">356<small> / 356</small></span><span class="tile-note">Bilans domknięty na wszystkich samolotach.</span></div>
           <div class="tile"><span class="tile-key">Paliwo zużyte</span><span class="tile-val amber">21 436<small> L</small></span><span class="tile-note">Start + dolane − koniec, sesja po sesji.</span></div>
-          <div class="tile"><span class="tile-key">Przyrost motogodzin</span><span class="tile-val">186.3<small> h</small></span><span class="tile-note">Δ liczników fizycznych · blok 186.65 h — rozjazd 0.35 h.</span></div>
+          <div class="tile"><span class="tile-key">Przyrost motogodzin</span><span class="tile-val">180.1<small> h</small></span><span class="tile-note">Δ liczników fizycznych — mniej niż blok 186.65 h, bo licznik SP-ABC liczy obroty i na ziemi przyrasta wolniej (kolumna „Analityka").</span></div>
           <div class="tile"><span class="tile-key">Dni lotne</span><span class="tile-val blue">53</span><span class="tile-note">3 samoloty · 5 pilotów · 30 dni kalendarzowych.</span></div>
         </div>
 
@@ -625,44 +651,48 @@
                   <th class="num">MH start → koniec</th>
                   <th class="num">Δ MH</th>
                   <th class="num">Wykorzystanie</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 <tr class="clickable">
-                  <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan · 1250 L</span></td>
+                  <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan · 1257 L</span></td>
                   <td class="num">21</td>
                   <td class="num cell-strong">112:38</td>
                   <td class="num">71:24</td>
                   <td class="num">186 / 186</td>
                   <td class="num">19 240 L</td>
                   <td class="num">170.8</td>
-                  <td class="num">3795.4 → 3907.8<span class="cell-sub">licznik dziesiętny</span></td>
+                  <td class="num">3795.4 → 3907.8<span class="cell-sub">dziesiętny · godzinowy</span></td>
                   <td class="num">112.4</td>
                   <td class="num">70 %</td>
+                  <td><div class="row-actions"><a class="btn sm ghost" href="A10a-analityka.html">Analityka</a></div></td>
                 </tr>
                 <tr class="clickable">
-                  <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182 · 200 L</span></td>
+                  <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182 · 212 L</span></td>
                   <td class="num">18</td>
                   <td class="num cell-strong">46:12</td>
                   <td class="num">38:05</td>
                   <td class="num">74 / 74</td>
                   <td class="num">1 684 L</td>
                   <td class="num">36.5</td>
-                  <td class="num">1238.4 → 1284.6<span class="cell-sub">licznik dziesiętny</span></td>
-                  <td class="num">46.2</td>
+                  <td class="num">1244.6 → 1284.6<span class="cell-sub">dziesiętny · obrotomierzowy</span></td>
+                  <td class="num">40.0<span class="cell-sub">blok 46.2 h — licznik liczy obroty</span></td>
                   <td class="num">60 %</td>
+                  <td><div class="row-actions"><a class="btn sm ghost" href="A10a-analityka.html">Analityka</a></div></td>
                 </tr>
                 <tr class="clickable">
-                  <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3 · 100 L</span></td>
+                  <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3 · 118 L</span></td>
                   <td class="num">14</td>
                   <td class="num cell-strong">27:49</td>
                   <td class="num">24:16</td>
                   <td class="num">96 / 96</td>
                   <td class="num">512 L</td>
                   <td class="num">18.4</td>
-                  <td class="num">617:24 → 645:06<span class="cell-sub">licznik hh:mm</span></td>
+                  <td class="num">617:24 → 645:06<span class="cell-sub">hh:mm · godzinowy</span></td>
                   <td class="num">27:42</td>
                   <td class="num">47 %</td>
+                  <td><div class="row-actions"><a class="btn sm ghost" href="A10a-analityka.html">Analityka</a></div></td>
                 </tr>
                 <tr style="background:var(--surface-raised);">
                   <td class="cell-strong">RAZEM</td>
@@ -673,13 +703,14 @@
                   <td class="num cell-strong" style="color:var(--amber);">21 436 L</td>
                   <td class="num dim">—</td>
                   <td class="num dim">—</td>
-                  <td class="num cell-strong">186.3 h</td>
+                  <td class="num cell-strong">180.1 h</td>
                   <td class="num dim">—</td>
+                  <td></td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <span class="hint" style="display:block;padding-top:8px;">Kolumna „Śr. L/h" nie sumuje się do wiersza RAZEM — średnia ze średnich nie jest średnią. Dla całej floty policzyłaby 21 436 L / 186.65 h = 114.8 L/h, co nie znaczy nic, bo Caravan i AT-3 palą w innej skali. Dlatego panel stawia tu kreskę zamiast liczby, która wygląda na sensowną.</span>
+          <span class="hint" style="display:block;padding-top:8px;">Kolumna „Śr. L/h" nie sumuje się do wiersza RAZEM — średnia ze średnich nie jest średnią. Dla całej floty policzyłaby 21 436 L / 186.65 h = 114.8 L/h, co nie znaczy nic, bo Caravan i AT-3 palą w innej skali. Dlatego panel stawia tu kreskę zamiast liczby, która wygląda na sensowną. Δ MH z kolei <b>nie musi równać się blokowi</b>: licznik obrotomierzowy (SP-ABC) przyrasta na ziemi wolniej niż zegar. Zużycie per faza, przelicznik MH i interwały źródłowe: kolumna <a href="A10a-analityka.html" style="color:var(--green);">Analityka</a>.</span>
         </div>
 
         <div data-view="pilot" style="display:none;">
@@ -843,9 +874,13 @@
               </tbody>
             </table>
           </div>
-          <div class="banner warn" style="margin-top:12px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>DO DOROBIENIA: migracja projekcji <code>sessions</code>.</b> Ujęcie „per operacja" wymaga kolumny <code>operation</code>, której projekcja serwera dziś nie ma — wartość siedzi w payloadzie <code>preflight_confirm</code>. Do czasu migracji to zestawienie trzeba by liczyć przeglądem strumienia zdarzeń, więc na produkcji zakres dat byłby ograniczony.</span>
+          <!-- SPROSTOWANIE 2026-08-03: poprzednia adnotacja („DO DOROBIENIA: migracja
+               projekcji sessions") była NIEAKTUALNA od migracji 11 — kolumny operation
+               i client istnieją od przekroju A02. Poprawione przy wdrożeniu przekroju
+               A10 (`server/test/adminStats.test.ts`). -->
+          <div class="banner status" style="margin-top:12px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span><b>Sprostowanie z 2026-08-03 — kolumna <code>operation</code> ISTNIEJE od migracji 11.</b> Poprzednia adnotacja „DO DOROBIENIA: migracja projekcji <code>sessions</code>" była nieaktualna: kolumny <code>operation</code> i <code>client</code> weszły do projekcji razem z przekrojem A02, a wiersze sprzed migracji wypełnia przebudowa projekcji z ekranu <a href="A11-konserwacja.html" style="color:var(--green);">A11</a>. Ujęcie „per operacja" liczy się wprost z kolumn projekcji — bez przeglądu strumienia zdarzeń i bez ograniczania zakresu dat. Podpisy wierszy tej tabeli (lotniska przy FERRY, nazwy egzaminów) to dane przykładowe: projekcja niesie rejestracje jednostek i liczbę klientów operacji, nie lotniska.</span>
           </div>
         </div>
 
@@ -901,9 +936,11 @@
             </table>
           </div>
 
-          <div class="banner warn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>DO DOROBIENIA: migracja projekcji <code>sessions</code>.</b> Podział na klientów wymaga kolumny <code>client</code>, której projekcja serwera dziś nie ma — wartość jest w payloadzie <code>preflight_confirm</code> i denormalizowana w każdym <code>drop</code>. Same zrzuty (liczba wyniesień, skoczkowie, wysokość) liczy już <code>projectSession</code> i one są dostępne od ręki.</span>
+          <!-- SPROSTOWANIE 2026-08-03: kolumna client istnieje od migracji 11, a agregaty
+               zrzutów weszły do projekcji migracją 18 (przekrój A10). -->
+          <div class="banner status">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span><b>Sprostowanie z 2026-08-03 — projekcja NIESIE agregaty zrzutów (migracja 18).</b> Kolumna <code>client</code> istnieje od migracji 11, a wyniesienia, skoczkowie wg typów oraz <b>SUMA wysokości zrzutów z fixem i ich LICZNIK</b> (<code>drop_alt_sum_ft</code> / <code>drop_alt_count</code>) — od migracji 18. Para suma+licznik zamiast średniej per sesja jest celowa: średnich nie da się składać, a zrzut bez wysokości nie wchodzi ani do sumy, ani do licznika. Licznik wierszy do przebudowy obejmuje <b>także dni z <code>operation IS NULL</code></b> (sprzed migracji 11 albo bez preflightu): rodzaju operacji nie znamy, więc każdy z nich mógł być dniem skokowym — a na bazie migrującej ze starego schematu to jest stan DOMYŚLNY, aż do przebudowy. Wiersze wypełnia przebudowa projekcji (<a href="A11-konserwacja.html" style="color:var(--green);">A11</a>); do tego czasu panel pokazuje w tej sekcji <b>kreski i licznik wierszy do przebudowy — nigdy zera i nigdy sumy z części wierszy podanej jako całość</b>.</span>
           </div>
         </div>
 
@@ -920,6 +957,8 @@
   <a href="A02a-dzien.html">A02A Szczegół dnia</a>
   <span>·</span>
   <a href="A10-statystyki.html" class="active">A10 Statystyki</a>
+  <a href="A10a-analityka.html">A10A Analityka</a>
+  <a href="A10b-analityka-brak-danych.html">A10B Za mało danych</a>
   <span>·</span>
   <a href="A04-zdarzenia.html">A04 Zdarzenia</a>
   <a href="A05-eksporty.html">A05 Eksporty</a>

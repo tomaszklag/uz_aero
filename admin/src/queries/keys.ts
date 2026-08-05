@@ -10,6 +10,7 @@
  */
 
 import type { AuditListQuery } from '../api/audit';
+import type { ConsumptionQuery } from '../api/consumption';
 import type { CorrectionDraftDto } from '../api/dto';
 import type { EventListQuery } from '../api/events';
 import type { ExportListQuery } from '../api/exports';
@@ -17,6 +18,7 @@ import type { FlagListQuery } from '../api/flags';
 import type { FleetListQuery } from '../api/fleet';
 import type { PilotListQuery } from '../api/pilots';
 import type { SessionListQuery } from '../api/sessions';
+import type { StatsQuery } from '../api/stats';
 
 export const keys = {
   /** Tożsamość i zdolności zalogowanego (`GET /admin/api/me`). */
@@ -206,4 +208,34 @@ export const keys = {
   },
 
   dashboard: ['dashboard'] as const,
+
+  /**
+   * Statystyki (`A10`). Klucz niesie CAŁY zakres dat, bo zakres jest tożsamością
+   * pytania — „lipiec" i „ostatnie 30 dni" to dwa różne raporty i oba mają prawo żyć
+   * w cache'u obok siebie (przełączanie presetów wraca wtedy do policzonej odpowiedzi).
+   * Ujęcia (samolot / pilot / operacja) w kluczu NIE MA: to jeden raport, a przełącznik
+   * tylko wybiera tabelę z tej samej odpowiedzi.
+   */
+  stats: {
+    all: ['stats'] as const,
+    report: (query: StatsQuery) => ['stats', 'report', query] as const,
+  },
+
+  /**
+   * Analityka zużycia (`A10a`, `A10b`).
+   *
+   * Klucz niesie CAŁE pytanie: samolot i zakres. Przełączanie jednostki chipem wraca
+   * wtedy do policzonej odpowiedzi zamiast pytać serwer drugi raz — a raport jest
+   * kosztowny (czyta strumienie kilkudziesięciu sesji), więc jest to oszczędność
+   * realna, nie kosmetyczna.
+   *
+   * Pod prefiksem `fleet` NIE stoi, choć dotyczy jednostki: `keys.fleet.lists`
+   * unieważnia się przy każdym zapisie konfiguracji, a analityka nie zmienia się od
+   * zmiany pojemności zbiorników — zmienia się od nowych DNI. Wspólny prefiks kazałby
+   * jej przeliczać się bez powodu.
+   */
+  consumption: {
+    all: ['consumption'] as const,
+    report: (query: ConsumptionQuery) => ['consumption', 'report', query] as const,
+  },
 };

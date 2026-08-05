@@ -21,8 +21,23 @@ import {
   parseMotoHours,
   parseTimeUtcOnDay,
   relativeAge,
+  thousands,
   timeUtc,
 } from '../ui/format';
+
+describe('tysiące', () => {
+  it('grupuje cyfry spacją jak mockup 05 („3 500 FT")', () => {
+    expect(thousands(3500)).toBe('3 500');
+    expect(thousands(142)).toBe('142');
+    expect(thousands(12500)).toBe('12 500');
+  });
+
+  it('zaokrągla i nie gubi znaku przy wysokości pod poziomem morza', () => {
+    expect(thousands(3499.6)).toBe('3 500');
+    expect(thousands(-12.4)).toBe('−12');
+    expect(thousands(-1234)).toBe('−1 234');
+  });
+});
 
 describe('motogodziny', () => {
   it('formatuje wg konfiguracji samolotu (§5.4)', () => {

@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 17;
+export const SCHEMA_VERSION = 19;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -609,6 +609,91 @@ export const MIGRATION_17 = `
     ON admin_audit (actor_pilot_id, created_at DESC, id DESC);
 `;
 
+/**
+ * Migracja 18: STATYSTYKI zakresu z kolumn projekcji (przekrój A10, 2026-08-03).
+ *
+ * Reguła jest ta sama, co przy migracji 11 i stoi w `docs/architektura-panelu-serwer.md`
+ * §7.2: **nowa liczba w panelu = nowa kolumna projekcji wypełniana przez
+ * `sessionRowFrom`, nigdy nowe wyrażenie SQL.** Ekran `A10` sumuje starty/lądowania,
+ * paliwo zużyte, przyrost motogodzin i stronę przychodową zrzutów — a projekcja żadnej
+ * z tych wielkości dotąd nie niosła (dlatego pulpit `A01` pokazywał przy zrzutach kreskę).
+ *
+ * Co niesie która kolumna (wszystkie przepisane z `projectSession`, `@uzaero/domain`):
+ *  • `takeoff_count` / `landing_count` — liczniki zdarzeń; NIE to samo co `flights_count`
+ *    (drugi `takeoff` w powietrzu podbija licznik, ale nie otwiera drugiego lotu);
+ *  • `mh_delta_h` / `fuel_consumed_l` — bilanse dnia; `NULL`, dopóki nie ma `day_close`,
+ *    razem z regułą projekcji („zużycie istnieje dopiero z odczytem końcowym");
+ *  • `drop_count`, `jumpers_tandem/aff/solo` — wyniesienia i skoczkowie wg typów;
+ *  • `drop_alt_sum_ft` / `drop_alt_count` — SUMA wysokości zrzutów Z FIXEM i ich
+ *    LICZNIK, celowo zamiast średniej: średnia per sesja nie składa się w średnią
+ *    zakresu, a zrzut bez wysokości nie wchodzi ani do sumy, ani do licznika
+ *    (mockup A10: „7 bez wysokości nie wchodzi do średniej").
+ *
+ * `NULL` w KAŻDEJ z tych kolumn znaczy „wiersz sprzed tej migracji, jeszcze
+ * nieprzeliczony" — a nie zero. Agregaty `A10` odróżniają ten stan po `takeoff_count
+ * IS NULL` (kolumny wypełnia się razem) i wtedy zamiast liczby pokazują kreskę
+ * z liczbą wierszy do przebudowy.
+ *
+ * Indeks częściowy po `close_time`: zakres statystyk liczy się PO DNIU ZAMKNIĘCIA
+ * (dzień wchodzi do sum tam, gdzie został domknięty), więc każde zapytanie `A10`
+ * zawęża `status = 'closed' AND close_time BETWEEN …` — bez indeksu byłby to pełny
+ * skan projekcji przy każdym wejściu na ekran raportów.
+ *
+ * **Migracja wymaga PRZEBUDOWY PROJEKCJI** — dokładnie jak 11: nowe kolumny
+ * w istniejących wierszach zostaną puste do najbliższej paczki zdarzeń danej sesji,
+ * a dla dni zamkniętych takiej paczki już nie będzie. Przelicza je
+ * `AdminMaintenanceCommands.rebuildProjections` (`A11`) — jego test ma osobny
+ * przypadek na kolumny tej migracji.
+ */
+export const MIGRATION_18 = `
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS takeoff_count   INTEGER;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS landing_count   INTEGER;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mh_delta_h      DOUBLE PRECISION;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS fuel_consumed_l DOUBLE PRECISION;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS drop_count      INTEGER;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS jumpers_tandem  INTEGER;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS jumpers_aff     INTEGER;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS jumpers_solo    INTEGER;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS drop_alt_sum_ft DOUBLE PRECISION;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS drop_alt_count  INTEGER;
+  CREATE INDEX IF NOT EXISTS idx_sessions_closed_day
+    ON sessions (close_time) WHERE status = 'closed';
+`;
+
+/**
+ * Migracja 19: NORMA ZUŻYCIA per samolot — materializacja modelu dla telefonów (2026-08-05).
+ *
+ * ══ DLACZEGO TABELA, A NIE LICZENIE W LOCIE ══
+ * `GET /reference` woła KAŻDY telefon co kwadrans. Model zużycia czyta strumienie
+ * kilkudziesięciu sesji i puszcza przez regresję — koszt zupełnie inny niż odczyt
+ * konfiguracji floty. Liczenie go na żądanie telefonu byłoby wpuszczeniem analityki
+ * na ścieżkę, która ma być tania i zawsze dostępna. Memo w procesie nie wystarcza:
+ * nie przeżywa restartu i rozjeżdża się między instancjami.
+ *
+ * ══ DLACZEGO JSONB, A NIE KOLUMNY ══
+ * Kształt `ConsumptionNorm` należy do domeny i będzie się zmieniał razem z modelem
+ * (dojdą fazy pionowe). Serwer tej struktury nie filtruje ani nie sortuje — zapisuje
+ * ją i oddaje. Rozbicie na osiem kolumn dałoby osiem miejsc do zapomnienia przy
+ * następnym polu i migrację przy każdej zmianie modelu. To jest ta sama decyzja,
+ * co przy `flags.details` i `events.payload`.
+ *
+ * ══ CO ZNACZY BRAK WIERSZA ══
+ * „Model poniżej progu publikacji albo jeszcze nieliczony" — czyli dokładnie to samo,
+ * co `consumption: null` w kontrakcie. Telefon nie pokazuje wtedy porównania z normą,
+ * zamiast pokazywać zero.
+ *
+ * `computed_at` jest stemplem POLICZENIA, nie zapisu: wchodzi do odpowiedzi i pozwala
+ * telefonowi powiedzieć, jak stara jest podpowiedź, niezależnie od wieku samego cache'u.
+ */
+export const MIGRATION_19 = `
+  CREATE TABLE IF NOT EXISTS aircraft_consumption (
+    aircraft_id  TEXT PRIMARY KEY,
+    window_days  INTEGER NOT NULL,
+    model        JSONB NOT NULL,
+    computed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -627,6 +712,8 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_15,
   MIGRATION_16,
   MIGRATION_17,
+  MIGRATION_18,
+  MIGRATION_19,
 ];
 
 /**
@@ -659,4 +746,6 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Indeks po events.received_at — oś pulsu systemu',
   'Rejestr zdarzeń pod listę śledczą (indeksy typu, pilota i urządzenia)',
   'Koniec z NULLS LAST na kluczach NOT NULL (rejestr i audyt)',
+  'Kolumny statystyk w projekcji: starty/lądowania, bilanse dnia i zrzuty',
+  'Norma zużycia per samolot: aircraft_consumption (materializacja modelu)',
 ];

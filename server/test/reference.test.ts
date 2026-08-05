@@ -160,3 +160,71 @@ describe('GET /reference', () => {
     expect(second.headers.etag).not.toBe(first.headers.etag);
   });
 });
+
+describe('norma zużycia w kanale referencyjnym (etap 3, 2026-08-05)', () => {
+  it('samolot bez policzonego modelu niesie `consumption: null`, nie zero', async () => {
+    const { app } = await testHarness();
+    const token = await authed(app);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+    for (const aircraft of res.json().aircraft) {
+      // Świeża baza nie ma jeszcze żadnego zamkniętego dnia, więc modelu też nie ma.
+      // Telefon musi dostać jawny brak, a nie normę „0 L/h" — na jej podstawie
+      // ekran tankowania orzekłby, że każdy wynik jest „powyżej normy".
+      expect(aircraft.consumption).toBeNull();
+    }
+  });
+
+  it('policzona norma trafia do odpowiedzi i ZMIENIA ETag', async () => {
+    // Bez trzeciego składnika ETagu przeliczenie modelu (które nie rusza ani floty,
+    // ani sesji) byłoby dla telefonu niewidoczne — 304 zamroziłoby poprzednią odpowiedź.
+    const { app, db } = await testHarness();
+    const token = await authed(app);
+
+    const before = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    await db.query(
+      `INSERT INTO aircraft_consumption (aircraft_id, window_days, model, computed_at)
+       VALUES ('SP-AXA', 90, $1, now())`,
+      [
+        JSON.stringify({
+          windowDays: 90,
+          blockLPerHLow: 15,
+          blockLPerHHigh: 17,
+          blockLPerH: 16,
+          airLPerH: 20,
+          litersPerFlight: 22,
+          intervals: 96,
+          engineMs: 118 * 3_600_000,
+          computedAt: Date.UTC(2026, 5, 21),
+        }),
+      ],
+    );
+
+    const after = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}`, 'if-none-match': before.headers.etag as string },
+    });
+
+    expect(after.statusCode).toBe(200);
+    expect(after.headers.etag).not.toBe(before.headers.etag);
+
+    const axa = after.json().aircraft.find((a: { id: string }) => a.id === 'SP-AXA');
+    expect(axa.consumption).toMatchObject({ blockLPerH: 16, windowDays: 90, airLPerH: 20 });
+
+    // Pozostałe jednostki nadal bez normy — wpis dotyczy jednego samolotu.
+    const other = after.json().aircraft.find((a: { id: string }) => a.id === 'SP-FGK');
+    expect(other.consumption).toBeNull();
+  });
+});

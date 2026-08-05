@@ -10,6 +10,7 @@
  */
 
 export type * from './audit.ts';
+export type * from './consumption.ts';
 export type * from './corrections.ts';
 export type * from './dashboard.ts';
 export type * from './events.ts';
@@ -20,3 +21,4 @@ export type * from './fleet.ts';
 export type * from './maintenance.ts';
 export type * from './pilots.ts';
 export type * from './sessions.ts';
+export type * from './stats.ts';

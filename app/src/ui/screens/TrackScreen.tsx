@@ -6,9 +6,9 @@
  * punktów.
  *
  * **Wszystko liczy się LOKALNIE**, z zapisu na telefonie i z rejestru na telefonie
- * (`FlightTrackQueries`). Sieci wymaga wyłącznie tło mapy, więc wariant 14A nie jest
- * osobną gałęzią kodu: kafelki się nie ładują, a pod spodem zostaje siatka współrzędnych
- * ze skalą. Baner statusu mówi o tym wprost, bo milcząca dziura wyglądałaby na awarię.
+ * (`FlightTrackQueries`) i ekran **nie potrzebuje sieci w ogóle** — mapa nie ma kafelków
+ * (decyzja 2026-08-04), tylko siatkę współrzędnych z podziałką i lotniska z katalogu
+ * wbudowanego w aplikację.
  *
  * Wariant 14B (brak śladu) ma dwa powody i ekran je rozróżnia, bo znaczą co innego dla
  * pilota: lot wpisany ręcznie nigdy śladu nie miał, a lot sprzed ponad 14 dni już go
@@ -151,6 +151,7 @@ export function TrackScreen({
             markers={markers}
             width={contentWidth}
             height={MAP_HEIGHT}
+            departureIcao={view.departureIcao}
           />
           <StatGrid
             columns={2}
@@ -221,8 +222,8 @@ export function TrackScreen({
           kind="status"
           tone="blue"
           text={
-            'Ślad liczy się z zapisu na telefonie — działa bez zasięgu. Sieci wymaga wyłącznie ' +
-            'tło mapy; bez niej trasa i profil rysują się na siatce. Zapis znika po 14 dniach.'
+            'Ślad liczy się z zapisu na telefonie i działa bez zasięgu — mapa nie pobiera ' +
+            'niczego z sieci. Wysokość jest z GPS, nie ciśnieniowa. Zapis znika po 14 dniach.'
           }
         />
       </View>

@@ -34,6 +34,9 @@ export class ReplayGpsAdapter implements GpsPort {
     return 'granted';
   }
 
+  /** Odtworzenie nie ma tła ani usługi — tryb jest bez znaczenia. */
+  async setBackgroundMode(): Promise<void> {}
+
   /**
    * Jak w adapterze urządzenia: każde wywołanie to własna subskrypcja odbiorcy.
    * Odtwarzanie rusza z pierwszym słuchaczem i gaśnie z ostatnim — kto dołączy

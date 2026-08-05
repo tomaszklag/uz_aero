@@ -46,6 +46,7 @@ import {
   type SessionState,
 } from '../../domain';
 import type { EventsRepo } from '../eventsRepo';
+import { SESSION_META_KEYS } from '../ports';
 import type { CommandResult } from './commandResult';
 
 /** Tożsamość nagłówka zdarzeń (single-writer, §4.1 pkt 3). */
@@ -100,6 +101,9 @@ export class SessionCommands {
       pilotId: input.picId,
       aircraftId: input.aircraftId,
     });
+    // Osobny klucz dla usługi GPS w tle: writer headless przypisuje nim fixy po
+    // śmierci procesu. Żyje dokładnie tak długo jak otwarty dzień (czyści `dayClose`).
+    await this.repo.setMeta(SESSION_META_KEYS.activeSessionUuid, input.sessionUuid);
     return result;
   }
 
@@ -204,8 +208,12 @@ export class SessionCommands {
     return this.execute(ctx, 'manual_log_entry', () => ({ payload }));
   }
 
-  dayClose(ctx: SessionContext, payload: DayClosePayload): Promise<CommandResult> {
-    return this.execute(ctx, 'day_close', () => ({ payload }));
+  async dayClose(ctx: SessionContext, payload: DayClosePayload): Promise<CommandResult> {
+    const result = await this.execute(ctx, 'day_close', () => ({ payload }));
+    // Dzień zamknięty = usługa GPS w tle nie ma już do czego przypisywać fixów.
+    // Czyścimy dopiero PO udanym zapisie — odrzucone zamknięcie zostawia klucz.
+    await this.repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
+    return result;
   }
 
   // ── wspólna ścieżka zapisu ──────────────────────────────────────────────────

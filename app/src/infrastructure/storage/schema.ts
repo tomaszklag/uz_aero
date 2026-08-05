@@ -16,7 +16,7 @@
  */
 
 /** Wersja schematu — sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
@@ -146,5 +146,36 @@ export const MIGRATION_3 = `
   CREATE INDEX IF NOT EXISTS idx_trace_device_time ON gps_trace (device_time);
 `;
 
+/**
+ * Migracja 4: norma zużycia samolotu z analityki (`A10a`) — wejście dla ekranów 04, 06 i 10.
+ *
+ * ══ DLACZEGO OSOBNA TABELA, A NIE KOLUMNA W `reference_aircraft` ══
+ * Z konieczności i z wygody naraz.
+ *
+ * Konieczność: SQLite nie zna `ALTER TABLE … ADD COLUMN IF NOT EXISTS`, a komplet migracji
+ * musi dać się przepuścić PONOWNIE bez błędu — pilnuje tego `sqliteSchema.test.ts` na
+ * prawdziwym silniku. `CREATE TABLE IF NOT EXISTS` tę własność ma, `ADD COLUMN` nie.
+ *
+ * Wygoda: to są dwa różne cykle życia. Konfiguracja samolotu zmienia się, gdy ktoś ją
+ * zmieni w panelu — czyli raz na kwartał. Norma przelicza się po każdym zamkniętym dniu.
+ * Trzymanie ich w jednym wierszu kazałoby przepisywać konfigurację przy każdym syncu.
+ *
+ * `model` jako JSON, a nie rozbite kolumny: telefon tej struktury NIE LICZY ani nie
+ * filtruje — przepisuje ją z odpowiedzi i oddaje ekranowi. Rozbicie na osiem kolumn
+ * dałoby osiem miejsc do zapomnienia przy następnym polu.
+ */
+export const MIGRATION_4 = `
+  CREATE TABLE IF NOT EXISTS reference_consumption (
+    aircraft_id TEXT PRIMARY KEY NOT NULL,
+    model       TEXT NOT NULL,
+    fetched_at  INTEGER NOT NULL
+  );
+`;
+
 /** Migracje w kolejności stosowania: indeks = wersja docelowa − 1. */
-export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2, MIGRATION_3];
+export const MIGRATIONS: readonly string[] = [
+  MIGRATION_1,
+  MIGRATION_2,
+  MIGRATION_3,
+  MIGRATION_4,
+];

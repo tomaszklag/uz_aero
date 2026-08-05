@@ -32,7 +32,7 @@ import {
   AppText,
   Card,
   DutyStrip,
-  EventLog,
+  DayLog,
   Screen,
   StatusChip,
   SyncChip,
@@ -45,7 +45,7 @@ import { PeekBanner } from '../components/status/PeekBanner';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { litres, timeLocal, timeUtc } from '../format';
-import { buildLogRows } from './logic/cockpitLog';
+import { buildDaySections } from './logic/cockpitLog';
 import {
   peekBanner,
   peekFreshness,
@@ -117,14 +117,16 @@ export function CockpitReadonlyScreen({
 
   const mhFormat = projection?.mhFormat ?? aircraft?.mhFormat ?? 'decimal';
 
-  const logRows = useMemo(() => {
+  const daySections = useMemo(() => {
     if (snapshot == null || projection == null) return [];
-    return buildLogRows(snapshot.events, projection, mhFormat).map((row) => ({
-      ...row,
-      // Outbox opisuje TEN telefon. Cudze zdarzenia przyszły z serwera, więc znacznik
-      // „czeka na wysyłkę" byłby tu informacją o cudzej kolejce, której nie znamy.
-      pending: false,
-    }));
+    // Outbox opisuje TEN telefon. Cudze zdarzenia przyszły z serwera, więc znacznik
+    // „czeka na wysyłkę" byłby tu informacją o cudzej kolejce, której nie znamy —
+    // gasimy go i w wierszach, i na nagłówkach cykli.
+    return buildDaySections(snapshot.events, projection, mhFormat).map((s) =>
+      s.kind === 'cycle'
+        ? { ...s, pending: false, rows: s.rows.map((row) => ({ ...row, pending: false })) }
+        : { ...s, row: { ...s.row, pending: false } },
+    );
   }, [snapshot, projection, mhFormat]);
 
   if (aircraftId == null) {
@@ -261,10 +263,12 @@ export function CockpitReadonlyScreen({
           />
         )}
 
-        {/* ── log jego dnia (`.day-log`) — BEZ kolumny korekty ───────────────── */}
+        {/* ── log jego dnia (`.day-log`) — BEZ kolumny korekty; cykle domyślnie
+            zwinięte: podgląd to rzut oka na cudzy dzień, nie praca na nim ───── */}
         <Card title={peekLogTitle(picCode, projection)} flush>
-          <EventLog
-            rows={logRows}
+          <DayLog
+            sections={daySections}
+            initiallyExpanded="none"
             emptyText={
               snapshot == null
                 ? 'Nie mamy migawki tego dnia — log pojawi się po połączeniu z serwerem.'

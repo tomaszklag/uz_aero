@@ -34,6 +34,8 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     dutyEnd: at(13, 20),
     engineRunning: false,
     inFlight: false,
+    // Doszło do `SessionState` razem z detekcją kołowania — dzień zamknięty nie kołuje.
+    taxiing: false,
     openEngineStartAt: null,
     openTakeoffAt: null,
     engineRuns: [
@@ -52,6 +54,9 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
       count: 9,
       jumpers: { tandem: 21, aff: 9, solo: 17 },
       totalJumpers: 47,
+      // Osiem z dziewięciu zrzutów miało fix — średnia liczy się WYŁĄCZNIE z nich.
+      altitudeSumFt: 102850,
+      altitudeFixCount: 8,
       avgAltitudeFt: 12856.25,
     },
     closed: true,
@@ -203,7 +208,14 @@ describe('dropRows', () => {
 
   it('brak wysokości w ogóle (żaden zrzut jej nie miał) to „—", nie zero', () => {
     const state = closedState({
-      drops: { count: 2, jumpers: { tandem: 1, aff: 0, solo: 1 }, totalJumpers: 2, avgAltitudeFt: null },
+      drops: {
+        count: 2,
+        jumpers: { tandem: 1, aff: 0, solo: 1 },
+        totalJumpers: 2,
+        altitudeSumFt: 0,
+        altitudeFixCount: 0,
+        avgAltitudeFt: null,
+      },
     });
     expect(row(dropRows(state), 'Śr. wysokość').value).toBe('—');
   });

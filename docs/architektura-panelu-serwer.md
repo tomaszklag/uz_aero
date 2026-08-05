@@ -216,6 +216,35 @@
 > obejmuje `export.retry`, więc ponowienia zrobione z kolejki `A11` nie znajdują się pod
 > linkiem „Ślad akcji w audycie" z tego ekranu. Katalogu NIE zmieniono (reguła: bez
 > zgłoszenia ani `adminActions.ts`, ani `roles.ts`) — propozycje w raporcie z przeglądu.
+>
+> **Aktualizacja 2026-08-03 — przekrój STATYSTYKI (A10) WDROŻONY** (§10 poz. 8, część):
+> migracja **18** (`sessions` + 10 kolumn statystyk: `takeoff_count`, `landing_count`,
+> `mh_delta_h`, `fuel_consumed_l`, `drop_count`, `jumpers_tandem/aff/solo`,
+> `drop_alt_sum_ft`, `drop_alt_count` + częściowy `idx_sessions_closed_day`),
+> rozszerzenie `SessionRow`/`sessionRowFrom`/upsertu projekcji, w domenie
+> `DropSummary.altitudeSumFt`/`altitudeFixCount` (średnia zakresu składa się z SUMY
+> i LICZNIKA zrzutów z fixem — średnich per sesja nie da się składać), `StatsAdminPort`
+> + `PgAdminStatsRepo`, `AdminStatsQueries`, `mappers/statsReport.ts`, `contracts/stats.ts`,
+> `GET /admin/api/stats` (`panel.access`, zakres po DNIU ZAMKNIĘCIA, domyślnie ostatnie
+> 30 dni od zegara serwera), `test/adminStats.test.ts` + rozszerzone
+> `{contract,adminMaintenance,schema}.test.ts`. Przebudowa z `A11` wypełnia nowe kolumny
+> w wierszach sprzed migracji (osobny przypadek testu); do tego czasu agregaty kolumn
+> migracji 18 jadą jako `null` z licznikiem `staleRows` — nigdy jako zera.
+>
+> **Trzy odstępstwa, świadome:**
+> (1) §7.2 lokował `mh_delta_h`/`fuel_consumed_l` w migracji projekcji przekroju 2 —
+> weszły dopiero TERAZ (migracja 18), bo dopiero statystyki mają je czym sumować
+> (dokładnie wg zastrzeżenia z aktualizacji przekroju 2);
+> (2) **atrybucja block time per pilot w `@uzaero/domain` (§10 poz. 8) NIE powstała** —
+> to decyzja o nowej projekcji domenowej (dotyka aplikacji pilota) i czeka na człowieka.
+> Ujęcie „per pilot" jedzie po PIC-u (jedynym pewnym dla całej sesji — single-writer);
+> kolumny „Blok jako Dual" z mockupu NIE MA, bo `sessions.dual_id` niesie OSTATNIEGO
+> duala dnia i przy zmianie załogi przypisywałby mu cudze godziny — ekran mówi to
+> wprost pod tabelą;
+> (3) odpowiedź niesie też ILORAZY (średnie L/h, udziały, wykorzystanie, skoczkowie/h)
+> policzone w czystym mapperze nad sumami — reguła „nowa liczba = nowa kolumna projekcji"
+> dotyczy WIELKOŚCI dnia; iloraz sum nie jest odtwarzaniem projekcji, a panel nie ma
+> prawa dzielić dwóch sum po swojemu (konstytucja `A10`).
 
 ---
 
@@ -1161,6 +1190,9 @@ na zapytaniu listy potwierdza użycie indeksu — dokładnie tak, jak
   'closed'` — sesje otwarte wypadają z sum (nie mają `mh_end` ani `fuel_end_l`, więc
   wliczenie ich zafałszowałoby delty), a odpowiedź niesie `openSessionsInRange`, żeby
   UI mogło pokazać baner „w okresie są 2 sesje otwarte — ich liczby nie wchodzą do sum".
+  Osobno jedzie `openSessionsUndated`: sesja `active` z samym `session_claim` ma
+  `claim_time IS NULL` (kolumna niesie duty start z preflightu), więc nie należy do
+  ŻADNEGO zakresu — liczona jest zawsze, zamiast znikać za predykatem `BETWEEN`.
 
 ### 7.6 Rozszerzenie `test/contract.test.ts`
 
@@ -1174,6 +1206,46 @@ Test kontraktowy dostaje trzy nowe obowiązki:
    w teście. To jest wykonywalna wersja zdania „panel nie liczy po swojemu".
 3. **Mapper DTO jest czystą funkcją.** `sessionListItem(row, joins)` testowany bez bazy —
    ten sam wzorzec, co `sessionRowFrom`.
+
+### 7.7 Liczba OKNA, a nie liczba wiersza — analityka zużycia (dopisane 2026-08-05)
+
+§7.2 rozstrzyga przypadek, w którym nowa liczba panelu jest **własnością pojedynczego
+dnia**: wtedy dokładamy kolumnę projekcji i agregujemy ją SQL-em. Analityka zużycia
+(`A10a`) jest pierwszym przekrojem, do którego ta recepta nie pasuje, i warto wiedzieć
+dlaczego, zanim ktoś spróbuje ją tam zastosować.
+
+**Dlaczego kolumna projekcji nie wystarcza.** Model zużycia stoi na **interwałach
+paliwowych** — odcinkach między kolejnymi odczytami paliwomierza (`preflight_confirm`,
+para `refuel.beforeL`/`afterL`, `day_close`). Interwałów jest KILKA na sesję, więc nie są
+wartością wiersza; upchnięcie ich w JSONB dałoby kolumnę, po której i tak trzeba by
+liczyć `jsonb_array_elements` z arytmetyką — czyli dokładnie to odtwarzanie projekcji
+SQL-em, przed którym ostrzega §7.1. Co więcej, wynik modelu (`r_przelot = 40,9 L/h`)
+**nie należy do żadnego dnia** — opisuje okno. Nie ma wiersza, w którym mógłby stanąć.
+
+**Co wolno w zamian.** Przekrój analityczny może czytać strumień zdarzeń wielu sesji,
+pod trzema warunkami:
+
+1. **Zero arytmetyki w SQL.** Zapytanie wykonuje `SELECT` (kolumny projekcji + wiersze
+   rejestru); wszystkie liczby produkuje `@uzaero/domain`, a ilorazy — mapper. Reguła
+   §7.1 obowiązuje bez zmian: agreguj wartości projekcji, nigdy nie odtwarzaj projekcji.
+2. **Jedno zapytanie, nie pętla.** Strumienie pobiera `EventsStorePort.sessionStreams`
+   (`WHERE session_uuid = ANY($1)`). Pętla po `sessionEvents` przy oknie rocznym to
+   dwieście round-tripów na jedno wejście na ekran.
+3. **Bezpiecznik zamiast obietnicy kompletu.** `CONSUMPTION_SESSION_LIMIT` przycina zbiór
+   dni, a odpowiedź MÓWI o przycięciu (`basis.sessionsInRange` > `basis.sessions`).
+   Analiza z połowy okna, która nie przyznaje się do połowy, kłamie skuteczniej niż
+   odmowa.
+
+**Czego to NIE otwiera.** Listy nadal nie wołają `projectSession` ani `sessionStreams` —
+i to jest sprawdzane, nie deklarowane. `contract.test.ts` liczy OBIE drogi do rejestru
+osobno (`reads` dla pojedynczej sesji, `bulkReads` dla wielosesyjnej) i wymaga zera od
+list oraz dokładnie jednego odczytu zbiorczego od analityki. `architecture.test.ts`
+dokłada regułę po ścieżce: `sessionStreams` ma dokładnie jednego użytkownika
+(`application/admin/queries/consumption.ts`) — poza deklaracją portu i adapterem.
+
+**Model motogodzin nie potrzebuje tej furtki w ogóle.** `ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`
+składa się wyłącznie z kolumn migracji 18 (`mh_delta_h`, `flight_ms`, `block_ms`), więc
+liczy się bez jednego odczytu rejestru — czysty przypadek §7.2.
 
 ---
 

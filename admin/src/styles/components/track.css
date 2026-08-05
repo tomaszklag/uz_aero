@@ -20,35 +20,23 @@
   width: 100%;
   height: 100%;
 }
-/* Kafelki leżą POD śladem — osobna warstwa, żeby brak pokrycia nie ruszał geometrii. */
-.map-tiles {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-.map-tiles img {
-  position: absolute;
-  width: 256px;
-  height: 256px;
-  /* Kafelek, który nie doszedł, ma zostać niewidoczny zamiast pokazywać ikonę błędu. */
-  color: transparent;
-}
 .map-overlay {
   position: absolute;
   inset: 0;
 }
 
-.map-attrib {
-  position: absolute;
-  right: 8px;
-  bottom: 7px;
-  font-family: var(--font-mono);
-  font-size: 8px;
-  color: var(--text-muted);
-  background: rgba(13, 13, 13, 0.72);
-  padding: 3px 7px;
-  border-radius: 5px;
-  letter-spacing: 0.3px;
+/* Siatka współrzędnych — podkład, który zastąpił kafelki (decyzja 2026-08-04). */
+.map-grid line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+/* Pas startowy lotniska: jedyny szczegół terenu, jaki rysujemy. */
+.map-runway {
+  fill: var(--border-strong);
+}
+.map-airfield-dot {
+  fill: var(--border-strong);
 }
 .map-scale {
   position: absolute;

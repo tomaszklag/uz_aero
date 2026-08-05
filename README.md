@@ -36,7 +36,7 @@ możesz zostawić, na produkcji zmień `JWT_SECRET` i `SEED_PASSWORD`).
 | `npm run seed:demo` | trzy tygodnie ruchu klubu na **działającym** serwerze (patrz niżej) |
 | `npm test` | wszystkie testy: aplikacja (Jest) + serwer (Vitest na PGlite) |
 | `npm run typecheck` | TypeScript w całym repo |
-| `npm run android` | przebudowa dev clienta (telefon po USB) — tylko po zmianie modułów natywnych |
+| `npm run android` | przebudowa dev clienta (telefon po USB) — tylko po zmianie modułów natywnych (ostatnio: `expo-task-manager` + plugin `expo-location` dla usługi GPS w tle, 2026-08-03) |
 
 Kolejność przy pracy z serwerem: `db:up` → `seed` (raz) → `server`.
 

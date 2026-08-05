@@ -82,6 +82,10 @@ const AIRCRAFT: SeedAircraft[] = [
         },
       ],
     },
+    // Norma zużycia przychodzi WYŁĄCZNIE z serwera (analityka `A10a`) — seed pierwszego
+    // uruchomienia jej nie zmyśla. Do pierwszego synca ekrany po prostu nie pokazują
+    // porównania z normą, zamiast pokazywać wymyśloną liczbę.
+    consumption: null,
   },
   {
     // Zajęty przez innego pilota — scenariusz przejęcia (02) i podglądu read-only (04b).
@@ -96,6 +100,7 @@ const AIRCRAFT: SeedAircraft[] = [
     claimPicId: 'KRZ',
     claimSince: null,
     handover: null,
+    consumption: null,
   },
   {
     // An-2 wymaga załogi dwuosobowej — blokuje przejście dalej bez Duala.
@@ -110,6 +115,7 @@ const AIRCRAFT: SeedAircraft[] = [
     claimPicId: null,
     claimSince: null,
     handover: null,
+    consumption: null,
   },
   {
     // Wyłączony ze służby — widoczny, ale niedostępny do wyboru.
@@ -124,6 +130,7 @@ const AIRCRAFT: SeedAircraft[] = [
     claimPicId: null,
     claimSince: null,
     handover: null,
+    consumption: null,
   },
 ];
 

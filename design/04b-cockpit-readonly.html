@@ -86,12 +86,14 @@
   .ro-meta { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
   .ro-meta .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
 
-  /* ===== STATUS GROUND CHIP ===== */
+  /* ===== STATUS GROUND CHIP =====
+     Kanon pilla jak `.sync-chip`/`.running-badge` (3×9, ls 1.5, gap 5) — jedna
+     rodzina chipów, jedna metryka (2026-08-04). */
   .ground-chip {
-    display: inline-flex; align-items: center; gap: 6px; align-self: center;
-    padding: 4px 12px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px; align-self: center;
+    padding: 3px 9px; border-radius: 999px;
     background: var(--surface); border: 1px solid var(--border);
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
     color: var(--text-muted);
   }
   .ground-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
@@ -123,6 +125,17 @@
   .day-log { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
   .day-log-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
   .day-log-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+  /* Akordeon cykli jak na 04 — w podglądzie WSZYSTKIE cykle domyślnie zwinięte:
+     to szybki rzut oka na cudzy dzień, nie praca na nim (2026-08-04). */
+  .cycle-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+  .cycle-head:hover { background: var(--surface-hover); }
+  .cycle-head .chev { color: var(--text-muted); flex-shrink: 0; transition: transform .15s ease; }
+  .cycle-head.open .chev { transform: rotate(90deg); color: var(--green); }
+  .cycle-head.open { background: rgba(46,204,113,0.05); }
+  .cycle-no { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-primary); }
+  .cycle-range { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px; color: var(--text-secondary); }
+  .cycle-sum { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); letter-spacing: 0.5px; margin-left: auto; white-space: nowrap; }
+  .cycle-body.folded { display: none; }
   .log-cycle { display: flex; align-items: center; gap: 0; border-bottom: 1px solid var(--border); }
   .log-cycle:last-child { border-bottom: none; }
   .log-cycle-tl { width: 36px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; align-self: stretch; position: relative; }
@@ -296,6 +309,14 @@
           <span class="day-log-title">Log dnia KRZ · UTC · 1 cykl · 1 T/O</span>
         </div>
 
+        <!-- W podglądzie cykle domyślnie zwinięte -->
+        <div class="cycle-head" onclick="cycleToggle(this)">
+          <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          <span class="cycle-no">CYKL 1</span>
+          <span class="cycle-range">07:22–08:31</span>
+          <span class="cycle-sum">1 T/O · blok 1:09</span>
+        </div>
+        <div class="cycle-body folded">
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
           <div class="log-cycle-body"><div class="log-time green">07:22</div><div class="log-evt-label green">Start engine</div><span class="log-chip log-chip-mh">MH 4 512:00</span><span class="log-chip log-chip-fuel">176 L</span></div>
@@ -318,6 +339,7 @@
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon stop"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div></div>
           <div class="log-cycle-body"><div class="log-time red">08:31</div><div class="log-evt-label red">Stop engine</div><div class="log-meta">blok 1:09</div><span class="log-chip log-chip-mh">MH 4 513:12</span><span class="log-chip log-chip-fuel">156 L</span></div>
+        </div>
         </div>
       </div>
 
@@ -434,6 +456,11 @@
     phoneEl.dataset.state = s;
     document.querySelectorAll('.ss-btn').forEach(b => b.classList.toggle('active', b.dataset.state === s));
     document.getElementById('ss-desc').textContent = ssDesc[s];
+  }
+  // Akordeon cykli — nagłówek przełącza widoczność swojego .cycle-body.
+  function cycleToggle(head) {
+    head.classList.toggle('open');
+    head.nextElementSibling.classList.toggle('folded');
   }
 </script>
 

@@ -35,9 +35,11 @@ import {
   Banner,
   Card,
   CockpitActions,
+  DayLog,
   DetectToast,
   DropSheet,
   DutyStrip,
+  FuelStrip,
   EventLog,
   ManualEventSheet,
   NoGpsBanner,
@@ -48,19 +50,28 @@ import {
   SyncChip,
   Tag,
   type ActionCardSpec,
+  type IconName,
   type Tone,
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useGps, useSensors } from '../bootstrap/servicesContext';
+import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
-import { useEventCorrection } from '../hooks/useEventCorrection';
-import { duration, litres, timeLocal, timeUtc } from '../format';
-import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
+import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
+import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
+import { enduranceLabel } from './logic/fuelNorm';
 import { cyclesLabel } from './logic/cockpitPeek';
 import { flightsBadge } from './logic/statsDay';
-import { gpsLossText, staleCellNote, unknownPhaseDetail } from './logic/gpsLoss';
+import {
+  gpsAcquiringText,
+  gpsLossText,
+  gpsPermissionText,
+  gpsSignalState,
+  staleCellNote,
+  unknownPhaseDetail,
+} from './logic/gpsLoss';
 import type { Event, FlightPhase } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */
@@ -92,12 +103,18 @@ const PHASE_TONE: Record<FlightPhase, Tone> = {
   descent: 'blue',
 };
 
-/** „+1 200 FT/MIN" — znak jest istotny, więc wypisujemy go jawnie. */
-function verticalSpeedLabel(fpm: number | null): string | null {
-  if (fpm == null) return null;
-  const rounded = Math.round(fpm / 50) * 50;
-  return `${rounded >= 0 ? '+' : '−'}${Math.abs(rounded)} FT/MIN`;
-}
+/**
+ * Ikona fazy — stan rozpoznawalny bez czytania napisu (komplet 2026-08-04):
+ * śmigło = kręci się tylko silnik · taxi = sylwetka na kołach · odloty/przyloty
+ * = wznoszenie/zniżanie · pion = przelot. Definicje glifów w rejestrze `Icon`.
+ */
+const PHASE_ICON: Record<FlightPhase, IconName> = {
+  idle: 'phase-idle',
+  taxi: 'phase-taxi',
+  climb: 'phase-climb',
+  cruise: 'phase-cruise',
+  descent: 'phase-descent',
+};
 
 export function CockpitScreen({
   navigation,
@@ -121,6 +138,10 @@ export function CockpitScreen({
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
 
+  // Konfiguracja i norma zużycia z cache'u referencyjnego — do paska paliwa (mockup 04).
+  // Dane lokalne, więc kokpit nigdy nie czeka na sieć.
+  const aircraft = useAircraft(projection.aircraftId);
+
   const [busy, setBusy] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -137,18 +158,18 @@ export function CockpitScreen({
     return start?.payload.fieldElevationFt ?? null;
   }, [events]);
 
-  const { fix, phase, pending, undo, gpsAvailable, lastFixAt } = useFlightDetection({
-    gps,
-    enabled: engineOn,
-    fieldElevationFt,
-    // Skoki latają z i na to samo lotnisko — geofence odcina „lądowanie" daleko od
-    // pola (artefakt GPS). Ferry/przelot/egzamin lądują gdzie chcą — bez bramki.
-    sameFieldOnly: projection.operation === 'skoki',
-  });
+  const { fix, phase, pending, undo, gpsAvailable, lastFixAt, permissionDenied } =
+    useFlightDetection({
+      gps,
+      enabled: engineOn,
+      fieldElevationFt,
+      // Skoki latają z i na to samo lotnisko — geofence odcina „lądowanie" daleko od
+      // pola (artefakt GPS). Ferry/przelot/egzamin lądują gdzie chcą — bez bramki.
+      sameFieldOnly: projection.operation === 'skoki',
+    });
   // Nagrywanie czujników pokładowych do śladu kalibracyjnego — ten hook NIC nie decyduje
   // i celowo stoi obok detekcji, a nie w niej (patrz nagłówek `useSensorTrace`).
   useSensorTrace({ sensors, enabled: engineOn });
-  const { openCorrection, correctionSheet } = useEventCorrection();
 
   const run = useCallback(async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -218,7 +239,11 @@ export function CockpitScreen({
     const takeoffs = cycleRows.filter((r) => r.kind === 'takeoff').length;
     // Degradacja CZUJNIKA (mockup 05g) — osobna oś od sieci: SyncChip może świecić
     // zielono, a autodetekcja stoi. Baner-przyrząd + ręczny zapis jako jedyna droga.
+    // `gpsLost` steruje degradacją danych (siatka, faza, etykiety ręczne) — brak
+    // danych to brak danych. TON banera różnicuje dopiero `signal`: rozruch
+    // odbiornika po START ENGINE to nie awaria (decyzja UX 2026-08-04).
     const gpsLost = !gpsAvailable;
+    const signal = gpsSignalState(gpsAvailable, lastFixAt, permissionDenied);
 
     return (
       <Screen padded={false}>
@@ -249,8 +274,27 @@ export function CockpitScreen({
           contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* ── `.no-gps` (05g): baner typu STATUS — przyrząd, znika sam z powrotem fixa ── */}
-          {gpsLost && (
+          {/* ── `.no-gps` (05g): baner typu STATUS — przyrząd, znika sam z powrotem fixa.
+               Trzy stany: rozruch (amber, spokojny), utrata (czerwony 05g), brak
+               uprawnienia (czerwony + instrukcja ustawień). ── */}
+          {signal === 'acquiring' && (
+            <NoGpsBanner
+              tone="amber"
+              title="GPS: wyszukiwanie sygnału · autodetekcja uzbraja się"
+              text={gpsAcquiringText()}
+              onManualEvent={() => setManualOpen(true)}
+              onManualList={() => navigation.navigate('ManualLog')}
+            />
+          )}
+          {signal === 'permission' && (
+            <NoGpsBanner
+              title="GPS: brak uprawnienia · autodetekcja wyłączona"
+              text={gpsPermissionText()}
+              onManualEvent={() => setManualOpen(true)}
+              onManualList={() => navigation.navigate('ManualLog')}
+            />
+          )}
+          {signal === 'lost' && (
             <NoGpsBanner
               text={gpsLossText(lastFixAt, now)}
               onManualEvent={() => setManualOpen(true)}
@@ -261,12 +305,12 @@ export function CockpitScreen({
           <PhaseHero
             // Fazy z GPS nie znamy; „w locie" wiemy ZE ZDARZEŃ — projekcja nie potrzebuje fixa.
             phase={gpsLost && inFlight ? 'In Flight' : PHASE_LABEL[phase.phase]}
+            icon={gpsLost && inFlight ? 'phase-cruise' : PHASE_ICON[phase.phase]}
             tone={gpsLost ? 'amber' : PHASE_TONE[phase.phase]}
-            detail={
-              gpsLost
-                ? unknownPhaseDetail(lastFixAt)
-                : (verticalSpeedLabel(phase.verticalSpeedFpm) ?? 'brak danych o wysokości')
-            }
+            // Linia kontekstu tylko przy utracie GPS (FAZA NIEZNANA · BEZ FIXA OD…).
+            // Prędkość wznoszenia wyleciała (2026-08-04): rejestrator, nie przyrząd —
+            // wariometr pilot ma na tablicy, a trend niesie sama nazwa fazy.
+            detail={gpsLost ? unknownPhaseDetail(lastFixAt) : undefined}
           />
 
           <ParamGrid
@@ -277,7 +321,7 @@ export function CockpitScreen({
                     { label: 'Altitude', value: '— —', unit: 'FT', stale: true, note: staleCellNote(lastFixAt) },
                     {
                       label: 'Fuel on board',
-                      value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+                      value: `~${Math.round(projection.fuel.lastReadingL ?? 0)}`,
                       unit: 'L',
                       tone: 'amber',
                       tint: true,
@@ -285,7 +329,7 @@ export function CockpitScreen({
                     },
                     {
                       label: 'Flight time',
-                      value: duration(liveFlightMs),
+                      value: hhmm(liveFlightMs),
                       tone: 'green',
                       tint: true,
                       note: 'zegar — liczy normalnie',
@@ -301,17 +345,21 @@ export function CockpitScreen({
                     },
                     {
                       label: 'Altitude',
-                      value: fix?.altitudeFt != null ? `${Math.round(fix.altitudeFt)}` : '—',
+                      value: fix?.altitudeFt != null ? thousands(fix.altitudeFt) : '—',
                       unit: 'FT',
                     },
                     {
+                      // Tylda jak w mockupach 05/05g: to ostatni ODCZYT, nie stan
+                      // bieżący — w locie paliwa jest już mniej i „~" mówi to wprost.
                       label: 'Fuel on board',
-                      value: `${Math.round(projection.fuel.lastReadingL ?? 0)}`,
+                      value: `~${Math.round(projection.fuel.lastReadingL ?? 0)}`,
                       unit: 'L',
                       tone: 'amber',
                       tint: true,
                     },
-                    { label: 'Flight time', value: duration(liveFlightMs), tone: 'green', tint: true },
+                    // `hhmm` (00:47), nie `duration` (0:47) — mockup trzyma w tej komórce
+                    // format karty lotów.
+                    { label: 'Flight time', value: hhmm(liveFlightMs), tone: 'green', tint: true },
                   ]
             }
           />
@@ -404,7 +452,7 @@ export function CockpitScreen({
   // ─────────────────────────────────────────────────────────────────────────
   // TRYB GROUND (mockup 04) — przewijalny ekran dnia.
   // ─────────────────────────────────────────────────────────────────────────
-  const logRows = buildLogRows(events, projection, mhFormat);
+  const daySections = buildDaySections(events, projection, mhFormat);
 
   /**
    * Akcje naziemne (`.action-grid`). Każda niesie podpis ze stanem, żeby pilot widział,
@@ -465,8 +513,6 @@ export function CockpitScreen({
       />
 
       <View style={{ padding: theme.spacing.lg, gap: 14 }}>
-        <StatusChip label="Ground · silnik wyłączony" tone="neutral" style={{ alignSelf: 'center' }} />
-
         <ActionButton
           label="START ENGINE"
           tone="green"
@@ -485,6 +531,22 @@ export function CockpitScreen({
           />
         )}
 
+        {/* Pasek paliwa: odczyt z rejestru + szacunek z normy samolotu (serwer).
+            Bez normy pokazuje sam odczyt — brak podpowiedzi nie jest wartością
+            do wyświetlenia, a zmyślona liczba przy planowaniu paliwa jest gorsza
+            od jej braku. */}
+        {projection.fuel.lastReadingL != null && (
+          <FuelStrip
+            fuel={litres(projection.fuel.lastReadingL)}
+            endurance={enduranceLabel(projection.fuel.lastReadingL, aircraft?.consumption ?? null)}
+            source={
+              aircraft?.consumption == null
+                ? null
+                : `szacunek z normy samolotu (${aircraft.consumption.windowDays} dni) — decyduje paliwomierz`
+            }
+          />
+        )}
+
         {messages}
 
         <Card
@@ -493,11 +555,13 @@ export function CockpitScreen({
           title={`Log dnia · UTC · ${cyclesLabel(projection.engineRuns.length)} · ${projection.takeoffCount} T/O`}
           flush
         >
-          {/* Ołówek przy każdym wierszu → arkusz korekty (04c). Cel ≥ 44 px: naprawa
-              błędu nie może być trudniejsza niż jego popełnienie (§8, audyt). */}
-          <EventLog
-            rows={logRows}
-            onCorrect={openCorrection}
+          {/* Log dnia jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków
+              (korekta = świadoma operacja w Liście ręcznej 08 i statystykach 10; tam
+              mieszka arkusz 04c). Zamknięte cykle zwijają się do nagłówków, ostatni
+              zostaje rozwinięty — świeża pamięć dnia (obie decyzje 2026-08-04). */}
+          <DayLog
+            sections={daySections}
+            initiallyExpanded="last"
             emptyText="Brak zdarzeń — zacznij od START ENGINE."
           />
         </Card>
@@ -505,7 +569,6 @@ export function CockpitScreen({
         <ActionGrid actions={groundActions} />
       </View>
 
-      {correctionSheet}
       {toast}
     </Screen>
   );

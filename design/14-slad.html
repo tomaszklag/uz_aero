@@ -96,16 +96,11 @@
   .head-note { font-size:8px; letter-spacing:1px; color:var(--text-muted); text-transform:none; }
 
   /* ===== MAPA ===== */
-  /* Kafelki są JEDYNĄ rzeczą na tym ekranie wymagającą sieci — sam ślad liczy się
-     lokalnie z zapisu na telefonie, więc linia rysuje się zawsze (wariant 14A). */
+  /* BEZ kafelków (decyzja 2026-08-04): tłem jest siatka współrzędnych, a odniesienie
+     w terenie dają lotniska z katalogu wbudowanego w aplikację. Ekran nie pobiera
+     niczego z sieci — działa tak samo w hangarze bez zasięgu, jak w domu. */
   .map-wrap { position:relative; height:300px; background:#0F1216; }
   .map-wrap svg { display:block; width:100%; height:100%; }
-  .map-attrib {
-    position:absolute; right:6px; bottom:5px;
-    font-family:var(--font-mono); font-size:7px; letter-spacing:0.5px;
-    color:var(--text-muted); background:rgba(13,13,13,0.72);
-    padding:2px 6px; border-radius:4px;
-  }
   .map-scale {
     position:absolute; left:8px; bottom:6px; display:flex; flex-direction:column; gap:2px;
   }
@@ -240,28 +235,29 @@
         </div>
         <div class="map-wrap">
           <svg viewBox="0 0 365 300" preserveAspectRatio="xMidYMid slice">
-            <!-- Tło kafelków OSM (styl ciemny): pola, lasy, drogi, rzeka, lotnisko.
-                 W implementacji to warstwa rastrowa/wektorowa z serwera kafelków. -->
-            <rect x="0" y="0" width="365" height="300" fill="#12161B"/>
-            <rect x="0" y="0" width="150" height="120" fill="#141A16"/>
-            <rect x="205" y="30" width="160" height="95" fill="#141A16"/>
-            <rect x="30" y="180" width="120" height="120" fill="#151812"/>
-            <rect x="230" y="200" width="135" height="100" fill="#141A16"/>
-            <circle cx="85" cy="60" r="34" fill="#16211A"/>
-            <circle cx="300" cy="245" r="28" fill="#16211A"/>
-            <!-- rzeka -->
-            <path d="M0 155 C60 148, 95 176, 150 168 S250 140, 365 158" stroke="#1B2C3A" stroke-width="7" fill="none" stroke-linecap="round"/>
-            <!-- drogi -->
-            <path d="M0 205 L365 190" stroke="#232A31" stroke-width="3.5" fill="none"/>
-            <path d="M118 0 L140 300" stroke="#232A31" stroke-width="3" fill="none"/>
-            <path d="M255 0 L238 300" stroke="#1E242A" stroke-width="2" fill="none"/>
-            <path d="M0 92 L365 78" stroke="#1E242A" stroke-width="2" fill="none"/>
-            <!-- lotnisko: pas -->
-            <g transform="rotate(-24 168 214)">
-              <rect x="120" y="210" width="96" height="8" fill="#2A3038" rx="1"/>
-              <rect x="120" y="213" width="96" height="1.4" fill="#3A424C"/>
+            <!-- TŁO: siatka współrzędnych, BEZ kafelków (decyzja 2026-08-04).
+                 Ekran przestał zależeć od sieci w jakimkolwiek stopniu, a przy okazji
+                 zniknął problem dostawcy kafelków, jego klucza i regulaminu. -->
+            <rect x="0" y="0" width="365" height="300" fill="#0F1216"/>
+            <g stroke="#1A1F26" stroke-width="1">
+              <line x1="0" y1="60"  x2="365" y2="60"/>
+              <line x1="0" y1="120" x2="365" y2="120"/>
+              <line x1="0" y1="180" x2="365" y2="180"/>
+              <line x1="0" y1="240" x2="365" y2="240"/>
+              <line x1="60"  y1="0" x2="60"  y2="300"/>
+              <line x1="120" y1="0" x2="120" y2="300"/>
+              <line x1="180" y1="0" x2="180" y2="300"/>
+              <line x1="240" y1="0" x2="240" y2="300"/>
+              <line x1="300" y1="0" x2="300" y2="300"/>
             </g>
-            <text x="150" y="243" class="axis-label" fill="#5A646E" font-size="8">EPZG</text>
+
+            <!-- LOTNISKO z katalogu (`packages/domain/src/airfields.ts`, dane OurAirports):
+                 pas w skali mapy, obrócony o kurs progu, i kod ICAO. Bez kafelków to
+                 jedyne odniesienie w terenie — mówi też, z której strony było podejście. -->
+            <g transform="rotate(-25 152 218)">
+              <rect x="110" y="216" width="84" height="4" fill="#3A424C" rx="1"/>
+            </g>
+            <text x="163" y="243" class="axis-label" fill="#5A646E" font-size="8">EPZG · Zielona Góra-Babimost</text>
 
             <!-- ŚLAD LOTU: start z pasa, spirala wznoszenia, zrzut, zejście, lądowanie.
                  Kolor = zielony (główny akcent), grubość 2.5, zaokrąglone łączenia. -->
@@ -306,7 +302,6 @@
             <span class="map-scale-label">2 km</span>
             <span class="map-scale-bar"></span>
           </div>
-          <div class="map-attrib">© OpenStreetMap</div>
         </div>
 
         <div class="metric-grid">
@@ -498,9 +493,10 @@
           <circle cx="7" cy="7" r="6"/><path d="M7 6.5v4M7 4h.01"/>
         </svg>
         <div class="note-text">
-          <b>Ślad liczy się z zapisu na telefonie</b> — działa bez zasięgu. Sieci wymaga
-          wyłącznie tło mapy; bez niej ślad i profil rysują się na siatce (14A).
-          Zapis znika po 14 dniach, a dla lotów wpisanych ręcznie nie powstaje wcale (14B).
+          <b>Wszystko liczy się z zapisu na telefonie</b> — ekran nie pobiera niczego
+          z sieci. Lotniska pochodzą z katalogu wbudowanego w aplikację, wysokość jest
+          z GPS (nie ciśnieniowa). Zapis śladu znika po 14 dniach, a dla lotów wpisanych
+          ręcznie nie powstaje wcale (14B).
         </div>
       </div>
 
@@ -518,13 +514,6 @@
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="14a-slad-offline.html">
-    <span class="vp-badge amber">14A</span>
-    <span class="vp-body">
-      <span class="vp-name">Ślad bez tła mapy</span>
-      <span class="vp-when">Brak zasięgu: kafelki nie doszły, ale ślad, profil i log są lokalne — rysują się na siatce ze skalą. Adnotacja amber mówi wprost, czego brakuje i że reszta jest kompletna.</span>
-    </span>
-  </a>
   <a class="vp-item" href="14b-slad-brak.html">
     <span class="vp-badge dim">14B</span>
     <span class="vp-body">
@@ -540,7 +529,6 @@
   <a href="10-statystyki.html">← 10 Statystyki</a>
   <span>·</span>
   <a href="14-slad.html" class="active">14 Ślad</a>
-  <a href="14a-slad-offline.html">14A Bez tła</a>
   <a href="14b-slad-brak.html">14B Brak</a>
   <span>·</span>
   <a href="12-historia.html">12 Historia →</a>

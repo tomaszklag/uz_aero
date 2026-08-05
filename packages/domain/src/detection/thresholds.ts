@@ -24,8 +24,11 @@
  * Oddalenie od kotwicy postoju (m), po którym uznajemy, że samolot ruszył.
  *
  * 25 m to około pięciokrotność dryfu odbiornika stojącego w miejscu i jednocześnie
- * ~6 sekund kołowania z prędkością 8 kt. Ten próg nie potrzebuje osobnego okna
- * potwierdzenia — przejechane dwadzieścia pięć metrów SAMO w sobie jest potwierdzeniem.
+ * ~6 sekund kołowania z prędkością 8 kt. Próg działa z dwoma zabezpieczeniami
+ * (`motion.ts`, zgłoszenie z terenu 2026-08-04): jest powiększany o deklarowaną
+ * niepewność fixa (`accuracyM`) i musi się utrzymać `TAXI_CONFIRM_SEC` — pierwsza
+ * wersja („25 m samo w sobie jest potwierdzeniem") kołowała telefonem odłożonym
+ * na stole, bo bramka jakości wpuszcza fixy o dokładności do 50 m.
  */
 export const TAXI_DISPLACEMENT_M = 25;
 
@@ -49,15 +52,16 @@ export const STOP_DISPLACEMENT_M = 10;
  * Kołowanie, kanał WSPARCIA: prędkość po ziemi powyżej progu (węzły).
  *
  * ZOSTAJE przy 4 kt, choć czułość kanału przemieszczeniowego kusiła, żeby zejść niżej.
- * Ten tor obsługuje teraz sytuacje, w których przemieszczenia policzyć się NIE DA —
- * czyli fixy bez pozycji, a więc dane najgorszej jakości, jakie w ogóle dostajemy.
+ * Ten tor obsługuje WYŁĄCZNIE sytuacje, w których przemieszczenia policzyć się NIE DA —
+ * czyli fixy bez pozycji, a więc dane najgorszej jakości, jakie w ogóle dostajemy
+ * (od 2026-08-04 egzekwowane wprost: przy dostępnej pozycji doppler nie głosuje).
  * Obniżanie progu akurat tam, gdzie wiemy najmniej, jest odwrotnością tego, co należy
  * zrobić: szum dopplera na postoju sięga 3 kt i przy progu 3 kt kołowałby zaparkowany
  * samolot. Czułość bierzemy z przemieszczenia, nie z rozluźnienia zabezpieczenia.
  */
 export const TAXI_SPEED_KT = 4;
 
-/** Kołowanie, kanał wsparcia: warunek prędkościowy musi trwać min. tyle sekund. */
+/** Kołowanie: warunek (przemieszczeniowy albo prędkościowy) musi trwać min. tyle sekund. */
 export const TAXI_CONFIRM_SEC = 4;
 
 /** Okno (s) uśredniania prędkości do decyzji „stoi / jedzie". */

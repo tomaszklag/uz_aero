@@ -10,7 +10,8 @@
  * To ta sama zależność, którą `projections.test.ts` sprawdza jako inwariant „Δ MH = block".
  */
 
-import { buildLogRows } from '../ui/screens/logic/cockpitLog';
+import { buildDaySections, buildLogRows } from '../ui/screens/logic/cockpitLog';
+import type { DayCycleSection, DayLooseSection } from '../ui/components';
 import type { Event, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);
@@ -63,6 +64,33 @@ describe('log dnia', () => {
     // `session_claim` nie jest przebiegiem dnia — to zapis o przejęciu samolotu.
     expect(rows.map((r) => r.label)).toEqual(['Start engine', 'Stop engine']);
     expect(rows.map((r) => r.kind)).toEqual(['start', 'stop']);
+  });
+
+  it('preflight nie wchodzi do logu — dzień zaczyna się pustą osią (mockup 04a)', () => {
+    // Odczyty początkowe ustala się WYŁĄCZNIE stepperami 02a i potwierdzeniem 03 —
+    // wiersz w logu dawałby preflightowi ołówek korekty 04c, czyli tylną furtkę
+    // do zmiany tego, co pilot świadomie zatwierdził.
+    const rows = buildLogRows(
+      [event('preflight_confirm', at(8, 0), { reading: { mh: 1234.5, fuelL: 150 } })],
+      projection(),
+      'hhmm',
+    );
+    expect(rows).toEqual([]);
+  });
+
+  it('odczyt z preflightu niesie pierwszy start silnika, nie osobny wiersz', () => {
+    // Mockup 04: pierwszy „Start engine" ma chipy „MH 1234:30" i „150 L".
+    const rows = buildLogRows(
+      [
+        event('preflight_confirm', at(8, 0), { reading: { mh: 1234.5, fuelL: 150 } }),
+        event('engine_start', at(8, 12)),
+      ],
+      projection(),
+      'hhmm',
+    );
+
+    expect(rows.map((r) => r.label)).toEqual(['Start engine']);
+    expect(rows[0]!.chips?.map((c) => c.label)).toEqual(['MH 1234:30', '150 L']);
   });
 
   it('porządkuje chronologicznie, nie w kolejności zapisu', () => {
@@ -198,5 +226,80 @@ describe('log dnia', () => {
       'hhmm',
     );
     expect(rows.map((r) => r.pending)).toEqual([true, false]);
+  });
+});
+
+describe('sekcje dnia (zwijanie cykli)', () => {
+  /** Dzień z mockupu 04: dwa zamknięte cykle przedzielone tankowaniem. */
+  const dayEvents = (): Event[] => [
+    event('engine_start', at(8, 12)),
+    event('takeoff', at(8, 25), { method: 'auto' }),
+    event('landing', at(9, 18), { method: 'auto' }),
+    event('takeoff', at(9, 35), { method: 'auto' }),
+    event('landing', at(10, 22), { method: 'auto' }),
+    event('engine_stop', at(10, 34)),
+    event('refuel', at(10, 48), { beforeL: 112, addedL: 48, afterL: 160 }),
+    event('engine_start', at(11, 15)),
+    event('takeoff', at(11, 28), { method: 'auto' }),
+    event('landing', at(12, 15), { method: 'auto' }),
+    event('engine_stop', at(12, 28)),
+  ];
+
+  it('zamknięty cykl zwija się do nagłówka, którego liczby zgadzają się z wierszami', () => {
+    const sections = buildDaySections(dayEvents(), projection(), 'hhmm');
+    expect(sections.map((s) => s.kind)).toEqual(['cycle', 'loose', 'cycle']);
+
+    const c1 = sections[0] as DayCycleSection;
+    expect(c1.no).toBe(1);
+    expect(c1.range).toBe('08:12–10:34');
+    expect(c1.takeoffs).toBe(2);
+    expect(c1.block).toBe('blok 2:22');
+    expect(c1.closed).toBe(true);
+    expect(c1.rows.map((r) => r.label)).toEqual([
+      'Start engine',
+      'Takeoff',
+      'Landing',
+      'Takeoff',
+      'Landing',
+      'Stop engine',
+    ]);
+
+    const c2 = sections[2] as DayCycleSection;
+    expect(c2.no).toBe(2);
+    expect(c2.takeoffs).toBe(1);
+    expect(c2.block).toBe('blok 1:13');
+  });
+
+  it('zdarzenie naziemne między cyklami zostaje luzem — nigdy się nie zwija', () => {
+    const sections = buildDaySections(dayEvents(), projection(), 'hhmm');
+    const loose = sections[1] as DayLooseSection;
+    expect(loose.kind).toBe('loose');
+    expect(loose.row.label).toBe('Tankowanie');
+  });
+
+  it('cykl bez stopu jest otwarty: zakres z wielokropkiem, bez bloku', () => {
+    const sections = buildDaySections(
+      [event('engine_start', at(13, 10)), event('takeoff', at(13, 24), { method: 'auto' })],
+      projection(),
+      'hhmm',
+    );
+    const c = sections[0] as DayCycleSection;
+    expect(c.closed).toBe(false);
+    expect(c.range).toBe('13:10–…');
+    expect(c.block).toBeNull();
+    expect(c.takeoffs).toBe(1);
+  });
+
+  it('znacznik niewysłanych z wnętrza cyklu wypływa na nagłówek', () => {
+    const sections = buildDaySections(
+      [
+        event('engine_start', at(8, 12)),
+        event('takeoff', at(8, 25), { method: 'auto' }, false),
+        event('engine_stop', at(10, 34)),
+      ],
+      projection(),
+      'hhmm',
+    );
+    expect((sections[0] as DayCycleSection).pending).toBe(true);
   });
 });

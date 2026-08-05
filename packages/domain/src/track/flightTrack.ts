@@ -77,29 +77,27 @@ export interface BuildTrackOptions {
  *   zapis wsadowy i retro-datowanie potrafią je pomieszać, tak samo jak w rejestrze).
  * @param window okno lotu z projekcji sesji.
  */
-export function buildFlightTrack(
+/**
+ * Surowe wiersze śladu → punkty po bramce jakości, w kolejności czasu.
+ *
+ * Wydzielone z `buildFlightTrack`, bo tej samej konwersji potrzebuje oś faz pionowych
+ * (`consumption/phaseTimeline.ts`), która pracuje na CAŁYM nagraniu, a nie na oknie
+ * jednego lotu. Druga kopia tej pętli oznaczałaby drugą bramkę jakości — i ślad
+ * pokazywałby na mapie coś innego, niż widziała analityka.
+ *
+ * Wejście musi być posortowane rosnąco po czasie: test skoku pozycji porównuje z ostatnim
+ * PRZYJĘTYM punktem, więc przemieszana kolejność dałaby fałszywe odrzucenia.
+ */
+export function toTrackPoints(
   entries: readonly RawTrackEntry[],
-  window: FlightWindow,
-  options: BuildTrackOptions = {},
-): FlightTrack {
-  const toleranceM = options.toleranceM ?? DEFAULT_SIMPLIFY_TOLERANCE_M;
-  const thresholds = options.thresholds ?? GPS_THRESHOLDS;
-
-  // Lot otwarty (w powietrzu) nie ma górnej granicy — ślad idzie do ostatniego wpisu.
-  const until = window.landingAt ?? Number.POSITIVE_INFINITY;
-
-  const inWindow = entries
-    .filter((e) => e.kind === 'fix' && e.time >= window.takeoffAt && e.time <= until)
-    .sort((a, b) => a.time - b.time);
-
-  if (inWindow.length === 0) return emptyFlightTrack();
-
+  thresholds: GpsThresholds = GPS_THRESHOLDS,
+): TrackPoint[] {
   const points: TrackPoint[] = [];
   // Ostatni PRZYJĘTY punkt — odniesienie testu skoku. Odrzucony nie może być
   // odniesieniem, bo jedna teleportacja unieważniłaby cały ogon trasy.
   let previousAccepted: { lat: number; lon: number; time: EpochMillis } | null = null;
 
-  for (const entry of inWindow) {
+  for (const entry of entries) {
     const rejected = rejectionReason(entry, previousAccepted, thresholds);
     const point: TrackPoint = {
       time: entry.time,
@@ -118,6 +116,28 @@ export function buildFlightTrack(
       previousAccepted = { lat: point.lat, lon: point.lon, time: point.time };
     }
   }
+
+  return points;
+}
+
+export function buildFlightTrack(
+  entries: readonly RawTrackEntry[],
+  window: FlightWindow,
+  options: BuildTrackOptions = {},
+): FlightTrack {
+  const toleranceM = options.toleranceM ?? DEFAULT_SIMPLIFY_TOLERANCE_M;
+  const thresholds = options.thresholds ?? GPS_THRESHOLDS;
+
+  // Lot otwarty (w powietrzu) nie ma górnej granicy — ślad idzie do ostatniego wpisu.
+  const until = window.landingAt ?? Number.POSITIVE_INFINITY;
+
+  const inWindow = entries
+    .filter((e) => e.kind === 'fix' && e.time >= window.takeoffAt && e.time <= until)
+    .sort((a, b) => a.time - b.time);
+
+  if (inWindow.length === 0) return emptyFlightTrack();
+
+  const points = toTrackPoints(inWindow, thresholds);
 
   const usable = points.filter(isUsablePoint);
   if (usable.length === 0) {

@@ -25,6 +25,8 @@ import { FlagsScreen } from './screens/flags/FlagsScreen';
 import { FleetScreen } from './screens/fleet/FleetScreen';
 import { MaintenanceScreen } from './screens/maintenance/MaintenanceScreen';
 import { PilotsScreen } from './screens/pilots/PilotsScreen';
+import { ConsumptionScreen } from './screens/consumption/ConsumptionScreen';
+import { StatsScreen } from './screens/stats/StatsScreen';
 import { TrackScreen } from './screens/track/TrackScreen';
 import { DashboardScreen } from './screens/dashboard/DashboardScreen';
 import { UnderConstructionScreen } from './screens/underConstruction/UnderConstructionScreen';
@@ -41,6 +43,7 @@ const IMPLEMENTED = new Set([
   '/eksporty',
   '/zdarzenia',
   '/konserwacja',
+  '/statystyki',
 ]);
 
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items).filter(
@@ -148,6 +151,17 @@ export const router = createHashRouter([
       // a odtworzyłby wyłącznie pusty formularz. Przejścia W GŁĄB (do dnia, do flagi,
       // do karty) prowadzą stąd na ekrany, które adresy mają.
       { path: 'konserwacja', element: <MaintenanceScreen /> },
+
+      // Statystyki (`A10`) — JEDNA trasa; zakres dat i ujęcie (samolot / pilot /
+      // operacja) jadą query stringiem po polsku (`?od=…&do=…&ujecie=…`), jak w pasku
+      // adresu mockupu — raport „lipiec per pilot" ma być linkiem do wklejenia.
+      { path: 'statystyki', element: <StatsScreen /> },
+
+      // Analityka zużycia (`A10a` / `A10b`) — PODTRASA statystyk, bo wejście prowadzi
+      // z tabeli samolotów i tam też wraca. Wariant „za mało danych" nie ma osobnego
+      // adresu: to inny stan tych samych danych, a rozstrzyga go dopiero odpowiedź
+      // serwera (`fuel.published`) — ta sama decyzja, co przy pulpicie i jego ciszy.
+      { path: 'statystyki/analityka/:aircraftId', element: <ConsumptionScreen /> },
 
       ...NAV_ITEMS.map((item) => ({
         // `path` bez wiodącego ukośnika: trasy potomne są względne wobec `/`.

@@ -81,6 +81,17 @@ export interface DropSummary {
   /** Suma skoczków wg typów. */
   jumpers: JumperCounts;
   totalJumpers: number;
+  /**
+   * Suma wysokości zrzutów, które MIAŁY wysokość (ft), i liczba tych zrzutów.
+   *
+   * Para istnieje obok `avgAltitudeFt`, bo średnich nie da się składać: statystyki
+   * zakresu (panel `A10`) sumują gotowe wyniki wielu sesji, a średnia policzona ze
+   * średnich per sesja ważyłaby każdą sesję tak samo, niezależnie od liczby zrzutów.
+   * Zrzut bez fixa GPS nie wchodzi ani do sumy, ani do licznika — brak wysokości to
+   * niewiedza, nie zero.
+   */
+  altitudeSumFt: number;
+  altitudeFixCount: number;
   /** Średnia wysokość zrzutu (ft) — null, gdy żaden drop nie miał wysokości. */
   avgAltitudeFt: number | null;
 }
@@ -109,6 +120,12 @@ export interface SessionState {
 
   engineRunning: boolean;
   inFlight: boolean;
+  /**
+   * Czy trwa kołowanie: `taxi` bez późniejszego startu/wyłączenia silnika.
+   * Gwardia `ALREADY_TAXIING` blokuje tym stanem drugie `taxi` z rzędu — po kołowaniu
+   * legalny jest wyłącznie `takeoff` albo `engine_stop` (decyzja 2026-08-04).
+   */
+  taxiing: boolean;
   /** Start otwartego cyklu silnika (do liczenia block time „na żywo"). */
   openEngineStartAt: EpochMillis | null;
   /** Start otwartego lotu (do liczenia flight time „na żywo"). */
@@ -167,6 +184,7 @@ export function emptySessionState(): SessionState {
     dutyEnd: null,
     engineRunning: false,
     inFlight: false,
+    taxiing: false,
     openEngineStartAt: null,
     openTakeoffAt: null,
     engineRuns: [],
@@ -181,6 +199,8 @@ export function emptySessionState(): SessionState {
       count: 0,
       jumpers: { tandem: 0, aff: 0, solo: 0 },
       totalJumpers: 0,
+      altitudeSumFt: 0,
+      altitudeFixCount: 0,
       avgAltitudeFt: null,
     },
     closed: false,
@@ -206,9 +226,9 @@ export function projectSession(events: Event[]): SessionState {
   // po poprawce, bez zdarzeń unieważnionych i bez samych `event_correction`.
   const effective = applyCorrections(events);
 
-  // Bufor sum wysokości zrzutów — średnią liczymy na końcu.
-  let dropAltSum = 0;
-  let dropAltCount = 0;
+  // Suma i licznik wysokości akumulują się wprost w stanie (`drops.altitudeSumFt` /
+  // `drops.altitudeFixCount`) — średnią liczymy z nich na końcu. Osobny bufor lokalny
+  // byłby drugą kopią tych samych liczb.
 
   // Kolejność WSTAWIENIA ≠ kolejność ZDARZEŃ. Wpis ręczny (05f) niesie czas cofnięty
   // („4 min temu"), a korekta (04c) zmienia czas istniejącego zdarzenia — oba trafiają
@@ -262,6 +282,7 @@ export function projectSession(events: Event[]): SessionState {
           state.blockTimeMs += run.durationMs;
         }
         state.engineRunning = false;
+        state.taxiing = false;
         state.openEngineStartAt = null;
         break;
       }
@@ -281,6 +302,7 @@ export function projectSession(events: Event[]): SessionState {
           state.inFlight = true;
           state.openTakeoffAt = t;
         }
+        state.taxiing = false;
         break;
       }
 
@@ -294,6 +316,9 @@ export function projectSession(events: Event[]): SessionState {
           state.flightTimeMs += flight.durationMs;
         }
         state.inFlight = false;
+        // Kołowanie jest już zamknięte startem; zerujemy też tu, żeby korekta
+        // unieważniająca takeoff nie zakleszczyła stanu „wiecznego kołowania".
+        state.taxiing = false;
         state.openTakeoffAt = null;
         break;
       }
@@ -312,8 +337,8 @@ export function projectSession(events: Event[]): SessionState {
         state.drops.jumpers.aff += p.jumpers.aff;
         state.drops.jumpers.solo += p.jumpers.solo;
         if (p.altitudeFt != null) {
-          dropAltSum += p.altitudeFt;
-          dropAltCount += 1;
+          state.drops.altitudeSumFt += p.altitudeFt;
+          state.drops.altitudeFixCount += 1;
         }
         if (state.client == null && p.client != null) state.client = p.client;
         break;
@@ -363,9 +388,11 @@ export function projectSession(events: Event[]): SessionState {
 
       case 'taxi':
         // Kołowanie nie wpływa na ŻADEN bilans: czas blokowy wyznaczają `engine_start`
-        // i `engine_stop`, czas lotu — `takeoff` i `landing`. To wpis czysto opisowy,
-        // odczytywany wprost ze strumienia przy budowaniu logu cyklu (mockup 05).
-        // Gdyby kiedyś wszedł do statystyk, jego miejsce jest tutaj.
+        // i `engine_stop`, czas lotu — `takeoff` i `landing`. Jedyne, co niesie, to
+        // stan „kołowanie trwa" dla gwardii ALREADY_TAXIING — zamyka go dopiero start
+        // albo wyłączenie silnika. Sam wpis jest opisowy, odczytywany wprost ze
+        // strumienia przy budowaniu logu cyklu (mockup 05).
+        state.taxiing = true;
         break;
 
       case 'event_correction':
@@ -388,7 +415,10 @@ export function projectSession(events: Event[]): SessionState {
   }
   state.drops.totalJumpers =
     state.drops.jumpers.tandem + state.drops.jumpers.aff + state.drops.jumpers.solo;
-  state.drops.avgAltitudeFt = dropAltCount > 0 ? dropAltSum / dropAltCount : null;
+  state.drops.avgAltitudeFt =
+    state.drops.altitudeFixCount > 0
+      ? state.drops.altitudeSumFt / state.drops.altitudeFixCount
+      : null;
 
   return state;
 }

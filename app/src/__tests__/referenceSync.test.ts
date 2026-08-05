@@ -47,6 +47,7 @@ const axa = (over: Partial<ReferenceAircraft> = {}): ReferenceAircraft => ({
   claimPicId: null,
   claimSince: null,
   handover: null,
+  consumption: null,
   fetchedAt: 0,
   ...over,
 });

@@ -301,6 +301,17 @@ function checkByType(
       if (state.inFlight) {
         v.push(error('ALREADY_IN_FLIGHT', 'Samolot jest w powietrzu — kołowanie nie ma sensu.'));
       }
+      // Drugie taxi z rzędu to zawsze duplikat (odrodzony detektor po remoncie ekranu,
+      // dryf GPS), nie nowy fakt: kołowanie raz otwarte trwa, aż zamknie je start albo
+      // wyłączenie silnika. Decyzja 2026-08-04.
+      if (state.taxiing) {
+        v.push(
+          error(
+            'ALREADY_TAXIING',
+            'Kołowanie już trwa — następnym zdarzeniem może być tylko start albo wyłączenie silnika.',
+          ),
+        );
+      }
       break;
     }
 

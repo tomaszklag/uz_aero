@@ -28,6 +28,7 @@ import {
   CrewGrid,
   DataTable,
   DutyHero,
+  FreshnessNote,
   ResultRow,
   Screen,
   ScreenHeader,
@@ -36,9 +37,11 @@ import {
   Tag,
   type DataTableRow,
   type StatCell,
+  type Tone,
 } from '../components';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
+import { useAircraft } from '../hooks/useAircraft';
 import { useEventCorrection } from '../hooks/useEventCorrection';
 import { correctionWindow } from '../../domain';
 import { dateUtcLong, motoHours, timeUtc } from '../format';
@@ -51,6 +54,7 @@ import {
   hhmm,
   jumperBreakdown,
 } from './logic/statsDay';
+import { compareToNorm, normLabel, verdictLabel } from './logic/fuelNorm';
 
 /** Kolumny listy lotów — `#` i `Typ` mają stałą szerokość, czasy dzielą resztę po równo. */
 const FLIGHT_COLUMNS = [
@@ -75,6 +79,19 @@ export function StatsScreen({
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const currentPilotId = useCurrentPilot((s) => s.id);
   const { openCorrection, correctionSheet } = useEventCorrection();
+
+  // Norma zużycia z cache'u referencyjnego — jedyna dana z serwera na tym ekranie.
+  // Reszta liczb jest projekcją lokalnych zdarzeń, więc zawsze świeża (§5.2).
+  const aircraftRef = useAircraft(projection.aircraftId);
+  const norm = aircraftRef?.consumption ?? null;
+  const verdict = compareToNorm(
+    projection.fuel.consumedL != null && projection.blockTimeMs > 0
+      ? projection.fuel.consumedL / (projection.blockTimeMs / 3_600_000)
+      : null,
+    norm,
+  );
+  const normVerdict = verdictLabel(verdict);
+  const normTone: Tone = verdict === 'w-normie' ? 'green' : 'amber';
 
   // Karty załogi pokazują KOD pilota (TMK/AKO) — tak jak mockup i jak dokumenty.
   // Kody mieszkają w cache referencyjnym; do czasu odczytu pokazujemy identyfikator.
@@ -309,6 +326,29 @@ export function StatsScreen({
             <AppText variant="mono" tone="muted" style={styles.avgNote}>
               nie liczymy — block time 0:00 (dzielenie przez zero to nie statystyka)
             </AppText>
+          )}
+
+          {/* Na tle normy samolotu — PIERWSZA dana z serwera na tym ekranie, więc
+              jedyna, która ma tu stan świeżości. Koniec dnia bywa offline, a norma
+              policzona tydzień temu dalej jest dobrym punktem odniesienia — pod
+              warunkiem, że pilot wie, że jest sprzed tygodnia (§4.8). */}
+          {normVerdict != null && (
+            <>
+              <ResultRow
+                label="Na tle normy samolotu"
+                value={normVerdict}
+                tone={normTone}
+                style={styles.row}
+              />
+              <FreshnessNote
+                state={synced ? 'live' : 'cache'}
+                syncedAt={aircraftRef == null ? null : dateTimeUtcShort(aircraftRef.fetchedAt)}
+                style={styles.avgNote}
+              />
+              <AppText variant="mono" tone="muted" style={styles.avgNote}>
+                {normLabel(norm)}
+              </AppText>
+            </>
           )}
         </Card>
 

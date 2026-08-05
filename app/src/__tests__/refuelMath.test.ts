@@ -91,18 +91,32 @@ describe('punkt odniesienia paliwa', () => {
 describe('czas pracy silnika w oknie', () => {
   it('sumuje cykle od punktu odniesienia', () => {
     const state = projectSession(canonicalDay);
-    expect(engineTimeInWindow(state, at(8, 0), at(10, 48))).toBe(142 * 60_000); // 2:22
+    expect(engineTimeInWindow(state, canonicalDay, at(8, 0), at(10, 48))).toBe(142 * 60_000); // 2:22
   });
 
   it('przycina cykl, który zaczął się przed oknem', () => {
     const state = projectSession(canonicalDay);
     // Okno od 09:34 łapie ostatnią godzinę cyklu 08:12–10:34.
-    expect(engineTimeInWindow(state, at(9, 34), at(10, 48))).toBe(60 * 60_000);
+    expect(engineTimeInWindow(state, canonicalDay, at(9, 34), at(10, 48))).toBe(60 * 60_000);
   });
 
   it('cykl otwarty liczy do „teraz”', () => {
-    const state = projectSession([preflight(at(8, 0), 150), event('engine_start', at(8, 12))]);
-    expect(engineTimeInWindow(state, at(8, 0), at(9, 12))).toBe(60 * 60_000);
+    const events = [preflight(at(8, 0), 150), event('engine_start', at(8, 12))];
+    expect(engineTimeInWindow(projectSession(events), events, at(8, 0), at(9, 12))).toBe(
+      60 * 60_000,
+    );
+  });
+
+  it('liczy ręczny off/on-block — wada naprawiona 2026-08-05', () => {
+    // Dzień, w którym GPS zawiódł i wzlot trafił do rejestru wpisem ręcznym (ekran 08).
+    // Przed poprawką mianownik pomijał te 90 minut, więc średnia L/h wychodziła zawyżona.
+    const events = [
+      preflight(at(8, 0), 150),
+      event('manual_log_entry', at(11, 0), { offBlock: at(9, 0), onBlock: at(10, 30) }),
+    ];
+    expect(engineTimeInWindow(projectSession(events), events, at(8, 0), at(11, 0))).toBe(
+      90 * 60_000,
+    );
   });
 });
 

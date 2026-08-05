@@ -81,6 +81,31 @@ export class PgEventsStore implements EventsStorePort {
     return rows.map(toEvent);
   }
 
+  async sessionStreams(
+    db: Queryable,
+    sessionUuids: readonly string[],
+  ): Promise<Map<string, Event[]>> {
+    const streams = new Map<string, Event[]>();
+    if (sessionUuids.length === 0) return streams;
+
+    // Porządek `session_uuid` na pierwszym miejscu grupuje wiersze jednej sesji obok
+    // siebie, ale to `received_at, uuid` jest tu kontraktem: `projectSession` zakłada
+    // kolejność WSTAWIENIA, dokładnie jak przy `sessionEvents`.
+    const { rows } = await db.query<EventRow>(
+      `SELECT * FROM events
+        WHERE session_uuid = ANY($1)
+        ORDER BY session_uuid, received_at, uuid`,
+      [[...sessionUuids]],
+    );
+
+    // Klucze zakładamy z góry, żeby sesja BEZ zdarzeń miała pustą tablicę zamiast
+    // brakującego wpisu — wywołujący nie musi wtedy rozróżniać `undefined` od `[]`.
+    for (const uuid of sessionUuids) streams.set(uuid, []);
+    for (const row of rows) streams.get(row.session_uuid)?.push(toEvent(row));
+
+    return streams;
+  }
+
   async lastReceivedAt(db: Queryable, aircraftId: string): Promise<Date | null> {
     const { rows } = await db.query<{ last: string | null }>(
       'SELECT MAX(received_at) AS last FROM events WHERE aircraft_id = $1',

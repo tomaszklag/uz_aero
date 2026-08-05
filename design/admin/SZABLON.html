@@ -596,16 +596,101 @@
   /* Odwołanie do pliku źródłowego — panel bywa czytany razem z repozytorium. */
   .code-ref { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:3px 8px; letter-spacing:0.3px; }
 
+  /* ══ STATYSTYKI (A10) — cztery wykresy z czystego CSS/SVG ══
+     Dołożone 2026-08-03 razem z przekrojem A10: mockup budował je stylami inline,
+     przez co wzorce nie miały NAZW i nie dało się ich powtórzyć ani wygrepować
+     (ta sama historia, co `.reason-list` przy A01a). Szerokości segmentów i punkty
+     polyline liczy moduł czysty ekranu i podaje stylem inline — klasa niesie
+     wszystko poza geometrią. */
+
+  /* Szereg „dzień po dniu" — SVG polyline; oś z podpisami dat pod spodem. */
+  .trend { width:100%; height:auto; display:block; overflow:visible; }
+  .trend-axis { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--text-muted); padding-top:2px; }
+
+  /* Zestawienie DWÓCH wielkości jednej pozycji (blok vs czas lotu) — para pasków. */
+  .duo { display:flex; align-items:center; gap:14px; }
+  .duo-name { width:74px; font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:1px; flex-shrink:0; }
+  .duo-bars { flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .duo-line { display:flex; align-items:center; gap:9px; }
+  .duo-bar { height:15px; border-radius:4px; display:block; }
+  .duo-bar.green { background:var(--green); }
+  .duo-bar.blue { background:var(--blue); }
+  .duo-val { font-family:var(--font-mono); font-size:10.5px; width:52px; text-align:right; flex-shrink:0; }
+  .duo-val.green { color:var(--green); }
+  .duo-val.blue { color:var(--blue); }
+
+  /* Miernik udziału (wykorzystanie floty) — tor z wypełnieniem i twardą krawędzią. */
+  .meter { display:flex; align-items:center; gap:12px; }
+  .meter-track { flex:1; height:22px; border-radius:6px; background:var(--surface-raised); border:1px solid var(--border); overflow:hidden; }
+  .meter-fill { display:block; height:100%; background:var(--green-muted); border-right:2px solid var(--green); }
+  .meter-fill.amber { background:var(--amber-muted); border-right-color:var(--amber); }
+  .meter-val { font-family:var(--font-mono); font-size:11px; font-weight:700; width:58px; text-align:right; flex-shrink:0; }
+
+  /* Pasek udziału W KOMÓRCE tabeli („Udział w nalocie") — cieńszy niż miernik. */
+  .share { display:flex; align-items:center; gap:9px; }
+  .share-track { flex:1; height:9px; border-radius:99px; background:var(--surface-raised); overflow:hidden; }
+  .share-fill { display:block; height:100%; background:var(--text-muted); }
+  .share-fill.blue { background:var(--blue); }
+  .share-val { font-family:var(--font-mono); font-size:10.5px; width:42px; text-align:right; flex-shrink:0; }
+
+  /* Wstęga rozkładu (typy skoków) — segmenty sumujące się do całości. */
+  .ribbon { display:flex; height:26px; border-radius:8px; overflow:hidden; border:1px solid var(--border); }
+  .ribbon-seg { display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10px; font-weight:700; border-right:1px solid var(--border); min-width:0; white-space:nowrap; overflow:hidden; }
+  .ribbon-seg:last-child { border-right:none; }
+  .ribbon-seg.blue { background:var(--blue-muted); color:var(--blue); }
+  .ribbon-seg.green { background:var(--green-muted); color:var(--green); }
+  .ribbon-seg.amber { background:var(--amber-muted); color:var(--amber); }
+
+  /* ══ ANALITYKA ZUŻYCIA (A10a) — stawka fazowa z NIEPEWNOŚCIĄ ══
+     Dołożone 2026-08-05 razem z przekrojem A10a. Karta niesie estymatę z regresji
+     (NNLS na interwałach paliwowych), nie pomiar — dlatego `.rate-ci` jest częścią
+     komponentu, a nie ozdobą: stawka bez przedziału ufności i podstawy (ile równań,
+     jaki zakres dat) nie ma prawa stanąć na ekranie. Kolor kropki fazy jest
+     MODYFIKATOREM, bo znaczenie kolorów jest wspólne dla całego ekranu i wraca na
+     wstędze faz oraz w tabeli interwałów: ziemia `dim` · wznoszenie `green` ·
+     przelot `blue` · zniżanie `amber`. */
+  .rate-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .rate { background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:11px 13px; display:flex; flex-direction:column; gap:5px; }
+  .rate-phase { display:flex; align-items:center; gap:7px; font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .rate-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--border-strong); }
+  .rate-dot.green { background:var(--green); } .rate-dot.blue { background:var(--blue); } .rate-dot.amber { background:var(--amber); } .rate-dot.dim { background:var(--text-muted); }
+  .rate-val { font-family:var(--font-mono); font-size:21px; font-weight:700; line-height:1; letter-spacing:-0.3px; }
+  .rate-val small { font-size:10px; font-weight:400; color:var(--text-secondary); letter-spacing:0; }
+  .rate-ci { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
+  .rate-ci b { color:var(--text-secondary); font-weight:500; }
+  /* Stawka NIEDOSTĘPNA — model zszedł do wariantu zgrubnego (scalone fazy) albo
+     danych jest za mało. Karta ZOSTAJE na ekranie z kreską i powodem: znikająca
+     karta wygląda jak błąd układu, a obecna mówi, czego brakuje. */
+  .rate.na { opacity:0.55; }
+  .rate.na .rate-val { color:var(--text-muted); }
+  /* Wstęga faz przyjmuje też segment wygaszony — czas na ziemi z pracującym
+     silnikiem, który jest tłem, nie bohaterem wykresu. */
+  .ribbon-seg.dim { background:var(--surface-raised); color:var(--text-secondary); }
+
+  /* Pionowa kreska między grupami chipów i element dobity do prawej (mockup: inline). */
+  .filters-sep { width:1px; height:22px; background:var(--border); margin:0 4px; }
+  .filters-end { margin-left:auto; }
+  /* Przypis POD tabelą — odsunięty od jej krawędzi (mockup: styl inline). */
+  .table-hint { display:block; padding-top:8px; }
+  /* Wiersz RAZEM tabeli — wyróżnione tło; mockupy robiły to stylem inline na <tr>. */
+  .row-total td { background:var(--surface-raised); }
+  /* Tony komórek wiersza RAZEM — te same barwy, co kafle nad tabelą. */
+  .cell-green { color:var(--green); }
+  .cell-blue { color:var(--blue); }
+  .cell-amber { color:var(--amber); }
   /* ── mapa śladu i profil pionowy (A02c) ──────────────────────────────────
      Płótno ma stałą wysokość: ślad ogląda się na biurku i ma być czytelny bez
      przewijania. Legenda i skala siedzą NAD mapą (absolute), bo kafelki są
      warstwą wymienną — nie wolno im przesuwać układu, gdy się nie doczytają. */
   .map-canvas { position:relative; height:430px; background:#0F1216; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
   .map-canvas svg { display:block; width:100%; height:100%; }
-  /* Kafelki leżą POD śladem, w osobnej warstwie: brak pokrycia nie może ruszyć geometrii. */
-  .map-tiles { position:absolute; inset:0; overflow:hidden; }
-  .map-tiles img { position:absolute; width:256px; height:256px; color:transparent; }
+
   .map-overlay { position:absolute; inset:0; }
+  /* Siatka współrzędnych — podkład, który zastąpił kafelki (decyzja 2026-08-04). */
+  .map-grid line { stroke:var(--border); stroke-width:1; }
+  /* Pas startowy lotniska: jedyny szczegół terenu, jaki rysujemy. */
+  .map-runway { fill:var(--border-strong); }
+  .map-airfield-dot { fill:var(--border-strong); }
   .map-attrib { position:absolute; right:8px; bottom:7px; font-family:var(--font-mono); font-size:8px; color:var(--text-muted); background:rgba(13,13,13,0.72); padding:3px 7px; border-radius:5px; letter-spacing:0.3px; }
   .map-scale { position:absolute; left:12px; bottom:9px; display:flex; flex-direction:column; gap:3px; }
   .map-scale-bar { width:88px; height:5px; border:1px solid var(--text-secondary); border-top:none; }
@@ -1153,6 +1238,64 @@
             <div class="kv"><span class="kv-k">Zniknęłoby</span><span class="kv-v green">12 flag</span></div>
             <div class="kv"><span class="kv-k">Nowych flag</span><span class="kv-v">0</span></div>
           </div>
+        </div>
+
+        <div class="demo-note">10 · Statystyki (A10) — trend, para pasków, miernik, udział, wstęga</div>
+        <div class="cols even">
+          <div class="card">
+            <div class="card-title">Nalot dzień po dniu <span class="spacer"></span><span class="pill green">suma 12:34</span></div>
+            <svg class="trend" viewBox="0 0 600 96" role="img" aria-label="Przykładowy szereg dzienny">
+              <line x1="0" y1="85" x2="600" y2="85" stroke="var(--border)" stroke-width="1"/>
+              <line x1="0" y1="45" x2="600" y2="45" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3 4"/>
+              <polyline fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="0,60 150,30 300,85 450,20 600,40"/>
+              <circle cx="300" cy="85" r="2.5" fill="var(--border-strong)"/>
+              <circle cx="600" cy="40" r="3" fill="var(--green)"/>
+            </svg>
+            <div class="trend-axis"><span>01 JUL</span><span>15 JUL</span><span>30 JUL</span></div>
+            <div class="duo">
+              <span class="duo-name">SP-KLM</span>
+              <span class="duo-bars">
+                <span class="duo-line"><span class="duo-bar green" style="width:100%;"></span><span class="duo-val green">112:38</span></span>
+                <span class="duo-line"><span class="duo-bar blue" style="width:63.4%;"></span><span class="duo-val blue">71:24</span></span>
+              </span>
+            </div>
+            <div class="meter">
+              <span class="duo-name">SP-XYZ</span>
+              <span class="meter-track"><span class="meter-fill amber" style="width:47%;"></span></span>
+              <span class="meter-val">14 · 47 %</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Udział i rozkład</div>
+            <span class="share"><span class="share-track"><span class="share-fill blue" style="width:60.3%;"></span></span><span class="share-val">60.3 %</span></span>
+            <span class="share"><span class="share-track"><span class="share-fill" style="width:13.3%;"></span></span><span class="share-val">13.3 %</span></span>
+            <span class="ribbon">
+              <span class="ribbon-seg blue" style="width:43.8%;">TANDEM 421</span>
+              <span class="ribbon-seg green" style="width:17.5%;">AFF 168</span>
+              <span class="ribbon-seg amber" style="width:38.7%;">SOLO 373</span>
+            </span>
+            <span class="hint">Geometrię (szerokości, punkty polyline) liczy moduł czysty ekranu z liczb SERWERA — klasa niesie wszystko poza geometrią.</span>
+          </div>
+        </div>
+
+        <div class="demo-note">11 · Analityka zużycia (A10a) — stawka fazowa z przedziałem ufności; wstęga faz z segmentem `dim`</div>
+        <div class="card">
+          <div class="card-title">Model fazowy paliwa <span class="spacer"></span><span class="pill dim">NNLS · 96 równań</span></div>
+          <div class="rate-grid">
+            <div class="rate"><span class="rate-phase"><span class="rate-dot dim"></span>Ziemia · silnik</span><span class="rate-val">11.9<small> L/h</small></span><span class="rate-ci"><b>±1.6</b> · 95%</span></div>
+            <div class="rate"><span class="rate-phase"><span class="rate-dot green"></span>Wznoszenie</span><span class="rate-val">51.3<small> L/h</small></span><span class="rate-ci"><b>±2.1</b> · 95%</span></div>
+            <div class="rate"><span class="rate-phase"><span class="rate-dot blue"></span>Przelot</span><span class="rate-val">40.9<small> L/h</small></span><span class="rate-ci"><b>±2.9</b> · 95%</span></div>
+            <!-- Karta NIEDOSTĘPNA (`.rate.na`): model scala fazy, gdy interwały są
+                 zbyt podobne, żeby je rozdzielić — karta zostaje z powodem. -->
+            <div class="rate na"><span class="rate-phase"><span class="rate-dot amber"></span>Zniżanie</span><span class="rate-val">—</span><span class="rate-ci">scalone z przelotem — za mało zróżnicowanych interwałów</span></div>
+          </div>
+          <span class="ribbon">
+            <span class="ribbon-seg dim" style="width:17.8%;">ZIEMIA 21:06</span>
+            <span class="ribbon-seg green" style="width:27.0%;">WZN 31:54</span>
+            <span class="ribbon-seg blue" style="width:41.0%;">PRZELOT 48:36</span>
+            <span class="ribbon-seg amber" style="width:14.2%;">ZNIŻ 16:48</span>
+          </span>
+          <span class="hint">Stawka fazowa to wynik regresji na interwałach paliwowych (odczyt → odczyt), nie pomiar — dlatego zawsze niesie przedział ufności i podstawę (liczbę równań, zakres dat). Znaczenie kolorów faz jest wspólne dla karty, wstęgi i tabeli interwałów.</span>
         </div>
 
       </div>

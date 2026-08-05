@@ -162,6 +162,25 @@ describe('projectSession — pojedynczy cykl', () => {
   it('pusty strumień daje pusty stan', () => {
     expect(projectSession([])).toEqual(emptySessionState());
   });
+
+  it('taxi otwiera kołowanie; zamyka je start albo wyłączenie silnika', () => {
+    const start = [ev('engine_start', '08:12', {}), ev('taxi', '08:14', { method: 'auto' })];
+    expect(projectSession(start).taxiing).toBe(true);
+
+    // Start zamyka kołowanie — po lądowaniu zjazd z pasa to NOWE taxi.
+    const flying = [...start, ev('takeoff', '08:25', { method: 'auto' })];
+    expect(projectSession(flying).taxiing).toBe(false);
+
+    const backOnGround = [
+      ...flying,
+      ev('landing', '09:18', { method: 'auto' }),
+      ev('taxi', '09:19', { method: 'auto' }),
+    ];
+    expect(projectSession(backOnGround).taxiing).toBe(true);
+
+    const shutdown = [...backOnGround, ev('engine_stop', '09:25', {})];
+    expect(projectSession(shutdown).taxiing).toBe(false);
+  });
 });
 
 describe('projectSession — kanoniczny dzień 22 JUNE (zgodność z design-notes)', () => {
@@ -202,7 +221,25 @@ describe('projectSession — kanoniczny dzień 22 JUNE (zgodność z design-note
     expect(s.drops.count).toBe(3);
     expect(s.drops.jumpers).toEqual({ tandem: 6, aff: 3, solo: 4 });
     expect(s.drops.totalJumpers).toBe(13);
+    // Suma i licznik wysokości jadą OSOBNO (panel A10 składa z nich średnią zakresu —
+    // średnich per sesja nie da się składać), a średnia sesji jest z nich pochodną.
+    expect(s.drops.altitudeSumFt).toBe(2450 + 1800 + 3200);
+    expect(s.drops.altitudeFixCount).toBe(3);
     expect(s.drops.avgAltitudeFt).toBeCloseTo((2450 + 1800 + 3200) / 3, 5);
+  });
+
+  it('zrzut BEZ wysokości nie wchodzi ani do sumy, ani do licznika fixów', () => {
+    // Brak fixa GPS to niewiedza, nie zero: wliczenie go do sumy zaniżałoby średnią,
+    // a do licznika — udawało pomiar, którego nie było (mockup A10: „7 bez wysokości
+    // nie wchodzi do średniej").
+    const partial = projectSession([
+      ev('drop', '13:48', { dropNumber: 1, altitudeFt: 3000, jumpers: { tandem: 1, aff: 0, solo: 0 } }),
+      ev('drop', '14:42', { dropNumber: 2, jumpers: { tandem: 0, aff: 0, solo: 2 } }),
+    ]);
+    expect(partial.drops.count).toBe(2);
+    expect(partial.drops.altitudeSumFt).toBe(3000);
+    expect(partial.drops.altitudeFixCount).toBe(1);
+    expect(partial.drops.avgAltitudeFt).toBe(3000);
   });
 
   it('kontekst dnia i zamknięcie', () => {

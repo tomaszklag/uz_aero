@@ -293,6 +293,52 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     expect(await projectionOf(db)).toMatchObject({ operation: 'skoki', client: 'SKY CAMP' });
   });
 
+  it('wypełnia kolumny dołożone migracją 18 w wierszach sprzed migracji', async () => {
+    // Ten sam powód, co przy migracji 11: `upsert` uruchamia dopiero następna paczka
+    // zdarzeń sesji, a dla dnia zamkniętego takiej paczki już nie będzie. Bez
+    // przeliczenia statystyki `A10` widziałyby w całej historii `NULL` — i uczciwie
+    // pokazywałyby kreskę zamiast startów, paliwa i zrzutów.
+    const { db, compare, rebuild } = await withDay();
+    await db.query(
+      `UPDATE sessions SET takeoff_count = NULL, landing_count = NULL, mh_delta_h = NULL,
+              fuel_consumed_l = NULL, drop_count = NULL, jumpers_tandem = NULL,
+              jumpers_aff = NULL, jumpers_solo = NULL, drop_alt_sum_ft = NULL,
+              drop_alt_count = NULL`,
+    );
+
+    // `projectionDiff` iteruje po polach wiersza PRZELICZONEGO, więc nowe kolumny
+    // wchodzą do porównania same — pierwsza przebudowa po migracji MUSI je zobaczyć.
+    const fields = (await compare()).diffs[0]!.fields.map((f) => f.field);
+    expect(fields).toEqual(
+      expect.arrayContaining([
+        'takeoffCount',
+        'landingCount',
+        'mhDeltaH',
+        'fuelConsumedL',
+        'dropCount',
+        'jumpersTandem',
+        'dropAltSumFt',
+        'dropAltCount',
+      ]),
+    );
+
+    await rebuild({ reason: 'Migracja 18.' });
+    const row = await projectionOf(db);
+    expect(row).toMatchObject({
+      takeoff_count: 1,
+      landing_count: 1,
+      fuel_consumed_l: 62, // 150 + 0 dolane − 88
+      drop_count: 0,
+      jumpers_tandem: 0,
+      jumpers_aff: 0,
+      jumpers_solo: 0,
+      drop_alt_sum_ft: 0,
+      drop_alt_count: 0,
+    });
+    // Delta liczników to liczba zmiennoprzecinkowa — porównanie z tolerancją.
+    expect(row.mh_delta_h as number).toBeCloseTo(1241.15 - 1234.5, 9);
+  });
+
   it('NIE DOTYKA rejestru zdarzeń — ani przy porównaniu, ani przy zapisie', async () => {
     const { db, compare, rebuild } = await withDay();
     const before = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM events');
@@ -333,6 +379,7 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
       insertBatch: (tx, events, sourceDevice) => real.insertBatch(tx, events, sourceDevice),
       lastReceivedAt: (db, aircraftId) => real.lastReceivedAt(db, aircraftId),
       countForSession: (db, sessionUuid) => real.countForSession(db, sessionUuid),
+      sessionStreams: (db, sessionUuids) => real.sessionStreams(db, sessionUuids),
       sessionEvents: async (db, sessionUuid) => {
         const { rows } = await db.query<{ n: number }>(
           "SELECT COUNT(*)::int AS n FROM pg_locks WHERE locktype = 'advisory'",

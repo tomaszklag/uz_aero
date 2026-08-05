@@ -10,6 +10,7 @@
 
 import { DomainRuleError } from '../domain';
 import { EventsRepo } from '../application/eventsRepo';
+import { SESSION_META_KEYS } from '../application/ports';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
 import { FixedClock } from '../infrastructure/clock';
 import { useSessionStore } from '../ui/store/sessionStore';
@@ -111,5 +112,28 @@ describe('useSessionStore', () => {
       dualId: null,
     });
     expect(store().projection.engineRunning).toBe(true);
+  });
+
+  it('loadSession otwartego dnia odtwarza active_session_uuid (upgrade w środku dnia)', async () => {
+    const { repo, clock, store } = attach();
+    await openDay(clock);
+    // Stan sprzed tej wersji aplikacji: dzień otwarty, klucza nie ma — writer headless
+    // nie miałby do czego przypisać fixów po śmierci procesu.
+    await repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
+
+    await store().loadSession(SESSION);
+    expect(await repo.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBe(SESSION);
+  });
+
+  it('loadSession zamkniętego dnia usuwa osierocony active_session_uuid', async () => {
+    const { repo, clock, store } = attach();
+    await openDay(clock);
+    clock.set(min(300));
+    await store().dayClose({ finalReading: { fuelL: 150, mh: 1234.5 }, dutyEnd: min(300) });
+    // Symulacja crasha między day_close a czyszczeniem klucza.
+    await repo.setMeta(SESSION_META_KEYS.activeSessionUuid, SESSION);
+
+    await store().loadSession(SESSION);
+    expect(await repo.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBeNull();
   });
 });

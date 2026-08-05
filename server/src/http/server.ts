@@ -27,6 +27,8 @@ import type { AdminMeQueries } from '../application/admin/queries/me.ts';
 import type { AdminPilotQueries } from '../application/admin/queries/pilots.ts';
 import type { AdminFlightTrackQueries } from '../application/admin/queries/flightTrack.ts';
 import type { AdminSessionQueries } from '../application/admin/queries/sessions.ts';
+import type { AdminConsumptionQueries } from '../application/admin/queries/consumption.ts';
+import type { AdminStatsQueries } from '../application/admin/queries/stats.ts';
 import type { AuthCommands } from '../application/common/commands/auth.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
@@ -48,6 +50,8 @@ import { registerAdminMaintenanceRoutes } from './routes/admin/maintenance.ts';
 import { registerAdminMeRoutes } from './routes/admin/me.ts';
 import { registerAdminPilotRoutes } from './routes/admin/pilots.ts';
 import { registerAdminSessionRoutes } from './routes/admin/sessions.ts';
+import { registerAdminConsumptionRoutes } from './routes/admin/consumption.ts';
+import { registerAdminStatsRoutes } from './routes/admin/stats.ts';
 import { registerAdminTrackRoutes } from './routes/admin/tracks.ts';
 import { registerAuthRoutes } from './routes/common/auth.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
@@ -119,6 +123,17 @@ export interface ServerDeps {
    */
   adminDashboardQueries: AdminDashboardQueries;
   /**
+   * Statystyki floty i pilotów (`A10`) — wyłącznie odczyt: agregaty kolumn projekcji
+   * `sessions` w zakresie dat, trzy ujęcia jednego zbioru dni w jednej odpowiedzi.
+   */
+  adminStatsQueries: AdminStatsQueries;
+  /**
+   * Analityka zużycia jednego samolotu (`A10a`/`A10b`) — jedyny przekrój panelu, który
+   * czyta STRUMIEŃ zdarzeń wielu sesji naraz: granice interwałów paliwowych wyznaczają
+   * odczyty z payloadów, a stawka per faza opisuje okno, nie dzień (§7.7).
+   */
+  adminConsumptionQueries: AdminConsumptionQueries;
+  /**
    * Odczytowa strona konserwacji (`A11`): PORÓWNANIE projekcji bez zapisu, stan tabeli
    * refresh tokenów i stan schematu. Bez `AuditedWrite`, więc bez czym zapisać —
    * podgląd różnic nie ma prawa dopisywać do dziennika akcji, które się nie wydarzyły.
@@ -165,6 +180,8 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerAdminExportRoutes(app, deps.adminExportQueries, deps.adminExports, gate);
   registerAdminEventRoutes(app, deps.adminEventQueries, gate);
   registerAdminDashboardRoutes(app, deps.adminDashboardQueries, gate);
+  registerAdminStatsRoutes(app, deps.adminStatsQueries, gate);
+  registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
 
   app.get('/health', async () => ({ ok: true }));

@@ -254,6 +254,10 @@ function LogRow({
           variant="mono"
           style={[
             styles.time,
+            // „00:57:40" (HH:MM:SS) nie mieści się w 44 px i łamał się na dwie
+            // linie — wiersz na żywo bierze szerokość naturalną, reszta kolumny
+            // zostaje wyrównana jak w mockupie.
+            live ? styles.timeLive : null,
             {
               fontFamily: theme.fontFamily.monoBold,
               color: awaited
@@ -386,6 +390,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   time: { width: 44, fontSize: 13, letterSpacing: 1 },
+  timeLive: { width: 'auto', flexShrink: 0 },
   label: { flex: 1, fontSize: 8, letterSpacing: 1, textTransform: 'uppercase' },
   meta: { fontSize: 9, letterSpacing: 0.3 },
   chip: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4 },

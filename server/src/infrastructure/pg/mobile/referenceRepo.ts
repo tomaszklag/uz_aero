@@ -61,6 +61,9 @@ export class PgReferenceRepo implements ReferencePort {
       claimPicId: null,
       claimSince: null,
       handover: null,
+      // Normę, tak jak claim i przekazanie, dokłada warstwa aplikacji — adapter oddaje
+      // wyłącznie to, co stoi w `aircraft`.
+      consumption: null,
       fetchedAt: touch(r.updated_at),
     }));
 

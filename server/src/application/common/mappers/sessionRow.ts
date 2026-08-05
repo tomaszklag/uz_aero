@@ -59,5 +59,20 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     blockMs: s.blockTimeMs,
     flightMs: s.flightTimeMs,
     flightsCount: s.flights.length,
+    // Kolumny statystyk (migracja 18) — jak wyżej: przepisujemy WARTOŚCI POLICZONE
+    // przez projekcję, razem z jej regułami. `mh.deltaH` i `fuel.consumedL` są `null`
+    // do `day_close` (bilans istnieje dopiero z odczytem końcowym), a suma wysokości
+    // zrzutów i licznik fixów jadą OSOBNO, bo średnich per sesja nie da się składać
+    // w średnią zakresu (`DropSummary.altitudeSumFt` — uzasadnienie przy typie).
+    takeoffCount: s.takeoffCount,
+    landingCount: s.landingCount,
+    mhDeltaH: s.mh.deltaH,
+    fuelConsumedL: s.fuel.consumedL,
+    dropCount: s.drops.count,
+    jumpersTandem: s.drops.jumpers.tandem,
+    jumpersAff: s.drops.jumpers.aff,
+    jumpersSolo: s.drops.jumpers.solo,
+    dropAltSumFt: s.drops.altitudeSumFt,
+    dropAltCount: s.drops.altitudeFixCount,
   };
 }

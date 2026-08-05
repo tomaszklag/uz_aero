@@ -155,6 +155,8 @@ describe('zrzuty — rozliczenie w stopce', () => {
     count: 6,
     totalJumpers: 22,
     jumpers: { tandem: 12, aff: 6, solo: 4 },
+    altitudeSumFt: 78000,
+    altitudeFixCount: 6,
     avgAltitudeFt: 13000,
   };
 
@@ -169,6 +171,8 @@ describe('zrzuty — rozliczenie w stopce', () => {
       count: 2,
       totalJumpers: 4,
       jumpers: { tandem: 4, aff: 0, solo: 0 },
+      altitudeSumFt: 0,
+      altitudeFixCount: 0,
       avgAltitudeFt: null,
     };
     expect(dropsSummary(tandemOnly, null)).toBe('2 wyniesienia · 4 skoczków (4 tandem)');
@@ -179,6 +183,8 @@ describe('zrzuty — rozliczenie w stopce', () => {
       count: 1,
       totalJumpers: 1,
       jumpers: { tandem: 0, aff: 0, solo: 1 },
+      altitudeSumFt: 0,
+      altitudeFixCount: 0,
       avgAltitudeFt: null,
     };
     expect(dropsShort(single)).toBe('1 wyniesienie · 1 skoczek');

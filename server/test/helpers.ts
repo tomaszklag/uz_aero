@@ -41,6 +41,8 @@ import { AdminMaintenanceQueries } from '../src/application/admin/queries/mainte
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
+import { AdminConsumptionQueries } from '../src/application/admin/queries/consumption.ts';
+import { AdminStatsQueries } from '../src/application/admin/queries/stats.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
@@ -64,6 +66,10 @@ import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenan
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
+import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';
+import { PgAdminStatsRepo } from '../src/infrastructure/pg/admin/statsRepo.ts';
+import { FsPhaseTimeline } from '../src/infrastructure/traces/fsPhaseTimeline.ts';
+import { PgConsumptionNormRepo } from '../src/infrastructure/pg/common/consumptionNormRepo.ts';
 import { PgEventsStore } from '../src/infrastructure/pg/common/eventsStore.ts';
 import { PgExportLogRepo } from '../src/infrastructure/pg/common/exportLogRepo.ts';
 import { PgFlagsRepo } from '../src/infrastructure/pg/common/flagsRepo.ts';
@@ -137,6 +143,7 @@ export async function testHarness(
   const realEvents = new PgEventsStore();
   const events = options.events?.(realEvents) ?? realEvents;
   const sessions = new PgSessionsProjection();
+  const consumptionNorms = new PgConsumptionNormRepo();
   const flags = new PgFlagsRepo();
   const exportLog = new PgExportLogRepo();
   const pilots = new PgPilotsRepo(db);
@@ -160,6 +167,9 @@ export async function testHarness(
   // Zrzut śladu (faza 5) — prawdziwy adapter plikowy na katalogu tymczasowym;
   // testy trasy zaglądają do NDJSON dokładnie tak, jak zrobi to skrypt replay.
   const tracesDir = mkdtempSync(join(tmpdir(), 'uzaero-traces-'));
+  // Osie faz pionowych czytają ślady z TEGO SAMEGO katalogu, co ich zapis — pliki
+  // poboczne lądują obok nagrań i znikają razem z katalogiem tymczasowym testu.
+  const phaseTimeline = new FsPhaseTimeline(tracesDir, new FsTraceSource(tracesDir));
 
   const aircraftConfig = new PgAircraftConfigRepo();
   const auditedWrite = new AuditedWrite(db, options.audit ?? new PgAdminAuditRepo(), clock);
@@ -183,8 +193,8 @@ export async function testHarness(
 
   const app = buildServer({
     auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
-    reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter),
+    reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms),
+    ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
     traces: new FsTraceSink(tracesDir),
@@ -288,6 +298,18 @@ export async function testHarness(
       events,
       adminPilotsRepo,
       clock,
+    ),
+    // Statystyki (A10) — jak w produkcyjnym composition root: czysty odczyt agregatów
+    // kolumn projekcji, zegar rozstrzyga zakres domyślny.
+    adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
+    // Analityka zużycia (A10a/A10b) — dostaje TEN SAM `events`, co reszta harnessu,
+    // więc dekorator liczący odczyty strumienia widzi też jej wywołania.
+    adminConsumptionQueries: new AdminConsumptionQueries(
+      db,
+      new PgAdminConsumptionRepo(),
+      events,
+      clock,
+      phaseTimeline,
     ),
   });
 

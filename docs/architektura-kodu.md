@@ -8,8 +8,9 @@
 ## 0. Monorepo (Faza 2)
 
 ```
-packages/domain    @uzaero/domain — zdarzenia, reguły, projekcje, detekcja. Czysty TS,
-                   ZERO zależności (pilnowane testem architektury).
+packages/domain    @uzaero/domain — zdarzenia, reguły, projekcje, detekcja, ślad lotu,
+                   analityka zużycia. Czysty TS, ZERO zależności (pilnowane testem
+                   architektury — dlatego regresja i algebra są napisane ręcznie).
 app/               aplikacja; w `src/domain` został shim `export * from '@uzaero/domain'`
 server/            backend; importuje TĘ SAMĄ domenę
 ```
@@ -993,9 +994,11 @@ Porty w `application/ports/`, każdy z realnym powodem:
 | `GpsPort` | Lot trwa 45 minut i wymaga samolotu. Port pozwala **odtworzyć trasę** z serii fixów i sprawdzić detekcję w milisekundach. Implementacje: `expoLocationAdapter` (urządzenie), `replayGpsAdapter` (testy i podgląd). |
 | `SensorPort` | Czujniki pokładowe (barometr, akcelerometr, żyroskop). Osobno od GPS, bo mają inne właściwości: brak własnego zegara, fizyczna NIEOBECNOŚĆ na części urządzeń i próbkowanie 50 Hz. Oddaje **agregaty sekundowe**, nie surowe próbki. Implementacje: `expoSensorsAdapter` (urządzenie), `nullSensorAdapter` (brak czujników / testy). |
 
-Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`) są importowane
-**wyłącznie** przez swoje adaptery i nie trafiają do barrela infrastruktury — inaczej
-testy w Node przestałyby działać. Pilnują tego dwa testy w `architecture.test.ts`.
+Moduły natywne (`expo-sqlite`, `expo-location`, `expo-sensors`, `expo-task-manager`)
+są importowane **wyłącznie** przez swoje adaptery/moduły i nie trafiają do barrela
+infrastruktury — inaczej testy w Node przestałyby działać. Pilnuje tego rodzina
+testów exact-list w `architecture.test.ts` (po jednym na moduł natywny + wykluczenia
+barrela + strażnik importu taska w `app/index.ts`).
 
 **`GpsPort.start()` = subskrypcja JEDNEGO odbiorcy, nie przełącznik odbiornika.**
 Zwrócona funkcja wypisuje wyłącznie jego; odbiornik gaśnie dopiero, gdy zejdzie ostatni
@@ -1005,6 +1008,53 @@ oddawał strumień temu, kto wszedł później, i gasił go przy wyjściu — ko
 autodetekcję na resztę dnia, a baner „GPS: brak sygnału" nie miał już czym zniknąć.
 Stąd też odbudowa nasłuchu w `useFlightDetection`: po `GPS_STALE_SEC` ciszy hook zdejmuje
 subskrypcję i zakłada nową, bo martwej subskrypcji powrót sygnału nie obudzi.
+
+### GPS w tle (usługa pierwszoplanowa + start headless)
+
+Zapis lotu działa przy wygaszonym ekranie (ryzyko 🔴 z `_main.md.txt` §8 — battery
+saver zabija proces). Konstrukcja, warstwa po warstwie:
+
+- **Okno usługi = `projection.engineRunning`** (start silnika = start usługi i
+  powiadomienia „UZ Aero — rejestracja lotu"; stop = koniec obu; między lotami zero
+  GPS). Spoiną jest `ui/hooks/useBackgroundTracking.ts` — subskrypcja store'u wołająca
+  `GpsPort.setBackgroundMode(...)` na zboczach. Binder montuje się w `ResumeGate`
+  **po** `loadSession`, bo pierwszy odczyt stanu też jest komendą: zamontowany wyżej
+  gasiłby adoptowaną usługę przy każdym otwarciu aplikacji w locie.
+- **Adapter ma dwa źródła za jednym fanoutem**: `watchPositionAsync` (tryb `watch`,
+  ekran włączony) ↔ `startLocationUpdatesAsync` + task `uzaero-location` (tryb
+  `service`). Odbiorcy (kokpit, 13, ślad) nie widzą różnicy. Kadencja obu źródeł
+  identyczna (1 s, bez `deferredUpdates*` — inaczej watchdog `GPS_STALE_SEC`
+  i `MAX_FIX_GAP_SEC` czytałyby dosyłkę paczkami jako utratę sygnału).
+- **Decyzje uzbrajania to czysta funkcja** (`gps/backgroundModePolicy.ts`): działającą
+  usługę ADOPTUJEMY (`none` — restart mrugałby powiadomieniem i ciął ślad), startu
+  z tła Android zakazuje → `retry-later` ponowione przy `AppState 'active'`.
+- **Task rejestruje się z `app/index.ts`** (`gps/backgroundLocationTask.ts`,
+  `defineTask` na poziomie modułu) — w starcie headless po śmierci procesu ładuje się
+  bundle, ale React i bootstrap NIE. Usługa przeżywa proces (`killServiceOnDestroy:
+  false`); paczki bez żywego sinka idą przez `gps/backgroundFixRouting.ts` do
+  `gps/headlessTraceWriter.ts`, który pisze do `gps_trace` **tym samym**
+  `TraceRecorder` + `appendTrace` co ścieżka żywa — `TraceSync` i `replay.ts` nie
+  odróżniają trybów. Sesję wskazuje meta `active_session_uuid` (zapis w `claim`,
+  czyszczenie w `dayClose`, uzgodnienie w `loadSession`); bez niej paczka idzie do
+  kosza — fix bez atrybucji mógłby trafić do cudzej sesji.
+- **Uprawnienia**: usłudze pierwszoplanowej wystarcza while-in-use — o „w tle" NIE
+  prosimy (na Androidzie 11+ to wycieczka do ustawień bez korzyści). Dialogi
+  (lokalizacja + powiadomienia 13+) wychodzą przy zatwierdzeniu preflight na 03,
+  nie przy pierwszym START ENGINE; odmowa niczego nie blokuje (§4.1).
+
+Degradacja bez modułu natywnego (stary dev client, Expo Go na Androidzie — tam
+lokalizacja w tle nie działa wcale): `backgroundLocationTask` robi MIĘKKI `require`
+w try/catch (wzorzec `useSystemBackground`), więc aplikacja startuje normalnie,
+a gdy uzbrojenie usługi twardo padnie, `armService` otwiera z powrotem zwykły nasłuch
+(`serviceUnavailable`) — usługa jest ulepszeniem (ekran wygaszony), nie warunkiem
+działania GPS.
+
+Znane zachowania (świadome): wiersze `sensor` nie powstają headless (hooki UI śpią);
+detekcja wraca dopiero po otwarciu aplikacji (od zdarzeń jest korekta ręczna + okno
+24 h); `useSyncLoop` tyka dalej, gdy usługa trzyma proces; po reboocie telefonu usługa
+NIE wstaje sama (bez `RECEIVE_BOOT_COMPLETED`) — wznawia ją resume przy otwarciu;
+nawigacja poza kokpit przy pracującym silniku nadal usypia detekcję i ślad (hook
+odmontowany — jak przed zmianą; usługa trzyma tylko GPS ciepły).
 
 Portów **nie mnożymy na zapas** — port bez drugiej implementacji lub potrzeby testowej to koszt bez zysku.
 
@@ -1055,6 +1105,66 @@ Wzorzec: `ui/screens/CockpitScreen.tsx` (pierwszy ekran wpięty end-to-end).
    edycji"** w §2. Wysokość klawiatury, zapas pod akcjami arkusza i zaznaczenie tekstu mają
    po jednym poprawnym rozwiązaniu i po kilka objawów, gdy się je obejdzie własnym kodem.
 
+### Nowa metryka analityki zużycia
+
+Moduł `packages/domain/src/consumption/` (dodany 2026-08-05) liczy stawki paliwa per faza
+i przelicznik motogodzin. Podział plików idzie wzorcem `track/`: typy → czysta matematyka
+→ polityka → orkiestrator → widoki pochodne.
+
+| Plik | Rola |
+|---|---|
+| `interval.ts` | typy `FuelInterval` / `MhEquation`; zero logiki |
+| `timeInPhase.ts` | odcinki pracy silnika i lotu, przycinanie do okna, **scalanie nakładek** |
+| `matrix.ts` | Cholesky, Gram, inwersja (n ≤ 4); bez pojęć dziedzinowych |
+| `nnls.ts` | regresja z więzem nieujemności — wyliczeniowy zbiór aktywny |
+| `fit.ts` | dopasowanie RAZEM z przedziałami ufności (t-Studenta, nie bootstrap) |
+| `policy.ts` | wszystkie progi i bramka publikacji |
+| `intervals.ts` | ekstrakcja interwałów z jednej sesji (korekty przed arytmetyką) |
+| `model.ts` | drabina degradacji faz + wykluczanie odstających |
+| `mhModel.ts` | przeliczniki MH + rozpoznanie typu licznika |
+| `summary.ts` | ilorazy sum, pasmo centylowe, trend miesięczny |
+| `norm.ts` | skrócony widok dla aplikacji pilota (`ConsumptionNorm`) |
+| `phaseTimeline.ts` | oś faz pionowych ze śladu GPS — zależy WYŁĄCZNIE od nagrania |
+
+Dokładając metrykę:
+
+1. **Iloraz sum czy regresja?** To dwie różne liczby i wybór jest merytoryczny, nie
+   stylistyczny. `summary.ts` waży interwały LINIOWO czasem (`ΣL / Σh`), a `model.ts` —
+   KWADRATEM (regresja minimalizuje błąd w litrach, więc dłuższy interwał ma większą
+   wagę). Obie są poprawne; rozjazd między nimi jest oczekiwany i **nie należy go
+   „ujednolicać"** (test `nnls.test.ts` przybija to wprost).
+2. **Nowy próg** trafia do `policy.ts`, nigdy do modułu, który go używa — i wchodzi
+   z komentarzem, co się dzieje przy podniesieniu i obniżeniu. Progi kalibrujemy na
+   realnej historii, nie na wyczucie (ta sama reguła, co w `algorytm-detekcji.md` §15).
+3. **Nowa metryka zbiorcza** idzie do `summary.ts` i musi zwracać `null` przy pustym
+   mianowniku. Zero nigdy nie udaje pomiaru.
+4. Test w `app/src/__tests__/` (mapowanie 1:1 z modułem), z przypadkiem, w którym metryka
+   **nie ma prawa** się policzyć.
+5. Po stronie panelu: kolumna DTO w `server/src/application/admin/contracts/consumption.ts`
+   i iloraz w mapperze — nigdy w SQL (`architektura-panelu-serwer.md` §7.7).
+6. **Jeśli metryka ma trafić do telefonu**, dochodzi trzeci krok: pole w `ConsumptionNorm`
+   (`packages/domain/src/reference.ts`) i przepisanie go w `application/common/consumptionNorm.ts`.
+   Norma jest materializowana w tabeli `aircraft_consumption` (migracja 19) i przeliczana
+   PO commicie ingestu, gdy dzień się domknął — nigdy na żądanie `GET /reference`, bo
+   tę trasę odpytuje każdy telefon co kwadrans.
+
+**Dwie bramki, które łatwo pomylić** (obie znalezione przebiegiem po realnej historii,
+2026-08-05, oba przypadki mają testy regresyjne):
+
+- `MAX_RELATIVE_CI` pyta „jak dokładnie znamy stawkę PRZY TYCH danych";
+- `MAX_VARIANCE_INFLATION` pyta „czy te dane w ogóle rozstrzygają ten podział".
+
+Przy danych wewnętrznie spójnych σ reszt schodzi do zera, więc pierwsza bramka
+przepuszcza wynik, w którym stawka ziemi wychodzi WYŻSZA niż stawka lotu. Druga to
+łapie. Model motogodzin ma zamiast niej bramkę FIZYCZNĄ (`k_ziemia ≤ k_lot`), bo relację
+między jego dwiema niewiadomymi znamy z góry — patrz docblok `trustworthy` w `mhModel.ts`.
+
+**Fazy pionowe cache'ujemy przy śladzie, nie w bazie.** `consumption/phaseTimeline.ts`
+zależy wyłącznie od nagrania, więc `<sesja>.phases.json` obok `<sesja>.ndjson` unieważnia
+się rozmiarem pliku źródłowego i wersją formatu — a korekta czasu startu (04c) go NIE
+unieważnia, bo okno lotu nie wchodzi do tego rachunku. Podbij `TIMELINE_VERSION`
+w `server/src/infrastructure/traces/fsPhaseTimeline.ts` przy każdej zmianie progów fazy.
+
 ### Nowy adapter (np. serwer sync)
 
 Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i komendy nie mogą się dowiedzieć, że coś się zmieniło.
@@ -1097,6 +1207,9 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „— —" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
 | `themePrefsSync.test.ts` | uzgadniania motywu pilota przez `/me/prefs`: LWW po stemplu decyzji w obie strony, `dirty` jak outbox, brama wieku pulla, offline = `skipped` |
 | `themePrefsStore.test.ts` | rekordu motywu per pilot: izolacja pilotów na wspólnym telefonie, migracja starego klucza per telefon, odporność na zepsuty zapis |
+| `locationToFix.test.ts` | translacji odczytu platformy: null-nie-zero (regres do `?? 0`), `−1` = brak, jednostki m→ft i m/s→kt, czas z fixa zamiast zegara urządzenia |
+| `backgroundFixRouting.test.ts` | routingu paczek z taska tła: żywy sink > zapis headless > kosz — fix bez sesji nie wchodzi do śladu |
+| `backgroundModePolicy.test.ts` | usługi pierwszoplanowej GPS: adopcja bez restartu po headless, `retry-later` przy próbie startu z tła, sprzątanie osieroconej usługi |
 
 **Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:
@@ -1301,6 +1414,38 @@ tabeli jako nowy `kind` — bez zmiany serwera (koperta `/traces` celowo luźna)
 **`projections.test.ts` to kontrakt z designem, nie zwykły test.** Odwzorowuje kanoniczną oś dnia 22 JUNE z `docs/design-notes.md` — te same liczby, które pokazują mockupy 04/09/10/11: block **6:39** (2:22 + 1:13 + 3:04), 6 lotów, paliwo **150 +48 −110 = 88 L**, MH **1234:30 → 1241:09**, oraz inwariant **Δ MH = block time**. Zmiana tych liczb w teście bez zmiany designu (i odwrotnie) to rozjazd, nie poprawka.
 
 Ten test już raz się opłacił: wykrył, że projekcja iterowała zdarzenia w kolejności **wstawienia**, a nie chronologicznej — co psułoby wyliczenia po użyciu ekranu wpisu ręcznego (05f zapisuje zdarzenie z **cofniętym** czasem) i po korekcie czasu (04c).
+
+### 8.3 Czas pracy silnika liczony z dwóch źródeł (2026-08-05)
+
+Wada znaleziona przy budowie analityki zużycia, naprawiona razem z nią — warta opisu,
+bo jej **objawem był brak objawu**.
+
+`projectSession` obsługuje czas blokowy DWIEMA drogami. Para `engine_start`/`engine_stop`
+tworzy wpis w `state.engineRuns`; `manual_log_entry` (fallback GPS, ekran 08) dokłada
+odcinek off-block→on-block **wprost do `blockTimeMs`, bez wpisu w `engineRuns`**. Jest to
+sensowne — wpis ręczny nie opisuje cyklu silnika, tylko zaraportowany czas — ale każdy,
+kto liczy czas pracy silnika z samych `engineRuns`, dostanie w dniu z wpisem ręcznym
+mianownik za mały.
+
+Robił tak ekran 06: `estimateConsumption` dzieliło ubytek paliwa przez czas z cykli, więc
+średnia L/h wychodziła **zawyżona**. Nic tego nie zdradzało: zła średnia wygląda dokładnie
+tak samo jak dobra, a docblok modułu ostrzegał przed tym trybem awarii dwa lata wcześniej,
+niż on wystąpił.
+
+Naprawa jest jedną funkcją dla obu stron — `consumption/timeInPhase.ts`:
+
+- `blockSpans(state, events)` zbiera odcinki z OBU źródeł i nakłada korekty (wpis
+  unieważniony `void` przestaje liczyć się do mianownika);
+- `spanTimeInWindow` **scala nakładki zamiast sumować długości**. Ręczny wpis potrafi
+  nachodzić na zarejestrowany cykl (pilot dopisał wzlot, który aplikacja też złapała),
+  a suma policzyłaby te minuty dwa razy — mianownik rośnie, L/h spada, i znowu nic tego
+  nie widać. `state.blockTimeMs` sumuje bez scalania i **to zostaje**: tam liczba opisuje
+  „ile czasu zaraportowano", tu miara opisuje „ile silnik pracował". Różnica jest
+  zamierzona i nazwana w obu miejscach.
+
+Test regresyjny: `app/src/__tests__/timeInPhase.test.ts`, przypadek nazwany wprost
+(„liczy ręczny off/on-block, którego NIE MA w engineRuns") plus asercja pokazująca,
+że projekcja i miara odpowiadają na różne pytania.
 
 ---
 

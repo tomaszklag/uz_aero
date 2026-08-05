@@ -97,7 +97,7 @@
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
   </div>
   <h1>UZ AERO — <span>PANEL</span></h1>
-  <div class="hero-sub">Aplikacja web dla administratora i szefa wyszkolenia · 20 ekranów</div>
+  <div class="hero-sub">Aplikacja web dla administratora i szefa wyszkolenia · 23 ekrany</div>
   <div class="hero-tag"><span class="dot"></span> Projekt — do zatwierdzenia, nie wdrożony</div>
 </div>
 
@@ -241,7 +241,7 @@
   </a>
 </div>
 
-<div class="section-title">Raporty <small>A10</small></div>
+<div class="section-title">Raporty <small>A10 – A10b</small></div>
 <div class="grid">
   <a href="A10-statystyki.html" class="card green">
     <div class="card-num">A10</div>
@@ -249,6 +249,22 @@
       <div class="card-title">A10-statystyki</div>
       <div class="card-desc">Naloty, paliwo i MH per samolot, pilot i operacja. Osobna sekcja przychodowa: zrzuty, skoczkowie w rozbiciu tandem / AFF / solo, średnia wysokość, klient.</div>
       <div class="card-tags"><span class="tag green">raporty</span><span class="tag">zrzuty</span><span class="tag">CSV</span></div>
+    </div>
+  </a>
+  <a href="A10a-analityka.html" class="card green">
+    <div class="card-num">A10A</div>
+    <div class="card-body">
+      <div class="card-title">A10a-analityka</div>
+      <div class="card-desc">Analityka zużycia jednego samolotu: stawki fazowe paliwa z regresji na interwałach (odczyt → odczyt), przelicznik motogodzin na godzinę zegara per faza (licznik obrotomierzowy vs godzinowy — model wykrywa sam), trend miesięczny i tabela interwałów z resztami. Każda liczba klika się do dnia i zdarzeń źródłowych; estymaty zawsze z przedziałem ufności.</div>
+      <div class="card-tags"><span class="tag green">analityka</span><span class="tag">NNLS</span><span class="tag amber">estymata ≠ pomiar</span></div>
+    </div>
+  </a>
+  <a href="A10b-analityka-brak-danych.html" class="card amber">
+    <div class="card-num">A10B</div>
+    <div class="card-body">
+      <div class="card-title">A10b-analityka-brak-danych</div>
+      <div class="card-desc">Wariant analityki poniżej progu publikacji (5 interwałów i 10 h silnika w oknie): progi, postęp zbierania i zebrane interwały zamiast stawek, które by zmyślał. Obsługuje też okres po wyzerowaniu modelu (remont silnika).</div>
+      <div class="card-tags"><span class="tag amber">wariant</span><span class="tag">stan pusty</span></div>
     </div>
   </a>
 </div>

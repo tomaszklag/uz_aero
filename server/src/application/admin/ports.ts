@@ -1011,6 +1011,151 @@ export interface MaintenanceAdminPort {
   schemaMigrations(db: Queryable): Promise<{ version: number; rows: SchemaMigrationRow[] }>;
 }
 
+// ── statystyki (A10) ────────────────────────────────────────────────────────────
+
+/** Zakres statystyk po DNIU ZAMKNIĘCIA (`sessions.close_time`), obustronnie domknięty. */
+export interface StatsRange {
+  fromMs: number;
+  toMs: number;
+}
+
+/**
+ * Wspólny rdzeń wiersza agregatu — te same liczby w każdym ujęciu, bo to ten sam
+ * zbiór dni policzony w trzech przekrojach (sumy MUSZĄ się zgadzać między ujęciami).
+ *
+ * `staleRows` = wiersze projekcji sprzed migracji 18 (`takeoff_count IS NULL` —
+ * kolumny statystyk wypełnia się razem, więc jedna wystarcza za wskaźnik).
+ * `fuelKnownSessions`/`mhKnownSessions` liczą wiersze, które WESZŁY do sumy —
+ * mapper odróżnia nimi „bilansu nie ma z czego policzyć" od „wiersz nieprzeliczony".
+ */
+export interface AdminStatsGroupRow {
+  sessions: number;
+  blockMs: number;
+  flightMs: number;
+  takeoffs: number;
+  landings: number;
+  fuelConsumedL: number;
+  fuelKnownSessions: number;
+  /** Blok WYŁĄCZNIE dni, które weszły do sumy paliwa — mianownik Śr. L/h. */
+  fuelBlockMs: number;
+  mhDeltaH: number;
+  mhKnownSessions: number;
+  /** Blok WYŁĄCZNIE dni ze znanym Δ MH — mianownik rozjazdu Δ MH vs blok. */
+  mhBlockMs: number;
+  staleRows: number;
+}
+
+/** Sumy całego zakresu plus wymiary kafli (`aircraft`, `pilots`). */
+export interface AdminStatsTotalsRow extends AdminStatsGroupRow {
+  aircraft: number;
+  /**
+   * PIC ∪ Dual — pilotów BIORĄCYCH UDZIAŁ, nie tylko piszących sesję. Uwaga:
+   * `dual_id` niesie OSTATNIEGO duala dnia, więc dual zastąpiony w środku dnia
+   * może nie być policzony (przypis pod tabelą pilotów mówi to wprost).
+   */
+  pilots: number;
+}
+
+/**
+ * Dni OTWARTE: `inRange` — z duty startem w zakresie; `undated` — z SAMYM
+ * `session_claim` (`claim_time IS NULL`), których nie da się przypisać do żadnego
+ * zakresu, więc liczone są ZAWSZE.
+ */
+export interface AdminStatsOpenSessionsRow {
+  inRange: number;
+  undated: number;
+}
+
+export interface AdminStatsAircraftRow extends AdminStatsGroupRow {
+  aircraftId: string;
+  reg: string | null;
+  aircraftType: string | null;
+  capacityL: number | null;
+  mhFormat: MhFormat | null;
+  /** Dni kalendarzowe (UTC, po dniu zamknięcia) z co najmniej jedną zamkniętą sesją. */
+  activeDays: number;
+  /** Odczyty skrajnych sesji zakresu — surowe, bez szukania „pierwszego niepustego". */
+  mhFirstStart: number | null;
+  mhLastEnd: number | null;
+}
+
+export interface AdminStatsPilotRow {
+  pilotId: string;
+  code: string | null;
+  name: string | null;
+  sessions: number;
+  blockMs: number;
+  flightMs: number;
+  takeoffs: number;
+  landings: number;
+  staleRows: number;
+  /** Rejestracje jednostek (bez `null` po `LEFT JOIN`), alfabetycznie. */
+  regs: string[];
+}
+
+export interface AdminStatsOperationRow extends AdminStatsGroupRow {
+  operation: OperationType | null;
+  regs: string[];
+  clients: number;
+}
+
+/** Numer doby UTC (`close_time / 86400000`) — na dzień zamienia go warstwa aplikacji. */
+export interface AdminStatsDailyRow {
+  dayIndex: number;
+  blockMs: number;
+}
+
+export interface AdminStatsDropsRow {
+  sessions: number;
+  flightMs: number;
+  lifts: number;
+  tandem: number;
+  aff: number;
+  solo: number;
+  altSumFt: number;
+  altCount: number;
+  /**
+   * Wiersze, przez które sum zrzutów nie da się uczciwie podać: dni skokowe sprzed
+   * migracji 18 ORAZ dni z `operation IS NULL` w zakresie — rodzaju operacji nie
+   * znamy, więc KAŻDY z nich mógł być dniem skokowym. To domyślny stan bazy
+   * migrującej ze starego schematu, aż do przebudowy projekcji (`A11`).
+   */
+  staleRows: number;
+}
+
+export interface AdminStatsClientRow {
+  client: string | null;
+  lifts: number;
+  tandem: number;
+  aff: number;
+  solo: number;
+  altSumFt: number;
+  altCount: number;
+}
+
+/**
+ * Port statystyk (`A10`) — WYŁĄCZNIE agregacja kolumn projekcji `sessions`.
+ *
+ * Reguła twarda z `docs/architektura-panelu-serwer.md` §7.5: wolno SUMOWAĆ wartości,
+ * które wyprodukowała projekcja (`sessionRowFrom(projectSession(...))`), nie wolno
+ * ODTWARZAĆ projekcji SQL-em (`COUNT(*) FROM events WHERE type='takeoff'` byłoby
+ * drugim, równoległym wyliczeniem — i to ono zaczyna kłamać). Dlatego każda liczba
+ * tego portu ma swoją kolumnę w `sessions`, a brak kolumny = brak liczby.
+ */
+export interface StatsAdminPort {
+  totals(db: Queryable, range: StatsRange): Promise<AdminStatsTotalsRow>;
+  /** Dni OTWARTE — licznik pominiętych (w zakresie + bez daty), nie składnik sum. */
+  openSessions(db: Queryable, range: StatsRange): Promise<AdminStatsOpenSessionsRow>;
+  /** Tylko doby NIEPUSTE — zer nie zmyśla baza, dopełnia je warstwa aplikacji. */
+  daily(db: Queryable, range: StatsRange): Promise<AdminStatsDailyRow[]>;
+  byAircraft(db: Queryable, range: StatsRange): Promise<AdminStatsAircraftRow[]>;
+  byPilot(db: Queryable, range: StatsRange): Promise<AdminStatsPilotRow[]>;
+  byOperation(db: Queryable, range: StatsRange): Promise<AdminStatsOperationRow[]>;
+  /** Strona przychodowa — zakres zawężony do `operation = 'skoki'` (podpis mockupu). */
+  drops(db: Queryable, range: StatsRange): Promise<AdminStatsDropsRow>;
+  dropsByClient(db: Queryable, range: StatsRange): Promise<AdminStatsClientRow[]>;
+}
+
 // ── pulpit (A01, A01a) ──────────────────────────────────────────────────────────
 
 /**
@@ -1089,4 +1234,69 @@ export interface DashboardAdminPort {
    * gdy dziś nic nie lata.
    */
   lastFlyingDayStart(db: Queryable): Promise<number | null>;
+}
+
+// ── analityka zużycia (A10a, A10b) ──────────────────────────────────────────────
+
+/**
+ * Sesja jako WEJŚCIE analityki: identyfikator plus kolumny projekcji, które model
+ * motogodzin konsumuje wprost.
+ *
+ * Podział pracy jest tu istotny i celowy. Model MH (`ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`)
+ * składa się WYŁĄCZNIE z wartości, które wyprodukowała projekcja — `mh_delta_h`,
+ * `flight_ms`, `block_ms` (migracja 18) — więc liczy się bez ani jednego odczytu
+ * rejestru zdarzeń, dokładnie tak, jak każe §7.2. Strumień jest potrzebny dopiero
+ * modelowi PALIWA, bo granice interwałów wyznaczają odczyty paliwomierza z payloadów,
+ * a tych projekcja nie niesie i nieść nie powinna (jest ich kilka na sesję).
+ */
+export interface ConsumptionSessionRef {
+  sessionUuid: string;
+  claimTime: number | null;
+  closeTime: number | null;
+  mhDeltaH: number | null;
+  blockMs: number;
+  flightMs: number;
+  /** `null` = wiersz sprzed migracji 18, jeszcze nieprzeliczony (`A11`). */
+  takeoffCount: number | null;
+}
+
+/** Jednostka, której dotyczy analityka — nagłówek ekranu i podpisy formatu. */
+export interface ConsumptionAircraftRow {
+  aircraftId: string;
+  reg: string;
+  aircraftType: string;
+  capacityL: number;
+  mhFormat: MhFormat;
+  serviceStatus: string;
+}
+
+/** Zamknięte dni okna razem z licznikiem tych, które nie zmieściły się w limicie. */
+export interface ConsumptionSessionsPage {
+  sessions: ConsumptionSessionRef[];
+  /** Ile dni spełnia warunek zakresu ŁĄCZNIE — mianownik komunikatu o przycięciu. */
+  total: number;
+}
+
+export interface ConsumptionAdminPort {
+  /** Jednostka po identyfikatorze; `null` = nie ma takiej we flocie. */
+  aircraft(db: Queryable, aircraftId: string): Promise<ConsumptionAircraftRow | null>;
+
+  /**
+   * Zamknięte dni samolotu w oknie, od najnowszego. `limit` jest bezpiecznikiem
+   * (patrz `queries/consumption.ts`), a nie stronicowaniem — analityka liczy się
+   * na całym oknie albo mówi, że go przycięła.
+   */
+  closedSessions(
+    db: Queryable,
+    aircraftId: string,
+    range: StatsRange,
+    limit: number,
+  ): Promise<ConsumptionSessionsPage>;
+
+  /**
+   * Dni OTWARTE samolotu w oknie — liczone po `claim_time`, bo dzień bez zamknięcia
+   * nie ma `close_time`. Ich zużycia nie znamy (brak odczytu końcowego), więc do modelu
+   * nie wchodzą; ekran mówi, ile ich pominął, zamiast milczeć o różnicy.
+   */
+  openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number>;
 }
