@@ -21,6 +21,7 @@ import {
 
 import {
   EVENT_TYPES,
+  type ConsumptionNorm,
   type EpochMillis,
   type Event,
   type EventType,
@@ -72,6 +73,11 @@ interface AircraftRow {
   claim_since: number | null;
   handover: string | null;
   fetched_at: number;
+  /**
+   * JSON normy zużycia z `reference_consumption` (migracja 4) — dołączany `LEFT JOIN`-em.
+   * `null` znaczy „model poniżej progu publikacji albo nigdy nie pobrany", a nie zero.
+   */
+  consumption: string | null;
 }
 
 interface PilotRow {
@@ -228,20 +234,42 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
              handover=excluded.handover, fetched_at=excluded.fetched_at`,
           params,
         );
+
+        // Norma żyje w osobnej tabeli i ma własny cykl życia (migracja 4). `null`
+        // z serwera KASUJE wpis, zamiast zostawiać poprzedni: model, który przestał
+        // się publikować (wyzerowany po remoncie, zbyt mało świeżych dni), nie ma
+        // prawa dalej podpowiadać pilotowi starą liczbę.
+        if (a.consumption == null) {
+          await db.runAsync('DELETE FROM reference_consumption WHERE aircraft_id = ?', [a.id]);
+        } else {
+          await db.runAsync(
+            `INSERT INTO reference_consumption (aircraft_id, model, fetched_at)
+             VALUES (?, ?, ?)
+             ON CONFLICT(aircraft_id) DO UPDATE SET
+               model=excluded.model, fetched_at=excluded.fetched_at`,
+            [a.id, JSON.stringify(a.consumption), a.fetchedAt],
+          );
+        }
       }
     });
   }
 
   async getAircraft(): Promise<ReferenceAircraft[]> {
     const rows = await this.getDb().getAllAsync<AircraftRow>(
-      'SELECT * FROM reference_aircraft ORDER BY reg ASC',
+      `SELECT a.*, c.model AS consumption
+         FROM reference_aircraft a
+         LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
+        ORDER BY a.reg ASC`,
     );
     return rows.map(rowToAircraft);
   }
 
   async getAircraftById(id: string): Promise<ReferenceAircraft | null> {
     const row = await this.getDb().getFirstAsync<AircraftRow>(
-      'SELECT * FROM reference_aircraft WHERE id = ?',
+      `SELECT a.*, c.model AS consumption
+         FROM reference_aircraft a
+         LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
+        WHERE a.id = ?`,
       [id],
     );
     return row ? rowToAircraft(row) : null;
@@ -387,6 +415,7 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     await this.getDb().execAsync(`
       DELETE FROM events;
       DELETE FROM reference_aircraft;
+      DELETE FROM reference_consumption;
       DELETE FROM reference_pilots;
       DELETE FROM session_meta;
       DELETE FROM gps_trace;
@@ -495,6 +524,7 @@ function rowToAircraft(row: AircraftRow): ReferenceAircraft {
     claimPicId: row.claim_pic,
     claimSince: row.claim_since,
     handover: row.handover ? (JSON.parse(row.handover) as Handover) : null,
+    consumption: row.consumption ? (JSON.parse(row.consumption) as ConsumptionNorm) : null,
     fetchedAt: row.fetched_at,
   };
 }

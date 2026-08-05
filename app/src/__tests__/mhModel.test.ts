@@ -120,3 +120,37 @@ describe('niepewność i reszty', () => {
     }
   });
 });
+
+describe('bramki znalezione przebiegiem po realnej historii (2026-08-05)', () => {
+  it('różnica trzech minut na godzinę to NIE jest inny typ licznika', () => {
+    // Realny przypadek: SP-FGK i SP-KWA dawały 1,00 kontra 0,99 i model orzekał
+    // „obrotomierzowy". Statystycznie miał rację — przy danych bez szumu przedziały są
+    // zerowe, więc każda różnica jest pewna. Operacyjnie odpowiedź była bez sensu.
+    const model = fitMhModel(sixDays(1.0, 0.99));
+
+    expect(model.kind).toBe('hobbs');
+  });
+
+  it('nie publikuje przelicznika, który przeczy fizyce licznika', () => {
+    // An-2 z bazy dawał „w locie 0,90, na ziemi 1,20". Licznik chodzący SZYBCIEJ na
+    // wolnych obrotach nie istnieje — ani obrotomierzowy, ani godzinowy. To artefakt
+    // danych, więc wynik nie ma prawa stanąć na ekranie jako fakt.
+    const model = fitMhModel(sixDays(0.9, 1.2));
+
+    expect(model.published).toBe(false);
+    expect(model.kind).toBe('unknown');
+    expect(model.perFlightHour).toBeNull();
+    expect(model.perGroundHour).toBeNull();
+    // Wiersze zestawienia zostają — administrator ma zobaczyć, na czym model poległ.
+    expect(model.rows).toHaveLength(6);
+  });
+
+  it('wyraźnie niższy przelicznik na ziemi nadal daje obrotomierz', () => {
+    // Kontrola poprzedniego przypadku: bramka fizyczna nie może wyciąć prawdziwego
+    // obrotomierza, dla którego różnica jest cała treścią.
+    const model = fitMhModel(sixDays(0.96, 0.41));
+
+    expect(model.published).toBe(true);
+    expect(model.kind).toBe('tach');
+  });
+});

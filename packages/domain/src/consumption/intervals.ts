@@ -35,6 +35,7 @@ import {
   type SessionIntervals,
 } from './interval';
 import { intervalRejection } from './policy';
+import { phaseTimesInWindow, type PhaseSegment } from './phaseTimeline';
 import { blockSpans, flightSpans, spanTimeInWindow, type Span } from './timeInPhase';
 
 /**
@@ -53,12 +54,29 @@ interface FuelBound {
   opens: number | null;
 }
 
+/** Opcje ekstrakcji. */
+export interface FuelIntervalOptions {
+  /**
+   * Oś faz pionowych ze śladu GPS (`buildPhaseTimeline`). Podana — interwały dostają
+   * rozbicie lotu na wznoszenie/przelot/zniżanie i model może pracować na czterech
+   * fazach. Pominięta — pola faz zostają `null`, czyli „nie wiem", a model schodzi
+   * na podział ziemia/powietrze.
+   *
+   * Oś jest parametrem, a nie czymś, co ta funkcja sama sobie policzy, bo pochodzi
+   * z INNEGO magazynu (pliki śladu) niż rejestr zdarzeń — a domena nie czyta plików.
+   */
+  phaseTimeline?: readonly PhaseSegment[];
+}
+
 /**
  * Buduje interwały paliwowe i równanie motogodzin z sesji.
  *
  * @param events strumień JEDNEJ sesji — surowy (korekty nakładamy tutaj).
  */
-export function buildFuelIntervals(events: Event[]): SessionIntervals {
+export function buildFuelIntervals(
+  events: Event[],
+  options: FuelIntervalOptions = {},
+): SessionIntervals {
   if (events.length === 0) return emptySessionIntervals();
 
   const state = projectSession(events);
@@ -68,6 +86,21 @@ export function buildFuelIntervals(events: Event[]): SessionIntervals {
   const flights = flightSpans(state);
 
   const intervals = buildIntervals(ordered, state, block, flights);
+
+  if (options.phaseTimeline != null && options.phaseTimeline.length > 0) {
+    for (const interval of intervals) {
+      const times = phaseTimesInWindow(
+        options.phaseTimeline,
+        flights,
+        interval.startAt,
+        interval.endAt,
+      );
+      interval.climbMs = times.climbMs;
+      interval.cruiseMs = times.cruiseMs;
+      interval.descentMs = times.descentMs;
+    }
+  }
+
   return { intervals, mh: buildMhEquation(state, block, flights) };
 }
 

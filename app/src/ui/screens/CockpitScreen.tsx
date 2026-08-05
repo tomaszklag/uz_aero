@@ -39,6 +39,7 @@ import {
   DetectToast,
   DropSheet,
   DutyStrip,
+  FuelStrip,
   EventLog,
   ManualEventSheet,
   NoGpsBanner,
@@ -55,10 +56,12 @@ import {
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useGps, useSensors } from '../bootstrap/servicesContext';
+import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
 import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
+import { enduranceLabel } from './logic/fuelNorm';
 import { cyclesLabel } from './logic/cockpitPeek';
 import { flightsBadge } from './logic/statsDay';
 import {
@@ -134,6 +137,10 @@ export function CockpitScreen({
   const drop = useSessionStore((s) => s.drop);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
+
+  // Konfiguracja i norma zużycia z cache'u referencyjnego — do paska paliwa (mockup 04).
+  // Dane lokalne, więc kokpit nigdy nie czeka na sieć.
+  const aircraft = useAircraft(projection.aircraftId);
 
   const [busy, setBusy] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
@@ -521,6 +528,22 @@ export function CockpitScreen({
           <DutyStrip
             elapsed={duration(dutyMs)}
             since={`Meldunek ${timeUtc(projection.dutyStart)} UTC · ${timeLocal(projection.dutyStart)} LT`}
+          />
+        )}
+
+        {/* Pasek paliwa: odczyt z rejestru + szacunek z normy samolotu (serwer).
+            Bez normy pokazuje sam odczyt — brak podpowiedzi nie jest wartością
+            do wyświetlenia, a zmyślona liczba przy planowaniu paliwa jest gorsza
+            od jej braku. */}
+        {projection.fuel.lastReadingL != null && (
+          <FuelStrip
+            fuel={litres(projection.fuel.lastReadingL)}
+            endurance={enduranceLabel(projection.fuel.lastReadingL, aircraft?.consumption ?? null)}
+            source={
+              aircraft?.consumption == null
+                ? null
+                : `szacunek z normy samolotu (${aircraft.consumption.windowDays} dni) — decyduje paliwomierz`
+            }
           />
         )}
 

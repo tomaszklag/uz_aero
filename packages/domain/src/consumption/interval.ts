@@ -42,6 +42,12 @@ export type IntervalRejection =
   | 'negative-consumption'
   /** Silnik pracował krócej niż `MIN_INTERVAL_ENGINE_MS` — błąd przyrządu przeważa nad sygnałem. */
   | 'engine-too-short'
+  /**
+   * Silnik „pracował" dłużej niż `MAX_INTERVAL_ENGINE_MS` — czyli dłużej niż jakikolwiek
+   * realny dzień lotny. Znaczy to zapomniane `engine_stop`, a nie lot; mianownik jest
+   * wtedy fikcją i stawka z niego też.
+   */
+  | 'engine-too-long'
   /** Silnik nie pracował wcale: dwa odczyty przy wyłączonym silniku nie mierzą zużycia. */
   | 'no-engine'
   /** Reszta ponad `OUTLIER_SIGMA` — wykluczony PO dopasowaniu modelu (`model.ts`). */

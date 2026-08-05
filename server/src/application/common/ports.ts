@@ -13,10 +13,12 @@
  */
 
 import type {
+  ConsumptionNorm,
   Event,
   FlagStatus,
   FlagType,
   OperationType,
+  PhaseSegment,
   ReferenceAircraft,
   ReferencePilot,
 } from '@uzaero/domain';
@@ -183,6 +185,56 @@ export interface ReferenceSnapshot {
 
 export interface ReferencePort {
   snapshot(): Promise<ReferenceSnapshot>;
+}
+
+/**
+ * OŚ FAZ PIONOWYCH lotu (wznoszenie / przelot / zniżanie) dla sesji.
+ *
+ * Wynik zależy WYŁĄCZNIE od śladu GPS — nie od rejestru zdarzeń. Dzięki temu da się go
+ * cache'ować obok nagrania: korekta czasu startu zmienia okno lotu, ale nie zmienia ani
+ * jednego odcinka tej osi. Pusta lista znaczy „ten dzień nie ma nagrania" i jest wynikiem
+ * pełnoprawnym: interwały tej sesji zostają wtedy bez rozbicia na fazy pionowe.
+ */
+export interface PhaseTimelinePort {
+  read(sessionUuid: string): Promise<PhaseSegment[]>;
+}
+
+/**
+ * NORMA ZUŻYCIA per samolot (migracja 19) — materializacja modelu dla telefonów.
+ *
+ * Port jest w `common/`, bo normę PRODUKUJE analityka panelu, a KONSUMUJE aplikacja
+ * pilota (`GET /reference`). Liczenie jej na żądanie telefonu odpada: `/reference`
+ * odpytuje każdy telefon co kwadrans, a model czyta strumienie kilkudziesięciu sesji.
+ */
+export interface ConsumptionNormPort {
+  /** Uuidy zamkniętych dni samolotu w oknie — wejście przeliczenia. */
+  closedSessionUuids(
+    db: Queryable,
+    aircraftId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<string[]>;
+
+  /**
+   * Zapisuje normę; `norm === null` KASUJE wiersz. Model, który przestał się publikować,
+   * nie ma prawa dalej podpowiadać starej liczby.
+   */
+  save(
+    db: Queryable,
+    aircraftId: string,
+    windowDays: number,
+    norm: ConsumptionNorm | null,
+    computedAt: Date,
+  ): Promise<void>;
+
+  /** Normy całej floty, po `aircraft_id` — wejście `GET /reference`. */
+  all(db: Queryable): Promise<Map<string, ConsumptionNorm>>;
+
+  /**
+   * Najświeższy stempel policzenia — trzeci składnik ETagu referencji. Bez niego
+   * przeliczenie modeli (bez zmiany sesji ani konfiguracji) nie dotarłoby do telefonów,
+   * bo `304` zamroziłoby poprzednią odpowiedź.
+   */
+  latestComputedAt(db: Queryable): Promise<Date | null>;
 }
 
 // ── zdarzenia, sesje, flagi (M2) ────────────────────────────────────────────────

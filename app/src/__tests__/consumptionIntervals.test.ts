@@ -211,3 +211,35 @@ describe('równanie motogodzin dnia', () => {
     expect(mh!.clamped).toBe(false);
   });
 });
+
+describe('bramka górna — znaleziona przebiegiem po realnej historii (2026-08-05)', () => {
+  it('odrzuca interwał, w którym silnik „pracował" dłużej niż dzień lotny', () => {
+    // Prawdziwy przypadek z bazy: `engine_start` 27 JUL 19:00, `engine_stop` 29 JUL
+    // 11:33 — czterdzieści godzin przez dwie noce. To zapomniane wyłączenie, nie lot;
+    // mianownik jest wtedy fikcją, a stawka z niego byłaby fikcją pomnożoną przez paliwo.
+    const events = [
+      preflight(at(8, 0), 300),
+      event('engine_start', at(8, 10)),
+      event('engine_stop', at(8, 10) + 40 * 3_600_000),
+      dayClose(at(8, 10) + 41 * 3_600_000, 100, 1240.0),
+    ];
+
+    const [interval] = buildFuelIntervals(events).intervals;
+
+    expect(interval!.rejected).toBe('engine-too-long');
+    // Wiersz ZOSTAJE — to jest ślad rozjazdu w rejestrze, a nie szum do ukrycia.
+    expect(interval!.consumedL).toBe(200);
+  });
+
+  it('długi, ale realny dzień lotny przechodzi', () => {
+    // Antonow przy skokach robi 8–10 h silnika dziennie. Próg nie ma prawa go uciąć.
+    const events = [
+      preflight(at(6, 0), 300),
+      event('engine_start', at(6, 10)),
+      event('engine_stop', at(15, 40)), // 9,5 h
+      dayClose(at(16, 0), 100, 1244.0),
+    ];
+
+    expect(buildFuelIntervals(events).intervals[0]!.rejected).toBeNull();
+  });
+});

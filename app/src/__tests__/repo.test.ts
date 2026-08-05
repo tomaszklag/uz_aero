@@ -129,6 +129,7 @@ describe('EventsRepo + InMemoryAdapter', () => {
         claimPicId: null,
         claimSince: null,
         handover: null,
+        consumption: null,
       },
     ]);
     await repo.upsertPilots([{ id: 'pic-1', code: 'KRZ', name: 'Jan Kowalski', active: true }]);

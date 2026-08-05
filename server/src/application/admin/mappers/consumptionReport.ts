@@ -21,6 +21,7 @@ import {
   type Event,
   type FuelInterval,
   type MhEquation,
+  type PhaseSegment,
 } from '@uzaero/domain';
 
 import type {
@@ -47,6 +48,12 @@ export interface ConsumptionReportInput {
   openSessions: number;
   /** Strumienie tych samych sesji, po `sessionUuid`. */
   streams: ReadonlyMap<string, Event[]>;
+  /**
+   * Osie faz pionowych ze śladu GPS, po `sessionUuid`. Sesja bez wpisu (albo z pustą
+   * osią) nie dostaje rozbicia lotu na wznoszenie/przelot/zniżanie — jej interwały
+   * wchodzą do modelu dwufazowego, a `fuel.tracedIntervals` mówi, ilu wierszy to dotyczy.
+   */
+  timelines?: ReadonlyMap<string, PhaseSegment[]>;
 }
 
 export function consumptionReport(input: ConsumptionReportInput): AdminConsumptionReport {
@@ -57,7 +64,8 @@ export function consumptionReport(input: ConsumptionReportInput): AdminConsumpti
     const stream = input.streams.get(session.sessionUuid) ?? [];
     if (stream.length === 0) continue;
 
-    const extracted = buildFuelIntervals(stream);
+    const phaseTimeline = input.timelines?.get(session.sessionUuid);
+    const extracted = buildFuelIntervals(stream, { phaseTimeline });
     intervals.push(...extracted.intervals);
     if (extracted.mh != null) equations.push(extracted.mh);
   }

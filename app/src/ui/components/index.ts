@@ -92,6 +92,7 @@ export * from './data/CockpitActions';
 export * from './data/EventLog';
 export * from './data/DayLog';
 export * from './data/DutyStrip';
+export * from './data/FuelStrip';
 export * from './data/ActionGrid';
 export * from './data/ActionButton';
 export * from './data/DetectToast';

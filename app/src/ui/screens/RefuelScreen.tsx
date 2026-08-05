@@ -51,6 +51,7 @@ import {
   maxAddableL,
   refuelScale,
 } from './logic/refuelMath';
+import { compareToNorm, normLabel, verdictLabel } from './logic/fuelNorm';
 import type { ReferenceAircraft } from '../../domain';
 
 /** Krok dolewki. 5 L to podziałka, którą widać na dystrybutorze; 20 L to szybki przeskok. */
@@ -109,6 +110,15 @@ export function RefuelScreen({
     () => estimateConsumption(events, projection, beforeL, openedAt),
     [events, projection, beforeL, openedAt],
   );
+
+  // Norma tego samolotu (serwer, ekran `A10a`) — punkt odniesienia dla dzisiejszego
+  // wyniku. `null` znaczy „model poniżej progu publikacji"; wiersz wtedy nie powstaje.
+  const norm = aircraft?.consumption ?? null;
+  const normRow = useMemo(() => {
+    const label = normLabel(norm);
+    const verdict = verdictLabel(compareToNorm(consumption?.lPerH ?? null, norm));
+    return label == null || verdict == null ? null : { label, value: verdict };
+  }, [consumption, norm]);
 
   const save = useCallback(async () => {
     setBusy(true);
@@ -269,11 +279,19 @@ export function RefuelScreen({
                 value: hoursMinutes(consumption.engineMs),
               },
               { label: 'Zużycie w tym czasie', value: `~${Math.round(consumption.usedL)} L` },
+              // Porównanie z normą samolotu — wiersz pojawia się TYLKO wtedy, gdy serwer
+              // ją przysłał. Bez normy nie ma tu kreski ani zera: brak podpowiedzi nie
+              // jest wartością do pokazania (mockup 06).
+              ...(normRow == null ? [] : [normRow]),
             ]}
             // Bez miejsc po przecinku (i z tyldą, jak w mockupie): to szacunek z dwóch
             // odczytów paliwomierza, a ten nie ma dokładności uzasadniającej „16,1 L/h".
             total={{ label: 'Średnie zużycie', value: `~${Math.round(consumption.lPerH)} L/h` }}
-            note="Punkt kontrolny — zweryfikuj z dokumentacją samolotu"
+            note={
+              norm == null
+                ? 'Punkt kontrolny — zweryfikuj z dokumentacją samolotu'
+                : 'Punkt kontrolny — zweryfikuj z dokumentacją samolotu. Norma uczy się z historii odczytów; wynik wyraźnie poza nią to powód, żeby sprawdzić odczyt. Paliwomierz wygrywa.'
+            }
           />
         ) : (
           // Puste miejsce po rachunku byłoby mylące: pilot ma wiedzieć, DLACZEGO średniej

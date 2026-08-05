@@ -63,6 +63,47 @@ export interface Handover {
 }
 
 /**
+ * Norma zużycia policzona z historii tego samolotu (ekran `A10a` po stronie panelu).
+ *
+ * ══ CZYM TO NIE JEST ══
+ * Nie jest KONFIGURACJĄ: nikt tego nie wpisuje i nie da się tego edytować. Wartości
+ * uczą się z odczytów paliwomierza i czasów z rejestru, więc zmieniają się razem
+ * z danymi. Nie jest też dokumentacją samolotu — to estymata statystyczna, która ma
+ * powiedzieć „czy dzisiejsze 16 L/h to normalne dla tej maszyny", a nie zastąpić
+ * instrukcję użytkowania.
+ *
+ * `null` na całym polu (`ReferenceAircraft.consumption`) znaczy „model poniżej progu
+ * publikacji" — ekran NIE POKAZUJE wtedy wiersza porównania. Zero udające normę byłoby
+ * gorsze od jego braku (§6: nigdy cicha kreska tam, gdzie pilot mógłby podejrzewać błąd).
+ *
+ * ══ DLACZEGO PASMO, A NIE PRZEDZIAŁ UFNOŚCI ══
+ * Panel pyta „jak dokładnie znamy stawkę" — na to odpowiada przedział z modelu.
+ * Ekran tankowania pyta „czy dzisiejszy wynik mieści się w tym, co ta maszyna zwykle
+ * pokazuje" — a na to odpowiada ROZRZUT zaobserwowanych interwałów. Przy stu równaniach
+ * przedział ufności jest wąski i werdykt „poza normą" zapalałby się na zupełnie
+ * normalnej zmienności między lotami. To są dwie różne liczby i nie należy ich
+ * ujednolicać.
+ */
+export interface ConsumptionNorm {
+  /** Szerokość okna, z którego policzono normę (dni). */
+  windowDays: number;
+  /** Dolna i górna granica pasma typowego zużycia na godzinę pracy silnika (10. i 90. centyl). */
+  blockLPerHLow: number;
+  blockLPerHHigh: number;
+  /** Środek pasma — iloraz sum (Σ litrów / Σ godzin silnika), nigdy średnia ilorazów. */
+  blockLPerH: number;
+  /** Stawka W LOCIE z modelu fazowego (L/h); `null`, gdy model nie rozdzielił faz. */
+  airLPerH: number | null;
+  /** Paliwo na jeden wzlot (L); `null`, gdy w oknie nie było startów. */
+  litersPerFlight: number | null;
+  /** Ile interwałów i ile godzin silnika stoi za tymi liczbami — podstawa zaufania. */
+  intervals: number;
+  engineMs: number;
+  /** Kiedy model policzono — NIE to samo, co `fetchedAt` rekordu. */
+  computedAt: EpochMillis;
+}
+
+/**
  * Samolot + konfiguracja + najświeższy znany stan (§5.2 `reference_aircraft`).
  * `claim*` i `handover` bywają nieświeże — traktujemy je przez pryzmat `fetchedAt`.
  */
@@ -84,6 +125,11 @@ export interface ReferenceAircraft {
   claimSince: EpochMillis | null;
   /** Ostatnie znane przekazanie FOB/MH — null gdy brak. */
   handover: Handover | null;
+  /**
+   * Norma zużycia z analityki; `null` = model poniżej progu publikacji albo serwer
+   * jeszcze go nie policzył. Dana z serwera, więc obowiązują trzy stany świeżości (§4.8).
+   */
+  consumption: ConsumptionNorm | null;
   /** Kiedy rekord pobrano z serwera (UTC) — steruje adnotacją wieku w UI (§4.8). */
   fetchedAt: EpochMillis;
 }

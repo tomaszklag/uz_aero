@@ -44,3 +44,5 @@ export * from './consumption/intervals';
 export * from './consumption/model';
 export * from './consumption/mhModel';
 export * from './consumption/summary';
+export * from './consumption/norm';
+export * from './consumption/phaseTimeline';

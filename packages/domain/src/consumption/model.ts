@@ -39,6 +39,7 @@ import { fitNonNegative, type Fit } from './fit';
 import {
   HOUR_MS,
   MAX_RELATIVE_CI,
+  MAX_VARIANCE_INFLATION,
   OUTLIER_SIGMA,
   publicationGate,
   type PublicationGate,
@@ -137,10 +138,11 @@ export function fitConsumptionModel(intervals: readonly FuelInterval[]): Consump
   const two = attempt(accepted, TWO_PHASE);
   if (two != null) return finish(two, gate, 'two', reason, traced.length);
 
+  // Zejście na JEDNĄ fazę ma zawsze ten sam powód — ziemi nie dało się odróżnić od
+  // powietrza. Brak śladu GPS tłumaczy wyłącznie brak faz PIONOWYCH i przepisanie go
+  // tutaj byłoby myleniem czytelnika: usunięcie plików śladu niczego by nie naprawiło.
   const single = attempt(accepted, SINGLE_PHASE);
-  if (single != null) {
-    return finish(single, gate, 'single', reason === 'none' ? 'collinear' : reason, traced.length);
-  }
+  if (single != null) return finish(single, gate, 'single', 'collinear', traced.length);
 
   return { ...emptyConsumptionModel(gate, 'singular'), tracedIntervals: traced.length };
 }
@@ -267,12 +269,23 @@ function median(values: readonly number[]): number {
 }
 
 /**
- * Czy wynik nadaje się do pokazania: żadna stawka WOLNA nie może mieć przedziału
- * szerszego niż `MAX_RELATIVE_CI` swojej wartości.
+ * Czy wynik nadaje się do pokazania — DWIE niezależne bramki.
  *
- * Próg stoi na przedziale, a nie na liczbie warunkowej macierzy, bo przedział jest
- * w jednostkach, które i tak pokazujemy — a zdanie „nie umiemy rozdzielić tych faz,
- * bo jedna wychodzi ±50%" da się przeczytać bez znajomości algebry.
+ * ══ 1. SZEROKOŚĆ PRZEDZIAŁU ══
+ * Żadna stawka wolna nie może mieć przedziału szerszego niż `MAX_RELATIVE_CI` swojej
+ * wartości. Ta bramka mówi, JAK DOKŁADNIE znamy stawkę przy tych danych, i jest
+ * w jednostkach, które ekran i tak pokazuje.
+ *
+ * ══ 2. ROZDZIELNOŚĆ KOLUMN (dołożona 2026-08-05 po przebiegu na realnej historii) ══
+ * Sam przedział NIE WYSTARCZA i kosztowało to konkretny błędny wynik: model podał
+ * stawkę ziemi WYŻSZĄ niż stawkę lotu (52 vs 37 L/h dla Cessny 182), a przedziały
+ * wyszły ±21% i ±14%, czyli poniżej progu. Dane były wewnętrznie spójne, więc σ reszt
+ * było maleńkie — a iloczyn `σ · √VIF` bywa mały nawet przy VIF rzędu tysiąca.
+ *
+ * Przedział i VIF odpowiadają na różne pytania: pierwszy na „jak dokładnie", drugi na
+ * „czy te dane w ogóle rozstrzygają ten podział". Model idealnie dopasowany do dni
+ * o prawie stałej proporcji faz podaje podział DOWOLNY, nie wyznaczony — i tylko VIF
+ * to widzi.
  */
 function acceptable(fit: Fit, columns: PhaseColumn[]): boolean {
   // Jedna kolumna nie ma czego mylić z czym — zestaw jednofazowy przechodzi zawsze,
@@ -281,6 +294,14 @@ function acceptable(fit: Fit, columns: PhaseColumn[]): boolean {
 
   return fit.coefficients.every((coefficient) => {
     if (coefficient.pinned) return true;
+
+    if (
+      Number.isFinite(coefficient.varianceInflation) &&
+      coefficient.varianceInflation > MAX_VARIANCE_INFLATION
+    ) {
+      return false;
+    }
+
     if (coefficient.ciHalfWidth == null) return true; // brak stopni swobody — patrz `fit.ts`
     if (coefficient.value <= 0) return true;
     return coefficient.ciHalfWidth / coefficient.value <= MAX_RELATIVE_CI;

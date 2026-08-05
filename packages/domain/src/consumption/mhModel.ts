@@ -27,6 +27,19 @@ import type { MhEquation } from './interval';
 import { fitNonNegative } from './fit';
 import { HOUR_MS, MIN_PUBLISH_MH_DAYS } from './policy';
 
+/**
+ * Poniżej tej różnicy przeliczniki uznajemy za NIEROZRÓŻNIALNE (0,05 MH na godzinę
+ * zegara, czyli trzy minuty).
+ *
+ * Próg praktyczny obok statystycznego, dołożony po przebiegu na realnej historii
+ * (2026-08-05). Przy danych wewnętrznie spójnych σ reszt schodzi do zera, więc przedziały
+ * ufności też — i wtedy KAŻDA różnica staje się „istotna": model orzekał licznik
+ * obrotomierzowy na podstawie 1,00 kontra 0,99. Statystyka miała rację (różnica jest
+ * pewna), ale odpowiedź była bez sensu, bo trzy minuty na godzinę to nie jest różnica
+ * między typami licznika, tylko szum odczytu z tarczy.
+ */
+const MH_MIN_DISTINGUISHABLE = 0.05;
+
 /** Charakter licznika odczytany z danych. */
 export type CounterKind =
   /** Godzinowy: chodzi 1:1 z zegarem, gdy silnik pracuje. */
@@ -114,7 +127,8 @@ export function fitMhModel(equations: readonly MhEquation[]): MhModel {
     };
   });
 
-  const published = usable.length >= MIN_PUBLISH_MH_DAYS && fit.degreesOfFreedom > 0;
+  const published =
+    usable.length >= MIN_PUBLISH_MH_DAYS && fit.degreesOfFreedom > 0 && trustworthy(flight, ground);
 
   return {
     published,
@@ -143,13 +157,42 @@ function isUsableEquation(equation: MhEquation): boolean {
 }
 
 /**
- * Rozstrzyga typ licznika PRZEDZIAŁAMI, nie progiem na wartości.
+ * Czy wynikowi wolno stanąć na ekranie — bramka FIZYCZNA.
  *
- * `hobbs` — oba przeliczniki są zgodne z jednością w granicach niepewności.
- * `tach`  — przedziały lotu i ziemi się NIE PRZECINAJĄ, a ziemia leży niżej: dopiero
- *           wtedy różnica jest faktem, a nie rozrzutem.
- * `unknown` — wszystko inne, w tym brak przedziałów (zero stopni swobody) i stawka
- *           przypięta do zera. Milczenie jest tu odpowiedzią, nie brakiem odpowiedzi.
+ * Przelicznik na ziemi wyższy niż w locie znaczyłby licznik chodzący szybciej na wolnych
+ * obrotach. Taki nie istnieje — ani obrotomierzowy, ani godzinowy. Wynik, który to
+ * twierdzi, jest artefaktem danych (rozjazd łańcucha odczytów, dzień z zapomnianym
+ * wyłączeniem silnika), więc go NIE PUBLIKUJEMY. Znalezione przebiegiem po realnej
+ * historii 2026-08-05: An-2 dawał „w locie 0,90, na ziemi 1,20" i model podawał to
+ * jako fakt.
+ *
+ * ══ DLACZEGO TU NIE MA BRAMKI NA WSPÓŁLINIOWOŚĆ (a przy paliwie jest) ══
+ * Bo ten model ma dwie niewiadome o ZNANEJ z góry relacji: `k_ziemia ≤ k_lot`. Warunek
+ * wyżej wyczerpuje więc to, co bramka VIF miałaby tu wykryć, i robi to bez odrzucania
+ * wyników użytecznych — pierwsza wersja z progiem VIF wycinała samolot o przedziałach
+ * ±0,07 i ±0,14, czyli odpowiedź całkiem precyzyjną. Model paliwa ma do czterech faz
+ * i relacji między nimi nie zna z góry, więc tam VIF zostaje jedyną obroną przed
+ * podziałem wyznaczonym przez szum.
+ *
+ * Nadinterpretacji broni osobno `classifyCounter`: przy niepewnych danych przedziały się
+ * nie rozejdą i typ licznika zostanie `unknown`, mimo opublikowanych wartości.
+ */
+function trustworthy(
+  flight: { value: number },
+  ground: { value: number },
+): boolean {
+  return ground.value <= flight.value + MH_MIN_DISTINGUISHABLE;
+}
+
+/**
+ * Rozstrzyga typ licznika przedziałami ORAZ progiem praktycznym.
+ *
+ * `hobbs` — przeliczniki są nieodróżnialne od siebie i oba zgodne z jednością.
+ * `tach`  — ziemia leży niżej niż lot i to NA TYLE, żeby różnica coś znaczyła:
+ *           przedziały muszą się rozejść, a sama różnica przekroczyć
+ *           `MH_MIN_DISTINGUISHABLE`. Sam rozjazd przedziałów nie wystarcza, bo przy
+ *           danych bez szumu przedziały są zerowe i „istotna" robi się różnica 0,01.
+ * `unknown` — wszystko inne. Milczenie jest tu odpowiedzią, nie brakiem odpowiedzi.
  */
 function classifyCounter(
   flight: number,
@@ -159,12 +202,16 @@ function classifyCounter(
 ): CounterKind {
   if (flightCi == null || groundCi == null) return 'unknown';
 
-  const flightMatchesOne = Math.abs(flight - 1) <= flightCi;
-  const groundMatchesOne = Math.abs(ground - 1) <= groundCi;
-  if (flightMatchesOne && groundMatchesOne) return 'hobbs';
+  const difference = flight - ground;
 
-  const groundBelowFlight = ground + groundCi < flight - flightCi;
-  if (groundBelowFlight) return 'tach';
+  if (Math.abs(difference) < MH_MIN_DISTINGUISHABLE) {
+    // Przeliczniki nierozróżnialne — licznik chodzi tak samo w obu fazach. To Hobbs,
+    // o ile chodzi 1:1 z zegarem; inaczej mamy licznik o nieznanej charakterystyce.
+    const nearOne = (value: number, ci: number) =>
+      Math.abs(value - 1) <= Math.max(ci, MH_MIN_DISTINGUISHABLE);
+    return nearOne(flight, flightCi) && nearOne(ground, groundCi) ? 'hobbs' : 'unknown';
+  }
 
-  return 'unknown';
+  const separated = ground + groundCi < flight - flightCi;
+  return difference > 0 && separated ? 'tach' : 'unknown';
 }

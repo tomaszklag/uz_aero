@@ -30,6 +30,21 @@ export const HOUR_MS = 3_600_000;
  */
 export const MIN_INTERVAL_ENGINE_MS = 30 * 60_000;
 
+/**
+ * Górny próg długości interwału (16 h pracy silnika).
+ *
+ * Znaleziony przebiegiem po realnej historii (2026-08-05): w rejestrze stała sesja
+ * z `engine_start` 27 lipca 19:00 i `engine_stop` 29 lipca 11:33 — czterdzieści godzin
+ * „pracy silnika" przez dwie noce. To nie jest lot, tylko zapomniane wyłączenie, więc
+ * czas w takim interwale jest fikcją, a stawka z niego — fikcją pomnożoną przez paliwo.
+ *
+ * Próg jest lustrem `MIN_INTERVAL_ENGINE_MS`: tam odcinamy odcinki, w których błąd
+ * odczytu przeważa nad sygnałem, tu — takie, w których mianownik nie opisuje niczego
+ * rzeczywistego. Szesnaście godzin jest wyraźnie ponad najdłuższym realnym dniem
+ * lotnym (Antonow przy skokach robi 8–10 h), więc prawdziwego dnia nie utnie.
+ */
+export const MAX_INTERVAL_ENGINE_MS = 16 * 3_600_000;
+
 /** Minimalna liczba przyjętych interwałów, żeby opublikować stawki. */
 export const MIN_PUBLISH_INTERVALS = 5;
 
@@ -68,6 +83,28 @@ export const OUTLIER_SIGMA = 3;
  */
 export const MAX_RELATIVE_CI = 0.5;
 
+/**
+ * Górny próg współczynnika inflacji wariancji — DRUGA, niezależna bramka rozdzielności.
+ *
+ * ══ DLACZEGO SAM PRZEDZIAŁ NIE WYSTARCZA (przebieg z 2026-08-05) ══
+ * Pierwsza wersja pilnowała wyłącznie `MAX_RELATIVE_CI` i przepuściła model, w którym
+ * stawka ziemi wyszła WYŻSZA niż stawka lotu (52 vs 37 L/h dla Cessny 182) — fizyczny
+ * absurd. Przedziały wyglądały wtedy przyzwoicie (±21% i ±14%), bo dane były wewnętrznie
+ * spójne, więc σ reszt było maleńkie. Iloczyn `σ · √VIF` może być mały nawet przy VIF
+ * rzędu tysiąca — czyli przy kolumnach praktycznie nierozróżnialnych.
+ *
+ * To są dwie różne rzeczy i muszą mieć dwie bramki: przedział mówi, JAK DOKŁADNIE znamy
+ * stawkę przy tych danych, a VIF — czy dane w ogóle niosą informację o tym podziale.
+ * Model idealnie dopasowany do danych, których proporcje faz są prawie stałe, podaje
+ * podział dowolny, a nie wyznaczony.
+ *
+ * Wartość 100 znaczy „niepewność najwyżej dziesięciokrotnie większa niż przy fazach
+ * idealnie rozdzielonych" (VIF wchodzi pod pierwiastek). Klasyczny podręcznikowy próg
+ * to 10, ale kolumny czasów są nieujemne i niecentrowane, więc ich cosinusy są z natury
+ * wysokie — 10 wycinałoby modele, które jeszcze coś znaczą.
+ */
+export const MAX_VARIANCE_INFLATION = 100;
+
 /** Poziom ufności przedziałów (dwustronnych). Zmiana wymaga zmiany tablicy `T_TWO_SIDED_95`. */
 export const CI_LEVEL = 0.95;
 
@@ -81,6 +118,7 @@ export function intervalRejection(interval: FuelInterval): IntervalRejection | n
   if (interval.consumedL < 0) return 'negative-consumption';
   if (interval.engineMs <= 0) return 'no-engine';
   if (interval.engineMs < MIN_INTERVAL_ENGINE_MS) return 'engine-too-short';
+  if (interval.engineMs > MAX_INTERVAL_ENGINE_MS) return 'engine-too-long';
   return null;
 }
 

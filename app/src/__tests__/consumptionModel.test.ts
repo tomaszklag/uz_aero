@@ -180,3 +180,24 @@ function rate(
 ): number {
   return model.rates.find((r) => r.phase === phase)?.lPerH ?? Number.NaN;
 }
+
+describe('bramki znalezione przebiegiem po realnej historii (2026-08-05)', () => {
+  it('nie publikuje podziału, którego dane nie rozstrzygają — mimo wąskich przedziałów', () => {
+    // Sedno wady, którą złapał przebieg: dni o prawie stałej proporcji faz dają model
+    // idealnie dopasowany (σ ≈ 0), więc przedziały wychodzą wąskie — a podział jest
+    // DOWOLNY. Poprzednia wersja publikowała wtedy „na ziemi 52 L/h, w locie 37 L/h",
+    // czyli fizyczny absurd z wiarygodnie wyglądającym ±. Sam przedział tego nie widzi;
+    // widzi to dopiero współczynnik inflacji wariancji.
+    const nearlyProportional = [1, 2, 3, 4, 5, 6].map((n) =>
+      interval(n, n * 0.5 + 0.001 * n, n * 1.5, 12, 42),
+    );
+    const model = fitConsumptionModel(nearlyProportional);
+
+    expect(model.published).toBe(true);
+    expect(model.phaseSet).toBe('single');
+    expect(model.degradedBecause).toBe('collinear');
+    // Zamiast dwóch zmyślonych stawek jedna uczciwa: średnia na godzinę pracy silnika.
+    expect(model.rates).toHaveLength(1);
+    expect(model.rates[0]!.phase).toBe('engine');
+  });
+});

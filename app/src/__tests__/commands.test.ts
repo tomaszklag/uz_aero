@@ -57,6 +57,7 @@ function setup(withAircraftCache = true) {
         claimPicId: null,
         claimSince: null,
         handover: null,
+        consumption: null,
       },
     ]);
   };

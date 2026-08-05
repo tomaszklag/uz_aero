@@ -134,6 +134,8 @@ export function rejectionLabel(rejected: string | null): string | null {
       return 'paliwa przybyło — sprawdź odczyt';
     case 'engine-too-short':
       return 'za krótki odcinek pracy silnika';
+    case 'engine-too-long':
+      return 'silnik pracował dłużej niż dzień lotny — sprawdź, czy nie zapomniano wyłączyć';
     case 'no-engine':
       return 'silnik nie pracował';
     case 'outlier':

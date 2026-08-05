@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 18;
+export const SCHEMA_VERSION = 19;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -660,6 +660,40 @@ export const MIGRATION_18 = `
     ON sessions (close_time) WHERE status = 'closed';
 `;
 
+/**
+ * Migracja 19: NORMA ZUŻYCIA per samolot — materializacja modelu dla telefonów (2026-08-05).
+ *
+ * ══ DLACZEGO TABELA, A NIE LICZENIE W LOCIE ══
+ * `GET /reference` woła KAŻDY telefon co kwadrans. Model zużycia czyta strumienie
+ * kilkudziesięciu sesji i puszcza przez regresję — koszt zupełnie inny niż odczyt
+ * konfiguracji floty. Liczenie go na żądanie telefonu byłoby wpuszczeniem analityki
+ * na ścieżkę, która ma być tania i zawsze dostępna. Memo w procesie nie wystarcza:
+ * nie przeżywa restartu i rozjeżdża się między instancjami.
+ *
+ * ══ DLACZEGO JSONB, A NIE KOLUMNY ══
+ * Kształt `ConsumptionNorm` należy do domeny i będzie się zmieniał razem z modelem
+ * (dojdą fazy pionowe). Serwer tej struktury nie filtruje ani nie sortuje — zapisuje
+ * ją i oddaje. Rozbicie na osiem kolumn dałoby osiem miejsc do zapomnienia przy
+ * następnym polu i migrację przy każdej zmianie modelu. To jest ta sama decyzja,
+ * co przy `flags.details` i `events.payload`.
+ *
+ * ══ CO ZNACZY BRAK WIERSZA ══
+ * „Model poniżej progu publikacji albo jeszcze nieliczony" — czyli dokładnie to samo,
+ * co `consumption: null` w kontrakcie. Telefon nie pokazuje wtedy porównania z normą,
+ * zamiast pokazywać zero.
+ *
+ * `computed_at` jest stemplem POLICZENIA, nie zapisu: wchodzi do odpowiedzi i pozwala
+ * telefonowi powiedzieć, jak stara jest podpowiedź, niezależnie od wieku samego cache'u.
+ */
+export const MIGRATION_19 = `
+  CREATE TABLE IF NOT EXISTS aircraft_consumption (
+    aircraft_id  TEXT PRIMARY KEY,
+    window_days  INTEGER NOT NULL,
+    model        JSONB NOT NULL,
+    computed_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  );
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -679,6 +713,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_16,
   MIGRATION_17,
   MIGRATION_18,
+  MIGRATION_19,
 ];
 
 /**
@@ -712,4 +747,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Rejestr zdarzeń pod listę śledczą (indeksy typu, pilota i urządzenia)',
   'Koniec z NULLS LAST na kluczach NOT NULL (rejestr i audyt)',
   'Kolumny statystyk w projekcji: starty/lądowania, bilanse dnia i zrzuty',
+  'Norma zużycia per samolot: aircraft_consumption (materializacja modelu)',
 ];

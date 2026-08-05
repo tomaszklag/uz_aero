@@ -58,6 +58,7 @@ import { PgAdminConsumptionRepo } from './infrastructure/pg/admin/consumptionRep
 import { PgAdminStatsRepo } from './infrastructure/pg/admin/statsRepo.ts';
 import { PgAircraftConfigRepo } from './infrastructure/pg/common/aircraftConfigRepo.ts';
 import { PgDatabase } from './infrastructure/pg/database.ts';
+import { PgConsumptionNormRepo } from './infrastructure/pg/common/consumptionNormRepo.ts';
 import { PgEventsStore } from './infrastructure/pg/common/eventsStore.ts';
 import { PgExportLogRepo } from './infrastructure/pg/common/exportLogRepo.ts';
 import { PgFlagsRepo } from './infrastructure/pg/common/flagsRepo.ts';
@@ -68,6 +69,7 @@ import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/mobile/referenceRepo.ts';
 import { PgSheets } from './infrastructure/pg/common/sheetsRepo.ts';
+import { FsPhaseTimeline } from './infrastructure/traces/fsPhaseTimeline.ts';
 import { FsTraceSink } from './infrastructure/traces/fsTraceSink.ts';
 import { FsTraceSource } from './infrastructure/traces/fsTraceSource.ts';
 import { buildServer } from './http/server.ts';
@@ -93,6 +95,13 @@ await migrate(db);
 const tokens = new Hs256Tokens(env.JWT_SECRET, clock);
 const events = new PgEventsStore();
 const sessions = new PgSessionsProjection();
+// Norma zużycia (migracja 19) — produkuje ją analityka panelu, konsumuje aplikacja
+// pilota, więc port siedzi w `application/common/` i trafia do OBU stron: ingestu
+// (przelicza po zamknięciu dnia) i `GET /reference` (oddaje telefonom).
+const consumptionNorms = new PgConsumptionNormRepo();
+// Osie faz pionowych: pliki poboczne przy śladach, liczone leniwie i unieważniane
+// rozmiarem nagrania. Wchodzą i do analityki panelu, i do przeliczenia normy.
+const phaseTimeline = new FsPhaseTimeline(env.TRACES_DIR, new FsTraceSource(env.TRACES_DIR));
 const flags = new PgFlagsRepo();
 const exportLog = new PgExportLogRepo();
 const pilots = new PgPilotsRepo(db);
@@ -142,8 +151,8 @@ const adminFleetQueries = new AdminFleetQueries(db, adminFleetRepo, sessions, ad
 
 const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
-  reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions),
-  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter),
+  reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms),
+  ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
   state: new StateQueries(db, events, sessions, flags, exportLog),
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),
@@ -275,6 +284,7 @@ const app = buildServer({
     new PgAdminConsumptionRepo(),
     events,
     clock,
+    phaseTimeline,
   ),
 });
 

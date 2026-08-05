@@ -1123,6 +1123,8 @@ i przelicznik motogodzin. Podział plików idzie wzorcem `track/`: typy → czys
 | `model.ts` | drabina degradacji faz + wykluczanie odstających |
 | `mhModel.ts` | przeliczniki MH + rozpoznanie typu licznika |
 | `summary.ts` | ilorazy sum, pasmo centylowe, trend miesięczny |
+| `norm.ts` | skrócony widok dla aplikacji pilota (`ConsumptionNorm`) |
+| `phaseTimeline.ts` | oś faz pionowych ze śladu GPS — zależy WYŁĄCZNIE od nagrania |
 
 Dokładając metrykę:
 
@@ -1140,6 +1142,28 @@ Dokładając metrykę:
    **nie ma prawa** się policzyć.
 5. Po stronie panelu: kolumna DTO w `server/src/application/admin/contracts/consumption.ts`
    i iloraz w mapperze — nigdy w SQL (`architektura-panelu-serwer.md` §7.7).
+6. **Jeśli metryka ma trafić do telefonu**, dochodzi trzeci krok: pole w `ConsumptionNorm`
+   (`packages/domain/src/reference.ts`) i przepisanie go w `application/common/consumptionNorm.ts`.
+   Norma jest materializowana w tabeli `aircraft_consumption` (migracja 19) i przeliczana
+   PO commicie ingestu, gdy dzień się domknął — nigdy na żądanie `GET /reference`, bo
+   tę trasę odpytuje każdy telefon co kwadrans.
+
+**Dwie bramki, które łatwo pomylić** (obie znalezione przebiegiem po realnej historii,
+2026-08-05, oba przypadki mają testy regresyjne):
+
+- `MAX_RELATIVE_CI` pyta „jak dokładnie znamy stawkę PRZY TYCH danych";
+- `MAX_VARIANCE_INFLATION` pyta „czy te dane w ogóle rozstrzygają ten podział".
+
+Przy danych wewnętrznie spójnych σ reszt schodzi do zera, więc pierwsza bramka
+przepuszcza wynik, w którym stawka ziemi wychodzi WYŻSZA niż stawka lotu. Druga to
+łapie. Model motogodzin ma zamiast niej bramkę FIZYCZNĄ (`k_ziemia ≤ k_lot`), bo relację
+między jego dwiema niewiadomymi znamy z góry — patrz docblok `trustworthy` w `mhModel.ts`.
+
+**Fazy pionowe cache'ujemy przy śladzie, nie w bazie.** `consumption/phaseTimeline.ts`
+zależy wyłącznie od nagrania, więc `<sesja>.phases.json` obok `<sesja>.ndjson` unieważnia
+się rozmiarem pliku źródłowego i wersją formatu — a korekta czasu startu (04c) go NIE
+unieważnia, bo okno lotu nie wchodzi do tego rachunku. Podbij `TIMELINE_VERSION`
+w `server/src/infrastructure/traces/fsPhaseTimeline.ts` przy każdej zmianie progów fazy.
 
 ### Nowy adapter (np. serwer sync)
 

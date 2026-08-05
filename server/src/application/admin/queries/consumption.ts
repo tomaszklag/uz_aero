@@ -19,7 +19,14 @@
  * przy oknie rocznym.
  */
 
-import type { Clock, Database, EventsStorePort } from '../../common/ports.ts';
+import type {
+  Clock,
+  Database,
+  EventsStorePort,
+  PhaseTimelinePort,
+} from '../../common/ports.ts';
+import type { PhaseSegment } from '@uzaero/domain';
+
 import type { AdminConsumptionReport } from '../contracts/consumption.ts';
 import type { AdminStatsRange } from '../contracts/stats.ts';
 import { consumptionReport } from '../mappers/consumptionReport.ts';
@@ -56,6 +63,12 @@ export class AdminConsumptionQueries {
     private readonly consumption: ConsumptionAdminPort,
     private readonly events: EventsStorePort,
     private readonly clock: Clock,
+    /**
+     * Osie faz pionowych; `null` = analityka pracuje na dwóch fazach (ziemia/powietrze).
+     * Wstrzykiwalne, bo źródłem są PLIKI śladu, a nie baza — test bez katalogu nagrań
+     * ma działać bez atrapy systemu plików.
+     */
+    private readonly phases: PhaseTimelinePort | null = null,
   ) {}
 
   async load(aircraftId: string, filter: ConsumptionFilter = {}): Promise<ConsumptionOutcome> {
@@ -75,10 +88,19 @@ export class AdminConsumptionQueries {
       this.consumption.openSessions(this.db, aircraftId, scope),
     ]);
 
-    const streams = await this.events.sessionStreams(
-      this.db,
-      page.sessions.map((session) => session.sessionUuid),
-    );
+    const sessionUuids = page.sessions.map((session) => session.sessionUuid);
+    const streams = await this.events.sessionStreams(this.db, sessionUuids);
+
+    // Osie faz pionowych ze śladów — każda z pliku pobocznego (kilkaset bajtów), więc
+    // koszt jest liniowy i mały. Sesja bez nagrania oddaje pustą oś i jej interwały
+    // po prostu nie dostają rozbicia lotu na fazy; ekran mówi o tym liczbą
+    // `fuel.tracedIntervals`, zamiast udawać, że ślad był.
+    const timelines = new Map<string, PhaseSegment[]>();
+    if (this.phases != null) {
+      for (const sessionUuid of sessionUuids) {
+        timelines.set(sessionUuid, await this.phases.read(sessionUuid));
+      }
+    }
 
     return {
       ok: true,
@@ -90,6 +112,7 @@ export class AdminConsumptionQueries {
         sessionsInRange: page.total,
         openSessions,
         streams,
+        timelines,
       }),
     };
   }

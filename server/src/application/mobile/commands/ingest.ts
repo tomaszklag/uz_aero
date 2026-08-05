@@ -25,9 +25,14 @@ import type { Event } from '@uzaero/domain';
 import { clockDriftFlag } from '../../../domain/clockDrift.ts';
 import { chainFlags, type ChainLink } from '../../../domain/mhChain.ts';
 import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
+import {
+  recomputeConsumptionNorm,
+  type ConsumptionNormPorts,
+} from '../../common/consumptionNorm.ts';
 import type { DayExporter } from '../../common/export/dayExporter.ts';
 import type {
   AircraftConfigPort,
+  Clock,
   Database,
   EventsStorePort,
   FlagRecord,
@@ -57,6 +62,13 @@ export class IngestCommands {
     private readonly aircraft: AircraftConfigPort,
     /** `null` = eksport §4.7 wyłączony (brak konfiguracji Sheets w composition root). */
     private readonly exporter: DayExporter | null,
+    /**
+     * Porty przeliczenia normy zużycia; `null` = wyłączone. Norma jest podpowiedzią
+     * dla pilota (ekrany 04/06/10), więc jej brak nie blokuje niczego — dokładnie tak
+     * samo jak brak eksportu arkusza.
+     */
+    private readonly norms: ConsumptionNormPorts | null,
+    private readonly clock: Clock,
   ) {}
 
   async ingest(
@@ -64,6 +76,9 @@ export class IngestCommands {
     batch: readonly Event[],
     sourceDevice: string | null,
   ): Promise<IngestOutcome> {
+    // Samoloty dotknięte paczką — wypełniane w transakcji, używane PO commicie
+    // (przeliczenie normy zużycia), więc muszą przeżyć jej zakres.
+    const aircraftIds = new Set<string>();
     // Single-writer (§4.4), warstwa 1: każda paczka niesie zdarzenia podpisane PIC-em
     // sesji; nadawca musi nim być. Odrzucamy CAŁĄ paczkę — częściowe przyjęcie
     // rozjechałoby księgowość outboxa (telefon nie wie, które wiersze weszły).
@@ -97,7 +112,6 @@ export class IngestCommands {
       // Projekcje przeliczamy per DOTKNIĘTA sesja — pełny strumień, nie przyrost.
       // Strumień dnia to dziesiątki zdarzeń; odtwarzalność > mikrooptymalizacja.
       const sessionUuids = [...new Set(batch.map((e) => e.sessionUuid))];
-      const aircraftIds = new Set<string>();
       const closedNow: string[] = [];
 
       for (const sessionUuid of sessionUuids) {
@@ -151,6 +165,21 @@ export class IngestCommands {
           await this.exporter.exportSession(sessionUuid);
         } catch (err) {
           console.error(`eksport arkusza sesji ${sessionUuid} nie powiódł się:`, err);
+        }
+      }
+    }
+
+    // Norma zużycia — dokładnie ta sama umowa, co przy eksporcie: PO commicie, poza
+    // gwarancjami odpowiedzi, wyjątek do logu. Model czyta strumienie kilkudziesięciu
+    // sesji i puszcza je przez regresję, więc jest to najdroższa rzecz w tym przepływie —
+    // a przelicza się wyłącznie wtedy, gdy dzień faktycznie się domknął, bo tylko wtedy
+    // przybył nowy interwał paliwowy. Otwarcie dnia niczego w modelu nie zmienia.
+    if (this.norms != null && closedNow.length > 0) {
+      for (const aircraftId of aircraftIds) {
+        try {
+          await recomputeConsumptionNorm(this.db, aircraftId, this.norms, this.clock.now());
+        } catch (err) {
+          console.error(`przeliczenie normy zużycia ${aircraftId} nie powiodło się:`, err);
         }
       }
     }
