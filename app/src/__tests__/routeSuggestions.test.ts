@@ -71,7 +71,7 @@ describe('routeSuggestions', () => {
 });
 
 describe('airfieldRow', () => {
-  it('składa drugą linię z pasa i elewacji', () => {
+  it('podaje kurs pasa MAGNETYCZNY, bo taki jest na tabliczce progu', () => {
     const row = airfieldRow({
       icao: 'EPZG',
       name: 'Zielona Góra-Babimost Airport',
@@ -81,9 +81,28 @@ describe('airfieldRow', () => {
       runway: { headingDeg: 65, lengthM: 2500 },
     });
 
-    // Kurs w stopniach, z zerem wiodącym — nie „07/25", bo katalog zna kurs
-    // geograficzny, a oznaczenie progu jest magnetyczne.
-    expect(row.meta).toBe('pas 065° · 2500 m · 194 ft');
+    // Katalog trzyma 65° geograficznych (mapa obraca nimi pas na siatce zorientowanej
+    // na północ geograficzną), a pilot czyta 060 — czyli próg 06.
+    expect(row.meta).toBe('pas 060° · 2500 m · 194 ft');
+  });
+
+  it('przelicza deklinację per lotnisko, a nie jedną dla całego kraju', () => {
+    // Ten sam kurs geograficzny na zachodzie i wschodzie kraju daje różne magnetyczne —
+    // rozpiętość deklinacji przez Polskę to ~3°, czyli więcej niż rozdzielczość podpisu.
+    const west = airfieldRow({
+      ...airfield('EPSC', 'Szczecin'),
+      lat: 53.58,
+      lon: 14.9,
+      runway: { headingDeg: 100, lengthM: 2500 },
+    });
+    const east = airfieldRow({
+      ...airfield('EPSU', 'Suwałki'),
+      lat: 54.07,
+      lon: 22.9,
+      runway: { headingDeg: 100, lengthM: 2500 },
+    });
+
+    expect(west.meta).not.toBe(east.meta);
   });
 
   it('pomija to, czego katalog nie zna', () => {

@@ -16,7 +16,7 @@
  * i nie wolno go zamieniać w ostrzeżenie.
  */
 
-import { POLISH_AIRFIELDS, searchAirfields, type Airfield } from '../../../domain';
+import { POLISH_AIRFIELDS, searchAirfields, toMagneticDeg, type Airfield } from '../../../domain';
 import type { AirfieldRow } from '../../components/input/AirfieldSuggestions';
 
 export type { AirfieldRow };
@@ -96,14 +96,20 @@ export function routeSuggestions(
 /**
  * Lotnisko na wiersz listy.
  *
- * Kurs pasa podajemy w STOPNIACH, a nie jako oznaczenie progu („06/24"). Katalog trzyma
- * kurs GEOGRAFICZNY, a oznaczenia są magnetyczne — przeliczenie 65° na „07" różniłoby się
- * od tabliczki na lotnisku o cały numer progu. Stopnie są tym, co wiemy naprawdę.
+ * Kurs pasa podajemy MAGNETYCZNY, bo taki jest w lotnictwie kursem domyślnym: tak opisane
+ * są progi, tak podaje go wieża i taki pilot odczyta z busoli. Katalog trzyma kurs
+ * GEOGRAFICZNY (mapa śladu obraca nim pas na siatce zorientowanej na północ geograficzną),
+ * więc przeliczamy tutaj — w warstwie, która mówi do pilota.
+ *
+ * Zostają STOPNIE, a nie oznaczenie progu („06/24"): oznaczenie jest zaokrąglone do
+ * dziesiątek i bywa dodatkowo przesunięte decyzją zarządzającego lotniskiem, a kurs
+ * z geometrii pasa znamy dokładniej niż z takiego zaokrąglenia.
  */
 export function airfieldRow(airfield: Airfield): AirfieldRow {
   const parts: string[] = [];
   if (airfield.runway != null) {
-    parts.push(`pas ${String(airfield.runway.headingDeg).padStart(3, '0')}°`);
+    const magnetic = toMagneticDeg(airfield.runway.headingDeg, airfield);
+    parts.push(`pas ${String(magnetic).padStart(3, '0')}°`);
     parts.push(`${airfield.runway.lengthM} m`);
   }
   if (airfield.elevationFt != null) parts.push(`${airfield.elevationFt} ft`);

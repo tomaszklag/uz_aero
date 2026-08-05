@@ -34,6 +34,7 @@ export * from './track/sample';
 export * from './track/mercator';
 export * from './airfields';
 export * from './airfieldSearch';
+export * from './magneticDeclination';
 export * from './track/airfieldsInView';
 export * from './consumption/interval';
 export * from './consumption/timeInPhase';
