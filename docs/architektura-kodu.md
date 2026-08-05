@@ -743,6 +743,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `Numpad` | klawiatura PIN 3×4, klawisze 58 px; slot biometrii celowo pusty | `.numpad` (00) |
 | `ProfileChip` | karta lokalnego profilu na zamku (awatar, nazwisko, kod) | `.profile-chip` (00) |
 | `Field`, `TextField` | oprawa pola: etykieta mono, tag, podpowiedź; fokus zielony | `.field` / `.field-input` |
+| `AirfieldSuggestions` | podpowiedzi lotnisk pod wierszem trasy: kod, nazwa, pas i elewacja; lista kart w przepływie treści, nie nakładka | `.suggest-list` (02f) |
 | `ValueBox` | pole **odczytu**: duża wartość + jednostka, kontekst i ołówek po prawej | `.field-input.filled` |
 | `Readout` | sekcja odczytu z licznika: wartość, świeżość, pasek, korekta, historia | `.section` w 02a |
 | `FreshnessNote` | adnotacja §4.8: `live` (cisza) / `cache` (data) / `brak` / `manual` | `.fresh-note` |

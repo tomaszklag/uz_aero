@@ -17,11 +17,12 @@
  * pól wyłącza ją do końca preflightu (`taskTouched` w szkicu).
  */
 
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import {
   ActionButton,
+  AirfieldSuggestions,
   AppText,
   Card,
   InlineNote,
@@ -36,6 +37,7 @@ import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useTaskMemory } from '../store/taskMemory';
 import { usePreflightDraft } from '../store/preflightDraft';
+import { airfieldRow, routeConfirmations, routeSuggestions } from './logic/routeSuggestions';
 import type { OperationType } from '../../domain';
 
 /** Siatka operacji — etykiety i ikony jak w `.op-grid` mockupu 02. */
@@ -81,6 +83,18 @@ export function PreflightTaskScreen({
   }, [memory.ready, memory.task, memory.route]);
 
   const suggested = memory.ready && !draft.taskTouched && (memory.task != null || memory.route != null);
+
+  // Katalog lotnisk jest wkompilowany w aplikację, więc podpowiedzi liczą się LOKALNIE
+  // i przy każdej literze — bez sieci, bez opóźnienia, bez stanu ładowania.
+  const { departureIcao, arrivalIcao } = draft;
+  const suggestions = useMemo(
+    () => routeSuggestions({ departureIcao, arrivalIcao }),
+    [departureIcao, arrivalIcao],
+  );
+  const confirmations = useMemo(
+    () => routeConfirmations({ departureIcao, arrivalIcao }),
+    [departureIcao, arrivalIcao],
+  );
 
   if (aircraft == null) {
     return (
@@ -148,32 +162,56 @@ export function PreflightTaskScreen({
 
         {/* ── trasa ───────────────────────────────────────────────────────── */}
         <Card title="Trasa" header="inline">
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: theme.spacing.sm }}>
-            <TextField
-              label="Start ICAO"
-              mono
-              maxLength={4}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              placeholder="EPKK"
-              value={draft.departureIcao}
-              onChangeText={(v) => draft.set('departureIcao', v.toUpperCase())}
-              style={{ flex: 1 }}
-            />
-            <AppText variant="display" tone="muted" style={{ paddingBottom: 10 }}>
-              →
-            </AppText>
-            <TextField
-              label="Lądowanie ICAO"
-              mono
-              maxLength={4}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              placeholder="EPWA"
-              value={draft.arrivalIcao}
-              onChangeText={(v) => draft.set('arrivalIcao', v.toUpperCase())}
-              style={{ flex: 1 }}
-            />
+          <View style={{ gap: theme.spacing.sm }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: theme.spacing.sm }}>
+              <TextField
+                label="Start ICAO"
+                mono
+                maxLength={4}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                placeholder="EPKK"
+                value={draft.departureIcao}
+                onChangeText={(v) => draft.set('departureIcao', v.toUpperCase())}
+                style={{ flex: 1 }}
+              />
+              <AppText variant="display" tone="muted" style={{ paddingBottom: 10 }}>
+                →
+              </AppText>
+              <TextField
+                label="Lądowanie ICAO"
+                mono
+                maxLength={4}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                placeholder="EPWA"
+                value={draft.arrivalIcao}
+                onChangeText={(v) => draft.set('arrivalIcao', v.toUpperCase())}
+                style={{ flex: 1 }}
+              />
+            </View>
+
+            {/* Potwierdzenie kodu, który katalog rozpoznaje — pilot widzi, że EPWA to
+                faktycznie Warszawa, ZANIM pojedzie dalej z literówką. Kod spoza katalogu
+                (ferry za granicę) po prostu milczy: to nie jest błąd. */}
+            {confirmations.map((row) => (
+              <AppText key={row.field} variant="mono" tone="muted" style={styles.confirm}>
+                {row.text}
+              </AppText>
+            ))}
+
+            {suggestions != null && (
+              <AirfieldSuggestions
+                label={suggestions.label}
+                rows={suggestions.airfields.map(airfieldRow)}
+                onPick={(icao) =>
+                  draft.set(
+                    suggestions.field === 'departure' ? 'departureIcao' : 'arrivalIcao',
+                    icao,
+                  )
+                }
+              />
+            )}
           </View>
         </Card>
 
@@ -192,3 +230,7 @@ export function PreflightTaskScreen({
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  confirm: { fontSize: 9, letterSpacing: 0.5 },
+});
