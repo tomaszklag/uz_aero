@@ -157,6 +157,9 @@ export function TrackMap({ plot, width, height }: TrackMapProps) {
         <span className="map-scale-label">{plot.scale.label}</span>
         <span className="map-scale-bar" style={{ width: plot.scale.pixels }} />
       </div>
+
+      {/* Atrybucja ODbL — część pasów w katalogu pochodzi z OpenStreetMap. */}
+      <div className="map-attrib">lotniska: OurAirports · © OpenStreetMap</div>
     </div>
   );
 }
