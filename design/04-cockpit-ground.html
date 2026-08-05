@@ -289,6 +289,19 @@
   .duty-icon { color: var(--blue); }
   .duty-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
   .duty-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
+
+  /* Pasek paliwa — FOB z ostatniego odczytu + szacunek wystarczalności z NORMY
+     serwera (dana referencyjna, 3 stany świeżości §4.8; offline: adnotacja
+     „z cache", brak danych: zostaje sam FOB). Szacunek jest jawnie statystyczny —
+     mówi „ile zwykle wychodzi", nigdy „ile masz w zbiornikach". Dlatego nie udaje
+     przyrządu: bez paska postępu i bez alarmów, a rezerwa jest wpisana w liczbę.
+     Paliwomierz zawsze wygrywa (§4.5: liczniki fizyczne > dane z serwera). */
+  .fuel-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .fuel-strip-icon { color: var(--amber); }
+  .fuel-strip-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
+  .fuel-strip-est { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); letter-spacing: 0.5px; text-align: right; line-height: 1.6; }
+  .fuel-strip-est b { color: var(--amber); font-weight: 700; }
+  .fuel-strip-src { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.8px; color: var(--text-muted); }
   .duty-since { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
 
   /* nav strip */
@@ -374,6 +387,23 @@
           </div>
         </div>
         <div class="duty-since">Meldunek 08:00 UTC · 10:00 LT</div>
+      </div>
+
+      <!-- FUEL STRIP — FOB z ostatniego odczytu + wystarczalność z normy (serwer, live) -->
+      <div class="fuel-strip">
+        <div class="duty-left">
+          <div class="fuel-strip-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h3m0 0V3h6v3m0 0h3a2 2 0 0 1 2 2v14M9 6h6"/></svg>
+          </div>
+          <div>
+            <div class="duty-label">Paliwo · ostatni odczyt</div>
+            <div class="fuel-strip-val">141 L</div>
+          </div>
+        </div>
+        <div class="fuel-strip-est">
+          wystarczy na <b>~6 wyniesień</b> do rezerwy 45 min<br>
+          <span class="fuel-strip-src">szacunek z normy samolotu (90 dni) — decyduje paliwomierz</span>
+        </div>
       </div>
 
       <!-- DAY LOG -->

@@ -1235,3 +1235,68 @@ export interface DashboardAdminPort {
    */
   lastFlyingDayStart(db: Queryable): Promise<number | null>;
 }
+
+// ── analityka zużycia (A10a, A10b) ──────────────────────────────────────────────
+
+/**
+ * Sesja jako WEJŚCIE analityki: identyfikator plus kolumny projekcji, które model
+ * motogodzin konsumuje wprost.
+ *
+ * Podział pracy jest tu istotny i celowy. Model MH (`ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`)
+ * składa się WYŁĄCZNIE z wartości, które wyprodukowała projekcja — `mh_delta_h`,
+ * `flight_ms`, `block_ms` (migracja 18) — więc liczy się bez ani jednego odczytu
+ * rejestru zdarzeń, dokładnie tak, jak każe §7.2. Strumień jest potrzebny dopiero
+ * modelowi PALIWA, bo granice interwałów wyznaczają odczyty paliwomierza z payloadów,
+ * a tych projekcja nie niesie i nieść nie powinna (jest ich kilka na sesję).
+ */
+export interface ConsumptionSessionRef {
+  sessionUuid: string;
+  claimTime: number | null;
+  closeTime: number | null;
+  mhDeltaH: number | null;
+  blockMs: number;
+  flightMs: number;
+  /** `null` = wiersz sprzed migracji 18, jeszcze nieprzeliczony (`A11`). */
+  takeoffCount: number | null;
+}
+
+/** Jednostka, której dotyczy analityka — nagłówek ekranu i podpisy formatu. */
+export interface ConsumptionAircraftRow {
+  aircraftId: string;
+  reg: string;
+  aircraftType: string;
+  capacityL: number;
+  mhFormat: MhFormat;
+  serviceStatus: string;
+}
+
+/** Zamknięte dni okna razem z licznikiem tych, które nie zmieściły się w limicie. */
+export interface ConsumptionSessionsPage {
+  sessions: ConsumptionSessionRef[];
+  /** Ile dni spełnia warunek zakresu ŁĄCZNIE — mianownik komunikatu o przycięciu. */
+  total: number;
+}
+
+export interface ConsumptionAdminPort {
+  /** Jednostka po identyfikatorze; `null` = nie ma takiej we flocie. */
+  aircraft(db: Queryable, aircraftId: string): Promise<ConsumptionAircraftRow | null>;
+
+  /**
+   * Zamknięte dni samolotu w oknie, od najnowszego. `limit` jest bezpiecznikiem
+   * (patrz `queries/consumption.ts`), a nie stronicowaniem — analityka liczy się
+   * na całym oknie albo mówi, że go przycięła.
+   */
+  closedSessions(
+    db: Queryable,
+    aircraftId: string,
+    range: StatsRange,
+    limit: number,
+  ): Promise<ConsumptionSessionsPage>;
+
+  /**
+   * Dni OTWARTE samolotu w oknie — liczone po `claim_time`, bo dzień bez zamknięcia
+   * nie ma `close_time`. Ich zużycia nie znamy (brak odczytu końcowego), więc do modelu
+   * nie wchodzą; ekran mówi, ile ich pominął, zamiast milczeć o różnicy.
+   */
+  openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number>;
+}

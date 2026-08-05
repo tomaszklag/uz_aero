@@ -22,7 +22,7 @@
  *     agregaty jej kolumn: kafle mówią „—", a baner kieruje na przebudowę (`A11`).
  */
 
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import type { StatsReportDto } from '../../api/dto';
 import { useStats } from '../../queries/useStats';
@@ -120,6 +120,21 @@ const AIRCRAFT_COLUMNS: Column<AircraftRowView>[] = [
     header: 'Wykorzystanie',
     align: 'num',
     render: (row) => row.utilization,
+  },
+  {
+    // Przejście do analityki zużycia (`A10a`): rozbicie „Śr. L/h" na fazy, przelicznik
+    // motogodzin i interwały ze źródłami. Wiersz RAZEM go nie ma — stawki floty nie
+    // składają się w jedną liczbę.
+    key: 'analytics',
+    header: '',
+    render: (row) =>
+      row.aircraftId == null ? null : (
+        <div className="row-actions">
+          <Link className="btn sm ghost" to={`/statystyki/analityka/${row.aircraftId}`}>
+            Analityka
+          </Link>
+        </div>
+      ),
   },
 ];
 

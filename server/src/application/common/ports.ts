@@ -196,6 +196,22 @@ export interface EventsStorePort {
   ): Promise<{ accepted: number; duplicates: number }>;
   /** Pełny strumień sesji — wejście `projectSession`. */
   sessionEvents(db: Queryable, sessionUuid: string): Promise<Event[]>;
+  /**
+   * Strumienie WIELU sesji jednym zapytaniem — wejście analityki zużycia (`A10a`).
+   *
+   * DLACZEGO OSOBNA METODA, A NIE `sessionEvents` W PĘTLI: okno 90 dni to ~50 sesji
+   * na samolot, a rok — ponad 200. Pętla oznaczałaby tyleż round-tripów na jedno
+   * otwarcie ekranu; `WHERE session_uuid = ANY($1)` załatwia to jednym.
+   *
+   * DLACZEGO W TYM PORCIE, A NIE W NOWYM: `contract.test.ts` liczy wywołania tego
+   * portu, żeby pilnować reguły „listy panelu nie odtwarzają projekcji ze strumienia"
+   * (§7.5). Nowy port byłby furtką POZA tym licznikiem — tutaj gwarancja robi się
+   * mocniejsza, nie słabsza.
+   */
+  sessionStreams(
+    db: Queryable,
+    sessionUuids: readonly string[],
+  ): Promise<Map<string, Event[]>>;
   /** Znacznik ostatniego przyjęcia zdarzenia samolotu (do `last_sync_at`). */
   lastReceivedAt(db: Queryable, aircraftId: string): Promise<Date | null>;
   /** Liczba zdarzeń sesji przyjętych przez serwer (do `sync-status`). */

@@ -379,6 +379,7 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
       insertBatch: (tx, events, sourceDevice) => real.insertBatch(tx, events, sourceDevice),
       lastReceivedAt: (db, aircraftId) => real.lastReceivedAt(db, aircraftId),
       countForSession: (db, sessionUuid) => real.countForSession(db, sessionUuid),
+      sessionStreams: (db, sessionUuids) => real.sessionStreams(db, sessionUuids),
       sessionEvents: async (db, sessionUuid) => {
         const { rows } = await db.query<{ n: number }>(
           "SELECT COUNT(*)::int AS n FROM pg_locks WHERE locktype = 'advisory'",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — Panel admina · szablon i komponenty</title>
+<title>UZ Aero — Panel admina · A10b Analityka — za mało danych</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -729,37 +729,44 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — PANEL · SZABLON</span>
-  <span class="slug">rama okna · shell · inwentarz komponentów</span>
-  <span class="canvas-meta"><span class="pulse"></span>Baza dla wszystkich ekranów A*</span>
+  <span class="film-strip">UZ AERO — PANEL · A10B</span>
+  <span class="slug">analityka zużycia · za mało danych na model</span>
+  <span class="canvas-meta"><span class="pulse"></span>Progi zamiast zmyślonych stawek</span>
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Jak używać tego pliku</div>
-  <a class="vp-item active" href="SZABLON.html">
-    <span class="vp-badge">BAZA</span>
+  <div class="vp-title">Rodzina ekranu statystyk — kiedy który?</div>
+  <a class="vp-item" href="A10-statystyki.html">
+    <span class="vp-badge">A10</span>
     <span class="vp-body">
-      <span class="vp-name">Kopiuj &lt;head&gt; w całości</span>
-      <span class="vp-when">Tokeny, rama okna 1440×900, shell i wszystkie komponenty. Nowy ekran = ten &lt;head&gt; + własna treść w <code>.content</code>. Nie definiuj własnych kolorów ani wymiarów ramy.</span>
+      <span class="vp-name">Statystyki zakresu</span>
+      <span class="vp-when">Sumy dni zamkniętych per samolot / pilot / operacja. Kolumna „Analityka" w tabeli samolotów prowadzi do analityki.</span>
     </span>
-    <span class="vp-tag">ten plik</span>
   </a>
-  <a class="vp-item" href="../index.html">
-    <span class="vp-badge amber">TEL</span>
+  <a class="vp-item" href="A10a-analityka.html">
+    <span class="vp-badge">A10A</span>
     <span class="vp-body">
-      <span class="vp-name">Mockupy telefonu — osobny standard</span>
-      <span class="vp-when">Ekrany pilota (<code>design/*.html</code>) zostają na ramce 393×852. Te same tokeny i czcionki, inna rama — panel to inne urządzenie i inny użytkownik.</span>
+      <span class="vp-name">Analityka zużycia jednego samolotu</span>
+      <span class="vp-when">Domyślny widok, gdy danych wystarcza: stawki fazowe paliwa, przelicznik MH, trend, interwały.</span>
     </span>
+  </a>
+  <a class="vp-item active" href="A10b-analityka-brak-danych.html">
+    <span class="vp-badge amber">A10B</span>
+    <span class="vp-body">
+      <span class="vp-name">Za mało danych</span>
+      <span class="vp-when">Poniżej 5 interwałów albo 10 h silnika w oknie — także po wyzerowaniu modelu (remont silnika). Ekran pokazuje progi, postęp zbierania i interwały, które już są; przełącza się sam, gdy dane się uzbierają.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
   </a>
 </aside>
 
-<main class="browser" role="region" aria-label="Szablon panelu administracyjnego">
+<main class="browser" role="region" aria-label="Panel administracyjny — analityka zużycia SP-DEF, za mało danych">
 
   <div class="chrome">
     <span class="chrome-dots"><i></i><i></i><i></i></span>
     <span class="chrome-url">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      <b>admin.uzaero.pl</b>/szablon
+      <b>admin.uzaero.pl</b>/statystyki/analityka/SP-DEF?okno=90d
     </span>
   </div>
 
@@ -778,50 +785,50 @@
 
       <div class="side-nav">
         <div class="nav-group">Operacje</div>
-        <a class="nav-item active" href="#">
+        <a class="nav-item" href="A01-pulpit.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
           Pulpit
         </a>
-        <a class="nav-item" href="#">
+        <a class="nav-item" href="A02-dni.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
           Dni lotne
         </a>
-        <a class="nav-item" href="#">
+        <a class="nav-item" href="A03-flagi.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
           Flagi
           <span class="nav-count amber">7</span>
         </a>
 
         <div class="nav-group">Rejestr</div>
-        <a class="nav-item" href="#">
+        <a class="nav-item" href="A04-zdarzenia.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Zdarzenia
         </a>
-        <a class="nav-item" href="#">
+        <a class="nav-item" href="A05-eksporty.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Eksporty
         </a>
-        <a class="nav-item" href="#">
+        <a class="nav-item" href="A09-audyt.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
           Audyt
         </a>
 
         <div class="nav-group">Raporty</div>
-        <a class="nav-item" href="#">
+        <a class="nav-item active" href="A10-statystyki.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           Statystyki
         </a>
 
         <div class="nav-group">Konfiguracja</div>
-        <a class="nav-item" href="#">
+        <a class="nav-item" href="A06-piloci.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Piloci
         </a>
-        <a class="nav-item" href="#">
+        <a class="nav-item" href="A07-flota.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
           Flota
         </a>
-        <a class="nav-item locked" href="#" title="Wymaga roli: administrator">
+        <a class="nav-item" href="A08-progi.html">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Progi i ustawienia
         </a>
@@ -844,7 +851,7 @@
 
     <div class="main">
       <div class="topbar">
-        <div class="crumbs">Panel <span>/</span> <b>Szablon i komponenty</b></div>
+        <div class="crumbs">Panel <span>/</span> Raporty <span>/</span> <a href="A10-statystyki.html" style="color:inherit;text-decoration:none;">Statystyki</a> <span>/</span> <b>SP-DEF · analityka zużycia</b></div>
         <div class="topbar-right">
           <span class="utc-clock"><i>UTC</i> <b>14:22:07</b> · 31 JUL 2026</span>
         </div>
@@ -854,448 +861,107 @@
 
         <div class="page-head">
           <div>
-            <h1 class="page-title">INWENTARZ KOMPONENTÓW</h1>
-            <p class="page-sub">Wszystko, z czego składają się ekrany panelu. Każdy nowy ekran buduje się z tych klas — nowy komponent powstaje dopiero, gdy żaden istniejący nie pasuje, i wtedy ląduje tutaj.</p>
+            <h1 class="page-title">ANALITYKA ZUŻYCIA · SP-DEF</h1>
+            <p class="page-sub">Aero AT-3 · 2014 · lata rzadko. Stawek fazowych i przelicznika MH jeszcze nie ma — ekran pokazuje, ile danych już się zebrało i ile brakuje, oraz interwały, z których model policzy się w przyszłości.</p>
           </div>
           <div class="page-actions">
-            <button class="btn ghost">Drugorzędna</button>
-            <button class="btn primary">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Akcja główna
-            </button>
+            <a class="btn ghost" href="A10a-analityka.html">Analityka SP-ABC (komplet danych)</a>
           </div>
         </div>
 
-        <div class="demo-note">1 · Kafle liczbowe — liczby zawsze JetBrains Mono</div>
-        <div class="tiles">
-          <div class="tile"><span class="tile-key">Samoloty w powietrzu</span><span class="tile-val green">2<small> / 5</small></span><span class="tile-note">Aktywny claim z niezamkniętą sesją.</span></div>
-          <div class="tile"><span class="tile-key">Flagi otwarte</span><span class="tile-val amber">7</span><span class="tile-note">Najstarsza: 3 dni.</span></div>
-          <div class="tile"><span class="tile-key">Zdarzenia dziś</span><span class="tile-val">184</span><span class="tile-note">Ostatnie przyjęte 14:19 UTC.</span></div>
-          <div class="tile"><span class="tile-key">Eksport arkuszy</span><span class="tile-val red">1<small> błąd</small></span><span class="tile-note">SP-ABC · 30 JUL — ponowienie czeka.</span></div>
+        <div class="filters">
+          <a class="chip" href="A10a-analityka.html">SP-ABC · Cessna 182</a>
+          <span class="chip">SP-KLM</span>
+          <span class="chip">SP-XYZ</span>
+          <span class="chip on amber">SP-DEF · Aero AT-3</span>
+          <span class="filters-sep"></span>
+          <span class="chip">Okno: 30 dni</span>
+          <span class="chip on">90 dni</span>
+          <span class="chip">365 dni</span>
+          <span class="list-spacer filters-end"><span class="pill blue"><span class="dot"></span>Wszystkie czasy UTC</span></span>
         </div>
 
-        <div class="demo-note">2 · Banery — trzy typy, jak w aplikacji (status / ostrzeżenie / błąd)</div>
-        <div class="banner status">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Dzień otwarty — dane w drodze.</b> SP-ABC ma aktywną sesję; telefon dosyła zdarzenia w miarę zasięgu. Liczby poniżej są stanem na ostatni sync, nie stanem końcowym.</span>
-        </div>
         <div class="banner warn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>MH_GAP</b> — między sesją z 29 JUL a 30 JUL brakuje 0.4 h na liczniku SP-ABC. Możliwy lot bez aplikacji.</span>
-        </div>
-        <div class="banner danger">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          <span><b>Rejestr zdarzeń jest append-only.</b> Panel nigdy nie edytuje ani nie kasuje zdarzenia — korekta dopisuje <code>event_correction</code> (<code>retime</code> / <code>void</code>). Oryginalny odczyt zostaje w rejestrze na zawsze.</span>
+          <span><b>Za mało danych na stawki.</b> Model publikujemy od <b>5 interwałów paliwowych</b> i <b>10 godzin pracy silnika</b> w oknie — SP-DEF ma 2 interwały i 2:32. Stawka z dwóch odczytów byłaby liczbą wyglądającą na wiedzę; zamiast niej pokazujemy postęp i surowe fakty. Ekran przełączy się w pełną analitykę sam, bez żadnej akcji administratora.</span>
         </div>
 
-        <div class="demo-note">3 · Filtry + tabela + plakietki stanu (kolumna „Samolot" pokazuje `.cell-link` — klikalną TREŚĆ komórki)</div>
-        <div class="filters">
-          <label class="search">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input placeholder="Szukaj: rejestracja, pilot, UUID…" />
-          </label>
-          <span class="chip on">Wszystkie</span>
-          <span class="chip">Otwarte</span>
-          <span class="chip amber">Z flagą</span>
-          <span class="chip">Zamknięte</span>
+        <div class="tiles">
+          <div class="tile"><span class="tile-key">Na godzinę lotu</span><span class="tile-val" style="color:var(--text-muted);">—</span><span class="tile-note">Publikacja od 10 h silnika w oknie.</span></div>
+          <div class="tile"><span class="tile-key">Stawki fazowe</span><span class="tile-val" style="color:var(--text-muted);">—</span><span class="tile-note">Publikacja od 5 interwałów.</span></div>
+          <div class="tile"><span class="tile-key">Przelicznik MH</span><span class="tile-val" style="color:var(--text-muted);">—</span><span class="tile-note">Charakter licznika nieznany — za mało dni.</span></div>
+          <div class="tile"><span class="tile-key">Podstawa</span><span class="tile-val amber">2<small> interwały</small></span><span class="tile-note">2:32 silnika · 12 CZE i 29 JUL.</span></div>
         </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="sortable">Dzień <span class="arrow">↓</span></th>
-                <th>Samolot</th>
-                <th>PIC</th>
-                <th class="num">Bloki</th>
-                <th class="num">MH start → koniec</th>
-                <th class="num">FOB</th>
-                <th>Stan</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="clickable">
-                <td class="mono">31 JUL 2026<span class="cell-sub">UTC</span></td>
-                <!-- `.cell-link` — klikalna TREŚĆ komórki, zawężająca listę do tej
-                     wartości. Nie `.btn`: w tabeli o ośmiu kolumnach przycisk w każdym
-                     wierszu przestaje być akcją, a zaczyna być tłem. -->
-                <td><a class="cell-link reg" href="#">SP-ABC</a><span class="cell-sub">Cessna 182</span></td>
-                <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">PIC · dual: —</span></td>
-                <td class="num">02:14</td>
-                <td class="num">1284.6 → <span style="color:var(--text-muted)">—</span></td>
-                <td class="num">96 L</td>
-                <td><span class="pill green"><span class="dot live"></span>W locie</span></td>
-                <td><div class="row-actions"><button class="btn sm ghost">Szczegóły</button></div></td>
-              </tr>
-              <tr class="clickable">
-                <td class="mono">30 JUL 2026<span class="cell-sub">UTC</span></td>
-                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208</span></td>
-                <td class="cell-strong">Anna Wrzosek<span class="cell-sub">PIC · dual: M. Bąk</span></td>
-                <td class="num">05:41</td>
-                <td class="num">3902.1 → 3907.8</td>
-                <td class="num">210 L</td>
-                <td><span class="pill amber"><span class="dot"></span>2 flagi</span></td>
-                <td><div class="row-actions"><button class="btn sm ghost">Szczegóły</button></div></td>
-              </tr>
-              <tr class="clickable">
-                <td class="mono">30 JUL 2026<span class="cell-sub">UTC</span></td>
-                <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
-                <td class="cell-strong">Piotr Czarnecki<span class="cell-sub">PIC · dual: —</span></td>
-                <td class="num">01:02</td>
-                <td class="num">644.0 → 645.1</td>
-                <td class="num">48 L</td>
-                <td><span class="pill dim">Zamknięty</span></td>
-                <td><div class="row-actions"><button class="btn sm ghost">Szczegóły</button></div></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="cols">
-          <div class="card">
-            <div class="card-title">Oś zdarzeń dnia <span class="spacer"></span><span class="pill dim">czasy UTC</span></div>
-            <div class="tl">
-              <div class="tl-row">
-                <span class="tl-time">08:02:11</span>
-                <span class="tl-rail"><span class="tl-dot green"></span></span>
-                <span><span class="tl-name">engine_start</span><span class="tl-meta">GPS 52.1834 N · 21.0442 E · elew. 108 m</span></span>
-                <span class="pill dim">auto</span>
-              </div>
-              <div class="tl-row">
-                <span class="tl-time">08:09:47</span>
-                <span class="tl-rail"><span class="tl-dot blue"></span></span>
-                <span><span class="tl-name">takeoff</span><span class="tl-meta">metoda: auto · lot 1</span></span>
-                <span class="pill blue">auto</span>
-              </div>
-              <div class="tl-row voided">
-                <span class="tl-time">08:31:02</span>
-                <span class="tl-rail"><span class="tl-dot"></span></span>
-                <span><span class="tl-name">landing</span><span class="tl-meta">unieważnione przez <code>event_correction</code> · powód: „fałszywa detekcja"</span></span>
-                <span class="pill red">void</span>
-              </div>
-              <div class="tl-row">
-                <span class="tl-time">08:44:19</span>
-                <span class="tl-rail"><span class="tl-dot amber"></span></span>
-                <span><span class="tl-name">refuel</span><span class="tl-meta">przed 96 L · dolano 84 L · po 180 L</span></span>
-                <span class="pill amber">paliwo</span>
-              </div>
-              <!-- Wiersz z PLAKIETKĄ I AKCJĄ naraz (`.tl-act`): oś karty dnia jest
-                   jedynym miejscem, w którym wybiera się zdarzenie do korekty
-                   administratora (A02b). Przejście stoi wyłącznie przy zdarzeniach
-                   KORYGOWALNYCH — claim, preflight, day_close i same korekty jej nie
-                   podlegają, więc tam przycisku nie ma w ogóle. -->
-              <div class="tl-row">
-                <span class="tl-time">10:34:07</span>
-                <span class="tl-rail"><span class="tl-dot red"></span></span>
-                <span><span class="tl-name">engine_stop</span><span class="tl-meta">gps_time: brak fixa · czas z zegara urządzenia</span></span>
-                <span class="tl-act">
-                  <span class="pill red">silnik</span>
-                  <a class="btn sm ghost" href="A02b-korekta.html">Koryguj</a>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">Klucz / wartość</div>
-            <div class="kv"><span class="kv-k">Sesja</span><span class="kv-v"><small>a3f9…c210</small></span></div>
-            <div class="kv"><span class="kv-k">Claim od</span><span class="kv-v">07:58 <small>UTC</small></span></div>
-            <div class="kv"><span class="kv-k">Ostatni sync</span><span class="kv-v amber">14:19 <small>UTC · 3 min temu</small></span></div>
-            <div class="kv"><span class="kv-k">Zdarzeń</span><span class="kv-v">47</span></div>
-            <div class="kv"><span class="kv-k">Starty / lądowania</span><span class="kv-v green">6 / 5</span></div>
-            <!-- Zestawienie „przed → po" (A02b). Wartość SPRZED zmiany jest wygaszona
-                 (`.was`), bo czyta się ją jako punkt odniesienia — uwaga ma zostać
-                 przy liczbie po prawej stronie strzałki. -->
-            <div class="kv"><span class="kv-k">Czas blokowy · po korekcie</span><span class="kv-v"><span class="was">05:53</span> → 05:41 <small>−12 min</small></span></div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">Lista szczegółów <span class="spacer"></span><span class="pill dim">details JSONB</span></div>
-            <div class="det">
-              <div class="det-row"><span class="det-k">rodzaj korekty</span><span class="det-v">retime</span></div>
-              <div class="det-row"><span class="det-k">nowy czas zdarzenia</span><span class="det-v">2026-07-30 11:38:00 UTC (1785584280000)</span></div>
-              <div class="det-row"><span class="det-k">powód</span><span class="det-v">Lądowanie wykryte 3 min po dobiegu.</span></div>
-              <!-- Klucza `flightLegIndex` panel nie umie nazwać — i właśnie dlatego
-                   pokazuje go z surową nazwą, wygaszonego (`.raw`), a nie pomija. -->
-              <div class="det-row"><span class="det-k">flightLegIndex</span><span class="det-v raw">3</span></div>
-            </div>
-            <span class="hint">Kolejność pól jest kolejnością z serwera — panel jej nie przestawia, bo <code>details</code> to worek o kształcie zależnym od akcji, a nie rekord o ustalonych polach.</span>
-          </div>
-        </div>
-
-        <div class="demo-note">4 · Formularz — pola i lista kart (natywny &lt;select&gt; jest zakazany)</div>
-        <div class="cols even">
-          <div class="card">
-            <div class="card-title">Pola</div>
-            <div class="field"><span class="label">Imię i nazwisko</span><input class="input" value="Tomasz Małkiewicz" /></div>
-            <div class="field"><span class="label">Kod pilota</span><input class="input mono" value="TML" /></div>
-            <div class="field">
-              <span class="label">Hasło startowe</span>
-              <!-- `.field-row`: pole + akcje w jednej linii. Hasło GENERUJE SERWER
-                   i oddaje je raz w odpowiedzi, więc pole jest `readonly` — nie ma tu
-                   czego wpisać, a „generuj nowe" to kolejny reset, nie zmiana w polu. -->
-              <div class="field-row">
-                <input class="input mono" value="k7np-r4mx-9tqd" readonly />
-                <button class="btn" title="Kopiuj do schowka">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
-              </div>
-              <span class="hint"><b>Uwaga:</b> hasło pokazujemy raz, w tym oknie. Nie trafia do URL-a, logów ani audit logu — audyt zapisuje wyłącznie fakt „ustawiono hasło" i kto to zrobił.</span>
-            </div>
-            <div class="field-row">
-              <button class="btn danger">Deaktywuj</button>
-              <button class="btn ok">Aktywuj</button>
-              <button class="btn ghost disabled" title="Wymaga roli: administrator">Reset hasła</button>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Wybór — lista kart</div>
-            <div class="opt-list">
-              <label class="opt selected">
-                <span class="opt-body"><span class="opt-name">Administrator</span><span class="opt-desc">Konta, flota, korekty po oknie 24 h, progi</span></span>
-                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-              </label>
-              <label class="opt">
-                <span class="opt-body"><span class="opt-name">Szef wyszkolenia</span><span class="opt-desc">Podgląd, statystyki, rozwiązywanie flag — bez kont i progów</span></span>
-                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-              </label>
-              <!-- Wybór ZABLOKOWANY (`.opt:disabled`) — ta sama para wartości, co
-                   `.btn:disabled`. W panelu karta wyboru jest <button>, bo <label> bez
-                   powiązanego <input> nie jest osiągalny z klawiatury; po zapisanej
-                   korekcie (A02b) formularz zostaje na ekranie, ale przestaje przyjmować
-                   zmiany. -->
-              <button class="opt" disabled>
-                <span class="opt-body"><span class="opt-name">Pilot</span><span class="opt-desc">Bez wejścia do panelu — loguje się w aplikacji na telefonie</span></span>
-                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
-              </button>
-
-              <!-- Wariant NAWIGACYJNY (`.opt` jako <a>, szewron zamiast ptaszka): karta
-                   nie WYBIERA wartości, tylko PROWADZI w głąb. Tak A03a wypisuje sesje
-                   objęte flagą — każda jest linkiem do swojej karty dnia. -->
-              <a class="opt" href="A02a-dzien.html">
-                <span class="opt-body"><span class="opt-name">30 JUL 2026 · SP-KLM</span><span class="opt-desc">sesja 7c1e5a9b…83b4 · 9 lotów · blok 05:53</span></span>
-                <span class="opt-go"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></span>
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <div class="demo-note">5 · Stany: pusty · ładowanie · brak uprawnień</div>
         <div class="cols even">
           <div class="card" style="padding:0;">
             <div class="empty">
-              <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg></span>
-              <span class="empty-title">BRAK OTWARTYCH FLAG</span>
-              <span class="empty-note">Wszystkie rozbieżności są wyjaśnione. Nowe flagi pojawią się tu automatycznie, gdy serwer przyjmie zdarzenia z niespójnym łańcuchem MH, paliwem poza tolerancją albo podwójnym claimem.</span>
+              <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+              <span class="empty-title">MODEL JESZCZE SIĘ NIE LICZY</span>
+              <span class="empty-note">Każdy zamknięty dzień z odczytami paliwomierza dokłada interwały. Przy obecnym tempie lotów SP-DEF próg zostanie osiągnięty po ~3 kolejnych dniach lotnych.</span>
             </div>
           </div>
           <div class="card">
-            <div class="card-title">Ładowanie</div>
-            <div style="display:flex;flex-direction:column;gap:9px;">
-              <span class="skel" style="width:70%"></span>
-              <span class="skel" style="width:100%"></span>
-              <span class="skel" style="width:45%"></span>
-              <span class="skel" style="width:88%"></span>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="no-access">
-            <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-            <span class="empty-title">SEKCJA TYLKO DLA ADMINISTRATORA</span>
-            <span class="empty-note">Jesteś zalogowany jako <b>szef wyszkolenia</b>. Ta sekcja zmienia konta i progi detekcji, więc wymaga roli administratora. Nie chowamy jej z nawigacji — masz wiedzieć, że istnieje, i kogo poprosić.</span>
-          </div>
-        </div>
-
-        <div class="demo-note">6 · Szuflada szczegółu — pokazana niżej jako osobny blok (w ekranach nakłada się na treść)</div>
-        <div class="card" style="position:relative;height:300px;overflow:hidden;padding:0;">
-          <div class="drawer-scrim" style="position:absolute;"></div>
-          <div class="drawer" style="position:absolute;width:460px;">
-            <div class="drawer-head">
-              <div>
-                <div class="drawer-title">FLAGA · MH_GAP</div>
-                <div class="drawer-sub">SP-ABC · dotyczy 2 sesji · otwarta od 29 JUL 11:04 UTC</div>
-              </div>
-              <button class="x-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            </div>
-            <div class="drawer-body">
-              <div class="kv"><span class="kv-k">Koniec MH (29 JUL)</span><span class="kv-v">1283.2</span></div>
-              <div class="kv"><span class="kv-k">Start MH (30 JUL)</span><span class="kv-v amber">1283.6</span></div>
-              <div class="kv"><span class="kv-k">Dziura</span><span class="kv-v red">0.4 h <small>tolerancja 0.1</small></span></div>
-            </div>
-            <div class="drawer-foot">
-              <!-- Notatka stopki (`.drawer-note`) — mówi, czego to okno NIE zrobi.
-                   Wariant `.drawer.wide` (660 px) niesie szuflada, która jest
-                   FORMULARZEM, a nie podglądem: korekta administratora (A02b). -->
-              <span class="drawer-note">brak edycji · brak kasowania</span>
-              <button class="btn ghost">Anuluj</button>
-              <button class="btn primary">Rozwiąż z komentarzem</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="demo-note">7 · Flota — faza ORAZ świeżość w jednym wierszu</div>
-        <div class="card">
-          <div class="card-title">Flota teraz <span class="spacer"></span><span class="pill dim">czasy UTC</span></div>
-          <div class="fleet">
-            <a class="fleet-row flying" href="#">
-              <span><div class="fleet-reg">SP-ABC</div><div class="fleet-type">Cessna 182</div></span>
-              <span><div class="fleet-who">Tomasz Małkiewicz</div><div class="fleet-since">claim 07:58 · duty 6:24 · EPMO</div></span>
-              <span class="fleet-nums"><div><span class="k">MH</span> 1284.6</div><div><span class="k">FOB</span> 96 L</div></span>
-              <span class="fleet-state"><span class="pill green"><span class="dot live"></span>W locie</span></span>
-              <span class="fresh"><span class="fresh-val">sync 2 min temu</span><span class="fresh-note">lot 4 · T/O 14:11</span></span>
-            </a>
-            <a class="fleet-row stale" href="#">
-              <span><div class="fleet-reg">SP-KLM</div><div class="fleet-type">Cessna 208 Caravan</div></span>
-              <span><div class="fleet-who">Anna Wrzosek</div><div class="fleet-since">claim 06:40 · duty 7:42 · EPRA</div></span>
-              <span class="fleet-nums"><div><span class="k">MH</span> 3907.8</div><div><span class="k">FOB</span> 210 L</div></span>
-              <span class="fleet-state"><span class="pill amber"><span class="dot"></span>Dane w drodze</span></span>
-              <span class="fresh"><span class="fresh-val amber">sync 47 min temu</span><span class="fresh-note">ostatnie znane: zrzut 3</span></span>
-            </a>
-            <a class="fleet-row free" href="#">
-              <span><div class="fleet-reg">SP-MNO</div><div class="fleet-type">Cessna 182</div></span>
-              <span><div class="fleet-who" style="color:var(--text-secondary);font-weight:500;">Wyłączony ze służby</div><div class="fleet-since">od 19 JUN · remont</div></span>
-              <span class="fleet-nums"><div><span class="k">MH</span> 2210.8</div><div><span class="k">FOB</span> — <span class="k">pusty</span></div></span>
-              <span class="fleet-state"><span class="pill dim">Poza służbą</span></span>
-              <span class="fresh"><span class="fresh-val dim">ostatni lot 18 JUN</span><span class="fresh-note">historia zostaje</span></span>
-            </a>
-          </div>
-        </div>
-
-        <div class="demo-note">8 · Kolejka zadań · napływ zdarzeń · oś w wariancie kompaktowym</div>
-        <div class="cols wide">
-          <div class="card">
-            <div class="card-title">Wymaga uwagi</div>
-            <div class="todo">
-              <a class="todo-row" href="#">
-                <span class="todo-mark amber"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
-                <span class="todo-body"><span class="todo-name">mh_gap · SP-ABC</span><span class="todo-meta">dziura 0.4 h przy tolerancji 0.1 · możliwy lot bez aplikacji</span></span>
-                <span class="todo-age old">3 dni</span>
-              </a>
-              <a class="todo-row" href="#">
-                <span class="todo-mark red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
-                <span class="todo-body"><span class="todo-name">session_overlap · SP-KLM — blokuje arkusz</span><span class="todo-meta">karta dnia nie powstanie, dopóki flaga jest otwarta</span></span>
-                <span class="todo-age old">2 dni</span>
-              </a>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Napływ zdarzeń <span class="spacer"></span><span class="pill dim">12 h</span></div>
-            <div class="spark">
-              <i style="height:22%"></i><i style="height:38%"></i><i style="height:64%"></i><i style="height:47%"></i>
-              <i style="height:80%"></i><i class="zero" style="height:4%"></i><i class="zero" style="height:4%"></i>
-              <i style="height:35%"></i><i style="height:71%"></i><i class="now" style="height:44%"></i>
-            </div>
-            <div class="spark-axis"><span>02:00</span><span>08:00</span><span>14:00 UTC</span></div>
-            <div class="tl compact">
-              <div class="tl-row">
-                <span class="tl-time">14:19:52</span>
-                <span class="tl-rail"><span class="tl-dot blue"></span></span>
-                <span><span class="tl-name">takeoff</span><span class="tl-meta">SP-ABC · lot 4 · auto</span></span>
-              </div>
-              <div class="tl-row">
-                <span class="tl-time">14:04:31</span>
-                <span class="tl-rail"><span class="tl-dot red"></span></span>
-                <span><span class="tl-name">engine_stop</span><span class="tl-meta">SP-XYZ · P. Czarnecki</span></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="demo-note">9 · Progi — wartość, jej źródło i dowód zmiany</div>
-        <div class="cols wide">
-          <div class="card">
-            <div class="card-title">Tolerancje <span class="spacer"></span><span class="code-ref">packages/domain/src/rules/tolerances.ts</span></div>
-            <div class="thr">
-              <span>
-                <div class="thr-name">Start — prędkość <code>TAKEOFF_SPEED_KT</code></div>
-                <div class="thr-why">Liczy się na telefonie, offline — zmiana idzie przez kod i wydanie aplikacji.</div>
-              </span>
-              <span class="thr-val">50 <small>kt</small></span>
-              <span class="thr-src"><span class="pill dim">w kodzie</span></span>
-            </div>
-            <div class="thr">
-              <span>
-                <div class="thr-name">Łańcuch motogodzin <code>MH_TOLERANCE_H</code></div>
-                <div class="thr-why">Serwer stosuje przy scalaniu po fakcie, więc wartość da się zmienić z panelu.</div>
-              </span>
-              <span><input class="thr-input changed" value="0.2" /></span>
-              <span class="thr-src"><span class="pill amber">było 0.1</span></span>
-            </div>
-          </div>
-          <div class="proof">
-            <div class="proof-head">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/></svg>
-              Wpływ zmiany — replay na historii
-            </div>
-            <div class="diff">
-              <span class="diff-side"><span class="diff-k">Teraz</span><span class="diff-v">0.1</span><span class="diff-n">41 flag w 90 dniach</span></span>
-              <span class="diff-arrow">→</span>
-              <span class="diff-side" style="border-color:var(--amber-border);"><span class="diff-k">Po zmianie</span><span class="diff-v" style="color:var(--amber)">0.2</span><span class="diff-n">29 flag w 90 dniach</span></span>
-            </div>
-            <div class="kv"><span class="kv-k">Zniknęłoby</span><span class="kv-v green">12 flag</span></div>
-            <div class="kv"><span class="kv-k">Nowych flag</span><span class="kv-v">0</span></div>
-          </div>
-        </div>
-
-        <div class="demo-note">10 · Statystyki (A10) — trend, para pasków, miernik, udział, wstęga</div>
-        <div class="cols even">
-          <div class="card">
-            <div class="card-title">Nalot dzień po dniu <span class="spacer"></span><span class="pill green">suma 12:34</span></div>
-            <svg class="trend" viewBox="0 0 600 96" role="img" aria-label="Przykładowy szereg dzienny">
-              <line x1="0" y1="85" x2="600" y2="85" stroke="var(--border)" stroke-width="1"/>
-              <line x1="0" y1="45" x2="600" y2="45" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3 4"/>
-              <polyline fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="0,60 150,30 300,85 450,20 600,40"/>
-              <circle cx="300" cy="85" r="2.5" fill="var(--border-strong)"/>
-              <circle cx="600" cy="40" r="3" fill="var(--green)"/>
-            </svg>
-            <div class="trend-axis"><span>01 JUL</span><span>15 JUL</span><span>30 JUL</span></div>
-            <div class="duo">
-              <span class="duo-name">SP-KLM</span>
-              <span class="duo-bars">
-                <span class="duo-line"><span class="duo-bar green" style="width:100%;"></span><span class="duo-val green">112:38</span></span>
-                <span class="duo-line"><span class="duo-bar blue" style="width:63.4%;"></span><span class="duo-val blue">71:24</span></span>
-              </span>
+            <div class="card-title">Postęp zbierania danych <span class="spacer"></span><span class="pill amber">2 / 5 · 2:32 / 10:00</span></div>
+            <div class="meter">
+              <span class="duo-name">Interwały</span>
+              <span class="meter-track"><span class="meter-fill amber" style="width:40%;"></span></span>
+              <span class="meter-val">2 / 5</span>
             </div>
             <div class="meter">
-              <span class="duo-name">SP-XYZ</span>
-              <span class="meter-track"><span class="meter-fill amber" style="width:47%;"></span></span>
-              <span class="meter-val">14 · 47 %</span>
+              <span class="duo-name">Silnik</span>
+              <span class="meter-track"><span class="meter-fill amber" style="width:25%;"></span></span>
+              <span class="meter-val">2:32 / 10 h</span>
             </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Udział i rozkład</div>
-            <span class="share"><span class="share-track"><span class="share-fill blue" style="width:60.3%;"></span></span><span class="share-val">60.3 %</span></span>
-            <span class="share"><span class="share-track"><span class="share-fill" style="width:13.3%;"></span></span><span class="share-val">13.3 %</span></span>
-            <span class="ribbon">
-              <span class="ribbon-seg blue" style="width:43.8%;">TANDEM 421</span>
-              <span class="ribbon-seg green" style="width:17.5%;">AFF 168</span>
-              <span class="ribbon-seg amber" style="width:38.7%;">SOLO 373</span>
-            </span>
-            <span class="hint">Geometrię (szerokości, punkty polyline) liczy moduł czysty ekranu z liczb SERWERA — klasa niesie wszystko poza geometrią.</span>
+            <div class="kv"><span class="kv-k">Σ zużycie (fakt)</span><span class="kv-v">47 L</span></div>
+            <div class="kv"><span class="kv-k">Σ silnik · Σ lot (fakt)</span><span class="kv-v">2:32 · 2:02</span></div>
+            <div class="kv"><span class="kv-k">Stawka L/h</span><span class="kv-v"><small>— od progu publikacji</small></span></div>
+            <span class="hint"><b>Po remoncie silnika model liczy się od nowa</b> — wyremontowana jednostka napędowa to nowa charakterystyka spalania, więc administrator zeruje okno modelu z karty samolotu (A07a), a historia sprzed remontu zostaje w rejestrze i w statystykach. Ten sam ekran obsługuje wtedy okres przejściowy.</span>
           </div>
         </div>
 
-        <div class="demo-note">11 · Analityka zużycia (A10a) — stawka fazowa z przedziałem ufności; wstęga faz z segmentem `dim`</div>
         <div class="card">
-          <div class="card-title">Model fazowy paliwa <span class="spacer"></span><span class="pill dim">NNLS · 96 równań</span></div>
-          <div class="rate-grid">
-            <div class="rate"><span class="rate-phase"><span class="rate-dot dim"></span>Ziemia · silnik</span><span class="rate-val">11.9<small> L/h</small></span><span class="rate-ci"><b>±1.6</b> · 95%</span></div>
-            <div class="rate"><span class="rate-phase"><span class="rate-dot green"></span>Wznoszenie</span><span class="rate-val">51.3<small> L/h</small></span><span class="rate-ci"><b>±2.1</b> · 95%</span></div>
-            <div class="rate"><span class="rate-phase"><span class="rate-dot blue"></span>Przelot</span><span class="rate-val">40.9<small> L/h</small></span><span class="rate-ci"><b>±2.9</b> · 95%</span></div>
-            <!-- Karta NIEDOSTĘPNA (`.rate.na`): model scala fazy, gdy interwały są
-                 zbyt podobne, żeby je rozdzielić — karta zostaje z powodem. -->
-            <div class="rate na"><span class="rate-phase"><span class="rate-dot amber"></span>Zniżanie</span><span class="rate-val">—</span><span class="rate-ci">scalone z przelotem — za mało zróżnicowanych interwałów</span></div>
+          <div class="card-title">Interwały zebrane do tej pory <span class="spacer"></span><span class="pill dim">odczyt → odczyt · czasy UTC</span></div>
+          <div class="table-wrap">
+            <table>
+              <caption class="visually-hidden">Interwały paliwowe SP-DEF zebrane przed osiągnięciem progu publikacji</caption>
+              <thead>
+                <tr>
+                  <th class="sortable">Dzień <span class="arrow">↓</span></th>
+                  <th>Interwał</th>
+                  <th class="num">Odczyty</th>
+                  <th class="num">Zużycie</th>
+                  <th class="num">Silnik</th>
+                  <th class="num">Ziemia / lot</th>
+                  <th>Stan</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="clickable">
+                  <td class="mono">29 JUL</td>
+                  <td class="mono dim">preflight 13:02 → day_close 15:41</td>
+                  <td class="num">84 → 62 L</td>
+                  <td class="num cell-strong">22 L</td>
+                  <td class="num">1:12</td>
+                  <td class="num">0:14 / 0:58</td>
+                  <td><span class="pill dim">zebrany</span></td>
+                  <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Dzień</a></div></td>
+                </tr>
+                <tr class="clickable">
+                  <td class="mono">12 CZE</td>
+                  <td class="mono dim">preflight 09:11 → day_close 10:47</td>
+                  <td class="num">96 → 71 L</td>
+                  <td class="num cell-strong">25 L</td>
+                  <td class="num">1:20</td>
+                  <td class="num">0:16 / 1:04</td>
+                  <td><span class="pill dim">zebrany</span></td>
+                  <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Dzień</a></div></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <span class="ribbon">
-            <span class="ribbon-seg dim" style="width:17.8%;">ZIEMIA 21:06</span>
-            <span class="ribbon-seg green" style="width:27.0%;">WZN 31:54</span>
-            <span class="ribbon-seg blue" style="width:41.0%;">PRZELOT 48:36</span>
-            <span class="ribbon-seg amber" style="width:14.2%;">ZNIŻ 16:48</span>
-          </span>
-          <span class="hint">Stawka fazowa to wynik regresji na interwałach paliwowych (odczyt → odczyt), nie pomiar — dlatego zawsze niesie przedział ufności i podstawę (liczbę równań, zakres dat). Znaczenie kolorów faz jest wspólne dla karty, wstęgi i tabeli interwałów.</span>
+          <span class="hint table-hint">Interwały są widoczne od pierwszego dnia — dowód liczenia zbiera się na oczach administratora, a nie pojawia znikąd razem ze stawkami. Rozbicie lotu na wznoszenie/przelot/zniżanie dojdzie tam, gdzie dzień ma ślad GPS.</span>
         </div>
 
       </div>
@@ -1306,9 +972,13 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index panelu</a>
   <span>·</span>
-  <a href="SZABLON.html" class="active">Szablon</a>
+  <a href="A10-statystyki.html">← A10 Statystyki</a>
+  <a href="A10a-analityka.html">A10A Analityka</a>
+  <a href="A10b-analityka-brak-danych.html" class="active">A10B Za mało danych</a>
   <span>·</span>
-  <a href="../index.html">Mockupy telefonu →</a>
+  <a href="A07-flota.html">A07 Flota</a>
+  <span>·</span>
+  <a href="SZABLON.html">Szablon</a>
 </nav>
 
 </body>

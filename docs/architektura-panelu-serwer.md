@@ -1207,6 +1207,46 @@ Test kontraktowy dostaje trzy nowe obowiązki:
 3. **Mapper DTO jest czystą funkcją.** `sessionListItem(row, joins)` testowany bez bazy —
    ten sam wzorzec, co `sessionRowFrom`.
 
+### 7.7 Liczba OKNA, a nie liczba wiersza — analityka zużycia (dopisane 2026-08-05)
+
+§7.2 rozstrzyga przypadek, w którym nowa liczba panelu jest **własnością pojedynczego
+dnia**: wtedy dokładamy kolumnę projekcji i agregujemy ją SQL-em. Analityka zużycia
+(`A10a`) jest pierwszym przekrojem, do którego ta recepta nie pasuje, i warto wiedzieć
+dlaczego, zanim ktoś spróbuje ją tam zastosować.
+
+**Dlaczego kolumna projekcji nie wystarcza.** Model zużycia stoi na **interwałach
+paliwowych** — odcinkach między kolejnymi odczytami paliwomierza (`preflight_confirm`,
+para `refuel.beforeL`/`afterL`, `day_close`). Interwałów jest KILKA na sesję, więc nie są
+wartością wiersza; upchnięcie ich w JSONB dałoby kolumnę, po której i tak trzeba by
+liczyć `jsonb_array_elements` z arytmetyką — czyli dokładnie to odtwarzanie projekcji
+SQL-em, przed którym ostrzega §7.1. Co więcej, wynik modelu (`r_przelot = 40,9 L/h`)
+**nie należy do żadnego dnia** — opisuje okno. Nie ma wiersza, w którym mógłby stanąć.
+
+**Co wolno w zamian.** Przekrój analityczny może czytać strumień zdarzeń wielu sesji,
+pod trzema warunkami:
+
+1. **Zero arytmetyki w SQL.** Zapytanie wykonuje `SELECT` (kolumny projekcji + wiersze
+   rejestru); wszystkie liczby produkuje `@uzaero/domain`, a ilorazy — mapper. Reguła
+   §7.1 obowiązuje bez zmian: agreguj wartości projekcji, nigdy nie odtwarzaj projekcji.
+2. **Jedno zapytanie, nie pętla.** Strumienie pobiera `EventsStorePort.sessionStreams`
+   (`WHERE session_uuid = ANY($1)`). Pętla po `sessionEvents` przy oknie rocznym to
+   dwieście round-tripów na jedno wejście na ekran.
+3. **Bezpiecznik zamiast obietnicy kompletu.** `CONSUMPTION_SESSION_LIMIT` przycina zbiór
+   dni, a odpowiedź MÓWI o przycięciu (`basis.sessionsInRange` > `basis.sessions`).
+   Analiza z połowy okna, która nie przyznaje się do połowy, kłamie skuteczniej niż
+   odmowa.
+
+**Czego to NIE otwiera.** Listy nadal nie wołają `projectSession` ani `sessionStreams` —
+i to jest sprawdzane, nie deklarowane. `contract.test.ts` liczy OBIE drogi do rejestru
+osobno (`reads` dla pojedynczej sesji, `bulkReads` dla wielosesyjnej) i wymaga zera od
+list oraz dokładnie jednego odczytu zbiorczego od analityki. `architecture.test.ts`
+dokłada regułę po ścieżce: `sessionStreams` ma dokładnie jednego użytkownika
+(`application/admin/queries/consumption.ts`) — poza deklaracją portu i adapterem.
+
+**Model motogodzin nie potrzebuje tej furtki w ogóle.** `ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`
+składa się wyłącznie z kolumn migracji 18 (`mh_delta_h`, `flight_ms`, `block_ms`), więc
+liczy się bez jednego odczytu rejestru — czysty przypadek §7.2.
+
 ---
 
 ## 8. Sesja przeglądarkowa — dwa źródła tokenu, jedna autoryzacja

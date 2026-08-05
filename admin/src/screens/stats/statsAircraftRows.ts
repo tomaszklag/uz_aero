@@ -15,6 +15,13 @@ import { DASH, dot1, litresThousands, pct0, thousands } from './statsFormat';
 export interface AircraftRowView {
   key: string;
   total: boolean;
+  /**
+   * Identyfikator jednostki — cel przejścia do analityki zużycia (`A10a`).
+   * `null` w wierszu RAZEM: analityka opisuje SAMOLOT, a nie flotę, bo stawka L/h
+   * Caravana i AT-3 nie składa się w jedną liczbę (ten sam powód, dla którego
+   * kolumna „Śr. L/h" ma tam kreskę).
+   */
+  aircraftId: string | null;
   name: string;
   /** `Cessna 208 Caravan · 1250 L`; `null` przy RAZEM i jednostce spoza floty. */
   sub: string | null;
@@ -47,6 +54,7 @@ export function aircraftRows(
     (row): AircraftRowView => ({
       key: row.aircraftId,
       total: false,
+      aircraftId: row.aircraftId,
       name: row.reg ?? row.aircraftId,
       sub:
         row.aircraftType == null
@@ -78,6 +86,7 @@ export function aircraftRows(
   rows.push({
     key: 'total',
     total: true,
+    aircraftId: null,
     name: 'RAZEM',
     sub: null,
     days: String(totals.sessions),

@@ -144,6 +144,12 @@
   .calc-highlight { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--amber); }
   .calc-divider { height: 1px; background: var(--amber-border); opacity: 0.4; margin: 2px 0; }
   .calc-subtext { font-family: var(--font-body); font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+  /* Norma z serwera — dana referencyjna z 3 stanami świeżości (§4.8): live bez
+     adnotacji, cache z amber „· z cache · sync …", brak = wiersza w ogóle nie ma
+     (nigdy zero udające normę). Werdykt zielony/amber liczy się z przedziału. */
+  .calc-row-val.ok { color: var(--green); font-weight: 700; }
+  .calc-row-val.off { color: var(--amber); font-weight: 700; }
+  .calc-norm-src { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.5px; color: var(--text-muted); }
 
   /* Amber button */
   .btn-amber {
@@ -266,7 +272,11 @@
           <span class="calc-row-label">Średnie zużycie</span>
           <span class="calc-highlight">~16 L/h</span>
         </div>
-        <div class="calc-subtext">Punkt kontrolny — zweryfikuj z dokumentacją samolotu</div>
+        <div class="calc-row">
+          <span class="calc-norm-src">norma tego samolotu 15–17 L/h · 90 dni</span>
+          <span class="calc-row-val ok">✓ w normie</span>
+        </div>
+        <div class="calc-subtext">Punkt kontrolny — zweryfikuj z dokumentacją samolotu. Norma SP-AXA z 90 dni historii (serwer; offline „z cache", bez danych — bez porównania). Wynik wyraźnie poza normą = sprawdź odczyt; paliwomierz wygrywa.</div>
       </div>
 
       <!-- Amber Button -->

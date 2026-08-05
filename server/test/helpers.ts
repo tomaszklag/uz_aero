@@ -41,6 +41,7 @@ import { AdminMaintenanceQueries } from '../src/application/admin/queries/mainte
 import { AdminMeQueries } from '../src/application/admin/queries/me.ts';
 import { AdminPilotQueries } from '../src/application/admin/queries/pilots.ts';
 import { AdminSessionQueries } from '../src/application/admin/queries/sessions.ts';
+import { AdminConsumptionQueries } from '../src/application/admin/queries/consumption.ts';
 import { AdminStatsQueries } from '../src/application/admin/queries/stats.ts';
 import { AuditedWrite } from '../src/application/admin/auditedWrite.ts';
 import { AuthCommands } from '../src/application/common/commands/auth.ts';
@@ -65,6 +66,7 @@ import { PgAdminMaintenanceRepo } from '../src/infrastructure/pg/admin/maintenan
 import { PgAdminPilotsRepo } from '../src/infrastructure/pg/admin/pilotsRepo.ts';
 import { PgAdminRefreshTokensRepo } from '../src/infrastructure/pg/admin/refreshTokensRepo.ts';
 import { PgAdminSessionsRepo } from '../src/infrastructure/pg/admin/sessionsRepo.ts';
+import { PgAdminConsumptionRepo } from '../src/infrastructure/pg/admin/consumptionRepo.ts';
 import { PgAdminStatsRepo } from '../src/infrastructure/pg/admin/statsRepo.ts';
 import { PgEventsStore } from '../src/infrastructure/pg/common/eventsStore.ts';
 import { PgExportLogRepo } from '../src/infrastructure/pg/common/exportLogRepo.ts';
@@ -294,6 +296,14 @@ export async function testHarness(
     // Statystyki (A10) — jak w produkcyjnym composition root: czysty odczyt agregatów
     // kolumn projekcji, zegar rozstrzyga zakres domyślny.
     adminStatsQueries: new AdminStatsQueries(db, new PgAdminStatsRepo(), clock),
+    // Analityka zużycia (A10a/A10b) — dostaje TEN SAM `events`, co reszta harnessu,
+    // więc dekorator liczący odczyty strumienia widzi też jej wywołania.
+    adminConsumptionQueries: new AdminConsumptionQueries(
+      db,
+      new PgAdminConsumptionRepo(),
+      events,
+      clock,
+    ),
   });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych

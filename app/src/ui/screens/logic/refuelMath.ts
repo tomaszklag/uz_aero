@@ -18,7 +18,14 @@
  * rachubą, więc gdy danych brakuje, zwracamy `null` zamiast liczby „mniej więcej".
  */
 
-import { eventTime, type EpochMillis, type Event, type SessionState } from '../../../domain';
+import {
+  blockSpans,
+  eventTime,
+  spanTimeInWindow,
+  type EpochMillis,
+  type Event,
+  type SessionState,
+} from '../../../domain';
 
 /** Ostatni bezpośredni odczyt paliwomierza w strumieniu zdarzeń. */
 export interface FuelReference {
@@ -53,22 +60,25 @@ export function lastFuelReference(events: Event[]): FuelReference | null {
 /**
  * Czas pracy silnika (ms) w oknie [`since`, `until`].
  *
- * Cykle przycinamy do okna zamiast filtrować po `startedAt`, bo okno może zacząć się
- * w środku cyklu (odczyt korygowany w trakcie postoju między lotami). Cykl otwarty
- * (`stoppedAt == null`) liczymy do `until`.
+ * Deleguje do domeny (`consumption/timeInPhase.ts`), bo tę samą liczbę liczy analityka
+ * zużycia po stronie panelu i dwie definicje zaczęłyby się rozjeżdżać przy pierwszej
+ * poprawce. Tam też mieszka uzasadnienie dwóch rzeczy, których ta funkcja pierwotnie
+ * nie robiła, a robić musi:
+ *  • liczy ręczne off/on-block z `manual_log_entry` (fallback GPS, ekran 08) — projekcja
+ *    dokłada je do `blockTimeMs` BEZ wpisu w `engineRuns`, więc liczenie z samych cykli
+ *    zaniżało mianownik i zawyżało L/h (wada znaleziona 2026-08-05);
+ *  • scala odcinki nachodzące na siebie, zamiast sumować ich długości.
+ *
+ * `events` musi pochodzić z tej samej sesji co `state` — inaczej odcinki opisywałyby
+ * inny dzień niż cykle.
  */
 export function engineTimeInWindow(
   state: SessionState,
+  events: readonly Event[],
   since: EpochMillis,
   until: EpochMillis,
 ): number {
-  let total = 0;
-  for (const run of state.engineRuns) {
-    const from = Math.max(run.startedAt, since);
-    const to = Math.min(run.stoppedAt ?? until, until);
-    if (to > from) total += to - from;
-  }
-  return total;
+  return spanTimeInWindow(blockSpans(state, events), since, until);
 }
 
 /** Wynik kalkulacji zużycia (`.calc-box` z mockupu). */
@@ -101,7 +111,7 @@ export function estimateConsumption(
   const reference = lastFuelReference(events);
   if (reference == null) return null;
 
-  const engineMs = engineTimeInWindow(state, reference.at, now);
+  const engineMs = engineTimeInWindow(state, events, reference.at, now);
   if (engineMs <= 0) return null;
 
   const usedL = reference.fuelL - beforeL;

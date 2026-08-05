@@ -445,6 +445,17 @@
           <span class="fuel-avg-label">Średnie zużycie (na block time)</span>
           <span class="fuel-avg-val">17 L/H</span>
         </div>
+        <!-- Norma z serwera = dana referencyjna (3 stany świeżości §4.8). Tu stan
+             CACHE: koniec dnia bywa offline, więc adnotacja amber mówi, skąd i jak
+             stara jest liczba. Brak danych = wiersza nie ma (nigdy zero jako norma).
+             Werdykt porównuje dzisiejszą średnią z przedziałem normy. -->
+        <div class="fuel-avg-row">
+          <span>
+            <span class="fuel-avg-label">Na tle normy samolotu</span>
+            <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.5px;color:var(--amber);margin-top:3px;">norma 15–17 L/h · 90 dni · z cache · sync 21 JUN 17:30</div>
+          </span>
+          <span class="fuel-avg-val" style="color:var(--green);font-size:16px;letter-spacing:1px;">W NORMIE</span>
+        </div>
       </div>
 
       <!-- Motogodziny (3.7: początek / koniec / delta) -->

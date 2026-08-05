@@ -14,13 +14,17 @@
  */
 
 import type {
+  ConsumptionModel,
+  ConsumptionSummary,
   Event,
   EventCorrectionPayload,
   EventType,
   FlagStatus,
   FlagType,
   FlightProfile,
+  FuelInterval,
   MhFormat,
+  MhModel,
   OperationType,
   RuleViolation,
   ServiceStatus,
@@ -1460,4 +1464,45 @@ export interface FlightTrackDto {
   maxAltitudeFt: number | null;
   totalCount: number;
   usableCount: number;
+}
+
+// ── analityka zużycia (A10a, A10b) ────────────────────────────────────────────
+
+/**
+ * Raport analityki zużycia jednego samolotu.
+ *
+ * `ConsumptionModel`, `MhModel`, `ConsumptionSummary` i `FuelInterval` biorzemy jako
+ * TYPY z domeny — to byty domenowe, liczone tym samym kodem, którym liczy je telefon
+ * (norma w aplikacji pilota wychodzi z tego samego modułu). Własne są wyłącznie koperty:
+ * tożsamość jednostki, zakres i opis podstawy.
+ */
+export interface ConsumptionReportDto {
+  at: string;
+  range: StatsRangeDto;
+  aircraft: {
+    aircraftId: string;
+    reg: string;
+    aircraftType: string;
+    capacityL: number;
+    mhFormat: MhFormat;
+    serviceStatus: string;
+  };
+  headline: {
+    litersPerFlightHour: number | null;
+    litersPerBlockHour: number | null;
+    litersPerFlight: number | null;
+    mhPerBlockHour: number | null;
+  };
+  basis: {
+    sessions: number;
+    sessionsInRange: number;
+    openSessions: number;
+    staleRows: number;
+    firstDay: number | null;
+    lastDay: number | null;
+  };
+  summary: ConsumptionSummary;
+  fuel: ConsumptionModel;
+  mh: MhModel;
+  intervals: FuelInterval[];
 }

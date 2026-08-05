@@ -8,8 +8,9 @@
 ## 0. Monorepo (Faza 2)
 
 ```
-packages/domain    @uzaero/domain — zdarzenia, reguły, projekcje, detekcja. Czysty TS,
-                   ZERO zależności (pilnowane testem architektury).
+packages/domain    @uzaero/domain — zdarzenia, reguły, projekcje, detekcja, ślad lotu,
+                   analityka zużycia. Czysty TS, ZERO zależności (pilnowane testem
+                   architektury — dlatego regresja i algebra są napisane ręcznie).
 app/               aplikacja; w `src/domain` został shim `export * from '@uzaero/domain'`
 server/            backend; importuje TĘ SAMĄ domenę
 ```
@@ -1104,6 +1105,42 @@ Wzorzec: `ui/screens/CockpitScreen.tsx` (pierwszy ekran wpięty end-to-end).
    edycji"** w §2. Wysokość klawiatury, zapas pod akcjami arkusza i zaznaczenie tekstu mają
    po jednym poprawnym rozwiązaniu i po kilka objawów, gdy się je obejdzie własnym kodem.
 
+### Nowa metryka analityki zużycia
+
+Moduł `packages/domain/src/consumption/` (dodany 2026-08-05) liczy stawki paliwa per faza
+i przelicznik motogodzin. Podział plików idzie wzorcem `track/`: typy → czysta matematyka
+→ polityka → orkiestrator → widoki pochodne.
+
+| Plik | Rola |
+|---|---|
+| `interval.ts` | typy `FuelInterval` / `MhEquation`; zero logiki |
+| `timeInPhase.ts` | odcinki pracy silnika i lotu, przycinanie do okna, **scalanie nakładek** |
+| `matrix.ts` | Cholesky, Gram, inwersja (n ≤ 4); bez pojęć dziedzinowych |
+| `nnls.ts` | regresja z więzem nieujemności — wyliczeniowy zbiór aktywny |
+| `fit.ts` | dopasowanie RAZEM z przedziałami ufności (t-Studenta, nie bootstrap) |
+| `policy.ts` | wszystkie progi i bramka publikacji |
+| `intervals.ts` | ekstrakcja interwałów z jednej sesji (korekty przed arytmetyką) |
+| `model.ts` | drabina degradacji faz + wykluczanie odstających |
+| `mhModel.ts` | przeliczniki MH + rozpoznanie typu licznika |
+| `summary.ts` | ilorazy sum, pasmo centylowe, trend miesięczny |
+
+Dokładając metrykę:
+
+1. **Iloraz sum czy regresja?** To dwie różne liczby i wybór jest merytoryczny, nie
+   stylistyczny. `summary.ts` waży interwały LINIOWO czasem (`ΣL / Σh`), a `model.ts` —
+   KWADRATEM (regresja minimalizuje błąd w litrach, więc dłuższy interwał ma większą
+   wagę). Obie są poprawne; rozjazd między nimi jest oczekiwany i **nie należy go
+   „ujednolicać"** (test `nnls.test.ts` przybija to wprost).
+2. **Nowy próg** trafia do `policy.ts`, nigdy do modułu, który go używa — i wchodzi
+   z komentarzem, co się dzieje przy podniesieniu i obniżeniu. Progi kalibrujemy na
+   realnej historii, nie na wyczucie (ta sama reguła, co w `algorytm-detekcji.md` §15).
+3. **Nowa metryka zbiorcza** idzie do `summary.ts` i musi zwracać `null` przy pustym
+   mianowniku. Zero nigdy nie udaje pomiaru.
+4. Test w `app/src/__tests__/` (mapowanie 1:1 z modułem), z przypadkiem, w którym metryka
+   **nie ma prawa** się policzyć.
+5. Po stronie panelu: kolumna DTO w `server/src/application/admin/contracts/consumption.ts`
+   i iloraz w mapperze — nigdy w SQL (`architektura-panelu-serwer.md` §7.7).
+
 ### Nowy adapter (np. serwer sync)
 
 Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i komendy nie mogą się dowiedzieć, że coś się zmieniło.
@@ -1353,6 +1390,38 @@ tabeli jako nowy `kind` — bez zmiany serwera (koperta `/traces` celowo luźna)
 **`projections.test.ts` to kontrakt z designem, nie zwykły test.** Odwzorowuje kanoniczną oś dnia 22 JUNE z `docs/design-notes.md` — te same liczby, które pokazują mockupy 04/09/10/11: block **6:39** (2:22 + 1:13 + 3:04), 6 lotów, paliwo **150 +48 −110 = 88 L**, MH **1234:30 → 1241:09**, oraz inwariant **Δ MH = block time**. Zmiana tych liczb w teście bez zmiany designu (i odwrotnie) to rozjazd, nie poprawka.
 
 Ten test już raz się opłacił: wykrył, że projekcja iterowała zdarzenia w kolejności **wstawienia**, a nie chronologicznej — co psułoby wyliczenia po użyciu ekranu wpisu ręcznego (05f zapisuje zdarzenie z **cofniętym** czasem) i po korekcie czasu (04c).
+
+### 8.3 Czas pracy silnika liczony z dwóch źródeł (2026-08-05)
+
+Wada znaleziona przy budowie analityki zużycia, naprawiona razem z nią — warta opisu,
+bo jej **objawem był brak objawu**.
+
+`projectSession` obsługuje czas blokowy DWIEMA drogami. Para `engine_start`/`engine_stop`
+tworzy wpis w `state.engineRuns`; `manual_log_entry` (fallback GPS, ekran 08) dokłada
+odcinek off-block→on-block **wprost do `blockTimeMs`, bez wpisu w `engineRuns`**. Jest to
+sensowne — wpis ręczny nie opisuje cyklu silnika, tylko zaraportowany czas — ale każdy,
+kto liczy czas pracy silnika z samych `engineRuns`, dostanie w dniu z wpisem ręcznym
+mianownik za mały.
+
+Robił tak ekran 06: `estimateConsumption` dzieliło ubytek paliwa przez czas z cykli, więc
+średnia L/h wychodziła **zawyżona**. Nic tego nie zdradzało: zła średnia wygląda dokładnie
+tak samo jak dobra, a docblok modułu ostrzegał przed tym trybem awarii dwa lata wcześniej,
+niż on wystąpił.
+
+Naprawa jest jedną funkcją dla obu stron — `consumption/timeInPhase.ts`:
+
+- `blockSpans(state, events)` zbiera odcinki z OBU źródeł i nakłada korekty (wpis
+  unieważniony `void` przestaje liczyć się do mianownika);
+- `spanTimeInWindow` **scala nakładki zamiast sumować długości**. Ręczny wpis potrafi
+  nachodzić na zarejestrowany cykl (pilot dopisał wzlot, który aplikacja też złapała),
+  a suma policzyłaby te minuty dwa razy — mianownik rośnie, L/h spada, i znowu nic tego
+  nie widać. `state.blockTimeMs` sumuje bez scalania i **to zostaje**: tam liczba opisuje
+  „ile czasu zaraportowano", tu miara opisuje „ile silnik pracował". Różnica jest
+  zamierzona i nazwana w obu miejscach.
+
+Test regresyjny: `app/src/__tests__/timeInPhase.test.ts`, przypadek nazwany wprost
+(„liczy ręczny off/on-block, którego NIE MA w engineRuns") plus asercja pokazująca,
+że projekcja i miara odpowiadają na różne pytania.
 
 ---
 

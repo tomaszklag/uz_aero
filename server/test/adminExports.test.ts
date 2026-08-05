@@ -141,6 +141,9 @@ class ExplodingEvents implements EventsStorePort {
     if (this.explode) throw new TypeError('projekcja: nie mogę odczytać właściwości „map"');
     return this.real.sessionEvents(db, sessionUuid);
   }
+  sessionStreams(db: Queryable, sessionUuids: readonly string[]): Promise<Map<string, Event[]>> {
+    return this.real.sessionStreams(db, sessionUuids);
+  }
   lastReceivedAt(db: Queryable, aircraftId: string) {
     return this.real.lastReceivedAt(db, aircraftId);
   }

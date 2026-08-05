@@ -306,16 +306,28 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
     },
   ];
 
-  /** Dekorator liczący odczyty strumienia — opakowuje PRAWDZIWY adapter, nie udaje go. */
-  function counting(real: EventsStorePort): EventsStorePort & { reads: number } {
+  /**
+   * Dekorator liczący odczyty strumienia — opakowuje PRAWDZIWY adapter, nie udaje go.
+   *
+   * Liczy OBIE drogi do rejestru osobno: `reads` to odczyty pojedynczej sesji, `bulkReads`
+   * to odczyty wielosesyjne (analityka zużycia, `A10a`). Rozdzielenie jest istotne — reguła
+   * §7.5 mówi, że listy nie odtwarzają projekcji ze strumienia ŻADNĄ z tych dróg, a nowa
+   * metoda portu byłaby inaczej furtką poza tym licznikiem.
+   */
+  function counting(real: EventsStorePort): EventsStorePort & { reads: number; bulkReads: number } {
     const spy = {
       reads: 0,
+      bulkReads: 0,
       insertBatch: real.insertBatch.bind(real),
       lastReceivedAt: real.lastReceivedAt.bind(real),
       countForSession: real.countForSession.bind(real),
       sessionEvents: (...args: Parameters<EventsStorePort['sessionEvents']>) => {
         spy.reads += 1;
         return real.sessionEvents(...args);
+      },
+      sessionStreams: (...args: Parameters<EventsStorePort['sessionStreams']>) => {
+        spy.bulkReads += 1;
+        return real.sessionStreams(...args);
       },
     };
     return spy;
@@ -344,13 +356,17 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
 
     await app.inject({ method: 'POST', url: '/events', headers: auth, payload: { events: DAY_STREAM } });
 
-    const counter = spy as unknown as { reads: number };
+    const counter = spy as unknown as { reads: number; bulkReads: number };
     counter.reads = 0;
+    counter.bulkReads = 0;
 
     const list = await app.inject({ method: 'GET', url: '/admin/api/sessions', headers: auth });
     expect(list.statusCode).toBe(200);
     expect(list.json().items).toHaveLength(1);
     expect(counter.reads).toBe(0);
+    // Nowa droga do rejestru (`sessionStreams`) musi być tak samo zamknięta dla list
+    // jak stara — inaczej reguła §7.5 obowiązywałaby tylko jedną z nich.
+    expect(counter.bulkReads).toBe(0);
 
     const detail = await app.inject({
       method: 'GET',
@@ -359,6 +375,44 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
     });
     expect(detail.statusCode).toBe(200);
     expect(counter.reads).toBe(1);
+    expect(counter.bulkReads).toBe(0);
+  });
+
+  it('analityka zużycia czyta strumienie JEDNYM zapytaniem, nie sesja po sesji', async () => {
+    // Wykonywalna wersja §7.7: analityka wolno czytać rejestr, ale nie wolno jej robić
+    // tego w pętli. Przy oknie rocznym byłoby to dwieście round-tripów na jedno wejście
+    // na ekran — dokładnie ten koszt, którego kursor i projekcje mają nie dopuszczać.
+    let spy: ReturnType<typeof counting> | null = null;
+    const { app } = await testHarness({
+      events: (real) => {
+        spy = counting(real);
+        return spy;
+      },
+    });
+
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { login: 'TMK', password: TEST_PASSWORD },
+    });
+    const token = login.json().token as string;
+    const auth = { authorization: `Bearer ${token}` };
+
+    await app.inject({ method: 'POST', url: '/events', headers: auth, payload: { events: DAY_STREAM } });
+
+    const counter = spy as unknown as { reads: number; bulkReads: number };
+    counter.reads = 0;
+    counter.bulkReads = 0;
+
+    const report = await app.inject({
+      method: 'GET',
+      url: '/admin/api/fleet/SP-AXA/consumption',
+      headers: auth,
+    });
+
+    expect(report.statusCode).toBe(200);
+    expect(counter.bulkReads).toBe(1);
+    expect(counter.reads).toBe(0);
   });
 });
 
