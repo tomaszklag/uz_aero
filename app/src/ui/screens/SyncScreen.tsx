@@ -138,7 +138,13 @@ export function SyncScreen({
       size="md"
       onBack={navigation.goBack}
       backLabel="Statystyki"
-      right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+      right={
+        <SyncChip
+          status={synced ? 'synced' : 'offline'}
+          outboxCount={outboxCount}
+          lastSyncAt={lastSyncAt}
+        />
+      }
     />
   );
 

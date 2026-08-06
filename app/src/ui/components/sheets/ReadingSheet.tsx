@@ -97,19 +97,29 @@ export function ReadingSheet({
   });
   const input = useRef<TextInput>(null);
 
+  /**
+   * Klawiatura ma być na ekranie razem z arkuszem, bez dodatkowego tapnięcia w pole
+   * (zgłoszenie z urządzenia, issue #12: arkusz godziny meldunku otwierał się „martwy").
+   *
+   * Fokus ustawiamy sami, nie przez `autoFocus`: w `Modal` na Androidzie autofokus bywa
+   * gubiony, bo pole montuje się, zanim okno modalne skończy animację wejścia. Główną
+   * próbę odpalamy z `Modal.onShow` — dopiero wtedy okno przyjmuje fokus i `focus()`
+   * naprawdę podnosi klawiaturę. Zwłoka 150 ms zostaje jako zapas na wypadek, gdyby
+   * `onShow` nie doszło; drugi `focus()` na zogniskowanym polu nic nie robi.
+   */
+  const focusInput = useCallback(() => {
+    input.current?.focus();
+  }, []);
+
   // Każde otwarcie zaczyna od aktualnej wartości — arkusz nie pamięta porzuconej edycji.
-  //
-  // Fokus ustawiamy sami zamiast przez `autoFocus`: w `Modal` na Androidzie autofokus
-  // bywa gubiony, bo pole montuje się, zanim okno modalne skończy animację wejścia.
-  // Krótka zwłoka daje oknu dojść do stanu, w którym przyjmuje fokus.
   useEffect(() => {
     if (!visible) return;
     setText(initialText);
     // Cała wartość zaznaczona: pierwszy wpis nadpisuje odczyt, zamiast dopisywać się.
     setSelection({ start: 0, end: initialText.length });
-    const id = setTimeout(() => input.current?.focus(), 150);
+    const id = setTimeout(focusInput, 150);
     return () => clearTimeout(id);
-  }, [visible, initialText]);
+  }, [visible, initialText, focusInput]);
 
   const change = useCallback(
     (raw: string) => {
@@ -140,6 +150,7 @@ export function ReadingSheet({
           : (warning ?? undefined)
       }
       warningTone={parsed == null ? 'red' : 'amber'}
+      onShow={focusInput}
       confirmLabel="POTWIERDŹ"
       onConfirm={() => {
         if (parsed != null) onConfirm(parsed);

@@ -59,6 +59,7 @@ export function TrackScreen({
   const trackQueries = useSessionStore((s) => s.trackQueries);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
 
   const [view, setView] = useState<FlightTrackView | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -101,7 +102,13 @@ export function TrackScreen({
       size="md"
       onBack={navigation.goBack}
       backLabel="Statystyki"
-      right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+      right={
+        <SyncChip
+          status={synced ? 'synced' : 'offline'}
+          outboxCount={outboxCount}
+          lastSyncAt={lastSyncAt}
+        />
+      }
     />
   );
 

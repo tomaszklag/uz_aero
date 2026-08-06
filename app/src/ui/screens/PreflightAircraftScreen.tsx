@@ -15,10 +15,12 @@
  *    (`CLAUDE.md`);
  *  • tożsamość pilota jest znana z sesji — nie pytamy o kod, **pokazujemy** go paskiem;
  *  • samolot wyłączony ze służby jest widoczny, ale niedostępny — z podanym powodem;
- *  • samolot zajęty przez innego pilota wymaga świadomego **przejęcia** (arkusz z §4.4);
- *    claim jest optymistyczny, więc działa też bez sieci;
+ *  • samolotu zajętego przez innego pilota **nie da się stąd wybrać**: wiersz prowadzi
+ *    do podglądu 04b, a przejęcie jest decyzją TAMTEGO ekranu (issue #12; §4.4 — claim
+ *    odbiera poprzednikowi prawo zapisu, więc nie zapada przy liście);
  *  • samolot z wymogiem załogi 2-osobowej blokuje przejście dalej bez Duala;
- *  • czas meldowania w UTC, LT tylko jako wartość drugorzędna.
+ *  • czas meldowania w UTC, LT tylko jako wartość drugorzędna; „teraz" bierzemy z chwili
+ *    WEJŚCIA na ekran, nie z uruchomienia aplikacji.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -35,7 +37,6 @@ import {
   ReadingSheet,
   Screen,
   ScreenHeader,
-  Sheet,
   SyncChip,
   Tag,
   ValueBox,
@@ -57,16 +58,16 @@ export function PreflightAircraftScreen({
   const queries = useSessionStore((s) => s.queries);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
 
   const pilotId = useCurrentPilot((s) => s.id);
   const pilotProfile = useCurrentPilot((s) => s.profile);
   const setPilotProfile = useCurrentPilot((s) => s.setProfile);
 
   const draft = usePreflightDraft();
+  const refreshDutyStart = usePreflightDraft((s) => s.refreshDutyStart);
   const [fleet, setFleet] = useState<ReferenceAircraft[]>([]);
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
-  /** Samolot czekający na potwierdzenie przejęcia (arkusz). */
-  const [takeover, setTakeover] = useState<ReferenceAircraft | null>(null);
   /**
    * Arkusz czasu meldowania — `null` = zamknięty, liczba = „teraz" z chwili otwarcia.
    *
@@ -84,6 +85,13 @@ export function PreflightAircraftScreen({
     });
   }, [pilotId, queries, setPilotProfile]);
 
+  // Godzina meldunku = „teraz" z chwili wejścia na ekran (issue #12). Szkic przeżywa
+  // całą sesję aplikacji, więc bez tego pilot widział godzinę uruchomienia telefonu.
+  // Wpis własny zostaje nietknięty — o tym decyduje `dutyStartEdited` w szkicu.
+  useEffect(() => {
+    refreshDutyStart(Date.now());
+  }, [refreshDutyStart]);
+
   const selected = draft.aircraft;
   const needsDual = selected?.dualRequired === true && draft.dualId == null;
 
@@ -96,25 +104,19 @@ export function PreflightAircraftScreen({
         return {
           value: a.id,
           label: a.reg,
-          detail: [a.type, a.year].filter(Boolean).join(' · '),
-          tags: grounded
-            ? [{ label: 'Wyłączony', tone: 'red' as const }]
-            : claimed
-              ? [
-                  {
-                    // Mockup: „PIC: KRZ · od 07:10" — sama informacja „kto" bez „od kiedy"
-                    // nie pozwala ocenić, czy tamten dzień jeszcze trwa.
-                    label:
-                      a.claimSince != null
-                        ? `PIC: ${a.claimPicId} · od ${timeUtc(a.claimSince)}`
-                        : `PIC: ${a.claimPicId}`,
-                    tone: 'amber' as const,
-                  },
-                ]
-              : undefined,
-          // Podgląd read-only (04b) TYLKO przy samolocie prowadzonym przez kogoś innego —
-          // tam, gdzie pilot chce zobaczyć stan, zanim zdecyduje się przejąć.
-          hasSecondary: claimed,
+          // Bez rocznika (issue #12): przy wyborze samolotu na dziś rok produkcji nie
+          // rozstrzyga niczego, a wydłużał wiersz o wartość, której nikt nie czyta.
+          detail: a.type,
+          tags: grounded ? [{ label: 'Wyłączony', tone: 'red' as const }] : undefined,
+          // Zajęty przez kogoś innego = pozycja do podglądu (04b), nie do wyboru.
+          // Sama informacja „kto" bez „od kiedy" nie pozwala ocenić, czy tamten dzień
+          // jeszcze trwa — stąd godzina blokady w tej samej linii.
+          peek: claimed,
+          note: claimed
+            ? a.claimSince != null
+              ? `Prowadzi PIC: ${a.claimPicId} · od ${timeUtc(a.claimSince)}`
+              : `Prowadzi PIC: ${a.claimPicId}`
+            : undefined,
           disabledReason: grounded ? 'Wyłączony ze służby' : undefined,
           // Powód niesie już czerwony tag — druga linia byłaby powtórzeniem.
           disabledTagged: grounded,
@@ -124,43 +126,42 @@ export function PreflightAircraftScreen({
   );
 
   // Pilot zalogowany nie może być jednocześnie Dualem — filtrujemy go z listy.
+  // Kod pilota nosi kafelek po lewej (issue #12), więc nie powtarzamy go w detalu.
   const dualOptions: PickerOption<string>[] = useMemo(
     () =>
       pilots
         .filter((p) => p.active && p.id !== pilotId)
-        .map((p) => ({ value: p.id, label: p.name, detail: p.code, avatarName: p.name })),
+        .map((p) => ({ value: p.id, label: p.name, avatarCode: p.code })),
     [pilots, pilotId],
   );
 
   const handleAircraft = useCallback(
     (id: string) => {
       const found = fleet.find((a) => a.id === id);
-      if (!found) return;
-      // Samolot prowadzony przez kogoś innego = decyzja o odebraniu mu prawa zapisu.
-      // Nie da się jej podjąć przypadkowym tapnięciem (§4.4).
-      if (found.claimPicId != null && found.claimPicId !== pilotId) {
-        setTakeover(found);
-        return;
-      }
+      // Samolot z cudzym claimem nie wchodzi tą drogą — `CardPicker` kieruje takie
+      // pozycje do podglądu (04b), a stamtąd wraca gotowy wybór.
+      if (!found || (found.claimPicId != null && found.claimPicId !== pilotId)) return;
       draft.setAircraft(found);
     },
     [draft, fleet, pilotId],
   );
-
-  const confirmTakeover = useCallback(() => {
-    if (takeover) draft.setAircraft(takeover);
-    setTakeover(null);
-  }, [draft, takeover]);
 
   return (
     <Screen
       scroll
       header={
         <ScreenHeader
+          // Bez podtytułu (issue #12): „Kto, czym i od kiedy" opisywało formularz, który
+          // pilot i tak ma przed oczami, a numer kroku mówi już wszystko o miejscu w flow.
           title="PREFLIGHT"
-          subtitle="Kto, czym i od kiedy"
           step="1 / 4"
-          right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+          right={
+            <SyncChip
+              status={synced ? 'synced' : 'offline'}
+              outboxCount={outboxCount}
+              lastSyncAt={lastSyncAt}
+            />
+          }
         />
       }
       // Akcja prowadząca dalej stoi przy dolnej krawędzi niezależnie od długości
@@ -201,18 +202,21 @@ export function PreflightAircraftScreen({
               options={aircraftOptions}
               value={selected?.id ?? null}
               onChange={handleAircraft}
-              // Podglądanie i przejmowanie to dwie różne czynności: przejęcie odbiera
-              // poprzednikowi prawo zapisu (§4.4), więc nie może być skutkiem ubocznym
-              // sprawdzenia, co się z samolotem dzieje.
+              // Cała pozycja z cudzym claimem prowadzi TUTAJ. Przejęcie odbiera
+              // poprzednikowi prawo zapisu (§4.4), więc zapada dopiero na 04b — po
+              // zobaczeniu, co się z samolotem dzieje, a nie tapnięciem w listę.
               onSecondary={(id) => navigation.navigate('CockpitReadonly', { aircraftId: id })}
-              secondaryLabel="Podgląd bez przejmowania"
+              secondaryLabel="Podgląd — kto prowadzi ten samolot"
             />
           )}
         </Card>
 
         {/* ── drugi pilot ─────────────────────────────────────────────── */}
+        {/* „· Dual" wypadło z tytułu (issue #12): to żargon obok napisu, który i tak
+            mówi wszystko. Rola „DUAL" zostaje tam, gdzie jest identyfikatorem — w logu
+            dnia, na karcie załogi i w arkuszu. */}
         <Card
-          title="Drugi pilot · Dual"
+          title="Drugi pilot"
           header="inline"
           headerRight={
             <Tag
@@ -242,7 +246,9 @@ export function PreflightAircraftScreen({
             odczytów): meldunek bywa godziny wstecz wobec chwili wypełniania formularza,
             a wtedy wpisanie „08:00" jest jednym ruchem zamiast serii tapnięć w stepper. */}
         <Card header="inline">
-          <Field label="Czas meldowania (duty start)">
+          {/* Bez „(duty start)" — angielski termin w nawiasie nie tłumaczył już niczego,
+              czego nie mówi polska etykieta (issue #12). */}
+          <Field label="Czas meldowania">
             <ValueBox
               value={timeUtc(draft.dutyStart)}
               unit="UTC"
@@ -264,7 +270,12 @@ export function PreflightAircraftScreen({
         visible={dutyEditorNow != null}
         title="Godzina meldowania"
         unit="UTC"
-        tone="blue"
+        // Ton NEUTRALNY, czyli ten sam kolor cyfr co w polu, z którego arkusz się otwiera
+        // (issue #12). Niebieski był tu tonem „informacja o czasie UTC", ale w praktyce
+        // wyglądał jak zmiana wartości w połowie edycji: pilot tapał białe „08:00",
+        // a dostawał niebieskie. Amber w 02b/02c niesie stan (paliwo/MH); godzina
+        // meldunku nie niesie żadnego.
+        tone="neutral"
         // Cyfry z klawiatury numerycznej — dwukropek w „HH:MM" stawia maska arkusza.
         keyboard="time"
         initialText={timeUtc(draft.dutyStart)}
@@ -296,33 +307,10 @@ export function PreflightAircraftScreen({
         onCancel={() => setDutyEditorNow(null)}
       />
 
-      {/* ── przejęcie samolotu (`#takeover-modal` z mockupu) ───────────── */}
-      <Sheet
-        visible={takeover != null}
-        title={`PRZEJMIJ ${takeover?.reg ?? ''}?`}
-        rows={[
-          { label: 'Aktywny PIC', value: takeover?.claimPicId ?? '—' },
-          {
-            label: 'Blokada od',
-            value: takeover?.claimSince != null ? `${timeUtc(takeover.claimSince)} UTC` : 'brak danych',
-          },
-          {
-            // Wiek danych JEST częścią tej decyzji: „PIC: KRZ" sprzed dwóch godzin znaczy
-            // coś zupełnie innego niż sprzed dwóch minut. Bez tego wiersza pilot ocenia
-            // sytuację, nie wiedząc, jak stara jest informacja, na której się opiera (§4.8).
-            label: 'Ostatnia synchronizacja',
-            value: takeover != null ? `${timeUtc(takeover.fetchedAt)} UTC` : '—',
-          },
-        ]}
-        warning={
-          'Poprzedni PIC może mieć niewysłane dane. Po przejęciu tylko Ty będziesz wysyłać dane ' +
-          'dla tego samolotu — zweryfikuj odczyty paliwa i MH z liczników w kolejnym kroku. ' +
-          'Spóźnione dane poprzednika serwer scali automatycznie.'
-        }
-        confirmLabel="PRZEJMIJ"
-        onConfirm={confirmTakeover}
-        onCancel={() => setTakeover(null)}
-      />
+      {/* Arkusza przejęcia tu już nie ma (issue #12): pytanie „PRZEJMIJ SP-FGK?" padało
+          nad listą, na której nie było widać ani stanu samolotu, ani tego, co poprzednik
+          zdążył zrobić — a to jest właśnie treść ekranu 04b. Cała decyzja przeniosła się
+          tam razem z ostrzeżeniem o niewysłanych danych poprzednika. */}
     </Screen>
   );
 }

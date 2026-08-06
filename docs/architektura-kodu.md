@@ -724,19 +724,19 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `Brand` | znak marki (kafel z ikoną, „UZ AERO", tagline), rozmiary `md`/`hero` | `.brand` (00/00a), `.app-icon` (01) |
 | `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
-| `Avatar` | kafelek z inicjałami, 40/32 px | `.pilot-avatar`, `.crew-avatar` |
+| `Avatar` | kafelek z inicjałami (albo z kodem pilota — `code`), 40/32 px | `.pilot-avatar`, `.crew-avatar` |
 | `AppBar` | pasek **dnia lotnego**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
 | `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót, wariant wyśrodkowany | `.app-header` |
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
 | `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` / `.form-card` (00a) |
-| `SyncChip` | **jedyny** globalny wskaźnik sieci (`SYNC` / `OFFLINE · n`) | reguła z `CLAUDE.md` |
+| `SyncChip` | **jedyny** globalny wskaźnik sieci; online nic nie rysuje, offline `OFFLINE · n` + stempel ostatniego synca (`syncStamp`) | reguła z `CLAUDE.md` |
 | `SyncStatusBox` | przyrząd statusu wysyłki: plakietka, licznik, pasek postępu | `.google-box` (11) / `.sync-box` (11a) |
 | `QueueBox` | kolejka outboxa: aktywna (amber) albo przygaszona do 30% | `.queue-box` (11a) / `.offline-queue` (11) |
 | `ExportedBox` | pudełko „Serwer zaktualizował arkusz": link do karty, jawny błąd otwarcia (§6 pkt 3) | `.success-box` (11) |
 | `StatusChip` | chipy **stanu sesji** (GROUND, RUNNING, cache) | `.ground-chip` |
 | `Tag` | **przypisy** przy pozycji listy/nagłówku (8–11 px) | `.pic-lock-tag`, `.optional-tag`, `.step-badge` |
 | `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
-| `CardPicker` | wybór z **listy kart** (nigdy natywny select), układ jednowierszowy | `.aircraft-option`, `.crew-option` |
+| `CardPicker` | wybór z **listy kart** (nigdy natywny select), układ jednowierszowy; pozycja `peek` = do podglądu, nie do wyboru (ikona oka w miejscu kółka) | `.aircraft-option`, `.crew-option` |
 | `OptionGrid` | siatka kart **z ikonami**, 2 kolumny | `.op-grid` |
 | `OptionInput` | wartość konfiguracyjna w „ubraniu" pola — bez wpisywania | `.option-input` (11) |
 | `PinDots` | kropki PIN-u; odmowa = czerwień + potrząśnięcie (jedyny komunikat) | `.pin-dots` (00) |
@@ -886,6 +886,12 @@ buildu) — sięgamy po niego dopiero, gdy własna droga okaże się niewystarcz
   i `maskTimeUtcInput` składa cztery cyfry w „HH:MM" (klawiatura numeryczna nie ma
   dwukropka, a pełna zajmuje pół ekranu i podstawia podpowiedzi słownikowe). Licznik MH
   w formacie `hh:mm` zostaje na `text`, bo liczba cyfr godzin jest dowolna.
+- **Fokus (i klawiaturę) odpala `Modal.onShow`, nie sam timer.** Arkusz ma się otwierać
+  RAZEM z klawiaturą — bez dodatkowego tapnięcia w pole (zgłoszenie z urządzenia,
+  issue #12). Zwłoka 150 ms po `visible` bywała za krótka: `focus()` trafiał w okno
+  w połowie animacji wejścia i klawiatura nie wstawała. `Sheet` przekazuje więc
+  `onShow` z `Modal` (fires po pokazaniu okna), a `ReadingSheet` woła stamtąd `focus()`;
+  timer został jako zapas, bo drugi `focus()` na zogniskowanym polu nic nie robi.
 - **Nigdy `selectTextOnFocus` na polu sterowanym.** Na Androidzie to `selectAllOnFocus`,
   które odnawia zaznaczenie przy KAŻDYM programowym ustawieniu tekstu — a wartość idzie
   przez JS i wraca, więc pierwsza wpisana cyfra znów była zaznaczona i druga ją wymazywała.
@@ -902,7 +908,16 @@ buildu) — sięgamy po niego dopiero, gdy własna droga okaże się niewystarcz
 `ui/store/preflightDraft.ts` trzyma **szkic** preflightu przez trzy ekrany (02 → 02a → 03).
 Rejestr jest append-only, więc nie wolno do niego wpisywać stanów pośrednich, które pilot
 może jeszcze zmienić albo porzucić. Zdarzenia `session_claim` i `preflight_confirm`
-powstają dopiero przy potwierdzeniu na ekranie 3.
+powstają dopiero przy potwierdzeniu na ekranie 3. **Przejęcie samolotu z podglądu 04b też
+jest tylko wypełnieniem szkicu** (`setAircraft` + powrót na 02) — ekran read-only nadal
+nie pisze do rejestru ani jednego zdarzenia.
+
+Szkic żyje tak długo jak proces aplikacji i to ma jeden nieoczywisty skutek: wartości
+udające „teraz" starzeją się w nim po cichu. Dlatego czas meldowania **odświeża się przy
+wejściu na krok 1** (`refreshDutyStart`, wołane z efektu montowania ekranu), a nie
+w `initial()` — inaczej pilot, który otworzył aplikację o 6:00, a zaczynał dzień o 8:00,
+dostawał w formularzu 6:00 (issue #12). Wpis własny jest nietykalny: `dutyStartEdited`
+działa dokładnie jak `taskTouched` przy podpowiedziach zadania.
 
 ### `.tsx` eksportuje wyłącznie komponenty
 

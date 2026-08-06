@@ -12,6 +12,9 @@
 
 import {
   dateTimeUtc,
+  dateTimeUtcShort,
+  dateUtcLong,
+  dateUtcShort,
   duration,
   litres,
   maskTimeUtcInput,
@@ -141,6 +144,34 @@ describe('czas', () => {
     expect(duration(90 * 60_000)).toBe('1:30');
     expect(duration(6 * 3_600_000 + 39 * 60_000)).toBe('6:39'); // block time dnia kanonicznego
     expect(duration(-1)).toBe('0:00');
+  });
+});
+
+/**
+ * Data dnia lotnego na telefonie. Aplikacja pilota mówi po polsku każdym napisem — po
+ * issue #12 także miesiącem. Dopełniacz, bo tak czyta się datę: „22 czerwca 2026".
+ *
+ * Skrót w `dateTimeUtcShort` jest PREFIKSEM pełnej nazwy, więc oba zapisy trzymają jedną
+ * tablicę miesięcy i nie mają jak się rozjechać — dlatego sprawdzamy je razem, w tym
+ * miesiące z ogonkiem (WRZEŚNIA, PAŹDZIERNIKA), gdzie skracanie łatwo zepsuć.
+ */
+describe('data dnia lotnego po polsku', () => {
+  it('plakietka dnia niesie pełną nazwę miesiąca', () => {
+    expect(dateUtcLong(Date.UTC(2026, 5, 22, 8, 0))).toBe('22 CZERWCA 2026');
+    expect(dateUtcLong(Date.UTC(2026, 0, 1))).toBe('1 STYCZNIA 2026');
+    expect(dateUtcLong(Date.UTC(2026, 11, 31, 23, 59))).toBe('31 GRUDNIA 2026');
+  });
+
+  it('stempel „dzień + godzina" skraca miesiąc do trzech znaków', () => {
+    expect(dateTimeUtcShort(Date.UTC(2026, 5, 23, 16, 45))).toBe('23 CZE 16:45');
+    expect(dateTimeUtcShort(Date.UTC(2026, 8, 2, 7, 5))).toBe('2 WRZ 07:05');
+    expect(dateTimeUtcShort(Date.UTC(2026, 9, 30, 0, 0))).toBe('30 PAŹ 00:00');
+  });
+
+  it('panel zostaje przy skrótach lotniczych — polonizacja dotyczy telefonu', () => {
+    // Kolumny dat w `design/admin/` i ich testy są napisane w tym zapisie; zmiana
+    // panelu to osobna decyzja, nie skutek uboczny zmiany na telefonie.
+    expect(dateUtcShort(Date.UTC(2026, 6, 31))).toBe('31 JUL 2026');
   });
 });
 

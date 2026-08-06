@@ -129,6 +129,7 @@ export function CockpitScreen({
   const projection = useSessionStore((s) => s.projection);
   const events = useSessionStore((s) => s.events);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const synced = useSessionStore((s) => s.synced);
   const warnings = useSessionStore((s) => s.warnings);
   const lastError = useSessionStore((s) => s.lastError);
@@ -253,7 +254,11 @@ export function CockpitScreen({
           compact
           right={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
-              <SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />
+              <SyncChip
+                status={synced ? 'synced' : 'offline'}
+                outboxCount={outboxCount}
+                lastSyncAt={lastSyncAt}
+              />
               <StatusChip label="Running" tone="green" />
             </View>
           }
@@ -506,7 +511,13 @@ export function CockpitScreen({
         ]
           .filter(Boolean)
           .join(' · ')}
-        right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+        right={
+          <SyncChip
+            status={synced ? 'synced' : 'offline'}
+            outboxCount={outboxCount}
+            lastSyncAt={lastSyncAt}
+          />
+        }
         // `.settings-btn` z mockupu 04 → ekran 13 (ustawienia: motyw, PIN, konto,
         // diagnostyka GPS). Do czasu 13 prowadził do StyleGuide.
         onSettings={() => navigation.navigate('Settings')}

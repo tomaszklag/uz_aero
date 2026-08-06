@@ -50,6 +50,7 @@ export function PreflightConfirmScreen({
   const lastError = useSessionStore((s) => s.lastError);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const queries = useSessionStore((s) => s.queries);
   const sync = useSessionStore((s) => s.sync);
 
@@ -183,7 +184,13 @@ export function PreflightConfirmScreen({
           size="md"
           step="4 / 4"
           onBack={navigation.goBack}
-          right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+          right={
+            <SyncChip
+              status={synced ? 'synced' : 'offline'}
+              outboxCount={outboxCount}
+              lastSyncAt={lastSyncAt}
+            />
+          }
         />
       }
       /* Jedna akcja, nie para. Mockup ma tu `.btn-group` z „WRÓĆ I POPRAW" na koncie

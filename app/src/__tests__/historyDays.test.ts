@@ -79,7 +79,7 @@ describe('historia dni (ekran 12)', () => {
     expect(groups.closed).toHaveLength(0);
     expect(groups.editable).toHaveLength(1);
     const day = groups.editable[0]!;
-    expect(day.date).toBe('22 JUNE 2026');
+    expect(day.date).toBe('22 CZERWCA 2026');
     expect(day.aircraft).toBe('SP-AXA');
     expect(day.stats).toEqual([
       { k: 'Loty', v: '1' },
@@ -87,7 +87,7 @@ describe('historia dni (ekran 12)', () => {
       { k: 'Duty', v: '8:45' },
       { k: 'Skoczków', v: '4' },
     ]);
-    expect(day.deadline).toBe('Korekta do 23 JUN 16:45');
+    expect(day.deadline).toBe('Korekta do 23 CZE 16:45');
     expect(day.remaining).toBe('zostało 23 h 04 min');
   });
 
@@ -136,7 +136,7 @@ describe('historia dni (ekran 12)', () => {
     const { repo, queries } = harness();
     await writeDay(repo, 'sess-1', at(8, 0));
 
-    expect(editableBadge(await queries.historyDays(), at(17, 0))).toBe('22 JUN — można poprawić');
+    expect(editableBadge(await queries.historyDays(), at(17, 0))).toBe('22 CZE — można poprawić');
     expect(
       editableBadge(await queries.historyDays(), at(16, 45) + CORRECTION_WINDOW_MS + 60_000),
     ).toBeNull();

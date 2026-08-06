@@ -43,6 +43,7 @@ export function HistoryScreen({
   const loadSession = useSessionStore((s) => s.loadSession);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
 
   const [days, setDays] = useState<HistoryDay[] | null>(null);
 
@@ -80,7 +81,13 @@ export function HistoryScreen({
           size="md"
           onBack={navigation.goBack}
           backLabel="Start"
-          right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+          right={
+            <SyncChip
+              status={synced ? 'synced' : 'offline'}
+              outboxCount={outboxCount}
+              lastSyncAt={lastSyncAt}
+            />
+          }
         />
       }
     >

@@ -45,26 +45,68 @@ export function timeLocal(t: EpochMillis | null): string {
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
-const MONTHS_UTC = [
-  'JANUARY',
-  'FEBRUARY',
-  'MARCH',
-  'APRIL',
-  'MAY',
-  'JUNE',
-  'JULY',
-  'AUGUST',
-  'SEPTEMBER',
-  'OCTOBER',
-  'NOVEMBER',
-  'DECEMBER',
+/**
+ * Miesiące dla TELEFONU — po polsku, w dopełniaczu („22 CZERWCA 2026").
+ *
+ * Aplikacja pilota mówi po polsku każdym napisem, więc angielska nazwa miesiąca
+ * w plakietce dnia lotnego była jedynym obcym słowem na ekranie (zgłoszenie z urządzenia,
+ * issue #12). Dopełniacz, a nie mianownik, bo tak czyta się datę po polsku: „22 czerwca",
+ * nie „22 czerwiec".
+ */
+const MONTHS_PL = [
+  'STYCZNIA',
+  'LUTEGO',
+  'MARCA',
+  'KWIETNIA',
+  'MAJA',
+  'CZERWCA',
+  'LIPCA',
+  'SIERPNIA',
+  'WRZEŚNIA',
+  'PAŹDZIERNIKA',
+  'LISTOPADA',
+  'GRUDNIA',
 ];
 
-/** Data dnia lotnego jako „22 JUNE 2026" (UTC) — badge z mockupu 02. */
+/** Data dnia lotnego jako „22 CZERWCA 2026" (UTC) — badge z mockupu 02. */
 export function dateUtcLong(t: EpochMillis): string {
   const d = new Date(t);
-  return `${d.getUTCDate()} ${MONTHS_UTC[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return `${d.getUTCDate()} ${MONTHS_PL[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
+
+/**
+ * Data i godzina jako „23 CZE 16:45" (UTC) — stempel z ekranów telefonu: termin okna
+ * korekty (10, 12), wiek migawki cudzej sesji (04b), stan cache przy odczytach.
+ *
+ * Data jest tu konieczna, a nie ozdobna: okno korekty zamyka się 24 h po zamknięciu dnia,
+ * więc prawie zawsze wypada NASTĘPNEGO dnia — sama godzina wyglądałaby jak „za chwilę".
+ *
+ * Skrót miesiąca jest PREFIKSEM pełnej nazwy z `MONTHS_PL` (CZERWCA → CZE, PAŹDZIERNIKA
+ * → PAŹ), więc jedna tablica obsługuje oba zapisy telefonu i nie ma jak się rozjechać.
+ * Mieszka tu, a nie w `ui/screens/logic/statsDay.ts` (gdzie powstał), bo czyta go też
+ * komponent wskaźnika łączności — dokładnie tą samą drogą, którą wcześniej przeszło `hhmm`.
+ */
+export function dateTimeUtcShort(t: EpochMillis): string {
+  const d = new Date(t);
+  const month = MONTHS_PL[d.getUTCMonth()]!.slice(0, 3);
+  return `${d.getUTCDate()} ${month} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+}
+
+/** Miesiące dla PANELU — trzyliterowe skróty lotnicze; powód rozdziału przy `dateUtcShort`. */
+const MONTHS_SHORT = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
+];
 
 /**
  * Data jako „31 JUL 2026" (UTC) — zapis GĘSTY, z mockupów panelu (`design/admin/`:
@@ -73,12 +115,19 @@ export function dateUtcLong(t: EpochMillis): string {
  * ISTNIEJE OBOK `dateUtcLong` i to nie jest niedopatrzenie, tylko różnica powierzchni:
  * telefon pokazuje datę raz, w plakietce dnia, i stać go na pełną nazwę miesiąca;
  * panel powtarza ją w każdym wierszu tabeli, gdzie cztery znaki więcej to inna
- * szerokość kolumny. Skrót jest PREFIKSEM pełnej nazwy, więc jedna tablica miesięcy
- * obsługuje oba zapisy — i nie ma jak się rozjechać.
+ * szerokość kolumny.
+ *
+ * DWIE TABLICE MIESIĘCY, NIE JEDNA — to też jest decyzja, nie przeoczenie. Do issue #12
+ * skrót był prefiksem pełnej nazwy (obie po angielsku) i jedna tablica obsługiwała oba
+ * zapisy. Telefon mówi teraz do pilota po polsku, a panel został przy skrótach lotniczych,
+ * bo w nich są napisane wszystkie 23 mockupy `design/admin/` i wszystkie kolumny jego tabel.
+ * Zmiana zapisu w panelu to osobna decyzja produktowa — nie skutek uboczny polonizacji
+ * plakietki na telefonie. (Polskie skróty złożyłyby się z dopełniacza równie dobrze:
+ * CZERWCA → CZE.)
  */
 export function dateUtcShort(t: EpochMillis): string {
   const d = new Date(t);
-  return `${d.getUTCDate()} ${MONTHS_UTC[d.getUTCMonth()]!.slice(0, 3)} ${d.getUTCFullYear()}`;
+  return `${d.getUTCDate()} ${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
 /** Czas trwania jako „H:MM" (block time, duty). */

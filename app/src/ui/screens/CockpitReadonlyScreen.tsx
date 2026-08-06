@@ -6,15 +6,18 @@
  * o pochodzeniu danych] → [chip stanu wg serwera] → [duty prowadzącego] → [log jego dnia]
  * → [PRZEJMIJ SAMOLOT + podpis] → [siatka akcji, cała zablokowana, z powodem pod spodem].
  *
- * Po co ten ekran istnieje: na liście samolotów (02) pilot widzi maszyny prowadzone przez
- * innych — „PIC: KRZ · od 07:10" z ikoną oka. Chce zobaczyć, co się z nimi dzieje, i to
- * jest **inna czynność niż przejęcie**. Przejęcie odbiera poprzednikowi prawo zapisu
- * (§4.4, optymistyczny claim), więc podglądanie nie może go uruchamiać przypadkiem.
+ * Po co ten ekran istnieje: na liście samolotów (02) maszyna prowadzona przez kogoś innego
+ * NIE JEST pozycją do wyboru — cały jej wiersz („Prowadzi PIC: KRZ · od 07:10", ikona oka)
+ * prowadzi tutaj. Przejęcie odbiera poprzednikowi prawo zapisu (§4.4, optymistyczny claim),
+ * więc od issue #12 zapada wyłącznie na TYM ekranie: tu widać stan samolotu, log cudzego
+ * dnia i wiek danych, na których pilot opiera decyzję. Arkusz potwierdzenia, który pytał
+ * o to nad listą — czyli nad ekranem bez żadnej z tych przesłanek — zniknął razem ze
+ * swoim ostrzeżeniem; ostrzeżenie stoi teraz nad przyciskiem niżej.
  *
  * Stąd twarda zasada tego ekranu: **zero akcji zapisu**. Nie ma START ENGINE, nie ma
  * ołówków korekty w logu (`EventLog` dostaje wiersze BEZ `onCorrect`), nie ma arkuszy.
- * Jedyne wyjście „w przód" prowadzi do preflightu, gdzie przejęcie jest świadomą decyzją
- * z własnym potwierdzeniem.
+ * „PRZEJMIJ SAMOLOT" też nie pisze do rejestru: wypełnia szkic preflightu (stan UI) i wraca
+ * na krok 1 — `session_claim` powstaje dopiero przy potwierdzeniu na ekranie 3.
  *
  * Skąd dane: **wyłącznie z serwera** — to cudza sesja, więc w rozumieniu `CLAUDE.md`
  * cały ekran jest kategorią (b) i każda wartość niesie stan świeżości (§4.8). Migawkę
@@ -30,6 +33,7 @@ import {
   ActionGrid,
   AppBar,
   AppText,
+  Banner,
   Card,
   DutyStrip,
   DayLog,
@@ -44,6 +48,7 @@ import { Caption } from '../components/status/Caption';
 import { PeekBanner } from '../components/status/PeekBanner';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
+import { usePreflightDraft } from '../store/preflightDraft';
 import { litres, timeLocal, timeUtc } from '../format';
 import { buildDaySections } from './logic/cockpitLog';
 import {
@@ -52,6 +57,7 @@ import {
   peekLogTitle,
   peekStatusChip,
   takeoverHint,
+  takeoverWarning,
   type PeekSnapshot,
 } from './logic/cockpitPeek';
 // Ten sam „HH:MM" z wiodącym zerem, co w tabelach ekranu 10 (`.duty-val` w mockupie
@@ -83,6 +89,9 @@ export function CockpitReadonlyScreen({
   const queries = useSessionStore((s) => s.queries);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
+  /** Przejęcie wypełnia szkic preflightu — patrz nota przy przycisku niżej. */
+  const takeAircraft = usePreflightDraft((s) => s.setAircraft);
 
   const aircraftId = route?.params?.aircraftId ?? null;
   const snapshot = route?.params?.snapshot ?? null;
@@ -235,7 +244,13 @@ export function CockpitReadonlyScreen({
           subtitle={subtitle.length > 0 ? subtitle : null}
           // SyncChip zostaje jedynym wskaźnikiem sieci (`CLAUDE.md`); o wieku danych
           // mówi stopka banera niżej — to druga, niezależna oś.
-          right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+          right={
+            <SyncChip
+              status={synced ? 'synced' : 'offline'}
+              outboxCount={outboxCount}
+              lastSyncAt={lastSyncAt}
+            />
+          }
         />
       }
     >
@@ -277,16 +292,32 @@ export function CockpitReadonlyScreen({
           />
         </Card>
 
-        {/* ── przejęcie (`.takeover-btn` + `.takeover-hint`) ─────────────────── */}
+        {/* ── przejęcie (`.takeover-warn` + `.takeover-btn` + `.takeover-hint`) ──
+            Ostrzeżenie stoi NAD przyciskiem, nie w arkuszu po tapnięciu: pilot ma je
+            przeczytać, zanim naciśnie, a nie zdejmować kolejną warstwę potwierdzeń. */}
+        <Banner
+          kind="warning"
+          icon="takeover"
+          title="Zanim przejmiesz"
+          text={takeoverWarning(freshness, picCode)}
+        />
         <ActionButton
           label="PRZEJMIJ SAMOLOT"
           tone="amber"
           variant="secondary"
           size="lg"
           icon="takeover"
-          onPress={() => navigation.navigate('PreflightAircraft')}
+          // Przejęcie = wypełnienie SZKICU preflightu (stan UI) i powrót na krok 1.
+          // Do rejestru nic tu nie trafia — `session_claim` powstaje przy potwierdzeniu
+          // na ekranie 3, więc zasada „zero akcji zapisu" na tym ekranie stoi.
+          disabledReason={aircraft == null ? 'Czekamy na dane samolotu z cache' : null}
+          onPress={() => {
+            if (aircraft == null) return;
+            takeAircraft(aircraft);
+            navigation.navigate('PreflightAircraft');
+          }}
         />
-        <Caption text={takeoverHint(freshness, picCode)} style={{ marginTop: -6 }} />
+        <Caption text={takeoverHint(aircraft?.reg ?? null)} style={{ marginTop: -6 }} />
 
         {/* ── akcje naziemne: widoczne, ale zablokowane (`.action-grid`) ─────── */}
         <ActionGrid actions={readonlyActions} />

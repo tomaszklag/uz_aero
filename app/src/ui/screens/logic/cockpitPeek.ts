@@ -197,20 +197,42 @@ export function peekStatusChip(state: SessionState | null): PeekStatus {
 }
 
 /**
- * Podpis pod „PRZEJMIJ SAMOLOT" (`.takeover-hint`).
+ * Ostrzeżenie NAD przyciskiem „PRZEJMIJ SAMOLOT".
+ *
+ * Treść przyszła tu z arkusza potwierdzenia, który do issue #12 otwierał się na liście
+ * samolotów (02). Arkusz pytał „PRZEJMIJ SP-FGK?" nad listą, na której nie widać było ani
+ * stanu maszyny, ani tego, co poprzednik zdążył zrobić — czyli nad ekranem BEZ przesłanek
+ * do tej decyzji. Tutaj przesłanki są (baner podglądu, chip stanu, log dnia), więc
+ * ostrzeżenie stoi obok nich, a nie w osobnym oknie nad czymś innym.
  *
  * Offline mówi więcej niż online i tak ma być: claim jest optymistyczny (§4.4), więc
  * przejęcie bez sieci DZIAŁA — pilot musi to wiedzieć, zanim zrezygnuje z lotu, czekając
  * na zasięg. Jednocześnie ma wiedzieć, czym płaci: odczyty wpisze z liczników, a kolizja
  * z poprzednikiem zostanie oznaczona do wyjaśnienia.
  */
-export function takeoverHint(freshness: PeekFreshness, picCode: string | null): string {
-  const who = picCode ?? 'prowadzący pilot';
-  if (freshness === 'live') {
-    return `Przejmiesz samolot w preflightcie · ostrzeżemy, jeśli ${who} ma jeszcze niewysłane dane`;
-  }
+export function takeoverWarning(freshness: PeekFreshness, picCode: string | null): string {
+  const who = picCode ?? 'poprzedni PIC';
+  const base =
+    `${who} może mieć niewysłane dane. Po przejęciu tylko Ty będziesz wysyłać dane dla tego ` +
+    'samolotu — zweryfikuj odczyty paliwa i MH z liczników w kolejnym kroku. Spóźnione dane ' +
+    'poprzednika serwer scali automatycznie.';
+
+  if (freshness === 'live') return base;
   return (
-    'Przejęcie działa też bez sieci — zapisze się na telefonie i wyśle po powrocie zasięgu, ' +
-    `a odczyty wpiszesz z liczników. Jeśli ${who} nadal lata, oznaczymy to do wyjaśnienia.`
+    `${base} Przejęcie działa też bez sieci: zapisze się na telefonie i wyśle po powrocie ` +
+    `zasięgu, a jeśli ${who} nadal lata, oznaczymy to do wyjaśnienia.`
   );
+}
+
+/**
+ * Podpis POD „PRZEJMIJ SAMOLOT" (`.takeover-hint`) — dokąd prowadzi ten przycisk.
+ *
+ * Od issue #12 przycisk naprawdę przejmuje: wybiera ten samolot w preflightcie i wraca
+ * na krok 1. Nic jeszcze nie trafia do rejestru — `session_claim` powstaje dopiero przy
+ * potwierdzeniu na ekranie 3 — i pilot ma prawo to wiedzieć, zanim naciśnie przycisk
+ * z napisem „PRZEJMIJ".
+ */
+export function takeoverHint(reg: string | null): string {
+  const what = reg ?? 'ten samolot';
+  return `Wrócisz do preflightu z wybranym ${what} — dzień zapisze się dopiero po potwierdzeniu danych`;
 }

@@ -59,7 +59,8 @@ describe('formaty ekranu 10', () => {
   });
 
   it('termin okna korekty niesie datę, bo prawie zawsze wypada nazajutrz', () => {
-    expect(dateTimeUtcShort(at(16, 45) + 24 * 3_600_000)).toBe('23 JUN 16:45');
+    // Miesiąc po polsku (issue #12) — telefon nie ma powodu mówić do pilota po angielsku.
+    expect(dateTimeUtcShort(at(16, 45) + 24 * 3_600_000)).toBe('23 CZE 16:45');
   });
 
   it('badge lotów odmienia się przez trzy formy liczby mnogiej', () => {

@@ -23,6 +23,7 @@ import {
   peekStatusChip,
   snapshotAgeLabel,
   takeoverHint,
+  takeoverWarning,
   type PeekSnapshot,
 } from '../ui/screens/logic/cockpitPeek';
 import { projectSession, type Event, type SessionState } from '../domain';
@@ -115,7 +116,7 @@ describe('baner podglądu', () => {
   it('cache: ostrzega, czego ten stan może już nie obejmować', () => {
     const model = peekBanner({ ...base, freshness: 'cache', now: at(9, 41) + 30 * 3_600_000 });
     expect(model.tone).toBe('amber');
-    expect(model.meta).toBe('Ostatnie pobrane dane · 22 JUN 09:41 · stan sprzed ponad doby');
+    expect(model.meta).toBe('Ostatnie pobrane dane · 22 CZE 09:41 · stan sprzed ponad doby');
     expect(model.warning).toContain('ostatni znany stan');
   });
 
@@ -181,13 +182,25 @@ describe('chip stanu', () => {
   });
 });
 
-describe('podpis przy przejęciu', () => {
-  it('offline mówi wprost, że przejęcie DZIAŁA — claim jest optymistyczny (§4.4)', () => {
-    expect(takeoverHint('cache', 'KRZ')).toContain('bez sieci');
-    expect(takeoverHint('brak', 'KRZ')).toContain('bez sieci');
+describe('przejęcie samolotu z podglądu (issue #12)', () => {
+  it('ostrzeżenie zawsze mówi o niewysłanych danych poprzednika', () => {
+    expect(takeoverWarning('live', 'KRZ')).toContain('niewysłane dane');
+    expect(takeoverWarning('live', 'KRZ')).toContain('KRZ');
   });
 
-  it('online ostrzega o niewysłanych danych poprzednika', () => {
-    expect(takeoverHint('live', 'KRZ')).toContain('niewysłane dane');
+  it('offline mówi wprost, że przejęcie DZIAŁA — claim jest optymistyczny (§4.4)', () => {
+    expect(takeoverWarning('cache', 'KRZ')).toContain('bez sieci');
+    expect(takeoverWarning('brak', 'KRZ')).toContain('bez sieci');
+  });
+
+  it('bez kodu poprzednika ostrzeżenie nadal jest zdaniem, nie dziurą', () => {
+    expect(takeoverWarning('live', null)).toContain('poprzedni PIC');
+  });
+
+  it('podpis pod przyciskiem mówi, że rejestru to jeszcze nie dotyka', () => {
+    const hint = takeoverHint('SP-FGK');
+    expect(hint).toContain('SP-FGK');
+    expect(hint).toContain('preflightu');
+    expect(hint).toContain('po potwierdzeniu');
   });
 });

@@ -77,6 +77,7 @@ export function StatsScreen({
   const queries = useSessionStore((s) => s.queries);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const currentPilotId = useCurrentPilot((s) => s.id);
   const { openCorrection, correctionSheet } = useEventCorrection();
 
@@ -231,7 +232,11 @@ export function StatsScreen({
                 size="md"
                 style={{ borderRadius: theme.radius.pill }}
               />
-              <SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />
+              <SyncChip
+                status={synced ? 'synced' : 'offline'}
+                outboxCount={outboxCount}
+                lastSyncAt={lastSyncAt}
+              />
             </>
           }
         />
