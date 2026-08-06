@@ -108,7 +108,7 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
   1. **dane sesji** (timery, log dnia, liczniki, statystyki) — lokalne, zawsze świeże, zero wariantów offline
   2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) — 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych — wpisz z licznika")
   3. **akcje wymagające sieci** (pierwsze logowanie, zmiana konta, ręczny sync) — offline: disabled z podanym powodem, nigdy cichy błąd
-- Jeden globalny wskaźnik łączności: SyncChip `SYNC` / `OFFLINE · n` — nie rozsiewamy komunikatów o braku sieci po ekranach
+- Jeden globalny wskaźnik łączności: SyncChip — nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: `OFFLINE · n` + stempel ostatniej udanej synchronizacji pod spodem
 - Blokada PIC = optymistyczny claim — przejęcie samolotu działa też offline (ostrzeżenie z danych cache)
 - Wygasły token ≠ wylogowanie; wylogowanie zablokowane przy niepustym outboxie
 - Liczniki fizyczne (MH, paliwomierz) > dane z serwera — serwer tylko podpowiada

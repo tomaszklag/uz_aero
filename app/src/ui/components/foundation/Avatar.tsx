@@ -6,6 +6,12 @@
  * zaznaczenia w tym samym wierszu.
  *
  * Inicjały liczymy z imienia i nazwiska, bo w bazie mamy `name`, a nie osobne pola.
+ *
+ * Z KODEM (`code`) kafelek pokazuje kod pilota zamiast inicjałów — mono, bo tak zapisujemy
+ * wszystkie kody w tej aplikacji (`CLAUDE.md`, sekcja Czcionki). Powód zmiany (issue #12):
+ * w wierszu wyboru drugiego pilota kod stał już po prawej stronie, więc inicjały po lewej
+ * były trzecim — i najmniej użytecznym — zapisem tej samej osoby. Kod jest tym, czym pilot
+ * podpisuje się w papierach i czym woła go klub.
  */
 
 import React from 'react';
@@ -20,6 +26,8 @@ export type AvatarSize = 'sm' | 'md';
 export interface AvatarProps {
   /** Pełne imię i nazwisko — inicjały wyliczamy sami. */
   name: string;
+  /** Kod pilota („AKO"); podany — zastępuje inicjały i idzie czcionką mono. */
+  code?: string;
   size?: AvatarSize;
   /** `neutral` = pozycja nie wybrana, `green` = wybrana / zalogowany pilot. */
   tone?: Tone;
@@ -41,7 +49,7 @@ function initialsOf(name: string): string {
     .join('');
 }
 
-export function Avatar({ name, size = 'md', tone = 'neutral', style }: AvatarProps) {
+export function Avatar({ name, code, size = 'md', tone = 'neutral', style }: AvatarProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
   const box = size === 'md' ? 40 : 32;
@@ -65,12 +73,29 @@ export function Avatar({ name, size = 'md', tone = 'neutral', style }: AvatarPro
         style,
       ]}
     >
-      <AppText
-        variant="display"
-        style={{ color: c.accent, fontSize: size === 'md' ? 17 : 14, letterSpacing: 1 }}
-      >
-        {initialsOf(name)}
-      </AppText>
+      {code != null ? (
+        // Trzy znaki kodu w kwadracie 32 px: mniejszy stopień i ciaśniejsze światło niż
+        // przy dwuznakowych inicjałach — inaczej „AKO" rozpycha kafelek.
+        <AppText
+          variant="mono"
+          numberOfLines={1}
+          style={{
+            fontFamily: theme.fontFamily.monoBold,
+            color: c.accent,
+            fontSize: size === 'md' ? 14 : 12,
+            letterSpacing: 0.5,
+          }}
+        >
+          {code}
+        </AppText>
+      ) : (
+        <AppText
+          variant="display"
+          style={{ color: c.accent, fontSize: size === 'md' ? 17 : 14, letterSpacing: 1 }}
+        >
+          {initialsOf(name)}
+        </AppText>
+      )}
     </View>
   );
 }

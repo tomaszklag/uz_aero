@@ -895,3 +895,113 @@ reguły „mockup wdrażamy 1:1" tych liczb nie wolno przepisać do kodu bez ust
 nie ma w kanonicznej piątce floty, i podawał dla `SP-DEF` inny typ oraz motogodziny niż rejestr
 `A07`. Wyrównane do `A07`, bo to on jest w tym zbiorze źródłem prawdy o konfiguracji samolotów —
 wokół jego pojemności zbiorników policzone są tolerancje `fuel_mismatch`.
+
+---
+
+## 2026-08-06 — Preflight krok 1 (issue #12)
+
+Uwagi właściciela produktu do pierwszego kroku preflightu. Zmiany dotykają `02`, jego wariantu
+offline `02d`, podglądu `04b` (przejmuje rolę usuniętego popupu) i `07` (druga lista pilotów
+w aplikacji).
+
+**02-preflight** — podtytuł „Kto, czym i od kiedy" usunięty; w nagłówku zostaje tytuł
+`PREFLIGHT` i badge kroku `1 / 4`.
+> Powód: podnagłówek opisywał ekran, a nie mówił nic, czego nie widać niżej — nad listą
+> samolotów, listą pilotów i polem meldunku streszczenie treści jest ozdobnikiem. Pilot czyta
+> ten ekran codziennie; zdanie, którego nigdy nie potrzebuje, zabiera tylko wysokość.
+
+**02-preflight / 02d** — rocznik znika z opisu samolotu: „Cessna 182 · 2019" → „Cessna 182".
+> Powód: pilot wybiera samolot po rejestracji, a typ jest już tylko potwierdzeniem, że to
+> ta maszyna. Rok produkcji nie rozstrzyga niczego w tej decyzji (nie ma dwóch identycznych
+> rejestracji), a wydłużał wiersz i konkurował wzrokowo z resztą pozycji.
+
+**02-preflight / 02d** — samolot prowadzony przez innego PIC dostał nowy kształt: **cała karta
+jest linkiem do podglądu 04B**, rejestracja z typem stoją w pierwszym wierszu jak w pozostałych
+pozycjach, a pod nimi adnotacja amber mono („Prowadzi PIC: KRZ · od 07:10") wyrównana do lewej. W miejscu kółka wyboru stoi ikona oka (`.aircraft-peek`),
+kółka ta pozycja nie ma. Klasy `.pic-lock-tag` i `.peek-link` usunięte.
+> Powód: zgłoszenie brzmiało wprost — mikro-plakietka 8 px wciśnięta między typ samolotu
+> a dwie ikony wyglądała źle i nie dawała się przeczytać. Głębszy problem był jednak inny:
+> pozycja udawała opcję do zaznaczenia, choć zaznaczyć jej nie można. **Przejęcie (§4.4)
+> odbiera poprzedniemu PIC prawo zapisu**, więc nie jest to wybór z listy, tylko decyzja —
+> a decyzję podejmuje się po zobaczeniu, co się z samolotem dzieje. Karta prowadzi więc tam,
+> gdzie ta wiedza jest (log dnia, wiek danych, ostatnia aktywność), i dlatego ma oko zamiast
+> kółka: kształt kontrolki mówi, co się stanie po dotknięciu.
+
+**02-preflight / 02d** — popup „PRZEJMIJ SP-FGK?" usunięty w całości (markup, style `.modal-*`,
+`pendingTakeover` / `confirmTakeover` / `cancelTakeover` i gałąź `data-locked`). Ostrzeżenie
+przeniesione na 04B.
+> Powód: modal zadawał pytanie „przejmujesz?" w miejscu, w którym pilot nie ma jeszcze czym
+> odpowiedzieć — pokazywał dwa wiersze danych wyrwane z kontekstu i kazał decydować. Po zmianie
+> jest jedna droga: karta → podgląd → decyzja przy pełnym stanie samolotu. **04B jest jedynym
+> miejscem, w którym przejmuje się samolot**, więc ostrzeżenie żyje w jednym egzemplarzu,
+> a nie w trzech wariantach popupu (online, offline, po przejęciu).
+
+**02-preflight / 02d** — etykieta sekcji `Drugi pilot · Dual` → `Drugi pilot`.
+> Powód: „Dual" to nazwa roli w arkuszu, nie pytanie do pilota. Sekcja pyta, kto leci obok;
+> słowo, którego znaczenia trzeba się domyślać, dokładało szumu przy zerowej informacji.
+
+**02-preflight / 02d / 07-zmiana-zalogi** — w kwadracie przy nazwisku stoi **kod pilota**
+(`AKO`, `PWI`, `JSE`) czcionką mono, a powtórzony kod po prawej stronie wiersza zniknął
+(`.crew-code`, `.pilot-cd` usunięte).
+> Powód: wiersz mówił tę samą wartość dwa razy — inicjały `AK` po lewej i kod `AKO` po prawej
+> są tym samym identyfikatorem w dwóch zapisach, a inicjały to wersja gorsza: nie występują
+> nigdzie w arkuszu ani w logu. Kod pilota jest tym, co pilot potem zobaczy w eksporcie, więc
+> to on należy do awatara. 07 zmieniony razem z 02, bo **dwie listy pilotów w jednej aplikacji
+> nie mogą wyglądać inaczej** — to jeden komponent w dwóch miejscach.
+
+**02-preflight / 02d** — `Czas meldowania (duty start)` → `Czas meldowania`.
+> Powód: nawias tłumaczył polską etykietę na angielski termin z arkusza. Pilot nie potrzebuje
+> tego przekładu w formularzu — pole ma jedno znaczenie i pytanie jest zrozumiałe bez glosariusza.
+
+**02-preflight / 02d** — data w badge po polsku: `22 JUNE 2026` → `22 CZERWCA 2026`.
+> Powód: interfejs jest polski, a angielska nazwa miesiąca została z pierwszych mockupów.
+> Dopełniacz („22 czerwca"), bo tak się datę w polszczyźnie czyta; wersaliki, bo to badge.
+
+**Wszystkie mockupy aplikacji pilota** — miesiące po polsku także poza krokiem 1:
+`JUNE` → `CZERWCA`, `JUN` → `CZE` (01, 02a, 04b, 07, 08, 09, 09a, 10, 10a, 11, 11a, 12, 14, 14b —
+plakietki dni, stemple cache, terminy okna korekty).
+> Powód: uwaga dotyczyła daty na kroku 1, ale ten sam napis składają dwie funkcje formatujące
+> używane na kilkunastu ekranach — poprawka wyłącznie w jednym miejscu zostawiłaby aplikację,
+> która na jednym ekranie mówi „22 CZERWCA", a dwa dalej „23 JUN". Skrót jest prefiksem pełnej
+> nazwy (CZERWCA → CZE), więc oba zapisy trzymają jedną tablicę miesięcy i nie mają jak się
+> rozjechać. **Panel administracyjny (`design/admin/`) zostaje przy skrótach lotniczych**
+> („31 JUL 2026") — to inna powierzchnia, jej 23 mockupy i kolumny tabel są napisane w tym
+> zapisie, a zmiana tam jest osobną decyzją, nie skutkiem ubocznym poprawki na telefonie.
+
+**Reguła globalna: chip SYNC znika z ekranów, kiedy jesteśmy online.** Plakietkę pokazujemy
+WYŁĄCZNIE offline (`OFFLINE · n`), a pod nią stempel ostatniej udanej synchronizacji
+(`Sync 21 CZE 17:30 UTC`, mono 8 px, `--text-muted`; sam sync z dzisiaj = sama godzina). Wdrożone na 02 (chip usunięty) i 02d
+(chip zostaje, stempel dołożony).
+> Powód: „zsynchronizowano" jest stanem **domyślnym**, a nie osiągnięciem — plakietka, która
+> świeci się przez 99% czasu pracy, przestaje cokolwiek znaczyć i tylko uczy pilota jej nie
+> zauważać. Wtedy nie zauważy też, gdy zmieni się w OFFLINE. Informacja jest po stronie braku:
+> chip pojawia się dokładnie wtedy, gdy niesie treść. Sam napis „OFFLINE" to jednak za mało —
+> nie mówi, jak stare są dane referencyjne, na których pilot za chwilę wybiera samolot i czyta
+> cudzy claim; stąd stempel ostatniego synca pod chipem. Zasada „jeden globalny wskaźnik
+> łączności" z `CLAUDE.md` zostaje bez zmian — zmienia się tylko to, kiedy jest widoczny.
+
+**04b-cockpit-readonly** — nad przyciskiem `PRZEJMIJ SAMOLOT` stoi baner ostrzegawczy amber
+(`.ro-banner.warn`, ta sama forma co baner podglądu) z treścią przeniesioną z usuniętego popupu:
+niewysłane dane poprzednika, jeden piszący po przejęciu, obowiązek weryfikacji paliwa i MH
+z liczników, automatyczne scalanie spóźnionych zdarzeń.
+> Powód: ekran przejął rolę modala, więc musiał przejąć też jego jedyną wartościową część —
+> ostrzeżenie. Kto prowadzi samolot, od kiedy i jak stare są dane, mówi już baner „PODGLĄD —
+> TYLKO ODCZYT" u góry, więc nowy baner tego **nie powtarza**: zostaje w nim wyłącznie to, co
+> wynika z samego przejęcia. Forma to istniejący komponent w wariancie amber, nie nowy klocek —
+> to ostrzeżenie warunkowe (Typ B), więc nie jest zamykalne.
+
+**04b-cockpit-readonly** — podpis pod przyciskiem mówi teraz prawdę o przepływie: „Wrócisz do
+preflightu z wybranym SP-FGK — dzień zapisze się dopiero po potwierdzeniu danych" (bez nazwy
+zdarzenia: `session_claim` to słowo z rejestru, nie z kokpitu). Nav-strip: „02 Preflight (przejęcie)" → „02 Preflight (powrót)".
+> Powód: stary podpis obiecywał „ostrzeżemy w preflightcie, jeśli KRZ ma niewysłane dane" —
+> po usunięciu modala nie było już czego obiecywać, a ostrzeżenie stoi wyżej na tym samym
+> ekranie. Nowy podpis rozdziela dwie rzeczy, które pilot inaczej myli: **wybór samolotu**
+> (dzieje się teraz) i **claim** (powstaje na 03, także offline — wtedy przez outbox).
+
+**02d-preflight-offline świadomie NIE został zmodernizowany całościowo.** Sekcje „Rodzaj
+operacji", „Trasa" i „Oznaczenie klienta" zostają w nim mimo decyzji z 2026-07-30, która
+przeniosła je do 02E.
+> Powód: to osobny dług i osobna decyzja — wariant offline zrówna się z 02 w całości przy
+> jego następnej iteracji. Wciągnięcie tego do poprawek z issue #12 zmieszałoby dwie sprawy
+> w jednym przeglądzie: uwagi właściciela produktu do kroku 1 i zaległą synchronizację
+> wariantu z decyzją sprzed tygodnia.

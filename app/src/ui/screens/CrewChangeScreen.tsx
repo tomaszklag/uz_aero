@@ -53,6 +53,7 @@ export function CrewChangeScreen({
   const queries = useSessionStore((s) => s.queries);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const lastError = useSessionStore((s) => s.lastError);
   const crewChange = useSessionStore((s) => s.crewChange);
   const pilotId = useCurrentPilot((s) => s.id);
@@ -83,7 +84,9 @@ export function CrewChangeScreen({
   const options: PickerOption<string>[] = useMemo(() => {
     const list: PickerOption<string>[] = pilots
       .filter((p) => p.active && p.id !== pilotId && p.id !== projection.dualId)
-      .map((p) => ({ value: p.id, label: p.name, detail: p.code, avatarName: p.name }));
+      // Kod pilota siedzi w kafelku po lewej (issue #12) — powtórzony po prawej byłby
+      // tą samą wartością dwa razy w jednym wierszu.
+      .map((p) => ({ value: p.id, label: p.name, avatarCode: p.code }));
 
     list.push({
       value: NO_DUAL,
@@ -136,7 +139,11 @@ export function CrewChangeScreen({
               <AppText variant="mono" tone="muted" style={styles.headerTime}>
                 {`${timeUtc(now)} UTC`}
               </AppText>
-              <SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />
+              <SyncChip
+                status={synced ? 'synced' : 'offline'}
+                outboxCount={outboxCount}
+                lastSyncAt={lastSyncAt}
+              />
             </>
           }
         />

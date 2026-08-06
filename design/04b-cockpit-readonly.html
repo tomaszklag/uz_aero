@@ -59,7 +59,12 @@
   .aircraft-code { color: var(--blue); font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
   .route-line { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
   .icao { color: var(--text-secondary); }
-  .app-bar-right { display: flex; align-items: center; gap: 8px; }
+  /* Kolumna, nie rząd: pod chipem OFFLINE stoi stempel ostatniego synca. */
+  .app-bar-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+  .sync-stamp {
+    font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--text-muted);
+  }
   .sync-chip {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 9px; border-radius: 999px;
@@ -71,6 +76,10 @@
   /* ===== SCROLL AREA ===== */
   .scroll { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; }
   .scroll::-webkit-scrollbar { display: none; }
+  /* Kolumna flex ŚCISKA dzieci, zanim pozwoli im wyjechać poza ekran — a log dnia ma
+     `overflow: hidden`, więc zamiast się przewinąć, zapadał się do zera po dołożeniu
+     banera ostrzegawczego. Treść przewijamy, nie zgniatamy. */
+  .scroll > * { flex-shrink: 0; }
 
   /* ===== READ-ONLY BANNER (sekcja 3.10 architektury) ===== */
   .ro-banner {
@@ -99,6 +108,11 @@
   .ground-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
 
   /* ===== TAKEOVER ===== */
+  /* Ostrzeżenie przed przejęciem — ta sama forma co `.ro-banner` (ikona + tytuł + tekst),
+     tyle że amber: to ostrzeżenie warunkowe, nie status, więc nie jest zamykalne. */
+  .ro-banner.warn { background: var(--amber-muted); border-color: var(--amber-border); }
+  .ro-banner.warn .ro-icon { color: var(--amber); }
+  .ro-banner.warn .ro-title { color: var(--amber); }
   .takeover-btn {
     display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; padding: 15px; border-radius: 16px;
@@ -256,15 +270,14 @@
           <span style="font-size:10px;color:var(--text-muted)">SKOKI</span>
         </div>
       </div>
+      <!-- Online chipa NIE MA (reguła z 2026-08-06): „zsynchronizowano" to stan domyślny.
+           Offline chip zostaje i niesie stempel ostatniej udanej synchronizacji. -->
       <div class="app-bar-right">
-        <div class="sync-chip only-live" title="Online — podgląd na żywo z serwera">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          SYNC
-        </div>
         <div class="sync-chip only-cache" style="background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber);" title="Brak sieci — pokazujemy ostatni znany stan z cache">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
           OFFLINE
         </div>
+        <div class="sync-stamp only-cache" title="Ostatnia udana synchronizacja z serwerem">Sync 21 CZE 17:30 UTC</div>
       </div>
     </div>
 
@@ -279,7 +292,7 @@
           <div class="ro-text">Samolot prowadzi <strong>KRZ · od 07:10</strong>. Dane zapisuje wyłącznie jego telefon — Ty widzisz stan pobrany z serwera.</div>
           <div class="stale-warn only-cache">Brak łączności — to <strong>ostatni znany stan</strong>. KRZ mógł już wylądować, zatankować albo zamknąć dzień.</div>
           <div class="ro-meta only-live"><span class="dot"></span>Dane z serwera · pobrano 09:41 · ostatnia aktywność KRZ 09:38</div>
-          <div class="ro-meta only-cache"><span class="dot"></span>Ostatnie pobrane dane · 21 JUN 17:30 · stan sprzed ponad doby</div>
+          <div class="ro-meta only-cache"><span class="dot"></span>Ostatnie pobrane dane · 21 CZE 17:30 · stan sprzed ponad doby</div>
         </div>
       </div>
 
@@ -344,16 +357,27 @@
       </div>
 
       <!-- PRZEJMIJ -->
+      <!-- Ostrzeżenie przeniesione z popupu przejęcia na 02 (2026-08-06): modala już nie ma,
+           a decyzja zapada TUTAJ — po zobaczeniu stanu i logu dnia. Kto prowadzi samolot,
+           od kiedy i jak stare są dane, mówi baner „PODGLĄD — TYLKO ODCZYT" wyżej, więc
+           tego nie powtarzamy; tu stoi wyłącznie to, co wynika z samego przejęcia. -->
+      <div class="ro-banner warn">
+        <svg class="ro-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div class="ro-body">
+          <div class="ro-title">ZANIM PRZEJMIESZ</div>
+          <div class="ro-text">KRZ może mieć <strong>niewysłane dane</strong>. Po przejęciu tylko Ty będziesz wysyłać dane dla tego samolotu — <strong>zweryfikuj odczyty paliwa i MH z liczników</strong> w kolejnym kroku. Spóźnione dane poprzednika serwer scali automatycznie.<span class="only-cache"> Przejęcie działa też bez sieci: zapisze się na telefonie i wyśle po powrocie zasięgu, a jeśli KRZ nadal lata, oznaczymy to do wyjaśnienia.</span></div>
+        </div>
+      </div>
       <a href="02-preflight.html" class="takeover-btn only-live">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint only-live">Przejmiesz samolot w preflightcie · ostrzeżemy, jeśli KRZ ma jeszcze niewysłane dane</div>
+      <div class="takeover-hint only-live">Wrócisz do preflightu z wybranym SP-FGK — dzień zapisze się dopiero po potwierdzeniu danych</div>
       <a href="02d-preflight-offline.html" class="takeover-btn only-cache">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint only-cache">Przejęcie działa też bez sieci — zapisze się na telefonie i wyśle po powrocie zasięgu, a odczyty wpiszesz z liczników. Jeśli KRZ nadal lata, oznaczymy to do wyjaśnienia.</div>
+      <div class="takeover-hint only-cache">Wrócisz do preflightu z wybranym SP-FGK — dzień zapisze się dopiero po potwierdzeniu danych</div>
 
       <!-- ACTIONS (disabled) -->
       <div class="action-grid">
@@ -420,7 +444,7 @@
     <span class="vp-badge blue">04B</span>
     <span class="vp-body">
       <span class="vp-name">Podgląd read-only</span>
-      <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log dnia z serwera, zero możliwości zapisu, akcja „Przejmij". Wejście np. z karty zajętego samolotu w preflightcie.</span>
+      <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log dnia z serwera, zero możliwości zapisu, ostrzeżenie i akcja „Przejmij". Wejście z karty zajętego samolotu w preflightcie (cała karta prowadzi tutaj) — to JEDYNE miejsce, w którym przejmuje się samolot.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -441,7 +465,7 @@
   <a href="04b-cockpit-readonly.html" class="active">04B Podgląd</a>
   <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
   <span>·</span>
-  <a href="02-preflight.html">02 Preflight (przejęcie)</a>
+  <a href="02-preflight.html">02 Preflight (powrót)</a>
 </nav>
 
 <script>
@@ -450,7 +474,7 @@
   const phoneEl = document.getElementById('phone');
   const ssDesc = {
     live: 'Jest sieć — stan samolotu pobrany na żywo z serwera.',
-    cache: 'Brak sieci — ostatni znany stan z cache (21 JUN 17:30). Przejęcie nadal możliwe: claim jest optymistyczny.'
+    cache: 'Brak sieci — ostatni znany stan z cache (21 CZE 17:30). Przejęcie nadal możliwe: claim jest optymistyczny.'
   };
   function setState(s) {
     phoneEl.dataset.state = s;

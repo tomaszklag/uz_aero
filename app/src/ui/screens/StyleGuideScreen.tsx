@@ -42,9 +42,15 @@ export function StyleGuideScreen() {
       {/* ── SyncChip ── */}
       <SectionTitle>SyncChip · wskaźnik łączności</SectionTitle>
       <View style={styles.chipRow}>
+        {/* Stan `synced` NIE RYSUJE NIC (issue #12) — puste miejsce obok jest pełnoprawną
+            pozycją katalogu, a nie brakiem przykładu. */}
         <SyncChip status="synced" />
-        <SyncChip status="offline" outboxCount={7} />
+        <SyncChip status="offline" outboxCount={7} lastSyncAt={Date.now() - 3 * 3_600_000} />
       </View>
+      <AppText variant="body" tone="secondary" style={styles.caption}>
+        „Zsynchronizowano" to stan domyślny i nie dostaje plakietki. Offline pokazuje kolejkę
+        i stempel ostatniej udanej synchronizacji.
+      </AppText>
 
       {/* ── Typografia ── */}
       <SectionTitle>Typografia</SectionTitle>

@@ -77,6 +77,7 @@ export function PreflightReadingsScreen({
   const { theme } = useTheme();
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
 
   const draft = usePreflightDraft();
   // Do rozstrzygnięcia, czy przekazanie jest „od kogoś", czy własne sprzed dnia przerwy.
@@ -218,7 +219,13 @@ export function PreflightReadingsScreen({
           subtitle={[aircraft.reg, aircraft.type].filter(Boolean).join(' · ')}
           step="3 / 4"
           onBack={navigation.goBack}
-          right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+          right={
+            <SyncChip
+              status={synced ? 'synced' : 'offline'}
+              outboxCount={outboxCount}
+              lastSyncAt={lastSyncAt}
+            />
+          }
         />
       }
       // Przycisk dalej — przy dolnej krawędzi, niezależnie od tego, ile miejsca zajęła

@@ -494,8 +494,12 @@ według źródła danych:
 3. **Akcje wymagające sieci** — pierwsze logowanie, "Zaloguj jako inny pilot",
    ręczny sync. Offline: disabled **z podanym powodem**, nigdy cichy błąd.
 
-Globalny stan łączności pokazuje wyłącznie SyncChip (`SYNC` / `OFFLINE · n`) —
-pojedynczy wskaźnik zamiast rozsianych komunikatów o braku sieci.
+Globalny stan łączności pokazuje wyłącznie SyncChip — pojedynczy wskaźnik zamiast
+rozsianych komunikatów o braku sieci. Online chip NIE POJAWIA SIĘ w ogóle (decyzja
+2026-08-06, issue #12: stan domyślny nie zasługuje na plakietkę i uczy oko ignorować
+róg ekranu, w którym czasem pojawia się OFFLINE); offline pokazuje `OFFLINE · n`
+i pod spodem stempel ostatniej udanej synchronizacji („SYNC 17:30 UTC", z datą, gdy
+sync był wcześniej niż dziś).
 
 Warianty stanu zrealizowane w mockupach (rodziny wariantów; każdy ekran rodziny ma
 na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):

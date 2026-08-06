@@ -52,6 +52,7 @@ export function SettingsScreen({
   const changePin = useAuthStore((s) => s.changePin);
   const logout = useAuthStore((s) => s.logout);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const synced = useSessionStore((s) => s.synced);
   const projection = useSessionStore((s) => s.projection);
   const queries = useSessionStore((s) => s.queries);
@@ -147,7 +148,13 @@ export function SettingsScreen({
           size="md"
           onBack={navigation.goBack}
           backLabel="Kokpit"
-          right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+          right={
+            <SyncChip
+              status={synced ? 'synced' : 'offline'}
+              outboxCount={outboxCount}
+              lastSyncAt={lastSyncAt}
+            />
+          }
         />
       }
     >

@@ -59,6 +59,7 @@ export function EndOfDayScreen({
   const projection = useSessionStore((s) => s.projection);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const lastError = useSessionStore((s) => s.lastError);
   const dayClose = useSessionStore((s) => s.dayClose);
   const refuel = useSessionStore((s) => s.refuel);
@@ -134,7 +135,13 @@ export function EndOfDayScreen({
               .join(' · ')}
             onBack={navigation.goBack}
             backLabel="Kokpit"
-            right={<SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />}
+            right={
+              <SyncChip
+                status={synced ? 'synced' : 'offline'}
+                outboxCount={outboxCount}
+                lastSyncAt={lastSyncAt}
+              />
+            }
           />
           {/* Bilans dnia zostaje na ekranie, gdy pilot przewija formularz — to on
               pozwala sprawdzić, czy odczyt licznika zgadza się z czasem bloku. */}

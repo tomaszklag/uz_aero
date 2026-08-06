@@ -172,12 +172,12 @@
   .pilot-opt { display:flex; align-items:center; gap:11px; background:var(--surface-raised); border:1px solid var(--border); border-radius:12px; padding:10px 13px; cursor:pointer; transition:all .15s; }
   .pilot-opt:hover { border-color:var(--border-strong); }
   .pilot-opt.selected { background:rgba(46,204,113,0.07); border-color:var(--green-border); }
-  .pilot-av { width:30px; height:30px; border-radius:9px; flex-shrink:0; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:13px; letter-spacing:1px; color:var(--text-secondary); }
+  /* W kwadracie stoi KOD pilota (mono), nie inicjały — tak samo jak na liście drugiego
+     pilota w preflightcie (02); kod nie wraca drugi raz po prawej stronie wiersza. */
+  .pilot-av { width:30px; height:30px; border-radius:9px; flex-shrink:0; background:var(--surface); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.5px; color:var(--text-secondary); }
   .pilot-opt.selected .pilot-av { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
   .pilot-nm { flex:1; font-size:13px; font-weight:600; color:var(--text-secondary); }
   .pilot-opt.selected .pilot-nm { color:var(--text-primary); }
-  .pilot-cd { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--text-muted); }
-  .pilot-opt.selected .pilot-cd { color:var(--green); }
   .pilot-chk { width:19px; height:19px; border-radius:50%; flex-shrink:0; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; }
   .pilot-opt.selected .pilot-chk { background:var(--green); border-color:var(--green); color:#0D0D0D; }
   .cache-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--amber); display:flex; align-items:center; gap:6px; }
@@ -276,25 +276,22 @@
           <div class="field-label">Nowy DUAL</div>
           <div class="pilot-list">
             <div class="pilot-opt selected">
-              <div class="pilot-av">PW</div>
+              <div class="pilot-av">PWI</div>
               <div class="pilot-nm">Piotr Wiśniewski</div>
-              <div class="pilot-cd">PWI</div>
               <div class="pilot-chk"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
             </div>
             <div class="pilot-opt">
-              <div class="pilot-av">JS</div>
+              <div class="pilot-av">JSE</div>
               <div class="pilot-nm">Jan Serafin</div>
-              <div class="pilot-cd">JSE</div>
               <div class="pilot-chk"></div>
             </div>
             <div class="pilot-opt">
               <div class="pilot-av">—</div>
               <div class="pilot-nm">Bez drugiego pilota</div>
-              <div class="pilot-cd">—</div>
               <div class="pilot-chk"></div>
             </div>
           </div>
-          <div class="cache-note" style="margin-top:7px;">Lista pilotów · ostatnie pobrane 21 JUN 17:30</div>
+          <div class="cache-note" style="margin-top:7px;">Lista pilotów · ostatnie pobrane 21 CZE 17:30</div>
         </div>
 
         <a href="04-cockpit-ground.html" class="btn-secondary-green">

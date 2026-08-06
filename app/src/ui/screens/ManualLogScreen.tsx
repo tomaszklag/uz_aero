@@ -56,6 +56,7 @@ export function ManualLogScreen({
   const events = useSessionStore((s) => s.events);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const lastError = useSessionStore((s) => s.lastError);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
@@ -108,7 +109,11 @@ export function ManualLogScreen({
             backLabel="Kokpit"
             right={
               <>
-                <SyncChip status={synced ? 'synced' : 'offline'} outboxCount={outboxCount} />
+                <SyncChip
+                  status={synced ? 'synced' : 'offline'}
+                  outboxCount={outboxCount}
+                  lastSyncAt={lastSyncAt}
+                />
                 {/* Mockup 08: „Dodaj wpis" = PEŁNY wpis §3.8 (cztery czasy + uwagi). */}
                 <PillButton label="Dodaj wpis" icon="manual-log" onPress={() => setEntryOpen(true)} />
               </>

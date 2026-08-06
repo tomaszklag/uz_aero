@@ -18,8 +18,16 @@ export interface PreflightDraft {
   operation: OperationType;
   departureIcao: string;
   arrivalIcao: string;
-  /** Czas meldowania (UTC) — domyślnie „teraz", edytowalny. */
+  /** Czas meldowania (UTC) — domyślnie „teraz" z chwili WEJŚCIA na krok 1, edytowalny. */
   dutyStart: number;
+  /**
+   * Czy pilot podał godzinę meldunku sam (arkusz na kroku 1).
+   *
+   * Rozstrzyga, czy wolno podstawić „teraz" przy kolejnym wejściu na ekran
+   * (`refreshDutyStart`). Bez tej flagi powrót z kroku 2 kasowałby świeżo wpisaną
+   * godzinę — dokładnie ten sam mechanizm, co `taskTouched` niżej.
+   */
+  dutyStartEdited: boolean;
   dualId: string | null;
   client: string | null;
 
@@ -51,6 +59,15 @@ interface PreflightDraftStore extends PreflightDraft {
   setAircraft(aircraft: ReferenceAircraft): void;
   set<K extends keyof PreflightDraft>(key: K, value: PreflightDraft[K]): void;
   /**
+   * Podstawia „teraz" jako godzinę meldunku — woła to krok 1 przy każdym wejściu.
+   *
+   * Osobna akcja, bo szkic żyje w pamięci procesu tak długo jak aplikacja: wartość
+   * z `initial()` powstawała RAZ, przy pierwszym dotknięciu store'u, więc pilot, który
+   * otworzył aplikację o 6:00, a zaczynał dzień o 8:00, dostawał na ekranie 6:00
+   * (zgłoszenie z urządzenia, issue #12). Godzina wpisana ręcznie jest nietykalna.
+   */
+  refreshDutyStart(now: number): void;
+  /**
    * Wypełnienie zadania podpowiedzią z ostatniego dnia. Osobno od `set`, bo NIE liczy
    * się jako dotknięcie pól przez pilota — inaczej podpowiedź zablokowałaby samą siebie.
    */
@@ -69,6 +86,7 @@ function initial(): PreflightDraft {
     departureIcao: '',
     arrivalIcao: '',
     dutyStart: Date.now(),
+    dutyStartEdited: false,
     dualId: null,
     client: null,
     fuelL: 0,
@@ -100,6 +118,13 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
     set({ [key]: value } as Pick<PreflightDraft, typeof key>);
     // Dotknięcie zadania zamyka drogę podpowiedzi — od tej chwili obowiązuje wpis pilota.
     if (TASK_FIELDS.includes(key)) set({ taskTouched: true });
+    // Ta sama zasada dla godziny meldunku: wpis pilota wygrywa z „teraz".
+    if (key === 'dutyStart') set({ dutyStartEdited: true });
+  },
+
+  refreshDutyStart(now) {
+    if (get().dutyStartEdited) return;
+    set({ dutyStart: now });
   },
 
   suggestTask(task, route) {

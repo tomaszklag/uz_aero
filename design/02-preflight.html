@@ -15,7 +15,7 @@
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
-    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -73,21 +73,15 @@
   }
   .header-left { display: flex; flex-direction: column; gap: 3px; }
   .screen-title { font-family: var(--font-display); font-size: 26px; letter-spacing: 3px; color: var(--text-primary); line-height: 1; }
-  .screen-subtitle { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
   .step-badge {
     font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
     color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border);
     border-radius: 8px; padding: 4px 10px; margin-top: 2px;
     flex-shrink: 0; white-space: nowrap;
   }
+  /* BEZ `.sync-chip` — online nie ma plakietki łączności (reguła 2026-08-06);
+     chip mieszka wyłącznie w wariancie offline (02D). */
   .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
-  .sync-chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 9px; border-radius: 999px;
-    background: var(--green-muted); border: 1px solid var(--green-border);
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--green);
-  }
 
   /* Scroll area */
   .scroll { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; padding-bottom: 24px; }
@@ -158,62 +152,8 @@
   }
   .btn-primary:hover { background: var(--green-hover); box-shadow: 0 0 40px rgba(46,204,113,0.5); }
 
-  /* ===== FUEL MODAL ===== */
-  .modal-overlay {
-    position: absolute; inset: 0; z-index: 50;
-    background: rgba(0,0,0,0.7);
-    display: flex; flex-direction: column; justify-content: flex-end;
-  }
-  .modal-sheet {
-    background: var(--surface-raised); border-radius: 24px 24px 0 0;
-    padding: 20px 18px 32px; display: flex; flex-direction: column; gap: 14px;
-    border-top: 1px solid var(--border-strong);
-  }
-  .modal-handle {
-    width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong);
-    align-self: center; margin-bottom: 4px;
-  }
-  .modal-title {
-    font-family: var(--font-display); font-size: 22px; letter-spacing: 2px; color: var(--text-primary);
-  }
-  .modal-input-row {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--surface); border: 1px solid var(--border-strong);
-    border-radius: 14px; padding: 14px 16px;
-  }
-  .modal-input-val {
-    font-family: var(--font-mono); font-size: 32px; font-weight: 700;
-    letter-spacing: 2px; color: var(--amber); flex: 1;
-  }
-  .modal-input-unit {
-    font-family: var(--font-mono); font-size: 16px; color: var(--text-secondary);
-  }
-  .modal-ref {
-    display: flex; justify-content: space-between;
-    font-family: var(--font-mono); font-size: 10px; color: var(--text-muted);
-    padding: 0 2px;
-  }
-  .modal-warning {
-    display: flex; align-items: flex-start; gap: 8px;
-    background: var(--amber-muted); border: 1px solid var(--amber-border);
-    border-radius: 10px; padding: 10px 12px;
-    font-family: var(--font-mono); font-size: 10px; color: var(--amber); line-height: 1.5;
-  }
-  .modal-actions { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
-  .modal-btn-cancel {
-    display: flex; align-items: center; justify-content: center;
-    padding: 14px; border-radius: 14px; border: 1px solid var(--border-strong);
-    background: var(--surface); color: var(--text-secondary);
-    font-family: var(--font-display); font-size: 16px; letter-spacing: 2px;
-    text-decoration: none; cursor: pointer;
-  }
-  .modal-btn-confirm {
-    display: flex; align-items: center; justify-content: center;
-    padding: 14px; border-radius: 14px; border: none;
-    background: var(--green); color: #0D0D0D;
-    font-family: var(--font-display); font-size: 16px; letter-spacing: 2px;
-    cursor: pointer; box-shadow: 0 0 20px rgba(46,204,113,0.25);
-  }
+  /* BEZ modala przejęcia (2026-08-06): samolot prowadzony przez innego PIC otwiera
+     podgląd 04B i to tam stoi ostrzeżenie oraz przycisk PRZEJMIJ SAMOLOT. */
 
   /* Optional tag */
   .optional-tag {
@@ -293,18 +233,24 @@
     color: var(--red); background: var(--red-muted); border: 1px solid var(--red-border);
     border-radius: 4px; padding: 2px 6px; white-space: nowrap;
   }
-  .pic-lock-tag {
-    font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
-    color: var(--amber); background: var(--amber-muted); border: 1px solid var(--amber-border);
-    border-radius: 4px; padding: 2px 6px; white-space: nowrap;
+  /* Pozycja prowadzona przez innego PIC — dwa wiersze zamiast ciasnej plakietki:
+     rejestracja z typem u góry, adnotacja amber pod spodem, wyrównana do lewej. */
+  .aircraft-option.locked { text-decoration: none; }
+  .aircraft-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .aircraft-row { display: flex; align-items: center; gap: 12px; }
+  .aircraft-note {
+    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--amber);
   }
-  .peek-link {
+  /* Oko stoi DOKŁADNIE w miejscu kółka wyboru — ta pozycja nie jest wybieralna,
+     więc kółka nie ma; jedyne wyjście z niej to podgląd read-only (04B). */
+  .aircraft-peek {
     display: flex; align-items: center; justify-content: center;
     width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
     border: 1px solid var(--border); color: var(--text-muted);
-    text-decoration: none; transition: all 0.15s;
+    transition: all 0.15s;
   }
-  .peek-link:hover { color: var(--blue); border-color: rgba(52,152,219,0.28); background: var(--blue-muted); }
+  .aircraft-option.locked:hover .aircraft-peek { color: var(--blue); border-color: var(--blue-border); background: var(--blue-muted); }
 
   /* ===== OPERATION SELECTOR ===== */
   .op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
@@ -343,17 +289,17 @@
     background: rgba(46,204,113,0.07); border-color: var(--green-border);
     box-shadow: 0 0 0 1px rgba(46,204,113,0.08);
   }
+  /* W kwadracie stoi KOD pilota (mono), nie inicjały — kod jest jego identyfikatorem
+     w arkuszu, więc nie ma powodu powtarzać go drugi raz po prawej stronie wiersza. */
   .crew-avatar {
     width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
     background: var(--surface); border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-display); font-size: 14px; letter-spacing: 1px; color: var(--text-secondary);
+    font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-secondary);
   }
   .crew-option.selected .crew-avatar { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
   .crew-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
   .crew-option.selected .crew-name { color: var(--text-primary); }
-  .crew-code { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text-muted); }
-  .crew-option.selected .crew-code { color: var(--green); }
   .crew-option.selected .aircraft-check { background: var(--green); border-color: var(--green); color: #0D0D0D; }
   .required-tag {
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
@@ -396,17 +342,16 @@
 
   <div class="screen">
     <!-- App Header -->
+    <!-- BEZ chipa SYNC (reguła 2026-08-06): „zsynchronizowano" jest stanem DOMYŚLNYM
+         i nie zasługuje na plakietkę — chip pokazujemy wyłącznie offline (02D), gdzie
+         niesie realną informację (ile zdarzeń czeka i jak stare są dane referencyjne).
+         Online w nagłówku zostaje sam badge kroku. -->
     <div class="app-header">
       <div class="header-left">
         <div class="screen-title">PREFLIGHT</div>
-        <div class="screen-subtitle">Kto, czym i od kiedy</div>
       </div>
       <div class="header-right">
         <div class="step-badge">1 / 4</div>
-        <div class="sync-chip" title="Online — dane referencyjne i stany claim na żywo z serwera">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          SYNC
-        </div>
       </div>
     </div>
 
@@ -427,30 +372,38 @@
       <div class="section">
         <div class="section-label">Samolot</div>
         <div class="aircraft-list">
-          <div class="aircraft-option selected" data-req2p="0" onclick="pickAircraft(this)">
+          <div class="aircraft-option selected" data-req2p="0" onclick="selectAircraft(this)">
             <div class="aircraft-reg">SP-AXA</div>
-            <div class="aircraft-type">Cessna 182 · 2019</div>
+            <div class="aircraft-type">Cessna 182</div>
             <div class="aircraft-check">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
           </div>
-          <div class="aircraft-option" data-req2p="0" data-locked="KRZ" onclick="pickAircraft(this)">
-            <div class="aircraft-reg">SP-FGK</div>
-            <div class="aircraft-type">Cessna 182 · 2017</div>
-            <div class="pic-lock-tag">PIC: KRZ · od 07:10</div>
-            <a class="peek-link" href="04b-cockpit-readonly.html" onclick="event.stopPropagation()" title="Podgląd read-only — stan i log dnia bez przejmowania (04B)">
+          <!-- SP-FGK prowadzi inny PIC: cała karta jest LINKIEM do podglądu 04B, a nie
+               pozycją do zaznaczenia. Przejęcie (§4.4) odbiera poprzedniemu PIC prawo
+               zapisu, więc tej decyzji nie podejmuje się z listy — dopiero na 04B, po
+               zobaczeniu, co się z samolotem dzieje (log dnia, wiek danych, ostrzeżenie).
+               Dlatego zamiast kółka wyboru stoi tu oko. -->
+          <a class="aircraft-option locked" href="04b-cockpit-readonly.html" title="Podgląd read-only — stan i log dnia; stamtąd przejmujesz samolot (04B)">
+            <div class="aircraft-body">
+              <div class="aircraft-row">
+                <div class="aircraft-reg">SP-FGK</div>
+                <div class="aircraft-type">Cessna 182</div>
+              </div>
+              <div class="aircraft-note">Prowadzi PIC: KRZ · od 07:10</div>
+            </div>
+            <span class="aircraft-peek">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </a>
-            <div class="aircraft-check"></div>
-          </div>
-          <div class="aircraft-option" data-req2p="1" onclick="pickAircraft(this)">
+            </span>
+          </a>
+          <div class="aircraft-option" data-req2p="1" onclick="selectAircraft(this)">
             <div class="aircraft-reg">SP-ANK</div>
-            <div class="aircraft-type">Antonov An-2 · 1984</div>
+            <div class="aircraft-type">Antonov An-2</div>
             <div class="aircraft-check"></div>
           </div>
           <div class="aircraft-option disabled">
             <div class="aircraft-reg">SP-KWA</div>
-            <div class="aircraft-type">Cessna 172 · 2021</div>
+            <div class="aircraft-type">Cessna 172</div>
             <div class="grounded-tag">Wyłączony</div>
           </div>
         </div>
@@ -459,26 +412,23 @@
       <!-- SEKCJA: DRUGI PILOT -->
       <div class="section">
         <div class="field-label-row">
-          <div class="section-label">Drugi pilot · Dual</div>
+          <div class="section-label">Drugi pilot</div>
           <span class="optional-tag" id="crew-tag">opcjonalne</span>
         </div>
         <div class="crew-list">
           <div class="crew-option" onclick="pickCrew(this)">
-            <div class="crew-avatar">AK</div>
+            <div class="crew-avatar">AKO</div>
             <div class="crew-name">Anna Kowalska</div>
-            <div class="crew-code">AKO</div>
             <div class="aircraft-check"></div>
           </div>
           <div class="crew-option" onclick="pickCrew(this)">
-            <div class="crew-avatar">PW</div>
+            <div class="crew-avatar">PWI</div>
             <div class="crew-name">Piotr Wiśniewski</div>
-            <div class="crew-code">PWI</div>
             <div class="aircraft-check"></div>
           </div>
           <div class="crew-option" onclick="pickCrew(this)">
-            <div class="crew-avatar">JS</div>
+            <div class="crew-avatar">JSE</div>
             <div class="crew-name">Jan Serafin</div>
-            <div class="crew-code">JSE</div>
             <div class="aircraft-check"></div>
           </div>
         </div>
@@ -496,7 +446,7 @@
       <!-- SEKCJA: CZAS SŁUŻBY -->
       <div class="section">
         <div class="field">
-          <div class="field-label">Czas meldowania (duty start)</div>
+          <div class="field-label">Czas meldowania</div>
           <div class="field-input filled">
             <span style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; letter-spacing: 2px;">08:00 <span style="font-size: 12px; color: var(--text-muted); letter-spacing: 1px;">UTC</span></span>
             <span style="display:flex; align-items:center; gap:10px;">
@@ -505,7 +455,7 @@
             </span>
           </div>
           <div class="time-row">
-            <div class="time-date-badge">22 JUNE 2026</div>
+            <div class="time-date-badge">22 CZERWCA 2026</div>
           </div>
         </div>
       </div>
@@ -517,32 +467,6 @@
       </a>
 
     </div>
-
-    <!-- TAKEOVER MODAL -->
-    <div id="takeover-modal" class="modal-overlay" style="display:none;">
-      <div class="modal-sheet">
-        <div class="modal-handle"></div>
-        <div class="modal-title">PRZEJMIJ <span id="takeover-reg">SP-FGK</span>?</div>
-        <div class="modal-ref">
-          <span>Aktywny PIC</span>
-          <span style="color:var(--text-secondary);">KRZ · od 07:10</span>
-        </div>
-        <div class="modal-ref">
-          <span>Ostatnia synchronizacja</span>
-          <span style="color:var(--text-secondary);">06:58 UTC</span>
-        </div>
-        <div class="modal-warning">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span>Poprzedni PIC może mieć <strong>niewysłane dane</strong>. Po przejęciu tylko Ty
-          będziesz wysyłać dane dla tego samolotu — <strong>zweryfikuj odczyty paliwa i MH
-          z liczników</strong> w kolejnym kroku. Spóźnione dane poprzednika serwer scali automatycznie.</span>
-        </div>
-        <div class="modal-actions">
-          <button onclick="cancelTakeover()" class="modal-btn-cancel">Anuluj</button>
-          <button onclick="confirmTakeover()" class="modal-btn-confirm">Przejmij</button>
-        </div>
-      </div>
-    </div>
   </div>
 </main>
 
@@ -552,7 +476,7 @@
     <span class="vp-badge">02</span>
     <span class="vp-body">
       <span class="vp-name">Online</span>
-      <span class="vp-when">Jest sieć — stany claim i dane referencyjne na żywo z serwera. Chip SYNC.</span>
+      <span class="vp-when">Jest sieć — stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -560,7 +484,7 @@
     <span class="vp-badge amber">02D</span>
     <span class="vp-body">
       <span class="vp-name">Offline — dane z cache</span>
-      <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); przejęcie na podstawie cache, claim trafia do outboxa. Chip OFFLINE.</span>
+      <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); zajęty samolot podglądasz na 04B i stamtąd przejmujesz, claim trafia do outboxa. Chip OFFLINE ze stemplem ostatniego synca.</span>
     </span>
   </a>
 </aside>
@@ -580,42 +504,18 @@
 
 <script>
   // Drugi pilot: wymagany gdy wybrany samolot ma flagę data-req2p="1" (konfiguracja samolotu na serwerze)
-  // Blokada PIC: samolot z data-locked ma aktywnego PIC — wybór wymaga przejęcia (jeden PIC wysyła dane)
-  let pendingTakeover = null;
-
-  function pickAircraft(el) {
-    if (el.dataset.locked && !el.dataset.takenOver) {
-      pendingTakeover = el;
-      document.getElementById('takeover-reg').textContent = el.querySelector('.aircraft-reg').textContent;
-      document.getElementById('takeover-modal').style.display = 'flex';
-      return;
-    }
-    selectAircraft(el);
-  }
-
+  // Blokada PIC: samolot prowadzony przez innego pilota (.aircraft-option.locked) NIE jest
+  // pozycją do zaznaczenia — to link do podglądu 04B, gdzie stoi przejęcie. Dlatego pętla
+  // czyszcząca zaznaczenie musi znieść pozycję bez kółka wyboru.
   function selectAircraft(el) {
     document.querySelectorAll('.aircraft-option').forEach(o => {
       o.classList.remove('selected');
-      o.querySelector('.aircraft-check').innerHTML = '';
+      const check = o.querySelector('.aircraft-check');
+      if (check) check.innerHTML = '';
     });
     el.classList.add('selected');
     el.querySelector('.aircraft-check').innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
     refreshCrew();
-  }
-
-  function confirmTakeover() {
-    document.getElementById('takeover-modal').style.display = 'none';
-    if (pendingTakeover) {
-      pendingTakeover.dataset.takenOver = '1';
-      pendingTakeover.querySelector('.pic-lock-tag').textContent = 'PIC: TY · przejęty';
-      selectAircraft(pendingTakeover);
-      pendingTakeover = null;
-    }
-  }
-
-  function cancelTakeover() {
-    document.getElementById('takeover-modal').style.display = 'none';
-    pendingTakeover = null;
   }
 
   function pickCrew(el) {

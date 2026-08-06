@@ -15,42 +15,19 @@
  */
 
 import type { DetectionMethod, Flight, JumperCounts, SessionState } from '../../../domain';
-import { hhmm, timeUtc } from '../../format';
-
-const pad2 = (n: number): string => String(n).padStart(2, '0');
+import { dateTimeUtcShort, hhmm, timeUtc } from '../../format';
 
 /**
  * `hhmm` przeniesione do `@uzaero/format` (2026-07-31) — ten sam napis musi produkować
  * karta arkusza po stronie serwera, więc format przestał być sprawą jednego ekranu.
  * Re-eksport zostaje, żeby `StatsScreen` i `CockpitReadonlyScreen` nie zmieniały importu.
- */
-export { hhmm };
-
-const MONTHS_SHORT = [
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC',
-];
-
-/**
- * Termin okna korekty jako „23 JUN 16:45" (UTC).
  *
- * Data jest tu konieczna, a nie ozdobna: okno zamyka się 24 h po zamknięciu dnia, więc
- * prawie zawsze wypada **następnego dnia** — sama godzina wyglądałaby jak „za chwilę".
+ * `dateTimeUtcShort` poszedł tą samą drogą (2026-08-06, issue #12): stempel „23 CZE 16:45"
+ * czyta dziś także wskaźnik łączności w `ui/components/`, a komponent nie ma po co sięgać
+ * do logiki ekranu. Przy okazji zniknęła DRUGA tablica miesięcy — polskie skróty składają
+ * się z pełnych nazw w pakiecie formatów.
  */
-export function dateTimeUtcShort(t: number): string {
-  const d = new Date(t);
-  return `${d.getUTCDate()} ${MONTHS_SHORT[d.getUTCMonth()]} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
-}
+export { dateTimeUtcShort, hhmm };
 
 /**
  * Badge nagłówka: „1 lot" / „3 loty" / „6 lotów".

@@ -57,6 +57,13 @@ export interface SheetProps {
   onConfirm: () => void;
   cancelLabel?: string;
   onCancel: () => void;
+  /**
+   * Arkusz skończył się pokazywać (przekazujemy `Modal.onShow`).
+   *
+   * Istnieje dla arkuszy z polem edycji: dopiero w tej chwili okno modalne przyjmuje
+   * fokus, więc dopiero teraz `focus()` naprawdę wywołuje klawiaturę (patrz `ReadingSheet`).
+   */
+  onShow?: () => void;
   children?: React.ReactNode;
 }
 
@@ -71,6 +78,7 @@ export function Sheet({
   onConfirm,
   cancelLabel = 'ANULUJ',
   onCancel,
+  onShow,
   children,
 }: SheetProps) {
   const { theme } = useTheme();
@@ -103,6 +111,7 @@ export function Sheet({
       transparent
       animationType="slide"
       onRequestClose={onCancel}
+      onShow={onShow}
       statusBarTranslucent
     >
       {/* Tapnięcie w tło = anuluj. Potwierdzenie wymaga celowego tapnięcia w przycisk. */}
