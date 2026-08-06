@@ -92,7 +92,7 @@
   /* przycisk synca — disabled z powodem */
   .btn-sync { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; padding:17px; border-radius:16px; background:var(--surface-hover); color:var(--text-muted); font-family:var(--font-display); font-size:21px; letter-spacing:3px; border:1px solid var(--border); cursor:not-allowed; }
   .btn-sync-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
-  /* GOTOWE — koniec dnia lotnego. Tu dostaje pełną zieleń, bo sync obok jest wygaszony
+  /* GOTOWE — powrót do „Mój dzień". Tu dostaje pełną zieleń, bo sync obok jest wygaszony
      (brak sieci) i to jedyna żywa akcja ekranu. Na 11 online z zaległością byłoby odwrotnie. */
   .btn-done { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; padding:18px 17px; border-radius:16px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:22px; letter-spacing:3px; border:none; text-decoration:none; cursor:pointer; box-shadow:0 0 32px rgba(46,204,113,0.35); }
   .btn-done-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:rgba(13,13,13,0.6); text-transform:uppercase; }
@@ -225,9 +225,9 @@
         </div>
       </div>
 
-      <!-- KONIEC DNIA — wyjście w przód działa TAKŻE offline.
-           §4.1 nie robi wyjątku dla ostatniego ekranu: 12 zdarzeń w kolejce nie może
-           uwięzić pilota na 11. Podpis mówi wprost, że wysyłka dokończy się bez niego. -->
+      <!-- POWRÓT DO DNIA — wyjście w przód działa TAKŻE offline.
+           §4.1 nie robi wyjątku: 12 zdarzeń w kolejce nie może uwięzić pilota na 11.
+           Podpis mówi wprost, że wysyłka dokończy się bez niego. -->
       <a class="btn-done" href="01-moj-dzien.html">
         <span>&#10003; GOTOWE</span>
         <span class="btn-done-sub">Wysyłka dokończy się sama</span>

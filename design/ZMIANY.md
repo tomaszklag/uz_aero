@@ -1408,3 +1408,32 @@ zdaniu samolotu.
 > Powód: bez niego wzlot niepotwierdzony był w liście nieodróżnialny od potwierdzonego.
 > Pasek ZAPRASZA, nie ostrzega: czasy z detekcji już są w rejestrze i wchodzą do sum,
 > brakuje wyłącznie przejrzenia.
+
+**10, 10A → rozliczenie SAMOLOTU** (było: „statystyki dnia"). Bohaterem 10 jest czas
+blokowy sesji, nie czas służby; nagłówki bilansu mówią „przy przejęciu / przy zdaniu"
+zamiast „początek / koniec dnia"; CTA „ZATWIERDŹ → SYNC" zastąpione powrotem do 01.
+W 10A wielką cyfrą stoi czas TRZYMANIA maszyny.
+> Powód: paliwo i motogodziny są wielkościami samolotu i nie sumują się przez służbę
+> pilota lecącego dwiema maszynami — więc ekran, który je pokazuje, nie może być ekranem
+> doby. Sesja jest już zamknięta przez zdanie samolotu (09B), więc rozliczenie tylko ją
+> opisuje i nie ma czego zatwierdzać. W 10A czas blokowy wynosi zero: gdyby to on stał
+> wielką cyfrą, ekran krzyczałby „0:00" zamiast powiedzieć rzecz prawdziwą — maszyna
+> była zajęta 3,5 godziny i nikt inny nie mógł jej wziąć.
+
+**12** — karta historii opisuje DZIEŃ PILOTA i obejmuje wszystkie maszyny z doby
+(05 SIE: SP-AXA · SP-KLM); „Loty/Block/Duty" → „Wzloty/Blok/Służba"; dzień w oknie
+korekty prowadzi do 01B zamiast do rozliczenia jednej maszyny. Dołożony dzień z jednym
+wzlotem (02 SIE).
+> Powód: w starym modelu przesiadka rodziła dwa wpisy w historii tej samej doby.
+> Dzień z jednym wzlotem jest po przebudowie przypadkiem typowym i powinien być widoczny
+> w zestawie jako norma, nie jako wyjątek.
+
+**11, 11A, 04C** — „GOTOWE · dzień zamknięty i wysłany" → „wszystko wysłane — wróć do
+dnia"; ekran 11 przestaje czyścić stos nawigacji; „log dnia" → „log SP-AXA".
+> Powód: synchronizacja przestała być ostatnim krokiem dnia i jest statusem, który można
+> sprawdzić w środku pracy. Czyszczenie stosu miało sens, gdy po `day_close` kokpit
+> opisywał stan nieistniejący — teraz dzień trwa dalej.
+
+**10, 10A, 12** — chip SYNC usunięty z nagłówków.
+> Powód: reguła z 2026-08-06 (issue #12) mówi, że online nie rysuje nic; te trzy ekrany
+> zostały wtedy przeoczone i plakietka świeciła na nich przez 99% czasu.

@@ -45,7 +45,6 @@
   .app-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
   .back-btn { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); text-decoration:none; padding:8px 10px; border-radius:8px; border:1px solid var(--border); min-height:38px; }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
-  .sync-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
 
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:11px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
@@ -121,33 +120,36 @@
     <div class="app-header">
       <a href="01-moj-dzien.html" class="back-btn">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
-        Start
+        Dzień
       </a>
       <span class="screen-title">HISTORIA DNI</span>
-      <div class="sync-chip">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        SYNC
-      </div>
+      <!-- Chip SYNC USUNIĘTY: online nie rysuje nic (reguła 2026-08-06, issue #12).
+           Prawy slot zostaje pusty, żeby tytuł nie uciekł z osi. -->
+      <span style="width:62px;"></span>
     </div>
 
     <div class="scroll">
 
       <div class="group-lbl">Możesz jeszcze poprawić</div>
 
-      <!-- DZIEŃ W OKNIE KOREKTY -->
-      <a href="10-statystyki.html" class="day-card editable">
+      <!-- DZIEŃ W OKNIE KOREKTY.
+           Karta opisuje DZIEŃ PILOTA, więc może obejmować kilka maszyn — to jest cała
+           różnica względem starego modelu, w którym „dzień" był sesją jednego samolotu
+           i przesiadka rodziła dwa wpisy. Prowadzi do 01B: zamknięty dzień z klamrą
+           i wzlotami, nie do rozliczenia pojedynczej maszyny. -->
+      <a href="01b-moj-dzien-zamkniety.html" class="day-card editable">
         <div class="day-top">
-          <span class="day-date">22 CZERWCA 2026</span>
-          <span class="day-ac">SP-AXA</span>
+          <span class="day-date">05 SIERPNIA 2026</span>
+          <span class="day-ac">SP-AXA · SP-KLM</span>
         </div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">6</span></span>
-          <span class="stat"><span class="stat-k">Block</span><span class="stat-v">6:39</span></span>
-          <span class="stat"><span class="stat-k">Duty</span><span class="stat-v">8:45</span></span>
+          <span class="stat"><span class="stat-k">Wzloty</span><span class="stat-v">6</span></span>
+          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">6:39</span></span>
+          <span class="stat"><span class="stat-k">Służba</span><span class="stat-v">8:45</span></span>
           <span class="stat"><span class="stat-k">Skoczków</span><span class="stat-v">22</span></span>
         </div>
         <div class="day-foot">
-          <span class="tag win">Korekta do 23 CZE 16:45</span>
+          <span class="tag win">Korekta do 06 SIE 16:45</span>
           <span class="foot-note">zostało 23 h 04 min</span>
         </div>
         <div class="cta-correct">
@@ -161,13 +163,13 @@
       <!-- DNI PO OKNIE -->
       <div class="day-card">
         <div class="day-top">
-          <span class="day-date">21 CZERWCA 2026</span>
+          <span class="day-date">04 SIERPNIA 2026</span>
           <span class="day-ac">SP-AXA</span>
         </div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">4</span></span>
-          <span class="stat"><span class="stat-k">Block</span><span class="stat-v">4:12</span></span>
-          <span class="stat"><span class="stat-k">Duty</span><span class="stat-v">7:30</span></span>
+          <span class="stat"><span class="stat-k">Wzloty</span><span class="stat-v">4</span></span>
+          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">4:12</span></span>
+          <span class="stat"><span class="stat-k">Służba</span><span class="stat-v">7:30</span></span>
           <span class="stat"><span class="stat-k">Skoczków</span><span class="stat-v">15</span></span>
         </div>
         <div class="day-foot">
@@ -176,16 +178,19 @@
         </div>
       </div>
 
+      <!-- Dzień z JEDNYM wzlotem — przypadek, który po przebudowie jest typowy:
+           pilot przyszedł, poleciał raz, oddał maszynę. W starym modelu wymagał
+           otwarcia i zamknięcia całej służby. -->
       <div class="day-card">
         <div class="day-top">
-          <span class="day-date">19 CZERWCA 2026</span>
+          <span class="day-date">02 SIERPNIA 2026</span>
           <span class="day-ac">SP-FGK</span>
         </div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">5</span></span>
-          <span class="stat"><span class="stat-k">Block</span><span class="stat-v">5:03</span></span>
-          <span class="stat"><span class="stat-k">Duty</span><span class="stat-v">8:10</span></span>
-          <span class="stat"><span class="stat-k">Skoczków</span><span class="stat-v">18</span></span>
+          <span class="stat"><span class="stat-k">Wzloty</span><span class="stat-v">1</span></span>
+          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">1:18</span></span>
+          <span class="stat"><span class="stat-k">Służba</span><span class="stat-v">1:35</span></span>
+          <span class="stat"><span class="stat-k">Operacja</span><span class="stat-v">Przelot</span></span>
         </div>
         <div class="day-foot">
           <span class="tag ok">Wysłane · arkusz gotowy</span>
@@ -208,15 +213,15 @@
     <span class="vp-badge">12</span>
     <span class="vp-body">
       <span class="vp-name">Historia dni</span>
-      <span class="vp-when">Wejście z ekranu startowego. Dzień w oknie 24 h jest wyróżniony i klikalny — bez tego ekranu obietnica „możesz poprawić przez 24 h" nie miała żadnych drzwi.</span>
+      <span class="vp-when">Wejście z „Mój dzień". Karta opisuje DZIEŃ PILOTA, więc obejmuje wszystkie maszyny z tej doby (05 SIE: SP-AXA i SP-KLM) — w starym modelu przesiadka rodziła dwa osobne wpisy. Dzień w oknie 24 h jest wyróżniony i klikalny; bez tego ekranu obietnica „możesz poprawić przez 24 h" nie miała żadnych drzwi.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="10-statystyki.html">
-    <span class="vp-badge">10</span>
+  <a class="vp-item" href="01b-moj-dzien-zamkniety.html">
+    <span class="vp-badge">01B</span>
     <span class="vp-body">
-      <span class="vp-name">Statystyki dnia</span>
-      <span class="vp-when">Otwarcie dnia w oknie korekty — stąd ołówek przy locie prowadzi do 04C.</span>
+      <span class="vp-name">Rozliczenie samolotu</span>
+      <span class="vp-when">Bilans jednej maszyny (paliwo, MH, zrzuty) — wywoływany z grupy wzlotów w widoku dnia, nie wprost z historii.</span>
     </span>
   </a>
   <a class="vp-item" href="04c-korekta-zdarzenia.html">

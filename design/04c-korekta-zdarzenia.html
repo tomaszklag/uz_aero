@@ -58,7 +58,7 @@
   .route-line { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; }
   .sync-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
 
-  /* tło — log dnia (przygaszony, bo modal jest na wierzchu) */
+  /* tło — log sesji samolotu (przygaszony, bo modal jest na wierzchu) */
   .scroll { flex:1; overflow:hidden; padding:16px; display:flex; flex-direction:column; gap:14px; }
   .day-log { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
   .day-log-header { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-raised); }
@@ -177,11 +177,11 @@
       </div>
     </div>
 
-    <!-- TŁO: log dnia z podświetlonym wierszem -->
+    <!-- TŁO: log sesji samolotu z podświetlonym wierszem -->
     <div class="scroll">
       <div class="day-log">
         <div class="day-log-header">
-          <span class="day-log-title">Log dnia · UTC · 2 cykle · 3 T/O</span>
+          <span class="day-log-title">Log SP-AXA · UTC · 2 cykle · 3 T/O</span>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>

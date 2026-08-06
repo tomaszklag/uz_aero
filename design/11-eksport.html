@@ -401,14 +401,14 @@
         <div class="offline-queue-text">0 zdarzeń w kolejce · offline? wysyłka wznowi się sama</div>
       </div>
 
-      <!-- Koniec dnia lotnego — jedyne wyjście W PRZÓD z ekranu 11.
+      <!-- Powrót do „Mój dzień" — jedyne wyjście W PRZÓD z ekranu 11.
            Stoi POD kolejką: pilot najpierw widzi, ile jeszcze wisi, potem wychodzi.
-           Prowadzi na 01 i CZYŚCI stos — po day_close kokpit, 09 i 10 opisują stan,
-           którego już nie ma, a 01 ma obie sensowne kontynuacje: nowy dzień lotny
-           i „Poprzednie dni" z oknem korekty 24 h. -->
+           NIE czyści już stosu: ten ekran przestał być końcem drogi. Synchronizacja
+           jest statusem, który można sprawdzić w środku dnia, a 01 opisuje stan
+           nadal żywy — z niego pilot bierze kolejny samolot albo domyka klamrę. -->
       <a class="btn-export" href="01-moj-dzien.html">
         <span>&#10003; GOTOWE</span>
-        <span class="btn-export-sub">Dzień zamknięty i wysłany</span>
+        <span class="btn-export-sub">Wszystko wysłane — wróć do dnia</span>
       </a>
 
     </div>
