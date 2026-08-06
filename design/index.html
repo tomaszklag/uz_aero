@@ -303,25 +303,35 @@
   <span class="flow-sep">→</span>
   <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
   <span class="flow-sep">→</span>
-  <a href="02-preflight.html" class="flow-step">02 Preflight</a>
+  <a href="02-preflight.html" class="flow-step">02 Przejęcie 1/3</a>
   <span class="flow-sep">→</span>
-  <a href="02e-preflight-zadanie.html" class="flow-step">02E Zadanie</a>
+  <a href="02e-preflight-zadanie.html" class="flow-step">02E Zadanie 2/3</a>
   <span class="flow-sep">→</span>
-  <a href="02a-preflight.html" class="flow-step">02A Paliwo/MH</a>
+  <a href="02a-preflight.html" class="flow-step">02A Liczniki 3/3</a>
   <span class="flow-sep">→</span>
-  <a href="03-preflight-confirm.html" class="flow-step">03 Potwierdzenie</a>
-  <span class="flow-sep">→</span>
-  <a href="04a-cockpit-ground.html" class="flow-step">04A Start dnia</a>
+  <a href="04a-cockpit-ground.html" class="flow-step">04A Kokpit (pusty)</a>
   <span class="flow-sep">→</span>
   <a href="04-cockpit-ground.html" class="flow-step">04 Kokpit / Ground</a>
   <span class="flow-sep">⇄</span>
   <a href="05-cockpit-running.html" class="flow-step">05 Kokpit / Running</a>
   <span class="flow-sep">→</span>
   <a href="09-zamknij-lot.html" class="flow-step">09 Zamknij lot</a>
+  <span class="flow-sep">↺</span>
+  <a href="09b-zdaj-samolot.html" class="flow-step">09B Zdaj samolot</a>
   <span class="flow-sep">→</span>
-  <a href="10-statystyki.html" class="flow-step">10 Statystyki</a>
+  <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
+</div>
+<!-- Pętla, nie prosta: po zamknięciu wzlotu (09) pilot wraca do kokpitu po kolejny
+     wzlot ALBO zdaje samolot (09B) i ląduje z powrotem w „Mój dzień". Statystyki (10)
+     i status synchronizacji (11) wiszą pod „Mój dzień" — nie są etapem dnia. -->
+<div class="flow-arrow" style="margin-top:10px;">
+  <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
   <span class="flow-sep">→</span>
+  <a href="10-statystyki.html" class="flow-step">10 Rozliczenie samolotu</a>
+  <span class="flow-sep">·</span>
   <a href="11-eksport.html" class="flow-step">11 Sync</a>
+  <span class="flow-sep">·</span>
+  <a href="12-historia.html" class="flow-step">12 Historia</a>
 </div>
 
 <div class="section-title">Główny flow</div>
@@ -346,7 +356,7 @@
     <div class="card-num">02</div>
     <div class="card-body">
       <div class="card-title">02-preflight</div>
-      <div class="card-desc">Preflight krok 1/4 — kto, czym i od kiedy: samolot (karty + blokada PIC + przejęcie), drugi pilot (Dual), czas meldowania</div>
+      <div class="card-desc">Przejęcie krok 1/3 — czym i z kim: samolot (karty + blokada PIC + przejęcie) i drugi pilot (Dual). Czasu meldowania TU NIE MA — służba nie jest kontenerem na loty, tylko klamrą wokół nich, więc powstaje sama przy pierwszym wzlocie i poprawia się po fakcie w „Mój dzień"</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">blokada PIC</span><span class="tag">Dual</span></div>
     </div>
   </a>
@@ -354,7 +364,7 @@
     <div class="card-num">02E</div>
     <div class="card-body">
       <div class="card-title">02e-preflight-zadanie</div>
-      <div class="card-desc">Preflight krok 2/4 — co dziś robimy: rodzaj operacji, trasa, klient i notatka do dnia; pola uzupełnione z ostatniego dnia (operacja i klient per pilot, trasa per samolot). Operacja wyznacza kształt trasy: skoki = jedno lotnisko, pozostałe = dwa pola start / lądowanie. Pola nie są inputami — to przyciski z wartością (lupa przy trasie, ołówek przy tekstach), a wpisywanie dzieje się w arkuszu wysuwanym od dołu</div>
+      <div class="card-desc">Przejęcie krok 2/3 — co teraz robimy: rodzaj operacji, trasa, klient i notatka do dnia; pola uzupełnione z ostatniego dnia (operacja i klient per pilot, trasa per samolot). Operacja wyznacza kształt trasy: skoki = jedno lotnisko, pozostałe = dwa pola start / lądowanie. Pola nie są inputami — to przyciski z wartością (lupa przy trasie, ołówek przy tekstach), a wpisywanie dzieje się w arkuszu wysuwanym od dołu</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag">pamięć</span><span class="tag">arkusze</span></div>
     </div>
   </a>
@@ -370,16 +380,8 @@
     <div class="card-num">02A</div>
     <div class="card-body">
       <div class="card-title">02a-preflight</div>
-      <div class="card-desc">Preflight krok 3/4 — paliwo na pokładzie i motogodziny z historią, korekty odczytów</div>
+      <div class="card-desc">Przejęcie krok 3/3 (ostatni) — paliwo na pokładzie i motogodziny z historią, korekty odczytów. CTA „Przejmij i leć" prowadzi wprost do kokpitu: ekranu podsumowania (dawny 03) nie ma, bo powtarzał to, co pilot przed chwilą wpisał</div>
       <div class="card-tags"><span class="tag amber">paliwo</span><span class="tag">motogodziny</span></div>
-    </div>
-  </a>
-  <a href="03-preflight-confirm.html" class="card">
-    <div class="card-num">03</div>
-    <div class="card-body">
-      <div class="card-title">03-preflight-confirm</div>
-      <div class="card-desc">Podgląd i potwierdzenie danych przed rozpoczęciem dnia — PIC, Dual, paliwo, MH</div>
-      <div class="card-tags"><span class="tag">potwierdzenie</span></div>
     </div>
   </a>
   <a href="04a-cockpit-ground.html" class="card green">
