@@ -25,6 +25,7 @@ import {
   ServerUnreachableError,
   type PushResult,
   type RemoteAircraftState,
+  type RemoteTaskSuggestions,
   type ServerPort,
   type SessionSyncStatus,
 } from '../ports/serverPort';
@@ -88,6 +89,18 @@ export class SyncEngine {
    */
   fetchAircraftState(aircraftId: string): Promise<RemoteAircraftState | null> {
     return authorizedFetch(this.auth, (token) => this.server.getAircraftState(token, aircraftId));
+  }
+
+  /**
+   * Ostatnio używane oznaczenia klientów i notatki (`GET /me/task-suggestions`, issue #14).
+   *
+   * `null` = nie wiadomo TERAZ (offline, wygasła sesja, odmowa) i tak ma być: to jedyna
+   * treść formularza zadania, której brak niczego nie blokuje — pilot wpisuje wartość
+   * z palca dokładnie jak dotąd. Świadomie BEZ cache: podpowiedź sprzed tygodnia nie
+   * jest warta magazynu, który trzeba by unieważniać.
+   */
+  fetchTaskSuggestions(): Promise<RemoteTaskSuggestions | null> {
+    return authorizedFetch(this.auth, (token) => this.server.getTaskSuggestions(token));
   }
 
   private async drain(): Promise<SyncOutcome> {

@@ -1,21 +1,22 @@
 /**
- * UZ Aero — podpowiedzi lotnisk pod wierszem trasy (mockup `02f-preflight-lotnisko.html`).
+ * UZ Aero — lista podpowiedzi lotnisk (mockup `02f-preflight-lotnisko.html`).
  *
  * Lista KART, nie natywny dropdown — twarda reguła projektu (`CLAUDE.md`). Stoi
- * w przepływie treści pod całym wierszem trasy, a nie jako nakładka nad polem: przy
- * podniesionej klawiaturze nakładka i tak nie zmieściłaby się w widoku, a treść
- * w przepływie zawsze daje się doprzewijać (ekran kurczy się o klawiaturę,
- * `docs/architektura-kodu.md` §2). Tapnięcie działa przy otwartej klawiaturze, bo
- * `Screen` ma `keyboardShouldPersistTaps="handled"`.
+ * w przepływie treści, a nie jako nakładka nad polem: przy podniesionej klawiaturze
+ * nakładka i tak nie zmieściłaby się w widoku, a treść w przepływie zawsze daje się
+ * doprzewijać (`docs/architektura-kodu.md` §2). Tapnięcie działa przy otwartej
+ * klawiaturze, bo `Screen` i `Sheet` mają `keyboardShouldPersistTaps="handled"`.
  *
  * Pełna szerokość, a nie kolumna pod polem: „Zielona Góra-Babimost" w 48% szerokości
  * telefonu zostaje uciętym „Zielona Gó…", czyli akurat tą częścią, dla której ta lista
  * powstała.
  *
- * Komponent jest CZYSTYM UKŁADEM — wiersze przychodzą gotowe z `airfieldRow`
- * (`ui/screens/logic/routeSuggestions.ts`), razem z decyzją, co wchodzi w drugą linię.
- * Kształt wiersza mieszka TUTAJ, a nie przy module liczącym, bo kierunek zależności
- * biegnie od ekranu do komponentu i tylko tak (lustro reguły panelu w `TrackMap.tsx`).
+ * Od issue #14 mieszka w arkuszu wyboru lotniska (`sheets/AirfieldSheet.tsx`), a nie pod
+ * wierszem formularza: pole trasy jest przyciskiem, a szukanie dzieje się w arkuszu.
+ *
+ * Komponent jest CZYSTYM UKŁADEM — wiersze przychodzą gotowe z `airfieldRow`, razem
+ * z decyzją, co wchodzi w drugą linię. Kształt wiersza mieszka TUTAJ, a nie przy module
+ * liczącym (lustro reguły panelu w `TrackMap.tsx`).
  */
 
 import React from 'react';

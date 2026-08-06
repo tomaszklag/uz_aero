@@ -695,6 +695,13 @@ siatka wyboru miała własne etykiety, a kokpit, podgląd i podsumowanie wypisyw
 wartość przez `toUpperCase()`. Po zmianie „Ferry" → „Przelot" (issue #13) pilot wybierałby
 „Przelot", a dwa ekrany dalej czytał „FERRY".
 
+Moduł potrafi też ZNIKNĄĆ, gdy ekran przestaje go potrzebować, i tak ma być: `routeSuggestions.ts`
+liczył, pod którym z dwóch pól trasy powiesić listę podpowiedzi i co potwierdzić pod spodem.
+Po issue #14 pola trasy są przyciskami otwierającymi arkusz (`AirfieldSheet`), który sam pyta
+katalog — więc moduł został usunięty razem z testami opisującymi układ, którego już nie ma.
+Zostało z niego `airfieldRow`, przeniesione do `components/input/` (kształt wiersza należy do
+komponentu, który go rysuje), z własnym testem kursu magnetycznego.
+
 Wydzielone do podkatalogu 2026-07-31. Wcześniej leżały wymieszane z ekranami w jednym
 płaskim katalogu, więc wzorzec był niewidoczny: nie dało się zobaczyć, który ekran ma
 wyniesioną logikę, a `statsDay.ts` (używany przez `StatsScreen` ORAZ `CockpitReadonlyScreen`)
@@ -750,7 +757,9 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `Numpad` | klawiatura PIN 3×4, klawisze 58 px; slot biometrii celowo pusty | `.numpad` (00) |
 | `ProfileChip` | karta lokalnego profilu na zamku (awatar, nazwisko, kod) | `.profile-chip` (00) |
 | `Field`, `TextField` | oprawa pola: etykieta mono, tag, podpowiedź; fokus zielony | `.field` / `.field-input` |
-| `AirfieldSuggestions` | podpowiedzi lotnisk pod wierszem trasy: kod, nazwa, pas i elewacja; lista kart w przepływie treści, nie nakładka | `.suggest-list` (02f) |
+| `AirfieldSuggestions` | podpowiedzi lotnisk (kod, nazwa, pas i elewacja); lista kart w przepływie treści, nie nakładka — od issue #14 mieszka w arkuszu | `.suggest-list` (02f) |
+| `AirfieldSheet` | arkusz wyboru lotniska: wpis kodu ALBO nazwy + żywa lista z katalogu w telefonie | `#sheet-airfield` (02e/02f) |
+| `TextEntrySheet` | arkusz wpisu tekstu z listą ostatnio używanych (klient, notatka dnia); lista **tylko online** | `#sheet-client` (02e) |
 | `ValueBox` | pole **odczytu**: duża wartość + jednostka, kontekst i ołówek po prawej | `.field-input.filled` |
 | `Readout` | sekcja odczytu z licznika: wartość, świeżość, pasek, korekta, historia | `.section` w 02a |
 | `FreshnessNote` | adnotacja §4.8: `live` (cisza) / `cache` (data) / `brak` / `manual` | `.fresh-note` |

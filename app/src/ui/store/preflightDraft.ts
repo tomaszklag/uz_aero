@@ -31,6 +31,15 @@ export interface PreflightDraft {
   dutyStartEdited: boolean;
   dualId: string | null;
   client: string | null;
+  /**
+   * Notatka pilota do dnia (issue #14) — wolny tekst, wielolinijkowy.
+   *
+   * Świadomie POZA `TASK_FIELDS` i poza pamięcią zadania: klient i trasa powtarzają się
+   * z dnia na dzień (ten sam klub, ten sam plac), a notatka opisuje JEDEN dzień
+   * („lot z uczniem", „drugi zbiornik nie działa"). Podpowiadanie jej wczorajszej treści
+   * byłoby podpowiadaniem nieprawdy — podpowiedzi w arkuszu pilot wybiera sam.
+   */
+  notes: string | null;
 
   /** Odczyt paliwa z paliwomierza (L). */
   fuelL: number;
@@ -108,6 +117,7 @@ function initial(): PreflightDraft {
     dutyStartEdited: false,
     dualId: null,
     client: null,
+    notes: null,
     fuelL: 0,
     mh: 0,
     readingSource: 'manual',

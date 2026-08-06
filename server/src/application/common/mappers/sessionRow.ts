@@ -50,6 +50,10 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     // podał". Sięgnięcie po `payload.operation` wprost byłoby drugą implementacją.
     operation: s.operation,
     client: s.client,
+    // Notatka dnia (migracja 20) — jak wyżej: wartość POLICZONA przez projekcję,
+    // razem z jej regułą („ostatni `preflight_confirm` wygrywa"). Payloadu nie
+    // czytamy tu wprost, bo to byłaby druga implementacja tej samej reguły.
+    notes: s.notes,
     mhStart: s.mh.start,
     mhEnd: s.closed ? s.mh.end : null,
     fuelStartL: s.fuel.startL,

@@ -132,6 +132,16 @@ export interface PreflightConfirmPayload {
   corrections?: PreflightCorrection[];
   /** Klient (operacja Skoki) — wiąże dzień z odbiorcą; dziedziczony przez `drop`. */
   client?: string | null;
+  /**
+   * Notatka pilota do dnia — wolny tekst, wielolinijkowy (issue #14).
+   *
+   * Nie jest to drugi „klient" ani pole rozliczeniowe: klient wiąże dzień z odbiorcą
+   * i wchodzi do statystyk, notatka opisuje okoliczności („lot z uczniem", „pokaz
+   * dla szkoły", „drugi zbiornik nie działa"). Zapisujemy ją razem z preflightem,
+   * bo powstaje przy planowaniu dnia i ma być widoczna dla administratora obok
+   * pozostałych danych sesji.
+   */
+  notes?: string | null;
   /** Format MH samolotu — zapamiętany dla spójnego wyświetlania w sesji. */
   mhFormat?: MhFormat;
 }

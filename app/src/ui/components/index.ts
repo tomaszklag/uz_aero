@@ -69,6 +69,8 @@ export * from './sheets/DropSheet';
 export * from './sheets/ManualEventSheet';
 export * from './sheets/ManualEntrySheet';
 export * from './sheets/CorrectionSheet';
+export * from './sheets/AirfieldSheet';
+export * from './sheets/TextEntrySheet';
 
 // Dane i akcje
 export * from './data/DayCard';

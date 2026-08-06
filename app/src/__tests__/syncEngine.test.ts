@@ -16,7 +16,7 @@ import {
   type AuthTokens,
   type PushResult,
   type RemoteAircraftState,
-  type RemoteThemePrefs,
+  type RemoteTaskSuggestions, RemoteThemePrefs,
   type ServerPort,
   type SessionSyncStatus,
   type StoredCredentials,
@@ -88,6 +88,9 @@ class ScriptedServer implements ServerPort {
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
 
+  getTaskSuggestions = async (): Promise<RemoteTaskSuggestions> => {
+    throw new Error('nieużywane w tych testach');
+  };
   getPrefs = async (): Promise<RemoteThemePrefs> => {
     throw new Error('nieużywane w tych testach');
   };

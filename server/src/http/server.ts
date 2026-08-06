@@ -33,6 +33,7 @@ import type { AuthCommands } from '../application/common/commands/auth.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
 import type { ReferenceQueries } from '../application/mobile/queries/reference.ts';
+import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSuggestions.ts';
 import type { SheetQueries } from '../application/common/queries/sheets.ts';
 import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
 import type { PilotsPort, TokenService, TraceSinkPort } from '../application/common/ports.ts';
@@ -57,6 +58,7 @@ import { registerAuthRoutes } from './routes/common/auth.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
 import { registerReferenceRoutes } from './routes/mobile/reference.ts';
+import { registerTaskSuggestionRoutes } from './routes/mobile/taskSuggestions.ts';
 import { registerSheetsRoutes } from './routes/common/sheets.ts';
 import { registerStateRoutes } from './routes/mobile/state.ts';
 import { registerTracesRoutes } from './routes/mobile/traces.ts';
@@ -69,6 +71,11 @@ export interface ServerDeps {
   sheets: SheetQueries;
   traces: TraceSinkPort;
   prefs: PrefsCommands;
+  /**
+   * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) — czysty odczyt
+   * projekcji: oznaczenia klientów CAŁEGO klubu i notatki TEGO pilota.
+   */
+  taskSuggestions: TaskSuggestionQueries;
   tokens: TokenService;
   /**
    * Konta — czytane przy KAŻDYM żądaniu panelu, żeby deaktywacja i odebranie roli
@@ -158,6 +165,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerSheetsRoutes(app, deps.sheets, deps.tokens);
   registerTracesRoutes(app, deps.traces, deps.tokens);
   registerPrefsRoutes(app, deps.prefs, deps.tokens);
+  registerTaskSuggestionRoutes(app, deps.taskSuggestions, deps.tokens);
 
   // Panel administracyjny — trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
   // pilnuje `adminRoute`, żeby nie rozjechał się między plikami.

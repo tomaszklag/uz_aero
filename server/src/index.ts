@@ -37,6 +37,7 @@ import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
 import { DayExporter } from './application/common/export/dayExporter.ts';
 import { ReferenceQueries } from './application/mobile/queries/reference.ts';
+import { TaskSuggestionQueries } from './application/mobile/queries/taskSuggestions.ts';
 import { SheetQueries } from './application/common/queries/sheets.ts';
 import { StateQueries } from './application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from './infrastructure/auth/hs256Tokens.ts';
@@ -68,6 +69,7 @@ import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/mobile/referenceRepo.ts';
+import { PgTaskSuggestionsRepo } from './infrastructure/pg/mobile/taskSuggestionsRepo.ts';
 import { PgSheets } from './infrastructure/pg/common/sheetsRepo.ts';
 import { FsPhaseTimeline } from './infrastructure/traces/fsPhaseTimeline.ts';
 import { FsTraceSink } from './infrastructure/traces/fsTraceSink.ts';
@@ -157,6 +159,10 @@ const app = buildServer({
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),
   prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
+  // Podpowiedzi zadania dnia (issue #14) — własny adapter nad `sessions` obok
+  // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz
+  // sesji, ten agreguje kolumny wielu wierszy w listę wartości do podpowiedzenia.
+  taskSuggestions: new TaskSuggestionQueries(db, new PgTaskSuggestionsRepo()),
   tokens,
   // Brama tras panelu czyta konto przy KAŻDYM żądaniu — bez tego „Deaktywuj" na A06
   // odcinałby dostęp dopiero po wygaśnięciu 8-godzinnej sesji (`http/authorize.ts`).

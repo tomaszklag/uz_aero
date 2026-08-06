@@ -49,6 +49,7 @@ import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
 import { DayExporter } from '../src/application/common/export/dayExporter.ts';
 import { ReferenceQueries } from '../src/application/mobile/queries/reference.ts';
+import { TaskSuggestionQueries } from '../src/application/mobile/queries/taskSuggestions.ts';
 import { SheetQueries } from '../src/application/common/queries/sheets.ts';
 import { StateQueries } from '../src/application/mobile/queries/aircraftState.ts';
 import { Hs256Tokens } from '../src/infrastructure/auth/hs256Tokens.ts';
@@ -79,6 +80,7 @@ import { PgPilotPrefsRepo } from '../src/infrastructure/pg/mobile/pilotPrefsRepo
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/common/refreshTokensRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/mobile/referenceRepo.ts';
+import { PgTaskSuggestionsRepo } from '../src/infrastructure/pg/mobile/taskSuggestionsRepo.ts';
 import { PgAircraftConfigRepo } from '../src/infrastructure/pg/common/aircraftConfigRepo.ts';
 import { PgSheets } from '../src/infrastructure/pg/common/sheetsRepo.ts';
 import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
@@ -203,6 +205,10 @@ export async function testHarness(
     // tę drogę, którą przechodzą dane w produkcji.
     adminFlightTrackQueries: new AdminFlightTrackQueries(db, events, new FsTraceSource(tracesDir)),
     prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
+    // Podpowiedzi zadania dnia (issue #14) — PRAWDZIWY adapter nad projekcją, jak
+    // w produkcyjnym composition root: test wysyła preflighty przez `POST /events`
+    // i czyta podpowiedzi tą samą drogą, którą przejdą dane telefonu.
+    taskSuggestions: new TaskSuggestionQueries(db, new PgTaskSuggestionsRepo()),
     tokens,
     // Brama tras panelu czyta konto przy KAŻDYM żądaniu; na tym opierają się przypadki
     // „deaktywacja odcina natychmiast" (`roles.test.ts`, `adminAccounts.test.ts`).

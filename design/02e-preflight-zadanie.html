@@ -84,8 +84,32 @@
   .field { display:flex; flex-direction:column; gap:6px; }
   .field-label-row { display:flex; align-items:center; justify-content:space-between; }
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
-  .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; }
-  .field-input-val { font-size:14px; color:var(--text-primary); }
+  /* ===== POLE W TRYBIE ODCZYTU (issue #14) =====
+     Na tym ekranie nie ma już ANI JEDNEGO inputu. Każde pole jest PRZYCISKIEM z wartością
+     — ten sam kształt, co „Czas meldowania" na kroku 1 (`.field-input.filled` w 02) —
+     a wpisywanie dzieje się w arkuszu wysuwanym od dołu. Ikona po prawej mówi, co się
+     stanie po tapnięciu: LUPA przy trasie (bo tam się szuka w katalogu), OŁÓWEK przy
+     polach tekstowych (bo tam się pisze). Zgłoszenie z urządzenia brzmiało „trochę nie
+     widać, że tam jest przeszukiwanie" — pole z czterema kratkami wyglądało jak miejsce
+     na przepisanie kodu z pamięci i niczym nie zdradzało, że można wpisać „zielona". */
+  .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; }
+  .field-input:hover { border-color:var(--green-border); }
+  .field-input-val { font-size:15px; line-height:20px; color:var(--text-primary); }
+  /* Kod ICAO czyta się jak numer rejestracyjny, nie jak zdanie — mono, rozstrzelony. */
+  .field-input-val.icao { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:2px; }
+  /* Pusto: napis zastępczy przygaszony dokładnie jak placeholder w polu tekstowym. */
+  .field-input-val.empty { color:var(--text-muted); }
+  .field-input-main { display:flex; align-items:center; gap:6px; min-width:0; }
+  /* Wariant tekstowy zabiera resztę wiersza: zdanie ma się łamać (do dwóch linii),
+     a nie wypychać ołówek poza pole. */
+  .field-input-main.grow { flex:1; }
+  .field-input-side { display:flex; align-items:center; gap:10px; min-width:0; }
+  /* Nazwa rozpoznanego lotniska stoi TERAZ W POLU, obok kodu — dlatego pod trasą zniknął
+     rząd potwierdzeń („Start: EPZG · Zielona Góra-Babimost Airport”), który powtarzał kod
+     widoczny wyżej. Jedna linia z wielokropkiem: najdłuższe nazwy katalogu nie mieszczą
+     się obok kodu, a pełną widać w arkuszu — czyli tam, gdzie pilot wybiera. */
+  .field-meta { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .field-icon { display:flex; color:var(--text-muted); flex-shrink:0; }
   .field-hint { color:var(--text-muted); }
   .optional-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
 
@@ -96,8 +120,56 @@
   .op-option.selected .op-icon, .op-option.selected .op-label { color:var(--green); }
   .op-label { font-size:12px; color:var(--text-secondary); }
 
-  /* Bez `.route-row` / `.route-arrow` — na tym ekranie wybrane są skoki, więc trasa to
-     JEDNO pole na pełną szerokość. Parę pól ze strzałką pokazuje wariant 02F. */
+  /* Bez `.route-row` / `.route-arrow` — i to nie jest brak tylko tego ekranu. Odkąd pole
+     niesie w sobie nazwę lotniska (issue #14), para kodów nie mieści się już obok siebie:
+     przy operacjach z parą stoją DWA pola jedno pod drugim, każde na pełną szerokość,
+     z etykietami „Start" i „Lądowanie" i bez strzałki między nimi (patrz 02F). Tu wybrane
+     są skoki, więc pole jest jedno. */
+
+  /* ===== ARKUSZ (`.modal-overlay` / `.modal-sheet`) — wzorzec z 02b =====
+     Miejsce, w którym pilot faktycznie WPISUJE. Arkusz otwiera się razem z klawiaturą,
+     więc szukanie (albo pisanie) jest pierwszą rzeczą, którą widać, a formularz pod nim
+     czyta się jak podsumowanie, a nie jak kartka do wypełnienia. */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:20px 18px 36px; display:flex; flex-direction:column; gap:16px; border-top:1px solid var(--border-strong); }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
+  /* Mniejszy niż tytuł ekranu: arkusz jest wstawką, nie ekranem. */
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+  .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:2px solid var(--border-strong); border-radius:14px; padding:12px 16px; }
+  .modal-input-val { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; }
+  .modal-input-text { font-size:15px; line-height:21px; color:var(--text-primary); flex:1; }
+  .modal-cursor { display:inline-block; width:2px; height:26px; background:var(--green); margin-left:3px; vertical-align:-5px; animation:blink 1.1s step-end infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  /* Potwierdzenie rozpoznanego kodu — pełna nazwa, bez skracania. */
+  .modal-known { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); }
+  .modal-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; }
+  .modal-btn-confirm { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; box-shadow:0 0 24px rgba(46,204,113,0.3); }
+
+  /* ===== PODPOWIEDZI LOTNISK (w arkuszu) =====
+     Lista KART, nie natywny dropdown (reguła z CLAUDE.md). Pełna szerokość, a nie kolumna
+     pod polem: nazwy w rodzaju „Zielona Góra-Babimost" w połowie szerokości telefonu
+     zostają uciętym „Zielona Gó…", czyli dokładnie tą częścią, dla której lista istnieje. */
+  .suggest-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .suggest-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .suggest-source { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .suggest-list { display:flex; flex-direction:column; gap:6px; }
+  .suggest-row { display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:12px; border:1px solid var(--border); background:var(--surface-raised); cursor:pointer; }
+  .suggest-row:hover { border-color:var(--green-border); }
+  .suggest-icao { font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex-shrink:0; min-width:52px; }
+  .suggest-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .suggest-name { font-size:12px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .suggest-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+
+  /* ===== OSTATNIO UŻYWANE (w arkuszu tekstowym) =====
+     Wartość po lewej, rodzaj operacji po prawej — ten sam klient bywa i skokami,
+     i przelotem, więc bez tej prawej kolumny wiersze bywają nierozróżnialne. */
+  .recent-list { display:flex; flex-direction:column; gap:6px; }
+  .recent-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--surface-raised); cursor:pointer; }
+  .recent-row:hover { border-color:var(--green-border); }
+  .recent-val { font-size:13px; color:var(--text-secondary); min-width:0; }
+  .recent-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
 
   /* Podpowiedź z ostatniego dnia — adnotacja informacyjna (blue), nie ostrzeżenie */
   /* Baner pouczający (Typ C): `position:relative` + zapas z prawej na `×`, mini-chip
@@ -240,32 +312,87 @@
            kod dwa razy — i, co gorsza, pozwalał opisać dzień skoków parą różnych lotnisk,
            czyli trasą, której w takim dniu nie da się polecieć.
            Pozostałe operacje (przelot, egzamin, lot techniczny, inne) mogą skończyć gdzie
-           indziej i zostają przy PARZE kodów start → lądowanie — patrz wariant 02F.
+           indziej i zostają przy PARZE kodów — dwa pola JEDNO POD DRUGIM, z etykietami
+           „Start" i „Lądowanie", każde na pełną szerokość i bez strzałki między nimi
+           (patrz wariant 02F). Strzałka odpadła razem z ciasnym wierszem: odkąd pole
+           niesie w sobie nazwę lotniska, dwa kody nie mieszczą się już obok siebie.
            Tę samą regułę czyta detekcja lotu: bramka lądowania (`sameFieldOnly`) jest
            uzbrojona dokładnie dla skoków, żeby fix z drugiego końca Polski nie zamknął
            lotu. Formularz i detekcja pytają o to samo, więc nie mają jak się rozjechać. -->
       <div class="section">
         <div class="section-label">Miejsce skoków</div>
         <div class="field">
-          <div class="field-label">Lotnisko ICAO</div>
-          <div class="field-input">
-            <span class="field-input-val" style="font-family:var(--font-mono); font-size:18px; letter-spacing:3px; font-weight:700;">EPKK</span>
+          <div class="field-label">Lotnisko skoków</div>
+          <!-- POLE-PRZYCISK Z LUPĄ (issue #14). Kod po lewej, nazwa rozpoznanego lotniska
+               po prawej, lupa na końcu — tapnięcie otwiera arkusz `#sheet-airfield`.
+               Pusto = przygaszone „Wybierz lotnisko" w miejscu kodu (patrz 02F). -->
+          <div class="field-input" onclick="openSheet('sheet-airfield')">
+            <span class="field-input-main">
+              <span class="field-input-val icao">EPKK</span>
+            </span>
+            <span class="field-input-side">
+              <span class="field-meta">Kraków John Paul II International Airport</span>
+              <span class="field-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </span>
+            </span>
           </div>
           <div class="field-hint" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px;">Skoki startują i lądują na tym samym lotnisku</div>
         </div>
       </div>
 
-      <!-- SEKCJA: OPCJONALNIE -->
+      <!-- SEKCJA: OPCJONALNIE — dwa pola wolnego tekstu, oba w trybie odczytu z OŁÓWKIEM
+           (nie lupą: tu się pisze, a nie przeszukuje katalog). Wpis dzieje się w arkuszu
+           `#sheet-client`, a przy notatce — w tym samym arkuszu z polem wielolinijkowym.
+
+           BEZ PODPOWIEDZI POD POLEM KLIENTA (issue #14). Stało tam „Wiąże zrzuty dnia
+           z klientem — trafia do statystyk i arkusza rozliczeniowego", czyli opis tego,
+           co się z wartością dzieje PÓŹNIEJ. Pilot w tym miejscu odpowiada na jedno
+           pytanie — „dla kogo" — i etykieta pola już je zadaje. -->
       <div class="section">
         <div class="field">
           <div class="field-label-row">
             <div class="field-label">Oznaczenie klienta</div>
             <span class="optional-tag">opcjonalne</span>
           </div>
-          <div class="field-input">
-            <span class="field-input-val">SKY CAMP · zlec. 2026/114</span>
+          <div class="field-input" onclick="openSheet('sheet-client')">
+            <span class="field-input-main grow">
+              <!-- Pusto: przygaszone „Bez oznaczenia" (`.field-input-val.empty`). -->
+              <span class="field-input-val">SKY CAMP · zlec. 2026/114</span>
+            </span>
+            <span class="field-input-side">
+              <span class="field-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </span>
+            </span>
           </div>
-          <div class="field-hint" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px;">Wiąże zrzuty dnia z klientem — trafia do statystyk i arkusza rozliczeniowego</div>
+        </div>
+
+        <!-- NOTATKA DO DNIA (nowe pole, issue #14) — jedyne miejsce w preflightcie, w którym
+             pilot pisze ZDANIE, a nie kod. Ten sam kształt pola i ten sam ołówek, co przy
+             kliencie; różni je to, że wartość może zająć dwie linie, a arkusz otwiera się
+             z polem wielolinijkowym. Pusto = przygaszone „Bez notatki".
+
+             ARKUSZ NOTATKI TO TEN SAM KOMPONENT, CO `#sheet-client` — dlatego nie ma go
+             w pliku trzeci raz. Różnice: tytuł „Notatka do dnia", pole wysokie na kilka
+             linii zamiast jednej i podpowiedzi bez prawej kolumny (notatka nie należy do
+             rodzaju operacji, więc nie ma czym jej opisać). Reszta identyczna: nagłówek
+             „Ostatnio używane", ANULUJ / ZAPISZ, brak listy bez sieci. -->
+        <div class="field">
+          <div class="field-label-row">
+            <div class="field-label">Notatka do dnia</div>
+            <span class="optional-tag">opcjonalne</span>
+          </div>
+          <div class="field-input">
+            <span class="field-input-main grow">
+              <span class="field-input-val">Lot zapoznawczy z uczniem — pierwszy raz na tym typie</span>
+            </span>
+            <span class="field-input-side">
+              <span class="field-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 
@@ -277,6 +404,107 @@
       </a>
 
     </div>
+
+    <!-- ================= ARKUSZ: WYBÓR LOTNISKA =================
+         Ukryty (`display:none`) — pokazuje go tapnięcie w pole trasy. Stan otwarty
+         w pełnej krasie, z klawiaturą i wieloma trafieniami, ma osobny wariant: 02F.
+         Tutaj arkusz jest w stanie, w jakim otwiera się z pola JUŻ WYPEŁNIONEGO:
+         wpis to bieżący kod, więc lista ma jedno trafienie — ten sam kod.
+         Kod SPOZA katalogu (przelot do EDDB) potwierdza się normalnie: katalog obejmuje
+         Polskę, a jego milczenie nie jest błędem pilota — to podpowiedź, nie bramka. -->
+    <div class="modal-overlay" id="sheet-airfield" style="display:none;" onclick="closeSheet('sheet-airfield')">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Lotnisko skoków</div>
+
+        <!-- Placeholder pustego pola brzmi `EPKK albo nazwa` — to on mówi wprost, że
+             katalog da się przeszukać słowem, nie tylko kodem. -->
+        <div class="modal-input-row">
+          <span class="modal-input-val">EPKK<span class="modal-cursor"></span></span>
+          <span class="field-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+        </div>
+
+        <!-- Potwierdzenie rozpoznanego kodu stoi TU, w arkuszu, a nie pod formularzem:
+             to jest miejsce, w którym pilot podejmuje decyzję. -->
+        <div class="modal-known">Kraków John Paul II International Airport</div>
+
+        <div class="suggest-head">
+          <span class="suggest-title">Podpowiedzi</span>
+          <span class="suggest-source">katalog w telefonie</span>
+        </div>
+        <!-- KURS PASA JEST MAGNETYCZNY — taki stoi na tabliczce progu, taki podaje wieża
+             i taki pilot odczyta z busoli. Katalog trzyma kurs geograficzny (mapa śladu
+             obraca nim pas na siatce zorientowanej na północ geograficzną), więc
+             przeliczenie robi się przy wyświetlaniu. -->
+        <div class="suggest-list">
+          <div class="suggest-row">
+            <span class="suggest-icao">EPKK</span>
+            <span class="suggest-body">
+              <span class="suggest-name">Kraków John Paul II International Airport</span>
+              <span class="suggest-meta">pas 072° · 2550 m · 791 ft</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <div class="modal-btn-cancel" onclick="closeSheet('sheet-airfield')">ANULUJ</div>
+          <div class="modal-btn-confirm" onclick="closeSheet('sheet-airfield')">WYBIERZ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= ARKUSZ: OZNACZENIE KLIENTA =================
+         Ukryty — pokazuje go tapnięcie w pole klienta. Zysk jest tu inny niż przy
+         lotnisku: nie chodzi o to, żeby było widać przeszukiwanie, tylko o to, żeby pilot
+         NIE MUSIAŁ przepisywać tego samego z pamięci — nad polem stoi lista wartości
+         używanych ostatnio. -->
+    <div class="modal-overlay" id="sheet-client" style="display:none;" onclick="closeSheet('sheet-client')">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Oznaczenie klienta</div>
+
+        <div class="modal-input-row">
+          <span class="modal-input-text">SKY CAMP · zlec. 2026/114<span class="modal-cursor" style="height:18px; vertical-align:-3px;"></span></span>
+        </div>
+
+        <!-- PODPOWIEDZI SĄ TYLKO ONLINE — i to jest decyzja, nie brak. W przeciwieństwie
+             do katalogu lotnisk (wkompilowanego w aplikację) ta lista mieszka na serwerze,
+             bo składa się z tego, czego klub używał ostatnio.
+
+             WARIANT BEZ SIECI: cały blok niżej — nagłówek „Ostatnio używane" i wiersze —
+             znika, a w jego miejscu stoi jedno spokojne zdanie:
+
+                 <div class="modal-note">Podpowiedzi wymagają połączenia — wpisz wartość
+                 ręcznie</div>
+
+             Bez ostrzeżenia i bez ambera, bo nic się nie zepsuło: pole działa dokładnie
+             tak, jak działało wcześniej (wpisujesz i potwierdzasz), znika sama wygoda
+             (CLAUDE.md: „brak sieci NIGDY nie blokuje pracy pilota"). -->
+        <div class="suggest-title">Ostatnio używane</div>
+        <div class="recent-list">
+          <div class="recent-row">
+            <span class="recent-val">SKY CAMP · zlec. 2026/114</span>
+            <span class="recent-meta">Skoki</span>
+          </div>
+          <div class="recent-row">
+            <span class="recent-val">Aeroklub Ziemi Lubuskiej</span>
+            <span class="recent-meta">Egzamin</span>
+          </div>
+          <div class="recent-row">
+            <span class="recent-val">Serwis Kowalski · po przeglądzie</span>
+            <span class="recent-meta">Lot tech.</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <div class="modal-btn-cancel" onclick="closeSheet('sheet-client')">ANULUJ</div>
+          <div class="modal-btn-confirm" onclick="closeSheet('sheet-client')">ZAPISZ</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -285,16 +513,16 @@
   <a class="vp-item active" href="02e-preflight-zadanie.html">
     <span class="vp-badge">02E</span>
     <span class="vp-body">
-      <span class="vp-name">Formularz wypełniony · skoki (jedno lotnisko)</span>
-      <span class="vp-when">Stan spoczynku: kod ICAO kompletny, nic nie jest w trakcie pisania. Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko ICAO" pod nagłówkiem „Miejsce skoków" — samolot wraca tam, skąd wystartował. Przelot, egzamin, lot techniczny i inne pokazują w tym miejscu PARĘ pól (start → lądowanie), tak jak na 02F. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
+      <span class="vp-name">Formularz w spoczynku · skoki (jedno lotnisko)</span>
+      <span class="vp-when">Stan spoczynku: żaden arkusz nie jest otwarty. Wszystkie pola są <b>przyciskami z wartością</b>, nie inputami — lupa przy trasie, ołówek przy kliencie i notatce; wpisywanie dzieje się w arkuszu wysuwanym od dołu (oba są w tym pliku, ukryte — tapnij pole, żeby zobaczyć). Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko skoków" pod nagłówkiem „Miejsce skoków" — samolot wraca tam, skąd wystartował. Przelot, egzamin, lot techniczny i inne pokazują w tym miejscu DWA pola pod sobą („Start", „Lądowanie"), tak jak na 02F. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="02f-preflight-lotnisko.html">
     <span class="vp-badge">02F</span>
     <span class="vp-body">
-      <span class="vp-name">Wybór lotniska — podpowiedzi · przelot (para kodów)</span>
-      <span class="vp-when">Pilot pisze w polu ICAO i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). Wybrany jest <b>przelot</b>, więc trasa ma parę pól start → lądowanie, a lista należy do pierwszego pola z niedokończonym kodem. Lista znika, gdy kod jest kompletny i rozpoznany; kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
+      <span class="vp-name">Arkusz wyboru lotniska — szukanie po nazwie · przelot (para pól)</span>
+      <span class="vp-when">Arkusz OTWARTY nad formularzem: pilot wpisał „ZIELONA" i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). To jedyne miejsce, w którym dzieje się szukanie — dlatego pole w formularzu ma lupę. Wybrany jest <b>przelot</b>, więc pod nakładką stoją dwa pola trasy, a arkusz należy do „Startu". Kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
     </span>
   </a>
 </aside>
@@ -316,6 +544,12 @@
   // samą mechanikę. Te same funkcje mają 05f, 07, 09 i 09a.
   function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }
   function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
+
+  // Arkusze: pole otwiera, ANULUJ i tapnięcie w tło zamykają (wzorzec z 02b). W aplikacji
+  // arkusz jest `Modal` z RN, więc zamyka go też przycisk „wstecz" Androida — i otwiera
+  // się razem z klawiaturą, czego statyczny mockup nie pokaże.
+  function openSheet(id){ document.getElementById(id).style.display='flex'; }
+  function closeSheet(id){ document.getElementById(id).style.display='none'; }
 </script>
 
 </body>

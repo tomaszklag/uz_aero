@@ -117,6 +117,16 @@ export interface ValueBoxProps {
   onPress?: () => void;
   /** Ton wartości — `amber` dla paliwa, `neutral` dla reszty. */
   tone?: Tone;
+  /**
+   * `value` — liczba albo kod, mono i duże (czas, litry, ICAO).
+   * `text` — zdanie pilota (oznaczenie klienta, notatka): krój tekstowy, mniejszy
+   * stopień i do dwóch linii. Ten sam kształt pudełka i ten sam ołówek, bo to nadal
+   * jest „pole w trybie odczytu, które otwiera edycję" (issue #14) — inny jest tylko
+   * materiał w środku, a zdanie złożone czcionką licznika czyta się źle.
+   */
+  variant?: 'value' | 'text';
+  /** Napis zastępczy, gdy `value` jest puste — przygaszony, jak placeholder w polu. */
+  placeholder?: string;
   accessibilityLabel?: string;
   style?: ViewStyle;
 }
@@ -136,11 +146,15 @@ export function ValueBox({
   actionIcon,
   onPress,
   tone = 'neutral',
+  variant = 'value',
+  placeholder,
   accessibilityLabel,
   style,
 }: ValueBoxProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
+  const empty = value.length === 0;
+  const shown = empty ? (placeholder ?? '—') : value;
 
   return (
     <Pressable
@@ -163,20 +177,34 @@ export function ValueBox({
         style,
       ]}
     >
-      <View style={styles.boxSide}>
+      <View style={[styles.boxSide, variant === 'text' && styles.boxSideGrow]}>
         <AppText
-          variant="mono"
-          style={{
-            fontFamily: theme.fontFamily.monoBold,
-            fontSize: 22,
-            lineHeight: 26,
-            letterSpacing: 2,
-            color: tone === 'neutral' ? theme.colors.textPrimary : c.accent,
-          }}
+          variant={variant === 'text' ? 'body' : 'mono'}
+          numberOfLines={variant === 'text' ? 2 : 1}
+          style={
+            variant === 'text'
+              ? {
+                  flexShrink: 1,
+                  fontSize: 15,
+                  lineHeight: 20,
+                  color: empty ? theme.colors.textMuted : theme.colors.textPrimary,
+                }
+              : {
+                  fontFamily: theme.fontFamily.monoBold,
+                  fontSize: 22,
+                  lineHeight: 26,
+                  letterSpacing: 2,
+                  color: empty
+                    ? theme.colors.textMuted
+                    : tone === 'neutral'
+                      ? theme.colors.textPrimary
+                      : c.accent,
+                }
+          }
         >
-          {value}
+          {shown}
         </AppText>
-        {unit != null && (
+        {unit != null && !empty && (
           <AppText variant="mono" tone="muted" style={styles.unit}>
             {unit}
           </AppText>
@@ -185,7 +213,7 @@ export function ValueBox({
 
       <View style={styles.boxSide}>
         {meta != null && (
-          <AppText variant="mono" tone="muted" style={styles.meta}>
+          <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.meta}>
             {meta}
           </AppText>
         )}
@@ -255,6 +283,8 @@ const styles = StyleSheet.create({
   hint: { fontSize: 9, letterSpacing: 0.5, lineHeight: 13 },
   box: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   boxSide: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  // Wariant tekstowy zabiera resztę wiersza: zdanie ma się łamać, a nie wypychać ołówek.
+  boxSideGrow: { flex: 1, minWidth: 0 },
   unit: { fontSize: 12, letterSpacing: 1 },
-  meta: { fontSize: 11, letterSpacing: 1 },
+  meta: { fontSize: 11, letterSpacing: 1, flexShrink: 1 },
 });
