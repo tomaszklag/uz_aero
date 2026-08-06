@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02F Preflight · Wybór lotniska</title>
+<title>UZ Aero — 02G Preflight · Rozjazd trasy z pozycją</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -128,6 +128,16 @@
   .hint-text { font-family:var(--font-mono); font-size:9px; color:var(--blue); line-height:1.5; display:flex; flex-direction:column; gap:5px; }
   .hint-lead { font-weight:700; }
 
+  /* ===== ROZJAZD POZYCJI Z TRASĄ =====
+     Ten sam przypis co `.hint-box`, w tonie amber: ostrzeżenie WARUNKOWE (typ 2
+     z docs/design-notes.md) — znika samo, gdy kod zacznie się zgadzać z pozycją,
+     i nie zamyka się ręcznie, bo nie jest pouczeniem tylko odczytem stanu. */
+  .warn-box { display:flex; align-items:flex-start; gap:8px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:10px; padding:9px 11px; }
+  .warn-text { font-family:var(--font-mono); font-size:9px; color:var(--amber); line-height:1.5; }
+  /* Akcja domykająca kartę — kreskowana linia, ten sam wzorzec co „dopisz lot" na 08. */
+  .ghost-action { display:flex; align-items:center; justify-content:center; gap:7px; padding:11px 0 2px; border-top:1px dashed var(--border-strong); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-secondary); cursor:pointer; }
+  .ghost-action:hover { color:var(--green); }
+
   .btn-primary {
     display:flex; align-items:center; justify-content:center; gap:10px;
     background:var(--green); color:#0A0A0A; border:none; border-radius:14px;
@@ -152,12 +162,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 02F</span>
-  <span class="slug">preflight · wybór lotniska · podpowiedzi z katalogu</span>
-  <span class="canvas-meta">Screen 2F / 11</span>
+  <span class="film-strip">UZ AERO — 02G</span>
+  <span class="slug">preflight · trasa nie zgadza się z pozycją</span>
+  <span class="canvas-meta">Screen 2G / 11</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Preflight: wybór lotniska z podpowiedzi">
+<main class="phone" role="region" aria-label="Mockup — Preflight: rozjazd trasy z pozycją GPS">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -188,9 +198,19 @@
 
     <div class="scroll">
 
-      <!-- BEZ podpowiedzi z ostatniego dnia (`.hint-box` z 02E) — i to nie przeoczenie:
-           pilot właśnie pisze w polu trasy, a adnotacja znika po pierwszym dotknięciu
-           któregokolwiek pola tego kroku. -->
+      <!-- PODPOWIEDŹ Z OSTATNIEGO DNIA jest tu widoczna i to jest sedno scenariusza:
+           formularz WYGLĄDA na wypełniony, bo trasa przyszła z wczorajszego dnia na tym
+           samolocie. Pilot niczego nie dotknął, więc nie ma powodu podejrzewać, że
+           startuje dziś skądinąd — i dokładnie dlatego potrzebny jest niezależny głos
+           z GPS-a. -->
+      <div class="hint-box">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div class="hint-text">
+          <span class="hint-lead">Uzupełnione z Twojego ostatniego dnia (trasa — z ostatniego dnia na tym samolocie).</span>
+          <span>Zmień, jeśli dziś lecisz inaczej — wpis zastępuje podpowiedź.</span>
+        </div>
+      </div>
+
 
       <!-- SEKCJA: RODZAJ OPERACJI (siatka kart z ikonami, nigdy natywny select) -->
       <div class="section">
@@ -229,17 +249,21 @@
         </div>
       </div>
 
-      <!-- SEKCJA: TRASA — stan PISANIA w polu startu.
-           Pilot wpisał trzy znaki, katalog pokazuje, co do nich pasuje. Podpowiedź NIE
-           jest bramką: katalog obejmuje wyłącznie Polskę (EP**), więc kod spoza listy
-           (ferry do EDDB) wpisuje się normalnie, a lista po prostu zostaje pusta. -->
+      <!-- SEKCJA: TRASA — stan ROZJAZDU z pozycją.
+           Oba kody są kompletne i rozpoznane, więc podpowiedzi (02F) nie ma czego
+           pokazywać. Sprzeczność widzi dopiero GPS: samolot stoi 218 NM od lotniska,
+           które figuruje jako start dnia.
+
+           Sprawdzenie jest DARMOWE, nie warunkiem: bez zgody na lokalizację, bez odbioru
+           albo przy kodzie spoza katalogu (ferry za granicę) ten przypis po prostu się
+           nie pojawia, a formularz działa jak dotąd. -->
       <div class="section">
         <div class="section-label">Trasa</div>
         <div class="route-row">
           <div class="field">
             <div class="field-label">Start ICAO</div>
-            <div class="field-input editing">
-              <span class="field-input-val" style="font-family:var(--font-mono); font-size:18px; letter-spacing:3px; font-weight:700;">EPZ<span class="caret"></span></span>
+            <div class="field-input">
+              <span class="field-input-val" style="font-family:var(--font-mono); font-size:18px; letter-spacing:3px; font-weight:700;">EPKK</span>
             </div>
           </div>
           <div class="route-arrow">→</div>
@@ -251,40 +275,19 @@
           </div>
         </div>
 
-        <!-- Potwierdzenie kodu, który JEST już kompletny: pilot widzi, że EPWA to
-             faktycznie Warszawa, zanim pojedzie dalej z literówką. -->
+        <div class="field-hint" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px;">Start: EPKK · Kraków John Paul II International Airport</div>
         <div class="field-hint" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px;">Lądowanie: EPWA · Warsaw Chopin Airport</div>
 
-        <div class="suggest-head">
-          <span class="suggest-title">Start ICAO — podpowiedzi</span>
-          <span class="suggest-source">katalog w telefonie</span>
+        <div class="warn-box">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:1px;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div class="warn-text">Masz wpisany start EPKK, a stoisz 218 NM od niego. Najbliżej: EPZG · Zielona Góra-Babimost Airport.</div>
         </div>
-        <!-- KURS PASA JEST MAGNETYCZNY — taki stoi na tabliczce progu, taki podaje wieża
-             i taki pilot odczyta z busoli (060 = próg 06). Katalog trzyma kurs
-             geograficzny, bo mapa śladu obraca nim pas na siatce zorientowanej na północ
-             geograficzną; przeliczenie robi się przy wyświetlaniu. -->
-        <div class="suggest-list">
-          <div class="suggest-row">
-            <span class="suggest-icao">EPZG</span>
-            <span class="suggest-body">
-              <span class="suggest-name">Zielona Góra-Babimost Airport</span>
-              <span class="suggest-meta">pas 060° · 2500 m · 194 ft</span>
-            </span>
-          </div>
-          <div class="suggest-row">
-            <span class="suggest-icao">EPZP</span>
-            <span class="suggest-body">
-              <span class="suggest-name">Zielona Góra-Przylep Airfield</span>
-              <span class="suggest-meta">pas 056° · 1066 m · 249 ft</span>
-            </span>
-          </div>
-          <div class="suggest-row">
-            <span class="suggest-icao">EPZR</span>
-            <span class="suggest-body">
-              <span class="suggest-name">Żar Airfield</span>
-              <span class="suggest-meta">pas 039° · 429 m · 1260 ft</span>
-            </span>
-          </div>
+
+        <!-- Jedno tapnięcie zamiast czterech liter — a przede wszystkim: WYJŚCIE.
+             Ostrzeżenie bez drogi naprawy byłoby gorsze niż jego brak. -->
+        <div class="ghost-action">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+          Wpisz EPZG jako start
         </div>
       </div>
 
@@ -322,20 +325,20 @@
       <span class="vp-when">Stan spoczynku: oba kody ICAO kompletne, nic nie jest w trakcie pisania. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
     </span>
   </a>
-  <a class="vp-item active" href="02f-preflight-lotnisko.html">
+  <a class="vp-item" href="02f-preflight-lotnisko.html">
     <span class="vp-badge">02F</span>
     <span class="vp-body">
       <span class="vp-name">Wybór lotniska — podpowiedzi</span>
-      <span class="vp-when">Pilot pisze w polu ICAO i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). Lista znika, gdy kod jest kompletny i rozpoznany; kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
+      <span class="vp-when">Pilot pisze w polu ICAO i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). Lista znika, gdy kod jest kompletny i rozpoznany; kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka.</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="02g-preflight-rozjazd.html">
+  <a class="vp-item active" href="02g-preflight-rozjazd.html">
     <span class="vp-badge amber">02G</span>
     <span class="vp-body">
       <span class="vp-name">Trasa nie zgadza się z pozycją</span>
-      <span class="vp-when">Kody są kompletne, ale GPS mówi co innego: samolot stoi daleko od lotniska wpisanego jako start (najczęstsza przyczyna — trasa podpowiedziana z wczorajszego dnia). Ostrzeżenie warunkowe z akcją naprawczą; znika samo, gdy kod zacznie się zgadzać.</span>
+      <span class="vp-when">Kody są kompletne, ale GPS mówi co innego: samolot stoi daleko od lotniska wpisanego jako start (najczęstsza przyczyna — trasa podpowiedziana z wczorajszego dnia). Ostrzeżenie warunkowe z akcją naprawczą; znika samo, gdy kod zacznie się zgadzać. Milczy bez zgody na lokalizację, bez odbioru i przy kodzie spoza katalogu.</span>
     </span>
+    <span class="vp-tag">ten ekran</span>
   </a>
 </aside>
 
@@ -344,8 +347,8 @@
   <span>·</span>
   <a href="02-preflight.html">← 02 Preflight</a>
   <a href="02e-preflight-zadanie.html">← 02E Zadanie</a>
-  <a href="02f-preflight-lotnisko.html" class="active">02F Wybór lotniska</a>
-  <a href="02g-preflight-rozjazd.html">02G Rozjazd trasy →</a>
+  <a href="02f-preflight-lotnisko.html">← 02F Wybór lotniska</a>
+  <a href="02g-preflight-rozjazd.html" class="active">02G Rozjazd trasy</a>
   <a href="02a-preflight.html">02A Paliwo/MH →</a>
   <span>·</span>
   <a href="03-preflight-confirm.html">03 Potwierdź →</a>

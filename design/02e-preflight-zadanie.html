@@ -119,6 +119,7 @@
   .vp-item:hover { border-color:var(--green-border); }
   .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
   .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
@@ -276,6 +277,13 @@
       <span class="vp-when">Pilot pisze w polu ICAO i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). Lista znika, gdy kod jest kompletny i rozpoznany; kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
     </span>
   </a>
+  <a class="vp-item" href="02g-preflight-rozjazd.html">
+    <span class="vp-badge amber">02G</span>
+    <span class="vp-body">
+      <span class="vp-name">Trasa nie zgadza się z pozycją</span>
+      <span class="vp-when">Kody są kompletne, ale GPS mówi co innego: samolot stoi daleko od lotniska wpisanego jako start (najczęstsza przyczyna — trasa podpowiedziana z wczorajszego dnia). Ostrzeżenie warunkowe z akcją naprawczą; znika samo, gdy kod zacznie się zgadzać.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -284,6 +292,7 @@
   <a href="02-preflight.html">← 02 Preflight</a>
   <a href="02e-preflight-zadanie.html" class="active">02E Zadanie</a>
   <a href="02f-preflight-lotnisko.html">02F Wybór lotniska →</a>
+  <a href="02g-preflight-rozjazd.html">02G Rozjazd trasy →</a>
   <a href="02a-preflight.html">02A Paliwo/MH →</a>
   <span>·</span>
   <a href="03-preflight-confirm.html">03 Potwierdź →</a>
