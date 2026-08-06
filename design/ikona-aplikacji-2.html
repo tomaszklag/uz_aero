@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — Ikona aplikacji · runda 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .wrap { width: 100%; max-width: 1080px; display: flex; flex-direction: column; gap: 26px; }
+
+  .canvas-label {
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: baseline; gap: 20px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--border);
+  }
+  .film-strip { font-family: var(--font-display); font-size: 34px; letter-spacing: 3px; line-height: 1; }
+  .slug { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 18px; }
+  .canvas-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+  .panel h3 { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; font-weight: 400; margin-bottom: 10px; }
+  .panel p { font-size: 13px; line-height: 1.65; color: var(--text-secondary); }
+  .panel p + p { margin-top: 9px; }
+  .panel b { color: var(--text-primary); font-weight: 600; }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .toggle {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    background: var(--surface-raised); border: 1px solid var(--border-strong); color: var(--text-secondary);
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; transition: all .15s;
+  }
+  .toggle:hover { color: var(--text-primary); border-color: var(--text-muted); }
+  .toggle.on { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
+  .toolbar .hint { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: .5px; }
+
+  .section-title {
+    font-family: var(--font-display); font-size: 22px; letter-spacing: 2.5px; font-weight: 400;
+    display: flex; align-items: baseline; gap: 14px; margin-top: 8px;
+  }
+  .section-title small { font-family: var(--font-body); font-size: 12.5px; letter-spacing: 0; color: var(--text-secondary); font-weight: 400; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .concept { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: grid; grid-template-columns: 140px 1fr; gap: 18px; align-items: start; }
+  .concept-id { display: flex; align-items: baseline; gap: 9px; margin-bottom: 11px; }
+  .concept-id .num { font-family: var(--font-mono); font-size: 10.5px; color: var(--green); background: var(--green-muted); border: 1px solid var(--green-border); border-radius: 6px; padding: 3px 7px; letter-spacing: 1px; }
+  .concept-id .name { font-family: var(--font-display); font-size: 21px; letter-spacing: 2px; line-height: 1; }
+  .concept .note { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); margin-top: 12px; }
+  .concept .note b { color: var(--text-primary); font-weight: 600; }
+
+  .tile { border-radius: 23%; position: relative; overflow: hidden; flex-shrink: 0; display: block; }
+  .tile svg { display: block; width: 100%; height: 100%; }
+  .tile.dark { background: linear-gradient(155deg, #1C201D 0%, #0D0D0D 62%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 8px 20px rgba(0,0,0,.5); }
+  .tile.light { background: linear-gradient(155deg, #FFFFFF 0%, #E7EDE8 100%); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.07); }
+  .tile.mono { background: #2B2F2C; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+
+  .tile .safe { position: absolute; inset: 0; display: none; pointer-events: none; }
+  body.show-safe .tile.big .safe { display: block; }
+  .safe .circle { position: absolute; left: 17%; top: 17%; width: 66%; height: 66%; border-radius: 50%; border: 1px dashed rgba(243,156,18,.65); }
+  .safe .squircle { position: absolute; left: 12%; top: 12%; width: 76%; height: 76%; border-radius: 26%; border: 1px dashed rgba(52,152,219,.5); }
+
+  .sizes { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .size-item { display: flex; flex-direction: column; align-items: center; }
+  .tile-caption { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; text-align: center; margin-top: 6px; text-transform: uppercase; }
+
+  .launcher {
+    border-radius: 16px; padding: 26px 22px; border: 1px solid var(--border);
+    background:
+      radial-gradient(ellipse 60% 60% at 20% 10%, rgba(52,152,219,.20), transparent 60%),
+      radial-gradient(ellipse 50% 50% at 85% 80%, rgba(46,204,113,.14), transparent 60%),
+      linear-gradient(160deg, #171A1E, #0A0B0D);
+  }
+  .launcher-grid { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 78px; }
+  .app .label { font-size: 10px; color: rgba(255,255,255,.82); text-align: center; }
+  .app.ref .label { color: rgba(255,255,255,.45); }
+  .strip-title { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; text-align: center; }
+
+  .nav-strip { width:100%; max-width:1080px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+  footer { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: 1px; text-align: center; }
+
+  @media (max-width: 980px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="canvas-label">
+    <div class="film-strip">IKONA · 2</div>
+    <div class="slug">ikona-aplikacji-2.html · runda 2</div>
+    <div class="canvas-meta">8 wariantów · kierunki 04 i 05</div>
+  </div>
+
+  <div class="panel">
+    <h3>CO SIĘ ZMIENIŁO</h3>
+    <p>Runda 1 zawężona do dwóch rodzin: <b>SLOT</b> (grafik, z którego coś startuje) i <b>SYGNAŁ</b> (maszyna, która nadaje pozycję). Każda dostała trzy warianty — od odchudzenia po zmianę kompozycji.</p>
+    <p>Trzecia sekcja to <b>to, co obie rodziny razem podpowiadają</b>: rozdział na <b>plan</b> i <b>wykonanie</b>. Kreska przerywana = odcinek zarezerwowany, ciągła = przelatany, koralik = pozycja teraz. Jeden gest, który niesie cały produkt — rezerwację i monitoring — bez dokładania elementów.</p>
+    <p>Warunki brzegowe bez zmian: czytelność przy 48 i 28 px, treść w kole 66 % (adaptive icon), osobna warstwa monochrome, zero liter.</p>
+  </div>
+
+  <div class="toolbar">
+    <button class="toggle" id="btn-safe">Strefa bezpieczna Androida</button>
+    <span class="hint">amber = koło 66% (gwarantowane) · blue = typowa maska 76%</span>
+  </div>
+
+  <div class="section-title">Rodzina SLOT <small>grafik rezerwacji jako baza znaku</small></div>
+  <div class="row" id="family-slot"></div>
+
+  <div class="section-title">Rodzina SYGNAŁ <small>maszyna nadająca pozycję</small></div>
+  <div class="row" id="family-signal"></div>
+
+  <div class="section-title">Plan i wykonanie <small>synteza obu kierunków</small></div>
+  <div class="row" id="family-hybrid"></div>
+
+  <div class="launcher">
+    <div class="strip-title">Ekran główny — runda 2 obok oryginałów z rundy 1, 60 px</div>
+    <div class="launcher-grid" id="launcher"></div>
+  </div>
+
+  <div class="panel">
+    <h3>NA CO PATRZEĆ</h3>
+    <p><b>4A</b> i <b>4B</b> odpowiadają na jedyny realny zarzut wobec 04 — nadmiar detalu. 4A zdejmuje jeden pasek, 4B zamienia koralik na płatowca (więcej lotnictwa, mniej „swoosha”). <b>4C</b> porzuca układ listy na rzecz schodów — ta sama treść, sylwetka wznosząca się zamiast poziomej.</p>
+    <p><b>5A</b> naprawia największy problem 05: fale przeniesione <b>za ogon</b> przestają być logo Wi-Fi, bo siedzą za obiektem w ruchu. <b>5B</b> atakuje to samo od drugiej strony — odwraca fale w dół, bo Wi-Fi zawsze nadaje w górę. <b>5C</b> to symetria pełna: najlepiej skaluje się w dół, ale jako jedyny nie mówi nic o kierunku lotu.</p>
+    <p><b>H1</b> i <b>H2</b> to dwie odpowiedzi na to samo: H1 czystym śladem, H2 w układzie grafiku z 04. Jeśli rezerwacja i monitoring mają w znaku ważyć tyle samo, szukałbym tutaj — <b>H1</b> jest najprostszy i jako jedyny z całej ósemki opowiada sekwencję zdarzeń, a nie stan.</p>
+  </div>
+
+</div>
+
+<div class="nav-strip">
+  <a href="index.html">← INDEX</a><span>·</span>
+  <a href="ikona-aplikacji.html">RUNDA 1</a><span>·</span>
+  <a href="ikona-aplikacji-2.html" class="active">RUNDA 2</a><span>·</span>
+  <a href="ikona-aplikacji-3.html">RUNDA 3</a><span>·</span>
+  <a href="ikona-aplikacji-4.html">RUNDA 4</a><span>·</span>
+  <a href="ikona-aplikacji-5.html">RUNDA 5</a>
+</div>
+
+<footer>UZ Aero · propozycja znaku, runda 2 — nie jest jeszcze zatwierdzoną specyfikacją</footer>
+
+<script>
+const PALETTES = {
+  dark:  { c: '#2ECC71', m: 'rgba(232,232,232,0.20)', ink: '#0D0D0D' },
+  light: { c: '#1FA85C', m: 'rgba(13,13,13,0.16)',    ink: '#FFFFFF' },
+  mono:  { c: '#E8E8E8', m: 'rgba(232,232,232,0.30)', ink: '#2B2F2C' }
+};
+
+/* Płatowiec — jedna definicja dla całej rundy, skalowana w miejscu użycia.
+   Kadr bazowy: x 25..75, y 22..75, środek masy ~(50, 48.5). */
+const PLANE = 'M50 22 L75 75 L50 58 L25 75 Z';
+const plane = (p, x, y, scale, rot, sw) =>
+  `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${scale}) translate(-50 -48.5)">
+     <path d="${PLANE}" fill="${p.c}" stroke="${p.c}" stroke-width="${sw}" stroke-linejoin="round"/>
+   </g>`;
+
+const SLOT = [
+  {
+    num: '4A', name: 'SLOT MINIMAL',
+    note: 'Jeden pasek grafiku zamiast dwóch. <b>Najlżejsza wersja 04</b> — przy 28 px zostaje czytelna para: baza i start.',
+    glyph: p => `
+      <rect x="24" y="64" width="32" height="9" rx="4.5" fill="${p.m}"/>
+      <path d="M28 50 H55 C65 50 67 42 68 35" fill="none" stroke="${p.c}" stroke-width="9.5" stroke-linecap="round"/>
+      <circle cx="70" cy="29" r="8.5" fill="${p.c}"/>`
+  },
+  {
+    num: '4B', name: 'SLOT · PŁATOWIEC',
+    note: 'Układ 04 bez zmian, ale ślad kończy się <b>maszyną, nie koralikiem</b>. Więcej lotnictwa kosztem czystości sylwetki.',
+    glyph: p => `
+      <rect x="24" y="27" width="38" height="9" rx="4.5" fill="${p.m}"/>
+      <rect x="24" y="66" width="30" height="9" rx="4.5" fill="${p.m}"/>
+      <path d="M28.5 50.5 H53 C60 50.5 63 45.5 64.5 40.5" fill="none" stroke="${p.c}" stroke-width="9.5" stroke-linecap="round"/>
+      ${plane(p, 69, 30, 0.37, 40, 10)}`
+  },
+  {
+    num: '4C', name: 'SCHODY',
+    note: 'Te same paski, ale ustawione w <b>profil odlotu</b>. Sylwetka wznosząca się zamiast poziomej listy — mniej „menu”, więcej ruchu.',
+    glyph: p => `
+      <rect x="20" y="63" width="26" height="9" rx="4.5" fill="${p.m}"/>
+      <rect x="33" y="47" width="26" height="9" rx="4.5" fill="${p.m}"/>
+      <rect x="46" y="31" width="22" height="9" rx="4.5" fill="${p.c}"/>
+      <circle cx="72" cy="35.5" r="8.5" fill="${p.c}"/>`
+  }
+];
+
+const SIGNAL = [
+  {
+    num: '5A', name: 'ZA OGONEM',
+    note: 'Fale przeniesione <b>za maszynę</b>. To samo znaczenie co 05, ale znak przestaje być logo Wi-Fi — fala za obiektem w ruchu czyta się jako ślad, nie zasięg.',
+    glyph: p => `
+      <g fill="none" stroke="${p.c}" stroke-linecap="round">
+        <path d="M60.2 55.7 A22 22 0 0 1 42.3 37.8" stroke-width="9"/>
+        <path d="M58.1 67.5 A34 34 0 0 1 30.5 39.9" stroke-width="9" opacity="0.42"/>
+      </g>
+      ${plane(p, 63, 35, 0.5, 45, 9)}`
+  },
+  {
+    num: '5B', name: 'MELDUNEK',
+    note: 'Fale skierowane <b>w dół</b> — maszyna melduje pozycję do ziemi. Kierunek odwrotny niż w idiomie Wi-Fi, więc znak nie wpada w tamtą rodzinę mimo tego samego budulca.',
+    glyph: p => `
+      <g fill="none" stroke="${p.c}" stroke-linecap="round" stroke-width="9">
+        <path d="M39 69.6 A26 26 0 0 1 24.9 52.7"/>
+        <path d="M75.1 52.7 A26 26 0 0 1 61 69.6"/>
+      </g>
+      ${plane(p, 50, 41, 0.5, 0, 9)}`
+  },
+  {
+    num: '5C', name: 'PING',
+    note: 'Symetria pełna — dwie fale flankują maszynę. <b>Najlepiej znosi zejście do 28 px</b>, ale jako jedyny w rodzinie nie mówi nic o kierunku lotu.',
+    glyph: p => `
+      <g fill="none" stroke="${p.c}" stroke-linecap="round" stroke-width="9">
+        <path d="M23.9 47 A27 27 0 0 1 38.6 29.5"/>
+        <path d="M61.4 29.5 A27 27 0 0 1 76.1 47"/>
+      </g>
+      ${plane(p, 50, 56, 0.52, 0, 9)}`
+  }
+];
+
+const HYBRID = [
+  {
+    num: 'H1', name: 'PLAN I WYKONANIE',
+    note: 'Jeden ślad, trzy stany: <b>kreska przerywana</b> = odcinek zarezerwowany, <b>ciągła</b> = przelatany, <b>koralik</b> = pozycja teraz. Rezerwacja i monitoring w jednym geście, bez dokładania elementów.',
+    glyph: p => `
+      <path d="M24 73 C34 73 41 66 47 55" fill="none" stroke="${p.m}" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 12"/>
+      <path d="M47 55 C52 45 57 36 64 31" fill="none" stroke="${p.c}" stroke-width="9.5" stroke-linecap="round"/>
+      <circle cx="68" cy="27" r="8.5" fill="${p.c}"/>`
+  },
+  {
+    num: 'H2', name: 'SLOT · PLAN I WYKONANIE',
+    note: 'Ta sama myśl w układzie 04: <b>zarezerwowane okno rozpisane kropkami</b>, z którego wychodzi ciągły start. Paski grafiku zostają jako kontekst dnia.',
+    glyph: p => `
+      <rect x="24" y="27" width="38" height="9" rx="4.5" fill="${p.m}"/>
+      <rect x="24" y="66" width="30" height="9" rx="4.5" fill="${p.m}"/>
+      <path d="M28.5 50.5 H46" fill="none" stroke="${p.c}" stroke-width="9.5" stroke-linecap="round" stroke-dasharray="1 13"/>
+      <path d="M52 50.5 H57 C66 50.5 68 43 69 36" fill="none" stroke="${p.c}" stroke-width="9.5" stroke-linecap="round"/>
+      <circle cx="71" cy="30" r="8.5" fill="${p.c}"/>`
+  }
+];
+
+/* Oryginały z rundy 1 — tylko do paska porównawczego. */
+const REF = [
+  {
+    num: '04', name: 'SLOT · runda 1',
+    glyph: p => `
+      <rect x="24" y="26" width="38" height="9" rx="4.5" fill="${p.m}"/>
+      <rect x="24" y="66" width="30" height="9" rx="4.5" fill="${p.m}"/>
+      <path d="M28.5 50.5 H55 C65 50.5 67 43 68 36" fill="none" stroke="${p.c}" stroke-width="9.5" stroke-linecap="round"/>
+      <circle cx="70" cy="30" r="8.5" fill="${p.c}"/>`
+  },
+  {
+    num: '05', name: 'SYGNAŁ · runda 1',
+    glyph: p => `
+      <g fill="none" stroke="${p.c}" stroke-linecap="round">
+        <path d="M55.6 67.5 A26 26 0 0 0 34.5 46.4" stroke-width="9"/>
+        <path d="M71.4 64.7 A42 42 0 0 0 37.3 30.6" stroke-width="9" opacity="0.45"/>
+      </g>
+      ${plane(p, 30, 71, 0.46, 45, 9)}`
+  }
+];
+
+let uid = 0;
+const svg = (c, mode) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${c.glyph(PALETTES[mode], ++uid)}</svg>`;
+
+function tile(c, mode, size, big) {
+  const safe = big ? '<div class="safe"><div class="circle"></div><div class="squircle"></div></div>' : '';
+  return `<div class="tile ${mode} ${big ? 'big' : ''}" style="width:${size}px;height:${size}px">${svg(c, mode)}${safe}</div>`;
+}
+const sizeItem = (c, mode, size, caption) =>
+  `<div class="size-item">${tile(c, mode, size, false)}<div class="tile-caption">${caption}</div></div>`;
+
+const card = c => `
+  <div class="concept">
+    <div>
+      ${tile(c, 'dark', 140, true)}
+      <div class="tile-caption">główna · 1024 px</div>
+    </div>
+    <div>
+      <div class="concept-id"><span class="num">${c.num}</span><span class="name">${c.name}</span></div>
+      <div class="sizes">
+        ${sizeItem(c, 'dark', 48, '48')}
+        ${sizeItem(c, 'dark', 32, '32')}
+        ${sizeItem(c, 'dark', 26, '26')}
+        ${sizeItem(c, 'light', 40, 'jasne')}
+        ${sizeItem(c, 'mono', 40, 'mono')}
+      </div>
+      <div class="note">${c.note}</div>
+    </div>
+  </div>`;
+
+document.getElementById('family-slot').innerHTML = SLOT.map(card).join('');
+document.getElementById('family-signal').innerHTML = SIGNAL.map(card).join('');
+document.getElementById('family-hybrid').innerHTML = HYBRID.map(card).join('');
+
+document.getElementById('launcher').innerHTML =
+  [...SLOT, ...SIGNAL, ...HYBRID].map(c => `
+    <div class="app">${tile(c, 'dark', 60, false)}<div class="label">${c.num} ${c.name}</div></div>`).join('') +
+  REF.map(c => `
+    <div class="app ref">${tile(c, 'dark', 60, false)}<div class="label">${c.name}</div></div>`).join('');
+
+const btn = document.getElementById('btn-safe');
+btn.addEventListener('click', () => {
+  document.body.classList.toggle('show-safe');
+  btn.classList.toggle('on');
+});
+</script>
+
+</body>
+</html>

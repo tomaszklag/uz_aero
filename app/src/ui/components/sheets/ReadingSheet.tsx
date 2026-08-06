@@ -19,7 +19,7 @@
  * wartość to cztery cyfry, które maska składa w „HH:MM".
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { maskTimeUtcInput } from '../../format';
@@ -95,31 +95,13 @@ export function ReadingSheet({
     start: 0,
     end: initialText.length,
   });
-  const input = useRef<TextInput>(null);
-
-  /**
-   * Klawiatura ma być na ekranie razem z arkuszem, bez dodatkowego tapnięcia w pole
-   * (zgłoszenie z urządzenia, issue #12: arkusz godziny meldunku otwierał się „martwy").
-   *
-   * Fokus ustawiamy sami, nie przez `autoFocus`: w `Modal` na Androidzie autofokus bywa
-   * gubiony, bo pole montuje się, zanim okno modalne skończy animację wejścia. Główną
-   * próbę odpalamy z `Modal.onShow` — dopiero wtedy okno przyjmuje fokus i `focus()`
-   * naprawdę podnosi klawiaturę. Zwłoka 150 ms zostaje jako zapas na wypadek, gdyby
-   * `onShow` nie doszło; drugi `focus()` na zogniskowanym polu nic nie robi.
-   */
-  const focusInput = useCallback(() => {
-    input.current?.focus();
-  }, []);
-
   // Każde otwarcie zaczyna od aktualnej wartości — arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
     if (!visible) return;
     setText(initialText);
     // Cała wartość zaznaczona: pierwszy wpis nadpisuje odczyt, zamiast dopisywać się.
     setSelection({ start: 0, end: initialText.length });
-    const id = setTimeout(focusInput, 150);
-    return () => clearTimeout(id);
-  }, [visible, initialText, focusInput]);
+  }, [visible, initialText]);
 
   const change = useCallback(
     (raw: string) => {
@@ -150,7 +132,6 @@ export function ReadingSheet({
           : (warning ?? undefined)
       }
       warningTone={parsed == null ? 'red' : 'amber'}
-      onShow={focusInput}
       confirmLabel="POTWIERDŹ"
       onConfirm={() => {
         if (parsed != null) onConfirm(parsed);
@@ -171,7 +152,7 @@ export function ReadingSheet({
         ]}
       >
         <TextInput
-          ref={input}
+          autoFocus
           value={text}
           onChangeText={change}
           keyboardType={KEYBOARD_TYPE[keyboard]}

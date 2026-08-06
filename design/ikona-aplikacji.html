@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — Ikona aplikacji · warianty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .wrap { width: 100%; max-width: 1080px; display: flex; flex-direction: column; gap: 28px; }
+
+  .canvas-label {
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: baseline; gap: 20px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--border);
+  }
+  .film-strip { font-family: var(--font-display); font-size: 34px; letter-spacing: 3px; line-height: 1; }
+  .slug { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 18px; }
+  .canvas-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; }
+
+  .brief { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+  .panel h3 { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; font-weight: 400; margin-bottom: 10px; }
+  .panel p { font-size: 13px; line-height: 1.65; color: var(--text-secondary); }
+  .panel p + p { margin-top: 8px; }
+  .panel b { color: var(--text-primary); font-weight: 600; }
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  .checklist li { font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); padding-left: 20px; position: relative; }
+  .checklist li::before { content: '▸'; position: absolute; left: 0; color: var(--green); }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .toggle {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+    background: var(--surface-raised); border: 1px solid var(--border-strong); color: var(--text-secondary);
+    border-radius: 999px; padding: 7px 14px; cursor: pointer; transition: all .15s;
+  }
+  .toggle:hover { color: var(--text-primary); border-color: var(--text-muted); }
+  .toggle.on { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
+  .toolbar .hint { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: .5px; }
+
+  .concept {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; display: grid; grid-template-columns: 200px 1fr 250px; gap: 22px; align-items: start;
+  }
+  .concept + .concept { margin-top: 0; }
+  .concepts { display: flex; flex-direction: column; gap: 16px; }
+
+  .concept-id {
+    display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px;
+  }
+  .concept-id .num { font-family: var(--font-mono); font-size: 11px; color: var(--green); background: var(--green-muted); border: 1px solid var(--green-border); border-radius: 6px; padding: 3px 8px; letter-spacing: 1px; }
+  .concept-id .name { font-family: var(--font-display); font-size: 24px; letter-spacing: 2.5px; line-height: 1; }
+
+  /* --- kafle ikon --- */
+  .tile { border-radius: 23%; position: relative; overflow: hidden; flex-shrink: 0; display: block; }
+  .tile svg { display: block; width: 100%; height: 100%; }
+  .tile.dark { background: linear-gradient(155deg, #1C201D 0%, #0D0D0D 62%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 10px 24px rgba(0,0,0,.5); }
+  .tile.light { background: linear-gradient(155deg, #FFFFFF 0%, #E7EDE8 100%); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.07), 0 10px 24px rgba(0,0,0,.45); }
+  .tile.mono { background: #2B2F2C; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+
+  /* strefa bezpieczna adaptive icon: 66% średnicy = to, co launcher gwarantuje */
+  .tile .safe { position: absolute; inset: 0; display: none; pointer-events: none; }
+  body.show-safe .tile.big .safe { display: block; }
+  .safe .circle { position: absolute; left: 17%; top: 17%; width: 66%; height: 66%; border-radius: 50%; border: 1px dashed rgba(243,156,18,.65); }
+  .safe .squircle { position: absolute; left: 12%; top: 12%; width: 76%; height: 76%; border-radius: 26%; border: 1px dashed rgba(52,152,219,.5); }
+
+  .big { width: 168px; height: 168px; }
+  .tile-caption { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-muted); letter-spacing: 1px; text-align: center; margin-top: 7px; text-transform: uppercase; }
+
+  .sizes { display: flex; flex-direction: column; gap: 16px; }
+  .size-row { display: flex; align-items: flex-end; gap: 16px; }
+  .size-item { display: flex; flex-direction: column; align-items: center; }
+  .row-label { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-secondary); letter-spacing: 1.5px; text-transform: uppercase; width: 92px; flex-shrink: 0; padding-bottom: 6px; }
+
+  .notes { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); display: flex; flex-direction: column; gap: 10px; }
+  .notes .lead { color: var(--text-primary); font-size: 13px; }
+  .notes .risk { color: var(--amber); font-size: 12px; }
+  .notes .risk::before { content: 'Ryzyko · '; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; opacity: .8; }
+  .scores { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+  .score { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); letter-spacing: .5px; text-transform: uppercase; }
+  .dots { display: flex; gap: 4px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); display: block; }
+  .dots i.on { background: var(--green); }
+
+  /* --- symulacja launchera --- */
+  .launcher {
+    border-radius: 16px; padding: 26px 22px; border: 1px solid var(--border);
+    background:
+      radial-gradient(ellipse 60% 60% at 20% 10%, rgba(52,152,219,.20), transparent 60%),
+      radial-gradient(ellipse 50% 50% at 85% 80%, rgba(46,204,113,.14), transparent 60%),
+      linear-gradient(160deg, #171A1E, #0A0B0D);
+  }
+  .launcher-grid { display: flex; gap: 26px; justify-content: center; flex-wrap: wrap; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 76px; }
+  .app .label { font-size: 10.5px; color: rgba(255,255,255,.82); letter-spacing: .2px; text-align: center; }
+  .strip-title { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; text-align: center; }
+
+  .nav-strip { width:100%; max-width:1080px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+  footer { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: 1px; text-align: center; }
+
+  @media (max-width: 980px) {
+    .concept { grid-template-columns: 1fr; }
+    .brief { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="canvas-label">
+    <div class="film-strip">IKONA</div>
+    <div class="slug">ikona-aplikacji.html · propozycja</div>
+    <div class="canvas-meta">6 wariantów · do wyboru</div>
+  </div>
+
+  <div class="brief">
+    <div class="panel">
+      <h3>ZAŁOŻENIE</h3>
+      <p>Ikona ma unieść <b>dwa znaczenia naraz</b>: <b>monitoring lotu</b> (co się dzieje teraz, ślad, czas) i <b>rezerwację</b> (slot w grafiku, plan przed lotem). Docelowy produkt wychodzi poza UZ Aero, więc znak jest <b>neutralny nazwowo</b> — bez liter, bez skrótu, bez godła.</p>
+      <p>Dlatego odpada też obecna ikona z szablonu Expo (niebieski szewron „A”) — to placeholder, nie znak produktu.</p>
+      <p>Kolor bazowy: <b>--green #2ECC71</b> na tle <b>--bg #0D0D0D</b>, zgodnie z design systemem. Ikona jest dark-first, ale każdy wariant ma też wersję na jasnym tle i monochromatyczną.</p>
+    </div>
+    <div class="panel">
+      <h3>WARUNKI BRZEGOWE</h3>
+      <ul class="checklist">
+        <li>Czytelna przy <b>48 px</b> (launcher) i <b>28 px</b> (pasek statusu / powiadomienie foreground service)</li>
+        <li>Android adaptive icon: treść mieści się w <b>kole 66%</b> — reszta bywa przycięta maską launchera</li>
+        <li>Osobna warstwa <b>monochrome</b> (Material You / themed icons) — znak musi działać w jednym kolorze</li>
+        <li>Kształty grube, bez cienkich włosków i bez tekstu</li>
+        <li>Sylwetka odróżnialna od sąsiadów na ekranie: nie kolejny „samolocik z linii lotniczej”</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="toggle" id="btn-safe">Strefa bezpieczna Androida</button>
+    <span class="hint">amber = koło 66% (gwarantowane) · blue = typowa maska 76%</span>
+  </div>
+
+  <div class="concepts" id="concepts"></div>
+
+  <div class="launcher">
+    <div class="strip-title">Ekran główny — 6 wariantów obok siebie, 60 px</div>
+    <div class="launcher-grid" id="launcher"></div>
+  </div>
+
+  <div class="panel">
+    <h3>REKOMENDACJA</h3>
+    <p><b>01 ŚLAD</b> jako znak wiodący, jeśli sercem produktu jest monitoring: najprostsza sylwetka, jedyna czytelna jeszcze przy 28 px, świetnie się animuje na splashu (ślad rysuje się do koralika). <b>04 SLOT</b>, jeśli rezerwacja ma równy status co lot — to jedyny wariant, który dosłownie pokazuje oba: pasek w grafiku, z którego znak startuje w górę.</p>
+    <p><b>02 DELTA</b> to opcja bezpieczna i najbardziej „lotnicza”, ale też najbardziej zajęta przez inne aplikacje. <b>03 / 05 / 06</b> są mocniejsze charakterem, ale każdy niesie ryzyko pomyłki opisane przy wariancie.</p>
+    <p style="margin-top:12px">Po wyborze: eksport <b>icon.png 1024×1024</b> (znak ~64% kadru), <b>android-icon-foreground.png</b> (ten sam znak w skali ~0,75, żeby zmieścić się w kole 66%), <b>android-icon-background.png</b> (płaskie #0D0D0D), <b>android-icon-monochrome.png</b> i <b>favicon.png</b> — komplet, którego oczekuje <code>app.json</code>.</p>
+  </div>
+
+</div>
+
+<div class="nav-strip">
+  <a href="index.html">← INDEX</a><span>·</span>
+  <a href="ikona-aplikacji.html" class="active">RUNDA 1</a><span>·</span>
+  <a href="ikona-aplikacji-2.html">RUNDA 2</a><span>·</span>
+  <a href="ikona-aplikacji-3.html">RUNDA 3</a><span>·</span>
+  <a href="ikona-aplikacji-4.html">RUNDA 4</a><span>·</span>
+  <a href="ikona-aplikacji-5.html">RUNDA 5</a><span>·</span>
+  <a href="01-splash.html">01-SPLASH</a>
+</div>
+
+<footer>UZ Aero · propozycja znaku — nie jest jeszcze zatwierdzoną specyfikacją</footer>
+
+<script>
+/* Paleta per tło. Każdy glif dostaje ten sam kontrakt kolorów,
+   więc wariant da się obejrzeć w każdym trybie bez przepisywania kształtu. */
+const PALETTES = {
+  dark:  { c: '#2ECC71', m: 'rgba(232,232,232,0.20)', sky: 'rgba(52,152,219,0.42)', ink: '#0D0D0D' },
+  light: { c: '#1FA85C', m: 'rgba(13,13,13,0.16)',    sky: 'rgba(52,152,219,0.55)', ink: '#FFFFFF' },
+  mono:  { c: '#E8E8E8', m: 'rgba(232,232,232,0.30)', sky: 'rgba(232,232,232,0.20)', ink: '#2B2F2C' }
+};
+
+let uid = 0;
+
+const CONCEPTS = [
+  {
+    num: '01', name: 'ŚLAD',
+    lead: 'Wznoszący ślad zakończony koralikiem — pozycja teraz. Cała historia lotu plus punkt „jestem tutaj” w jednym gestcie.',
+    risk: 'sam ślad nie mówi nic o rezerwacji — musi ją nieść nazwa i pierwszy ekran.',
+    scores: { monitoring: 3, rezerwacja: 1, male: 3, odrebnosc: 3 },
+    glyph: p => `
+      <path d="M25 74 C38 74 45 62 52 47 C56 38 60 32 66 28" fill="none" stroke="${p.c}" stroke-width="9.5" stroke-linecap="round"/>
+      <circle cx="70" cy="25" r="8.5" fill="${p.c}"/>`
+  },
+  {
+    num: '02', name: 'DELTA',
+    lead: 'Płatowiec widziany z góry, sprowadzony do jednej bryły. Znak uniwersalny — czyta go każdy, w każdej kulturze, od razu.',
+    risk: 'najbardziej wyeksploatowany kształt w kategorii; na ekranie pełnym aplikacji podróżniczych łatwo się zlewa.',
+    scores: { monitoring: 2, rezerwacja: 1, male: 3, odrebnosc: 1 },
+    glyph: p => `
+      <path d="M50 22 L75 75 L50 58 L25 75 Z" fill="${p.c}" stroke="${p.c}" stroke-width="6.5" stroke-linejoin="round"/>`
+  },
+  {
+    num: '03', name: 'KARTA',
+    lead: 'Rezerwacja jako karta pokładowa: pełna bryła z płatowcem wyciętym w środku. Jedyny znak w zestawie zbudowany z masy, nie z kreski — na ekranie pełnym konturów wybija się od razu.',
+    risk: 'najmniej „lotniczy” z całej szóstki dopóki nie zobaczy się wycięcia; wycięcie pokazuje warstwę tła, więc na Androidzie wymaga poprawnie ustawionego koloru backgroundu.',
+    scores: { monitoring: 1, rezerwacja: 3, male: 3, odrebnosc: 2 },
+    glyph: (p, id) => `
+      <mask id="k${id}">
+        <rect x="0" y="0" width="100" height="100" fill="#fff"/>
+        <g transform="translate(50 50) scale(0.52) translate(-50 -48.5)">
+          <path d="M50 22 L75 75 L50 58 L25 75 Z" fill="#000" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+        </g>
+        <circle cx="17" cy="50" r="6" fill="#000"/>
+        <circle cx="83" cy="50" r="6" fill="#000"/>
+      </mask>
+      <rect x="17" y="29" width="66" height="42" rx="12" fill="${p.c}" mask="url(#k${id})"/>`
+  },
+  {
+    num: '04', name: 'SLOT',
+    lead: 'Grafik rezerwacji: dwa wyszarzone paski i jeden — twój — który zamiast się skończyć, startuje w górę i staje się śladem lotu.',
+    risk: 'najwięcej detalu z całej szóstki; przy 28 px paski zlewają się w blok, zostaje sam ślad.',
+    scores: { monitoring: 3, rezerwacja: 3, male: 2, odrebnosc: 3 },
+    glyph: p => `
+      <rect x="24" y="26" width="38" height="9" rx="4.5" fill="${p.m}"/>
+      <rect x="24" y="66" width="30" height="9" rx="4.5" fill="${p.m}"/>
+      <path d="M28.5 50.5 H55 C65 50.5 67 43 68 36" fill="none" stroke="${p.c}" stroke-width="9.5" stroke-linecap="round"/>
+      <circle cx="70" cy="30" r="8.5" fill="${p.c}"/>`
+  },
+  {
+    num: '05', name: 'SYGNAŁ',
+    lead: 'Samolot nadający pozycję — dwie fale rozchodzące się od maszyny. Najdosłowniejszy zapis słowa „monitoring”, żywy i kierunkowy.',
+    risk: 'rodzina kształtów zajęta przez Wi-Fi, podcasty i RSS; bez płatowca w rogu znak traci lotniczość.',
+    scores: { monitoring: 3, rezerwacja: 1, male: 2, odrebnosc: 2 },
+    glyph: p => `
+      <g fill="none" stroke="${p.c}" stroke-linecap="round">
+        <path d="M55.6 67.5 A26 26 0 0 0 34.5 46.4" stroke-width="9"/>
+        <path d="M71.4 64.7 A42 42 0 0 0 37.3 30.6" stroke-width="9" opacity="0.45"/>
+      </g>
+      <g transform="translate(30 71) rotate(45) scale(0.46) translate(-50 -48.5)">
+        <path d="M50 22 L75 75 L50 58 L25 75 Z" fill="${p.c}" stroke="${p.c}" stroke-width="9" stroke-linejoin="round"/>
+      </g>`
+  },
+  {
+    num: '06', name: 'HORYZONT',
+    lead: 'Sztuczny horyzont z sylwetką skrzydeł — przyrząd, nie ilustracja. Mówi „lot w toku, patrzysz na wskazanie”, a nie „podróże”.',
+    risk: 'przy małych rozmiarach koło z przekątną czyta się jak wskaźnik naładowania albo faza księżyca.',
+    scores: { monitoring: 3, rezerwacja: 1, male: 2, odrebnosc: 3 },
+    glyph: (p, id) => `
+      <defs><clipPath id="hz${id}"><circle cx="50" cy="50" r="31"/></clipPath></defs>
+      <g clip-path="url(#hz${id})">
+        <circle cx="50" cy="50" r="31" fill="${p.sky}"/>
+        <path d="M8 57 L92 33 L92 88 L8 88 Z" fill="${p.c}"/>
+      </g>
+      <path d="M30 51 H42 M58 51 H70" stroke="${p.ink}" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="50" cy="51" r="4.5" fill="${p.ink}"/>`
+  }
+];
+
+function svg(concept, mode) {
+  const id = ++uid;
+  const body = concept.glyph(PALETTES[mode], id);
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${body}</svg>`;
+}
+
+function tile(concept, mode, size, big) {
+  const safe = big ? '<div class="safe"><div class="circle"></div><div class="squircle"></div></div>' : '';
+  return `<div class="tile ${mode} ${big ? 'big' : ''}" style="width:${size}px;height:${size}px">${svg(concept, mode)}${safe}</div>`;
+}
+
+function sizeItem(concept, mode, size, caption) {
+  return `<div class="size-item">${tile(concept, mode, size, false)}<div class="tile-caption">${caption}</div></div>`;
+}
+
+function scoreRow(label, value) {
+  const dots = [1,2,3].map(i => `<i class="${i <= value ? 'on' : ''}"></i>`).join('');
+  return `<div class="score"><span>${label}</span><span class="dots">${dots}</span></div>`;
+}
+
+document.getElementById('concepts').innerHTML = CONCEPTS.map(c => `
+  <div class="concept">
+    <div>
+      <div class="concept-id"><span class="num">${c.num}</span><span class="name">${c.name}</span></div>
+      ${tile(c, 'dark', 168, true)}
+      <div class="tile-caption">iOS / główna · 1024 px</div>
+    </div>
+
+    <div class="sizes">
+      <div class="size-row">
+        <div class="row-label">Launcher</div>
+        ${sizeItem(c, 'dark', 64, '64')}
+        ${sizeItem(c, 'dark', 48, '48')}
+        ${sizeItem(c, 'dark', 36, '36')}
+        ${sizeItem(c, 'dark', 28, '28')}
+      </div>
+      <div class="size-row">
+        <div class="row-label">Jasne tło</div>
+        ${sizeItem(c, 'light', 64, 'tile')}
+        ${sizeItem(c, 'light', 40, '40')}
+        <div class="row-label" style="width:auto;padding-left:14px">Monochrome</div>
+        ${sizeItem(c, 'mono', 64, 'themed')}
+        ${sizeItem(c, 'mono', 28, 'status bar')}
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="lead">${c.lead}</div>
+      <div class="risk">${c.risk}</div>
+      <div class="scores">
+        ${scoreRow('monitoring', c.scores.monitoring)}
+        ${scoreRow('rezerwacja', c.scores.rezerwacja)}
+        ${scoreRow('małe rozmiary', c.scores.male)}
+        ${scoreRow('odrębność', c.scores.odrebnosc)}
+      </div>
+    </div>
+  </div>
+`).join('');
+
+document.getElementById('launcher').innerHTML = CONCEPTS.map(c => `
+  <div class="app">
+    ${tile(c, 'dark', 60, false)}
+    <div class="label">${c.num} ${c.name}</div>
+  </div>
+`).join('');
+
+const btn = document.getElementById('btn-safe');
+btn.addEventListener('click', () => {
+  document.body.classList.toggle('show-safe');
+  btn.classList.toggle('on');
+});
+</script>
+
+</body>
+</html>

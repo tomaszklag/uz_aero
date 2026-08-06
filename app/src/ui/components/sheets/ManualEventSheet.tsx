@@ -42,6 +42,11 @@ export interface ManualEventSheetProps {
   now: number;
   /** Sformatowanie czasu zdarzenia do wyświetlenia (UTC). */
   formatTime: (t: number) => string;
+  /**
+   * Ten sam czas w strefie telefonu — pokazywany drobnym drukiem pod zegarem UTC.
+   * Formatuje WOŁAJĄCY, tak samo jak UTC: arkusz nie zna stref, zna tylko napisy.
+   */
+  formatLocalTime: (t: number) => string;
   busy?: boolean;
   onConfirm: (type: ManualEventType, at: number) => void;
   onCancel: () => void;
@@ -60,6 +65,7 @@ export function ManualEventSheet({
   initialType,
   now,
   formatTime,
+  formatLocalTime,
   busy = false,
   onConfirm,
   onCancel,
@@ -112,53 +118,17 @@ export function ManualEventSheet({
         >
           <View style={[styles.handle, { backgroundColor: theme.colors.borderStrong }]} />
 
+          {/* TYTUŁ MÓWI, CO SIĘ ZAPISUJE — bo typ nie jest już do wyboru (issue #19).
+              Arkusz otwiera się zawsze z konkretnego przycisku („Take off" albo
+              „Landing"), więc siatka wyboru pytała pilota o rzecz, którą właśnie
+              zadeklarował tapnięciem — i pozwalała zapisać coś innego, niż zamierzał. */}
           <AppText variant="display" style={[styles.title, { color: amber.accent }]}>
-            ZAPISZ RĘCZNIE
+            {type === 'takeoff' ? 'ZAPISZ START' : 'ZAPISZ LĄDOWANIE'}
           </AppText>
           <AppText variant="body" tone="secondary" style={styles.lead}>
             GPS nie wykrył zdarzenia albo wykrył je za późno. Zapisz je sam — czas możesz
             cofnąć, jeśli orientujesz się po fakcie.
           </AppText>
-
-          {/* Wybór typu — duże karty, bo to decyzja podejmowana jednym spojrzeniem. */}
-          <View style={styles.typeGrid}>
-            {TYPES.map((option) => {
-              const selected = option.value === type;
-              return (
-                <Pressable
-                  key={option.value}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  onPress={() => setType(option.value)}
-                  style={({ pressed }) => [
-                    styles.typeCard,
-                    {
-                      borderRadius: theme.radius.btn,
-                      borderWidth: theme.borderWidth,
-                      borderColor: selected ? amber.border : theme.colors.border,
-                      backgroundColor: selected ? amber.muted : theme.colors.surface,
-                      opacity: pressed ? 0.75 : 1,
-                    },
-                  ]}
-                >
-                  <Icon
-                    name={option.icon}
-                    size={20}
-                    color={selected ? amber.accent : theme.colors.textSecondary}
-                  />
-                  <AppText
-                    variant="display"
-                    style={[
-                      styles.typeLabel,
-                      { color: selected ? amber.accent : theme.colors.textSecondary },
-                    ]}
-                  >
-                    {option.label}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </View>
 
           {/* Czas — kroki minutowe, cel 46 px (rękawice). */}
           <View
@@ -204,6 +174,15 @@ export function ManualEventSheet({
               />
             </View>
 
+            {/* Czas lokalny drobnym drukiem POD zegarem (issue #19). Rejestr jedzie
+                w UTC i tak zostaje — ale pilot patrzy na zegarek na ręce, a ten pokazuje
+                LT. Bez tej linii przeliczał w głowie, żeby sprawdzić, czy „08:14" to
+                rzeczywiście chwila, którą pamięta. Drugorzędna wartość, drugorzędny
+                stopień pisma (`CLAUDE.md`: LT tylko jako wartość drugorzędna). */}
+            <AppText variant="mono" tone="muted" style={styles.local}>
+              {formatLocalTime(at)} LT
+            </AppText>
+
             <AppText variant="mono" style={[styles.delta, { color: amber.accent }]}>
               {minutesAgo === 0
                 ? 'teraz'
@@ -217,7 +196,8 @@ export function ManualEventSheet({
             icon="info"
             text={
               'Wpis zostanie oznaczony jako ręczny — w statystykach i arkuszu widać, ' +
-              'które zdarzenia pochodzą z GPS, a które od pilota.'
+              'które zdarzenia pochodzą z GPS, a które od pilota. Zapis jest lokalny: ' +
+              'działa bez zasięgu i wyśle się sam.'
             }
             collapsedLabel="Wpis ręczny — co to znaczy?"
             dismissed={eduDismissed}
@@ -245,7 +225,6 @@ export function ManualEventSheet({
             />
           </View>
 
-          <InlineNote icon="offline" tone="amber" text="Zapis lokalny — działa bez zasięgu" />
         </View>
       </View>
     </Modal>
@@ -313,5 +292,6 @@ const styles = StyleSheet.create({
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   // 46 px — ten sam próg dla rękawic co w `CounterRow` i `Stepper`.
   minuteButton: { width: 66, height: 46, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  local: { fontSize: 11, letterSpacing: 1, textAlign: 'center' },
   delta: { fontSize: 10, letterSpacing: 0.5, textAlign: 'center', minHeight: 14 },
 });

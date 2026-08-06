@@ -33,10 +33,12 @@ import type { AuthCommands } from '../application/common/commands/auth.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
 import type { ReferenceQueries } from '../application/mobile/queries/reference.ts';
+import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSuggestions.ts';
 import type { SheetQueries } from '../application/common/queries/sheets.ts';
 import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
 import type { PilotsPort, TokenService, TraceSinkPort } from '../application/common/ports.ts';
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
+import { registerRequestLog } from './requestLog.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
@@ -57,6 +59,7 @@ import { registerAuthRoutes } from './routes/common/auth.ts';
 import { registerEventsRoutes } from './routes/mobile/events.ts';
 import { registerPrefsRoutes } from './routes/mobile/prefs.ts';
 import { registerReferenceRoutes } from './routes/mobile/reference.ts';
+import { registerTaskSuggestionRoutes } from './routes/mobile/taskSuggestions.ts';
 import { registerSheetsRoutes } from './routes/common/sheets.ts';
 import { registerStateRoutes } from './routes/mobile/state.ts';
 import { registerTracesRoutes } from './routes/mobile/traces.ts';
@@ -69,6 +72,11 @@ export interface ServerDeps {
   sheets: SheetQueries;
   traces: TraceSinkPort;
   prefs: PrefsCommands;
+  /**
+   * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) — czysty odczyt
+   * projekcji: oznaczenia klientów CAŁEGO klubu i notatki TEGO pilota.
+   */
+  taskSuggestions: TaskSuggestionQueries;
   tokens: TokenService;
   /**
    * Konta — czytane przy KAŻDYM żądaniu panelu, żeby deaktywacja i odebranie roli
@@ -141,8 +149,21 @@ export interface ServerDeps {
   adminMaintenanceQueries: AdminMaintenanceQueries;
 }
 
-export function buildServer(deps: ServerDeps): FastifyInstance {
+export interface ServerOptions {
+  /**
+   * Dziennik żądań na konsoli (`registerRequestLog`). Domyślnie WŁĄCZONY — serwer klubu
+   * ma być widoczny w oknie, w którym stoi. Testy integracyjne go gaszą: pięćset linii
+   * dziennika na przebieg zakryłoby to, po co się je czyta.
+   */
+  requestLog?: boolean;
+}
+
+export function buildServer(deps: ServerDeps, options: ServerOptions = {}): FastifyInstance {
   const app = Fastify({ logger: false });
+
+  // Przed trasami, żeby dziennik objął także żądania odbite przez strażnika CSRF
+  // i te, które nie trafią w żadną trasę (404 też jest informacją o tym, co się dzieje).
+  if (options.requestLog !== false) registerRequestLog(app);
 
   // Ciasteczka: potrzebuje ich WYŁĄCZNIE sesja panelu, ale wtyczka musi stać przed
   // trasami, bo dokłada `req.cookies` czytane przez `tokenFromRequest`. Bez podpisu
@@ -158,6 +179,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   registerSheetsRoutes(app, deps.sheets, deps.tokens);
   registerTracesRoutes(app, deps.traces, deps.tokens);
   registerPrefsRoutes(app, deps.prefs, deps.tokens);
+  registerTaskSuggestionRoutes(app, deps.taskSuggestions, deps.tokens);
 
   // Panel administracyjny — trasy per zasób, tak samo jak wyżej; prefiks `/admin/api`
   // pilnuje `adminRoute`, żeby nie rozjechał się między plikami.

@@ -40,6 +40,14 @@ export interface SummaryEntry {
   tone?: Tone;
   /** Wartość tekstowa (nazwisko, klient) zamiast liczbowej — mniejszy stopień. */
   text?: boolean;
+  /**
+   * Pozycja na CAŁĄ szerokość, do trzech linii — notatka dnia (issue #14).
+   *
+   * Zdanie pilota nie jest wartością do porównania z sąsiadem, tylko treścią do
+   * przeczytania: w kolumnie o połowie szerokości łamałoby się po dwóch słowach albo
+   * (z `numberOfLines={1}`) ucinało dokładnie tam, gdzie zaczyna się sens.
+   */
+  wide?: boolean;
 }
 
 export interface SummaryGridProps {
@@ -57,14 +65,14 @@ export function SummaryGrid({ entries, style }: SummaryGridProps) {
         const color = entry.tone == null ? theme.colors.textPrimary : c.accent;
 
         return (
-          <View key={entry.key} style={styles.item}>
+          <View key={entry.key} style={[styles.item, entry.wide === true && styles.itemWide]}>
             <AppText variant="mono" tone="muted" style={styles.key}>
               {entry.key}
             </AppText>
             <View style={styles.valueRow}>
               <AppText
                 variant="mono"
-                numberOfLines={1}
+                numberOfLines={entry.wide === true ? 3 : 1}
                 style={{
                   fontFamily: theme.fontFamily.monoBold,
                   fontSize: entry.text === true ? 13 : 16,
@@ -98,6 +106,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   // Dwie kolumny: 50% minus połowa odstępu.
   item: { width: '47.5%', flexGrow: 1, gap: 3 },
+  itemWide: { width: '100%' },
   key: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
   valueRow: { flexDirection: 'row', alignItems: 'baseline', gap: 5 },
   note: { flexShrink: 1, fontSize: 11, letterSpacing: 0.5 },

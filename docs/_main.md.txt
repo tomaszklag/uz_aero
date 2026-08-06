@@ -355,6 +355,11 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 | GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH — wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie z `day_close` **lub** zdarzenia w trakcie dnia, np. tankowanie), `last_sync_at` |
 | POST | `/events` | paczka zdarzeń → `{accepted, duplicates, flags}` |
 | GET | `/sessions/:uuid/sync-status` | wysłane/łącznie, flagi sesji, status i link eksportu |
+| GET | `/me/task-suggestions` | ostatnio używane oznaczenia klientów (z operacją, na której padły) i notatki pilota — podpowiedzi do kroku 2 preflightu (issue #14) |
+
+`/me/task-suggestions` jest jedynym odczytem, który **świadomie nie ma wariantu offline**:
+bez sieci pole działa jak dotąd (pilot wpisuje wartość), znika sama lista. To wygoda,
+a nie dane, których brak zmienia dzień lotny — dlatego nie trzymamy jej też w cache.
 
 Bez pushów — telefon odpytuje przy starcie aplikacji, po każdym opróżnieniu outboxa
 i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ekran 11).
@@ -407,11 +412,11 @@ Typy zdarzeń:
 | Typ | Payload (istotne pola) |
 |-----|------------------------|
 | `session_claim` | tryb przejęcia (wolny / przejęcie online / przejęcie offline) |
-| `preflight_confirm` | trasa, operacja, duty start, odczyt FOB + MH, korekty z powodem |
+| `preflight_confirm` | trasa, operacja, duty start, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14) |
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
 | `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
-| `drop` | numer zrzutu, wysokość (z GPS), **liczba skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm` |
+| `drop` | numer zrzutu, wysokość (z GPS), **liczba skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm`. Możliwy WYŁĄCZNIE w dniu skokowym (`isJumpOperation`) — w kokpicie innej operacji przycisku zrzutu nie ma (issue #19) |
 | `refuel` | przed / dolano / po, wyliczone zużycie |
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |

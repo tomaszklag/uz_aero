@@ -29,6 +29,7 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     departureIcao: 'EPRA',
     arrivalIcao: 'EPRA',
     client: 'SKY CAMP',
+    notes: null,
     mhFormat: 'decimal',
     dutyStart: at(5, 45),
     dutyEnd: at(13, 20),

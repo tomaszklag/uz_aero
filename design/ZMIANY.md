@@ -1086,3 +1086,277 @@ na stałe per pilot. Zdanie „wpis zastępuje podpowiedź" usunięte.
 > wpisana wartość i tak jest tą, którą widać. Baner nadal nie pojawia się, gdy nie było
 > czego podstawić (pierwszy dzień pilota, pierwszy dzień na tym samolocie): opisywałby
 > wtedy mechanizm, którego na ekranie nie widać.
+
+---
+
+## 2026-08-06 — Krok 2 preflightu: arkusze zamiast pól (issue #14)
+
+Punkt wyjścia jest jednym zdaniem ze zgłoszenia na urządzeniu: *„trochę nie widać, że tam
+jest przeszukiwanie"*. Pole tekstowe z czterema kratkami wygląda jak miejsce na przepisanie
+kodu z pamięci — niczym nie zdradza, że można wpisać „zielona" i dostać lotnisko z pasem
+i elewacją. Odpowiedzią nie jest kolejna adnotacja pod polem, tylko zmiana kształtu kroku 2:
+**pola przestały być inputami**.
+
+**02e-preflight-zadanie, 02f-preflight-lotnisko** — każde pole formularza jest teraz
+**przyciskiem z wartością**, a wpisywanie dzieje się w **arkuszu wysuwanym od dołu**
+(`.modal-overlay` / `.modal-sheet`, wzorzec z `02b`). Ikona po prawej mówi, co się stanie
+po tapnięciu: **lupa** przy trasie, **ołówek** przy polach tekstowych. Pole puste pokazuje
+przygaszony napis zastępczy („Wybierz lotnisko", „Bez oznaczenia", „Bez notatki").
+> Powód: ten sam ruch, który krok 1 zrobił już z godziną meldunku — pole w formularzu jest
+> przyciskiem, a wpisywanie mieszka w arkuszu. Zysk jest podwójny. Po pierwsze, arkusz
+> otwiera się razem z klawiaturą i listą, więc **szukanie jest pierwszą rzeczą, którą widać**,
+> zamiast być ukrytą własnością pola. Po drugie, formularz przestaje wyglądać jak kartka do
+> wypełnienia i czyta się jak podsumowanie — a to jest prawda o tym kroku, bo wszystkie
+> wartości są już podstawione z ostatniego dnia i pilot ma je głównie POTWIERDZIĆ. Lupa
+> zamiast ołówka przy trasie nie jest ozdobnikiem: przy lotnisku pilot nie tyle pisze, ile
+> wybiera z katalogu, i to jest jedyne miejsce na ekranie, gdzie ikona może to powiedzieć.
+
+**02e / 02f** — **rząd potwierdzeń pod trasą znika** („Start: EPZG · Zielona Góra-Babimost
+Airport", „Lądowanie: EPWA · Warsaw Chopin Airport"). Nazwa rozpoznanego lotniska stoi teraz
+**w polu**, obok kodu; w arkuszu — pod polem wpisu, w pełnej długości.
+> Powód: rząd powtarzał kod widoczny wiersz wyżej i odpowiadał na pytanie „czy to na pewno
+> to lotnisko" **po** tym, jak pilot zdążył już pole zamknąć. Nazwa przy kodzie odpowiada
+> na nie w tym samym miejscu, w którym kod widać, a pełne potwierdzenie stoi tam, gdzie
+> zapada decyzja — w arkuszu, przed tapnięciem WYBIERZ. W polu nazwa bywa ucięta
+> wielokropkiem (najdłuższe nazwy katalogu nie mieszczą się obok kodu) i to jest świadomy
+> podział ról: pole ma potwierdzać wybór, arkusz — umożliwiać go.
+
+**02e / 02f** — **podpowiedź pod polem klienta usunięta** („Wiąże zrzuty dnia z klientem —
+trafia do statystyk i arkusza rozliczeniowego").
+> Powód: zdanie opisywało, co się z wartością dzieje PÓŹNIEJ, w miejscu, w którym pilot
+> odpowiada na jedno krótkie pytanie — „dla kogo". Etykieta pola zadaje je już w całości,
+> więc podpowiedź nie dokładała wiedzy, tylko wysokości. To ta sama reguła, którą kierował
+> się przegląd kroku 1: pod polem zostaje wyłącznie to, czego z samego pola nie widać
+> (przy skokach — „Skoki startują i lądują na tym samym lotnisku").
+
+**02e-preflight-zadanie** — **nowe pole „Notatka do dnia"** (opcjonalne), wolny tekst
+o wartości do dwóch linii, pusto = przygaszone „Bez notatki". Wpis w tym samym arkuszu
+tekstowym, co klient, tylko z polem wielolinijkowym i podpowiedziami bez prawej kolumny.
+> Powód: dzień lotny miewa okoliczność, której nie opisze ani rodzaj operacji, ani klient —
+> uczeń pierwszy raz na typie, pokaz dla szkoły, samolot po przeglądzie. Do tej pory takie
+> zdanie lądowało doklejone do oznaczenia klienta albo nigdzie. To jedyne pole preflightu,
+> w którym pilot pisze ZDANIE, a nie kod, i dlatego jako jedyne dostaje wartość łamaną
+> do dwóch linii oraz krój tekstowy zamiast czcionki licznika.
+
+**02e-preflight-zadanie** — dołożone **dwa arkusze** (ukryte, otwierają się tapnięciem
+w pole): `#sheet-airfield` (duże pole wpisu z placeholderem `EPKK albo nazwa`, nazwa
+rozpoznanego kodu, lista „Podpowiedzi", ANULUJ / WYBIERZ) oraz
+`#sheet-client` (pole tekstowe, „Ostatnio używane" z rodzajem operacji po prawej,
+ANULUJ / ZAPISZ). Arkusz notatki to ten sam komponent z polem wielolinijkowym — opisany
+komentarzem, żeby nie mnożyć trzeciego bloku tego samego HTML-a.
+> Powód: mockup ma pokazywać, CO SIĘ OTWIERA, bo od tego zależy cała zmiana — bez arkuszy
+> plik opisywałby pola-przyciski prowadzące donikąd. Rodzaj operacji przy podpowiedzi klienta
+> jest tam z konkretnego powodu: ten sam klient bywa i skokami, i przelotem, więc bez prawej
+> kolumny wiersze listy bywają nierozróżnialne.
+
+**02e-preflight-zadanie** — podpowiedzi klienta i notatki są **świadomie tylko online**:
+bez sieci znika sama lista, a w jej miejsce wchodzi jedno zdanie „Podpowiedzi wymagają
+połączenia — wpisz wartość ręcznie" (mono 9 px, `--text-muted`, bez ambera). Wariant
+opisany komentarzem przy `#sheet-client`.
+> Powód: to jest wyjątek od reguły „dane z serwera mają trzy stany świeżości" i wyjątek
+> celowy. Ta lista składa się z tego, czego klub używał OSTATNIO, więc cache, którego nie
+> mielibyśmy jak unieważnić, podsuwałby wartości nieaktualne — a wartość podsunięta bywa
+> wpisana bez zastanowienia. Brak sieci niczego tu nie blokuje: pole działa dokładnie tak,
+> jak działało przed tą zmianą (wpisujesz i potwierdzasz), więc zdanie o braku podpowiedzi
+> jest informacją, nie ostrzeżeniem — stąd `--text-muted` zamiast ambera. Katalog lotnisk
+> zachowuje się odwrotnie i też z powodu, nie z przypadku: jest wkompilowany w aplikację,
+> więc `#sheet-airfield` nie ma wariantu offline w ogóle.
+
+**02f-preflight-lotnisko** — wariant przebudowany: zamiast listy podpowiedzi wiszącej pod
+wierszem trasy pokazuje **arkusz wyboru lotniska w stanie otwartym** (wpisane „ZIELONA",
+dwa trafienia — EPZG i EPZP). Formularz zostaje pod nakładką: para pól trasy stoi teraz
+**jedno pod drugim** („Start", „Lądowanie", bez strzałki), z pustym polem startu. Slug
+i opis wariantu mówią o arkuszu, nie o liście.
+> Powód: ten wariant zawsze istniał po to, żeby pokazać SZUKANIE — a szukanie przeprowadziło
+> się pod nakładkę, więc plik musiał pójść za nim. Strzałka między kodami odpadła przy okazji
+> i z twardego powodu: odkąd pole niesie w sobie nazwę lotniska, dwa kody nie mieszczą się
+> obok siebie w jednym wierszu. Zapytanie po NAZWIE miejscowości zamiast po trzech literach
+> kodu jest w tym mockupie celowe — to dokładnie ta możliwość, której nie było widać w polu
+> tekstowym i dla której cały arkusz powstał.
+
+**03-preflight-confirm** — nowy wiersz podsumowania **Notatka**, na CAŁĄ szerokość siatki
+(`.summary-item.wide`), do trzech linii, pokazywany tylko wtedy, gdy pilot coś napisał.
+> Powód: podsumowanie ma pokazywać wszystko, co zostanie utrwalone, a notatka jest częścią
+> zapisu dnia. Cała szerokość, bo to zdanie, a nie wartość do porównania z sąsiadem —
+> w kolumnie o połowie szerokości łamałoby się po dwóch słowach. Wiersz nie pojawia się
+> pusty: „Notatka —" zajmowałoby miejsce w siatce po to, żeby powiedzieć, że pilot nic nie
+> napisał.
+
+**02e / 02f — druga tura przeglądu tego samego kroku (uwagi z urządzenia).** Z ekranu
+znikają trzy napisy i wchodzi jedna poprawka układu:
+- nagłówek sekcji `Miejsce skoków` (nad etykietą pola `Lotnisko skoków`),
+- podpowiedź pod polem `Skoki startują i lądują na tym samym lotnisku`,
+- adnotacja `katalog w telefonie` przy nagłówku listy podpowiedzi w arkuszu,
+- nazwa lotniska w polu **ucina się wielokropkiem** zamiast wychodzić poza kontrolkę
+  (`.field-input-main` nie kurczy się, `.field-input-side` ustępuje miejsca).
+> Powód: wszystkie trzy napisy mówiły to, co ekran mówi już kształtem. Nagłówek sekcji
+> i etykieta pola nazywały tę samą rzecz dwa razy — przy JEDNYM polu w sekcji etykieta
+> wystarcza (tak samo zbudowany jest czas meldowania na kroku 1), a `Trasa` wraca tam,
+> gdzie ma co spinać: nad parą „Start" / „Lądowanie". Zdanie o startowaniu i lądowaniu
+> na tym samym lotnisku tłumaczyło pilotowi jego własną robotę. Adnotacja o katalogu
+> odpowiadała na pytanie PROGRAMISTY („skąd te dane"), a nie pilota — że lista nie zniknie
+> bez zasięgu, przekona się w chwili, w której nie zniknie. Ucinanie nazwy to już nie
+> redakcja, tylko błąd układu: najdłuższe nazwy katalogu („Kraków John Paul II
+> International Airport") rozpychały wiersz i wychodziły poza pole.
+
+**02e / 02f — arkusz lotniska przerobiony na WYSZUKIWARKĘ** (trzecia uwaga z tej samej tury).
+Znika linia z nazwą pod polem wpisu i przycisk `WYBIERZ`; pole startuje **puste**; tapnięcie
+w wiersz listy JEST wyborem (arkusz zamyka się i wraca kod); przy pustym wpisie lista
+pokazuje **lotniska najbliżej pilota** z odległością w drugiej linii; kod spoza katalogu
+wchodzi osobnym wierszem („Użyj tego kodu"); pod listą stoi „Wyczyść lotnisko (EPKK)",
+bo trasa jest opcjonalna.
+> Powód: zgłoszenie brzmiało „jak mam coś wybrane, to nie do końca wiadomo, bo pod spodem
+> wyświetlają się podpowiedzi" — i to jest opis stanu, który sam sobie przeczył. Arkusz
+> udawał formularz (pole + potwierdzenie), a miał być wyszukiwarką: jedno pytanie, jedna
+> lista, wybór przez tapnięcie. Nazwa pod polem powtarzała to, co stoi w wierszu listy,
+> czyli tam, gdzie pilot patrzy, wybierając; `WYBIERZ` stałby obok pozycji, którą pilot
+> właśnie tapnął, i pytał o zgodę na to, co już zrobił. Pole startuje puste, bo
+> wyszukiwarkę otwiera się po to, żeby coś ZMIENIĆ — poprzednia wartość i tak stoi
+> w formularzu pod arkuszem i zostaje po „ANULUJ".
+> Lista „najbliżej Ciebie" odpowiada na pytanie, które puste pole zostawiało bez odpowiedzi:
+> pilot stoi zwykle na tym lotnisku, z którego zaraz wystartuje, więc pierwsza pozycja jest
+> zwykle tą właściwą. Bez pozycji (brak fixa; o uprawnienie do lokalizacji prosimy dopiero
+> na kroku 4) zostaje sama zachęta do wpisania — lista lotnisk w pobliżu to wygoda, nie
+> warunek wypełnienia formularza, więc nie prosimy o uprawnienie w tym miejscu.
+> Kod spoza katalogu ma własny wiersz, a nie ciche przyjęcie: świadome tapnięcie odróżnia
+> „lecę do EDDB" od literówki w EPKK.
+
+**02d-preflight-offline** — ta sama redakcja co na 02e: nagłówek sekcji `Miejsce skoków`
+i podpowiedź `Skoki startują i lądują na tym samym lotnisku` usunięte, etykieta pola
+brzmi `Lotnisko skoków`.
+> Powód: wariant czeka na modernizację (całość kroku 2 przeniosła się na 02E), ale
+> powielanie skasowanych napisów w pliku, który nadal opisuje ten sam formularz, robiłoby
+> z niego źródło sprzecznej prawdy.
+
+**02e — arkusz oznaczenia klienta (i notatki) szuka w historii przy każdej literze.**
+Wpis zawęża listę „Ostatnio używane" (nagłówek zmienia się wtedy na „Z historii");
+wpis bez trafień zostawia jedno zdanie „Brak w historii — zapisze się jako nowy wpis".
+> Powód: lista dwudziestu ostatnich wartości jest pomocna, dopóki pilot jej nie przewija —
+> a przewija ją zawsze, gdy szuka konkretnego zlecenia. Wpisanie trzech liter jest szybsze
+> niż czytanie listy, a wpis, którego w historii nie ma, nadal zapisuje się normalnie: to
+> jest pole tekstowe z podpowiedziami, a nie lista zamknięta. Szukanie jest LOKALNE, po
+> liście pobranej raz przy wejściu na ekran — żadnego zapytania na literę, więc działa też
+> wtedy, gdy zasięg zniknie w połowie pisania. Optymalizacja z tej samej uwagi: jeśli
+> krótszy wpis nic nie znalazł, dłuższy nie ma czego znaleźć (dopisanie znaku może wynik
+> tylko zawęzić), więc aplikacja w ogóle nie przechodzi wtedy po liście; skasowanie znaku
+> wychodzi spod tej granicy i szukanie wraca do pracy.
+
+**02e / 02f — pole wpisu przeniesione POD listę** (oba arkusze: lotnisko i oznaczenie
+klienta/notatka), tuż nad rzędem akcji
+(w kodzie: `Sheet` → nowa stopka `footer`, poza obszarem przewijania).
+> Powód: arkusz jest przyklejony do dolnej krawędzi ekranu i rośnie w GÓRĘ, więc jego
+> wysokość zmienia się z każdą literą, która zmienia długość listy wyników. Pole na górze
+> przeskakiwało przy tym w pionie — pisało się do celu, który ucieka pod palcem
+> (zgłoszenie z urządzenia). Na dole pole ma stałą odległość od klawiatury, a lista rośnie
+> i kurczy się nad nim. Kolejność czytania zostaje naturalna — najtrafniejsze na górze
+> listy, bo to porządek odpowiedzi, a nie odległość od kciuka.
+
+**02e / 02f — pole wyszukiwarki: jeden krój i jeden stopień we wszystkich stanach**
+(mono w zwykłej wadze, 16 px; zachęta „Kod ICAO albo nazwa…" różni się tylko KOLOREM).
+> Powód: wersaliki licznika (mono 700, 26 px) sprawiały, że zachęta wyglądała jak wpisana
+> wartość, a nie jak podpowiedź, co się tu robi — stąd lżejsza waga, mniejszy stopień
+> i wielokropek. Kuszące było zmniejszyć sam placeholder, przy pustym polu; byłby to
+> jednak ten sam błąd, przez który pole wyjechało na dół arkusza: zmiana stopnia zmienia
+> WYSOKOŚĆ kontrolki, więc podskakiwałaby przy pierwszej i ostatniej literze. Metryka
+> stała, zmienny wyłącznie kolor (w React Native placeholder i tak dziedziczy po polu
+> wszystko poza kolorem).
+
+**02e — arkusz lotniska pokazuje AKTUALNY WYBÓR na górze** (sekcja „Wybrane": zielone
+obramowanie, zielony kod i ptaszek w kółku). Lista „Najbliżej Ciebie" nie powtarza tej
+pozycji. Przy pisaniu sekcja znika — ale trafienie w wynikach dostaje ten sam ptaszek.
+> Powód: pole wpisu startuje puste (bo wyszukiwarkę otwiera się, żeby coś ZMIENIĆ), więc
+> arkusz otwarty ponownie wyglądał identycznie jak przy pierwszym wyborze — nic nie mówiło,
+> że w polu formularza coś już jest. Pilot musiał zamknąć arkusz, żeby sprawdzić, co
+> wybrał. Znacznik jest KSZTAŁTEM, a nie samym kolorem (ptaszek w kółku, jak na liście
+> samolotów na 02): działa w słońcu, w motywach jasnych i przy daltonizmie.
+
+---
+
+## 2026-08-06 — Kokpit: uwagi z przeglądu (issue #19)
+
+Jedenaście uwag z lotu na urządzeniu, wszystkie o jednym: kokpit świecił kolorami tam,
+gdzie nic się nie działo, i pytał o rzeczy, o które nie musiał pytać. Kod aplikacji jest
+już poprawiony — mockupy nadążają za nim.
+
+**05, 05b, 05g, 05-themes** — przy pasku akcji reguła przycisku „Zrzut": istnieje TYLKO
+w dniu skokowym. Przy przelocie, egzaminie, locie technicznym i „innych" znika całkowicie,
+a nie jest wyszarzony (mockupy opisują dzień skoków, więc przycisk w nich zostaje).
+> Powód: pilot zobaczył zrzut w dniu przelotu i zapytał, kogo miałby wynieść. Wyszarzenie
+> mówi „teraz nie, ale kiedyś tak" — a w dniu przelotu nie będzie kiedy. Czego nie da się
+> zapisać, tego nie ma na ekranie.
+
+**05, 05b, 05g, 05-themes** — przycisk zrzutu bez mikropodpisu „w locie" (w mockupach ten
+podpis nie istniał; reguła zapisana komentarzem, żeby przy okazji nie wrócił). Podpis
+„po LDG" pod STOP zostaje.
+> Powód: że skoczek wychodzi w powietrzu, pilot wie lepiej niż aplikacja — podpis tłumaczył
+> mu jego własną robotę. Podpis pod STOP mówi coś innego i zostaje: nie „dlaczego", tylko
+> KIEDY blokada zniknie.
+
+**05, 05b, 05-themes** (`LAND` → `Landing`), **05a, 05c, 05d** (`Take-off` → `Take off`),
+**05g** (`LAND · RĘCZNIE` → `Landing · ręcznie`) — na przycisku akcji głównej pełne nazwy
+zamiast skrótów. Ta sama redakcja w banerze braku GPS na 05G i w opisach wariantów 05F.
+> Powód: to jedyne miejsce, w którym pilot ZAPISUJE zdarzenie do rejestru — a napis na
+> przycisku o dwóch trzecich szerokości ekranu oszczędzał znaki, których nie brakowało.
+> „T/O" trzeba rozwinąć w głowie; „Take off" czyta się od razu, także w rękawicach
+> i w słońcu.
+
+**05, 05b, 05g, 05-themes** — komórka „Flight time" bez zielonego akcentu i bez
+podświetlenia tła; wartość w kolorze podstawowym, jak „Ground speed" i „Altitude".
+(05C zostaje z przygaszoną wartością — tam zegar stanął na wykrytym lądowaniu i to jest
+osobna informacja, nie wyróżnienie.)
+> Powód: czas lotu to odczyt, a nie stan wymagający uwagi. Wyróżniony bez powodu zabierał
+> ją komórkom, które naprawdę mogą coś zgłosić.
+
+**05a** (przypadek graniczny) **+ komentarz w 05, 05b, 05c, 05d, 05g** — karta „Cykl
+bieżący" pojawia się dopiero, gdy w cyklu zaszło zdarzenie inne niż uruchomienie silnika
+i wiersz „na żywo": kołowanie, start, lądowanie albo zrzut. Zaraz po START ENGINE karty
+nie ma w ogóle.
+> Powód: przez pierwsze minuty cyklu nagłówek ogłaszał „Cykl bieżący · 0 T/O · 0 LDG"
+> i plakietkę „Lot #1" — trzy liczby o niczym nad jednym wierszem. Pusta karta uczy, że
+> na tę część ekranu nie warto patrzeć, a potem to właśnie tam wchodzą zdarzenia lotu.
+
+**04** (pasek paliwa, komentarz z progami) **oraz 05, 05a, 05b, 05c, 05d, 05g, 05-themes**
+(komórka „Fuel on board") — paliwo kolorowane WARUNKOWO: neutralnie przy pełnych
+zbiornikach, amber dopiero przy szacunku ~1h45 lotu (godzina zapasu nad rezerwą 45 min),
+czerwono na samej rezerwie. Warianty ostrzegawcze wyglądają jak dotąd. Ikona paliwa
+zostaje amber zawsze.
+> Powód: kolor ostrzegawczy, który świeci przy pełnych zbiornikach, przestaje być
+> ostrzeżeniem — oko uczy się go pomijać przez cały dzień i nie zauważa go w jedynej
+> chwili, w której miał coś znaczyć. Próg jest w minutach lotu, nie w litrach, bo pilot
+> i tak myśli minutami.
+
+**04, 04b, 05, 05a, 05b, 05c, 05d, 05g, 05-themes** — wiersz „Start engine" w logu traci
+zieleń: ikona, czas i etykieta jak przy „Takeoff" i „Landing". Zielony zostaje WYŁĄCZNIE
+wiersz „na żywo" („Silnik pracuje…", „In flight…", trwające kołowanie). Czerwień
+„Stop engine" i amber zdarzeń naziemnych bez zmian.
+> Powód: zieleń należy do teraźniejszości. Uruchomienie silnika sprzed dwóch godzin nie
+> wymaga uwagi bardziej niż starty i lądowania, które po nim nastąpiły — a świeciło
+> w każdym zamkniętym cyklu. Teraz w logu świeci dokładnie to, co dzieje się TERAZ,
+> a historia czyta się spokojnie. Czerwień i amber zostają, bo to nie wyróżnienia, tylko
+> znaczenia: zamknięcie cyklu i zdarzenie spoza cyklu.
+
+**04, 04b, 05, 05a, 05b, 05c, 05d, 05g, 05-themes** — plakietka zdarzenia ZAKRYWA kreskę
+osi czasu: pod barwę tonu wchodzi krycie powierzchni karty (w 05-themes także w czterech
+nadpisaniach motywów). Wiersz OCZEKIWANY z kreskowaną obwódką zostaje przezroczysty.
+> Powód: tony designu są półprzezroczyste, więc pionowa kreska szyny przechodziła przez
+> środek ikony — na urządzeniu wyglądało to jak rysa na przyrządzie. W wierszu
+> oczekującym prześwit jest celowy: zdarzenia jeszcze nie ma, więc oś biegnie dalej.
+
+**05f** — siatka wyboru TAKEOFF / LANDING usunięta; co się zapisuje, mówi tytuł arkusza
+(„ZAPISZ START"; z przycisku „Landing" ten sam arkusz ma tytuł „ZAPISZ LĄDOWANIE").
+> Powód: arkusz otwiera się zawsze z konkretnego przycisku, więc karty pytały pilota
+> o rzecz, którą przed chwilą zadeklarował tapnięciem — i pozwalały zapisać coś innego,
+> niż zamierzał. Jedno tapnięcie mniej i o jeden sposób na pomyłkę mniej.
+
+**05f** — pod zegarem UTC czas lokalny drobnym drukiem (`16:10 LT` pod `14:10`), idący
+za stepperami. Rejestr zostaje w UTC.
+> Powód: pilot patrzy na zegarek na ręce, a ten pokazuje LT. Bez tej linii przeliczał
+> w głowie, żeby sprawdzić, czy cofnął czas do tej chwili, którą pamięta — a robił to
+> w powietrzu, po zdarzeniu, którego GPS nie wykrył.
+
+**05f** — plakietka „Zapis lokalny — działa bez zasięgu" znika z dołu arkusza; jej treść
+kończy zdanie w niebieskim banerze pouczającym: „Zapis jest lokalny: działa bez zasięgu
+i wyśle się sam.". W 05E analogiczna plakietka zostaje (inny arkusz, poza tą uwagą).
+> Powód: dwa komunikaty o jednym zapisie kazały czytać dwa razy, żeby dowiedzieć się raz.
+> To jest dokończenie tej samej myśli — „co się stanie z moim wpisem" — a nie druga
+> informacja, więc stoi w jednym miejscu.

@@ -291,6 +291,13 @@ export interface SessionRow {
    */
   operation: OperationType | null;
   client: string | null;
+  /**
+   * Notatka pilota do dnia (migracja 20, issue #14) — wolny tekst z `preflight_confirm`.
+   * `null` = dzień bez notatki (stan normalny, nie „nieprzeliczony"). Stoi obok
+   * `client`, bo pochodzi z tego samego zdarzenia i z tej samej projekcji; różni je
+   * ODBIORCA: klienta czyta panel i statystyki, notatkę — podpowiedzi preflightu.
+   */
+  notes: string | null;
   mhStart: number | null;
   mhEnd: number | null;
   fuelStartL: number | null;

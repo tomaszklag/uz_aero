@@ -65,6 +65,10 @@ const REGISTRY = {
   // z „DALEJ".
   takeover: f('maximize-2'),
   edit: f('edit-2'),
+  // Lupa, a nie ołówek, przy polach otwierających arkusz z WYSZUKIWANIEM (trasa, 02E):
+  // zgłoszenie z urządzenia mówiło wprost, że po polu tekstowym „nie widać, że tam jest
+  // przeszukiwanie" — ikona jest pierwszym miejscem, w którym to widać (issue #14).
+  search: f('search'),
   next: f('arrow-right'),
   // Powrót to `chevron-left`, nie `arrow-left` — tak jest w `.back-btn` mockupów.
   // Strzałka jest zarezerwowana dla ruchu naprzód („DALEJ"), żeby dwa kierunki

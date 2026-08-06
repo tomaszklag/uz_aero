@@ -198,6 +198,76 @@ describe('POST /events', () => {
   });
 });
 
+describe('notatka pilota do dnia (issue #14, migracja 20)', () => {
+  /** Dzień z notatką w preflighcie — reszta paczki bez zmian. */
+  const dayWithNotes = (notes: unknown, sessionUuid = 'sess-1') =>
+    day(sessionUuid).map((e) =>
+      e.type === 'preflight_confirm'
+        ? { ...e, payload: { ...(e.payload as object), notes } }
+        : e,
+    );
+
+  const notesOf = async (db: Awaited<ReturnType<typeof testHarness>>['db']) => {
+    const { rows } = await db.query<{ notes: string | null }>(
+      "SELECT notes FROM sessions WHERE session_uuid = 'sess-1'",
+    );
+    return rows[0]?.notes;
+  };
+
+  it('notatka przechodzi przez ingest i ląduje w projekcji', async () => {
+    const { app, db } = await testHarness();
+    const token = await login(app);
+
+    // Wielolinijkowa i z polskimi znakami — to jest wolny tekst pilota, nie kod.
+    const notes = 'Lot z uczniem.\nDrugi zbiornik nie działa — tankować tylko lewy.';
+    expect((await post(app, token, dayWithNotes(notes))).statusCode).toBe(200);
+    expect(await notesOf(db)).toBe(notes);
+  });
+
+  it('BRAK pola = NULL — stare telefony nie wysyłają notatki i mają dalej działać', async () => {
+    // Zgodność wsteczna jest tu całą treścią przypadku: paczka z outboxa telefonu
+    // sprzed tej zmiany nie ma pola `notes`, a odrzucenie jej albo zapisanie pustego
+    // napisu (który wszedłby potem do podpowiedzi) byłoby regresem synca.
+    const { app, db } = await testHarness();
+    const token = await login(app);
+
+    expect((await post(app, token, day())).statusCode).toBe(200);
+    expect(await notesOf(db)).toBe(null);
+  });
+
+  it('jawny `null` też zapisuje NULL — telefon może wyczyścić notatkę', async () => {
+    const { app, db } = await testHarness();
+    const token = await login(app);
+
+    expect((await post(app, token, dayWithNotes(null))).statusCode).toBe(200);
+    expect(await notesOf(db)).toBe(null);
+  });
+
+  it('notatka dłuższa niż 2000 znaków → 400 i ZERO śladu w bazie', async () => {
+    // Limit jest regułą WEJŚCIA (zod na trasie), nie ograniczeniem tabeli: notatka to
+    // akapit o okolicznościach dnia, a nie załącznik. Odrzucamy CAŁĄ paczkę przed
+    // zapisem — częściowe przyjęcie rozjechałoby outbox telefonu.
+    const { app, db } = await testHarness();
+    const token = await login(app);
+
+    const res = await post(app, token, dayWithNotes('x'.repeat(2001)));
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe('bad_payload');
+    const { rows } = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM events');
+    expect(Number(rows[0]!.n)).toBe(0);
+
+    // …a dokładnie 2000 znaków przechodzi — granica ma być granicą, nie „mniej więcej".
+    expect((await post(app, token, dayWithNotes('x'.repeat(2000)))).statusCode).toBe(200);
+    expect(await notesOf(db)).toHaveLength(2000);
+  });
+
+  it('notatka innego typu niż tekst → 400 (payload chroni projekcję)', async () => {
+    const { app } = await testHarness();
+    const token = await login(app);
+    expect((await post(app, token, dayWithNotes(42))).statusCode).toBe(400);
+  });
+});
+
 describe('flagi łańcucha MH (§4.5)', () => {
   it('ciągły łańcuch dwóch dni — zero flag', async () => {
     const { app } = await testHarness();

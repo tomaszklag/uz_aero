@@ -33,8 +33,15 @@ export interface CockpitActionsProps {
    */
   primaryTone?: Tone;
   onPrimary: () => void;
-  /** Zrzut — dostępny tylko w powietrzu. */
-  onDrop: () => void;
+  /**
+   * Zrzut — dostępny tylko w powietrzu i tylko w dniu skokowym.
+   *
+   * `undefined` = przycisku NIE MA. To nie jest blokada z powodem, tylko brak akcji:
+   * w dniu przelotu czy egzaminu nie ma czego wynosić, więc `drop` nie może się wydarzyć
+   * (issue #19 — pilot zgłosił zrzut dostępny przy operacji „Przelot"). Wyszarzony
+   * przycisk mówiłby „teraz nie, ale kiedyś tak", a to nieprawda o tym dniu.
+   */
+  onDrop?: () => void;
   dropDisabledReason?: string | null;
   /** STOP ENGINE. */
   onStop: () => void;
@@ -94,17 +101,19 @@ export function CockpitActions({
         </AppText>
       </Pressable>
 
-      <SideButton
-        icon="drop"
-        label="Zrzut"
-        // Powód blokady MUSI być widoczny jako tekst (§6 pkt 3) — samo przygaszenie
-        // zostawia pilota z pytaniem „dlaczego nie działa". STOP ma to od początku
-        // („po LDG"); Zrzut dostaje swój skrót tą samą drogą.
-        sublabel={dropDisabledReason != null ? 'w locie' : undefined}
-        colors={blue}
-        disabledReason={dropDisabledReason}
-        onPress={onDrop}
-      />
+      {/* Zrzut bez podpisu „w locie" (issue #19): przy operacji skokowej to jedyny stan,
+          w jakim ten przycisk bywa zablokowany, a wyniesienie w powietrzu jest dla pilota
+          oczywistością — podpis tłumaczył mu jego własną robotę. Powód zostaje
+          w `accessibilityHint`, więc czytnik ekranu nadal go poda. */}
+      {onDrop != null && (
+        <SideButton
+          icon="drop"
+          label="Zrzut"
+          colors={blue}
+          disabledReason={dropDisabledReason}
+          onPress={onDrop}
+        />
+      )}
 
       <SideButton
         icon="stop"

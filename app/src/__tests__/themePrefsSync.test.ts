@@ -18,7 +18,7 @@ import {
   ServerUnreachableError,
   type AuthTokens,
   type PushResult,
-  type RemoteThemePrefs,
+  type RemoteTaskSuggestions, RemoteThemePrefs,
   type ServerPort,
   type SessionSyncStatus,
   type StoredCredentials,
@@ -60,6 +60,10 @@ class PrefsServer implements ServerPort {
   getScript: Array<RemoteThemePrefs | Error> = [];
   putScript: Array<RemoteThemePrefs | Error> = [];
   refreshCalls = 0;
+
+  async getTaskSuggestions(): Promise<RemoteTaskSuggestions> {
+    throw new Error('nieużywane w tych testach');
+  }
 
   async getPrefs(token: string): Promise<RemoteThemePrefs> {
     this.getCalls.push(token);

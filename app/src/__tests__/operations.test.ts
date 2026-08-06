@@ -11,7 +11,7 @@
  *     z domeny, więc nowa operacja bez etykiety zapali się tutaj, a nie na ekranie.
  */
 
-import { isSameFieldOperation, OPERATION_TYPES } from '../domain';
+import { isJumpOperation, isSameFieldOperation, OPERATION_TYPES } from '../domain';
 import { operationLabel, operationTag, routeLabel } from '../ui/screens/logic/operations';
 
 describe('rodzaj operacji a trasa dnia', () => {
@@ -22,6 +22,23 @@ describe('rodzaj operacji a trasa dnia', () => {
   it('przelot, egzamin, lot techniczny i inne mogą skończyć gdzie indziej', () => {
     for (const operation of OPERATION_TYPES.filter((o) => o !== 'skoki')) {
       expect(isSameFieldOperation(operation)).toBe(false);
+    }
+  });
+});
+
+describe('rodzaj operacji a zrzut skoczków (issue #19)', () => {
+  it('skoki wynoszą skoczków — zrzut ma sens tylko tam', () => {
+    expect(isJumpOperation('skoki')).toBe(true);
+    for (const operation of OPERATION_TYPES.filter((o) => o !== 'skoki')) {
+      expect(isJumpOperation(operation)).toBe(false);
+    }
+  });
+
+  it('to OSOBNE pytanie niż kształt trasy, choć dziś odpowiedź jest ta sama', () => {
+    // Gdyby doszła operacja „zloty" (jedno lotnisko, zero skoczków), oba predykaty
+    // rozjechałyby się natychmiast — i właśnie dlatego nie są jedną funkcją.
+    for (const operation of OPERATION_TYPES) {
+      expect(isJumpOperation(operation)).toBe(isSameFieldOperation(operation));
     }
   });
 });

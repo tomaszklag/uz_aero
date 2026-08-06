@@ -99,6 +99,7 @@ nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 - Samolot wybieramy z listy zarejestrowanych jednostek (dropdown/lista kart), NIE pole tekstowe
 - Rodzaj operacji — siatka kart z ikonami, NIE select. Nazwy dla pilota: Skoki / **Przelot** / Egzamin / Lot tech. / Inne (wartości w rejestrze zostają angielskie — `ferry` to identyfikator, nie napis)
 - **Rodzaj operacji wyznacza pola trasy** (issue #13): skoki = JEDNO lotnisko (startują i lądują na tym samym placu), pozostałe operacje = para start → lądowanie. Reguła mieszka w domenie (`isSameFieldOperation`) i tą samą odpowiedzią uzbraja bramkę lądowania w detekcji — formularz i detekcja nie mają jak się rozjechać
+- **Rodzaj operacji wyznacza też dostępne akcje** (issue #19): zrzut skoczków istnieje wyłącznie w dniu skokowym (`isJumpOperation`) — przy przelocie czy egzaminie przycisku NIE MA (to brak akcji, nie blokada z powodem: `drop` nie może się tam wydarzyć)
 
 ## Offline-first (obowiązuje w designie i implementacji)
 Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:

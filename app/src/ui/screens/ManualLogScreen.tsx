@@ -40,7 +40,7 @@ import {
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useEventCorrection } from '../hooks/useEventCorrection';
-import { dateUtcLong, timeUtc } from '../format';
+import { dateUtcLong, timeLocal, timeUtc } from '../format';
 import { buildLogGroups, cycleCount } from './logic/manualLog';
 import { toneColors } from '../components/tone';
 
@@ -250,7 +250,7 @@ export function ManualLogScreen({
       </View>
 
       {/* ── arkusz wpisu ręcznego — wspólny z 05f ─────────────────────────
-          Ta sama rodzina problemu i ten sam komponent: wybór T/O / LDG, czas z krokiem
+          Ta sama rodzina problemu i ten sam komponent: typ z przycisku, czas z krokiem
           minutowym, oznaczenie `manual`. Dwa różne arkusze do jednej czynności
           rozjechałyby się przy pierwszej zmianie. */}
       <ManualEventSheet
@@ -258,6 +258,7 @@ export function ManualLogScreen({
         initialType={projection.inFlight ? 'landing' : 'takeoff'}
         now={now}
         formatTime={timeUtc}
+        formatLocalTime={timeLocal}
         busy={busy}
         onConfirm={saveManual}
         onCancel={() => setSheetOpen(false)}

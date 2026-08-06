@@ -207,12 +207,20 @@
   }
   .log-cycle:first-child .log-cycle-tl::before { top: 50%; }
   .log-cycle:last-child  .log-cycle-tl::before { bottom: 50%; }
+  /* Plakietka zdarzenia ZAKRYWA kreskę szyny (issue #19). Tony designu są
+     półprzezroczyste (`rgba(...,0.12)`), więc podane wprost przepuszczały pionową kreskę
+     osi przez środek ikony — wyglądało to jak rysa na przyrządzie. Stąd dwie warstwy:
+     krycie powierzchni karty pod spodem, barwa tonu na wierzchu. Wyjątkiem jest wiersz
+     OCZEKIWANY (`.pending`) — tam zdarzenia jeszcze nie ma i prześwit jest celowy. */
   .log-icon {
     width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; z-index: 1; position: relative;
     display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);
   }
-  .log-icon.start   { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
-  .log-icon.stop    { background: var(--red-muted);   border-color: var(--red-border);   color: var(--red);   }
+  /* Uruchomienie silnika bez zieleni (issue #19): to zdarzenie historyczne jak Takeoff
+     i Landing, a nie stan wymagający uwagi. Zieleń w logu należy wyłącznie do wiersza
+     „na żywo" — w logu dnia (silnik OFF) takiego wiersza nie ma w ogóle. */
+  .log-icon.start   { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
+  .log-icon.stop    { background: linear-gradient(var(--red-muted), var(--red-muted)), var(--surface); border-color: var(--red-border); color: var(--red); }
   .log-icon.evt     { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
   .log-icon.pending { background: transparent; border-color: var(--border-strong); border-style: dashed; color: var(--text-muted); }
 
@@ -224,7 +232,8 @@
     font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 1px;
     width: 44px; flex-shrink: 0;
   }
-  .log-time.green  { color: var(--green); }
+  /* Bez wariantu `.green` (issue #19) — zieleń w logu należy wyłącznie do teraźniejszości,
+     a log dnia opisuje wyłącznie zdarzenia zamknięte. */
   .log-time.red    { color: var(--red); }
   .log-time.neutral { color: var(--text-primary); }
   .log-time.muted  { color: var(--text-muted); font-size: 11px; }
@@ -232,7 +241,6 @@
     font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px;
     text-transform: uppercase; flex: 1;
   }
-  .log-evt-label.green  { color: var(--green); }
   .log-evt-label.red    { color: var(--red); }
   .log-evt-label.neutral { color: var(--text-secondary); }
   .log-evt-label.muted  { color: var(--text-muted); }
@@ -298,7 +306,15 @@
      „z cache", brak danych: zostaje sam FOB). Szacunek jest jawnie statystyczny —
      mówi „ile zwykle wychodzi", nigdy „ile masz w zbiornikach". Dlatego nie udaje
      przyrządu: bez paska postępu i bez alarmów, a rezerwa jest wpisana w liczbę.
-     Paliwomierz zawsze wygrywa (§4.5: liczniki fizyczne > dane z serwera). */
+     Paliwomierz zawsze wygrywa (§4.5: liczniki fizyczne > dane z serwera).
+
+     KOLOR PASKA JEST WARUNKOWY (issue #19). Domyślnie NEUTRALNY — tak jak tutaj, przy
+     pełnych zbiornikach. Obramowanie, tło i wartość robią się amber dopiero, gdy szacunek
+     czasu lotu spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min), a czerwone na samej
+     rezerwie; wtedy pasek wygląda tak, jak amber wyglądał dotąd. Sama ikona zostaje amber
+     zawsze, bo to ona niesie „to jest paliwo".
+     Powód: kolor ostrzegawczy świecący przy pełnych zbiornikach przestaje być
+     ostrzeżeniem — oko uczy się go pomijać i nie widzi go wtedy, gdy zaczyna być groźnie. */
   .fuel-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .fuel-strip-icon { color: var(--amber); }
   .fuel-strip-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
@@ -429,7 +445,7 @@
         <div class="cycle-body folded">
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          <div class="log-cycle-body"><div class="log-time green">08:12</div><div class="log-evt-label green">Start engine</div><span class="log-chip log-chip-mh">MH 1 234:30</span><span class="log-chip log-chip-fuel">150 L</span></div>
+          <div class="log-cycle-body"><div class="log-time neutral">08:12</div><div class="log-evt-label neutral">Start engine</div><span class="log-chip log-chip-mh">MH 1 234:30</span><span class="log-chip log-chip-fuel">150 L</span></div>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
@@ -484,7 +500,7 @@
         <div class="cycle-body">
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          <div class="log-cycle-body"><div class="log-time green">11:15</div><div class="log-evt-label green">Start engine</div><span class="log-chip log-chip-mh">MH 1 236:52</span><span class="log-chip log-chip-fuel">160 L</span></div>
+          <div class="log-cycle-body"><div class="log-time neutral">11:15</div><div class="log-evt-label neutral">Start engine</div><span class="log-chip log-chip-mh">MH 1 236:52</span><span class="log-chip log-chip-fuel">160 L</span></div>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>

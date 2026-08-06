@@ -9,6 +9,7 @@
 
 import {
   MAX_AIRFIELD_SUGGESTIONS,
+  nearestAirfields,
   POLISH_AIRFIELDS,
   searchAirfields,
   type Airfield,
@@ -92,5 +93,39 @@ describe('searchAirfields', () => {
     expect(POLISH_AIRFIELDS.length).toBeGreaterThan(50);
     expect(codes(searchAirfields('EPZG'))[0]).toBe('EPZG');
     expect(codes(searchAirfields('krak'))).toContain('EPKK');
+  });
+});
+
+/**
+ * Lista „najbliżej Ciebie" (issue #14) — odpowiedź na puste pole wyszukiwarki.
+ *
+ * Pilot stoi zwykle na lotnisku, z którego zaraz wystartuje, więc pierwsza pozycja ma być
+ * tą właściwą. Test pilnuje też stanu BEZ pozycji: brak fixa jest normalny (o uprawnienie
+ * prosimy dopiero na kroku 4), więc funkcja ma wtedy milczeć, a nie zgadywać.
+ */
+describe('nearestAirfields', () => {
+  // Współrzędne przybliżone, ale zachowujące PORZĄDEK odległości — tylko on jest tu treścią.
+  const NEAR = [
+    { ...airfield('EPRA', 'Radom-Sadków'), lat: 51.39, lon: 21.21 },
+    { ...airfield('EPWA', 'Warsaw Chopin Airport'), lat: 52.17, lon: 20.97 },
+    { ...airfield('EPKK', 'Kraków John Paul II International Airport'), lat: 50.08, lon: 19.79 },
+  ];
+
+  it('sortuje od najbliższego i podaje odległość', () => {
+    const found = nearestAirfields({ lat: 51.4, lon: 21.2 }, { catalogue: NEAR, limit: 3 });
+
+    expect(found.map((n) => n.airfield.icao)).toEqual(['EPRA', 'EPWA', 'EPKK']);
+    expect(found[0]!.distanceNm).toBeLessThan(2);
+    expect(found[1]!.distanceNm).toBeGreaterThan(found[0]!.distanceNm);
+  });
+
+  it('bez pozycji nie zgaduje — pusta lista, nie „pierwsze z brzegu"', () => {
+    expect(nearestAirfields(null, { catalogue: NEAR })).toEqual([]);
+    expect(nearestAirfields(undefined, { catalogue: NEAR })).toEqual([]);
+  });
+
+  it('respektuje limit — lista podpowiedzi ma się mieścić nad klawiaturą', () => {
+    expect(nearestAirfields({ lat: 52, lon: 21 }, { catalogue: NEAR, limit: 2 })).toHaveLength(2);
+    expect(nearestAirfields({ lat: 52, lon: 21 }, { catalogue: NEAR, limit: 0 })).toEqual([]);
   });
 });

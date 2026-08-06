@@ -135,9 +135,14 @@
   .param-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); }
   .param-value { font-family: var(--font-mono); font-size: 28px; font-weight: 400; letter-spacing: 2px; line-height: 1; color: var(--text-primary); }
   .param-unit { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; color: var(--text-secondary); }
+  /* PALIWO KOLOROWANE WARUNKOWO (issue #19) — te dwie klasy to WARIANT OSTRZEGAWCZY,
+     nie domyślny wygląd komórki. Nakładamy je dopiero, gdy szacunek czasu lotu z FOB
+     spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min); na samej rezerwie 45 min ta
+     sama komórka idzie na czerwono. Powyżej progu — jak tutaj, przy ~92 L — paliwo jest
+     neutralne. Powód: kolor ostrzegawczy świecący zawsze przestaje być ostrzeżeniem.
+     `.param-cell.green-bg` została USUNIĘTA razem z zielenią „Flight Time". */
   .param-value.amber { color: var(--amber); }
   .param-cell.amber-bg { background: rgba(243,156,18,0.04); }
-  .param-cell.green-bg { background: rgba(46,204,113,0.04); }
 
   /* ===== CYCLE EVENT LOG ===== */
   .cycle-log {
@@ -175,19 +180,27 @@
   .log-row:first-child .log-tl::before { top: 50%; }
   .log-row:last-child  .log-tl::before { bottom: 50%; }
 
+  /* Plakietka zdarzenia ZAKRYWA kreskę szyny (issue #19). Tony designu są
+     półprzezroczyste (`rgba(...,0.12)`), więc pionowa kreska osi prześwitywała przez
+     środek ikony. Stąd dwie warstwy: krycie powierzchni karty pod spodem, barwa tonu
+     na wierzchu. Wiersz OCZEKIWANY (`.log-dot-pending`) zostaje przezroczysty —
+     tam zdarzenia jeszcze nie ma i prześwit jest celowy. */
   .log-icon {
     width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; z-index: 1; position: relative;
     display: flex; align-items: center; justify-content: center;
     border: 1px solid var(--border);
   }
-  .log-icon.start { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
-  .log-icon.stop  { background: var(--red-muted);   border-color: var(--red-border);   color: var(--red);   }
+  /* Start engine neutralny (issue #19): zieleń w logu należy WYŁĄCZNIE do wiersza
+     „na żywo" (`.live`). Uruchomienie silnika sprzed dwóch godzin nie wymaga uwagi
+     bardziej niż starty i lądowania, które po nim nastąpiły. */
+  .log-icon.start { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
+  .log-icon.stop  { background: linear-gradient(var(--red-muted), var(--red-muted)), var(--surface); border-color: var(--red-border); color: var(--red); }
   .log-dot-sm {
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--border-strong); z-index: 1; position: relative; flex-shrink: 0;
   }
   .log-icon.live  { background: var(--green); border-color: var(--green); animation: pulse 1.5s ease-in-out infinite; width: 10px; height: 10px; border-radius: 50%; border: none; }
-  .log-icon.zrzut { background: rgba(52,152,219,0.12); border-color: rgba(52,152,219,0.3); color: var(--blue); }
+  .log-icon.zrzut { background: linear-gradient(var(--blue-muted), var(--blue-muted)), var(--surface); border-color: rgba(52,152,219,0.3); color: var(--blue); }
 
   .log-body {
     flex: 1; display: flex; align-items: center; gap: 8px;
@@ -197,14 +210,14 @@
     font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
     width: 46px; flex-shrink: 0; color: var(--text-primary);
   }
-  .log-t.start { color: var(--green); }
+  /* Bez wariantu `.start` (issue #19) — czas i etykieta uruchomienia silnika biorą
+     kolory podstawowe, te same co Takeoff i Landing. */
   .log-t.stop  { color: var(--red);   }
   .log-t.live  { color: var(--green); font-size: 11px; letter-spacing: 0.5px; width: 64px; }
   .log-lbl {
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
     flex: 1; color: var(--text-secondary);
   }
-  .log-lbl.start { color: var(--green); }
   .log-lbl.stop  { color: var(--red);   }
   .log-lbl.live  { color: var(--green); }
   .log-dur {
@@ -380,23 +393,31 @@
           <div class="param-unit">FT</div>
         </div>
       </div>
-      <div class="param-cell amber-bg">
+      <!-- Paliwo neutralne, bo do rezerwy daleko (issue #19) — patrz komentarz przy
+           `.param-cell.amber-bg`. Czas lotu też bez wyróżnienia: to odczyt, jak Ground
+           Speed i Altitude, a nie stan wymagający uwagi. -->
+      <div class="param-cell">
         <div class="param-label">Fuel on Board</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
-          <div class="param-value amber">~92</div>
-          <div class="param-unit" style="color:var(--amber)">L</div>
+          <div class="param-value">~92</div>
+          <div class="param-unit">L</div>
         </div>
       </div>
-      <div class="param-cell green-bg">
+      <div class="param-cell">
         <div class="param-label">Flight Time</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
-          <div class="param-value" style="color:var(--green);font-size:28px;">00:47</div>
+          <div class="param-value">00:47</div>
         </div>
       </div>
     </div>
 
 
-    <!-- CYCLE EVENT LOG -->
+    <!-- CYCLE EVENT LOG
+         KARTA POJAWIA SIĘ DOPIERO, GDY W CYKLU COŚ ZASZŁO (issue #19): potrzebne jest
+         zdarzenie inne niż uruchomienie silnika i wiersz „na żywo" — kołowanie, start,
+         lądowanie albo zrzut. Zaraz po START ENGINE nagłówek ogłaszał „Cykl bieżący ·
+         0 T/O · 0 LDG" i plakietkę „Lot #1", czyli trzy liczby o niczym; kokpit wygląda
+         wtedy tak jak 05A przed wykryciem kołowania, tylko bez tej karty. -->
     <div class="cycle-log">
       <div class="cycle-log-header">
         <span class="cycle-log-title">Cykl bieżący · 3 T/O · 2 LDG</span>
@@ -405,7 +426,7 @@
 
       <div class="log-row">
         <div class="log-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-        <div class="log-body"><div class="log-t start">13:10</div><div class="log-lbl start">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
+        <div class="log-body"><div class="log-t">13:10</div><div class="log-lbl">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
       </div>
 
       <div class="flight-sep"><span class="flight-sep-label">Lot 1</span></div>
@@ -461,11 +482,21 @@
       </div>
     </div>
 
-    <!-- BOTTOM ACTIONS -->
+    <!-- BOTTOM ACTIONS
+         PRZYCISK „ZRZUT" ISTNIEJE TYLKO W DNIU SKOKOWYM (issue #19). Ten mockup opisuje
+         dzień skoków, więc przycisk tu jest — ale przy przelocie, egzaminie, locie
+         technicznym i „innych" NIE MA GO W OGÓLE, a nie jest wyszarzony: nie ma czego
+         wynosić, więc zdarzenie `drop` nie może się wydarzyć. Wyszarzenie mówiłoby
+         „teraz nie, ale kiedyś tak", a to nieprawda o tym dniu. Przygaszenie zostaje
+         wyłącznie dla dnia skokowego NA ZIEMI (wyniesienie dzieje się w powietrzu) —
+         i bez mikropodpisu pod etykietą, bo pilotowi nie tłumaczymy jego własnej roboty.
+         Pełne nazwy zamiast skrótów „T/O" i „LAND": pasek akcji jest jedynym miejscem,
+         gdzie pilot ZAPISUJE zdarzenie, a skrót oszczędzał znaki na przycisku o dwóch
+         trzecich szerokości ekranu. -->
     <div class="action-row">
       <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie — GPS nie wykrył zdarzenia albo wykrył za późno">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
-        LAND
+        Landing
       </a>
       <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu — wysokość z GPS, pilot ustawia liczby skoczków">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>

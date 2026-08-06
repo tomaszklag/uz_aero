@@ -116,6 +116,12 @@
   .summary-val { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: 1px; }
   .summary-val.amber { color: var(--amber); }
   .summary-val.muted { color: var(--text-muted); }
+  /* Pozycja na CAŁĄ szerokość siatki — notatka dnia (issue #14). Zdanie pilota nie jest
+     wartością do porównania z sąsiadem, tylko treścią do przeczytania: w kolumnie
+     o połowie szerokości łamałoby się po dwóch słowach. Sufit trzech linii, dalej
+     wielokropek (`numberOfLines={3}` w aplikacji). */
+  .summary-item.wide { grid-column: 1 / -1; }
+  .summary-item.wide .summary-val { line-height: 20px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
   /* Warning box */
   .warning-box {
@@ -237,6 +243,17 @@
           <div class="summary-item">
             <div class="summary-key">Klient</div>
             <div class="summary-val" style="font-size:13px;">SKY CAMP · 2026/114</div>
+          </div>
+
+          <!-- NOTATKA DNIA (issue #14) — wchodzi do podsumowania TYLKO wtedy, gdy pilot
+               coś napisał: pusty wiersz „Notatka —" zabierałby miejsce na informację,
+               że nic nie ma. Na CAŁĄ szerokość siatki, bo to zdanie, a nie wartość do
+               porównania z sąsiadem: w kolumnie o połowie szerokości łamałoby się po
+               dwóch słowach. Do trzech linii — dłuższa notatka zostaje ucięta, bo tu
+               chodzi o rozpoznanie tego, co się napisało, a nie o czytanie od nowa. -->
+          <div class="summary-item wide">
+            <div class="summary-key">Notatka</div>
+            <div class="summary-val" style="font-size:13px;">Lot zapoznawczy z uczniem — pierwszy raz na tym typie</div>
           </div>
         </div>
       </div>

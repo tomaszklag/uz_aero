@@ -19,6 +19,7 @@
 import type {
   Event,
   Handover,
+  OperationType,
   ReferenceAircraft,
   ReferencePilot,
   SessionFlag,
@@ -91,6 +92,24 @@ export interface SessionSyncStatus {
   exportUrl: string | null;
 }
 
+/**
+ * Podpowiedzi do formularza zadania (`GET /me/task-suggestions`, issue #14) — ostatnio
+ * używane oznaczenia klientów i notatki.
+ *
+ * Świadomie **tylko online**. To jedyna rzecz w tym formularzu, która nie ma prawa
+ * niczego zablokować: bez zasięgu pilot po prostu wpisuje wartość z palca, tak jak
+ * dotąd. Cache byłby tu kosztem bez zysku — lista podpowiedzi to wygoda, a nie dane,
+ * których brak zmienia dzień lotny (`CLAUDE.md`, offline-first pkt 3 dotyczy AKCJI
+ * wymagających sieci; tu akcja działa, chudsza jest tylko podpowiedź).
+ *
+ * `operation` przy kliencie odpowiada na pytanie „co to było za zlecenie" — ten sam
+ * klient bywa i skokami, i przelotem, a pilot wybiera z listy po pamięci ostatniego dnia.
+ */
+export interface RemoteTaskSuggestions {
+  clients: { value: string; operation: OperationType | null; lastUsedAt: string }[];
+  notes: { value: string; lastUsedAt: string }[];
+}
+
 export class ServerUnreachableError extends Error {
   constructor(cause?: unknown) {
     super('Serwer nieosiągalny');
@@ -121,6 +140,8 @@ export interface ServerPort {
    * obok outboxa zdarzeń; serwer odkłada NDJSON per sesja do analizy progów.
    */
   pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }>;
+  /** Podpowiedzi do formularza zadania (`GET /me/task-suggestions`) — wyłącznie online. */
+  getTaskSuggestions(token: string): Promise<RemoteTaskSuggestions>;
   /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */
   getPrefs(token: string): Promise<RemoteThemePrefs>;
   /**

@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 19;
+export const SCHEMA_VERSION = 20;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -694,6 +694,39 @@ export const MIGRATION_19 = `
   );
 `;
 
+/**
+ * Migracja 20: NOTATKA PILOTA DO DNIA w projekcji `sessions` (issue #14, 2026-08-06).
+ *
+ * ══ DLACZEGO KOLUMNA, A NIE ODCZYT Z PAYLOADU ══
+ * Ta sama reguła, co przy migracji 11 (`operation`, `client`) i 18: wartość jest już
+ * policzona przez `projectSession` (`SessionState.notes`), więc kolumna jest jej
+ * PRZEPISANIEM, a nie nowym modelem. Wyciąganie notatki w locie z `events.payload`
+ * byłoby drugim, równoległym odtwarzaniem projekcji — czyli tym, co zaczyna kłamać,
+ * gdy zmieni się reguła (dziś: „ostatni `preflight_confirm` wygrywa").
+ *
+ * ══ DLACZEGO WOLNY TEKST BEZ OGRANICZENIA ══
+ * `notes` jest zdaniem pilota o okolicznościach dnia („lot z uczniem", „drugi zbiornik
+ * nie działa"), nie słownikiem — więc żadnego `CHECK`-a, dokładnie jak przy `client`.
+ * Długość pilnuje reguła WEJŚCIA (`zod` na trasie `POST /events`, 2000 znaków), a nie
+ * ograniczenie tabeli: te dwie rzeczy dotyczą różnych zbiorów wierszy, a `TEXT` bez
+ * limitu w PostgreSQL nie kosztuje ani bajtu więcej niż `VARCHAR(n)`.
+ *
+ * ══ CO ZNACZY `NULL` ══
+ * „Dzień bez notatki" — stan całkowicie normalny i najczęstszy. Nie ma tu drugiego
+ * znaczenia „wiersz sprzed migracji" (jak przy kolumnach migracji 18), bo notatki
+ * przed tą migracją nie dało się wpisać: telefony wysyłające `preflight_confirm`
+ * bez pola `notes` są zgodne WSTECZ i mają zostawać `NULL`.
+ *
+ * **Przebudowy projekcji ta migracja NIE wymaga** — inaczej niż 11 i 18. Tamte
+ * dokładały kolumny na wartości, które w rejestrze JUŻ były i tylko nie miały gdzie
+ * wylądować; tutaj pusta kolumna w starych wierszach to prawda o tych dniach, a nie
+ * dziura do wypełnienia. Uruchomienie `A11` po tej migracji jest bezpieczne i nic
+ * nie zmieni — i to jest właściwe zachowanie, nie przeoczenie.
+ */
+export const MIGRATION_20 = `
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS notes TEXT;
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -714,6 +747,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_17,
   MIGRATION_18,
   MIGRATION_19,
+  MIGRATION_20,
 ];
 
 /**
@@ -748,4 +782,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Koniec z NULLS LAST na kluczach NOT NULL (rejestr i audyt)',
   'Kolumny statystyk w projekcji: starty/lądowania, bilanse dnia i zrzuty',
   'Norma zużycia per samolot: aircraft_consumption (materializacja modelu)',
+  'Notatka pilota do dnia w projekcji: sessions.notes',
 ];
