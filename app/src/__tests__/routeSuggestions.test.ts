@@ -4,7 +4,7 @@
  * Reguła bez fokusu jest tu treścią, nie szczegółem: podpowiedzi należą do pierwszego
  * pola z czymś niedokończonym, bo oparcie ich na fokusie znika w chwili dotknięcia
  * podpowiedzi. Testy pilnują też rzeczy najważniejszej dla pilota — że kod spoza
- * katalogu (ferry za granicę) przechodzi bez listy, bez potwierdzenia i bez ostrzeżenia.
+ * katalogu (przelot za granicę) przechodzi bez listy, bez potwierdzenia i bez ostrzeżenia.
  */
 
 import {
@@ -59,8 +59,23 @@ describe('routeSuggestions', () => {
   });
 
   it('kod spoza katalogu nie daje listy — to podpowiedź, nie bramka', () => {
-    // Ferry do Berlina. Milczenie katalogu nie jest błędem pilota.
+    // Przelot do Berlina. Milczenie katalogu nie jest błędem pilota.
     expect(routeSuggestions({ departureIcao: 'EDDB', arrivalIcao: '' }, opts)).toBeNull();
+  });
+
+  it('skoki: jedno pole, własna nazwa i ZERO podpowiedzi do lądowania', () => {
+    // Formularz skoków nie ma pola lądowania (issue #13), więc lista nie ma prawa
+    // się do niego odwołać — nawet gdy szkic trzyma tam wartość (a trzyma zawsze).
+    const single = { departureIcao: 'EPZ', arrivalIcao: 'EPZ' };
+    const found = routeSuggestions(single, { ...opts, shape: 'single' });
+
+    expect(found?.field).toBe('departure');
+    expect(found?.label).toBe('Lotnisko ICAO — podpowiedzi');
+
+    // Kod startu rozpoznany = koniec podpowiadania; para pól szukałaby dalej.
+    expect(
+      routeSuggestions({ departureIcao: 'EPZG', arrivalIcao: 'WARS' }, { ...opts, shape: 'single' }),
+    ).toBeNull();
   });
 
   it('szuka też po nazwie i po ogonkach', () => {
@@ -131,5 +146,16 @@ describe('routeConfirmations', () => {
     const rows = routeConfirmations({ departureIcao: ' epzg ', arrivalIcao: '' }, opts);
 
     expect(rows.map((r) => r.field)).toEqual(['departure']);
+  });
+
+  it('skoki potwierdzają JEDNO lotnisko, mimo że szkic trzyma dwa równe kody', () => {
+    const rows = routeConfirmations(
+      { departureIcao: 'EPZG', arrivalIcao: 'EPZG' },
+      { ...opts, shape: 'single' },
+    );
+
+    expect(rows).toEqual([
+      { field: 'departure', text: 'Lotnisko: EPZG · Zielona Góra-Babimost Airport' },
+    ]);
   });
 });

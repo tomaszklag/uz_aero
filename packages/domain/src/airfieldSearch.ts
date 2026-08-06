@@ -6,7 +6,7 @@
  * to samo źródło może podpowiadać przy wpisywaniu trasy — i przy okazji POKAZAĆ, jakie
  * lotnisko kryje się pod kodem, zanim pilot pojedzie dalej z literówką.
  *
- * PODPOWIEDŹ, NIE BRAMKA. Katalog obejmuje wyłącznie Polskę (`EP**`), a ferry potrafi
+ * PODPOWIEDŹ, NIE BRAMKA. Katalog obejmuje wyłącznie Polskę (`EP**`), a przelot potrafi
  * skończyć się w Berlinie — więc wpis spoza listy musi zostać przyjęty bez mrugnięcia.
  * Ta funkcja nigdy nie mówi „nie ma takiego lotniska"; brak trafień to po prostu pusta
  * lista i pole zachowuje się jak zwykły input.

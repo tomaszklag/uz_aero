@@ -169,7 +169,7 @@ export const MAX_PLAUSIBLE_SPEED_KT = 250;
 /**
  * Geofence lądowania dla operacji latających Z i NA to samo lotnisko (skoki):
  * lądowanie uznajemy tylko w tym promieniu (NM) od pozycji pola. Krąg nadlotniskowy
- * mieści się w 2 NM z zapasem. Dla operacji ferry/przelot bramka jest WYŁĄCZONA.
+ * mieści się w 2 NM z zapasem. Dla przelotu bramka jest WYŁĄCZONA.
  */
 export const LANDING_FIELD_VICINITY_NM = 2;
 

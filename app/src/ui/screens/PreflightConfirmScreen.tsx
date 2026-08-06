@@ -38,6 +38,7 @@ import { litres, motoHours, shortName, timeLocal, timeUtc } from '../format';
 // dotyka `react-native`, więc nie ma go w barrelu.
 import { requestNotificationPermission } from '../../infrastructure/permissions/notificationPermission';
 import { claimDecision } from './logic/claimMode';
+import { operationTag, routeLabel } from './logic/operations';
 
 export function PreflightConfirmScreen({
   navigation,
@@ -146,7 +147,7 @@ export function PreflightConfirmScreen({
     );
   }
 
-  const route = [draft.departureIcao, draft.arrivalIcao].filter(Boolean).join(' → ');
+  const route = routeLabel(draft.operation, draft.departureIcao, draft.arrivalIcao);
 
   const entries: SummaryEntry[] = [
     // Same role, bez dopowiedzeń: „PIC · zalogowany" i „Dual · drugi pilot" tłumaczyły
@@ -215,12 +216,12 @@ export function PreflightConfirmScreen({
           code={aircraft.reg}
           codeDetail={[aircraft.type, aircraft.year].filter(Boolean).join(' · ')}
           // Bez trasy karta i tak musi coś powiedzieć — wtedy niesie rodzaj operacji.
-          title={route.length > 0 ? route : draft.operation.toUpperCase()}
+          title={route.length > 0 ? route : operationTag(draft.operation)}
           // Tag operacji TYLKO wtedy, gdy tytułem jest trasa. Przy pustej trasie karta
           // pisała „SKOKI" dwa razy pod rząd — wielkim napisem i tagiem pod nim.
           // Daty tu nie ma z decyzji pilota: dzień lotny zaczyna się „teraz", więc badge
           // z dzisiejszą datą zajmował miejsce, nie odpowiadając na żadne pytanie.
-          tags={route.length > 0 ? [draft.operation.toUpperCase()] : []}
+          tags={route.length > 0 ? [operationTag(draft.operation)] : []}
         />
 
         <View

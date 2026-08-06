@@ -97,7 +97,8 @@ nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth — decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
 - Tożsamość pilota jest znana w całej sesji — NIE pytamy o kod pilota w formularzach
 - Samolot wybieramy z listy zarejestrowanych jednostek (dropdown/lista kart), NIE pole tekstowe
-- Rodzaj operacji — siatka kart z ikonami, NIE select
+- Rodzaj operacji — siatka kart z ikonami, NIE select. Nazwy dla pilota: Skoki / **Przelot** / Egzamin / Lot tech. / Inne (wartości w rejestrze zostają angielskie — `ferry` to identyfikator, nie napis)
+- **Rodzaj operacji wyznacza pola trasy** (issue #13): skoki = JEDNO lotnisko (startują i lądują na tym samym placu), pozostałe operacje = para start → lądowanie. Reguła mieszka w domenie (`isSameFieldOperation`) i tą samą odpowiedzią uzbraja bramkę lądowania w detekcji — formularz i detekcja nie mają jak się rozjechać
 
 ## Offline-first (obowiązuje w designie i implementacji)
 Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:

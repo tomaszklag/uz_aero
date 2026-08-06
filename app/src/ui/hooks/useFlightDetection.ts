@@ -82,7 +82,7 @@ export interface UseFlightDetectionOptions {
   fieldElevationFt?: number | null;
   /**
    * Operacja lata Z i NA to samo lotnisko (skoki) — włącza geofence lądowania
-   * w detektorze. Ferry/przelot MUSI zostawić `false`.
+   * w detektorze. Przelot MUSI zostawić `false`.
    */
   sameFieldOnly?: boolean;
   /** Długość okna „COFNIJ" (s). */

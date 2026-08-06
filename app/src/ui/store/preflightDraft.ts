@@ -11,6 +11,7 @@
 
 import { create } from 'zustand';
 
+import { isSameFieldOperation } from '../../domain';
 import type { MhFormat, OperationType, ReferenceAircraft } from '../../domain';
 
 export interface PreflightDraft {
@@ -54,6 +55,24 @@ const TASK_FIELDS: readonly (keyof PreflightDraft)[] = [
   'arrivalIcao',
   'client',
 ];
+
+/**
+ * Trasa skoków to JEDNA wartość w dwóch polach rekordu (issue #13).
+ *
+ * Formularz pyta o jedno lotnisko — bo skoki startują i lądują na tym samym placu
+ * (`isSameFieldOperation`) — ale szkic trzyma obie wartości równe. Dzięki temu ani
+ * projekcja, ani karta arkusza, ani panel nie muszą znać wyjątku „przy skokach patrz
+ * tylko na start": `departureIcao` i `arrivalIcao` znaczą zawsze to samo co dotąd.
+ *
+ * Egzekwowane w JEDNYM miejscu — przy każdym zapisie do szkicu — bo inwariant pilnowany
+ * przez pamiętanie o nim w trzech miejscach ekranu jest inwariantem tylko do pierwszej
+ * zmiany w tym ekranie.
+ */
+function withRouteShape(draft: PreflightDraft): PreflightDraft {
+  if (!isSameFieldOperation(draft.operation)) return draft;
+  if (draft.arrivalIcao === draft.departureIcao) return draft;
+  return { ...draft, arrivalIcao: draft.departureIcao };
+}
 
 interface PreflightDraftStore extends PreflightDraft {
   setAircraft(aircraft: ReferenceAircraft): void;
@@ -115,7 +134,7 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
   },
 
   set(key, value) {
-    set({ [key]: value } as Pick<PreflightDraft, typeof key>);
+    set((state) => withRouteShape({ ...state, [key]: value }));
     // Dotknięcie zadania zamyka drogę podpowiedzi — od tej chwili obowiązuje wpis pilota.
     if (TASK_FIELDS.includes(key)) set({ taskTouched: true });
     // Ta sama zasada dla godziny meldunku: wpis pilota wygrywa z „teraz".
@@ -129,7 +148,9 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
 
   suggestTask(task, route) {
     if (get().taskTouched) return;
-    set({ ...task, ...route });
+    // Podpowiedź z ostatniego dnia też przechodzi przez kształt trasy: zapamiętana para
+    // „EPKK → EPWA" przy operacji skoki opisywałaby dzień, którego się nie da polecieć.
+    set((state) => withRouteShape({ ...state, ...task, ...route }));
   },
 
   reset() {

@@ -127,11 +127,10 @@
   .field-input.mono { font-family: var(--font-mono); font-size: 17px; font-weight: 700; letter-spacing: 2px; }
   .field-input-val { font-size: 15px; font-weight: 600; color: var(--text-primary); }
   .field-placeholder { color: var(--text-muted); font-size: 14px; font-style: italic; }
+  .field-hint { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted); }
 
-  /* Route row */
-  .route-row { display: flex; align-items: center; gap: 8px; }
-  .route-row .field { flex: 1; }
-  .route-arrow { font-family: var(--font-display); font-size: 22px; color: var(--text-muted); flex-shrink: 0; padding-top: 14px; }
+  /* Bez `.route-row` / `.route-arrow` — wybrane są skoki, więc trasa to jedno pole
+     na pełną szerokość (issue #13). Parę kodów ze strzałką pokazuje 02F. */
 
   .fuel-warning {
     display: flex; align-items: center; gap: 6px;
@@ -455,7 +454,7 @@
             <div class="op-icon">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
             </div>
-            <div class="op-label">Ferry</div>
+            <div class="op-label">Przelot</div>
           </div>
           <div class="op-option">
             <div class="op-icon">
@@ -478,23 +477,20 @@
         </div>
       </div>
 
-      <!-- SEKCJA: TRASA (dane sesji — bez zmian offline) -->
+      <!-- SEKCJA: MIEJSCE SKOKÓW (dane sesji — bez zmian offline).
+           Kształt trasy idzie za rodzajem operacji (issue #13): wybrane są skoki, więc
+           pytamy o JEDNO lotnisko — samolot krąży nad polem i ląduje tam, skąd wystartował.
+           Ta sekcja to znany dług 02D (całość kroku 1 przeniosła się na 02E), ale para pól
+           opisywałaby dzień skoków trasą, której nie da się polecieć, więc kształt musi być
+           poprawny nawet w wariancie czekającym na modernizację. -->
       <div class="section">
-        <div class="section-label">Trasa</div>
-        <div class="route-row">
-          <div class="field">
-            <div class="field-label">Start ICAO</div>
-            <div class="field-input filled mono">
-              <span class="field-input-val" style="font-family: var(--font-mono); font-size: 18px; letter-spacing: 3px; font-weight: 700;">EPKK</span>
-            </div>
+        <div class="section-label">Miejsce skoków</div>
+        <div class="field">
+          <div class="field-label">Lotnisko ICAO</div>
+          <div class="field-input filled mono">
+            <span class="field-input-val" style="font-family: var(--font-mono); font-size: 18px; letter-spacing: 3px; font-weight: 700;">EPKK</span>
           </div>
-          <div class="route-arrow">→</div>
-          <div class="field">
-            <div class="field-label">Lądowanie ICAO</div>
-            <div class="field-input filled mono">
-              <span class="field-input-val" style="font-family: var(--font-mono); font-size: 18px; letter-spacing: 3px; font-weight: 700;">EPWA</span>
-            </div>
-          </div>
+          <div class="field-hint">Skoki startują i lądują na tym samym lotnisku</div>
         </div>
       </div>
 

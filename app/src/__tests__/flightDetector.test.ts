@@ -660,7 +660,7 @@ describe('geofence lądowania (operacja jednolotniskowa)', () => {
     ]);
   });
 
-  it('ferry (bez bramki) ląduje na INNYM lotnisku jak dotąd — regresja niedopuszczalna', () => {
+  it('przelot (bez bramki) ląduje na INNYM lotnisku jak dotąd — regresja niedopuszczalna', () => {
     const away = series(0, 14, 20, FIELD_ELEV + 5).map((f) => ({ ...f, ...nmNorth(150) }));
 
     expect(runDetector(airborne(), away).detections.map((d) => d.detection)).toEqual([

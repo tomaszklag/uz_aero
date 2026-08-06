@@ -72,7 +72,7 @@ describe('searchAirfields', () => {
   });
 
   it('kod spoza katalogu daje pustą listę, a nie błąd — wpis musi przejść', () => {
-    // Ferry do Berlina: EDDB nie jest i nie będzie w polskim katalogu.
+    // Przelot do Berlina: EDDB nie jest i nie będzie w polskim katalogu.
     expect(searchAirfields('EDDB', { catalogue: CATALOGUE })).toEqual([]);
     expect(searchAirfields('XXXX', { catalogue: CATALOGUE })).toEqual([]);
   });

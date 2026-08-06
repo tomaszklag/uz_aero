@@ -446,8 +446,14 @@ podaje i wtedy nic nie unieważniamy.
 **Geofence** dotyczy operacji latających Z i NA to samo lotnisko (`sameFieldOnly`, czyli
 skoki): lądowanie uznajemy tylko w promieniu `LANDING_FIELD_VICINITY_NM` od `fieldPosition`.
 „Wolno i nisko" 20 km od pola jest w dniu skokowym artefaktem, nie przyziemieniem. Dla
-**ferry / przelotu / egzaminu bramka jest WYŁĄCZONA** — tam lądowanie gdzie indziej jest
+**przelotu i egzaminu bramka jest WYŁĄCZONA** — tam lądowanie gdzie indziej jest
 normą, nie anomalią, a bramka odcięłaby prawdziwe przyziemienie.
+
+Od 2026-08-06 (issue #13) o tym, które operacje są `sameFieldOnly`, orzeka JEDEN predykat
+domeny — `isSameFieldOperation` (`packages/domain/src/events/operations.ts`). Ten sam
+rozstrzyga, czy preflight pyta o jedno lotnisko, czy o parę kodów: dzień opisany jako skoki
+z trasą „EPKK → EPWA" był wcześniej możliwy do wpisania, a bramka i tak zakładała powrót
+na to samo pole.
 
 ### 8.3 Histereza
 

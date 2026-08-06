@@ -100,7 +100,7 @@ export interface DetectorState {
   fieldPosition: LatLon | null;
   /**
    * Operacja lata Z i NA to samo lotnisko (skoki): lądowanie uznajemy tylko przy polu
-   * (`LANDING_FIELD_VICINITY_NM`). Ferry/przelot MUSI mieć `false` — tam lądowanie
+   * (`LANDING_FIELD_VICINITY_NM`). Przelot MUSI mieć `false` — tam lądowanie
    * gdzie indziej jest normą i bramka odcięłaby prawdziwe przyziemienie.
    */
   sameFieldOnly: boolean;

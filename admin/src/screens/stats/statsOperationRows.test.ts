@@ -23,7 +23,8 @@ describe('operationRows', () => {
 
   it('pozostałe operacje są przygaszone, a podpis niesie dane PROJEKCJI (nie lotniska)', () => {
     expect(rows[1]).toMatchObject({
-      pill: { label: 'FERRY', tone: 'dim' },
+      // Wartość z serwera to nadal `ferry`; plakietka mówi po polsku (issue #13).
+      pill: { label: 'PRZELOT', tone: 'dim' },
       sub: 'SP-ABC · SP-XYZ',
       share: { width: '11.4%', blue: false, label: '11.4 %' },
     });

@@ -193,7 +193,12 @@
           <span class="card-aircraft-code">SP-AXA</span>
           <span style="font-family:var(--font-mono); font-size:10px; color:var(--text-muted);">Cessna 182 · 2019</span>
         </div>
-        <div class="card-route">EPKK → EPWA</div>
+        <!-- TRASA WEDŁUG RODZAJU OPERACJI (issue #13). Dzień skoków ma w rekordzie oba
+             kody ICAO równe, bo samolot wraca tam, skąd wystartował — więc podsumowanie
+             pisze JEDNO lotnisko. „EPKK → EPKK" wyglądałoby jak pomyłka pilota tuż przed
+             ekranem, na którym ma potwierdzić, że wszystko się zgadza. Przelot, egzamin,
+             lot techniczny i inne stoją tu dalej z parą kodów („EPWA → EPMO"). -->
+        <div class="card-route">EPKK</div>
         <!-- Tag operacji, bez daty: dzień lotny zaczyna się „teraz", więc badge
              z dzisiejszą datą zajmował miejsce, nie odpowiadając na żadne pytanie.
              Gdy trasy nie wpisano, tytułem karty jest sama operacja — wtedy tag

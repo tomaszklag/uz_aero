@@ -191,21 +191,26 @@
            pilot właśnie pisze w polu trasy, a adnotacja znika po pierwszym dotknięciu
            któregokolwiek pola tego kroku. -->
 
-      <!-- SEKCJA: RODZAJ OPERACJI (siatka kart z ikonami, nigdy natywny select) -->
+      <!-- SEKCJA: RODZAJ OPERACJI (siatka kart z ikonami, nigdy natywny select)
+           WYBRANY JEST PRZELOT, NIE SKOKI — i to jest celowe (issue #13). Ten wariant
+           pokazuje listę podpowiedzi wiszącą pod wierszem trasy, a lista należy zawsze do
+           PIERWSZEGO pola z niedokończonym kodem. Żeby taki wiersz w ogóle istniał, dzień
+           musi być opisany PARĄ lotnisk — a parę mają wyłącznie operacje inne niż skoki.
+           Przy skokach pole jest jedno i nazywa się „Lotnisko ICAO" (patrz 02E). -->
       <div class="section">
         <div class="section-label">Rodzaj operacji</div>
         <div class="op-grid">
-          <div class="op-option selected">
+          <div class="op-option">
             <div class="op-icon">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12M12 12 8 8M12 12l4-4M5 20l7-8 7 8"/><circle cx="12" cy="5" r="2"/></svg>
             </div>
             <div class="op-label">Skoki</div>
           </div>
-          <div class="op-option">
+          <div class="op-option selected">
             <div class="op-icon">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
             </div>
-            <div class="op-label">Ferry</div>
+            <div class="op-label">Przelot</div>
           </div>
           <div class="op-option">
             <div class="op-icon">
@@ -229,9 +234,11 @@
       </div>
 
       <!-- SEKCJA: TRASA — stan PISANIA w polu startu.
-           Pilot wpisał trzy znaki, katalog pokazuje, co do nich pasuje. Podpowiedź NIE
-           jest bramką: katalog obejmuje wyłącznie Polskę (EP**), więc kod spoza listy
-           (ferry do EDDB) wpisuje się normalnie, a lista po prostu zostaje pusta. -->
+           Nagłówek brzmi „Trasa" (a nie „Miejsce skoków"), bo wybrany jest przelot: para
+           kodów start → lądowanie. Pilot wpisał trzy znaki, katalog pokazuje, co do nich
+           pasuje. Podpowiedź NIE jest bramką: katalog obejmuje wyłącznie Polskę (EP**),
+           więc kod spoza listy (przelot do EDDB) wpisuje się normalnie, a lista po prostu
+           zostaje pusta. -->
       <div class="section">
         <div class="section-label">Trasa</div>
         <div class="route-row">
@@ -317,15 +324,15 @@
   <a class="vp-item" href="02e-preflight-zadanie.html">
     <span class="vp-badge">02E</span>
     <span class="vp-body">
-      <span class="vp-name">Formularz wypełniony</span>
-      <span class="vp-when">Stan spoczynku: oba kody ICAO kompletne, nic nie jest w trakcie pisania. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
+      <span class="vp-name">Formularz wypełniony · skoki (jedno lotnisko)</span>
+      <span class="vp-when">Stan spoczynku: kod ICAO kompletny, nic nie jest w trakcie pisania. Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko ICAO" pod nagłówkiem „Miejsce skoków" — samolot wraca tam, skąd wystartował. Przelot, egzamin, lot techniczny i inne pokazują w tym miejscu PARĘ pól (start → lądowanie), tak jak tutaj. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
     </span>
   </a>
   <a class="vp-item active" href="02f-preflight-lotnisko.html">
     <span class="vp-badge">02F</span>
     <span class="vp-body">
-      <span class="vp-name">Wybór lotniska — podpowiedzi</span>
-      <span class="vp-when">Pilot pisze w polu ICAO i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). Lista znika, gdy kod jest kompletny i rozpoznany; kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
+      <span class="vp-name">Wybór lotniska — podpowiedzi · przelot (para kodów)</span>
+      <span class="vp-when">Pilot pisze w polu ICAO i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). Wybrany jest <b>przelot</b>, więc trasa ma parę pól start → lądowanie, a lista należy do pierwszego pola z niedokończonym kodem. Lista znika, gdy kod jest kompletny i rozpoznany; kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
