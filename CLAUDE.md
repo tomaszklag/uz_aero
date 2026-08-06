@@ -22,6 +22,13 @@ Fazy z `docs/_main.md.txt` §10: 1–4 ✅ (ekrany 00–12 komplet; sync end-to-
 Faza 7 **panel administracyjny (web)** — projekt UI zamknięty (`design/admin/`: 23 ekrany, `SZABLON.html`, `ANALIZA.md`), a backend i klient web **są wdrożone**: role, `/admin/*`, cykl życia flagi, audyt oraz `admin/` (React+Vite, ekrany A01–A11 z modułami czystymi 1:1 z testami).
 **Analityka zużycia** (2026-08-05) — wdrożona end-to-end: domena `packages/domain/src/consumption/` (interwały paliwowe odczyt→odczyt, NNLS per faza, przelicznik MH z automatycznym rozpoznaniem obrotomierz/Hobbs, oś faz pionowych ze śladu), `GET /admin/api/fleet/:id/consumption` + ekran A10a/A10b w panelu, norma zużycia w aplikacji pilota (migracja serwera 19 + SQLite 4, ekrany 04/06/10). Reguła czytania strumienia poza listami: `docs/architektura-panelu-serwer.md` §7.7; przepis „nowa metryka analityki": `docs/architektura-kodu.md` §7.
 **Progi analityki są DO KALIBRACJI** (`consumption/policy.ts`) — służy do tego `server/scripts/consumptionReplay.ts`, który puszcza realną historię przez ten sam kod, co serwer. Pierwszy przebieg (2026-08-05) znalazł pięć wad, każda ma test regresyjny; nie strojimy tych progów w dyskusji.
+**PRZEBUDOWA FLOW W TOKU** (od 2026-08-06, gałąź `poc-zmiany-flow`) — dzień służby przestał
+być kontenerem na loty (patrz sekcja „Czas służby" niżej). **Design jest przebudowany
+i zacommitowany, kod jeszcze NIE** — `app/` i `packages/domain` nadal realizują stary model
+(`preflight_confirm` z wymaganym `dutyStart`, `day_close` jako koniec dnia). Rozjazd jest
+świadomy i tymczasowy: mockupy prowadzą, kod dogania. Kolejność: etap B `packages/domain`
+(`leg_close`, klamry duty opcjonalne, projekcja `duty.ts`), etap C `app/`, etap D serwer
+i panel. Nie „naprawiaj" ekranów RN pod stare mockupy — zostały usunięte.
 - Mockupy w `design/` to **zatwierdzona specyfikacja**: ekran RN wdrażamy 1:1 z odpowiadającego pliku HTML, sekcja po sekcji, bez upraszczania. Wątpliwość do mockupu = rozmowa przed implementacją, nie cicha zmiana w kodzie.
 - **Gdzie położyć nowy plik** (reguła od 2026-07-31, pełne uzasadnienie w `docs/architektura-kodu.md`):
   warstwa jest osią główną, a wewnątrz `application/`, `http/routes/` i `infrastructure/pg/`
@@ -83,18 +90,40 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 
 ## Screen flow (kolejność ekranów)
 ```
-00-login → 01-splash → 02-preflight → 02e-zadanie → 02a-paliwo/mh → 03-preflight-confirm
+00-login → 01-moj-dzien (EKRAN DOMOWY)
+01-moj-dzien → 02-przejecie → 02e-zadanie → 02a-liczniki → „Przejmij i leć"
 → 04-cockpit-ground ⇄ 05-cockpit-running
 → 06-tankowanie / 07-zmiana-zalogi / 08-lista-reczna (akcje ground)
-→ 09-end-of-day → 10-statystyki → 11-eksport → 01-splash (GOTOWE: koniec dnia)
-01-splash → 12-historia (okno korekty 24 h) → 10-statystyki
+→ 09-zamknij-lot (po STOP ENGINE) → kolejny wzlot (04) ALBO 09b-zdaj-samolot
+→ 01-moj-dzien
+01-moj-dzien → 10-statystyki (rozliczenie samolotu) / 11-eksport / 12-historia
+01-moj-dzien → „Zamknij dzień" (OPCJONALNE) → 01b (okno korekty 24 h)
 ```
-Pętla domyka się na 01: „GOTOWE" na 11 **czyści stos nawigacji**, bo po `day_close` kokpit,
-09 i 10 opisują stan, którego już nie ma. Wyjście działa też offline — niepusty outbox
-nigdy nie więzi pilota na ostatnim ekranie (§4.1).
+**Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
+kroków flow: zaczyna się pierwszym wzlotem i domyka sam na ostatnim. Wyjście działa też
+offline — niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
+
+## Czas służby — klamra, nie kontener (decyzja 2026-08-06)
+Reguła w jednym zdaniu: **loty są ZAPISYWANE, służba jest DEKLAROWANA i zawsze stanowi
+klamrę wokół lotów** (duty ⊇ suma wzlotów, zawsze). Z tego wynika wszystko inne:
+- służba należy do **pilota**, nie do samolotu — dwa samoloty mieszczą się w jednej służbie
+  (to odwraca „jeden samolot = jeden dzień" z 2026-07-23 i usuwa jego trade-off)
+- klamra bierze się domyślnie z pierwszego i ostatniego wzlotu doby UTC; pilot **nie otwiera
+  ani nie zamyka niczego, żeby polecieć**. Deklaracja jest korektą po fakcie na ekranie 01
+- jednostką potwierdzenia danych jest **wzlot** (cykl silnika), nie doba — ekran 09
+- odczyt liczników przy zamknięciu wzlotu jest **opcjonalny**, a **wymagany dopiero przy
+  zdaniu samolotu** (09b), bo to on jest przekazaniem i ogniwem łańcucha MH. Powód
+  opcjonalności: dzień skokowy to 8–12 wzlotów pod rząd i nikt nie chodzi do licznika po
+  każdym — wymóg zrobiłby z aplikacji coś wolniejszego od papieru
+- **zdanie samolotu nie kończy dnia pilota**; „Zamknij dzień" jest opcjonalne
+- łańcuch MH nie ma ze służbą nic wspólnego: to oś samolotu
+Pełny opis: `docs/_main.md.txt` §3.6, §3.6a. **Design jest przebudowany, domena jeszcze
+nie** — etap B doprowadza `packages/domain` do zgodności (nowy `leg_close`, klamry duty
+opcjonalne, projekcja służby per pilot per doba UTC).
 
 ## Pilot i samolot — UX
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth — decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
+- **Przejęcie samolotu ma trwać kilka sekund** — trzy kroki (samolot+Dual → zadanie → liczniki) i „Przejmij i leć" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
 - Tożsamość pilota jest znana w całej sesji — NIE pytamy o kod pilota w formularzach
 - Samolot wybieramy z listy zarejestrowanych jednostek (dropdown/lista kart), NIE pole tekstowe
 - Rodzaj operacji — siatka kart z ikonami, NIE select. Nazwy dla pilota: Skoki / **Przelot** / Egzamin / Lot tech. / Inne (wartości w rejestrze zostają angielskie — `ferry` to identyfikator, nie napis)

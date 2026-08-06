@@ -1360,3 +1360,51 @@ i wyśle się sam.". W 05E analogiczna plakietka zostaje (inny arkusz, poza tą 
 > Powód: dwa komunikaty o jednym zapisie kazały czytać dwa razy, żeby dowiedzieć się raz.
 > To jest dokończenie tej samej myśli — „co się stanie z moim wpisem" — a nie druga
 > informacja, więc stoi w jednym miejscu.
+
+---
+
+## 2026-08-06 — Przebudowa flow: dzień służby przestaje być kontenerem na loty
+
+**Powód całości** (odwraca „jeden samolot = jeden dzień" z 2026-07-23): flow był zbudowany
+wokół dnia służby — żeby zapisać jeden lot, pilot musiał otworzyć i zamknąć służbę, a
+przesiadka na drugi samolot dawała dwie służby. W rzeczywistości typowy dzień to JEDEN lot
+i przekazanie maszyny; służba trwająca cały dzień jest rzadkością i przypadkiem szczególnym.
+> Nowa reguła: **loty są ZAPISYWANE, służba jest DEKLAROWANA i zawsze stanowi klamrę wokół
+> lotów** (duty ⊇ suma wzlotów). Klamra należy do pilota, nie do samolotu.
+
+**01-splash → 01-moj-dzien** (+ warianty 01a zero wzlotów, 01b dzień zamknięty) — splash
+awansuje na ekran domowy: klamra służby (meldunek / koniec) wokół listy wzlotów dnia,
+przekrojowo po WSZYSTKICH samolotach, z sumami służby / bloku / lotów.
+> Powód: odpowiedź na „jak pogodzić czas służby z pojedynczymi lotami" jest układem, nie
+> tekstem — jedna karta, w której klamra fizycznie otacza wzloty. Scenariusz główny pokazuje
+> jedną służbę na dwóch samolotach, bo to jest rzecz, której stary model nie umiał.
+
+**02-preflight → PRZEJĘCIE, czas meldowania usunięty** (także z 02D). Stepper 4 → 3 kroki.
+> Powód: pytanie „od kiedy jesteś na służbie" stało między pilotem a samolotem. Klamra
+> powstaje sama z pierwszego wzlotu i poprawia się po fakcie na 01.
+
+**03-preflight-confirm USUNIĘTY** — CTA „Przejmij i leć" na 02A prowadzi wprost do kokpitu.
+> Powód: ekran powtarzał to, co pilot wpisał sekundę wcześniej, i był czwartym tapem
+> w drodze do samolotu.
+
+**09-end-of-day → 09-zamknij-lot** (+ 09A seria skokowa, 09B zdaj samolot, 09C bez wzlotu).
+Jednostką potwierdzenia jest wzlot; odczyt liczników OPCJONALNY, wymagany dopiero przy
+zdaniu samolotu.
+> Powód opcjonalności: dzień skokowy to 8–12 wzlotów pod rząd i nikt nie chodzi do licznika
+> po każdym — wymóg zrobiłby z aplikacji coś wolniejszego od papieru. 09A mieści się
+> w całości z przyciskiem i to był warunek przyjęcia tego wariantu.
+> 09C zastępuje dawny „dzień bez lotów" (09A end-of-day): w nowym modelu dniem nie jest
+> sesja samolotu, więc stanem zerowym jest „przejąłem i nie poleciałem".
+
+**04, 04A, 04B** — duty timer zastąpiony paskiem sesji samolotu („SP-AXA · Twój od 09:05 ·
+2 wzloty"), który jest zarazem jedyną drogą powrotną do 01. „Log dnia" → „Log SP-AXA".
+> Powód: czas służby w kokpicie sugerował, że dzień kończy się razem z tym samolotem —
+> czyli dokładnie założenie, które ta przebudowa usuwa. W podglądzie cudzej maszyny (04B)
+> duty obcego pilota nie wnosiło nic do decyzji o przejęciu.
+
+**05A, 05D** — STOP ENGINE prowadzi do 09 (zamknięcie wzlotu), nie z powrotem do kokpitu.
+
+**01** — wzlot porzucony przez „Potwierdzę później" dostaje amber pasek „do potwierdzenia".
+> Powód: bez niego wzlot niepotwierdzony był w liście nieodróżnialny od potwierdzonego.
+> Pasek ZAPRASZA, nie ostrzega: czasy z detekcji już są w rejestrze i wchodzą do sum,
+> brakuje wyłącznie przejrzenia.
