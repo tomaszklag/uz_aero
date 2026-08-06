@@ -182,6 +182,22 @@
   }
   .edit-btn:hover { border-color:var(--green-border); color:var(--green); }
 
+  /* Wzlot niepotwierdzony — pilot wyszedł z 09 przez „Potwierdzę później".
+     Czasy są w rejestrze i wchodzą do sum (to fakty z detekcji), brakuje tylko
+     przejrzenia i ewentualnych odczytów. Dlatego pasek jest ZAPROSZENIEM,
+     nie ostrzeżeniem: nic nie jest zepsute, coś jest niedokończone. */
+  .leg-num.pending { color:var(--amber); }
+  .leg-num.pending::after { background:var(--amber); opacity:0.7; }
+  .leg-note {
+    display:flex; align-items:center; gap:8px;
+    padding:9px 12px; min-height:44px;
+    background:var(--amber-muted); border-top:1px solid var(--amber-border);
+    font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--amber); text-decoration:none;
+  }
+  .leg-note svg { flex-shrink:0; }
+  .leg-note .chev { margin-left:auto; }
+
   .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); border-top:1px solid var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -373,7 +389,7 @@
             <a href="10-statystyki.html" class="leg-group-link">Rozliczenie →</a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad wzlotu 3">3</a>
+            <a href="14-slad.html" class="leg-num pending" title="Ślad wzlotu 3">3</a>
             <span class="leg-times">13:40 → 15:10</span>
             <span class="leg-metrics">
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">1:30</span></span>
@@ -383,6 +399,11 @@
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
+          <a href="09-zamknij-lot.html" class="leg-note" title="Dokończ zamknięcie wzlotu 3">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+            Wzlot 3 — do potwierdzenia
+            <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
         </div>
 
         <div class="bracket-row bottom">
@@ -446,7 +467,7 @@
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Dzień w toku — samolot w ręce</span>
-      <span class="vp-when">Standard po pierwszym wzlocie: klamra służby wokół listy wzlotów, dwa samoloty w jednej służbie (SP-AXA zdany, SP-KLM trzymany), meldunek poprawiony ręcznie na 07:10.</span>
+      <span class="vp-when">Standard po pierwszym wzlocie: klamra służby wokół listy wzlotów, dwa samoloty w jednej służbie (SP-AXA zdany, SP-KLM trzymany), meldunek poprawiony ręcznie na 07:10. Wzlot 3 czeka na potwierdzenie — pilot wyszedł z 09 przez „Potwierdzę później", więc czasy już są w sumach, a pasek amber zaprasza do dokończenia.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

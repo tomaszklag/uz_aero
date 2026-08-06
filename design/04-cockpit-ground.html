@@ -156,22 +156,22 @@
   }
 
   /* ===== DAY LOG ===== */
-  .day-log {
+  .session-log {
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
   }
-  .day-log-header {
+  .session-log-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 9px 12px; border-bottom: 1px solid var(--border);
     background: var(--surface-raised);
   }
-  .day-log-title {
+  .session-log-title {
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
   }
-  .day-log-link {
+  .session-log-link {
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
     color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 4px;
   }
-  .day-log-link:hover { color: var(--green); }
+  .session-log-link:hover { color: var(--green); }
 
   /* ===== AKORDEON CYKLI (2026-08-04) =====
      Zamknięty cykl zwija się do nagłówka z podsumowaniem (n T/O · blok · MH po
@@ -291,15 +291,15 @@
   .action-label { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-primary); }
   .action-sub { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
 
-  /* ===== DUTY TIME ===== */
-  .duty-strip {
+  /* ===== PASEK SESJI SAMOLOTU ===== */
+  .claim-strip { text-decoration: none;
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px;
     display: flex; align-items: center; justify-content: space-between;
   }
-  .duty-left { display: flex; align-items: center; gap: 8px; }
-  .duty-icon { color: var(--blue); }
-  .duty-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
-  .duty-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
+  .strip-left { display: flex; align-items: center; gap: 8px; }
+  .claim-icon { color: var(--blue); }
+  .strip-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+  .claim-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
 
   /* Pasek paliwa — FOB z ostatniego odczytu + szacunek wystarczalności z NORMY
      serwera (dana referencyjna, 3 stany świeżości §4.8; offline: adnotacja
@@ -321,7 +321,7 @@
   .fuel-strip-est { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); letter-spacing: 0.5px; text-align: right; line-height: 1.6; }
   .fuel-strip-est b { color: var(--amber); font-weight: 700; }
   .fuel-strip-src { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.8px; color: var(--text-muted); }
-  .duty-since { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+  .claim-since { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
 
   /* nav strip */
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
@@ -394,28 +394,33 @@
         <div class="start-engine-hint">Przytrzymaj 2 sekundy aby potwierdzić</div>
       </a>
 
-      <!-- DUTY TIME STRIP -->
-      <div class="duty-strip">
-        <div class="duty-left">
-          <div class="duty-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <!-- PASEK SESJI SAMOLOTU — kokpit opisuje SAMOLOT, nie służbę.
+           Wcześniej stał tu duty timer, ale czas służby jest wielkością pilota,
+           obejmuje też inne samoloty i mieszka w „Mój dzień" (01). Trzymanie go
+           tutaj sugerowało, że dzień kończy się razem z tym samolotem — a to jest
+           dokładnie założenie, które ta przebudowa usuwa. Pasek jest zarazem
+           jedyną drogą powrotną z kokpitu do ekranu domowego. -->
+      <a href="01-moj-dzien.html" class="claim-strip">
+        <div class="strip-left">
+          <div class="claim-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2 3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
           </div>
           <div>
-            <div class="duty-label">Duty Time</div>
-            <div class="duty-val">04:34</div>
+            <div class="strip-label">SP-AXA · Twój od 09:05</div>
+            <div class="claim-val">2 wzloty</div>
           </div>
         </div>
-        <div class="duty-since">Meldunek 08:00 UTC · 10:00 LT</div>
-      </div>
+        <div class="claim-since">Mój dzień →</div>
+      </a>
 
       <!-- FUEL STRIP — FOB z ostatniego odczytu + wystarczalność z normy (serwer, live) -->
       <div class="fuel-strip">
-        <div class="duty-left">
+        <div class="strip-left">
           <div class="fuel-strip-icon">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h3m0 0V3h6v3m0 0h3a2 2 0 0 1 2 2v14M9 6h6"/></svg>
           </div>
           <div>
-            <div class="duty-label">Paliwo · ostatni odczyt</div>
+            <div class="strip-label">Paliwo · ostatni odczyt</div>
             <div class="fuel-strip-val">141 L</div>
           </div>
         </div>
@@ -426,10 +431,10 @@
       </div>
 
       <!-- DAY LOG -->
-      <div class="day-log">
-        <div class="day-log-header">
-          <span class="day-log-title">Log dnia · UTC · 2 cykle · 3 T/O</span>
-          <a href="08-lista-reczna.html" class="day-log-link">
+      <div class="session-log">
+        <div class="session-log-header">
+          <span class="session-log-title">Log SP-AXA · UTC · 2 cykle · 3 T/O</span>
+          <a href="08-lista-reczna.html" class="session-log-link">
             Szczegóły
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
@@ -573,8 +578,8 @@
   <a class="vp-item" href="04a-cockpit-ground.html">
     <span class="vp-badge">04A</span>
     <span class="vp-body">
-      <span class="vp-name">Start dnia</span>
-      <span class="vp-when">Zaraz po potwierdzeniu preflightu — pusty log, świeży duty, pierwszy START ENGINE.</span>
+      <span class="vp-name">Świeżo przejęty samolot</span>
+      <span class="vp-when">Zaraz po przejęciu — pusty log, zero wzlotów, pierwszy START ENGINE. Nie „start dnia": dzień pilota mógł zacząć się wcześniej, na innym samolocie.</span>
     </span>
   </a>
   <a class="vp-item active" href="04-cockpit-ground.html">

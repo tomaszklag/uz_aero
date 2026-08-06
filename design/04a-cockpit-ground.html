@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 04A Cockpit / Ground · Start dnia</title>
+<title>UZ Aero — 04A Cockpit / Ground · świeżo przejęty</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -84,20 +84,20 @@
   .start-engine-label { font-family:var(--font-display); font-size:32px; letter-spacing:4px; color:var(--green); text-align:center; position:relative; z-index:1; text-shadow:0 0 20px rgba(46,204,113,0.3); }
   .start-engine-hint { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); text-align:center; position:relative; z-index:1; }
 
-  .duty-strip { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; }
-  .duty-left { display:flex; align-items:center; gap:8px; }
-  .duty-icon { color:var(--blue); }
-  .duty-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  .duty-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:2px; color:var(--text-primary); }
-  .duty-since { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); }
+  .claim-strip { text-decoration: none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; }
+  .strip-left { display:flex; align-items:center; gap:8px; }
+  .claim-icon { color:var(--blue); }
+  .strip-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .claim-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:2px; color:var(--text-primary); }
+  .claim-since { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); }
 
-  .day-log { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  .day-log-header { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-raised); }
-  .day-log-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
-  .day-log-link { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:4px; }
-  .day-log-empty { display:flex; flex-direction:column; align-items:center; gap:8px; padding:28px 16px; }
-  .day-log-empty-icon { color:var(--border-strong); }
-  .day-log-empty-text { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-muted); text-align:center; line-height:1.6; }
+  .session-log { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .session-log-header { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-raised); }
+  .session-log-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .session-log-link { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:4px; }
+  .session-log-empty { display:flex; flex-direction:column; align-items:center; gap:8px; padding:28px 16px; }
+  .session-log-empty-icon { color:var(--border-strong); }
+  .session-log-empty-text { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-muted); text-align:center; line-height:1.6; }
 
   .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .action-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; text-decoration:none; color:var(--text-primary); cursor:pointer; position:relative; overflow:hidden; }
@@ -134,11 +134,11 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 04A</span>
-  <span class="slug">cockpit · ground · start dnia</span>
+  <span class="slug">cockpit · ground · świeżo przejęty samolot</span>
   <span class="canvas-meta"><span class="pulse"></span>Brak lotów</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Ground state, start dnia">
+<main class="phone" role="region" aria-label="Mockup — Ground state, świeżo przejęty samolot">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -187,34 +187,36 @@
         <div class="start-engine-hint">Przytrzymaj 2 sekundy aby potwierdzić</div>
       </a>
 
-      <!-- DUTY TIME -->
-      <div class="duty-strip">
-        <div class="duty-left">
-          <div class="duty-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <!-- PASEK SESJI SAMOLOTU — zamiast duty timera (patrz komentarz w 04).
+           Świeżo przejęty samolot, zero wzlotów: licznik mówi „jeszcze żadnego",
+           a nie „0", bo zero sugerowałoby wynik zamiast braku. -->
+      <a href="01-moj-dzien.html" class="claim-strip">
+        <div class="strip-left">
+          <div class="claim-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2 3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
           </div>
           <div>
-            <div class="duty-label">Duty Time</div>
-            <div class="duty-val">00:04</div>
+            <div class="strip-label">SP-AXA · Twój od 08:04</div>
+            <div class="claim-val">jeszcze żadnego wzlotu</div>
           </div>
         </div>
-        <div class="duty-since">Meldunek 08:00 UTC · 10:00 LT</div>
-      </div>
+        <div class="claim-since">Mój dzień →</div>
+      </a>
 
       <!-- LOG DNIA — empty state -->
-      <div class="day-log">
-        <div class="day-log-header">
-          <span class="day-log-title">Log dnia · UTC · 0 cykli · 0 T/O</span>
-          <a href="08-lista-reczna.html" class="day-log-link">
+      <div class="session-log">
+        <div class="session-log-header">
+          <span class="session-log-title">Log SP-AXA · UTC · 0 cykli · 0 T/O</span>
+          <a href="08-lista-reczna.html" class="session-log-link">
             Szczegóły
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
         </div>
-        <div class="day-log-empty">
-          <div class="day-log-empty-icon">
+        <div class="session-log-empty">
+          <div class="session-log-empty-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
           </div>
-          <div class="day-log-empty-text">
+          <div class="session-log-empty-text">
             Brak wpisów<br>Uruchom silnik aby rozpocząć pierwszy lot
           </div>
         </div>
@@ -269,8 +271,8 @@
   <a class="vp-item active" href="04a-cockpit-ground.html">
     <span class="vp-badge">04A</span>
     <span class="vp-body">
-      <span class="vp-name">Start dnia</span>
-      <span class="vp-when">Zaraz po potwierdzeniu preflightu — pusty log, świeży duty, pierwszy START ENGINE.</span>
+      <span class="vp-name">Świeżo przejęty samolot</span>
+      <span class="vp-when">Zaraz po przejęciu — pusty log, zero wzlotów, pierwszy START ENGINE. Nie „start dnia": dzień pilota mógł zacząć się wcześniej, na innym samolocie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

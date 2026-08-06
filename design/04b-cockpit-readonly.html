@@ -127,18 +127,18 @@
     color: var(--text-muted); text-align: center; line-height: 1.6; margin-top: -6px;
   }
 
-  /* ===== DUTY TIME ===== */
-  .duty-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
-  .duty-left { display: flex; align-items: center; gap: 8px; }
-  .duty-icon { color: var(--blue); }
-  .duty-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
-  .duty-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
-  .duty-since { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+  /* ===== PASEK SESJI SAMOLOTU ===== */
+  .claim-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .strip-left { display: flex; align-items: center; gap: 8px; }
+  .claim-icon { color: var(--blue); }
+  .strip-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+  .claim-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
+  .claim-since { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
 
   /* ===== DAY LOG ===== */
-  .day-log { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-  .day-log-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
-  .day-log-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+  .session-log { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .session-log-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
+  .session-log-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
   /* Akordeon cykli jak na 04 — w podglądzie WSZYSTKIE cykle domyślnie zwinięte:
      to szybki rzut oka na cudzy dzień, nie praca na nim (2026-08-04). */
   .cycle-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
@@ -304,24 +304,27 @@
         GROUND · SILNIK WYŁĄCZONY · WG SERWERA
       </div>
 
-      <!-- DUTY -->
-      <div class="duty-strip">
-        <div class="duty-left">
-          <div class="duty-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <!-- PASEK SESJI SAMOLOTU — podgląd cudzej sesji.
+           Wcześniej stał tu „Duty KRZ 02:31". Czas służby innego pilota nie jest
+           informacją o SAMOLOCIE i nie ma czego wnosić do decyzji o przejęciu —
+           liczy się, od kiedy maszyna jest zajęta i ile już zrobiła. -->
+      <div class="claim-strip">
+        <div class="strip-left">
+          <div class="claim-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2 3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
           </div>
           <div>
-            <div class="duty-label">Duty KRZ</div>
-            <div class="duty-val">02:31</div>
+            <div class="strip-label">SP-FGK · KRZ od 07:10 UTC</div>
+            <div class="claim-val">3 wzloty</div>
           </div>
         </div>
-        <div class="duty-since">Meldunek 07:10 UTC · 09:10 LT</div>
+        <div class="claim-since">zajęty</div>
       </div>
 
       <!-- DAY LOG (KRZ) -->
-      <div class="day-log">
-        <div class="day-log-header">
-          <span class="day-log-title">Log dnia KRZ · UTC · 1 cykl · 1 T/O</span>
+      <div class="session-log">
+        <div class="session-log-header">
+          <span class="session-log-title">Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O</span>
         </div>
 
         <!-- W podglądzie cykle domyślnie zwinięte -->
@@ -431,8 +434,8 @@
   <a class="vp-item" href="04a-cockpit-ground.html">
     <span class="vp-badge">04A</span>
     <span class="vp-body">
-      <span class="vp-name">Start dnia</span>
-      <span class="vp-when">Zaraz po potwierdzeniu preflightu — pusty log, świeży duty, pierwszy START ENGINE.</span>
+      <span class="vp-name">Świeżo przejęty samolot</span>
+      <span class="vp-when">Zaraz po przejęciu — pusty log, zero wzlotów, pierwszy START ENGINE. Nie „start dnia": dzień pilota mógł zacząć się wcześniej, na innym samolocie.</span>
     </span>
   </a>
   <a class="vp-item" href="04-cockpit-ground.html">
