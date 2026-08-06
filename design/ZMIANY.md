@@ -1437,3 +1437,39 @@ dnia"; ekran 11 przestaje czyścić stos nawigacji; „log dnia" → „log SP-A
 **10, 10A, 12** — chip SYNC usunięty z nagłówków.
 > Powód: reguła z 2026-08-06 (issue #12) mówi, że online nie rysuje nic; te trzy ekrany
 > zostały wtedy przeoczone i plakietka świeciła na nich przez 99% czasu.
+
+---
+
+## 2026-08-06 — Audyt spójności całego zestawu (po przebudowie flow)
+
+Zlecony przegląd wszystkich 47 mockupów po TREŚCI, nie po nazwach plików. Znalazł to,
+czego nie wyłapały przeglądy prowadzone greppem po linkach.
+
+**10, 10A, 11, 11A — przeliczone na scenariusz 06 SIE.**
+> Powód: „Rozliczenie →" przy grupie SP-AXA z dwoma wzlotami otwierało czerwcowy ekran
+> z sześcioma i oknem korekty „do 23 CZE". Ekran, który ma potwierdzać regułę
+> „służba ⊇ suma wzlotów", zaprzeczał jej pierwszą liczbą.
+> 10A i 09C przeniesione na SP-ANK / 03 SIE, bo opisywały maszynę trzymaną bez wzlotu
+> w dniu, w którym ta sama maszyna latała.
+
+**07 — „Zamykasz dzień odczytami końcowymi" → „Zdajesz samolot".**
+> Powód: ekran prowadził przyciskiem do 09B, gdzie stoi baner „Zdajesz samolot, NIE
+> kończysz dnia". Dwa sąsiadujące ekrany twierdziły rzeczy przeciwne.
+
+**04/04A — godzina przejęcia SP-AXA ujednolicona na 08:04.**
+> Powód: 04 mówiło „Twój od 09:05" przy logu zaczynającym się o 08:12 — samolot był
+> w logu przed przejęciem.
+
+**Chip SYNC usunięty z 12 ekranów** (02A, 02E, 02F, 04, 04A, 04C, 05G, 06, 07, 08, 14, 14B).
+> Powód: reguła „online nie rysuje nic" (issue #12) nigdy nie została dociągnięta poza
+> kilka ekranów. Plakietka świeciła przez 99% czasu, ucząc oko ignorować róg, w którym
+> ma się pojawiać wyłącznie ostrzeżenie. W 05G była świadoma — pokazywała, że awaria GPS
+> nie jest awarią sieci — ale jeden ekran z plakietką, której nie ma nigdzie indziej, uczy
+> czegoś odwrotnego niż reguła. Lekcja przeniesiona do treści banera GPS.
+
+**`.scroll > * { flex-shrink:0 }` dołożone w 8 plikach** (04, 04A, 04C, 08, 11, 11A, 14, 14B).
+> Powód: karty z `overflow:hidden` zapadają się w kolumnie flex poniżej swojej treści —
+> sekcje pokazywały same nagłówki. Wada zastana, ta sama co naprawiona w 01 i 10.
+
+**Nawigacja:** rodzina 05 dostała link do 09 (faktyczny następny krok), 04B, 06, 07, 08,
+10A i 13 — drogę powrotną do „Mój dzień", 05E prowadzi do 09A zamiast do rozliczenia.
