@@ -7,37 +7,53 @@
 
 ## Przepływ ekranów (screen flow)
 
+> **Przebudowany 2026-08-06** (`_main.md.txt` §3.6a): dzień służby przestał być kontenerem
+> na loty. Wszystko wraca do `01`, jednostką potwierdzenia jest wzlot.
+
 ```
 00-login (odblokowanie PIN · warianty: 00a pełny login, 00b offline bez profilu)
-  → 01-splash             (odświeżenie cache referencyjnego — adnotacja "dane referencyjne · sync")
-  → 02-preflight          (krok 1/3 — samolot, operacja, trasa, czas służby; wariant offline: 02d)
-  → 02a-preflight         (krok 2/3 — paliwo, motogodziny)
+  → 01-moj-dzien          EKRAN DOMOWY — klamra służby wokół wzlotów dnia, przekrojowo
+                          po samolotach (warianty: 01a zero wzlotów, 01b dzień zamknięty)
+
+Przejęcie samolotu (trzy kroki, kilka sekund — nie otwiera doby):
+  → 02-preflight          (krok 1/3 — samolot i Dual; wariant offline: 02d)
+  → 02e-preflight-zadanie (krok 2/3 — operacja, trasa, klient, notatka; arkusz lotnisk: 02f)
+  → 02a-preflight         (krok 3/3 — paliwo i motogodziny; „Przejmij i leć")
     02b-preflight-paliwo    (modal: korekta paliwa — wizualizacja)
     02c-preflight-moto      (modal: korekta MH — wizualizacja)
-  → 03-preflight-confirm  (krok 3/3 — podsumowanie i potwierdzenie)
-  → 04a-cockpit-ground    (start dnia, brak lotów)
+  → 04a-cockpit-ground    (świeżo przejęty samolot, zero wzlotów)
 
 Cockpit cycle (powtarzalny):
-  04a / 04-cockpit-ground   (silnik OFF — start dnia / w trakcie dnia)
+  04a / 04-cockpit-ground   (silnik OFF — świeżo przejęty / kolejne wzloty)
   04b-cockpit-readonly      (podgląd cudzego samolotu — zajęty przez innego PIC)
     ↓ Start engine
   05a-cockpit-taxi          (silnik ON — kołowanie przed T/O)
     ↓ autodetect T/O
   05b-cockpit-inflight-toast  (w locie · toast: Wykryto Takeoff)
     ↓ toast potwierdzony
-  05-cockpit-running        (w locie — fazy GPS, log zdarzeń)
+  05-cockpit-running        (w locie — fazy GPS, log zdarzeń; 05g: brak GPS)
     ↓ autodetect LDG
   05c-cockpit-toast-ldg     (rollout · toast: Wykryto Landing)
     ↓ toast potwierdzony
-  05d-cockpit-taxi-post     (kołowanie po lądowaniu — Lot N ukończony)
-    ↓ kolejny T/O → 05b  /  Stop engine → 04
+  05d-cockpit-taxi-post     (kołowanie po lądowaniu — wzlot N ukończony)
+    ↓ kolejny T/O → 05b  /  Stop engine → 09
 
-  → 06-tankowanie
-  → 07-zmiana-zalogi
-  → 08-lista-reczna
-  → 09-end-of-day
-  → 10-statystyki
-  → 11-eksport
+  akcje ground (z 04/04a): 06-tankowanie · 07-zmiana-zalogi · 08-lista-reczna
+
+Zamknięcie wzlotu i zdanie samolotu:
+  09-zamknij-lot            (czasy z detekcji, liczniki OPCJONALNE, uwagi;
+                             09a — seria skokowa, jeden kciuk)
+    ↓ kolejny wzlot → 04   /   koniec pracy z maszyną ↓
+  09b-zdaj-samolot          (odczyt WYMAGANY — przekazanie i ogniwo łańcucha MH;
+                             09c — zdanie bez wzlotu: pogoda, usterka)
+  → 01-moj-dzien            kolejny samolot wchodzi do TEJ SAMEJ służby
+
+Odnogi pod 01 (nie etapy dnia):
+  10-statystyki  rozliczenie SAMOLOTU (10a — bez wzlotów)
+  11-eksport     status synchronizacji (11a — offline)
+  12-historia    poprzednie dni pilota, okno korekty 24 h
+  13-ustawienia
+  „Zamknij dzień" → 01b  (OPCJONALNE — potwierdzenie klamry)
 ```
 
 ---
@@ -53,12 +69,18 @@ Cockpit cycle (powtarzalny):
 - Samolot wybieramy z listy zarejestrowanych jednostek (karty do wyboru, nie `<select>`)
 - Samolot może być **wyłączony ze służby** — oznaczony tagiem "Wyłączony", niedostępny do wyboru (`disabled`)
 
-### Stepper 4-krokowy (od 2026-07-30)
-- Krok 1 (02) — **kto, czym i od kiedy**: samolot (z przejęciem po innym PIC), drugi
-  pilot, czas meldowania
-- Krok 2 (02E) — **co dziś robimy**: rodzaj operacji, trasa (ICAO), oznaczenie klienta
-- Krok 3 (02A) — paliwo na pokładzie, motogodziny
-- Krok 4 (03) — podsumowanie tylko do odczytu + „Potwierdź i zacznij dzień"
+### Stepper 3-krokowy (od 2026-08-06; wcześniej 4 kroki)
+- Krok 1 (02) — **czym i z kim**: samolot (z przejęciem po innym PIC), drugi pilot
+- Krok 2 (02E) — **co teraz robimy**: rodzaj operacji, trasa (ICAO), klient, notatka
+- Krok 3 (02A) — paliwo na pokładzie, motogodziny + CTA „Przejmij i leć"
+
+**Co zniknęło i dlaczego** (przebudowa flow, `_main.md.txt` §3.6a):
+- **czas meldowania z kroku 1** — pytanie „od kiedy jesteś na służbie" stało między pilotem
+  a samolotem. Służba nie jest kontenerem na loty, tylko klamrą wokół nich: powstaje sama
+  z pierwszego wzlotu, a pilot poprawia ją po fakcie na `01`. Przejęcie ma trwać kilka
+  sekund, nie otwierać doby
+- **krok 4 (ekran 03, podsumowanie)** — powtarzał to, co pilot wpisał sekundę wcześniej,
+  i był czwartym tapnięciem w drodze do samolotu. Odczyty z kroku 3 SĄ potwierdzeniem
 
 Podział 1 ↔ 2 idzie po NATURZE pytań: krok 1 to wybory z list, krok 2 to opis zadania.
 Powód wydzielenia: krok 1 był najdłuższym formularzem aplikacji i rósł dalej — lista
@@ -71,28 +93,33 @@ opcjonalne), więc bez pamięci byłby codziennym tapnięciem w pusty formularz.
 operacja i klient **per pilot**, trasa **per samolot** (`TaskMemoryStore`). Podpowiedź
 ustępuje bez pytania — pierwsza zmiana któregokolwiek pola wyłącza ją do końca preflightu.
 
-### Czas meldowania (duty start)
-- Wyświetlany jako **UTC primary** (duża czcionka mono), LT secondary (mała, po prawej)
+### Klamra służby — meldunek i koniec (ekran 01, od 2026-08-06)
+
+Pole przeniesione z przejęcia na ekran domowy. **Domyślnie nie wymaga niczego**: klamra
+bierze się z pierwszego i ostatniego wzlotu doby, a pilot poprawia ją tylko wtedy, gdy
+zameldował się wcześniej albo został dłużej niż samolot.
+
+- Wyświetlana jako **UTC primary** (duża czcionka mono), pod spodem adnotacja o pochodzeniu:
+  „z pierwszego wzlotu" (wyliczone) albo „poprawione" (deklaracja pilota, kolor `--blue`)
 - Edycja przez ołówek = **arkusz z wpisaniem godziny** (`ReadingSheet`, ten sam wzorzec co
-  odczyty 02b/02c i zakończenie duty na 09): pole „HH:MM" UTC, pod nim odniesienia
-  („Teraz", „Dzień lotny") i miękkie ostrzeżenie, gdy wpis wypada w przyszłości.
+  odczyty 02b/02c): pole „HH:MM" UTC, pod nim odniesienia („Teraz", „Pierwszy wzlot")
+  i miękkie ostrzeżenie, gdy wpis wypada w przyszłości albo **zawęża klamrę poniżej lotów**
+  (służba ⊇ suma wzlotów — to jest reguła, nie preferencja).
   Klawiatura **numeryczna** — pilot wbija cztery cyfry (`0800`), dwukropek stawia maska;
   QWERTY dla czterech cyfr zajmowałaby pół ekranu i podstawiała podpowiedzi słownikowe.
-  Powód: meldunek bywa godziny wstecz wobec chwili wypełniania formularza — wpisanie
-  wartości jest jednym ruchem, stepper wymagałby serii tapnięć. Data pozostaje z dnia
-  lotnego (pilot poprawia godzinę, nie datę) — badge z datą pod polem to potwierdza
+  Powód: meldunek bywa godziny wstecz wobec chwili wypełniania — wpisanie wartości jest
+  jednym ruchem, stepper wymagałby serii tapnięć. Data pozostaje z doby (pilot poprawia
+  godzinę, nie datę)
 
 ### Strefa czasowa — reguła nadrzędna
 
-**UTC jest domyślnym czasem w całej aplikacji.** Wszystkie czasy zdarzeń (log dnia,
-T/O, LDG, tankowanie, start/stop silnika, duty start i end, tabela lotów, arkusz
-w eksporcie) są w UTC — czas nieoznaczony = UTC.
-LT pojawia się **wyłącznie jako wartość drugorzędna** przy meldunku (duty start),
+**UTC jest domyślnym czasem w całej aplikacji.** Wszystkie czasy zdarzeń (log samolotu,
+wzloty dnia, T/O, LDG, tankowanie, start/stop silnika, klamra służby, arkusz w eksporcie)
+są w UTC — czas nieoznaczony = UTC.
+LT pojawia się **wyłącznie jako wartość drugorzędna** przy deklaracji klamry służby na `01`,
 bo pilot melduje się o lokalnej godzinie; format: `08:00 UTC · 10:00 LT`.
-Logi i tabele mają jawny marker („Log dnia · UTC", „Lista lotów · czasy UTC"),
+Logi i tabele mają jawny marker („Log SP-AXA · UTC", „Wzloty · czasy UTC"),
 żeby nie było wątpliwości. Scenariusz mockupów: offset LT = UTC+2.
-- Domyślnie pobierany z systemu, edytowalny (ołówek)
-- Data wyświetlana jako badge poniżej (`22 JUNE 2026`)
 
 ### Paliwo na pokładzie
 - Wartość pochodzi z **przekazania przez poprzednika** na końcu jego zmiany — nie jest szacunkiem
@@ -111,19 +138,21 @@ Logi i tabele mają jawny marker („Log dnia · UTC", „Lista lotów · czasy 
 - Również z przyciskiem "Koryguj" i modalem z ostrzeżeniem o rozbieżności
 
 ### Wartości formularza — spójność danych
-Dane na ekranie 03 (potwierdzenie) muszą zgadzać się z danymi z kroków 1 i 2:
+Ekranu 03 nie ma (usunięty 2026-08-06), więc spójności pilnujemy między krokami 1–3
+a kokpitem, do którego prowadzi „Przejmij i leć":
 - Samolot: SP-AXA (Cessna 182 · 2019)
 - Pilot: T. Małkiewicz
-- Meldunek: 08:00 UTC (10:00 LT)
 - Paliwo: 150 L
 - Motogodziny: 1 234:30 MH (format hh:mm z konfiguracji SP-AXA)
+- Godzina przejęcia: **08:04 UTC** — ta sama na 04A („Twój od 08:04"), na 04 i w rozliczeniu
+  sesji na 10. Log samolotu nie może zaczynać się przed tą godziną
 
 ---
 
 ## Cockpit Ground — założenia
 
 ### Dwa warianty ekranu
-- `04a-cockpit-ground` — **start dnia**: log pusty, duty time świeży (00:0x), START ENGINE prominentny
+- `04a-cockpit-ground` — **świeżo przejęty samolot**: log pusty, pasek sesji „jeszcze żadnego wzlotu", START ENGINE prominentny. NIE „start dnia" — dzień pilota mógł zacząć się wcześniej, na innej maszynie
 - `04b-cockpit-readonly` — **podgląd cudzego samolotu** (single-writer): banner „tylko odczyt",
   log i stan z serwera, akcje disabled z podanym powodem, przycisk „Przejmij" → flow w 02
 - `04-cockpit-ground` — **w trakcie dnia**: log z historią cykli, akcje ground dostępne

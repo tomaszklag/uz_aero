@@ -61,6 +61,13 @@ nadpisany przez drugą zmianę, korekta administracyjna po oknie 24 h, ślad w d
 audytu, konto wyłączone (JSE) i **jeden dzień otwarty DZIŚ** na SP-FGK (KRZ) — po to,
 żeby telefon miał co przejmować na ekranie 02. Mapa scenariusza: `server/scripts/demo/scenario.ts`.
 
+> ⚠ **Scenariusz demo generuje dane w modelu sprzed 2026-08-06** — jeden dzień = jedna sesja
+> samolotu, `preflight_confirm` z `dutyStart`, `day_close` jako koniec pracy. Po przebudowie
+> flow (`docs/_main.md.txt` §3.6a) potrzebne będą dane w nowym kształcie: krótkie sesje,
+> kilka maszyn w jednej służbie pilota, wzloty z opcjonalnym odczytem liczników. To warunek
+> wstępny dla `consumptionReplay.ts` — bez nich nie da się skalibrować progów analityki
+> pod nowy model (§3.6b). Zadanie etapu B.
+
 Skrypt nie dotyka bazy: wysyła paczki przez `POST /events` i klika w panel przez
 `/admin/api/*`, więc `sessions`, `flags` i karty arkusza powstają z produkcyjnego kodu.
 Identyfikatory zdarzeń są stałe (`demo-…`), więc powtórny bieg wraca jako `duplicates` —

@@ -5,6 +5,19 @@
 > Architektura systemu (offline-first, sync, kontrakt API): `docs/_main.md.txt`.
 > Ten dokument mówi, **jak jest zbudowany kod** i gdzie dopisać nową rzecz.
 
+> ## ⚠ STATUS (2026-08-07): ten dokument opisuje kod WDROŻONY, czyli model sprzed 2026-08-06
+>
+> Decyzja z 2026-08-06 (`_main.md.txt` §3.6a) odwróciła fundament: dzień służby przestał być
+> kontenerem na loty, jednostką potwierdzenia jest **wzlot**, a służba jest **klamrą** wokół
+> lotów, należącą do pilota i mogącą obejmować kilka maszyn. Design jest już przebudowany,
+> **kod jeszcze nie** (faza 8, etapy B–D).
+>
+> Wszystko poniżej, co mówi „dzień", `day_close`, `dutyStart`, „zamknięcie dnia" albo opisuje
+> ekran `03`/`01-splash`, jest **prawdziwym opisem dzisiejszego kodu i nieprawdziwym opisem
+> docelowego modelu**. Miejsca, w których ta różnica ma konsekwencje przy pisaniu etapu B,
+> są oznaczone w tekście blokiem `> ⚠ ETAP B`. Specyfikacją docelową jest `_main.md.txt`
+> §3.6, §3.6a, §3.6b i §7 — nie ten plik.
+
 ## 0. Monorepo (Faza 2)
 
 ```
@@ -83,7 +96,21 @@ odblokowanie (w 100% offline, solony SHA-256 w `expo-secure-store`; własna
 implementacja skrótu w `infrastructure/auth/sha256.ts` — powody w docblocku),
 `signed_in` → `ResumeGate`: otwarta sesja z `session_meta` (§5.2) wraca prosto do
 kokpitu, inaczej ekran 01 (start dnia: „NOWY DZIEŃ LOTNY" → preflight, stopka ze
-stemplem cache referencyjnego). „Nie pamiętam PIN" nie czyści poświadczeń (nadpisuje
+stemplem cache referencyjnego).
+
+> ⚠ **ETAP C — dychotomia `ResumeGate` przestaje obowiązywać.** `01` nie jest już „startem
+> dnia" z jednym przyciskiem, tylko **ekranem domowym osiągalnym ZAWSZE** — także przy
+> otwartej sesji samolotu (kokpit ma do niego wyjście przez pasek sesji). `ResumeGate`
+> może co najwyżej wybierać ekran startowy, nie odbierać dostępu do domu.
+>
+> Konsekwencja, którą trzeba rozwiązać osobno: argument bezpieczeństwa przy ekranie 12
+> („historia osiągalna tylko ze splasha, więc bez otwartego dnia w tle") upada razem z tą
+> dychotomią. Ładowanie zamkniętej sesji do store'u przy żywej sesji w tle to realne ryzyko
+> nadpisania stanu — albo `12` czyta bez ładowania do store'u, albo potrzebna jest inna
+> bariera. Blokowanie wejścia na `01` przy otwartej sesji jest złym rozwiązaniem, bo łamie
+> regułę „wszystko wraca do 01".
+
+„Nie pamiętam PIN" nie czyści poświadczeń (nadpisuje
 je dopiero udany login) i jest zablokowane przy niepustym outboxie. Klawisz biometrii
 z mockupu 00 odłożony (wymagałby `expo-local-authentication`).
 
@@ -196,6 +223,19 @@ i wycena: `design/admin/ANALIZA.md`.
   `duty_start` NIE POWSTAJE, bo `claim_time` niesie tę wartość od pierwszej wersji
   (`sessionRowFrom` mapuje `claimTime: s.dutyStart`) — szczegóły w docblocku
   `application/common/mappers/sessionRow.ts`.
+
+> ⚠ **ETAP B/D — to jest najgroźniejsza mina całej przebudowy.**
+> `claim_time` **jest** `dutyStart` z `preflight_confirm`. Po usunięciu czasu meldowania
+> z przejęcia (2026-08-06) `dutyStart` będzie `null` dla praktycznie każdej sesji, a razem
+> z nim wyzeruje się: klucz sortowania listy dni, kursor keyset (`claim_time DESC NULLS
+> LAST` — predykat trójgałęziowy zaprojektowany pod przypadek brzegowy, który stanie się
+> większościowy), indeks `idx_sessions_day`, filtr zakresu dat w A02, `openSessionsUndated`
+> w statystykach A08/A09 i kolumna „Dzień" w panelu. Sześciu konsumentów jednej kolumny.
+>
+> **Decyzja 2026-08-07** (`_main.md.txt`, log): `claim_time` = czas zdarzenia `session_claim`
+> (istnieje zawsze, jest pierwsze w sesji). Klamra służby przenosi się do osobnej projekcji
+> per pilot per doba UTC. Wymaga migracji z backfillem i `rebuild-projections` — którego
+> niezerowy dry-run jest normalnie incydentem, a **tu będzie ogromny i oczekiwany**.
 - **Tabela audytu `admin_audit` nie istnieje.** Niezmienność wymuszamy uprawnieniami
   (`GRANT INSERT, SELECT` dla roli aplikacyjnej), nie dyscypliną programisty.
 - **Brak list i filtrów** (sesje, zdarzenia, flagi), zapisu kont i floty, agregatów
@@ -387,6 +427,13 @@ administrator nie miał czym jej wprowadzić.
   i `day_close`, a te są niekorygowalne (`CORRECTION_TARGET_NOT_ALLOWED`), więc korekta
   nie ma jak ruszyć MH ani przekazania paliwa. Otwarta `clock_drift` też zostaje —
   A02b mówi to wprost: „zamyka ją człowiek na A03".
+
+> ⚠ **ETAP B — ten argument upada.** Decyzja 2026-08-07 przesądza, że `leg_close` MUSI być
+> korygowalny (okno 24 h kotwiczy się właśnie w nim, więc bez korygowalności pilot nie
+> poprawi literówki w odczycie, mimo że okno istnieje po to). A `leg_close` niesie
+> opcjonalny odczyt FOB+MH, czyli **ogniwo łańcucha stanie się korygowalne** — flagi
+> łańcucha trzeba będzie przeliczać albo świadomie zdecydować, że nie, i uzasadnić to
+> na nowo.
 - **Odmowy są wariantami wyniku, nie wyjątkami na granicy HTTP** (wzorzec `ResolveFlagOutcome`):
   404 nieznana sesja, **400 `day_open`** (dzień otwarty = pilot poprawia sam na 04c, panel
   nie ma tu czego naprawiać — §6.5), **422 `rule_violation`** z listą naruszeń. Rozdział 400
@@ -739,7 +786,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
 | `Avatar` | kafelek z inicjałami (albo z kodem pilota — `code`), 40/32 px | `.pilot-avatar`, `.crew-avatar` |
-| `AppBar` | pasek **dnia lotnego**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
+| `AppBar` | pasek **sesji samolotu**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
 | `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót, wariant wyśrodkowany | `.app-header` |
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
 | `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` / `.form-card` (00a) |
@@ -774,7 +821,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `StepList` | numerowana procedura wychodząca poza ten telefon | `.handover-steps` (07) |
 | `PillButton` | mała akcja nagłówka (pigułka z ikoną) | `.btn-add` (08) |
 | `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
-| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c, godziny duty (02, 09) |
+| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c; ⚠ etap C: godziny klamry służby przenoszą się na 01 / 01b |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
@@ -799,7 +846,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy — bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami (nieprzezroczyste — zakrywają kreskę), chipy, cel korekty ≥ 44 px. **Zieleń ma tylko wiersz `live`** — historia jest neutralna | `.day-log`, `.cycle-log` |
-| `DutyStrip` | licznik czasu służby od meldunku | `.duty-strip` |
+| `DutyStrip` | ⚠ **DO USUNIĘCIA w etapie C** — czasu służby w kokpicie NIE MA (§3.2); jego miejsce zajmuje pasek sesji samolotu prowadzący do 01 | `.claim-strip` |
 | `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
@@ -926,6 +973,12 @@ buildu) — sięgamy po niego dopiero, gdy własna droga okaże się niewystarcz
   bez czytelnego tekstu. Kursor i uchwyty zostają w pełnym kryciu tonu.
 
 ### Stan UI vs rejestr zdarzeń
+
+> ⚠ **ETAP C — cały ten akapit opisuje ścieżkę, której już nie ma.** Ekran `03` został
+> usunięty, ścieżka to `02 → 02e → 02a`, a zdarzenia powstają przy „Przejmij i leć" na `02a`.
+> Czas meldowania zniknął z przejęcia, więc `refreshDutyStart`, `dutyStartEdited` i cała
+> historia issue #12 dotyczą pola, które przestało istnieć — do usunięcia razem ze szkicem.
+> Sam mechanizm „szkic nie dotyka rejestru" pozostaje w mocy i jest nadal słuszny.
 
 `ui/store/preflightDraft.ts` trzyma **szkic** preflightu przez trzy ekrany (02 → 02a → 03).
 Rejestr jest append-only, więc nie wolno do niego wpisywać stanów pośrednich, które pilot
@@ -1185,6 +1238,14 @@ Dokładając metrykę:
    Norma jest materializowana w tabeli `aircraft_consumption` (migracja 19) i przeliczana
    PO commicie ingestu, gdy dzień się domknął — nigdy na żądanie `GET /reference`, bo
    tę trasę odpytuje każdy telefon co kwadrans.
+
+> ⚠ **ETAP B/D — wyzwalacz przeliczenia normy znika razem z `day_close`.** Trzeba wskazać
+> nowy: zdanie samolotu (spójne z „przekazanie zamyka sesję") albo każdy `leg_close`
+> z odczytem (częściej, ale drożej). Osobno: `_main.md.txt` §3.6b opisuje ryzyko, że przy
+> opcjonalnym odczycie dzień skokowy da JEDEN interwał paliwowy na całą sesję — czyli
+> dokładnie przypadek, w którym `MAX_VARIANCE_INFLATION` odrzuci rozdział ziemia/lot.
+> Progów **nie stroimy w dyskusji**; rozstrzyga `consumptionReplay.ts`, ale musi dostać
+> dane w nowym kształcie, których nie ma nawet w scenariuszu demo.
 
 **Dwie bramki, które łatwo pomylić** (obie znalezione przebiegiem po realnej historii,
 2026-08-05, oba przypadki mają testy regresyjne):

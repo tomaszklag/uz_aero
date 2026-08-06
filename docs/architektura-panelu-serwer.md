@@ -2,6 +2,23 @@
 
 > Faza 7. Dokument **decyzyjny**: każde rozwidlenie kończy się rekomendacją i powodem;
 > tam, gdzie coś odradzam, jest napisane wprost, czego NIE robić.
+
+> ## ⚠ STATUS (2026-08-07): opisuje model sprzed 2026-08-06 — czytaj razem z §3.6a `_main.md.txt`
+>
+> Panel powstał przy założeniu **dzień lotny = sesja jednego samolotu**. Decyzja z 2026-08-06
+> je unieważniła: jednostką potwierdzenia jest wzlot, służba należy do pilota i może objąć
+> kilka maszyn, a zamknięcie dnia jest opcjonalne. Przebudowa panelu to **faza 8 etap D**.
+>
+> Cztery miejsca, w których ten dokument prowadzi dziś na minę — opisane w tekście blokami
+> `⚠ ETAP D`:
+> 1. **`claim_time` niesie `dutyStart`** (§7.2, §7.5) — po zmianie będzie `null`; decyzja
+>    2026-08-07: `claim_time` = czas `session_claim`.
+> 2. **Okno korekty od `day_close`** (§6.2) — kotwiczy się teraz w zamknięciu WZLOTU.
+> 3. **Bramka `400 day_open`** (§6.5) — „brak `day_close` = dzień trwa" przestaje być prawdą,
+>    bo zamknięcie dnia jest opcjonalne; administrator straciłby korektę tam, gdzie jej
+>    najbardziej potrzeba.
+> 4. **Interwały paliwowe** (§7.7) — lista źródeł odczytu nie zna `leg_close` ani zdania
+>    samolotu; patrz `_main.md.txt` §3.6b.
 > Zakres: `server/` i `packages/domain` — czyli to, co panel konsumuje.
 > Zakres UI panelu (20 ekranów, role, mapowanie ekran→endpoint): `design/admin/ANALIZA.md`.
 > Architektura istniejącego kodu i reguły twarde: `docs/architektura-kodu.md`.
@@ -1435,6 +1452,14 @@ niczego, co da się pokazać).
 ---
 
 ## 11. Do decyzji człowieka
+
+> **ROZSTRZYGNIĘTE 2026-07-31** (punkt 1 niżej): katalog ma **pięć** pozycji i wszystkie są
+> produkowane — `packages/domain/src/flags.ts`, tabela w `_main.md.txt` §4.5 przepisana
+> 2026-08-07. Punkt zostaje jako zapis rozumowania, nie jako otwarte pytanie.
+>
+> Nowe otwarte pytanie w jego miejsce (etap D): `session_overlap` udaje dwie różne patologie —
+> nakładkę CLAIMÓW na maszynie i nakładkę CZASU PILOTA. Po §3.6a to drugie jest osobnym
+> zjawiskiem, a sesje jednego pilota na dwóch maszynach mogą legalnie sąsiadować co do minuty.
 
 1. **Katalog flag: 3 czy 6?** §4.5 obiecuje `DOUBLE_CLAIM`, `TIME_OVERLAP`, `MH_GAP`,
    `MH_REGRESSION`, `FUEL_MISMATCH`, `CLOCK_DRIFT`; `domain/mhChain.ts` produkuje trzy

@@ -7,6 +7,28 @@
 >
 > Wersja 1.0 — 2026-07-31.
 
+> ## ⚠ STATUS (2026-08-07): cały dokument stoi na modelu sprzed 2026-08-06
+>
+> Panel zaprojektowano przy założeniu **dzień lotny = sesja jednego samolotu**
+> (`session_claim` → `day_close`). Decyzja z 2026-08-06 (`docs/_main.md.txt` §3.6a) to
+> unieważniła: jednostką potwierdzenia jest **wzlot**, służba należy do **pilota** i może
+> obejmować kilka maszyn, a zamknięcie dnia jest **opcjonalne**.
+>
+> Co z tego wynika dla panelu (faza 8 etap D — przebudowa jeszcze się nie zaczęła):
+> - **A02 „Dni lotne" rozpada się na dwie listy** — dni PILOTÓW (klamra służby, przekrojowo
+>   po maszynach) i sesje SAMOLOTÓW (claim → zdanie). Dziś jeden wiersz udaje oba.
+> - **A02a** ma kafel „Czas służby (duty)" przypisany do sesji samolotu — czas służby
+>   przestał być własnością sesji.
+> - **Plakietka „Dzień otwarty"** i bramka `400 day_open` opierają się na braku `day_close`
+>   jako oznace „dzień trwa". Po zmianie brak `day_close` będzie normą także dla dni dawno
+>   skończonych.
+> - **Nakładka sesji** przestaje być anomalią: dwóch pilotów tą samą maszyną w jednej dobie
+>   to typowy dzień skokowy, nie patologia (`_main.md.txt` §4.7).
+> - **Sidebar we wszystkich 23 ekranach** ma pozycję „Dni lotne" — jedna zmiana
+>   w `SZABLON.html` plus propagacja.
+>
+> Do czasu etapu D czytaj ten dokument jako opis stanu wdrożonego, nie docelowego.
+
 ---
 
 ## 0. Zgodność z plikami, które powstały
