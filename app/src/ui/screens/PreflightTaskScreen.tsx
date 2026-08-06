@@ -14,9 +14,11 @@
  * tylko to, co się faktycznie zmieniło (`useTaskMemory`).
  *
  * Podpowiedź ustępuje pilotowi bez pytania: pierwsze dotknięcie któregokolwiek z tych
- * pól wyłącza ją do końca preflightu (`taskTouched` w szkicu).
+ * pól wyłącza ją do końca preflightu (`taskTouched` w szkicu). Wyjaśnienie, SKĄD te
+ * wartości, jest osobnym bytem — banerem pouczającym (`edu`), który pilot chowa raz
+ * i na stałe. Nie znika po dotknięciu pola, bo opisuje regułę, a nie zawartość pól.
  *
- * RODZAJ OPERACJI STEROWNIKUJE TRASĄ (issue #13). Skoki wracają tam, skąd wystartowały,
+ * RODZAJ OPERACJI WYZNACZA TRASĘ (issue #13). Skoki wracają tam, skąd wystartowały,
  * więc pytamy o JEDNO lotnisko — do tej pory formularz kazał wpisać ten sam kod dwa razy
  * i pozwalał opisać dzień skoków trasą „EPKK → EPWA", której nie da się polecieć.
  * Pozostałe operacje (przelot, egzamin, lot techniczny, inne) mogą skończyć gdzie indziej
@@ -32,8 +34,8 @@ import {
   ActionButton,
   AirfieldSuggestions,
   AppText,
+  Banner,
   Card,
-  InlineNote,
   OptionGrid,
   Screen,
   ScreenHeader,
@@ -42,7 +44,7 @@ import {
   type GridOption,
 } from '../components';
 import { useTheme } from '../theme';
-import { useSessionStore } from '../store';
+import { useEduBanner, useSessionStore } from '../store';
 import { useTaskMemory } from '../store/taskMemory';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { airfieldRow, routeConfirmations, routeSuggestions } from './logic/routeSuggestions';
@@ -91,7 +93,15 @@ export function PreflightTaskScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [memory.ready, memory.task, memory.route]);
 
-  const suggested = memory.ready && !draft.taskTouched && (memory.task != null || memory.route != null);
+  /**
+   * Czy w ogóle było co podstawić — czyli czy baner ma o czym mówić.
+   *
+   * Bez zapamiętanego dnia (pierwszy lot pilota, pierwszy dzień na tym samolocie)
+   * formularz jest pusty i wyjaśnienie mechanizmu opisywałoby coś, czego pilot nie
+   * widzi. `memory.ready` chroni przed mignięciem banera przed odczytem z dysku.
+   */
+  const prefilled = memory.ready && (memory.task != null || memory.route != null);
+  const [sourceDismissed, setSourceDismissed] = useEduBanner('task-source');
 
   // Jedno lotnisko czy para — patrz nota na górze pliku.
   const shape = isSameFieldOperation(draft.operation) ? 'single' : 'pair';
@@ -155,17 +165,28 @@ export function PreflightTaskScreen({
       }
     >
       <View style={{ gap: theme.spacing.md }}>
-        {/* ── skąd te wartości ─────────────────────────────────────────────
-            Adnotacja, nie pytanie: pilot ma wiedzieć, że patrzy na podpowiedź,
-            i że wystarczy ją zmienić, żeby przestała obowiązywać. */}
-        {suggested && (
-          <InlineNote
-            icon="info"
+        {/* ── skąd te wartości (baner POUCZAJĄCY, trwały per pilot) ────────
+            Typ `edu` z taksonomii `docs/design-notes.md`: wyjaśnienie mechanizmu jest
+            pomocne za pierwszym razem i szumem przy każdym kolejnym, więc pilot chowa
+            je na stałe (`×` → mini-chip w tym samym miejscu).
+
+            Baner opisuje REGUŁĘ, a nie bieżące wartości — dlatego nie znika po pierwszej
+            zmianie pola, jak robiła to poprzednia adnotacja. „Uzupełnione z ostatniego
+            dnia" przestawało być prawdą dla poprawionego pola i baner musiał uciekać
+            z ekranu; zdanie o tym, CO uzupełniamy, jest prawdziwe cały czas. */}
+        {prefilled && (
+          <Banner
+            kind="edu"
             tone="blue"
+            icon="info"
+            title="Dane z ostatniego dnia"
             text={
-              'Uzupełnione z Twojego ostatniego dnia (trasa — z ostatniego dnia na tym samolocie).\n' +
-              'Zmień, jeśli dziś lecisz inaczej — wpis zastępuje podpowiedź.'
+              'Formularz uzupełniamy z ostatniego dnia: rodzaj operacji i klienta — z Twojego, ' +
+              'trasę — z tego samolotu. Zweryfikuj wartości przed przejściem dalej.'
             }
+            collapsedLabel="Skąd te dane?"
+            dismissed={sourceDismissed}
+            onDismiss={setSourceDismissed}
           />
         )}
 

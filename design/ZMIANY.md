@@ -1071,3 +1071,18 @@ Skoki`.
 > Powód: to tabela „Scenariusz danych (spójność między ekranami!)", czyli źródło, z którego
 > mockupy biorą wartości. Gdyby zostało w niej stare, sprzeczne z operacją założenie, następny
 > rysowany ekran odtworzyłby błąd — i wróciłby ten sam przegląd.
+
+**02e-preflight-zadanie** — adnotacja „Uzupełnione z Twojego ostatniego dnia…" zamieniona
+w **baner pouczający (Typ C)**: nowa treść („Dane z ostatniego dnia" + jedno zdanie o tym,
+co skąd bierzemy), `×` zwija go do mini-chipu „Skąd te dane?", stan schowania zapamiętany
+na stałe per pilot. Zdanie „wpis zastępuje podpowiedź" usunięte.
+> Powód: to jest wyjaśnienie mechanizmu, czyli dokładnie Typ C z `docs/design-notes.md` —
+> pomocne za pierwszym razem, szum przy każdym kolejnym; pilot ma prawo schować je raz
+> i na zawsze. Poprzednia wersja robiła coś odwrotnego niż baner pouczający: znikała po
+> pierwszej zmianie pola, więc wyjaśnienie uciekało z ekranu dokładnie wtedy, gdy pilot
+> zaczynał przy formularzu pracować. Nowa treść mówi o REGULE („co uzupełniamy"), a nie
+> o zawartości pól, dzięki czemu jest prawdziwa także po ręcznej poprawce i nie musi
+> znikać. Zdanie o zastępowaniu podpowiedzi opisywało implementację, nie pracę pilota —
+> wpisana wartość i tak jest tą, którą widać. Baner nadal nie pojawia się, gdy nie było
+> czego podstawić (pierwszy dzień pilota, pierwszy dzień na tym samolocie): opisywałby
+> wtedy mechanizm, którego na ekranie nie widać.
