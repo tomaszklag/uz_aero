@@ -262,8 +262,18 @@ klamrę wokół lotów** (duty ⊇ suma wzlotów, zawsze).
 - deklaracja jest **korektą klamry po fakcie**, nie warunkiem startu: pilot poprawia ją
   w `01`, gdy zameldował się wcześniej albo został dłużej niż samolot
 - „Zamknij dzień" (`01b`) jest **opcjonalne** — potwierdza klamrę i otwiera okno korekty
-  24 h. Niezamknięty dzień domyka się sam na ostatnim wzlocie; nowy wzlot po zamknięciu
-  otwiera dzień z powrotem i rozszerza klamrę
+  24 h **dla samej klamry**. Niezamknięty dzień domyka się sam na ostatnim wzlocie; nowy
+  wzlot po zamknięciu otwiera dzień z powrotem i rozszerza klamrę
+
+> **Dwa okna korekty, nie jedno** (doprecyzowanie 2026-08-07). Klamra służby i dane wzlotu
+> to różne fakty o różnych momentach powstania, więc mają osobne zegary:
+> - **klamra służby** — 24 h od zamknięcia DNIA (`01b`); gdy dzień nie został zamknięty,
+>   od ostatniego zdarzenia doby,
+> - **dane wzlotu** (czasy, odczyty, zrzuty) — 24 h od zamknięcia TEGO wzlotu (`leg_close`),
+>   osobno dla każdego; wzlot zamknięty rano wygasa wcześniej niż zamknięty wieczorem.
+>
+> Konsekwencja dla UI: ekran nie może obiecywać jednej daty dla wszystkiego. `01b` podaje
+> datę klamry i najbliższą wygasającą datę wzlotu; `10` podaje datę wzlotu, którego dotyczy.
 - łańcuch MH nie ma ze służbą nic wspólnego i mieć nie będzie: to oś **samolotu**
 
 > Opcja „przerwa" (pauzowanie duty) pozostaje **usunięta** — decyzja 2026-07-23. Duty liczy
@@ -310,9 +320,9 @@ MH (początek / koniec / delta), **zrzuty** (liczba wyniesień, skoczkowie w roz
 więc nie sumują się przez służbę pilota lecącego dwiema maszynami.
 
 Dane edytowalne przed zamknięciem wzlotu oraz **przez 24 h po nim** (decyzja 2026-07-23,
-okno liczone od zamknięcia wzlotu): pilot nanosi korektę samodzielnie, bez akceptacji
-administratora. Po upływie okna korektę wprowadza administrator. Korekta zawsze jest
-zdarzeniem append-only — nie kasuje oryginalnego odczytu.
+okno liczone od zamknięcia TEGO wzlotu — osobno dla każdego, patrz §3.6a): pilot nanosi
+korektę samodzielnie, bez akceptacji administratora. Po upływie okna korektę wprowadza
+administrator. Korekta zawsze jest zdarzeniem append-only — nie kasuje oryginalnego odczytu.
 
 ### 3.8 Ręczna lista wzlotów (fallback GPS)
 

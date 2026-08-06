@@ -1473,3 +1473,24 @@ czego nie wyłapały przeglądy prowadzone greppem po linkach.
 
 **Nawigacja:** rodzina 05 dostała link do 09 (faktyczny następny krok), 04B, 06, 07, 08,
 10A i 13 — drogę powrotną do „Mój dzień", 05E prowadzi do 09A zamiast do rozliczenia.
+
+---
+
+## 2026-08-07 — Zgodność designu z dokumentacją (po audycie dokumentacji)
+
+**01, 01B — LT przy klamrze służby** (`07:10 · 09:10 LT`).
+> Powód: reguła strefy czasowej mówi, że czas lokalny pojawia się jako wartość drugorzędna
+> przy deklaracji klamry, bo pilot melduje się o lokalnej godzinie. Designy pokazywały sam
+> UTC — dokumentacja obiecywała coś, czego ekran nie robił.
+
+**01B — dwa okna korekty zamiast jednego.**
+> Powód: decyzja z 2026-08-07 zakotwiczyła okno w zamknięciu WZLOTU, a klamra służby liczy
+> się od zamknięcia dnia. Wzlot zamknięty rano wygasa wcześniej niż wieczorny, więc jedna
+> data dla wszystkiego („do 07 SIE 15:40") była obietnicą, której model nie dotrzyma.
+> Ekran podaje teraz datę klamry i najbliższą wygasającą datę wzlotu.
+
+**Notacja miesiąca ujednolicona na polską** (`06 SIE`, `06 SIERPNIA 2026`) — ekrany 01, 01A,
+01B, 09, 09B, 09C używały angielskiego `AUG`.
+> Powód: reszta zestawu jest po polsku (`22 CZE`, `22 CZERWCA`), a `AUG` wszedł razem
+> z nowymi ekranami. Aplikacja jest polska — dwie notacje w jednym zestawie to przeoczenie,
+> nie decyzja.

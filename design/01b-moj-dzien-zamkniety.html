@@ -103,6 +103,10 @@
   .bracket-label { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); width:74px; flex-shrink:0; line-height:1.4; }
   .bracket-body { flex:1; display:flex; flex-direction:column; gap:3px; }
   .bracket-value { font-family:var(--font-display); font-size:26px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  /* LT obok UTC — reguła strefy czasowej: czas lokalny pojawia się WYŁĄCZNIE jako
+     wartość drugorzędna przy deklaracji klamry, bo pilot melduje się o lokalnej
+     godzinie. Scenariusz mockupów: LT = UTC+2. */
+  .bracket-lt { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-muted); margin-left:7px; }
   .bracket-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .bracket-hint.declared { color:var(--blue); }
 
@@ -221,7 +225,7 @@
       </a>
       <div class="app-header-center">
         <span class="screen-title">MÓJ DZIEŃ</span>
-        <span class="header-subtitle">TMK · 06 AUG 2026 · UTC</span>
+        <span class="header-subtitle">TMK · 06 SIE 2026 · UTC</span>
       </div>
       <span class="badge">ZAMKNIĘTY</span>
     </div>
@@ -231,8 +235,13 @@
       <!-- Typ A: przyrząd, nie da się zamknąć — odlicza okno samodzielnej korekty -->
       <div class="correction-window">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="cw-text">Dzień zamknięty. Czasy wzlotów i klamrę służby poprawisz jeszcze przez
-        <b>24 h</b> — do <b>07 AUG 15:40 UTC</b>. Później korektę nanosi administrator.</span>
+        <!-- DWA okna, nie jedno (decyzja 2026-08-07): klamra służby liczy się od zamknięcia
+             DNIA, a każdy wzlot ma własne 24 h od swojego zamknięcia. Wzlot 1 zamknięty
+             o 09:05 wygasa więc wcześniej niż klamra. Jedna data dla wszystkiego byłaby
+             obietnicą, której model nie dotrzyma. -->
+        <span class="cw-text">Dzień zamknięty. <b>Klamrę służby</b> poprawisz do <b>07 SIE 15:40 UTC</b>.
+        Każdy wzlot ma <b>własne 24 h</b> od swojego zamknięcia — najstarszy (08:12) wygasa
+        już <b>07 SIE 09:05</b>. Później korektę nanosi administrator.</span>
       </div>
 
       <!-- Klamra potwierdzona: obie godziny pochodzą od pilota -->
@@ -242,7 +251,7 @@
         <div class="bracket-row top">
           <span class="bracket-label">Meldunek</span>
           <span class="bracket-body">
-            <span class="bracket-value">07:10</span>
+            <span class="bracket-value">07:10<span class="bracket-lt">09:10 LT</span></span>
             <span class="bracket-hint declared">poprawione · pierwszy wzlot 08:12</span>
           </span>
           <a href="01b-moj-dzien-zamkniety.html" class="edit-btn" title="Popraw godzinę meldunku (okno 24 h)">
@@ -304,7 +313,7 @@
         <div class="bracket-row bottom">
           <span class="bracket-label">Koniec służby</span>
           <span class="bracket-body">
-            <span class="bracket-value">15:40</span>
+            <span class="bracket-value">15:40<span class="bracket-lt">17:40 LT</span></span>
             <span class="bracket-hint declared">potwierdzone · ostatni wzlot 15:10</span>
           </span>
           <a href="01b-moj-dzien-zamkniety.html" class="edit-btn" title="Popraw godzinę zakończenia służby (okno 24 h)">
@@ -345,7 +354,7 @@
       <a href="12-historia.html" class="history-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
         Poprzednie dni
-        <span class="history-badge">05 AUG — można poprawić</span>
+        <span class="history-badge">05 SIE — można poprawić</span>
       </a>
 
       <div class="ref-sync" title="Cache referencyjny (samoloty, konfiguracje, piloci) odświeżany przy każdym kontakcie z siecią">

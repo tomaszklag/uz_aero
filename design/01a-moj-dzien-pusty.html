@@ -104,6 +104,10 @@
   .bracket-label { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); width:74px; flex-shrink:0; line-height:1.4; }
   .bracket-body { flex:1; display:flex; flex-direction:column; gap:3px; }
   .bracket-value { font-family:var(--font-display); font-size:26px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  /* LT obok UTC — reguła strefy czasowej: czas lokalny pojawia się WYŁĄCZNIE jako
+     wartość drugorzędna przy deklaracji klamry, bo pilot melduje się o lokalnej
+     godzinie. Scenariusz mockupów: LT = UTC+2. */
+  .bracket-lt { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-muted); margin-left:7px; }
   .bracket-value.pending { color:var(--text-muted); font-size:18px; letter-spacing:2px; }
   .bracket-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .edit-btn {
@@ -198,7 +202,7 @@
       </a>
       <div class="app-header-center">
         <span class="screen-title">MÓJ DZIEŃ</span>
-        <span class="header-subtitle">TMK · 06 AUG 2026 · UTC</span>
+        <span class="header-subtitle">TMK · 06 SIE 2026 · UTC</span>
       </div>
       <span class="header-slot"></span>
     </div>
@@ -286,7 +290,7 @@
       <a href="12-historia.html" class="history-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
         Poprzednie dni
-        <span class="history-badge">05 AUG — można poprawić</span>
+        <span class="history-badge">05 SIE — można poprawić</span>
       </a>
 
       <div class="ref-sync" title="Cache referencyjny (samoloty, konfiguracje, piloci) odświeżany przy każdym kontakcie z siecią">
