@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — Ikona aplikacji · runda 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 26px;
+  }
+  .wrap { width: 100%; max-width: 1080px; display: flex; flex-direction: column; gap: 24px; }
+
+  .canvas-label { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+  .film-strip { font-family: var(--font-display); font-size: 34px; letter-spacing: 3px; line-height: 1; }
+  .slug { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 18px; }
+  .canvas-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+  .panel h3 { font-family: var(--font-display); font-size: 20px; letter-spacing: 2px; font-weight: 400; margin-bottom: 10px; }
+  .panel p { font-size: 13px; line-height: 1.65; color: var(--text-secondary); }
+  .panel p + p { margin-top: 9px; }
+  .panel b { color: var(--text-primary); font-weight: 600; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .concept { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: grid; grid-template-columns: 132px 1fr; gap: 18px; align-items: start; }
+  .concept-id { display: flex; align-items: baseline; gap: 9px; margin-bottom: 4px; }
+  .concept-id .num { font-family: var(--font-mono); font-size: 10.5px; color: var(--green); background: var(--green-muted); border: 1px solid var(--green-border); border-radius: 6px; padding: 3px 7px; letter-spacing: 1px; }
+  .concept-id .name { font-family: var(--font-display); font-size: 21px; letter-spacing: 2px; line-height: 1; }
+  .device { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+  .concept .note { font-size: 12.5px; line-height: 1.6; color: var(--text-secondary); margin-top: 12px; }
+  .concept .note b { color: var(--text-primary); font-weight: 600; }
+  .concept .risk { font-size: 12px; line-height: 1.55; color: var(--amber); margin-top: 8px; }
+  .concept .risk::before { content: 'Ryzyko · '; font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; opacity: .8; }
+
+  .tile { border-radius: 23%; position: relative; overflow: hidden; flex-shrink: 0; display: block; }
+  .tile svg { display: block; width: 100%; height: 100%; }
+  .tile.dark { background: linear-gradient(155deg, #1C201D 0%, #0D0D0D 62%); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 8px 20px rgba(0,0,0,.5); }
+  .tile.light { background: linear-gradient(155deg, #FFFFFF 0%, #E7EDE8 100%); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.07); }
+  .tile.mono { background: #2B2F2C; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+  .tile.neg { background: linear-gradient(155deg, #3DDC82 0%, #24B863 100%); box-shadow: 0 8px 20px rgba(0,0,0,.5); }
+
+  .tile .safe { position: absolute; inset: 0; display: none; pointer-events: none; }
+  body.show-safe .tile.big .safe { display: block; }
+  .safe .circle { position: absolute; left: 17%; top: 17%; width: 66%; height: 66%; border-radius: 50%; border: 1px dashed rgba(243,156,18,.65); }
+  .safe .squircle { position: absolute; left: 12%; top: 12%; width: 76%; height: 76%; border-radius: 26%; border: 1px dashed rgba(52,152,219,.5); }
+
+  .sizes { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .size-item { display: flex; flex-direction: column; align-items: center; }
+  .tile-caption { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); letter-spacing: 1px; text-align: center; margin-top: 6px; text-transform: uppercase; }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .toggle { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; background: var(--surface-raised); border: 1px solid var(--border-strong); color: var(--text-secondary); border-radius: 999px; padding: 7px 14px; cursor: pointer; transition: all .15s; }
+  .toggle:hover { color: var(--text-primary); border-color: var(--text-muted); }
+  .toggle.on { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
+  .toolbar .hint { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: .5px; }
+
+  .launcher {
+    border-radius: 16px; padding: 26px 22px; border: 1px solid var(--border);
+    background:
+      radial-gradient(ellipse 60% 60% at 20% 10%, rgba(52,152,219,.20), transparent 60%),
+      radial-gradient(ellipse 50% 50% at 85% 80%, rgba(46,204,113,.14), transparent 60%),
+      linear-gradient(160deg, #171A1E, #0A0B0D);
+  }
+  .launcher-grid { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 78px; }
+  .app .label { font-size: 10px; color: rgba(255,255,255,.82); text-align: center; }
+  .app.ref .label { color: rgba(255,255,255,.45); }
+  .strip-title { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; text-align: center; }
+
+  .nav-strip { width:100%; max-width:1080px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+  footer { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); letter-spacing: 1px; text-align: center; }
+
+  @media (max-width: 980px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="canvas-label">
+    <div class="film-strip">IKONA · 4</div>
+    <div class="slug">ikona-aplikacji-4.html · runda 4</div>
+    <div class="canvas-meta">4 pomysły · inny środek wyrazu</div>
+  </div>
+
+  <div class="panel">
+    <h3>DLACZEGO TA RUNDA JEST INNA</h3>
+    <p>Trzy poprzednie rundy zmieniały <b>motyw</b> — samolot, fale, pasek, pierścień, śmigło — ale nie zmieniały jednej rzeczy: każdy znak był <b>pojedynczą figurą na kaflu</b>. Stąd wrażenie, że wszystko jest z tej samej rodziny.</p>
+    <p>Tutaj zmienia się środek wyrazu. Cztery pomysły, cztery mechanizmy, których wcześniej nie było: <b>powtórzenie</b> zamiast linii, <b>głębia</b> zamiast płaskiej sylwetki, <b>tekstura z akcentem</b> zamiast figury i <b>rama</b> zamiast przedmiotu w środku.</p>
+    <p>Każdy pokazany od razu w negatywie (zielony kafel, znak wycięty), bo to rozstrzygnięcie z rundy 3 warto nieść dalej niezależnie od motywu.</p>
+  </div>
+
+  <div class="toolbar">
+    <button class="toggle" id="btn-safe">Strefa bezpieczna Androida</button>
+    <span class="hint">amber = koło 66% (gwarantowane) · blue = typowa maska 76%</span>
+  </div>
+
+  <div class="row" id="fresh"></div>
+
+  <div class="launcher">
+    <div class="strip-title">Ekran główny — runda 4 obok wskazanego wcześniej 05, 60 px</div>
+    <div class="launcher-grid" id="launcher"></div>
+  </div>
+
+  <div class="panel">
+    <h3>KTÓRY MA NAJWIĘKSZĄ SZANSĘ</h3>
+    <p><b>P1 POWIDOK</b> — i to nie jest wybór estetyczny, tylko rzeczowy. Aplikacja nie rejestruje „lotu” jako ciągłej linii; rejestruje <b>próbki pozycji co kilka sekund</b>, z których dopiero powstaje ślad. Trzy sylwetki gasnące w tył to dosłownie ten model danych, a nie ilustracja lotu. Znak zostaje lotniczy (każdy element to płatowiec), zyskuje ruch i kierunek, i jako jedyny z całego projektu pokazuje <b>upływ czasu</b> — czyli to, czym ta aplikacja jest.</p>
+    <p><b>P2 CIEŃ</b> jest najładniejszy i najbardziej ryzykowny: cień żyje tylko dopóki widać różnicę jasności między maszyną a plamą pod nią. Na kaflu monochrome i przy 26 px ta różnica znika i zostają dwie plamy bez znaczenia.</p>
+    <p><b>P3</b> i <b>P4</b> to uczciwe eksperymenty, ale oba mówią o obserwacji w ogóle, nie o lataniu — <b>P3</b> ryzykuje odczyt „mapa/pole”, <b>P4</b> wygląda jak celownik aparatu. Pokazuję je, żeby było widać, gdzie leży granica: znak przestaje być lotniczy, zanim staje się ciekawy.</p>
+  </div>
+
+</div>
+
+<div class="nav-strip">
+  <a href="index.html">← INDEX</a><span>·</span>
+  <a href="ikona-aplikacji.html">RUNDA 1</a><span>·</span>
+  <a href="ikona-aplikacji-2.html">RUNDA 2</a><span>·</span>
+  <a href="ikona-aplikacji-3.html">RUNDA 3</a><span>·</span>
+  <a href="ikona-aplikacji-4.html" class="active">RUNDA 4</a><span>·</span>
+  <a href="ikona-aplikacji-5.html">RUNDA 5</a>
+</div>
+
+<footer>UZ Aero · propozycja znaku, runda 4 — nie jest jeszcze zatwierdzoną specyfikacją</footer>
+
+<script>
+const PALETTES = {
+  dark:  { c: '#2ECC71', m: 'rgba(232,232,232,0.22)', ink: '#0D0D0D' },
+  light: { c: '#1FA85C', m: 'rgba(13,13,13,0.18)',    ink: '#FFFFFF' },
+  mono:  { c: '#E8E8E8', m: 'rgba(232,232,232,0.32)', ink: '#2B2F2C' },
+  neg:   { c: '#0D0D0D', m: 'rgba(13,13,13,0.30)',    ink: '#2ECC71' }
+};
+
+const PLANE = 'M50 22 L75 75 L50 58 L25 75 Z';
+const plane = (p, x, y, scale, rot, sw, color) =>
+  `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${scale}) translate(-50 -48.5)">
+     <path d="${PLANE}" fill="${color || p.c}" stroke="${color || p.c}" stroke-width="${sw}" stroke-linejoin="round"/>
+   </g>`;
+
+const FRESH = [
+  {
+    num: 'P1', name: 'POWIDOK',
+    device: 'mechanizm: powtórzenie',
+    note: 'Trzy sylwetki tej samej maszyny, gasnące w tył. <b>Aplikacja nie zapisuje lotu jako linii — zapisuje próbki pozycji</b>, z których dopiero powstaje ślad; ten znak rysuje ten model wprost. Jako jedyny w całym projekcie pokazuje upływ czasu, a nie stan.',
+    risk: 'przy 26 px dwie słabsze sylwetki gasną i zostaje sam płatowiec — znak degraduje się do wariantu 02, więc musi bronić się też w tej postaci.',
+    glyph: p => `
+      <g opacity="0.26">${plane(p, 30, 71, 0.30, 45, 10)}</g>
+      <g opacity="0.55">${plane(p, 47, 54, 0.35, 45, 10)}</g>
+      ${plane(p, 66, 34, 0.42, 45, 10)}`
+  },
+  {
+    num: 'P2', name: 'CIEŃ',
+    device: 'mechanizm: głębia',
+    note: 'Maszyna i jej cień na ziemi. <b>Jedyny znak, który ma trzeci wymiar</b> — nie pokazuje samolotu, tylko fakt, że coś jest w powietrzu nad czymś. Dokładnie ta różnica, wokół której kręci się cała aplikacja: on block / off block.',
+    risk: 'cień żyje wyłącznie różnicą jasności; na warstwie monochrome i przy 26 px zostają dwie plamy bez relacji.',
+    glyph: p => `
+      <g transform="translate(50 71) scale(0.78 0.22) translate(-50 -48.5)">
+        <path d="${PLANE}" fill="${p.m}"/>
+      </g>
+      ${plane(p, 50, 40, 0.54, 0, 9)}`
+  },
+  {
+    num: 'P3', name: 'PUNKT NA POLU',
+    device: 'mechanizm: tekstura z akcentem',
+    note: 'Pole punktów i jeden zapalony. Ten sam język, którym mówi <b>ekran śladu 14</b> — siatka współrzędnych jako tło, pozycja jako jedyny jasny element. Znak nie rysuje przedmiotu, tylko <b>fakt namierzenia</b>.',
+    risk: 'bez kontekstu czyta się jak mapa, plansza do gry albo wskaźnik siatki; drobne punkty przy 26 px zlewają się w szum.',
+    glyph: p => {
+      const g = [];
+      const coords = [22, 36, 50, 64, 78];
+      coords.forEach(y => coords.forEach(x => {
+        if (x === 64 && y === 36) return;
+        g.push(`<circle cx="${x}" cy="${y}" r="2.6" fill="${p.m}"/>`);
+      }));
+      return g.join('') + `<circle cx="64" cy="36" r="9.5" fill="${p.c}"/>`;
+    }
+  },
+  {
+    num: 'P4', name: 'KADR',
+    device: 'mechanizm: rama',
+    note: 'Cztery narożniki i maszyna w środku. <b>Znak jest ramą, nie przedmiotem</b> — monitoring rozumiany dosłownie: trzymać obiekt w kadrze. Narożniki dają mocną, kwadratową sylwetkę, która czyta się nawet całkiem rozmyta.',
+    risk: 'narożniki celownika to idiom aparatu i skanera kodów; przy 26 px środek gubi się i zostaje sama ramka.',
+    glyph: p => `
+      <g fill="none" stroke="${p.c}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 37 L22 27 Q22 22 27 22 L37 22"/>
+        <path d="M63 22 L73 22 Q78 22 78 27 L78 37"/>
+        <path d="M78 63 L78 73 Q78 78 73 78 L63 78"/>
+        <path d="M37 78 L27 78 Q22 78 22 73 L22 63"/>
+      </g>
+      ${plane(p, 50, 50, 0.40, 0, 10)}`
+  }
+];
+
+const REF = [{
+  num: '05', name: 'SYGNAŁ · runda 1',
+  glyph: p => `
+    <g fill="none" stroke="${p.c}" stroke-linecap="round">
+      <path d="M55.6 67.5 A26 26 0 0 0 34.5 46.4" stroke-width="9"/>
+      <path d="M71.4 64.7 A42 42 0 0 0 37.3 30.6" stroke-width="9" opacity="0.45"/>
+    </g>
+    ${plane(p, 30, 71, 0.46, 45, 9)}`
+}];
+
+let uid = 0;
+const svg = (c, mode) => `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${c.glyph(PALETTES[mode], ++uid)}</svg>`;
+
+function tile(c, mode, size, big) {
+  const safe = big ? '<div class="safe"><div class="circle"></div><div class="squircle"></div></div>' : '';
+  return `<div class="tile ${mode} ${big ? 'big' : ''}" style="width:${size}px;height:${size}px">${svg(c, mode)}${safe}</div>`;
+}
+const sizeItem = (c, mode, size, caption) =>
+  `<div class="size-item">${tile(c, mode, size, false)}<div class="tile-caption">${caption}</div></div>`;
+
+document.getElementById('fresh').innerHTML = FRESH.map(c => `
+  <div class="concept">
+    <div>
+      ${tile(c, 'dark', 132, true)}
+      <div class="tile-caption">standard</div>
+    </div>
+    <div>
+      <div class="concept-id"><span class="num">${c.num}</span><span class="name">${c.name}</span></div>
+      <div class="device">${c.device}</div>
+      <div class="sizes">
+        ${sizeItem(c, 'dark', 48, '48')}
+        ${sizeItem(c, 'dark', 26, '26')}
+        ${sizeItem(c, 'neg', 48, 'negatyw')}
+        ${sizeItem(c, 'light', 40, 'jasne')}
+        ${sizeItem(c, 'mono', 40, 'mono')}
+      </div>
+      <div class="note">${c.note}</div>
+      <div class="risk">${c.risk}</div>
+    </div>
+  </div>`).join('');
+
+document.getElementById('launcher').innerHTML =
+  FRESH.map(c => `<div class="app">${tile(c, 'dark', 60, false)}<div class="label">${c.num} ${c.name}</div></div>`).join('') +
+  FRESH.map(c => `<div class="app">${tile(c, 'neg', 60, false)}<div class="label">${c.num} negatyw</div></div>`).join('') +
+  REF.map(c => `<div class="app ref">${tile(c, 'neg', 60, false)}<div class="label">${c.name} · negatyw</div></div>`).join('');
+
+const btn = document.getElementById('btn-safe');
+btn.addEventListener('click', () => {
+  document.body.classList.toggle('show-safe');
+  btn.classList.toggle('on');
+});
+</script>
+
+</body>
+</html>
