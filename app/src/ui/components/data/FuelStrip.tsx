@@ -27,6 +27,16 @@ import { toneColors } from '../tone';
 export interface FuelStripProps {
   /** Sformatowany odczyt paliwa („141 L"). */
   fuel: string;
+  /**
+   * Ton odczytu (issue #19). `neutral` = paliwa jest dużo; `amber` godzinę przed rezerwą,
+   * `red` na rezerwie — decyduje `fuelTone` z szacunku czasu lotu.
+   *
+   * Do issue #19 pasek był amber ZAWSZE, także przy pełnych zbiornikach. Kolor
+   * ostrzegawczy, który nigdy nie gaśnie, przestaje być ostrzeżeniem, a wtedy nie działa
+   * też wtedy, gdy zaczyna być groźnie. Ikona zostaje w barwie tonu, bo to ona niesie
+   * „to jest paliwo"; wygaszenie jej do szarości zabrałoby pasek z pola widzenia zupełnie.
+   */
+  tone?: 'neutral' | 'amber' | 'red';
   label?: string;
   /** Zdanie szacunku („wystarczy na ~6 wyniesień do rezerwy 45 min"); `null` = brak normy. */
   endurance?: string | null;
@@ -37,13 +47,16 @@ export interface FuelStripProps {
 
 export function FuelStrip({
   fuel,
+  tone = 'neutral',
   label = 'Paliwo · ostatni odczyt',
   endurance,
   source,
   style,
 }: FuelStripProps) {
   const { theme } = useTheme();
+  // Ikona zawsze w barwie paliwa; obramowanie i wartość reagują dopiero na ostrzeżenie.
   const amber = toneColors(theme, 'amber');
+  const warn = tone === 'neutral' ? null : toneColors(theme, tone);
 
   return (
     <View
@@ -55,8 +68,8 @@ export function FuelStrip({
           paddingVertical: 10,
           borderRadius: theme.radius.md,
           borderWidth: theme.borderWidth,
-          borderColor: theme.colors.border,
-          backgroundColor: theme.colors.surface,
+          borderColor: warn?.border ?? theme.colors.border,
+          backgroundColor: warn?.muted ?? theme.colors.surface,
         },
         style,
       ]}
@@ -67,7 +80,10 @@ export function FuelStrip({
           <AppText variant="mono" tone="muted" style={styles.label}>
             {label}
           </AppText>
-          <AppText variant="mono" style={styles.value}>
+          <AppText
+            variant="mono"
+            style={[styles.value, warn != null ? { color: warn.accent } : null]}
+          >
             {fuel}
           </AppText>
         </View>

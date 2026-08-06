@@ -11,6 +11,7 @@ import {
   compareToNorm,
   enduranceLabel,
   flightTimeRemainingMs,
+  fuelTone,
   liftsRemaining,
   normLabel,
   verdictLabel,
@@ -135,5 +136,34 @@ describe('zdanie dla paska paliwa (mockup 04)', () => {
 
   it('bez normy pasek pokazuje sam odczyt paliwa', () => {
     expect(enduranceLabel(141, null)).toBeNull();
+  });
+});
+
+/**
+ * Kolor odczytu paliwa (issue #19). Do tej pory paliwo świeciło na pomarańczowo zawsze —
+ * także przy pełnych zbiornikach — więc kolor nie niósł żadnej informacji. Teraz wynika
+ * z szacunku czasu lotu, a testy pilnują obu granic i tego, że BEZ NORMY nie zmyślamy tonu.
+ */
+describe('ton odczytu paliwa', () => {
+  // Stawka lotu 20 L/h: 45 min = 15 L, 1:45 = 35 L.
+  it('rezerwa i mniej — czerwony', () => {
+    expect(fuelTone(15, norm())).toBe('red');
+    expect(fuelTone(9, norm())).toBe('red');
+  });
+
+  it('godzina nad rezerwą — amber', () => {
+    expect(fuelTone(35, norm())).toBe('amber');
+    expect(fuelTone(20, norm())).toBe('amber');
+  });
+
+  it('powyżej progu ostrzegawczego — bez tonu ostrzegawczego', () => {
+    expect(fuelTone(36, norm())).toBe('neutral');
+    expect(fuelTone(141, norm())).toBe('neutral');
+  });
+
+  it('bez normy albo bez stawki lotu NIE zgadujemy koloru', () => {
+    expect(fuelTone(141, null)).toBeNull();
+    expect(fuelTone(null, norm())).toBeNull();
+    expect(fuelTone(141, norm({ airLPerH: null }))).toBeNull();
   });
 });

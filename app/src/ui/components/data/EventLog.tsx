@@ -91,8 +91,20 @@ const KIND_ICON: Record<LogKind, IconName> = {
   live: 'start',
 };
 
+/**
+ * Ton wiersza. ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19).
+ *
+ * `start` był zielony i rzucał się w oczy w każdym zamkniętym cyklu — a uruchomienie
+ * silnika sprzed dwóch godzin nie wymaga uwagi bardziej niż start i lądowanie, które
+ * po nim nastąpiły. Zieleń została jednemu wierszowi: `live`, czyli trwającemu stanowi
+ * („Silnik pracuje…", „In flight…"). Dzięki temu w logu świeci dokładnie to, co dzieje
+ * się TERAZ, a historia czyta się spokojnie.
+ *
+ * Czerwień `stop` i amber `ground` zostają: to nie są wyróżnienia, tylko znaczenia —
+ * zamknięcie cyklu i zdarzenie spoza cyklu (tankowanie, zmiana załogi).
+ */
 const KIND_TONE: Record<LogKind, Tone> = {
-  start: 'green',
+  start: 'neutral',
   stop: 'red',
   taxi: 'neutral',
   takeoff: 'neutral',
@@ -227,7 +239,8 @@ function LogRow({
               styles.railIcon,
               awaited
                 ? {
-                    // `.event-icon.pending` — kreskowana obwódka, przezroczysty środek.
+                    // `.event-icon.pending` — kreskowana obwódka, przezroczysty środek:
+                    // zdarzenia jeszcze nie ma, więc kreska szyny MA przez nią prześwitywać.
                     borderWidth: theme.borderWidth,
                     borderStyle: 'dashed',
                     borderColor: theme.colors.borderStrong,
@@ -236,10 +249,18 @@ function LogRow({
                 : {
                     borderWidth: theme.borderWidth,
                     borderColor: tone === 'neutral' ? theme.colors.border : c.border,
-                    backgroundColor: tone === 'neutral' ? theme.colors.surfaceRaised : c.muted,
+                    // Tło NIEPRZEZROCZYSTE — plakietka ma ZAKRYWAĆ kreskę szyny, a nie
+                    // pokazywać ją przez siebie (issue #19: „kreska timeline jest widoczna
+                    // pod ikonkami"). Tony DS są półprzezroczyste (`rgba(...,0.12)`), więc
+                    // sam `c.muted` przepuszczał kreskę. Stąd dwie warstwy: krycie
+                    // powierzchni karty pod spodem, barwa tonu na wierzchu.
+                    backgroundColor: theme.colors.surface,
                   },
             ]}
           >
+            {!awaited && tone !== 'neutral' && (
+              <View style={[StyleSheet.absoluteFill, { backgroundColor: c.muted }]} />
+            )}
             <Icon
               name={KIND_ICON[row.kind]}
               size={11}
@@ -377,6 +398,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
+    // Warstwa tonu jest `absoluteFill` — bez przycięcia wystawałaby poza zaokrąglone rogi.
+    overflow: 'hidden',
   },
   railLive: { width: 10, height: 10, borderRadius: 5 },
   body: {

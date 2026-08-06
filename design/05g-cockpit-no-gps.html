@@ -160,9 +160,13 @@
   .param-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); }
   .param-value { font-family: var(--font-mono); font-size: 28px; font-weight: 400; letter-spacing: 2px; line-height: 1; color: var(--text-primary); }
   .param-unit { font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; color: var(--text-secondary); }
+  /* WARIANT OSTRZEGAWCZY paliwa (issue #19), nie domyślny wygląd komórki: amber dopiero,
+     gdy szacunek czasu lotu z FOB spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min),
+     czerwony na samej rezerwie. Powyżej — jak tutaj — paliwo jest neutralne, bo kolor
+     świecący zawsze przestaje być ostrzeżeniem, a na tym ekranie ostrzeżeń i tak jest
+     komplet. `.param-cell.green-bg` usunięta razem z zielenią „Flight Time". */
   .param-value.amber { color: var(--amber); }
   .param-cell.amber-bg { background: rgba(243,156,18,0.04); }
-  .param-cell.green-bg { background: rgba(46,204,113,0.04); }
   /* wartości z martwego czujnika: — — plus stempel, od kiedy nie ma fixa */
   .param-value.stale { color: var(--text-muted); letter-spacing: 4px; }
   .param-stale-note { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--red); opacity: 0.85; }
@@ -208,13 +212,15 @@
     display: flex; align-items: center; justify-content: center;
     border: 1px solid var(--border);
   }
-  .log-icon.start { background: var(--green-muted); border-color: var(--green-border); color: var(--green); }
+  /* Start engine neutralny (issue #19) — zieleń w logu należy wyłącznie do wiersza
+     „na żywo". Tło nieprzezroczyste, żeby plakietka ZAKRYWAŁA kreskę szyny. */
+  .log-icon.start { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
   .log-dot-sm {
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--border-strong); z-index: 1; position: relative; flex-shrink: 0;
   }
   .log-icon.live  { background: var(--green); border-color: var(--green); animation: pulse 1.5s ease-in-out infinite; width: 10px; height: 10px; border-radius: 50%; border: none; }
-  .log-icon.zrzut { background: rgba(52,152,219,0.12); border-color: rgba(52,152,219,0.3); color: var(--blue); }
+  .log-icon.zrzut { background: linear-gradient(var(--blue-muted), var(--blue-muted)), var(--surface); border-color: rgba(52,152,219,0.3); color: var(--blue); }
 
   .log-body {
     flex: 1; display: flex; align-items: center; gap: 8px;
@@ -224,13 +230,11 @@
     font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
     width: 46px; flex-shrink: 0; color: var(--text-primary);
   }
-  .log-t.start { color: var(--green); }
   .log-t.live  { color: var(--green); font-size: 11px; letter-spacing: 0.5px; width: 64px; }
   .log-lbl {
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
     flex: 1; color: var(--text-secondary);
   }
-  .log-lbl.start { color: var(--green); }
   .log-lbl.live  { color: var(--green); }
   .log-dur {
     font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
@@ -384,7 +388,7 @@
         <span class="no-gps-title">GPS: brak sygnału · autodetekcja wstrzymana</span>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M12 2a9.94 9.94 0 0 1 7.5 3.4M4.4 5.5A9.96 9.96 0 0 0 2 12c0 5.5 10 10 10 10s2.53-1.14 5.03-3"/><circle cx="12" cy="9" r="2.5"/></svg>
       </div>
-      <div class="no-gps-sub">Ostatni fix <b>15:58 UTC</b> (12 min temu). Startów i lądowań nie wykryjemy — <b>zapisuj je ręcznie</b> przyciskiem LAND / T-O. Timery i log dnia liczą dalej z zegara.</div>
+      <div class="no-gps-sub">Ostatni fix <b>15:58 UTC</b> (12 min temu). Startów i lądowań nie wykryjemy — <b>zapisuj je ręcznie</b> przyciskiem Landing / Take off. Timery i log dnia liczą dalej z zegara.</div>
       <div class="no-gps-actions">
         <a href="05f-zdarzenie-reczne.html" class="no-gps-link" title="Arkusz ręcznego zapisu T/O i LAND — czas cofalny stepperami">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -428,24 +432,29 @@
         </div>
         <div class="param-stale-note">brak fixa od 15:58</div>
       </div>
-      <div class="param-cell amber-bg">
+      <!-- Paliwo i czas lotu bez wyróżnienia (issue #19): to odczyty, a nie stany
+           wymagające uwagi. Podpisy pod spodem mówią, skąd wartość pochodzi — i to one
+           niosą różnicę wobec martwych komórek GPS wyżej, nie kolor. -->
+      <div class="param-cell">
         <div class="param-label">Fuel on Board</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
-          <div class="param-value amber">~90</div>
-          <div class="param-unit" style="color:var(--amber)">L</div>
+          <div class="param-value">~90</div>
+          <div class="param-unit">L</div>
         </div>
         <div class="param-stale-note" style="color:var(--text-muted)">szacunek ze zużycia — bez GPS</div>
       </div>
-      <div class="param-cell green-bg">
+      <div class="param-cell">
         <div class="param-label">Flight Time</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
-          <div class="param-value" style="color:var(--green);font-size:28px;">00:53</div>
+          <div class="param-value">00:53</div>
         </div>
         <div class="param-stale-note" style="color:var(--text-muted)">zegar — liczy normalnie</div>
       </div>
     </div>
 
-    <!-- CYCLE EVENT LOG — dane lokalne, zero wariantów offline/GPS -->
+    <!-- CYCLE EVENT LOG — dane lokalne, zero wariantów offline/GPS.
+         Karta pokazuje się dopiero, gdy w cyklu jest zdarzenie inne niż uruchomienie
+         silnika i wiersz „na żywo" (issue #19) — tu jest ich pełen cykl. -->
     <div class="cycle-log">
       <div class="cycle-log-header">
         <span class="cycle-log-title">Cykl bieżący · 3 T/O · 2 LDG</span>
@@ -454,7 +463,7 @@
 
       <div class="log-row">
         <div class="log-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-        <div class="log-body"><div class="log-t start">13:10</div><div class="log-lbl start">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
+        <div class="log-body"><div class="log-t">13:10</div><div class="log-lbl">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
       </div>
 
       <div class="flight-sep"><span class="flight-sep-label">Lot 1</span></div>
@@ -498,11 +507,17 @@
       </div>
     </div>
 
-    <!-- BOTTOM ACTIONS — LAND awansuje na amber: to teraz JEDYNA droga zapisu lądowania -->
+    <!-- BOTTOM ACTIONS — „Landing" awansuje na amber: to teraz JEDYNA droga zapisu
+         lądowania. Pełna nazwa zamiast skrótu „LAND" (issue #19) — pasek akcji jest
+         jedynym miejscem, gdzie pilot ZAPISUJE zdarzenie, a dopisek „ręcznie" mówi, że
+         nikt tego za niego nie wykryje.
+         Przycisk „Zrzut" jest tu, bo to dzień skokowy; przy przelocie, egzaminie, locie
+         technicznym i „innych" NIE MA GO W OGÓLE — nie ma czego wynosić, więc `drop` nie
+         może się wydarzyć. To brak akcji, a nie wyszarzenie z powodem. -->
     <div class="action-row">
       <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Autodetekcja stoi — lądowanie zapiszesz wyłącznie ręcznie; czas cofniesz stepperami">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
-        LAND · RĘCZNIE
+        Landing · ręcznie
       </a>
       <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu działa — bez fixa wysokość wpiszesz z wysokościomierza (steppery w arkuszu)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
@@ -543,7 +558,7 @@
     <span class="vp-badge amber">05F</span>
     <span class="vp-body">
       <span class="vp-name">Zdarzenie ręczne (arkusz)</span>
-      <span class="vp-when">Pojedynczy zapis T/O lub LAND, którego GPS nie wykrył — czas cofalny stepperami ±1 min. Z 05G otwierany przyciskiem LAND · RĘCZNIE albo z banera.</span>
+      <span class="vp-when">Pojedynczy zapis T/O lub LAND, którego GPS nie wykrył — czas cofalny stepperami ±1 min. Z 05G otwierany przyciskiem „Landing · ręcznie" albo z banera.</span>
     </span>
   </a>
   <a class="vp-item" href="08-lista-reczna.html">

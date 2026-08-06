@@ -69,11 +69,10 @@
   .sheet-lead { font-size:12px; color:var(--text-secondary); line-height:1.55; }
   .sheet-lead b { color:var(--text-primary); font-weight:600; }
 
-  /* wybór typu — duże karty */
-  .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
-  .type-card { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:15px 10px; border-radius:14px; background:var(--surface); border:1px solid var(--border); color:var(--text-secondary); cursor:pointer; min-height:74px; }
-  .type-card.selected { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
-  .type-card-lbl { font-family:var(--font-display); font-size:19px; letter-spacing:2px; }
+  /* Siatka wyboru typu (TAKEOFF / LANDING) USUNIĘTA — issue #19. Arkusz otwiera się
+     zawsze z konkretnego przycisku, więc karty pytały pilota o rzecz, którą właśnie
+     zadeklarował tapnięciem — i pozwalały zapisać coś innego, niż zamierzał. Co się
+     zapisuje, mówi teraz tytuł arkusza. */
 
   /* czas — steppery 46 px (wzorzec z 05e) */
   .time-block { background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:9px; }
@@ -82,6 +81,9 @@
   .step-btn { width:46px; height:46px; border-radius:13px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); cursor:pointer; font-family:var(--font-mono); font-size:13px; line-height:1; user-select:none; text-align:center; }
   .step-btn:active { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
   .time-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; text-align:center; }
+  /* Czas lokalny drobnym drukiem POD zegarem (issue #19) — drugorzędna wartość,
+     drugorzędny stopień pisma. Rejestr jedzie w UTC i tak zostaje. */
+  .time-local { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); text-align:center; }
   .time-delta { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--amber); text-align:center; min-height:14px; }
 
   .note-box { position:relative; display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 40px 11px 13px; }
@@ -95,7 +97,8 @@
   .sheet-actions { display:grid; grid-template-columns:1fr 2fr; gap:9px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-save { display:flex; align-items:center; justify-content:center; gap:8px; padding:15px; border-radius:14px; border:none; background:var(--amber); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(243,156,18,0.28); }
-  .offline-hint { font-family:var(--font-mono); font-size:9px; letter-spacing:0.8px; color:var(--amber); text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; }
+  /* Plakietka „Zapis lokalny — działa bez zasięgu" USUNIĘTA z dołu arkusza (issue #19) —
+     jej treść dopowiada teraz baner pouczający wyżej. */
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -169,19 +172,12 @@
     <div class="sheet-overlay">
       <div class="sheet">
         <div class="sheet-handle"></div>
-        <div class="sheet-title">ZAPISZ RĘCZNIE</div>
+        <!-- TYTUŁ MÓWI, CO SIĘ ZAPISUJE — bo typ nie jest już do wyboru (issue #19).
+             Ten mockup pokazuje wariant otwarty przyciskiem „Take off"; z przycisku
+             „Landing" ten sam arkusz ma tytuł ZAPISZ LĄDOWANIE i ikonę strzałki w dół
+             w rzędzie akcji. Reszta — czas, baner, przyciski — jest identyczna. -->
+        <div class="sheet-title">ZAPISZ START</div>
         <div class="sheet-lead">GPS nie wykrył zdarzenia albo wykrył je za późno. <b>Zapisz je sam</b> — czas możesz cofnąć, jeśli orientujesz się po fakcie.</div>
-
-        <div class="type-grid">
-          <div class="type-card selected" id="c-to" onclick="pickType('to')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
-            <span class="type-card-lbl">TAKEOFF</span>
-          </div>
-          <div class="type-card" id="c-ldg" onclick="pickType('ldg')">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
-            <span class="type-card-lbl">LANDING</span>
-          </div>
-        </div>
 
         <div class="time-block">
           <div class="time-lbl">Czas zdarzenia (UTC)</div>
@@ -190,12 +186,20 @@
             <span class="time-val" id="tv">14:10</span>
             <div class="step-btn" onclick="bump(1)">+1 min</div>
           </div>
+          <!-- Ten sam czas na zegarku na ręce pilota (scenariusz mockupów: LT = UTC+2).
+               Bez tej linii pilot przeliczał w głowie, żeby sprawdzić, czy „14:10" to
+               rzeczywiście chwila, którą pamięta. -->
+          <div class="time-local" id="tvl">16:10 LT</div>
           <div class="time-delta" id="td">4 min temu — tyle trwało, zanim zauważyłeś</div>
         </div>
 
         <div class="note-box" id="eduManual">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span class="note-text">Wpis zostanie oznaczony jako <b>ręczny</b> — w statystykach i arkuszu widać, które zdarzenia pochodzą z GPS, a które od pilota.</span>
+          <!-- Zdanie o zapisie lokalnym wchodzi TUTAJ (issue #19), zamiast osobnej
+               plakietki na dole arkusza: to dokończenie tej samej myśli („co się dzieje
+               z moim wpisem"), a nie druga informacja. Dwa komunikaty o jednym zapisie
+               kazały pilotowi czytać dwa razy, żeby dowiedzieć się raz. -->
+          <span class="note-text">Wpis zostanie oznaczony jako <b>ręczny</b> — w statystykach i arkuszu widać, które zdarzenia pochodzą z GPS, a które od pilota. <b>Zapis jest lokalny:</b> działa bez zasięgu i wyśle się sam.</span>
           <button class="edu-dismiss" onclick="eduCollapse('eduManual')" title="Rozumiem — schowaj wyjaśnienie">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -212,10 +216,6 @@
             ZAPISZ
           </a>
         </div>
-        <div class="offline-hint">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-          Zapis lokalny — działa bez zasięgu
-        </div>
       </div>
     </div>
   </div>
@@ -227,7 +227,7 @@
     <span class="vp-badge amber">05F</span>
     <span class="vp-body">
       <span class="vp-name">Zdarzenie ręczne (w locie)</span>
-      <span class="vp-when">GPS <b>nie wykrył</b> startu/lądowania albo wykrył za późno. Otwierane przyciskiem T/O lub LAND w kokpicie. Czas cofalny stepperami 46 px, bo pilot orientuje się po fakcie.</span>
+      <span class="vp-when">GPS <b>nie wykrył</b> startu/lądowania albo wykrył za późno. Otwierane przyciskiem <b>Take off</b> lub <b>Landing</b> w kokpicie — i to przycisk decyduje, co się zapisuje: arkusz nie pyta o typ, tylko go ogłasza w tytule. Czas cofalny stepperami 46 px, bo pilot orientuje się po fakcie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -269,16 +269,15 @@
   // więc stepper cofa czas. Kroki 1-minutowe, cele 46 px (rękawice).
   let mins = 14 * 60 + 10;          // 14:10
   const nowMins = 14 * 60 + 14;     // 14:14 — „teraz"
-  function fmt(m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+  const LT_OFFSET = 2 * 60;         // scenariusz mockupów: LT = UTC+2
+  function fmt(m) { return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
   function bump(d) {
     mins = Math.max(0, Math.min(nowMins, mins + d));
     document.getElementById('tv').textContent = fmt(mins);
+    // Czas lokalny idzie za zegarem UTC — dwie liczby o jednej chwili nie mogą się rozjechać.
+    document.getElementById('tvl').textContent = fmt(mins + LT_OFFSET) + ' LT';
     const diff = nowMins - mins;
     document.getElementById('td').textContent = diff === 0 ? 'teraz' : diff + ' min temu — tyle trwało, zanim zauważyłeś';
-  }
-  function pickType(t) {
-    document.getElementById('c-to').classList.toggle('selected', t === 'to');
-    document.getElementById('c-ldg').classList.toggle('selected', t === 'ldg');
   }
   // Baner pouczający (Typ C) — w aplikacji stan „schowany" zapamiętany na stałe per pilot.
   function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }

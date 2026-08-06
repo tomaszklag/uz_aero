@@ -61,7 +61,7 @@ import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
 import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
-import { enduranceLabel } from './logic/fuelNorm';
+import { enduranceLabel, fuelTone } from './logic/fuelNorm';
 import { cyclesLabel } from './logic/cockpitPeek';
 import { flightsBadge } from './logic/statsDay';
 import {
@@ -73,7 +73,7 @@ import {
   unknownPhaseDetail,
 } from './logic/gpsLoss';
 import { operationTag, routeLabel } from './logic/operations';
-import { isSameFieldOperation } from '../../domain';
+import { isJumpOperation, isSameFieldOperation } from '../../domain';
 import type { Event, FlightPhase } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */
@@ -204,6 +204,19 @@ export function CockpitScreen({
     projection.openTakeoffAt != null ? now - projection.openTakeoffAt : projection.flightTimeMs;
   const dutyMs = projection.dutyStart != null ? now - projection.dutyStart : 0;
 
+  /**
+   * Czy w tym dniu wynosi się skoczków — od tego zależy, czy pasek akcji ma przycisk
+   * zrzutu (issue #19). Pyta o to domena, tak samo jak o kształt trasy w preflightcie.
+   */
+  const jumpDay = projection.operation != null && isJumpOperation(projection.operation);
+
+  /**
+   * Ton odczytu paliwa z szacunku czasu lotu (issue #19): amber godzinę przed rezerwą,
+   * czerwony na rezerwie. `null` = brak normy, czyli nie ma czym kolorować — odczyt
+   * zostaje neutralny zamiast świecić na pomarańczowo przy pełnych zbiornikach.
+   */
+  const fuelToneNow = fuelTone(projection.fuel.lastReadingL, aircraft?.consumption ?? null);
+
   /** Komunikaty wspólne dla obu trybów — nigdy cichy błąd (§6 pkt 3). */
   const messages = (
     <>
@@ -241,6 +254,15 @@ export function CockpitScreen({
     const cycleRows = buildCycleRows(events, projection, mhFormat, now);
     const landings = cycleRows.filter((r) => r.kind === 'landing').length;
     const takeoffs = cycleRows.filter((r) => r.kind === 'takeoff').length;
+    /**
+     * Czy w tym cyklu JEST JUŻ CO POKAZYWAĆ (issue #19).
+     *
+     * Zaraz po START ENGINE log cyklu składa się z samego uruchomienia silnika i wiersza
+     * „na żywo" — a nagłówek ogłaszał wtedy „Cykl bieżący · 0 T/O · 0 LDG" i plakietkę
+     * „Lot #1", czyli trzy liczby o niczym. Karta pojawia się więc dopiero, gdy system
+     * wykryje pierwsze zdarzenie lotu: kołowanie, start, lądowanie albo zrzut.
+     */
+    const cycleHasEvents = cycleRows.some((r) => r.kind !== 'live' && r.kind !== 'start');
     // Degradacja CZUJNIKA (mockup 05g) — osobna oś od sieci: SyncChip może świecić
     // zielono, a autodetekcja stoi. Baner-przyrząd + ręczny zapis jako jedyna droga.
     // `gpsLost` steruje degradacją danych (siatka, faza, etykiety ręczne) — brak
@@ -331,15 +353,14 @@ export function CockpitScreen({
                       label: 'Fuel on board',
                       value: `~${Math.round(projection.fuel.lastReadingL ?? 0)}`,
                       unit: 'L',
-                      tone: 'amber',
-                      tint: true,
+                      // Ton z szacunku, nie „zawsze amber" — patrz `fuelToneNow`.
+                      tone: fuelToneNow ?? 'neutral',
+                      tint: fuelToneNow != null && fuelToneNow !== 'neutral',
                       note: 'dane lokalne — bez GPS',
                     },
                     {
                       label: 'Flight time',
                       value: hhmm(liveFlightMs),
-                      tone: 'green',
-                      tint: true,
                       note: 'zegar — liczy normalnie',
                     },
                   ]
@@ -362,12 +383,15 @@ export function CockpitScreen({
                       label: 'Fuel on board',
                       value: `~${Math.round(projection.fuel.lastReadingL ?? 0)}`,
                       unit: 'L',
-                      tone: 'amber',
-                      tint: true,
+                      // AMBER TYLKO WTEDY, GDY JEST O CO (issue #19): kolor ostrzegawczy
+                      // świecący przy pełnych zbiornikach przestaje cokolwiek znaczyć.
+                      tone: fuelToneNow ?? 'neutral',
+                      tint: fuelToneNow != null && fuelToneNow !== 'neutral',
                     },
                     // `hhmm` (00:47), nie `duration` (0:47) — mockup trzyma w tej komórce
-                    // format karty lotów.
-                    { label: 'Flight time', value: hhmm(liveFlightMs), tone: 'green', tint: true },
+                    // format karty lotów. Bez zieleni (issue #19): czas lotu jest odczytem,
+                    // a nie stanem wymagającym uwagi — wyróżniał się bez powodu.
+                    { label: 'Flight time', value: hhmm(liveFlightMs) },
                   ]
             }
           />
@@ -385,31 +409,47 @@ export function CockpitScreen({
               zdarzeń, a przy krótkim logu rozpycha się do paska akcji (`flexGrow`), więc
               pełnoekranowa wstęga z mockupu zostaje. `flexShrink: 0` pilnuje, żeby się
               nie ścisnął, gdy sekcje wyżej zabiorą całą wysokość. */}
-          <Card
-            title={`Cykl bieżący · ${takeoffs} T/O · ${landings} LDG`}
-            headerRight={<Tag label={`Lot #${projection.flights.length + (inFlight ? 1 : 0)}`} />}
-            flush
-            style={{
-              flexGrow: 1,
-              flexShrink: 0,
-              borderRadius: 0,
-              borderLeftWidth: 0,
-              borderRightWidth: 0,
-            }}
-            contentStyle={{ flexGrow: 1 }}
-          >
-            <EventLog rows={cycleRows} emptyText="Cykl dopiero się zaczął." />
-          </Card>
+          {cycleHasEvents && (
+            <Card
+              title={`Cykl bieżący · ${takeoffs} T/O · ${landings} LDG`}
+              headerRight={<Tag label={`Lot #${projection.flights.length + (inFlight ? 1 : 0)}`} />}
+              flush
+              style={{
+                flexGrow: 1,
+                flexShrink: 0,
+                borderRadius: 0,
+                borderLeftWidth: 0,
+                borderRightWidth: 0,
+              }}
+              contentStyle={{ flexGrow: 1 }}
+            >
+              <EventLog rows={cycleRows} emptyText="Cykl dopiero się zaczął." />
+            </Card>
+          )}
         </ScrollView>
 
         <CockpitActions
           // 05g: bez fixa ręczny zapis to JEDYNA droga — etykieta i amber mówią to
           // wprost, zanim pilot doczyta baner.
-          primaryLabel={inFlight ? (gpsLost ? 'LAND · RĘCZNIE' : 'LAND') : gpsLost ? 'T/O · RĘCZNIE' : 'T/O'}
+          // Pełne nazwy zamiast skrótów „T/O" i „LAND" (issue #19): pasek akcji jest
+          // jedynym miejscem, gdzie pilot ZAPISUJE zdarzenie, a skrót oszczędzał znaki
+          // na przycisku, który ma dwie trzecie szerokości ekranu.
+          primaryLabel={
+            inFlight
+              ? gpsLost
+                ? 'Landing · ręcznie'
+                : 'Landing'
+              : gpsLost
+                ? 'Take off · ręcznie'
+                : 'Take off'
+          }
           primaryTone={gpsLost ? 'amber' : undefined}
           primaryIcon={inFlight ? 'landing' : 'takeoff'}
           onPrimary={() => setManualOpen(true)}
-          onDrop={() => setDropOpen(true)}
+          // Zrzut istnieje TYLKO w dniu skokowym (issue #19): przy przelocie,
+          // egzaminie czy locie technicznym nie ma czego wynosić, więc przycisku nie
+          // ma w ogóle. `undefined` to brak akcji, nie blokada — patrz `CockpitActions`.
+          onDrop={jumpDay ? () => setDropOpen(true) : undefined}
           // Wyniesienie z definicji dzieje się w powietrzu (§3.3).
           dropDisabledReason={inFlight ? null : 'Zrzut zapiszesz w powietrzu'}
           onStop={() => run(stopEngine)}
@@ -440,6 +480,7 @@ export function CockpitScreen({
           initialType={inFlight ? 'landing' : 'takeoff'}
           now={now}
           formatTime={timeUtc}
+          formatLocalTime={timeLocal}
           busy={busy}
           onConfirm={(type, at) => {
             setManualOpen(false);
@@ -552,6 +593,7 @@ export function CockpitScreen({
         {projection.fuel.lastReadingL != null && (
           <FuelStrip
             fuel={litres(projection.fuel.lastReadingL)}
+            tone={fuelToneNow ?? 'neutral'}
             endurance={enduranceLabel(projection.fuel.lastReadingL, aircraft?.consumption ?? null)}
             source={
               aircraft?.consumption == null

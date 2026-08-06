@@ -141,6 +141,41 @@ export function enduranceLabel(
   return `wystarczy na ~${hours}:${String(minutes % 60).padStart(2, '0')} lotu do rezerwy ${reserveMinutes} min`;
 }
 
+/**
+ * Ile minut lotu przed rezerwą zaczynamy ostrzegać kolorem (amber).
+ *
+ * Godzina zapasu nad rezerwą — tyle, żeby decyzja o tankowaniu zapadła na ziemi między
+ * wyniesieniami, a nie w powietrzu przy ostatnim.
+ */
+export const FUEL_WARN_MINUTES = RESERVE_MINUTES + 60;
+
+/**
+ * Kolor odczytu paliwa: `red` przy rezerwie, `amber` godzinę przed nią, `neutral` wyżej.
+ * `null` = nie ma normy, więc nie ma czym pokolorować — odczyt zostaje bez tonu.
+ *
+ * ══ DLACZEGO PALIWO NIE JEST AMBER ZAWSZE ══
+ * Do issue #19 komórka „Fuel on board" i pasek na ziemi były pomarańczowe niezależnie od
+ * tego, ile tego paliwa jest. Kolor ostrzegawczy, który świeci przy pełnych zbiornikach,
+ * przestaje cokolwiek znaczyć — a wtedy nie znaczy też wtedy, gdy zaczyna być groźnie.
+ * Ton wynika więc z SZACUNKU CZASU LOTU: pilot i tak myśli minutami, nie litrami.
+ *
+ * Liczymy CAŁY czas lotu z paliwa na pokładzie (rezerwa = 0), a progi ustawiamy na
+ * rezerwie i godzinę przed nią. Wynik czyta się wprost: czerwony = zostało tyle, ile
+ * wynosi rezerwa. Szacunek pozostaje szacunkiem — paliwomierz decyduje (`CLAUDE.md`).
+ */
+export function fuelTone(
+  fobL: number | null,
+  norm: ConsumptionNorm | null,
+): 'red' | 'amber' | 'neutral' | null {
+  const ms = flightTimeRemainingMs(fobL, norm, 0);
+  if (ms == null) return null;
+
+  const minutes = ms / 60_000;
+  if (minutes <= RESERVE_MINUTES) return 'red';
+  if (minutes <= FUEL_WARN_MINUTES) return 'amber';
+  return 'neutral';
+}
+
 /** Trzy formy polskiej liczby mnogiej — jak `flightsBadge` w statystykach dnia. */
 function liftWord(count: number): string {
   if (count === 1) return 'wyniesienie';

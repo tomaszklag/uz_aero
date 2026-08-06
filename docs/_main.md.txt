@@ -416,7 +416,7 @@ Typy zdarzeń:
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
 | `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
-| `drop` | numer zrzutu, wysokość (z GPS), **liczba skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm` |
+| `drop` | numer zrzutu, wysokość (z GPS), **liczba skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm`. Możliwy WYŁĄCZNIE w dniu skokowym (`isJumpOperation`) — w kokpicie innej operacji przycisku zrzutu nie ma (issue #19) |
 | `refuel` | przed / dolano / po, wyliczone zużycie |
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |

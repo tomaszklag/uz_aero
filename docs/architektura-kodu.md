@@ -797,9 +797,10 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
 | `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
-| `CockpitActions` | dolny pasek: zapis ręczny, zrzut, STOP z powodem blokady | `.action-row` |
-| `EventLog` | log dnia jako **oś cykli**: szyna z ikonami, chipy, cel korekty ≥ 44 px | `.day-log`, `.cycle-log` |
+| `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy — bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
+| `EventLog` | log dnia jako **oś cykli**: szyna z ikonami (nieprzezroczyste — zakrywają kreskę), chipy, cel korekty ≥ 44 px. **Zieleń ma tylko wiersz `live`** — historia jest neutralna | `.day-log`, `.cycle-log` |
 | `DutyStrip` | licznik czasu służby od meldunku | `.duty-strip` |
+| `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
 | `Sheet` | arkusz od dołu dla decyzji dotykających innych | `.modal-overlay` (przejęcie) |

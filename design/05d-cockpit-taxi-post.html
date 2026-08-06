@@ -15,7 +15,7 @@
     --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
-    --blue: #3498DB;
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -64,6 +64,10 @@
 
   .param-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); margin:0; flex-shrink:0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
   .param-cell { background:var(--surface); padding:12px 14px; display:flex; flex-direction:column; gap:4px; }
+  /* WARIANT OSTRZEGAWCZY paliwa (issue #19), nie domyślny wygląd komórki: amber dopiero,
+     gdy szacunek czasu lotu z FOB spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min),
+     czerwony na samej rezerwie. Powyżej — jak tutaj — paliwo jest neutralne, bo kolor
+     świecący zawsze przestaje być ostrzeżeniem. */
   .param-cell.amber-bg { background:rgba(243,156,18,0.04); }
   .param-label { font-family:var(--font-mono); font-size: 10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); }
   .param-value { font-family:var(--font-mono); font-size:28px; font-weight:400; letter-spacing:2px; line-height:1; color:var(--text-primary); }
@@ -82,16 +86,17 @@
   .log-row:first-child .log-tl::before { top:50%; }
   .log-row:last-child .log-tl::before { bottom:50%; }
   .log-icon { width:22px; height:22px; border-radius:6px; flex-shrink:0; z-index:1; position:relative; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); }
-  .log-icon.start { background:var(--green-muted); border-color:var(--green-border); color:var(--green); }
-  .log-icon.zrzut { background:rgba(52,152,219,0.12); border-color:rgba(52,152,219,0.3); color:var(--blue); }
+  /* Start engine neutralny (issue #19) — zieleń w logu należy wyłącznie do teraźniejszości.
+     Tła nieprzezroczyste, żeby plakietka ZAKRYWAŁA kreskę szyny (tony designu są
+     półprzezroczyste, więc kreska prześwitywała przez środek ikony). */
+  .log-icon.start { background:var(--surface-raised); border-color:var(--border); color:var(--text-secondary); }
+  .log-icon.zrzut { background:linear-gradient(var(--blue-muted), var(--blue-muted)), var(--surface); border-color:rgba(52,152,219,0.3); color:var(--blue); }
   .log-icon.live { background:var(--green); border-color:var(--green); animation:pulse 1.5s ease-in-out infinite; width:10px; height:10px; border-radius:50%; border:none; }
   .log-dot-sm { width:6px; height:6px; border-radius:50%; background:var(--border-strong); z-index:1; position:relative; flex-shrink:0; }
   .log-body { flex:1; display:flex; align-items:center; gap:8px; padding:8px 10px 8px 2px; }
   .log-t { font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:1.5px; width:46px; flex-shrink:0; color:var(--text-primary); }
-  .log-t.start { color:var(--green); }
   .log-t.live { color:var(--green); font-size:11px; letter-spacing:0.5px; width:64px; }
   .log-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; flex:1; color:var(--text-secondary); }
-  .log-lbl.start { color:var(--green); }
   .log-lbl.live { color:var(--green); }
   .log-dur { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); padding-right:10px; white-space:nowrap; }
   .log-chip { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:4px; white-space:nowrap; }
@@ -202,9 +207,9 @@
         <div class="param-label">Track</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">085</div><div class="param-unit">°</div></div>
       </div>
-      <div class="param-cell amber-bg">
+      <div class="param-cell">
         <div class="param-label">Fuel on Board</div>
-        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value amber">~89</div><div class="param-unit" style="color:var(--amber)">L</div></div>
+        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">~89</div><div class="param-unit">L</div></div>
       </div>
       <div class="param-cell">
         <div class="param-label">Engine Time</div>
@@ -212,6 +217,8 @@
       </div>
     </div>
 
+    <!-- Karta „Cykl bieżący" pokazuje się dopiero, gdy w cyklu jest zdarzenie inne niż
+         uruchomienie silnika i wiersz „na żywo" (issue #19) — tu jest ich pełen cykl. -->
     <div class="cycle-log">
       <div class="cycle-log-header">
         <span class="cycle-log-title">Cykl bieżący · 3 T/O · 3 LDG</span>
@@ -219,7 +226,7 @@
       </div>
       <div class="log-row">
         <div class="log-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-        <div class="log-body"><div class="log-t start">13:10</div><div class="log-lbl start">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
+        <div class="log-body"><div class="log-t">13:10</div><div class="log-lbl">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
       </div>
       <div class="flight-sep"><span class="flight-sep-label">Lot 1</span></div>
       <div class="log-row">
@@ -281,7 +288,7 @@
     <div class="action-row">
       <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie — GPS nie wykrył zdarzenia albo wykrył za późno">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
-        Take-off
+        Take off
       </a>
       <a href="04-cockpit-ground.html" class="stop-btn" title="Zapisuje engine_stop z odczytem MH i FOB · przytrzymaj 2 s aby potwierdzić">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>

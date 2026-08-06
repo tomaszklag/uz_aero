@@ -1269,3 +1269,94 @@ pozycji. Przy pisaniu sekcja znika — ale trafienie w wynikach dostaje ten sam 
 > że w polu formularza coś już jest. Pilot musiał zamknąć arkusz, żeby sprawdzić, co
 > wybrał. Znacznik jest KSZTAŁTEM, a nie samym kolorem (ptaszek w kółku, jak na liście
 > samolotów na 02): działa w słońcu, w motywach jasnych i przy daltonizmie.
+
+---
+
+## 2026-08-06 — Kokpit: uwagi z przeglądu (issue #19)
+
+Jedenaście uwag z lotu na urządzeniu, wszystkie o jednym: kokpit świecił kolorami tam,
+gdzie nic się nie działo, i pytał o rzeczy, o które nie musiał pytać. Kod aplikacji jest
+już poprawiony — mockupy nadążają za nim.
+
+**05, 05b, 05g, 05-themes** — przy pasku akcji reguła przycisku „Zrzut": istnieje TYLKO
+w dniu skokowym. Przy przelocie, egzaminie, locie technicznym i „innych" znika całkowicie,
+a nie jest wyszarzony (mockupy opisują dzień skoków, więc przycisk w nich zostaje).
+> Powód: pilot zobaczył zrzut w dniu przelotu i zapytał, kogo miałby wynieść. Wyszarzenie
+> mówi „teraz nie, ale kiedyś tak" — a w dniu przelotu nie będzie kiedy. Czego nie da się
+> zapisać, tego nie ma na ekranie.
+
+**05, 05b, 05g, 05-themes** — przycisk zrzutu bez mikropodpisu „w locie" (w mockupach ten
+podpis nie istniał; reguła zapisana komentarzem, żeby przy okazji nie wrócił). Podpis
+„po LDG" pod STOP zostaje.
+> Powód: że skoczek wychodzi w powietrzu, pilot wie lepiej niż aplikacja — podpis tłumaczył
+> mu jego własną robotę. Podpis pod STOP mówi coś innego i zostaje: nie „dlaczego", tylko
+> KIEDY blokada zniknie.
+
+**05, 05b, 05-themes** (`LAND` → `Landing`), **05a, 05c, 05d** (`Take-off` → `Take off`),
+**05g** (`LAND · RĘCZNIE` → `Landing · ręcznie`) — na przycisku akcji głównej pełne nazwy
+zamiast skrótów. Ta sama redakcja w banerze braku GPS na 05G i w opisach wariantów 05F.
+> Powód: to jedyne miejsce, w którym pilot ZAPISUJE zdarzenie do rejestru — a napis na
+> przycisku o dwóch trzecich szerokości ekranu oszczędzał znaki, których nie brakowało.
+> „T/O" trzeba rozwinąć w głowie; „Take off" czyta się od razu, także w rękawicach
+> i w słońcu.
+
+**05, 05b, 05g, 05-themes** — komórka „Flight time" bez zielonego akcentu i bez
+podświetlenia tła; wartość w kolorze podstawowym, jak „Ground speed" i „Altitude".
+(05C zostaje z przygaszoną wartością — tam zegar stanął na wykrytym lądowaniu i to jest
+osobna informacja, nie wyróżnienie.)
+> Powód: czas lotu to odczyt, a nie stan wymagający uwagi. Wyróżniony bez powodu zabierał
+> ją komórkom, które naprawdę mogą coś zgłosić.
+
+**05a** (przypadek graniczny) **+ komentarz w 05, 05b, 05c, 05d, 05g** — karta „Cykl
+bieżący" pojawia się dopiero, gdy w cyklu zaszło zdarzenie inne niż uruchomienie silnika
+i wiersz „na żywo": kołowanie, start, lądowanie albo zrzut. Zaraz po START ENGINE karty
+nie ma w ogóle.
+> Powód: przez pierwsze minuty cyklu nagłówek ogłaszał „Cykl bieżący · 0 T/O · 0 LDG"
+> i plakietkę „Lot #1" — trzy liczby o niczym nad jednym wierszem. Pusta karta uczy, że
+> na tę część ekranu nie warto patrzeć, a potem to właśnie tam wchodzą zdarzenia lotu.
+
+**04** (pasek paliwa, komentarz z progami) **oraz 05, 05a, 05b, 05c, 05d, 05g, 05-themes**
+(komórka „Fuel on board") — paliwo kolorowane WARUNKOWO: neutralnie przy pełnych
+zbiornikach, amber dopiero przy szacunku ~1h45 lotu (godzina zapasu nad rezerwą 45 min),
+czerwono na samej rezerwie. Warianty ostrzegawcze wyglądają jak dotąd. Ikona paliwa
+zostaje amber zawsze.
+> Powód: kolor ostrzegawczy, który świeci przy pełnych zbiornikach, przestaje być
+> ostrzeżeniem — oko uczy się go pomijać przez cały dzień i nie zauważa go w jedynej
+> chwili, w której miał coś znaczyć. Próg jest w minutach lotu, nie w litrach, bo pilot
+> i tak myśli minutami.
+
+**04, 04b, 05, 05a, 05b, 05c, 05d, 05g, 05-themes** — wiersz „Start engine" w logu traci
+zieleń: ikona, czas i etykieta jak przy „Takeoff" i „Landing". Zielony zostaje WYŁĄCZNIE
+wiersz „na żywo" („Silnik pracuje…", „In flight…", trwające kołowanie). Czerwień
+„Stop engine" i amber zdarzeń naziemnych bez zmian.
+> Powód: zieleń należy do teraźniejszości. Uruchomienie silnika sprzed dwóch godzin nie
+> wymaga uwagi bardziej niż starty i lądowania, które po nim nastąpiły — a świeciło
+> w każdym zamkniętym cyklu. Teraz w logu świeci dokładnie to, co dzieje się TERAZ,
+> a historia czyta się spokojnie. Czerwień i amber zostają, bo to nie wyróżnienia, tylko
+> znaczenia: zamknięcie cyklu i zdarzenie spoza cyklu.
+
+**04, 04b, 05, 05a, 05b, 05c, 05d, 05g, 05-themes** — plakietka zdarzenia ZAKRYWA kreskę
+osi czasu: pod barwę tonu wchodzi krycie powierzchni karty (w 05-themes także w czterech
+nadpisaniach motywów). Wiersz OCZEKIWANY z kreskowaną obwódką zostaje przezroczysty.
+> Powód: tony designu są półprzezroczyste, więc pionowa kreska szyny przechodziła przez
+> środek ikony — na urządzeniu wyglądało to jak rysa na przyrządzie. W wierszu
+> oczekującym prześwit jest celowy: zdarzenia jeszcze nie ma, więc oś biegnie dalej.
+
+**05f** — siatka wyboru TAKEOFF / LANDING usunięta; co się zapisuje, mówi tytuł arkusza
+(„ZAPISZ START"; z przycisku „Landing" ten sam arkusz ma tytuł „ZAPISZ LĄDOWANIE").
+> Powód: arkusz otwiera się zawsze z konkretnego przycisku, więc karty pytały pilota
+> o rzecz, którą przed chwilą zadeklarował tapnięciem — i pozwalały zapisać coś innego,
+> niż zamierzał. Jedno tapnięcie mniej i o jeden sposób na pomyłkę mniej.
+
+**05f** — pod zegarem UTC czas lokalny drobnym drukiem (`16:10 LT` pod `14:10`), idący
+za stepperami. Rejestr zostaje w UTC.
+> Powód: pilot patrzy na zegarek na ręce, a ten pokazuje LT. Bez tej linii przeliczał
+> w głowie, żeby sprawdzić, czy cofnął czas do tej chwili, którą pamięta — a robił to
+> w powietrzu, po zdarzeniu, którego GPS nie wykrył.
+
+**05f** — plakietka „Zapis lokalny — działa bez zasięgu" znika z dołu arkusza; jej treść
+kończy zdanie w niebieskim banerze pouczającym: „Zapis jest lokalny: działa bez zasięgu
+i wyśle się sam.". W 05E analogiczna plakietka zostaje (inny arkusz, poza tą uwagą).
+> Powód: dwa komunikaty o jednym zapisie kazały czytać dwa razy, żeby dowiedzieć się raz.
+> To jest dokończenie tej samej myśli — „co się stanie z moim wpisem" — a nie druga
+> informacja, więc stoi w jednym miejscu.
