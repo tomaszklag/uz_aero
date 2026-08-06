@@ -136,7 +136,13 @@
            Karta opisuje DZIEŃ PILOTA, więc może obejmować kilka maszyn — to jest cała
            różnica względem starego modelu, w którym „dzień" był sesją jednego samolotu
            i przesiadka rodziła dwa wpisy. Prowadzi do 01B: zamknięty dzień z klamrą
-           i wzlotami, nie do rozliczenia pojedynczej maszyny. -->
+           i wzlotami, nie do rozliczenia pojedynczej maszyny.
+
+           UWAGA co do dat: ten ekran opisuje moment widziany z 01 (dziś 06 SIE, dzień
+           w toku), więc w oknie korekty stoi DZIEŃ POPRZEDNI — 05 SIE. Kliknięcie
+           otwiera 01B, który tym samym układem pokazuje dzień 06 SIE. To celowe:
+           01B jest wzorcem widoku zamkniętego dnia, nie zrzutem tej konkretnej daty,
+           a osobnego mockupu „dzień z przeszłości" nie robimy. -->
       <a href="01b-moj-dzien-zamkniety.html" class="day-card editable">
         <div class="day-top">
           <span class="day-date">05 SIERPNIA 2026</span>
