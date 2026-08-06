@@ -38,6 +38,7 @@ import type { SheetQueries } from '../application/common/queries/sheets.ts';
 import type { StateQueries } from '../application/mobile/queries/aircraftState.ts';
 import type { PilotsPort, TokenService, TraceSinkPort } from '../application/common/ports.ts';
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
+import { registerRequestLog } from './requestLog.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
@@ -148,8 +149,21 @@ export interface ServerDeps {
   adminMaintenanceQueries: AdminMaintenanceQueries;
 }
 
-export function buildServer(deps: ServerDeps): FastifyInstance {
+export interface ServerOptions {
+  /**
+   * Dziennik żądań na konsoli (`registerRequestLog`). Domyślnie WŁĄCZONY — serwer klubu
+   * ma być widoczny w oknie, w którym stoi. Testy integracyjne go gaszą: pięćset linii
+   * dziennika na przebieg zakryłoby to, po co się je czyta.
+   */
+  requestLog?: boolean;
+}
+
+export function buildServer(deps: ServerDeps, options: ServerOptions = {}): FastifyInstance {
   const app = Fastify({ logger: false });
+
+  // Przed trasami, żeby dziennik objął także żądania odbite przez strażnika CSRF
+  // i te, które nie trafią w żadną trasę (404 też jest informacją o tym, co się dzieje).
+  if (options.requestLog !== false) registerRequestLog(app);
 
   // Ciasteczka: potrzebuje ich WYŁĄCZNIE sesja panelu, ale wtyczka musi stać przed
   // trasami, bo dokłada `req.cookies` czytane przez `tokenFromRequest`. Bez podpisu

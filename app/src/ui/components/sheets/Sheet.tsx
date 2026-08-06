@@ -52,18 +52,26 @@ export interface SheetProps {
   /** Treść ostrzeżenia — co dokładnie się stanie po potwierdzeniu. */
   warning?: string;
   warningTone?: Tone;
-  confirmLabel: string;
+  /**
+   * Napis akcji potwierdzającej. **Opcjonalny**: arkusz wyszukiwarki (`AirfieldSheet`)
+   * kończy się w chwili wyboru pozycji z listy, więc nie ma czego potwierdzać —
+   * przycisk „WYBIERZ" obok wybranego już wiersza pytałby o zgodę na to, co pilot
+   * właśnie zrobił. Bez tego pola zostaje sam rząd z „ANULUJ".
+   */
+  confirmLabel?: string;
   confirmTone?: Tone;
-  onConfirm: () => void;
+  onConfirm?: () => void;
   cancelLabel?: string;
   onCancel: () => void;
   /**
-   * Arkusz skończył się pokazywać (przekazujemy `Modal.onShow`).
+   * Treść PRZYPIĘTA nad rzędem akcji, poza obszarem przewijania.
    *
-   * Istnieje dla arkuszy z polem edycji: dopiero w tej chwili okno modalne przyjmuje
-   * fokus, więc dopiero teraz `focus()` naprawdę wywołuje klawiaturę (patrz `ReadingSheet`).
+   * Powstała dla wyszukiwarki lotnisk (zgłoszenie z urządzenia): arkusz jest przyklejony
+   * do dolnej krawędzi i rośnie w górę, więc każdy wynik dokładany do listy przesuwał pole
+   * wpisu — pisało się do celu, który skacze pod palcem. Element w stopce ma stałą odległość
+   * od dołu: lista rośnie i kurczy się NAD nim, a pole zostaje tam, gdzie pilot je zostawił.
    */
-  onShow?: () => void;
+  footer?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -78,7 +86,7 @@ export function Sheet({
   onConfirm,
   cancelLabel = 'ANULUJ',
   onCancel,
-  onShow,
+  footer,
   children,
 }: SheetProps) {
   const { theme } = useTheme();
@@ -111,7 +119,6 @@ export function Sheet({
       transparent
       animationType="slide"
       onRequestClose={onCancel}
-      onShow={onShow}
       statusBarTranslucent
     >
       {/* Tapnięcie w tło = anuluj. Potwierdzenie wymaga celowego tapnięcia w przycisk. */}
@@ -169,6 +176,8 @@ export function Sheet({
             )}
           </ScrollView>
 
+          {footer}
+
           <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
             {/* Mockup: `.modal-actions` = siatka 1 : 2 z mniejszymi napisami niż CTA ekranu. */}
             <ActionButton
@@ -179,14 +188,16 @@ export function Sheet({
               onPress={onCancel}
               style={{ flex: 1 }}
             />
-            <ActionButton
-              label={confirmLabel}
-              tone={confirmTone}
-              variant="solid"
-              size="md"
-              onPress={onConfirm}
-              style={{ flex: 2 }}
-            />
+            {confirmLabel != null && onConfirm != null && (
+              <ActionButton
+                label={confirmLabel}
+                tone={confirmTone}
+                variant="solid"
+                size="md"
+                onPress={onConfirm}
+                style={{ flex: 2 }}
+              />
+            )}
           </View>
         </View>
       </View>

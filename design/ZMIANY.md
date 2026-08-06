@@ -1140,7 +1140,7 @@ tekstowym, co klient, tylko z polem wielolinijkowym i podpowiedziami bez prawej 
 
 **02e-preflight-zadanie** — dołożone **dwa arkusze** (ukryte, otwierają się tapnięciem
 w pole): `#sheet-airfield` (duże pole wpisu z placeholderem `EPKK albo nazwa`, nazwa
-rozpoznanego kodu, lista „Podpowiedzi · katalog w telefonie", ANULUJ / WYBIERZ) oraz
+rozpoznanego kodu, lista „Podpowiedzi", ANULUJ / WYBIERZ) oraz
 `#sheet-client` (pole tekstowe, „Ostatnio używane" z rodzajem operacji po prawej,
 ANULUJ / ZAPISZ). Arkusz notatki to ten sam komponent z polem wielolinijkowym — opisany
 komentarzem, żeby nie mnożyć trzeciego bloku tego samego HTML-a.
@@ -1181,3 +1181,91 @@ i opis wariantu mówią o arkuszu, nie o liście.
 > w kolumnie o połowie szerokości łamałoby się po dwóch słowach. Wiersz nie pojawia się
 > pusty: „Notatka —" zajmowałoby miejsce w siatce po to, żeby powiedzieć, że pilot nic nie
 > napisał.
+
+**02e / 02f — druga tura przeglądu tego samego kroku (uwagi z urządzenia).** Z ekranu
+znikają trzy napisy i wchodzi jedna poprawka układu:
+- nagłówek sekcji `Miejsce skoków` (nad etykietą pola `Lotnisko skoków`),
+- podpowiedź pod polem `Skoki startują i lądują na tym samym lotnisku`,
+- adnotacja `katalog w telefonie` przy nagłówku listy podpowiedzi w arkuszu,
+- nazwa lotniska w polu **ucina się wielokropkiem** zamiast wychodzić poza kontrolkę
+  (`.field-input-main` nie kurczy się, `.field-input-side` ustępuje miejsca).
+> Powód: wszystkie trzy napisy mówiły to, co ekran mówi już kształtem. Nagłówek sekcji
+> i etykieta pola nazywały tę samą rzecz dwa razy — przy JEDNYM polu w sekcji etykieta
+> wystarcza (tak samo zbudowany jest czas meldowania na kroku 1), a `Trasa` wraca tam,
+> gdzie ma co spinać: nad parą „Start" / „Lądowanie". Zdanie o startowaniu i lądowaniu
+> na tym samym lotnisku tłumaczyło pilotowi jego własną robotę. Adnotacja o katalogu
+> odpowiadała na pytanie PROGRAMISTY („skąd te dane"), a nie pilota — że lista nie zniknie
+> bez zasięgu, przekona się w chwili, w której nie zniknie. Ucinanie nazwy to już nie
+> redakcja, tylko błąd układu: najdłuższe nazwy katalogu („Kraków John Paul II
+> International Airport") rozpychały wiersz i wychodziły poza pole.
+
+**02e / 02f — arkusz lotniska przerobiony na WYSZUKIWARKĘ** (trzecia uwaga z tej samej tury).
+Znika linia z nazwą pod polem wpisu i przycisk `WYBIERZ`; pole startuje **puste**; tapnięcie
+w wiersz listy JEST wyborem (arkusz zamyka się i wraca kod); przy pustym wpisie lista
+pokazuje **lotniska najbliżej pilota** z odległością w drugiej linii; kod spoza katalogu
+wchodzi osobnym wierszem („Użyj tego kodu"); pod listą stoi „Wyczyść lotnisko (EPKK)",
+bo trasa jest opcjonalna.
+> Powód: zgłoszenie brzmiało „jak mam coś wybrane, to nie do końca wiadomo, bo pod spodem
+> wyświetlają się podpowiedzi" — i to jest opis stanu, który sam sobie przeczył. Arkusz
+> udawał formularz (pole + potwierdzenie), a miał być wyszukiwarką: jedno pytanie, jedna
+> lista, wybór przez tapnięcie. Nazwa pod polem powtarzała to, co stoi w wierszu listy,
+> czyli tam, gdzie pilot patrzy, wybierając; `WYBIERZ` stałby obok pozycji, którą pilot
+> właśnie tapnął, i pytał o zgodę na to, co już zrobił. Pole startuje puste, bo
+> wyszukiwarkę otwiera się po to, żeby coś ZMIENIĆ — poprzednia wartość i tak stoi
+> w formularzu pod arkuszem i zostaje po „ANULUJ".
+> Lista „najbliżej Ciebie" odpowiada na pytanie, które puste pole zostawiało bez odpowiedzi:
+> pilot stoi zwykle na tym lotnisku, z którego zaraz wystartuje, więc pierwsza pozycja jest
+> zwykle tą właściwą. Bez pozycji (brak fixa; o uprawnienie do lokalizacji prosimy dopiero
+> na kroku 4) zostaje sama zachęta do wpisania — lista lotnisk w pobliżu to wygoda, nie
+> warunek wypełnienia formularza, więc nie prosimy o uprawnienie w tym miejscu.
+> Kod spoza katalogu ma własny wiersz, a nie ciche przyjęcie: świadome tapnięcie odróżnia
+> „lecę do EDDB" od literówki w EPKK.
+
+**02d-preflight-offline** — ta sama redakcja co na 02e: nagłówek sekcji `Miejsce skoków`
+i podpowiedź `Skoki startują i lądują na tym samym lotnisku` usunięte, etykieta pola
+brzmi `Lotnisko skoków`.
+> Powód: wariant czeka na modernizację (całość kroku 2 przeniosła się na 02E), ale
+> powielanie skasowanych napisów w pliku, który nadal opisuje ten sam formularz, robiłoby
+> z niego źródło sprzecznej prawdy.
+
+**02e — arkusz oznaczenia klienta (i notatki) szuka w historii przy każdej literze.**
+Wpis zawęża listę „Ostatnio używane" (nagłówek zmienia się wtedy na „Z historii");
+wpis bez trafień zostawia jedno zdanie „Brak w historii — zapisze się jako nowy wpis".
+> Powód: lista dwudziestu ostatnich wartości jest pomocna, dopóki pilot jej nie przewija —
+> a przewija ją zawsze, gdy szuka konkretnego zlecenia. Wpisanie trzech liter jest szybsze
+> niż czytanie listy, a wpis, którego w historii nie ma, nadal zapisuje się normalnie: to
+> jest pole tekstowe z podpowiedziami, a nie lista zamknięta. Szukanie jest LOKALNE, po
+> liście pobranej raz przy wejściu na ekran — żadnego zapytania na literę, więc działa też
+> wtedy, gdy zasięg zniknie w połowie pisania. Optymalizacja z tej samej uwagi: jeśli
+> krótszy wpis nic nie znalazł, dłuższy nie ma czego znaleźć (dopisanie znaku może wynik
+> tylko zawęzić), więc aplikacja w ogóle nie przechodzi wtedy po liście; skasowanie znaku
+> wychodzi spod tej granicy i szukanie wraca do pracy.
+
+**02e / 02f — pole wpisu przeniesione POD listę** (oba arkusze: lotnisko i oznaczenie
+klienta/notatka), tuż nad rzędem akcji
+(w kodzie: `Sheet` → nowa stopka `footer`, poza obszarem przewijania).
+> Powód: arkusz jest przyklejony do dolnej krawędzi ekranu i rośnie w GÓRĘ, więc jego
+> wysokość zmienia się z każdą literą, która zmienia długość listy wyników. Pole na górze
+> przeskakiwało przy tym w pionie — pisało się do celu, który ucieka pod palcem
+> (zgłoszenie z urządzenia). Na dole pole ma stałą odległość od klawiatury, a lista rośnie
+> i kurczy się nad nim. Kolejność czytania zostaje naturalna — najtrafniejsze na górze
+> listy, bo to porządek odpowiedzi, a nie odległość od kciuka.
+
+**02e / 02f — pole wyszukiwarki: jeden krój i jeden stopień we wszystkich stanach**
+(mono w zwykłej wadze, 16 px; zachęta „Kod ICAO albo nazwa…" różni się tylko KOLOREM).
+> Powód: wersaliki licznika (mono 700, 26 px) sprawiały, że zachęta wyglądała jak wpisana
+> wartość, a nie jak podpowiedź, co się tu robi — stąd lżejsza waga, mniejszy stopień
+> i wielokropek. Kuszące było zmniejszyć sam placeholder, przy pustym polu; byłby to
+> jednak ten sam błąd, przez który pole wyjechało na dół arkusza: zmiana stopnia zmienia
+> WYSOKOŚĆ kontrolki, więc podskakiwałaby przy pierwszej i ostatniej literze. Metryka
+> stała, zmienny wyłącznie kolor (w React Native placeholder i tak dziedziczy po polu
+> wszystko poza kolorem).
+
+**02e — arkusz lotniska pokazuje AKTUALNY WYBÓR na górze** (sekcja „Wybrane": zielone
+obramowanie, zielony kod i ptaszek w kółku). Lista „Najbliżej Ciebie" nie powtarza tej
+pozycji. Przy pisaniu sekcja znika — ale trafienie w wynikach dostaje ten sam ptaszek.
+> Powód: pole wpisu startuje puste (bo wyszukiwarkę otwiera się, żeby coś ZMIENIĆ), więc
+> arkusz otwarty ponownie wyglądał identycznie jak przy pierwszym wyborze — nic nie mówiło,
+> że w polu formularza coś już jest. Pilot musiał zamknąć arkusz, żeby sprawdzić, co
+> wybrał. Znacznik jest KSZTAŁTEM, a nie samym kolorem (ptaszek w kółku, jak na liście
+> samolotów na 02): działa w słońcu, w motywach jasnych i przy daltonizmie.

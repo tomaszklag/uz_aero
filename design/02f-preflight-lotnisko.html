@@ -91,9 +91,10 @@
   .field-input-val { font-size:15px; line-height:20px; color:var(--text-primary); }
   .field-input-val.icao { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:2px; }
   .field-input-val.empty { color:var(--text-muted); }
-  .field-input-main { display:flex; align-items:center; gap:6px; min-width:0; }
-  .field-input-main.grow { flex:1; }
-  .field-input-side { display:flex; align-items:center; gap:10px; min-width:0; }
+  /* Wartość główna NIE kurczy się nigdy — kod ICAO ma być cały. Ustępuje prawa strona. */
+  .field-input-main { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .field-input-main.grow { flex:1; min-width:0; }
+  .field-input-side { display:flex; align-items:center; gap:10px; flex-shrink:1; min-width:0; }
   .field-meta { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .field-icon { display:flex; color:var(--text-muted); flex-shrink:0; }
   .optional-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
@@ -117,10 +118,16 @@
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
   .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:2px solid var(--border-strong); border-radius:14px; padding:12px 16px; }
-  .modal-input-val { font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; }
+  /* JEDEN KRÓJ I JEDEN STOPIEŃ WE WSZYSTKICH STANACH pola wyszukiwarki. Zmniejszanie
+     samego placeholdera zmieniałoby WYSOKOŚĆ kontrolki przy pierwszej i ostatniej
+     literze — czyli ten sam błąd, przez który pole wyjechało na dół arkusza. */
+  .modal-input-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:1.5px; color:var(--text-primary); flex:1; }
+  /* Pusta wyszukiwarka: zmienia się WYŁĄCZNIE kolor. */
+  .modal-input-val.placeholder { color:var(--text-muted); }
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  /* Wyszukiwarka nie ma czego potwierdzać — wybór to tapnięcie w wiersz. */
+  .modal-actions.single { grid-template-columns:1fr; }
   .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; }
-  .modal-btn-confirm { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; box-shadow:0 0 24px rgba(46,204,113,0.3); }
 
   /* ===== PODPOWIEDZI LOTNISK =====
      Lista KART, nie natywny dropdown (reguła z CLAUDE.md). Mieszka w ARKUSZU, a nie pod
@@ -130,9 +137,8 @@
      PEŁNA SZEROKOŚĆ, a nie kolumna pod polem: nazwy w rodzaju „Zielona Góra-Babimost"
      w 48% szerokości telefonu zostają uciętym „Zielona Gó…", czyli dokładnie tą częścią,
      dla której ta lista istnieje. */
-  .suggest-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .suggest-head { display:flex; align-items:center; }
   .suggest-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
-  .suggest-source { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
   .suggest-list { display:flex; flex-direction:column; gap:6px; }
   .suggest-row { display:flex; align-items:center; gap:11px; padding:9px 11px; border-radius:12px; border:1px solid var(--border); background:var(--surface-raised); cursor:pointer; }
   .suggest-row:hover { border-color:var(--green-border); }
@@ -143,7 +149,7 @@
 
   /* Kursor tekstowy — stoi w polu ARKUSZA, bo to jedyne miejsce, w którym się pisze.
      Mockup pokazuje moment szukania, nie stan spoczynku (ten jest na 02E). */
-  .caret { display:inline-block; width:2px; height:26px; background:var(--green); margin-left:3px; vertical-align:-5px; animation:blink 1.1s step-end infinite; }
+  .caret { display:inline-block; width:2px; height:18px; background:var(--green); margin-left:3px; vertical-align:-3px; animation:blink 1.1s step-end infinite; }
   @keyframes blink { 50% { opacity:0; } }
 
   .btn-primary {
@@ -359,39 +365,30 @@
         <!-- Pilot wpisał NAZWĘ MIEJSCOWOŚCI, nie kod — to jest ta możliwość, której nie
              było widać w polu formularza. Wersaliki, bo pole podnosi wpis do wersalików
              (szukanie i tak ignoruje wielkość liter oraz ogonki: „zar" znajdzie „Żar").
-             Pole puste ma placeholder `EPKK albo nazwa`. -->
-        <div class="modal-input-row">
-          <span class="modal-input-val">ZIELONA<span class="caret"></span></span>
-          <span class="field-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </span>
-        </div>
+             Pole puste ma placeholder `Kod ICAO albo nazwa…`. -->
 
-        <!-- Nazwy rozpoznanego lotniska pod polem TU NIE MA i to nie przeoczenie:
-             wpisany tekst nie jest kodem ICAO, więc nie ma czego potwierdzać. Ta linia
-             pojawia się dopiero, gdy wpis jest kompletnym kodem z katalogu (patrz 02E). -->
+        <!-- POD POLEM NIE MA JUŻ LINII Z NAZWĄ — ani tu, ani przy rozpoznanym kodzie.
+             Nazwa stoi w wierszu listy, czyli tam, gdzie pilot patrzy, wybierając;
+             ta sama nazwa dwa razy robiła stan „coś jest wybrane, a pod spodem nadal
+             wiszą podpowiedzi", w którym nie było wiadomo, co obowiązuje. -->
 
         <div class="suggest-head">
           <span class="suggest-title">Podpowiedzi</span>
-          <span class="suggest-source">katalog w telefonie</span>
         </div>
         <!-- KURS PASA JEST MAGNETYCZNY — taki stoi na tabliczce progu, taki podaje wieża
              i taki pilot odczyta z busoli (060 = próg 06). Katalog trzyma kurs
              geograficzny, bo mapa śladu obraca nim pas na siatce zorientowanej na północ
              geograficzną; przeliczenie robi się przy wyświetlaniu.
-
-             DWA TRAFIENIA, NIE TRZY: „ZIELONA" pasuje do początku wyrazu w nazwie, a takie
-             lotniska w katalogu są dokładnie dwa. Tapnięcie wiersza wybiera lotnisko od
-             razu, bez drogi przez WYBIERZ. -->
+             TAPNIĘCIE W WIERSZ JEST WYBOREM — arkusz zamyka się i wraca kod. -->
         <div class="suggest-list">
-          <div class="suggest-row">
+          <div class="suggest-row" onclick="closeSheet('sheet-airfield')">
             <span class="suggest-icao">EPZG</span>
             <span class="suggest-body">
               <span class="suggest-name">Zielona Góra-Babimost Airport</span>
               <span class="suggest-meta">pas 060° · 2500 m · 194 ft</span>
             </span>
           </div>
-          <div class="suggest-row">
+          <div class="suggest-row" onclick="closeSheet('sheet-airfield')">
             <span class="suggest-icao">EPZP</span>
             <span class="suggest-body">
               <span class="suggest-name">Zielona Góra-Przylep Airfield</span>
@@ -400,9 +397,35 @@
           </div>
         </div>
 
-        <div class="modal-actions">
+        <!-- KOD SPOZA KATALOGU wchodzi OSOBNYM wierszem pod listą, gdy wpis ma kształt
+             kodu ICAO, a katalog go nie zna (przelot do EDDB):
+
+               <div class="suggest-row">
+                 <span class="suggest-icao">EDDB</span>
+                 <span class="suggest-body">
+                   <span class="suggest-name">Użyj tego kodu — katalog zna tylko polskie lotniska</span>
+                 </span>
+               </div>
+
+             Świadome tapnięcie odróżnia „lecę do EDDB" od literówki w EPKK — dlatego
+             kod spoza katalogu nie wchodzi po cichu razem z zamknięciem arkusza. -->
+
+        <!-- POLE WPISU NA DOLE, TUŻ NAD AKCJĄ: arkusz jest przyklejony do dolnej
+             krawędzi i rośnie w GÓRĘ, więc pole na górze przeskakiwało przy każdej
+             literze zmieniającej długość listy — pisało się do celu, który ucieka
+             pod palcem (zgłoszenie z urządzenia). Tu ma stałą odległość od klawiatury,
+             a lista rośnie i kurczy się nad nim. -->
+        <div class="modal-input-row">
+          <span class="field-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <span class="modal-input-val">ZIELONA<span class="caret"></span></span>
+        </div>
+
+<!-- Sam ANULUJ: wybór dzieje się tapnięciem w wiersz listy, więc nie ma czego
+             potwierdzać — „WYBIERZ" stałby obok pozycji, którą pilot właśnie tapnął. -->
+        <div class="modal-actions single">
           <div class="modal-btn-cancel" onclick="closeSheet('sheet-airfield')">ANULUJ</div>
-          <div class="modal-btn-confirm" onclick="closeSheet('sheet-airfield')">WYBIERZ</div>
         </div>
       </div>
     </div>
@@ -416,7 +439,7 @@
     <span class="vp-badge">02E</span>
     <span class="vp-body">
       <span class="vp-name">Formularz w spoczynku · skoki (jedno lotnisko)</span>
-      <span class="vp-when">Stan spoczynku: żaden arkusz nie jest otwarty. Wszystkie pola są <b>przyciskami z wartością</b> — lupa przy trasie, ołówek przy kliencie i notatce. Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko skoków" pod nagłówkiem „Miejsce skoków" — samolot wraca tam, skąd wystartował. Przelot, egzamin, lot techniczny i inne pokazują w tym miejscu DWA pola pod sobą, tak jak tutaj. Tam też mieszkają ukryte arkusze klienta i notatki.</span>
+      <span class="vp-when">Stan spoczynku: żaden arkusz nie jest otwarty. Wszystkie pola są <b>przyciskami z wartością</b> — lupa przy trasie, ołówek przy kliencie i notatce. Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko skoków" (bez osobnego nagłówka sekcji — etykieta pola wystarcza) — samolot wraca tam, skąd wystartował. Przelot, egzamin, lot techniczny i inne pokazują w tym miejscu DWA pola pod sobą, tak jak tutaj. Tam też mieszkają ukryte arkusze klienta i notatki.</span>
     </span>
   </a>
   <a class="vp-item active" href="02f-preflight-lotnisko.html">

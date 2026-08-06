@@ -317,7 +317,9 @@ export async function testHarness(
       clock,
       phaseTimeline,
     ),
-  });
+    // Dziennik żądań na konsoli zgaszony: kilkaset linii na przebieg zakryłoby to,
+    // po co czyta się wynik testów. Sam format ma własny test jednostkowy.
+  }, { requestLog: false });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
   // wołanych POZA HTTP (przebudowa projekcji = CLI) składały je z tych samych klas.

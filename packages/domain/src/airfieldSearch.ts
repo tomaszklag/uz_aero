@@ -17,6 +17,7 @@
  */
 
 import { POLISH_AIRFIELDS, type Airfield } from './airfields';
+import { distanceNm, type LatLon } from './detection/geo';
 
 /** Ile podpowiedzi najwyżej pokazujemy — dłuższa lista przestaje być podpowiedzią. */
 export const MAX_AIRFIELD_SUGGESTIONS = 5;
@@ -46,8 +47,14 @@ const FOLDED: Readonly<Record<string, string>> = {
   Ż: 'Z',
 };
 
-/** Napis do porównań: wersaliki bez ogonków. „Żar" i „zar" mają się spotkać. */
-function fold(text: string): string {
+/**
+ * Napis do porównań: wersaliki bez ogonków. „Żar" i „zar" mają się spotkać.
+ *
+ * EKSPORTOWANE, bo tej samej reguły potrzebuje wyszukiwanie w historii oznaczeń klienta
+ * i notatek (issue #14) — a druga tablica polskich liter w drugim pliku rozjechałaby się
+ * przy pierwszej literze, o której ktoś zapomni w jednym z dwóch miejsc.
+ */
+export function foldPolish(text: string): string {
   let out = '';
   for (const char of text.toUpperCase()) out += FOLDED[char] ?? char;
   return out;
@@ -55,7 +62,7 @@ function fold(text: string): string {
 
 /** Wyrazy nazwy — po nich sprawdzamy dopasowanie „od początku słowa". */
 function wordsOf(name: string): string[] {
-  return fold(name)
+  return foldPolish(name)
     .split(/[^A-Z0-9]+/)
     .filter((w) => w.length > 0);
 }
@@ -74,7 +81,7 @@ function rank(airfield: Airfield, needle: string): number | null {
 
   const words = wordsOf(airfield.name);
   if (words.some((word) => word.startsWith(needle))) return 2;
-  if (fold(airfield.name).includes(needle)) return 3;
+  if (foldPolish(airfield.name).includes(needle)) return 3;
 
   return null;
 }
@@ -93,7 +100,7 @@ export function searchAirfields(
   const catalogue = options.catalogue ?? POLISH_AIRFIELDS;
   const limit = options.limit ?? MAX_AIRFIELD_SUGGESTIONS;
 
-  const needle = fold((query ?? '').trim());
+  const needle = foldPolish((query ?? '').trim());
   if (needle.length === 0 || limit <= 0) return [];
 
   const hits: { airfield: Airfield; rank: number }[] = [];
@@ -106,4 +113,38 @@ export function searchAirfields(
     .sort((a, b) => a.rank - b.rank || a.airfield.icao.localeCompare(b.airfield.icao))
     .slice(0, limit)
     .map((hit) => hit.airfield);
+}
+
+/** Lotnisko z odległością od pilota — wynik `nearestAirfields`. */
+export interface NearbyAirfield {
+  readonly airfield: Airfield;
+  readonly distanceNm: number;
+}
+
+/**
+ * Lotniska NAJBLIŻSZE podanej pozycji, od najbliższego (issue #14).
+ *
+ * Odpowiedź na pytanie, które pilot ma przed wpisaniem czegokolwiek: „skąd dziś lecę".
+ * Puste pole wyszukiwarki nie ma czego podpowiadać po tekście, ale ma to zrobić po
+ * POŁOŻENIU — pilot stoi zwykle na tym lotnisku, z którego zaraz wystartuje, więc
+ * pierwsza pozycja listy jest zwykle tą właściwą.
+ *
+ * Pozycja przychodzi z zewnątrz i bywa jej brak (brak fixa, odmowa uprawnienia) —
+ * wtedy wołający dostaje pustą listę i pokazuje zwykłą zachętę do wpisania kodu.
+ * Domena nie zna GPS-u i nie ma tu żadnego progu „za daleko": katalog obejmuje Polskę,
+ * a pilot startujący spod granicy ma prawo zobaczyć swoje pole, choćby było jedyne
+ * w promieniu stu mil.
+ */
+export function nearestAirfields(
+  position: LatLon | null | undefined,
+  options: AirfieldSearchOptions = {},
+): NearbyAirfield[] {
+  const catalogue = options.catalogue ?? POLISH_AIRFIELDS;
+  const limit = options.limit ?? MAX_AIRFIELD_SUGGESTIONS;
+  if (position == null || limit <= 0) return [];
+
+  return catalogue
+    .map((airfield) => ({ airfield, distanceNm: distanceNm(position, airfield) }))
+    .sort((a, b) => a.distanceNm - b.distanceNm || a.airfield.icao.localeCompare(b.airfield.icao))
+    .slice(0, limit);
 }

@@ -177,7 +177,14 @@ export function ValueBox({
         style,
       ]}
     >
-      <View style={[styles.boxSide, variant === 'text' && styles.boxSideGrow]}>
+      <View
+        style={[
+          styles.boxSide,
+          // Wartość główna NIE kurczy się nigdy: kod ICAO i godzina mają być całe.
+          // To wartość drugorzędna po prawej ustępuje miejsca (patrz `boxSideEnd`).
+          variant === 'text' ? styles.boxSideGrow : styles.boxSideFixed,
+        ]}
+      >
         <AppText
           variant={variant === 'text' ? 'body' : 'mono'}
           numberOfLines={variant === 'text' ? 2 : 1}
@@ -211,7 +218,7 @@ export function ValueBox({
         )}
       </View>
 
-      <View style={styles.boxSide}>
+      <View style={[styles.boxSide, styles.boxSideEnd]}>
         {meta != null && (
           <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.meta}>
             {meta}
@@ -285,6 +292,14 @@ const styles = StyleSheet.create({
   boxSide: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   // Wariant tekstowy zabiera resztę wiersza: zdanie ma się łamać, a nie wypychać ołówek.
   boxSideGrow: { flex: 1, minWidth: 0 },
+  boxSideFixed: { flexShrink: 0 },
+  /**
+   * Prawa strona USTĘPUJE: „Kraków John Paul II International Airport" jest dłuższe niż
+   * pół ekranu, więc bez `flexShrink` + `minWidth: 0` napis rozpychał wiersz i wychodził
+   * poza kontrolkę (zgłoszenie z urządzenia). Skrócenie z wielokropkiem działa dopiero,
+   * gdy tekst MA gdzie się skurczyć — sam `numberOfLines` nie wystarcza.
+   */
+  boxSideEnd: { flexShrink: 1, minWidth: 0, justifyContent: 'flex-end' },
   unit: { fontSize: 12, letterSpacing: 1 },
   meta: { fontSize: 11, letterSpacing: 1, flexShrink: 1 },
 });

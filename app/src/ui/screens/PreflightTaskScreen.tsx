@@ -23,7 +23,7 @@
  * dzieje się w arkuszu, tym samym ruchem, co godzina meldunku na kroku 1. Powód nie jest
  * estetyczny: pole tekstowe z czterema kratkami wyglądało jak miejsce na przepisanie kodu
  * z pamięci i „trochę nie było widać, że tam jest przeszukiwanie" (zgłoszenie z urządzenia).
- * Arkusz otwiera się z klawiaturą i listą, więc szukanie jest pierwszą rzeczą, którą widać.
+ * Arkusz otwiera się z listą podpowiedzi, więc szukanie jest pierwszą rzeczą, którą widać.
  *
  * Przy okazji zniknęły dwa napisy, które opisywały coś innego niż pytanie zadane pilotowi:
  * rząd potwierdzeń pod trasą (nazwa rozpoznanego lotniska stoi teraz W POLU) i podpowiedź
@@ -38,7 +38,7 @@
  * formularz i detekcja nie mogą się rozjechać.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
 import {
@@ -62,6 +62,7 @@ import { useEduBanner, useSessionStore } from '../store';
 import { useTaskMemory } from '../store/taskMemory';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { useTaskSuggestions } from '../hooks/useTaskSuggestions';
+import { useNearbyPosition } from '../hooks/useNearbyPosition';
 import { operationLabel } from './logic/operations';
 import { airfieldByIcao, isSameFieldOperation, OPERATION_TYPES } from '../../domain';
 import type { OperationType } from '../../domain';
@@ -129,31 +130,49 @@ export function PreflightTaskScreen({
   const [picker, setPicker] = useState<'departure' | 'arrival' | null>(null);
   const [editor, setEditor] = useState<'client' | 'notes' | null>(null);
 
+  // Pozycja do listy „najbliżej Ciebie" w wyborze lotniska. Pytamy przez cały czas
+  // na ekranie, nie dopiero przy otwarciu arkusza: zimny fix przychodzi wolniej, niż
+  // pilot zdąży tapnąć w pole. Brak pozycji nie blokuje niczego (patrz hook).
+  const position = useNearbyPosition(true);
+
   // Ostatnio używane oznaczenia i notatki — jedyna treść tego ekranu z serwera.
-  // Trzy stany (`undefined` = jeszcze pytamy) opisuje `useTaskSuggestions`; offline
-  // nie blokuje niczego, arkusz mówi tylko, że listy nie ma.
-  const remote = useTaskSuggestions();
-  const clientSuggestions = useMemo<TextSuggestion[] | null>(
+  // Żądanie leci dopiero przy OTWARCIU arkusza (patrz `openEditor` niżej i nota w hooku):
+  // klient i notatka są opcjonalne, więc pobieranie „na zapas" przy wejściu na ekran
+  // płaciło jednym żądaniem za każdy preflight, w którym pilot i tak ich nie dotknął.
+  const { suggestions: remote, reload: reloadSuggestions } = useTaskSuggestions();
+  // Trzy stany jadą do arkusza NIETKNIĘTE (`undefined` = pytamy, `null` = nie mamy,
+  // tablica = mamy, choćby pustą) — zwinięcie „pytamy" do pustej listy kazałoby arkuszowi
+  // ogłaszać „historia jest pusta", zanim odpowiedź w ogóle wróci.
+  const clientSuggestions = useMemo<TextSuggestion[] | null | undefined>(
     () =>
-      remote === undefined
-        ? []
-        : remote === null
-          ? null
-          : remote.clients.map((row) => ({
-              value: row.value,
-              // „Co to było za zlecenie" — ten sam klient bywa i skokami, i przelotem.
-              meta: row.operation == null ? null : operationLabel(row.operation),
-            })),
+      remote == null
+        ? remote
+        : remote.clients.map((row) => ({
+            value: row.value,
+            // „Co to było za zlecenie" — ten sam klient bywa i skokami, i przelotem.
+            meta: row.operation == null ? null : operationLabel(row.operation),
+          })),
     [remote],
   );
-  const noteSuggestions = useMemo<TextSuggestion[] | null>(
+  const noteSuggestions = useMemo<TextSuggestion[] | null | undefined>(
     () =>
-      remote === undefined
-        ? []
-        : remote === null
-          ? null
-          : remote.notes.map((row) => ({ value: row.value, meta: null })),
+      remote == null ? remote : remote.notes.map((row) => ({ value: row.value, meta: null })),
     [remote],
+  );
+
+  /**
+   * Otwarcie arkusza to JEDYNY moment, w którym pytamy serwer o podpowiedzi — wtedy
+   * i tylko wtedy wynik ma się gdzie pokazać. Hook pilnuje, żeby otwarcie klienta,
+   * a zaraz potem notatki, nie wysłało dwóch żądań (świeża odpowiedź żyje minutę),
+   * i żeby nieudana próba nie zablokowała kolejnej — pilot, który odzyskał zasięg,
+   * dostanie listę przy następnym otwarciu.
+   */
+  const openEditor = useCallback(
+    (which: 'client' | 'notes') => {
+      reloadSuggestions();
+      setEditor(which);
+    },
+    [reloadSuggestions],
   );
 
   if (aircraft == null) {
@@ -241,15 +260,18 @@ export function PreflightTaskScreen({
             Pola są PRZYCISKAMI, nie inputami (issue #14). Wpisywanie i szukanie dzieje
             się w arkuszu — tym samym ruchem, co godzina meldunku na kroku 1. Nazwa
             rozpoznanego lotniska stoi w samym polu, więc zniknął rząd potwierdzeń pod
-            spodem („Start: EPZG · …"), który powtarzał kod widoczny wyżej. */}
-        <Card title={shape === 'single' ? 'Miejsce skoków' : 'Trasa'} header="inline">
+            spodem („Start: EPZG · …"), który powtarzał kod widoczny wyżej.
+
+            Przy skokach karta NIE MA tytułu: jedno pole w sekcji nie potrzebuje nagłówka,
+            bo nagłówek i etykieta nazywałyby tę samą rzecz dwa razy („Miejsce skoków"
+            nad „Lotnisko skoków"). Tak samo zbudowany jest czas meldowania na kroku 1.
+            Tytuł wraca przy parze kodów, gdzie ma co spinać: „Start" i „Lądowanie". */}
+        <Card title={shape === 'pair' ? 'Trasa' : undefined} header="inline">
           <View style={{ gap: theme.spacing.sm }}>
-            <Field
-              label={shape === 'single' ? 'Lotnisko skoków' : 'Start'}
-              hint={
-                shape === 'single' ? 'Skoki startują i lądują na tym samym lotnisku' : undefined
-              }
-            >
+            {/* Bez podpowiedzi „Skoki startują i lądują na tym samym lotnisku": etykieta
+                „Lotnisko skoków" i JEDNO pole w sekcji mówią to samo kształtem formularza.
+                Zdanie tłumaczyło pilotowi jego własną robotę. */}
+            <Field label={shape === 'single' ? 'Lotnisko skoków' : 'Start'}>
               <ValueBox
                 value={draft.departureIcao}
                 placeholder="Wybierz lotnisko"
@@ -287,7 +309,7 @@ export function PreflightTaskScreen({
               placeholder="Bez oznaczenia"
               actionIcon="edit"
               accessibilityLabel={`Oznaczenie klienta ${draft.client ?? 'puste'} — zmień`}
-              onPress={() => setEditor('client')}
+              onPress={() => openEditor('client')}
             />
           </Field>
 
@@ -298,7 +320,7 @@ export function PreflightTaskScreen({
               placeholder="Bez notatki"
               actionIcon="edit"
               accessibilityLabel={`Notatka ${draft.notes ?? 'pusta'} — zmień`}
-              onPress={() => setEditor('notes')}
+              onPress={() => openEditor('notes')}
             />
           </Field>
         </Card>
@@ -315,7 +337,8 @@ export function PreflightTaskScreen({
               ? 'Lotnisko skoków'
               : 'Lotnisko startu'
         }
-        initialIcao={picker === 'arrival' ? draft.arrivalIcao : draft.departureIcao}
+        currentIcao={picker === 'arrival' ? draft.arrivalIcao : draft.departureIcao}
+        position={position}
         onConfirm={(icao) => {
           draft.set(picker === 'arrival' ? 'arrivalIcao' : 'departureIcao', icao);
           setPicker(null);
