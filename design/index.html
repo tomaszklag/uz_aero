@@ -301,7 +301,7 @@
 <div class="flow-arrow">
   <a href="00-login.html" class="flow-step">00 Login</a>
   <span class="flow-sep">→</span>
-  <a href="01-splash.html" class="flow-step">01 Splash</a>
+  <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
   <span class="flow-sep">→</span>
   <a href="02-preflight.html" class="flow-step">02 Preflight</a>
   <span class="flow-sep">→</span>
@@ -317,7 +317,7 @@
   <span class="flow-sep">⇄</span>
   <a href="05-cockpit-running.html" class="flow-step">05 Kokpit / Running</a>
   <span class="flow-sep">→</span>
-  <a href="09-end-of-day.html" class="flow-step">09 End of Day</a>
+  <a href="09-zamknij-lot.html" class="flow-step">09 Zamknij lot</a>
   <span class="flow-sep">→</span>
   <a href="10-statystyki.html" class="flow-step">10 Statystyki</a>
   <span class="flow-sep">→</span>
@@ -334,12 +334,12 @@
       <div class="card-tags"><span class="tag">PIN offline</span><span class="tag green">PIC</span></div>
     </div>
   </a>
-  <a href="01-splash.html" class="card">
+  <a href="01-moj-dzien.html" class="card">
     <div class="card-num">01</div>
     <div class="card-body">
-      <div class="card-title">01-splash</div>
-      <div class="card-desc">Ekran po odblokowaniu — logo, odświeżenie danych referencyjnych (sync z adnotacją), wejście w dzień lotny</div>
-      <div class="card-tags"><span class="tag">onboarding</span></div>
+      <div class="card-title">01-moj-dzien</div>
+      <div class="card-desc">Ekran domowy pilota — klamra służby (meldunek / koniec) wokół listy wzlotów dnia, przekrojowo po wszystkich samolotach. Loty są zapisane, klamra zadeklarowana i zawsze obejmuje loty; domyślnie bierze się z pierwszego i ostatniego wzlotu. Stąd wejście w kokpit, przejęcie samolotu i okno korekty 24 h</div>
+      <div class="card-tags"><span class="tag green">home</span><span class="tag">służba</span><span class="tag">wzloty dnia</span></div>
     </div>
   </a>
   <a href="02-preflight.html" class="card">
@@ -424,6 +424,22 @@
       <div class="card-title">00b-login-offline</div>
       <div class="card-desc">Logowanie offline bez profilu — twarda granica: komunikat z instrukcją, formularz nieaktywny, auto-ponawianie</div>
       <div class="card-tags"><span class="tag amber">offline</span><span class="tag">stan</span></div>
+    </div>
+  </a>
+  <a href="01a-moj-dzien-pusty.html" class="card">
+    <div class="card-num">01A</div>
+    <div class="card-body">
+      <div class="card-title">01a-moj-dzien-pusty</div>
+      <div class="card-desc">Mój dzień przed pierwszym wzlotem — klamra pusta („— : —", nigdy zera), pełny baner pouczający o regule klamry, cały ekran prowadzi do przejęcia samolotu. „Zamknij dzień" nie występuje: to brak akcji, nie blokada z powodem</div>
+      <div class="card-tags"><span class="tag">stan pusty</span><span class="tag">pouczenie</span></div>
+    </div>
+  </a>
+  <a href="01b-moj-dzien-zamkniety.html" class="card amber">
+    <div class="card-num">01B</div>
+    <div class="card-body">
+      <div class="card-title">01b-moj-dzien-zamkniety</div>
+      <div class="card-desc">Mój dzień po „Zamknij dzień" — obie godziny klamry pochodzą od pilota, baner odliczający 24 h okna korekty (Typ A, niezamykalny), samolot zdany. Nowy wzlot tego samego dnia otwiera dzień z powrotem i rozszerza klamrę</div>
+      <div class="card-tags"><span class="tag amber">zamknięty</span><span class="tag">okno 24 h</span></div>
     </div>
   </a>
   <a href="02d-preflight-offline.html" class="card amber">
@@ -530,12 +546,20 @@
       <div class="card-tags"><span class="tag red">no GPS</span><span class="tag">degradacja czujnika</span><span class="tag amber">fallback ręczny</span></div>
     </div>
   </a>
-  <a href="09a-end-of-day-zero.html" class="card amber">
+  <a href="09a-zamknij-lot-seria.html" class="card amber">
     <div class="card-num">09A</div>
     <div class="card-body">
-      <div class="card-title">09a-end-of-day-zero</div>
-      <div class="card-desc">Zakończenie dnia bez lotów — uczciwe zera (block 0:00, St/Ld 0/0), amber-box „żaden lot nie został zapisany"; odczyty MH/paliwa nadal wymagane (łańcuch przekazań 4.5 obowiązuje też bez lotów)</div>
-      <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">łańcuch MH</span></div>
+      <div class="card-title">09a-zamknij-lot-seria</div>
+      <div class="card-desc">Zamknięcie wzlotu w serii skokowej — siódmy pod rząd: zrzut podsumowany (zapisany w locie na 05E), liczniki zwinięte do jednego wiersza, ostrzeżenie warunkowe po pięciu pominięciach. Cały ekran zamyka się jednym kciukiem, inaczej potwierdzanie po każdym wzlocie byłoby krokiem wstecz wobec papieru</div>
+      <div class="card-tags"><span class="tag amber">seria</span><span class="tag">skoki</span><span class="tag">jeden tap</span></div>
+    </div>
+  </a>
+  <a href="09c-zdaj-bez-lotu.html" class="card amber">
+    <div class="card-num">09C</div>
+    <div class="card-body">
+      <div class="card-title">09c-zdaj-bez-lotu</div>
+      <div class="card-desc">Zdanie samolotu bez wzlotu — pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; liczniki zostają bez zmian (z furtką korekty), a jedyne pytanie to powód jako siatka kart. Zastępuje dawny „dzień bez lotów"</div>
+      <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">powód</span></div>
     </div>
   </a>
   <a href="10a-statystyki-zero.html" class="card amber">
@@ -600,14 +624,22 @@
   </a>
 </div>
 
-<div class="section-title">Zakończenie dnia</div>
+<div class="section-title">Zamknięcie wzlotu i zdanie samolotu</div>
 <div class="grid">
-  <a href="09-end-of-day.html" class="card red">
+  <a href="09-zamknij-lot.html" class="card green">
     <div class="card-num">09</div>
     <div class="card-body">
-      <div class="card-title">09-end-of-day</div>
-      <div class="card-desc">Formularz zakończenia dnia — stan paliwa końcowy, godzina zakończenia duty</div>
-      <div class="card-tags"><span class="tag red">zakończenie</span><span class="tag">formularz</span></div>
+      <div class="card-title">09-zamknij-lot</div>
+      <div class="card-desc">Potwierdzenie wzlotu po STOP ENGINE — czasy z detekcji do przejrzenia, liczniki OPCJONALNE (wymagane dopiero przy zdaniu samolotu), uwagi. Jednostką potwierdzenia jest wzlot, nie dzień; „Potwierdzę później" nigdy nie więzi pilota przy telefonie</div>
+      <div class="card-tags"><span class="tag green">wzlot</span><span class="tag">potwierdzenie</span><span class="tag">liczniki opcjonalne</span></div>
+    </div>
+  </a>
+  <a href="09b-zdaj-samolot.html" class="card red">
+    <div class="card-num">09B</div>
+    <div class="card-body">
+      <div class="card-title">09b-zdaj-samolot</div>
+      <div class="card-desc">Zdanie samolotu — jedyne miejsce w nowym flow, gdzie odczyt liczników jest WYMAGANY, bo staje się przekazaniem i ogniwem łańcucha MH. Baner statusu mówi wprost: zdajesz samolot, nie kończysz dnia — służba liczy się dalej</div>
+      <div class="card-tags"><span class="tag red">zdanie</span><span class="tag">przekazanie</span><span class="tag">łańcuch MH</span></div>
     </div>
   </a>
   <a href="10-statystyki.html" class="card">

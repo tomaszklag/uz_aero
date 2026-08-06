@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 09A Zamknij lot · seria skokowa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 4px var(--amber-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--amber); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ===== App header ===== */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px 8px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--green); }
+  .header-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .header-slot { width:52px; flex-shrink:0; }
+  .serie-badge {
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1px;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    padding:4px 8px; border-radius:999px; white-space:nowrap; width:52px; text-align:center; flex-shrink:0;
+  }
+
+  .summary-strip {
+    background:var(--surface-raised); border-bottom:1px solid var(--border);
+    padding:9px 14px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+  }
+  .summary-item { display:flex; flex-direction:column; gap:2px; align-items:center; }
+  .summary-val { font-family:var(--font-display); font-size:19px; letter-spacing:1px; color:var(--text-primary); line-height:1; }
+  .summary-val.blue { color:var(--blue); }
+  .summary-label { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .summary-sep { width:1px; height:28px; background:var(--border); }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  .form-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .form-section-title {
+    padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary);
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+  }
+  .form-section-title.blue { color:var(--blue); }
+
+  .time-row { display:flex; align-items:center; gap:10px; padding:0 6px 0 12px; border-bottom:1px solid var(--border); }
+  .time-row:last-child { border-bottom:none; }
+  .time-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); width:76px; flex-shrink:0; }
+  .time-val { font-family:var(--font-mono); font-size:17px; font-weight:700; letter-spacing:1px; color:var(--text-primary); width:64px; flex-shrink:0; }
+  .time-src { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; padding:3px 6px; border-radius:4px; white-space:nowrap; }
+  .time-src.auto { color:var(--green); background:var(--green-muted); }
+  .time-src.manual { color:var(--amber); background:var(--amber-muted); }
+  .time-spacer { flex:1; }
+  .edit-btn {
+    background:none; border:1px solid var(--border-strong); border-radius:8px;
+    color:var(--text-secondary); text-decoration:none;
+    min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .edit-btn:hover { border-color:var(--green-border); color:var(--green); }
+
+  /* Zrzut — zapisany W LOCIE (05e), tu tylko do przejrzenia */
+  .drop-body { display:flex; align-items:center; gap:10px; padding:11px 6px 11px 12px; }
+  .drop-count { font-family:var(--font-display); font-size:30px; letter-spacing:1px; color:var(--blue); line-height:1; }
+  .drop-detail { flex:1; display:flex; flex-direction:column; gap:3px; }
+  .drop-types { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:0.5px; }
+  .drop-meta { font-family:var(--font-mono); font-size:8.5px; color:var(--text-muted); letter-spacing:0.5px; }
+
+  /* Liczniki ZWINIĘTE — w serii nikt nie chodzi do licznika po każdym wzlocie */
+  .collapsed-row {
+    display:flex; align-items:center; gap:10px; width:100%;
+    padding:13px 14px; min-height:52px;
+    background:var(--surface); border:1px dashed var(--border-strong); border-radius:12px;
+    color:var(--text-secondary); text-decoration:none; cursor:pointer;
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase;
+  }
+  .collapsed-row:hover { border-color:var(--amber-border); color:var(--amber); }
+  .collapsed-note { font-family:var(--font-body); font-size:10px; letter-spacing:0; text-transform:none; color:var(--text-muted); margin-left:auto; text-align:right; }
+
+  /* Ostrzeżenie warunkowe (Typ B) — znika samo, gdy pilot zrobi odczyt. Bez „×". */
+  .warn-box {
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:12px; padding:12px 14px;
+    display:flex; align-items:flex-start; gap:10px;
+  }
+  .warn-icon { color:var(--amber); flex-shrink:0; margin-top:1px; }
+  .warn-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .warn-text b { color:var(--amber); font-weight:700; }
+
+  /* ===== Przyciski ===== */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:19px; border-radius:16px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:23px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
+  .btn-later {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:46px; padding:12px; border-radius:12px;
+    background:none; color:var(--text-muted);
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:1.5px;
+    border:1px solid var(--border); text-decoration:none; cursor:pointer;
+  }
+  .btn-later:hover { color:var(--text-secondary); border-color:var(--border-strong); }
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 09A</span>
+  <span class="slug">zamknij lot · seria skokowa</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 09</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Zamknij lot, seria skokowa">
+  <div class="status-bar">
+    <span>15:26</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <span class="header-slot"></span>
+      <div class="app-header-center">
+        <span class="screen-title">ZAMKNIJ LOT</span>
+        <span class="header-date">SP-AXA · WZLOT 7 · SKOKI · UTC</span>
+      </div>
+      <span class="serie-badge">SERIA</span>
+    </div>
+
+    <div class="summary-strip">
+      <div class="summary-item"><span class="summary-val">0:22</span><span class="summary-label">Blok</span></div>
+      <div class="summary-sep"></div>
+      <div class="summary-item"><span class="summary-val">0:14</span><span class="summary-label">Lot</span></div>
+      <div class="summary-sep"></div>
+      <div class="summary-item"><span class="summary-val blue">6</span><span class="summary-label">Skoczków</span></div>
+      <div class="summary-sep"></div>
+      <div class="summary-item"><span class="summary-val">7 / 7</span><span class="summary-label">Wzlot dnia</span></div>
+    </div>
+
+    <div class="scroll">
+
+      <div class="form-section">
+        <div class="form-section-title"><span>Czasy wzlotu · UTC</span></div>
+        <div class="time-row">
+          <span class="time-key">Off block</span>
+          <span class="time-val">13:02</span>
+          <span class="time-src auto">Auto</span>
+          <span class="time-spacer"></span>
+          <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Popraw czas off block">
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+          </a>
+        </div>
+        <div class="time-row">
+          <span class="time-key">Takeoff</span>
+          <span class="time-val">13:06</span>
+          <span class="time-src auto">Auto</span>
+          <span class="time-spacer"></span>
+          <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Popraw czas startu">
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+          </a>
+        </div>
+        <div class="time-row">
+          <span class="time-key">Landing</span>
+          <span class="time-val">13:20</span>
+          <span class="time-src auto">Auto</span>
+          <span class="time-spacer"></span>
+          <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Popraw czas lądowania">
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+          </a>
+        </div>
+        <div class="time-row">
+          <span class="time-key">On block</span>
+          <span class="time-val">13:24</span>
+          <span class="time-src manual">Ręcznie</span>
+          <span class="time-spacer"></span>
+          <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Popraw czas on block">
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Zrzut istnieje TYLKO w dniu skokowym (issue #19). Zapisany na 05e w locie —
+           tutaj jest podsumowaniem do przejrzenia, nie drugim formularzem. -->
+      <div class="form-section">
+        <div class="form-section-title blue"><span>Zrzut 7 · zapisany w locie</span></div>
+        <div class="drop-body">
+          <span class="drop-count">6</span>
+          <span class="drop-detail">
+            <span class="drop-types">4 TANDEM · 2 AFF · 0 SOLO</span>
+            <span class="drop-meta">2 700 ft · 13:14 UTC · SKY CAMP</span>
+          </span>
+          <a href="05e-zrzut.html" class="edit-btn" title="Popraw zrzut">
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Liczniki zwinięte do jednego wiersza: w serii pilot nie wysiada do licznika -->
+      <a href="09-zamknij-lot.html" class="collapsed-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Dopisz odczyt liczników
+        <span class="collapsed-note">pominięty w 5 wzlotach</span>
+      </a>
+
+      <!-- Typ B: warunkowe. Zniknie samo w chwili, gdy pilot wpisze odczyt. -->
+      <div class="warn-box">
+        <svg class="warn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="warn-text">Paliwo i motogodziny bez odczytu od <b>5 wzlotów</b>. To jest w porządku
+        w serii — ale <b>przy zdaniu SP-AXA odczyt będzie wymagany</b>, bo bez niego następny
+        pilot nie wie, z czym startuje.</span>
+      </div>
+
+      <a href="04-cockpit-ground.html" class="btn-primary">
+        ZAPISZ I LEĆ DALEJ
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </a>
+
+      <a href="04-cockpit-ground.html" class="btn-later">POTWIERDZĘ PÓŹNIEJ</a>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <a class="vp-item" href="09-zamknij-lot.html">
+    <span class="vp-badge">09</span>
+    <span class="vp-body">
+      <span class="vp-name">Zamknięcie wzlotu — standard</span>
+      <span class="vp-when">Po STOP ENGINE przy operacji innej niż skoki. Czasy z detekcji do przejrzenia, liczniki opcjonalne, uwagi opcjonalne, bez sekcji zrzutów.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="09a-zamknij-lot-seria.html">
+    <span class="vp-badge amber">09A</span>
+    <span class="vp-body">
+      <span class="vp-name">Zamknięcie wzlotu — seria skokowa</span>
+      <span class="vp-when">Siódmy wzlot pod rząd w dniu skokowym: zrzut podsumowany (zapisany w locie na 05E), liczniki zwinięte do jednego wiersza, ostrzeżenie warunkowe po pięciu pominięciach. Cały ekran ma się zamknąć jednym kciukiem — inaczej ta zmiana byłaby krokiem wstecz wobec papieru.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="09b-zdaj-samolot.html">
+    <span class="vp-badge red">09B</span>
+    <span class="vp-body">
+      <span class="vp-name">Zdanie samolotu</span>
+      <span class="vp-when">Koniec pracy z tym samolotem: TU liczniki są wymagane, bo odczyt staje się przekazaniem dla następnego pilota.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="09c-zdaj-bez-lotu.html">
+    <span class="vp-badge amber">09C</span>
+    <span class="vp-body">
+      <span class="vp-name">Zdanie bez wzlotu</span>
+      <span class="vp-when">Pilot przejął samolot i nie poleciał (pogoda, usterka). Liczniki bez zmian, więc formularz pyta tylko o powód.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="05-cockpit-running.html">← 05 Kokpit / Running</a>
+  <span>·</span>
+  <a href="09-zamknij-lot.html">09 Zamknij lot</a>
+  <a href="09a-zamknij-lot-seria.html" class="active">09A Seria</a>
+  <a href="09b-zdaj-samolot.html">09B Zdaj samolot</a>
+  <a href="09c-zdaj-bez-lotu.html">09C Bez wzlotu</a>
+  <span>·</span>
+  <a href="04-cockpit-ground.html">04 Kokpit →</a>
+</nav>
+
+</body>
+</html>
