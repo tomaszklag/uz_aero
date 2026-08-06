@@ -15,6 +15,14 @@
  *
  * Podpowiedź ustępuje pilotowi bez pytania: pierwsze dotknięcie któregokolwiek z tych
  * pól wyłącza ją do końca preflightu (`taskTouched` w szkicu).
+ *
+ * RODZAJ OPERACJI STEROWNIKUJE TRASĄ (issue #13). Skoki wracają tam, skąd wystartowały,
+ * więc pytamy o JEDNO lotnisko — do tej pory formularz kazał wpisać ten sam kod dwa razy
+ * i pozwalał opisać dzień skoków trasą „EPKK → EPWA", której nie da się polecieć.
+ * Pozostałe operacje (przelot, egzamin, lot techniczny, inne) mogą skończyć gdzie indziej
+ * i zostają przy parze kodów. O tym, która operacja jest którym kształtem, orzeka domena
+ * (`isSameFieldOperation`) — ten sam predykat uzbraja bramkę lądowania w kokpicie, więc
+ * formularz i detekcja nie mogą się rozjechać.
  */
 
 import React, { useEffect, useMemo } from 'react';
@@ -38,16 +46,16 @@ import { useSessionStore } from '../store';
 import { useTaskMemory } from '../store/taskMemory';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { airfieldRow, routeConfirmations, routeSuggestions } from './logic/routeSuggestions';
+import { operationLabel } from './logic/operations';
+import { isSameFieldOperation, OPERATION_TYPES } from '../../domain';
 import type { OperationType } from '../../domain';
 
-/** Siatka operacji — etykiety i ikony jak w `.op-grid` mockupu 02. */
-const OPERATIONS: GridOption<OperationType>[] = [
-  { value: 'skoki', label: 'Skoki', icon: 'op-skoki' },
-  { value: 'ferry', label: 'Ferry', icon: 'op-ferry' },
-  { value: 'egzamin', label: 'Egzamin', icon: 'op-egzamin' },
-  { value: 'techniczny', label: 'Lot tech.', icon: 'op-techniczny' },
-  { value: 'inne', label: 'Inne', icon: 'op-inne' },
-];
+/** Siatka operacji — ikony jak w `.op-grid` mockupu 02e, nazwy z `operationLabel`. */
+const OPERATIONS: GridOption<OperationType>[] = OPERATION_TYPES.map((value) => ({
+  value,
+  label: operationLabel(value),
+  icon: `op-${value}` as const,
+}));
 
 export function PreflightTaskScreen({
   navigation,
@@ -85,16 +93,19 @@ export function PreflightTaskScreen({
 
   const suggested = memory.ready && !draft.taskTouched && (memory.task != null || memory.route != null);
 
+  // Jedno lotnisko czy para — patrz nota na górze pliku.
+  const shape = isSameFieldOperation(draft.operation) ? 'single' : 'pair';
+
   // Katalog lotnisk jest wkompilowany w aplikację, więc podpowiedzi liczą się LOKALNIE
   // i przy każdej literze — bez sieci, bez opóźnienia, bez stanu ładowania.
   const { departureIcao, arrivalIcao } = draft;
   const suggestions = useMemo(
-    () => routeSuggestions({ departureIcao, arrivalIcao }),
-    [departureIcao, arrivalIcao],
+    () => routeSuggestions({ departureIcao, arrivalIcao }, { shape }),
+    [departureIcao, arrivalIcao, shape],
   );
   const confirmations = useMemo(
-    () => routeConfirmations({ departureIcao, arrivalIcao }),
-    [departureIcao, arrivalIcao],
+    () => routeConfirmations({ departureIcao, arrivalIcao }, { shape }),
+    [departureIcao, arrivalIcao, shape],
   );
 
   if (aircraft == null) {
@@ -168,11 +179,15 @@ export function PreflightTaskScreen({
         </Card>
 
         {/* ── trasa ───────────────────────────────────────────────────────── */}
-        <Card title="Trasa" header="inline">
+        <Card title={shape === 'single' ? 'Miejsce skoków' : 'Trasa'} header="inline">
           <View style={{ gap: theme.spacing.sm }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: theme.spacing.sm }}>
+            {shape === 'single' ? (
+              /* Jedno pole na pełną szerokość — pilot wpisuje plac, z którego dziś lata.
+                 `arrivalIcao` idzie za nim w szkicu (`withRouteShape`), więc rejestr
+                 i arkusz dostają dokładnie to, co dotąd. */
               <TextField
-                label="Start ICAO"
+                label="Lotnisko ICAO"
+                hint="Skoki startują i lądują na tym samym lotnisku"
                 mono
                 maxLength={4}
                 autoCapitalize="characters"
@@ -180,27 +195,40 @@ export function PreflightTaskScreen({
                 placeholder="EPKK"
                 value={draft.departureIcao}
                 onChangeText={(v) => draft.set('departureIcao', v.toUpperCase())}
-                style={{ flex: 1 }}
               />
-              <AppText variant="display" tone="muted" style={{ paddingBottom: 10 }}>
-                →
-              </AppText>
-              <TextField
-                label="Lądowanie ICAO"
-                mono
-                maxLength={4}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                placeholder="EPWA"
-                value={draft.arrivalIcao}
-                onChangeText={(v) => draft.set('arrivalIcao', v.toUpperCase())}
-                style={{ flex: 1 }}
-              />
-            </View>
+            ) : (
+              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: theme.spacing.sm }}>
+                <TextField
+                  label="Start ICAO"
+                  mono
+                  maxLength={4}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  placeholder="EPKK"
+                  value={draft.departureIcao}
+                  onChangeText={(v) => draft.set('departureIcao', v.toUpperCase())}
+                  style={{ flex: 1 }}
+                />
+                <AppText variant="display" tone="muted" style={{ paddingBottom: 10 }}>
+                  →
+                </AppText>
+                <TextField
+                  label="Lądowanie ICAO"
+                  mono
+                  maxLength={4}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  placeholder="EPWA"
+                  value={draft.arrivalIcao}
+                  onChangeText={(v) => draft.set('arrivalIcao', v.toUpperCase())}
+                  style={{ flex: 1 }}
+                />
+              </View>
+            )}
 
             {/* Potwierdzenie kodu, który katalog rozpoznaje — pilot widzi, że EPWA to
                 faktycznie Warszawa, ZANIM pojedzie dalej z literówką. Kod spoza katalogu
-                (ferry za granicę) po prostu milczy: to nie jest błąd. */}
+                (przelot za granicę) po prostu milczy: to nie jest błąd. */}
             {confirmations.map((row) => (
               <AppText key={row.field} variant="mono" tone="muted" style={styles.confirm}>
                 {row.text}

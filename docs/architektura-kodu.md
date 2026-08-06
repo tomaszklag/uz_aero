@@ -683,10 +683,17 @@ root i nawigację. Ekran nie wie, skąd biorą się zależności.
 
 ### `screens/logic/` — logika wyniesiona z ekranu
 
-Jedenaście czystych modułów (`statsDay`, `refuelMath`, `cockpitLog`, `historyDays`,
-`syncStatus`…) liczących to, co ekran pokazuje: statystyki dnia, arytmetykę dolewki,
-log cyklu, listę dni. **Bez importów z Reacta** — testują się w gołym Node, bez
-urządzenia i bez RNTL, i stąd bierze się większość pokrycia testowego aplikacji.
+Kilkanaście czystych modułów (`statsDay`, `refuelMath`, `cockpitLog`, `historyDays`,
+`syncStatus`, `operations`…) liczących to, co ekran pokazuje: statystyki dnia, arytmetykę
+dolewki, log cyklu, listę dni, nazwy operacji i napis trasy. **Bez importów z Reacta** —
+testują się w gołym Node, bez urządzenia i bez RNTL, i stąd bierze się większość pokrycia
+testowego aplikacji.
+
+Moduł bywa wspólny dla kilku ekranów i to jest normalne, a nie wyjątek: `operations.ts`
+(2026-08-06) powstał dlatego, że nazwę operacji pokazywały cztery ekrany na trzy sposoby —
+siatka wyboru miała własne etykiety, a kokpit, podgląd i podsumowanie wypisywały surową
+wartość przez `toUpperCase()`. Po zmianie „Ferry" → „Przelot" (issue #13) pilot wybierałby
+„Przelot", a dwa ekrany dalej czytał „FERRY".
 
 Wydzielone do podkatalogu 2026-07-31. Wcześniej leżały wymieszane z ekranami w jednym
 płaskim katalogu, więc wzorzec był niewidoczny: nie dało się zobaczyć, który ekran ma

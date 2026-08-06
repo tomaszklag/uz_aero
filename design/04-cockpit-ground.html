@@ -75,6 +75,9 @@
     display: flex; align-items: center; gap: 5px;
   }
   .icao { color: var(--text-secondary); }
+  /* `.route-arrow` została w arkuszu, bo pasek dnia z operacją INNĄ niż skoki (przelot,
+     egzamin, lot techniczny) nadal składa parę kodów ze strzałką. Ten mockup opisuje dzień
+     skoków, więc jej nie używa. */
   .route-arrow { color: var(--text-muted); }
   .settings-btn {
     width: 34px; height: 34px; border-radius: 8px;
@@ -338,12 +341,12 @@
         <div class="pilot-line">
           <span class="aircraft-code">SP-AXA</span>
         </div>
+        <!-- TRASA DNIA WEDŁUG RODZAJU OPERACJI (issue #13): przy skokach pasek pisze
+             JEDEN kod ICAO, bo samolot wraca tam, skąd wystartował — oba kody w rekordzie
+             są równe i „EPKK → EPKK" czytałoby się jak pomyłka. Strzałka i drugi kod
+             wracają na paskach dni z operacją inną niż skoki (przelot, egzamin, techniczny). -->
         <div class="route-line">
           <span class="icao">EPKK</span>
-          <span class="route-arrow">
-            <svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 8h18M14 3l6 5-6 5"/></svg>
-          </span>
-          <span class="icao">EPWA</span>
           <span style="color:var(--text-muted)">·</span>
           <span style="font-size:10px;color:var(--text-muted)">SKOKI</span>
         </div>

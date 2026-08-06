@@ -11,7 +11,7 @@
  * rozpoznany zamyka listę i zamienia się w potwierdzenie z nazwą — pilot widzi, że EPWA
  * to faktycznie Warszawa, zanim pojedzie dalej z literówką.
  *
- * Kod SPOZA katalogu (ferry do EDDB) nie daje ani listy, ani potwierdzenia — i tak ma
+ * Kod SPOZA katalogu (przelot do EDDB) nie daje ani listy, ani potwierdzenia — i tak ma
  * być. Katalog obejmuje wyłącznie Polskę, więc jego milczenie nie jest błędem pilota
  * i nie wolno go zamieniać w ostrzeżenie.
  */
@@ -22,6 +22,13 @@ import type { AirfieldRow } from '../../components/input/AirfieldSuggestions';
 export type { AirfieldRow };
 
 export type RouteField = 'departure' | 'arrival';
+
+/**
+ * Ile lotnisk opisuje ten dzień: `pair` (start → lądowanie) albo `single` (skoki —
+ * ten sam plac, issue #13). O tym, która operacja jest którym kształtem, rozstrzyga
+ * domena (`isSameFieldOperation`) — tu przyjmujemy już gotową odpowiedź.
+ */
+export type RouteShape = 'pair' | 'single';
 
 export interface RouteDraft {
   readonly departureIcao: string;
@@ -48,10 +55,23 @@ interface FieldSpec {
 }
 
 /** Kolejność ma znaczenie: pilot wypełnia trasę od startu. */
-const FIELDS: readonly FieldSpec[] = [
+const PAIR_FIELDS: readonly FieldSpec[] = [
   { field: 'departure', label: 'Start ICAO', short: 'Start' },
   { field: 'arrival', label: 'Lądowanie ICAO', short: 'Lądowanie' },
 ];
+
+/**
+ * Skoki: jedno pole i inna nazwa. „Start ICAO" przy operacji, która wraca tam, skąd
+ * wystartowała, sugerowałoby, że gdzieś jeszcze jest lądowanie — a lądowanie jest tu
+ * tym samym miejscem. Pole `arrival` w szkicu nadal istnieje i ma tę samą wartość
+ * (`withRouteShape`), ale pilotowi go nie pokazujemy.
+ */
+const SINGLE_FIELDS: readonly FieldSpec[] = [
+  { field: 'departure', label: 'Lotnisko ICAO', short: 'Lotnisko' },
+];
+
+const fieldsOf = (shape: RouteShape): readonly FieldSpec[] =>
+  shape === 'single' ? SINGLE_FIELDS : PAIR_FIELDS;
 
 const valueOf = (route: RouteDraft, field: RouteField): string =>
   (field === 'departure' ? route.departureIcao : route.arrivalIcao).trim();
@@ -59,6 +79,8 @@ const valueOf = (route: RouteDraft, field: RouteField): string =>
 export interface RouteSuggestionsOptions {
   catalogue?: readonly Airfield[];
   limit?: number;
+  /** Kształt trasy; domyślnie `pair` — tak wygląda większość operacji. */
+  shape?: RouteShape;
 }
 
 /**
@@ -79,7 +101,7 @@ export function routeSuggestions(
 ): RouteSuggestions | null {
   const catalogue = options.catalogue ?? POLISH_AIRFIELDS;
 
-  for (const spec of FIELDS) {
+  for (const spec of fieldsOf(options.shape ?? 'pair')) {
     const value = valueOf(route, spec.field);
     if (value.length === 0) continue;
     // Kod rozpoznany = pytanie zamknięte; lista ustępuje miejsca potwierdzeniu.
@@ -124,12 +146,12 @@ export function airfieldRow(airfield: Airfield): AirfieldRow {
 /** Wiersze potwierdzeń dla kodów, które katalog rozpoznaje. */
 export function routeConfirmations(
   route: RouteDraft,
-  options: Pick<RouteSuggestionsOptions, 'catalogue'> = {},
+  options: Pick<RouteSuggestionsOptions, 'catalogue' | 'shape'> = {},
 ): RouteConfirmation[] {
   const catalogue = options.catalogue ?? POLISH_AIRFIELDS;
 
   const rows: RouteConfirmation[] = [];
-  for (const spec of FIELDS) {
+  for (const spec of fieldsOf(options.shape ?? 'pair')) {
     const airfield = exactMatch(valueOf(route, spec.field), catalogue);
     if (airfield == null) continue;
     rows.push({ field: spec.field, text: `${spec.short}: ${airfield.icao} · ${airfield.name}` });

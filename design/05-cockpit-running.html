@@ -327,7 +327,11 @@
       <div class="compact-info">
         <span class="compact-aircraft">SP-AXA</span>
         <span class="compact-sep">·</span>
-        <span>EPKK → EPWA</span>
+        <!-- Dzień skoków: JEDEN kod ICAO, nie para (issue #13). Samolot wraca tam, skąd
+             wystartował, więc oba kody w rekordzie są równe — para start → lądowanie
+             opisywałaby trasę, której w tym dniu nie da się polecieć. Para zostaje na
+             paskach dni z operacją inną niż skoki. -->
+        <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">
         <div class="offline-badge" title="Brak sieci — zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">

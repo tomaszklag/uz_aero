@@ -124,7 +124,13 @@ Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do
 - samolot z listy kart zarejestrowanych jednostek (rejestracja + typ + rok); stany karty:
   wolny / **aktywny PIC** ("PIC: KRZ · od 07:10") / wyłączony ze służby (disabled)
 - wybór zajętego samolotu → modal przejęcia (sekcja 4.4)
-- rodzaj operacji jako siatka kart z ikonami: Skoki / Ferry / Egzamin / Lot techniczny / Inne
+- rodzaj operacji jako siatka kart z ikonami: Skoki / Przelot / Egzamin / Lot techniczny / Inne
+  (napisy dla pilota; wartości w rejestrze bez zmian — `skoki`, `ferry`, `egzamin`,
+  `techniczny`, `inne`, bo to identyfikatory, nie etykiety)
+- **rodzaj operacji wyznacza kształt trasy** (decyzja 2026-08-06, issue #13): skoki startują
+  i lądują na tym samym lotnisku, więc formularz pyta o JEDNO pole ICAO (rekord i tak trzyma
+  oba kody równe); pozostałe operacje opisuje para start → lądowanie. Ten sam predykat
+  (`isSameFieldOperation`) uzbraja bramkę lądowania w detekcji (sekcja 3.3)
 - trasa (ICAO start / lądowanie), czas meldowania (UTC primary, LT secondary, edytowalny)
 - **Dual** — opcjonalny wybór z listy pilotów; gdy samolot ma flagę załogi dwuosobowej
   (np. An-2), pole staje się wymagane i blokuje przejście dalej

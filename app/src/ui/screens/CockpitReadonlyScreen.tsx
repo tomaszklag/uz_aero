@@ -60,6 +60,7 @@ import {
   takeoverWarning,
   type PeekSnapshot,
 } from './logic/cockpitPeek';
+import { operationTag, routeLabel } from './logic/operations';
 // Ten sam „HH:MM" z wiodącym zerem, co w tabelach ekranu 10 (`.duty-val` w mockupie
 // pokazuje „02:31") — drugi format tej samej wielkości byłby rozjazdem, nie niuansem.
 import { hhmm } from './logic/statsDay';
@@ -228,8 +229,12 @@ export function CockpitReadonlyScreen({
   ];
 
   const subtitle = [
-    [projection?.departureIcao, projection?.arrivalIcao].filter(Boolean).join(' → '),
-    projection?.operation?.toUpperCase(),
+    routeLabel(
+      projection?.operation ?? null,
+      projection?.departureIcao ?? null,
+      projection?.arrivalIcao ?? null,
+    ),
+    projection?.operation == null ? null : operationTag(projection.operation),
   ]
     .filter(Boolean)
     .join(' · ');

@@ -8,7 +8,7 @@
  * **wywala kompilację tego pliku**, bo `Record` wymaga kompletu kluczy. Lista przepisana
  * ręcznie jako tablica rozjechałaby się po cichu i filtr zgubiłby jedną operację.
  *
- * Kolejność kluczy jest kolejnością chipów w `A02-dni.html` (Skoki · Egzamin · Ferry ·
+ * Kolejność kluczy jest kolejnością chipów w `A02-dni.html` (Skoki · Egzamin · Przelot ·
  * Techniczny · Inne) i stąd bierze ją `OPERATION_ORDER` — nie z domeny, bo tam
  * porządek katalogu odpowiada na inne pytanie niż porządek pasków filtrów.
  */
@@ -34,7 +34,11 @@ export interface OperationMeta {
 export const OPERATION_META: Record<OperationType, OperationMeta> = {
   skoki: { label: 'Skoki', badge: 'SKOKI', tone: 'blue' },
   egzamin: { label: 'Egzamin', badge: 'EGZAMIN', tone: 'dim' },
-  ferry: { label: 'Ferry', badge: 'FERRY', tone: 'dim' },
+  // Klucz `ferry` zostaje — to identyfikator z rejestru i z kolumny `sessions.operation`.
+  // Napis jest polski, bo pilot wybiera „Przelot" (issue #13), a administrator ogląda
+  // te same dni: dwie nazwy tej samej operacji w jednym produkcie to zaproszenie do
+  // pytania „czym się różni ferry od przelotu".
+  ferry: { label: 'Przelot', badge: 'PRZELOT', tone: 'dim' },
   techniczny: { label: 'Techniczny', badge: 'TECHNICZNY', tone: 'dim' },
   inne: { label: 'Inne', badge: 'INNE', tone: 'dim' },
 };

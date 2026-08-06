@@ -1005,3 +1005,69 @@ przeniosła je do 02E.
 > jego następnej iteracji. Wciągnięcie tego do poprawek z issue #12 zmieszałoby dwie sprawy
 > w jednym przeglądzie: uwagi właściciela produktu do kroku 1 i zaległą synchronizację
 > wariantu z decyzją sprzed tygodnia.
+
+---
+
+## 2026-08-06 — Zadanie dnia wg rodzaju operacji (issue #13)
+
+Rodzaj operacji przestaje być samą etykietą do statystyk: przesądza, ILE LOTNISK opisuje dzień.
+Zmiana dotyka kroku 2 preflightu (`02e` i jego wariant `02f`), zaległej kopii sekcji na `02d`,
+podsumowania `03`, pasków dnia w całej rodzinie kokpitu oraz nazewnictwa operacji w panelu.
+
+**Wszystkie powierzchnie** — operacja `Ferry` nazywa się teraz **`Przelot`** (w wersalikach
+`FERRY` → `PRZELOT`): siatka wyboru na `02d` / `02e` / `02f`, plakietka i chip filtra w panelu
+(`admin/A02-dni`, `admin/A10-statystyki`), opisy kart w `index.html`.
+> Powód: „ferry" to żargon przepisany wprost z angielskiego grafiku, a aplikacja mówi do pilota
+> po polsku — ta sama zasada, która wcześniej wyrzuciła z mockupów `JUNE` na rzecz `CZERWCA`.
+> **Wartość w rejestrze została `ferry`** i taka zostaje: to IDENTYFIKATOR — siedzi w zdarzeniach,
+> w kolumnie `sessions.operation`, w ograniczeniu bazy i w parametrze `?operation=` panelu. Napis
+> dla człowieka jest osobną warstwą, więc zmiana nazwy nie jest powodem do migracji historii
+> klubu: żaden zapisany dzień nie musi być ruszony, zmienia się tylko to, co pilot czyta.
+
+**02e-preflight-zadanie** — przy skokach sekcja `Trasa` nazywa się `Miejsce skoków` i ma JEDNO
+pole na pełną szerokość (`Lotnisko ICAO`, wartość `EPKK`) z podpowiedzią pod spodem: „Skoki
+startują i lądują na tym samym lotnisku". Para pól ze strzałką (`Start ICAO` → `Lądowanie ICAO`)
+zostaje dla przelotu, egzaminu, lotu technicznego i „innych".
+> Powód: **rodzaj operacji wyznacza kształt trasy.** Skoki wracają tam, skąd wystartowały —
+> samolot krąży nad polem i ląduje na tym samym placu. Formularz kazał więc pilotowi wpisać ten
+> sam kod dwa razy, a przy okazji pozwalał opisać dzień skoków dwoma różnymi lotniskami, czyli
+> trasą, której w takim dniu nie da się polecieć. **Tę samą regułę czyta już detekcja lotu:**
+> bramka lądowania (`sameFieldOnly`) jest uzbrojona dokładnie dla skoków, żeby fix z drugiego
+> końca Polski nie zamknął lotu. Reguła mieszka w domenie w jednym egzemplarzu i pyta o nią
+> zarówno formularz (ile pól pokazać), jak i kokpit (czy uzbroić bramkę) — nie mają jak się
+> rozjechać. W rekordzie oba kody zostają równe, więc projekcje, arkusz i panel nie muszą znać
+> wyjątku.
+
+**02f-preflight-lotnisko** — zaznaczoną operacją jest teraz `Przelot`, nie `Skoki`; nagłówek
+sekcji zostaje `Trasa`, a lista podpowiedzi nadal wisi pod polem „Start ICAO".
+> Powód: ten wariant istnieje po to, żeby pokazać listę podpowiedzi z katalogu, a lista należy
+> do PIERWSZEGO pola z niedokończonym kodem — musi więc istnieć wiersz z dwoma polami. Przy
+> skokach pole jest jedno i nazywa się `Lotnisko ICAO`, czyli wariant z parą wymaga operacji,
+> która parę ma. Panele „Warianty tego ekranu" na `02e` i `02f` mówią teraz wprost, KIEDY ekran
+> pokazuje jedno pole, a kiedy dwa.
+
+**03-preflight-confirm** — trasa na karcie podsumowania: `EPKK → EPWA` → `EPKK`.
+> Powód: karta niosła tag operacji `SKOKI` i obok trasę między dwoma różnymi lotniskami — dwa
+> napisy, które nie mogły być naraz prawdziwe. Przy skokach oba kody w rekordzie są równe, więc
+> podsumowanie pokazuje jedno lotnisko: „EPKK → EPKK" wyglądałoby jak pomyłka pilota na ekranie,
+> którego jedynym zadaniem jest potwierdzić, że wszystko się zgadza.
+
+**Rodzina kokpitu (`04`, `04a`, `05`, `05-themes`, `05a`, `05b`, `05c`, `05d`, `05g`)** — pasek
+dnia lotnego zwinięty z `EPKK → EPWA` do `EPKK · SKOKI` (strzałka i drugi kod usunięte).
+> Powód: scenariusz kanoniczny tych mockupów to dzień SKOKÓW (6 lotów, zrzuty, klient SKY CAMP),
+> więc pasek opisywał trasę sprzeczną z operacją, którą sam wypisywał obok. `04b`, `04c`, `05e`
+> i `05f` miały jeden kod już wcześniej — teraz cała rodzina mówi to samo. **Para kodów zostaje
+> wyłącznie tam, gdzie ekran opisuje operację INNĄ niż skoki** (`admin/A02-dni`: wiersz
+> `PRZELOT · EPWA → EPMO`).
+
+**02d-preflight-offline** — sekcja trasy zwinięta do jednego pola dokładnie tak jak na `02e`.
+> Powód: to wciąż ten sam dług, co opisany w poprzedniej sekcji (krok 1 przeniósł się na `02E`,
+> a wariant offline czeka na całościową modernizację) i ta zmiana go nie spłaca — poprawia
+> wyłącznie kształt trasy. Zostawienie pary kodów pod zaznaczonymi skokami oznaczałoby, że spec
+> pokazuje dzień, którego nie da się polecieć, w dwóch miejscach zamiast w żadnym.
+
+**PLAN.md** — wiersz „Dzień scenariusza": `EPKK → EPWA · operacja: Skoki` → `EPKK · operacja:
+Skoki`.
+> Powód: to tabela „Scenariusz danych (spójność między ekranami!)", czyli źródło, z którego
+> mockupy biorą wartości. Gdyby zostało w niej stare, sprzeczne z operacją założenie, następny
+> rysowany ekran odtworzyłby błąd — i wróciłby ten sam przegląd.

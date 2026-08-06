@@ -72,6 +72,8 @@ import {
   staleCellNote,
   unknownPhaseDetail,
 } from './logic/gpsLoss';
+import { operationTag, routeLabel } from './logic/operations';
+import { isSameFieldOperation } from '../../domain';
 import type { Event, FlightPhase } from '../../domain';
 
 /** Sekundowy tick — tylko gdy jest co odliczać. */
@@ -165,8 +167,9 @@ export function CockpitScreen({
       enabled: engineOn,
       fieldElevationFt,
       // Skoki latają z i na to samo lotnisko — geofence odcina „lądowanie" daleko od
-      // pola (artefakt GPS). Ferry/przelot/egzamin lądują gdzie chcą — bez bramki.
-      sameFieldOnly: projection.operation === 'skoki',
+      // pola (artefakt GPS). Przelot i egzamin lądują gdzie chcą — bez bramki.
+      // Ten sam predykat rozstrzyga, czy preflight pyta o jedno lotnisko, czy o parę.
+      sameFieldOnly: projection.operation != null && isSameFieldOperation(projection.operation),
     });
   // Nagrywanie czujników pokładowych do śladu kalibracyjnego — ten hook NIC nie decyduje
   // i celowo stoi obok detekcji, a nie w niej (patrz nagłówek `useSensorTrace`).
@@ -506,8 +509,8 @@ export function CockpitScreen({
       <AppBar
         aircraft={projection.aircraftId}
         subtitle={[
-          [projection.departureIcao, projection.arrivalIcao].filter(Boolean).join(' → '),
-          projection.operation?.toUpperCase(),
+          routeLabel(projection.operation, projection.departureIcao, projection.arrivalIcao),
+          projection.operation == null ? null : operationTag(projection.operation),
         ]
           .filter(Boolean)
           .join(' · ')}

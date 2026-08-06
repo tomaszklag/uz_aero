@@ -9,7 +9,7 @@
  * wypełnia się tylko wtedy, gdy coś się faktycznie zmieniło.
  *
  * Dlaczego trasa per SAMOLOT, a operacja i klient per PILOT: trasa jest własnością
- * maszyny w danym miejscu (An-2 lata ze swojego lotniska, ferry ma swoją parę ICAO),
+ * maszyny w danym miejscu (An-2 lata ze swojego lotniska, przelot ma swoją parę ICAO),
  * a rodzaj operacji i zleceniodawca chodzą za człowiekiem, także gdy przesiądzie się
  * na inny samolot.
  *

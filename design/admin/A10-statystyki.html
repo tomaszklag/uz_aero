@@ -832,7 +832,9 @@
                   <td><span style="display:flex;align-items:center;gap:9px;"><span style="flex:1;height:9px;border-radius:99px;background:var(--surface-raised);overflow:hidden;"><span style="display:block;height:100%;width:13.3%;background:var(--text-muted);"></span></span><span class="mono" style="font-size:10.5px;width:42px;text-align:right;">13.3 %</span></span></td>
                 </tr>
                 <tr class="clickable">
-                  <td><span class="pill dim">FERRY</span><span class="cell-sub">EPWA · EPMO · EPBC</span></td>
+                  <!-- Napis „PRZELOT" (issue #13) — zmienia się etykieta, nie wartość `ferry`
+                       w kolumnie `sessions.operation`, po której liczy się ten wiersz. -->
+                  <td><span class="pill dim">PRZELOT</span><span class="cell-sub">EPWA · EPMO · EPBC</span></td>
                   <td class="num">6</td>
                   <td class="num cell-strong">21:14</td>
                   <td class="num">19:48</td>
@@ -880,7 +882,7 @@
                A10 (`server/test/adminStats.test.ts`). -->
           <div class="banner status" style="margin-top:12px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span><b>Sprostowanie z 2026-08-03 — kolumna <code>operation</code> ISTNIEJE od migracji 11.</b> Poprzednia adnotacja „DO DOROBIENIA: migracja projekcji <code>sessions</code>" była nieaktualna: kolumny <code>operation</code> i <code>client</code> weszły do projekcji razem z przekrojem A02, a wiersze sprzed migracji wypełnia przebudowa projekcji z ekranu <a href="A11-konserwacja.html" style="color:var(--green);">A11</a>. Ujęcie „per operacja" liczy się wprost z kolumn projekcji — bez przeglądu strumienia zdarzeń i bez ograniczania zakresu dat. Podpisy wierszy tej tabeli (lotniska przy FERRY, nazwy egzaminów) to dane przykładowe: projekcja niesie rejestracje jednostek i liczbę klientów operacji, nie lotniska.</span>
+            <span><b>Sprostowanie z 2026-08-03 — kolumna <code>operation</code> ISTNIEJE od migracji 11.</b> Poprzednia adnotacja „DO DOROBIENIA: migracja projekcji <code>sessions</code>" była nieaktualna: kolumny <code>operation</code> i <code>client</code> weszły do projekcji razem z przekrojem A02, a wiersze sprzed migracji wypełnia przebudowa projekcji z ekranu <a href="A11-konserwacja.html" style="color:var(--green);">A11</a>. Ujęcie „per operacja" liczy się wprost z kolumn projekcji — bez przeglądu strumienia zdarzeń i bez ograniczania zakresu dat. Podpisy wierszy tej tabeli (lotniska przy PRZELOCIE, nazwy egzaminów) to dane przykładowe: projekcja niesie rejestracje jednostek i liczbę klientów operacji, nie lotniska.</span>
           </div>
         </div>
 

@@ -32,7 +32,7 @@ describe('TaskMemoryStore', () => {
     expect(await store.readTask('AKO')).toEqual({ operation: 'ferry', client: null });
   });
 
-  it('trasa żyje per samolot — An-2 ze swojego lotniska, ferry ze swoją parą ICAO', async () => {
+  it('trasa żyje per samolot — An-2 ze swojego lotniska, przelot ze swoją parą ICAO', async () => {
     const store = new TaskMemoryStore(new MemoryKv());
     await store.writeRoute('SP-ANK', { departureIcao: 'EPKK', arrivalIcao: 'EPKK' });
     await store.writeRoute('SP-AXA', { departureIcao: 'EPKK', arrivalIcao: 'EPWA' });

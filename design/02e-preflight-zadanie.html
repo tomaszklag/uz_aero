@@ -96,9 +96,8 @@
   .op-option.selected .op-icon, .op-option.selected .op-label { color:var(--green); }
   .op-label { font-size:12px; color:var(--text-secondary); }
 
-  .route-row { display:flex; align-items:flex-end; gap:8px; }
-  .route-row .field { flex:1; }
-  .route-arrow { font-size:18px; color:var(--text-muted); padding-bottom:12px; }
+  /* Bez `.route-row` / `.route-arrow` — na tym ekranie wybrane są skoki, więc trasa to
+     JEDNO pole na pełną szerokość. Parę pól ze strzałką pokazuje wariant 02F. */
 
   /* Podpowiedź z ostatniego dnia — adnotacja informacyjna (blue), nie ostrzeżenie */
   .hint-box { display:flex; align-items:flex-start; gap:8px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:10px; padding:9px 11px; }
@@ -191,7 +190,7 @@
             <div class="op-icon">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
             </div>
-            <div class="op-label">Ferry</div>
+            <div class="op-label">Przelot</div>
           </div>
           <div class="op-option">
             <div class="op-icon">
@@ -214,23 +213,25 @@
         </div>
       </div>
 
-      <!-- SEKCJA: TRASA -->
+      <!-- SEKCJA: MIEJSCE SKOKÓW — RODZAJ OPERACJI WYZNACZA KSZTAŁT TRASY (issue #13).
+           Skoki wracają tam, skąd wystartowały: samolot krąży nad polem i ląduje na tym
+           samym placu. Dlatego przy skokach pytamy o JEDNO lotnisko, a nagłówek sekcji
+           brzmi „Miejsce skoków", nie „Trasa". Do tej pory formularz kazał wpisać ten sam
+           kod dwa razy — i, co gorsza, pozwalał opisać dzień skoków parą różnych lotnisk,
+           czyli trasą, której w takim dniu nie da się polecieć.
+           Pozostałe operacje (przelot, egzamin, lot techniczny, inne) mogą skończyć gdzie
+           indziej i zostają przy PARZE kodów start → lądowanie — patrz wariant 02F.
+           Tę samą regułę czyta detekcja lotu: bramka lądowania (`sameFieldOnly`) jest
+           uzbrojona dokładnie dla skoków, żeby fix z drugiego końca Polski nie zamknął
+           lotu. Formularz i detekcja pytają o to samo, więc nie mają jak się rozjechać. -->
       <div class="section">
-        <div class="section-label">Trasa</div>
-        <div class="route-row">
-          <div class="field">
-            <div class="field-label">Start ICAO</div>
-            <div class="field-input">
-              <span class="field-input-val" style="font-family:var(--font-mono); font-size:18px; letter-spacing:3px; font-weight:700;">EPKK</span>
-            </div>
+        <div class="section-label">Miejsce skoków</div>
+        <div class="field">
+          <div class="field-label">Lotnisko ICAO</div>
+          <div class="field-input">
+            <span class="field-input-val" style="font-family:var(--font-mono); font-size:18px; letter-spacing:3px; font-weight:700;">EPKK</span>
           </div>
-          <div class="route-arrow">→</div>
-          <div class="field">
-            <div class="field-label">Lądowanie ICAO</div>
-            <div class="field-input">
-              <span class="field-input-val" style="font-family:var(--font-mono); font-size:18px; letter-spacing:3px; font-weight:700;">EPWA</span>
-            </div>
-          </div>
+          <div class="field-hint" style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px;">Skoki startują i lądują na tym samym lotnisku</div>
         </div>
       </div>
 
@@ -264,16 +265,16 @@
   <a class="vp-item active" href="02e-preflight-zadanie.html">
     <span class="vp-badge">02E</span>
     <span class="vp-body">
-      <span class="vp-name">Formularz wypełniony</span>
-      <span class="vp-when">Stan spoczynku: oba kody ICAO kompletne, nic nie jest w trakcie pisania. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
+      <span class="vp-name">Formularz wypełniony · skoki (jedno lotnisko)</span>
+      <span class="vp-when">Stan spoczynku: kod ICAO kompletny, nic nie jest w trakcie pisania. Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko ICAO" pod nagłówkiem „Miejsce skoków" — samolot wraca tam, skąd wystartował. Przelot, egzamin, lot techniczny i inne pokazują w tym miejscu PARĘ pól (start → lądowanie), tak jak na 02F. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="02f-preflight-lotnisko.html">
     <span class="vp-badge">02F</span>
     <span class="vp-body">
-      <span class="vp-name">Wybór lotniska — podpowiedzi</span>
-      <span class="vp-when">Pilot pisze w polu ICAO i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). Lista znika, gdy kod jest kompletny i rozpoznany; kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
+      <span class="vp-name">Wybór lotniska — podpowiedzi · przelot (para kodów)</span>
+      <span class="vp-when">Pilot pisze w polu ICAO i katalog pokazuje pasujące lotniska (kod, nazwa, kurs pasa magnetyczny i elewacja). Wybrany jest <b>przelot</b>, więc trasa ma parę pól start → lądowanie, a lista należy do pierwszego pola z niedokończonym kodem. Lista znika, gdy kod jest kompletny i rozpoznany; kod spoza katalogu wpisuje się normalnie — to podpowiedź, nie bramka. Działa bez sieci: katalog jest w telefonie.</span>
     </span>
   </a>
 </aside>

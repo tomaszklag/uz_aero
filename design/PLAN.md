@@ -28,7 +28,7 @@
 
 | Element | Wartość |
 |---------|---------|
-| Dzień scenariusza | 22 JUNE 2026 · EPKK → EPWA · operacja: Skoki |
+| Dzień scenariusza | 22 JUNE 2026 · EPKK · operacja: Skoki (skoki startują i lądują na tym samym lotnisku — jeden kod ICAO, nie para; issue #13) |
 | PIC zalogowany | Tomasz Małkiewicz · TMK · login `tmalkiewicz` · tomasz@uzaero.pl |
 | Dual | AKO |
 | Samolot sesji | SP-AXA · Cessna 182 · 2019 · zbiorniki 330 L · MH w formacie **hh:mm** (1 234:30) |

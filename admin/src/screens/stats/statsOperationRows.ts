@@ -35,7 +35,8 @@ export interface OperationRowView {
 /** Etykiety plakietek — wersaliki jak w mockupie; `null` = dni bez preflightu. */
 const OPERATION_LABELS: Record<OperationType, string> = {
   skoki: 'SKOKI',
-  ferry: 'FERRY',
+  // Wartość w rejestrze to nadal `ferry`; napis jest polski jak wszędzie indziej (issue #13).
+  ferry: 'PRZELOT',
   egzamin: 'EGZAMIN',
   techniczny: 'TECHNICZNY',
   inne: 'INNE',
