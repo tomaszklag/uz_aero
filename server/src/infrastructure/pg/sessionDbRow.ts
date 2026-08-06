@@ -25,6 +25,7 @@ export interface SessionDbRow {
   close_time: string | null;
   operation: string | null;
   client: string | null;
+  notes: string | null;
   mh_start: number | null;
   mh_end: number | null;
   fuel_start_l: number | null;
@@ -62,6 +63,7 @@ export const sessionColumns = (alias: string): string =>
     'close_time',
     'operation',
     'client',
+    'notes',
     'mh_start',
     'mh_end',
     'fuel_start_l',
@@ -108,6 +110,7 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     closeTime: r.close_time != null ? Number(r.close_time) : null,
     operation: r.operation,
     client: r.client,
+    notes: r.notes,
     mhStart: r.mh_start,
     mhEnd: r.mh_end,
     fuelStartL: r.fuel_start_l,

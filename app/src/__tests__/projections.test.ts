@@ -253,6 +253,27 @@ describe('projectSession — kanoniczny dzień 22 JUNE (zgodność z design-note
   });
 });
 
+describe('projectSession — notatka dnia (issue #14)', () => {
+  it('notatka z preflightu wchodzi do projekcji', () => {
+    const state = projectSession([
+      ev('preflight_confirm', '08:00', {
+        operation: 'skoki',
+        dutyStart: at('08:00'),
+        reading: { fuelL: 150, mh: 1234.5 },
+        notes: 'Lot z uczniem\nDrugi zbiornik nie działa',
+      }),
+    ]);
+
+    expect(state.notes).toBe('Lot z uczniem\nDrugi zbiornik nie działa');
+  });
+
+  it('dzień bez notatki ma `null`, a nie pusty napis — stare telefony jej nie wysyłają', () => {
+    // Zdarzenie sprzed issue #14 nie ma pola `notes`; projekcja musi to znieść bez zmiany
+    // znaczenia („nie napisano" to nie to samo co „napisano pustkę").
+    expect(projectSession(canonicalDay()).notes).toBeNull();
+  });
+});
+
 describe('projectSession — odporność', () => {
   it('kolejność wejścia nie zmienia wyniku (porządkowanie po czasie)', () => {
     const ordered = canonicalDay();

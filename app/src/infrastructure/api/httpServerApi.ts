@@ -15,6 +15,7 @@ import type {
   PushResult,
   ReferenceFetch,
   RemoteAircraftState,
+  RemoteTaskSuggestions,
   RemoteThemePrefs,
   ServerPort,
   SessionSyncStatus,
@@ -70,6 +71,10 @@ export class HttpServerApi implements ServerPort {
 
   pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }> {
     return this.request('POST', '/traces', { token, body: { entries } });
+  }
+
+  getTaskSuggestions(token: string): Promise<RemoteTaskSuggestions> {
+    return this.request('GET', '/me/task-suggestions', { token });
   }
 
   getPrefs(token: string): Promise<RemoteThemePrefs> {

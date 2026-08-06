@@ -695,6 +695,13 @@ siatka wyboru miała własne etykiety, a kokpit, podgląd i podsumowanie wypisyw
 wartość przez `toUpperCase()`. Po zmianie „Ferry" → „Przelot" (issue #13) pilot wybierałby
 „Przelot", a dwa ekrany dalej czytał „FERRY".
 
+Moduł potrafi też ZNIKNĄĆ, gdy ekran przestaje go potrzebować, i tak ma być: `routeSuggestions.ts`
+liczył, pod którym z dwóch pól trasy powiesić listę podpowiedzi i co potwierdzić pod spodem.
+Po issue #14 pola trasy są przyciskami otwierającymi arkusz (`AirfieldSheet`), który sam pyta
+katalog — więc moduł został usunięty razem z testami opisującymi układ, którego już nie ma.
+Zostało z niego `airfieldRow`, przeniesione do `components/input/` (kształt wiersza należy do
+komponentu, który go rysuje), z własnym testem kursu magnetycznego.
+
 Wydzielone do podkatalogu 2026-07-31. Wcześniej leżały wymieszane z ekranami w jednym
 płaskim katalogu, więc wzorzec był niewidoczny: nie dało się zobaczyć, który ekran ma
 wyniesioną logikę, a `statsDay.ts` (używany przez `StatsScreen` ORAZ `CockpitReadonlyScreen`)
@@ -750,7 +757,9 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `Numpad` | klawiatura PIN 3×4, klawisze 58 px; slot biometrii celowo pusty | `.numpad` (00) |
 | `ProfileChip` | karta lokalnego profilu na zamku (awatar, nazwisko, kod) | `.profile-chip` (00) |
 | `Field`, `TextField` | oprawa pola: etykieta mono, tag, podpowiedź; fokus zielony | `.field` / `.field-input` |
-| `AirfieldSuggestions` | podpowiedzi lotnisk pod wierszem trasy: kod, nazwa, pas i elewacja; lista kart w przepływie treści, nie nakładka | `.suggest-list` (02f) |
+| `AirfieldSuggestions` | podpowiedzi lotnisk (kod, nazwa, pas i elewacja); lista kart w przepływie treści, nie nakładka — od issue #14 mieszka w arkuszu | `.suggest-list` (02f) |
+| `AirfieldSheet` | arkusz wyboru lotniska: wpis kodu ALBO nazwy + żywa lista z katalogu w telefonie | `#sheet-airfield` (02e/02f) |
+| `TextEntrySheet` | arkusz wpisu tekstu z listą ostatnio używanych (klient, notatka dnia); lista **tylko online** | `#sheet-client` (02e) |
 | `ValueBox` | pole **odczytu**: duża wartość + jednostka, kontekst i ołówek po prawej | `.field-input.filled` |
 | `Readout` | sekcja odczytu z licznika: wartość, świeżość, pasek, korekta, historia | `.section` w 02a |
 | `FreshnessNote` | adnotacja §4.8: `live` (cisza) / `cache` (data) / `brak` / `manual` | `.fresh-note` |
@@ -893,12 +902,17 @@ buildu) — sięgamy po niego dopiero, gdy własna droga okaże się niewystarcz
   i `maskTimeUtcInput` składa cztery cyfry w „HH:MM" (klawiatura numeryczna nie ma
   dwukropka, a pełna zajmuje pół ekranu i podstawia podpowiedzi słownikowe). Licznik MH
   w formacie `hh:mm` zostaje na `text`, bo liczba cyfr godzin jest dowolna.
-- **Fokus (i klawiaturę) odpala `Modal.onShow`, nie sam timer.** Arkusz ma się otwierać
-  RAZEM z klawiaturą — bez dodatkowego tapnięcia w pole (zgłoszenie z urządzenia,
-  issue #12). Zwłoka 150 ms po `visible` bywała za krótka: `focus()` trafiał w okno
-  w połowie animacji wejścia i klawiatura nie wstawała. `Sheet` przekazuje więc
-  `onShow` z `Modal` (fires po pokazaniu okna), a `ReadingSheet` woła stamtąd `focus()`;
-  timer został jako zapas, bo drugi `focus()` na zogniskowanym polu nic nie robi.
+- **Klawiatura przy otwarciu arkusza: samo `autoFocus` i nic więcej — SPRAWA OTWARTA.**
+  Arkusz powinien otwierać się gotowy do pisania (zgłoszenia z urządzenia, issue #12
+  i #14: „miała się otwierać klawiatura, ale się nie otwiera"), ale na Androidzie
+  `TextInput` w `Modal` po prostu jej nie podnosi. Sprawdzone i **nieskuteczne**:
+  `focus()` po zwłoce 150 ms, `focus()` z `Modal.onShow`, ponawiany `focus()`
+  (0/60/180/350/600/900 ms) z przerwaniem na `isFocused()`, zdjęcie
+  `statusBarTranslucent` z okna modalnego. Każda z tych prób dokładała maszynerii, żadna
+  nie podniosła klawiatury — więc w kodzie został jeden `autoFocus` i tyle, a rzetelne
+  rozwiązanie (najpewniej rezygnacja z `Modal` na rzecz nakładki wewnątrz ekranu, dla
+  WSZYSTKICH arkuszy naraz) czeka na własne zadanie. Nie dokładaj kolejnej łatki
+  celującej w timing: problem nie jest w momencie wywołania.
 - **Nigdy `selectTextOnFocus` na polu sterowanym.** Na Androidzie to `selectAllOnFocus`,
   które odnawia zaznaczenie przy KAŻDYM programowym ustawieniu tekstu — a wartość idzie
   przez JS i wraca, więc pierwsza wpisana cyfra znów była zaznaczona i druga ją wymazywała.
@@ -1480,6 +1494,25 @@ npx expo start        # aplikacja (Expo Go / emulator)
 npx jest              # testy — wszystkie w Node, bez urządzenia (liczba: §8)
 npx tsc --noEmit      # kontrola typów (strict)
 ```
+
+### Dziennik żądań serwera
+
+Serwer wypisuje na konsolę JEDNĄ linię na zakończone żądanie (`http/requestLog.ts`):
+
+```
+08:14:32  POST  /events                             200    38 ms  1.3 kB
+08:14:33  GET   /me/task-suggestions                200     4 ms
+08:14:41  GET   /admin/api/dni                      401     1 ms
+```
+
+Czas w UTC — inaczej dziennik nie dałby się zestawić z czasami zdarzeń, które w nim widać.
+**Bez nagłówków, ciasteczek, treści i query stringu**: linia loga bywa kopiowana do
+zgłoszenia, a `authorization` albo `?token=…` skopiowany razem z nią jest tokenem oddanym.
+
+Jedna linia po ODPOWIEDZI, a nie dwie (żądanie + odpowiedź) jak w `logger: true` Fastify'ego:
+przy jednym serwerze klubu JSON Pino jest formatem dla agregatora, którego tu nie ma, a puls
+telefonu co 60 s zamieniłby okno w szum. Testy integracyjne gaszą dziennik
+(`buildServer(deps, { requestLog: false })`), sam format ma test jednostkowy.
 
 ---
 

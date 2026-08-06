@@ -113,6 +113,8 @@ export interface SessionState {
   departureIcao: string | null;
   arrivalIcao: string | null;
   client: string | null;
+  /** Notatka pilota do dnia (issue #14) — wolny tekst z preflightu. */
+  notes: string | null;
   mhFormat: MhFormat | null;
 
   dutyStart: EpochMillis | null;
@@ -179,6 +181,7 @@ export function emptySessionState(): SessionState {
     departureIcao: null,
     arrivalIcao: null,
     client: null,
+    notes: null,
     mhFormat: null,
     dutyStart: null,
     dutyEnd: null,
@@ -259,6 +262,7 @@ export function projectSession(events: Event[]): SessionState {
         state.departureIcao = p.departureIcao ?? null;
         state.arrivalIcao = p.arrivalIcao ?? null;
         state.client = p.client ?? null;
+        state.notes = p.notes ?? null;
         state.mhFormat = p.mhFormat ?? null;
         state.dutyStart = p.dutyStart;
         state.fuel.startL = p.reading.fuelL;

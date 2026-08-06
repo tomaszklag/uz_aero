@@ -125,6 +125,7 @@ export function PreflightConfirmScreen({
         dutyStart: draft.dutyStart,
         reading: { fuelL: draft.fuelL, mh: draft.mh },
         client: draft.client,
+        notes: draft.notes,
         mhFormat,
       });
 
@@ -174,6 +175,14 @@ export function PreflightConfirmScreen({
     { key: 'Motogodziny', value: motoHours(draft.mh, mhFormat), note: 'MH' },
     { key: 'Klient', value: draft.client ?? '—', text: true },
   ];
+
+  // Notatka wchodzi do podsumowania TYLKO wtedy, gdy jest (issue #14): pusty wiersz
+  // „Notatka —" zabierałby pół kolumny na informację, że pilot nic nie napisał.
+  // Na całą szerokość, bo to zdanie, a nie wartość — w połowie siatki łamałoby się
+  // po dwóch słowach.
+  if (draft.notes != null) {
+    entries.push({ key: 'Notatka', value: draft.notes, text: true, wide: true });
+  }
 
   return (
     <Screen

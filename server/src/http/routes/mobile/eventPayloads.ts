@@ -47,6 +47,12 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     reading,
     corrections: z.array(z.record(z.unknown())).optional(),
     client: z.string().max(200).nullable().optional(),
+    // Notatka do dnia (issue #14) — wolny tekst, wielolinijkowy. Limit 2000 znaków,
+    // bo to NOTATKA, a nie załącznik: mieści akapit o okolicznościach dnia i nie
+    // zamienia rejestru zdarzeń w magazyn dokumentów. Pole jest OPCJONALNE i to jest
+    // zgodność wsteczna, nie luźność — telefony sprzed tej zmiany go nie wysyłają
+    // i ich paczki mają nadal przechodzić.
+    notes: z.string().max(2000).nullable().optional(),
     mhFormat: z.enum(['decimal', 'hhmm']).optional(),
   }),
 

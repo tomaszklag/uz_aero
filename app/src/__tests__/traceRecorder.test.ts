@@ -53,6 +53,9 @@ class TraceServer implements ServerPort {
   getSyncStatus = async () => {
     throw new Error('nieużywane');
   };
+  getTaskSuggestions = async () => {
+    throw new Error('nieużywane');
+  };
   getPrefs = async () => {
     throw new Error('nieużywane');
   };
