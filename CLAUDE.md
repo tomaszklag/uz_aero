@@ -27,11 +27,20 @@ być kontenerem na loty (patrz sekcja „Czas służby" niżej). Rozjazd design�
 i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN pod stare mockupy
 — zostały usunięte.**
 - **Etap A ✅** — `design/` i dokumentacja przebudowane i zacommitowane.
-- **Etap B 🔶 w toku** (`packages/domain`). **B1 ZROBIONE**: `leg_close`,
-  `CURRENT_SCHEMA_VERSION` = 2, `dutyStart`/`dutyEnd` opcjonalne, `closedLegCount`
-  w projekcji, trzy reguły `LEG_*`. **B2 przed nami**: `Leg[]` z odczytami per wzlot,
-  projekcja służby `duty.ts` (per pilot per doba UTC, POZA `SessionState`), przewiązanie
-  okna korekty na `leg_close`. B4: `consumption/intervals.ts` uczy się `leg_close`.
+- **Etap B 🔶 w toku** (`packages/domain`).
+  - **B1 ✅** `leg_close`, `CURRENT_SCHEMA_VERSION` = 2, `dutyStart`/`dutyEnd` opcjonalne,
+    trzy reguły `LEG_*`.
+  - **B2a ✅** `EngineRun` → **`Leg`** (`engineRuns` → `legs`): wzlot to cykl silnika
+    RAZEM z potwierdzeniem (`confirmed`, `confirmedAt`, `reading`, `notes`). Nie ma
+    osobnej tablicy obok — to ten sam byt.
+  - **B2b ✅** `projections/duty.ts` — `projectDuty(sessions, pilotId, day)` jako CZYSTA
+    funkcja POZA `SessionState`. Klamra = **unia** deklaracji i wzlotów (tu mieszka
+    reguła „służba ⊇ suma wzlotów"); `declaredStart/End` obok, żeby UI umiało napisać
+    „poprawione"; `declarationNarrowsStart/End` na ostrzeżenie. Przynależność wzlotu
+    do doby wyznacza czas URUCHOMIENIA silnika, nie zamknięcia.
+  - **B3 przed nami**: przewiązanie okna korekty z `day_close` na `leg_close`
+    (`checkAppend`, `CORRECTION_EVENT_TYPES`, `WriteAuthority`, bramka `day_open`).
+  - **B4**: `consumption/intervals.ts` uczy się `leg_close` (ryzyko z §3.6b).
 - **Etap C** `app/` (ekrany 1:1 z nowych mockupów), **etap D** serwer + panel.
 
 **Twardy warunek każdego commitu etapu B:** strumień `schema_version 1` musi projektować się
