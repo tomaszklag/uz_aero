@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 20;
+export const SCHEMA_VERSION = 21;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -727,6 +727,50 @@ export const MIGRATION_20 = `
   ALTER TABLE sessions ADD COLUMN IF NOT EXISTS notes TEXT;
 `;
 
+/**
+ * Migracja 21: `sessions.claim_time` zaczyna nieść CZAS PRZEJĘCIA (decyzja 2026-08-07).
+ *
+ * ══ CO SIĘ ZMIENIA ══
+ * Kolumna od migracji 2 nazywała się `claim_time`, a niosła `SessionState.dutyStart`,
+ * czyli godzinę MELDUNKU z `preflight_confirm`. Rozjazd nazwy z zawartością był opisany
+ * i świadomy — do chwili, w której meldunek stał się opcjonalny (§3.6a). Od tego momentu
+ * kolumna byłaby `NULL` w ZWYKŁYM przypadku, a nie w brzegowym, co wywraca wszystko,
+ * co się o nią opiera: sortowanie listy dni, kursor keyset, indeks `idx_sessions_day`,
+ * filtr zakresu dat i rozpoznanie sesji „bez daty".
+ *
+ * Nowa zawartość: czas zdarzenia `session_claim`, czyli `COALESCE(gps_time, device_time)`
+ * — dokładnie to, co domena liczy jako `SessionState.claimedAt` (`eventTime`).
+ *
+ * ══ DLACZEGO NIE NOWA KOLUMNA ══
+ * Bo stara wartość NIE MA następcy po tej stronie. Klamra służby przestała być
+ * właściwością sesji: należy do PILOTA, obejmuje kilka maszyn i liczy się projekcją
+ * `projectDuty` per pilot per doba UTC. Kolumna `duty_start` w tabeli `sessions` byłaby
+ * miejscem na wielkość, która do sesji nie należy — a deklaracja pilota i tak zostaje
+ * w rejestrze zdarzeń, skąd bierze ją ta projekcja.
+ *
+ * ══ BACKFILL I PRZEBUDOWA ══
+ * Backfill przepisuje wartość z rejestru, więc jest bezpieczny i idempotentny: dla
+ * każdej sesji bierze czas jej `session_claim`. Sesje bez tego zdarzenia (niemożliwe
+ * wg §4.4, ale rejestr bywa niekompletny po imporcie) zostają nietknięte.
+ *
+ * **`rebuild-projections` po tej migracji ZOBACZY RÓŻNICĘ i jest to OCZEKIWANE** — to
+ * jedyny znany wyjątek od reguły „niezerowy dry-run = incydent" (`A11`). Backfill robi
+ * to samo, co zrobiłaby przebudowa; jest tutaj, żeby panel nie pokazywał przez chwilę
+ * meldunków w kolumnie opisanej jako przejęcie.
+ */
+export const MIGRATION_21 = `
+  UPDATE sessions s
+     SET claim_time = e.at
+    FROM (
+      SELECT session_uuid, MIN(COALESCE(gps_time, device_time)) AS at
+        FROM events
+       WHERE type = 'session_claim'
+       GROUP BY session_uuid
+    ) e
+   WHERE e.session_uuid = s.session_uuid
+     AND (s.claim_time IS DISTINCT FROM e.at);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -748,6 +792,7 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_18,
   MIGRATION_19,
   MIGRATION_20,
+  MIGRATION_21,
 ];
 
 /**
@@ -783,4 +828,5 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Kolumny statystyk w projekcji: starty/lądowania, bilanse dnia i zrzuty',
   'Norma zużycia per samolot: aircraft_consumption (materializacja modelu)',
   'Notatka pilota do dnia w projekcji: sessions.notes',
+  'sessions.claim_time niesie czas przejęcia (session_claim), nie meldunek',
 ];

@@ -9,26 +9,25 @@
  * czyli przekazanie (§4.5). `fuelLastL`/`mhLast` żyją też w trakcie dnia — z nich
  * `GET /aircraft/:id/state` podpowiada stan bieżący (np. po tankowaniu).
  *
- * ── `claim_time` niesie DUTY START, nie czas zdarzenia `session_claim` ───────────
- * Kolumna nazywa się `claim_time` (migracja 2), a od pierwszej wersji zapisujemy do
- * niej `SessionState.dutyStart`, czyli czas MELDUNKU wpisany w `preflight_confirm`.
- * Konsekwencje, które trzeba znać, zanim ktoś zaufa nazwie:
+ * ── `claim_time` niesie CZAS PRZEJĘCIA (decyzja 2026-08-07, migracja 21) ─────────
+ * Kolumna nazywa się `claim_time` (migracja 2) i od migracji 21 wreszcie znaczy to,
+ * co mówi jej nazwa: czas zdarzenia `session_claim` (`SessionState.claimedAt`).
  *
- *  • sesja z samym `session_claim` (pilot wziął samolot, nie dokończył preflightu)
- *    ma `claim_time = NULL`, choć claim NASTĄPIŁ — dlatego kolumna jest NULL-owalna,
- *    a kursor listy dni ma predykat trójgałęziowy;
- *  • meldunek bywa WCZEŚNIEJSZY niż przejęcie samolotu, więc to nie jest ta sama
- *    chwila pod dwiema nazwami;
- *  • `GET /aircraft/:id/state` wystawia tę wartość jako `claimSince` i telefon
- *    pokazuje ją jako „od kiedy zajęty" (`aircraftStateView.ts`).
+ * Do 2026-08-07 zapisywaliśmy tu `dutyStart`, czyli godzinę MELDUNKU z preflightu.
+ * Rozjazd nazwy z zawartością był świadomy i opisany — do chwili, w której meldunek
+ * stał się opcjonalny (§3.6a). Wtedy przestał być niuansem: kolumna byłaby `NULL`
+ * w ZWYKŁYM przypadku, a opiera się na niej sortowanie listy dni, kursor keyset,
+ * indeks `idx_sessions_day`, filtr zakresu dat i rozpoznanie sesji „bez daty".
  *
- * Panel administracyjny (`A01-pulpit.html`) pokazuje „claim 07:58 · duty 6:24", czyli
- * STEMPEL i UPŁYW służby — a upływ liczy się właśnie od duty startu, więc jedna
- * wartość obsługuje oba pola. Osobnej kolumny `duty_start` NIE dokładamy (migracja 11):
- * byłaby dokładnym duplikatem tej samej liczby. Gdyby panel kiedyś potrzebował czasu
- * zdarzenia `session_claim` jako osobnej wielkości, właściwym ruchem jest NOWA kolumna
- * na tę nową wartość i przemianowanie istniejącej na `duty_start` — nie ciche
- * przestawienie zawartości tej, którą czyta już telefon.
+ * Co z tego wynika dzisiaj:
+ *
+ *  • sesja ma `claim_time` od PIERWSZEGO zdarzenia — również ta, w której pilot wziął
+ *    samolot i nie dokończył preflightu (wcześniej takie sesje były bez daty);
+ *  • `GET /aircraft/:id/state` wystawia tę wartość jako `claimSince`, a telefon pokazuje
+ *    „od kiedy zajęty" — i teraz jest to prawda dosłowna, nie przybliżenie;
+ *  • klamry służby w `sessions` NIE MA i nie ma jej tu być: należy do PILOTA, obejmuje
+ *    kilka maszyn i liczy ją `projectDuty` per pilot per doba UTC (§3.6a). Deklaracja
+ *    pilota zostaje w rejestrze zdarzeń, skąd bierze ją ta projekcja.
  */
 
 import { projectSession, type Event } from '@uzaero/domain';
@@ -43,7 +42,7 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     picId: s.sessionPicId ?? stream[0]!.picId,
     dualId: s.dualId,
     status: s.closed ? 'closed' : 'active',
-    claimTime: s.dutyStart,
+    claimTime: s.claimedAt,
     closeTime: s.closedAt,
     // Wymiary listy dni (migracja 11). Przepisujemy WARTOŚĆ POLICZONĄ przez projekcję
     // — razem z jej regułą „klient dziedziczony przez `drop`, gdy preflight go nie

@@ -44,12 +44,11 @@ export interface AdminSessionListItem {
   client: string | null;
 
   /**
-   * Początek służby (meldunek z `preflight_confirm`) — kolumna „Dzień · UTC" listy.
-   * `null` = sesja bez preflightu; taki dzień NIE MA daty i wypada z filtra zakresu.
-   * Nazwa pola idzie za zawartością, a nie za nazwą kolumny (`sessions.claim_time`,
-   * uzasadnienie w `application/sessionRow.ts`).
+   * Chwila PRZEJĘCIA samolotu (`session_claim`) — kolumna „Dzień · UTC" listy.
+   * Każda sesja ją ma (§4.4), więc od migracji 21 żaden dzień nie wypada już z filtra
+   * zakresu z powodu braku daty. `null` znaczy rejestr niekompletny, nie „bez preflightu".
    */
-  dutyStart: number | null;
+  claimedAt: number | null;
   closeTime: number | null;
 
   blockMs: number;

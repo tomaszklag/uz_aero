@@ -99,9 +99,36 @@ function closeDay(o: DayOptions & { mh?: number }) {
   ];
 }
 
-/** Sesja BEZ `preflight_confirm` — karty nie da się nawet nazwać (stan `impossible`). */
+/** Sesja BEZ `preflight_confirm` — pilot wziął samolot i nie dokończył przejęcia. */
 function claimOnly(o: DayOptions) {
   return [event('session_claim', at(8, 0, o.dayOffset ?? 0), { mode: 'free' }, o)];
+}
+
+/**
+ * Strumień BEZ `session_claim` — jedyna droga do stanu `impossible` po migracji 21.
+ *
+ * Wg §4.4 claim jest pierwszym zdarzeniem każdej sesji, więc taki strumień nie powstaje
+ * w normalnej pracy. Serwer go jednak PRZYJMIE (§4.5: nie odrzuca danych z terenu), a
+ * monitor eksportu musi umieć powiedzieć, że takiej karty nie da się nazwać — zamiast
+ * pokazać ją jako brakującą, czyli możliwą do dorobienia.
+ */
+function withoutClaim(o: DayOptions) {
+  const d = o.dayOffset ?? 0;
+  return [
+    event(
+      'preflight_confirm',
+      at(8, 0, d),
+      {
+        operation: 'skoki',
+        departureIcao: 'EPKK',
+        arrivalIcao: null,
+        reading: o.reading ?? { fuelL: 150, mh: 1234.5 },
+        client: null,
+        mhFormat: 'hhmm',
+      },
+      o,
+    ),
+  ];
 }
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
@@ -317,14 +344,21 @@ describe('monitor eksportu — lista (A05)', () => {
       revision: null,
       exportedAt: null,
     });
-    // Sesja bez duty startu nie ma nazwy — i to jest inna odpowiedź niż „brak karty".
-    expect(by('bare-1')).toMatchObject({ state: 'impossible', tab: null, day: null });
+    // Sesja z SAMYM claimem, bez preflightu, ma dziś nazwę karty — bo nazwę wyznacza
+    // chwila przejęcia, a nie meldunek (migracja 21). To dzień, który po prostu jeszcze
+    // trwa. Stan `impossible` został wyłącznie dla rejestru niekompletnego (brak
+    // `session_claim`), czyli dla czegoś, czego trasą `POST /events` nie da się zapisać.
+    expect(by('bare-1')).toMatchObject({
+      state: 'waiting',
+      tab: '2026-06-24_SP-ANK',
+      day: '2026-06-24',
+    });
 
     expect(body.counts).toMatchObject({
       total: 3,
       current: 1,
-      waiting: 1,
-      impossible: 1,
+      waiting: 2,
+      impossible: 0,
       missing: 0,
       blocked: 0,
       revised: 0,
@@ -520,11 +554,11 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
     await post(app, tmk, openDay({ sessionUuid: 's-miss', picId: 'TMK', dayOffset: 1 }));
     await post(app, tmk, closeDay({ sessionUuid: 's-miss', picId: 'TMK', dayOffset: 1 }));
     sheets.failing = false;
-    // `impossible`
+    // `impossible` — strumień bez claimu, czyli rejestr niekompletny (patrz `withoutClaim`).
     await post(
       app,
       krz,
-      claimOnly({ sessionUuid: 's-bare', picId: 'KRZ', aircraftId: 'SP-ANK', dayOffset: 2 }),
+      withoutClaim({ sessionUuid: 's-bare', picId: 'KRZ', aircraftId: 'SP-ANK', dayOffset: 2 }),
     );
     // `waiting` + `blocked` (nakładka na SP-FGK: pierwsza sesja zostaje otwarta)
     await post(
@@ -1022,7 +1056,7 @@ describe('pierwszeństwo stanów karty', () => {
     picCode: 'TMK',
     picName: 'Tomasz Małkiewicz',
     status: 'closed',
-    dutyStart: DAY,
+    claimedAt: DAY,
     updatedAt: new Date(DAY),
     blockingFlagIds: [],
     revision: null,
@@ -1032,9 +1066,10 @@ describe('pierwszeństwo stanów karty', () => {
     ...patch,
   });
 
-  it('brak duty startu wygrywa ze wszystkim — karty nie da się NAZWAĆ', () => {
-    // „Brakuje karty" sugerowałoby, że da się ją dorobić; tu nie ma jak.
-    expect(exportState(join({ dutyStart: null, blockingFlagIds: [7], status: 'active' }))).toBe(
+  it('brak chwili przejęcia wygrywa ze wszystkim — karty nie da się NAZWAĆ', () => {
+    // „Brakuje karty" sugerowałoby, że da się ją dorobić; tu nie ma jak. Od migracji 21
+    // to stan wyłącznie awaryjny: `session_claim` ma KAŻDA sesja (§4.4).
+    expect(exportState(join({ claimedAt: null, blockingFlagIds: [7], status: 'active' }))).toBe(
       'impossible',
     );
   });

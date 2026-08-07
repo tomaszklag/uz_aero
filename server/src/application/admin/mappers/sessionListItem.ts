@@ -37,10 +37,9 @@ export function sessionListItem(join: AdminSessionJoin): AdminSessionListItem {
     operation: row.operation,
     client: row.client,
 
-    // Nazwa pola DTO idzie za zawartością, nie za nazwą kolumny: `sessions.claim_time`
-    // niesie duty start z `preflight_confirm` (uzasadnienie: `application/sessionRow.ts`).
-    // Panel ma nazywać rzeczy tym, czym są — inaczej powiela nieporozumienie dalej.
-    dutyStart: row.claimTime,
+    // Od migracji 21 nazwa kolumny i nazwa pola DTO wreszcie znaczą to samo: chwilę
+    // przejęcia samolotu (`session_claim`).
+    claimedAt: row.claimTime,
     closeTime: row.closeTime,
 
     blockMs: row.blockMs,

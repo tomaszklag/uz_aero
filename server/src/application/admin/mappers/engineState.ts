@@ -42,7 +42,7 @@ export function engineState(
     openTakeoffAt: state.openTakeoffAt,
     engineStoppedAt: stopped?.stoppedAt ?? null,
     lastEventAt: state.lastEventAt,
-    dutyStart: state.dutyStart,
+    claimedAt: state.claimedAt,
     departureIcao: state.departureIcao,
     dualId: state.dualId,
     dualName,

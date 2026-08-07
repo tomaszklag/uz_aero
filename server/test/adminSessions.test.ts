@@ -199,7 +199,8 @@ describe('lista dni (A02)', () => {
       status: 'closed',
       operation: 'egzamin',
       client: null,
-      dutyStart: at(8, 0, 1),
+      // Kolumna „Dzień · UTC" idzie od PRZEJĘCIA samolotu (7:50), nie od meldunku (8:00).
+      claimedAt: at(7, 50, 1),
       closeTime: at(16, 45, 1),
       flightsCount: 1,
       mhStart: 900,

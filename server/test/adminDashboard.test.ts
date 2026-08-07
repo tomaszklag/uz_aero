@@ -251,7 +251,9 @@ describe('pulpit — stan silnika', () => {
       inFlight: true,
       flightsCount: 1,
       openTakeoffAt: dayStart + 8 * HOUR_MS + 25 * 60_000,
-      dutyStart: dayStart + 8 * HOUR_MS,
+      // Wiersz floty mówi, od kiedy MASZYNA jest zajęta — czyli od claimu (7:50),
+      // a nie od meldunku pilota (8:00). Po §3.6a to dwie różne wielkości.
+      claimedAt: dayStart + 7 * HOUR_MS + 50 * 60_000,
       departureIcao: 'EPKK',
     });
     // Silnik nigdy nie stanął w tej sesji — `null`, a nie czas ostatniego zdarzenia.

@@ -199,10 +199,9 @@ const toJoin = (r: ExportJoinDbRow): AdminExportJoin => ({
   // Kolumna jest wolnym tekstem z `DEFAULT 'active'`; monitor rozróżnia wyłącznie
   // „zamknięty czy nie", bo tylko to jest bramką eksportera.
   status: r.status === 'closed' ? 'closed' : 'active',
-  // `claim_time` NIESIE `SessionState.dutyStart` — tak mapuje je `sessionRowFrom` od
-  // pierwszej wersji projekcji (rozbieżność NAZWY z zawartością jest osobną sprawą,
-  // opisaną w `application/common/mappers/sessionRow.ts`).
-  dutyStart: r.claim_time == null ? null : Number(r.claim_time),
+  // `claim_time` niesie chwilę przejęcia samolotu (migracja 21) — dobę karty liczymy
+  // z niej, bo karta jest DOBĄ SAMOLOTU (§4.7), a nie służbą pilota.
+  claimedAt: r.claim_time == null ? null : Number(r.claim_time),
   updatedAt: new Date(r.updated_at),
   blockingFlagIds: r.blocking_flag_ids.map(Number),
   revision: r.revision,

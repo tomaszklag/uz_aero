@@ -6,15 +6,13 @@
  * listach panelu: agreguj wartości projekcji, nigdy nie odtwarzaj projekcji SQL-em.
  *
  * ══ SKĄD BIERZE SIĘ „NAJNOWSZE" ══
- * `sessions` nie ma kolumny `duty_start`: znacznik dnia niesie `claim_time` (migracja 2,
- * uzasadnienie w `application/common/mappers/sessionRow.ts`) i jest NULL-owalny — sesja
- * bez `preflight_confirm` nie ma meldunku. Taki dzień nie może przez to wypaść
- * z porządku, więc `COALESCE` schodzi na `updated_at`, czyli stempel odświeżenia
- * projekcji — najbliższą prawdzie chwilę przyjęcia danych, jaką ma sam wiersz.
+ * Znacznik dnia niesie `claim_time`, czyli chwilę PRZEJĘCIA samolotu (migracja 21).
+ * Po tej migracji ma go każda sesja, bo `session_claim` jest pierwszym zdarzeniem
+ * każdej z nich (§4.4) — `COALESCE` na `updated_at` zostaje jako zabezpieczenie dla
+ * rejestru niekompletnego (import, awaria), a nie jako gałąź obsługująca normalny dzień,
+ * którym była do 2026-08-07 (kolumna niosła wtedy opcjonalny meldunek).
  * Sięgnięcie po `events.received_at` dałoby to samo dokładniej i kosztem złączenia
- * z rejestrem przy każdym otwarciu preflightu — cena nieproporcjonalna do różnicy,
- * która dotyczy wyłącznie dni bez preflightu (a te nie mają ani klienta, ani notatki,
- * więc do wyniku i tak nie wchodzą).
+ * z rejestrem przy każdym otwarciu preflightu — cena nieproporcjonalna do różnicy.
  *
  * ══ DLACZEGO `DISTINCT ON` DLA KLIENTÓW, A `MAX` DLA NOTATEK ══
  * Obie listy są deduplikacją po wartości z porządkiem „najnowsze pierwsze", ale klient
@@ -34,7 +32,7 @@ import type {
 } from '../../../application/mobile/ports.ts';
 
 /**
- * Znacznik dnia sesji: meldunek, a gdy go nie ma — stempel projekcji. Wyrażenie stoi
+ * Znacznik dnia sesji: przejęcie, a gdy go nie ma — stempel projekcji. Wyrażenie stoi
  * w stałej, bo powtarza się w `SELECT` i w `ORDER BY` (PostgreSQL nie pozwala użyć
  * aliasu w `ORDER BY` gałęzi `DISTINCT ON`), a dwie ręcznie zsynchronizowane kopie
  * porządku to dokładnie ten rodzaj rozjazdu, którego nie widać w wyniku.

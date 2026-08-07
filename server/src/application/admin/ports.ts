@@ -381,8 +381,8 @@ export interface AdminExportJoin {
   picCode: string | null;
   picName: string | null;
   status: 'active' | 'closed';
-  /** Duty start (epoch ms UTC); `null` = sesja bez `preflight_confirm`. */
-  dutyStart: number | null;
+  /** Chwila przejęcia samolotu (epoch ms UTC); `null` = strumień bez `session_claim`. */
+  claimedAt: number | null;
   /** Ostatnia przyjęta paczka tej sesji — oś porównania „karta starsza niż dane". */
   updatedAt: Date;
   /**

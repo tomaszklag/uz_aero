@@ -278,9 +278,9 @@ export interface SessionRow {
   dualId: string | null;
   status: 'active' | 'closed';
   /**
-   * `SessionState.dutyStart` — czas MELDUNKU z `preflight_confirm`, mimo nazwy kolumny
-   * (`claim_time`, migracja 2). Rozbieżność nazwy z zawartością jest opisana
-   * w `application/sessionRow.ts`; `null` = sesja bez preflightu (realny stan).
+   * `SessionState.claimedAt` — czas PRZEJĘCIA samolotu, czyli zdarzenia `session_claim`
+   * (migracja 21; wcześniej kolumna niosła meldunek — uzasadnienie w `mappers/sessionRow.ts`).
+   * `null` = strumień bez claimu, czyli rejestr niekompletny; wg §4.4 nie powinien wystąpić.
    */
   claimTime: number | null;
   closeTime: number | null;

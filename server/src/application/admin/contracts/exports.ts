@@ -86,7 +86,8 @@ export type ExportOutcomeDto =
  *                   więc jej brak nie jest usterką.
  *  • `blocked`    — otwarta flaga `session_overlap`. Bramka `DayExporter`: sporny dzień
  *                   nie ma prawa utrwalić się w dokumencie klubu.
- *  • `impossible` — sesja bez `preflight_confirm`, czyli bez duty startu i bez samolotu.
+ *  • `impossible` — sesja bez `session_claim`, czyli bez daty i bez samolotu (rejestr
+ *    niekompletny — wg §4.4 nie powinno wystąpić).
  *                   `buildDaySheet` zwraca `null` — karty nie da się nawet NAZWAĆ.
  *  • `missing`    — dzień zamknięty i eksportowalny, a w `export_log` zero wierszy.
  *                   Jedyna droga do tego stanu to AWARIA eksportu: karta jest skutkiem,
@@ -106,16 +107,16 @@ export interface AdminExportListItem {
   /**
    * Nazwa karty wg konwencji §4.7 (`YYYY-MM-DD_SP-XXX`), policzona `sheetTabName` —
    * TĄ SAMĄ funkcją, którą eksporter nazywa kartę przy zapisie i którą telefon liczy
-   * u siebie na ekranie 11. `null` = sesja bez duty startu, czyli karty nie da się nazwać.
+   * u siebie na ekranie 11. `null` = sesja bez chwili przejęcia, czyli karty nie da się nazwać.
    *
    * Nazwa jedzie także dla dni jeszcze niewyeksportowanych, bo pytanie tego ekranu
    * brzmi „której karty brakuje", a nie „które karty są".
    */
   tab: string | null;
-  /** Dzień karty `YYYY-MM-DD` (UTC z duty startu); `null` razem z `tab`. */
+  /** Dzień karty `YYYY-MM-DD` (UTC z chwili przejęcia); `null` razem z `tab`. */
   day: string | null;
-  /** Duty start (epoch ms UTC) — kolumna „Dzień". `null` = sesja bez preflightu. */
-  dutyStart: number | null;
+  /** Chwila przejęcia (epoch ms UTC) — kolumna „Dzień". `null` = rejestr bez claimu. */
+  claimedAt: number | null;
 
   aircraftId: string;
   /** `null` = samolotu nie ma już w rejestrze floty; dzień zostaje widoczny. */

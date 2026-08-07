@@ -347,12 +347,16 @@ describe('A10 · dni otwarte i oś zakresu', () => {
     expect(daily.map((p) => p.blockMs)).toEqual([0, BLOCK_MS, BLOCK_MS, 0]);
   });
 
-  it('dzień otwarty z SAMYM claimem (bez duty startu) jest liczony ZAWSZE, osobno', async () => {
+  it('dzień otwarty BEZ CLAIMU (rejestr niekompletny) jest liczony ZAWSZE, osobno', async () => {
     const { app, stats } = await threeDays();
-    // Pilot wziął samolot, telefon padł przed preflightem: sesja `active` bez
-    // `claim_time` (kolumna niesie duty start z preflightu, nie czas claimu).
-    // Nie ma jak przypisać jej do zakresu — uczciwiej pokazać ją zawsze, niż schować:
-    // to licznik rzeczy wymagających uwagi, a ta sesja jest połamana.
+    // Strumień bez `session_claim`, czyli bez `claim_time`. Wg §4.4 claim jest pierwszym
+    // zdarzeniem każdej sesji, więc taki strumień nie powstaje w normalnej pracy — ale
+    // serwer go przyjmie (§4.5: nie odrzuca danych z terenu) i nie ma jak przypisać go
+    // do zakresu dat. Uczciwiej pokazać go zawsze, niż schować: to licznik rzeczy
+    // wymagających uwagi, a ta sesja jest połamana.
+    //
+    // Do migracji 21 rolę „bez daty" pełniła sesja z SAMYM claimem, bo kolumna niosła
+    // wtedy meldunek z preflightu. Dziś taka sesja ma datę i jest zwykłym dniem w toku.
     await ingest(app, [
       {
         sessionUuid: 'st-lost',
@@ -360,11 +364,18 @@ describe('A10 · dni otwarte i oś zakresu', () => {
         picId: 'JSE',
         dualId: null,
         schemaVersion: 1,
-        uuid: 'st-lost-claim',
-        type: 'session_claim',
+        uuid: 'st-lost-preflight',
+        type: 'preflight_confirm',
         deviceTime: D21 + 7 * HOUR_MS,
         gpsTime: D21 + 7 * HOUR_MS,
-        payload: { mode: 'free' },
+        payload: {
+          operation: 'skoki',
+          departureIcao: 'EPKK',
+          arrivalIcao: null,
+          reading: { fuelL: 150, mh: 1234.5 },
+          client: null,
+          mhFormat: 'hhmm',
+        },
       },
     ]);
 

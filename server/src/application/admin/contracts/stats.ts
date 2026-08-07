@@ -76,10 +76,14 @@ export interface AdminStatsTotals {
   /** Dni OTWARTE z duty startem w zakresie — celowo poza sumami. */
   openSessionsInRange: number;
   /**
-   * Dni OTWARTE z SAMYM `session_claim` (bez duty startu, telefon padł przed
-   * preflightem) — nie mają daty, więc nie należą do żadnego zakresu i są liczone
-   * ZAWSZE. Osobno od `openSessionsInRange`, bo podtytuł ekranu musi umieć je
-   * odróżnić.
+   * Dni OTWARTE BEZ `session_claim` — czyli rejestr niekompletny: nie mają daty, więc
+   * nie należą do żadnego zakresu i są liczone ZAWSZE. Osobno od `openSessionsInRange`,
+   * bo podtytuł ekranu musi umieć je odróżnić.
+   *
+   * Do migracji 21 licznik obejmował sesje z SAMYM claimem (kolumna niosła wtedy
+   * opcjonalny meldunek). Dziś taka sesja MA datę i jest zwykłym dniem w toku, więc ten
+   * licznik zszedł do roli, którą powinien był mieć od początku: sygnału o połamanym
+   * strumieniu. W zdrowym klubie stoi na zerze — i to jest właściwe zachowanie.
    */
   openSessionsUndated: number;
 }

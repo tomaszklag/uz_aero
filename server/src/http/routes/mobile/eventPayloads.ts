@@ -43,7 +43,12 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     operation: z.enum(['skoki', 'ferry', 'egzamin', 'techniczny', 'inne']),
     departureIcao: z.string().max(8).nullable().optional(),
     arrivalIcao: z.string().max(8).nullable().optional(),
-    dutyStart: epochMs,
+    /**
+     * Godzina meldunku — **OPCJONALNA od schemaVersion 2** (§3.6a). Ekran przejęcia
+     * o nią nie pyta: służba jest klamrą wokół wzlotów, a nie czymś, co pilot otwiera,
+     * żeby polecieć. Wymaganie jej tutaj odrzucałoby paczki z KAŻDEGO nowego telefonu.
+     */
+    dutyStart: epochMs.nullable().optional(),
     reading,
     corrections: z.array(z.record(z.unknown())).optional(),
     client: z.string().max(200).nullable().optional(),
@@ -100,7 +105,30 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     notes: z.string().max(1000).nullable().optional(),
   }),
 
-  day_close: z.object({ finalReading: reading, dutyEnd: epochMs }),
+  /**
+   * `leg_close` — POTWIERDZENIE WZLOTU (§3.6, schemaVersion 2).
+   *
+   * Odczyt jest OPCJONALNY i to jest decyzja, nie luźność walidacji: w dniu skokowym
+   * nikt nie schodzi do licznika po każdym z ośmiu wzlotów. Wymóg odczytu obowiązuje
+   * dopiero przy zdaniu samolotu (`day_close`).
+   */
+  leg_close: z.object({
+    legIndex: z.number().int().positive(),
+    reading: reading.nullable().optional(),
+    notes: z.string().max(1000).nullable().optional(),
+  }),
+
+  /**
+   * `day_close` — ZDANIE SAMOLOTU. Odczyt końcowy wymagany (jest przekazaniem dla
+   * następnego pilota), godzina końca służby opcjonalna od schemaVersion 2 (§3.6a):
+   * zdanie maszyny nie kończy dnia pilota, więc ekran jej nie wysyła.
+   */
+  day_close: z.object({
+    finalReading: reading,
+    dutyEnd: epochMs.nullable().optional(),
+    /** Powód zdania bez ani jednego wzlotu (09C); brak = miękka flaga w domenie. */
+    noFlightReason: z.enum(['weather', 'malfunction', 'cancelled', 'other']).nullable().optional(),
+  }),
 
   event_correction: z.discriminatedUnion('action', [
     z.object({ targetUuid: z.string().min(1).max(100), action: z.literal('retime'), newTime: epochMs }),
