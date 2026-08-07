@@ -61,7 +61,7 @@ export function EndOfDayScreen({
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const lastError = useSessionStore((s) => s.lastError);
-  const dayClose = useSessionStore((s) => s.dayClose);
+  const releaseAircraft = useSessionStore((s) => s.releaseAircraft);
   const refuel = useSessionStore((s) => s.refuel);
 
   const mhFormat = projection.mhFormat ?? 'decimal';
@@ -106,7 +106,7 @@ export function EndOfDayScreen({
       if (addedL > 0) {
         await refuel({ beforeL: fuelL, addedL, afterL: finalFuelL });
       }
-      await dayClose({
+      await releaseAircraft({
         finalReading: { fuelL: finalFuelL, mh },
         dutyEnd,
       });
@@ -116,7 +116,7 @@ export function EndOfDayScreen({
     } finally {
       setBusy(false);
     }
-  }, [addedL, blocker, dayClose, dutyEnd, finalFuelL, fuelL, mh, navigation, refuel]);
+  }, [addedL, blocker, releaseAircraft, dutyEnd, finalFuelL, fuelL, mh, navigation, refuel]);
 
   return (
     <Screen

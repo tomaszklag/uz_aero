@@ -125,11 +125,11 @@ describe('useSessionStore', () => {
     expect(await repo.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBe(SESSION);
   });
 
-  it('loadSession zamkniętego dnia usuwa osierocony active_session_uuid', async () => {
+  it('loadSession zdanego samolotu usuwa osierocony active_session_uuid', async () => {
     const { repo, clock, store } = attach();
     await openDay(clock);
     clock.set(min(300));
-    await store().dayClose({ finalReading: { fuelL: 150, mh: 1234.5 }, dutyEnd: min(300) });
+    await store().releaseAircraft({ finalReading: { fuelL: 150, mh: 1234.5 }, dutyEnd: min(300) });
     // Symulacja crasha między day_close a czyszczeniem klucza.
     await repo.setMeta(SESSION_META_KEYS.activeSessionUuid, SESSION);
 

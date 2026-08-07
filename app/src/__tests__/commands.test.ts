@@ -130,7 +130,7 @@ describe('SessionCommands — odrzucenie nie zostawia śladu', () => {
 
     clock.set(min(300));
     await expect(
-      commands.dayClose(CTX, {
+      commands.releaseAircraft(CTX, {
         finalReading: { fuelL: 112, mh: MH_START - 2 },
         dutyEnd: min(300),
       }),
@@ -220,7 +220,7 @@ describe('SessionCommands — pełny dzień przez komendy', () => {
     clock.set(min(168));
     await commands.refuel(CTX, { beforeL: 112, addedL: 48, afterL: 160 });
     clock.set(min(300));
-    const closed = await commands.dayClose(CTX, {
+    const closed = await commands.releaseAircraft(CTX, {
       finalReading: { fuelL: 160, mh: MH_START + 142 / 60 },
       dutyEnd: min(300),
     });
@@ -271,7 +271,7 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
     expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBe(SESSION);
 
     clock.set(min(300));
-    await commands.dayClose(CTX, {
+    await commands.releaseAircraft(CTX, {
       finalReading: { fuelL: 150, mh: MH_START },
       dutyEnd: min(300),
     });
@@ -290,7 +290,7 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
     // wiedzieć, do której sesji pisać.
     clock.set(min(30));
     await expect(
-      commands.dayClose(CTX, { finalReading: { fuelL: 150, mh: MH_START }, dutyEnd: min(30) }),
+      commands.releaseAircraft(CTX, { finalReading: { fuelL: 150, mh: MH_START }, dutyEnd: min(30) }),
     ).rejects.toBeInstanceOf(DomainRuleError);
 
     expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBe(SESSION);
@@ -306,5 +306,72 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
 
     await expect(commands.claim({ ...CTX, mode: 'free' })).rejects.toBeInstanceOf(DomainRuleError);
     expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBeNull();
+  });
+});
+
+/**
+ * Potwierdzenie wzlotu (etap C1). Numeru NIE podaje ekran — komenda bierze go
+ * z projekcji, bo musi wskazać NAJSTARSZY niepotwierdzony wzlot. Pilot może odłożyć
+ * potwierdzenie („Potwierdzę później" na 09) i wraca do kolejki od najstarszego.
+ */
+describe('closeLeg — potwierdzenie wzlotu', () => {
+  async function twoCycles() {
+    const h = setup();
+    await openDay(h.commands, h.clock);
+
+    h.clock.set(min(12));
+    await h.commands.startEngine(CTX);
+    h.clock.set(min(154));
+    await h.commands.stopEngine(CTX);
+
+    h.clock.set(min(195));
+    await h.commands.startEngine(CTX);
+    h.clock.set(min(268));
+    await h.commands.stopEngine(CTX);
+
+    return h;
+  }
+
+  it('bez odczytu zapisuje potwierdzenie i nie rusza stanu paliwomierza', async () => {
+    const h = await twoCycles();
+    h.clock.set(min(270));
+
+    const { event } = await h.commands.closeLeg(CTX);
+
+    expect(event.type).toBe('leg_close');
+    expect((event.payload as { reading: unknown }).reading).toBeNull();
+    expect((await h.queries.sessionState(CTX.sessionUuid)).fuel.lastReadingL).toBe(150);
+  });
+
+  it('numer wzlotu bierze się z projekcji — najpierw NAJSTARSZY niepotwierdzony', async () => {
+    const h = await twoCycles();
+
+    h.clock.set(min(270));
+    const first = await h.commands.closeLeg(CTX);
+    expect((first.event.payload as { legIndex: number }).legIndex).toBe(1);
+
+    h.clock.set(min(272));
+    const second = await h.commands.closeLeg(CTX);
+    expect((second.event.payload as { legIndex: number }).legIndex).toBe(2);
+  });
+
+  it('odczyt z potwierdzenia staje się ostatnim znanym stanem paliwomierza', async () => {
+    const h = await twoCycles();
+    h.clock.set(min(270));
+
+    await h.commands.closeLeg(CTX, { reading: { fuelL: 118, mh: MH_START + 2 } });
+
+    expect((await h.queries.sessionState(CTX.sessionUuid)).fuel.lastReadingL).toBe(118);
+  });
+
+  it('trzecie potwierdzenie przy dwóch cyklach jest odrzucone jako duplikat', async () => {
+    const h = await twoCycles();
+    h.clock.set(min(270));
+    await h.commands.closeLeg(CTX);
+    await h.commands.closeLeg(CTX);
+
+    await expect(h.commands.closeLeg(CTX)).rejects.toMatchObject({
+      code: 'LEG_ALREADY_CLOSED',
+    });
   });
 });

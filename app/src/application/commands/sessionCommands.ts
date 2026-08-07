@@ -30,6 +30,7 @@ import {
   type AppendEventInput,
   type CrewChangePayload,
   type DayClosePayload,
+  type FuelMhReading,
   type DetectionMethod,
   type EngineStartPayload,
   type EngineStopPayload,
@@ -208,10 +209,47 @@ export class SessionCommands {
     return this.execute(ctx, 'manual_log_entry', () => ({ payload }));
   }
 
-  async dayClose(ctx: SessionContext, payload: DayClosePayload): Promise<CommandResult> {
+  /**
+   * Potwierdzenie WZLOTU (ekran 09, §3.6) — jednostka potwierdzania danych.
+   *
+   * `legIndex` bierzemy z projekcji, nie od wołającego: numer musi wskazywać
+   * NAJSTARSZY niepotwierdzony zamknięty wzlot, bo pilot mógł odłożyć potwierdzenie
+   * wcześniejszego („Potwierdzę później") i wraca do kolejki od najstarszego.
+   * Ekran nie ma powodu tego wiedzieć, a gdyby liczył sam, rozjechałby się po korekcie
+   * unieważniającej cykl.
+   *
+   * `reading` jest OPCJONALNY — w serii skokowej nikt nie chodzi do licznika po każdym
+   * wzlocie. Gdy jest, staje się pełnoprawnym ogniwem łańcucha (§4.1 pkt 5).
+   */
+  closeLeg(
+    ctx: SessionContext,
+    input: { reading?: FuelMhReading | null; notes?: string | null } = {},
+  ): Promise<CommandResult> {
+    return this.execute(ctx, 'leg_close', (state) => ({
+      payload: {
+        legIndex: state.legs.find((l) => l.stoppedAt != null && !l.confirmed)?.index ?? 1,
+        reading: input.reading ?? null,
+        notes: input.notes ?? null,
+      },
+    }));
+  }
+
+  /**
+   * ZDANIE SAMOLOTU (ekran 09B). Typ zdarzenia nazywa się historycznie `day_close`,
+   * ale od 2026-08-06 **nie kończy dnia pilota** — kończy jego pracę z tą maszyną.
+   * Służba liczy się dalej, a kolejny samolot wejdzie do tej samej doby (§3.6).
+   *
+   * `dutyEnd` jest opcjonalny i domyślnie go NIE wysyłamy: klamrę domyka pilot na `01b`
+   * albo domyka się sama na ostatnim wzlocie. Podajemy go tylko wtedy, gdy pilot
+   * świadomie zadeklarował koniec służby przy zdawaniu maszyny.
+   */
+  async releaseAircraft(
+    ctx: SessionContext,
+    payload: DayClosePayload,
+  ): Promise<CommandResult> {
     const result = await this.execute(ctx, 'day_close', () => ({ payload }));
-    // Dzień zamknięty = usługa GPS w tle nie ma już do czego przypisywać fixów.
-    // Czyścimy dopiero PO udanym zapisie — odrzucone zamknięcie zostawia klucz.
+    // Samolot zdany = usługa GPS w tle nie ma już do czego przypisywać fixów.
+    // Czyścimy dopiero PO udanym zapisie — odrzucone zdanie zostawia klucz.
     await this.repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
     return result;
   }
