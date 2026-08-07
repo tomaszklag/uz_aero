@@ -120,8 +120,10 @@ export function boundLabel(kind: string): string {
       return 'preflight';
     case 'refuel':
       return 'tankowanie';
+    case 'leg_close':
+      return 'wzlot';
     case 'day_close':
-      return 'zamknięcie';
+      return 'zdanie';
     default:
       return kind;
   }

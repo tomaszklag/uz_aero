@@ -6,10 +6,24 @@
  *
  *   `preflight_confirm`  →  OTWIERA pierwszy interwał (odczyt startowy)
  *   `refuel`             →  ZAMYKA bieżący (`beforeL`) i OTWIERA następny (`afterL`)
+ *   `leg_close`          →  ZAMYKA bieżący i OTWIERA następny tą samą wartością —
+ *                           TYLKO gdy pilot zrobił odczyt (§3.6: jest opcjonalny)
  *   `day_close`          →  ZAMYKA ostatni (`finalReading.fuelL`)
  *
  * Dolewka nie jest więc składnikiem żadnego równania — jest GRANICĄ. To dlatego zużycie
  * w interwale liczy się jako różnica dwóch odczytów, bez żadnej arytmetyki dolewek.
+ *
+ * ══ OPCJONALNY ODCZYT PRZY WZLOCIE TO ZNANE RYZYKO (§3.6b) ══
+ * Odczyt przy zamknięciu wzlotu ratuje dzień skokowy przed ceremonią — i tym samym
+ * uderza w analitykę tego samego dnia. Pilot skrupulatny da dziesięć krótkich interwałów
+ * o niskiej dźwigni; pilot, który pominie wszystkie, da JEDEN interwał na całą sesję,
+ * czyli dokładnie przypadek, w którym `MAX_VARIANCE_INFLATION` odrzuci rozdział
+ * ziemia/lot, bo dane nie rozstrzygają podziału.
+ *
+ * Progów NIE stroimy w reakcji na tę uwagę — od tego jest `server/scripts/consumptionReplay.ts`
+ * na realnej historii. Warunek wstępny: replay musi dostać dane w NOWYM kształcie
+ * (krótkie sesje, wzloty z odczytem i bez), których nie ma nawet w scenariuszu demo.
+ * To osobne zadanie i dopóki nie jest zrobione, ryzyko zostaje OTWARTE.
  *
  * ══ SESJA BEZ `day_close` NIE PRODUKUJE OSTATNIEGO INTERWAŁU ══
  * I nie jest to niedopatrzenie: bez odczytu zamykającego nie wiadomo, ile paliwa ubyło.
@@ -126,6 +140,19 @@ function collectBounds(ordered: readonly Event[]): FuelBound[] {
         kind: 'refuel',
         closes: event.payload.beforeL,
         opens: event.payload.afterL,
+      });
+    } else if (event.type === 'leg_close' && event.payload.reading != null) {
+      // Zamknięcie wzlotu Z ODCZYTEM działa jak tankowanie bez dolewki: ZAMYKA bieżący
+      // interwał i OTWIERA następny tą samą wartością. Bez odczytu (§3.6 — jest
+      // opcjonalny) nie tworzy granicy w ogóle: nie ma czego porównać, a zgadywanie
+      // stanu paliwa byłoby wymyślaniem pomiaru.
+      const fuelL = event.payload.reading.fuelL;
+      bounds.push({
+        at,
+        uuid: event.uuid,
+        kind: 'leg_close',
+        closes: fuelL,
+        opens: fuelL,
       });
     } else if (event.type === 'day_close') {
       bounds.push({

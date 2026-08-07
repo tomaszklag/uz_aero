@@ -28,7 +28,15 @@ import type { EpochMillis } from '../time';
  * (start dnia), `refuel` (para `beforeL`/`afterL` — jeden odczyt zamyka interwał,
  * drugi otwiera następny) i `day_close` (przekazanie).
  */
-export type FuelBoundKind = 'preflight' | 'refuel' | 'day_close';
+/**
+ * Rodzaj granicy interwału paliwowego.
+ *
+ *  doszedł 2026-08-07 (etap B4): odczyt przy zamknięciu wzlotu jest
+ * OPCJONALNY (§3.6), ale gdy pilot go zrobi, jest pełnoprawnym odczytem paliwomierza
+ * — §4.1 pkt 5 stawia licznik fizyczny nad rachubą. Dzieli więc sesję na krótsze
+ * interwały dokładnie tak samo jak tankowanie, z tą różnicą, że nic nie dolewa.
+ */
+export type FuelBoundKind = 'preflight' | 'refuel' | 'leg_close' | 'day_close';
 
 /**
  * Powód, dla którego interwał nie wchodzi do regresji. `null` = interwał policzony.

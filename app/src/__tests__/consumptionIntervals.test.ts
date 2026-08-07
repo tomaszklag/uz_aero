@@ -243,3 +243,55 @@ describe('bramka górna — znaleziona przebiegiem po realnej historii (2026-08-
     expect(buildFuelIntervals(events).intervals[0]!.rejected).toBeNull();
   });
 });
+
+/**
+ * Zamknięcie wzlotu jako granica interwału (etap B4, §3.6b).
+ *
+ * Odczyt przy `leg_close` jest OPCJONALNY, więc ten sam dzień daje różną liczbę
+ * interwałów w zależności od tego, czy pilot go zrobił. To nie jest niedoskonałość
+ * implementacji — to bezpośrednia konsekwencja decyzji z §3.6 i dokładnie ten kompromis,
+ * który §3.6b opisuje jako znane ryzyko.
+ */
+describe('interwały paliwowe — zamknięcie wzlotu (leg_close)', () => {
+  /** Dwa wzloty, jedno zamknięcie z odczytem pośrodku, bez tankowania. */
+  const twoLegs = (legReading: boolean): Event[] => [
+    preflight(at(8, 0), 150),
+    event('engine_start', at(8, 12)),
+    event('takeoff', at(8, 25), { method: 'auto' }),
+    event('landing', at(9, 18), { method: 'auto' }),
+    event('engine_stop', at(9, 30)),
+    event(
+      'leg_close',
+      at(9, 35),
+      legReading ? { legIndex: 1, reading: { fuelL: 128, mh: 1235.8 } } : { legIndex: 1 },
+    ),
+    event('engine_start', at(10, 20)),
+    event('takeoff', at(10, 26), { method: 'auto' }),
+    event('landing', at(11, 1), { method: 'auto' }),
+    event('engine_stop', at(11, 10)),
+    dayClose(at(11, 20), 108, 1236.9),
+  ];
+
+  it('odczyt przy wzlocie DZIELI sesję na dwa interwały', () => {
+    const { intervals } = buildFuelIntervals(twoLegs(true));
+
+    expect(intervals).toHaveLength(2);
+    expect(intervals[0]!.startKind).toBe('preflight');
+    expect(intervals[0]!.endKind).toBe('leg_close');
+    expect(intervals[0]!.consumedL).toBeCloseTo(22, 6); // 150 → 128
+    expect(intervals[1]!.startKind).toBe('leg_close');
+    expect(intervals[1]!.endKind).toBe('day_close');
+    expect(intervals[1]!.consumedL).toBeCloseTo(20, 6); // 128 → 108
+  });
+
+  it('wzlot BEZ odczytu nie tworzy granicy — zostaje JEDEN interwał na całą sesję', () => {
+    // Przypadek z §3.6b: dzień skokowy, w którym pilot nie schodzi do licznika.
+    // Suma zużycia się zgadza, ale model traci punkt podparcia do rozdziału ziemia/lot.
+    const { intervals } = buildFuelIntervals(twoLegs(false));
+
+    expect(intervals).toHaveLength(1);
+    expect(intervals[0]!.startKind).toBe('preflight');
+    expect(intervals[0]!.endKind).toBe('day_close');
+    expect(intervals[0]!.consumedL).toBeCloseTo(42, 6); // 150 → 108, to samo paliwo
+  });
+});
