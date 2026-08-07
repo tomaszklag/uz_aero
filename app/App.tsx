@@ -31,6 +31,7 @@ import {
 import { ThemeProvider, useTheme } from './src/ui/theme';
 import { AppText } from './src/ui/components';
 import { RootNavigator } from './src/ui/navigation/RootNavigator';
+import { resumeTarget, type ResumeTarget } from './src/ui/navigation/resumeTarget';
 import { useAppBootstrap, useGpsPort, useSensorPort } from './src/ui/bootstrap/appBootstrap';
 import { ServicesProvider } from './src/ui/bootstrap/ServicesProvider';
 import { useGps } from './src/ui/bootstrap/servicesContext';
@@ -170,15 +171,18 @@ function AuthGate() {
 }
 
 /**
- * Wznowienie dnia po restarcie (§5.2): otwarta sesja z `session_meta` wraca prosto
- * do kokpitu — inaczej „NOWY DZIEŃ LOTNY" na 01 rozwidliłby trwający dzień w drugą
- * sesję (i flagę `session_overlap`). Zamknięty albo nieobecny dzień startuje z 01.
+ * Wznowienie po restarcie (§5.2): pilot wraca tam, gdzie stoi jego samolot.
+ *
+ * Trzyma maszynę → prosto do kokpitu, bo restart w środku dnia lotnego nie może kosztować
+ * tapnięcia w drodze do STOP ENGINE. Zdał ją albo nie ma sesji → „Mój dzień" (01).
+ * Sama decyzja mieszka w `resumeTarget` — jest regułą flow, nie szczegółem montowania,
+ * i ma test (`claimStrip.test.ts`).
  */
 function ResumeGate() {
   const { theme } = useTheme();
   const queries = useSessionStore((s) => s.queries);
   const loadSession = useSessionStore((s) => s.loadSession);
-  const [initial, setInitial] = React.useState<'Splash' | 'Cockpit' | null>(null);
+  const [initial, setInitial] = React.useState<ResumeTarget | null>(null);
 
   React.useEffect(() => {
     let alive = true;
@@ -188,14 +192,13 @@ function ResumeGate() {
         if (current != null) {
           await loadSession(current.sessionUuid);
           const { projection } = useSessionStore.getState();
-          const open = projection.sessionUuid != null && projection.dutyEnd == null;
-          if (alive) setInitial(open ? 'Cockpit' : 'Splash');
+          if (alive) setInitial(resumeTarget(projection));
           return;
         }
       } catch {
         // Uszkodzone meta nie może zablokować wejścia — najwyżej zaczniemy od 01.
       }
-      if (alive) setInitial('Splash');
+      if (alive) setInitial('MyDay');
     })();
     return () => {
       alive = false;

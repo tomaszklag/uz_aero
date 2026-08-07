@@ -35,7 +35,7 @@ import {
   AppText,
   Banner,
   Card,
-  DutyStrip,
+  ClaimStrip,
   DayLog,
   Screen,
   StatusChip,
@@ -49,7 +49,7 @@ import { PeekBanner } from '../components/status/PeekBanner';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
-import { litres, timeLocal, timeUtc } from '../format';
+import { litres } from '../format';
 import { buildDaySections } from './logic/cockpitLog';
 import {
   peekBanner,
@@ -60,10 +60,8 @@ import {
   takeoverWarning,
   type PeekSnapshot,
 } from './logic/cockpitPeek';
+import { buildPeekStrip } from './logic/claimStrip';
 import { operationTag, routeLabel } from './logic/operations';
-// Ten sam „HH:MM" z wiodącym zerem, co w tabelach ekranu 10 (`.duty-val` w mockupie
-// pokazuje „02:31") — drugi format tej samej wielkości byłby rozjazdem, nie niuansem.
-import { hhmm } from './logic/statsDay';
 import { projectSession, type ReferenceAircraft, type ReferencePilot } from '../../domain';
 
 export type { PeekSnapshot };
@@ -172,12 +170,8 @@ export function CockpitReadonlyScreen({
   });
   const status = peekStatusChip(projection);
 
-  // Wszystko, co liczone z czasu, odnosimy do chwili POBRANIA migawki — tak samo robi
-  // mockup (meldunek 07:10, pobrano 09:41, duty 02:31). Liczenie do „teraz" dokładałoby
-  // do cudzego duty czas, przez który pilot patrzył na ekran.
-  const asOf = snapshot?.fetchedAt ?? openedAt;
-  const dutyMs =
-    projection?.dutyStart != null ? Math.max(0, asOf - projection.dutyStart) : null;
+  const peekStrip =
+    projection != null ? buildPeekStrip(projection, picCode ?? 'prowadzący') : null;
 
   const capacityL = aircraft?.capacityL ?? null;
   const fobL = projection?.fuel.lastReadingL ?? null;
@@ -274,13 +268,12 @@ export function CockpitReadonlyScreen({
         {/* ── stan samolotu wg serwera (`.ground-chip`) ──────────────────────── */}
         <StatusChip label={status.label} tone={status.tone} style={{ alignSelf: 'center' }} />
 
-        {/* ── czas służby prowadzącego (`.duty-strip`) ───────────────────────── */}
-        {dutyMs != null && projection?.dutyStart != null && (
-          <DutyStrip
-            label={`Duty ${picCode ?? 'prowadzącego'}`}
-            elapsed={hhmm(dutyMs)}
-            since={`Meldunek ${timeUtc(projection.dutyStart)} UTC · ${timeLocal(projection.dutyStart)} LT`}
-          />
+        {/* ── pasek sesji cudzego samolotu (`.claim-strip`) ───────────────────
+            Stało tu „Duty KRZ 02:31". Czas służby innego pilota nie jest informacją
+            o SAMOLOCIE i nie wnosi nic do decyzji o przejęciu (§3.6a) — liczy się,
+            od kiedy maszyna jest zajęta i ile już zrobiła. */}
+        {peekStrip != null && (
+          <ClaimStrip label={peekStrip.label} legs={peekStrip.legs} trailing={peekStrip.trailing} />
         )}
 
         {/* ── log jego dnia (`.day-log`) — BEZ kolumny korekty; cykle domyślnie

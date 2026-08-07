@@ -21,10 +21,10 @@
  * się na strzałce wstecz — dzień lotny nie miał ostatniego kroku. Pilot po wysyłce zostawał
  * na ekranie bez wyjścia w przód, a cofanie prowadziło do kokpitu dnia, który przed chwilą
  * zamknął, z zapraszającym START ENGINE (zapis odrzuca dopiero reguła `DAY_CLOSED`).
- * Stąd „GOTOWE": RESETUJE stos na 01, więc wstecz nie ma już czego wskrzeszać. Splash jest
- * właściwym domem tego stanu — ma „NOWY DZIEŃ LOTNY" i „Poprzednie dni" z plakietką okna
- * korekty 24 h, czyli obie rzeczy, które pilot może jeszcze chcieć zrobić. Dokładnie tam
- * trafia też zimny start po zamkniętym dniu (`App.tsx` sprawdza `dutyEnd`).
+ * Stąd „GOTOWE": RESETUJE stos na „Mój dzień" (01), więc wstecz nie ma już czego wskrzeszać.
+ * To właściwy dom tego stanu — 01 pokazuje całą dobę pilota, zaległe potwierdzenia wzlotów
+ * i wejście w historię z oknem korekty, czyli wszystko, co pilot może jeszcze chcieć zrobić.
+ * Dokładnie tam trafia też zimny start po zdanym samolocie (`resumeTarget`).
  * Mockupy zostały uzupełnione o ten przycisk.
  */
 
@@ -124,7 +124,7 @@ export function SyncScreen({
    * słucha AppState i pulsu), więc zejście z ekranu niczego nie przerywa.
    */
   const finishDay = useCallback((): void => {
-    navigation.reset({ index: 0, routes: [{ name: 'Splash' }] });
+    navigation.reset({ index: 0, routes: [{ name: 'MyDay' }] });
   }, [navigation]);
 
   const offline = lastSync?.kind === 'offline';
@@ -184,7 +184,9 @@ export function SyncScreen({
 
   const aircraft = projection.aircraftId ?? '—';
   const dayLabel = projection.claimedAt != null ? dateUtcLong(projection.claimedAt) : '—';
-  const dayClosed = projection.dutyEnd != null;
+  // Pytamy o ZDANIE samolotu (`closed`), nie o klamrę służby: od §3.6a `dutyEnd` jest
+  // opcjonalny i ekran „Zdaj samolot" go nie wysyła, więc ten warunek nigdy by nie zaszedł.
+  const dayClosed = projection.closed;
   const mhFormat = projection.mhFormat ?? 'decimal';
   const tabName = sheetTabName(projection.claimedAt, projection.aircraftId);
   const showDrops = projection.drops.count > 0 || projection.operation === 'skoki';

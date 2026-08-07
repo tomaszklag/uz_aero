@@ -1,8 +1,12 @@
 /**
- * UZ Aero — 10 STATYSTYKI DNIA.
+ * UZ Aero — 10 ROZLICZENIE SAMOLOTU.
  *
- * Odwzorowanie mockupu `design/10-statystyki.html`: okno korekty → czas służby → karty
- * załogi → lista lotów → paliwo → motogodziny → zrzuty → para akcji.
+ * Odwzorowanie mockupu `design/10-statystyki.html`: okno korekty → czas blokowy sesji →
+ * karty załogi → lista wzlotów → paliwo → motogodziny → zrzuty → para akcji.
+ *
+ * Rozlicza JEDNĄ SESJĘ SAMOLOTU (przejęcie → zdanie), a nie dzień pilota. Do 2026-08-06
+ * były tym samym; po §3.6a nie są — służba należy do pilota, obejmuje kilka maszyn
+ * i mieszka na „Mój dzień" (01). Dlatego bohaterem ekranu jest czas blokowy, a nie duty.
  *
  * Ekran jest **wyłącznie do odczytu**: nie emituje ani jednego zdarzenia. Wszystko, co
  * pokazuje, jest projekcją ze strumienia lokalnego (§5.2), więc te same liczby wychodzą
@@ -11,7 +15,7 @@
  * a nie o wiarygodności statystyk.
  *
  * Kolejność sekcji nie jest dowolna: najpierw to, co ma termin (okno korekty), potem to,
- * co pilot przepisuje do dokumentów (czas służby, załoga, loty), a dopiero na końcu
+ * co pilot przepisuje do dokumentów (czas blokowy, załoga, loty), a dopiero na końcu
  * rozliczenia (paliwo, motogodziny, zrzuty). Akcje stoją pod wszystkim — „ZATWIERDŹ"
  * ma być decyzją po przeczytaniu, nie skrótem na górze ekranu.
  */
@@ -27,7 +31,7 @@ import {
   CrewCard,
   CrewGrid,
   DataTable,
-  DutyHero,
+  SessionHero,
   FreshnessNote,
   ResultRow,
   Screen,
@@ -44,7 +48,7 @@ import { useCurrentPilot, useSessionStore } from '../store';
 import { useAircraft } from '../hooks/useAircraft';
 import { useEventCorrection } from '../hooks/useEventCorrection';
 import { correctionWindow } from '../../domain';
-import { dateUtcLong, motoHours, timeUtc } from '../format';
+import { motoHours, timeUtc } from '../format';
 import {
   buildCrewCards,
   buildFlightRows,
@@ -53,8 +57,10 @@ import {
   fuelPerHour,
   hhmm,
   jumperBreakdown,
+  sessionSubtitle,
 } from './logic/statsDay';
 import { compareToNorm, normLabel, verdictLabel } from './logic/fuelNorm';
+import { legsLabel } from './logic/claimStrip';
 
 /** Kolumny listy lotów — `#` i `Typ` mają stałą szerokość, czasy dzielą resztę po równo. */
 const FLIGHT_COLUMNS = [
@@ -181,10 +187,17 @@ export function StatsScreen({
   const aircraft = projection.aircraftId ?? '—';
   const mhFormat = projection.mhFormat ?? 'decimal';
   const mhFormatLabel = mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny';
-  const dutyMs =
-    projection.dutyStart != null && projection.dutyEnd != null
-      ? projection.dutyEnd - projection.dutyStart
-      : null;
+  /**
+   * Zakres SESJI: przejęcie → zdanie. Nie klamra służby (§3.6a) — ten ekran rozlicza
+   * jeden samolot, a służba należy do pilota i potrafi objąć kilka maszyn.
+   * Sesja jeszcze trwa, dopóki `closedAt` jest puste; wtedy mówimy to wprost.
+   */
+  const sessionRange =
+    projection.claimedAt != null
+      ? `przejęty ${timeUtc(projection.claimedAt)} → ${
+          projection.closedAt != null ? `zdany ${timeUtc(projection.closedAt)} UTC` : 'jeszcze w ręce'
+        } · ${legsLabel(projection.legs.length)}`
+      : undefined;
 
   const fuelCells: StatCell[] = [
     { label: 'Startowe', value: amount(projection.fuel.startL), unit: 'litrów', tone: 'amber' },
@@ -218,16 +231,20 @@ export function StatsScreen({
       padded={false}
       header={
         <ScreenHeader
-          title="STATYSTYKI DNIA"
+          title="ROZLICZENIE"
           size="md"
-          // Wyśrodkowany bez powrotu: statystyki otwierają się po zamknięciu dnia,
-          // a „wstecz" prowadziłoby do formularza, którego nie da się powtórzyć.
-          centered
-          subtitle={`${aircraft} · ${projection.dutyStart != null ? dateUtcLong(projection.dutyStart) : '—'}`}
+          // Powrót JEST i prowadzi na 01 (mockup 10: „‹ Dzień"). Ekran otwierał się kiedyś
+          // wyłącznie po zamknięciu dnia — dziś wchodzi się tu z „Mój dzień" linkiem przy
+          // KAŻDEJ maszynie doby, także w jej trakcie, więc droga powrotna musi istnieć.
+          onBack={() => navigation.navigate('MyDay')}
+          backLabel="Dzień"
+          subtitle={sessionSubtitle(aircraft, projection.claimedAt, projection.closedAt)}
           right={
             <>
               <Tag
-                label={flightsBadge(projection.flights.length)}
+                // Plakietka liczy WZLOTY, nie loty (mockup 10): jednostką sesji jest cykl
+                // silnika, a kołowanie techniczne bez startu też jest wzlotem.
+                label={legsLabel(projection.legs.length)}
                 tone="green"
                 size="md"
                 style={{ borderRadius: theme.radius.pill }}
@@ -276,17 +293,8 @@ export function StatsScreen({
           closesAt={window24h.closesAt}
         />
 
-        {/* ── czas służby ──────────────────────────────────────────────────── */}
-        <DutyHero
-          value={dutyMs != null ? hhmm(dutyMs) : '—'}
-          range={
-            projection.dutyStart != null
-              ? `${timeUtc(projection.dutyStart)} UTC → ${
-                  projection.dutyEnd != null ? `${timeUtc(projection.dutyEnd)} UTC` : 'dzień otwarty'
-                }`
-              : undefined
-          }
-        />
+        {/* ── czas blokowy sesji ───────────────────────────────────────────── */}
+        <SessionHero value={hhmm(projection.blockTimeMs)} range={sessionRange} />
 
         {/* ── załoga ───────────────────────────────────────────────────────── */}
         <CrewGrid>

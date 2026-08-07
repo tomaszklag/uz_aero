@@ -202,9 +202,7 @@ export function MyDayScreen({
           <ClaimCard
             held={held}
             onCockpit={() => navigation.navigate('Cockpit')}
-            // 09b „Zdaj samolot" nie ma jeszcze własnego ekranu — odczyty końcowe
-            // i `day_close` zbiera dziś ekran zakończenia dnia.
-            onRelease={() => navigation.navigate('EndOfDay')}
+            onRelease={() => navigation.navigate('ReleaseAircraft')}
           />
         )}
 
@@ -266,9 +264,10 @@ export function MyDayScreen({
                       {!leg.confirmed && (
                         <LegNote
                           index={leg.index}
-                          // Ekran 09 „Zamknij wzlot" jeszcze nie istnieje — potwierdzenie
-                          // (odczyty + uwaga) zbiera dziś ekran zakończenia dnia.
-                          onPress={() => navigation.navigate('EndOfDay')}
+                          // 09 bierze najstarszy niepotwierdzony wzlot sam (`buildLegClose`),
+                          // więc wiersz nie musi go wskazywać — kolejka rozładowuje się
+                          // od początku niezależnie od tego, w który pilot tapnął.
+                          onPress={() => navigation.navigate('LegClose')}
                         />
                       )}
                     </View>
@@ -327,7 +326,7 @@ export function MyDayScreen({
               disabledReason={
                 vm.end.editable ? null : 'Wzlot jeszcze trwa — najpierw wyłącz silnik'
               }
-              onPress={() => navigation.navigate('EndOfDay')}
+              onPress={() => navigation.navigate('ReleaseAircraft')}
             />
             <AppText variant="mono" tone="muted" style={styles.btnNote}>
               {held != null ? `Zamknięcie dnia zda też ${held.aircraftId}. ` : ''}

@@ -79,12 +79,15 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     więc czytelnicy przeszli na `claimedAt` (historia, sortowanie sesji, nazwa karty
     arkusza, załoga). **Karta historii mierzy SESJĘ (przejęcie → zdanie), nie „Duty"** —
     służba należy do pilota i potrafi objąć kilka maszyn.
-  - **C5** kokpit z paskiem sesji i nawigacja w `App.tsx`. **Do C5 aplikacja nie jest
-    spójnie klikalna.** Zaległość do domknięcia w C5: `CockpitScreen`,
-    `CockpitReadonlyScreen`, `StatsScreen` i `EndOfDayScreen` nadal czytają
-    `projection.dutyStart` (timer służby, „Meldunek", podpisy dat) — wszystkie cztery
-    i tak są w tym kroku przebudowywane albo usuwane (`EndOfDayScreen` zastąpił
-    `ReleaseAircraftScreen`), więc świadomie NIE łatamy ich osobno.
+  - **C5 ✅** kokpit i nawigacja. `DutyStrip` → **`ClaimStrip`** (pasek sesji: czyja
+    maszyna, od kiedy, ile wzlotów; klikalny wariant jest jedyną drogą powrotną z kokpitu
+    na 01). `DutyHero` → **`SessionHero`** na ekranie 10, gdzie bohaterem jest czas
+    blokowy sesji, nie służba. **`SplashScreen` i `EndOfDayScreen` USUNIĘTE** — 01 jest
+    ekranem domowym, a zdanie samolotu zastąpiło zamknięcie dnia. STOP ENGINE prowadzi
+    na 09. Wznowienie po restarcie w `navigation/resumeTarget.ts`: pytamy o `closed`,
+    bo `dutyEnd` po §3.6a nie odróżnia już sesji trwającej od zdanej.
+  - **ETAP C DOMKNIĘTY** — aplikacja jest spójnie klikalna: 01 → 02/02e/02a → kokpit →
+    09 → 09b → 01.
 - **Etap D** serwer + panel.
 
 **Twardy warunek każdego commitu etapu B:** strumień `schema_version 1` musi projektować się

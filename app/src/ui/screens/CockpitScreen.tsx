@@ -38,7 +38,7 @@ import {
   DayLog,
   DetectToast,
   DropSheet,
-  DutyStrip,
+  ClaimStrip,
   FuelStrip,
   EventLog,
   ManualEventSheet,
@@ -63,6 +63,7 @@ import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format
 import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
 import { enduranceLabel, fuelTone } from './logic/fuelNorm';
 import { cyclesLabel } from './logic/cockpitPeek';
+import { buildClaimStrip } from './logic/claimStrip';
 import { flightsBadge } from './logic/statsDay';
 import {
   gpsAcquiringText,
@@ -150,7 +151,7 @@ export function CockpitScreen({
   const [manualOpen, setManualOpen] = useState(false);
   const engineOn = projection.engineRunning;
   const inFlight = projection.inFlight;
-  const now = useTicker(engineOn || projection.dutyStart != null);
+  const now = useTicker(engineOn);
 
   // Elewacja lotniska = wysokość GPS z chwili ENGINE START (§3.3). Bierzemy ją
   // z payloadu zdarzenia, żeby przetrwała restart aplikacji.
@@ -197,12 +198,33 @@ export function CockpitScreen({
     [fix, run, startEngine],
   );
 
+  /**
+   * STOP ENGINE prowadzi na 09 „Zamknij lot" (§7).
+   *
+   * Wzlot jest jednostką potwierdzenia danych (§3.6a), a jedyną chwilą, w której pilot
+   * pamięta przebieg lotu, jest ta zaraz po zgaszeniu silnika. Ekran otwieramy DOPIERO
+   * po udanym zapisie — gdyby `engine_stop` odbiła reguła, 09 nie miałby czego zamykać
+   * i pilot zobaczyłby pusty formularz zamiast powodu odmowy.
+   */
+  const handleStop = useCallback(async () => {
+    setBusy(true);
+    try {
+      await stopEngine();
+      navigation.navigate('LegClose');
+    } catch {
+      // Powód jest w `lastError` — pokazujemy go banerem niżej.
+    } finally {
+      setBusy(false);
+    }
+  }, [navigation, stopEngine]);
+
   if (!context) return <NoSession onStart={() => navigation.navigate('PreflightAircraft')} />;
 
+
   const mhFormat = projection.mhFormat ?? 'decimal';
+  const claimStrip = buildClaimStrip(projection);
   const liveFlightMs =
     projection.openTakeoffAt != null ? now - projection.openTakeoffAt : projection.flightTimeMs;
-  const dutyMs = projection.dutyStart != null ? now - projection.dutyStart : 0;
 
   /**
    * Czy w tym dniu wynosi się skoczków — od tego zależy, czy pasek akcji ma przycisk
@@ -452,7 +474,7 @@ export function CockpitScreen({
           onDrop={jumpDay ? () => setDropOpen(true) : undefined}
           // Wyniesienie z definicji dzieje się w powietrzu (§3.3).
           dropDisabledReason={inFlight ? null : 'Zrzut zapiszesz w powietrzu'}
-          onStop={() => run(stopEngine)}
+          onStop={handleStop}
           // `engine_stop` w powietrzu byłby fałszywym wpisem — blokujemy z powodem (§3.2).
           stopDisabledReason={inFlight ? 'Silnik zatrzymasz po wylądowaniu i dobiegu' : null}
         />
@@ -536,12 +558,14 @@ export function CockpitScreen({
       onPress: () => navigation.navigate('ManualLog'),
     },
     {
-      id: 'end-day',
+      id: 'release',
       icon: 'end-day',
-      label: 'Zakończ dzień',
+      label: 'Zdaj samolot',
       tone: 'red',
-      sub: 'Statystyki + synchronizacja',
-      onPress: () => navigation.navigate('EndOfDay'),
+      // Nie „Zakończ dzień": zdanie maszyny NIE kończy służby pilota (§3.6a). Kafelek
+      // prowadzi na 09B, gdzie odczyt liczników jest wymagany, bo staje się przekazaniem.
+      sub: 'Odczyty końcowe · przekazanie',
+      onPress: () => navigation.navigate('ReleaseAircraft'),
     },
   ];
 
@@ -579,10 +603,15 @@ export function CockpitScreen({
           onPress={handleStart}
         />
 
-        {projection.dutyStart != null && (
-          <DutyStrip
-            elapsed={duration(dutyMs)}
-            since={`Meldunek ${timeUtc(projection.dutyStart)} UTC · ${timeLocal(projection.dutyStart)} LT`}
+        {/* Pasek sesji samolotu — i zarazem JEDYNA droga powrotna z kokpitu na 01.
+            Stał tu wcześniej duty timer; czas służby jest wielkością pilota, obejmuje
+            też inne maszyny i mieszka w „Mój dzień" (§3.6a). */}
+        {claimStrip != null && (
+          <ClaimStrip
+            label={claimStrip.label}
+            legs={claimStrip.legs}
+            trailing={claimStrip.trailing}
+            onPress={() => navigation.navigate('MyDay')}
           />
         )}
 

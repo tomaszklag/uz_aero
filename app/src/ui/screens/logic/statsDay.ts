@@ -30,6 +30,23 @@ import { dateTimeUtcShort, hhmm, timeUtc } from '../../format';
 export { dateTimeUtcShort, hhmm };
 
 /**
+ * Podtytuł rozliczenia: „SP-AXA · 08:04 → 11:20 UTC" (mockup 10).
+ *
+ * Godziny opisują SESJĘ SAMOLOTU — przejęcie i zdanie — a nie dobę i nie klamrę służby.
+ * Sesja jeszcze trwa, dopóki nie ma `closedAt`; wtedy prawa strona zakresu mówi to
+ * wprost, zamiast podstawiać „teraz" i udawać zamknięcie.
+ */
+export function sessionSubtitle(
+  aircraft: string,
+  claimedAt: number | null,
+  closedAt: number | null,
+): string {
+  if (claimedAt == null) return aircraft;
+  const end = closedAt != null ? timeUtc(closedAt) : 'trwa';
+  return `${aircraft} · ${timeUtc(claimedAt)} → ${end} UTC`;
+}
+
+/**
  * Badge nagłówka: „1 lot" / „3 loty" / „6 lotów".
  *
  * Polska liczba mnoga ma trzy formy, a badge stoi w nagłówku ekranu — „6 lot" byłoby
