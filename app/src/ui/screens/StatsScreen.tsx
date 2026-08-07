@@ -271,7 +271,7 @@ export function StatsScreen({
             Baner typu `status`: to odliczanie terminu, a nie pouczenie — nie wolno
             go zamknąć, bo razem z nim zniknąłby jedyny widoczny termin dnia. */}
         <CorrectionWindowBanner
-          dayClosed={window24h.dayClosed}
+          hasClosedLeg={window24h.hasClosedLeg}
           open={window24h.open}
           closesAt={window24h.closesAt}
         />
@@ -427,11 +427,12 @@ export function StatsScreen({
  * powiedzenia, co zamiast tego.
  */
 function CorrectionWindowBanner({
-  dayClosed,
+  hasClosedLeg,
   open,
   closesAt,
 }: {
-  dayClosed: boolean;
+  /** Czy jest już jakikolwiek zamknięty wzlot, czyli czy okno w ogóle ruszyło. */
+  hasClosedLeg: boolean;
   open: boolean;
   closesAt: number | null;
 }) {
@@ -439,14 +440,14 @@ function CorrectionWindowBanner({
     'Później korektę nanosi administrator. Stuknij ołówek przy locie, żeby poprawić czas ' +
     'albo oznaczyć zdarzenie jako błędne.';
 
-  if (!dayClosed) {
+  if (!hasClosedLeg) {
     return (
       <Banner
         kind="status"
         tone="blue"
         icon="clock"
-        title="Okno korekty: 24 h po zatwierdzeniu"
-        text={`Dane możesz poprawiać teraz i jeszcze przez 24 h po zatwierdzeniu dnia. ${tail}`}
+        title="Okno korekty: 24 h po zamknięciu wzlotu"
+        text={`Dane każdego wzlotu poprawisz przez 24 h od jego zamknięcia. ${tail}`}
       />
     );
   }
@@ -457,7 +458,7 @@ function CorrectionWindowBanner({
         kind="status"
         tone="blue"
         icon="clock"
-        title="Okno korekty: 24 h po zatwierdzeniu"
+        title="Okno korekty: 24 h po zamknięciu wzlotu"
         text={`Dane możesz poprawiać jeszcze do ${dateTimeUtcShort(closesAt)} UTC. ${tail}`}
       />
     );

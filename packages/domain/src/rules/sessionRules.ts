@@ -30,7 +30,7 @@
 import type { Event, EventType } from '../events';
 import type { ReferenceAircraft } from '../reference';
 import type { EpochMillis } from '../time';
-import { eventTime, type SessionState } from '../projections';
+import { eventTime, type Leg, type SessionState } from '../projections';
 import type { WriteAuthority } from './authority';
 import {
   error,
@@ -79,26 +79,88 @@ export const CORRECTION_EVENT_TYPES: readonly EventType[] = [
   'event_correction',
 ];
 
-/** Stan okna korekty po zamknięciu dnia — do bannera z odliczaniem (design-notes). */
-export interface CorrectionWindow {
-  /** Czy dzień jest zamknięty. */
-  dayClosed: boolean;
-  /** Czy pilot może jeszcze korygować samodzielnie. */
+/**
+ * Okno korekty JEDNEGO wzlotu (§3.6a — każdy wzlot ma własne 24 h).
+ *
+ * Kotwicą jest `confirmedAt`, a gdy pilot wzlotu nie potwierdził („Potwierdzę później")
+ * — `stoppedAt`. Bez tej kotwicy awaryjnej wzlot niepotwierdzony miałby okno, które
+ * nigdy się nie otwiera, czyli **bezterminowe prawo zapisu** — a niepotwierdzenie jest
+ * stanem legalnym i częstym, nie brzegowym.
+ */
+export interface LegCorrectionWindow {
+  legIndex: number;
+  /** Od czego liczymy: potwierdzenie wzlotu albo (awaryjnie) wyłączenie silnika. */
+  anchoredAt: EpochMillis;
+  /** Czy kotwicą jest potwierdzenie pilota (`false` = kotwica awaryjna). */
+  anchoredOnConfirmation: boolean;
+  closesAt: EpochMillis;
   open: boolean;
-  /** Kiedy okno się zamyka (UTC) — null, gdy dzień otwarty. */
-  closesAt: EpochMillis | null;
-  /** Ile zostało (ms); 0 gdy zamknięte lub nie dotyczy. */
   remainingMs: number;
 }
 
-/** Liczy stan 24-godzinnego okna korekty. Czysta funkcja — `now` podaje wołający. */
-export function correctionWindow(state: SessionState, now: EpochMillis): CorrectionWindow {
-  if (!state.closed || state.closedAt == null) {
-    return { dayClosed: false, open: true, closesAt: null, remainingMs: 0 };
+/** Okna korekty wszystkich ZAMKNIĘTYCH wzlotów sesji. Otwarty wzlot nie ma jeszcze okna. */
+export function legCorrectionWindows(
+  state: SessionState,
+  now: EpochMillis,
+): LegCorrectionWindow[] {
+  const windows: LegCorrectionWindow[] = [];
+  for (const leg of state.legs) {
+    if (leg.stoppedAt == null) continue;
+    const anchoredAt = leg.confirmedAt ?? leg.stoppedAt;
+    const closesAt = anchoredAt + CORRECTION_WINDOW_MS;
+    windows.push({
+      legIndex: leg.index,
+      anchoredAt,
+      anchoredOnConfirmation: leg.confirmedAt != null,
+      closesAt,
+      open: closesAt > now,
+      remainingMs: Math.max(0, closesAt - now),
+    });
   }
-  const closesAt = state.closedAt + CORRECTION_WINDOW_MS;
-  const remainingMs = Math.max(0, closesAt - now);
-  return { dayClosed: true, open: remainingMs > 0, closesAt, remainingMs };
+  return windows;
+}
+
+/**
+ * Zagregowany stan okna korekty — do bannera z odliczaniem (design-notes).
+ *
+ * Agregat, bo ekran pokazuje JEDNO odliczanie, a wzlotów bywa kilkanaście. Pokazujemy
+ * to, które wygasa NAJWCZEŚNIEJ spośród jeszcze otwartych: pilot ma wiedzieć, ile czasu
+ * zostało mu na najstarszą poprawkę, a nie na najświeższą.
+ */
+export interface CorrectionWindow {
+  /** Czy jest cokolwiek do korygowania (istnieje zamknięty wzlot). */
+  hasClosedLeg: boolean;
+  /** Czy pilot może jeszcze samodzielnie poprawić KTÓRYKOLWIEK wzlot. */
+  open: boolean;
+  /** Kiedy zamyka się najbliższe wygasające okno (UTC); `null`, gdy nie ma otwartych. */
+  closesAt: EpochMillis | null;
+  /** Ile zostało do tego wygaśnięcia (ms); 0 gdy nie ma otwartych okien. */
+  remainingMs: number;
+  /** Ile wzlotów można jeszcze poprawić samodzielnie. */
+  openLegCount: number;
+}
+
+/** Liczy zagregowany stan okien korekty. Czysta funkcja — `now` podaje wołający. */
+export function correctionWindow(state: SessionState, now: EpochMillis): CorrectionWindow {
+  const windows = legCorrectionWindows(state, now);
+  const open = windows.filter((w) => w.open);
+  if (open.length === 0) {
+    return {
+      hasClosedLeg: windows.length > 0,
+      open: false,
+      closesAt: null,
+      remainingMs: 0,
+      openLegCount: 0,
+    };
+  }
+  const soonest = open.reduce((a, b) => (a.closesAt <= b.closesAt ? a : b));
+  return {
+    hasClosedLeg: true,
+    open: true,
+    closesAt: soonest.closesAt,
+    remainingMs: soonest.remainingMs,
+    openLegCount: open.length,
+  };
 }
 
 /**
@@ -118,12 +180,19 @@ export function checkAppend(
   limits: AircraftLimits = UNKNOWN_LIMITS,
   authority: WriteAuthority = 'pilot',
 ): RuleViolation[] {
-  // Naruszenia „koperty" (tożsamość sesji, single-writer, zamknięty dzień) unieważniają
-  // sens dalszych sprawdzeń — zwracamy je same, żeby pilot dostał JEDEN konkretny powód.
+  // TWARDE naruszenia „koperty" (tożsamość sesji, single-writer, zdany samolot)
+  // unieważniają sens dalszych sprawdzeń — zwracamy je same, żeby pilot dostał JEDEN
+  // konkretny powód, a nie listę następstw.
+  //
+  // Warunek pyta o `severity`, nie o długość listy, i to jest istotne: od 2026-08-07
+  // koperta produkuje też OSTRZEŻENIA (kolizje administratora, `ADMIN_EDIT_*`).
+  // Skrót „cokolwiek w kopercie → wracaj" sprawiłby, że jedno miękkie ostrzeżenie
+  // wycina komplet reguł per typ — administrator zapisałby wtedy pusty wpis ręczny
+  // albo korektę z czasem z przyszłości bez jednego sprzeciwu.
   const envelope = checkEnvelope(state, candidate, authority);
-  if (envelope.length > 0) return envelope;
+  if (envelope.some((v) => v.severity === 'error')) return envelope;
 
-  return [...checkClocks(candidate), ...checkByType(state, candidate, limits)];
+  return [...envelope, ...checkClocks(candidate), ...checkByType(state, candidate, limits)];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -185,36 +254,120 @@ function checkEnvelope(
 
   if (state.closed) {
     if (candidate.type === 'day_close') {
-      v.push(error('DAY_ALREADY_CLOSED', 'Dzień jest już zamknięty.'));
+      v.push(error('DAY_ALREADY_CLOSED', 'Samolot jest już zdany.'));
     } else if (!CORRECTION_EVENT_TYPES.includes(candidate.type)) {
       v.push(
         error(
           'DAY_CLOSED',
-          'Dzień jest zamknięty — po zamknięciu można dopisać wyłącznie korektę (wpis ręczny).',
+          'Samolot jest zdany — potem można dopisać wyłącznie korektę (wpis ręczny).',
           { type: candidate.type },
-        ),
-      );
-    } else if (
-      // JEDYNA gałąź w całym pliku, która pyta o uprawnienie zapisu. Komunikat mówił
-      // „korektę wprowadza administrator" na długo zanim administrator miał czym ją
-      // wprowadzić — ten warunek wreszcie daje regule adresata, zamiast robić z niej
-      // ślepy zaułek. Reszta reguł (tożsamość sesji, single-writer, zamknięty dzień,
-      // gwardie per typ) obowiązuje administratora TAK SAMO: korekta z panelu to nadal
-      // zdarzenie w rejestrze, a nie zapis „obok" domeny.
-      authority === 'pilot' &&
-      state.closedAt != null &&
-      eventTime(candidate) - state.closedAt > CORRECTION_WINDOW_MS
-    ) {
-      v.push(
-        error(
-          'CORRECTION_WINDOW_EXPIRED',
-          'Minęło 24 h od zamknięcia dnia — korektę wprowadza administrator.',
         ),
       );
     }
   }
 
+  v.push(...checkCorrectionWindow(state, candidate, authority));
+
   return v;
+}
+
+/**
+ * Okno samodzielnej korekty — JEDYNE miejsce w tym pliku, które pyta o uprawnienie.
+ *
+ * Dwie zmiany względem modelu sprzed 2026-08-06:
+ *
+ * 1. **Okno kotwiczy się we WZLOCIE, nie w zamknięciu dnia** (§3.6a). Każdy wzlot ma
+ *    własne 24 h liczone od jego potwierdzenia — a gdy pilot go nie potwierdził,
+ *    awaryjnie od wyłączenia silnika. Bez tej kotwicy awaryjnej niepotwierdzenie
+ *    dawałoby bezterminowe prawo zapisu, a jest to stan legalny i częsty.
+ *
+ * 2. **Administrator nie jest już NIGDY blokowany** (decyzja użytkownika 2026-08-07,
+ *    zastępuje bramkę `400 day_open`). Powód: po przebudowie brak `day_close` przestał
+ *    znaczyć „dzień trwa" — zdanie samolotu jest opcjonalne, więc sesje sprzed tygodnia
+ *    też go nie mają. Bramka odmawiałaby korekty w większości przypadków, w których
+ *    jest potrzebna. Zamiast blokady administrator dostaje **jasne ostrzeżenie**, gdy
+ *    wchodzi w kolizję z pilotem, i sam decyduje.
+ */
+function checkCorrectionWindow(
+  state: SessionState,
+  candidate: Event,
+  authority: WriteAuthority,
+): RuleViolation[] {
+  if (!CORRECTION_EVENT_TYPES.includes(candidate.type)) return [];
+
+  const now = eventTime(candidate);
+
+  if (authority === 'administrative') {
+    const v: RuleViolation[] = [];
+    // Kolizja 1: pilot nadal prowadzi sesję i może dopisywać zdarzenia. Jego paczka
+    // dosłana po synchronizacji trafi do tego samego strumienia.
+    if (!state.closed) {
+      v.push(
+        warning(
+          'ADMIN_EDIT_SESSION_ACTIVE',
+          'Pilot nadal prowadzi tę sesję — może dopisać własne zdarzenia po synchronizacji.',
+        ),
+      );
+    }
+    // Kolizja 2: okno pilota jeszcze trwa, więc obie strony mogą poprawiać naraz.
+    const target = targetLeg(state, candidate);
+    if (target != null && legWindowOpen(target, now)) {
+      v.push(
+        warning(
+          'ADMIN_EDIT_PILOT_WINDOW_OPEN',
+          `Pilot może jeszcze poprawić ten wzlot samodzielnie (okno 24 h wzlotu ${target.index} trwa).`,
+          { legIndex: target.index },
+        ),
+      );
+    }
+    return v;
+  }
+
+  // Pilot: okno TEGO wzlotu, do którego należy korygowane zdarzenie.
+  const target = targetLeg(state, candidate);
+  if (target == null) return [];
+  if (legWindowOpen(target, now)) return [];
+  return [
+    error(
+      'CORRECTION_WINDOW_EXPIRED',
+      `Minęło 24 h od zamknięcia wzlotu ${target.index} — tę poprawkę wprowadzi administrator.`,
+      { legIndex: target.index },
+    ),
+  ];
+}
+
+/** Kotwica okna wzlotu: potwierdzenie, a gdy go nie ma — wyłączenie silnika. */
+function legWindowOpen(leg: Leg, now: EpochMillis): boolean {
+  if (leg.stoppedAt == null) return true; // wzlot trwa — okno jeszcze się nie zaczęło
+  const anchoredAt = leg.confirmedAt ?? leg.stoppedAt;
+  return now - anchoredAt <= CORRECTION_WINDOW_MS;
+}
+
+/**
+ * Wzlot, którego dotyczy korekta.
+ *
+ * Dla `event_correction` — wzlot zawierający czas korygowanego zdarzenia (stąd czas
+ * w `eventIndex`). Dla `manual_log_entry` — wzlot zawierający wpisany czas; wpis, który
+ * nie mieści się w żadnym wzlocie, dokłada NOWY fakt zamiast poprawiać istniejący,
+ * więc nie podlega oknu (`null`).
+ */
+function targetLeg(state: SessionState, candidate: Event): Leg | null {
+  const at = correctionTargetTime(state, candidate);
+  if (at == null) return null;
+  return (
+    state.legs.find((l) => l.stoppedAt != null && at >= l.startedAt && at <= l.stoppedAt) ?? null
+  );
+}
+
+function correctionTargetTime(state: SessionState, candidate: Event): EpochMillis | null {
+  if (candidate.type === 'event_correction') {
+    return state.eventIndex[candidate.payload.targetUuid]?.at ?? null;
+  }
+  if (candidate.type === 'manual_log_entry') {
+    const p = candidate.payload;
+    return p.offBlock ?? p.takeoff ?? p.landing ?? p.onBlock ?? null;
+  }
+  return null;
 }
 
 /** Rozjazd zegarów device↔GPS (§4.5 CLOCK_DRIFT) — miękko: zapisujemy i sygnalizujemy. */
@@ -434,7 +587,7 @@ function checkByType(
 
     case 'event_correction': {
       const p = candidate.payload;
-      const targetType = state.eventIndex[p.targetUuid];
+      const targetType = state.eventIndex[p.targetUuid]?.type;
 
       if (targetType == null) {
         // Cel spoza tej sesji (albo literówka w uuid) — poprawka wisiałaby w próżni,

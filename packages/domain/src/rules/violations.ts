@@ -77,6 +77,9 @@ export type ViolationCode =
   | 'CORRECTION_TARGET_NOT_FOUND'
   | 'CORRECTION_TARGET_NOT_ALLOWED'
   | 'CORRECTION_TIME_IN_FUTURE'
+  // ── korekta administracyjna: OSTRZEŻENIA, nigdy blokada (decyzja 2026-08-07) ──
+  | 'ADMIN_EDIT_SESSION_ACTIVE'
+  | 'ADMIN_EDIT_PILOT_WINDOW_OPEN'
   // ── zegary ─────────────────────────────────────────────────────────────────
   | 'CLOCK_DRIFT';
 

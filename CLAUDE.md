@@ -38,8 +38,14 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     reguła „służba ⊇ suma wzlotów"); `declaredStart/End` obok, żeby UI umiało napisać
     „poprawione"; `declarationNarrowsStart/End` na ostrzeżenie. Przynależność wzlotu
     do doby wyznacza czas URUCHOMIENIA silnika, nie zamknięcia.
-  - **B3 przed nami**: przewiązanie okna korekty z `day_close` na `leg_close`
-    (`checkAppend`, `CORRECTION_EVENT_TYPES`, `WriteAuthority`, bramka `day_open`).
+  - **B3 ✅** okno korekty kotwiczy się we WZLOCIE (`leg_close`, awaryjnie `engine_stop`),
+    osobno dla każdego; `eventIndex` niesie `{type, at}`, żeby regułę dało się przypisać
+    do konkretnego wzlotu. **Administrator NIE JEST NIGDY BLOKOWANY** (decyzja 2026-08-07)
+    — przy kolizji dostaje ostrzeżenia `ADMIN_EDIT_SESSION_ACTIVE` /
+    `ADMIN_EDIT_PILOT_WINDOW_OPEN`. Twarde reguły są w obu trybach IDENTYCZNE bez wyjątku;
+    pilnuje tego `writeAuthority.test.ts` i to on złapał błąd, w którym miękkie
+    ostrzeżenie w „kopercie" wycinało komplet reguł per typ.
+    **Do etapu D zostaje bramka `400 day_open` w panelu** — domena jej już nie egzekwuje.
   - **B4**: `consumption/intervals.ts` uczy się `leg_close` (ryzyko z §3.6b).
 - **Etap C** `app/` (ekrany 1:1 z nowych mockupów), **etap D** serwer + panel.
 

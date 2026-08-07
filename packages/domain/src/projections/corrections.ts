@@ -108,19 +108,33 @@ export function applyCorrections(events: readonly Event[]): Event[] {
   return out;
 }
 
+/** Wpis indeksu celów korekty: co to za zdarzenie i KIEDY zaszło. */
+export interface IndexedEvent {
+  type: Event['type'];
+  /**
+   * Czas zdarzenia (GPS → fallback zegar telefonu), z SUROWEGO strumienia.
+   *
+   * Potrzebny regułom, żeby ustalić, DO KTÓREGO WZLOTU należy korygowane zdarzenie —
+   * od tego zależy, czy okno 24 h tego wzlotu jeszcze trwa (§3.6a: każdy wzlot ma
+   * własne okno). Bez czasu reguła musiałaby pytać o okno zagregowane, czyli pozwalać
+   * poprawiać wzlot wygasły, dopóki jakikolwiek inny jest otwarty.
+   */
+  at: EpochMillis;
+}
+
 /**
- * Indeks zdarzeń KORYGOWALNYCH: uuid → typ. Buduje go projekcja, a reguły używają
- * do walidacji celu korekty — `checkAppend` dostaje stan, nie surowy strumień.
+ * Indeks zdarzeń KORYGOWALNYCH: uuid → typ i czas. Buduje go projekcja, a reguły
+ * używają do walidacji celu korekty — `checkAppend` dostaje stan, nie surowy strumień.
  *
  * Obejmuje też zdarzenia już unieważnione: ponowna korekta unieważnionego jest legalna
  * (patrz „ostatnia wygrywa" wyżej). Nie obejmuje samych korekt — poprawia się fakt,
  * nie poprawkę; kolejna korekta celu po prostu zastępuje poprzednią.
  */
-export function buildEventIndex(events: readonly Event[]): Record<string, Event['type']> {
-  const index: Record<string, Event['type']> = {};
+export function buildEventIndex(events: readonly Event[]): Record<string, IndexedEvent> {
+  const index: Record<string, IndexedEvent> = {};
   for (const event of events) {
     if (event.type === 'event_correction') continue;
-    index[event.uuid] = event.type;
+    index[event.uuid] = { type: event.type, at: event.gpsTime ?? event.deviceTime };
   }
   return index;
 }

@@ -87,8 +87,11 @@ describe('historia dni (ekran 12)', () => {
       { k: 'Duty', v: '8:45' },
       { k: 'Skoczków', v: '4' },
     ]);
-    expect(day.deadline).toBe('Korekta do 23 CZE 16:45');
-    expect(day.remaining).toBe('zostało 23 h 04 min');
+    // §3.6a: okno kotwiczy się w WZLOCIE, nie w zdaniu samolotu. Cykl kończy się
+    // o 10:34, więc termin to 23 CZE 10:34 — a nie 16:45, kiedy pilot oddał maszynę.
+    // Poprawiamy DANE LOTU, a te powstały o 10:34.
+    expect(day.deadline).toBe('Korekta do 23 CZE 10:34');
+    expect(day.remaining).toBe('zostało 16 h 53 min');
   });
 
   it('po oknie 24 h dzień przechodzi do „Zamknięte"', async () => {

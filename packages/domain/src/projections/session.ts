@@ -25,7 +25,7 @@ import type {
   MhFormat,
   OperationType,
 } from '../events';
-import { applyCorrections, buildEventIndex } from './corrections';
+import { applyCorrections, buildEventIndex, type IndexedEvent } from './corrections';
 
 /**
  * WZLOT — cykl pracy silnika (engine_start → engine_stop) wraz z jego potwierdzeniem.
@@ -201,7 +201,7 @@ export interface SessionState {
    * korekt. Reguły walidują nim cel `event_correction`; obejmuje też zdarzenia już
    * unieważnione, bo ponowna korekta unieważnionego jest legalna („ostatnia wygrywa").
    */
-  eventIndex: Record<string, EventType>;
+  eventIndex: Record<string, IndexedEvent>;
   lastEventAt: EpochMillis | null;
 }
 

@@ -410,18 +410,23 @@ describe('okno korekty po zamknięciu dnia (24 h)', () => {
     expect(hard(check(closed(), late))).toEqual(['CORRECTION_WINDOW_EXPIRED']);
   });
 
-  it('correctionWindow liczy pozostały czas', () => {
+  it('correctionWindow liczy pozostały czas OD WZLOTU, nie od zdania samolotu', () => {
+    // §3.6a: kotwicą jest wzlot. Cykl kończy się o min(154), samolot jest zdawany
+    // o min(300) — okno biegnie od wcześniejszej z tych chwil, bo dotyczy danych lotu.
+    const LEG_END = min(154);
     const state = projectSession(closed());
-    const open = correctionWindow(state, min(300) + 3_600_000);
-    expect(open.dayClosed).toBe(true);
+
+    const open = correctionWindow(state, LEG_END + 3_600_000);
+    expect(open.hasClosedLeg).toBe(true);
     expect(open.open).toBe(true);
     expect(open.remainingMs).toBe(CORRECTION_WINDOW_MS - 3_600_000);
+    expect(open.openLegCount).toBe(1);
 
-    const expired = correctionWindow(state, min(300) + CORRECTION_WINDOW_MS + 1);
+    const expired = correctionWindow(state, LEG_END + CORRECTION_WINDOW_MS + 1);
     expect(expired.open).toBe(false);
     expect(expired.remainingMs).toBe(0);
 
-    // Dzień otwarty: korekta zawsze dozwolona.
+    // Wzlot świeżo zamknięty: okno dopiero ruszyło, korekta oczywiście dozwolona.
     expect(correctionWindow(projectSession(afterCycle()), min(200)).open).toBe(true);
   });
 });

@@ -14,9 +14,16 @@
 > 1. **`claim_time` niesie `dutyStart`** (§7.2, §7.5) — po zmianie będzie `null`; decyzja
 >    2026-08-07: `claim_time` = czas `session_claim`.
 > 2. **Okno korekty od `day_close`** (§6.2) — kotwiczy się teraz w zamknięciu WZLOTU.
-> 3. **Bramka `400 day_open`** (§6.5) — „brak `day_close` = dzień trwa" przestaje być prawdą,
->    bo zamknięcie dnia jest opcjonalne; administrator straciłby korektę tam, gdzie jej
->    najbardziej potrzeba.
+> 3. **Bramka `400 day_open`** (§6.5) — **ROZSTRZYGNIĘTE 2026-08-07: bramka ZNIKA.**
+>    „Brak `day_close` = dzień trwa" przestało być prawdą (zdanie samolotu jest opcjonalne),
+>    więc bramka odmawiałaby korekty w większości przypadków, w których jest potrzebna.
+>    Decyzja użytkownika: **administrator może edytować ZAWSZE**, a przy kolizji dostaje
+>    jasne ostrzeżenie i sam decyduje. Domena już tego nie egzekwuje (etap B3): zamiast
+>    błędu produkuje ostrzeżenia `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi sesję)
+>    i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno pilota jeszcze trwa).
+>    **Do zrobienia w etapie D:** usunąć `DayStillOpen` / `reason: 'day_open'` z komendy
+>    i query korekt, przestać zwracać `400 day_open` w trasach, a w panelu pokazać te dwa
+>    ostrzeżenia jako baner nad formularzem korekty zamiast komunikatu o odmowie.
 > 4. **Interwały paliwowe** (§7.7) — lista źródeł odczytu nie zna `leg_close` ani zdania
 >    samolotu; patrz `_main.md.txt` §3.6b.
 > Zakres: `server/` i `packages/domain` — czyli to, co panel konsumuje.
