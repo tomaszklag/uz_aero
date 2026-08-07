@@ -1,42 +1,86 @@
 /**
- * UZ Aero (dane demo) — SCENARIUSZ TRZECH TYGODNI KLUBU.
+ * UZ Aero (dane demo) — SCENARIUSZ CZTERECH TYGODNI KLUBU.
  *
  * Czysta funkcja `buildScenario(now)` → paczki zdarzeń w kolejności wysyłki + akcje
  * administratora do wykonania po nich. Zero I/O: ten sam scenariusz jedzie w teście
- * (PGlite przez `app.inject`) i w skrypcie (`scripts/seedDemo.ts`, prawdziwy HTTP).
+ * (PGlite przez prawdziwe gniazdo) i w skrypcie (`scripts/seedDemo.ts`, HTTP).
  *
- * ══ CO TEN SCENARIUSZ MA UDOWODNIĆ ══
- * Dane demo mają być NIEWYGODNE, bo panel powstał do obsługi rzeczy niewygodnych.
- * Ładny miesiąc zgodnych łańcuchów MH pokazałby wyłącznie, że tabele się renderują.
- * Dlatego w scenariuszu siedzi po jednym egzemplarzu każdego typu flagi z §4.5, dzień
- * bez karty arkusza, doba z dwiema zmianami w jednej karcie, korekta po oknie 24 h
- * i konto odcięte od systemu.
+ * ══ PROPORCJE: NAJPIERW NORMALNY KLUB, PATOLOGIE JAKO MNIEJSZOŚĆ ══
+ * Poprzednia wersja tego pliku była ZBIOREM AWARII: po jednym egzemplarzu każdej flagi
+ * i prawie nic poza tym, więc panel pokazywał klub, w którym wszystko jest zepsute.
+ * To uczy złej rzeczy — administrator, który widzi skrzynkę pełną zawsze, przestaje ją
+ * czytać, a wrażenie „u nas ciągle coś nie gra" bierze się z danych demo, nie z lotów.
  *
- * ┌ Flaga / stan ──────────┬ Gdzie ──────────────────┬ Po co ────────────────────────┐
- * │ mh_gap                 │ SP-AXA, D−13            │ A03: skrzynka, nieblokująca   │
- * │ mh_regression          │ SP-ANK, D−14            │ A03 + A02a: cofnięty licznik  │
- * │ fuel_mismatch          │ SP-KWA, D−16            │ A03: tolerancja z pojemności  │
- * │ clock_drift            │ SP-FGK, D−6             │ A04: rozjazd zegara telefonu  │
- * │ aircraft_overlap (open) │ SP-KWA, D−5 × D−4       │ A03 blokuje + A05 „brak karty"│
- * │ aircraft_overlap (res.) │ SP-ANK, D−9 × D−8       │ A03a: rozwiązanie → 2 karty   │
- * │ doba z dwiema zmianami │ SP-AXA, D−3 (2 zmiany)  │ A05: 1 karta, rewizje 1 i 2   │
- * │ rewizja 2 w dzienniku  │ SP-FGK, D−15 (ponów)    │ A05: 2 wiersze, 1 karta       │
- * │ korekta po 24 h        │ SP-AXA, D−6 (void drop) │ A02b + A04: przekreślony wpis │
- * │ dzień otwarty DZIŚ     │ SP-FGK, KRZ             │ A01 + telefon: przejęcie PIC  │
- * │ konto nieaktywne       │ JSE                     │ A06 + 00-login: odmowa        │
- * └────────────────────────┴─────────────────────────┴───────────────────────────────┘
+ * Dziś proporcja jest odwrotna: **50 sesji, z czego 6 niesie flagę** (12%), a reszta to
+ * zwykłe dni klubu — skoki, egzaminy, przeloty, próby silnika po obsłudze. Po jednym
+ * egzemplarzu KAŻDEGO typu flagi zostaje, bo na nich stoją ekrany A03/A03a/A05 i bez
+ * nich seed „cicho degraduje" do panelu, w którym nic nie ma. Wyjątkiem są nakładki
+ * MASZYNY: są DWIE, bo A03a pokazuje flagę ROZWIĄZANĄ, a A05 wiersz „brak karty" pod
+ * flagą wciąż OTWARTĄ — jeden egzemplarz nie może być jednocześnie w obu stanach.
+ *
+ * Nowy model (§3.6a) w ogóle na to pozwolił: przy „jeden samolot = jeden dzień" tło
+ * z krótkich sesji nie istniało, bo każda sesja zajmowała całą dobę maszyny.
+ *
+ * ┌ Flaga / stan ───────────┬ Gdzie ──────────────────┬ Po co ────────────────────────┐
+ * │ mh_gap                  │ SP-AXA, D−16 (AKO)      │ A03: skrzynka, nieblokująca   │
+ * │ mh_regression           │ SP-ANK, D−18 (JSE)      │ A03 + A02a: cofnięty licznik  │
+ * │ fuel_mismatch           │ SP-KWA, D−20 (PWI)      │ A03: tolerancja z pojemności  │
+ * │ clock_drift             │ SP-FGK, D−13 (JSE)      │ A04: rozjazd zegara telefonu  │
+ * │ aircraft_overlap (open) │ SP-KWA, D−7 × D−6       │ A03 blokuje + A05 „brak karty"│
+ * │ aircraft_overlap (res.) │ SP-ANK, D−12 × D−11     │ A03a: rozwiązanie → 2 karty   │
+ * │ pilot_overlap           │ AKO: SP-KWA D−7 + ANK   │ A03: grafik, arkusza NIE tyka │
+ * │ doba z dwiema zmianami  │ SP-AXA D−18 i D−4       │ A05: 1 karta, rewizje 1 i 2   │
+ * │ zdanie bez wzlotu (09C) │ SP-FGK D−25, SP-KWA D−9 │ A02a: powód, po co maszyna    │
+ * │ rewizja 2 w dzienniku   │ SP-FGK, D−15 (ponów)    │ A05: 2 wiersze, 1 karta       │
+ * │ korekta po 24 h         │ SP-AXA, D−13 (void drop)│ A02b + A04: przekreślony wpis │
+ * │ zetknięcie sesji        │ KRZ D−2: FGK → AXA      │ NIE jest nakładką (§4.7)      │
+ * │ sesja W TOKU DZIŚ       │ SP-FGK, KRZ             │ A01 + telefon: przejęcie PIC  │
+ * │ konto nieaktywne        │ JSE                     │ A06 + 00-login: odmowa        │
+ * └─────────────────────────┴─────────────────────────┴───────────────────────────────┘
+ *
+ * ══ MATERIAŁ DO KALIBRACJI ANALITYKI (§3.6b — to zadanie ZAMYKA otwarte ryzyko) ══
+ * Progów `consumption/policy.ts` nie da się nastroić na danych, których nie ma. Ten
+ * scenariusz produkuje CELOWO cztery style pracy z ekranem 09 (`ConfirmStyle`), bo
+ * to od nich zależy, ile interwałów paliwowych powstanie z jednej sesji:
+ *
+ *   `careful` — odczyt przy KAŻDYM wzlocie      → tyle interwałów, ile wzlotów (~32 min)
+ *   `mixed`   — odczyt co trzeci wzlot i ostatni → interwały 1,5–2 h
+ *   `quick`   — potwierdzenie BEZ odczytu        → JEDEN interwał na całą sesję
+ *   `none`    — „Potwierdzę później", zero 09    → JEDEN interwał, wzloty niepotwierdzone
+ *
+ * `careful` w dniu skokowym daje interwały tuż nad progiem `MIN_INTERVAL_ENGINE_MS`
+ * (30 min), a `quick`/`none` — dokładnie ten przypadek z §3.6b, w którym cała sesja jest
+ * jednym odcinkiem. Do tego dochodzą **próby silnika bez lotu** (operacja `techniczny`):
+ * jedyne obserwacje, w których cały czas pracy silnika przypada na ziemię, więc to one
+ * rozdzielają stawki ziemia/lot. **Progów tu NIE stroimy** — od tego jest
+ * `scripts/consumptionReplay.ts` na tych danych.
  *
  * ══ DLACZEGO NAKŁADKI WYMAGAJĄ DWÓCH PACZEK ══
  * `aircraft_overlap` powstaje, gdy w chwili liczenia flag samolot ma WIĘCEJ NIŻ JEDNĄ
- * niezamkniętą sesję (`domain/mhChain.ts`). Dzień wysłany jedną paczką razem z `day_close`
- * jest w tej chwili już zamknięty, więc nakładki nigdy by nie zrobił. Dlatego dni
- * nakładające się jadą rozdzielone: najpierw otwarcie, potem reszta dnia — dokładnie
- * tak, jak robi to telefon synchronizujący w trakcie pracy.
+ * niezamkniętą sesję (`domain/mhChain.ts`). Sesja wysłana jedną paczką razem z `day_close`
+ * jest w tej chwili już zamknięta, więc nakładki nigdy by nie zrobiła. Dlatego sesje
+ * nakładające się jadą rozdzielone: najpierw przejęcie, potem reszta — dokładnie tak,
+ * jak robi to telefon synchronizujący w trakcie pracy.
+ *
+ * ══ CZEGO SCENARIUSZ PILNUJE, ŻEBY NIE ZROBIĆ ══
+ * `pilot_overlap` ma być JEDEN i ZAMIERZONY. Flaga powstaje z sesji jednego pilota
+ * nachodzących w czasie na RÓŻNYCH maszynach, a sesja niezamknięta nachodzi na wszystko,
+ * co ten pilot weźmie później. Stąd twarda reguła planu: **pilot, którego sesja zostaje
+ * otwarta (`leaveOpen`, `lateRelease`, `split`), nie siada do innej maszyny, dopóki ta
+ * sesja się nie domknie** — z jedynym wyjątkiem AKO po D−7, który jest właśnie tym
+ * zamierzonym egzemplarzem. Poprzednia wersja tej reguły nie miała i produkowała pięć
+ * nakładek grafiku, z czego cztery były wadą DANYCH, nie detektora.
  */
 
-import type { FlagType } from '@uzaero/domain';
+import type { FlagType, NoFlightReason } from '@uzaero/domain';
 
-import { dayEvents, type DemoDay, type DemoFlight, type WireEvent } from './dayStream.ts';
+import {
+  sessionStream,
+  type DemoLeg,
+  type DemoRefuel,
+  type DemoSession,
+  type WireEvent,
+} from './sessionStream.ts';
 
 /** Paczka `POST /events` — tyle, ile telefon wysyła jednym strzałem. */
 export interface DemoBatch {
@@ -89,12 +133,23 @@ export interface DemoScenario {
  * Pojemność i format MH muszą się zgadzać z seedem referencyjnym, bo tolerancja
  * `fuel_mismatch` liczy się z pojemności (`max(10 L, 5% capacity)`) — rozjazd tutaj
  * dałby scenariusz, który obiecuje flagę, a jej nie produkuje.
+ *
+ * ══ DWIE STAWKI, A NIE JEDNA — I TO JEST WARUNEK SENSU CAŁEJ ANALITYKI ══
+ * Model zużycia (`packages/domain/src/consumption/`) istnieje po to, żeby ROZDZIELIĆ
+ * palenie na ziemi od palenia w locie. Generator, który spala tyle samo w obu fazach,
+ * produkuje dane, w których tego podziału NIE MA — i model słusznie schodzi wtedy na
+ * jedną stawkę z powodem `collinear`. Pierwszy przebieg replaya po przebudowie pokazał
+ * dokładnie to (R² = 1.00, ±0%, jedna stawka `engine`), więc dane demo nie umiały
+ * odpowiedzieć na pytanie, dla którego ten model powstał.
+ *
+ * Stawki ziemi są rzędu jednej trzeciej lotu — tyle pali silnik na wolnych obrotach
+ * podczas kołowania i załadunku skoczków.
  */
 const FLEET = {
-  'SP-AXA': { capacityL: 330, mhFormat: 'hhmm', burnLPerH: 42 },
-  'SP-FGK': { capacityL: 330, mhFormat: 'hhmm', burnLPerH: 40 },
-  'SP-ANK': { capacityL: 1700, mhFormat: 'hhmm', burnLPerH: 135 },
-  'SP-KWA': { capacityL: 200, mhFormat: 'decimal', burnLPerH: 28 },
+  'SP-AXA': { capacityL: 330, mhFormat: 'hhmm', flightLPerH: 42, groundLPerH: 15 },
+  'SP-FGK': { capacityL: 330, mhFormat: 'hhmm', flightLPerH: 40, groundLPerH: 14 },
+  'SP-ANK': { capacityL: 1700, mhFormat: 'hhmm', flightLPerH: 135, groundLPerH: 45 },
+  'SP-KWA': { capacityL: 200, mhFormat: 'decimal', flightLPerH: 28, groundLPerH: 10 },
 } as const;
 
 type AircraftId = keyof typeof FLEET;
@@ -116,31 +171,112 @@ const CLIENTS = ['Skydive Kraków', 'AeroKlub Podhalański', 'Tandem Team', 'Fre
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Plan dni — jedna tabela, którą da się przeczytać w całości
+// Kształt wzlotu — profile czasowe per operacja
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Jak dzień jest wysyłany:
- *  • `full`      — jedna paczka z całym dniem (telefon zsynchronizował po wylądowaniu);
- *  • `split`     — otwarcie osobno, reszta osobno (tworzy nakładkę z dniem już otwartym);
- *  • `leaveOpen` — bez `day_close`, dzień zostaje otwarty NA STAŁE;
- *  • `lateClose` — dzień jedzie bez zamknięcia, a `day_close` dojeżdża spóźnioną paczką.
+ * Profil JEDNEGO wzlotu: minuty liczone od uruchomienia silnika + postój po jego
+ * wyłączeniu. Wszystko poza `stop` bywa `null` — wzlot bez lotu (próba silnika) ma
+ * wyłącznie parę `engine_start`/`engine_stop`.
  */
-type Delivery = 'full' | 'split' | 'leaveOpen' | 'lateClose';
+interface LegShape {
+  taxi: number | null;
+  takeoff: number | null;
+  landing: number | null;
+  stop: number;
+  /** Przerwa na ziemi do NASTĘPNEGO uruchomienia silnika (załadunek, zmiana ucznia). */
+  pause: number;
+}
 
-interface DayPlan {
+/**
+ * Wzlot skokowy Cessny: 3 min kołowania, wznoszenie na ~12 000 ft, zrzut, zniżanie
+ * i lądowanie po 24 min lotu, 3 min kołowania z powrotem. 32 min pracy silnika
+ * i 10 min na załadunek następnej ekipy — czyli cykl 42 min, jak na prawdziwym placu.
+ *
+ * Ta liczba nie jest ozdobna: 32 min to interwał paliwowy TUŻ NAD progiem
+ * `MIN_INTERVAL_ENGINE_MS` (30 min), więc dzień pilota `careful` jest dokładnie tym
+ * przypadkiem granicznym, o który pyta §3.6b.
+ */
+const JUMP_C182: LegShape = { taxi: 3, takeoff: 5, landing: 29, stop: 32, pause: 10 };
+
+/** An-2 wznosi się wolniej i wozi więcej ludzi — dłuższy wzlot, dłuższy załadunek. */
+const JUMP_AN2: LegShape = { taxi: 4, takeoff: 8, landing: 39, stop: 43, pause: 14 };
+
+const FERRY: LegShape = { taxi: 4, takeoff: 7, landing: 102, stop: 106, pause: 0 };
+const EXAM: LegShape = { taxi: 4, takeoff: 7, landing: 81, stop: 85, pause: 22 };
+const OTHER: LegShape = { taxi: 4, takeoff: 7, landing: 54, stop: 58, pause: 16 };
+
+/** Próba silnika po obsłudze — 42 min pracy BEZ ani jednego startu. */
+const GROUND_RUN: LegShape = { taxi: null, takeoff: null, landing: null, stop: 42, pause: 15 };
+
+/**
+ * Wzlot PRZERWANY na kołowaniu — 12 min pracy silnika i powrót na płytę.
+ *
+ * Jedyne źródło interwału KRÓTSZEGO niż `MIN_INTERVAL_ENGINE_MS` (30 min). Bez niego
+ * ten próg nie ma w danych demo czego odrzucić, więc replay nie umie odpowiedzieć, czy
+ * stoi w dobrym miejscu — a to jedno z pytań, dla których §3.6b został otwarty.
+ */
+const ABORTED: LegShape = { taxi: 3, takeoff: null, landing: null, stop: 12, pause: 18 };
+/** Oblot po próbie — krótki lot kontrolny. */
+const TEST_FLIGHT: LegShape = { taxi: 4, takeoff: 7, landing: 33, stop: 37, pause: 0 };
+
+/**
+ * Styl pracy pilota z ekranem 09 — od niego zależy, ile interwałów paliwowych powstanie.
+ *
+ * To nie jest ozdoba scenariusza, tylko jego najważniejszy wymiar: `leg_close` z odczytem
+ * ZAMYKA interwał, bez odczytu nie tworzy granicy w ogóle, a jego brak zostawia wzlot
+ * niepotwierdzony (§3.6). Cztery style dają analityce cztery różne kształty tej samej
+ * sesji — i dopiero na nich `consumptionReplay.ts` ma co kalibrować (§3.6b).
+ */
+type ConfirmStyle = 'careful' | 'mixed' | 'quick' | 'none';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan sesji — jedna tabela, którą da się przeczytać w całości
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Jak sesja jest wysyłana:
+ *  • `full`         — jedna paczka z całą sesją (telefon zsynchronizował po zdaniu);
+ *  • `split`        — przejęcie osobno, reszta osobno (tworzy nakładkę z maszyną,
+ *                     której poprzednia sesja jest niezamknięta);
+ *  • `leaveOpen`    — bez `day_close`, samolot zostaje zajęty NA STAŁE;
+ *  • `lateRelease`  — sesja jedzie bez zdania, a `day_close` dojeżdża spóźnioną paczką.
+ */
+type Delivery = 'full' | 'split' | 'leaveOpen' | 'lateRelease';
+
+interface SessionPlan {
   /** Ile dni przed „dziś" (UTC). */
   offset: number;
   aircraftId: AircraftId;
   picId: string;
   dualId: string | null;
-  operation: DemoDay['operation'];
+  operation: DemoSession['operation'];
   clientIndex: number | null;
-  /** Liczba wzlotów (`skoki`) albo 1 dla operacji z jednym lotem. */
+  /**
+   * Liczba wzlotów. `0` = sesja BEZ ANI JEDNEGO WZLOTU (ekran 09C) — samolot był zajęty,
+   * silnik nie ruszył, a `day_close` niesie powód.
+   */
   lifts: number;
-  /** Minuta pierwszego kołowania (od północy UTC). */
-  firstTaxiMin: number;
+  /**
+   * Minuta uruchomienia silnika pierwszego wzlotu (od północy UTC). `'handoff'` znaczy
+   * „przejęcie CO DO MINUTY po zdaniu poprzedniej maszyny przez tego samego pilota" —
+   * układ, który po §3.6a jest normalnym dniem, a NIE nakładką grafiku (§4.7). Wiersz
+   * z `'handoff'` musi stać bezpośrednio po wierszu tego samego pilota z tej samej doby.
+   */
+  firstEngineMin: number | 'handoff';
+  confirm: ConfirmStyle;
   delivery: Delivery;
+  /**
+   * Pierwszy wzlot PRZERWANY na kołowaniu (12 min pracy silnika, bez startu) — dopisany
+   * PRZED wzlotami z `lifts`, bo dzień toczy się dalej po powrocie na płytę.
+   */
+  abortFirstLeg?: true;
+  /** Powód zdania bez wzlotu — wypełniany dokładnie wtedy, gdy `lifts === 0` (09C). */
+  noFlightReason?: NoFlightReason;
+  /** Notatka pilota do dnia (issue #14). */
+  notes?: string;
+  /** Uwaga do OSTATNIEGO potwierdzonego wzlotu — pole `notes` w `leg_close`. */
+  legNote?: string;
   /** Celowy rozjazd odczytu MH względem przekazania (h) — źródło `mh_gap`/`mh_regression`. */
   mhAnomalyH?: number;
   /** Celowy rozjazd odczytu paliwa względem przekazania (L) — źródło `fuel_mismatch`. */
@@ -150,61 +286,102 @@ interface DayPlan {
 }
 
 /**
- * Trzy tygodnie klubu, chronologicznie (od najstarszego). Kolejność wierszy JEST
+ * Cztery tygodnie klubu, chronologicznie (od najstarszego). Kolejność wierszy JEST
  * kolejnością wysyłki — na niej stoi cały mechanizm nakładek, bo flagi liczą się
  * ze stanu świata w chwili przyjęcia paczki, a nie z dat w payloadzie.
+ *
+ * Wiersze tej samej doby stoją w kolejności GODZINOWEJ, bo w tej samej kolejności
+ * przesuwa się łańcuch liczników maszyny (dwie zmiany jednego samolotu w dobie są
+ * po §3.6a normą, nie wyjątkiem).
  */
-const PLAN: readonly DayPlan[] = [
-  { offset: 20, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 4, firstTaxiMin: 505, delivery: 'full' },
-  { offset: 20, aircraftId: 'SP-KWA', picId: 'TMK', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 1, firstTaxiMin: 600, delivery: 'full' },
-  { offset: 19, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 5, firstTaxiMin: 495, delivery: 'full' },
-  { offset: 19, aircraftId: 'SP-ANK', picId: 'AKO', dualId: 'KRZ', operation: 'skoki', clientIndex: 0, lifts: 3, firstTaxiMin: 540, delivery: 'full' },
-  { offset: 18, aircraftId: 'SP-FGK', picId: 'AKO', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstTaxiMin: 570, delivery: 'full' },
-  { offset: 17, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 2, lifts: 4, firstTaxiMin: 515, delivery: 'full' },
-  { offset: 16, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 3, firstTaxiMin: 530, delivery: 'full' },
+const PLAN: readonly SessionPlan[] = [
+  // ── Tydzień 1 ────────────────────────────────────────────────────────────────
+  { offset: 28, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 6, firstEngineMin: 505, confirm: 'careful', delivery: 'full' },
+  { offset: 28, aircraftId: 'SP-KWA', picId: 'TMK', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 2, firstEngineMin: 600, confirm: 'careful', delivery: 'full', notes: 'Po wymianie świec — próba na ziemi i oblot.' },
+  { offset: 27, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 8, firstEngineMin: 495, confirm: 'quick', delivery: 'full' },
+  { offset: 27, aircraftId: 'SP-ANK', picId: 'AKO', dualId: 'KRZ', operation: 'skoki', clientIndex: 0, lifts: 4, firstEngineMin: 540, confirm: 'mixed', delivery: 'full' },
+  { offset: 26, aircraftId: 'SP-FGK', picId: 'AKO', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstEngineMin: 570, confirm: 'careful', delivery: 'full' },
+  { offset: 26, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 2, lifts: 5, firstEngineMin: 500, confirm: 'none', delivery: 'full' },
+  // Pogoda zamknęła plac: maszyna była zajęta 1:22 i nikt nigdzie nie poleciał (09C).
+  { offset: 25, aircraftId: 'SP-FGK', picId: 'KRZ', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 0, firstEngineMin: 560, confirm: 'none', delivery: 'full', noFlightReason: 'weather' },
+  { offset: 24, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 7, firstEngineMin: 490, confirm: 'mixed', delivery: 'full' },
+  { offset: 24, aircraftId: 'SP-FGK', picId: 'JSE', dualId: null, operation: 'ferry', clientIndex: null, lifts: 1, firstEngineMin: 480, confirm: 'careful', delivery: 'full' },
+  { offset: 23, aircraftId: 'SP-AXA', picId: 'AKO', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 4, firstEngineMin: 520, confirm: 'quick', delivery: 'full' },
+  { offset: 23, aircraftId: 'SP-KWA', picId: 'KRZ', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 2, firstEngineMin: 615, confirm: 'careful', delivery: 'full' },
+  { offset: 22, aircraftId: 'SP-ANK', picId: 'PWI', dualId: 'JSE', operation: 'skoki', clientIndex: 3, lifts: 5, firstEngineMin: 545, confirm: 'mixed', delivery: 'full' },
+
+  // ── Tydzień 2 ────────────────────────────────────────────────────────────────
+  { offset: 21, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 9, firstEngineMin: 480, confirm: 'quick', delivery: 'full' },
+  { offset: 21, aircraftId: 'SP-FGK', picId: 'TMK', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstEngineMin: 600, confirm: 'careful', delivery: 'full' },
+  { offset: 20, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 2, lifts: 6, firstEngineMin: 505, confirm: 'careful', delivery: 'full' },
   // Paliwomierz o 45 L wyżej niż przekazanie — ktoś dolał poza aplikacją (tolerancja
   // SP-KWA = max(10 L, 5% × 200 L) = 10 L, więc flaga jest pewna).
-  { offset: 16, aircraftId: 'SP-KWA', picId: 'PWI', dualId: null, operation: 'inne', clientIndex: null, lifts: 1, firstTaxiMin: 615, delivery: 'full', fuelAnomalyL: 45 },
-  { offset: 15, aircraftId: 'SP-FGK', picId: 'TMK', dualId: null, operation: 'ferry', clientIndex: null, lifts: 1, firstTaxiMin: 480, delivery: 'full' },
+  { offset: 20, aircraftId: 'SP-KWA', picId: 'PWI', dualId: null, operation: 'inne', clientIndex: null, lifts: 1, firstEngineMin: 615, confirm: 'careful', delivery: 'full', fuelAnomalyL: 45 },
+  { offset: 19, aircraftId: 'SP-FGK', picId: 'AKO', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstEngineMin: 565, confirm: 'careful', delivery: 'full' },
+  { offset: 19, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 5, firstEngineMin: 495, confirm: 'none', delivery: 'full' },
   // Licznik cofnięty o 0.4 h — złe odczytanie zegara An-2 (tolerancja łańcucha 0.1 h).
-  { offset: 14, aircraftId: 'SP-ANK', picId: 'PWI', dualId: 'JSE', operation: 'skoki', clientIndex: 3, lifts: 3, firstTaxiMin: 555, delivery: 'full', mhAnomalyH: -0.4 },
-  { offset: 14, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 4, firstTaxiMin: 500, delivery: 'full' },
+  { offset: 18, aircraftId: 'SP-ANK', picId: 'JSE', dualId: 'AKO', operation: 'skoki', clientIndex: 2, lifts: 4, firstEngineMin: 550, confirm: 'mixed', delivery: 'full', mhAnomalyH: -0.4 },
+  // Doba SP-AXA z dwiema zmianami — po §3.6a zwykły dzień, nie wyjątek.
+  { offset: 18, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 4, firstEngineMin: 420, confirm: 'careful', delivery: 'full' },
+  { offset: 18, aircraftId: 'SP-AXA', picId: 'TMK', dualId: null, operation: 'inne', clientIndex: null, lifts: 2, firstEngineMin: 780, confirm: 'careful', delivery: 'full', notes: 'Loty zapoznawcze dla kandydatów.' },
+  { offset: 17, aircraftId: 'SP-FGK', picId: 'KRZ', dualId: null, operation: 'ferry', clientIndex: null, lifts: 1, firstEngineMin: 470, confirm: 'careful', delivery: 'full' },
   // Dziura 0.8 h w łańcuchu — ktoś poleciał bez aplikacji.
-  { offset: 13, aircraftId: 'SP-AXA', picId: 'AKO', dualId: null, operation: 'skoki', clientIndex: 2, lifts: 3, firstTaxiMin: 525, delivery: 'full', mhAnomalyH: 0.8 },
-  { offset: 12, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 5, firstTaxiMin: 490, delivery: 'full' },
-  { offset: 12, aircraftId: 'SP-KWA', picId: 'JSE', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 1, firstTaxiMin: 640, delivery: 'full' },
-  { offset: 11, aircraftId: 'SP-FGK', picId: 'KRZ', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstTaxiMin: 585, delivery: 'full' },
-  { offset: 10, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 4, firstTaxiMin: 510, delivery: 'full' },
-  // Telefon PWI padł w terenie: dzień jedzie bez zamknięcia, `day_close` dojedzie
-  // spóźnioną paczką dopiero po D−2 (patrz `LATE_CLOSE_AFTER_OFFSET`).
-  { offset: 9, aircraftId: 'SP-ANK', picId: 'PWI', dualId: 'KRZ', operation: 'skoki', clientIndex: 0, lifts: 3, firstTaxiMin: 545, delivery: 'lateClose' },
-  { offset: 9, aircraftId: 'SP-AXA', picId: 'AKO', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 3, firstTaxiMin: 520, delivery: 'full' },
-  // …a JSE bierze An-2 następnego dnia, gdy sesja PWI wciąż jest otwarta → nakładka.
-  { offset: 8, aircraftId: 'SP-ANK', picId: 'JSE', dualId: 'AKO', operation: 'skoki', clientIndex: 2, lifts: 4, firstTaxiMin: 535, delivery: 'split' },
-  { offset: 8, aircraftId: 'SP-KWA', picId: 'KRZ', dualId: null, operation: 'inne', clientIndex: null, lifts: 1, firstTaxiMin: 620, delivery: 'full' },
-  { offset: 7, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 5, firstTaxiMin: 495, delivery: 'full' },
+  { offset: 16, aircraftId: 'SP-AXA', picId: 'AKO', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 7, firstEngineMin: 500, confirm: 'quick', delivery: 'full', mhAnomalyH: 0.8 },
+  { offset: 15, aircraftId: 'SP-FGK', picId: 'TMK', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 2, firstEngineMin: 610, confirm: 'careful', delivery: 'full', legNote: 'Próba na ziemi bez uwag, oblot czysty.' },
+
+  // ── Tydzień 3 ────────────────────────────────────────────────────────────────
+  { offset: 14, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 8, firstEngineMin: 490, confirm: 'mixed', delivery: 'full' },
+  { offset: 14, aircraftId: 'SP-KWA', picId: 'JSE', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 2, firstEngineMin: 640, confirm: 'careful', delivery: 'full' },
   // Zegar telefonu spóźniony o ~6.7 min względem GPS (próg to 120 s).
-  { offset: 6, aircraftId: 'SP-FGK', picId: 'JSE', dualId: null, operation: 'ferry', clientIndex: null, lifts: 1, firstTaxiMin: 470, delivery: 'full', clockDriftMs: 402_000 },
-  // Dzień, w którym administrator unieważni jeden zrzut (korekta po oknie 24 h).
-  { offset: 6, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 4, firstTaxiMin: 505, delivery: 'full' },
-  // SP-KWA zostaje otwarty NA STAŁE — sesja porzucona przed wyłączeniem samolotu ze służby.
-  { offset: 5, aircraftId: 'SP-KWA', picId: 'AKO', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 1, firstTaxiMin: 610, delivery: 'leaveOpen' },
-  { offset: 5, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 2, lifts: 3, firstTaxiMin: 530, delivery: 'full' },
-  // …i nakładka, której NIKT nie rozwiąże: karta dnia PWI zostaje poza arkuszem.
-  { offset: 4, aircraftId: 'SP-KWA', picId: 'PWI', dualId: null, operation: 'inne', clientIndex: null, lifts: 1, firstTaxiMin: 600, delivery: 'split' },
-  { offset: 4, aircraftId: 'SP-ANK', picId: 'AKO', dualId: 'KRZ', operation: 'skoki', clientIndex: 1, lifts: 3, firstTaxiMin: 550, delivery: 'full' },
-  // Dwie zmiany na jednym samolocie tego samego dnia — obie zamknięte, JEDNA karta doby
-  // (§4.7): pierwsza daje rewizję 1, druga przebudowuje kartę do rewizji 2 z obiema w środku.
-  { offset: 3, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 3, firstTaxiMin: 420, delivery: 'full' },
-  { offset: 3, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 3, firstTaxiMin: 780, delivery: 'full' },
-  { offset: 2, aircraftId: 'SP-FGK', picId: 'TMK', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstTaxiMin: 560, delivery: 'full' },
-  { offset: 2, aircraftId: 'SP-AXA', picId: 'AKO', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 4, firstTaxiMin: 500, delivery: 'full' },
-  { offset: 1, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 2, lifts: 5, firstTaxiMin: 490, delivery: 'full' },
-  { offset: 1, aircraftId: 'SP-ANK', picId: 'KRZ', dualId: 'PWI', operation: 'skoki', clientIndex: 0, lifts: 3, firstTaxiMin: 540, delivery: 'full' },
+  { offset: 13, aircraftId: 'SP-FGK', picId: 'JSE', dualId: null, operation: 'ferry', clientIndex: null, lifts: 1, firstEngineMin: 470, confirm: 'careful', delivery: 'full', clockDriftMs: 402_000 },
+  // Sesja, z której administrator unieważni jeden zrzut (korekta po oknie 24 h).
+  { offset: 13, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 6, firstEngineMin: 505, confirm: 'careful', delivery: 'full' },
+  // Telefon PWI padł w terenie: sesja jedzie bez zdania, `day_close` dojedzie spóźnioną
+  // paczką dopiero po D−8 (patrz `LATE_RELEASE_AFTER_OFFSET`). PWI do tego czasu NIE
+  // siada do żadnej innej maszyny — inaczej dostalibyśmy nakładkę grafiku z wady danych.
+  { offset: 12, aircraftId: 'SP-ANK', picId: 'PWI', dualId: 'KRZ', operation: 'skoki', clientIndex: 1, lifts: 4, firstEngineMin: 545, confirm: 'mixed', delivery: 'lateRelease' },
+  { offset: 12, aircraftId: 'SP-AXA', picId: 'AKO', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 5, firstEngineMin: 500, confirm: 'quick', delivery: 'full' },
+  // …a JSE bierze An-2 następnego dnia, gdy sesja PWI wciąż jest otwarta → nakładka.
+  { offset: 11, aircraftId: 'SP-ANK', picId: 'JSE', dualId: 'AKO', operation: 'skoki', clientIndex: 2, lifts: 5, firstEngineMin: 535, confirm: 'mixed', delivery: 'split' },
+  { offset: 11, aircraftId: 'SP-KWA', picId: 'KRZ', dualId: null, operation: 'inne', clientIndex: null, lifts: 1, firstEngineMin: 620, confirm: 'careful', delivery: 'full' },
+  { offset: 10, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 7, firstEngineMin: 495, confirm: 'none', delivery: 'full' },
+  { offset: 10, aircraftId: 'SP-FGK', picId: 'AKO', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstEngineMin: 575, confirm: 'careful', delivery: 'full' },
+  // Pierwszy wzlot przerwany na kołowaniu (usterka radia) — jedyny interwał krótszy
+  // niż próg 30 min w całym scenariuszu.
+  { offset: 9, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 2, lifts: 5, firstEngineMin: 510, confirm: 'careful', delivery: 'full', abortFirstLeg: true, legNote: 'Pierwszy wzlot przerwany na kołowaniu — usterka radia.' },
+  // Usterka wykryta przy przeglądzie — maszyna zajęta, silnik nie ruszył (09C).
+  { offset: 9, aircraftId: 'SP-KWA', picId: 'TMK', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 0, firstEngineMin: 600, confirm: 'none', delivery: 'full', noFlightReason: 'malfunction' },
+  // Po tej paczce dojeżdża spóźnione zdanie An-2 (D−12).
+  { offset: 8, aircraftId: 'SP-FGK', picId: 'TMK', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstEngineMin: 560, confirm: 'careful', delivery: 'full' },
+
+  // ── Tydzień 4 ────────────────────────────────────────────────────────────────
+  { offset: 7, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 6, firstEngineMin: 500, confirm: 'mixed', delivery: 'full' },
+  // SP-KWA zostaje zajęty NA STAŁE — sesja porzucona przed wyłączeniem maszyny ze służby.
+  { offset: 7, aircraftId: 'SP-KWA', picId: 'AKO', dualId: null, operation: 'techniczny', clientIndex: null, lifts: 2, firstEngineMin: 610, confirm: 'careful', delivery: 'leaveOpen' },
+  // …i nakładka MASZYNY, której NIKT nie rozwiąże: karta doby PWI zostaje poza arkuszem.
+  { offset: 6, aircraftId: 'SP-KWA', picId: 'PWI', dualId: null, operation: 'inne', clientIndex: null, lifts: 1, firstEngineMin: 600, confirm: 'careful', delivery: 'split' },
+  { offset: 6, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 8, firstEngineMin: 490, confirm: 'quick', delivery: 'full' },
+  // JEDYNA zamierzona nakładka GRAFIKU: AKO nie zdała SP-KWA (D−7) i siada do An-2.
+  // Arkusza to nie dotyka — `pilot_overlap` nie jest bramką eksportu (§4.7).
+  { offset: 5, aircraftId: 'SP-ANK', picId: 'AKO', dualId: 'KRZ', operation: 'skoki', clientIndex: 1, lifts: 4, firstEngineMin: 550, confirm: 'mixed', delivery: 'full' },
+  // Doba SP-AXA z dwiema zmianami — JEDNA karta, rewizje 1 i 2 (§4.7).
+  { offset: 4, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 2, lifts: 4, firstEngineMin: 420, confirm: 'careful', delivery: 'full' },
+  { offset: 4, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 4, firstEngineMin: 780, confirm: 'quick', delivery: 'full' },
+  { offset: 3, aircraftId: 'SP-FGK', picId: 'KRZ', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstEngineMin: 560, confirm: 'careful', delivery: 'full' },
+  { offset: 3, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 5, firstEngineMin: 500, confirm: 'none', delivery: 'full' },
+  // Zetknięcie sesji CO DO MINUTY: KRZ zdaje SP-FGK i w tej samej minucie przejmuje
+  // SP-AXA. To jest normalny dzień po §3.6a i NIE MA prawa dać `pilot_overlap`.
+  { offset: 2, aircraftId: 'SP-FGK', picId: 'KRZ', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstEngineMin: 480, confirm: 'careful', delivery: 'full' },
+  { offset: 2, aircraftId: 'SP-AXA', picId: 'KRZ', dualId: null, operation: 'skoki', clientIndex: 3, lifts: 4, firstEngineMin: 'handoff', confirm: 'careful', delivery: 'full' },
+  { offset: 1, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 7, firstEngineMin: 490, confirm: 'mixed', delivery: 'full' },
+  { offset: 1, aircraftId: 'SP-ANK', picId: 'KRZ', dualId: 'PWI', operation: 'skoki', clientIndex: 2, lifts: 4, firstEngineMin: 540, confirm: 'careful', delivery: 'full' },
 ];
 
-/** Po tym dniu dojeżdża spóźnione `day_close` sesji z `delivery: 'lateClose'`. */
-const LATE_CLOSE_AFTER_OFFSET = 2;
+/** Po tej dobie dojeżdża spóźnione zdanie samolotu z `delivery: 'lateRelease'`. */
+const LATE_RELEASE_AFTER_OFFSET = 8;
+
+/** Ile paczek `POST /events` niesie samo przejęcie w trybie `split` (claim + preflight). */
+const CLAIM_ONLY_EVENTS = 2;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Budowa scenariusza
@@ -220,25 +397,41 @@ export function buildScenario(nowMs: number): DemoScenario {
   };
 
   const batches: DemoBatch[] = [];
-  /** Sesje z `lateClose` czekające na spóźnioną paczkę: uuid → zdarzenie `day_close`. */
-  const pendingLateClose: Array<{ picId: string; event: WireEvent }> = [];
-  /** Zdarzenia dnia, z którego administrator unieważni zrzut — potrzebny uuid celu. */
+  /** Sesje z `lateRelease` czekające na spóźnioną paczkę: uuid → zdarzenie `day_close`. */
+  const pendingLateRelease: Array<{ picId: string; event: WireEvent }> = [];
+  /** Sesja, z której administrator unieważni zrzut — potrzebny uuid celu. */
   let correctionTarget: { sessionUuid: string; targetUuid: string } | null = null;
+  /** Poprzedni wiersz razem z minutą zdania — wejście dla `firstEngineMin: 'handoff'`. */
+  let previous: { plan: SessionPlan; releaseMin: number | null } | null = null;
+  const seenUuids = new Set<string>();
 
   for (const [index, plan] of PLAN.entries()) {
-    const day = dayFrom(plan, today, ledger[plan.aircraftId], index);
-    const events = dayEvents(day);
+    const built = sessionFrom(plan, today, ledger[plan.aircraftId], index, previous);
+    const session = built.session;
+    const events = sessionStream(session);
     const device = `demo-${plan.picId.toLowerCase()}-01`;
 
-    // Łańcuch idzie dalej od PRZEKAZANIA (`day_close`), a nie od odczytu startowego —
-    // dokładnie jak w rzeczywistości: następny pilot zastaje to, co zostawił poprzedni.
-    if (day.finalReading != null) {
-      ledger[plan.aircraftId] = { mh: day.finalReading.mh, fuelL: day.finalReading.fuelL };
+    // Identyfikator sesji składa się z (samolot, doba, pilot) — czytelnie, ale to znaczy,
+    // że plan nie ma prawa posadzić tego samego pilota dwa razy na tej samej maszynie
+    // w tej samej dobie. Cicha kolizja zamieniłaby drugą sesję w duplikaty pierwszej.
+    if (seenUuids.has(session.sessionUuid)) {
+      throw new Error(`scenariusz demo: zduplikowany identyfikator sesji ${session.sessionUuid}`);
     }
+    seenUuids.add(session.sessionUuid);
 
-    if (plan.offset === 6 && plan.aircraftId === 'SP-AXA') {
-      const drop = events.find((e) => e.type === 'drop');
-      if (drop != null) correctionTarget = { sessionUuid: day.sessionUuid, targetUuid: drop.uuid };
+    // Łańcuch idzie dalej od STANU FIZYCZNEGO na koniec sesji, także wtedy, gdy nikt go
+    // nie zapisał (sesja porzucona) — następny pilot zastaje licznik takim, jaki jest,
+    // a nie takim, jaki został wpisany. Zaszumione odczyty przy wzlocie na łańcuch nie
+    // wpływają: inaczej co druga granica sesji dostawałaby `fuel_mismatch`.
+    ledger[plan.aircraftId] = built.endState;
+    previous = { plan, releaseMin: session.release?.atMin ?? null };
+
+    if (plan.offset === 13 && plan.aircraftId === 'SP-AXA') {
+      // Trzeci zrzut dnia — administrator unieważni go po oknie korekty.
+      const drops = events.filter((e) => e.type === 'drop');
+      if (drops[2] != null) {
+        correctionTarget = { sessionUuid: session.sessionUuid, targetUuid: drops[2].uuid };
+      }
     }
 
     switch (plan.delivery) {
@@ -248,75 +441,74 @@ export function buildScenario(nowMs: number): DemoScenario {
           picId: plan.picId,
           sourceDevice: device,
           events,
-          note: `${plan.aircraftId} · ${dayLabel(day.dayStartMs)} · ${plan.picId}${
-            plan.delivery === 'leaveOpen' ? ' (dzień zostaje OTWARTY)' : ''
+          note: `${plan.aircraftId} · ${dayLabel(session.dayStartMs)} · ${plan.picId}${
+            plan.delivery === 'leaveOpen' ? ' (samolot zostaje ZAJĘTY)' : ''
           }`,
         });
         break;
 
       case 'split': {
-        // Otwarcie osobno: w chwili tej paczki samolot ma już drugą niezamkniętą sesję,
-        // więc ingest wykrywa `aircraft_overlap`. Reszta dnia dojeżdża zaraz potem i jej
+        // Przejęcie osobno: w chwili tej paczki samolot ma już drugą niezamkniętą sesję,
+        // więc ingest wykrywa `aircraft_overlap`. Reszta sesji dojeżdża zaraz potem i jej
         // karta odbija się od otwartej flagi (§4.7).
-        const opening = events.slice(0, 3);
         batches.push({
           picId: plan.picId,
           sourceDevice: device,
-          events: opening,
-          note: `${plan.aircraftId} · ${dayLabel(day.dayStartMs)} · ${plan.picId} — otwarcie dnia na samolocie z niezamkniętą sesją (nakładka)`,
+          events: events.slice(0, CLAIM_ONLY_EVENTS),
+          note: `${plan.aircraftId} · ${dayLabel(session.dayStartMs)} · ${plan.picId} — przejęcie maszyny z niezamkniętą sesją (nakładka)`,
         });
         batches.push({
           picId: plan.picId,
           sourceDevice: device,
-          events: events.slice(3),
-          note: `${plan.aircraftId} · ${dayLabel(day.dayStartMs)} · ${plan.picId} — reszta dnia; karta zablokowana otwartą nakładką`,
+          events: events.slice(CLAIM_ONLY_EVENTS),
+          note: `${plan.aircraftId} · ${dayLabel(session.dayStartMs)} · ${plan.picId} — reszta sesji; karta zablokowana otwartą nakładką`,
         });
         break;
       }
 
-      case 'lateClose': {
+      case 'lateRelease': {
         batches.push({
           picId: plan.picId,
           sourceDevice: device,
           events: events.slice(0, -1),
-          note: `${plan.aircraftId} · ${dayLabel(day.dayStartMs)} · ${plan.picId} — dzień bez zamknięcia (telefon padł)`,
+          note: `${plan.aircraftId} · ${dayLabel(session.dayStartMs)} · ${plan.picId} — sesja bez zdania maszyny (telefon padł)`,
         });
-        pendingLateClose.push({ picId: plan.picId, event: events[events.length - 1]! });
+        pendingLateRelease.push({ picId: plan.picId, event: events[events.length - 1]! });
         break;
       }
     }
 
-    // Spóźnione zamknięcia wpuszczamy dopiero, gdy scenariusz dojdzie do umówionego dnia —
+    // Spóźnione zdania wpuszczamy dopiero, gdy scenariusz dojdzie do umówionej doby —
     // dzięki temu nakładka zdąży powstać i przez kilka dni realnie blokuje kartę.
-    if (plan.offset === LATE_CLOSE_AFTER_OFFSET && pendingLateClose.length > 0) {
-      for (const late of pendingLateClose.splice(0)) {
+    if (plan.offset === LATE_RELEASE_AFTER_OFFSET && pendingLateRelease.length > 0) {
+      for (const late of pendingLateRelease.splice(0)) {
         batches.push({
           picId: late.picId,
           sourceDevice: `demo-${late.picId.toLowerCase()}-01`,
           events: [late.event],
-          note: `spóźnione domknięcie dnia ${late.event.sessionUuid} — telefon wrócił do sieci`,
+          note: `spóźnione zdanie samolotu ${late.event.sessionUuid} — telefon wrócił do sieci`,
         });
       }
     }
   }
 
-  // Cokolwiek zostało (gdyby plan przestał zawierać dzień o umówionym offsecie) —
+  // Cokolwiek zostało (gdyby plan przestał zawierać dobę o umówionym offsecie) —
   // wysyłamy na końcu, żeby scenariusz nie gubił zdarzeń po cichu.
-  for (const late of pendingLateClose.splice(0)) {
+  for (const late of pendingLateRelease.splice(0)) {
     batches.push({
       picId: late.picId,
       sourceDevice: `demo-${late.picId.toLowerCase()}-01`,
       events: [late.event],
-      note: `spóźnione domknięcie dnia ${late.event.sessionUuid}`,
+      note: `spóźnione zdanie samolotu ${late.event.sessionUuid}`,
     });
   }
 
-  const openToday = openSessionToday(nowMs, ledger['SP-FGK']);
+  const openNow = sessionInProgress(nowMs, ledger['SP-FGK']);
   batches.push({
-    picId: openToday.picId,
-    sourceDevice: `demo-${openToday.picId.toLowerCase()}-01`,
-    events: dayEvents(openToday),
-    note: 'SP-FGK · DZIŚ · KRZ — dzień W TOKU (silnik pracuje, samolot zajęty)',
+    picId: openNow.picId,
+    sourceDevice: `demo-${openNow.picId.toLowerCase()}-01`,
+    events: sessionStream(openNow),
+    note: 'SP-FGK · DZIŚ · KRZ — sesja W TOKU (silnik pracuje, samolot zajęty)',
   });
 
   return {
@@ -327,17 +519,18 @@ export function buildScenario(nowMs: number): DemoScenario {
 }
 
 /**
- * Dzień otwarty W TEJ CHWILI — na nim stoi testowanie telefonu (ekran 02: samolot
+ * Sesja trwająca W TEJ CHWILI — na niej stoi testowanie telefonu (ekran 02: samolot
  * zajęty, przejęcie PIC) i karta „Samoloty w powietrzu" na pulpicie `A01`.
  *
- * Czasy liczymy WSTECZ od `now`, a nie od siatki godzin: dzień „od 08:00", odpalony
- * o 06:00 UTC, byłby dniem z przyszłości — a to jedyny rodzaj danych, którego rejestr
+ * Czasy liczymy WSTECZ od `now`, a nie od siatki godzin: sesja „od 08:00", odpalona
+ * o 06:00 UTC, byłaby sesją z przyszłości — a to jedyny rodzaj danych, którego rejestr
  * zdarzeń nie ma prawa dostać z seeda.
  */
-function openSessionToday(nowMs: number, opening: { mh: number; fuelL: number }): DemoDay {
+function sessionInProgress(nowMs: number, opening: { mh: number; fuelL: number }): DemoSession {
   const start = nowMs - 3 * 60 * 60 * 1000;
   const dayStartMs = midnightUtc(start);
-  const dutyStartMin = Math.floor((start - dayStartMs) / 60_000);
+  const claimMin = Math.floor((start - dayStartMs) / 60_000);
+  const engineStartMin = claimMin + 14;
 
   return {
     sessionUuid: `demo-fgk-${stamp(dayStartMs)}-krz`,
@@ -345,145 +538,264 @@ function openSessionToday(nowMs: number, opening: { mh: number; fuelL: number })
     picId: 'KRZ',
     dualId: null,
     dayStartMs,
-    dutyStartMin,
-    dutyEndMin: null,
-    engineStartMin: dutyStartMin + 40,
-    engineStopMin: null,
+    claimMin,
+    preflightMin: claimMin + 4,
     operation: 'egzamin',
     client: null,
+    notes: null,
     departureIcao: 'EPKK',
     arrivalIcao: null,
     mhFormat: FLEET['SP-FGK'].mhFormat,
     reading: { fuelL: opening.fuelL, mh: round2(opening.mh) },
-    finalReading: null,
-    flights: [
+    legs: [
       {
-        taxiMin: dutyStartMin + 46,
-        takeoffMin: dutyStartMin + 52,
-        landingMin: dutyStartMin + 129,
+        engineStartMin,
+        taxiMin: engineStartMin + 4,
+        takeoffMin: engineStartMin + 7,
+        // Silnik NADAL PRACUJE: wzlot bez lądowania i bez `engine_stop` to sesja w toku,
+        // a nie strumień z dziurą.
+        landingMin: null,
+        engineStopMin: null,
         drop: null,
+        close: null,
       },
     ],
-    refuel: null,
+    refuels: [],
+    release: null,
     clockDriftMs: 0,
   };
 }
 
-/** Wiersz planu + stan liczników → pełny opis dnia (czasy, paliwo, motogodziny). */
-function dayFrom(
-  plan: DayPlan,
+/**
+ * Wiersz planu + stan liczników → pełny opis sesji (wzloty, paliwo, motogodziny).
+ *
+ * Paliwo i motogodziny SYMULUJEMY wzlot po wzlocie i FAZA PO FAZIE, zamiast liczyć jedną
+ * deltą na całą sesję. Dwa powody, oba twarde:
+ *  • odczyt z `leg_close` musi być spójny z tym, ile maszyna faktycznie spaliła do tej
+ *    chwili, bo analityka liczy zużycie jako RÓŻNICĘ DWÓCH ODCZYTÓW;
+ *  • ziemia i lot muszą palić RÓŻNIE, inaczej dane nie niosą podziału, którego model
+ *    szuka, i regresja słusznie schodzi na jedną stawkę (`collinear`).
+ *
+ * Odczyty pilota mają szum ±2 L (`gaugeNoise`) i to jest decyzja, nie niechlujstwo:
+ * paliwomierz nie jest dokładniejszy, a zestaw danych z zerową resztą dawałby przedziały
+ * ufności ±0% i model, który wygląda na pewny wszystkiego. Progi kalibruje się przeciw
+ * błędowi pomiaru, więc dane bez błędu pomiaru nie kalibrują niczego. Szum dotyka
+ * WYŁĄCZNIE odczytów przy wzlocie — preflight i zdanie samolotu są ogniwami łańcucha MH
+ * (§4.5), a szum na nich produkowałby `fuel_mismatch` na każdej granicy sesji.
+ *
+ * Zwraca też stan FIZYCZNY na koniec sesji: to on, a nie zaszumiony odczyt, jest tym,
+ * co zastanie następny pilot.
+ */
+function sessionFrom(
+  plan: SessionPlan,
   today: number,
   opening: { mh: number; fuelL: number },
   seed: number,
-): DemoDay {
+  previous: { plan: SessionPlan; releaseMin: number | null } | null,
+): { session: DemoSession; endState: { mh: number; fuelL: number } } {
   const config = FLEET[plan.aircraftId];
   const dayStartMs = today - plan.offset * DAY_MS;
-  const flights = planFlights(plan, seed);
+  const shapes = legShapes(plan);
 
-  const engineStartMin = flights[0]!.taxiMin - 4;
-  const engineStopMin = flights[flights.length - 1]!.landingMin + 5;
-  const engineHours = (engineStopMin - engineStartMin) / 60;
+  const firstEngineMin = resolveFirstEngineMin(plan, previous);
+  const claimMin = firstEngineMin - 14;
 
   const fuelStartL = Math.round(opening.fuelL + (plan.fuelAnomalyL ?? 0));
   const mhStart = round2(opening.mh + (plan.mhAnomalyH ?? 0));
-  const burnL = engineHours * config.burnLPerH;
 
-  const refuel = planRefuel({
-    capacityL: config.capacityL,
-    burnLPerH: config.burnLPerH,
-    fuelStartL,
-    burnL,
-    engineStartMin,
-    firstLandingMin: flights[0]!.landingMin,
-  });
+  let fuelL = fuelStartL;
+  let mh = mhStart;
+  const legs: DemoLeg[] = [];
+  const refuels: DemoRefuel[] = [];
+  let engineStartMin = firstEngineMin;
 
-  const fuelEndL = Math.max(
-    10,
-    Math.round(fuelStartL - burnL + (refuel?.addedL ?? 0)),
-  );
-  const closed = plan.delivery !== 'leaveOpen';
+  for (const [index, shape] of shapes.entries()) {
+    const engineHours = shape.stop / 60;
+    // Czas LOTU wzlotu (0 dla próby silnika) i reszta, czyli ziemia. Ten podział jest
+    // jedyną rzeczą, dzięki której model ma co rozdzielać.
+    const flightHours =
+      shape.takeoff == null || shape.landing == null ? 0 : (shape.landing - shape.takeoff) / 60;
+    const burnL =
+      flightHours * config.flightLPerH + (engineHours - flightHours) * config.groundLPerH;
+
+    // Tankowanie WYŁĄCZNIE wtedy, gdy wzlot inaczej skończyłby się poniżej 15%
+    // pojemności. Bez tego długie dni skokowe schodziłyby do ujemnych litrów, a paliwo
+    // w danych demo przestałoby cokolwiek znaczyć.
+    if (fuelL - burnL < config.capacityL * 0.15) {
+      const beforeL = Math.round(fuelL);
+      const afterL = Math.round(config.capacityL * 0.85);
+      if (afterL > beforeL) {
+        refuels.push({ atMin: engineStartMin - 4, beforeL, addedL: afterL - beforeL, afterL });
+        fuelL = afterL;
+      }
+    }
+
+    fuelL -= burnL;
+    mh += engineHours;
+
+    const engineStopMin = engineStartMin + shape.stop;
+
+    legs.push({
+      engineStartMin,
+      taxiMin: shape.taxi == null ? null : engineStartMin + shape.taxi,
+      takeoffMin: shape.takeoff == null ? null : engineStartMin + shape.takeoff,
+      landingMin: shape.landing == null ? null : engineStartMin + shape.landing,
+      engineStopMin,
+      drop:
+        plan.operation === 'skoki' && shape.takeoff != null
+          ? {
+              altitudeFt: 12_000 + spread(seed + index, 3) * 500,
+              jumpers: {
+                tandem: 2 + spread(seed * 3 + index, 3),
+                aff: spread(seed * 5 + index, 3),
+                solo: spread(seed * 7 + index, 5),
+              },
+            }
+          : null,
+      close: legClose(plan, index, shapes.length, engineStopMin, {
+        fuelL: fuelL + gaugeNoise(seed, index),
+        mh,
+      }),
+    });
+
+    engineStartMin = engineStopMin + shape.pause;
+  }
+
+  const lastStopMin = legs.length > 0 ? legs[legs.length - 1]!.engineStopMin : null;
+  // Sesja bez wzlotu (09C) i tak trzymała maszynę zajętą — i to jest jej cała treść.
+  const releaseMin = lastStopMin != null ? lastStopMin + 12 : claimMin + 82;
+
+  const endState = { mh: round2(mh), fuelL: Math.round(fuelL) };
 
   return {
-    sessionUuid: `demo-${plan.aircraftId.slice(3).toLowerCase()}-${stamp(dayStartMs)}-${plan.picId.toLowerCase()}`,
-    aircraftId: plan.aircraftId,
-    picId: plan.picId,
-    dualId: plan.dualId,
-    dayStartMs,
-    dutyStartMin: engineStartMin - 41,
-    dutyEndMin: closed ? engineStopMin + 24 : null,
-    engineStartMin,
-    engineStopMin: closed ? engineStopMin : null,
-    operation: plan.operation,
-    client: plan.clientIndex == null ? null : CLIENTS[plan.clientIndex]!,
-    departureIcao: 'EPKK',
-    arrivalIcao: plan.operation === 'ferry' ? 'EPRJ' : null,
-    mhFormat: config.mhFormat,
-    reading: { fuelL: fuelStartL, mh: mhStart },
-    finalReading: closed ? { fuelL: fuelEndL, mh: round2(mhStart + engineHours) } : null,
-    flights,
-    refuel,
-    clockDriftMs: plan.clockDriftMs ?? 0,
+    session: {
+      sessionUuid: `demo-${plan.aircraftId.slice(3).toLowerCase()}-${stamp(dayStartMs)}-${plan.picId.toLowerCase()}`,
+      aircraftId: plan.aircraftId,
+      picId: plan.picId,
+      dualId: plan.dualId,
+      dayStartMs,
+      claimMin,
+      preflightMin: claimMin + 4,
+      operation: plan.operation,
+      client: plan.clientIndex == null ? null : CLIENTS[plan.clientIndex]!,
+      notes: plan.notes ?? null,
+      departureIcao: 'EPKK',
+      arrivalIcao: plan.operation === 'ferry' ? 'EPRJ' : null,
+      mhFormat: config.mhFormat,
+      reading: { fuelL: fuelStartL, mh: mhStart },
+      legs,
+      refuels,
+      release:
+        plan.delivery === 'leaveOpen'
+          ? null
+          : {
+              atMin: releaseMin,
+              finalReading: { fuelL: endState.fuelL, mh: endState.mh },
+              noFlightReason: plan.noFlightReason ?? null,
+            },
+      clockDriftMs: plan.clockDriftMs ?? 0,
+    },
+    endState,
   };
 }
 
 /**
- * Wzloty dnia. `skoki` to seria krótkich wyniesień z jednego cyklu silnika (32 min
- * na wzlot: 4 kołowania, 22 w powietrzu, 6 na dole na załadunek); pozostałe operacje
- * mają jeden lot o długości charakterystycznej dla siebie.
+ * Godzina uruchomienia pierwszego silnika. `'handoff'` przepisuje ją z chwili ZDANIA
+ * poprzedniej maszyny przez tego samego pilota — sesje stykają się wtedy co do minuty,
+ * co po §3.6a jest normalnym dniem i nie ma prawa być nakładką grafiku (§4.7).
  */
-function planFlights(plan: DayPlan, seed: number): DemoFlight[] {
-  if (plan.operation !== 'skoki') {
-    const minutes = { ferry: 95, egzamin: 74, techniczny: 26, inne: 47 }[plan.operation];
-    return [
-      {
-        taxiMin: plan.firstTaxiMin,
-        takeoffMin: plan.firstTaxiMin + 6,
-        landingMin: plan.firstTaxiMin + 6 + minutes,
-        drop: null,
-      },
-    ];
+function resolveFirstEngineMin(
+  plan: SessionPlan,
+  previous: { plan: SessionPlan; releaseMin: number | null } | null,
+): number {
+  if (plan.firstEngineMin !== 'handoff') return plan.firstEngineMin;
+
+  // Warunki są trzy i każdy z nich niesie inną własność scenariusza: ten sam pilot
+  // (inaczej to nie jest przekazanie), ta sama doba (inaczej minuty nie są porównywalne)
+  // i zapisane zdanie maszyny (inaczej nie ma z czego wziąć chwili styku).
+  if (
+    previous == null ||
+    previous.releaseMin == null ||
+    previous.plan.picId !== plan.picId ||
+    previous.plan.offset !== plan.offset
+  ) {
+    throw new Error(
+      `scenariusz demo: wiersz 'handoff' (${plan.aircraftId} D−${plan.offset}, ${plan.picId}) ` +
+        'musi stać bezpośrednio po zdanej sesji TEGO SAMEGO pilota z TEJ SAMEJ doby',
+    );
   }
 
-  return Array.from({ length: plan.lifts }, (_unused, lift) => {
-    const taxiMin = plan.firstTaxiMin + lift * 32;
-    const takeoffMin = taxiMin + 4;
-    return {
-      taxiMin,
-      takeoffMin,
-      landingMin: takeoffMin + 22,
-      drop: {
-        altitudeFt: 12_000 + spread(seed + lift, 3) * 500,
-        jumpers: {
-          tandem: 2 + spread(seed * 3 + lift, 3),
-          aff: spread(seed * 5 + lift, 3),
-          solo: spread(seed * 7 + lift, 5),
-        },
-      },
-    };
-  });
+  return previous.releaseMin + 14;
 }
 
 /**
- * Tankowanie w trakcie dnia — wyłącznie wtedy, gdy dzień inaczej skończyłby się poniżej
- * 15% pojemności. Bez tego długie dni na `skoki` schodziłyby do ujemnych litrów, a
- * paliwo w danych demo przestałoby cokolwiek znaczyć.
+ * Wzloty sesji wg operacji.
+ *
+ * `techniczny` ma dwa różne wzloty i to jest jego istota: najpierw PRÓBA SILNIKA bez
+ * startu (cały czas pracy na ziemi — jedyna obserwacja, która rozdziela stawki ziemia/lot
+ * bez zgadywania), potem krótki oblot kontrolny.
  */
-function planRefuel(input: {
-  capacityL: number;
-  burnLPerH: number;
-  fuelStartL: number;
-  burnL: number;
-  engineStartMin: number;
-  firstLandingMin: number;
-}): DemoDay['refuel'] {
-  if (input.fuelStartL - input.burnL >= input.capacityL * 0.15) return null;
-
-  const atMin = input.firstLandingMin + 2;
-  const burnedByThen = ((atMin - input.engineStartMin) / 60) * input.burnLPerH;
-  const beforeL = Math.max(5, Math.round(input.fuelStartL - burnedByThen));
-  const afterL = Math.round(input.capacityL * 0.85);
-  return { atMin, beforeL, addedL: Math.max(0, afterL - beforeL), afterL };
+function legShapes(plan: SessionPlan): LegShape[] {
+  if (plan.lifts === 0) return [];
+  return [...(plan.abortFirstLeg === true ? [ABORTED] : []), ...liftShapes(plan)];
 }
+
+function liftShapes(plan: SessionPlan): LegShape[] {
+  switch (plan.operation) {
+    case 'skoki':
+      return Array.from({ length: plan.lifts }, () =>
+        plan.aircraftId === 'SP-ANK' ? JUMP_AN2 : JUMP_C182,
+      );
+    case 'techniczny':
+      return [GROUND_RUN, TEST_FLIGHT].slice(0, plan.lifts);
+    case 'ferry':
+      return Array.from({ length: plan.lifts }, () => FERRY);
+    case 'egzamin':
+      return Array.from({ length: plan.lifts }, () => EXAM);
+    case 'inne':
+      return Array.from({ length: plan.lifts }, () => OTHER);
+  }
+}
+
+/**
+ * Potwierdzenie wzlotu wg stylu pracy pilota (§3.6).
+ *
+ * `null` znaczy „wzlot bez potwierdzenia" — legalny stan („Potwierdzę później"), po
+ * którym w „Mój dzień" zostaje pasek do przejrzenia. `reading: null` to potwierdzenie
+ * BEZ odczytu liczników: pilot przejrzał czasy, ale nie poszedł do paliwomierza.
+ */
+function legClose(
+  plan: SessionPlan,
+  index: number,
+  legCount: number,
+  engineStopMin: number,
+  gauge: { fuelL: number; mh: number },
+): DemoLeg['close'] {
+  if (plan.confirm === 'none') return null;
+
+  const isLast = index === legCount - 1;
+  const withReading =
+    plan.confirm === 'careful' ||
+    (plan.confirm === 'mixed' && ((index + 1) % 3 === 0 || isLast));
+
+  return {
+    // Cztery minuty po wyłączeniu silnika: pilot przegląda czasy stojąc przy maszynie,
+    // czyli PRZED następnym uruchomieniem (najkrótsza przerwa w planie to 10 min).
+    atMin: engineStopMin + 4,
+    reading: withReading ? { fuelL: Math.round(gauge.fuelL), mh: round2(gauge.mh) } : null,
+    notes: isLast ? (plan.legNote ?? null) : null,
+  };
+}
+
+/**
+ * Błąd odczytu paliwomierza: deterministyczna liczba całkowita z zakresu −2…+2 L.
+ *
+ * Nie chodzi o losowość, tylko o to, żeby reszty regresji NIE BYŁY zerowe — model
+ * dopasowany co do litra podaje przedziały ±0% i wygląda na pewny czegoś, czego pomiar
+ * nie rozstrzyga. Wartość jest funkcją wiersza planu i numeru wzlotu, więc powtórny bieg
+ * seeda daje te same odczyty (idempotencja) i test umie je przewidzieć.
+ */
+const gaugeNoise = (seed: number, index: number): number => spread(seed * 11 + index, 5) - 2;
 
 /**
  * Akcje panelu — WYKONYWANE PO wszystkich paczkach, bo każda opisuje decyzję podjętą
@@ -493,16 +805,16 @@ function adminActions(
   today: number,
   correction: { sessionUuid: string; targetUuid: string } | null,
 ): DemoAdminAction[] {
-  const ankOpen = `demo-ank-${stamp(today - 9 * DAY_MS)}-pwi`;
+  const ankLate = `demo-ank-${stamp(today - 12 * DAY_MS)}-pwi`;
   const actions: DemoAdminAction[] = [
     {
       kind: 'resolve_flag',
       actorId: 'TMK',
-      flag: { type: 'aircraft_overlap', aircraftId: 'SP-ANK', sessionUuid: ankOpen },
+      flag: { type: 'aircraft_overlap', aircraftId: 'SP-ANK', sessionUuid: ankLate },
       note:
-        'Nakładka pozorna: telefon PWI padł w terenie i dzień domknęła spóźniona paczka. ' +
+        'Nakładka pozorna: telefon PWI padł w terenie i sesję domknęła spóźniona paczka. ' +
         'JSE wystartował następnego dnia rano, więc sesje nie zachodziły na siebie w powietrzu. ' +
-        'Odblokowuję karty obu dni.',
+        'Odblokowuję karty obu dób.',
       why: 'A03a: rozwiązanie nakładki odblokowuje karty obu sesji (re-eksport w odpowiedzi).',
     },
     {
@@ -511,7 +823,7 @@ function adminActions(
       flag: {
         type: 'mh_gap',
         aircraftId: 'SP-AXA',
-        sessionUuid: `demo-axa-${stamp(today - 13 * DAY_MS)}-ako`,
+        sessionUuid: `demo-axa-${stamp(today - 16 * DAY_MS)}-ako`,
       },
       note:
         'Dziura 0.8 h potwierdzona: lot techniczny po wymianie świec, wykonany bez aplikacji. ' +
@@ -522,7 +834,7 @@ function adminActions(
       kind: 'retry_export',
       actorId: 'TMK',
       sessionUuid: `demo-fgk-${stamp(today - 15 * DAY_MS)}-tmk`,
-      why: 'A05: drugi wiersz dziennika przy jednej karcie („3 wiersze dziennika, 1 wiersz karty").',
+      why: 'A05: drugi wiersz dziennika przy jednej karcie („2 wiersze dziennika, 1 karta").',
     },
   ];
 
@@ -534,7 +846,7 @@ function adminActions(
       targetUuid: correction.targetUuid,
       reason:
         'Zrzut przerwany z powodu zachmurzenia — skoczkowie wrócili na pokładzie. ' +
-        'Wzlot się odbył, wyniesienia nie było; zgłoszone przez PIC po zamknięciu dnia.',
+        'Wzlot się odbył, wyniesienia nie było; zgłoszone przez PIC po oknie korekty.',
       why: 'A02b + A04: korekta po oknie 24 h; zdarzenie zostaje w rejestrze, przekreślone.',
     });
   }

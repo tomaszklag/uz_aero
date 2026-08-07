@@ -4,7 +4,7 @@
  *   npm run db:up          # Postgres w Dockerze
  *   npm run seed           # migracje + flota i konta (`infrastructure/pg/seed.ts`)
  *   npm run server         # serwer musi DZIAŁAĆ — ten skrypt jest jego klientem
- *   npm run seed:demo      # trzy tygodnie ruchu klubu
+ *   npm run seed:demo      # cztery tygodnie ruchu klubu
  *
  * Skrypt nie dotyka bazy. Wysyła paczki zdarzeń przez `POST /events` i klika w panel
  * przez `/admin/api/*` — czyli robi dokładnie to, co telefony i administrator, a
@@ -19,12 +19,12 @@
  *
  * ══ CZEGO TE DANE NIE ODDAJĄ ══
  * `events.received_at` to chwila PRZYJĘCIA paczki, więc cały scenariusz ląduje na
- * serwerze „teraz", choć opisuje trzy tygodnie wstecz. Histogram pulsu na `A01`
+ * serwerze „teraz", choć opisuje cztery tygodnie wstecz. Histogram pulsu na `A01`
  * (dwanaście godzin wstecz) pokaże jeden słupek, a rejestr `A04` sortowany po czasie
  * przyjęcia — jeden blok. To nie jest usterka do obejścia: kolumnę wypełnia baza przy
  * `INSERT`, a rejestr jest append-only, więc jedynym sposobem na rozłożenie tych
  * znaczników byłoby ominięcie ingestu — czyli utrata wszystkiego, po co ten seed jedzie
- * przez API. Dni lotne, sesje, flagi i karty mają daty prawdziwe.
+ * przez API. Sesje, wzloty, flagi i karty mają daty prawdziwe.
  */
 
 import { z } from 'zod';

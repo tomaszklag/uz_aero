@@ -568,8 +568,8 @@ describe('pulpit — puls rejestru', () => {
     // Pulpit jest ekranem, na którym każdy ląduje jako pierwszym, a `events` rośnie bez
     // granicy — więc `Sort` w tym planie znaczy „ładuje się natychmiast w pierwszym
     // miesiącu i coraz wolniej w każdym następnym". Dokładnie takie zniszczenie groziło
-    // przy migracji 16 (`ORDER BY` dostał wtedy `NULLS LAST` w ślad za indeksem)
-    // i przy migracji 17 (indeks wrócił do postaci domyślnej). Ani razu nie pilnował
+    // przy `idx_events_correction_target` (`ORDER BY` dostał wtedy `NULLS LAST` w ślad za indeksem)
+    // i przy powrocie indeksu do postaci domyślnej. Ani razu nie pilnował
     // tego test — dlatego stoi tu teraz.
     const { db } = await testHarness();
     await db.query(

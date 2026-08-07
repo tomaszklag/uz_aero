@@ -14,7 +14,7 @@
  * Wszystkie predykaty to `status = 'closed' AND close_time BETWEEN $1 AND $2`:
  * do sum wchodzą wyłącznie dni ZAMKNIĘTE (otwarte zmieniłyby sumy po zamknięciu),
  * a dzień liczy się tam, gdzie został domknięty. Obsługuje to częściowy indeks
- * `idx_sessions_closed_day` (migracja 18).
+ * `idx_sessions_closed_day`.
  *
  * ══ `NULL` W KOLUMNACH MIGRACJI 18 ══
  * `SUM` po cichu pomija `NULL`, więc sama suma nie odróżnia „zera" od „wiersza sprzed
@@ -315,7 +315,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     }
 
     // Sumy jadą z dni JAWNIE skokowych, ale licznik stale patrzy na CAŁY zakres:
-    // dzień z `operation IS NULL` (sprzed migracji 11 albo bez preflightu) MÓGŁ być
+    // dzień z `operation IS NULL` (bez rozpoznanej operacji albo bez preflightu) MÓGŁ być
     // dniem skokowym, więc zawężenie `operation = 'skoki'` nie ma prawa wyrzucić go
     // ze zbioru nawet jako „nieznany". Do czasu przebudowy projekcji (`A11`) to jest
     // DOMYŚLNY stan bazy migrującej ze starego schematu — sekcja mówi wtedy „nie
@@ -362,7 +362,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
       alt_count: string;
     }
 
-    // Wiersze sprzed migracji 18 (`drop_count IS NULL`) są tu ODFILTROWANE, a nie
+    // Wiersze sprzed kolumn statystyk (`drop_count IS NULL`) są tu ODFILTROWANE, a nie
     // liczone jako zero — o tym, że tabela klientów przy takich wierszach w ogóle
     // nie ma prawa się pokazać, rozstrzyga mapper (`drops.staleRows`).
     const { rows } = await db.query<Row>(
@@ -396,7 +396,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
 }
 
 /**
- * Wartość spoza katalogu rzuca, a nie jest po cichu zerowana — od migracji 11 pilnuje
+ * Wartość spoza katalogu rzuca, a nie jest po cichu zerowana — `sessions_operation_known` pilnuje
  * jej `CHECK`, więc obecność innej znaczy ręczną ingerencję (ten sam argument, co
  * w `sessionDbRow.ts`).
  */

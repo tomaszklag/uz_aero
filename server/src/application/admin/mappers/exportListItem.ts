@@ -29,7 +29,7 @@ import type { AdminExportJoin } from '../ports.ts';
  *
  *  1. **`impossible` przed wszystkim** — sesja bez chwili przejęcia nie ma nawet nazwy
  *     karty, więc mówienie o niej „brakuje karty" sugerowałoby, że da się ją dorobić.
- *     Od migracji 21 to stan wyłącznie awaryjny: `session_claim` ma KAŻDA sesja (§4.4).
+ *     Od 2026-08-07 to stan wyłącznie awaryjny: `session_claim` ma KAŻDA sesja (§4.4).
  *  2. **`waiting` przed `blocked`** — dzień, który jeszcze trwa, nie jest zablokowany
  *     przez flagę, tylko po prostu niegotowy; obie bramki są w eksporterze, ale tylko
  *     jedna wymaga decyzji człowieka.

@@ -80,7 +80,7 @@ push rekordu `dirty` przy każdej okazji (outbox preferencji — zmiana motywu N
 nie czeka na sieć), pull za bramą wieku 15 min, LWW po stemplu DECYZJI pilota
 w OBIE strony (adoptujemy wyłącznie stan ściśle nowszy; adopcję ogłasza
 `onApplied`, którym ThemeProvider przemalowuje ekran na żywo), offline/wygasła
-sesja/obcy profil = `skipped`. Po stronie serwera migracja 6 dokłada
+sesja/obcy profil = `skipped`. Po stronie serwera `pilots.theme` + `pilots.theme_updated_at` dokładają
 `pilots.theme`/`theme_updated_at` (prefs są 1:1 z pilotem — osobna tabela to
 przerost), a trasy `GET/PUT /me/prefs` (`http/routes/mobile/prefs.ts`, tożsamość WYŁĄCZNIE
 z tokenu) piszą przez `PrefsCommands` + `PgPilotPrefsRepo`, gdzie warunek LWW
@@ -118,11 +118,11 @@ Eksport arkuszy (§4.7, serwer): `application/common/export/` — `buildDaySheet
 `DaySheetDay` → karta; nazwa `YYYY-MM-DD_SP-XXX` bajt w bajt zgodna z `sheetTabName`
 aplikacji, treść = ekrany 10/11, MH w formacie samolotu) i `DayExporter` (po commicie
 ingestu, dla sesji zamkniętych po przetworzeniu; spóźnione dane → rewizja +1).
-Dziennik `export_log` (migracja 4, append-only — historia rewizji to jedyny ślad rozjazdu
+Dziennik `export_log` (append-only — historia rewizji to jedyny ślad rozjazdu
 arkusz↔rejestr); `sync-status.exportUrl` z ostatniej rewizji. Awarię Sheets łapie ingest —
 telefon dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek.
 
-**Karta = DOBA SAMOLOTU** (decyzja 2026-08-07, migracja 23), nie sesja: agregat wszystkich
+**Karta = DOBA SAMOLOTU** (decyzja 2026-08-07), nie sesja: agregat wszystkich
 sesji maszyny w dobie UTC wyznaczonej przez `session_claim` (`sessions.claim_time` —
 **nie `dutyStart`**, bo meldunek jest po §3.6a opcjonalny i bramka na nim odrzucałaby każdą
 sesję z przebudowanego flow). Sesje są WIERSZAMI karty, etykietowanymi `S1`, `S2`…
@@ -138,7 +138,7 @@ Skład doby czyta `SessionsProjectionPort.listByAircraftDay` (projekcja), a tabe
 
 Karty mieszkają W BAZIE (decyzja 2026-07-28: nie czekamy na Google): adapter
 `PgSheets` (`infrastructure/pg/common/sheetsRepo.ts`) zapisuje dosłowne wiersze karty do
-`exported_sheets` (migracja 5; UPSERT po `tab` — semantyka jak karta w Google:
+`exported_sheets` (UPSERT po `tab` — semantyka jak karta w Google:
 czytelnik widzi wyłącznie aktualny stan, historię rewizji trzyma `export_log`),
 a `GET /sheets/:tab` (autoryzowane, `SheetQueries` + osobny `SheetsReadPort` —
 odczyt po nazwie istnieje tylko przy własnej bazie, Google „czyta się" samym
@@ -209,8 +209,8 @@ więc tokeny porzucone zbierają się między jednym a drugim ręcznym sprzątan
 także trasami panelu — porównanie `GET …/maintenance/projections/compare` jako
 ZAPYTANIE bez śladu w audycie, nadpisanie `POST …/projections/rebuild` przez `AuditedWrite`);
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
-ignorowana); ~~`UNIQUE` na `export_log`~~ **ZROBIONE** (migracja 14, przekluczona na
-`(day, aircraft_id, revision, session_uuid)` migracją 23) + kolejka ponowień
+ignorowana); ~~`UNIQUE` na `export_log`~~ **ZROBIONE** (`uq_export_log_card_revision`, przekluczone na
+`(day, aircraft_id, revision, session_uuid)` 2026-08-07) + kolejka ponowień
 nieudanych eksportów (~~re-eksport po rozwiązaniu flagi przez administratora~~
 **ZROBIONE 2026-07-31**, przekrój 1 — zostaje samo ponawianie eksportów, które padły).
 
@@ -345,7 +345,7 @@ cyklem życia flagi, bo obie zmniejszają ryzyko wszystkiego, co po nich:
    zostawia ani wpisu, ani skutków DDL" i „po nieudanej migracji kolejny bieg stosuje
    poprawioną wersję").
    Skutek uboczny, dla którego to była pierwsza pozycja: `ADD CONSTRAINT` przestał być
-   pułapką, więc migracja 8 mogła bezpiecznie dołożyć `CHECK` na `flags.type`.
+   pułapką, więc `flags_type_known` mógł bezpiecznie wejść jako `CHECK` na `flags.type`.
 2. **Kształt flagi ma jedno miejsce.** `packages/domain/src/flags.ts` — katalog
    `FLAG_TYPES` (pięć pozycji: `session_overlap` zastąpił `DOUBLE_CLAIM` i `TIME_OVERLAP`
    z §4.5), `FlagType`, `FlagStatus`, `SessionFlag` (kształt „na drucie") i strażnik
@@ -483,7 +483,7 @@ pierwszy, w którym trzeba było rozstrzygnąć, skąd biorą się jego liczby.
   `SessionState.dutyStart` od pierwszej wersji, więc druga kolumna byłaby duplikatem tej
   samej liczby (docblock `application/common/mappers/sessionRow.ts` opisuje też konsekwencje tej nazwy).
 - **Przebudowa projekcji ze strumienia** (`AdminMaintenanceCommands.rebuildProjections`,
-  CLI `npm run rebuild-projections`) — WARUNEK KONIECZNY migracji 11: `upsert` uruchamia
+  CLI `npm run rebuild-projections`) — WARUNEK KONIECZNY każdej nowej kolumny projekcji: `upsert` uruchamia
   dopiero następna paczka zdarzeń sesji, a dla dnia zamkniętego takiej paczki już nie
   będzie, więc bez przeliczenia kolumna „Operacja" byłaby pusta dla całej historii.
   **Dry-run jest trybem domyślnym, a niezerowa różnica to INCYDENT, nie sukces**: projekcja
@@ -650,6 +650,12 @@ lekcja tego porządkowania: pierwsze podejście wepchnęło pod `common/` równi
   (DDL), `migrate.ts` (runner), `seed.ts`, `database.ts`, `keyset.ts`, `sqlFilter.ts`,
   `sessionDbRow.ts`. Schemat bazy nie służy ani panelowi, ani telefonowi — służy bazie.
   Katalogi `admin/`, `mobile/`, `common/` trzymają wyłącznie ADAPTERY portów.
+  > **`schema.ts` jest JEDNĄ migracją bazową** (zgniecenie 2026-08-08, `SCHEMA_VERSION = 1`)
+  > i jednocześnie najgęstszym dokumentem o bazie w repo: uzasadnienie każdej kolumny,
+  > ograniczenia i indeksu stoi komentarzem SQL przy nim. Dokładając kolumnę, dopisz je
+  > tam — nie w commit message. Cztery reguły przekrojowe (projekcje vs rejestr, kolumna
+  > projekcji zamiast wyrażenia SQL, kiedy `CHECK`, kiedy `NULLS` w indeksie) są
+  > w docblocku pliku; historia pułapek — `architektura-panelu-serwer.md` §7.8.
 - **`src/bin/` = punkty wejścia.** `seedCli.ts` i `rebuildProjectionsCli.ts` to composition
   rooty: same składają zależności i same startują. Leżały wśród adapterów, w dwóch różnych
   katalogach, jakby były adapterami. Trzeci punkt wejścia (`index.ts`) zostaje w korzeniu
@@ -1269,7 +1275,7 @@ Dokładając metrykę:
    i iloraz w mapperze — nigdy w SQL (`architektura-panelu-serwer.md` §7.7).
 6. **Jeśli metryka ma trafić do telefonu**, dochodzi trzeci krok: pole w `ConsumptionNorm`
    (`packages/domain/src/reference.ts`) i przepisanie go w `application/common/consumptionNorm.ts`.
-   Norma jest materializowana w tabeli `aircraft_consumption` (migracja 19) i przeliczana
+   Norma jest materializowana w tabeli `aircraft_consumption` i przeliczana
    PO commicie ingestu, gdy dzień się domknął — nigdy na żądanie `GET /reference`, bo
    tę trasę odpytuje każdy telefon co kwadrans.
 
@@ -1533,7 +1539,7 @@ Kalibracja progów bez danych z realnych lotów to zgadywanie — więc telefon 
 SUROWE fixy sprzed kwarantanny (śmieci to najcenniejszy materiał do progów bramki)
 + markery detektora (`detection` = toast pokazany, `undo` = COFNIJ pilota — czyli
 fałszywa detekcja oznaczona przez człowieka, której rejestr zdarzeń nie widzi).
-Tor CAŁKOWICIE osobny od rejestru: tabela `gps_trace` (migracja 2 aplikacji, poza
+Tor CAŁKOWICIE osobny od rejestru: tabela `gps_trace` (migracja 2 SQLite aplikacji, poza
 outboxem, własna księgowość `uploaded_at`), retencja `TRACE_RETENTION_DAYS = 14`
 przy starcie, wysyłka `TraceSync` jako OSTATNI krok pętli okazji (jedna paczka
 ≤ 2000/okazję — ślad nie konkuruje o łącze z rejestrem dnia) na `POST /traces`;

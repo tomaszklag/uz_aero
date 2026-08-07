@@ -15,7 +15,7 @@
  * rozjeżdża się przy pierwszej nowej komendzie.
  *
  * ══ KOD SPOZA KATALOGU ══
- * `admin_audit.action` celowo nie ma `CHECK`-a (migracja 9): wiersz jest zapisem
+ * `admin_audit.action` celowo nie ma `CHECK`-a: wiersz jest zapisem
  * historycznym, więc wycofanie akcji z katalogu nie może unieważnić tego, co zdarzyło
  * się rok temu. Dlatego `actionView` przyjmuje `string`, a nie `AdminAction`, i dla
  * nieznanego kodu oddaje go DOSŁOWNIE zamiast rzucać albo pokazywać „—". Dziennik

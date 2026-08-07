@@ -65,7 +65,7 @@ i zdaniu samolotu oraz potwierdzenie wzlotu po locie.
 | 2026-07-22 | **Rezygnacja z Google OAuth** (odwraca decyzję z 2026-06-22): konta pilotów zakłada administrator w bazie, logowanie = login + hasło → JWT. Powód: argument za OAuth (Sheets na telefonie) zniknął wraz z eksportem serwerowym; wąskie, zamknięte grono użytkowników; zero konfiguracji OAuth/SHA/Play Console |
 | 2026-07-31 | **Podział kodu: warstwa jako oś główna, powierzchnia jako druga** (`admin` / `mobile` / `common` wewnątrz `application/`, `http/routes/`, `infrastructure/pg/`). ODRZUCONE: dwie gałęzie najwyższego poziomu ADMIN/MOBILE — te powierzchnie nie są dwoma systemami (jedna baza, jeden strumień zdarzeń, jedna projekcja, jedno logowanie), więc trzecia gałąź na kod wspólny wchłonęłaby większość plików, a granica byłaby przekraczana przy każdym żądaniu. ODRZUCONE: spłaszczenie — `admin/` jest granicą sprawdzaną maszynowo przez `test/architecture.test.ts`. Oś powierzchni obowiązuje TYLKO tam, gdzie plik istnieje dla kogoś: schemat bazy, punkty wejścia i mapowania mają własne miejsca. Szczegóły: `docs/architektura-kodu.md` |
 | 2026-07-31 | **Katalog flag: kod dogania §4.5, nie odwrotnie.** `FUEL_MISMATCH` i `CLOCK_DRIFT` doliczamy przy ingescie (dziś żyją wyłącznie jako lokalne ostrzeżenia w telefonie i nigdy nie docierają na serwer); `session_overlap` zostaje następcą `DOUBLE_CLAIM` + `TIME_OVERLAP`. Powód: obie kontrole mają komplet danych po stronie serwera (`checkClocks` już porównuje oba zegary), a rozbieżność dokumentacji z kodem jest droższa niż ich dopisanie. Determinuje kształt `FlagType`, więc decyzja zapadła PRZED cyklem życia flagi |
-| 2026-07-31 | **Bez ORM-a i bez query buildera** (podtrzymuje „Spójność modeli bez ORM"). Powód mocniejszy niż poprzedni: ten system nie ma encji, którymi ORM miałby zarządzać — `events` jest append-only, a wiersz `sessions` to zrzut `projectSession` nadpisywany w całości, więc change tracking i unit of work zapraszają do „poprawienia jednego pola projekcji", czyli do obejścia strumienia. Zamiast tego `infrastructure/pg/sqlFilter.ts` + `keyset.ts` (~120 linii z testami) i naprawa runnera migracji (`BEGIN`/`COMMIT` jednym `exec`), która domyka też wadę migracji 3 i 6 |
+| 2026-07-31 | **Bez ORM-a i bez query buildera** (podtrzymuje „Spójność modeli bez ORM"). Powód mocniejszy niż poprzedni: ten system nie ma encji, którymi ORM miałby zarządzać — `events` jest append-only, a wiersz `sessions` to zrzut `projectSession` nadpisywany w całości, więc change tracking i unit of work zapraszają do „poprawienia jednego pola projekcji", czyli do obejścia strumienia. Zamiast tego `infrastructure/pg/sqlFilter.ts` + `keyset.ts` (~120 linii z testami) i naprawa runnera migracji (`BEGIN`/`COMMIT` jednym `exec`), która domyka też wadę migracji z `ADD CONSTRAINT`/`ADD COLUMN` |
 | 2026-07-31 | **Panel dzieli wyłącznie model DOMENOWY** (`@uzaero/domain`); modelu persystencji nie widzi nigdy — między nim a bazą stoi DTO z `/admin/api/*`. Osobnego pakietu „modele z bazy" NIE tworzymy: uczyniłby schemat kontraktem publicznym i pozwolił panelowi liczyć po swojemu zamiast przez `projectSession`. API pod `/admin/api/*`, nie `/admin/*` — kolizja z wildcardem `@fastify/static` (tryb awarii: żądanie API dostaje plik HTML) |
 | 2026-07-31 | **Wspólne biblioteki frontendu: dwa pakiety nie-wizualne** — `@uzaero/tokens` (5 motywów + emiter zmiennych CSS) i `@uzaero/format` (czas blokowy, MH, UTC). **Zero pakietu z komponentami**: RN i web to inne przyciski, nie ta sama skórka (kokpitowy `ActionButton` ma przytrzymanie 2 s i 44 px pod rękawice, `.btn` panelu 36 px z `:hover`), a `react-native-web` nie wyrenderuje zatwierdzonego `SZABLON.html`. Komponenty webowe zostają w `admin/src/ui/components/` |
 | 2026-08-06 | **Dzień służby przestaje być kontenerem na loty — ODWRACA „jeden samolot = jeden dzień" z 2026-07-23.** Flow był zbudowany wokół dnia służby: żeby zapisać jeden lot, pilot musiał otworzyć i zamknąć służbę, a przesiadka na drugi samolot dawała dwie służby. W rzeczywistości typowy dzień to JEDEN lot i przekazanie maszyny — służba trwająca cały dzień jest rzadkością. Nowa reguła: **loty są zapisywane, służba jest deklarowana i zawsze stanowi klamrę wokół lotów** (duty ⊇ suma wzlotów). Klamra należy do pilota, nie do samolotu, i domyślnie bierze się z pierwszego i ostatniego wzlotu doby UTC; deklaracja jest korektą po fakcie, nie warunkiem startu. Jednostką potwierdzenia danych staje się **wzlot** (09), a zdanie samolotu (09b) nie kończy dnia. Znika czas meldowania z przejęcia i ekran podsumowania `03`; ekranem domowym jest `01 Mój dzień` (dawny splash). Trade-off z lipca („powstają dwie służby") tym samym przestaje istnieć |
@@ -305,8 +305,28 @@ Otwarte pytania:
 3. czy ostrzeżenie warunkowe „po pięciu pominięciach" (§3.6) jest wystarczającą zachętą.
 
 Punktów 2 i 3 **nie rozstrzygamy w dyskusji** — służy do tego replay na realnej historii.
-Warunek wstępny: replay musi dostać dane w NOWYM kształcie, których dziś nie ma nawet
-w scenariuszu demo. To zadanie etapu B.
+
+**WARUNEK WSTĘPNY SPEŁNIONY 2026-08-08.** Generator demo (`server/scripts/demo/`) został
+przebudowany pod nowy model i produkuje cztery style pracy z ekranem 09 (`ConfirmStyle`):
+odczyt przy każdym wzlocie, co trzeci, potwierdzenie bez odczytu i brak potwierdzenia —
+czyli od interwałów ~32 min po JEDEN interwał na całą sesję. Do tego dochodzą próby silnika
+bez lotu (jedyne obserwacje z całym czasem na ziemi) i jeden wzlot przerwany na kołowaniu
+(jedyny interwał poniżej progu 30 min). Pierwszy przebieg `consumptionReplay.ts` na tych
+danych (nie strojąc niczego) pokazał trzy rzeczy:
+
+1. **Próg 30 min stoi 2 minuty pod typowym wzlotem skokowym.** Cessna: 32 min pracy silnika
+   na wzlot, więc pilot skrupulatny daje interwały tuż nad progiem. Skrócenie kołowania
+   o trzy minuty wycięłoby CAŁY jego wkład do modelu.
+2. **Dzień skokowy nie rozdziela ziemi od lotu i nie rozdzieli.** Każdy wzlot ma tę samą
+   proporcję faz, więc kolumny są współliniowe niezależnie od liczby danych: SP-AXA
+   (63 interwały, 71 h) schodzi na jedną stawkę z powodem `collinear`. Rozdział wyszedł
+   wyłącznie na maszynie z RÓŻNORODNYM ruchem (egzaminy, przeloty, próby silnika):
+   ziemia 12,5 L/h ±31%, lot 40,1 L/h ±2%.
+3. **Sesja `careful` produkuje interwał degeneracyjny** między ostatnim `leg_close`
+   a zdaniem samolotu (zero czasu silnika, dwa odczyty) — do 25% wszystkich. Odrzucany
+   poprawnie (`no-engine`/`negative-consumption`), ale wchodzi do mianownika statystyk.
+
+Odpowiedzi na punkty 2 i 3 zapadną PO kalibracji na tych danych — nie tutaj.
 
 ### 3.7 Statystyki
 
@@ -482,10 +502,10 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
 - **bramka flagi obejmuje wyłącznie sesje objęte flagą**, nie całą kartę: karta wychodzi
   z adnotacją „niekompletna — flaga #n"
 
-**Wdrożone 2026-08-07** (`application/common/export/`, migracja 23):
+**Wdrożone 2026-08-07** (`application/common/export/`):
 
 - **dobę wyznacza `claimedAt`**, czyli czas `session_claim` (`sessions.claim_time`,
-  migracja 21) — **nie `dutyStart`**. Meldunek jest od §3.6a opcjonalny i ekran 02 o niego
+  decyzja 2026-08-07) — **nie `dutyStart`**. Meldunek jest od §3.6a opcjonalny i ekran 02 o niego
   nie pyta, więc oparta na nim bramka odrzucała każdą sesję z przebudowanego flow. Sesja
   przejęta o 23:50 i zdana po północy należy do doby swojego PRZEJĘCIA — ta sama reguła,
   co przy przynależności wzlotu do doby w `projectDuty`
@@ -513,7 +533,7 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
 > całej karty z powodu jednej pary nakładających się sesji uczyniłoby z bramki stan domyślny,
 > bo przy krótszych sesjach nakładki są częstsze — stąd zawężenie bramki.
 >
-> **`session_overlap` ROZDZIELONE na dwie patologie** (WDROŻONE 2026-08-07, migracja 22): nakładka CLAIMÓW
+> **`session_overlap` ROZDZIELONE na dwie patologie** (WDROŻONE 2026-08-07): nakładka CLAIMÓW
 > na jednej maszynie (dwa telefony piszą do tej samej maszyny) to co innego niż nakładka
 > CZASU PILOTA (jeden pilot rzekomo lata dwiema maszynami naraz). Dziś jedna flaga udaje obie,
 > a po zmianie modelu sesje tego samego pilota na dwóch maszynach mogą legalnie sąsiadować
@@ -625,7 +645,7 @@ ze strumienia zdarzeń — przy kilkuset zdarzeniach dziennie tabele agregujące
 ```
 pilots       — id, kod, imię i nazwisko, e-mail, password_hash, active, role
                (konta zakłada i resetuje administrator — brak samodzielnej rejestracji)
-               role: pilot | training_lead | admin (migracja 7, decyzja 2026-07-31) —
+               role: pilot | training_lead | admin (decyzja 2026-07-31) —
                uprawnienia panelu siedzą na koncie pilota, bo szef wyszkolenia
                i administrator SĄ pilotami; mapa ról na zdolności: server/src/domain/roles.ts
 aircraft     — id, reg, typ, rok, capacity_l, mh_format, dual_required, service_status
@@ -641,7 +661,19 @@ export_log   — data, aircraft_id, sheet_url, exported_at, rewizja, session_uui
 ```
 
 `events` jest append-only również na serwerze; `sessions` i statystyki to projekcje
-odświeżane przy przyjęciu zdarzeń.
+odświeżane przy przyjęciu zdarzeń. Dochodzą jeszcze: `exported_sheets` (treść kart —
+bazodanowy adapter `SheetsPort`), `admin_audit` (ślad akcji panelu, append-only),
+`refresh_tokens` (hashe, nie wartości) i `aircraft_consumption` (materializacja normy
+zużycia dla telefonów).
+
+> **Schemat jest JEDNĄ migracją bazową** (zgniecenie 2026-08-08, `SCHEMA_VERSION = 1`).
+> Dwadzieścia trzy migracje z lipca i sierpnia 2026 zwinęły się w jeden skrypt opisujący
+> stan docelowy — faza 5 się nie zaczęła, więc nie było danych produkcyjnych do zachowania.
+> **Uzasadnienie KAŻDEJ kolumny, ograniczenia i indeksu stoi komentarzem przy nim
+> w `server/src/infrastructure/pg/schema.ts`**; historia pułapek (trzy podejścia do
+> `NULLS LAST`, sprostowania do `UNIQUE` dziennika eksportu, dwa przesunięcia znaczenia
+> karty) — w `docs/architektura-panelu-serwer.md` §7.8. Odwołania „migracja N" w kodzie
+> zostały przepisane na nazwy rzeczy; w narracji historycznej tamtego dokumentu zostają.
 
 ### 5.4 Konfiguracja samolotu (na serwerze, cache'owana)
 

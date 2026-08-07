@@ -198,7 +198,7 @@ describe('POST /events', () => {
   });
 });
 
-describe('notatka pilota do dnia (issue #14, migracja 20)', () => {
+describe('notatka pilota do dnia (issue #14, `sessions.notes`)', () => {
   /** Dzień z notatką w preflighcie — reszta paczki bez zmian. */
   const dayWithNotes = (notes: unknown, sessionUuid = 'sess-1') =>
     day(sessionUuid).map((e) =>

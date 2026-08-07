@@ -85,7 +85,7 @@ interface RevisionDbRow {
  * TRZECH pól z tego samego, najświeższego wiersza (`revision`, `exported_at`,
  * `sheet_url`), a agregat oddałby maksimum każdego z osobna — czyli mógłby skleić numer
  * z jednej wysyłki z adresem z innej. Przy `ORDER BY revision DESC LIMIT 1` planer
- * schodzi po indeksie unikalności z migracji 14.
+ * schodzi po `uq_export_log_card_revision`.
  *
  * Flagi blokujące jadą podzapytaniem agregującym IDENTYFIKATORY, nie samą liczbą: wiersz
  * ma prowadzić DO KONKRETNEJ flagi („Do flagi #1046"), a licznik kazałby administratorowi
@@ -208,7 +208,7 @@ const toJoin = (r: ExportJoinDbRow): AdminExportJoin => ({
   // Kolumna jest wolnym tekstem z `DEFAULT 'active'`; monitor rozróżnia wyłącznie
   // „zamknięty czy nie", bo tylko to jest bramką eksportera.
   status: r.status === 'closed' ? 'closed' : 'active',
-  // `claim_time` niesie chwilę przejęcia samolotu (migracja 21) — dobę karty liczymy
+  // `claim_time` niesie chwilę przejęcia samolotu (decyzja 2026-08-07) — dobę karty liczymy
   // z niej, bo karta jest DOBĄ SAMOLOTU (§4.7), a nie służbą pilota.
   claimedAt: r.claim_time == null ? null : Number(r.claim_time),
   updatedAt: new Date(r.updated_at),

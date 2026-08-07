@@ -158,6 +158,8 @@ export class IngestCommands {
       //
       // Flaga ląduje na samolocie PÓŹNIEJSZEJ z pary — tabela `flags` wymaga jednego
       // `aircraft_id`, a to ta maszyna została wzięta, gdy poprzednia nie była zdana.
+      // Wskazuje ją `laterSessionUuid`, NIE `sessionUuids[1]`: tamta tablica jest
+      // posortowana alfabetycznie (zbiór kanoniczny dla `UNIQUE`) i o czasie nie mówi nic.
       for (const picId of picIds) {
         const spans = (await this.sessions.listByPilot(tx, picId)).map((s) => ({
           sessionUuid: s.sessionUuid,
@@ -165,8 +167,8 @@ export class IngestCommands {
           claimedAt: s.claimTime,
           closedAt: s.closeTime,
         }));
-        for (const flag of pilotOverlapFlags(spans)) {
-          const later = spans.find((s) => s.sessionUuid === flag.sessionUuids[1]);
+        for (const { laterSessionUuid, ...flag } of pilotOverlapFlags(spans)) {
+          const later = spans.find((s) => s.sessionUuid === laterSessionUuid);
           if (later != null) {
             await this.flags.ensureOpen(tx, { ...flag, aircraftId: later.aircraftId });
           }

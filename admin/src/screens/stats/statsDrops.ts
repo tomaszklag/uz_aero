@@ -6,7 +6,7 @@
  *
  * ══ TRZY STANY SEKCJI ══
  *  `stale` — w zakresie są wiersze, których nie da się uczciwie doliczyć do zrzutów:
- *            dni skokowe sprzed migracji 18 ORAZ dni bez rodzaju operacji (każdy MÓGŁ
+ *            dni skokowe sprzed kolumn statystyk ORAZ dni bez rodzaju operacji (każdy MÓGŁ
  *            być skokowy). Kafle mówią „—" i sekcja kieruje na przebudowę (`A11`).
  *            Zero byłoby twierdzeniem, że nikt nie skakał.
  *  `empty` — zakres nie ma zamkniętych dni operacji SKOKI: to fakt, nie awaria —
@@ -81,7 +81,7 @@ export function dropsView(
       tiles: dashTiles(),
       ribbon: [],
       clients: [],
-      note: `${drops.staleRows} ${plural(drops.staleRows, 'wiersza projekcji w zakresie nie da się', 'wierszy projekcji w zakresie nie da się', 'wierszy projekcji w zakresie nie da się')} uczciwie doliczyć do zrzutów: brak rodzaju operacji (dzień MÓGŁ być skokowy) albo brak agregatów sprzed migracji 18. Uruchom przebudowę projekcji na ekranie Konserwacja; zera w tym miejscu twierdziłyby, że nikt nie skakał.`,
+      note: `${drops.staleRows} ${plural(drops.staleRows, 'wiersza projekcji w zakresie nie da się', 'wierszy projekcji w zakresie nie da się', 'wierszy projekcji w zakresie nie da się')} uczciwie doliczyć do zrzutów: brak rodzaju operacji (dzień MÓGŁ być skokowy) albo wiersz projekcji sprzed kolumn statystyk. Uruchom przebudowę projekcji na ekranie Konserwacja; zera w tym miejscu twierdziłyby, że nikt nie skakał.`,
     };
   }
 

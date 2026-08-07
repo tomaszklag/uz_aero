@@ -224,7 +224,7 @@ export function accountFailure(status: number | null, body: ApiErrorDto | null):
  * bo tylko one mają wiersz w bazie, który dało się skasować i policzyć. Sesja panelu
  * to podpisany JWT w ciasteczku `HttpOnly`: nie ma jej w żadnej tabeli, więc nikt jej
  * nie zliczał i zliczyć nie może. Odbiera ją znacznik `credentials_valid_from` — brama
- * odrzuca token wydany przed resetem albo deaktywacją (migracja 13).
+ * odrzuca token wydany przed resetem albo deaktywacją (`pilots.credentials_valid_from`).
  *
  * Dlatego komunikaty niżej mówią o obu rodzajach OSOBNO i pozostają prawdziwe także
  * przy `revokedSessions === 0`: „ten pilot nie miał aktywnych sesji" byłoby wtedy

@@ -30,7 +30,7 @@ const toAccount = (r: PilotRow): PilotAccount => ({
   email: r.email,
   passwordHash: r.password_hash,
   active: r.active,
-  // Bazy pilnuje CHECK z migracji 7, ale adapter i tak nie ufa łańcuchowi znaków
+  // Bazy pilnuje CHECK na `pilots.role`, ale adapter i tak nie ufa łańcuchowi znaków
   // z zewnątrz: nierozpoznana rola schodzi do najmniejszej, nigdy nie awansuje.
   role: isPilotRole(r.role) ? r.role : DEFAULT_ROLE,
 });

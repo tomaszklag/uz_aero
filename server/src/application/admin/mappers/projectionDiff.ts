@@ -15,7 +15,7 @@ import type { SessionRow } from '../../common/ports.ts';
 /**
  * Nazwy pól bierzemy z PRZELICZONEGO wiersza (`Object.keys`), a nie z listy zapisanej
  * na sztywno. Powód jest praktyczny: nowa kolumna projekcji (jak `operation` i `client`
- * w migracji 11) ma wejść do porównania sama, bez pamiętania o drugim miejscu — inaczej
+ * przy liście dni) ma wejść do porównania sama, bez pamiętania o drugim miejscu — inaczej
  * pierwsza przebudowa po migracji zameldowałaby „zero różnic" właśnie dla tych pól,
  * dla których migracja się odbyła.
  */

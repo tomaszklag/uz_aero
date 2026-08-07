@@ -100,7 +100,7 @@ export class PgSessionsProjection implements SessionsProjectionPort {
    * wpadłaby do dwóch kart albo do żadnej, zależnie od strony ostrego nierówności.
    * Porządek `(claim_time, session_uuid)` jest treścią, nie ozdobą: karta numeruje
    * zmiany `S1`, `S2`… i dwie sesje przejęte w tej samej minucie muszą mieć stabilną
-   * kolejność między rewizjami. Zapytanie schodzi po `idx_sessions_day` (migracja 11).
+   * kolejność między rewizjami. Zapytanie schodzi po `idx_sessions_day`.
    */
   async listByAircraftDay(
     db: Queryable,

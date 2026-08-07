@@ -76,7 +76,7 @@ export interface PilotAuthSnapshot {
   active: boolean;
   role: PilotRole;
   /**
-   * Od kiedy poświadczenia tego konta są ważne (migracja 13). `null` = nigdy ich nie
+   * Od kiedy poświadczenia tego konta są ważne. `null` = nigdy ich nie
    * unieważniano. Token wydany WCZEŚNIEJ nie przechodzi bramy — to jedyny sposób,
    * w jaki reset hasła i deaktywacja zrywają sesję PANELU, która nie ma wiersza
    * w bazie (podpisany JWT w ciasteczku `HttpOnly`).
@@ -144,7 +144,8 @@ export interface Identity {
 export interface VerifiedIdentity extends Identity {
   /**
    * `iat` w SEKUNDACH epoki (RFC 7519). `0` = token sprzed wprowadzenia claimu
-   * (migracja 13) — czyli „wydany przed czasem", więc każde unieważnienie poświadczeń
+   * (`pilots.credentials_valid_from`) — czyli „wydany przed czasem", więc każde
+   * unieważnienie poświadczeń
    * go obejmuje. Domyślna wartość idzie w stronę BEZPIECZNĄ, nigdy w stronę zaufania.
    */
   issuedAt: number;
@@ -200,7 +201,7 @@ export interface PhaseTimelinePort {
 }
 
 /**
- * NORMA ZUŻYCIA per samolot (migracja 19) — materializacja modelu dla telefonów.
+ * NORMA ZUŻYCIA per samolot (`aircraft_consumption`) — materializacja modelu dla telefonów.
  *
  * Port jest w `common/`, bo normę PRODUKUJE analityka panelu, a KONSUMUJE aplikacja
  * pilota (`GET /reference`). Liczenie jej na żądanie telefonu odpada: `/reference`
@@ -279,20 +280,20 @@ export interface SessionRow {
   status: 'active' | 'closed';
   /**
    * `SessionState.claimedAt` — czas PRZEJĘCIA samolotu, czyli zdarzenia `session_claim`
-   * (migracja 21; wcześniej kolumna niosła meldunek — uzasadnienie w `mappers/sessionRow.ts`).
+   * (decyzja 2026-08-07; wcześniej kolumna niosła meldunek — uzasadnienie w `mappers/sessionRow.ts`).
    * `null` = strumień bez claimu, czyli rejestr niekompletny; wg §4.4 nie powinien wystąpić.
    */
   claimTime: number | null;
   closeTime: number | null;
   /**
-   * Rodzaj operacji i klient dnia (migracja 11) — wymiary listy dni panelu (`A02`).
+   * Rodzaj operacji i klient dnia — wymiary listy dni panelu (`A02`).
    * Wartości pochodzą z projekcji, nie z ponownego czytania payloadów: reguła
    * „agreguj wartości projekcji, nigdy nie odtwarzaj projekcji SQL-em".
    */
   operation: OperationType | null;
   client: string | null;
   /**
-   * Notatka pilota do dnia (migracja 20, issue #14) — wolny tekst z `preflight_confirm`.
+   * Notatka pilota do dnia (`sessions.notes`, issue #14) — wolny tekst z `preflight_confirm`.
    * `null` = dzień bez notatki (stan normalny, nie „nieprzeliczony"). Stoi obok
    * `client`, bo pochodzi z tego samego zdarzenia i z tej samej projekcji; różni je
    * ODBIORCA: klienta czyta panel i statystyki, notatkę — podpowiedzi preflightu.
@@ -308,7 +309,7 @@ export interface SessionRow {
   flightMs: number;
   flightsCount: number;
   /**
-   * Kolumny statystyk (migracja 18) — wejście agregatów `A10`.
+   * Kolumny statystyk (kolumny statystyk) — wejście agregatów `A10`.
    *
    * Wszystkie są NULL-owalne z JEDNEGO powodu: wiersz zapisany przed migracją ma tu
    * `NULL` do czasu przebudowy projekcji (`A11`) i agregat musi umieć to odróżnić od
@@ -513,7 +514,7 @@ export interface ExportLogPort {
    * spóźniona paczka z telefonu i kliknięcie „Ponów" w panelu, trafione w tę samą
    * chwilę, czytają ten sam stan i obie chcą zapisać rewizję 3 — a dziennik, w którym
    * numer rewizji nie jest jednoznaczny, przestaje odpowiadać na pytanie „co i kiedy
-   * poszło do arkusza". Od migracji 23 drugi zapis odbija się o `UNIQUE (day,
+   * poszło do arkusza". Drugi zapis odbija się o `UNIQUE (day,
    * aircraft_id, revision, session_uuid)`; blokada sprawia, że do tego odbicia w ogóle
    * nie dochodzi w normalnej pracy.
    *

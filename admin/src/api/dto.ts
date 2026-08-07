@@ -480,7 +480,7 @@ export interface SessionListItemDto {
 
   /**
    * Chwila PRZEJĘCIA samolotu (`session_claim`), kolumna „Dzień · UTC". Każda sesja ją
-   * ma (§4.4), więc od migracji 21 żaden dzień nie wypada z filtra zakresu z powodu
+   * ma (§4.4), więc od 2026-08-07 żaden dzień nie wypada z filtra zakresu z powodu
    * braku daty. `null` znaczy rejestr niekompletny, nie „bez preflightu".
    */
   claimedAt: number | null;
@@ -1221,7 +1221,7 @@ export interface StatsRangeDto {
  * a dzielenie dwóch sum po swojemu byłoby właśnie własną metryką.
  *
  * `null` znaczy „nie wiemy" i ma tu DWA źródła, oba nazwane: `staleRows` (wiersze
- * projekcji sprzed migracji 18 — naprawia przebudowa na `A11`) oraz
+ * projekcji sprzed kolumn statystyk — naprawia przebudowa na `A11`) oraz
  * `fuelUnknownSessions`/`mhUnknownSessions` (dni zamknięte, których bilansu nie da
  * się policzyć). Panel nigdy nie zamienia `null` na zero.
  */
@@ -1247,7 +1247,7 @@ export interface StatsTotalsDto {
   openSessionsInRange: number;
   /**
    * Sesje OTWARTE BEZ `session_claim` — rejestr niekompletny: nie mają daty, więc nie
-   * należą do żadnego zakresu i są liczone ZAWSZE. Do migracji 21 licznik obejmował
+   * należą do żadnego zakresu i są liczone ZAWSZE. Do 2026-08-07 licznik obejmował
    * sesje z samym claimem (kolumna niosła wtedy opcjonalny meldunek); dziś taka sesja
    * MA datę, a ten licznik jest sygnałem o połamanym strumieniu i w zdrowym klubie stoi
    * na zerze.
@@ -1347,7 +1347,7 @@ export interface StatsDropsDto {
   dropsWithAltitude: number | null;
   dropsWithoutAltitude: number | null;
   jumpersPerFlightHour: number | null;
-  /** Dni skokowe sprzed migracji 18 ORAZ dni bez rodzaju operacji (mogły być skokowe). */
+  /** Dni skokowe sprzed kolumn statystyk ORAZ dni bez rodzaju operacji (mogły być skokowe). */
   staleRows: number;
   /** Pusta przy `staleRows > 0` — częściowa tabela wyglądałaby na kompletną. */
   clients: StatsClientItemDto[];

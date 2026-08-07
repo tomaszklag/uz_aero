@@ -75,6 +75,32 @@ describe('pilot_overlap — grafik pilota, nie dane maszyny', () => {
     expect(flags).toEqual([]);
   });
 
+  /**
+   * Znalezione 2026-08-07 przy przebudowie generatora demo (`scripts/demo/scenario.ts`).
+   *
+   * `sessionUuids` jest SORTOWANE alfabetycznie, bo to zbiór kanoniczny dla ograniczenia
+   * `uq_flags_type_sessions` — i tak ma zostać. Ingest brał jednak z niego element `[1]`
+   * jako „sesję późniejszą", żeby przypiąć flagę do maszyny, która została wzięta, gdy
+   * poprzednia nie była zdana. Te dwa porządki nie mają ze sobą nic wspólnego.
+   *
+   * Wada spała, bo KAŻDY przypadek w tym pliku nazywał sesje `a`, `b`, `c` — czyli tak,
+   * że porządek alfabetyczny pokrywał się z chronologicznym. Dopiero dane demo z prawdziwymi
+   * identyfikatorami (`demo-kwa-…-ako` przejęte przed `demo-ank-…-ako`) pokazały flagę
+   * przypiętą do maszyny ZDAWANEJ zamiast wziętej.
+   */
+  it('wskazuje sesję PÓŹNIEJSZĄ niezależnie od porządku alfabetycznego uuid', () => {
+    const flags = pilotOverlapFlags([
+      span({ sessionUuid: 'zulu', aircraftId: 'SP-AXA', claimedAt: at(8), closedAt: null }),
+      span({ sessionUuid: 'alfa', aircraftId: 'SP-KLM', claimedAt: at(10), closedAt: null }),
+    ]);
+
+    expect(flags).toHaveLength(1);
+    // Zbiór zostaje kanoniczny (UNIQUE w bazie działa na posortowanej tablicy)…
+    expect(flags[0]!.sessionUuids).toEqual(['alfa', 'zulu']);
+    // …a „która była później" jedzie osobnym polem, bo z tamtego nie da się jej odczytać.
+    expect(flags[0]!.laterSessionUuid).toBe('alfa');
+  });
+
   it('trzy nachodzące sesje dają trzy PARY — flaga opisuje parę, nie zbiór', () => {
     const flags = pilotOverlapFlags([
       span({ sessionUuid: 'a', aircraftId: 'SP-AXA', claimedAt: at(8), closedAt: null }),

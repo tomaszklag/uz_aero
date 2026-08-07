@@ -37,7 +37,7 @@ export function sessionListItem(join: AdminSessionJoin): AdminSessionListItem {
     operation: row.operation,
     client: row.client,
 
-    // Od migracji 21 nazwa kolumny i nazwa pola DTO wreszcie znaczą to samo: chwilę
+    // Od 2026-08-07 nazwa kolumny i nazwa pola DTO wreszcie znaczą to samo: chwilę
     // przejęcia samolotu (`session_claim`).
     claimedAt: row.claimTime,
     closeTime: row.closeTime,

@@ -8,7 +8,7 @@
  * ══ CO Z TEGO WYNIKA W TYPACH (i dlaczego nie jest to niechlujstwo) ══
  *
  *  1. **`type` jest napisem, nie unią `EventType`.** Kolumna `events.type` celowo nie
- *     ma `CHECK`-a (migracja 1), a walidacja katalogu zachodzi na WEJŚCIU, w `POST
+ *     ma `CHECK`-a, a walidacja katalogu zachodzi na WEJŚCIU, w `POST
  *     /events`. Zwężenie przy odczycie kazałoby narzędziu śledczemu albo rzucić na
  *     wierszu spoza katalogu (rejestr przestaje się otwierać przez własną historię),
  *     albo taki wiersz pominąć (rejestr zaczyna ukrywać zdarzenia). Ta sama decyzja,
@@ -83,7 +83,7 @@ export interface AdminEventEntry {
 
   /** ISO 8601 UTC — kiedy SERWER przyjął zdarzenie. Po tym idzie porządek listy. */
   receivedAt: string;
-  /** `null` = wiersz sprzed migracji 4; napis = czym przyszło (także panel). */
+  /** `null` = wiersz sprzed wprowadzenia kolumny; napis = czym przyszło (także panel). */
   sourceDevice: string | null;
   /**
    * **TEN WIERSZ** zapisał panel administracyjny (`source_device` = `admin:<pilotId>`),

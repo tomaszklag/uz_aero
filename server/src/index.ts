@@ -97,7 +97,7 @@ await migrate(db);
 const tokens = new Hs256Tokens(env.JWT_SECRET, clock);
 const events = new PgEventsStore();
 const sessions = new PgSessionsProjection();
-// Norma zużycia (migracja 19) — produkuje ją analityka panelu, konsumuje aplikacja
+// Norma zużycia (`aircraft_consumption`) — produkuje ją analityka panelu, konsumuje aplikacja
 // pilota, więc port siedzi w `application/common/` i trafia do OBU stron: ingestu
 // (przelicza po zamknięciu dnia) i `GET /reference` (oddaje telefonom).
 const consumptionNorms = new PgConsumptionNormRepo();

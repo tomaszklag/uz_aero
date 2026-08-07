@@ -17,7 +17,7 @@
 
 import { ADMIN_CSRF_HEADER } from '../../src/http/adminCsrf.ts';
 import { ADMIN_SESSION_COOKIE } from '../../src/http/tokenFromRequest.ts';
-import type { WireEvent } from './dayStream.ts';
+import type { WireEvent } from './sessionStream.ts';
 import type { DemoTransport, IngestReply } from './runScenario.ts';
 
 export class DemoHttpError extends Error {

@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — adapter preferencji pilota (`PilotPrefsPort`, migracja 6).
+ * UZ Aero (serwer) — adapter preferencji pilota (`PilotPrefsPort`).
  *
  * LWW egzekwowany W ZAPYTANIU (`WHERE theme_updated_at IS NULL OR < $3`), nie
  * porównaniem po odczycie — dwie równoległe rotacje z dwóch urządzeń tego samego

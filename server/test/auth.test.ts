@@ -33,7 +33,8 @@ describe('POST /auth/login', () => {
       pilotId: 'TMK',
       code: 'TMK',
       role: 'admin',
-      // CHWILA WYDANIA (`iat`, sekundy epoki) — dołożona 2026-08-01 razem z migracją 13.
+      // CHWILA WYDANIA (`iat`, sekundy epoki) — dołożona 2026-08-01 razem
+      // z `pilots.credentials_valid_from`.
       // Bez niej brama panelu nie umiałaby odpowiedzieć na pytanie „czy to poświadczenie
       // jest starsze niż reset hasła", bo JWT nie ma jak unieważnić inaczej.
       issuedAt: Math.floor(clock.now().getTime() / 1000),

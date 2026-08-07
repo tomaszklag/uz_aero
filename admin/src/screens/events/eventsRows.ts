@@ -286,7 +286,7 @@ export function headerRows(entry: EventEntryDto, driftThresholdMs: number | null
     {
       label: 'source_device',
       value: entry.sourceDevice ?? '—',
-      unit: entry.sourceDevice == null ? 'wiersz sprzed migracji 4 — pola nie było' : null,
+      unit: entry.sourceDevice == null ? 'wiersz sprzed wprowadzenia kolumny — pola nie było' : null,
       tone: null,
     },
   ];

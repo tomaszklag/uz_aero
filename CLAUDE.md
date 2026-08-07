@@ -58,12 +58,17 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     Przy okazji `day_close` ma `noFlightReason` (09C) z miękką flagą
     `NO_FLIGHT_WITHOUT_REASON`: brak powodu nie może kasować faktu, że maszyna stała zajęta.
     **ETAP B DOMKNIĘTY.**
-- **OTWARTE RYZYKO (§3.6b), świadomie niezamknięte**: progów analityki nie da się nastroić,
-  dopóki `consumptionReplay.ts` nie dostanie danych w NOWYM kształcie (krótkie sesje,
-  wzloty z odczytem i bez) — a takich nie ma nawet w `server/scripts/demo/`. Dzień skokowy
-  bez odczytów pośrednich daje JEDEN interwał na sesję, czyli przypadek, w którym
-  `MAX_VARIANCE_INFLATION` odrzuci rozdział ziemia/lot. Przebudowa generatora demo to
-  osobne zadanie i warunek wstępny kalibracji. **Progów nie stroimy w dyskusji.**
+- **RYZYKO §3.6b — warunek wstępny SPEŁNIONY 2026-08-08**: generator demo
+  (`server/scripts/demo/`) przebudowany pod nowy model. Produkuje cztery style pracy
+  z ekranem 09 (`ConfirmStyle`: odczyt przy każdym wzlocie / co trzeci / potwierdzenie bez
+  odczytu / brak potwierdzenia), próby silnika bez lotu i jeden wzlot przerwany —
+  czyli materiał, na którym `consumptionReplay.ts` da się uruchomić sensownie. Pierwszy
+  przebieg (bez strojenia) pokazał: próg 30 min stoi 2 min pod typowym wzlotem skokowym;
+  dzień skokowy NIE ROZDZIELA ziemi od lotu przy żadnej liczbie danych (stała proporcja
+  faz → `collinear`), rozdział wychodzi tylko na maszynie z różnorodnym ruchem; sesja
+  „skrupulatna" produkuje do 25% interwałów degeneracyjnych między ostatnim `leg_close`
+  a zdaniem samolotu. **Progów nadal NIE stroimy w dyskusji** — to osobna decyzja
+  po kalibracji na tych danych (`docs/_main.md.txt` §3.6b).
 - **Etap C** `app/` (ekrany 1:1 z nowych mockupów) — w toku:
   - **C1 ✅** komendy i store: `closeLeg`, `releaseAircraft` (dawne `dayClose`).
   - **C2 ✅** ekran 01 „Mój dzień" — `logic/myDay.ts` + `logic/heldAircraft.ts`.
@@ -118,8 +123,28 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     rozróżnia `aircraft_overlap` (bramka arkusza) od `pilot_overlap` (grafik pilota).
     Oś zdarzeń pokazuje `noFlightReason` z 09C.
   - **Rozjazd z mockupami `design/admin/` jest ŚWIADOMY**: zostały przy modelu sprzed
-    2026-08-06 (mówią „Duty", „Dzień otwarty", `session_overlap`). Kod prowadzi,
-    mockupy panelu czekają na osobne zadanie.
+    2026-08-06 (mówią „Duty", „Dzień otwarty", `session_overlap`, „migracja N"). Kod
+    prowadzi, mockupy panelu czekają na osobne zadanie.
+- **Dane demo i schemat bazy (2026-08-08)** — dwa zadania po etapie D:
+  - **Generator demo przebudowany** (`server/scripts/demo/`): `dayStream.ts` → `sessionStream.ts`,
+    `DemoDay` → `DemoSession`. Sesja ma TABLICĘ wzlotów (`engine_start`/`engine_stop` na
+    każdy), payloady NIE niosą klamry służby, jest `leg_close` z opcjonalnym odczytem,
+    `noFlightReason` (09C), dwie zmiany jednej maszyny w dobie i zetknięcie sesji co do
+    minuty. **51 sesji, ~1400 zdarzeń, 6 typów flag na 7 egzemplarzach** — patologie są
+    mniejszością (panel ma pokazywać normalny klub, nie klub, w którym wszystko zepsute).
+    `pilot_overlap` spadł z 5 do 1 ZAMIERZONEGO; regułę, która to trzyma („pilot z otwartą
+    sesją nie siada do innej maszyny"), opisuje docblock `scenario.ts`.
+  - **Migracje ZGNIECIONE w jedną bazową** (`SCHEMA_VERSION = 1`). Uzasadnienia z 23
+    docbloków przeniesione do komentarzy SQL przy kolumnach; historia pułapek (trzy
+    podejścia do `NULLS LAST`, sprostowania `UNIQUE` dziennika eksportu, dwa przesunięcia
+    znaczenia karty) do `docs/architektura-panelu-serwer.md` §7.8. Odwołania „migracja N"
+    w kodzie przepisane na NAZWY rzeczy; w narracji historycznej tamtego dokumentu zostają.
+    Zgniecenie jest wierne: 99 kolumn, 28 indeksów i 19 ograniczeń bez zmian, a
+    `test/schema.test.ts` nie zmienił żadnej listy kolumn.
+    **Uwaga operacyjna:** baza deweloperska założona przed zgnieceniem ma
+    w `schema_migrations` numery do 23. Runner odmawia teraz startu na bazie NOWSZEJ niż
+    kod (inaczej po cichu pominąłby kolejną migrację) — naprawa to
+    `DELETE FROM schema_migrations WHERE version > 1`, nie migracja: schemat jest identyczny.
 
 **Twardy warunek każdego commitu etapu B:** strumień `schema_version 1` musi projektować się
 BEZ ZMIANY WYNIKÓW. Strażnikiem jest kanoniczny dzień 22 JUNE w `app/src/__tests__/projections.test.ts`

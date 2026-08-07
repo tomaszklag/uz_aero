@@ -40,7 +40,7 @@ interface PreflightSpec {
  * i nie poleciał), więc fixture nie udaje, że podpowiedź wymaga zamkniętego dnia.
  *
  * Do 2026-08-07 wystarczał tu sam `preflight_confirm`, bo porządek szedł po meldunku.
- * Odkąd niesie go chwila przejęcia (migracja 21), strumień bez claimu nie ma znacznika
+ * Odkąd niesie go chwila przejęcia (decyzja 2026-08-07), strumień bez claimu nie ma znacznika
  * dnia — i słusznie, bo taki strumień nie powstaje w normalnej pracy.
  */
 function preflight(spec: PreflightSpec) {

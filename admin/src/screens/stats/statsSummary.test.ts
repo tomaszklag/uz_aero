@@ -30,7 +30,7 @@ describe('statsPageSub', () => {
   });
 
   it('sesje BEZ `session_claim` są odróżnione od otwartych w zakresie', () => {
-    // Zmiana znaczenia po migracji 21: „sam claim, telefon padł przed preflightem"
+    // Zmiana znaczenia z 2026-08-07: „sam claim, telefon padł przed preflightem"
     // przestało być tym licznikiem. Sesja z samym claimem MA dziś datę i jest zwykłą
     // sesją w toku; bez daty zostaje wyłącznie strumień POŁAMANY (§4.4).
     const totals = statsFixture().totals;

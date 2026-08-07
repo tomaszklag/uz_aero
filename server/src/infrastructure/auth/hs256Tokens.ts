@@ -29,11 +29,12 @@ const HEADER = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
 interface Claims {
   sub: string;
   code: string;
-  /** Rola panelu. Nieobecna w tokenach wydanych przed migracją 7 — patrz `verify`. */
+  /** Rola panelu. Nieobecna w tokenach wydanych przed wprowadzeniem ról — patrz `verify`. */
   role?: string;
   /**
    * CHWILA WYDANIA w sekundach epoki (RFC 7519 `iat`). Dołożona 2026-08-01 razem
-   * z migracją 13: bez niej nie da się odpowiedzieć na pytanie „czy to poświadczenie
+   * z `pilots.credentials_valid_from`: bez niej nie da się odpowiedzieć na pytanie
+   * „czy to poświadczenie
    * jest starsze niż reset hasła", a JWT z natury nie ma jak unieważnić inaczej.
    * Nieobecna w tokenach wydanych wcześniej — patrz `verify`.
    */
@@ -95,7 +96,7 @@ export class Hs256Tokens implements TokenService {
     }
 
     // Rola nieznana → `pilot`, czyli zero uprawnień w panelu. Dotyczy tokenów wydanych
-    // przed migracją 7: mają poprawny podpis, więc odrzucenie wylogowałoby telefony
+    // przed wprowadzeniem ról: mają poprawny podpis, więc odrzucenie wylogowałoby telefony
     // w terenie bez powodu. Cichy awans do wyższej roli byłby natomiast luką — stąd
     // domyślną jest NAJMNIEJSZA rola, nie żadna heurystyka. Podpis HMAC gwarantuje,
     // że nierozpoznana wartość może pochodzić tylko od nas, nigdy od napastnika.

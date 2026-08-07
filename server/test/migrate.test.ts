@@ -85,6 +85,31 @@ describe('runner migracji', () => {
     expect(await tableExists(db, 'druga')).toBe(false);
   });
 
+  /**
+   * BAZA NOWSZA NIŻ KOD — stan, który stworzyło zgniecenie migracji (2026-08-08).
+   *
+   * Dwadzieścia trzy pozycje zwinęły się w jedną, więc każda baza deweloperska założona
+   * wcześniej ma w `schema_migrations` numery do 23, a kod zna jeden skrypt. Sam w sobie
+   * ten stan jest niegroźny (schemat jest identyczny), ale runner liczy `MAX(version)`
+   * i przy DRUGIEJ migracji po zgnieceniu po prostu by jej NIE URUCHOMIŁ: pętla
+   * `for (v = 23; v < 2; …)` nie ma iteracji. Serwer wstałby na bazie bez nowej kolumny
+   * i pierwszym objawem byłby błąd zapytania w losowym miejscu.
+   *
+   * Cisza jest tu więc gorsza niż odmowa startu — i to samo dotyczy wycofania wdrożenia
+   * na starszy kod, gdzie ten sam warunek zachodzi z tego samego powodu.
+   */
+  it('ODMAWIA startu, gdy baza odnotowała więcej migracji, niż zna kod', async () => {
+    const db = freshDb();
+    await migrate(db, [
+      'CREATE TABLE pierwsza (id INTEGER PRIMARY KEY);',
+      'CREATE TABLE druga (id INTEGER PRIMARY KEY);',
+    ]);
+
+    await expect(migrate(db, ['CREATE TABLE pierwsza (id INTEGER PRIMARY KEY);'])).rejects.toThrow(
+      /nowsza niż kod/i,
+    );
+  });
+
   it('po nieudanej migracji kolejny bieg stosuje poprawioną wersję', async () => {
     const db = freshDb();
     const zepsuta = 'CREATE TABLE druga (id INTEGER PRIMARY KEY); SELECT kolumna_ktorej_nie_ma;';

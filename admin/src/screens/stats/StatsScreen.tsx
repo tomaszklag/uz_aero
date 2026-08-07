@@ -18,7 +18,7 @@
  * ══ CZEGO TEN EKRAN ŚWIADOMIE NIE POKAZUJE ══
  *  1. **Kolumny „Blok jako Dual"** — backend nie ma jej z czego uczciwie policzyć
  *     (projekcja niesie ostatniego duala dnia); wyjaśnienie pod tabelą pilotów.
- *  2. **Zer w miejscach niewiedzy** — wiersze projekcji sprzed migracji 18 unieważniają
+ *  2. **Zer w miejscach niewiedzy** — wiersze projekcji sprzed kolumn statystyk unieważniają
  *     agregaty jej kolumn: kafle mówią „—", a baner kieruje na przebudowę (`A11`).
  */
 
@@ -311,7 +311,7 @@ export function StatsScreen() {
       {data != null && data.totals.staleRows > 0 ? (
         <Banner tone="warn">
           <b>
-            {data.totals.staleRows} wierszy projekcji w zakresie pochodzi sprzed migracji 18.
+            {data.totals.staleRows} wierszy projekcji w zakresie pochodzi sprzed kolumn statystyk.
           </b>{' '}
           Sumy startów i lądowań, paliwa, Δ MH oraz cała sekcja zrzutów jadą jako kreski —
           suma po części wierszy podana jako całość byłaby kłamstwem. Przelicz projekcję

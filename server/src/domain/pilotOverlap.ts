@@ -37,7 +37,22 @@ export interface PilotSpan {
 
 export interface PilotOverlapFlag {
   type: Extract<FlagType, 'pilot_overlap'>;
+  /**
+   * Para sesji POSORTOWANA ALFABETYCZNIE — zbiór kanoniczny dla `uq_flags_type_sessions`
+   * (migracja bazowa). Kolejność w tej tablicy nie niesie żadnej informacji o czasie
+   * i nie wolno jej tak czytać: patrz `laterSessionUuid`.
+   */
   sessionUuids: string[];
+  /**
+   * Sesja przejęta PÓŹNIEJ — czyli ta maszyna, którą pilot wziął, nie zdawszy poprzedniej.
+   *
+   * Pole istnieje, bo `flags.aircraft_id` jest jedno, a wołający musi wiedzieć, KTÓRĄ
+   * z dwóch maszyn opisać. Do 2026-08-08 ingest brał `sessionUuids[1]` i przypinał flagę
+   * do samolotu o alfabetycznie późniejszym identyfikatorze — porządek, który z czasem
+   * nie ma nic wspólnego. Wadę ujawniły dopiero dane demo z prawdziwymi uuid-ami; komplet
+   * testów jej nie widział, bo każdy fixture nazywał sesje `a`, `b`, `c`.
+   */
+  laterSessionUuid: string;
   details: Record<string, number | string>;
 }
 
@@ -74,6 +89,8 @@ export function pilotOverlapFlags(spans: readonly PilotSpan[]): PilotOverlapFlag
       flags.push({
         type: 'pilot_overlap',
         sessionUuids: [first.sessionUuid, second.sessionUuid].sort(),
+        // Odcinki są posortowane po chwili przejęcia, więc „drugi" znaczy tu późniejszy.
+        laterSessionUuid: second.sessionUuid,
         details: {
           aircraft: [first.aircraftId, second.aircraftId].sort().join(' + '),
           from: second.claimedAt,

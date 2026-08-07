@@ -21,7 +21,7 @@ const AIRCRAFT = [
 ] as const;
 
 /**
- * Role (migracja 7): seed daje po jednym koncie każdej roli, żeby panel dało się
+ * Role: seed daje po jednym koncie każdej roli, żeby panel dało się
  * przeklikać bez ręcznego UPDATE-u. Reszta to zwykli piloci — czyli stan, w którym
  * konto NIE ma dostępu do back-office'u, i taki ma być domyślny.
  */

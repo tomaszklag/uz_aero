@@ -6,7 +6,7 @@
  * NAPISY: formatuje, odmienia i dobiera przypis do stanu danych.
  *
  * `null` z serwera zostaje kreską z przypisem mówiącym DLACZEGO — dwa różne powody
- * („wiersze sprzed migracji 18" vs „dni bez bilansu") dostają dwa różne zdania,
+ * („wiersze sprzed kolumn statystyk" vs „dni bez bilansu") dostają dwa różne zdania,
  * bo pierwsze naprawia przebudowa, a drugiego nie naprawi nic.
  */
 
@@ -27,9 +27,9 @@ export interface StatsTile {
 
 const UNKNOWN_NOTE = 'Nie wiadomo — raport się nie pobrał.';
 
-/** Przypis kafli unieważnionych wierszami sprzed migracji 18 — kieruje na `A11`. */
+/** Przypis kafli unieważnionych wierszami sprzed kolumn statystyk — kieruje na `A11`. */
 const staleNote = (rows: number): string =>
-  `${rows} ${plural(rows, 'wiersz projekcji jest', 'wiersze projekcji są', 'wierszy projekcji jest')} sprzed migracji 18 — uruchom przebudowę na ekranie Konserwacja.`;
+  `${rows} ${plural(rows, 'wiersz projekcji jest', 'wiersze projekcji są', 'wierszy projekcji jest')} sprzed kolumn statystyk — uruchom przebudowę na ekranie Konserwacja.`;
 
 /** Sześć kafli mockupu, w tej samej kolejności. `data === null` = wszystkie „—". */
 export function statsTiles(data: StatsReportDto | null): StatsTile[] {

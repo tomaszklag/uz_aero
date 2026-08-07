@@ -1,11 +1,11 @@
 /**
- * UZ Aero (serwer) — role kont i brama uprawnień panelu (migracja 7, decyzja 2026-07-31).
+ * UZ Aero (serwer) — role kont i brama uprawnień panelu (decyzja 2026-07-31).
  *
  * Trzy rzeczy, które MUSZĄ trzymać, bo ich złamanie jest luką, a nie usterką:
  *  1. brak roli nigdy nie awansuje — nieznana wartość schodzi do `pilot`;
  *  2. rola jedzie z KONTA, nie z tokenu — odebranie uprawnień działa przy odświeżeniu
  *     ORAZ przy każdym żądaniu panelu (zmiana 2026-08-01, przekrój A06);
- *  3. baza nie przyjmuje roli spoza słownika (CHECK z migracji 7).
+ *  3. baza nie przyjmuje roli spoza słownika (CHECK na `pilots.role`).
  */
 
 import { createHmac } from 'node:crypto';
@@ -51,7 +51,7 @@ describe('mapa uprawnień', () => {
   });
 });
 
-describe('unieważnienie poświadczeń (migracja 13)', () => {
+describe('unieważnienie poświadczeń (`pilots.credentials_valid_from`)', () => {
   // Zaokrąglenie jest tu istotne, a nie kosmetyczne: `iat` ma rozdzielczość SEKUNDY
   // (RFC 7519), a znacznik — milisekundy. Reguła musi więc jawnie wybrać, w którą
   // stronę myli się na granicy, i wybiera stronę odebrania dostępu.
@@ -214,7 +214,7 @@ describe('brama uprawnień tras panelu', () => {
 });
 
 describe('zgodność wstecz tokenów', () => {
-  it('token wydany PRZED migracją 7 (bez claimu roli) czyta się jako pilot', async () => {
+  it('token wydany PRZED wprowadzeniem ról (bez claimu roli) czyta się jako pilot', async () => {
     // Odrzucenie takiego tokenu wylogowałoby telefony w terenie bez powodu, a cichy
     // awans byłby luką — jedyne bezpieczne wyjście to najmniejsza rola.
     //
@@ -356,7 +356,7 @@ describe('rola pochodzi z konta, nie z tokenu', () => {
   });
 });
 
-describe('CHECK z migracji 7', () => {
+describe('CHECK na `pilots.role`', () => {
   it('baza nie przyjmuje roli spoza słownika', async () => {
     const { db } = await testHarness();
     await expect(

@@ -884,14 +884,14 @@ describe('porządek rejestru daje INDEKS, nie sortowanie w pamięci', () => {
   /**
    * CZTERY kombinacje, a nie dwie — i to jest sedno tego przekroju.
    *
-   * Poprzednia wersja tego testu badała wyłącznie `desc`, więc migracja 16 przeszła
+   * Poprzednia wersja tego testu badała wyłącznie `desc`, więc `idx_events_correction_target` przeszła
    * z wadą: dopisanie `NULLS LAST` do `idx_events_received` naprawiło jeden kierunek
    * i zabrało indeks drugiemu (indeks `DESC NULLS LAST` skanowany wstecz daje
    * `ASC NULLS FIRST`, a `keysetOrderBy` prosił o `ASC NULLS LAST`). Zmierzone na 5 000
    * wierszy: `?sort=asc` sortował CAŁY rejestr przed `LIMIT`-em, koszt 442 zamiast 11,3
    * — i wystarczał do tego jeden klik w nagłówek kolumny.
    *
-   * Po migracji 17 indeks stoi w postaci DOMYŚLNEJ `(received_at DESC, uuid DESC)`,
+   * Dziś indeks stoi w postaci DOMYŚLNEJ `(received_at DESC, uuid DESC)`,
    * a `keysetOrderBy` nie dopisuje `NULLS` dla klucza `NOT NULL`. Jeden indeks obsługuje
    * wtedy oba kierunki: `desc` skanem w przód, `asc` skanem wstecz.
    */

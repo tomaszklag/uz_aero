@@ -6,7 +6,7 @@
  * listach panelu: agreguj wartości projekcji, nigdy nie odtwarzaj projekcji SQL-em.
  *
  * ══ SKĄD BIERZE SIĘ „NAJNOWSZE" ══
- * Znacznik dnia niesie `claim_time`, czyli chwilę PRZEJĘCIA samolotu (migracja 21).
+ * Znacznik dnia niesie `claim_time`, czyli chwilę PRZEJĘCIA samolotu (decyzja 2026-08-07).
  * Po tej migracji ma go każda sesja, bo `session_claim` jest pierwszym zdarzeniem
  * każdej z nich (§4.4) — `COALESCE` na `updated_at` zostaje jako zabezpieczenie dla
  * rejestru niekompletnego (import, awaria), a nie jako gałąź obsługująca normalny dzień,
@@ -68,7 +68,7 @@ export class PgTaskSuggestionsRepo implements TaskSuggestionsPort {
 
     return rows.map((r) => {
       // Wartość spoza katalogu rzuca, a nie jest po cichu zerowana — ten sam argument,
-      // co w `toSessionRow`: od migracji 11 pilnuje jej `CHECK` w bazie, więc inna
+      // co w `toSessionRow`: pilnuje jej `sessions_operation_known` w bazie, więc inna
       // wartość znaczy, że ktoś zdjął ograniczenie albo grzebał ręcznie.
       if (r.operation != null && !isOperationType(r.operation)) {
         throw new Error(`Nieznany rodzaj operacji w bazie: ${r.operation} (klient ${r.value})`);

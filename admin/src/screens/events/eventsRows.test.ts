@@ -292,7 +292,7 @@ describe('nagłówek zdarzenia: rozwinięcie mówi, KTÓRY zegar liczy', () => {
       (r) => r.label === 'source_device',
     )!;
     expect(src.value).toBe('—');
-    expect(src.unit).toContain('migracji 4');
+    expect(src.unit).toContain('sprzed wprowadzenia kolumny');
   });
 
   it('kontrola samego testu: nagłówek ma komplet pól i żadnego pustego', () => {

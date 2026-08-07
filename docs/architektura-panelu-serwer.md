@@ -29,6 +29,19 @@
 >    świadomie BEZ pola, z którego dałoby się wyprowadzić blokadę przycisku).
 > 4. **Interwały paliwowe** (§7.7) — lista źródeł odczytu nie zna `leg_close` ani zdania
 >    samolotu; patrz `_main.md.txt` §3.6b.
+> ## ⚠ NUMERY MIGRACJI W TYM DOKUMENCIE SĄ HISTORIĄ, NIE STANEM BAZY (2026-08-08)
+>
+> 2026-08-08 dwadzieścia trzy migracje zostały **zgniecione w jedną bazową** (§7.8):
+> `SCHEMA_VERSION = 1`, a `A11` pokazuje jeden wiersz. Wszystkie „migracja 9", „migracja 18"
+> itd. poniżej opisują **przebieg prac z lipca i sierpnia 2026** — kolejność, w jakiej rzeczy
+> powstawały, i to, co z czego wynikało. Zostawiamy je celowo: rozdział §11 i noty
+> „Aktualizacja …" są kroniką decyzji, a przepisanie ich na nazwy kolumn zamieniłoby
+> kronikę w listę faktów bez chronologii.
+>
+> **O stan bazy pytaj `server/src/infrastructure/pg/schema.ts`** — tam każda kolumna,
+> ograniczenie i indeks ma komentarz z uzasadnieniem. Odwołania w KODZIE zostały przepisane
+> na nazwy rzeczy; numery zostały wyłącznie w narracji historycznej.
+
 > Zakres: `server/` i `packages/domain` — czyli to, co panel konsumuje.
 > Zakres UI panelu (20 ekranów, role, mapowanie ekran→endpoint): `design/admin/ANALIZA.md`.
 > Architektura istniejącego kodu i reguły twarde: `docs/architektura-kodu.md`.
@@ -1210,7 +1223,7 @@ na stronę** (tyle, co maksymalna paczka `POST /events` — jedna liczba, jedno 
 (dziesiątki tysięcy zdarzeń) dokładne liczenie jest tanie. **Nie budujemy szacowania
 z `pg_class.reltuples`** — to optymalizacja problemu, którego nie ma.
 
-### 7.4 Indeksy (migracja 11)
+### 7.4 Indeksy rejestru — PLAN z 2026-07-31
 
 ```sql
 CREATE INDEX IF NOT EXISTS idx_events_received ON events (received_at DESC, uuid DESC);
@@ -1218,9 +1231,16 @@ CREATE INDEX IF NOT EXISTS idx_events_type     ON events (type, received_at DESC
 CREATE INDEX IF NOT EXISTS idx_events_pic      ON events (pic_id, received_at DESC);
 ```
 
-`idx_events_session` i `idx_events_aircraft` już są (migracja 1). Test: `EXPLAIN`
-na zapytaniu listy potwierdza użycie indeksu — dokładnie tak, jak
-`sqliteSchema.test.ts` sprawdza planer w aplikacji.
+`idx_events_session` i `idx_events_aircraft` już są. Test: `EXPLAIN` na zapytaniu listy
+potwierdza użycie indeksu — dokładnie tak, jak `sqliteSchema.test.ts` sprawdza planer
+w aplikacji.
+
+> **Wdrożono WĘŻEJ, niż zakładał ten plan** (sprostowanie 2026-08-08): `idx_events_type`
+> i `idx_events_pic` NIE powstały — filtry rejestru schodzą po `idx_events_received`,
+> a pomiar nie pokazał potrzeby dwóch dodatkowych indeksów na tabeli, do której pisze
+> każdy sync. Powstał za to `idx_events_correction_target` (częściowy, wyrażeniowy),
+> którego plan nie przewidywał. **Jedynym źródłem prawdy o indeksach jest
+> `server/src/infrastructure/pg/schema.ts`** — ten blok opisuje zamiar, nie stan.
 
 ### 7.5 Karta dnia — jedyne miejsce z `projectSession` na żądanie
 
@@ -1235,9 +1255,13 @@ na zapytaniu listy potwierdza użycie indeksu — dokładnie tak, jak
   'closed'` — sesje otwarte wypadają z sum (nie mają `mh_end` ani `fuel_end_l`, więc
   wliczenie ich zafałszowałoby delty), a odpowiedź niesie `openSessionsInRange`, żeby
   UI mogło pokazać baner „w okresie są 2 sesje otwarte — ich liczby nie wchodzą do sum".
-  Osobno jedzie `openSessionsUndated`: sesja `active` z samym `session_claim` ma
-  `claim_time IS NULL` (kolumna niesie duty start z preflightu), więc nie należy do
-  ŻADNEGO zakresu — liczona jest zawsze, zamiast znikać za predykatem `BETWEEN`.
+  Osobno jedzie `openSessionsUndated`: sesja bez `claim_time` nie należy do ŻADNEGO
+  zakresu, więc liczona jest zawsze, zamiast znikać za predykatem `BETWEEN`.
+
+  > **Sprostowanie 2026-08-07**: do przebudowy flow `claim_time` niosło `dutyStart`
+  > z preflightu, więc sesja z samym `session_claim` faktycznie bywała bez daty. Dziś
+  > kolumna niesie czas PRZEJĘCIA maszyny, a claim ma każda sesja (§4.4) — `openSessionsUndated`
+  > zostaje jako licznik stanu WYŁĄCZNIE awaryjnego (rejestr niekompletny po imporcie).
 
 ### 7.6 Rozszerzenie `test/contract.test.ts`
 
@@ -1289,8 +1313,63 @@ dokłada regułę po ścieżce: `sessionStreams` ma dokładnie jednego użytkown
 (`application/admin/queries/consumption.ts`) — poza deklaracją portu i adapterem.
 
 **Model motogodzin nie potrzebuje tej furtki w ogóle.** `ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`
-składa się wyłącznie z kolumn migracji 18 (`mh_delta_h`, `flight_ms`, `block_ms`), więc
-liczy się bez jednego odczytu rejestru — czysty przypadek §7.2.
+składa się wyłącznie z kolumn statystyk projekcji (`mh_delta_h`, `flight_ms`, `block_ms`),
+więc liczy się bez jednego odczytu rejestru — czysty przypadek §7.2.
+
+### 7.8 Schemat jest JEDNĄ migracją bazową — co z historii zostało i gdzie (2026-08-08)
+
+Do 2026-08-08 `infrastructure/pg/schema.ts` niósł 23 migracje. Zgnieliśmy je w jedną
+bazową, bo faza 5 (testy z pilotami) się nie zaczęła i **nie ma żadnych danych
+produkcyjnych do zachowania** — dwa backfille danych, które tam stały, nie miały już czego
+przepisywać. Zgniecenie jest wierne: 99 kolumn, 28 indeksów i 19 ograniczeń zgadza się
+co do definicji, a `test/schema.test.ts` nie zmienił ani jednej listy kolumn.
+
+**Uzasadnienia per kolumna, ograniczenie i indeks przeniosły się do samego DDL-a** —
+komentarzem SQL przy rzeczy, której dotyczą. Poniżej zostaje to, co opisuje DROGĘ do tego
+schematu: trzy pułapki, każda kosztowna, każda możliwa do powtórzenia.
+
+**(a) `NULLS LAST` na kluczu `NOT NULL` — trzy podejścia, wszystkie mierzone.**
+`keysetOrderBy` emitował kiedyś `NULLS LAST` bezwarunkowo, a indeksy stały bez niego —
+planer nie mógł ich wtedy użyć do PORZĄDKOWANIA, więc każda strona listy kończyła się
+pełnym `Sort`-em (koszt pierwszej strony dziennika audytu: 109 zamiast 4 przy 2000
+wierszy; rejestr zdarzeń przy 5000 wierszy schodził z `Index Only Scan` na `Bitmap Heap
+Scan` + `Sort` całej tabeli). Pierwsza „naprawa" dopisała `NULLS LAST` do indeksu — i tylko
+PRZESUNĘŁA wadę na drugi kierunek: indeks `DESC NULLS LAST` skanowany wstecz daje
+`ASC NULLS FIRST`, a `?sort=asc` prosił o `ASC NULLS LAST` (koszt 442 zamiast ~10, po
+jednym kliknięciu w nagłówek kolumny). Dopiero trzecie podejście poszło do ŹRÓDŁA:
+`NULLS` emitujemy i indeksujemy **wyłącznie dla klucza, który faktycznie bywa `NULL`**
+(dziś jest nim tylko `sessions.claim_time`). Wniosek do zapamiętania: ta wada **nie zmienia
+żadnego wyniku**, więc nie złapie jej test na danych — łapią ją `EXPLAIN`-y
+w `test/adminEvents.test.ts` i `test/adminAudit.test.ts`, i to jest jedyny powód, dla
+którego przestała wracać.
+
+**(b) Co `UNIQUE` naprawdę łapie, a czego nie.** `uq_export_log_card_revision`
+i `uq_flags_type_sessions` istnieją, bo dedupe w adapterze (SELECT-then-INSERT) przegrywa
+wyścig dwóch transakcji. Nie istnieją natomiast po to, żeby chronić przed drugą instancją
+serwera — `pg_advisory_xact_lock` jest blokadą KLASTROWĄ i szereguje dwie instancje
+dokładnie tak samo jak dwie transakcje w jednym procesie (poprzednia wersja tego
+komentarza twierdziła inaczej i było to po prostu nieprawdą). `UNIQUE` broni przed czymś
+węższym: ręcznym `INSERT`-em w `psql`, przyszłą ścieżką kodu, która zapomni zawołać
+`lock()`, i starymi duplikatami — te ujawnia przy zakładaniu ograniczenia.
+**Sama blokada advisory NIE MA testu i to jest luka nazwana, nie przeoczona**: PGlite ma
+jedno połączenie i szereguje transakcje własnym mutexem, więc po usunięciu
+`pg_advisory_xact_lock` testy nadal przechodzą (sprawdzone). Test udający równoległość
+dawałby fałszywe poczucie pokrycia.
+Przegrany wyścig wraca jako `23505` i kończy się **pięćsetką** — tłumaczenia na odmowę
+NIE MA i nie należy go obiecywać: `uniqueConflictOn` obsługuje formularze, gdzie kolizja
+jest zajętą wartością do poprawienia przez człowieka, a tutaj jest awarią serializacji.
+
+**(c) Karta arkusza dwa razy zmieniła znaczenie, a nazwa została.** `export_log.session_uuid`
+znaczyło „sesja, której to karta"; dziś znaczy **członkostwo sesji w rewizji**, bo karta
+jest DOBĄ SAMOLOTU (§4.7). Rozważona i odrzucona była wersja normalizacyjnie czystsza —
+jeden wiersz na rewizję plus tabela członkostwa — i odpadła w jedynym miejscu, które się
+liczy: `GET /sessions/:uuid/sync-status` (ekran 11 telefonu) pyta o link PO SESJI, więc
+zmiana, która eksportu nie wyzwoliła, nie miałaby własnego wiersza i pilot zobaczyłby
+„jeszcze nie wyeksportowano" o danych, które są w arkuszu. Cena wybranego wariantu to
+dokładnie jedno zdanie: kolumna nazywa się „sesja", a znaczy „członkostwo".
+Podobnie `exported_sheets.tab`: klucz `YYYY-MM-DD_SP-XXX` był od początku poprawny — to
+nie nazwa była za wąska, tylko TREŚĆ za wąska wobec nazwy (druga zmiana dnia nadpisywała
+pierwszą zamiast do niej dołączyć).
 
 ---
 

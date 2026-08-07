@@ -9,8 +9,8 @@
  * czyli przekazanie (§4.5). `fuelLastL`/`mhLast` żyją też w trakcie dnia — z nich
  * `GET /aircraft/:id/state` podpowiada stan bieżący (np. po tankowaniu).
  *
- * ── `claim_time` niesie CZAS PRZEJĘCIA (decyzja 2026-08-07, migracja 21) ─────────
- * Kolumna nazywa się `claim_time` (migracja 2) i od migracji 21 wreszcie znaczy to,
+ * ── `claim_time` niesie CZAS PRZEJĘCIA (decyzja 2026-08-07) ──────────────────────
+ * Kolumna nazywała się `claim_time` od początku i od 2026-08-07 wreszcie znaczy to,
  * co mówi jej nazwa: czas zdarzenia `session_claim` (`SessionState.claimedAt`).
  *
  * Do 2026-08-07 zapisywaliśmy tu `dutyStart`, czyli godzinę MELDUNKU z preflightu.
@@ -44,12 +44,12 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     status: s.closed ? 'closed' : 'active',
     claimTime: s.claimedAt,
     closeTime: s.closedAt,
-    // Wymiary listy dni (migracja 11). Przepisujemy WARTOŚĆ POLICZONĄ przez projekcję
+    // Wymiary listy dni (`operation`, `client`). Przepisujemy WARTOŚĆ POLICZONĄ przez projekcję
     // — razem z jej regułą „klient dziedziczony przez `drop`, gdy preflight go nie
     // podał". Sięgnięcie po `payload.operation` wprost byłoby drugą implementacją.
     operation: s.operation,
     client: s.client,
-    // Notatka dnia (migracja 20) — jak wyżej: wartość POLICZONA przez projekcję,
+    // Notatka dnia (`sessions.notes`) — jak wyżej: wartość POLICZONA przez projekcję,
     // razem z jej regułą („ostatni `preflight_confirm` wygrywa"). Payloadu nie
     // czytamy tu wprost, bo to byłaby druga implementacja tej samej reguły.
     notes: s.notes,
@@ -62,7 +62,7 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     blockMs: s.blockTimeMs,
     flightMs: s.flightTimeMs,
     flightsCount: s.flights.length,
-    // Kolumny statystyk (migracja 18) — jak wyżej: przepisujemy WARTOŚCI POLICZONE
+    // Kolumny statystyk (kolumny statystyk) — jak wyżej: przepisujemy WARTOŚCI POLICZONE
     // przez projekcję, razem z jej regułami. `mh.deltaH` i `fuel.consumedL` są `null`
     // do `day_close` (bilans istnieje dopiero z odczytem końcowym), a suma wysokości
     // zrzutów i licznik fixów jadą OSOBNO, bo średnich per sesja nie da się składać

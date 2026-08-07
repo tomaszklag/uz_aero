@@ -42,7 +42,7 @@ export function statsPageSub(totals: StatsTotalsDto | null): string {
     );
   }
   // Sesja BEZ `session_claim` nie ma daty, więc nie należy do ŻADNEGO zakresu. Po
-  // migracji 21 to już nie „telefon padł przed preflightem" (taka sesja ma dziś datę
+  // zmianie z 2026-08-07 to już nie „telefon padł przed preflightem" (taka sesja ma datę
   // z claimu i jest zwykłą sesją w toku), tylko POŁAMANY STRUMIEŃ — §4.4 mówi, że
   // każda sesja zaczyna się claimem. W zdrowym klubie ta liczba stoi na zerze.
   if (undated > 0) {

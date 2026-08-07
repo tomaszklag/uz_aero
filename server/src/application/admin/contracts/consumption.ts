@@ -57,7 +57,7 @@ export interface AdminConsumptionBasis {
   /** Dni OTWARTE w oknie — pominięte, bo bez odczytu końcowego nie znamy ich zużycia. */
   openSessions: number;
   /**
-   * Dni z kolumnami sprzed migracji 18 (`takeoff_count IS NULL`). Ich `mh_delta_h`
+   * Dni z projekcją sprzed kolumn statystyk (`takeoff_count IS NULL`). Ich `mh_delta_h`
    * bywa pusta, więc model motogodzin ma wtedy mniej równań — ekran mówi o tym wprost
    * i odsyła do przebudowy projekcji (`A11`), zamiast pokazywać niższą liczbę jako fakt.
    */

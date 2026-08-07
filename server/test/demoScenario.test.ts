@@ -3,7 +3,7 @@
  *
  * `scripts/demo/scenario.ts` otwiera się tabelą „flaga → gdzie → po co". Bez tego pliku
  * ta tabela byłaby PROZĄ: dane demo powstają z reguł §4.5, a te bywają subtelne —
- * `aircraft_overlap` nie powstanie, jeśli dzień pojedzie jedną paczką razem z `day_close`,
+ * `aircraft_overlap` nie powstanie, jeśli sesja pojedzie jedną paczką razem z `day_close`,
  * a `fuel_mismatch` przepadnie przy zmianie pojemności zbiorników w seedzie floty.
  * Cicho zdegradowany seed jest gorszy niż jego brak: pokazuje panel, w którym „nic nie
  * ma", i uczy, że to normalne.
@@ -16,6 +16,12 @@
  * Przy `app.inject` cała ta warstwa (parsowanie `Set-Cookie`, nagłówki, kody statusu)
  * byłaby ominięta, a to właśnie ona jest jedyną częścią seeda bez innego pokrycia.
  * Bazą zostaje PGlite, więc test nie potrzebuje ani Dockera, ani sieci poza pętlą zwrotną.
+ *
+ * ══ CO PRZYBYŁO PRZY PRZEBUDOWIE POD §3.6a (2026-08-07) ══
+ * Trzy przypadki pilnują rzeczy, które w starym modelu nie istniały i które najłatwiej
+ * zgubić po cichu: braku klamry służby w payloadach, obecności WSZYSTKICH czterech stylów
+ * potwierdzania wzlotów (od nich zależy analityka, §3.6b) i tego, że zetknięcie sesji
+ * co do minuty NIE jest nakładką grafiku.
  */
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -29,7 +35,7 @@ import { TEST_PASSWORD, testHarness } from './helpers.ts';
 /**
  * „Teraz" scenariusza = czas `TestClock` z `helpers.ts` (2026-06-22 08:00 UTC).
  * Zrównanie obu zegarów jest tu istotne, nie kosmetyczne: korekta administracyjna
- * stempluje się zegarem SERWERA, a scenariusz układa dni względem swojego „dziś" —
+ * stempluje się zegarem SERWERA, a scenariusz układa doby względem swojego „dziś" —
  * rozjazd dałby poprawkę wpisaną przed dniem, którego dotyczy.
  */
 const NOW = Date.UTC(2026, 5, 22, 8, 0, 0);
@@ -39,6 +45,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 function sessionUuid(aircraftSuffix: string, offsetDays: number, pilot: string): string {
   const day = new Date(Math.floor(NOW / DAY_MS) * DAY_MS - offsetDays * DAY_MS);
   return `demo-${aircraftSuffix}-${day.toISOString().slice(0, 10).replaceAll('-', '')}-${pilot}`;
+}
+
+/** `2026-06-18` — doba karty arkusza (`export_log.day`, prefiks nazwy karty). */
+function sheetDay(offsetDays: number): string {
+  return new Date(Math.floor(NOW / DAY_MS) * DAY_MS - offsetDays * DAY_MS)
+    .toISOString()
+    .slice(0, 10);
 }
 
 type Harness = Awaited<ReturnType<typeof testHarness>>;
@@ -62,9 +75,9 @@ describe('scenariusz danych demo', () => {
     scenario = buildScenario(NOW);
     client = new DemoClient(`http://127.0.0.1:${address.port}`, TEST_PASSWORD);
     summary = await runScenario(client, scenario);
-    // Limit z zapasem: bieg trwa ~12 s solo, ale ten plik przepuszcza przez PGlite
-    // cały scenariusz (ok. 40 paczek, 500 zdarzeń, eksporty kart), a pod pełnym
-    // zestawem równoległym maszyna zwalnia kilkukrotnie.
+    // Limit z zapasem: bieg przepuszcza przez PGlite cały scenariusz (ok. 54 paczki,
+    // 1400 zdarzeń, karty dób), a pod pełnym zestawem równoległym maszyna zwalnia
+    // kilkukrotnie.
   }, 300_000);
 
   afterAll(async () => {
@@ -78,6 +91,26 @@ describe('scenariusz danych demo', () => {
     expect(summary.adminActions).toBe(scenario.adminActions.length);
   });
 
+  /**
+   * Proporcje są TREŚCIĄ scenariusza, nie skutkiem ubocznym: panel ma pokazywać
+   * normalny klub, w którym patologie są mniejszością. Poprzednia wersja seeda była
+   * zbiorem awarii i uczyła, że skrzynka flag pełna zawsze to stan normalny.
+   */
+  it('większość sesji jest ZWYCZAJNA — flagi dotykają mniejszości', async () => {
+    const sessions = await harness.db.query<{ n: string }>(
+      'SELECT count(*)::text AS n FROM sessions',
+    );
+    const flagged = await harness.db.query<{ n: string }>(
+      'SELECT count(DISTINCT s)::text AS n FROM flags f, unnest(f.session_uuids) AS s',
+    );
+
+    expect(Number(sessions.rows[0]!.n)).toBeGreaterThanOrEqual(45);
+    // Udział sesji objętych JAKĄKOLWIEK flagą — próg z zapasem, żeby test nie kruszył
+    // się przy dołożeniu jednego zwykłego dnia, ale wywalał się, gdy patologie znowu
+    // zaczną dominować.
+    expect(Number(flagged.rows[0]!.n) / Number(sessions.rows[0]!.n)).toBeLessThan(0.3);
+  });
+
   it('produkuje po jednym egzemplarzu KAŻDEGO typu flagi z §4.5', async () => {
     const page = await client.adminGet<AdminFlagPage>('/flags?limit=100');
     const byType = new Map<string, number>();
@@ -85,21 +118,20 @@ describe('scenariusz danych demo', () => {
 
     // Nakładki MASZYNY są DWIE (jedna rozwiązana, jedna wciąż blokująca) — na tym stoi
     // zarówno skrzynka `A03`, jak i wiersz „brak karty" w monitorze eksportu `A05`.
+    // Jeden egzemplarz nie może być jednocześnie w obu stanach.
     //
-    // ⚠ `pilot_overlap: 5` NIE JEST liczbą zaprojektowaną. Tyle nakładek grafiku ma dziś
-    // scenariusz demo, bo powstawał przed rozdzieleniem flagi (§4.7, 2026-08-07) i zostawia
-    // pilotom sesje otwarte na kilku maszynach naraz — układ, którego stary detektor nie
-    // widział. Detektor ma rację, dane demo nie. Przebudowa generatora pod nowy model jest
-    // OSOBNYM, już zapisanym zadaniem (`_main.md.txt` §3.6b — warunek wstępny kalibracji
-    // progów analityki) i wtedy ta liczba ma spaść do 1. Do tego czasu asercja pilnuje
-    // przynajmniej tego, że nic więcej się nie zmieniło.
+    // `pilot_overlap: 1` jest liczbą ZAPROJEKTOWANĄ: AKO nie zdaje SP-KWA (D−7) i siada
+    // do An-2 (D−5). Do 2026-08-07 było ich pięć, bo scenariusz zostawiał pilotom sesje
+    // otwarte na kilku maszynach naraz — wada DANYCH, nie detektora. Reguła planu, która
+    // to zamyka, stoi w docblocku `scenario.ts` („czego scenariusz pilnuje, żeby nie
+    // zrobić"); ta asercja jest jej strażnikiem.
     expect(Object.fromEntries(byType)).toEqual({
       mh_gap: 1,
       mh_regression: 1,
       fuel_mismatch: 1,
       clock_drift: 1,
       aircraft_overlap: 2,
-      pilot_overlap: 5,
+      pilot_overlap: 1,
     });
   });
 
@@ -113,9 +145,19 @@ describe('scenariusz danych demo', () => {
     expect(where('fuel_mismatch')).toEqual(['SP-KWA']);
     expect(where('clock_drift')).toEqual(['SP-FGK']);
     expect(where('aircraft_overlap').sort()).toEqual(['SP-ANK', 'SP-KWA']);
+    // Nakładka grafiku ląduje na maszynie PÓŹNIEJSZEJ z pary (`ingest.ts`) — to An-2,
+    // wzięty w chwili, gdy SP-KWA wciąż był zajęty.
+    expect(where('pilot_overlap')).toEqual(['SP-ANK']);
+
+    const pilotOverlap = page.items.find((f) => f.type === 'pilot_overlap')!;
+    expect(pilotOverlap.sessionUuids.sort()).toEqual(
+      [sessionUuid('kwa', 7, 'ako'), sessionUuid('ank', 5, 'ako')].sort(),
+    );
+    // Grafik człowieka nie jest bramką arkusza (§4.7) — karta doby An-2 ma wyjść mimo niej.
+    expect(pilotOverlap.blocksExport).toBe(false);
   });
 
-  it('zostaje dokładnie jedna nakładka OTWARTA i to ona blokuje eksport', async () => {
+  it('zostaje dokładnie jedna nakładka MASZYNY otwarta i to ona blokuje eksport', async () => {
     const open = await client.adminGet<AdminFlagPage>('/flags?status=open&type=aircraft_overlap');
     expect(open.items).toHaveLength(1);
     expect(open.items[0]!.aircraftId).toBe('SP-KWA');
@@ -131,9 +173,9 @@ describe('scenariusz danych demo', () => {
     expect(resolved.items[0]!.resolvedBy).toBe('TMK');
   });
 
-  it('rozwiązanie nakładki wypuściło do arkusza karty OBU sesji An-2', async () => {
-    const blocked = sessionUuid('ank', 8, 'jse');
-    const late = sessionUuid('ank', 9, 'pwi');
+  it('rozwiązanie nakładki wypuściło do arkusza karty OBU dób An-2', async () => {
+    const blocked = sessionUuid('ank', 11, 'jse');
+    const late = sessionUuid('ank', 12, 'pwi');
     for (const uuid of [blocked, late]) {
       const { rows } = await harness.db.query<{ n: string }>(
         'SELECT count(*)::text AS n FROM export_log WHERE session_uuid = $1',
@@ -143,18 +185,16 @@ describe('scenariusz danych demo', () => {
     }
   });
 
-  it('dzień zablokowany otwartą nakładką NIE MA karty — to wiersz alarmowy A05', async () => {
+  it('doba zablokowana otwartą nakładką NIE MA karty — to wiersz alarmowy A05', async () => {
     const { rows } = await harness.db.query<{ n: string }>(
       'SELECT count(*)::text AS n FROM export_log WHERE session_uuid = $1',
-      [sessionUuid('kwa', 4, 'pwi')],
+      [sessionUuid('kwa', 6, 'pwi')],
     );
     expect(rows[0]!.n).toBe('0');
   });
 
-  it('dwie zmiany jednego dnia = JEDNA karta z obiema w środku (§4.7)', async () => {
-    const day = new Date(Math.floor(NOW / DAY_MS) * DAY_MS - 3 * DAY_MS)
-      .toISOString()
-      .slice(0, 10);
+  it('dwie zmiany jednej doby = JEDNA karta z obiema w środku (§4.7)', async () => {
+    const day = sheetDay(4);
     const { rows } = await harness.db.query<{ session_uuid: string; revision: number }>(
       `SELECT session_uuid, revision FROM export_log
         WHERE day = $1 AND aircraft_id = 'SP-AXA' ORDER BY revision, session_uuid`,
@@ -168,7 +208,7 @@ describe('scenariusz danych demo', () => {
     expect(new Set(rows.map((r) => r.session_uuid)).size).toBe(2);
 
     // Do 2026-08-07 dwie zmiany budowały dwa dokumenty o jednej nazwie i druga
-    // nadpisywała pierwszą (migracja 5 — otwarta wtedy sprawa produktowa). Dziś karta
+    // nadpisywała pierwszą (otwarta wtedy sprawa produktowa). Dziś karta
     // jest dobą samolotu: dalej jeden wiersz w `exported_sheets`, ale obie zmiany
     // W ŚRODKU, a nie jedna zamiast drugiej.
     const sheets = await harness.db.query<{ n: string }>(
@@ -193,7 +233,7 @@ describe('scenariusz danych demo', () => {
   });
 
   it('korekta administratora dopisuje zdarzenie, a oryginał zostaje w rejestrze', async () => {
-    const day = sessionUuid('axa', 6, 'krz');
+    const day = sessionUuid('axa', 13, 'krz');
     const { rows } = await harness.db.query<{ type: string; payload: { action?: string } }>(
       "SELECT type, payload FROM events WHERE session_uuid = $1 AND type IN ('drop', 'event_correction') ORDER BY device_time",
       [day],
@@ -201,17 +241,136 @@ describe('scenariusz danych demo', () => {
     const corrections = rows.filter((r) => r.type === 'event_correction');
     expect(corrections).toHaveLength(1);
     expect(corrections[0]!.payload.action).toBe('void');
-    // Cztery zrzuty nadal SĄ w rejestrze — korekta ich nie usuwa, tylko wyłącza
+    // Sześć zrzutów nadal JEST w rejestrze — korekta ich nie usuwa, tylko wyłącza
     // z projekcji (`A04` pokazuje je przekreślone).
-    expect(rows.filter((r) => r.type === 'drop')).toHaveLength(4);
+    expect(rows.filter((r) => r.type === 'drop')).toHaveLength(6);
   });
 
-  it('zostawia jeden dzień W TOKU na SP-FGK — telefon ma co przejmować', async () => {
+  it('zostawia jedną sesję W TOKU na SP-FGK — telefon ma co przejmować', async () => {
     const { rows } = await harness.db.query<{ session_uuid: string; pic_id: string }>(
       "SELECT session_uuid, pic_id FROM sessions WHERE aircraft_id = 'SP-FGK' AND status = 'active'",
     );
     expect(rows).toHaveLength(1);
     expect(rows[0]!.pic_id).toBe('KRZ');
+  });
+
+  /**
+   * ŻADEN payload nie niesie klamry służby — i to jest asercja o modelu, nie o formacie.
+   *
+   * Po §3.6a służba należy do PILOTA, obejmuje kilka maszyn i liczy ją `projectDuty`.
+   * Ekrany 02 i 09b o godziny meldunku i zejścia NIE PYTAJĄ, więc strumień demo, który
+   * by je niósł, opisywałby aplikację, której nie ma — i przywracałby tylnymi drzwiami
+   * pole opcjonalne używane jako znacznik „zdarzenie zaszło" (pomyłka, która w tym
+   * projekcie wystąpiła już sześć razy).
+   */
+  it('strumień demo NIE niesie klamry służby (dutyStart / dutyEnd)', async () => {
+    const { rows } = await harness.db.query<{ type: string; n: string }>(
+      `SELECT type, count(*)::text AS n FROM events
+        WHERE payload ->> 'dutyStart' IS NOT NULL OR payload ->> 'dutyEnd' IS NOT NULL
+        GROUP BY type`,
+    );
+    expect(rows).toEqual([]);
+  });
+
+  /**
+   * Cztery style pracy z ekranem 09 — warunek wstępny kalibracji progów (§3.6b).
+   *
+   * Od nich zależy, ile interwałów paliwowych powstanie z jednej sesji: odczyt przy
+   * wzlocie ZAMYKA interwał, potwierdzenie bez odczytu nie tworzy granicy, a brak
+   * potwierdzenia zostawia wzlot do przejrzenia. Scenariusz bez któregokolwiek z tych
+   * kształtów daje replayowi materiał jednorodny, czyli bezużyteczny.
+   */
+  it('produkuje wzloty potwierdzone z odczytem, bez odczytu i całkiem niepotwierdzone', async () => {
+    const withReading = await harness.db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM events
+        WHERE type = 'leg_close' AND payload -> 'reading' <> 'null'::jsonb`,
+    );
+    const withoutReading = await harness.db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM events
+        WHERE type = 'leg_close' AND payload -> 'reading' = 'null'::jsonb`,
+    );
+    // Sesje z cyklami silnika, których pilot nie potwierdził ANI RAZU („Potwierdzę
+    // później", §3.6) — legalny stan i jedyne źródło paska „do potwierdzenia" na `01`.
+    const unconfirmed = await harness.db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM (
+         SELECT session_uuid
+           FROM events
+          GROUP BY session_uuid
+         HAVING count(*) FILTER (WHERE type = 'engine_stop') > 0
+            AND count(*) FILTER (WHERE type = 'leg_close') = 0
+       ) s`,
+    );
+
+    expect(Number(withReading.rows[0]!.n)).toBeGreaterThan(20);
+    expect(Number(withoutReading.rows[0]!.n)).toBeGreaterThan(20);
+    expect(Number(unconfirmed.rows[0]!.n)).toBeGreaterThanOrEqual(3);
+  });
+
+  /**
+   * Zdanie samolotu BEZ ANI JEDNEGO WZLOTU (ekran 09C) razem z powodem.
+   *
+   * Bez tego przypadku rejestr demo nie zawiera odpowiedzi na pytanie „dlaczego maszyna
+   * stała zajęta półtorej godziny", a to jedyne, co administrator ma w takiej dobie
+   * do przeczytania.
+   */
+  it('ma sesje zdane bez wzlotu, każdą z powodem (09C)', async () => {
+    const { rows } = await harness.db.query<{ session_uuid: string; reason: string }>(
+      `SELECT e.session_uuid, e.payload ->> 'noFlightReason' AS reason
+         FROM events e
+        WHERE e.type = 'day_close' AND e.payload ->> 'noFlightReason' IS NOT NULL
+        ORDER BY e.session_uuid`,
+    );
+    expect(rows.map((r) => r.reason).sort()).toEqual(['malfunction', 'weather']);
+
+    for (const row of rows) {
+      const legs = await harness.db.query<{ n: string }>(
+        "SELECT count(*)::text AS n FROM events WHERE session_uuid = $1 AND type = 'engine_start'",
+        [row.session_uuid],
+      );
+      expect(legs.rows[0]!.n, `sesja ${row.session_uuid} nie miała prawa mieć wzlotu`).toBe('0');
+    }
+  });
+
+  /**
+   * Zetknięcie sesji CO DO MINUTY nie jest nakładką grafiku (§4.7, `pilotOverlap.ts`).
+   *
+   * KRZ zdaje SP-FGK i w tej samej minucie przejmuje SP-AXA — po §3.6a normalny dzień,
+   * bo służba obejmuje kilka maszyn. Asercja liczby flag wyżej by tego nie pokazała
+   * (brak flagi wygląda tak samo jak brak przypadku), więc styk sprawdzamy wprost.
+   */
+  it('zdanie i przejęcie w tej samej minucie NIE jest nakładką grafiku', async () => {
+    const { rows } = await harness.db.query<{ close_time: string; claim_time: string }>(
+      `SELECT
+         (SELECT close_time FROM sessions WHERE session_uuid = $1)::text AS close_time,
+         (SELECT claim_time FROM sessions WHERE session_uuid = $2)::text AS claim_time`,
+      [sessionUuid('fgk', 2, 'krz'), sessionUuid('axa', 2, 'krz')],
+    );
+    expect(rows[0]!.close_time).toBe(rows[0]!.claim_time);
+
+    const flags = await client.adminGet<AdminFlagPage>('/flags?type=pilot_overlap&limit=100');
+    for (const flag of flags.items) {
+      expect(flag.sessionUuids).not.toContain(sessionUuid('axa', 2, 'krz'));
+    }
+  });
+
+  /**
+   * Analityka zużycia MA NA CZYM PRACOWAĆ — warunek wstępny z §3.6b.
+   *
+   * Norma zapisuje się wyłącznie wtedy, gdy model przeszedł bramkę publikacji
+   * (`recomputeConsumptionNorm` kasuje wiersz, gdy nie przeszedł), więc obecność wiersza
+   * jest dowodem, że scenariusz produkuje dość interwałów i dość godzin silnika.
+   * To jest dokładnie ta rzecz, której starym danym brakowało.
+   */
+  it('daje modelowi zużycia dość materiału, żeby norma się opublikowała', async () => {
+    const { rows } = await harness.db.query<{ aircraft_id: string }>(
+      'SELECT aircraft_id FROM aircraft_consumption ORDER BY aircraft_id',
+    );
+    const published = rows.map((r) => r.aircraft_id);
+    expect(published).toContain('SP-AXA');
+    // …i JEDEN samolot ma zostać PONIŻEJ progu. Ekran `A10b` pokazuje postęp zbierania
+    // danych, a bez maszyny w tym stanie nie ma czego na nim obejrzeć — pełny komplet
+    // opublikowanych norm ukrywałby połowę produktu.
+    expect(published).not.toContain('SP-KWA');
   });
 
   it('każda akcja panelu zostawia ślad w dzienniku audytu', async () => {
@@ -249,7 +408,7 @@ describe('scenariusz danych demo', () => {
    * Wysyłamy PRÓBKĘ paczek, nie wszystkie, i to jest świadome ograniczenie: mechanizm
    * idempotencji to `uuid` nadany przez scenariusz (`INSERT … ON CONFLICT DO NOTHING`),
    * a schemat identyfikatorów jest jeden dla całego strumienia — powtórzenie wszystkich
-   * czterdziestu paczek podwajało czas pliku i pod pełnym zestawem równoległym potrafiło
+   * pięćdziesięciu paczek podwajało czas pliku i pod pełnym zestawem równoległym potrafiło
    * przekroczyć limit. Próbka obejmuje wszystkie CZTERY tryby dostarczenia, bo tylko one
    * różnią się kształtem paczki.
    */
@@ -257,10 +416,10 @@ describe('scenariusz danych demo', () => {
     const before = await harness.db.query<{ n: string }>('SELECT count(*)::text AS n FROM events');
 
     const sample = [
-      scenario.batches[0]!, // pełny dzień
-      scenario.batches.find((b) => b.note.includes('nakładka'))!, // otwarcie dnia
-      scenario.batches.find((b) => b.note.includes('spóźnione domknięcie'))!, // sama paczka `day_close`
-      scenario.batches[scenario.batches.length - 1]!, // dzień otwarty DZIŚ
+      scenario.batches[0]!, // pełna sesja
+      scenario.batches.find((b) => b.note.includes('nakładka'))!, // samo przejęcie
+      scenario.batches.find((b) => b.note.includes('spóźnione zdanie'))!, // sama paczka `day_close`
+      scenario.batches[scenario.batches.length - 1]!, // sesja W TOKU dziś
     ];
 
     let accepted = 0;

@@ -52,7 +52,7 @@ const type = z.string().trim().min(2).max(60);
 
 /**
  * Rok produkcji jest OPCJONALNY, bo kolumna `aircraft.year` jest `NULL`-owalna od
- * migracji 1 — szybowiec z tabliczki bez daty to realny przypadek. Pusty napis znaczy
+ * schematu bazowego — szybowiec z tabliczki bez daty to realny przypadek. Pusty napis znaczy
  * „nie wiadomo" (`null`), a nie „rok zerowy".
  */
 const year = z

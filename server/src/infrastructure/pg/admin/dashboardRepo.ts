@@ -16,12 +16,13 @@
  *
  * **`ORDER BY` niżej jest BEZ `NULLS LAST` i to jest decyzja, nie przeoczenie.**
  * `events.received_at` jest `NOT NULL`, więc dopisek nie zmienia wyniku — a planer
- * dopasowuje porządek SKŁADNIOWO i o ograniczeniu kolumny nie wnioskuje. Po migracji 17
+ * dopasowuje porządek SKŁADNIOWO i o ograniczeniu kolumny nie wnioskuje.
  * `idx_events_received` stoi jako `(received_at DESC, uuid DESC)`, czyli w postaci
  * DOMYŚLNEJ, którą ten sam indeks obsługuje w obie strony. Zapytanie z `NULLS LAST`
  * przestałoby do niego pasować i „ostatnie sześć zdarzeń" zaczęłoby sortować cały
  * rejestr — pulpit ładowałby się natychmiast w pierwszym miesiącu i coraz wolniej
- * w każdym następnym. Krótka historia tej pomyłki: migracje 12, 16 i 17.
+ * w każdym następnym. Trzy podejścia do tej pomyłki opisuje
+ * `docs/architektura-panelu-serwer.md` §7.8.
  */
 
 import type {

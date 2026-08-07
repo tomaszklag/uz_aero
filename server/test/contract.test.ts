@@ -153,15 +153,15 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
     expect(sessionRowFrom('sess-1', stream)).toMatchObject({
       operation: projection.operation,
       client: projection.client,
-      // `claim_time` niesie CHWILĘ PRZEJĘCIA (migracja 21). Klamry służby w `sessions`
+      // `claim_time` niesie CHWILĘ PRZEJĘCIA (decyzja 2026-08-07). Klamry służby w `sessions`
       // nie ma i nie ma jej być: należy do pilota, nie do sesji samolotu (§3.6a).
       claimTime: projection.claimedAt,
     });
     expect(projection.client).toBe('SKY CAMP');
   });
 
-  it('kolumny STATYSTYK (migracja 18) też są przepisane z projekcji, nie policzone', () => {
-    // Ta sama reguła, co przy migracji 11: agregaty `A10` sumują wartości projekcji,
+  it('kolumny STATYSTYK (kolumny statystyk) też są przepisane z projekcji, nie policzone', () => {
+    // Ta sama reguła, co przy `operation`/`client`: agregaty `A10` sumują wartości projekcji,
     // więc każda z nich musi mieć kolumnę wypełnianą przez `sessionRowFrom` — razem
     // z regułami projekcji („bilans istnieje dopiero z `day_close`", „zrzut bez
     // wysokości nie wchodzi ani do sumy, ani do licznika fixów").
@@ -264,7 +264,7 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
       fuelEndL: row.fuelEndL,
       operation: row.operation,
       client: row.client,
-      // Od migracji 21 nazwa kolumny i nazwa pola DTO znaczą to samo.
+      // Od 2026-08-07 nazwa kolumny i nazwa pola DTO znaczą to samo.
       claimedAt: row.claimTime,
     });
   });

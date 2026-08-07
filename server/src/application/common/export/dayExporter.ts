@@ -15,7 +15,7 @@
  *
  * ══ DOBĘ WYZNACZA CHWILA PRZEJĘCIA, NIE MELDUNEK ══
  * Przynależność sesji do karty liczymy z `session_claim` (`sessions.claim_time`,
- * migracja 21). Meldunek (`dutyStart`) jest od §3.6a OPCJONALNY i ekran 02 o niego
+ * decyzja 2026-08-07). Meldunek (`dutyStart`) jest od §3.6a OPCJONALNY i ekran 02 o niego
  * nie pyta — oparcie na nim nazwy karty znaczyłoby, że po przebudowie flow nie
  * eksportuje się NIC (bramka `dutyStart == null` odrzucała wtedy każdą sesję).
  * Klamra służby zresztą do sesji nie należy: jest własnością PILOTA i obejmuje kilka
@@ -230,7 +230,7 @@ export class DayExporter {
     // Bez niej spóźniona paczka z telefonu i kliknięcie „Ponów" w panelu, trafione
     // w tę samą chwilę, zapisywały DWA komplety wierszy z tym samym numerem — a numer
     // rewizji jest jedyną osią, po której da się odtworzyć, co i kiedy poszło do arkusza
-    // (od migracji 23 pilnuje tego również `UNIQUE (day, aircraft_id, revision,
+    // (pilnuje tego również `UNIQUE (day, aircraft_id, revision,
     // session_uuid)`). Blokada obejmuje ten sam klucz co rewizja: parę (doba, samolot).
     const revision = await this.db.transaction(async (tx) => {
       await this.exportLog.lock(tx, day, aircraftId);

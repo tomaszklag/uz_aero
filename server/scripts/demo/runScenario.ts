@@ -14,7 +14,7 @@
  */
 
 import type { AdminFlagPage } from '../../src/application/admin/contracts/flags.ts';
-import type { WireEvent } from './dayStream.ts';
+import type { WireEvent } from './sessionStream.ts';
 import type { DemoAdminAction, DemoScenario } from './scenario.ts';
 
 /** Odpowiedź `POST /events` — tyle, ile wykonawca z niej czyta. */

@@ -13,7 +13,7 @@
  * Dlatego `AdminSessionListItem` jest PŁASKI, a nie `SessionRow & {…}`: wiersz listy
  * nie jest bytem domenowym, tylko złączeniem trzech tabel z polami wyliczonymi.
  * Wystawienie kształtu projekcji przywiązałoby panel do niej — a projekcja rośnie
- * (migracja 11 dołożyła `operation` i `client`, kolejne dołożą liczby statystyk),
+ * (`operation` i `client` doszły przy liście dni, potem liczby statystyk),
  * więc każda taka zmiana stawałaby się zmianą łamiącą panel.
  */
 
@@ -45,7 +45,7 @@ export interface AdminSessionListItem {
 
   /**
    * Chwila PRZEJĘCIA samolotu (`session_claim`) — kolumna „Dzień · UTC" listy.
-   * Każda sesja ją ma (§4.4), więc od migracji 21 żaden dzień nie wypada już z filtra
+   * Każda sesja ją ma (§4.4), więc od 2026-08-07 żaden dzień nie wypada już z filtra
    * zakresu z powodu braku daty. `null` znaczy rejestr niekompletny, nie „bez preflightu".
    */
   claimedAt: number | null;

@@ -105,7 +105,7 @@ function claimOnly(o: DayOptions) {
 }
 
 /**
- * Strumień BEZ `session_claim` — jedyna droga do stanu `impossible` po migracji 21.
+ * Strumień BEZ `session_claim` — jedyna droga do stanu `impossible` po zmianie z 2026-08-07.
  *
  * Wg §4.4 claim jest pierwszym zdarzeniem każdej sesji, więc taki strumień nie powstaje
  * w normalnej pracy. Serwer go jednak PRZYJMIE (§4.5: nie odrzuca danych z terenu), a
@@ -345,7 +345,7 @@ describe('monitor eksportu — lista (A05)', () => {
       exportedAt: null,
     });
     // Sesja z SAMYM claimem, bez preflightu, ma dziś nazwę karty — bo nazwę wyznacza
-    // chwila przejęcia, a nie meldunek (migracja 21). To dzień, który po prostu jeszcze
+    // chwila przejęcia, a nie meldunek (decyzja 2026-08-07). To dzień, który po prostu jeszcze
     // trwa. Stan `impossible` został wyłącznie dla rejestru niekompletnego (brak
     // `session_claim`), czyli dla czegoś, czego trasą `POST /events` nie da się zapisać.
     expect(by('bare-1')).toMatchObject({
@@ -1005,7 +1005,7 @@ describe('ponowienie eksportu (A05)', () => {
   });
 });
 
-describe('rewizje są jednoznaczne (migracja 14)', () => {
+describe('rewizje są jednoznaczne (uq_export_log_card_revision)', () => {
   it('baza ODRZUCA drugą rewizję o tym samym numerze', async () => {
     const { app, db } = await testHarness();
     const admin = await login(app, 'TMK');
@@ -1034,7 +1034,7 @@ describe('rewizje są jednoznaczne (migracja 14)', () => {
    *
    * Dowodzi natomiast rzeczy, którą da się sprawdzić: sekwencja nadania rewizji jest
    * poprawna, dwie próby dają dwa RÓŻNE numery i żadna nie kończy się pięćsetką.
-   * Przed wyścigiem, którego tu nie ma, broni ograniczenie z migracji 14 — a ono ma
+   * Przed wyścigiem, którego tu nie ma, broni ograniczenie `uq_export_log_card_revision` — a ono ma
    * własny przypadek wyżej i ten faktycznie upada po zdjęciu `UNIQUE`.
    */
   it('dwa ponowienia naraz dają DWIE różne rewizje, nie dwie takie same', async () => {
@@ -1085,7 +1085,7 @@ describe('pierwszeństwo stanów karty', () => {
   });
 
   it('brak chwili przejęcia wygrywa ze wszystkim — karty nie da się NAZWAĆ', () => {
-    // „Brakuje karty" sugerowałoby, że da się ją dorobić; tu nie ma jak. Od migracji 21
+    // „Brakuje karty" sugerowałoby, że da się ją dorobić; tu nie ma jak. Od 2026-08-07
     // to stan wyłącznie awaryjny: `session_claim` ma KAŻDA sesja (§4.4).
     expect(exportState(join({ claimedAt: null, blockingFlagIds: [7], status: 'active' }))).toBe(
       'impossible',

@@ -82,7 +82,7 @@ describe('statsTiles — `null` to „nie wiemy", nigdy zero', () => {
     }
   });
 
-  it('wiersze sprzed migracji 18: kreski + przypis kierujący na przebudowę', () => {
+  it('wiersze sprzed kolumn statystyk: kreski + przypis kierujący na przebudowę', () => {
     const data = statsFixture();
     data.totals.staleRows = 3;
     data.totals.takeoffs = null;
@@ -92,7 +92,7 @@ describe('statsTiles — `null` to „nie wiemy", nigdy zero', () => {
     data.totals.mhVsBlockH = null;
 
     expect(tile(data, 'takeoffs').value).toBe('—');
-    expect(tile(data, 'takeoffs').note).toContain('migracji 18');
+    expect(tile(data, 'takeoffs').note).toContain('kolumn statystyk');
     expect(tile(data, 'fuel').value).toBe('—');
     expect(tile(data, 'fuel').unit).toBeUndefined();
     expect(tile(data, 'mh').value).toBe('—');
