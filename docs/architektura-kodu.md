@@ -115,13 +115,26 @@ je dopiero udany login) i jest zablokowane przy niepustym outboxie. Klawisz biom
 z mockupu 00 odłożony (wymagałby `expo-local-authentication`).
 
 Eksport arkuszy (§4.7, serwer): `application/common/export/` — `buildDaySheet` (czysta funkcja
-`SessionState` → karta; nazwa `YYYY-MM-DD_SP-XXX` bajt w bajt zgodna z `sheetTabName`
+`DaySheetDay` → karta; nazwa `YYYY-MM-DD_SP-XXX` bajt w bajt zgodna z `sheetTabName`
 aplikacji, treść = ekrany 10/11, MH w formacie samolotu) i `DayExporter` (po commicie
-ingestu, dla sesji zamkniętych po przetworzeniu; bramki: sesja otwarta / otwarta flaga
-`session_overlap` = nic; spóźnione dane → rewizja +1). Dziennik `export_log`
-(migracja 4, append-only — historia rewizji to jedyny ślad rozjazdu arkusz↔rejestr);
-`sync-status.exportUrl` z ostatniej rewizji. Awarię Sheets łapie ingest — telefon
-dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek.
+ingestu, dla sesji zamkniętych po przetworzeniu; spóźnione dane → rewizja +1).
+Dziennik `export_log` (migracja 4, append-only — historia rewizji to jedyny ślad rozjazdu
+arkusz↔rejestr); `sync-status.exportUrl` z ostatniej rewizji. Awarię Sheets łapie ingest —
+telefon dostał 200 za PRZYJĘCIE, arkusz to skutek, nie warunek.
+
+**Karta = DOBA SAMOLOTU** (decyzja 2026-08-07, migracja 23), nie sesja: agregat wszystkich
+sesji maszyny w dobie UTC wyznaczonej przez `session_claim` (`sessions.claim_time` —
+**nie `dutyStart`**, bo meldunek jest po §3.6a opcjonalny i bramka na nim odrzucałaby każdą
+sesję z przebudowanego flow). Sesje są WIERSZAMI karty, etykietowanymi `S1`, `S2`…
+chronologicznie; `Sesja` jest pierwszą kolumną tabeli lotów, bo numer lotu liczy się
+w obrębie sesji. Bramki: doba bez sesji (`no_events`) / nikt jeszcze nie zdał maszyny
+(`session_open`) / otwarta flaga `aircraft_overlap` — ale **wyłącznie dla sesji nią
+objętych** (`overlap_flag`), reszta doby idzie do arkusza z adnotacją „Niekompletna".
+Rewizja należy do PARY (doba, samolot): `export_log` ma po jednym wierszu na sesję
+wchodzącą do rewizji, wszystkie z tym samym numerem, bo `sync-status` pyta o link po
+sesji. Blokada advisory (`ExportLogPort.lock`) obejmuje ten sam klucz co rewizja.
+Skład doby czyta `SessionsProjectionPort.listByAircraftDay` (projekcja), a tabelę lotów —
+`projectSession` per sesja (strumień).
 
 Karty mieszkają W BAZIE (decyzja 2026-07-28: nie czekamy na Google): adapter
 `PgSheets` (`infrastructure/pg/common/sheetsRepo.ts`) zapisuje dosłowne wiersze karty do
@@ -196,7 +209,8 @@ więc tokeny porzucone zbierają się między jednym a drugim ręcznym sprzątan
 także trasami panelu — porównanie `GET …/maintenance/projections/compare` jako
 ZAPYTANIE bez śladu w audycie, nadpisanie `POST …/projections/rebuild` przez `AuditedWrite`);
 porównywanie treści przy duplikacie uuid (dziś duplikat = potwierdzenie, treść
-ignorowana); `UNIQUE (session_uuid, revision)` na `export_log` + kolejka ponowień
+ignorowana); ~~`UNIQUE` na `export_log`~~ **ZROBIONE** (migracja 14, przekluczona na
+`(day, aircraft_id, revision, session_uuid)` migracją 23) + kolejka ponowień
 nieudanych eksportów (~~re-eksport po rozwiązaniu flagi przez administratora~~
 **ZROBIONE 2026-07-31**, przekrój 1 — zostaje samo ponawianie eksportów, które padły).
 

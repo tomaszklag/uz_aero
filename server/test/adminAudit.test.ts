@@ -197,7 +197,7 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
         target_id: String(flagId),
         details: {
           note: 'Nakładka pozorna — dane dosłane z kopii.',
-          type: 'session_overlap',
+          type: 'aircraft_overlap',
           sessionUuids: ['sess-1', 'sess-2'],
         },
       },

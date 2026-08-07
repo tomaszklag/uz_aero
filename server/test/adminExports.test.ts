@@ -365,7 +365,7 @@ describe('monitor eksportu — lista (A05)', () => {
     });
   });
 
-  it('otwarta flaga `session_overlap` daje stan `blocked` z NUMEREM flagi', async () => {
+  it('otwarta flaga `aircraft_overlap` daje stan `blocked` z NUMEREM flagi', async () => {
     const { app } = await testHarness();
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
@@ -614,19 +614,24 @@ describe('limit obcina LISTĘ, nie prawdę o zakresie (A05)', () => {
 });
 
 /**
- * DWIE ZMIANY NA JEDNYM SAMOLOCIE JEDNEGO DNIA — KARTA JEST JEDNA.
+ * DWIE ZMIANY NA JEDNYM SAMOLOCIE JEDNEGO DNIA — KARTA JEST JEDNA I OBIE SĄ W NIEJ.
  *
- * Nazwa karty (`sheetTabName`) niesie DZIEŃ i SAMOLOT, ale nie sesję, a `exported_sheets`
- * jest po `tab` UPSERT-owane. Zmiana poranna i popołudniowa to dwie ZAMKNIĘTE sesje, więc
- * `session_overlap` nie powstaje (ta flaga dotyczy sesji niezamkniętych) — i druga karta
- * po prostu nadpisuje pierwszą. Do 2026-08-01 monitor raportował obie jako „W arkuszu",
- * a podgląd karty porannej pokazywał treść popołudniowej bez słowa komentarza.
+ * ══ CO TU BYŁO DO 2026-08-07 ══
+ * Nazwa karty niesie DZIEŃ i SAMOLOT, ale nie sesję, a `exported_sheets` jest po `tab`
+ * UPSERT-owane. Zmiana poranna i popołudniowa budowały więc DWA dokumenty o jednej
+ * nazwie i druga nadpisywała pierwszą — monitor raportował obie jako „W arkuszu",
+ * a podgląd karty porannej pokazywał treść popołudniowej. Panel umiał to wtedy
+ * najwyżej NAZWAĆ (`overwrittenBy`), bo scalanie kart było decyzją produktową.
  *
- * Konwencji nazw ani schematu NIE zmieniamy (decyzja produktowa dotykająca telefonu,
- * §4.7). Zmieniamy to, co ekran o tym MÓWI.
+ * ══ DECYZJA ZAPADŁA (§4.7): karta = DOBA SAMOLOTU ══
+ * Sesje są wierszami jednej karty, a nie konkurentami do jednej nazwy. Te przypadki
+ * pilnują teraz odwrotnej własności: żadna zmiana nie może zniknąć pod inną.
+ * `overwrittenBy` zostaje w kontrakcie i musi być `null` — jego zapalenie się dla dwóch
+ * sesji tej samej doby znaczyłoby, że powstały dwie karty jednego dokumentu, czyli że
+ * ta zmiana gdzieś się cofnęła.
  */
-describe('kolizja nazw kart tego samego dnia (A05)', () => {
-  it('nadpisany jest ten, kto pisał WCZEŚNIEJ — i wie, kto go nadpisał', async () => {
+describe('dwie zmiany jednego dnia w jednej karcie (A05)', () => {
+  it('obie zmiany są `current` pod tą samą kartą i ŻADNA nie jest nadpisana', async () => {
     const { app, clock } = await testHarness();
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
@@ -636,8 +641,6 @@ describe('kolizja nazw kart tego samego dnia (A05)', () => {
     await post(app, tmk, closeDay({ sessionUuid: 'zmiana-am', picId: 'TMK' }));
 
     // Zmiana popołudniowa: TEN SAM samolot, TEN SAM dzień, inny pilot, też zamknięta.
-    // Zegar do przodu, żeby drugi eksport dostał PÓŹNIEJSZY stempel — w klubie dzieli
-    // je pół dnia; tutaj wystarczy cokolwiek różnego od zera.
     clock.advance(5 * 60 * 1000);
     await post(app, krz, openDay({ sessionUuid: 'zmiana-pm', picId: 'KRZ' }));
     await post(app, krz, closeDay({ sessionUuid: 'zmiana-pm', picId: 'KRZ' }));
@@ -646,22 +649,26 @@ describe('kolizja nazw kart tego samego dnia (A05)', () => {
     const by = (uuid: string) =>
       body.items.find((item: { sessionUuid: string }) => item.sessionUuid === uuid);
 
-    // Obie sesje mają własne wiersze dziennika, więc obie są `current` — i to jest prawda.
+    // Obie zmiany wchodzą do tej samej karty i obie są w arkuszu.
     expect(by('zmiana-am')).toMatchObject({ state: 'current', tab: '2026-06-22_SP-AXA' });
     expect(by('zmiana-pm')).toMatchObject({ state: 'current', tab: '2026-06-22_SP-AXA' });
 
-    // Nieprawdą byłoby dopiero milczenie o tym, CZYJA treść leży dziś pod tą nazwą.
-    expect(by('zmiana-am').overwrittenBy).toMatchObject({ sessionUuid: 'zmiana-pm' });
-    // Ostatni autor nie jest niczyją ofiarą.
+    // Rewizja jest własnością KARTY, więc po drugiej zmianie obie mają numer 2 —
+    // a nie po jedynce każda dla siebie.
+    expect(by('zmiana-am').revision).toBe(2);
+    expect(by('zmiana-pm').revision).toBe(2);
+
+    // Nikt nikogo nie nadpisał: to jeden dokument, nie dwa o wspólnej nazwie.
+    expect(by('zmiana-am').overwrittenBy).toBeNull();
     expect(by('zmiana-pm').overwrittenBy).toBeNull();
-    expect(body.counts.overwritten).toBe(1);
+    expect(body.counts.overwritten).toBe(0);
 
     // Flaga nakładki NIE powstała — obie sesje zamknięto poprawnie, więc nie ma sporu.
     expect(by('zmiana-am').blockingFlagIds).toEqual([]);
     expect(by('zmiana-pm').blockingFlagIds).toEqual([]);
   });
 
-  it('podgląd karty porannej pokazuje treść popołudniowej — i rozwinięcie o tym mówi', async () => {
+  it('podgląd z obu wierszy pokazuje TĘ SAMĄ kartę — i są w niej obaj piloci', async () => {
     const { app, db, clock } = await testHarness();
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
@@ -672,24 +679,30 @@ describe('kolizja nazw kart tego samego dnia (A05)', () => {
     await post(app, krz, openDay({ sessionUuid: 'pm', picId: 'KRZ' }));
     await post(app, krz, closeDay({ sessionUuid: 'pm', picId: 'KRZ' }));
 
-    // Dwa wiersze dziennika (po jednym na sesję) i JEDNA karta — obie sesje pisały pod
-    // tą samą nazwą.
-    expect(await exportLogRows(db)).toHaveLength(2);
+    // Trzy wiersze dziennika: rewizja 1 (sama zmiana poranna) i rewizja 2 (obie),
+    // bo wiersz powstaje na KAŻDĄ sesję wchodzącą do rewizji. Karta dalej JEDNA.
+    expect(await exportLogRows(db)).toEqual([
+      { session_uuid: 'am', revision: 1, day: '2026-06-22' },
+      { session_uuid: 'am', revision: 2, day: '2026-06-22' },
+      { session_uuid: 'pm', revision: 2, day: '2026-06-22' },
+    ]);
     expect(await sheetRowCount(db)).toBe(1);
 
     const amSheet = (await getPanel(app, tmk, '/exports/am/sheet')).json();
     const pmSheet = (await getPanel(app, tmk, '/exports/pm/sheet')).json();
-    // Ta sama nazwa = ta sama treść: podgląd sesji porannej pokazuje dzień KRZ-a.
+    // Ta sama nazwa = ta sama treść — i to już NIE jest wprowadzanie w błąd, bo treść
+    // opisuje dobę obojga, a nie dzień pracy jednego z nich.
     expect(amSheet.rows).toEqual(pmSheet.rows);
-    expect(amSheet.rows).toContainEqual(['PIC', 'KRZ']);
+    expect(amSheet.rows).toContainEqual(['Sesje', '2']);
+    expect(amSheet.rows.map((r: string[]) => r[1])).toContain('TMK');
+    expect(amSheet.rows.map((r: string[]) => r[1])).toContain('KRZ');
 
-    // Rozwinięcie niesie ten fakt razem z podglądem, bo to podgląd wprowadza w błąd.
-    const history = (await getPanel(app, tmk, '/exports/am')).json();
-    expect(history.overwrittenBy).toMatchObject({ sessionUuid: 'pm' });
+    // Rozwinięcie nie ma już o czym ostrzegać.
+    expect((await getPanel(app, tmk, '/exports/am')).json().overwrittenBy).toBeNull();
     expect((await getPanel(app, tmk, '/exports/pm')).json().overwrittenBy).toBeNull();
   });
 
-  it('ten sam dzień na INNYM samolocie to nie kolizja — nazwa karty jest inna', async () => {
+  it('ten sam dzień na INNYM samolocie to osobna karta', async () => {
     const { app, clock } = await testHarness();
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
@@ -706,7 +719,7 @@ describe('kolizja nazw kart tego samego dnia (A05)', () => {
     expect(body.counts.overwritten).toBe(0);
   });
 
-  it('kolejne REWIZJE tej samej sesji nie nadpisują same siebie', async () => {
+  it('kolejne REWIZJE tej samej karty nie nadpisują same siebie', async () => {
     // Regeneracja własnej karty jest zamierzona i codzienna (spóźniony sync, korekta).
     // Warunek `o.session_uuid <> s.session_uuid` istnieje właśnie po to.
     const { app, clock } = await testHarness();
@@ -860,9 +873,14 @@ describe('ponowienie eksportu (A05)', () => {
     await post(app, krz, openDay({ sessionUuid: 'g-block', picId: 'KRZ' }));
     await post(app, krz, closeDay({ sessionUuid: 'g-block', picId: 'KRZ' }));
 
+    // Obie sesje są objęte TĄ SAMĄ flagą nakładki, więc obie odbijają się o nią —
+    // także ta niezamknięta. Do 2026-08-07 dostawała `session_open`, bo bramki
+    // szeregowały się per sesja („twój dzień jeszcze trwa"). Po przejściu na kartę doby
+    // to była już nieprawda: doba MA zdaną zmianę (`g-block`), więc powodem, dla którego
+    // nic nie idzie do arkusza, jest flaga, a nie brak zamknięcia.
     const openDayRetry = await retry(app, 'g-open', tmk);
     expect(openDayRetry.statusCode).toBe(200);
-    expect(openDayRetry.json().retry.outcome).toEqual({ exported: false, reason: 'session_open' });
+    expect(openDayRetry.json().retry.outcome).toEqual({ exported: false, reason: 'overlap_flag' });
 
     const blockedRetry = await retry(app, 'g-block', tmk);
     expect(blockedRetry.statusCode).toBe(200);

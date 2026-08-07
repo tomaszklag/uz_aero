@@ -297,7 +297,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(sheet.statusCode).toBe(200);
     // Karta klubu pokazuje POPRAWIONY czas blokowy (02:22 → 02:10), a nie ten,
     // który zapisał telefon. To jest cel całego przekroju.
-    expect(sheet.json().rows).toContainEqual(['Block time', '02:10']);
+    expect(sheet.json().rows).toContainEqual(['Czas blokowy doby', '02:10']);
   });
 
   it('void: zdarzenie wypada z wyliczeń, wiersz zostaje w rejestrze', async () => {

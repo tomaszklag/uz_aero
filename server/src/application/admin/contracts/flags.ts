@@ -31,7 +31,7 @@ export interface AdminFlagListItem {
    * sortowania skrzynki.
    *
    * Wartość jest wyliczona, a nie zapisana, i wynika WPROST z bramki eksportera
-   * (`application/export/dayExporter.ts`: otwarta `session_overlap` przerywa eksport).
+   * (`application/export/dayExporter.ts`: otwarta `aircraft_overlap` przerywa eksport).
    * Trzymanie jej w kolumnie znaczyłoby, że zmiana bramki wymaga migracji danych,
    * a rozjazd „panel mówi blokuje, eksporter przepuszcza" byłby niewidoczny.
    */

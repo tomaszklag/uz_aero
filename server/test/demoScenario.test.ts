@@ -3,7 +3,7 @@
  *
  * `scripts/demo/scenario.ts` otwiera się tabelą „flaga → gdzie → po co". Bez tego pliku
  * ta tabela byłaby PROZĄ: dane demo powstają z reguł §4.5, a te bywają subtelne —
- * `session_overlap` nie powstanie, jeśli dzień pojedzie jedną paczką razem z `day_close`,
+ * `aircraft_overlap` nie powstanie, jeśli dzień pojedzie jedną paczką razem z `day_close`,
  * a `fuel_mismatch` przepadnie przy zmianie pojemności zbiorników w seedzie floty.
  * Cicho zdegradowany seed jest gorszy niż jego brak: pokazuje panel, w którym „nic nie
  * ma", i uczy, że to normalne.
@@ -83,14 +83,23 @@ describe('scenariusz danych demo', () => {
     const byType = new Map<string, number>();
     for (const flag of page.items) byType.set(flag.type, (byType.get(flag.type) ?? 0) + 1);
 
-    // Nakładki są DWIE (jedna rozwiązana, jedna wciąż blokująca) — na tym stoi
+    // Nakładki MASZYNY są DWIE (jedna rozwiązana, jedna wciąż blokująca) — na tym stoi
     // zarówno skrzynka `A03`, jak i wiersz „brak karty" w monitorze eksportu `A05`.
+    //
+    // ⚠ `pilot_overlap: 5` NIE JEST liczbą zaprojektowaną. Tyle nakładek grafiku ma dziś
+    // scenariusz demo, bo powstawał przed rozdzieleniem flagi (§4.7, 2026-08-07) i zostawia
+    // pilotom sesje otwarte na kilku maszynach naraz — układ, którego stary detektor nie
+    // widział. Detektor ma rację, dane demo nie. Przebudowa generatora pod nowy model jest
+    // OSOBNYM, już zapisanym zadaniem (`_main.md.txt` §3.6b — warunek wstępny kalibracji
+    // progów analityki) i wtedy ta liczba ma spaść do 1. Do tego czasu asercja pilnuje
+    // przynajmniej tego, że nic więcej się nie zmieniło.
     expect(Object.fromEntries(byType)).toEqual({
       mh_gap: 1,
       mh_regression: 1,
       fuel_mismatch: 1,
       clock_drift: 1,
-      session_overlap: 2,
+      aircraft_overlap: 2,
+      pilot_overlap: 5,
     });
   });
 
@@ -103,17 +112,17 @@ describe('scenariusz danych demo', () => {
     expect(where('mh_regression')).toEqual(['SP-ANK']);
     expect(where('fuel_mismatch')).toEqual(['SP-KWA']);
     expect(where('clock_drift')).toEqual(['SP-FGK']);
-    expect(where('session_overlap').sort()).toEqual(['SP-ANK', 'SP-KWA']);
+    expect(where('aircraft_overlap').sort()).toEqual(['SP-ANK', 'SP-KWA']);
   });
 
   it('zostaje dokładnie jedna nakładka OTWARTA i to ona blokuje eksport', async () => {
-    const open = await client.adminGet<AdminFlagPage>('/flags?status=open&type=session_overlap');
+    const open = await client.adminGet<AdminFlagPage>('/flags?status=open&type=aircraft_overlap');
     expect(open.items).toHaveLength(1);
     expect(open.items[0]!.aircraftId).toBe('SP-KWA');
     expect(open.items[0]!.blocksExport).toBe(true);
 
     const resolved = await client.adminGet<AdminFlagPage>(
-      '/flags?status=resolved&type=session_overlap',
+      '/flags?status=resolved&type=aircraft_overlap',
     );
     expect(resolved.items).toHaveLength(1);
     expect(resolved.items[0]!.aircraftId).toBe('SP-ANK');
@@ -142,23 +151,37 @@ describe('scenariusz danych demo', () => {
     expect(rows[0]!.n).toBe('0');
   });
 
-  it('dwie zmiany jednego dnia dzielą nazwę karty — kolizja z A05', async () => {
+  it('dwie zmiany jednego dnia = JEDNA karta z obiema w środku (§4.7)', async () => {
     const day = new Date(Math.floor(NOW / DAY_MS) * DAY_MS - 3 * DAY_MS)
       .toISOString()
       .slice(0, 10);
-    const { rows } = await harness.db.query<{ session_uuid: string }>(
-      "SELECT session_uuid FROM export_log WHERE day = $1 AND aircraft_id = 'SP-AXA'",
+    const { rows } = await harness.db.query<{ session_uuid: string; revision: number }>(
+      `SELECT session_uuid, revision FROM export_log
+        WHERE day = $1 AND aircraft_id = 'SP-AXA' ORDER BY revision, session_uuid`,
       [day],
     );
-    expect(rows).toHaveLength(2);
 
-    // Jedna karta, dwie sesje: druga zmiana NADPISAŁA pierwszą (migracja 5, otwarta
-    // sprawa produktowa). Seed ma ten stan pokazywać, a nie przed nim uciekać.
+    // Trzy wiersze, nie dwa: rewizja 1 to zmiana poranna sama, rewizja 2 to obie —
+    // wiersz dziennika powstaje na KAŻDĄ sesję wchodzącą do rewizji, bo po nim
+    // `sync-status` obu pilotów znajduje kartę.
+    expect(rows.map((r) => r.revision)).toEqual([1, 2, 2]);
+    expect(new Set(rows.map((r) => r.session_uuid)).size).toBe(2);
+
+    // Do 2026-08-07 dwie zmiany budowały dwa dokumenty o jednej nazwie i druga
+    // nadpisywała pierwszą (migracja 5 — otwarta wtedy sprawa produktowa). Dziś karta
+    // jest dobą samolotu: dalej jeden wiersz w `exported_sheets`, ale obie zmiany
+    // W ŚRODKU, a nie jedna zamiast drugiej.
     const sheets = await harness.db.query<{ n: string }>(
       'SELECT count(*)::text AS n FROM exported_sheets WHERE tab = $1',
       [`${day}_SP-AXA`],
     );
     expect(sheets.rows[0]!.n).toBe('1');
+
+    const sheet = await harness.db.query<{ rows: string[][] }>(
+      'SELECT rows FROM exported_sheets WHERE tab = $1',
+      [`${day}_SP-AXA`],
+    );
+    expect(sheet.rows[0]!.rows).toContainEqual(['Sesje', '2']);
   });
 
   it('ponowienie eksportu dopisuje REWIZJĘ, nie nadpisuje dziennika', async () => {

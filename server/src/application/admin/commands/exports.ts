@@ -10,7 +10,7 @@
  * wchodzenia do bazy.
  *
  * ══ CZEGO TA KOMENDA NIE ROBI ══
- * **Nie omija bramek eksportera.** Otwarta flaga `session_overlap`, dzień bez
+ * **Nie omija bramek eksportera.** Otwarta flaga `aircraft_overlap`, dzień bez
  * `day_close`, sesja bez preflightu — każda z nich odmówi tak samo, jak przy eksporcie
  * automatycznym. Ponowienie jest powtórzeniem tej samej operacji, a nie jej wersją
  * uprzywilejowaną; „ponów mimo flagi" byłoby obejściem §4.7 pod przyciskiem.

@@ -37,19 +37,23 @@
  *     Mockup `A05` tego stanu zresztą nie ma: rozróżnia „W arkuszu" i „Rewizja N",
  *     a jedno i drugie wynika wprost z numeru rewizji.
  *
- * ══ CO ZA TO JEST, OD 2026-08-01: NADPISANIE KARTY PRZEZ DRUGĄ SESJĘ ══
- * Nazwa karty (`sheetTabName`) niesie DZIEŃ i SAMOLOT, a nie sesję — dwie zamknięte
- * zmiany na tym samym samolocie tego samego dnia (poranna i popołudniowa) budują więc
- * kartę o tej SAMEJ nazwie, a `exported_sheets` jest po `tab` UPSERT-owane. Druga karta
- * nadpisuje pierwszą. Flaga `session_overlap` tego nie łapie i nie ma prawa łapać:
- * dotyczy sesji NIEZAMKNIĘTYCH, a tu obie są zamknięte poprawnie.
+ * ══ NADPISANIE KARTY PRZEZ DRUGĄ SESJĘ: BYŁO OD 2026-08-01, ZAMKNIĘTE 2026-08-07 ══
+ * Nazwa karty niesie DZIEŃ i SAMOLOT, a nie sesję — dwie zamknięte zmiany na tym samym
+ * samolocie tego samego dnia (poranna i popołudniowa) budowały więc kartę o tej SAMEJ
+ * nazwie, a `exported_sheets` jest po `tab` UPSERT-owane. Druga karta nadpisywała
+ * pierwszą. Flaga `aircraft_overlap` tego nie łapała i nie miała prawa łapać: dotyczy
+ * sesji NIEZAMKNIĘTYCH, a tu obie były zamknięte poprawnie. Panel umiał ten stan
+ * najwyżej NAZWAĆ (`overwrittenBy`), bo scalenie kart było decyzją produktową
+ * dotykającą obu końców drutu (konwencja nazw jest lustrem
+ * `app/src/ui/screens/syncStatus.ts`).
  *
- * Konwencji nazw NIE zmieniamy — jest lustrem `app/src/ui/screens/syncStatus.ts`
- * (telefon liczy ją u siebie na ekranie 11) i częścią §4.7, więc jej zmiana jest decyzją
- * produktową dotykającą obu końców. Zmieniamy natomiast to, co ekran O TYM MÓWI:
- * `overwrittenBy` niesie FAKT („ostatni zapis tej karty pochodzi z innej sesji"),
- * a nie ocenę. Dopóki decyzja produktowa nie zapadnie, monitor ma przynajmniej
- * nie twierdzić, że obie karty są w arkuszu.
+ * **Decyzja zapadła 2026-08-07: karta jest DOBĄ SAMOLOTU** (§4.7). Zmiana poranna
+ * i popołudniowa są WIERSZAMI jednego dokumentu, a rewizja należy do pary (doba,
+ * samolot) — więc wada zniknęła z konstrukcji, a nie została opisana. `overwrittenBy`
+ * zostaje w kontrakcie z dwóch powodów: dalej ma realną treść dla sesji WYŁĄCZONEJ
+ * z karty otwartą flagą (doba idzie dalej bez niej, więc treść pod `tab` przestaje ją
+ * opisywać), a poza tym jest sygnalizatorem — zapalenie się go dla dwóch sesji tej samej
+ * doby znaczyłoby, że znów powstają dwie karty jednego dokumentu.
  */
 
 /** Powód, dla którego eksporter ODMÓWIŁ zbudowania karty — nie błąd, tylko stan świata. */
@@ -82,10 +86,14 @@ export type ExportOutcomeDto =
  * Wnioskuje ją serwer (`mappers/exportListItem.ts`) z czterech faktów naraz, żeby panel
  * nie musiał ich składać po swojemu:
  *
- *  • `waiting`    — dzień jeszcze trwa (brak `day_close`). Karta powstaje po zamknięciu,
- *                   więc jej brak nie jest usterką.
- *  • `blocked`    — otwarta flaga `session_overlap`. Bramka `DayExporter`: sporny dzień
- *                   nie ma prawa utrwalić się w dokumencie klubu.
+ *  • `waiting`    — ta zmiana jeszcze trwa (brak `day_close`). Karta doby powstaje po
+ *                   zdaniu samolotu, więc brak własnej rewizji nie jest usterką. Uwaga:
+ *                   od 2026-08-07 taka sesja MOŻE być w karcie (wiersz „w toku"), jeśli
+ *                   inna zmiana tej doby już maszynę oddała — stan opisuje SESJĘ, a nie
+ *                   dokument.
+ *  • `blocked`    — otwarta flaga `aircraft_overlap`. Bramka `DayExporter` zawęziła się
+ *                   2026-08-07 z całej karty do SESJI: sporna zmiana wypada z karty,
+ *                   a doba reszty maszyny idzie do arkusza z adnotacją „Niekompletna".
  *  • `impossible` — sesja bez `session_claim`, czyli bez daty i bez samolotu (rejestr
  *    niekompletny — wg §4.4 nie powinno wystąpić).
  *                   `buildDaySheet` zwraca `null` — karty nie da się nawet NAZWAĆ.

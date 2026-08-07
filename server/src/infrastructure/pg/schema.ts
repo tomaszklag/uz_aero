@@ -10,7 +10,7 @@
  * projekcje — odświeżane przy przyjęciu zdarzeń, zawsze odtwarzalne ze strumienia.
  */
 
-export const SCHEMA_VERSION = 21;
+export const SCHEMA_VERSION = 23;
 
 export const MIGRATION_1 = `
   CREATE TABLE IF NOT EXISTS pilots (
@@ -128,6 +128,15 @@ export const MIGRATION_3 = `
  * i kiedy poszło do arkusza", a to jedyny ślad, którym da się wyjaśnić rozjazd
  * między arkuszem a rejestrem. `session_uuid` spina wpis z sesją — po nim pyta
  * `GET /sessions/:uuid/sync-status` (link na ekranie 11).
+ *
+ * **DOPISEK 2026-08-07 (migracja 23): `session_uuid` znaczy dziś CO INNEGO.** Karta
+ * przestała być sesją i stała się DOBĄ SAMOLOTU (§4.7), więc jedna rewizja ma tyle
+ * wierszy, ile sesji weszło do karty, i wszystkie niosą ten sam numer. Kolumna nie jest
+ * już „sesją, której to karta", tylko CZŁONKOSTWEM sesji w rewizji — a zdanie wyżej
+ * („`session_uuid` spina wpis z sesją, po nim pyta `sync-status`") zostaje prawdziwe
+ * i jest dokładnie tym powodem, dla którego te wiersze nadal istnieją per sesja.
+ * `day` + `aircraft_id` niosą teraz KLUCZ karty, a nie jej opis. Reszta bez zmian:
+ * dziennik dalej jest append-only i dalej jest jedynym śladem rozjazdu.
  */
 export const MIGRATION_4 = `
   CREATE TABLE IF NOT EXISTS export_log (
@@ -155,17 +164,24 @@ export const MIGRATION_4 = `
  * `rows` to DOSŁOWNE wiersze karty (`DaySheet.rows`, string[][]) — karta jest
  * dokumentem w kształcie Excela, nie projekcją do dalszego liczenia.
  *
- * ══ CO Z TEGO WYNIKA I JEST NIEROZSTRZYGNIĘTE (2026-08-01) ══
+ * ══ CO Z TEGO WYNIKAŁO I BYŁO NIEROZSTRZYGNIĘTE (2026-08-01) ══
  * Kluczem jest `tab`, czyli `YYYY-MM-DD_SP-XXX` — DZIEŃ i SAMOLOT, bez sesji. Dwie
  * ZAMKNIĘTE zmiany na tym samym samolocie tego samego dnia (poranna i popołudniowa)
- * budują więc kartę o tej samej nazwie i druga NADPISUJE pierwszą. Flaga
- * `session_overlap` tego nie łapie i nie ma prawa łapać — dotyczy sesji niezamkniętych.
- * Konwencji nazw nie zmieniamy jednostronnie: jest lustrem `sheetTabName` w telefonie
+ * budowały więc kartę o tej samej nazwie i druga NADPISYWAŁA pierwszą. Flaga nakładki
+ * tego nie łapała i nie miała prawa łapać — dotyczy sesji niezamkniętych. Konwencji
+ * nazw nie zmienialiśmy jednostronnie: jest lustrem `sheetTabName` w telefonie
  * (`app/src/ui/screens/syncStatus.ts`, ekran 11) i częścią §4.7, więc scalanie sesji
- * w jedną kartę albo wpuszczenie sesji do nazwy jest DECYZJĄ PRODUKTOWĄ dotykającą obu
- * końców. Do czasu jej podjęcia monitor eksportu przynajmniej nie milczy: wykrywa
- * kolizję po `(day, aircraft_id)` w `export_log` i niesie ją jako
+ * w jedną kartę albo wpuszczenie sesji do nazwy było DECYZJĄ PRODUKTOWĄ dotykającą obu
+ * końców. Do czasu jej podjęcia monitor eksportu przynajmniej nie milczał: wykrywał
+ * kolizję po `(day, aircraft_id)` w `export_log` i niósł ją jako
  * `AdminExportListItem.overwrittenBy`.
+ *
+ * ══ ROZSTRZYGNIĘTE 2026-08-07 (migracja 23) ══
+ * Decyzja padła na stronę SCALANIA: karta jest DOBĄ SAMOLOTU, a sesje są jej wierszami
+ * (§4.7). `tab` jako klucz `exported_sheets` był więc od początku poprawny — to nie
+ * nazwa była za wąska, tylko treść za wąska wobec nazwy. Ta tabela nie zmienia się
+ * ani o kolumnę: jedna nazwa = jedna karta = aktualny stan doby, dokładnie jak
+ * zakładka w arkuszu Google. Zmienia się to, co eksporter pod tę nazwę zapisuje.
  */
 export const MIGRATION_5 = `
   CREATE TABLE IF NOT EXISTS exported_sheets (
@@ -228,7 +244,9 @@ export const MIGRATION_7 = `
  * „zastosowana, ale nieodnotowana" jest niemożliwy i powtórka nie grozi.
  *
  * Katalog liczy pięć pozycji, bo `session_overlap` zastąpił `DOUBLE_CLAIM`
- * i `TIME_OVERLAP` z §4.5 (uzasadnienie: `packages/domain/src/flags.ts`).
+ * i `TIME_OVERLAP` z §4.5. **Migracja 22 rozdziela go z powrotem** na `aircraft_overlap`
+ * i `pilot_overlap` — ta wersja CHECK-a jest więc historyczna (uzasadnienie obu ruchów:
+ * `packages/domain/src/flags.ts`).
  */
 export const MIGRATION_8 = `
   ALTER TABLE flags ADD CONSTRAINT flags_type_known CHECK (
@@ -478,6 +496,16 @@ export const MIGRATION_13 = `
  * być: to jest dokładnie ten stan, o którym trzeba się dowiedzieć, a nie ten, który
  * wolno cicho przepuścić. Runner wykonuje skrypt i wpis o zastosowaniu jedną transakcją,
  * więc nieudana migracja nie zostawia półproduktu.
+ *
+ * **DOPISEK 2026-08-07 (migracja 23): ograniczenie ZMIENIA KLUCZ, bo zmieniła się
+ * jednostka karty.** Rewizja przestała należeć do sesji i należy do pary (doba, samolot)
+ * — §4.7 — więc `UNIQUE (session_uuid, revision)` przestało opisywać tę własność.
+ * Powód całego rozumowania wyżej pozostaje ważny co do słowa: dedupe w adapterze
+ * przegrywa wyścig, blokada advisory szereguje normalną pracę, a ograniczenie broni
+ * przed ręcznym `INSERT`-em i przed ścieżką kodu, która zapomni zawołać `lock()`.
+ * Zmienia się WYŁĄCZNIE zestaw kolumn. Blokada advisory przenosi się razem z kluczem
+ * (`ExportLogPort.lock(tx, day, aircraftId)`) — blokada per sesja przepuściłaby dwa
+ * równoległe eksporty TEJ SAMEJ karty wyzwolone przez dwie różne zmiany.
  *
  * `idx_export_log_session` (migracja 4) znika, bo nowy indeks unikalności ma tę samą
  * kolumnę wiodącą i obsługuje oba pytania dziennika: „wiersze tej sesji" i „ostatnia
@@ -771,6 +799,105 @@ export const MIGRATION_21 = `
      AND (s.claim_time IS DISTINCT FROM e.at);
 `;
 
+/**
+ * Migracja 22: `session_overlap` → `aircraft_overlap` + `pilot_overlap` (§4.7, 2026-08-07).
+ *
+ * ══ DLACZEGO ROZDZIELENIE ══
+ * Jedna pozycja udawała dwie różne patologie. Przy długich sesjach zbiegały się
+ * w praktyce, więc rozróżnienie nic nie dawało; po §3.6a sesje są krótkie i to przestało
+ * być prawdą — pilot legalnie zdaje jedną maszynę i bierze drugą co do minuty, a jedna
+ * maszyna bywa zajęta przez dwa telefony bez żadnego udziału grafiku.
+ *
+ * `aircraft_overlap` (dwie niezamknięte sesje jednej MASZYNY) zostaje bramką arkusza —
+ * dopóki nie wiadomo, który strumień opisuje maszynę, jej doba nie ma jednej prawdy.
+ * `pilot_overlap` (sesje jednego PILOTA nachodzące w czasie) arkusza nie dotyka: to
+ * anomalia grafiku człowieka, a nie danych samolotu.
+ *
+ * ══ MIGRACJA DANYCH ══
+ * Istniejące wiersze `session_overlap` przechodzą na `aircraft_overlap`, bo dokładnie to
+ * wykrywał stary detektor (liczył NIEZAMKNIĘTE sesje jednej maszyny — grafiku pilota nie
+ * oglądał ani razu). To przemianowanie, nie reinterpretacja: żaden wiersz nie zmienia
+ * znaczenia, tylko zaczyna nazywać się tym, czym zawsze był.
+ *
+ * `pilot_overlap` wykrywa się od zera przy kolejnym ingescie tej sesji; wstecznego
+ * przeliczenia NIE robimy — flagi opisują stan zauważony przy przyjęciu danych, a nie
+ * wynik ponownej analizy historii (ta sama zasada, co przy `fuel_mismatch` w 2026-07-31).
+ */
+export const MIGRATION_22 = `
+  UPDATE flags SET type = 'aircraft_overlap' WHERE type = 'session_overlap';
+
+  ALTER TABLE flags DROP CONSTRAINT IF EXISTS flags_type_known;
+  ALTER TABLE flags ADD CONSTRAINT flags_type_known CHECK (
+    type IN ('mh_gap', 'mh_regression', 'aircraft_overlap', 'pilot_overlap',
+             'fuel_mismatch', 'clock_drift')
+  );
+`;
+
+/**
+ * Migracja 23: REWIZJA NALEŻY DO KARTY (doba + samolot), nie do sesji (§4.7, 2026-08-07).
+ *
+ * ══ CO ZAMYKA ══
+ * Karta arkusza przestała być sesją i stała się DOBĄ SAMOLOTU. Powód produktowy jest
+ * w §4.7: po skróceniu sesji (§3.6a) nazwa `YYYY-MM-DD_SP-XXX` przestała być kluczem
+ * unikalnym, bo w dniu skokowym tą samą maszyną lata dwóch pilotów — druga karta
+ * NADPISYWAŁA pierwszą i podgląd porannej zmiany pokazywał treść popołudniowej.
+ * Konsekwencja dla dziennika jest arytmetyczna: skoro dokumentów jest tyle, ile dób
+ * maszyny, to numer rewizji też musi się liczyć per doba maszyny. Przy starym kluczu
+ * druga zmiana zaczynała własne liczenie od jedynki i dwie „rewizje 1" opisywały dwa
+ * różne stany JEDNEJ karty.
+ *
+ * ══ DLACZEGO ZMIANA KLUCZA, A NIE NOWE KOLUMNY ══
+ * Rozważone i odrzucone: `export_log` z jednym wierszem na rewizję (`session_uuid` =
+ * „sesja, która eksport wyzwoliła") plus tabela członkostwa. Byłoby to czystsze
+ * normalizacyjnie i gorsze w jedynym miejscu, które się liczy: `GET /sessions/:uuid/
+ * sync-status` (ekran 11 telefonu) pyta o link PO SESJI. Sesja, która karty nie
+ * wyzwoliła — czyli poranna zmiana po zdaniu maszyny przez popołudniową — nie miałaby
+ * wtedy własnego wiersza i pilot zobaczyłby „jeszcze nie wyeksportowano" o danych,
+ * które są w arkuszu. Druga tabela naprawiałaby to kosztem trzeciego JOIN-a w monitorze
+ * panelu i drugiego zapisu w gorącej ścieżce eksportu.
+ *
+ * Wybraliśmy więc wariant tańszy i węższy: **jedna rewizja = N wierszy, po jednym na
+ * sesję wchodzącą do karty, wszystkie z tym samym numerem.** `session_uuid` zmienia
+ * znaczenie z „sesji, której to karta" na CZŁONKOSTWO w rewizji — i to jest cała cena
+ * tej decyzji, nazwana tutaj i w docblocku migracji 4. Zysk: żaden JOIN po stronie
+ * odczytu (`sync-status`, monitor `A05`, historia rewizji) nie wymaga zmiany, a
+ * powiązanie sesja→karta przeżywa dokładnie w tej postaci, w jakiej istniało.
+ *
+ * ══ CO ROBI DDL ══
+ *  • `uq_export_log_revision (session_uuid, revision)` znika, bo opisuje własność,
+ *    która przestała obowiązywać — po zmianie ta sama sesja NIE MOŻE mieć dwóch rewizji
+ *    o tym samym numerze, ale wolno jej należeć do dwóch KART (korekta czasu przejęcia
+ *    przesuwająca sesję przez północ), a te numerują się niezależnie. Stare ograniczenie
+ *    odbiłoby wtedy poprawny zapis.
+ *  • `uq_export_log_card_revision (day, aircraft_id, revision, session_uuid)` broni
+ *    tego, co trzeba: dwóch kompletów wierszy tej samej karty z tym samym numerem.
+ *    Kolumna `session_uuid` jest na końcu, bo jedna rewizja ma ich wiele — bez niej
+ *    ograniczenie zabraniałoby drugiej sesji wejść do karty.
+ *  • `idx_export_log_session` WRACA (usunięty migracją 14, gdy `session_uuid` był
+ *    kolumną wiodącą unikalności). Teraz prowadzi `(day, aircraft_id)`, więc pytania
+ *    po sesji — `sync-status` telefonu i `LEFT JOIN LATERAL` monitora — nie miałyby
+ *    czym schodzić. Porządek `(exported_at DESC, id DESC)` jest tym, którym te dwa
+ *    miejsca czytają: „ostatni zapis zawierający tę sesję". Bez `NULLS LAST`, bo obie
+ *    kolumny są `NOT NULL` — reguła z migracji 17.
+ *
+ * ══ DANE ZASTANE ══
+ * Migracja **nie rusza ani jednego wiersza** i nie może się wywalić na historii:
+ * wiersze sprzed zmiany mają po jednym `session_uuid` na rewizję, więc dwie zmiany
+ * jednego dnia z rewizją 1 różnią się sesją i mieszczą w nowym `UNIQUE`. `latestRevision`
+ * czyta `MAX(revision)` po parze, więc pierwsza karta doby zbudowana po wdrożeniu
+ * dostanie numer o jeden większy od najwyższego numeru zastanego — numeracja jest dalej
+ * rosnąca, choć w miejscu przejścia może przeskoczyć. To jest właściwe zachowanie:
+ * dziennik jest osią czasu, a nie licznikiem bez dziur.
+ */
+export const MIGRATION_23 = `
+  ALTER TABLE export_log DROP CONSTRAINT IF EXISTS uq_export_log_revision;
+  ALTER TABLE export_log ADD CONSTRAINT uq_export_log_card_revision
+    UNIQUE (day, aircraft_id, revision, session_uuid);
+
+  CREATE INDEX IF NOT EXISTS idx_export_log_session
+    ON export_log (session_uuid, exported_at DESC, id DESC);
+`;
+
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
@@ -793,6 +920,8 @@ export const MIGRATIONS: readonly string[] = [
   MIGRATION_19,
   MIGRATION_20,
   MIGRATION_21,
+  MIGRATION_22,
+  MIGRATION_23,
 ];
 
 /**
@@ -829,4 +958,6 @@ export const MIGRATION_TITLES: readonly string[] = [
   'Norma zużycia per samolot: aircraft_consumption (materializacja modelu)',
   'Notatka pilota do dnia w projekcji: sessions.notes',
   'sessions.claim_time niesie czas przejęcia (session_claim), nie meldunek',
+  'Rozdzielenie session_overlap na aircraft_overlap i pilot_overlap',
+  'Rewizja karty należy do pary (doba, samolot), nie do sesji',
 ];

@@ -24,6 +24,7 @@ import type { Event } from '@uzaero/domain';
 
 import { clockDriftFlag } from '../../../domain/clockDrift.ts';
 import { chainFlags, type ChainLink } from '../../../domain/mhChain.ts';
+import { pilotOverlapFlags } from '../../../domain/pilotOverlap.ts';
 import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
 import {
   recomputeConsumptionNorm,
@@ -79,6 +80,7 @@ export class IngestCommands {
     // Samoloty dotknięte paczką — wypełniane w transakcji, używane PO commicie
     // (przeliczenie normy zużycia), więc muszą przeżyć jej zakres.
     const aircraftIds = new Set<string>();
+    const picIds = new Set<string>();
     // Single-writer (§4.4), warstwa 1: każda paczka niesie zdarzenia podpisane PIC-em
     // sesji; nadawca musi nim być. Odrzucamy CAŁĄ paczkę — częściowe przyjęcie
     // rozjechałoby księgowość outboxa (telefon nie wie, które wiersze weszły).
@@ -120,6 +122,7 @@ export class IngestCommands {
         const row = sessionRowFrom(sessionUuid, stream);
         await this.sessions.upsert(tx, row);
         aircraftIds.add(row.aircraftId);
+        picIds.add(row.picId);
         if (row.status === 'closed') closedNow.push(sessionUuid);
 
         // Rozjazd zegarów jest własnością POJEDYNCZEGO zdarzenia, nie łańcucha sesji,
@@ -146,6 +149,27 @@ export class IngestCommands {
         const capacityL = await this.aircraft.capacityL(tx, aircraftId);
         for (const flag of chainFlags(links, capacityL)) {
           await this.flags.ensureOpen(tx, { ...flag, aircraftId });
+        }
+      }
+
+      // Nakładka CZASU PILOTA — druga oś, więc drugie przejście (§4.7). Grafik człowieka
+      // idzie w poprzek maszyn, więc pętla po samolotach wyżej nie ma jak jej zobaczyć:
+      // dwie sesje tworzące nakładkę należą z definicji do RÓŻNYCH samolotów.
+      //
+      // Flaga ląduje na samolocie PÓŹNIEJSZEJ z pary — tabela `flags` wymaga jednego
+      // `aircraft_id`, a to ta maszyna została wzięta, gdy poprzednia nie była zdana.
+      for (const picId of picIds) {
+        const spans = (await this.sessions.listByPilot(tx, picId)).map((s) => ({
+          sessionUuid: s.sessionUuid,
+          aircraftId: s.aircraftId,
+          claimedAt: s.claimTime,
+          closedAt: s.closeTime,
+        }));
+        for (const flag of pilotOverlapFlags(spans)) {
+          const later = spans.find((s) => s.sessionUuid === flag.sessionUuids[1]);
+          if (later != null) {
+            await this.flags.ensureOpen(tx, { ...flag, aircraftId: later.aircraftId });
+          }
         }
       }
 

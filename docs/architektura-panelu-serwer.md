@@ -107,8 +107,12 @@
 >
 > **Aktualizacja 2026-08-01 — przekrój EKSPORTY (A05) WDROŻONY** (§11 poz. 5):
 > migracja **14** (`UNIQUE (session_uuid, revision)` na `export_log` + usunięcie
-> nadmiarowego `idx_export_log_session`), `ExportLogPort.lock` (advisory na sesji) razem
-> z przeniesieniem nadania rewizji w `DayExporter` do JEDNEJ transakcji,
+> nadmiarowego `idx_export_log_session`) — **przekluczona migracją 23 na
+> `UNIQUE (day, aircraft_id, revision, session_uuid)`, gdy karta stała się dobą samolotu;
+> `idx_export_log_session` wtedy wrócił, bo `session_uuid` przestał być kolumną wiodącą** —
+> `ExportLogPort.lock` (advisory; od migracji 23 na PARZE doba+samolot, czyli na tym samym
+> kluczu co rewizja) razem z przeniesieniem nadania rewizji w `DayExporter` do JEDNEJ
+> transakcji,
 > `ExportsAdminPort` + `PgAdminExportsRepo`, `AdminExportQueries`,
 > `AdminExportCommands.retry`, `application/admin/mappers/exportListItem.ts`,
 > `contracts/exports.ts`, `GET /admin/api/exports`, `/exports/:uuid`,
@@ -153,13 +157,17 @@
 > w mapperze i `CASE` w `PgAdminExportsRepo`. Rozjazd łapie `test/adminExports.test.ts`
 > (liczniki vs policzone wiersze, `?state=X` vs wiersze o tym stanie);
 > (b) **kolizja nazw kart tego samego dnia** — `AdminExportListItem.overwrittenBy`. Dwie
-> ZAMKNIĘTE zmiany na jednym samolocie tego samego dnia budują kartę o tej samej nazwie
+> ZAMKNIĘTE zmiany na jednym samolocie tego samego dnia budowały kartę o tej samej nazwie
 > (`sheetTabName` niesie dzień i samolot, nie sesję), a `exported_sheets` jest po `tab`
-> UPSERT-owane — druga nadpisuje pierwszą, `session_overlap` tego nie łapie (dotyczy sesji
+> UPSERT-owane — druga nadpisywała pierwszą, flaga nakładki tego nie łapała (dotyczy sesji
 > NIEZAMKNIĘTYCH), a monitor raportował obie jako „W arkuszu". Konwencji nazw ani schematu
-> **nie zmieniamy** (lustro `app/src/ui/screens/syncStatus.ts`, §4.7 — decyzja produktowa
-> dotykająca telefonu, OTWARTA). Serwer wykrywa fakt po `(day, aircraft_id)` w `export_log`,
-> ekran go pokazuje, a podgląd karty ostrzega, że wyświetla treść innej sesji;
+> wtedy **nie zmienialiśmy** (lustro `app/src/ui/screens/syncStatus.ts`, §4.7 — decyzja
+> produktowa dotykająca telefonu). Serwer wykrywał fakt po `(day, aircraft_id)`
+> w `export_log`, ekran go pokazywał, a podgląd karty ostrzegał, że wyświetla treść innej
+> sesji. **ZAMKNIĘTE 2026-08-07 (migracja 23): karta jest DOBĄ SAMOLOTU**, a zmiany są jej
+> wierszami — wada zniknęła z konstrukcji. Porównanie w `ow` idzie odtąd po REWIZJI (wiersze
+> jednej rewizji dzielą `exported_at`, więc stempel przestał rozstrzygać), a samo pole
+> zostaje: opisuje sesję WYŁĄCZONĄ z karty flagą i jest sygnalizatorem powrotu wady;
 > (c) **awaria adaptera arkuszy odróżniona od błędu po naszej stronie** — `SheetsAdapterError`
 > w `DayExporter` (opakowuje WYŁĄCZNIE wywołanie `writeDaySheet`) i `ExportFailureDto`
 > w kontrakcie. Wcześniej komenda łapała każdy wyjątek i zwracała `outcome: null`, a panel
@@ -1449,7 +1457,7 @@ niczego, co da się pokazać).
 | **2** | **Czytanie dni** | migracja 10 (5 kolumn + indeks) · rozszerzenie `sessionRowFrom` · `POST maintenance/rebuild-projections` · `SqlFilter` + `keyset` · `SessionsAdminPort.list` · `GET /admin/api/sessions`, `/sessions/:uuid` · rozszerzenie `contract.test.ts` | A02, A02a | przebudowa projekcji **musi** wejść w tym samym przekroju co migracja 10 — inaczej nowe kolumny są puste |
 | **3** | **Korekta administracyjna** | `WriteAuthority` w `@uzaero/domain` · `AdminCorrectionCommands` · `POST /admin/api/sessions/:uuid/corrections` | A02b | wymaga #2 (wybór celu na karcie dnia) i #0 (audyt) |
 | **4** | **Rejestr zdarzeń** | migracja 11 (indeksy) · `EventsAdminPort.list` · `GET /admin/api/events` | A04 | narzędzie diagnostyczne; po #2, bo dzieli `SqlFilter`/`keyset` |
-| **5** | **Eksporty** | migracja **14** `UNIQUE (session_uuid, revision)` + `ExportLogPort.lock` (advisory na sesji) · `ExportsAdminPort` (list/byUuid/history) · `AdminExportCommands.retry` · `GET /admin/api/exports`, `/exports/:uuid`, `/exports/:uuid/sheet` · `POST /exports/:uuid/retry` | A05 | ponowienie to `ExportOutcome` z #1 wystawiony trasą |
+| **5** | **Eksporty** | migracja **14** `UNIQUE (session_uuid, revision)` → **23** `UNIQUE (day, aircraft_id, revision, session_uuid)` + `ExportLogPort.lock` (advisory; od 23 na parze doba+samolot) · `ExportsAdminPort` (list/byUuid/history) · `AdminExportCommands.retry` · `GET /admin/api/exports`, `/exports/:uuid`, `/exports/:uuid/sheet` · `POST /exports/:uuid/retry` | A05 | ponowienie to `ExportOutcome` z #1 wystawiony trasą |
 | **6** | **Konta** | `PilotsAdminPort` · `AdminPilotCommands` (create/update/reset/deactivate, hasło generowane, kasowanie `refresh_tokens`, blokada „ostatni administrator") · trasy | A06, A06a | pierwszy przekrój czysto CRUD-owy — po nim widać, czy §2.4 się broni w praktyce |
 | **7** | **Flota** | `FleetAdminPort` · `AdminFleetCommands` (z podbiciem `aircraft.updated_at` → ETag `/reference`) · trasy | A07, A07a | test regresji: zmiana `capacity_l` musi dojechać na telefon (ETag) |
 | **8** | **Statystyki** | atrybucja block time per pilot **w `@uzaero/domain`** (wspólna z aplikacją, dziś tylko w `crewChange.test.ts`) · `AdminStatsQueries` z kolumn `sessions` · rozszerzenie `contract.test.ts` | A10 | wymaga kolumn z #2 |

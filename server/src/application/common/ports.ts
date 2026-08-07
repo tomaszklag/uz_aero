@@ -334,6 +334,35 @@ export interface SessionsProjectionPort {
   upsert(tx: Queryable, row: SessionRow): Promise<void>;
   get(db: Queryable, sessionUuid: string): Promise<SessionRow | null>;
   listByAircraft(db: Queryable, aircraftId: string): Promise<SessionRow[]>;
+  /**
+   * Sesje jednego PILOTA — do wykrywania nakładki jego czasu (`pilot_overlap`, §4.7).
+   *
+   * Osobno od `listByAircraft`, bo to inna OŚ: nakładka grafiku idzie w poprzek maszyn,
+   * więc nie da się jej zobaczyć, patrząc na jeden samolot. Filtrujemy po `pic_id`, czyli
+   * po PIC-u sesji — Dual nie jest piszącym i nie odpowiada za jej istnienie (§4.1 pkt 3).
+   */
+  listByPilot(db: Queryable, picId: string): Promise<SessionRow[]>;
+  /**
+   * Sesje jednej maszyny przejęte w danym oknie czasu — SKŁAD KARTY DOBY (§4.7).
+   *
+   * Osobno od `listByAircraft`, choć zawężenie jest jego podzbiorem: tamten czyta CAŁĄ
+   * historię maszyny (łańcuch MH potrzebuje sąsiedztwa sesji przez lata), a eksport
+   * potrzebuje jednej doby. Użycie tamtego znaczyłoby wczytywanie całego nalotu
+   * samolotu przy każdym zdaniu maszyny — koszt rosnący bez granicy za odpowiedź
+   * o dwudziestu czterech godzinach.
+   *
+   * Okno jest po `claim_time`, czyli po CHWILI PRZEJĘCIA, i granice są DOMKNIĘTE
+   * (`utcDayRange`). Sesja rozpoczęta o 23:50 i zdana po północy należy do doby swojego
+   * przejęcia — ta sama reguła, co w projekcji służby.
+   *
+   * Wynik jest UPORZĄDKOWANY chronologicznie: karta numeruje zmiany `S1`, `S2`…, więc
+   * kolejność jest treścią, a nie przypadkiem planera.
+   */
+  listByAircraftDay(
+    db: Queryable,
+    aircraftId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<SessionRow[]>;
 }
 
 /**
@@ -415,47 +444,92 @@ export interface SheetsReadPort {
   readDaySheet(tab: string): Promise<StoredDaySheet | null>;
 }
 
-/** Wpis dziennika eksportu (§5.3 `export_log`) — jedna wykonana rewizja karty. */
+/**
+ * Wpis dziennika eksportu (§5.3 `export_log`) — CZŁONKOSTWO jednej sesji w jednej
+ * rewizji karty doby.
+ *
+ * Od 2026-08-07 (karta = doba samolotu) jedna rewizja ma tyle wierszy, ile sesji weszło
+ * do karty, i wszystkie niosą ten sam numer. Powód jest jeden: `GET /sessions/:uuid/
+ * sync-status` (ekran 11 telefonu) pyta o link PO SESJI, więc powiązanie sesja→karta
+ * musi istnieć dla KAŻDEJ zmiany, a nie tylko dla tej, która eksport wyzwoliła.
+ */
 export interface ExportRecord {
   sessionUuid: string;
-  /** Dzień karty jako `YYYY-MM-DD` (UTC z duty start) — prefiks nazwy karty. */
+  /** Doba karty jako `YYYY-MM-DD` (UTC z chwili przejęcia) — prefiks nazwy karty. */
   day: string;
   aircraftId: string;
   sheetUrl: string;
-  /** 1 = pierwszy eksport; spóźnione dane po eksporcie podbijają o 1 (§4.7). */
+  /** 1 = pierwszy eksport TEJ DOBY; każda kolejna budowa karty podbija o 1 (§4.7). */
   revision: number;
   exportedAt: Date;
 }
 
 /**
+ * Jedna REWIZJA karty doby: jeden zapis do arkusza, N wierszy dziennika.
+ *
+ * Osobny typ od `ExportRecord`, a nie tablica tamtych, bo rewizja jest NIEPODZIELNA —
+ * `day`, `aircraftId`, `sheetUrl`, `revision` i `exportedAt` muszą być we wszystkich
+ * wierszach identyczne. Tablica `ExportRecord[]` pozwalałaby złożyć komplet, w którym
+ * dwie sesje jednej karty mają różny numer rewizji, i nic by tego nie zatrzymało.
+ */
+export interface ExportCardRecord {
+  day: string;
+  aircraftId: string;
+  sheetUrl: string;
+  revision: number;
+  exportedAt: Date;
+  /** Sesje WCHODZĄCE w tę rewizję — po jednym wierszu dziennika na każdą. */
+  sessionUuids: readonly string[];
+}
+
+/**
  * Dziennik eksportu jest append-only jak reszta systemu: regeneracja karty to NOWY
- * wiersz z kolejną rewizją, nie nadpisanie — historia „co i kiedy poszło do arkusza"
- * zostaje do audytu, a `sync-status` czyta po prostu najświeższy wpis.
+ * komplet wierszy z kolejną rewizją, nie nadpisanie — historia „co i kiedy poszło do
+ * arkusza" zostaje do audytu, a `sync-status` czyta po prostu najświeższy wpis sesji.
  */
 export interface ExportLogPort {
-  /** Ostatnia rewizja eksportu sesji; `null` = jeszcze nie eksportowano. */
-  latest(db: Queryable, sessionUuid: string): Promise<ExportRecord | null>;
-  append(db: Queryable, record: ExportRecord): Promise<void>;
   /**
-   * Blokada advisory na DZIENNIKU JEDNEJ SESJI, ważna do końca transakcji. Wołana
-   * PRZED `latest` przez każdego, kto zaraz nada kolejną rewizję.
+   * Ostatnia rewizja karty, w której ta sesja WYSTĄPIŁA; `null` = nigdy nie weszła
+   * do żadnej karty. To jest odpowiedź dla ekranu 11: „gdzie leżą moje dane".
+   */
+  latest(db: Queryable, sessionUuid: string): Promise<ExportRecord | null>;
+  /**
+   * Numer ostatniej rewizji KARTY (pary doba+samolot); `0` = jeszcze nie eksportowano.
+   *
+   * Osobno od `latest`, bo pytania są dwa i mają różne klucze. Nowa sesja dołączająca
+   * do już wyeksportowanej doby nie ma ANI JEDNEGO własnego wiersza — gdyby numer
+   * kolejnej rewizji liczyć z `latest(jej uuid)`, karta zaczęłaby od jedynki po raz
+   * drugi i dziennik przestałby być osią czasu jednego dokumentu.
+   */
+  latestRevision(db: Queryable, day: string, aircraftId: string): Promise<number>;
+  /** Dopisuje CAŁĄ rewizję: po jednym wierszu na sesję, jednym zapytaniem. */
+  appendCard(db: Queryable, card: ExportCardRecord): Promise<void>;
+  /**
+   * Blokada advisory na dzienniku JEDNEJ KARTY (para doba+samolot), ważna do końca
+   * transakcji. Wołana PRZED `latestRevision` przez każdego, kto zaraz nada kolejny numer.
    *
    * ══ CZEGO PILNUJE ══
-   * Sekwencji „odczytaj ostatnią rewizję → dodaj jeden → dopisz wiersz". Bez niej
+   * Sekwencji „odczytaj ostatnią rewizję → dodaj jeden → dopisz wiersze". Bez niej
    * spóźniona paczka z telefonu i kliknięcie „Ponów" w panelu, trafione w tę samą
    * chwilę, czytają ten sam stan i obie chcą zapisać rewizję 3 — a dziennik, w którym
    * numer rewizji nie jest jednoznaczny, przestaje odpowiadać na pytanie „co i kiedy
-   * poszło do arkusza". Od migracji 14 drugi zapis odbija się o `UNIQUE`; blokada
-   * sprawia, że do tego odbicia w ogóle nie dochodzi w normalnej pracy.
+   * poszło do arkusza". Od migracji 23 drugi zapis odbija się o `UNIQUE (day,
+   * aircraft_id, revision, session_uuid)`; blokada sprawia, że do tego odbicia w ogóle
+   * nie dochodzi w normalnej pracy.
+   *
+   * **Klucz blokady MUSI być tym samym kluczem, co rewizja.** Do 2026-08-07 blokowała
+   * sesję i było to poprawne, dopóki rewizja należała do sesji; po przejściu na kartę
+   * doby blokada per sesja przepuściłaby dwa równoległe eksporty TEJ SAMEJ karty
+   * wyzwolone przez dwie różne zmiany.
    *
    * ══ CZEGO NIE PILNUJE ══
    * Treści karty. `exported_sheets` jest UPSERT-em po nazwie i wygrywa zapis późniejszy
-   * — co jest poprawne, bo obie strony budują kartę z TEGO SAMEGO strumienia zdarzeń.
+   * — co jest poprawne, bo obie strony budują kartę z TYCH SAMYCH strumieni zdarzeń.
    *
-   * Klucz mieszka w adapterze, bo nazwa klucza advisory jest szczegółem Postgresa —
-   * ta sama decyzja, co przy `FleetAdminPort.lockAircraft`.
+   * Kształt klucza mieszka w adapterze, bo nazwa klucza advisory jest szczegółem
+   * Postgresa — ta sama decyzja, co przy `FleetAdminPort.lockAircraft`.
    */
-  lock(tx: Queryable, sessionUuid: string): Promise<void>;
+  lock(tx: Queryable, day: string, aircraftId: string): Promise<void>;
 }
 
 // ── ślad kalibracyjny GPS (faza 5) ─────────────────────────────────────────────

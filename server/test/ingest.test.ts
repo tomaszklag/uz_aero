@@ -320,7 +320,7 @@ describe('flagi łańcucha MH (§4.5)', () => {
     expect(res.json().flags[0]).toMatchObject({ type: 'mh_regression' });
   });
 
-  it('dwie niezamknięte sesje jednego samolotu → session_overlap (przejęcie offline)', async () => {
+  it('dwie niezamknięte sesje jednego samolotu → aircraft_overlap (przejęcie offline)', async () => {
     const { app } = await testHarness();
     const tokenTmk = await login(app, 'TMK');
     const tokenKrz = await login(app, 'KRZ');
@@ -337,7 +337,7 @@ describe('flagi łańcucha MH (§4.5)', () => {
       );
     const res = await post(app, tokenKrz, takeover);
 
-    const overlap = res.json().flags.find((f: { type: string }) => f.type === 'session_overlap');
+    const overlap = res.json().flags.find((f: { type: string }) => f.type === 'aircraft_overlap');
     expect(overlap).toBeDefined();
     expect(overlap.sessionUuids.sort()).toEqual(['sess-1', 'sess-2']);
   });
@@ -521,7 +521,7 @@ describe('GET /aircraft/:id/state i sync-status', () => {
     expect(body).toMatchObject({ sessionUuid: 'sess-2', received: 7, status: 'closed' });
     expect(body.flags.map((f: { type: string }) => f.type)).toEqual(['mh_gap']);
     // Eksport jest domyślnie WŁĄCZONY (adapter bazodanowy): zamknięty dzień ma link.
-    // `mh_gap` nie blokuje eksportu — arkusz wstrzymuje wyłącznie `session_overlap` (§4.7).
+    // `mh_gap` nie blokuje eksportu — arkusz wstrzymuje wyłącznie `aircraft_overlap` (§4.7).
     expect(body.exportUrl).toBe(`${TEST_BASE_URL}/sheets/2026-06-22_SP-AXA`);
   });
 });

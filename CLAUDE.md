@@ -88,7 +88,20 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     bo `dutyEnd` po §3.6a nie odróżnia już sesji trwającej od zdanej.
   - **ETAP C DOMKNIĘTY** — aplikacja jest spójnie klikalna: 01 → 02/02e/02a → kokpit →
     09 → 09b → 01.
-- **Etap D** serwer + panel.
+- **Etap D** serwer + panel — w toku:
+  - **D1 ✅** `claim_time` = czas `session_claim` (migracja 21 z backfillem); pole DTO
+    `dutyStart` → `claimedAt`. Przy okazji: walidacja payloadów nie znała `leg_close`,
+    więc potwierdzenia wzlotów wracały jako `400 bad_payload` — cały etap C nie miał
+    jak się zsynchronizować.
+  - **D3 ✅** karta arkusza = DOBA SAMOLOTU (migracja 23): jedna karta na (doba, maszyna),
+    sesje jako jej wiersze z kolumną `Sesja`; rewizja per karta, bramka flagi zawężona
+    do sesji objętych flagą. Stary eksporter odrzucał KAŻDĄ sesję z nowego flow
+    (bramka `dutyStart == null → no_preflight`).
+  - **D4 ✅** `session_overlap` → `aircraft_overlap` (bramka arkusza) + `pilot_overlap`
+    (nakładka grafiku, nowy `server/src/domain/pilotOverlap.ts`), migracja 22.
+    Zetknięcie sesji co do minuty NIE jest nakładką — to normalny dzień po §3.6a.
+  - **D2** bramka `400 day_open`, **D6** ekrany panelu (+ przemianowanie `dutyStart`
+    → `claimedAt` po stronie `admin/`, bez tego panel się nie zbuduje).
 
 **Twardy warunek każdego commitu etapu B:** strumień `schema_version 1` musi projektować się
 BEZ ZMIANY WYNIKÓW. Strażnikiem jest kanoniczny dzień 22 JUNE w `app/src/__tests__/projections.test.ts`

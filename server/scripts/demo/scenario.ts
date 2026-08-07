@@ -9,7 +9,7 @@
  * Dane demo mają być NIEWYGODNE, bo panel powstał do obsługi rzeczy niewygodnych.
  * Ładny miesiąc zgodnych łańcuchów MH pokazałby wyłącznie, że tabele się renderują.
  * Dlatego w scenariuszu siedzi po jednym egzemplarzu każdego typu flagi z §4.5, dzień
- * bez karty arkusza, dzień nadpisany przez drugą zmianę, korekta po oknie 24 h
+ * bez karty arkusza, doba z dwiema zmianami w jednej karcie, korekta po oknie 24 h
  * i konto odcięte od systemu.
  *
  * ┌ Flaga / stan ──────────┬ Gdzie ──────────────────┬ Po co ────────────────────────┐
@@ -17,9 +17,9 @@
  * │ mh_regression          │ SP-ANK, D−14            │ A03 + A02a: cofnięty licznik  │
  * │ fuel_mismatch          │ SP-KWA, D−16            │ A03: tolerancja z pojemności  │
  * │ clock_drift            │ SP-FGK, D−6             │ A04: rozjazd zegara telefonu  │
- * │ session_overlap (open) │ SP-KWA, D−5 × D−4       │ A03 blokuje + A05 „brak karty"│
- * │ session_overlap (res.) │ SP-ANK, D−9 × D−8       │ A03a: rozwiązanie → 2 karty   │
- * │ kolizja karty dnia     │ SP-AXA, D−3 (2 zmiany)  │ A05: `overwrittenBy`          │
+ * │ aircraft_overlap (open) │ SP-KWA, D−5 × D−4       │ A03 blokuje + A05 „brak karty"│
+ * │ aircraft_overlap (res.) │ SP-ANK, D−9 × D−8       │ A03a: rozwiązanie → 2 karty   │
+ * │ doba z dwiema zmianami │ SP-AXA, D−3 (2 zmiany)  │ A05: 1 karta, rewizje 1 i 2   │
  * │ rewizja 2 w dzienniku  │ SP-FGK, D−15 (ponów)    │ A05: 2 wiersze, 1 karta       │
  * │ korekta po 24 h        │ SP-AXA, D−6 (void drop) │ A02b + A04: przekreślony wpis │
  * │ dzień otwarty DZIŚ     │ SP-FGK, KRZ             │ A01 + telefon: przejęcie PIC  │
@@ -27,7 +27,7 @@
  * └────────────────────────┴─────────────────────────┴───────────────────────────────┘
  *
  * ══ DLACZEGO NAKŁADKI WYMAGAJĄ DWÓCH PACZEK ══
- * `session_overlap` powstaje, gdy w chwili liczenia flag samolot ma WIĘCEJ NIŻ JEDNĄ
+ * `aircraft_overlap` powstaje, gdy w chwili liczenia flag samolot ma WIĘCEJ NIŻ JEDNĄ
  * niezamkniętą sesję (`domain/mhChain.ts`). Dzień wysłany jedną paczką razem z `day_close`
  * jest w tej chwili już zamknięty, więc nakładki nigdy by nie zrobił. Dlatego dni
  * nakładające się jadą rozdzielone: najpierw otwarcie, potem reszta dnia — dokładnie
@@ -193,7 +193,8 @@ const PLAN: readonly DayPlan[] = [
   // …i nakładka, której NIKT nie rozwiąże: karta dnia PWI zostaje poza arkuszem.
   { offset: 4, aircraftId: 'SP-KWA', picId: 'PWI', dualId: null, operation: 'inne', clientIndex: null, lifts: 1, firstTaxiMin: 600, delivery: 'split' },
   { offset: 4, aircraftId: 'SP-ANK', picId: 'AKO', dualId: 'KRZ', operation: 'skoki', clientIndex: 1, lifts: 3, firstTaxiMin: 550, delivery: 'full' },
-  // Dwie zmiany na jednym samolocie tego samego dnia — obie zamknięte, jedna nazwa karty.
+  // Dwie zmiany na jednym samolocie tego samego dnia — obie zamknięte, JEDNA karta doby
+  // (§4.7): pierwsza daje rewizję 1, druga przebudowuje kartę do rewizji 2 z obiema w środku.
   { offset: 3, aircraftId: 'SP-AXA', picId: 'PWI', dualId: null, operation: 'skoki', clientIndex: 0, lifts: 3, firstTaxiMin: 420, delivery: 'full' },
   { offset: 3, aircraftId: 'SP-AXA', picId: 'JSE', dualId: null, operation: 'skoki', clientIndex: 1, lifts: 3, firstTaxiMin: 780, delivery: 'full' },
   { offset: 2, aircraftId: 'SP-FGK', picId: 'TMK', dualId: null, operation: 'egzamin', clientIndex: null, lifts: 1, firstTaxiMin: 560, delivery: 'full' },
@@ -255,7 +256,7 @@ export function buildScenario(nowMs: number): DemoScenario {
 
       case 'split': {
         // Otwarcie osobno: w chwili tej paczki samolot ma już drugą niezamkniętą sesję,
-        // więc ingest wykrywa `session_overlap`. Reszta dnia dojeżdża zaraz potem i jej
+        // więc ingest wykrywa `aircraft_overlap`. Reszta dnia dojeżdża zaraz potem i jej
         // karta odbija się od otwartej flagi (§4.7).
         const opening = events.slice(0, 3);
         batches.push({
@@ -497,7 +498,7 @@ function adminActions(
     {
       kind: 'resolve_flag',
       actorId: 'TMK',
-      flag: { type: 'session_overlap', aircraftId: 'SP-ANK', sessionUuid: ankOpen },
+      flag: { type: 'aircraft_overlap', aircraftId: 'SP-ANK', sessionUuid: ankOpen },
       note:
         'Nakładka pozorna: telefon PWI padł w terenie i dzień domknęła spóźniona paczka. ' +
         'JSE wystartował następnego dnia rano, więc sesje nie zachodziły na siebie w powietrzu. ' +

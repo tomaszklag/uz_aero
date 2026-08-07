@@ -92,10 +92,10 @@ describe('bazodanowe karty arkusza (PgSheets + GET /sheets/:tab)', () => {
     expect(sheet.tab).toBe('2026-06-22_SP-AXA');
 
     // Kanoniczne liczby — ta sama projekcja co ekran 10 telefonu.
-    expect(sheet.rows).toContainEqual(['UZ Aero — dzień lotny', '2026-06-22 (UTC)']);
-    expect(sheet.rows).toContainEqual(['1', '08:25', '09:18', '00:53', 'AUTO']);
-    expect(sheet.rows).toContainEqual(['Koniec', '1241:09']);
-    expect(sheet.rows).toContainEqual(['Block time', '02:22']);
+    expect(sheet.rows).toContainEqual(['UZ Aero — doba samolotu', '2026-06-22 (UTC)']);
+    expect(sheet.rows).toContainEqual(['S1', '1', '08:25', '09:18', '00:53', 'AUTO']);
+    expect(sheet.rows).toContainEqual(['Doba', '1234:30', '1241:09', '6:39']);
+    expect(sheet.rows).toContainEqual(['Czas blokowy doby', '02:22']);
 
     // Link jest jeden i wszędzie ten sam: dziennik eksportu i sync-status telefonu.
     const { rows } = await db.query<{ sheet_url: string }>(
@@ -130,7 +130,7 @@ describe('bazodanowe karty arkusza (PgSheets + GET /sheets/:tab)', () => {
       url: '/sheets/2026-06-22_SP-AXA',
       headers: { authorization: `Bearer ${token}` },
     });
-    expect(res.json().rows).toContainEqual(['Wyniesienia', '1']);
+    expect(res.json().rows).toContainEqual(['Doba', '1', '4 (2 tandem / 1 AFF / 1 solo)']);
 
     const count = await db.query<{ n: string }>('SELECT COUNT(*) AS n FROM exported_sheets');
     expect(Number(count.rows[0]!.n)).toBe(1); // karta jak u Google: nadpisana, nie zdublowana

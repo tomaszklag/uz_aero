@@ -482,6 +482,30 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
 - **bramka flagi obejmuje wyłącznie sesje objęte flagą**, nie całą kartę: karta wychodzi
   z adnotacją „niekompletna — flaga #n"
 
+**Wdrożone 2026-08-07** (`application/common/export/`, migracja 23):
+
+- **dobę wyznacza `claimedAt`**, czyli czas `session_claim` (`sessions.claim_time`,
+  migracja 21) — **nie `dutyStart`**. Meldunek jest od §3.6a opcjonalny i ekran 02 o niego
+  nie pyta, więc oparta na nim bramka odrzucała każdą sesję z przebudowanego flow. Sesja
+  przejęta o 23:50 i zdana po północy należy do doby swojego PRZEJĘCIA — ta sama reguła,
+  co przy przynależności wzlotu do doby w `projectDuty`
+- **kształt karty**: nagłówek (samolot · doba · liczba zmian · czas blokowy doby) → tabela
+  `Sesje doby` (PIC, Dual, operacja, przejęcie → zdanie, block, stan) → `Loty` → `Paliwo` →
+  `Motogodziny` → `Zrzuty` (tylko przy operacji Skoki). Zmiany są etykietowane `S1`, `S2`…
+  chronologicznie i **`Sesja` jest pierwszą kolumną tabeli lotów** — numer lotu liczy się
+  w obrębie sesji, więc w dobie z dwiema zmianami powtórzy się
+- **sumy doby nie są sumą wszystkiego**: paliwo startowe to odczyt pierwszej zmiany,
+  końcowe — ostatniej (poziom w zbiorniku nie jest addytywny); MH doby to **ruch licznika**
+  od pierwszego do ostatniego odczytu, a rozjazd wobec sumy delt per sesja ma zgłosić
+  `mh_gap`, nie zamaskować arytmetyka karty
+- **sesja jeszcze niezdana jest w karcie** ze stanem „w toku" — karta odzwierciedla aktualny
+  stan doby i jest przebudowywana przy każdym kolejnym zdaniu maszyny
+- **rewizja należy do pary (doba, samolot)**, nie do sesji. `export_log` ma po jednym
+  wierszu na sesję wchodzącą do rewizji, wszystkie z tym samym numerem — bo
+  `GET /sessions/:uuid/sync-status` (ekran 11) pyta o link PO SESJI i każda zmiana musi go
+  znaleźć, także ta, która eksportu nie wyzwoliła. Blokada advisory obejmuje ten sam klucz
+  co rewizja (`export_log:<doba>:<samolot>`)
+
 > **Dlaczego karta jest dobą samolotu, a nie sesją** (decyzja 2026-08-07, konsekwencja §3.6a):
 > po skróceniu sesji nazwa `YYYY-MM-DD_SP-XXX` przestaje być kluczem unikalnym — w typowym
 > dniu skokowym tą samą maszyną lata dwóch pilotów. Klub czyta jednak dzień per samolot,
@@ -489,7 +513,7 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
 > całej karty z powodu jednej pary nakładających się sesji uczyniłoby z bramki stan domyślny,
 > bo przy krótszych sesjach nakładki są częstsze — stąd zawężenie bramki.
 >
-> **`session_overlap` wymaga rozdzielenia na dwie patologie** (do etapu D): nakładka CLAIMÓW
+> **`session_overlap` ROZDZIELONE na dwie patologie** (WDROŻONE 2026-08-07, migracja 22): nakładka CLAIMÓW
 > na jednej maszynie (dwa telefony piszą do tej samej maszyny) to co innego niż nakładka
 > CZASU PILOTA (jeden pilot rzekomo lata dwiema maszynami naraz). Dziś jedna flaga udaje obie,
 > a po zmianie modelu sesje tego samego pilota na dwóch maszynach mogą legalnie sąsiadować
@@ -610,7 +634,10 @@ events       — uuid PK, session_uuid, aircraft_id, pic_id, dual_id, type,
 sessions     — projekcja: uuid, aircraft_id, pic_id, claim/close time,
                mh_start/end, fuel_start/end, status (active|closed|flagged)
 flags        — id, type, session_uuid(s), szczegóły, status (open|resolved)
-export_log   — data, aircraft_id, sheet_url, exported_at, rewizja
+export_log   — data, aircraft_id, sheet_url, exported_at, rewizja, session_uuid
+               (rewizja należy do PARY data+aircraft_id — karta jest dobą samolotu,
+               §4.7; session_uuid = CZŁONKOSTWO sesji w rewizji, po nim pyta
+               GET /sessions/:uuid/sync-status)
 ```
 
 `events` jest append-only również na serwerze; `sessions` i statystyki to projekcje
@@ -983,8 +1010,9 @@ sessions ze strumienia zdarzeń; porządkowanie sesji samolotu po łańcuchu odc
 flagi DOUBLE_CLAIM / TIME_OVERLAP / MH_GAP / MH_REGRESSION / FUEL_MISMATCH / CLOCK_DRIFT
 z cyklem open → resolved.
 
-EKSPORT (sekcja 4.7): konto serwisowe, arkusz YYYY-MM-DD_SP-XXX po day_close,
-regeneracja z rewizją przy spóźnionych danych.
+EKSPORT (sekcja 4.7): konto serwisowe, karta YYYY-MM-DD_SP-XXX = DOBA SAMOLOTU
+(agregat wszystkich sesji maszyny w dobie UTC wyznaczonej przez session_claim),
+wyzwalana zdaniem samolotu, regeneracja z rewizją przy spóźnionych danych.
 
 TESTY obowiązkowe dla scalania: spóźniony sync poprzednika, podwójny claim, dziura MH,
 duplikaty zdarzeń. Walidacja: zdarzenia sesji przyjmowane tylko od jej PIC-a (JWT).

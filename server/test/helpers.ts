@@ -159,6 +159,7 @@ export async function testHarness(
   const exporter = new DayExporter(
     db,
     events,
+    sessions,
     flags,
     exportLog,
     options.sheets ?? pgSheets,

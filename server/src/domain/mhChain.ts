@@ -10,8 +10,10 @@
  *  • `mh_gap`        — dziura: ktoś latał bez aplikacji albo odczyt startowy zawyżony;
  *  • `mh_regression` — cofnięcie: odczyt startowy niższy niż koniec poprzednika — złe
  *                      odczytanie licznika albo nakładające się dni;
- *  • `session_overlap` — dwie NIEZAMKNIĘTE sesje jednego samolotu: przejęcie offline
- *                      (§4.4) — poprzednik ma niewysłane dane albo nie zamknął dnia;
+ *  • `aircraft_overlap` — dwie NIEZAMKNIĘTE sesje jednego samolotu: przejęcie offline
+ *                      (§4.4) — poprzednik ma niewysłane dane albo nie zdał maszyny.
+ *                      Nakładka CZASU PILOTA jest osobnym zjawiskiem i mieszka
+ *                      w `pilotOverlap.ts` (rozdzielenie 2026-08-07, §4.7);
  *  • `fuel_mismatch` — stan paliwa na starcie nie zgadza się z przekazaniem od
  *                      poprzednika (dodane 2026-07-31, patrz niżej).
  *
@@ -47,7 +49,7 @@ export interface ChainLink {
  * literał, który nigdy się nie dopasuje.
  */
 export interface ChainFlag {
-  type: Extract<FlagType, 'mh_gap' | 'mh_regression' | 'session_overlap' | 'fuel_mismatch'>;
+  type: Extract<FlagType, 'mh_gap' | 'mh_regression' | 'aircraft_overlap' | 'fuel_mismatch'>;
   sessionUuids: string[];
   details: Record<string, number | string>;
 }
@@ -76,7 +78,7 @@ export function chainFlags(
   const open = links.filter((l) => !l.closed);
   if (open.length > 1) {
     flags.push({
-      type: 'session_overlap',
+      type: 'aircraft_overlap',
       sessionUuids: open.map((l) => l.sessionUuid).sort(),
       details: { openSessions: open.length },
     });

@@ -61,7 +61,7 @@ export interface DemoRefuel {
  *
  * `finalReading === null` znaczy DZIEŃ OTWARTY — nie ma `day_close`, więc nie ma karty
  * arkusza, a samolot zostaje zajęty. To nie jest brak danych, tylko stan, który panel
- * ma pokazywać (i który tworzy nakładkę `session_overlap`, gdy dojdzie druga sesja).
+ * ma pokazywać (i który tworzy nakładkę `aircraft_overlap`, gdy dojdzie druga sesja).
  */
 export interface DemoDay {
   sessionUuid: string;
