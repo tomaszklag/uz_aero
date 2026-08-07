@@ -27,7 +27,7 @@ być kontenerem na loty (patrz sekcja „Czas służby" niżej). Rozjazd design�
 i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN pod stare mockupy
 — zostały usunięte.**
 - **Etap A ✅** — `design/` i dokumentacja przebudowane i zacommitowane.
-- **Etap B 🔶 w toku** (`packages/domain`).
+- **Etap B ✅ DOMKNIĘTY** (`packages/domain`) — pięć kroków, każdy z testami:
   - **B1 ✅** `leg_close`, `CURRENT_SCHEMA_VERSION` = 2, `dutyStart`/`dutyEnd` opcjonalne,
     trzy reguły `LEG_*`.
   - **B2a ✅** `EngineRun` → **`Leg`** (`engineRuns` → `legs`): wzlot to cykl silnika
