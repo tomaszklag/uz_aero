@@ -35,6 +35,15 @@ export interface ScreenHeaderProps {
    * tak jak w mockupach kroków 2 i 3, gdzie tytuł stoi między „Wróć" a numerem kroku.
    */
   onBack?: () => void;
+  /**
+   * Koło zębate w LEWYM slocie (`.icon-btn` z mockupu 01 „Mój dzień").
+   *
+   * Po lewej, a nie po prawej jak w `AppBar`, i to nie jest niekonsekwencja: na ekranie
+   * domowym prawy slot należy do licznika wzlotów i wskaźnika łączności, a lewy jest
+   * wolny — ekran domowy nie ma dokąd wracać. W kokpicie jest odwrotnie, bo lewą stronę
+   * zajmuje znak samolotu. Każdy pasek odwzorowuje swój mockup.
+   */
+  onSettings?: () => void;
   /** Napis przy strzałce powrotu; domyślnie „Wróć", ale bywa nazwą celu („Kokpit"). */
   backLabel?: string;
   /**
@@ -57,6 +66,7 @@ export function ScreenHeader({
   size = 'lg',
   onBack,
   backLabel = 'Wróć',
+  onSettings,
   centered = false,
   right,
   style,
@@ -64,7 +74,7 @@ export function ScreenHeader({
   const { theme } = useTheme();
   const titleSize = size === 'lg' ? styles.title : styles.titleMd;
 
-  if (onBack != null || centered) {
+  if (onBack != null || onSettings != null || centered) {
     return (
       <View
         style={[
@@ -96,6 +106,15 @@ export function ScreenHeader({
             <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.backLabel}>
               {backLabel}
             </AppText>
+          </Pressable>
+        ) : onSettings != null ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ustawienia"
+            onPress={onSettings}
+            style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Icon name="settings" size={19} color={theme.colors.textMuted} />
           </Pressable>
         ) : (
           <View style={styles.sideSlot} />
@@ -168,4 +187,7 @@ const styles = StyleSheet.create({
   backLabel: { fontSize: 11, letterSpacing: 0.5 },
   // Równe sloty po obu stronach trzymają tytuł naprawdę na środku (mockup: min-width 56).
   sideSlot: { minWidth: 56 },
+  // `.icon-btn` (01): wysokość 44 px — próg celu dotykowego dla rękawic, nie ozdoba.
+  // Szerokość jak pozostałe sloty boczne, żeby tytuł został naprawdę na środku.
+  iconBtn: { minWidth: 56, height: 44, alignItems: 'center', justifyContent: 'center' },
 });
