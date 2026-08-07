@@ -44,13 +44,13 @@ export function blockSince(
 /**
  * Od kiedy AKTUALNY Dual jest w załodze.
  *
- * Domyślnie od początku dnia (preflight ustawia załogę), a jeśli był zmieniany —
+ * Domyślnie od przejęcia samolotu (preflight ustawia załogę), a jeśli był zmieniany —
  * od OSTATNIEGO `crew_change`, które go wprowadziło. Zdarzenia przeglądamy od końca,
  * bo interesuje nas ostatnia zmiana, nie historia wszystkich.
  */
 export function dualSince(
   events: readonly Event[],
-  dutyStart: EpochMillis | null,
+  claimedAt: EpochMillis | null,
 ): EpochMillis | null {
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const e = events[i]!;
@@ -58,7 +58,7 @@ export function dualSince(
       return e.gpsTime ?? e.deviceTime;
     }
   }
-  return dutyStart;
+  return claimedAt;
 }
 
 /** Wiersze „Aktualna załoga" — dane, nie napisy; formatowanie należy do ekranu. */
@@ -67,7 +67,10 @@ export function crewRows(
   events: readonly Event[],
   now: EpochMillis,
 ): CrewRowModel[] {
-  const picSince = projection.dutyStart;
+  // Od PRZEJĘCIA samolotu, nie od meldunku: załoga dotyczy tej maszyny, a klamra służby
+  // należy do pilota i po §3.6a bywa pusta. `claimedAt` jest tu jedyną godziną, która
+  // zawsze istnieje i naprawdę odpowiada na „od kiedy prowadzisz ten samolot".
+  const picSince = projection.claimedAt;
   const rows: CrewRowModel[] = [
     {
       role: 'PIC',
@@ -77,7 +80,7 @@ export function crewRows(
     },
   ];
 
-  const dSince = projection.dualId != null ? dualSince(events, projection.dutyStart) : null;
+  const dSince = projection.dualId != null ? dualSince(events, projection.claimedAt) : null;
   rows.push({
     role: 'DUAL',
     pilotId: projection.dualId,

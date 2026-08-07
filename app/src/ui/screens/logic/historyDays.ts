@@ -52,16 +52,20 @@ export function remainingLabel(ms: number): string {
 
 function cardSpec(day: HistoryDay): DayCardSpec {
   const { state, pendingCount } = day;
-  const dutyMs =
-    state.dutyStart != null && state.dutyEnd != null ? state.dutyEnd - state.dutyStart : null;
+  // Karta opisuje SESJĘ SAMOLOTU, więc jej miarą jest czas trzymania maszyny:
+  // przejęcie → zdanie. Do 2026-08-07 stała tu „Duty" liczone z klamry służby, co po
+  // §3.6a jest pomyłką kategorii — służba należy do PILOTA i potrafi objąć kilka maszyn,
+  // więc przypisanie jej do jednej sesji kłamałoby przy każdej przesiadce.
+  const heldMs =
+    state.claimedAt != null && state.closedAt != null ? state.closedAt - state.claimedAt : null;
   return {
     sessionUuid: state.sessionUuid ?? '',
-    date: state.dutyStart != null ? dateUtcLong(state.dutyStart) : '—',
+    date: state.claimedAt != null ? dateUtcLong(state.claimedAt) : '—',
     aircraft: state.aircraftId ?? '—',
     stats: [
       { k: 'Loty', v: `${state.flights.length}` },
       { k: 'Block', v: duration(state.blockTimeMs) },
-      { k: 'Duty', v: dutyMs != null ? duration(dutyMs) : '—' },
+      { k: 'Sesja', v: heldMs != null ? duration(heldMs) : '—' },
       { k: 'Skoczków', v: `${state.drops.totalJumpers}` },
     ],
     sync:
@@ -99,10 +103,13 @@ export function buildHistory(days: HistoryDay[], now: number): HistoryGroups {
  */
 export function editableBadge(days: HistoryDay[], now: number): string | null {
   for (const day of days) {
-    if (day.state.dutyEnd == null || day.state.dutyStart == null) continue;
+    // Warunkiem jest OTWARTE OKNO, nie obecność klamry służby. Po §3.6a okno kotwiczy się
+    // we wzlocie, więc `correctionWindow` odpowiada samo — a wymóg `dutyEnd`/`dutyStart`
+    // wyciszał plakietkę na każdej sesji bez deklaracji, czyli na prawie każdej.
+    if (day.state.claimedAt == null) continue;
     if (correctionWindow(day.state, now).open) {
       // `dateTimeUtcShort` daje „22 JUN 16:45" — plakietka bierze samą datę.
-      const label = dateTimeUtcShort(day.state.dutyStart).split(' ').slice(0, 2).join(' ');
+      const label = dateTimeUtcShort(day.state.claimedAt).split(' ').slice(0, 2).join(' ');
       return `${label} — można poprawić`;
     }
   }

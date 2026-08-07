@@ -20,7 +20,6 @@ import { CockpitScreen } from '../screens/CockpitScreen';
 import { PreflightAircraftScreen } from '../screens/PreflightAircraftScreen';
 import { PreflightTaskScreen } from '../screens/PreflightTaskScreen';
 import { PreflightReadingsScreen } from '../screens/PreflightReadingsScreen';
-import { PreflightConfirmScreen } from '../screens/PreflightConfirmScreen';
 import {
   CockpitReadonlyScreen,
   type CockpitReadonlyParams,
@@ -47,7 +46,6 @@ export type RootStackParamList = {
   PreflightAircraft: undefined;
   PreflightTask: undefined;
   PreflightReadings: undefined;
-  PreflightConfirm: undefined;
   /** Podgląd cudzego samolotu bez przejmowania go (04b) — wejście z listy na 02. */
   CockpitReadonly: CockpitReadonlyParams;
   Refuel: undefined;
@@ -110,7 +108,6 @@ export function RootNavigator({
         <Stack.Screen name="PreflightAircraft" component={PreflightAircraftScreen} />
         <Stack.Screen name="PreflightTask" component={PreflightTaskScreen} />
         <Stack.Screen name="PreflightReadings" component={PreflightReadingsScreen} />
-        <Stack.Screen name="PreflightConfirm" component={PreflightConfirmScreen} />
         <Stack.Screen name="CockpitReadonly" component={CockpitReadonlyScreen} />
         <Stack.Screen name="Refuel" component={RefuelScreen} />
         <Stack.Screen name="CrewChange" component={CrewChangeScreen} />

@@ -43,7 +43,10 @@ async function writeDay(
       operation: 'skoki',
       departureIcao: null,
       arrivalIcao: null,
-      dutyStart: t(0),
+      // Meldunek GODZINĘ PRZED przejęciem samolotu — tak wygląda zwykły dzień: pilot jest
+      // na lotnisku od 07:00, a maszynę bierze o 08:00. Te dwie godziny rozsuwamy celowo,
+      // żeby karta historii nie mogła pomylić sesji samolotu ze służbą pilota (§3.6a).
+      dutyStart: t(-60),
       reading: { fuelL: 150, mh: 1234.5 },
       client: null,
       mhFormat: 'hhmm',
@@ -84,7 +87,10 @@ describe('historia dni (ekran 12)', () => {
     expect(day.stats).toEqual([
       { k: 'Loty', v: '1' },
       { k: 'Block', v: '2:22' }, // 8:12 → 10:34, ta sama liczba co na ekranie 10
-      { k: 'Duty', v: '8:45' },
+      // Karta opisuje SESJĘ SAMOLOTU: przejęcie 08:00 → zdanie 16:45 = 8:45. Służba
+      // pilota trwała 9:45 (meldunek 07:00) i celowo NIE jest tą liczbą — należy do
+      // pilota, nie do maszyny, i potrafi objąć kilka samolotów (§3.6a).
+      { k: 'Sesja', v: '8:45' },
       { k: 'Skoczków', v: '4' },
     ]);
     // §3.6a: okno kotwiczy się w WZLOCIE, nie w zdaniu samolotu. Cykl kończy się

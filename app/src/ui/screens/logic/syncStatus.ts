@@ -24,10 +24,15 @@ export { eventsCount, plural } from '../../format';
  * To jedyny element „konfiguracji serwera", który telefon zna bez pytania — konwencja
  * jest częścią specyfikacji, nie zgadywaniem. Nazwa SKOROSZYTU (np. „UZ Aero 2026")
  * pozostaje po stronie serwera i pojawi się tu razem z eksportem (faza 4).
+ *
+ * `dayAt` to dowolna chwila należąca do doby karty — wołający podaje **przejęcie
+ * samolotu** (`claimedAt`), bo karta jest dobą SAMOLOTU (§4.7), a nie służbą pilota.
+ * Parametr nazywał się `dutyStart` do 2026-08-07 i była to nazwa myląca już wtedy;
+ * po §3.6a byłaby wprost fałszywa, bo klamra służby bywa pusta.
  */
-export function sheetTabName(dutyStart: number | null, aircraftId: string | null): string | null {
-  if (dutyStart == null || aircraftId == null) return null;
-  const d = new Date(dutyStart);
+export function sheetTabName(dayAt: number | null, aircraftId: string | null): string | null {
+  if (dayAt == null || aircraftId == null) return null;
+  const d = new Date(dayAt);
   const pad2 = (n: number): string => String(n).padStart(2, '0');
   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}_${aircraftId}`;
 }

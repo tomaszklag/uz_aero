@@ -72,8 +72,19 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     po jednym pliku na parę, bo wariant to STAN tego samego ekranu, nie osobny ekran:
     seria skokowa włącza się obecnością zrzutu, 09C brakiem wzlotów. Logika w
     `logic/legClose.ts` i `logic/releaseAircraft.ts`.
-  - **C4** przejęcie (02, 02a — `03-preflight-confirm` znika), **C5** kokpit z paskiem
-    sesji i nawigacja w `App.tsx`. **Do C5 aplikacja nie jest spójnie klikalna.**
+  - **C4 ✅** przejęcie skrócone do trzech kroków (02 → 02e → 02a). `PreflightConfirmScreen`
+    USUNIĘTY razem z trasą w nawigacji — zapis `session_claim` + `preflight_confirm`
+    przeniósł się pod „PRZEJMIJ I LEĆ" na 02a. Godziny meldunku nie ma już ani w szkicu,
+    ani w payloadzie. Konsekwencja: `dutyStart` w projekcji jest odtąd zwykle `null`,
+    więc czytelnicy przeszli na `claimedAt` (historia, sortowanie sesji, nazwa karty
+    arkusza, załoga). **Karta historii mierzy SESJĘ (przejęcie → zdanie), nie „Duty"** —
+    służba należy do pilota i potrafi objąć kilka maszyn.
+  - **C5** kokpit z paskiem sesji i nawigacja w `App.tsx`. **Do C5 aplikacja nie jest
+    spójnie klikalna.** Zaległość do domknięcia w C5: `CockpitScreen`,
+    `CockpitReadonlyScreen`, `StatsScreen` i `EndOfDayScreen` nadal czytają
+    `projection.dutyStart` (timer służby, „Meldunek", podpisy dat) — wszystkie cztery
+    i tak są w tym kroku przebudowywane albo usuwane (`EndOfDayScreen` zastąpił
+    `ReleaseAircraftScreen`), więc świadomie NIE łatamy ich osobno.
 - **Etap D** serwer + panel.
 
 **Twardy warunek każdego commitu etapu B:** strumień `schema_version 1` musi projektować się

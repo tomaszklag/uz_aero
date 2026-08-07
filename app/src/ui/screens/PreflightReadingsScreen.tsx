@@ -1,12 +1,17 @@
 /**
- * UZ Aero — 02A PREFLIGHT · krok 3/4: paliwo i motogodziny.
+ * UZ Aero — 02A PRZEJĘCIE · krok 3/3: paliwo i motogodziny.
  *
  * Odwzorowanie mockupu `design/02a-preflight.html` wraz z arkuszami korekty z 02b/02c.
  * Struktura stamtąd: [box „brak danych"] → sekcja PALIWO → sekcja MOTOGODZINY →
- * poświadczenie → DALEJ.
+ * poświadczenie → PRZEJMIJ I LEĆ.
  *
- * Najważniejszy ekran preflightu, bo tutaj powstaje **początek łańcucha MH** (§4.5) —
+ * Najważniejszy ekran przejęcia, bo tutaj powstaje **początek łańcucha MH** (§4.5) —
  * wartość, po której serwer porządkuje sesje samolotu.
+ *
+ * OSTATNI KROK: to ten przycisk zapisuje `session_claim` i `preflight_confirm`, i stąd
+ * prowadzi wprost do kokpitu. Osobny ekran podsumowania (dawny `03`) został usunięty
+ * 2026-08-07 — powtarzał wartości wpisane sekundę wcześniej i wydłużał drogę do lotu
+ * o krok bez decyzji. Do tej chwili **nic nie jest zapisane**: szkic żyje w pamięci UI.
  *
  * Zasada nadrzędna (`CLAUDE.md`): **liczniki fizyczne > dane z serwera**. Przekazanie
  * od poprzednika jest podpowiedzią, nie prawdą. Dlatego każda wartość niesie adnotację
@@ -23,6 +28,7 @@ import { View } from 'react-native';
 import {
   ActionButton,
   AppText,
+  Banner,
   InlineNote,
   LevelBar,
   ReadingSheet,
@@ -34,8 +40,13 @@ import {
   type TrailRow,
 } from '../components';
 import { useTheme } from '../theme';
+import { useGps } from '../bootstrap/servicesContext';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
+// Import wprost z infrastruktury (jak composition root w `appBootstrap`) — moduł
+// dotyka `react-native`, więc nie ma go w barrelu.
+import { requestNotificationPermission } from '../../infrastructure/permissions/notificationPermission';
+import { claimDecision } from './logic/claimMode';
 import {
   dateUtcLong,
   duration,
@@ -78,12 +89,18 @@ export function PreflightReadingsScreen({
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
+  const claim = useSessionStore((s) => s.claim);
+  const confirmPreflight = useSessionStore((s) => s.confirmPreflight);
+  const lastError = useSessionStore((s) => s.lastError);
+  const sync = useSessionStore((s) => s.sync);
+  const gps = useGps();
 
   const draft = usePreflightDraft();
   // Do rozstrzygnięcia, czy przekazanie jest „od kogoś", czy własne sprzed dnia przerwy.
   const pilotId = useCurrentPilot((s) => s.id);
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
   const [editing, setEditing] = useState<'fuel' | 'mh' | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const queries = useSessionStore((s) => s.queries);
   React.useEffect(() => {
@@ -99,6 +116,78 @@ export function PreflightReadingsScreen({
     (id: string | null): string => pilots.find((p) => p.id === id)?.name ?? id ?? 'Poprzedni pilot',
     [pilots],
   );
+
+  /**
+   * PRZEJMIJ I LEĆ — tu kończy się szkic, a zaczyna rejestr.
+   *
+   * Zapis zapadał do 2026-08-07 na osobnym ekranie podsumowania (dawny `03`). Ekran zniknął,
+   * bo powtarzał to, co pilot wpisał sekundę wcześniej, i wydłużał drogę do kokpitu
+   * o krok bez decyzji (`CLAUDE.md`: przejęcie ma trwać kilka sekund). Potwierdzeniem
+   * jest ten przycisk: stoi pod wartościami, które właśnie utrwala.
+   */
+  const takeOver = useCallback(async () => {
+    if (aircraft == null) return;
+
+    // Rozgrzewka uprawnień na dzień lotny (lokalizacja + powiadomienia) — TUTAJ,
+    // na ziemi, a nie przy pierwszym START ENGINE w środku checklisty silnika.
+    // Sekwencyjnie (dwa systemowe dialogi naraz się gryzą), bez `await` w torze
+    // przejęcia i bez patrzenia na wynik: odmowa NICZEGO nie blokuje (§4.1) —
+    // kokpit sam pokaże tryb ręczny, a pasek usługi najwyżej schowa system.
+    void (async () => {
+      try {
+        await gps?.requestPermission();
+        await requestNotificationPermission();
+      } catch {
+        // Miękka prośba — cisza jest tu decyzją, nie przeoczeniem.
+      }
+    })();
+
+    setBusy(true);
+    try {
+      // 1. Claim — od tej chwili to urządzenie jest jedynym piszącym dla tego samolotu.
+      //
+      //    Przy przejęciu pytamy serwer o ŻYWY stan (§4.4): odpowiedź awansuje claim
+      //    do `takeover_online` (z aktualnym poprzednikiem — cache mógł wskazywać
+      //    kogoś, kto już oddał samolot), brak odpowiedzi degraduje do
+      //    `takeover_offline`. Bez zasięgu `fetchAircraftState` szybko wraca `null`
+      //    i pilot leci dalej — sieć jest okazją, nie warunkiem (§6).
+      const live =
+        aircraft.claimPicId != null && sync != null
+          ? await sync.fetchAircraftState(aircraft.id)
+          : null;
+      const decision = claimDecision(aircraft.claimPicId, live);
+      await claim({
+        sessionUuid: `sess-${Date.now()}`,
+        aircraftId: aircraft.id,
+        picId: pilotId,
+        dualId: draft.dualId,
+        mode: decision.mode,
+        previousPicId: decision.previousPicId ?? undefined,
+      });
+
+      // 2. Preflight — odczyty liczników stają się początkiem łańcucha MH (§4.5).
+      //
+      //    `dutyStart` NIE jest wysyłany i to jest decyzja (§3.6a): służba jest klamrą
+      //    wokół wzlotów, więc godzina meldunku bierze się z pierwszego wzlotu doby,
+      //    a pilot poprawia ją po fakcie na ekranie 01.
+      await confirmPreflight({
+        operation: draft.operation,
+        departureIcao: draft.departureIcao || null,
+        arrivalIcao: draft.arrivalIcao || null,
+        reading: { fuelL: draft.fuelL, mh: draft.mh },
+        client: draft.client,
+        notes: draft.notes,
+        mhFormat,
+      });
+
+      draft.reset();
+      navigation.navigate('Cockpit');
+    } catch {
+      // Twarde odrzucenie inwariantu trafia do `lastError` i jest pokazane niżej.
+    } finally {
+      setBusy(false);
+    }
+  }, [aircraft, claim, confirmPreflight, draft, gps, mhFormat, navigation, pilotId, sync]);
 
   /**
    * Stan świeżości (§4.8). Bez przekazania jest `brak` — niezależnie od sieci.
@@ -217,7 +306,7 @@ export function PreflightReadingsScreen({
           // stała całego ekranu, nie właściwość pojedynczego odczytu. Zniknąć nie może:
           // odczyt wpisany dla złego samolotu zatruwa łańcuch MH (§4.5).
           subtitle={[aircraft.reg, aircraft.type].filter(Boolean).join(' · ')}
-          step="3 / 4"
+          step="3 / 3"
           onBack={navigation.goBack}
           right={
             <SyncChip
@@ -232,9 +321,10 @@ export function PreflightReadingsScreen({
       // oś czasu przekazania (reguła z 2026-07-30).
       footer={
         <ActionButton
-          label="DALEJ"
+          label="PRZEJMIJ I LEĆ"
           tone="green"
           variant="solid"
+          busy={busy}
           trailingIcon="next"
           disabledReason={
             noReadings
@@ -243,7 +333,7 @@ export function PreflightReadingsScreen({
                 ? 'Licznik motogodzin nie może być niższy niż przekazany — popraw odczyt'
                 : null
           }
-          onPress={() => navigation.navigate('PreflightConfirm')}
+          onPress={takeOver}
         />
       }
     >
@@ -317,6 +407,22 @@ export function PreflightReadingsScreen({
           />
         )}
 
+        {/* ── ostrzeżenia warunkowe (dawny ekran 03) ──────────────────────────
+            Odziedziczone po usuniętym podsumowaniu: to jedyne dwa komunikaty, których
+            NIE widać z wartości stojących wyżej, więc razem z ekranem zniknąć nie mogły.
+            Stoją nad przyciskiem, bo dotyczą tego, co on za chwilę zrobi. */}
+        {aircraft.claimPicId != null && aircraft.claimPicId !== pilotId && (
+          <Banner
+            kind="warning"
+            icon="warning"
+            title={`Przejmujesz samolot od ${pilotName(aircraft.claimPicId)}`}
+            text="Jeśli poprzedni pilot nadal prowadzi ten samolot, serwer oznaczy nakładkę do wyjaśnienia."
+          />
+        )}
+
+        {lastError != null && (
+          <Banner kind="warning" tone="red" icon="warning" title="Nie przejęto" text={lastError} />
+        )}
       </View>
 
       {/* ── arkusze korekty (02b / 02c) ──────────────────────────────────── */}

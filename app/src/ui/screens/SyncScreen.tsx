@@ -183,10 +183,10 @@ export function SyncScreen({
   }
 
   const aircraft = projection.aircraftId ?? '—';
-  const dayLabel = projection.dutyStart != null ? dateUtcLong(projection.dutyStart) : '—';
+  const dayLabel = projection.claimedAt != null ? dateUtcLong(projection.claimedAt) : '—';
   const dayClosed = projection.dutyEnd != null;
   const mhFormat = projection.mhFormat ?? 'decimal';
-  const tabName = sheetTabName(projection.dutyStart, projection.aircraftId);
+  const tabName = sheetTabName(projection.claimedAt, projection.aircraftId);
   const showDrops = projection.drops.count > 0 || projection.operation === 'skoki';
 
   const flightRows: DataTableRow[] = buildFlightRows(projection.flights).map((row) => ({
