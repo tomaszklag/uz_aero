@@ -877,7 +877,7 @@
         <div class="demo-note">2 · Banery — trzy typy, jak w aplikacji (status / ostrzeżenie / błąd)</div>
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Dzień otwarty — dane w drodze.</b> SP-ABC ma aktywną sesję; telefon dosyła zdarzenia w miarę zasięgu. Liczby poniżej są stanem na ostatni sync, nie stanem końcowym.</span>
+          <span><b>Samolot nieoddany — dane w drodze.</b> SP-ABC ma otwartą sesję (brak <code>day_close</code>); telefon dosyła zdarzenia w miarę zasięgu. Liczby poniżej są stanem na ostatni sync, nie stanem końcowym.</span>
         </div>
         <div class="banner warn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -945,7 +945,7 @@
                 <td class="num">01:02</td>
                 <td class="num">644.0 → 645.1</td>
                 <td class="num">48 L</td>
-                <td><span class="pill dim">Zamknięty</span></td>
+                <td><span class="pill dim">Samolot zdany</span></td>
                 <td><div class="row-actions"><button class="btn sm ghost">Szczegóły</button></div></td>
               </tr>
             </tbody>
@@ -954,7 +954,7 @@
 
         <div class="cols">
           <div class="card">
-            <div class="card-title">Oś zdarzeń dnia <span class="spacer"></span><span class="pill dim">czasy UTC</span></div>
+            <div class="card-title">Oś zdarzeń sesji <span class="spacer"></span><span class="pill dim">czasy UTC</span></div>
             <div class="tl">
               <div class="tl-row">
                 <span class="tl-time">08:02:11</span>
@@ -974,6 +974,16 @@
                 <span><span class="tl-name">landing</span><span class="tl-meta">unieważnione przez <code>event_correction</code> · powód: „fałszywa detekcja"</span></span>
                 <span class="pill red">void</span>
               </div>
+              <!-- `leg_close` — POTWIERDZENIE WZLOTU (§3.6). Jednostką potwierdzenia
+                   danych jest WZLOT, nie doba: od tego zdarzenia liczy się 24-godzinne
+                   okno korekty TEGO wzlotu. Odczyt liczników jest tu OPCJONALNY —
+                   w dniu skokowym nikt nie chodzi do licznika po każdym wzlocie. -->
+              <div class="tl-row">
+                <span class="tl-time">08:41:55</span>
+                <span class="tl-rail"><span class="tl-dot green"></span></span>
+                <span><span class="tl-name">leg_close</span><span class="tl-meta">wzlot 1 potwierdzony przez pilota · odczyt: FOB 96 L · MH 1284.6<br>okno korekty tego wzlotu: do 31 JUL 08:41 UTC</span></span>
+                <span class="pill green">wzlot</span>
+              </div>
               <div class="tl-row">
                 <span class="tl-time">08:44:19</span>
                 <span class="tl-rail"><span class="tl-dot amber"></span></span>
@@ -984,7 +994,10 @@
                    jedynym miejscem, w którym wybiera się zdarzenie do korekty
                    administratora (A02b). Przejście stoi wyłącznie przy zdarzeniach
                    KORYGOWALNYCH — claim, preflight, day_close i same korekty jej nie
-                   podlegają, więc tam przycisku nie ma w ogóle. -->
+                   podlegają, więc tam przycisku nie ma w ogóle. `leg_close` KORYGOWALNY
+                   JEST: od niego liczy się 24-godzinne okno korekty TEGO wzlotu, więc
+                   pilot musi móc poprawić literówkę w odczycie, który sam w tym oknie
+                   zatwierdził. -->
               <div class="tl-row">
                 <span class="tl-time">10:34:07</span>
                 <span class="tl-rail"><span class="tl-dot red"></span></span>
@@ -1053,7 +1066,7 @@
             <div class="card-title">Wybór — lista kart</div>
             <div class="opt-list">
               <label class="opt selected">
-                <span class="opt-body"><span class="opt-name">Administrator</span><span class="opt-desc">Konta, flota, korekty po oknie 24 h, progi</span></span>
+                <span class="opt-body"><span class="opt-name">Administrator</span><span class="opt-desc">Konta, flota, korekty rejestru, progi</span></span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
               </label>
               <label class="opt">
@@ -1142,14 +1155,14 @@
           <div class="fleet">
             <a class="fleet-row flying" href="#">
               <span><div class="fleet-reg">SP-ABC</div><div class="fleet-type">Cessna 182</div></span>
-              <span><div class="fleet-who">Tomasz Małkiewicz</div><div class="fleet-since">claim 07:58 · duty 6:24 · EPMO</div></span>
+              <span><div class="fleet-who">Tomasz Małkiewicz</div><div class="fleet-since">claim 07:58 · zajęty 6:24 · EPMO</div></span>
               <span class="fleet-nums"><div><span class="k">MH</span> 1284.6</div><div><span class="k">FOB</span> 96 L</div></span>
               <span class="fleet-state"><span class="pill green"><span class="dot live"></span>W locie</span></span>
               <span class="fresh"><span class="fresh-val">sync 2 min temu</span><span class="fresh-note">lot 4 · T/O 14:11</span></span>
             </a>
             <a class="fleet-row stale" href="#">
               <span><div class="fleet-reg">SP-KLM</div><div class="fleet-type">Cessna 208 Caravan</div></span>
-              <span><div class="fleet-who">Anna Wrzosek</div><div class="fleet-since">claim 06:40 · duty 7:42 · EPRA</div></span>
+              <span><div class="fleet-who">Anna Wrzosek</div><div class="fleet-since">claim 06:40 · zajęty 7:42 · EPRA</div></span>
               <span class="fleet-nums"><div><span class="k">MH</span> 3907.8</div><div><span class="k">FOB</span> 210 L</div></span>
               <span class="fleet-state"><span class="pill amber"><span class="dot"></span>Dane w drodze</span></span>
               <span class="fresh"><span class="fresh-val amber">sync 47 min temu</span><span class="fresh-note">ostatnie znane: zrzut 3</span></span>
@@ -1176,7 +1189,7 @@
               </a>
               <a class="todo-row" href="#">
                 <span class="todo-mark red"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>
-                <span class="todo-body"><span class="todo-name">session_overlap · SP-KLM — blokuje arkusz</span><span class="todo-meta">karta dnia nie powstanie, dopóki flaga jest otwarta</span></span>
+                <span class="todo-body"><span class="todo-name">aircraft_overlap · SP-KLM — blokuje arkusz</span><span class="todo-meta">dwa telefony piszą do jednej maszyny — sporne sesje wypadają z karty doby</span></span>
                 <span class="todo-age old">2 dni</span>
               </a>
             </div>

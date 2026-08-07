@@ -531,8 +531,8 @@
         </div>
 
         <div class="tiles">
-          <div class="tile"><span class="tile-key">Zdarzeń w zakresie</span><span class="tile-val">247</span><span class="tile-note">30–31 JUL 2026 · 3 samoloty · 5 pilotów.</span></div>
-          <div class="tile"><span class="tile-key">Przyjęte / duplikaty</span><span class="tile-val green">247<small> / 18</small></span><span class="tile-note">Duplikaty odsiane po <code>uuid</code> — retry outboxa działa.</span></div>
+          <div class="tile"><span class="tile-key">Zdarzeń w zakresie</span><span class="tile-val">248</span><span class="tile-note">30–31 JUL 2026 · 3 samoloty · 5 pilotów.</span></div>
+          <div class="tile"><span class="tile-key">Przyjęte / duplikaty</span><span class="tile-val green">248<small> / 18</small></span><span class="tile-note">Duplikaty odsiane po <code>uuid</code> — retry outboxa działa.</span></div>
           <div class="tile"><span class="tile-key">Rozjazd zegarów</span><span class="tile-val amber">9</span><span class="tile-note">|device − gps| &gt; 120 s · wszystkie z SP-KLM 30 JUL.</span></div>
           <div class="tile"><span class="tile-key">Bez fixa GPS</span><span class="tile-val">23</span><span class="tile-note"><code>gps_time = null</code> — czas z zegara telefonu.</span></div>
         </div>
@@ -575,6 +575,7 @@
           <span class="chip">crew_change</span>
           <span class="chip">manual_log_entry</span>
           <span class="chip">engine_stop</span>
+          <span class="chip">leg_close</span>
           <span class="chip">day_close</span>
           <span class="chip">event_correction</span>
         </div>
@@ -720,6 +721,25 @@
                 <td><div class="row-actions"><span class="btn sm ghost">Rozwiń ▾</span></div></td>
               </tr>
 
+              <!-- `leg_close` — POTWIERDZENIE WZLOTU (§3.6, schema_version 2). Nie tworzy
+                   i nie zamyka cyklu silnika; niesie fakt „pilot przejrzał ten wzlot",
+                   OPCJONALNY odczyt FOB+MH i uwagę. Od niego liczy się 24-godzinne okno
+                   korekty TEGO wzlotu — osobno dla każdego. Wzlot bez `leg_close` jest
+                   legalny („Potwierdzę później") i kotwiczy okno w `engine_stop`. -->
+              <tr class="clickable">
+                <td class="mono">31 JUL 10:59:07</td>
+                <td class="num">10:58:58</td>
+                <td class="num">10:58:57</td>
+                <td class="num dim">1 s</td>
+                <td><span class="pill green">leg_close</span></td>
+                <td><span class="reg">SP-XYZ</span></td>
+                <td>Piotr Czarnecki<span class="cell-sub">PCZ</span></td>
+                <td class="mono dim">Pixel 6 · 03c8e1</td>
+                <td class="num">2</td>
+                <td class="mono">a90fd41c…6b73</td>
+                <td><div class="row-actions"><span class="btn sm ghost">Rozwiń ▾</span></div></td>
+              </tr>
+
               <tr class="clickable">
                 <td class="mono">30 JUL 18:22:11</td>
                 <td class="num">18:22:05</td>
@@ -727,7 +747,7 @@
                 <td class="num dim">0 s</td>
                 <td><span class="pill red">event_correction</span></td>
                 <td><span class="reg">SP-KLM</span></td>
-                <td>Anna Wrzosek<span class="cell-sub">AWR · okno 24 h</span></td>
+                <td>Anna Wrzosek<span class="cell-sub">AWR · okno wzlotu 1</span></td>
                 <td class="mono dim">Pixel 7a · a41f9c</td>
                 <td class="num">1</td>
                 <td class="mono">4b6f2ad9…08e7</td>
@@ -878,8 +898,13 @@
           </table>
         </div>
 
+        <div class="banner status">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span><b>Kolumna <code>v</code> — dwie wersje schematu w jednym rejestrze i tak ma zostać.</b> Strumienie sprzed przebudowy flow niosą <code>schema_version 1</code>, nowe — <code>2</code> (doszedł typ <code>leg_close</code>, a <code>preflight_confirm.dutyStart</code> i <code>day_close.dutyEnd</code> przestały być wymagane). Rejestr jest append-only, więc <b>jedynki zostają w bazie na zawsze</b> i muszą projektować się bez zmiany wyników — starego dnia nie wolno „zaktualizować" pod nowy model. Panel niczego tu nie konwertuje: pokazuje wersję, z jaką zdarzenie przyszło.</span>
+        </div>
+
         <div class="filters">
-          <span class="pill dim">15 z 247 wierszy</span>
+          <span class="pill dim">16 z 248 wierszy</span>
           <span style="margin-left:auto;display:inline-flex;gap:9px;">
             <button class="btn sm ghost disabled">← Nowsze</button>
             <button class="btn sm ghost">Starsze →</button>
@@ -894,7 +919,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index panelu</a>
   <span>·</span>
-  <a href="A02a-dzien.html">← A02A Szczegół dnia</a>
+  <a href="A02a-dzien.html">← A02A Karta sesji</a>
   <a href="A04-zdarzenia.html" class="active">A04 Zdarzenia</a>
   <a href="A05-eksporty.html">A05 Eksporty →</a>
   <a href="A09-audyt.html">A09 Audyt</a>

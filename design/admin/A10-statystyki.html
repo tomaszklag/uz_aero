@@ -406,7 +406,7 @@
     <span class="vp-badge">A10</span>
     <span class="vp-body">
       <span class="vp-name">Statystyki zakresu</span>
-      <span class="vp-when">Sumy dni zamkniętych per samolot / pilot / operacja. Wejście z nawigacji „Statystyki".</span>
+      <span class="vp-when">Sumy zdanych sesji per samolot / pilot / operacja. Wejście z nawigacji „Statystyki".</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -528,7 +528,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">STATYSTYKI FLOTY I PILOTÓW</h1>
-            <p class="page-sub">Suma dni zamkniętych w zakresie. Każda liczba to złożenie projekcji <code>projectSession</code> z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk. Sumy liczą się po dniu zamknięcia sesji, więc zbiór dni może różnić się od listy dni (A02) z tym samym zakresem — tam dzień stoi pod duty startem. Dni jeszcze otwarte (dziś: SP-ABC i SP-KLM) są celowo poza zakresem, bo ich sumy zmieniłyby się po zamknięciu.</p>
+            <p class="page-sub">Suma <b>ZDANYCH sesji</b> w zakresie. Każda liczba to złożenie projekcji <code>projectSession</code> z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk. Sumy liczą się po dacie ZDANIA samolotu, więc zbiór sesji może różnić się od listy na <a href="A02-dni.html" style="color:var(--green);">A02</a> z tym samym zakresem — tam sesja stoi pod chwilą PRZEJĘCIA (<code>claim_time</code>), a sesja przejęta wieczorem bywa zdana następnego dnia. Sesje jeszcze trwające (dziś: SP-ABC i SP-KLM) są celowo poza zakresem, bo ich sumy zmieniłyby się po zdaniu maszyny.</p>
           </div>
           <div class="page-actions">
             <button class="btn primary">
@@ -554,7 +554,7 @@
         </div>
 
         <div class="tiles">
-          <div class="tile"><span class="tile-key">Nalot blokowy</span><span class="tile-val green">186:39</span><span class="tile-note">Suma <code>engine_start</code> → <code>engine_stop</code> z 53 dni lotnych.</span></div>
+          <div class="tile"><span class="tile-key">Nalot blokowy</span><span class="tile-val green">186:39</span><span class="tile-note">Suma <code>engine_start</code> → <code>engine_stop</code> z 53 zdanych sesji.</span></div>
           <div class="tile"><span class="tile-key">Czas lotu</span><span class="tile-val">133:45</span><span class="tile-note">71,7 % nalotu blokowego — reszta to kołowanie i postoje z pracującym silnikiem.</span></div>
           <div class="tile"><span class="tile-key">Starty / lądowania</span><span class="tile-val">356<small> / 356</small></span><span class="tile-note">Bilans domknięty na wszystkich samolotach.</span></div>
           <div class="tile"><span class="tile-key">Paliwo zużyte</span><span class="tile-val amber">21 436<small> L</small></span><span class="tile-note">Start + dolane − koniec, sesja po sesji.</span></div>
@@ -890,7 +890,7 @@
           <div class="card-title" style="color:var(--blue);">Strona przychodowa · zrzuty <span class="spacer"></span><span class="pill blue">operacja SKOKI</span><span class="pill dim">SP-KLM · 21 dni</span></div>
 
           <div class="tiles">
-            <div class="tile" style="background:var(--bg);"><span class="tile-key">Wyniesienia</span><span class="tile-val blue">178</span><span class="tile-note">Zdarzeń <code>drop</code> · 8,5 na dzień lotny.</span></div>
+            <div class="tile" style="background:var(--bg);"><span class="tile-key">Wyniesienia</span><span class="tile-val blue">178</span><span class="tile-note">Zdarzeń <code>drop</code> · 8,5 na sesję skokową.</span></div>
             <div class="tile" style="background:var(--bg);"><span class="tile-key">Skoczkowie</span><span class="tile-val blue">962</span><span class="tile-note">Średnio 5,4 na wyniesienie.</span></div>
             <div class="tile" style="background:var(--bg);"><span class="tile-key">Śr. wysokość zrzutu</span><span class="tile-val">12 840<small> ft</small></span><span class="tile-note">Z 171 zrzutów, które miały fix GPS — 7 bez wysokości nie wchodzi do średniej.</span></div>
             <div class="tile" style="background:var(--bg);"><span class="tile-key">Skoczków na godzinę lotu</span><span class="tile-val">13.5</span><span class="tile-note">962 skoczków / 71:24 czasu lotu.</span></div>
@@ -956,7 +956,7 @@
   <span>·</span>
   <a href="A01-pulpit.html">← A01 Pulpit</a>
   <a href="A02-dni.html">A02 Dni lotne</a>
-  <a href="A02a-dzien.html">A02A Szczegół dnia</a>
+  <a href="A02a-dzien.html">A02A Karta sesji</a>
   <span>·</span>
   <a href="A10-statystyki.html" class="active">A10 Statystyki</a>
   <a href="A10a-analityka.html">A10A Analityka</a>

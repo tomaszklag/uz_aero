@@ -574,7 +574,7 @@
           <a class="tile" href="A02-dni.html">
             <span class="tile-key">Dni otwarte</span>
             <span class="tile-val">3</span>
-            <span class="tile-note">W tym 1 z wczoraj — bez <code>day_close</code>.</span>
+            <span class="tile-note">W tym 1 bez <code>day_close</code> dłużej niż doba.</span>
           </a>
           <a class="tile" href="A03-flagi.html">
             <span class="tile-key">Flagi otwarte</span>
@@ -608,7 +608,7 @@
                   </span>
                   <span>
                     <div class="fleet-who">Tomasz Małkiewicz</div>
-                    <div class="fleet-since">claim 07:58 · duty 6:24 · EPMO</div>
+                    <div class="fleet-since">claim 07:58 · zajęty 6:24 · EPMO</div>
                   </span>
                   <span class="fleet-nums">
                     <div><span class="k">MH</span> 1284.6</div>
@@ -628,7 +628,7 @@
                   </span>
                   <span>
                     <div class="fleet-who">Anna Wrzosek</div>
-                    <div class="fleet-since">claim 06:40 · duty 7:42 · EPRA · dual: M. Bąk</div>
+                    <div class="fleet-since">claim 06:40 · zajęty 7:42 · EPRA · dual: M. Bąk</div>
                   </span>
                   <span class="fleet-nums">
                     <div><span class="k">MH</span> 3907.8</div>
@@ -648,7 +648,7 @@
                   </span>
                   <span>
                     <div class="fleet-who">Piotr Czarnecki</div>
-                    <div class="fleet-since">claim 09:12 · duty 5:10 · EPBC</div>
+                    <div class="fleet-since">claim 09:12 · zajęty 5:10 · EPBC</div>
                   </span>
                   <span class="fleet-nums">
                     <div><span class="k">MH</span> 645.1</div>
@@ -668,7 +668,7 @@
                   </span>
                   <span>
                     <div class="fleet-who" style="color:var(--text-secondary);font-weight:500;">Wolny — bez claimu</div>
-                    <div class="fleet-since">ostatni dzień: 30 JUL · K. Sobczak</div>
+                    <div class="fleet-since">ostatni odczyt: K. Sobczak · 30 JUL 16:45</div>
                   </span>
                   <span class="fleet-nums">
                     <div><span class="k">MH</span> 302.4</div>
@@ -717,7 +717,7 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                   </span>
                   <span class="todo-body">
-                    <span class="todo-name">MH_GAP · SP-ABC</span>
+                    <span class="todo-name">mh_gap · SP-ABC</span>
                     <span class="todo-meta">koniec 1283.2 → start 1283.6 · dziura 0.4 h przy tolerancji 0.1 · możliwy lot bez aplikacji</span>
                   </span>
                   <span class="todo-age old">3 dni</span>
@@ -728,8 +728,8 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
                   </span>
                   <span class="todo-body">
-                    <span class="todo-name">session_overlap · SP-KLM — blokuje arkusz</span>
-                    <span class="todo-meta">dwie niezamknięte sesje: A. Wrzosek (06:40) i K. Sobczak (06:52, przejęcie offline) · <b style="color:var(--red)">karta dnia nie powstanie, dopóki flaga jest otwarta</b></span>
+                    <span class="todo-name">aircraft_overlap · SP-KLM — blokuje arkusz</span>
+                    <span class="todo-meta">dwa telefony piszą do jednej maszyny: A. Wrzosek (06:40) i K. Sobczak (06:52, przejęcie offline) · <b style="color:var(--red)">sporne sesje wypadają z karty doby; reszta zmian idzie do arkusza z adnotacją „niekompletna"</b></span>
                   </span>
                   <span class="todo-age old">2 dni</span>
                 </a>
@@ -750,8 +750,8 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
                   </span>
                   <span class="todo-body">
-                    <span class="todo-name">Dzień bez zamknięcia · SP-DEF · 30 JUL</span>
-                    <span class="todo-meta">brak <code>day_close</code> · okno samodzielnej korekty pilota mija za 4 h, potem tylko administrator</span>
+                    <span class="todo-name">Samolot nieoddany · SP-DEF</span>
+                    <span class="todo-meta">brak <code>day_close</code> · maszyna stoi zajęta dłużej niż dobę, więc nikt inny jej nie przejmie, a łańcuch motogodzin nie ma ogniwa zamykającego · karta doby powstaje po zdaniu samolotu</span>
                   </span>
                   <span class="todo-age">20 h</span>
                 </a>
@@ -762,7 +762,7 @@
                   </span>
                   <span class="todo-body">
                     <span class="todo-name">mh_regression · SP-XYZ</span>
-                    <span class="todo-meta">odczyt 644.0 niższy od poprzedniego 645.1 · cofnięty licznik albo błąd wpisu przy preflight</span>
+                    <span class="todo-meta">odczyt 644.0 niższy od poprzedniego 645.1 · cofnięty licznik albo błąd wpisu przy przejęciu samolotu</span>
                   </span>
                   <span class="todo-age">9 h</span>
                 </a>

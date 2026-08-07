@@ -396,8 +396,8 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — PANEL · A03a SZCZEGÓŁ FLAGI</span>
-  <span class="slug">szuflada nad listą · liczby rozbieżności · rozwiązanie odblokowuje eksport</span>
-  <span class="canvas-meta"><span class="pulse"></span>#1046 session_overlap · SP-KLM · blokuje kartę</span>
+  <span class="slug">szuflada nad listą · liczby rozbieżności · rozwiązanie zdejmuje bramkę arkusza</span>
+  <span class="canvas-meta"><span class="pulse"></span>#1046 aircraft_overlap · SP-KLM · sesje poza kartą doby</span>
 </header>
 
 <aside class="variants-panel">
@@ -406,14 +406,14 @@
     <span class="vp-badge amber">A03</span>
     <span class="vp-body">
       <span class="vp-name">Skrzynka flag — stan roboczy</span>
-      <span class="vp-when">Lista otwartych flag: blokujące eksport na górze, reszta po wieku. Stąd wchodzi się w szczegół przyciskiem „Szczegóły" w wierszu.</span>
+      <span class="vp-when">Lista otwartych flag: bramkujące arkusz (<code>aircraft_overlap</code>) na górze, reszta po wieku. Stąd wchodzi się w szczegół przyciskiem „Szczegóły" w wierszu.</span>
     </span>
   </a>
   <a class="vp-item active" href="A03a-flaga.html">
     <span class="vp-badge">A03a</span>
     <span class="vp-body">
       <span class="vp-name">Szczegół flagi + rozwiązanie</span>
-      <span class="vp-when">Szuflada otwarta nad listą — kontekst listy zostaje. Rozwiązanie = komentarz i zmiana statusu, nigdy edycja danych; przy <code>session_overlap</code> zdejmuje też blokadę eksportu karty dnia.</span>
+      <span class="vp-when">Szuflada otwarta nad listą — kontekst listy zostaje. Rozwiązanie = komentarz i zmiana statusu, nigdy edycja danych; przy <code>aircraft_overlap</code> zdejmuje też bramkę arkusza i wpuszcza sporne sesje z powrotem do karty doby.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -517,7 +517,7 @@
 
     <div class="main" style="position:relative;">
       <div class="topbar">
-        <div class="crumbs">Panel <span>/</span> Operacje <span>/</span> <a href="A03-flagi.html" style="color:var(--text-muted);text-decoration:none;">Flagi</a> <span>/</span> <b>#1046 · session_overlap</b></div>
+        <div class="crumbs">Panel <span>/</span> Operacje <span>/</span> <a href="A03-flagi.html" style="color:var(--text-muted);text-decoration:none;">Flagi</a> <span>/</span> <b>#1046 · aircraft_overlap</b></div>
         <div class="topbar-right">
           <span class="pill red"><span class="dot"></span>2 blokują eksport</span>
           <span class="utc-clock"><i>UTC</i> <b>14:22:07</b> · 31 JUL 2026</span>
@@ -564,16 +564,16 @@
               <tr class="clickable">
                 <td><span class="pill red"><span class="dot"></span>Blokuje kartę</span></td>
                 <td class="num" style="color:var(--red);font-weight:700">2 dni</td>
-                <td><span class="pill red">session_overlap</span><span class="cell-sub">#1043</span></td>
+                <td><span class="pill red">aircraft_overlap</span><span class="cell-sub">#1043</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
-                <td class="num">claimy 17 min od siebie<span class="cell-sub">brak <code>day_close</code> ×2</span></td>
+                <td class="num">2 sesje bez day_close<span class="cell-sub">claimy 17 min od siebie · ta sama maszyna</span></td>
                 <td class="num">29 JUL 13:50</td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Szczegóły</a></div></td>
               </tr>
               <tr class="clickable" style="background:var(--surface-raised);box-shadow:inset 3px 0 0 var(--green);">
                 <td><span class="pill red"><span class="dot"></span>Blokuje kartę</span><span class="cell-sub">otwarta w szufladzie</span></td>
                 <td class="num">1 dzień 8 h</td>
-                <td><span class="pill red">session_overlap</span><span class="cell-sub">#1046</span></td>
+                <td><span class="pill red">aircraft_overlap</span><span class="cell-sub">#1046</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                 <td class="num">claimy 17 min od siebie<span class="cell-sub">A. Wrzosek 05:41 · M. Bąk 05:58</span></td>
                 <td class="num">30 JUL 05:58</td>
@@ -598,7 +598,7 @@
                 <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Szczegóły</a></div></td>
               </tr>
               <tr class="clickable">
-                <td><span class="pill blue">Dzień otwarty</span></td>
+                <td><span class="pill blue">Samolot zajęty</span></td>
                 <td class="num">6 h 41 min</td>
                 <td><span class="pill amber">mh_gap</span><span class="cell-sub">#1051</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
@@ -607,7 +607,7 @@
                 <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Szczegóły</a></div></td>
               </tr>
               <tr class="clickable">
-                <td><span class="pill dim">Karta wstrzymana</span><span class="cell-sub">przez #1046</span></td>
+                <td><span class="pill dim">Sesja poza kartą</span><span class="cell-sub">przez #1046</span></td>
                 <td class="num">5 h 10 min</td>
                 <td><span class="pill red">mh_regression</span><span class="cell-sub">#1052</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
@@ -616,11 +616,11 @@
                 <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Szczegóły</a></div></td>
               </tr>
               <tr class="clickable">
-                <td><span class="pill blue">Dzień otwarty</span></td>
+                <td><span class="pill dim">Karta poszła</span><span class="cell-sub">arkusza nie bramkuje</span></td>
                 <td class="num">2 h 56 min</td>
-                <td><span class="pill amber">mh_gap</span><span class="cell-sub">#1054</span></td>
-                <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
-                <td class="num">1285.1 → 1285.3<span class="cell-sub">+0.2 h · tol. 0.1 h</span></td>
+                <td><span class="pill amber">pilot_overlap</span><span class="cell-sub">#1054</span></td>
+                <td><span class="reg">SP-ABC + SP-KLM</span><span class="cell-sub">T. Małkiewicz (TML)</span></td>
+                <td class="num">SP-ABC + SP-KLM naraz<span class="cell-sub">11:26 → trwa UTC</span></td>
                 <td class="num">31 JUL 11:26</td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Szczegóły</a></div></td>
               </tr>
@@ -634,7 +634,7 @@
       <div class="drawer">
         <div class="drawer-head">
           <div>
-            <div class="drawer-title">FLAGA · SESSION_OVERLAP</div>
+            <div class="drawer-title">FLAGA · AIRCRAFT_OVERLAP</div>
             <div class="drawer-sub">#1046 · SP-KLM · dotyczy 2 sesji<br />otwarta 30 JUL 05:58 UTC · leży 1 dzień 8 h</div>
           </div>
           <a class="x-btn" href="A03-flagi.html" aria-label="Zamknij"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></a>
@@ -649,28 +649,28 @@
 
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>Otwarta flaga <code>session_overlap</code> blokuje kartę dnia.</b> Do 2026-07-31 blokowała ją bezterminowo, bo w kodzie serwera nie było niczego, co ustawia <code>flags.status = 'resolved'</code> — jedynym odblokowaniem był ręczny <code>UPDATE</code> w bazie. Endpoint rozwiązania już istnieje i sam wywołuje re-eksport. <span class="pill green" style="margin-top:6px;">WDROŻONE</span></span>
+            <span><b>To jedyny typ flagi, który bramkuje arkusz — i od 2026-08-07 bramka obejmuje SESJE, nie całą kartę.</b> Wcześniej otwarta flaga trzymała poza arkuszem cały dokument doby. Po §4.7 sporne sesje po prostu <b>wypadają z karty</b>, a reszta doby wychodzi z adnotacją „niekompletna" — bo przy krótszych sesjach nakładki są częstsze, więc blokowanie całej doby uczyniłoby z bramki stan domyślny. Endpoint rozwiązania istnieje i sam wywołuje re-eksport. <span class="pill green" style="margin-top:6px;">WDROŻONE</span></span>
           </div>
 
           <div class="card" style="padding:14px 16px;">
-            <div class="card-title">Skutek dla arkusza <span class="spacer"></span><span class="pill red">blokada</span></div>
-            <div class="kv"><span class="kv-k">Karta dnia</span><span class="kv-v red">2026-07-30_SP-KLM</span></div>
-            <div class="kv"><span class="kv-k">Stan eksportu</span><span class="kv-v red">ZABLOKOWANY <small>od 30 JUL 18:41 UTC</small></span></div>
-            <div class="kv"><span class="kv-k">Rewizja w arkuszu</span><span class="kv-v"><small>brak — karta nigdy nie powstała</small></span></div>
-            <div class="kv"><span class="kv-k">Bramka</span><span class="kv-v"><small>dayExporter · openForSession → session_overlap</small></span></div>
-            <span class="hint">§4.7 mówi wprost: nakładające się sesje trafiają do arkusza <b>dopiero po rozwiązaniu flagi</b>. Wcześniejszy zapis utrwaliłby w dokumencie klubu wersję dnia, o której już wiadomo, że jest sporna. <a href="A05-eksporty.html" style="color:var(--green)">Zobacz wiersz w monitorze eksportu →</a></span>
+            <div class="card-title">Skutek dla arkusza <span class="spacer"></span><span class="pill red">bramka na 2 sesjach</span></div>
+            <div class="kv"><span class="kv-k">Karta doby</span><span class="kv-v"><code>2026-07-30_SP-KLM</code> <small>doba samolotu, nie sesja</small></span></div>
+            <div class="kv"><span class="kv-k">Stan karty</span><span class="kv-v amber">NIEKOMPLETNA <small>od 30 JUL 18:41 UTC</small></span></div>
+            <div class="kv"><span class="kv-k">Sesje wycięte z karty</span><span class="kv-v red">2 <small>e881…04dc · 2ab7…9910</small></span></div>
+            <div class="kv"><span class="kv-k">Bramka</span><span class="kv-v"><small>dayExporter · openForSession → aircraft_overlap</small></span></div>
+            <span class="hint">§4.7 mówi wprost: <b>bramka obejmuje wyłącznie sesje objęte flagą</b>, a nie cały dokument. Sporne zmiany trafią do arkusza dopiero po rozwiązaniu flagi — wcześniejszy zapis utrwaliłby w dokumencie klubu wersję dnia, o której już wiadomo, że jest sporna. Pozostałe zmiany tej maszyny z tej doby są w karcie normalnie, z adnotacją „niekompletna". <a href="A05-eksporty.html" style="color:var(--green)">Zobacz wiersz w monitorze eksportu →</a></span>
           </div>
 
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Rozbieżność <span class="spacer"></span><span class="pill dim">details: openSessions = 2</span></div>
-            <div class="kv"><span class="kv-k">Niezamknięte sesje</span><span class="kv-v red">2 <small>na jednym samolocie</small></span></div>
+            <div class="kv"><span class="kv-k">Sesje bez <code>day_close</code></span><span class="kv-v red">2 <small>na jednym samolocie</small></span></div>
             <div class="kv"><span class="kv-k">Claim A · Anna Wrzosek</span><span class="kv-v">30 JUL 05:41:12 <small>UTC</small></span></div>
             <div class="kv"><span class="kv-k">Claim B · Marek Bąk</span><span class="kv-v amber">30 JUL 05:58:04 <small>UTC · przejęcie offline</small></span></div>
-            <div class="kv"><span class="kv-k">Nakładka claimów</span><span class="kv-v red">16 min 52 s</span></div>
+            <div class="kv"><span class="kv-k">Nakładka claimów</span><span class="kv-v red">16 min 52 s <small>zetknięcie co do minuty nakładką NIE jest</small></span></div>
             <div class="kv"><span class="kv-k">Sesja A · ostatni sync</span><span class="kv-v amber">30 JUL 12:04 <small>UTC · 34 zdarzenia · brak day_close</small></span></div>
             <div class="kv"><span class="kv-k">Sesja B · ostatni sync</span><span class="kv-v">31 JUL 09:12 <small>UTC · 61 zdarzeń · brak day_close</small></span></div>
             <div class="kv"><span class="kv-k">Łańcuch MH</span><span class="kv-v">3903.6 → 3906.4 <small>A</small> · 3906.9 → ? <small>B</small></span></div>
-            <span class="hint">Serwer nie jest mutexem (§4.4): oba claimy się udały, bo lokalnie zawsze można zostać PIC-em. Flaga mówi tylko, że <b>dwie sesje tego samego samolotu nie mają <code>day_close</code></b> — typowo poprzednik ma niewysłane dane. Sesja A milczy od 30 JUL 12:04, więc zamknięcia dnia Wrzosek nikt jeszcze nie widział.</span>
+            <span class="hint">Serwer nie jest mutexem (§4.4): oba claimy się udały, bo lokalnie zawsze można zostać PIC-em. Flaga mówi tylko, że <b>dwie sesje TEJ SAMEJ MASZYNY nie mają <code>day_close</code></b> — typowo poprzednik ma niewysłane dane. Sesja A milczy od 30 JUL 12:04, więc zdania samolotu przez Wrzosek nikt jeszcze nie widział. <b style="color:var(--text-secondary)">Uwaga na siostrzaną flagę</b>: gdyby to były sesje jednego PILOTA na DWÓCH różnych maszynach, byłby to <code>pilot_overlap</code> — anomalia grafiku, która arkusza nie bramkuje.</span>
           </div>
 
           <div class="card" style="padding:14px 16px;">
@@ -711,7 +711,7 @@
               <div class="tl-row">
                 <span class="tl-time">30 JUL<br />05:58:07</span>
                 <span class="tl-rail"><span class="tl-dot red"></span></span>
-                <span><span class="tl-name">flaga #1046 · session_overlap</span><span class="tl-meta">mhChain: 2 ogniwa bez <code>day_close</code> → <code>flags.status = open</code></span></span>
+                <span><span class="tl-name">flaga #1046 · aircraft_overlap</span><span class="tl-meta">mhChain: 2 ogniwa bez <code>day_close</code> na TEJ SAMEJ maszynie → <code>flags.status = open</code></span></span>
                 <span class="pill red">flaga</span>
               </div>
               <div class="tl-row">
@@ -729,7 +729,7 @@
               <div class="tl-row">
                 <span class="tl-time">30 JUL<br />18:41:02</span>
                 <span class="tl-rail"><span class="tl-dot red"></span></span>
-                <span><span class="tl-name">eksport wstrzymany</span><span class="tl-meta">dayExporter przerwał budowę karty <code>2026-07-30_SP-KLM</code> — otwarta flaga <code>session_overlap</code></span></span>
+                <span><span class="tl-name">eksport wstrzymany</span><span class="tl-meta">dayExporter wyciął obie sporne sesje z karty <code>2026-07-30_SP-KLM</code> — otwarta flaga <code>aircraft_overlap</code></span></span>
                 <span class="pill red">blokada</span>
               </div>
             </div>
@@ -755,13 +755,13 @@
 
           <div class="banner ok">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            <span><b>Co się stanie po rozwiązaniu.</b> Bramka <code>dayExporter</code> przestaje trzymać sesję, karta <code>2026-07-30_SP-KLM</code> generuje się po raz pierwszy → <b>rewizja 1</b>, nowy wiersz w <code>export_log</code>, treść karty w <code>exported_sheets</code>. Ślad akcji ląduje w audycie.<br />
+            <span><b>Co się stanie po rozwiązaniu.</b> Bramka <code>dayExporter</code> przestaje trzymać obie sporne sesje, karta <code>2026-07-30_SP-KLM</code> składa się od nowa — tym razem KOMPLETNA, ze wszystkimi zmianami doby jako wierszami (kolumna <code>Sesja</code>: S1, S2, S3) → <b>podbita rewizja</b>, po jednym wierszu na sesję w <code>export_log</code> z tym samym numerem, treść karty w <code>exported_sheets</code>. Ślad akcji ląduje w audycie.<br />
             <span class="pill green" style="margin-top:6px;">WDROŻONE</span> Rozwiązanie flagi samo uruchamia re-eksport karty — po zatwierdzeniu transakcji, żeby dokument klubu nigdy nie opisał stanu, który się nie zapisał. Ręczne ponowienie na ekranie <a href="A05-eksporty.html" style="color:var(--green);font-weight:600;">Eksporty</a> zostaje na wypadek awarii samego eksportu.</span>
           </div>
 
           <div class="banner ok">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-            <span><b>Sprostowanie z 2026-08-01: flaga NIEBLOKUJĄCA nie wywołuje re-eksportu — i tak ma zostać.</b> Ten baner obiecywał wcześniej, że rozwiązanie <code>mh_gap</code> / <code>mh_regression</code> „wymusza re-eksport karty z podbitą rewizją, bo karta niesie adnotację o otwartej fladze". <b>Karta żadnej adnotacji o flagach nie niesie</b> — <code>buildDaySheet</code> składa nagłówek dnia, tabelę lotów, bilans paliwa i motogodziny, i nic poza tym. Serwer re-eksportuje wyłącznie po <code>session_overlap</code>, czyli po jedynym typie, który jest bramką eksportu (<code>application/admin/commands/flags.ts</code>). Powód jest merytoryczny, nie techniczny: re-eksport przy każdym zamknięciu flagi produkowałby nowe rewizje arkusza <b>bez zmiany choćby jednej liczby</b> — ruch w dokumencie klubu, za którym nic nie stoi, i szum w kolumnie „Rewizja" na <a href="A05-eksporty.html" style="color:var(--green)">A05</a>. Rozwiązanie flagi jest decyzją o SPRAWIE, a nie zmianą danych; liczby zmienia wyłącznie <code>event_correction</code> — i to ono uruchamia nową rewizję. <b>Odpowiedź trasy nie kłamie</b>: dla typów nieblokujących niesie <code>exports: []</code>, a nie zmyśloną rewizję.</span>
+            <span><b>Sprostowanie z 2026-08-01: flaga NIEBLOKUJĄCA nie wywołuje re-eksportu — i tak ma zostać.</b> Ten baner obiecywał wcześniej, że rozwiązanie <code>mh_gap</code> / <code>mh_regression</code> „wymusza re-eksport karty z podbitą rewizją, bo karta niesie adnotację o otwartej fladze". <b>Karta żadnej adnotacji o flagach nie niesie</b> — <code>buildDaySheet</code> składa nagłówek dnia, tabelę lotów, bilans paliwa i motogodziny, i nic poza tym. Serwer re-eksportuje wyłącznie po <code>aircraft_overlap</code>, czyli po jedynym typie, który jest bramką eksportu (<code>application/admin/commands/flags.ts</code>). Powód jest merytoryczny, nie techniczny: re-eksport przy każdym zamknięciu flagi produkowałby nowe rewizje arkusza <b>bez zmiany choćby jednej liczby</b> — ruch w dokumencie klubu, za którym nic nie stoi, i szum w kolumnie „Rewizja" na <a href="A05-eksporty.html" style="color:var(--green)">A05</a>. Rozwiązanie flagi jest decyzją o SPRAWIE, a nie zmianą danych; liczby zmienia wyłącznie <code>event_correction</code> — i to ono uruchamia nową rewizję. <b>Odpowiedź trasy nie kłamie</b>: dla typów nieblokujących niesie <code>exports: []</code>, a nie zmyśloną rewizję.</span>
           </div>
 
           <div class="card" style="padding:14px 16px;">
@@ -777,7 +777,7 @@
             <div class="card-title">Kto może co <span class="spacer"></span><span class="pill dim">dwie role</span></div>
             <div class="kv"><span class="kv-k">Rozwiązanie flagi</span><span class="kv-v green">administrator ✓ · szef wyszkolenia ✓</span></div>
             <div class="kv"><span class="kv-k">Korekta zdarzenia</span><span class="kv-v amber">tylko administrator</span></div>
-            <span class="hint">Skrzynka flag jest <b>głównym narzędziem szefa wyszkolenia</b> — komentarz i zamknięcie sprawy (a więc też odblokowanie karty dnia) należą do niego tak samo jak do administratora. Korekta po oknie 24 h dopisuje zdarzenie do rejestru, więc zostaje przy administratorze. Przycisku nie chowamy — szef wyszkolenia widzi go wyszarzonego z powodem, żeby wiedział, kogo poprosić:</span>
+            <span class="hint">Skrzynka flag jest <b>głównym narzędziem szefa wyszkolenia</b> — komentarz i zamknięcie sprawy (a więc też odblokowanie karty dnia) należą do niego tak samo jak do administratora. Korekta dopisuje zdarzenie do rejestru, więc zostaje przy administratorze (i jest dla niego dostępna ZAWSZE, także przy sesji trwającej). Przycisku nie chowamy — szef wyszkolenia widzi go wyszarzonego z powodem, żeby wiedział, kogo poprosić:</span>
             <button class="btn sm disabled" disabled>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               Korekta zdarzenia — wymaga roli administrator

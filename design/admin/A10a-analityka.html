@@ -862,7 +862,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">ANALITYKA ZUŻYCIA · SP-ABC</h1>
-            <p class="page-sub">Skąd biorą się średnie tego samolotu: każdy odczyt paliwomierza (preflight, tankowanie przed/po, koniec dnia) tnie dzień na <b>interwały o znanym zużyciu</b>, a regresja rozdziela je między fazy. Motogodziny analogicznie — jedno równanie na każdy zamknięty dzień. Każda liczba na tym ekranie klika się w dół: do interwału, dnia i zdarzeń źródłowych.</p>
+            <p class="page-sub">Skąd biorą się średnie tego samolotu: każdy odczyt paliwomierza (przejęcie, tankowanie przed/po, <b>opcjonalny odczyt przy zamknięciu wzlotu</b>, zdanie samolotu) tnie sesję na <b>interwały o znanym zużyciu</b>, a regresja rozdziela je między fazy. Odczyt przy wzlocie działa jak tankowanie bez dolewki: zamyka interwał i otwiera następny tą samą wartością — a wzlot BEZ odczytu nie tworzy granicy w ogóle, bo nie ma czego porównać. Motogodziny analogicznie — jedno równanie na każdą zamkniętą sesję. Każda liczba na tym ekranie klika się w dół: do interwału, dnia i zdarzeń źródłowych.</p>
           </div>
           <div class="page-actions">
             <button class="btn primary">
@@ -1000,7 +1000,7 @@
               <tbody>
                 <tr class="clickable">
                   <td class="mono">30 JUL</td>
-                  <td class="mono dim">preflight 09:58 → day_close 11:31</td>
+                  <td class="mono dim">preflight 09:58 → zdanie 11:31</td>
                   <td class="num cell-strong">22 L<span class="cell-sub">odczyt 96 → 74 L</span></td>
                   <td class="num">1:02</td>
                   <td class="num">0:14 / 0:16 / 0:22 / 0:10</td>
@@ -1011,7 +1011,7 @@
                 </tr>
                 <tr class="clickable">
                   <td class="mono">29 JUL</td>
-                  <td class="mono dim">preflight 07:58 → refuel 10:22</td>
+                  <td class="mono dim">preflight 07:58 → tankowanie 10:22</td>
                   <td class="num cell-strong">83 L<span class="cell-sub">odczyt 148 → 65 L</span></td>
                   <td class="num">2:18</td>
                   <td class="num">0:26 / 0:38 / 0:52 / 0:22</td>
@@ -1022,7 +1022,7 @@
                 </tr>
                 <tr class="clickable">
                   <td class="mono">29 JUL</td>
-                  <td class="mono dim">refuel 10:22 → day_close 13:05</td>
+                  <td class="mono dim">tankowanie 10:22 → wzlot 12:45</td>
                   <td class="num cell-strong">81 L<span class="cell-sub">odczyt 178 → 97 L</span></td>
                   <td class="num">2:23</td>
                   <td class="num">0:29 / 0:40 / 0:50 / 0:24</td>
@@ -1033,7 +1033,7 @@
                 </tr>
                 <tr class="clickable">
                   <td class="mono">26 JUL</td>
-                  <td class="mono dim">preflight 08:05 → day_close 10:31</td>
+                  <td class="mono dim">preflight 08:05 → zdanie 10:31</td>
                   <td class="num cell-strong">79 L<span class="cell-sub">odczyt 152 → 73 L</span></td>
                   <td class="num">2:08</td>
                   <td class="num">0:20 / 0:37 / 0:49 / 0:22</td>
@@ -1044,7 +1044,7 @@
                 </tr>
                 <tr class="clickable flagged">
                   <td class="mono">24 JUL</td>
-                  <td class="mono dim">preflight 09:02 → refuel 09:31</td>
+                  <td class="mono dim">preflight 09:02 → tankowanie 09:31</td>
                   <td class="num cell-strong">22 L<span class="cell-sub">odczyt 140 → 118 L</span></td>
                   <td class="num">0:26</td>
                   <td class="num">0:26 / — / — / —</td>
@@ -1055,7 +1055,7 @@
                 </tr>
                 <tr class="clickable">
                   <td class="mono">22 JUL</td>
-                  <td class="mono dim">preflight 08:05 → day_close 13:58</td>
+                  <td class="mono dim">preflight 08:05 → zdanie 13:58</td>
                   <td class="num cell-strong">106 L<span class="cell-sub">odczyt 190 → 84 L</span></td>
                   <td class="num">2:52</td>
                   <td class="num">0:28 / 0:52 / 1:04 / 0:28</td>
@@ -1069,7 +1069,7 @@
           </div>
 
           <div class="list-foot">
-            <span class="hint">Pokazano 6 z 96 interwałów okna. 26 min pracy silnika z 24 JUL nie tłumaczy 22 L — interwał jest wykluczony z regresji i czeka na wyjaśnienie przy dniu; „Reszta" to zużycie zmierzone minus przewidziane przez model.</span>
+            <span class="hint">Pokazano 6 z 96 interwałów okna. 26 min pracy silnika z 24 JUL nie tłumaczy 22 L — interwał jest wykluczony z regresji i czeka na wyjaśnienie przy sesji; „Reszta" to zużycie zmierzone minus przewidziane przez model. <b>Granica „wzlot"</b> to opcjonalny odczyt z <code>leg_close</code> (§3.6): pilot, który podaje odczyt po wzlocie, daje modelowi dodatkowy punkt podparcia — a dzień skokowy bez takich odczytów da JEDEN długi interwał na całą sesję i model odmówi rozdziału ziemia/lot (§3.6b).</span>
             <button class="btn ghost sm">Pokaż kolejne 20</button>
           </div>
         </div>
@@ -1114,7 +1114,7 @@
   <a href="A10a-analityka.html" class="active">A10A Analityka</a>
   <a href="A10b-analityka-brak-danych.html">A10B Za mało danych</a>
   <span>·</span>
-  <a href="A02a-dzien.html">A02A Szczegół dnia</a>
+  <a href="A02a-dzien.html">A02A Karta sesji</a>
   <a href="A07-flota.html">A07 Flota</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>

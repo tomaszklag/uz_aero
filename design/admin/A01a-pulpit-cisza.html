@@ -605,7 +605,7 @@
                 <span><b>Kiedy ta sama pustka znaczy „cisza podejrzana".</b> Gdy pęknie choć jeden z tych warunków, werdykt wyżej zmienia się na amber i nazywa stan wprost:
                   <span style="display:block;padding-top:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.5px;line-height:1.9;color:var(--text-secondary);">
                     · claim otwarty, a od niego zero zdarzeń<br />
-                    · sesja bez <code>day_close</code> starsza niż okno korekty<br />
+                    · sesja bez <code>day_close</code> stoi otwarta dłużej niż doba<br />
                     · ostatnie zdarzenie starsze niż 48 godz.<br />
                     · karta dnia niewyeksportowana
                   </span>
@@ -727,7 +727,7 @@
 
               </div>
 
-              <span class="hint">Każda liczba w tej tabeli pochodzi z <code>day_close</code> ostatniej sesji danego samolotu — to samo źródło, z którego aplikacja pilota bierze podpowiedź przekazania na preflight. <b style="color:var(--text-secondary)">Wiek przekazania nie jest tu ostrzeżeniem</b>: przy zamkniętym dniu liczniki po prostu stoją, a stara wartość jest tak samo prawdziwa jak wczoraj. Amber pojawia się dopiero wtedy, gdy stary odczyt należy do sesji, która wciąż jest otwarta.</span>
+              <span class="hint">Każda liczba w tej tabeli pochodzi z <code>day_close</code> ostatniej sesji danego samolotu — to samo źródło, z którego aplikacja pilota bierze podpowiedź przekazania przy przejęciu samolotu (ekran <code>02a</code>). <b style="color:var(--text-secondary)">Wiek przekazania nie jest tu ostrzeżeniem</b>: przy zdanym samolocie liczniki po prostu stoją, a stara wartość jest tak samo prawdziwa jak wczoraj. Amber pojawia się dopiero wtedy, gdy stary odczyt należy do sesji, która wciąż jest otwarta.</span>
             </div>
 
             <div class="card" style="padding:0;">
@@ -736,7 +736,7 @@
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
                 </span>
                 <span class="empty-title">KOLEJKA UWAGI JEST PUSTA</span>
-                <span class="empty-note" style="max-width:520px;">Tu wchodzą trzy rzeczy i wszystkie trzy tworzy serwer, nie człowiek: <b>flagi z <code>mhChain</code></b> (dziura w łańcuchu motogodzin, cofnięty licznik, nakładające się sesje) przy przyjęciu zdarzeń; <b>dzień bez <code>day_close</code></b>, gdy minie okno samodzielnej korekty pilota; <b>karta dnia, której eksport odbił się błędem</b> albo którą blokuje otwarta flaga. Dziś nie ma żadnej z nich — wszystkie sesje z 30 JUL zostały zamknięte, a trzy karty poszły do arkusza między 12:31 a 19:48 UTC.</span>
+                <span class="empty-note" style="max-width:520px;">Tu wchodzą trzy rzeczy i wszystkie trzy tworzy serwer, nie człowiek: <b>flagi wykryte przy przyjęciu zdarzeń</b> (dziura w łańcuchu motogodzin, cofnięty licznik, dwa telefony przy jednej maszynie, pilot na dwóch maszynach naraz); <b>samolot nieoddany</b>, czyli sesja bez <code>day_close</code> starsza niż doba; <b>karta doby, której eksport odbił się awarią</b> albo której sesje trzyma otwarta flaga. Dziś nie ma żadnej z nich — wszystkie sesje z 30 JUL są zdane, a trzy karty poszły do arkusza między 12:31 a 19:48 UTC.</span>
                 <span style="display:flex;gap:9px;padding-top:6px;">
                   <a class="btn sm ghost" href="A03b-flagi-zero.html">Skrzynka flag →</a>
                   <a class="btn sm ghost" href="A05-eksporty.html">Eksporty →</a>
@@ -820,7 +820,7 @@
                 <span><div class="tile-key">Blok łącznie</div><div class="tile-val blue" style="font-size:22px;">09:12</div></span>
                 <span><div class="tile-key">Paliwo dolane</div><div class="tile-val amber" style="font-size:22px;">214<small> L</small></div></span>
               </div>
-              <span class="hint">SP-ABC, SP-KLM i SP-DEF. SP-XYZ stał (ostatni lot 29 JUL), SP-MNO jest w remoncie od czerwca. Dzień zamknięty, wyliczony i wyeksportowany w całości.</span>
+              <span class="hint">SP-ABC, SP-KLM i SP-DEF. SP-XYZ stał (ostatni lot 29 JUL), SP-MNO jest w remoncie od czerwca. Wszystkie sesje z tej doby zdane, wyliczone i wyeksportowane w całości.</span>
             </a>
 
           </div>
