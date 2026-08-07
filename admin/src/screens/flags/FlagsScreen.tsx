@@ -12,8 +12,10 @@
  * danych z komponentami.
  *
  * Porządku listy NIE RUSZAMY. Serwer sortuje skrzynkę „blokujące eksport → najstarsze"
- * (`pg/admin/flagsRepo.ts`) i to jest część kontraktu: otwarta `session_overlap`
- * wstrzymuje kartę dnia, więc jest innym rodzajem sprawy niż `mh_gap` sprzed godziny.
+ * (`pg/admin/flagsRepo.ts`) i to jest część kontraktu: otwarta `aircraft_overlap`
+ * wstrzymuje kartę doby, więc jest innym rodzajem sprawy niż `mh_gap` sprzed godziny.
+ * `pilot_overlap` mimo bliźniaczej nazwy stoi po drugiej stronie tej granicy — opisuje
+ * grafik człowieka i arkusza nie dotyka (rozdzielenie z 2026-08-07, §4.7).
  */
 
 import { useEffect, useState } from 'react';
@@ -106,9 +108,11 @@ export function FlagsScreen() {
 
       {blocking.length === 0 ? null : (
         <Banner tone="danger">
-          <b>Na tej liście stoją sprawy, które trzymają karty dnia poza arkuszem.</b>{' '}
-          <code>dayExporter</code> przerywa eksport sesji, dla której otwarta jest flaga{' '}
-          <code>session_overlap</code> (§4.7). Dotyczy to spraw{' '}
+          <b>Na tej liście stoją sprawy, które wycinają sesje z kart doby.</b>{' '}
+          <code>dayExporter</code> pomija sesję, dla której otwarta jest flaga{' '}
+          <code>aircraft_overlap</code> — jedyny typ bramkujący arkusz. Doba maszyny
+          wychodzi wtedy z adnotacją „niekompletna", a nie zostaje w całości poza
+          dokumentem (§4.7). Dotyczy to spraw{' '}
           {blocking.map((flag, index) => (
             <span key={flag.id}>
               {index > 0 ? ', ' : ''}
@@ -128,7 +132,7 @@ export function FlagsScreen() {
           tone={openCount.data == null ? undefined : openCount.data === 0 ? 'green' : 'amber'}
           note={
             openCount.data === 0
-              ? 'Żadna karta dnia nie czeka na odblokowanie.'
+              ? 'Żadna sesja nie czeka na odblokowanie karty doby.'
               : 'Liczba z serwera — niezależna od filtra, którym patrzysz na listę.'
           }
         />

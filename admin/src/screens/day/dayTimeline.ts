@@ -24,13 +24,27 @@
  * mylniejsza niż brak informacji. Czas po korekcie stoi w opisie, obok powodu.
  */
 
-import type { Event } from '@uzaero/domain';
+import type { Event, NoFlightReason } from '@uzaero/domain';
 import { formatLatLon, litres, motoHours, plural, timeUtcSeconds } from '@uzaero/format';
 
 import type { TimelineEntryDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components/Pill';
 import type { TimelineTone } from '../../ui/components/TimelineRow';
 import { EVENT_META } from './eventTypes';
+
+/**
+ * Powody zdania samolotu bez wzlotu (09C) po polsku.
+ *
+ * `Record` po unii domeny wymusza komplet: dopisanie piątego powodu w `@uzaero/domain`
+ * wywali kompilację tutaj, zamiast pokazać administratorowi surowy identyfikator.
+ * Identyfikatory zostają angielskie — to klucze rejestru, nie napisy (issue #13).
+ */
+const NO_FLIGHT_LABEL: Record<NoFlightReason, string> = {
+  weather: 'pogoda',
+  malfunction: 'usterka',
+  cancelled: 'odwołane',
+  other: 'inny',
+};
 
 export interface TimelineRowView {
   uuid: string;
@@ -191,14 +205,23 @@ function describe(event: Event): string[] {
 
     case 'day_close': {
       const p = event.payload;
-      return [
+      const lines = [
         `odczyt końcowy (przekazanie): FOB ${litres(p.finalReading.fuelL)} · MH ${p.finalReading.mh}`,
         `koniec służby: ${p.dutyEnd != null ? timeUtcSeconds(p.dutyEnd) : 'nie zadeklarowano'}`,
-        // Nazwa typu jest historyczna: od 2026-08-06 to ZDANIE SAMOLOTU, nie koniec
-        // dnia pilota — służba liczy się dalej, a kolejna maszyna wchodzi do tej samej
-        // doby (§3.6). Okno korekty kotwiczy się dziś we wzlocie, nie tutaj (§3.6a).
-        'zdanie samolotu — koniec pracy z tą maszyną, nie koniec służby pilota',
       ];
+      // Powód zdania BEZ WZLOTU (09C). To jest dokładnie ta informacja, której szuka
+      // administrator patrząc na sesję z zerowym czasem blokowym: maszyna stała zajęta
+      // i ktoś powiedział, dlaczego. Pole jest opcjonalne (strumienie schemaVersion 1
+      // go nie niosą, a sesja ze wzlotami nie ma o co pytać), więc wiersz pojawia się
+      // wyłącznie wtedy, gdy powód naprawdę padł.
+      if (p.noFlightReason != null) {
+        lines.push(`bez wzlotu — powód: ${NO_FLIGHT_LABEL[p.noFlightReason]}`);
+      }
+      // Nazwa typu jest historyczna: od 2026-08-06 to ZDANIE SAMOLOTU, nie koniec
+      // dnia pilota — służba liczy się dalej, a kolejna maszyna wchodzi do tej samej
+      // doby (§3.6). Okno korekty kotwiczy się dziś we wzlocie, nie tutaj (§3.6a).
+      lines.push('zdanie samolotu — koniec pracy z tą maszyną, nie koniec służby pilota');
+      return lines;
     }
 
     case 'leg_close': {

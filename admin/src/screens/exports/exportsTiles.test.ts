@@ -107,22 +107,27 @@ describe('baner nadpisanych kart', () => {
     expect(overwrittenNotice(undefined)).toBeNull();
   });
 
-  it('nazywa PRZYCZYNĘ i mówi wprost, że decyzja produktowa jest otwarta', () => {
-    // Wada, którą ten przypadek zamyka: dwie zamknięte zmiany na jednym samolocie tego
-    // samego dnia budują kartę o tej samej nazwie, więc druga nadpisuje pierwszą —
-    // a monitor raportował obie jako „W arkuszu". Poprawki po stronie panelu nie ma:
-    // konwencja nazw jest lustrem ekranu 11 telefonu i częścią §4.7.
+  it('mówi o SESJACH i o tym, że decyzja produktowa ZAPADŁA', () => {
+    // ODWRÓCENIE zdania z 2026-08-01 („decyzja produktowa jest otwarta"). Decyzja
+    // zapadła 2026-08-07: karta jest DOBĄ SAMOLOTU, a zmiana poranna i popołudniowa są
+    // jej wierszami — więc nadpisywanie zniknęło z konstrukcji. Baner ma dziś dwie
+    // treści: normalną (sesja wycięta z karty flagą) i alarmową (dwie sesje tej samej
+    // doby znów budują dwie karty). Bez tego rozróżnienia byłby opisem wady, której
+    // już nie ma.
     const note = overwrittenNotice({ ...counts, overwritten: 2 })!;
 
-    expect(note).toContain('2 dni ma karty nadpisane');
-    expect(note).toContain('exported_sheets');
+    expect(note).toContain('2 sesje mają karty nadpisane');
+    expect(note).toContain('DOBĄ SAMOLOTU');
+    expect(note).toContain('aircraft_overlap');
+    expect(note).toContain('usterka do zgłoszenia');
     expect(note).toContain('append-only');
-    expect(note).toContain('decyzja produktowa');
     expect(note).toContain('4.7');
+    // Zdanie o otwartej decyzji ma ZNIKNĄĆ — inaczej panel opisuje nieaktualny świat.
+    expect(note).not.toContain('otwarta decyzja produktowa');
   });
 
   it('odmienia jedną nadpisaną kartę poprawnie', () => {
-    expect(overwrittenNotice({ ...counts, overwritten: 1 })).toContain('1 dzień ma kartę');
+    expect(overwrittenNotice({ ...counts, overwritten: 1 })).toContain('1 sesja ma kartę');
   });
 });
 

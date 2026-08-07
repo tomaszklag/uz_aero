@@ -143,21 +143,25 @@ function exportTask(row: ExportListItemDto, nowMs: number, windowMs: number): To
 }
 
 function openDayTask(row: SessionListItemDto, nowMs: number, windowMs: number): TodoTask {
-  // Duty start, a nie `updatedAt`: pytanie brzmi „jak długo ten dzień jest otwarty",
-  // a nie „kiedy ostatnio coś do niego dotarło".
-  const sinceMs = row.dutyStart ?? nowMs;
+  // Chwila PRZEJĘCIA, a nie `updatedAt`: pytanie brzmi „jak długo ta maszyna jest
+  // zajęta", a nie „kiedy ostatnio coś do niej dotarło".
+  const sinceMs = row.claimedAt ?? nowMs;
   const { age, old, since } = ageOf(sinceMs, nowMs, windowMs);
 
   return {
     key: `day-${row.sessionUuid}`,
     kind: 'open_day',
     tone: 'blue',
-    name: `Dzień bez zamknięcia · ${row.reg ?? row.aircraftId}`,
-    // Mockup pisze tu „okno samodzielnej korekty pilota mija za 4 h". Tak nie jest:
-    // okno korekty otwiera się DOPIERO po `day_close` i liczy od niego — dzień, który
-    // nigdy się nie zamknął, żadnego okna nie ma. Zdanie sprostowane: doba jest tu
-    // MIARĄ tego, jak długo dzień stoi otwarty, a nie odliczaniem.
-    meta: `Brak \`day_close\` — dzień stoi otwarty dłużej niż doba, czyli dłużej niż trwa okno samodzielnej korekty pilota. Karta arkusza powstanie dopiero po zamknięciu.`,
+    // Po §3.6a sesja to PRZEJĘCIE → ZDANIE jednej maszyny, nie „dzień lotny": pilot
+    // potrafi w jednej służbie zdać jedną maszynę i wziąć drugą. Otwarta sesja znaczy
+    // więc dokładnie tyle, że samolot nie wrócił do puli — i tak ma się nazywać.
+    name: `Samolot nieoddany · ${row.reg ?? row.aircraftId}`,
+    // Mockup pisze tu „okno samodzielnej korekty pilota mija za 4 h". To nieprawda
+    // z DWÓCH powodów naraz: okno kotwiczy się w ZAMKNIĘCIU WZLOTU (`leg_close`,
+    // etap B3), więc biegnie niezależnie od zdania maszyny, a zdanie samolotu jest
+    // opcjonalne i niczego nie odlicza. Doba jest tu MIARĄ tego, jak długo maszyna
+    // stoi zajęta, a nie odliczaniem.
+    meta: `Brak \`day_close\` — maszyna stoi zajęta dłużej niż dobę, więc nikt inny jej nie przejmie, a łańcuch motogodzin nie ma ogniwa zamykającego. Karta doby powstaje po zdaniu samolotu.`,
     age,
     old,
     since,

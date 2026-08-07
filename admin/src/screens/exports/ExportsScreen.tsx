@@ -170,11 +170,13 @@ export function ExportsScreen() {
         title="EKSPORT KART DZIENNYCH"
         sub={
           <>
-            Jedna karta na dzień i samolot (<code>YYYY-MM-DD_SP-XXX</code>), budowana po{' '}
-            <code>day_close</code> danej sesji (§4.7). Eksport jest <b>skutkiem</b> przyjęcia
-            zdarzeń, nigdy warunkiem — telefon dostał 200, zanim karta powstała, więc błąd
-            tutaj niczego pilotowi nie cofa. Ten ekran jest jedynym miejscem, w którym widać,
-            że arkusz i rejestr się rozjechały.
+            Karta jest <b>DOBĄ SAMOLOTU</b> (<code>YYYY-MM-DD_SP-XXX</code>, §4.7), a sesje
+            tej maszyny są jej WIERSZAMI — dwie zmiany tego samego dnia trafiają do jednego
+            dokumentu, spięte kolumną <code>Sesja</code>. Ta lista pokazuje jednak SESJE, bo
+            to one mają stan: pytanie brzmi „której zmiany brakuje w karcie". Eksport jest{' '}
+            <b>skutkiem</b> przyjęcia zdarzeń, nigdy warunkiem — telefon dostał 200, zanim
+            karta powstała, więc błąd tutaj niczego pilotowi nie cofa. Ten ekran jest jedynym
+            miejscem, w którym widać, że arkusz i rejestr się rozjechały.
           </>
         }
         actions={
@@ -198,12 +200,14 @@ export function ExportsScreen() {
         <Banner tone="danger" live>
           <b>
             {counts.blocked === 1
-              ? 'Jedna karta nie powstanie, dopóki nie zamknie się flagi.'
-              : `${counts.blocked} karty nie powstaną, dopóki nie zamkną się flagi.`}
+              ? 'Jedna sesja wypada z karty doby, dopóki nie zamknie się flagi.'
+              : `${counts.blocked} sesje wypadają z kart doby, dopóki nie zamkną się flagi.`}
           </b>{' '}
-          <code>dayExporter</code> przerywa eksport sesji, dla której otwarta jest flaga{' '}
-          <code>session_overlap</code> — §4.7: sporny dzień nie ma prawa utrwalić się
-          w dokumencie klubu. Ponowienie tej bramki <b>nie omija</b>.{' '}
+          <code>dayExporter</code> pomija sesję, dla której otwarta jest flaga{' '}
+          <code>aircraft_overlap</code> — §4.7: sporna zmiana nie ma prawa utrwalić się
+          w dokumencie klubu. Reszta doby idzie do arkusza z adnotacją „niekompletna",
+          więc maszyna nie znika z rejestru przez jedną sporną zmianę. Ponowienie tej
+          bramki <b>nie omija</b>.{' '}
           <CellLink to="/flagi" title="Skrzynka flag">
             Skrzynka flag →
           </CellLink>
@@ -424,8 +428,8 @@ export function ExportsScreen() {
       <Banner tone="status">
         <b>Czym różni się ponowienie od naprawy.</b> „Ponów" powtarza dokładnie tę samą
         operację, którą wykonuje automat po przyjęciu zdarzeń — <b>nie omija żadnej bramki</b>.
-        Dzień bez <code>day_close</code>, sesja bez preflightu i otwarta flaga{' '}
-        <code>session_overlap</code> odmówią tak samo. Jeśli karta ma powstać, najpierw musi
+        Doba, w której nikt jeszcze nie zdał samolotu, sesja bez <code>session_claim</code>{' '}
+        i otwarta flaga <code>aircraft_overlap</code> odmówią tak samo. Jeśli karta ma powstać, najpierw musi
         zniknąć powód; przycisk służy do sytuacji, w której powodu już nie ma, a eksport nie
         wrócił sam. Każde kliknięcie trafia do{' '}
         <CellLink to="/audyt?typ=sheet" title="Dziennik audytu — akcje na kartach arkusza">
@@ -487,7 +491,7 @@ function SheetTable({ tab, rows }: { tab: string; rows: string[][] }) {
  * Kolumny monitora — dokładnie te z `A05-eksporty.html`.
  *
  * Sortowania nie ma na żadnej kolumnie i to jest świadome: trasa oddaje jeden porządek
- * (po dniu służby, malejąco), więc nagłówek ze strzałką, który po kliknięciu nic nie
+ * (po chwili przejęcia, malejąco), więc nagłówek ze strzałką, który po kliknięciu nic nie
  * robi, byłby gorszy od nagłówka bez strzałki. Ta sama decyzja, co na `A09`.
  */
 function columns(

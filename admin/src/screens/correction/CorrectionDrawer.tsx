@@ -59,6 +59,7 @@ import {
 import { impactRows } from './correctionImpact';
 import { correctionFailure, correctionOutcome, violationMessages } from './correctionResult';
 import { targetRows } from './correctionTarget';
+import { correctionWarningBanner } from './correctionWarnings';
 
 interface CorrectionDrawerProps {
   sessionUuid: string;
@@ -156,6 +157,12 @@ function CorrectionForm({
 
   const reasonCheck = reasonState(reason);
   const violations = violationMessages(preview.data?.violations ?? []);
+  // Kolizje z pilotem: po zapisie bierzemy je z ODPOWIEDZI (opisują chwilę zapisu),
+  // wcześniej z podglądu. Baner NIE wchodzi do `blocked` — administrator może edytować
+  // zawsze i to jest cała treść decyzji z 2026-08-07.
+  const warnings = correctionWarningBanner(
+    save.data?.warnings ?? preview.data?.warnings ?? [],
+  );
   const outcome = save.isSuccess ? correctionOutcome(save.data) : null;
   const failure = save.isError ? failureOf(save.error) : null;
   const done = outcome != null;
@@ -177,11 +184,12 @@ function CorrectionForm({
       sub={
         <>
           {session.reg ?? session.aircraftId} ·{' '}
-          {session.dutyStart == null ? 'dzień bez meldunku' : dateUtcShort(session.dutyStart)} · sesja{' '}
+          {session.claimedAt == null ? 'sesja bez claimu' : dateUtcShort(session.claimedAt)} · sesja{' '}
           {sessionUuid}
           <br />
-          dzień zamknięty{' '}
-          {state.closedAt == null ? '—' : `${dateUtcShort(state.closedAt)} ${timeUtcSeconds(state.closedAt)} UTC`}
+          {state.closedAt == null
+            ? 'samolot nieoddany — sesja wciąż otwarta'
+            : `samolot zdany ${dateUtcShort(state.closedAt)} ${timeUtcSeconds(state.closedAt)} UTC`}
         </>
       }
       onClose={onClose}
@@ -228,6 +236,19 @@ function CorrectionForm({
             <span key={message}>
               <br />
               <code>{message}</code>
+            </span>
+          ))}
+        </Banner>
+      )}
+
+      {warnings == null ? null : (
+        <Banner tone={warnings.tone}>
+          <b>{warnings.title}</b> {warnings.note}
+          {warnings.items.map((item) => (
+            <span key={item.code}>
+              <br />
+              <code>{item.code}</code> — {item.text}
+              {item.consequence == null ? null : ` ${item.consequence}`}
             </span>
           ))}
         </Banner>

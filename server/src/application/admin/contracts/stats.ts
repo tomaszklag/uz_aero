@@ -73,7 +73,7 @@ export interface AdminStatsTotals {
   mhVsBlockH: number | null;
   /** Wiersze projekcji sprzed migracji 18 — do przebudowy na `A11`. */
   staleRows: number;
-  /** Dni OTWARTE z duty startem w zakresie — celowo poza sumami. */
+  /** Sesje OTWARTE z chwilą przejęcia w zakresie — celowo poza sumami. */
   openSessionsInRange: number;
   /**
    * Dni OTWARTE BEZ `session_claim` — czyli rejestr niekompletny: nie mają daty, więc

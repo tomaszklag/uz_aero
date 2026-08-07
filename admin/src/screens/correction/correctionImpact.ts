@@ -79,8 +79,8 @@ export function impactRows(
       motoHours(after.mh.deltaH, mhFormat),
       { note: 'odczyt fizycznego licznika — nietykalny, cel korekty nim nie jest' },
     ),
-    row('Czas służby (duty)', duty(before), duty(after), {
-      note: 'z meldunku i z `day_close` — obu nie da się korygować',
+    row('Samolot zajęty', held(before), held(after), {
+      note: 'od `session_claim` do `day_close` — obu nie da się korygować',
     }),
     row(
       'Zdarzeń w projekcji',
@@ -156,14 +156,18 @@ const flightsLabel = (state: SessionState): string =>
   `${state.flights.length} ${plural(state.flights.length, 'lot', 'loty', 'lotów')}`;
 
 /**
- * Czas służby. **Odjęcie dwóch stempli** podanych przez serwer — ta sama kategoria
- * działania, co kafel duty na karcie dnia (`daySummary.ts`): upływ między dwiema
- * chwilami, a nie druga wersja liczby dnia. `SessionState` nie ma pola `dutyMs`,
- * bo duty nie wchodzi do żadnego bilansu.
+ * Czas zajęcia MASZYNY: przejęcie → zdanie. **Odjęcie dwóch stempli** podanych przez
+ * serwer — ta sama kategoria działania, co kafel na karcie sesji (`daySummary.ts`):
+ * upływ między dwiema chwilami, a nie druga wersja liczby dnia.
+ *
+ * Stał tu „Czas służby (duty)" i była to ta sama pomyłka kategorii, co na karcie sesji:
+ * służba należy do PILOTA i obejmuje kilka maszyn (§3.6a), więc korekta zdarzenia
+ * JEDNEJ sesji nie ma jak jej opisać. Wiersz zostaje, bo pełni tu rolę kontrolną —
+ * pokazuje, że korekta czasu nie ruszyła ram sesji.
  */
-function duty(state: SessionState): string {
-  if (state.dutyStart == null || state.dutyEnd == null) return '—';
-  return hhmm(state.dutyEnd - state.dutyStart);
+function held(state: SessionState): string {
+  if (state.claimedAt == null || state.closedAt == null) return '—';
+  return hhmm(state.closedAt - state.claimedAt);
 }
 
 /** Zdanie pod czasem blokowym — jedyne miejsce, gdzie `void` tłumaczy się sam. */

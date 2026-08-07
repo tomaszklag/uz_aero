@@ -163,7 +163,7 @@ export function queueTruncationNotice(counts: QueueCounts | null, limit: number)
 /** Stan pusty kolejki — potwierdzenie, nie awaria (`A01a`: „cisza spodziewana"). */
 export function queueEmpty(): { title: string; note: string } {
   return {
-    title: 'KAŻDY ZAMKNIĘTY DZIEŃ MA KARTĘ',
-    note: 'Ani jeden dzień lotny nie czeka na eksport i żadna flaga nie trzyma karty poza dokumentem klubu. Pusta kolejka jest tu wynikiem oczekiwanym — pozycje pojawiają się same, gdy eksport nie dojdzie do skutku.',
+    title: 'KAŻDA ZDANA MASZYNA MA KARTĘ',
+    note: 'Ani jedna sesja nie czeka na eksport i żadna flaga nie wycina zmiany z karty doby. Pusta kolejka jest tu wynikiem oczekiwanym — pozycje pojawiają się same, gdy eksport nie dojdzie do skutku.',
   };
 }

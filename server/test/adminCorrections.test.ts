@@ -182,9 +182,12 @@ async function exportRevisions(db: Harness['db']) {
 
 /**
  * Dzień zamknięty i wyeksportowany, zegar przesunięty POZA okno korekty pilota.
- * `closed: false` zostawia dzień otwarty — do przypadku brzegowego z §6.5.
+ *
+ * `closed: false` zostawia samolot NIEZDANY — od 2026-08-07 to już nie odmowa, tylko
+ * powód ostrzeżenia `ADMIN_EDIT_SESSION_ACTIVE`. `advanceMs` steruje drugą kolizją:
+ * krótszy skok zostawia okno 24 h wzlotu otwarte (`ADMIN_EDIT_PILOT_WINDOW_OPEN`).
  */
-async function flownDay(options: { closed?: boolean } = {}) {
+async function flownDay(options: { closed?: boolean; advanceMs?: number } = {}) {
   const harness = await testHarness();
   const { app, clock } = harness;
   const pic = await login(app, PIC);
@@ -203,7 +206,7 @@ async function flownDay(options: { closed?: boolean } = {}) {
 
   // Doba i osiem godzin od zamknięcia: okno 04c minęło, więc pilot nie poprawi już nic
   // sam. Zegar jest portem, więc test nie musi spać ani udawać upływu czasu.
-  clock.advance(2 * 24 * HOUR_MS);
+  clock.advance(options.advanceMs ?? 2 * 24 * HOUR_MS);
   return harness;
 }
 
@@ -478,19 +481,62 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(res.json().violations).toMatchObject([{ code: 'CORRECTION_TIME_IN_FUTURE' }]);
   });
 
-  it('dzień OTWARTY → 400 day_open: pilot poprawia sam, panel nie ma tu nic do roboty', async () => {
+  it('sesja OTWARTA → zapis PRZECHODZI z ostrzeżeniem; bramka `day_open` znikła', async () => {
+    // ODWRÓCENIE oczekiwania z 2026-08-01 (decyzja użytkownika 2026-08-07). Stary test
+    // brzmiał „dzień OTWARTY → 400 day_open: pilot poprawia sam". Reguła opierała się na
+    // równości „brak `day_close` = dzień trwa", a §3.6a ją unieważnił: zdanie samolotu
+    // jest OPCJONALNE, więc sesja sprzed tygodnia wygląda dokładnie tak samo jak ta
+    // z dzisiejszego poranka. Bramka odmawiałaby więc korekty przede wszystkim tam,
+    // gdzie jest naprawdę potrzebna. Administrator nie jest NIGDY blokowany — dostaje
+    // ostrzeżenie i decyduje sam.
     const { app, db } = await flownDay({ closed: false });
     const admin = await login(app, 'TMK');
 
     const res = await correct(app, SESSION, {
       token: admin,
-      body: { targetUuid: UUID.landing, action: 'void', reason: 'Za wcześnie na panel.' },
+      body: { targetUuid: UUID.landing, action: 'void', reason: 'Lądowanie policzone dwa razy.' },
     });
 
-    expect(res.statusCode).toBe(400);
-    expect(res.json()).toEqual({ error: 'day_open' });
-    expect(await eventRows(db)).toHaveLength(6);
-    expect(await auditRows(db)).toEqual([]);
+    expect(res.statusCode).toBe(200);
+    // Kolizja jedzie w odpowiedzi POZYTYWNEJ, bo korekta JEST w rejestrze.
+    expect(res.json().warnings).toMatchObject([{ code: 'ADMIN_EDIT_SESSION_ACTIVE' }]);
+    // Zdarzenie dopisane (6 → 7) i ślad w audycie zostawiony — jedno i drugie
+    // odróżnia „zapisano mimo kolizji" od dawnej odmowy.
+    expect(await eventRows(db)).toHaveLength(7);
+    expect(await auditRows(db)).toHaveLength(1);
+  });
+
+  it('sesja ZDANA, ale okno wzlotu jeszcze biegnie → ostrzeżenie o kolizji z pilotem', async () => {
+    // Druga z dwóch kolizji, całkiem niezależna od pierwszej: samolot jest zdany
+    // (`day_close` o 16:45), więc `ADMIN_EDIT_SESSION_ACTIVE` się nie należy — ale od
+    // wyłączenia silnika o 10:34 nie minęła doba, więc pilot może ten wzlot poprawić
+    // SAM na 04c. Obie strony pisałyby wtedy naraz i administrator ma o tym wiedzieć.
+    const { app } = await flownDay({ advanceMs: 9 * HOUR_MS });
+    const admin = await login(app, 'TMK');
+
+    const res = await correct(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.landing, action: 'void', reason: 'Lądowanie policzone dwa razy.' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().warnings).toMatchObject([{ code: 'ADMIN_EDIT_PILOT_WINDOW_OPEN' }]);
+  });
+
+  it('sesja ZDANA i po oknie pilota → zapis bez ANI JEDNEGO ostrzeżenia', async () => {
+    // Druga strona tej samej reguły: ostrzeżenie ma znaczyć KOLIZJĘ, a nie towarzyszyć
+    // każdej korekcie. Bez tego przypadku baner nad formularzem świeciłby zawsze
+    // i przestałby cokolwiek mówić.
+    const { app } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await correct(app, SESSION, {
+      token: admin,
+      body: { targetUuid: UUID.landing, action: 'void', reason: 'Lądowanie policzone dwa razy.' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json().warnings).toEqual([]);
   });
 
   it('druga korekta tego samego celu wygrywa — i obie zostają w rejestrze', async () => {
@@ -679,7 +725,10 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
     expect(res.json().violations).toEqual([]);
   });
 
-  it('dzień OTWARTY → 400 day_open, tak samo jak przy zapisie', async () => {
+  it('sesja OTWARTA → podgląd DZIAŁA i uprzedza, tak samo jak zapis', async () => {
+    // Podgląd i zapis muszą odmawiać tego samego i przepuszczać to samo — inaczej panel
+    // wystawia formularz tam, gdzie zapis odmówi (albo odwrotnie). Bramka `day_open`
+    // znikła po OBU stronach naraz, więc i tu jest 200 razem z ostrzeżeniem.
     const { app } = await flownDay({ closed: false });
     const admin = await login(app, 'TMK');
 
@@ -688,8 +737,9 @@ describe('podgląd korekty przed zapisem (A02b, dry-run)', () => {
       body: { targetUuid: UUID.landing, action: 'void' },
     });
 
-    expect(res.statusCode).toBe(400);
-    expect(res.json()).toEqual({ error: 'day_open' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().violations).toEqual([]);
+    expect(res.json().warnings).toMatchObject([{ code: 'ADMIN_EDIT_SESSION_ACTIVE' }]);
   });
 
   it('nieistniejąca sesja → 404', async () => {

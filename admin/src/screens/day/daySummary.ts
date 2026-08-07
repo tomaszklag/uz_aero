@@ -8,13 +8,19 @@
  * formatowanie przez `@uzaero/format` i wybór słów.
  *
  * Jedyne dwa działania arytmetyczne w tym pliku są nazwane i uzasadnione na miejscu:
- * odjęcie dwóch stempli duty (upływ służby) i zaokrąglenie średniej wysokości zrzutu
- * do pełnych stóp. Oba są prezentacją liczb serwera, nie drugim ich wyliczeniem.
+ * odjęcie dwóch stempli sesji (jak długo maszyna była zajęta) i zaokrąglenie średniej
+ * wysokości zrzutu do pełnych stóp. Oba są prezentacją liczb serwera, nie drugim ich
+ * wyliczeniem.
  *
- * ══ DZIEŃ OTWARTY: „—" I KONIEC ══
+ * ══ KARTA OPISUJE SESJĘ SAMOLOTU, NIE SŁUŻBĘ PILOTA ══
+ * Nie ma tu i nie może być czasu służby: po §3.6a klamra należy do PILOTA i potrafi
+ * objąć kilka maszyn, więc na karcie jednej z nich byłaby pomyłką kategorii (patrz
+ * `heldTile`). Jednostką jest odcinek PRZEJĘCIE → ZDANIE.
+ *
+ * ══ SAMOLOT NIEODDANY: „—" I KONIEC ══
  * Sesja bez `day_close` nie ma odczytów końcowych, więc nie ma zużycia paliwa, delty
- * motogodzin ani czasu służby. Panel pokazuje kreskę i mówi, co ją wypełni. **Nie
- * ekstrapoluje** — ani z ostatniego odczytu, ani z tempa dnia, ani z „teraz".
+ * motogodzin ani domkniętego czasu zajęcia. Panel pokazuje kreskę i mówi, co ją wypełni.
+ * **Nie ekstrapoluje** — ani z ostatniego odczytu, ani z tempa dnia, ani z „teraz".
  * To jest cała treść tego stanu i nic poza nią nie jest prawdą.
  */
 
@@ -115,36 +121,47 @@ export function dayTiles(state: SessionState, mhFormat: MhFormat | null): DayTil
         ? 'Koniec − początek z odczytów fizycznego licznika, nie z czasu blokowego.'
         : 'Delta powstanie z odczytu końcowego licznika przy zamknięciu dnia.',
     },
-    dutyTile(state),
+    heldTile(state),
   ];
 }
 
 /**
- * Czas służby. **Odjęcie dwóch stempli** — tego samego rodzaju działanie, co wiek
- * sprawy w skrzynce flag (`flagRows.ts`): upływ między dwiema chwilami, które podał
- * serwer, a nie druga wersja liczby dnia. `SessionState` nie ma pola `dutyMs`, bo
- * duty nie wchodzi do żadnego bilansu — jest odczytem z meldunku i z przekazania.
+ * Czas ZAJĘCIA MASZYNY: przejęcie → zdanie.
+ *
+ * ══ TU STAŁ KAFEL „CZAS SŁUŻBY (DUTY)" I BYŁA TO POMYŁKA KATEGORII ══
+ * Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należy do PILOTA i potrafi objąć kilka
+ * maszyn (§3.6a) — więc jej upływ nie jest własnością tej karty i nigdy nie da się go
+ * z niej uczciwie policzyć. Do tego po §3.6a `dutyStart`/`dutyEnd` są OPCJONALNE i w
+ * zwykłym przypadku puste, więc kafel i tak pokazywałby kreskę przy poprawnie
+ * przeprowadzonym dniu. Zadeklarowane godziny klamry nie znikają z panelu: widać je na
+ * OSI ZDARZEŃ, przy `preflight_confirm` i `day_close`, czyli tam, gdzie są tym, czym są
+ * — treścią zdarzenia, a nie wielkością sesji.
+ *
+ * Zostaje **odjęcie dwóch stempli** — to samo działanie, co wiek sprawy w skrzynce flag
+ * (`flagRows.ts`): upływ między dwiema chwilami, które podał serwer, a nie druga wersja
+ * liczby dnia. `SessionState` nie ma pola `heldMs`, bo zajętość maszyny nie wchodzi do
+ * żadnego bilansu.
  */
-function dutyTile(state: SessionState): DayTile {
-  if (state.dutyStart == null) {
+function heldTile(state: SessionState): DayTile {
+  if (state.claimedAt == null) {
     return {
-      label: 'Czas służby (duty)',
+      label: 'Samolot zajęty',
       value: '—',
-      note: 'Sesja bez `preflight_confirm` — nie ma meldunku, od którego liczy się służba.',
+      note: 'Rejestr bez `session_claim` — nie ma chwili przejęcia, od której liczy się sesja.',
     };
   }
-  if (state.dutyEnd == null) {
+  if (state.closedAt == null) {
     return {
-      label: 'Czas służby (duty)',
+      label: 'Samolot zajęty',
       value: '—',
-      note: `Start ${timeUtcSeconds(state.dutyStart)} UTC · koniec poda \`day_close\`.`,
+      note: `Przejęty ${timeUtcSeconds(state.claimedAt)} UTC · maszyny jeszcze nie zdano.`,
     };
   }
   return {
-    label: 'Czas służby (duty)',
-    value: hhmm(state.dutyEnd - state.dutyStart),
+    label: 'Samolot zajęty',
+    value: hhmm(state.closedAt - state.claimedAt),
     tone: 'blue',
-    note: `${timeUtcSeconds(state.dutyStart)} → ${timeUtcSeconds(state.dutyEnd)} UTC · brutto, bez przerw.`,
+    note: `${timeUtcSeconds(state.claimedAt)} → ${timeUtcSeconds(state.closedAt)} UTC · od przejęcia do zdania.`,
   };
 }
 
@@ -157,17 +174,21 @@ export function sessionRows(
 ): KvRow[] {
   const rows: KvRow[] = [
     { label: 'session_uuid', value: session.sessionUuid },
-    { label: 'Meldunek · duty start', value: utcStamp(state.dutyStart) },
+    // Przejęcie, a nie meldunek: to `session_claim` otwiera sesję i przypisuje ją do
+    // doby. Zadeklarowana godzina meldunku (jeśli w ogóle padła) stoi na osi zdarzeń
+    // przy `preflight_confirm` — jest treścią zdarzenia, nie właściwością sesji.
+    { label: 'Przejęcie samolotu', value: utcStamp(state.claimedAt) },
   ];
 
   if (state.closedAt == null) {
-    rows.push({ label: 'Zamknięcie', value: 'dzień trwa', tone: 'amber' });
+    rows.push({ label: 'Zdanie samolotu', value: 'maszyna wciąż zajęta', tone: 'amber' });
   } else {
-    rows.push({ label: 'Zamknięcie', value: utcStamp(state.closedAt) });
-    // Wiek zamknięcia, nie „czy okno korekty minęło": próg 24 h jest WARTOŚCIĄ DOMENY
+    rows.push({ label: 'Zdanie samolotu', value: utcStamp(state.closedAt) });
+    // Wiek zdania, nie „czy okno korekty minęło": próg 24 h jest WARTOŚCIĄ DOMENY
     // (`packages/domain/src/rules/tolerances.ts`), a panelowi wolno importować z domeny
     // wyłącznie typy. Kopia progu tutaj byłaby liczbą, która rozjedzie się po cichu.
-    rows.push({ label: 'Zamknięty przed', value: relativeAge(nowMs - state.closedAt) });
+    // Po B3 okno i tak nie kotwiczy się w tym stemplu, tylko w zamknięciu WZLOTU.
+    rows.push({ label: 'Zdany przed', value: relativeAge(nowMs - state.closedAt) });
   }
 
   rows.push(

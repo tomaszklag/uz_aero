@@ -38,7 +38,11 @@ import {
   type EventCorrectionPayload,
 } from '@uzaero/domain';
 
-import { correctionCandidate, correctionViolations } from '../correctionCandidate.ts';
+import {
+  correctionCandidate,
+  correctionViolations,
+  correctionWarnings,
+} from '../correctionCandidate.ts';
 import type { AdminCorrectionPreview, AdminCorrectionTarget } from '../contracts/corrections.ts';
 import type {
   AircraftConfigPort,
@@ -56,17 +60,18 @@ export interface CorrectionPreviewInput {
 }
 
 /**
- * Odmowy IDENTYCZNE z komendą (`session_not_found` → 404, `day_open` → 400). Gdyby
- * podgląd był łaskawszy, panel wystawiłby formularz tam, gdzie zapis i tak odmówi.
+ * Odmowy IDENTYCZNE z komendą — czyli od 2026-08-07 **dokładnie jedna**
+ * (`session_not_found` → 404). Bramka `day_open` znikła po obu stronach naraz i to jest
+ * warunek sensu tego zapytania: podgląd łaskawszy albo surowszy od zapisu wystawiałby
+ * formularz tam, gdzie zapis odmówi (albo odwrotnie — odmawiał tam, gdzie zapis idzie).
  *
  * Naruszenia reguł NIE SĄ tu odmową: to treść odpowiedzi. Administrator ma zobaczyć,
  * że `void` na `day_close` jest niemożliwy, RAZEM z powodem — a nie dostać pustą
- * kartę i kod błędu.
+ * kartę i kod błędu. Tak samo ostrzeżenia o kolizji z pilotem.
  */
 export type CorrectionPreviewOutcome =
   | { ok: true; preview: AdminCorrectionPreview }
-  | { ok: false; reason: 'session_not_found' }
-  | { ok: false; reason: 'day_open' };
+  | { ok: false; reason: 'session_not_found' };
 
 /**
  * Uuid kandydata podglądu. Stały i jawnie nazwany, bo nigdzie nie trafia: reguły go
@@ -91,10 +96,10 @@ export class AdminCorrectionQueries {
     if (stream.length === 0) return { ok: false, reason: 'session_not_found' };
 
     const before = projectSession(stream);
-    // Dzień OTWARTY = pilot ma pełne prawo zapisu i poprawia sam (04c). Panel nie ma
-    // tu czego pokazywać, bo i tak nie ma czego zapisać — ta sama odmowa, co w komendzie.
-    if (!before.closed) return { ok: false, reason: 'day_open' };
 
+    // Nie ma tu już bramki na sesję otwartą (decyzja 2026-08-07, patrz komenda).
+    // Otwarta sesja jest dziś stanem NORMALNYM, a nie znakiem, że pilot siedzi
+    // w kokpicie — i podgląd ma o niej opowiedzieć w `warnings`, a nie odmówić.
     const candidate = correctionCandidate(
       before,
       stream,
@@ -118,6 +123,7 @@ export class AdminCorrectionQueries {
         // porządek strumienia to kolejność przyjęcia paczek.
         after: projectSession([...stream, candidate]),
         violations: correctionViolations(before, candidate, limits),
+        warnings: correctionWarnings(before, candidate, limits),
       },
     };
   }

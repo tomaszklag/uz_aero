@@ -13,6 +13,13 @@
  * **wywala kompilację tego pliku**, bo `Record` wymaga kompletu kluczy. Kolejność
  * kluczy jest kolejnością chipów w mockupie i stąd bierze ją `FLAG_TYPE_ORDER`.
  *
+ * **`session_overlap` ROZDZIELONE 2026-08-07** (§4.7) na `aircraft_overlap` (kto pisze
+ * do MASZYNY — jedyna bramka arkusza) i `pilot_overlap` (co robi PILOT — grafik, bez
+ * wpływu na arkusz). Legenda MUSI je rozróżniać, bo to dwie różne sprawy dla
+ * administratora: pierwsza trzyma dokument klubu, druga mówi, że rejestr opisuje
+ * człowieka w dwóch miejscach naraz. Mockup `A03-flagi.html` zna jeszcze starą, jedną
+ * pozycję — treść niżej jest opisem KODU (`server/src/domain/{mhChain,pilotOverlap}.ts`).
+ *
  * Czego tu NIE MA: PROGÓW (`0.1 h`, `±10 L`, `120 s`). Są wartościami domeny
  * (`packages/domain/src/rules/tolerances.ts`), a panel nie ma prawa trzymać ich kopii —
  * literał w tej tabeli byłby dokładnie tym „panelem, który mówi po swojemu". Do czasu,
@@ -36,14 +43,25 @@ export interface FlagTypeMeta {
 }
 
 export const FLAG_TYPE_META: Record<FlagType, FlagTypeMeta> = {
-  session_overlap: {
+  aircraft_overlap: {
     tone: 'red',
-    short: 'niezamknięte sesje',
-    condition: 'Więcej niż jedna sesja jednego samolotu bez `day_close`',
+    short: 'dwa telefony piszą do jednej maszyny',
+    condition: 'Więcej niż jedna NIEZAMKNIĘTA sesja tego samego samolotu',
     effect:
-      'Blokuje kartę dnia. Typowo przejęcie offline: poprzednik ma niewysłane dane albo ' +
-      'nie zamknął dnia. To jedna flaga na to, co dokumentacja §4.5 rozdziela na ' +
-      'DOUBLE_CLAIM i TIME_OVERLAP — w kodzie jest jednym typem.',
+      'Jedyna flaga bramkująca kartę arkusza: dopóki nie wiadomo, który strumień opisuje ' +
+      'maszynę, doba tej maszyny nie ma jednej prawdy. Sporna sesja wypada z karty, ' +
+      'a reszta doby idzie do arkusza z adnotacją „niekompletna". Typowo przejęcie ' +
+      'offline — poprzednik ma niewysłane dane albo nie zdał samolotu.',
+  },
+  pilot_overlap: {
+    tone: 'amber',
+    short: 'pilot rzekomo na dwóch maszynach naraz',
+    condition: 'Sesje jednego PILOTA na RÓŻNYCH maszynach o wspólnym odcinku czasu',
+    effect:
+      'Anomalia GRAFIKU, nie danych maszyny — arkusza NIE blokuje i karta dnia powstaje ' +
+      'normalnie. Zetknięcie co do minuty nakładką NIE JEST: po §3.6a pilot legalnie zdaje ' +
+      'jedną maszynę i bierze drugą o tej samej godzinie. Najczęstsza postać wady to ' +
+      'zapomniane zdanie poprzedniego samolotu.',
   },
   mh_gap: {
     tone: 'amber',

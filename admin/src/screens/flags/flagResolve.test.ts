@@ -19,7 +19,7 @@ import {
 
 const flag: FlagListItemDto = {
   id: 1046,
-  type: 'session_overlap',
+  type: 'aircraft_overlap',
   status: 'open',
   aircraftId: 'SP-KLM',
   reg: 'SP-KLM',
@@ -63,7 +63,7 @@ describe('przegrany wyścig (409)', () => {
       error: 'already_resolved',
       flag: {
         id: 1046,
-        type: 'session_overlap',
+        type: 'aircraft_overlap',
         aircraftId: 'SP-KLM',
         sessionUuids: ['e881-04dc'],
         details: {},
@@ -124,13 +124,13 @@ describe('przegrany wyścig (409)', () => {
 describe('skutek rozstrzygnięcia', () => {
   const result = (exports: ResolveFlagResultDto['exports']): ResolveFlagResultDto => ({
     flagId: 1046,
-    type: 'session_overlap',
+    type: 'aircraft_overlap',
     resolvedAt: '2026-07-31T14:22:00.000Z',
     exports,
   });
 
   it('pusta lista eksportów to POPRAWNA odpowiedź, nie brak informacji', () => {
-    // Serwer ponawia karty wyłącznie dla `session_overlap`. Obietnica rewizji po
+    // Serwer ponawia karty wyłącznie dla `aircraft_overlap`. Obietnica rewizji po
     // rozwiązaniu `mh_gap` uczyłaby nieufności do narzędzia.
     const outcome = resolveOutcome(result([]));
     expect(outcome.tone).toBe('ok');
@@ -172,7 +172,7 @@ describe('skutek rozstrzygnięcia', () => {
 
 describe('korekta zdarzenia — zdolności są rozłączne', () => {
   it('administrator idzie na KARTĘ DNIA — to oś zdarzeń wybiera cel korekty', () => {
-    // Flaga wskazuje sesję, nie zdarzenie (`session_overlap` opisuje dwie nakładki,
+    // Flaga wskazuje sesję, nie zdarzenie (`aircraft_overlap` opisuje dwie nakładki,
     // a nie pojedynczy odczyt). Korekta celuje w konkretny uuid, więc wybór musi
     // zapaść tam, gdzie uuid-y są widoczne.
     const action = correctionAction(flag, ['panel.access', 'flags.resolve', 'events.correct']);

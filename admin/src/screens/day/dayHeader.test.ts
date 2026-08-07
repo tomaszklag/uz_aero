@@ -43,20 +43,20 @@ const session = (over: Partial<SessionListItemDto> = {}): SessionListItemDto =>
     dualName: null,
     operation: 'skoki',
     client: 'SKY CAMP',
-    dutyStart: at(5, 45),
+    claimedAt: at(5, 45),
     updatedAt: new Date(NOW - 24 * 60_000).toISOString(),
     ...over,
   }) as unknown as SessionListItemDto;
 
 describe('dayHeader', () => {
-  it('nazywa dzień datą MELDUNKU i rejestracją', () => {
+  it('nazywa sesję datą PRZEJĘCIA i rejestracją', () => {
     expect(dayHeader(session(), state()).title).toBe('30 JUL 2026 · SP-KLM');
   });
 
-  it('sesja bez preflightu NIE dostaje zmyślonej daty', () => {
+  it('sesja bez claimu NIE dostaje zmyślonej daty', () => {
     // Podstawienie daty pierwszego zdarzenia albo „dzisiaj" byłoby zgadywaniem
     // w narzędziu, którego jedynym zadaniem jest nie zgadywać.
-    expect(dayHeader(session({ dutyStart: null }), state()).title).toBe('DZIEŃ BEZ MELDUNKU · SP-KLM');
+    expect(dayHeader(session({ claimedAt: null }), state()).title).toBe('SESJA BEZ CLAIMU · SP-KLM');
   });
 
   it('podtytuł niesie samolot, załogę, operację, klienta i trasę', () => {
@@ -86,30 +86,38 @@ describe('dayHeader', () => {
 });
 
 describe('dayBanner', () => {
-  it('dzień otwarty mówi, że to MIGAWKA, i podaje wiek ostatniej paczki', () => {
+  it('samolot nieoddany mówi, że to MIGAWKA, i podaje wiek ostatniej paczki', () => {
     const banner = dayBanner(session(), state({ closed: false, closedAt: null }), NOW);
 
     expect(banner.tone).toBe('status');
-    expect(banner.title).toContain('Dzień otwarty');
+    // „Dzień otwarty" był pomyłką kategorii: otwarta jest SESJA jednej maszyny,
+    // a pilot potrafi w tej samej służbie zdać ją i wziąć następną (§3.6a).
+    expect(banner.title).toContain('Samolot nieoddany');
     expect(banner.body).toContain('24 min temu');
     expect(banner.body).toContain('stanem na ostatni sync');
     // Cała treść tego stanu: panel pokazuje „—" i nie ekstrapoluje.
     expect(banner.body).toContain('zamiast zgadywać');
   });
 
-  it('dzień zamknięty podaje stempel i wiek zamknięcia', () => {
+  it('samolot zdany podaje stempel i wiek zdania', () => {
     const banner = dayBanner(session(), state(), NOW);
 
     expect(banner.tone).toBe('warn');
+    expect(banner.title).toContain('Samolot zdany');
     expect(banner.title).toContain('30 JUL 2026 13:22:00 UTC');
     expect(banner.title).toContain('1 dzień 1 h temu');
   });
 
-  it('NIE odlicza okna korekty — próg doby jest wartością domeny, nie panelu', () => {
-    // Kopia progu w panelu rozjechałaby się po cichu z regułą, którą serwer naprawdę
-    // egzekwuje przy zapisie. Baner mówi, kto poprawia i kiedy, a rozstrzyga serwer.
+  it('mówi, że okno korekty kotwiczy się we WZLOCIE, a nie w zdaniu samolotu', () => {
+    // Sprostowanie z etapu B3. Do etapu D baner obiecywał „przez dobę OD ZAMKNIĘCIA
+    // poprawia sam pilot" — czyli od `day_close`. Po §3.6a każdy wzlot ma własną dobę
+    // liczoną od `leg_close` (awaryjnie od `engine_stop`), więc zdanie samolotu nie
+    // uruchamia ani nie kończy żadnego okna.
     const banner = dayBanner(session(), state(), NOW);
-    expect(banner.body).toContain('rozstrzyga serwer w chwili zapisu');
+    expect(banner.body).toContain('`leg_close`');
+    expect(banner.body).toContain('Administrator dopisuje zmianę zawsze');
+    // Panel dalej nie trzyma kopii progu domeny.
+    expect(banner.body).toContain('nie odlicza tych okien za Ciebie');
   });
 
   it('nieczytelny stempel paczki mówi to wprost', () => {
@@ -123,7 +131,7 @@ describe('correctionAccess', () => {
     // Adresu tu nie ma i to jest treść zmiany: korekta dotyczy KONKRETNEGO zdarzenia,
     // a wyboru dokonuje się na osi. Link bez celu prowadziłby w ekran, który nie wie,
     // co poprawia.
-    expect(correctionAccess(state(), ADMIN)).toEqual({
+    expect(correctionAccess(ADMIN)).toEqual({
       label: 'Korekta administratora',
       allowed: true,
       reason: null,
@@ -134,7 +142,7 @@ describe('correctionAccess', () => {
     // `events.correct` ma TYLKO administrator: korekta dopisuje zdarzenie do cudzego
     // rejestru. Ukrycie nigdy nie było ochroną i tym się nie staje — egzekwuje serwer,
     // przy każdym żądaniu.
-    const access = correctionAccess(state(), TRAINING_LEAD);
+    const access = correctionAccess(TRAINING_LEAD);
 
     expect(access.allowed).toBe(false);
     expect(access.reason).toBe('Wymaga roli: administrator');
@@ -143,19 +151,22 @@ describe('correctionAccess', () => {
   });
 
   it('brak sesji (jeszcze nie wiadomo, kto to) też blokuje z powodem', () => {
-    const access = correctionAccess(state(), undefined);
+    const access = correctionAccess(undefined);
     expect(access.allowed).toBe(false);
     expect(access.reason).not.toBeNull();
   });
 
-  it('DZIEŃ OTWARTY blokuje korektę — i to jest ta sama odmowa, co po stronie serwera', () => {
-    // Przy otwartym dniu pilot ma pełne prawo zapisu i poprawia sam, a korekta
-    // administratora nie wraca na telefon (sync jest jednokierunkowy). Serwer odmawia
-    // tego wprost (`day_open`), więc panel nie zaprasza do żądania, które odbije.
-    const access = correctionAccess(state({ closed: false, closedAt: null }), ADMIN);
-
-    expect(access.allowed).toBe(false);
-    expect(access.reason).toContain('Dzień jeszcze trwa');
+  it('OTWARTA SESJA NIE blokuje już korekty — bramka `day_open` znikła', () => {
+    // ODWRÓCENIE testu z 2026-08-01 („DZIEŃ OTWARTY blokuje korektę"). Reguła lustrzyła
+    // bramkę serwera, a ta opierała się na równości „brak `day_close` = dzień trwa",
+    // którą §3.6a unieważnił: zdanie samolotu jest OPCJONALNE, więc warunek odmawiałby
+    // korekty przede wszystkim tam, gdzie jest potrzebna. Administrator nie jest NIGDY
+    // blokowany; kolizję nazywa baner nad formularzem (`correctionWarnings.ts`).
+    //
+    // Widać to także w SYGNATURZE: funkcja nie pyta już o `SessionState`, bo stan sesji
+    // przestał mieć wpływ na dostęp. Gdyby pytała, warunek dałoby się dopisać z powrotem
+    // bez zmiany wywołań — a tak nie da się tego zrobić po cichu.
+    expect(correctionAccess(ADMIN).allowed).toBe(true);
   });
 });
 

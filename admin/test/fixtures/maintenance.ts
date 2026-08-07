@@ -113,7 +113,7 @@ function exportItem(over: Partial<ExportListItemDto>): ExportListItemDto {
     sessionUuid: 'sess-bez-karty',
     tab: '2026-07-29_SP-KLM',
     day: '2026-07-29',
-    dutyStart: Date.UTC(2026, 6, 29, 8, 0),
+    claimedAt: Date.UTC(2026, 6, 29, 8, 0),
     aircraftId: 'ac-klm',
     reg: 'SP-KLM',
     aircraftType: 'Cessna 208 Caravan',
@@ -169,7 +169,7 @@ export function blockedExport(): ExportListItemDto {
     sessionUuid: 'sess-flaga',
     tab: '2026-07-30_SP-KLM',
     day: '2026-07-30',
-    dutyStart: Date.UTC(2026, 6, 30, 8, 0),
+    claimedAt: Date.UTC(2026, 6, 30, 8, 0),
     state: 'blocked',
     blockingFlagIds: [1046],
   });

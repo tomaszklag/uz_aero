@@ -193,7 +193,7 @@ export interface ResolveOutcome {
  *
  * Serwer zwraca SKUTEK, a nie `204`, właśnie po to, żeby padło „arkusz odblokowany ·
  * rewizja 1", a nie samo „zapisano". Re-eksport uruchamia się **wyłącznie dla
- * `session_overlap`**, bo tylko ten typ jest bramką w `DayExporter` — pusta lista
+ * `aircraft_overlap`**, bo tylko ten typ jest bramką w `DayExporter` — pusta lista
  * jest więc poprawną odpowiedzią, a nie brakiem informacji, i tak ją opisujemy.
  */
 export function resolveOutcome(result: ResolveFlagResultDto): ResolveOutcome {
@@ -242,7 +242,7 @@ export interface CorrectionAction {
  *
  * ══ PROWADZI NA KARTĘ DNIA, NIE WPROST W FORMULARZ ══
  * Korekta dotyczy KONKRETNEGO zdarzenia (`/dni/<sesja>/korekta/<zdarzenie>`), a flaga
- * wskazuje sesję, nie zdarzenie — `session_overlap` opisuje dwie nakładające się sesje,
+ * wskazuje sesję, nie zdarzenie — `aircraft_overlap` opisuje dwie nakładające się sesje,
  * a nie pojedynczy odczyt. Wyboru dokonuje się więc na osi dnia, która ZNA uuid-y
  * i wie, które zdarzenia są korygowalne. Adres bez celu prowadziłby w ekran, który nie
  * wie, co poprawia — a to jest gorsze niż jeden klik więcej.

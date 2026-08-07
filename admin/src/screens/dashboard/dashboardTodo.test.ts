@@ -44,7 +44,7 @@ describe('porządek: blokujące arkusz przodem, dalej najstarsze', () => {
         sessionUuid: 'sess-x',
         tab: '2026-07-30_SP-KLM',
         day: '2026-07-30',
-        dutyStart: NOW - 2 * DAY,
+        claimedAt: NOW - 2 * DAY,
         aircraftId: 'ac-x',
         reg: 'SP-KLM',
         aircraftType: 'Cessna 208 Caravan',
@@ -87,9 +87,9 @@ describe('wiek sprawy jest własną kolumną', () => {
     expect(young.every((t) => !t.old)).toBe(true);
   });
 
-  it('dzień bez zamknięcia liczy wiek od DUTY STARTU, nie od ostatniej paczki', () => {
-    // Pytanie brzmi „jak długo ten dzień jest otwarty", a nie „kiedy ostatnio coś do
-    // niego dotarło" — te dwie liczby różnią się o cały czas ciszy telefonu.
+  it('nieoddany samolot liczy wiek od CHWILI PRZEJĘCIA, nie od ostatniej paczki', () => {
+    // Pytanie brzmi „jak długo ta maszyna jest zajęta", a nie „kiedy ostatnio coś do
+    // niej dotarło" — te dwie liczby różnią się o cały czas ciszy telefonu.
     const task = todoTasks(attention(), NOW, DAY).find((t) => t.kind === 'open_day');
     expect(task?.age).toBe('3 dni');
     expect(task?.to).toBe('/dni/sess-stale');
@@ -99,7 +99,7 @@ describe('wiek sprawy jest własną kolumną', () => {
 describe('treść wiersza', () => {
   it('flaga blokująca mówi o SKUTKU, nie tylko o typie', () => {
     const task = todoTasks(attention(), NOW, DAY).find((t) => t.kind === 'flag');
-    expect(task?.name).toBe('session_overlap · SP-KLM');
+    expect(task?.name).toBe('aircraft_overlap · SP-KLM');
     expect(task?.meta).toContain('karta dnia nie powstanie');
     expect(task?.to).toBe('/flagi/1046');
   });
@@ -109,15 +109,18 @@ describe('treść wiersza', () => {
     // flagę, która nadal wymaga rozstrzygnięcia.
     const data = attention();
     data.flags[0]!.reg = null;
-    expect(todoTasks(data, NOW, DAY)[0]?.name).toBe('session_overlap · ac-stale');
+    expect(todoTasks(data, NOW, DAY)[0]?.name).toBe('aircraft_overlap · ac-stale');
   });
 
-  it('dzień bez zamknięcia NIE obiecuje odliczania okna korekty', () => {
-    // Sprostowanie mockupu: okno korekty otwiera się dopiero po `day_close` i liczy
-    // od niego, więc dzień, który nigdy się nie zamknął, żadnego okna nie ma.
+  it('nieoddany samolot NIE obiecuje odliczania okna korekty', () => {
+    // Sprostowanie mockupu, po etapie B3 podwójne: okno korekty kotwiczy się
+    // w ZAMKNIĘCIU WZLOTU (`leg_close`), więc biegnie niezależnie od zdania maszyny,
+    // a samo zdanie jest opcjonalne i niczego nie odlicza.
     const task = todoTasks(attention(), NOW, DAY).find((t) => t.kind === 'open_day');
-    expect(task?.meta).toContain('stoi otwarty dłużej niż doba');
+    expect(task?.name).toContain('Samolot nieoddany');
+    expect(task?.meta).toContain('stoi zajęta dłużej niż dobę');
     expect(task?.meta).not.toContain('mija za');
+    expect(task?.meta).not.toContain('okno');
   });
 });
 

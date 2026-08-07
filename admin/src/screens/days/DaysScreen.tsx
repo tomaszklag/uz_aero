@@ -1,9 +1,17 @@
 /**
- * UZ Aero — panel: LISTA DNI LOTNYCH (`design/admin/A02-dni.html`).
+ * UZ Aero — panel: LISTA SESJI SAMOLOTÓW (`design/admin/A02-dni.html`).
  *
  * Jeden wiersz = jedna sesja (`session_claim` → `day_close`). Wszystkie liczby są
  * projekcją `projectSession` przepisaną przez serwer — panel je FORMATUJE i niczego
  * nie przelicza.
+ *
+ * ══ „DZIEŃ LOTNY" TO NIE JEST JEDNOSTKA TEJ LISTY (§3.6a) ══
+ * Nazwa ekranu i mockupu jest historyczna. Sesja to odcinek PRZEJĘCIE → ZDANIE jednej
+ * maszyny, a po przebudowie flow bywa krótka: dwie zmiany dziennie na samolocie to
+ * norma, więc jedna doba UTC daje dwa wiersze o tej samej dacie i tej samej rejestracji
+ * (odróżnia je godzina przejęcia — patrz `daysRows.dayCell`). Klamra służby nie jest
+ * właściwością żadnego z tych wierszy: należy do PILOTA i potrafi objąć kilka maszyn,
+ * więc kolumny „duty" tu nie ma i nie może być.
  *
  * Ekran jest `.tsx` BEZ arytmetyki i bez decyzji o treści: każdy napis, plakietka
  * i podpis pochodzą z czystych modułów obok (`daysRows`, `daysFilters`, `daysPages`,

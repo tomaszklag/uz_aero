@@ -51,37 +51,44 @@ export function exportTiles(counts: ExportCountsDto | undefined): ExportTile[] {
       label: 'Zablokowane flagą',
       value: show(counts?.blocked),
       tone: 'red',
-      note: 'otwarta session_overlap trzyma dzień poza dokumentem klubu',
+      note: 'otwarta aircraft_overlap wycina tę sesję z karty doby',
     },
     {
       label: 'Bez karty',
       value: show(counts?.missing),
       tone: 'red',
-      note: 'dzień zamknięty, a eksport nie doszedł do skutku',
+      note: 'samolot zdany, a eksport nie doszedł do skutku',
     },
   ];
 }
 
 /**
- * Baner „karty nadpisane przez drugą sesję tego dnia" — `null`, gdy nie ma ani jednej.
+ * Baner „karty nadpisane przez inną sesję" — `null`, gdy nie ma ani jednej.
  *
- * Zdanie mówi też, czego system NIE rozstrzygnął, bo ta wada nie ma poprawki po stronie
- * panelu: konwencja nazw kart (`YYYY-MM-DD_SP-XXX`) jest lustrem ekranu 11 telefonu
- * i częścią §4.7, więc scalanie sesji w jedną kartę albo wpuszczenie sesji do nazwy jest
- * decyzją produktową, a nie zmianą w mapperze. Do czasu jej podjęcia monitor ma
- * przynajmniej nie twierdzić, że obie karty są w arkuszu.
+ * ══ ZNACZENIE TEGO BANERA ZMIENIŁO SIĘ 2026-08-07 ══
+ * Opisywał OTWARTĄ decyzję produktową: dwie zamknięte zmiany jednego samolotu budowały
+ * karty o tej samej nazwie i druga nadpisywała pierwszą. **Decyzja zapadła: karta jest
+ * DOBĄ SAMOLOTU** (§4.7), a zmiany są jej wierszami — więc ta wada zniknęła
+ * z konstrukcji, zamiast zostać opisana.
+ *
+ * Baner zostaje, bo ma dziś DWA realne znaczenia. Pierwsze: sesja wycięta z karty otwartą
+ * flagą przestaje być opisana treścią leżącą pod tą nazwą, a doba idzie do arkusza bez
+ * niej. Drugie i ważniejsze — jest SYGNALIZATOREM: zapalenie się go dla dwóch sesji TEJ
+ * SAMEJ doby znaczyłoby, że znów powstają dwie karty jednego dokumentu, czyli że regres
+ * wrócił.
  */
 export function overwrittenNotice(counts: ExportCountsDto | undefined): string | null {
   const n = counts?.overwritten ?? 0;
   if (n === 0) return null;
   return (
-    `${n} ${plural(n, 'dzień ma kartę nadpisaną', 'dni ma karty nadpisane', 'dni ma karty nadpisane')} ` +
-    'przez INNĄ sesję tego samego dnia i samolotu. Nazwa karty niesie dzień i samolot, ale nie ' +
-    'sesję, a exported_sheets trzyma jedną treść na nazwę — więc zmiana popołudniowa nadpisała ' +
-    'kartę porannej i tamtego dnia pracy nie ma dziś w dokumencie klubu. Dziennik eksportu ' +
-    'pamięta obie wysyłki, bo jest append-only. Czy karta dzienna ma obejmować wszystkie sesje ' +
-    'samolotu, czy nazwa ma nieść sesję — to jest otwarta decyzja produktowa dotykająca też ' +
-    'telefonu (§4.7), więc panel jej nie przesądza.'
+    `${n} ${plural(n, 'sesja ma kartę nadpisaną', 'sesje mają karty nadpisane', 'sesji ma karty nadpisane')} ` +
+    'przez INNY eksport tej samej nazwy. Od 2026-08-07 karta jest DOBĄ SAMOLOTU (§4.7), więc ' +
+    'zmiana poranna i popołudniowa są WIERSZAMI jednego dokumentu i nadpisywać się nie mają ' +
+    'prawa — normalną przyczyną tego stanu jest sesja wycięta z karty otwartą flagą ' +
+    'aircraft_overlap: doba poszła do arkusza bez niej, więc treść pod tą nazwą jej nie ' +
+    'opisuje. Jeśli natomiast nadpisują się DWIE sesje tej samej doby i maszyny, to znaczy, ' +
+    'że znów powstają dwie karty jednego dokumentu — i to jest usterka do zgłoszenia. ' +
+    'Dziennik eksportu pamięta obie wysyłki, bo jest append-only.'
   );
 }
 
@@ -115,25 +122,25 @@ export function exportChips(counts: ExportCountsDto | undefined): ExportChip[] {
       scope: 'blocked',
       label: 'Zablokowane',
       count: counts?.blocked,
-      title: 'Otwarta flaga session_overlap trzyma kartę poza arkuszem.',
+      title: 'Otwarta flaga aircraft_overlap wycina tę sesję z karty doby.',
     },
     {
       scope: 'missing',
       label: 'Bez karty',
       count: counts?.missing,
-      title: 'Dzień zamknięty, a karta nie powstała — eksport nie doszedł.',
+      title: 'Samolot zdany, a karta nie powstała — eksport nie doszedł.',
     },
     {
       scope: 'waiting',
       label: 'Czekają',
       count: counts?.waiting,
-      title: 'Dni bez day_close — karta powstaje dopiero po zamknięciu.',
+      title: 'Sesje bez day_close — wiersz karty domyka zdanie samolotu.',
     },
     {
       scope: 'impossible',
-      label: 'Bez preflightu',
+      label: 'Bez claimu',
       count: counts?.impossible,
-      title: 'Sesje bez duty startu — karty nie da się nazwać.',
+      title: 'Sesje bez session_claim — karty nie da się nazwać.',
     },
   ];
 }

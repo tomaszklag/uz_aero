@@ -77,7 +77,7 @@ export function DayScreen() {
 
   const header = dayHeader(session, state);
   const banner = dayBanner(session, state, now);
-  const correction = correctionAccess(state, panelSession?.capabilities);
+  const correction = correctionAccess(panelSession?.capabilities);
   const rows = timelineRows(timeline);
   const flights = flightRows(state);
   const openFlags = flags.filter((flag) => flag.status === 'open');

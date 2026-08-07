@@ -98,7 +98,7 @@ export interface FleetNowRow {
   rowClass: string;
   /** Kto trzyma samolot albo dlaczego nikt. */
   who: string;
-  /** „claim 07:58 · duty 6:24 · EPKK · dual: M. Bąk" — jedna linia opisu. */
+  /** „claim 07:58 · zajęty 6:24 · EPKK · dual: M. Bąk" — jedna linia opisu. */
   since: string;
   /** Ostatni znany odczyt licznika, sformatowany WG KONFIGURACJI jednostki. */
   mh: string;
@@ -194,13 +194,16 @@ function sinceOf(item: DashboardAircraftDto, nowMs: number): string {
   }
 
   const parts: string[] = [];
-  if (engine.dutyStart == null) {
-    // Sesja bez `preflight_confirm` to realny stan, nie usterka — dzień nie ma wtedy
-    // ani daty, ani duty startu, więc nie ma czego liczyć.
-    parts.push('claim bez preflightu');
+  if (engine.claimedAt == null) {
+    // Sesja bez `session_claim` to rejestr NIEKOMPLETNY (§4.4 mówi, że każda sesja
+    // zaczyna się claimem) — nie ma wtedy ani daty, ani czego liczyć.
+    parts.push('claim bez daty w rejestrze');
   } else {
-    parts.push(`claim ${timeUtc(engine.dutyStart)}`);
-    parts.push(`duty ${duration(Math.max(0, nowMs - engine.dutyStart))}`);
+    parts.push(`claim ${timeUtc(engine.claimedAt)}`);
+    // „zajęty", nie „duty": ta liczba mierzy, jak długo MASZYNA jest w czyichś rękach.
+    // Służba pilota jest jego klamrą i potrafi objąć kilka maszyn (§3.6a), więc na
+    // wierszu floty byłaby pomyłką kategorii.
+    parts.push(`zajęty ${duration(Math.max(0, nowMs - engine.claimedAt))}`);
   }
   if (engine.departureIcao != null) parts.push(engine.departureIcao);
   if (engine.dualId != null) parts.push(`dual: ${engine.dualName ?? engine.dualId}`);

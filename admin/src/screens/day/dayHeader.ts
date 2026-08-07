@@ -22,16 +22,20 @@ export interface DayHeader {
 }
 
 /**
- * Tytuł bierze datę z MELDUNKU, bo to on wyznacza dzień lotny — i tak samo działa
- * filtr zakresu na liście. Sesja bez `preflight_confirm` nie ma daty i panel to mówi,
+ * Tytuł bierze datę z CHWILI PRZEJĘCIA, bo to ona przypisuje sesję do doby — i tak samo
+ * działa filtr zakresu na liście. Sesja bez `session_claim` nie ma daty i panel to mówi,
  * zamiast podstawiać datę pierwszego zdarzenia albo „dzisiaj".
+ *
+ * Karta opisuje SESJĘ SAMOLOTU (przejęcie → zdanie), nie służbę pilota: ta należy do
+ * PILOTA i potrafi objąć kilka maszyn (§3.6a), więc na karcie jednej z nich byłaby
+ * pomyłką kategorii. Stąd też brak czasu służby w podsumowaniu (`daySummary.ts`).
  */
 export function dayHeader(session: SessionListItemDto, state: SessionState): DayHeader {
   const reg = session.reg ?? session.aircraftId;
   const title =
-    session.dutyStart == null
-      ? `DZIEŃ BEZ MELDUNKU · ${reg}`
-      : `${dateUtcShort(session.dutyStart)} · ${reg}`;
+    session.claimedAt == null
+      ? `SESJA BEZ CLAIMU · ${reg}`
+      : `${dateUtcShort(session.claimedAt)} · ${reg}`;
 
   const crew = [
     `PIC ${session.picName ?? session.picId}${session.picCode == null ? '' : ` (${session.picCode})`}`,
@@ -90,12 +94,12 @@ export function dayBanner(
       : `ostatnia paczka dotarła ${utcStamp(at)} UTC (${relativeAge(nowMs - at)} temu)`;
     return {
       tone: 'status',
-      title: 'Dzień otwarty — telefon dosyła zdarzenia.',
+      title: 'Samolot nieoddany — telefon dosyła zdarzenia.',
       body:
         `Sesja nie ma jeszcze \`day_close\`; ${last}. Liczby poniżej są stanem na ostatni sync, ` +
-        'nie stanem końcowym — dojdą kolejne loty, tankowania i odczyt końcowy. Odczyty „koniec" ' +
-        '(MH, FOB, duty) wypełni dopiero zamknięcie dnia; do tego czasu panel pokazuje „—" ' +
-        'zamiast zgadywać, a karta arkusza w ogóle nie powstaje.',
+        'nie stanem końcowym — dojdą kolejne wzloty, tankowania i odczyt końcowy. Odczyty ' +
+        '„koniec" (MH, FOB) wypełni dopiero zdanie samolotu; do tego czasu panel pokazuje „—" ' +
+        'zamiast zgadywać, a wiersz tej zmiany w karcie doby zostaje otwarty.',
     };
   }
 
@@ -103,12 +107,13 @@ export function dayBanner(
   const age = state.closedAt == null ? null : relativeAge(nowMs - state.closedAt);
   return {
     tone: 'warn',
-    title: `Dzień zamknięty ${closed}${age == null ? '' : ` (${age} temu)`}.`,
+    title: `Samolot zdany ${closed}${age == null ? '' : ` (${age} temu)`}.`,
     body:
-      'Przez dobę od zamknięcia poprawia sam pilot, na ekranie 04C aplikacji. Potem zmianę ' +
-      'dopisuje wyłącznie administrator — nowym zdarzeniem `event_correction`, bo rejestr jest ' +
-      'append-only i nic się w nim nie nadpisuje. Panel nie odlicza tego okna za Ciebie: ' +
-      'o tym, czy korekta jest jeszcze możliwa, rozstrzyga serwer w chwili zapisu.',
+      'Okno samodzielnej korekty pilota liczy się od ZAMKNIĘCIA WZLOTU (`leg_close`), nie od ' +
+      'zdania samolotu — każdy wzlot ma własną dobę, a wzlot niepotwierdzony kotwiczy się ' +
+      'w wyłączeniu silnika. Administrator dopisuje zmianę zawsze, nowym zdarzeniem ' +
+      '`event_correction`, bo rejestr jest append-only i nic się w nim nie nadpisuje. Panel ' +
+      'nie odlicza tych okien za Ciebie: kolizję nazywa serwer w chwili podglądu korekty.',
   };
 }
 
@@ -131,20 +136,24 @@ export interface CorrectionAccess {
  * zostawia widoczny powód nad nimi. Wcześniej zwracała adres `/dni/<sesja>/korekta`,
  * który nie znał celu i prowadził w ekran „w budowie".
  *
- * Dwa warunki, oba egzekwowane też przez serwer, więc to jest podpowiedź dla UI,
+ * ══ ZOSTAŁ JEDEN WARUNEK, I TO JEST ZMIANA MODELU ══
+ * Do etapu D warunki były dwa; drugi brzmiał „dzień musi być zamknięty" i lustrzył
+ * bramkę serwera `400 day_open`. **Bramka znikła 2026-08-07** (decyzja użytkownika):
+ * po §3.6a brak `day_close` przestał znaczyć „dzień trwa", bo zdanie samolotu jest
+ * OPCJONALNE — sesja sprzed tygodnia wygląda tak samo jak ta z dzisiejszego poranka,
+ * więc warunek odmawiałby korekty przede wszystkim tam, gdzie jest potrzebna.
+ * Administrator NIE JEST NIGDY BLOKOWANY; kolizję z pilotem nazywa baner nad formularzem
+ * (`correction/correctionWarnings.ts`), a decyzję podejmuje człowiek.
+ *
+ * Jedyny warunek, egzekwowany też przez serwer — więc to jest podpowiedź dla UI,
  * a nie zabezpieczenie:
  *
- *  1. **Zdolność `events.correct` ma TYLKO administrator** — szef wyszkolenia czyta
- *     dni i zamyka flagi, ale nie dopisuje zdarzeń do cudzego rejestru. Powód zostaje
- *     dla niego WIDOCZNY: ukrycie zmusiłoby go do zgadywania, czy funkcji nie ma
- *     w produkcie, czy nie ma jej on.
- *  2. **Dzień musi być zamknięty.** Przy otwartym pilot ma pełne prawo zapisu
- *     i poprawia sam, a korekta administratora nie wraca na telefon (sync jest
- *     jednokierunkowy) — więc wejście w otwarty dzień rozjechałoby dwa żywe obrazy
- *     tej samej sesji. Serwer odmawia tego wprost (`day_open`).
+ *  • **Zdolność `events.correct` ma TYLKO administrator** — szef wyszkolenia czyta
+ *    dni i zamyka flagi, ale nie dopisuje zdarzeń do cudzego rejestru. Powód zostaje
+ *    dla niego WIDOCZNY: ukrycie zmusiłoby go do zgadywania, czy funkcji nie ma
+ *    w produkcie, czy nie ma jej on.
  */
 export function correctionAccess(
-  state: SessionState,
   capabilities: readonly Capability[] | undefined,
 ): CorrectionAccess {
   if (!can(capabilities, 'events.correct')) {
@@ -152,14 +161,6 @@ export function correctionAccess(
       label: 'Korekta administratora',
       allowed: false,
       reason: denialReason('events.correct'),
-    };
-  }
-
-  if (!state.closed) {
-    return {
-      label: 'Korekta administratora',
-      allowed: false,
-      reason: 'Dzień jeszcze trwa — do zamknięcia poprawia pilot',
     };
   }
 

@@ -88,7 +88,7 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     bo `dutyEnd` po §3.6a nie odróżnia już sesji trwającej od zdanej.
   - **ETAP C DOMKNIĘTY** — aplikacja jest spójnie klikalna: 01 → 02/02e/02a → kokpit →
     09 → 09b → 01.
-- **Etap D** serwer + panel — w toku:
+- **Etap D ✅ DOMKNIĘTY** serwer + panel:
   - **D1 ✅** `claim_time` = czas `session_claim` (migracja 21 z backfillem); pole DTO
     `dutyStart` → `claimedAt`. Przy okazji: walidacja payloadów nie znała `leg_close`,
     więc potwierdzenia wzlotów wracały jako `400 bad_payload` — cały etap C nie miał
@@ -100,8 +100,26 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
   - **D4 ✅** `session_overlap` → `aircraft_overlap` (bramka arkusza) + `pilot_overlap`
     (nakładka grafiku, nowy `server/src/domain/pilotOverlap.ts`), migracja 22.
     Zetknięcie sesji co do minuty NIE jest nakładką — to normalny dzień po §3.6a.
-  - **D2** bramka `400 day_open`, **D6** ekrany panelu (+ przemianowanie `dutyStart`
-    → `claimedAt` po stronie `admin/`, bez tego panel się nie zbuduje).
+  - **D2 ✅** bramka `400 day_open` **USUNIĘTA** (decyzja 2026-08-07): administrator może
+    edytować ZAWSZE. `DayStillOpen` i `reason: 'day_open'` znikły z komendy i query
+    korekt, trasa podglądu ma dziś JEDNĄ odmowę (404). Zamiast odmowy jedzie
+    `warnings` — `correctionWarnings()` w `admin/correctionCandidate.ts` oddaje miękkie
+    naruszenia domeny (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`)
+    i w podglądzie, i w wyniku zapisu. Panel rysuje z nich baner nad formularzem
+    (`screens/correction/correctionWarnings.ts`), świadomie BEZ pola, z którego dałoby
+    się wyprowadzić wyszarzenie przycisku — inaczej bramka wraca tylnymi drzwiami.
+  - **D6 ✅** panel pod nowy model. `dutyStart` → `claimedAt` w `admin/` (bez tego panel
+    się nie budował). Napisy poszły za nazwami: „duty 6:24" → „zajęty 6:24" na pulpicie,
+    „Dzień otwarty" → „Samolot zajęty" na A02, kafel „Czas służby (duty)" na A02a
+    zastąpiony przez „Samolot zajęty" (przejęcie → zdanie) — służba należy do PILOTA
+    i obejmuje kilka maszyn, więc na karcie JEDNEJ sesji była pomyłką kategorii.
+    Kolumna „Dzień" na A02 i A05 niesie teraz godzinę przejęcia, bo dwie zmiany dnia
+    dzielą datę, a na A05 także NAZWĘ KARTY (karta = doba samolotu). Skrzynka flag
+    rozróżnia `aircraft_overlap` (bramka arkusza) od `pilot_overlap` (grafik pilota).
+    Oś zdarzeń pokazuje `noFlightReason` z 09C.
+  - **Rozjazd z mockupami `design/admin/` jest ŚWIADOMY**: zostały przy modelu sprzed
+    2026-08-06 (mówią „Duty", „Dzień otwarty", `session_overlap`). Kod prowadzi,
+    mockupy panelu czekają na osobne zadanie.
 
 **Twardy warunek każdego commitu etapu B:** strumień `schema_version 1` musi projektować się
 BEZ ZMIANY WYNIKÓW. Strażnikiem jest kanoniczny dzień 22 JUNE w `app/src/__tests__/projections.test.ts`

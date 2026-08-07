@@ -41,7 +41,7 @@ describe('flagRows', () => {
     // sortował po swojemu, młodsza sprawa blokująca spadłaby pod starszą, a karta
     // dnia stojąca poza arkuszem czekałaby na dole listy.
     const items = [
-      flag({ id: 1046, type: 'session_overlap', blocksExport: true, createdAt: hoursAgo(32) }),
+      flag({ id: 1046, type: 'aircraft_overlap', blocksExport: true, createdAt: hoursAgo(32) }),
       flag({ id: 1041, createdAt: hoursAgo(75) }),
       flag({ id: 1054, createdAt: hoursAgo(2) }),
     ];
@@ -50,16 +50,16 @@ describe('flagRows', () => {
   });
 
   it('kolumna „Skutek" bierze WYŁĄCZNIE `blocksExport` z serwera', () => {
-    // Nie odtwarzamy warunku „session_overlap blokuje" po stronie panelu: predykat
+    // Nie odtwarzamy warunku „aircraft_overlap blokuje" po stronie panelu: predykat
     // pochodzi z bramki eksportera i tylko tam ma prawo mieszkać. Panel mówiący
     // „blokuje", gdy eksporter przepuszcza, byłby rozjazdem niewidocznym z żadnej
     // ze stron osobno.
-    const blocking = flagRows([flag({ type: 'session_overlap', blocksExport: true })], NOW)[0]!;
+    const blocking = flagRows([flag({ type: 'aircraft_overlap', blocksExport: true })], NOW)[0]!;
     expect(blocking.effect).toEqual({ tone: 'red', text: 'Blokuje kartę', dot: true });
 
     // Ten sam TYP, ale rozwiązany — serwer mówi `blocksExport: false` i to wygrywa.
     const resolved = flagRows(
-      [flag({ type: 'session_overlap', status: 'resolved', blocksExport: false, resolvedAt: hoursAgo(1) })],
+      [flag({ type: 'aircraft_overlap', status: 'resolved', blocksExport: false, resolvedAt: hoursAgo(1) })],
       NOW,
     )[0]!;
     expect(resolved.effect.tone).toBe('green');

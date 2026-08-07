@@ -449,11 +449,17 @@ administrator nie miał czym jej wprowadzić.
 > łańcucha trzeba będzie przeliczać albo świadomie zdecydować, że nie, i uzasadnić to
 > na nowo.
 - **Odmowy są wariantami wyniku, nie wyjątkami na granicy HTTP** (wzorzec `ResolveFlagOutcome`):
-  404 nieznana sesja, **400 `day_open`** (dzień otwarty = pilot poprawia sam na 04c, panel
-  nie ma tu czego naprawiać — §6.5), **422 `rule_violation`** z listą naruszeń. Rozdział 400
-  od 422 jest celowy: 400 znaczy „popraw formularz", 422 — „domena odmawia i oto powód".
-  To pierwsze 422 w repo; wcześniej nie było endpointu, który odrzucałby poprawnie
-  zbudowane żądanie regułą domenową.
+  404 nieznana sesja, **422 `rule_violation`** z listą naruszeń. Rozdział 400 od 422 jest
+  celowy: 400 znaczy „popraw formularz", 422 — „domena odmawia i oto powód". To pierwsze
+  422 w repo; wcześniej nie było endpointu, który odrzucałby poprawnie zbudowane żądanie
+  regułą domenową.
+  > ⚠ **ETAP D (2026-08-07): `400 day_open` USUNIĘTE.** Brzmiało „dzień otwarty = pilot
+  > poprawia sam na 04c". Po §3.6a zdanie samolotu jest OPCJONALNE, więc brak `day_close`
+  > przestał znaczyć „dzień trwa" i bramka odmawiałaby korekty przede wszystkim tam, gdzie
+  > jest potrzebna. Administrator nie jest NIGDY blokowany; kolizja z pilotem jedzie jako
+  > `warnings` (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`) w ciele
+  > odpowiedzi 200 — i podglądu, i zapisu. Panel rysuje z nich baner nad formularzem,
+  > świadomie bez blokowania przycisku.
 
 **Przekrój 2 panelu — czytanie dni, zrobione 2026-07-31.** Trzeci wdrożony przekrój
 pionowy (mockupy `A02-dni.html`, `A02a-dzien.html`, `A03-flagi.html`, `A11-konserwacja.html`;

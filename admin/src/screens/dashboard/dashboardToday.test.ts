@@ -56,9 +56,11 @@ describe('karta prowadzi do dni, które policzyła', () => {
 });
 
 describe('doba bez lotów', () => {
-  it('mówi o braku dni lotnych, a nie wypisuje samych zer bez komentarza', () => {
+  it('mówi o braku PRZEJĘĆ, a nie wypisuje samych zer bez komentarza', () => {
+    // Jednostką jest sesja, nie „dzień lotny": jedna maszyna bierze w dobie dwie
+    // zmiany, a jeden pilot potrafi objąć dwie maszyny jedną służbą (§3.6a).
     const view = dayView(totals({ sessions: 0, aircraft: 0, flights: 0, blockMs: 0, eventsAccepted: 0 }));
-    expect(view.note).toContain('Żaden dzień lotny nie ma w tej dobie duty startu.');
+    expect(view.note).toContain('Żadnej maszyny nie przejęto w tej dobie.');
     // Zera SĄ tu poprawne: serwer je policzył i wie, że nic nie było.
     expect(view.cells[1]?.value).toBe('0');
     expect(view.cells[2]?.value).toBe('0:00');

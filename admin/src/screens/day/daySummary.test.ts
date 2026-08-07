@@ -1,10 +1,12 @@
 /**
  * UZ Aero — panel: kafle i karty karty dnia (moduł czysty).
  *
- * Najważniejsza reguła tego pliku nie jest widoczna w typach: **dzień otwarty pokazuje
- * „—" i nic poza tym.** Sesja bez `day_close` nie ma odczytów końcowych, więc nie ma
- * zużycia paliwa, delty motogodzin ani czasu służby — a panel nie ekstrapoluje ich ani
- * z ostatniego odczytu, ani z tempa dnia, ani z „teraz".
+ * Dwie reguły, których nie widać w typach:
+ *  • **samolot nieoddany pokazuje „—" i nic poza tym** — sesja bez `day_close` nie ma
+ *    odczytów końcowych, więc nie ma zużycia paliwa, delty motogodzin ani domkniętego
+ *    czasu zajęcia; panel nie ekstrapoluje ich ani z ostatniego odczytu, ani z „teraz";
+ *  • **na tej karcie NIE MA czasu służby** — karta opisuje sesję jednej maszyny,
+ *    a służba należy do pilota i potrafi objąć kilka maszyn (§3.6a).
  */
 
 import type { SessionState } from '@uzaero/domain';
@@ -31,8 +33,13 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     client: 'SKY CAMP',
     notes: null,
     mhFormat: 'decimal',
-    dutyStart: at(5, 45),
-    dutyEnd: at(13, 20),
+    // Chwila PRZEJĘCIA maszyny — oś samolotu. Klamra służby (`dutyStart`/`dutyEnd`)
+    // jest po §3.6a opcjonalna, należy do pilota i tej karty nie dotyczy; fixture
+    // zostawia ją pustą, bo tak wygląda ZWYKŁA sesja po przebudowie flow.
+    claimedAt: at(5, 45),
+    preflightAt: at(5, 45),
+    dutyStart: null,
+    dutyEnd: null,
     engineRunning: false,
     inFlight: false,
     // Doszło do `SessionState` razem z detekcją kołowania — dzień zamknięty nie kołuje.
@@ -71,10 +78,9 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
   };
 }
 
-/** Ten sam dzień PRZED zamknięciem: brak odczytów końcowych, jeden cykl trwa. */
+/** Ta sama sesja PRZED zdaniem maszyny: brak odczytów końcowych, jeden cykl trwa. */
 const openState = (): SessionState =>
   closedState({
-    dutyEnd: null,
     engineRunning: true,
     openEngineStartAt: at(11, 56),
     fuel: { startL: 780, addedL: 379, endL: null, consumedL: null, lastReadingL: 788 },
@@ -106,13 +112,21 @@ describe('dayTiles — dzień zamknięty', () => {
     expect(tile(closedState(), 'Czas lotu').value).toBe('03:35');
   });
 
-  it('czas służby to UPŁYW między meldunkiem a przekazaniem', () => {
-    // `SessionState` nie ma pola `dutyMs`, bo duty nie wchodzi do żadnego bilansu.
-    // Odjęcie dwóch stempli jest tego samego rodzaju działaniem, co wiek sprawy
-    // w skrzynce flag — prezentacją, nie drugą wersją liczby dnia.
-    const duty = tile(closedState(), 'Czas służby (duty)');
-    expect(duty.value).toBe('07:35');
-    expect(duty.note).toContain('05:45:00 → 13:20:00 UTC');
+  it('czas zajęcia maszyny to UPŁYW między przejęciem a zdaniem', () => {
+    // ZASTĘPUJE kafel „Czas służby (duty)" z 2026-08-01. Tamten był pomyłką kategorii:
+    // karta opisuje sesję JEDNEJ maszyny, a służba należy do PILOTA i potrafi objąć
+    // kilka maszyn (§3.6a) — więc jej upływu nie da się z tej karty uczciwie policzyć.
+    // Do tego `dutyStart`/`dutyEnd` są dziś opcjonalne i w zwykłym dniu puste, więc
+    // stary kafel pokazywałby kreskę przy poprawnie przeprowadzonej sesji.
+    const held = tile(closedState(), 'Samolot zajęty');
+    expect(held.value).toBe('07:37');
+    expect(held.note).toContain('05:45:00 → 13:22:00 UTC');
+  });
+
+  it('NIE MA kafla czasu służby — to nie jest wielkość sesji', () => {
+    expect(dayTiles(closedState(), 'decimal').map((t) => t.label)).not.toContain(
+      'Czas służby (duty)',
+    );
   });
 
   it('bilans startów i lądowań ma TON, bo to on jest treścią kafla', () => {
@@ -130,8 +144,8 @@ describe('dayTiles — dzień zamknięty', () => {
   });
 });
 
-describe('dayTiles — DZIEŃ OTWARTY: „—" i nic poza tym', () => {
-  it('paliwo zużyte, delta MH i czas służby są puste, a przypis mówi co je wypełni', () => {
+describe('dayTiles — SAMOLOT NIEODDANY: „—" i nic poza tym', () => {
+  it('paliwo zużyte, delta MH i czas zajęcia są puste, a przypis mówi co je wypełni', () => {
     const open = openState();
 
     expect(tile(open, 'Paliwo zużyte').value).toBe('—');
@@ -140,12 +154,12 @@ describe('dayTiles — DZIEŃ OTWARTY: „—" i nic poza tym', () => {
     expect(tile(open, 'Δ motogodzin').value).toBe('—');
     expect(tile(open, 'Δ motogodzin').note).toContain('odczytu końcowego');
 
-    const duty = tile(open, 'Czas służby (duty)');
-    expect(duty.value).toBe('—');
-    expect(duty.note).toContain('koniec poda');
+    const held = tile(open, 'Samolot zajęty');
+    expect(held.value).toBe('—');
+    expect(held.note).toContain('maszyny jeszcze nie zdano');
   });
 
-  it('to, co JUŻ dotarło, pokazuje normalnie — otwarty ≠ niekompletny', () => {
+  it('to, co JUŻ dotarło, pokazuje normalnie — nieoddany ≠ niekompletny', () => {
     // Sumy dnia otwartego są prawdziwe: opisują to, co przyszło. Ukrycie ich byłoby
     // drugim rodzajem kłamstwa, obok ekstrapolacji.
     expect(tile(openState(), 'Czas blokowy').value).toBe('05:53');
@@ -227,22 +241,32 @@ describe('dropRows', () => {
 describe('sessionRows', () => {
   const timeline: TimelineEntryDto[] = [];
 
-  it('dzień otwarty nie udaje zamknięcia i nie ma karty arkusza', () => {
+  it('sesja otwarta nie udaje zdania maszyny i nie ma karty arkusza', () => {
     const rows = sessionRows(session({ exportRevision: null }), openState(), timeline, NOW);
-    expect(row(rows, 'Zamknięcie').value).toBe('dzień trwa');
+    expect(row(rows, 'Zdanie samolotu').value).toBe('maszyna wciąż zajęta');
     expect(row(rows, 'Karta arkusza').value).toBe('brak');
-    // Wiek zamknięcia nie istnieje, dopóki nie ma zamknięcia.
-    expect(rows.some((r) => r.label === 'Zamknięty przed')).toBe(false);
+    // Wiek zdania nie istnieje, dopóki nie ma zdania.
+    expect(rows.some((r) => r.label === 'Zdany przed')).toBe(false);
   });
 
-  it('dzień zamknięty podaje stempel UTC i WIEK, ale nie odlicza okna korekty', () => {
+  it('sesja zdana podaje stempel UTC i WIEK, ale nie odlicza okna korekty', () => {
     // Próg doby jest wartością domeny (`rules/tolerances.ts`), a panelowi wolno
     // importować z domeny wyłącznie typy — kopia progu tutaj rozjechałaby się po cichu
-    // z regułą, którą serwer naprawdę egzekwuje przy zapisie.
+    // z regułą, którą serwer naprawdę egzekwuje przy zapisie. Po B3 okno i tak nie
+    // kotwiczy się w tym stemplu, tylko w zamknięciu WZLOTU.
     const rows = sessionRows(session(), closedState(), timeline, NOW);
-    expect(row(rows, 'Zamknięcie').value).toBe('30 JUL 2026 13:22:00');
-    expect(row(rows, 'Zamknięty przed').value).toBe('1 dzień 1 h');
+    expect(row(rows, 'Zdanie samolotu').value).toBe('30 JUL 2026 13:22:00');
+    expect(row(rows, 'Zdany przed').value).toBe('1 dzień 1 h');
     expect(row(rows, 'Karta arkusza').value).toBe('rewizja 2');
+  });
+
+  it('wiersz tożsamości mówi o PRZEJĘCIU, nie o meldunku', () => {
+    // „Meldunek · duty start" opisywał wielkość, która po §3.6a jest opcjonalna
+    // i należy do pilota, a nie do tej sesji. Zadeklarowaną godzinę widać na osi
+    // zdarzeń przy `preflight_confirm` — tam, gdzie jest treścią zdarzenia.
+    const rows = sessionRows(session(), closedState(), timeline, NOW);
+    expect(row(rows, 'Przejęcie samolotu').value).toBe('30 JUL 2026 05:45:00');
+    expect(rows.some((r) => r.label.toLowerCase().includes('duty'))).toBe(false);
   });
 
   it('nieczytelny stempel paczki mówi „—" zamiast „NaN"', () => {

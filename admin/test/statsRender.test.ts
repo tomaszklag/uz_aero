@@ -79,8 +79,10 @@ describe('statystyki: liczby serwera docierają do DOM-u', () => {
     expect(html).toContain('3 samoloty · 5 pilotów · 30 dni kalendarzowych.');
   });
 
-  it('podtytuł mówi o dniach otwartych POZA zakresem', () => {
-    expect(html).toContain('2 dni jeszcze otwarte są celowo poza zakresem');
+  it('podtytuł mówi o SESJACH otwartych POZA zakresem', () => {
+    // Jednostką jest sesja (przejęcie → zdanie), nie „dzień lotny" — po §3.6a jedna
+    // maszyna bierze w dobie dwie zmiany, a jeden pilot potrafi objąć dwie maszyny.
+    expect(html).toContain('2 sesje są celowo poza zakresem');
   });
 
   it('wykres: polyline, kropki dni zerowych i podpisy osi', () => {

@@ -11,19 +11,22 @@
 >
 > Cztery miejsca, w których ten dokument prowadzi dziś na minę — opisane w tekście blokami
 > `⚠ ETAP D`:
-> 1. **`claim_time` niesie `dutyStart`** (§7.2, §7.5) — po zmianie będzie `null`; decyzja
->    2026-08-07: `claim_time` = czas `session_claim`.
+> 1. **`claim_time` niesie `dutyStart`** (§7.2, §7.5) — **ZROBIONE (D1)**: `claim_time`
+>    to czas `session_claim` (migracja 21), a pole DTO nazywa się `claimedAt` po obu
+>    stronach drutu, razem z panelem.
 > 2. **Okno korekty od `day_close`** (§6.2) — kotwiczy się teraz w zamknięciu WZLOTU.
-> 3. **Bramka `400 day_open`** (§6.5) — **ROZSTRZYGNIĘTE 2026-08-07: bramka ZNIKA.**
->    „Brak `day_close` = dzień trwa" przestało być prawdą (zdanie samolotu jest opcjonalne),
->    więc bramka odmawiałaby korekty w większości przypadków, w których jest potrzebna.
->    Decyzja użytkownika: **administrator może edytować ZAWSZE**, a przy kolizji dostaje
->    jasne ostrzeżenie i sam decyduje. Domena już tego nie egzekwuje (etap B3): zamiast
->    błędu produkuje ostrzeżenia `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi sesję)
->    i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno pilota jeszcze trwa).
->    **Do zrobienia w etapie D:** usunąć `DayStillOpen` / `reason: 'day_open'` z komendy
->    i query korekt, przestać zwracać `400 day_open` w trasach, a w panelu pokazać te dwa
->    ostrzeżenia jako baner nad formularzem korekty zamiast komunikatu o odmowie.
+> 3. **Bramka `400 day_open`** (§6.5) — **USUNIĘTA (D2, 2026-08-07).** „Brak `day_close`
+>    = dzień trwa" przestało być prawdą (zdanie samolotu jest opcjonalne), więc bramka
+>    odmawiałaby korekty w większości przypadków, w których jest potrzebna. Decyzja
+>    użytkownika: **administrator może edytować ZAWSZE**, a przy kolizji dostaje jasne
+>    ostrzeżenie i sam decyduje.
+>    Wdrożone: `DayStillOpen` i `reason: 'day_open'` zniknęły z `commands/corrections.ts`
+>    i `queries/corrections.ts`, trasa nie zwraca już `400 day_open` (podgląd ma dziś
+>    JEDNĄ odmowę — `404`), a `correctionWarnings()` w `admin/correctionCandidate.ts`
+>    oddaje miękkie naruszenia domeny. Jadą jako `warnings` w `AdminCorrectionPreview`
+>    i w wyniku zapisu; panel rysuje z nich baner nad formularzem
+>    (`admin/src/screens/correction/correctionWarnings.ts` — moduł czysty z testem,
+>    świadomie BEZ pola, z którego dałoby się wyprowadzić blokadę przycisku).
 > 4. **Interwały paliwowe** (§7.7) — lista źródeł odczytu nie zna `leg_close` ani zdania
 >    samolotu; patrz `_main.md.txt` §3.6b.
 > Zakres: `server/` i `packages/domain` — czyli to, co panel konsumuje.
@@ -86,6 +89,8 @@
 > `POST /events` — tamta trasa należy do telefonu i jej single-writer zostaje nietknięty.
 > Odmowy mapujemy 404 / 400 `day_open` / **422 `rule_violation`** (§6.5 mówił tylko o 400
 > dla dnia otwartego; 422 rozdziela „popraw formularz" od „domena odmawia").
+> **Sprostowanie z 2026-08-07 (D2): `400 day_open` już nie istnieje** — zostają 404
+> i 422, a kolizja z pilotem jedzie jako `warnings` w ciele odpowiedzi. Patrz §6.5.
 >
 > **Aktualizacja 2026-08-01 — PODGLĄD korekty (dry-run) WDROŻONY**: `POST
 > /admin/api/sessions/:uuid/corrections/preview` (zdolność `events.correct`),
@@ -1119,8 +1124,16 @@ chroni outbox telefonu (§4.3), za darmo, bez nowego kodu.
 
 ### 6.5 Bramki, które zostają
 
-- sesja **bez** `day_close` → korekta administracyjna odmówiona (`400 day_open`):
-  pilot ma pełne prawo zapisu, więc panel nie ma czego naprawiać (A02b, stan brzegowy);
+> **⚠ ZMIANA (D2, 2026-08-07): bramka `400 day_open` USUNIĘTA.** Pierwszy punkt tej listy
+> brzmiał „sesja bez `day_close` → korekta administracyjna odmówiona (`400 day_open`)".
+> Reguła opierała się na równości „brak zamknięcia = dzień trwa", którą §3.6a unieważnił:
+> zdanie samolotu jest OPCJONALNE, więc sesja sprzed tygodnia wygląda tak samo jak ta
+> z dzisiejszego poranka — bramka odmawiałaby korekty przede wszystkim tam, gdzie jest
+> potrzebna. **Administrator nie jest NIGDY blokowany.** Kolizję opisują miękkie
+> naruszenia domeny (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`), które
+> jadą jako `warnings` w podglądzie i w wyniku zapisu; panel rysuje z nich baner nad
+> formularzem i **nie wyszarza przycisku**. Decyduje człowiek.
+
 - cel korekty musi być w tej sesji i być korygowalnym typem — pilnuje `checkAppend`;
 - odpowiedź niesie `state: SessionState` **po** korekcie (policzony `projectSession`),
   żeby panel odświeżył kartę dnia bez drugiego żądania i bez własnego liczenia.
