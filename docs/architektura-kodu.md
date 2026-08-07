@@ -1065,6 +1065,20 @@ To najważniejsza decyzja w tej warstwie.
 
 Reguła kciuka: *niemożliwe → error; wymagające rozstrzygnięcia przez człowieka → warning*.
 
+**Punkt odniesienia łańcucha MH: `lastKnownMh(state)`, nie `state.mh.start`** (2026-08-07).
+Odkąd `leg_close` niesie odczyt, sesja ma więcej niż jedno wskazanie licznika i porównywanie
+wyłącznie ze stanem przy przejęciu przepuszczało wartość niższą od tej, którą pilot sam
+wpisał wzlot wcześniej — formalnie „wyższą niż na starcie", faktycznie cofnięty licznik.
+Ta sama funkcja jest **wołana przez ekran** (`releaseAircraft.mhRegressionWarning`), bo próg
+ostrzeżenia w arkuszu i próg odrzucenia w komendzie muszą być jedną liczbą: rozjazd wygląda
+dla pilota jak awaria aplikacji, nie jak jego literówka.
+
+**Miękkie, choć wymagane przez ekran: `NO_FLIGHT_WITHOUT_REASON`.** Zdanie samolotu bez
+ani jednego wzlotu i bez powodu (09C) jest flagą, nie odrzuceniem — twarda reguła kasowałaby
+jedyny ślad po tym, że maszyna stała zajęta, czyli dokładnie tę informację, której szuka
+administrator. Wymóg mieszka w ekranie, gdzie kosztuje jedno tapnięcie pilota stojącego
+przy samolocie.
+
 ### Grupy naruszeń (`domain/rules/violations.ts`)
 
 sesja i single-writer · preflight · silnik i lot · paliwo · motogodziny · zrzuty · załoga · wpis ręczny i zamknięcie dnia · zegary.

@@ -1,0 +1,269 @@
+/**
+ * UZ Aero — model widoku ekranu 09B/09C „Zdaj samolot".
+ *
+ * Test pilnuje czterech rzeczy, na których stoi ten ekran: rozpoznania wariantu
+ * (są wzloty czy nie), podpowiedzi liczonych z wartości WPISYWANEJ (projekcja nie zna
+ * ich przed `day_close`), rozliczenia sesji i — przede wszystkim — blokady zapisu.
+ * Odczyt jest tu WYMAGANY (§3.6) i to jest jedyne miejsce w nowym flow, gdzie tak jest.
+ */
+
+import {
+  balanceRows,
+  buildRelease,
+  consumedL,
+  finalFuelHint,
+  finalMhHint,
+  handoverText,
+  releaseBlocker,
+} from '../ui/screens/logic/releaseAircraft';
+import { emptySessionState } from '../domain';
+import type { ConsumptionNorm, Event, EventPayloadMap, EventType, Leg, SessionState } from '../domain';
+
+const DAY0 = Date.UTC(2026, 7, 6, 0, 0, 0);
+
+const at = (hhmm: string): number => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return DAY0 + (h! * 60 + m!) * 60_000;
+};
+
+let seq = 0;
+
+function ev<K extends EventType>(type: K, time: string, payload: EventPayloadMap[K]): Event {
+  return {
+    uuid: `e-${++seq}-${type}`,
+    sessionUuid: 's-klm',
+    aircraftId: 'SP-KLM',
+    picId: 'tmk',
+    dualId: null,
+    type,
+    payload,
+    deviceTime: at(time),
+    gpsTime: at(time),
+    schemaVersion: 2,
+    syncedAt: null,
+  } as Event;
+}
+
+let legSeq = 0;
+
+function leg(from: string, to: string, over: Partial<Leg> = {}): Leg {
+  return {
+    index: ++legSeq,
+    startedAt: at(from),
+    stoppedAt: at(to),
+    durationMs: at(to) - at(from),
+    confirmed: true,
+    confirmedAt: at(to),
+    reading: null,
+    notes: null,
+    ...over,
+  };
+}
+
+/** Sesja z mockupu 09B: SP-KLM, jeden wzlot 13:40 → 15:10, 96 L i 1239:39 przy przejęciu. */
+function session(over: Partial<SessionState> = {}): SessionState {
+  return {
+    ...emptySessionState(),
+    sessionUuid: 's-klm',
+    aircraftId: 'SP-KLM',
+    sessionPicId: 'tmk',
+    operation: 'ferry',
+    mhFormat: 'hhmm',
+    claimedAt: at('13:35'),
+    mh: { start: 1239.65, end: null, deltaH: null },
+    fuel: { startL: 96, addedL: 0, endL: null, consumedL: null, lastReadingL: 96 },
+    legs: [leg('13:40', '15:10')],
+    blockTimeMs: at('15:10') - at('13:40'),
+    flightTimeMs: at('15:08') - at('13:47'),
+    ...over,
+  };
+}
+
+/** Norma SP-KLM z mockupu 09B: pasmo 20–24 L/h. */
+const norm = (over: Partial<ConsumptionNorm> = {}): ConsumptionNorm => ({
+  windowDays: 90,
+  blockLPerHLow: 20,
+  blockLPerHHigh: 24,
+  blockLPerH: 22,
+  airLPerH: 26,
+  litersPerFlight: 30,
+  intervals: 40,
+  engineMs: 90 * 3_600_000,
+  computedAt: at('12:00'),
+  ...over,
+});
+
+beforeEach(() => {
+  seq = 0;
+  legSeq = 0;
+});
+
+describe('buildRelease — który wariant i co wiemy', () => {
+  it('sesja z wzlotami to 09B: pasek wyniku i godzina przejęcia ze strumienia', () => {
+    const vm = buildRelease(session(), at('17:40'))!;
+
+    expect(vm.withoutLeg).toBe(false);
+    expect(vm.summary).toEqual({
+      legs: '1',
+      blockLabel: '1:30',
+      flightLabel: '1:21',
+      heldAt: '13:35',
+    });
+  });
+
+  it('sesja bez wzlotu to 09C — z miarą, jak długo samolot był zajęty', () => {
+    const vm = buildRelease(session({ legs: [], blockTimeMs: 0, flightTimeMs: 0 }), at('15:35'))!;
+
+    expect(vm.withoutLeg).toBe(true);
+    expect(vm.heldLabel).toBe('Trzymany 13:35 → 15:35 · 2:00');
+  });
+
+  it('bez zdarzenia przejęcia nie zmyślamy godziny', () => {
+    const vm = buildRelease(session({ legs: [], claimedAt: null }), at('15:35'))!;
+
+    expect(vm.summary.heldAt).toBe('—');
+    expect(vm.heldLabel).toBeNull();
+  });
+
+  it('bez samolotu w ręce nie ma czego zdawać', () => {
+    expect(buildRelease(emptySessionState(), at('15:35'))).toBeNull();
+  });
+
+  it('podpowiedź startowa bierze ODCZYT Z WZLOTU, nie z przejęcia', () => {
+    // Pilot dopisał odczyt przy drugim wzlocie — to on jest ostatnim znanym stanem
+    // liczników, a nie wartość sprzed całego dnia.
+    const state = session({
+      legs: [
+        leg('08:00', '09:00'),
+        leg('10:00', '11:00', { reading: { fuelL: 70, mh: 1241.5 } }),
+      ],
+      fuel: { startL: 96, addedL: 0, endL: null, consumedL: null, lastReadingL: 70 },
+    });
+
+    expect(buildRelease(state, at('12:00'))!.initial).toEqual({ fuelL: 70, mh: 1241.5 });
+  });
+});
+
+describe('podpowiedzi pod odczytem końcowym', () => {
+  it('paliwo: zużycie liczone z wartości WPISYWANEJ, bo projekcja go jeszcze nie zna', () => {
+    expect(session().fuel.consumedL).toBeNull();
+    expect(finalFuelHint(session(), 62)).toBe('przy przejęciu 96 L · bez tankowania · zużyte 34 L');
+  });
+
+  it('paliwo: tankowanie wchodzi do bilansu', () => {
+    const state = session({
+      fuel: { startL: 96, addedL: 40, endL: null, consumedL: null, lastReadingL: 130 },
+    });
+
+    expect(finalFuelHint(state, 100)).toBe('przy przejęciu 96 L · dolane 40 L · zużyte 36 L');
+  });
+
+  it('paliwo: przyrost mówi wprost, że coś się nie zgadza — zamiast ujemnego zużycia', () => {
+    expect(finalFuelHint(session(), 120)).toContain('przybyło 24 L — sprawdź odczyt');
+  });
+
+  it('motogodziny: Δ i czas bloku obok siebie — inwariant §4.5 do sprawdzenia wzrokiem', () => {
+    // 1239.65 → 1241.15 to +1:30, dokładnie tyle, ile czas blokowy.
+    expect(finalMhHint(session(), 1241.15)).toBe(
+      'format hh:mm · przy przejęciu 1239:39 · Δ +1:30 · blok 1:30',
+    );
+  });
+
+  it('motogodziny: bez odczytu startowego nie zmyślamy przyrostu', () => {
+    const state = session({ mh: { start: null, end: null, deltaH: null } });
+
+    expect(finalMhHint(state, 1241)).toBe(
+      'format hh:mm · brak odczytu przy przejęciu — wpisz z licznika',
+    );
+  });
+
+  it('baner przekazania wypisuje obie wartości — to one są ogniwem łańcucha', () => {
+    const text = handoverText('SP-KLM', { fuelL: 62, mh: 1241.15 }, 'hhmm');
+
+    expect(text).toContain('62 L');
+    expect(text).toContain('1241:09 MH');
+    expect(text).toContain('SP-KLM');
+  });
+});
+
+describe('rozliczenie sesji', () => {
+  it('wiersze są dokładnie te z mockupu 09B', () => {
+    const rows = balanceRows(session(), { fuelL: 62, mh: 1241.15 }, norm());
+
+    expect(rows.map((r) => [r.key, r.value])).toEqual([
+      ['Wzloty', '1 · 13:40 → 15:10'],
+      ['Paliwo start / koniec', '96 L → 62 L'],
+      ['Średnie zużycie', '22,7 L/h · norma 20–24 L/h'],
+      ['Motogodziny Δ', '+1:30'],
+    ]);
+  });
+
+  it('bez normy z serwera zostaje sam wynik — nie zmyślamy pasma', () => {
+    const rows = balanceRows(session(), { fuelL: 62, mh: 1241.15 }, null);
+
+    expect(rows.find((r) => r.key === 'Średnie zużycie')!.value).toBe('22,7 L/h');
+  });
+
+  it('zero czasu blokowego nie daje średniej — dzielenie przez zero to nie statystyka', () => {
+    const rows = balanceRows(session({ blockTimeMs: 0 }), { fuelL: 62, mh: 1241.15 }, norm());
+
+    expect(rows.find((r) => r.key === 'Średnie zużycie')!.value).toBe('—');
+  });
+
+  it('zużycie: zero jest wynikiem, brak danych nie jest', () => {
+    expect(consumedL(session(), 96)).toBe(0);
+    expect(consumedL(session(), null)).toBeNull();
+    expect(consumedL(session({ fuel: { ...session().fuel, startL: null } }), 62)).toBeNull();
+  });
+});
+
+describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
+  it('brak paliwa i brak MH blokują z osobnym powodem', () => {
+    expect(releaseBlocker(session(), { fuelL: null, mh: 1241 })).toContain('paliwomierz');
+    expect(releaseBlocker(session(), { fuelL: 62, mh: null })).toContain('licznik motogodzin');
+  });
+
+  it('cofnięty licznik jest zatrzymany PRZED zapisem, a nie odrzucony po fakcie', () => {
+    expect(releaseBlocker(session(), { fuelL: 62, mh: 1200 })).toBe(
+      'Licznik nie może się cofnąć — przy przejęciu 1239:39.',
+    );
+  });
+
+  it('progiem jest OSTATNI odczyt, a nie stan przy przejęciu — tak jak w regule domeny', () => {
+    // Ekran musi ostrzegać dokładnie tam, gdzie komenda odmówi. Inaczej arkusz mówi
+    // „w porządku" chwilę przed odrzuceniem i wygląda to na błąd aplikacji.
+    const state = session({
+      legs: [leg('13:40', '15:10', { reading: { fuelL: 70, mh: 1241.5 } })],
+    });
+
+    expect(releaseBlocker(state, { fuelL: 62, mh: 1241 })).toBe(
+      'Licznik nie może się cofnąć — przy wzlocie 1 1241:30.',
+    );
+    expect(releaseBlocker(state, { fuelL: 62, mh: 1242 })).toBeNull();
+  });
+
+  it('komplet odczytu przepuszcza zapis', () => {
+    expect(releaseBlocker(session(), { fuelL: 62, mh: 1241.15 })).toBeNull();
+  });
+
+  it('bez odczytu startowego nie blokujemy — nie ma z czym porównać', () => {
+    const state = session({ mh: { start: null, end: null, deltaH: null } });
+
+    expect(releaseBlocker(state, { fuelL: 62, mh: 5 })).toBeNull();
+  });
+
+  it('09C: bez powodu nie ma zapisu, choć odczyt jest kompletny', () => {
+    // Powód jest JEDYNYM pytaniem tego wariantu. Domena przyjęłaby zdarzenie bez niego
+    // (miękka flaga), ale pilot stoi przy samolocie i odpowie w sekundę — administrator
+    // czytający rejestr tydzień później nie ma już kogo zapytać.
+    const empty = session({ legs: [], blockTimeMs: 0, flightTimeMs: 0 });
+    const reading = { fuelL: 96, mh: 1239.65 };
+
+    expect(releaseBlocker(empty, reading, null)).toContain('powód');
+    expect(releaseBlocker(empty, reading, 'weather')).toBeNull();
+  });
+
+  it('sesja ZE WZLOTAMI nie pyta o powód — nie ma o co pytać', () => {
+    expect(releaseBlocker(session(), { fuelL: 62, mh: 1241.15 }, null)).toBeNull();
+  });
+});

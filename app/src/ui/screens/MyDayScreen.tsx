@@ -73,7 +73,6 @@ export function MyDayScreen({
   const repo = useSessionStore((s) => s.repo);
   const queries = useSessionStore((s) => s.queries);
   const projection = useSessionStore((s) => s.projection);
-  const events = useSessionStore((s) => s.events);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
@@ -89,7 +88,7 @@ export function MyDayScreen({
   const day = utcDayStart(now);
   const duty = useDutyDay(pilotId, day);
 
-  const held = buildHeldAircraft(projection, events);
+  const held = buildHeldAircraft(projection);
   const vm = duty != null ? buildMyDay(duty, now, held?.aircraftId ?? null) : null;
 
   // Plakietka okna korekty na wejściu do historii (`.history-badge`) — okno 24 h ma być

@@ -72,6 +72,8 @@ i zdaniu samolotu oraz potwierdzenie wzlotu po locie.
 | 2026-08-07 | **Trzy jednostki, dwa byty i jedna projekcja** (konsekwencja 2026-08-06). Model rozróżnia WZLOT (jednostka potwierdzenia), SESJĘ SAMOLOTU (claim → zdanie, ogniwo łańcucha MH) i SŁUŻBĘ PILOTA (klamra per pilot per doba UTC). Byt w danych dostają tylko dwie pierwsze: `leg_close` jest zdarzeniem, sesja zostaje jak dziś. **Służba jest CZYSTĄ PROJEKCJĄ** (`packages/domain/src/projections/duty.ts`) czytającą strumienie kilku sesji — poza `SessionState`, bo obejmuje maszyny, których pojedyncza sesja nie zna. Powód, dla którego nie tworzymy dla niej osi zdarzeń: nagłówek wymaga `session_uuid` i `aircraft_id`, więc „meldunek" nie miałby gdzie mieszkać |
 | 2026-08-07 | **`claim_time` przestaje nieść `dutyStart`** — od teraz to czas zdarzenia `session_claim`. Powód: kolumna była jednocześnie datą sesji i klamrą służby, a po usunięciu meldowania z przejęcia (2026-08-06) `dutyStart` bywa `null`, co wyzerowałoby sortowanie listy dni, kursor keyset, indeks `idx_sessions_day`, filtr zakresu dat i `openSessionsUndated`. `session_claim` istnieje zawsze i jest pierwszym zdarzeniem sesji, więc jest naturalnym czasem sesji; przy okazji znika trójgałęziowy predykat `NULLS LAST` zaprojektowany pod przypadek brzegowy, który stałby się większościowy. Wymaga migracji z backfillem i `rebuild-projections` (różnica będzie ogromna i OCZEKIWANA — to wyjątek od reguły „niezerowy dry-run = incydent") |
 | 2026-08-07 | **Okno korekty 24 h kotwiczy się w zamknięciu WZLOTU**, nie dnia. Każdy wzlot ma własne okno liczone od `leg_close`. Wzlot niepotwierdzony („Potwierdzę później", §3.6) dostaje kotwicę awaryjną w `engine_stop` — bez niej `closedAt == null` znaczyłoby „okno nie obowiązuje", czyli **bezterminowe prawo zapisu**, a `null` jest tu stanem domyślnym, nie brzegowym. Konsekwencja: `leg_close` MUSI być korygowalny (inaczej pilot nie poprawi literówki w odczycie, mimo że okno istnieje właśnie po to), co unieważnia argument z `architektura-kodu.md` §„flag łańcucha nie przeliczamy" |
+| 2026-08-07 | **Zdanie samolotu bez wzlotu wymaga POWODU, ale go nie warunkuje** (ekran 09C). `day_close.noFlightReason` (`weather`/`malfunction`/`cancelled`/`other`) jest wymagany przez EKRAN — pilot stoi przy samolocie i odpowie w sekundę — a przez domenę tylko flagowany (`NO_FLIGHT_WITHOUT_REASON`, waga `warning`). Powód takiego rozdziału: odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna była zajęta i nie poleciała, czyli dokładnie tę informację, o którą administratorowi chodzi. Twarda reguła kosztowałaby fakt, miękka kosztuje tylko kompletność formularza |
+| 2026-08-07 | **Fakty strumienia dostają JAWNE znaczniki w projekcji** — `claimedAt` i `preflightAt`. Powód: `PREFLIGHT_REQUIRED` pytało o `state.dutyStart`, co było poprawne wyłącznie dopóty, dopóki godzina meldunku była obowiązkowa; po jej uopcjonalnieniu ta sama reguła zaczęła blokować silnik i zdanie samolotu pilotowi, który niczego nie pominął. Reguła ogólna: **pole opcjonalne nie jest znacznikiem tego, że zdarzenie zaszło**, a komplet zielonych testów tego nie wyłapie, gdy każdy helper wypełnia je „bo tak było zawsze". Przy okazji `claimedAt` znosi przechodzenie po surowych zdarzeniach w modelach widoku |
 | 2026-07-31 | **Panel administratora — DECYZJA ODWRÓCONA** (odwraca 2026-07-24): powstaje jako **osobna aplikacja web**. Zakres v1 = pełny back-office (konta, flota, skrzynka flag, korekty po oknie 24 h, przegląd dni, rejestr zdarzeń, monitor eksportu, statystyki, audyt, progi), **dwie role** (`administrator` — wszystko; `szef wyszkolenia` — podgląd, statystyki, rozwiązywanie flag), stan floty **na żywo** oraz dane po fakcie. Powód: backend jest gotowy i wymaga obsługi, a §4.7 postawiło bramkę, której **nikt nie może otworzyć** — otwarta flaga `session_overlap` blokuje eksport karty dnia, a `status='resolved'` nie ustawia dziś żaden kod w `server/src`. Projekt UI: `design/admin/` (20 ekranów); zakres, mapowanie na endpointy i braki serwera: `design/admin/ANALIZA.md` |
 
 ---
@@ -541,21 +543,31 @@ Typy zdarzeń:
 | `refuel` | przed / dolano / po, wyliczone zużycie |
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |
-| `day_close` | końcowy FOB + MH (przekazanie), duty end |
+| `day_close` | **zdanie samolotu**: końcowy FOB + MH (przekazanie), OPCJONALNY `dutyEnd`, oraz `noFlightReason` dla sesji bez ani jednego wzlotu (09C: `weather` / `malfunction` / `cancelled` / `other`). Brak powodu przy takiej sesji to **miękka** flaga `NO_FLIGHT_WITHOUT_REASON` — odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna stała zajęta |
 | `event_correction` | `targetUuid` + akcja: `retime` (nowy czas) **lub** `void` („zdarzenia nie było") — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zamknięciu (decyzja 2026-07-23) |
 
 | `leg_close` | **potwierdzenie WZLOTU** (§3.6): numer wzlotu, OPCJONALNY odczyt FOB+MH, uwaga. Nie tworzy ani nie zamyka cyklu silnika — niesie fakt „pilot przejrzał ten wzlot", od którego liczy się okno korekty tego wzlotu. Wzlot bez `leg_close` jest legalny („Potwierdzę później") |
 
-> **Stan migracji modelu (etap B, `schema_version` 2).**
+> **Stan migracji modelu (etap B — DOMKNIĘTY, `schema_version` 2).**
 >
-> **ZROBIONE (B1):** `leg_close` istnieje; `dutyStart` w `preflight_confirm` i `dutyEnd`
-> w `day_close` są **opcjonalne**; `CURRENT_SCHEMA_VERSION` = 2; projekcja liczy
-> `closedLegCount` i przyjmuje odczyt z wzlotu jako ostatni znany stan paliwomierza;
-> reguły `LEG_CLOSE_ENGINE_RUNNING`, `LEG_CLOSE_WITHOUT_CYCLE`, `LEG_ALREADY_CLOSED`.
+> `leg_close` istnieje; `dutyStart` w `preflight_confirm` i `dutyEnd` w `day_close` są
+> **opcjonalne**; `CURRENT_SCHEMA_VERSION` = 2; `EngineRun` → **`Leg`** z odczytem
+> i potwierdzeniem per wzlot; `projectDuty` liczy klamrę służby per pilot per doba UTC
+> (unia deklaracji i wzlotów); okno korekty kotwiczy się w KAŻDYM wzlocie osobno;
+> `consumption/intervals.ts` traktuje odczyt przy wzlocie jak tankowanie bez dolewki.
 >
-> **ZOSTAJE:** `Leg[]` w projekcji z odczytami per wzlot (dziś odczyt MH z `leg_close`
-> świadomie NIE wchodzi do `mh.end` — to koniec łańcucha, należy do zdania samolotu),
-> projekcja służby per pilot per doba UTC, przewiązanie okna korekty na `leg_close`.
+> Odczyt MH z `leg_close` świadomie NIE wchodzi do `mh.end` — koniec łańcucha należy
+> do zdania samolotu.
+>
+> **Pułapka wykryta 2026-08-07** (już naprawiona, warta zapamiętania przy kolejnych
+> polach opcjonalnych): reguła `PREFLIGHT_REQUIRED` pytała o `state.dutyStart` jako
+> o dowód „preflight był". Gdy godzina meldunku stała się opcjonalna, ten sam warunek
+> zaczął znaczyć coś zupełnie innego i blokował uruchomienie silnika u pilota, który
+> niczego nie pominął. Projekcja ma teraz JAWNE znaczniki faktów strumienia —
+> `claimedAt` (przejęcie) i `preflightAt` (preflight) — i to o nie pytają reguły.
+> **Pole opcjonalne przestaje być dobrym znacznikiem zdarzenia w chwili, gdy staje się
+> opcjonalne**, a komplet zielonych testów tego nie wyłapie, jeśli każdy helper podaje
+> wartość „bo tak było zawsze".
 >
 > Nowej osi zdarzeń dla służby świadomie NIE tworzymy: nagłówek wymaga `session_uuid`
 > i `aircraft_id`, więc „meldunek" nie miałby gdzie mieszkać — dwie opcjonalne klamry

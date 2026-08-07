@@ -346,6 +346,19 @@ describe('zamknięcie dnia', () => {
     expect(hard(v)).toContain('MH_REGRESSION');
   });
 
+  it('odczyt końcowy porównuje się z OSTATNIM wskazaniem, nie z chwilą przejęcia', () => {
+    // Pilot dopisał 1240:00 przy wzlocie. Odczyt końcowy 1239:45 jest wyższy niż stan
+    // przy przejęciu, ale niższy niż to, co sam przed chwilą zobaczył na liczniku.
+    const stream = [
+      ...afterCycle(),
+      ev('leg_close', { legIndex: 1, reading: { fuelL: 120, mh: 1240 } }, { t: min(160) }),
+    ];
+    const v = check(stream, dayClose({ finalReading: { fuelL: 112, mh: 1239.75 } }));
+
+    expect(hard(v)).toContain('MH_REGRESSION');
+    expect(v.find((x) => x.code === 'MH_REGRESSION')!.message).toContain('przy wzlocie 1');
+  });
+
   it('rozjazd Δ MH vs block time to miękka flaga — zdarzenie zostaje', () => {
     const v = check(afterCycle(), dayClose({ finalReading: { fuelL: 112, mh: MH_START + 5 } }));
     expect(hard(v)).toEqual([]);
@@ -371,10 +384,129 @@ describe('zamknięcie dnia', () => {
     expect(hard(check(stream, dayClose({ finalReading: { fuelL: 160, mh: MH_END } })))).toEqual([]);
   });
 
+  it('zdanie bez ani jednego wzlotu i bez powodu daje MIĘKKĄ flagę (09C)', () => {
+    // Zdarzenie ZOSTAJE: odrzucenie skasowałoby jedyny ślad po tym, że maszyna stała
+    // zajęta. Administrator dostaje flagę zamiast pytania bez adresata.
+    const noFlight = [claim(), preflight()];
+    const close = ev(
+      'day_close',
+      { finalReading: { fuelL: 150, mh: MH_START } },
+      { t: min(75) },
+    );
+
+    expect(hard(check(noFlight, close))).toEqual([]);
+    expect(soft(check(noFlight, close))).toContain('NO_FLIGHT_WITHOUT_REASON');
+  });
+
+  it('z podanym powodem flagi nie ma', () => {
+    const close = ev(
+      'day_close',
+      { finalReading: { fuelL: 150, mh: MH_START }, noFlightReason: 'weather' },
+      { t: min(75) },
+    );
+
+    expect(check([claim(), preflight()], close)).toEqual([]);
+  });
+
+  it('sesja ZE WZLOTAMI nie jest o powód pytana', () => {
+    expect(soft(check(afterCycle(), dayClose()))).not.toContain('NO_FLIGHT_WITHOUT_REASON');
+  });
+
   it('koniec służby przed meldunkiem jest odrzucany', () => {
     expect(hard(check(afterCycle(), dayClose({ dutyEnd: min(-60) })))).toContain(
       'DUTY_END_BEFORE_START',
     );
+  });
+});
+
+describe('potwierdzenie wzlotu (`leg_close`, §3.6)', () => {
+  const legClose = (
+    payload: Partial<EventPayloadMap['leg_close']> = {},
+    t = min(160),
+  ): Event => ev('leg_close', { legIndex: 1, ...payload }, { t });
+
+  it('po pełnym cyklu potwierdzenie przechodzi — także BEZ odczytu', () => {
+    // Odczyt jest opcjonalny i to jest decyzja (§3.6), nie niedopatrzenie.
+    expect(check(afterCycle(), legClose())).toEqual([]);
+  });
+
+  it('przy pracującym silniku wzlot nie jest jeszcze kompletny', () => {
+    expect(hard(check(running(), legClose()))).toContain('LEG_CLOSE_ENGINE_RUNNING');
+  });
+
+  it('bez ani jednego cyklu nie ma czego zamykać', () => {
+    expect(hard(check(ground(), legClose()))).toEqual(['LEG_CLOSE_WITHOUT_CYCLE']);
+  });
+
+  it('drugie potwierdzenie tego samego wzlotu jest odrzucane', () => {
+    expect(hard(check([...afterCycle(), legClose()], legClose({}, min(170))))).toEqual([
+      'LEG_ALREADY_CLOSED',
+    ]);
+  });
+
+  it('łańcuch MH jest monotoniczny MIĘDZY WZLOTAMI, nie tylko od przejęcia', () => {
+    // Wzlot 1 zamknięty odczytem 1240:00. Wzlot 2 z odczytem 1239:45 jest wyższy niż
+    // stan przy przejęciu (1234:30), więc porównanie z samym startem sesji by go
+    // przepuściło — a licznik cofnął się względem tego, co pilot sam przed chwilą wpisał.
+    const stream = [
+      ...afterCycle(),
+      legClose({ reading: { fuelL: 120, mh: 1240 } }),
+      ev('engine_start', {}, { t: min(200) }),
+      ev('engine_stop', {}, { t: min(260) }),
+    ];
+
+    expect(hard(check(stream, legClose({ legIndex: 2, reading: { fuelL: 110, mh: 1239.75 } }, min(265)))))
+      .toContain('MH_REGRESSION');
+    expect(hard(check(stream, legClose({ legIndex: 2, reading: { fuelL: 110, mh: 1241 } }, min(265)))))
+      .toEqual([]);
+  });
+});
+
+describe('preflight bez deklaracji meldunku (§3.6a — klamra jest opcjonalna)', () => {
+  /**
+   * Od schemaVersion 2 ekran 02 NIE PYTA o godzinę meldunku, więc `dutyStart` jest
+   * `null` w ZWYKŁYM przypadku, nie w brzegowym. Reguły nie mogą traktować jego braku
+   * jak braku preflightu — inaczej pilot, który po prostu przeszedł preflight, nie
+   * uruchomi silnika ani nie zda samolotu.
+   */
+  const preflightNoDuty = (): Event =>
+    ev(
+      'preflight_confirm',
+      {
+        operation: 'skoki',
+        departureIcao: 'EPKK',
+        arrivalIcao: 'EPKK',
+        reading: { fuelL: 150, mh: MH_START },
+        mhFormat: 'hhmm',
+      },
+      { t: min(0) },
+    );
+
+  const groundNoDuty = (): Event[] => [claim(), preflightNoDuty()];
+
+  it('silnik wolno uruchomić — preflight był, choć meldunku nie zadeklarowano', () => {
+    expect(hard(check(groundNoDuty(), ev('engine_start', {}, { t: min(12) })))).toEqual([]);
+  });
+
+  it('samolot wolno zdać bez deklaracji meldunku', () => {
+    const stream = [
+      ...groundNoDuty(),
+      ev('engine_start', {}, { t: min(12) }),
+      ev('engine_stop', {}, { t: min(154) }),
+    ];
+    const close = ev(
+      'day_close',
+      { finalReading: { fuelL: 112, mh: MH_START + 142 / 60 } },
+      { t: min(300) },
+    );
+
+    expect(hard(check(stream, close))).toEqual([]);
+  });
+
+  it('bez preflightu silnik nadal jest zablokowany — regułę przesuwamy, nie kasujemy', () => {
+    expect(hard(check([claim()], ev('engine_start', {}, { t: min(12) })))).toEqual([
+      'PREFLIGHT_REQUIRED',
+    ]);
   });
 });
 

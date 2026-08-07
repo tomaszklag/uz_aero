@@ -7,13 +7,11 @@
  * kazałoby projekcji doby wiedzieć o claimie i stanie silnika, czyli o rzeczach
  * należących do samolotu, a nie do pilota.
  *
- * CHWILA PRZEJĘCIA IDZIE ZE STRUMIENIA, nie z projekcji, bo `SessionState` jej nie
- * niesie: zapamiętuje, KTO trzyma samolot, nie OD KIEDY. Pierwsze zdarzenie sesji jest
- * z definicji `session_claim` (§4.4), więc odczyt jest jednym przejściem po strumieniu,
- * a nie rekonstrukcją.
+ * CHWILA PRZEJĘCIA idzie z projekcji (`claimedAt`) — to fakt strumienia, nie rachunek,
+ * więc modele widoku nie mają po co przechodzić po zdarzeniach same.
  */
 
-import { eventTime, type Event, type SessionState } from '../../../domain';
+import type { SessionState } from '../../../domain';
 import { timeUtc } from '../../format';
 import { operationLabel } from './operations';
 
@@ -34,13 +32,10 @@ export interface HeldAircraftVm {
  * „na teraz", a ekran domowy nie ma powodu pokazywać przycisku „KOKPIT" prowadzącego
  * do maszyny, której pilot już nie ma.
  */
-export function buildHeldAircraft(
-  session: SessionState,
-  events: readonly Event[],
-): HeldAircraftVm | null {
+export function buildHeldAircraft(session: SessionState): HeldAircraftVm | null {
   if (session.sessionUuid == null || session.aircraftId == null || session.closed) return null;
 
-  const claimedAt = claimTime(events);
+  const claimedAt = session.claimedAt;
 
   return {
     aircraftId: session.aircraftId,
@@ -57,8 +52,3 @@ export function buildHeldAircraft(
   };
 }
 
-/** Czas `session_claim` — pierwszego zdarzenia sesji (§4.4). */
-function claimTime(events: readonly Event[]): number | null {
-  const claim = events.find((e) => e.type === 'session_claim');
-  return claim != null ? eventTime(claim) : null;
-}

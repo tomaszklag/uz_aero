@@ -417,7 +417,10 @@ function checkByType(
     }
 
     case 'engine_start': {
-      if (state.dutyStart == null) {
+      // Pytamy o PREFLIGHT, nie o godzinę meldunku. Od schemaVersion 2 klamra służby jest
+      // opcjonalna (§3.6a) i `dutyStart` bywa `null` u pilota, który zrobił wszystko jak
+      // trzeba — warunkowanie tym startu silnika unieruchamiało go bez powodu.
+      if (state.preflightAt == null) {
         v.push(
           error('PREFLIGHT_REQUIRED', 'Najpierw potwierdź preflight — bez odczytu MH i paliwa nie ma dnia.'),
         );
@@ -657,15 +660,18 @@ function checkByType(
       }
       if (p.reading != null) {
         v.push(...checkFuelReading(p.reading.fuelL, limits, 'Odczyt paliwa przy zamknięciu wzlotu'));
-        // Łańcuch MH jest monotoniczny także wewnątrz sesji — odczyt niższy niż
-        // startowy to literówka, którą pilot poprawi na miejscu. Miękko byłoby tu za
-        // mało: ta wartość ma prawo stać się ogniwem łańcucha (§3.6b).
-        if (state.mh.start != null && p.reading.mh < state.mh.start - MH_EPSILON_H) {
+        // Łańcuch MH jest monotoniczny także wewnątrz sesji, więc porównujemy z OSTATNIM
+        // znanym odczytem, a nie ze stanem przy przejęciu. Sam start sesji przepuściłby
+        // wartość niższą od tej, którą pilot wpisał przy poprzednim wzlocie — a to wciąż
+        // jest cofnięty licznik. Miękko byłoby tu za mało: ta wartość ma prawo stać się
+        // ogniwem łańcucha (§3.6b).
+        const previous = lastKnownMh(state);
+        if (previous != null && p.reading.mh < previous.value - MH_EPSILON_H) {
           v.push(
             error(
               'MH_REGRESSION',
-              `Odczyt MH (${round2(p.reading.mh)}) jest niższy niż przy przejęciu (${round2(state.mh.start)}). Sprawdź licznik.`,
-              { start: state.mh.start, reading: p.reading.mh },
+              `Odczyt MH (${round2(p.reading.mh)}) jest niższy niż ${previous.since} (${round2(previous.value)}). Sprawdź licznik.`,
+              { previous: previous.value, reading: p.reading.mh },
             ),
           );
         }
@@ -701,8 +707,8 @@ function checkByType(
 
     case 'day_close': {
       const p = candidate.payload;
-      if (state.dutyStart == null) {
-        v.push(error('PREFLIGHT_REQUIRED', 'Dzień nie został rozpoczęty — brak preflightu.'));
+      if (state.preflightAt == null) {
+        v.push(error('PREFLIGHT_REQUIRED', 'Samolot nie został przejęty — brak preflightu.'));
       }
       if (state.engineRunning || state.inFlight) {
         v.push(
@@ -712,6 +718,19 @@ function checkByType(
           ),
         );
       }
+      // Sesja bez ani jednego cyklu silnika (09C): samolot był zajęty i nikt nie poleciał.
+      // Bez powodu rejestr zostawia administratorowi pytanie zamiast informacji — ale to
+      // MIĘKKA flaga, nie blokada. Odrzucenie zdarzenia skasowałoby jedyny ślad po tym,
+      // że maszyna stała zablokowana, a to fakt cenniejszy od kompletności formularza.
+      if (state.legs.length === 0 && p.noFlightReason == null) {
+        v.push(
+          warning(
+            'NO_FLIGHT_WITHOUT_REASON',
+            'Samolot zdany bez ani jednego wzlotu i bez podanego powodu.',
+          ),
+        );
+      }
+
       // Klamra jest opcjonalna od schemaVersion 2 (§3.6a), więc reguła kolejności
       // budzi się TYLKO wtedy, gdy pilot podał obie godziny. Brak deklaracji nie jest
       // naruszeniem — jest stanem domyślnym.
@@ -724,15 +743,17 @@ function checkByType(
         );
       }
 
-      // Łańcuch MH (§4.5) — licznik motogodzin jest monotoniczny. Odczyt niższy niż
-      // startowy to literówka, którą pilot poprawi na miejscu; zapisanie jej zatrułoby
+      // Łańcuch MH (§4.5) — licznik motogodzin jest monotoniczny. Punktem odniesienia
+      // jest OSTATNIE znane wskazanie (odczyt z wzlotu bije stan przy przejęciu), bo to
+      // ta wartość zamyka łańcuch. Literówkę pilot poprawi na miejscu; zapisana zatrułaby
       // scalanie sesji na serwerze (MH_REGRESSION).
-      if (state.mh.start != null && p.finalReading.mh < state.mh.start - MH_EPSILON_H) {
+      const previousMh = lastKnownMh(state);
+      if (previousMh != null && p.finalReading.mh < previousMh.value - MH_EPSILON_H) {
         v.push(
           error(
             'MH_REGRESSION',
-            `Odczyt MH (${round2(p.finalReading.mh)}) jest niższy niż na starcie dnia (${round2(state.mh.start)}). Sprawdź licznik.`,
-            { start: state.mh.start, end: p.finalReading.mh },
+            `Odczyt MH (${round2(p.finalReading.mh)}) jest niższy niż ${previousMh.since} (${round2(previousMh.value)}). Sprawdź licznik.`,
+            { previous: previousMh.value, end: p.finalReading.mh },
           ),
         );
       }
@@ -782,6 +803,37 @@ function checkByType(
 // ─────────────────────────────────────────────────────────────────────────────
 // Pomocnicze
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Ostatnie znane wskazanie licznika MH razem ze źródłem — punkt odniesienia łańcucha. */
+export interface KnownMh {
+  value: number;
+  /** „przy przejęciu" / „przy wzlocie 2" — wprost do komunikatu dla pilota. */
+  since: string;
+}
+
+/**
+ * Ostatnie znane wskazanie licznika motogodzin wraz z tym, SKĄD pochodzi.
+ *
+ * Kolejność jest istotna: odczyt dopisany przy wzlocie jest świeższy niż stan przy
+ * przejęciu, więc to on jest punktem odniesienia dla kolejnego. Źródło wraca razem
+ * z liczbą, bo komunikat o cofniętym liczniku ma powiedzieć pilotowi, z czym właściwie
+ * porównaliśmy — „niższy niż przy przejęciu" i „niższy niż przy wzlocie 2" prowadzą
+ * do dwóch różnych miejsc na liczniku.
+ *
+ * PUBLICZNE, bo ekrany muszą ostrzegać dokładnie tym samym progiem, którym reguła
+ * odrzuca zapis. Własna kopia porównania w widoku znaczyłaby, że arkusz mówi „w porządku"
+ * chwilę przed tym, jak komenda odmawia — a to najgorszy rodzaj rozjazdu, bo wygląda
+ * jak błąd aplikacji, nie jak literówka pilota.
+ */
+export function lastKnownMh(state: SessionState): KnownMh | null {
+  for (let i = state.legs.length - 1; i >= 0; i -= 1) {
+    const leg = state.legs[i]!;
+    if (leg.reading != null) {
+      return { value: leg.reading.mh, since: `przy wzlocie ${leg.index}` };
+    }
+  }
+  return state.mh.start != null ? { value: state.mh.start, since: 'przy przejęciu' } : null;
+}
 
 /** Odczyt paliwomierza: nieujemny i mieszczący się w zbiornikach (§3.4). */
 function checkFuelReading(

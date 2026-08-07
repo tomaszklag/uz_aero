@@ -48,14 +48,33 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     **Do etapu D zostaje bramka `400 day_open` w panelu** — domena jej już nie egzekwuje.
   - **B4 ✅** `consumption/intervals.ts` czyta `leg_close`: odczyt przy wzlocie działa jak
     tankowanie bez dolewki (zamyka interwał i otwiera następny tą samą wartością), a wzlot
-    BEZ odczytu nie tworzy granicy w ogóle. **ETAP B DOMKNIĘTY.**
+    BEZ odczytu nie tworzy granicy w ogóle.
+  - **B5 ✅** (poprawka znaleziona dopiero w etapie C, 2026-08-07) — projekcja dostała
+    `claimedAt` i **`preflightAt`**, bo `PREFLIGHT_REQUIRED` pytało o `state.dutyStart`.
+    Po B1 godzina meldunku jest opcjonalna i ekran 02 o nią NIE PYTA, więc reguła
+    unieruchamiała silnik i blokowała zdanie samolotu pilotowi, który zrobił wszystko
+    dobrze. Komplet 906 testów tego nie widział, bo KAŻDY helper podawał `dutyStart` —
+    stąd nowy blok „preflight bez deklaracji meldunku" w `rules.test.ts`.
+    Przy okazji `day_close` ma `noFlightReason` (09C) z miękką flagą
+    `NO_FLIGHT_WITHOUT_REASON`: brak powodu nie może kasować faktu, że maszyna stała zajęta.
+    **ETAP B DOMKNIĘTY.**
 - **OTWARTE RYZYKO (§3.6b), świadomie niezamknięte**: progów analityki nie da się nastroić,
   dopóki `consumptionReplay.ts` nie dostanie danych w NOWYM kształcie (krótkie sesje,
   wzloty z odczytem i bez) — a takich nie ma nawet w `server/scripts/demo/`. Dzień skokowy
   bez odczytów pośrednich daje JEDEN interwał na sesję, czyli przypadek, w którym
   `MAX_VARIANCE_INFLATION` odrzuci rozdział ziemia/lot. Przebudowa generatora demo to
   osobne zadanie i warunek wstępny kalibracji. **Progów nie stroimy w dyskusji.**
-- **Etap C** `app/` (ekrany 1:1 z nowych mockupów), **etap D** serwer + panel.
+- **Etap C** `app/` (ekrany 1:1 z nowych mockupów) — w toku:
+  - **C1 ✅** komendy i store: `closeLeg`, `releaseAircraft` (dawne `dayClose`).
+  - **C2 ✅** ekran 01 „Mój dzień" — `logic/myDay.ts` + `logic/heldAircraft.ts`.
+    Dwa modele, bo to dwie OSIE: służba pilota przekrojowo po maszynach vs jedna sesja.
+  - **C3 ✅** ekrany 09/09A (`LegCloseScreen`) i 09B/09C (`ReleaseAircraftScreen`) —
+    po jednym pliku na parę, bo wariant to STAN tego samego ekranu, nie osobny ekran:
+    seria skokowa włącza się obecnością zrzutu, 09C brakiem wzlotów. Logika w
+    `logic/legClose.ts` i `logic/releaseAircraft.ts`.
+  - **C4** przejęcie (02, 02a — `03-preflight-confirm` znika), **C5** kokpit z paskiem
+    sesji i nawigacja w `App.tsx`. **Do C5 aplikacja nie jest spójnie klikalna.**
+- **Etap D** serwer + panel.
 
 **Twardy warunek każdego commitu etapu B:** strumień `schema_version 1` musi projektować się
 BEZ ZMIANY WYNIKÓW. Strażnikiem jest kanoniczny dzień 22 JUNE w `app/src/__tests__/projections.test.ts`

@@ -73,6 +73,7 @@ export type ViolationCode =
   | 'MANUAL_ENTRY_TIME_ORDER'
   | 'DAY_ALREADY_CLOSED'
   | 'DUTY_END_BEFORE_START'
+  | 'NO_FLIGHT_WITHOUT_REASON'
   // ── korekta zdarzenia (04c) ────────────────────────────────────────────────
   | 'CORRECTION_TARGET_NOT_FOUND'
   | 'CORRECTION_TARGET_NOT_ALLOWED'

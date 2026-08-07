@@ -157,6 +157,29 @@ export interface SessionState {
   notes: string | null;
   mhFormat: MhFormat | null;
 
+  /**
+   * Chwila przejęcia samolotu (`session_claim`) — początek sesji tej maszyny.
+   *
+   * To jest OŚ SAMOLOTU, nie oś służby: mówi, od kiedy maszyna jest zajęta, i tym samym
+   * jak długo stała zablokowana, gdy pilot nigdzie nie poleciał (09C). Sesja bez claimu
+   * nie istnieje (§4.4), więc `null` znaczy „strumienia jeszcze nie wczytano".
+   */
+  claimedAt: EpochMillis | null;
+  /**
+   * Chwila potwierdzenia preflightu — JEDYNY uprawniony znacznik „preflight był".
+   *
+   * Do 2026-08-07 tę rolę pełnił `dutyStart` i było to poprawne tylko dopóty, dopóki
+   * godzina meldunku była obowiązkowa. Od schemaVersion 2 klamra jest opcjonalna (§3.6a),
+   * a ekran 02 w ogóle o nią nie pyta — `dutyStart` jest więc `null` w ZWYKŁYM przypadku
+   * i mylenie go z brakiem preflightu blokowało pilotowi uruchomienie silnika.
+   */
+  preflightAt: EpochMillis | null;
+
+  /**
+   * Godziny KLAMRY SŁUŻBY zadeklarowane przez pilota — obie opcjonalne (§3.6a).
+   * Służba jest klamrą wokół wzlotów, nie kontenerem: brak deklaracji nie jest brakiem
+   * danych, tylko zgodą na wyliczenie klamry z lotów.
+   */
   dutyStart: EpochMillis | null;
   dutyEnd: EpochMillis | null;
 
@@ -224,6 +247,8 @@ export function emptySessionState(): SessionState {
     client: null,
     notes: null,
     mhFormat: null,
+    claimedAt: null,
+    preflightAt: null,
     dutyStart: null,
     dutyEnd: null,
     engineRunning: false,
@@ -305,6 +330,7 @@ export function projectSession(events: Event[]): SessionState {
         state.client = p.client ?? null;
         state.notes = p.notes ?? null;
         state.mhFormat = p.mhFormat ?? null;
+        state.preflightAt = t;
         // `?? null`, bo od schemaVersion 2 klamra jest opcjonalna (§3.6a) — brak
         // deklaracji ma być `null` („pilot nie podał"), nigdy `undefined`, inaczej
         // projekcja przestaje być totalna i psuje kontrakt DTO panelu.
@@ -465,6 +491,11 @@ export function projectSession(events: Event[]): SessionState {
       }
 
       case 'session_claim':
+        // Tożsamość aktualizowana z nagłówka (wyżej), payload informacyjny. Zostaje sam
+        // czas: to on mówi, od kiedy samolot jest zajęty (09C, `claim_time` panelu).
+        state.claimedAt = t;
+        break;
+
       case 'crew_change':
         // Tożsamość/załoga aktualizowana z nagłówka (wyżej). Payload informacyjny.
         break;

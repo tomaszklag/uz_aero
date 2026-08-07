@@ -276,9 +276,35 @@ export interface ManualLogEntryPayload {
  * to zdarzenie **nie kończy dnia pilota**, tylko jego pracę z TĄ maszyną: służba liczy się
  * dalej, a kolejny samolot wchodzi do tej samej doby.
  */
+/**
+ * Powód zdania samolotu BEZ ANI JEDNEGO WZLOTU (ekran 09C) — silnik nie ruszył.
+ *
+ * Identyfikatory po angielsku, napisy dla pilota składa ekran: ta sama zasada, którą
+ * `OperationType` trzyma od issue #13 (`ferry` to identyfikator, nie napis).
+ */
+export type NoFlightReason = 'weather' | 'malfunction' | 'cancelled' | 'other';
+
+/** Lista powodów (runtime) — walidacja przy odczycie i siatka kart na 09C. */
+export const NO_FLIGHT_REASONS: readonly NoFlightReason[] = [
+  'weather',
+  'malfunction',
+  'cancelled',
+  'other',
+];
+
 export interface DayClosePayload {
   /** Odczyt końcowy = przekazanie dla kolejnego pilota (ogniwo łańcucha MH). */
   finalReading: FuelMhReading;
+  /**
+   * Powód, dla którego nie było wzlotu — **tylko dla sesji bez cyklu silnika** (09C).
+   *
+   * Bez niego rejestr mówi „samolot był zajęty 1:15 i nikt nigdzie nie poleciał", co dla
+   * administratora jest pytaniem, nie informacją. Pole jest opcjonalne, bo przy sesji ze
+   * wzlotami nie ma o co pytać, a strumienie schemaVersion 1 go nie niosą — brak przy
+   * sesji bez wzlotu daje miękką flagę (`NO_FLIGHT_WITHOUT_REASON`), nigdy odrzucenie:
+   * fakt zajęcia maszyny jest cenniejszy niż kompletność formularza.
+   */
+  noFlightReason?: NoFlightReason | null;
   /**
    * Godzina zakończenia służby (UTC) — **OPCJONALNA od schemaVersion 2** (§3.6a).
    * Zdanie samolotu nie jest końcem służby, więc nie ma powodu jej tu wymagać;
