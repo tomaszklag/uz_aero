@@ -175,7 +175,7 @@ export function cyclesLabel(count: number): string {
 export function peekLogTitle(picCode: string | null, state: SessionState | null): string {
   const who = picCode ?? 'prowadzącego';
   if (state == null) return `Log dnia ${who} · UTC · brak danych`;
-  return `Log dnia ${who} · UTC · ${cyclesLabel(state.engineRuns.length)} · ${state.takeoffCount} T/O`;
+  return `Log dnia ${who} · UTC · ${cyclesLabel(state.legs.length)} · ${state.takeoffCount} T/O`;
 }
 
 export interface PeekStatus {

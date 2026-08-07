@@ -108,7 +108,10 @@ function describe(event: Event): string[] {
     case 'preflight_confirm': {
       const p = event.payload;
       const lines = [
-        `operacja: ${p.operation} · ${yesNo(p.departureIcao, '?')} → ${yesNo(p.arrivalIcao, '?')} · duty start ${timeUtcSeconds(p.dutyStart)}`,
+        // Klamra służby jest opcjonalna od schemaVersion 2 (§3.6a) — zdarzenia
+        // z przejęcia po 2026-08-06 jej nie niosą. Brak deklaracji to informacja,
+        // nie luka: administrator ma widzieć „nie zadeklarowano", a nie pustkę.
+        `operacja: ${p.operation} · ${yesNo(p.departureIcao, '?')} → ${yesNo(p.arrivalIcao, '?')} · meldunek ${p.dutyStart != null ? timeUtcSeconds(p.dutyStart) : 'nie zadeklarowano'}`,
         `odczyt: FOB ${litres(p.reading.fuelL)} · MH ${motoHours(p.reading.mh, p.mhFormat ?? null)}`,
       ];
       if (p.client != null) lines.push(`klient: ${p.client}`);
@@ -190,9 +193,25 @@ function describe(event: Event): string[] {
       const p = event.payload;
       return [
         `odczyt końcowy (przekazanie): FOB ${litres(p.finalReading.fuelL)} · MH ${p.finalReading.mh}`,
-        `duty end ${timeUtcSeconds(p.dutyEnd)}`,
-        'od tego zdarzenia liczy się okno korekty pilota',
+        `koniec służby: ${p.dutyEnd != null ? timeUtcSeconds(p.dutyEnd) : 'nie zadeklarowano'}`,
+        // Nazwa typu jest historyczna: od 2026-08-06 to ZDANIE SAMOLOTU, nie koniec
+        // dnia pilota — służba liczy się dalej, a kolejna maszyna wchodzi do tej samej
+        // doby (§3.6). Okno korekty kotwiczy się dziś we wzlocie, nie tutaj (§3.6a).
+        'zdanie samolotu — koniec pracy z tą maszyną, nie koniec służby pilota',
       ];
+    }
+
+    case 'leg_close': {
+      const p = event.payload;
+      const lines = [
+        `wzlot ${p.legIndex} potwierdzony przez pilota`,
+        p.reading != null
+          ? `odczyt: FOB ${litres(p.reading.fuelL)} · MH ${p.reading.mh}`
+          : 'bez odczytu liczników (opcjonalny — §3.6)',
+      ];
+      if (p.notes != null && p.notes !== '') lines.push(`uwagi: „${p.notes}"`);
+      lines.push('od tego zdarzenia liczy się okno korekty TEGO wzlotu');
+      return lines;
     }
 
     case 'event_correction': {

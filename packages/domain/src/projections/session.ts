@@ -20,18 +20,58 @@ import type {
   DetectionMethod,
   Event,
   EventType,
+  FuelMhReading,
   JumperCounts,
   MhFormat,
   OperationType,
 } from '../events';
 import { applyCorrections, buildEventIndex } from './corrections';
 
-/** Cykl pracy silnika (engine_start → engine_stop). `stoppedAt: null` = wciąż pracuje. */
-export interface EngineRun {
+/**
+ * WZLOT — cykl pracy silnika (engine_start → engine_stop) wraz z jego potwierdzeniem.
+ * `stoppedAt: null` = silnik wciąż pracuje.
+ *
+ * Nazwa zmieniona z `EngineRun` w etapie B2: od 2026-08-06 to nie jest już tylko
+ * „silnik chodził", tylko **jednostka potwierdzania danych** (§3.6). Nie dokładamy
+ * osobnej tablicy `Leg[]` obok `engineRuns` — wzlot i cykl silnika to w tym modelu
+ * ten sam byt, a dwie tablice opisujące jedną rzecz rozjechałyby się przy pierwszej
+ * korekcie.
+ *
+ * `Leg` (cykl silnika) ≠ `Flight` (takeoff → landing). Jeden wzlot może nie mieć lotu
+ * (kołowanie techniczne) albo mieć ich kilka (dzień skokowy z wieloma wyniesieniami
+ * na jednym cyklu zdarza się rzadko, ale model tego nie zabrania).
+ */
+export interface Leg {
+  /** Numer wzlotu w sesji (1-based) — ten sam, którym `leg_close.legIndex` się posługuje. */
+  index: number;
   startedAt: EpochMillis;
   stoppedAt: EpochMillis | null;
-  /** Czas trwania (ms); 0 dopóki cykl otwarty. */
+  /** Czas blokowy wzlotu (ms); 0 dopóki cykl otwarty. */
   durationMs: number;
+  /**
+   * Czy pilot potwierdził ten wzlot (`leg_close`, ekran 09).
+   *
+   * Wzlot niepotwierdzony jest LEGALNY — pilot mógł wyjść przez „Potwierdzę później",
+   * a offline-first zabrania więzić go przy telefonie. Czasy i tak są w rejestrze,
+   * więc wchodzą do sum; brakuje wyłącznie przejrzenia. To ta flaga rysuje pasek
+   * „do potwierdzenia" w „Mój dzień".
+   */
+  confirmed: boolean;
+  /**
+   * Kiedy pilot potwierdził (null = jeszcze nie).
+   *
+   * To jest **kotwica 24-godzinnego okna korekty tego wzlotu** (§3.6a — każdy wzlot
+   * ma własne okno). Wzlot niepotwierdzony kotwiczy się awaryjnie w `stoppedAt`,
+   * inaczej brak potwierdzenia dawałby bezterminowe prawo zapisu.
+   */
+  confirmedAt: EpochMillis | null;
+  /**
+   * Odczyt liczników z potwierdzenia — `null`, gdy pilot go pominął (§3.6: odczyt
+   * jest tu OPCJONALNY). `null` znaczy „nie wiem", nigdy „tyle samo co przed lotem".
+   */
+  reading: FuelMhReading | null;
+  /** Uwaga pilota do wzlotu. */
+  notes: string | null;
 }
 
 /** Lot (takeoff → landing). `landingAt: null` = w powietrzu. */
@@ -133,8 +173,9 @@ export interface SessionState {
   /** Start otwartego lotu (do liczenia flight time „na żywo"). */
   openTakeoffAt: EpochMillis | null;
 
-  engineRuns: EngineRun[];
-  /** Suma zamkniętych cykli silnika + ręcznych off/on-block (ms). */
+  /** Wzloty sesji w kolejności chronologicznej (cykle silnika + ich potwierdzenia). */
+  legs: Leg[];
+  /** Suma zamkniętych wzlotów + ręcznych off/on-block (ms). */
   blockTimeMs: number;
 
   flights: Flight[];
@@ -146,16 +187,6 @@ export interface SessionState {
   fuel: FuelState;
   mh: MhState;
   drops: DropSummary;
-
-  /**
-   * Liczba wzlotów POTWIERDZONYCH przez pilota (`leg_close`, §3.6).
-   *
-   * Świadomie osobna od `engineRuns.length`: cykl silnika jest faktem z detekcji,
-   * a potwierdzenie jest czynnością pilota, którą wolno mu odłożyć („Potwierdzę
-   * później"). Różnica między jednym a drugim to dokładnie zbiór wzlotów, które
-   * „Mój dzień" oznacza paskiem „do potwierdzenia".
-   */
-  closedLegCount: number;
 
   /** Czy padł `day_close` (zdanie samolotu). */
   closed: boolean;
@@ -200,7 +231,7 @@ export function emptySessionState(): SessionState {
     taxiing: false,
     openEngineStartAt: null,
     openTakeoffAt: null,
-    engineRuns: [],
+    legs: [],
     blockTimeMs: 0,
     flights: [],
     flightTimeMs: 0,
@@ -216,7 +247,6 @@ export function emptySessionState(): SessionState {
       altitudeFixCount: 0,
       avgAltitudeFt: null,
     },
-    closedLegCount: 0,
     closed: false,
     closedAt: null,
     eventCount: 0,
@@ -286,14 +316,23 @@ export function projectSession(events: Event[]): SessionState {
       }
 
       case 'engine_start': {
-        state.engineRuns.push({ startedAt: t, stoppedAt: null, durationMs: 0 });
+        state.legs.push({
+          index: state.legs.length + 1,
+          startedAt: t,
+          stoppedAt: null,
+          durationMs: 0,
+          confirmed: false,
+          confirmedAt: null,
+          reading: null,
+          notes: null,
+        });
         state.engineRunning = true;
         state.openEngineStartAt = t;
         break;
       }
 
       case 'engine_stop': {
-        const run = lastOpen(state.engineRuns, (r) => r.stoppedAt == null);
+        const run = lastOpen(state.legs, (r) => r.stoppedAt == null);
         if (run) {
           run.stoppedAt = t;
           run.durationMs = Math.max(0, t - run.startedAt);
@@ -400,20 +439,28 @@ export function projectSession(events: Event[]): SessionState {
       }
 
       case 'leg_close': {
-        // Potwierdzenie wzlotu (§3.6). NIE dotyka cykli ani lotów — te wyznaczają
-        // `engine_start`/`engine_stop` i `takeoff`/`landing`. Wnosi dwie rzeczy:
-        // fakt potwierdzenia (licznik) i — gdy pilot go zrobił — odczyt paliwomierza.
+        // Potwierdzenie wzlotu (§3.6). NIE tworzy ani nie zamyka cyklu — te wyznaczają
+        // `engine_start`/`engine_stop`. Przypina się do NAJSTARSZEGO niepotwierdzonego
+        // zamkniętego wzlotu, a nie do `legIndex` z payloadu: numer z telefonu bywa
+        // nieaktualny po korekcie (`event_correction` może unieważnić cykl i przenumerować
+        // resztę), a strumień efektywny jest tu jedynym źródłem prawdy o kolejności.
         const p = event.payload;
-        state.closedLegCount += 1;
+        const leg = state.legs.find((l) => l.stoppedAt != null && !l.confirmed);
+        if (leg) {
+          leg.confirmed = true;
+          leg.confirmedAt = t;
+          leg.reading = p.reading ?? null;
+          leg.notes = p.notes ?? null;
+        }
         if (p.reading != null) {
           // Odczyt z zamknięcia wzlotu jest PEŁNOPRAWNY (§4.1 pkt 5: licznik fizyczny
           // bije rachubę), więc staje się ostatnim znanym stanem paliwomierza — tym
           // samym domyka interwał paliwowy analityki (§3.6b).
           state.fuel.lastReadingL = p.reading.fuelL;
         }
-        // Odczyt MH z wzlotu NIE trafia jeszcze do `mh` — `mh.end` należy do zdania
-        // samolotu (koniec łańcucha). Odczyty per wzlot dostaną własne miejsce razem
-        // z `Leg[]` w kolejnym kroku etapu B; dopisanie ich tutaj zafałszowałoby deltę.
+        // Odczyt MH z wzlotu NIE trafia do `mh.end` — to koniec ŁAŃCUCHA i należy do
+        // zdania samolotu. Tutaj mieszka na `leg.reading`, skąd analityka bierze go
+        // jako koniec interwału paliwowego, nie jako deltę sesji.
         break;
       }
 

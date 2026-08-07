@@ -74,7 +74,7 @@ function deltaUnit(format: MhFormat | null): string | undefined {
  */
 export function dayTiles(state: SessionState, mhFormat: MhFormat | null): DayTile[] {
   const openRun = state.engineRunning ? 1 : 0;
-  const closedRuns = state.engineRuns.length - openRun;
+  const closedRuns = state.legs.length - openRun;
   const balanced = state.takeoffCount === state.landingCount;
 
   return [

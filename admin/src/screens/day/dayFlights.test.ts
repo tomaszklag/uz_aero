@@ -14,10 +14,18 @@ import { flightRows } from './dayFlights';
 const DAY = Date.UTC(2026, 6, 30);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 
+let legSeq = 0;
+
+/** Wzlot bez potwierdzenia — ten test bada wyłącznie przypisanie lotów do cykli. */
 const run = (from: [number, number], to: [number, number] | null) => ({
+  index: ++legSeq,
   startedAt: at(from[0], from[1]),
   stoppedAt: to == null ? null : at(to[0], to[1]),
   durationMs: to == null ? 0 : at(to[0], to[1]) - at(from[0], from[1]),
+  confirmed: false,
+  confirmedAt: null,
+  reading: null,
+  notes: null,
 });
 
 const flight = (
@@ -36,7 +44,7 @@ const flight = (
 });
 
 const state = (over: Partial<SessionState>): SessionState =>
-  ({ engineRuns: [], flights: [], ...over }) as unknown as SessionState;
+  ({ legs: [], flights: [], ...over }) as unknown as SessionState;
 
 describe('flightRows', () => {
   it('przypisuje lot do CYKLU SILNIKA, w którym się zaczął', () => {
@@ -44,7 +52,7 @@ describe('flightRows', () => {
     // a warunek jest zawarciem startu w przedziale cyklu.
     const rows = flightRows(
       state({
-        engineRuns: [run([6, 31], [8, 41]), run([9, 12], [11, 38]), run([11, 56], [13, 13])],
+        legs: [run([6, 31], [8, 41]), run([9, 12], [11, 38]), run([11, 56], [13, 13])],
         flights: [
           flight(1, [6, 38], [7, 2]),
           flight(2, [9, 20], [9, 44]),
@@ -59,7 +67,7 @@ describe('flightRows', () => {
   it('cykl TRWAJĄCY obejmuje wszystko po swoim starcie', () => {
     // Tak samo traktuje go `projectSession` przy liczeniu czasu blokowego.
     const rows = flightRows(
-      state({ engineRuns: [run([11, 56], null)], flights: [flight(1, [12, 3], null)] }),
+      state({ legs: [run([11, 56], null)], flights: [flight(1, [12, 3], null)] }),
     );
     expect(rows[0]!.cycle).toBe('1');
   });
@@ -68,7 +76,7 @@ describe('flightRows', () => {
     // Wpis ręczny (`manual_log_entry`) wnosi lot bez pary zdarzeń silnika, więc do
     // żadnego cyklu nie należy. „1" byłoby zmyśleniem, a puste pole — brakiem danych.
     const rows = flightRows(
-      state({ engineRuns: [run([6, 31], [8, 41])], flights: [flight(9, [12, 35], [12, 59], 'manual')] }),
+      state({ legs: [run([6, 31], [8, 41])], flights: [flight(9, [12, 35], [12, 59], 'manual')] }),
     );
     expect(rows[0]!.cycle).toBe('—');
     expect(rows[0]!.method).toEqual({ label: 'ręcznie', tone: 'amber' });
@@ -78,7 +86,7 @@ describe('flightRows', () => {
     // Projekcja trzyma `durationMs === 0` dla lotu otwartego („wartości na żywo NIE
     // wchodzą do sum"). Wypisanie zera sugerowałoby lot zerowej długości.
     const rows = flightRows(
-      state({ engineRuns: [run([11, 56], null)], flights: [flight(1, [12, 3], null)] }),
+      state({ legs: [run([11, 56], null)], flights: [flight(1, [12, 3], null)] }),
     );
 
     expect(rows[0]!.open).toBe(true);
@@ -88,7 +96,7 @@ describe('flightRows', () => {
 
   it('czasy lotów mają sekundy i wiodące zero, jak reszta karty dnia', () => {
     const rows = flightRows(
-      state({ engineRuns: [run([6, 31], [8, 41])], flights: [flight(1, [6, 38], [7, 2])] }),
+      state({ legs: [run([6, 31], [8, 41])], flights: [flight(1, [6, 38], [7, 2])] }),
     );
 
     expect(rows[0]!.takeoff).toBe('06:38:00');

@@ -188,8 +188,8 @@ describe('projectSession — kanoniczny dzień 22 JUNE (zgodność z design-note
 
   it('block time = 6:39 (suma trzech cykli 2:22 + 1:13 + 3:04)', () => {
     expect(s.blockTimeMs).toBe(399 * MIN);
-    expect(s.engineRuns).toHaveLength(3);
-    expect(s.engineRuns.map((r) => r.durationMs)).toEqual([
+    expect(s.legs).toHaveLength(3);
+    expect(s.legs.map((r) => r.durationMs)).toEqual([
       142 * MIN,
       73 * MIN,
       184 * MIN,
@@ -363,7 +363,7 @@ describe('projectSession — zamknięcie wzlotu (leg_close)', () => {
       ev('leg_close', '12:30', { legIndex: 2, reading: { fuelL: 96, mh: mh('1238:05') } }),
     ]);
 
-    expect(s.closedLegCount).toBe(2);
+    expect(s.legs.filter((l) => l.confirmed)).toHaveLength(2);
     expect(s.fuel.lastReadingL).toBe(96);
   });
 });
@@ -401,5 +401,82 @@ describe('projectSession — opcjonalne klamry służby', () => {
     expect(s.dutyEnd).toBeNull();
     expect(s.closed).toBe(true);
     expect(s.fuel.endL).toBe(62);
+  });
+});
+
+/**
+ * Wzlot jako byt (etap B2): `Leg` to cykl silnika RAZEM z jego potwierdzeniem.
+ * Nie ma osobnej tablicy obok `legs` — wzlot i cykl to w tym modelu ten sam byt.
+ */
+describe('projectSession — wzlot jako byt (Leg)', () => {
+  const dayStart = () =>
+    ev('preflight_confirm', '08:00', {
+      operation: 'skoki',
+      reading: { fuelL: 150, mh: mh('1234:30') },
+    });
+
+  it('wzlot dostaje numer i startuje jako niepotwierdzony', () => {
+    const s = projectSession([dayStart(), ...singleCycle()]);
+
+    expect(s.legs).toHaveLength(1);
+    expect(s.legs[0]!.index).toBe(1);
+    expect(s.legs[0]!.confirmed).toBe(false);
+    expect(s.legs[0]!.confirmedAt).toBeNull();
+    expect(s.legs[0]!.reading).toBeNull();
+  });
+
+  it('potwierdzenie przypina się do wzlotu razem z odczytem i uwagą', () => {
+    const s = projectSession([
+      dayStart(),
+      ...singleCycle(),
+      ev('leg_close', '10:40', {
+        legIndex: 1,
+        reading: { fuelL: 128, mh: mh('1236:52') },
+        notes: 'drugi zbiornik nie ciągnie',
+      }),
+    ]);
+
+    const leg = s.legs[0]!;
+    expect(leg.confirmed).toBe(true);
+    expect(leg.confirmedAt).toBe(at('10:40'));
+    expect(leg.reading).toEqual({ fuelL: 128, mh: mh('1236:52') });
+    expect(leg.notes).toBe('drugi zbiornik nie ciągnie');
+  });
+
+  it('potwierdzenie trafia w NAJSTARSZY niepotwierdzony wzlot, nie w ostatni', () => {
+    // Pilot pominął potwierdzenie pierwszego wzlotu („Potwierdzę później"), poleciał
+    // drugi raz i dopiero wtedy potwierdził. Zaległy wzlot ma dostać to potwierdzenie
+    // jako pierwszy — inaczej kolejka zaległości nigdy by się nie rozładowała.
+    const s = projectSession([
+      dayStart(),
+      ...singleCycle(),
+      ev('engine_start', '11:15', {}),
+      ev('takeoff', '11:28', { method: 'auto' }),
+      ev('landing', '12:15', { method: 'auto' }),
+      ev('engine_stop', '12:28', {}),
+      ev('leg_close', '12:30', { legIndex: 1 }),
+    ]);
+
+    expect(s.legs[0]!.confirmed).toBe(true);
+    expect(s.legs[1]!.confirmed).toBe(false);
+  });
+
+  it('wzlot niepotwierdzony i tak wnosi czas blokowy — czasy są faktem z detekcji', () => {
+    const s = projectSession([dayStart(), ...singleCycle()]);
+
+    expect(s.legs[0]!.confirmed).toBe(false);
+    expect(s.blockTimeMs).toBe(142 * MIN);
+  });
+
+  it('otwarty wzlot nie jest jeszcze kandydatem do potwierdzenia', () => {
+    const s = projectSession([
+      dayStart(),
+      ev('engine_start', '08:12', {}),
+      ev('leg_close', '08:20', { legIndex: 1 }),
+    ]);
+
+    // Reguły blokują ten zapis (LEG_CLOSE_ENGINE_RUNNING), ale projekcja musi być
+    // totalna także dla strumienia, który jakimś cudem taki wpis zawiera.
+    expect(s.legs[0]!.confirmed).toBe(false);
   });
 });

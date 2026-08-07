@@ -39,10 +39,12 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     taxiing: false,
     openEngineStartAt: null,
     openTakeoffAt: null,
-    engineRuns: [
-      { startedAt: at(6, 31), stoppedAt: at(8, 41), durationMs: (2 * 60 + 10) * 60_000 },
-      { startedAt: at(9, 12), stoppedAt: at(11, 38), durationMs: (2 * 60 + 26) * 60_000 },
-      { startedAt: at(11, 56), stoppedAt: at(13, 13), durationMs: (60 + 17) * 60_000 },
+    // Wzloty niepotwierdzone — ten test liczy czas blokowy, a potwierdzenie
+    // (`leg_close`) nie ma na niego wpływu: czas bierze się z cyklu silnika.
+    legs: [
+      { index: 1, startedAt: at(6, 31), stoppedAt: at(8, 41), durationMs: (2 * 60 + 10) * 60_000, confirmed: false, confirmedAt: null, reading: null, notes: null },
+      { index: 2, startedAt: at(9, 12), stoppedAt: at(11, 38), durationMs: (2 * 60 + 26) * 60_000, confirmed: false, confirmedAt: null, reading: null, notes: null },
+      { index: 3, startedAt: at(11, 56), stoppedAt: at(13, 13), durationMs: (60 + 17) * 60_000, confirmed: false, confirmedAt: null, reading: null, notes: null },
     ],
     blockTimeMs: (5 * 60 + 53) * 60_000,
     flights: [],

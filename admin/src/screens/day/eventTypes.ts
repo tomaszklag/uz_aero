@@ -60,6 +60,12 @@ export const EVENT_META: Record<EventType, EventMeta> = {
   refuel: { dot: 'amber', badge: 'paliwo', badgeTone: 'amber', correctable: true },
   crew_change: { dot: 'amber', badge: 'załoga', badgeTone: 'amber', correctable: true },
   manual_log_entry: { dot: 'amber', badge: 'ręcznie', badgeTone: 'amber', correctable: true },
-  day_close: { dot: 'red', badge: 'koniec', badgeTone: 'red', correctable: false },
+  // `correctable: true` — i to jest ZMIANA WZGLĘDEM POZOSTAŁYCH zdarzeń cyklu życia:
+  // od `leg_close` liczy się okno korekty tego wzlotu (§3.6a), więc pilot musi móc
+  // poprawić literówkę w odczycie, który sam w tym oknie zatwierdził. Zdarzenie niesie
+  // opcjonalny odczyt, więc bywa ogniwem łańcucha MH — konsekwencje dla przeliczania
+  // flag łańcucha opisuje `docs/architektura-kodu.md` (blok „⚠ ETAP B").
+  leg_close: { dot: 'green', badge: 'wzlot', badgeTone: 'green', correctable: true },
+  day_close: { dot: 'red', badge: 'zdanie', badgeTone: 'red', correctable: false },
   event_correction: { dot: 'red', badge: 'korekta', badgeTone: 'red', correctable: false },
 };

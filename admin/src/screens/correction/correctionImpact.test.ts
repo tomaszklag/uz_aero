@@ -25,7 +25,7 @@ const state = (over: Partial<SessionState> = {}): SessionState =>
     takeoffCount: 9,
     landingCount: 9,
     flights: Array.from({ length: 9 }, () => ({})),
-    engineRuns: [
+    legs: [
       { startedAt: at(6, 0), stoppedAt: at(7, 0), durationMs: HOUR },
       { startedAt: at(8, 0), stoppedAt: at(9, 0), durationMs: HOUR },
       { startedAt: at(11, 56), stoppedAt: at(13, 13), durationMs: 77 * MIN },
@@ -46,7 +46,7 @@ describe('retime — skraca cykl i czas blokowy', () => {
   const before = state();
   const after = state({
     blockTimeMs: 5 * HOUR + 41 * MIN,
-    engineRuns: [
+    legs: [
       { startedAt: at(6, 0), stoppedAt: at(7, 0), durationMs: HOUR },
       { startedAt: at(8, 0), stoppedAt: at(9, 0), durationMs: HOUR },
       { startedAt: at(11, 56), stoppedAt: at(13, 1), durationMs: 65 * MIN },
@@ -96,7 +96,7 @@ describe('void na engine_stop — cykl zostaje OTWARTY', () => {
   const after = state({
     blockTimeMs: 4 * HOUR + 36 * MIN,
     engineRunning: true,
-    engineRuns: [
+    legs: [
       { startedAt: at(6, 0), stoppedAt: at(7, 0), durationMs: HOUR },
       { startedAt: at(8, 0), stoppedAt: at(9, 0), durationMs: HOUR },
       { startedAt: at(11, 56), stoppedAt: null, durationMs: 0 },

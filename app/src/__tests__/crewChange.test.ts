@@ -8,15 +8,23 @@
  */
 
 import { NO_DUAL, blockSince, crewRows, dualChangeBlocker, dualSince } from '../ui/screens/logic/crewChange';
-import type { EngineRun, Event, SessionState } from '../domain';
+import type { Leg, Event, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 
-const run = (from: number, to: number | null): EngineRun => ({
+let legSeq = 0;
+
+/** Wzlot bez potwierdzenia — ten test bada wyłącznie podział czasu blokowego. */
+const run = (from: number, to: number | null): Leg => ({
+  index: ++legSeq,
   startedAt: from,
   stoppedAt: to,
   durationMs: to != null ? to - from : 0,
+  confirmed: false,
+  confirmedAt: null,
+  reading: null,
+  notes: null,
 });
 
 function crewEvent(time: number, pilotInId: string | null): Event {
@@ -75,7 +83,7 @@ describe('wiersze aktualnej załogi', () => {
       picId: 'TMK',
       dualId: null,
       dutyStart: at(8, 0),
-      engineRuns: [],
+      legs: [],
     } as unknown as SessionState;
 
     const rows = crewRows(projection, [], at(9, 0));

@@ -486,19 +486,20 @@ function checkByType(
         );
       }
       // Zamykanie wzlotu, którego nie było: żaden cykl silnika nie zapadł.
-      if (state.engineRuns.length === 0) {
+      if (state.legs.length === 0) {
         v.push(
           error('LEG_CLOSE_WITHOUT_CYCLE', 'Nie ma czego zamykać — silnik ani razu nie ruszył.'),
         );
-      }
-      // Więcej potwierdzeń niż cykli oznacza duplikat (dwa tapnięcia, wznowiony ekran).
-      if (state.closedLegCount >= state.engineRuns.length) {
+      } else if (!state.legs.some((l) => l.stoppedAt != null && !l.confirmed)) {
+        // Nie ma zamkniętego wzlotu czekającego na potwierdzenie — czyli to duplikat
+        // (dwa tapnięcia, wznowiony ekran po restarcie aplikacji). Pytamy o KONKRETNY
+        // stan, nie o arytmetykę liczników: „ile potwierdzeń vs ile cykli" dawało ten
+        // sam werdykt, ale nie umiało powiedzieć, którego wzlotu dotyczy.
         v.push(
-          error(
-            'LEG_ALREADY_CLOSED',
-            'Ten wzlot jest już potwierdzony.',
-            { closedLegCount: state.closedLegCount, cycles: state.engineRuns.length },
-          ),
+          error('LEG_ALREADY_CLOSED', 'Wszystkie zamknięte wzloty są już potwierdzone.', {
+            legs: state.legs.length,
+            confirmed: state.legs.filter((l) => l.confirmed).length,
+          }),
         );
       }
       if (p.reading != null) {

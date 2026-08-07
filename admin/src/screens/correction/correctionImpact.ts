@@ -118,17 +118,17 @@ function row(
  * ten cykl, a nie tylko sumę dnia. Cykle niezmienione pomijamy — dzień skokowy ma ich
  * kilka i wypisanie wszystkich zamieniłoby kartę w tabelę bez treści.
  *
- * Pary bierzemy po INDEKSIE, bo `projectSession` buduje `engineRuns` w kolejności
+ * Pary bierzemy po INDEKSIE, bo `projectSession` buduje `legs` w kolejności
  * chronologicznej, a korekta czasu nie zmienia liczby cykli — z jednym wyjątkiem,
  * który jest tu najważniejszy: `void` na `engine_stop` zostawia cykl otwarty.
  */
 function engineRunRows(before: SessionState, after: SessionState): ImpactRow[] {
-  const count = Math.max(before.engineRuns.length, after.engineRuns.length);
+  const count = Math.max(before.legs.length, after.legs.length);
   const out: ImpactRow[] = [];
 
   for (let i = 0; i < count; i += 1) {
-    const a = before.engineRuns[i];
-    const b = after.engineRuns[i];
+    const a = before.legs[i];
+    const b = after.legs[i];
     const label = `Cykl silnika ${i + 1}`;
     const beforeText = a == null ? '—' : runText(a.stoppedAt, a.durationMs);
     const afterText = b == null ? 'znika' : runText(b.stoppedAt, b.durationMs);

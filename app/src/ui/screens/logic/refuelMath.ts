@@ -65,7 +65,7 @@ export function lastFuelReference(events: Event[]): FuelReference | null {
  * poprawce. Tam też mieszka uzasadnienie dwóch rzeczy, których ta funkcja pierwotnie
  * nie robiła, a robić musi:
  *  • liczy ręczne off/on-block z `manual_log_entry` (fallback GPS, ekran 08) — projekcja
- *    dokłada je do `blockTimeMs` BEZ wpisu w `engineRuns`, więc liczenie z samych cykli
+ *    dokłada je do `blockTimeMs` BEZ wpisu w `legs`, więc liczenie z samych cykli
  *    zaniżało mianownik i zawyżało L/h (wada znaleziona 2026-08-05);
  *  • scala odcinki nachodzące na siebie, zamiast sumować ich długości.
  *

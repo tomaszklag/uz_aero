@@ -608,7 +608,7 @@ export function CockpitScreen({
         <Card
           // `cyclesLabel` — ten sam nagłówek co w podglądzie 04b, gdzie odmiana była
           // od początku poprawna („1 cykl", nie „1 cykli").
-          title={`Log dnia · UTC · ${cyclesLabel(projection.engineRuns.length)} · ${projection.takeoffCount} T/O`}
+          title={`Log dnia · UTC · ${cyclesLabel(projection.legs.length)} · ${projection.takeoffCount} T/O`}
           flush
         >
           {/* Log dnia jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków

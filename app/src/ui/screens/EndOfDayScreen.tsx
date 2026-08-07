@@ -185,7 +185,7 @@ export function EndOfDayScreen({
             title="Żaden lot nie został zapisany"
             text={
               `Zamykasz dzień bez lotów (0 startów, 0 lądowań${
-                projection.engineRuns.length === 0 ? ', silnik nie był uruchamiany' : ''
+                projection.legs.length === 0 ? ', silnik nie był uruchamiany' : ''
               }). Odczyty końcowe są mimo to wymagane: to one są przekazaniem dla ` +
               'następnego pilota.'
             }

@@ -8,7 +8,7 @@
  * więc przybliżenie „wszyscy mają tyle co dzień" byłoby fałszem rozliczeniowym.
  */
 
-import type { EngineRun, EpochMillis, Event, SessionState } from '../../../domain';
+import type { EpochMillis, Event, Leg, SessionState } from '../../../domain';
 
 export interface CrewRowModel {
   role: 'PIC' | 'DUAL';
@@ -28,7 +28,7 @@ export interface CrewRowModel {
  * nie zapisuje sobie czasu, przy którym go nie było.
  */
 export function blockSince(
-  runs: readonly EngineRun[],
+  runs: readonly Leg[],
   since: EpochMillis,
   now: EpochMillis,
 ): number {
@@ -73,7 +73,7 @@ export function crewRows(
       role: 'PIC',
       pilotId: projection.picId,
       since: picSince,
-      blockMs: picSince != null ? blockSince(projection.engineRuns, picSince, now) : 0,
+      blockMs: picSince != null ? blockSince(projection.legs, picSince, now) : 0,
     },
   ];
 
@@ -82,7 +82,7 @@ export function crewRows(
     role: 'DUAL',
     pilotId: projection.dualId,
     since: dSince,
-    blockMs: dSince != null ? blockSince(projection.engineRuns, dSince, now) : 0,
+    blockMs: dSince != null ? blockSince(projection.legs, dSince, now) : 0,
   });
 
   return rows;
