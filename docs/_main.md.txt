@@ -544,15 +544,30 @@ Typy zdarzeń:
 | `day_close` | końcowy FOB + MH (przekazanie), duty end |
 | `event_correction` | `targetUuid` + akcja: `retime` (nowy czas) **lub** `void` („zdarzenia nie było") — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zamknięciu (decyzja 2026-07-23) |
 
-> **Tabela opisuje model WDROŻONY (schema_version 1), sprzed decyzji 2026-08-06.** Design
-> jest już przebudowany, domena jeszcze nie. Etap B doprowadzi ją do zgodności z 3.6/3.6a:
-> nowy typ `leg_close` (potwierdzenie wzlotu: czasy, opcjonalny odczyt FOB+MH, uwagi),
-> `dutyStart` w `preflight_confirm` i `dutyEnd` w `day_close` stają się **opcjonalne**,
-> a czas służby przechodzi w projekcję per pilot per doba UTC. Nowej osi zdarzeń dla
-> służby świadomie NIE tworzymy: nagłówek wymaga `session_uuid` i `aircraft_id`, więc
-> „meldunek" nie miałby gdzie mieszkać — dwie opcjonalne klamry w istniejących payloadach
-> dają to samo bez ruszania nagłówka. Strumień `schema_version 1` musi projektować się
-> bez zmiany wyników — to twardy warunek każdego commitu etapu B.
+| `leg_close` | **potwierdzenie WZLOTU** (§3.6): numer wzlotu, OPCJONALNY odczyt FOB+MH, uwaga. Nie tworzy ani nie zamyka cyklu silnika — niesie fakt „pilot przejrzał ten wzlot", od którego liczy się okno korekty tego wzlotu. Wzlot bez `leg_close` jest legalny („Potwierdzę później") |
+
+> **Stan migracji modelu (etap B, `schema_version` 2).**
+>
+> **ZROBIONE (B1):** `leg_close` istnieje; `dutyStart` w `preflight_confirm` i `dutyEnd`
+> w `day_close` są **opcjonalne**; `CURRENT_SCHEMA_VERSION` = 2; projekcja liczy
+> `closedLegCount` i przyjmuje odczyt z wzlotu jako ostatni znany stan paliwomierza;
+> reguły `LEG_CLOSE_ENGINE_RUNNING`, `LEG_CLOSE_WITHOUT_CYCLE`, `LEG_ALREADY_CLOSED`.
+>
+> **ZOSTAJE:** `Leg[]` w projekcji z odczytami per wzlot (dziś odczyt MH z `leg_close`
+> świadomie NIE wchodzi do `mh.end` — to koniec łańcucha, należy do zdania samolotu),
+> projekcja służby per pilot per doba UTC, przewiązanie okna korekty na `leg_close`.
+>
+> Nowej osi zdarzeń dla służby świadomie NIE tworzymy: nagłówek wymaga `session_uuid`
+> i `aircraft_id`, więc „meldunek" nie miałby gdzie mieszkać — dwie opcjonalne klamry
+> w istniejących payloadach dają to samo bez ruszania nagłówka.
+>
+> **Strumień `schema_version 1` musi projektować się bez zmiany wyników** — to twardy
+> warunek każdego commitu etapu B. Strażnikiem jest komplet testów kanonicznego dnia
+> 22 JUNE w `app/src/__tests__/projections.test.ts`, budowany jawnie z `schemaVersion: 1`.
+>
+> Nazwa `day_close` **zostaje mimo zmiany znaczenia** (dziś: zdanie samolotu, nie koniec
+> dnia). Strumień jest append-only — zdarzenia w bazie nie zmienią nazwy dlatego, że
+> zmieniło się jej znaczenie; zmieniamy docblocki i komunikaty, nie identyfikatory.
 
 ### 5.2 SQLite (telefon)
 

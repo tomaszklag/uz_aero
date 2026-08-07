@@ -20,8 +20,16 @@
 
 import type { EpochMillis } from '../time';
 
-/** Wersja schematu payloadu — bump przy każdej zmianie kształtu payloadów (§5.1). */
-export const CURRENT_SCHEMA_VERSION = 1;
+/**
+ * Wersja schematu payloadu — bump przy każdej zmianie kształtu payloadów (§5.1).
+ *
+ * 1 → 2 (2026-08-06, przebudowa flow §3.6a): doszedł `leg_close`, a klamry służby
+ * (`dutyStart` w `preflight_confirm`, `dutyEnd` w `day_close`) stały się OPCJONALNE.
+ * Strumień w wersji 1 musi projektować się bez zmiany wyników — pilnuje tego komplet
+ * testów kanonicznego dnia w `app/src/__tests__/projections.test.ts`, budowany jawnie
+ * z `schemaVersion: 1`.
+ */
+export const CURRENT_SCHEMA_VERSION = 2;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typy pomocnicze wspólne dla payloadów
@@ -124,8 +132,15 @@ export interface PreflightConfirmPayload {
   departureIcao?: string | null;
   /** ICAO lądowania planowanego. */
   arrivalIcao?: string | null;
-  /** Czas meldowania = początek duty (UTC, §3.1). */
-  dutyStart: EpochMillis;
+  /**
+   * Czas meldowania = początek klamry służby (UTC).
+   *
+   * **OPCJONALNY od schemaVersion 2** (§3.6a): przejęcie samolotu nie pyta już „od kiedy
+   * jesteś na służbie" — klamra powstaje z pierwszego wzlotu doby, a pilot poprawia ją
+   * po fakcie na ekranie 01. Zdarzenia w wersji 1 zawsze tę wartość niosą i nadal jest
+   * respektowana; brak oznacza „pilot nie zadeklarował", nie „zero".
+   */
+  dutyStart?: EpochMillis | null;
   /** Odczyt liczników na start dnia — początek łańcucha MH (§4.5). */
   reading: FuelMhReading;
   /** Log korekt podpowiedzi (append-only, nie nadpisuje `reading`). */
@@ -253,12 +268,49 @@ export interface ManualLogEntryPayload {
   notes?: string | null;
 }
 
-/** `day_close` — końcowy FOB+MH (przekazanie dla następnego) + koniec duty (§3.6). */
+/**
+ * `day_close` — ZDANIE SAMOLOTU: końcowy FOB+MH (przekazanie dla następnego pilota).
+ *
+ * Nazwa typu jest historyczna i zostaje, bo strumień jest append-only — miliony zdarzeń
+ * w bazie nie zmienią nazwy dlatego, że zmieniło się jej znaczenie. Od 2026-08-06 (§3.6)
+ * to zdarzenie **nie kończy dnia pilota**, tylko jego pracę z TĄ maszyną: służba liczy się
+ * dalej, a kolejny samolot wchodzi do tej samej doby.
+ */
 export interface DayClosePayload {
-  /** Odczyt końcowy = przekazanie dla kolejnego pilota (koniec łańcucha MH). */
+  /** Odczyt końcowy = przekazanie dla kolejnego pilota (ogniwo łańcucha MH). */
   finalReading: FuelMhReading;
-  /** Godzina zakończenia duty (UTC). */
-  dutyEnd: EpochMillis;
+  /**
+   * Godzina zakończenia służby (UTC) — **OPCJONALNA od schemaVersion 2** (§3.6a).
+   * Zdanie samolotu nie jest końcem służby, więc nie ma powodu jej tu wymagać;
+   * klamrę domyka pilot na `01b` albo domyka się sama na ostatnim wzlocie.
+   */
+  dutyEnd?: EpochMillis | null;
+}
+
+/**
+ * `leg_close` — POTWIERDZENIE WZLOTU (§3.6). Jednostka potwierdzenia danych.
+ *
+ * Zapada po `engine_stop`: pilot przegląda czasy z detekcji, opcjonalnie dopisuje odczyt
+ * liczników i uwagę. Samo zdarzenie NIE tworzy ani nie zamyka cyklu silnika — te wyznaczają
+ * `engine_start`/`engine_stop`. Niesie fakt „pilot przejrzał ten wzlot", od którego liczy
+ * się 24-godzinne okno korekty tego wzlotu (§3.6a — każdy wzlot ma własne okno).
+ *
+ * Wzlot bez `leg_close` jest legalny: pilot mógł wyjść przez „Potwierdzę później",
+ * a offline-first zabrania więzić go przy telefonie. Czasy i tak są w rejestrze.
+ */
+export interface LegClosePayload {
+  /** Numer wzlotu w dobie (1-based) — ten sam, którym „Mój dzień" numeruje wiersze. */
+  legIndex: number;
+  /**
+   * Odczyt liczników — **OPCJONALNY** i to jest decyzja, nie niedopatrzenie (§3.6):
+   * dzień skokowy to 8–12 wzlotów pod rząd i nikt nie chodzi do licznika po każdym,
+   * a wymóg zrobiłby z aplikacji coś wolniejszego od papieru. Gdy jest — jest
+   * PEŁNOPRAWNYM ogniwem łańcucha (§4.1 pkt 5: licznik fizyczny bije rachubę)
+   * i domyka interwał paliwowy analityki. Konsekwencje: `_main.md.txt` §3.6b.
+   */
+  reading?: FuelMhReading | null;
+  /** Uwaga pilota do wzlotu — wolny tekst, opisuje okoliczności tego lotu. */
+  notes?: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -278,6 +330,7 @@ export interface EventPayloadMap {
   refuel: RefuelPayload;
   crew_change: CrewChangePayload;
   manual_log_entry: ManualLogEntryPayload;
+  leg_close: LegClosePayload;
   day_close: DayClosePayload;
   event_correction: EventCorrectionPayload;
 }
@@ -298,6 +351,7 @@ export const EVENT_TYPES: readonly EventType[] = [
   'refuel',
   'crew_change',
   'manual_log_entry',
+  'leg_close',
   'day_close',
   'event_correction',
 ];

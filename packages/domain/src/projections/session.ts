@@ -147,7 +147,17 @@ export interface SessionState {
   mh: MhState;
   drops: DropSummary;
 
-  /** Czy padł `day_close`. */
+  /**
+   * Liczba wzlotów POTWIERDZONYCH przez pilota (`leg_close`, §3.6).
+   *
+   * Świadomie osobna od `engineRuns.length`: cykl silnika jest faktem z detekcji,
+   * a potwierdzenie jest czynnością pilota, którą wolno mu odłożyć („Potwierdzę
+   * później"). Różnica między jednym a drugim to dokładnie zbiór wzlotów, które
+   * „Mój dzień" oznacza paskiem „do potwierdzenia".
+   */
+  closedLegCount: number;
+
+  /** Czy padł `day_close` (zdanie samolotu). */
   closed: boolean;
   /**
    * Czas zdarzenia `day_close` (null dopóki dzień otwarty). Od niego liczy się
@@ -206,6 +216,7 @@ export function emptySessionState(): SessionState {
       altitudeFixCount: 0,
       avgAltitudeFt: null,
     },
+    closedLegCount: 0,
     closed: false,
     closedAt: null,
     eventCount: 0,
@@ -264,7 +275,10 @@ export function projectSession(events: Event[]): SessionState {
         state.client = p.client ?? null;
         state.notes = p.notes ?? null;
         state.mhFormat = p.mhFormat ?? null;
-        state.dutyStart = p.dutyStart;
+        // `?? null`, bo od schemaVersion 2 klamra jest opcjonalna (§3.6a) — brak
+        // deklaracji ma być `null` („pilot nie podał"), nigdy `undefined`, inaczej
+        // projekcja przestaje być totalna i psuje kontrakt DTO panelu.
+        state.dutyStart = p.dutyStart ?? null;
         state.fuel.startL = p.reading.fuelL;
         state.fuel.lastReadingL = p.reading.fuelL;
         state.mh.start = p.reading.mh;
@@ -379,9 +393,27 @@ export function projectSession(events: Event[]): SessionState {
         state.fuel.endL = p.finalReading.fuelL;
         state.fuel.lastReadingL = p.finalReading.fuelL;
         state.mh.end = p.finalReading.mh;
-        state.dutyEnd = p.dutyEnd;
+        state.dutyEnd = p.dutyEnd ?? null;
         state.closed = true;
         state.closedAt = t;
+        break;
+      }
+
+      case 'leg_close': {
+        // Potwierdzenie wzlotu (§3.6). NIE dotyka cykli ani lotów — te wyznaczają
+        // `engine_start`/`engine_stop` i `takeoff`/`landing`. Wnosi dwie rzeczy:
+        // fakt potwierdzenia (licznik) i — gdy pilot go zrobił — odczyt paliwomierza.
+        const p = event.payload;
+        state.closedLegCount += 1;
+        if (p.reading != null) {
+          // Odczyt z zamknięcia wzlotu jest PEŁNOPRAWNY (§4.1 pkt 5: licznik fizyczny
+          // bije rachubę), więc staje się ostatnim znanym stanem paliwomierza — tym
+          // samym domyka interwał paliwowy analityki (§3.6b).
+          state.fuel.lastReadingL = p.reading.fuelL;
+        }
+        // Odczyt MH z wzlotu NIE trafia jeszcze do `mh` — `mh.end` należy do zdania
+        // samolotu (koniec łańcucha). Odczyty per wzlot dostaną własne miejsce razem
+        // z `Leg[]` w kolejnym kroku etapu B; dopisanie ich tutaj zafałszowałoby deltę.
         break;
       }
 

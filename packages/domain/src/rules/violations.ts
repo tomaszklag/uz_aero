@@ -64,7 +64,11 @@ export type ViolationCode =
   // ── załoga ─────────────────────────────────────────────────────────────────
   | 'PIC_CHANGE_NOT_ALLOWED'
   | 'DUAL_IS_PIC'
-  // ── wpis ręczny i zamknięcie dnia ──────────────────────────────────────────
+  // ── zamknięcie wzlotu (09) ─────────────────────────────────────────────────
+  | 'LEG_CLOSE_ENGINE_RUNNING'
+  | 'LEG_CLOSE_WITHOUT_CYCLE'
+  | 'LEG_ALREADY_CLOSED'
+  // ── wpis ręczny i zdanie samolotu ──────────────────────────────────────────
   | 'MANUAL_ENTRY_EMPTY'
   | 'MANUAL_ENTRY_TIME_ORDER'
   | 'DAY_ALREADY_CLOSED'

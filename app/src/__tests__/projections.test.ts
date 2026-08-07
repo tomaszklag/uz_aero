@@ -300,3 +300,106 @@ describe('projectSession — odporność', () => {
     expect(s.flights).toHaveLength(0);
   });
 });
+
+/**
+ * Zamknięcie wzlotu (`leg_close`) — etap B przebudowy flow (`docs/_main.md.txt` §3.6).
+ *
+ * Jednostką potwierdzenia danych jest WZLOT, nie doba. Odczyt liczników jest w nim
+ * OPCJONALNY (w serii skokowej nikt nie chodzi do licznika po każdym wzlocie), ale gdy
+ * jest — jest pełnoprawnym odczytem paliwomierza, bo §4.1 pkt 5 stawia licznik fizyczny
+ * nad naszą rachubą.
+ *
+ * Strażnikiem regresji dla starego strumienia jest CAŁA reszta tego pliku: buduje
+ * zdarzenia `schemaVersion: 1` i sprawdza kanoniczny dzień 22 JUNE. Jeśli dołożenie
+ * `leg_close` cokolwiek w nim ruszy, te testy upadną — o to chodzi.
+ */
+describe('projectSession — zamknięcie wzlotu (leg_close)', () => {
+  it('odczyt z zamknięcia wzlotu staje się ostatnim znanym stanem paliwomierza', () => {
+    const s = projectSession([
+      ev('preflight_confirm', '08:00', {
+        operation: 'skoki',
+        dutyStart: at('08:00'),
+        reading: { fuelL: 150, mh: mh('1234:30') },
+      }),
+      ...singleCycle(),
+      ev('leg_close', '10:40', {
+        legIndex: 1,
+        reading: { fuelL: 128, mh: mh('1236:52') },
+      }),
+    ]);
+
+    expect(s.fuel.lastReadingL).toBe(128);
+  });
+
+  it('wzlot zamknięty BEZ odczytu nie rusza stanu paliwomierza', () => {
+    const withoutReading = projectSession([
+      ev('preflight_confirm', '08:00', {
+        operation: 'skoki',
+        dutyStart: at('08:00'),
+        reading: { fuelL: 150, mh: mh('1234:30') },
+      }),
+      ...singleCycle(),
+      ev('leg_close', '10:40', { legIndex: 1 }),
+    ]);
+
+    // Brak odczytu to NIEWIEDZA, nie zero i nie „tyle samo co przed lotem" —
+    // ostatnim znanym stanem zostaje odczyt z przejęcia.
+    expect(withoutReading.fuel.lastReadingL).toBe(150);
+  });
+
+  it('liczy zamknięte wzloty niezależnie od tego, czy niosły odczyt', () => {
+    const s = projectSession([
+      ev('preflight_confirm', '08:00', {
+        operation: 'skoki',
+        dutyStart: at('08:00'),
+        reading: { fuelL: 150, mh: mh('1234:30') },
+      }),
+      ...singleCycle(),
+      ev('leg_close', '10:40', { legIndex: 1 }),
+      ev('engine_start', '11:15', {}),
+      ev('takeoff', '11:28', { method: 'auto' }),
+      ev('landing', '12:15', { method: 'auto' }),
+      ev('engine_stop', '12:28', {}),
+      ev('leg_close', '12:30', { legIndex: 2, reading: { fuelL: 96, mh: mh('1238:05') } }),
+    ]);
+
+    expect(s.closedLegCount).toBe(2);
+    expect(s.fuel.lastReadingL).toBe(96);
+  });
+});
+
+/**
+ * Klamry służby są OPCJONALNE (§3.6a) — pilot nie deklaruje niczego, żeby polecieć.
+ * Stare zdarzenia (`schemaVersion: 1`) zawsze je niosą i muszą projektować się tak samo.
+ */
+describe('projectSession — opcjonalne klamry służby', () => {
+  it('preflight bez `dutyStart` nie ustawia klamry, ale ustawia odczyty', () => {
+    const s = projectSession([
+      ev('preflight_confirm', '08:00', {
+        operation: 'ferry',
+        reading: { fuelL: 96, mh: mh('1239:39') },
+      }),
+    ]);
+
+    expect(s.dutyStart).toBeNull();
+    expect(s.fuel.startL).toBe(96);
+    expect(s.mh.start).toBeCloseTo(mh('1239:39'), 6);
+  });
+
+  it('zdanie samolotu bez `dutyEnd` domyka odczyty, nie klamrę', () => {
+    const s = projectSession([
+      ev('preflight_confirm', '08:00', {
+        operation: 'ferry',
+        reading: { fuelL: 96, mh: mh('1239:39') },
+      }),
+      ...singleCycle(),
+      ev('day_close', '11:20', {
+        finalReading: { fuelL: 62, mh: mh('1241:09') },
+      }),
+    ]);
+
+    expect(s.dutyEnd).toBeNull();
+    expect(s.closed).toBe(true);
+    expect(s.fuel.endL).toBe(62);
+  });
+});

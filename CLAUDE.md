@@ -23,12 +23,20 @@ Faza 7 **panel administracyjny (web)** — projekt UI zamknięty (`design/admin/
 **Analityka zużycia** (2026-08-05) — wdrożona end-to-end: domena `packages/domain/src/consumption/` (interwały paliwowe odczyt→odczyt, NNLS per faza, przelicznik MH z automatycznym rozpoznaniem obrotomierz/Hobbs, oś faz pionowych ze śladu), `GET /admin/api/fleet/:id/consumption` + ekran A10a/A10b w panelu, norma zużycia w aplikacji pilota (migracja serwera 19 + SQLite 4, ekrany 04/06/10). Reguła czytania strumienia poza listami: `docs/architektura-panelu-serwer.md` §7.7; przepis „nowa metryka analityki": `docs/architektura-kodu.md` §7.
 **Progi analityki są DO KALIBRACJI** (`consumption/policy.ts`) — służy do tego `server/scripts/consumptionReplay.ts`, który puszcza realną historię przez ten sam kod, co serwer. Pierwszy przebieg (2026-08-05) znalazł pięć wad, każda ma test regresyjny; nie strojimy tych progów w dyskusji.
 **PRZEBUDOWA FLOW W TOKU** (od 2026-08-06, gałąź `poc-zmiany-flow`) — dzień służby przestał
-być kontenerem na loty (patrz sekcja „Czas służby" niżej). **Design jest przebudowany
-i zacommitowany, kod jeszcze NIE** — `app/` i `packages/domain` nadal realizują stary model
-(`preflight_confirm` z wymaganym `dutyStart`, `day_close` jako koniec dnia). Rozjazd jest
-świadomy i tymczasowy: mockupy prowadzą, kod dogania. Kolejność: etap B `packages/domain`
-(`leg_close`, klamry duty opcjonalne, projekcja `duty.ts`), etap C `app/`, etap D serwer
-i panel. Nie „naprawiaj" ekranów RN pod stare mockupy — zostały usunięte.
+być kontenerem na loty (patrz sekcja „Czas służby" niżej). Rozjazd design↔kod jest świadomy
+i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN pod stare mockupy
+— zostały usunięte.**
+- **Etap A ✅** — `design/` i dokumentacja przebudowane i zacommitowane.
+- **Etap B 🔶 w toku** (`packages/domain`). **B1 ZROBIONE**: `leg_close`,
+  `CURRENT_SCHEMA_VERSION` = 2, `dutyStart`/`dutyEnd` opcjonalne, `closedLegCount`
+  w projekcji, trzy reguły `LEG_*`. **B2 przed nami**: `Leg[]` z odczytami per wzlot,
+  projekcja służby `duty.ts` (per pilot per doba UTC, POZA `SessionState`), przewiązanie
+  okna korekty na `leg_close`. B4: `consumption/intervals.ts` uczy się `leg_close`.
+- **Etap C** `app/` (ekrany 1:1 z nowych mockupów), **etap D** serwer + panel.
+
+**Twardy warunek każdego commitu etapu B:** strumień `schema_version 1` musi projektować się
+BEZ ZMIANY WYNIKÓW. Strażnikiem jest kanoniczny dzień 22 JUNE w `app/src/__tests__/projections.test.ts`
+(budowany jawnie z `schemaVersion: 1`) — nie usuwaj go i nie „aktualizuj" pod nowy model.
 - Mockupy w `design/` to **zatwierdzona specyfikacja**: ekran RN wdrażamy 1:1 z odpowiadającego pliku HTML, sekcja po sekcji, bez upraszczania. Wątpliwość do mockupu = rozmowa przed implementacją, nie cicha zmiana w kodzie.
 - **Gdzie położyć nowy plik** (reguła od 2026-07-31, pełne uzasadnienie w `docs/architektura-kodu.md`):
   warstwa jest osią główną, a wewnątrz `application/`, `http/routes/` i `infrastructure/pg/`

@@ -471,6 +471,54 @@ function checkByType(
       break;
     }
 
+    case 'leg_close': {
+      const p = candidate.payload;
+
+      // Wzlot zamyka się PO wyłączeniu silnika. Potwierdzenie przy pracującym silniku
+      // albo w powietrzu znaczy, że ekran otworzył się nie w tym momencie — a czasy,
+      // które pilot właśnie zatwierdza, jeszcze nie są kompletne.
+      if (state.engineRunning) {
+        v.push(
+          error(
+            'LEG_CLOSE_ENGINE_RUNNING',
+            'Silnik pracuje — wzlot zamyka się po jego wyłączeniu.',
+          ),
+        );
+      }
+      // Zamykanie wzlotu, którego nie było: żaden cykl silnika nie zapadł.
+      if (state.engineRuns.length === 0) {
+        v.push(
+          error('LEG_CLOSE_WITHOUT_CYCLE', 'Nie ma czego zamykać — silnik ani razu nie ruszył.'),
+        );
+      }
+      // Więcej potwierdzeń niż cykli oznacza duplikat (dwa tapnięcia, wznowiony ekran).
+      if (state.closedLegCount >= state.engineRuns.length) {
+        v.push(
+          error(
+            'LEG_ALREADY_CLOSED',
+            'Ten wzlot jest już potwierdzony.',
+            { closedLegCount: state.closedLegCount, cycles: state.engineRuns.length },
+          ),
+        );
+      }
+      if (p.reading != null) {
+        v.push(...checkFuelReading(p.reading.fuelL, limits, 'Odczyt paliwa przy zamknięciu wzlotu'));
+        // Łańcuch MH jest monotoniczny także wewnątrz sesji — odczyt niższy niż
+        // startowy to literówka, którą pilot poprawi na miejscu. Miękko byłoby tu za
+        // mało: ta wartość ma prawo stać się ogniwem łańcucha (§3.6b).
+        if (state.mh.start != null && p.reading.mh < state.mh.start - MH_EPSILON_H) {
+          v.push(
+            error(
+              'MH_REGRESSION',
+              `Odczyt MH (${round2(p.reading.mh)}) jest niższy niż przy przejęciu (${round2(state.mh.start)}). Sprawdź licznik.`,
+              { start: state.mh.start, reading: p.reading.mh },
+            ),
+          );
+        }
+      }
+      break;
+    }
+
     case 'manual_log_entry': {
       const p = candidate.payload;
       const times: Array<[string, EpochMillis | null | undefined]> = [
@@ -506,11 +554,14 @@ function checkByType(
         v.push(
           error(
             'ENGINE_RUNNING_AT_DAY_CLOSE',
-            'Silnik pracuje — wyłącz silnik przed zamknięciem dnia.',
+            'Silnik pracuje — wyłącz silnik przed zdaniem samolotu.',
           ),
         );
       }
-      if (state.dutyStart != null && p.dutyEnd < state.dutyStart) {
+      // Klamra jest opcjonalna od schemaVersion 2 (§3.6a), więc reguła kolejności
+      // budzi się TYLKO wtedy, gdy pilot podał obie godziny. Brak deklaracji nie jest
+      // naruszeniem — jest stanem domyślnym.
+      if (state.dutyStart != null && p.dutyEnd != null && p.dutyEnd < state.dutyStart) {
         v.push(
           error('DUTY_END_BEFORE_START', 'Koniec służby jest wcześniejszy niż meldunek.', {
             dutyStart: state.dutyStart,
