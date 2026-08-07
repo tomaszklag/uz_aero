@@ -364,7 +364,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       try {
         const repo = get().repo;
         if (repo != null && projection.sessionUuid != null) {
-          if (projection.dutyEnd == null) {
+          // Pytamy o ZDANIE samolotu, nie o klamrę służby. `dutyEnd` po §3.6a zostaje
+          // `null` także po `day_close`, więc ten warunek trzymał klucz usługi w tle
+          // wskazujący na sesję, której pilot już nie ma.
+          if (!projection.closed) {
             await repo.setMeta(SESSION_META_KEYS.activeSessionUuid, projection.sessionUuid);
           } else {
             await repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);

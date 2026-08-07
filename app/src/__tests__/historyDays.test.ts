@@ -66,7 +66,10 @@ async function writeDay(
   await repo.appendEvent({
     ...base,
     type: 'day_close',
-    payload: { finalReading: { fuelL: 110, mh: 1236.87 }, dutyEnd: t(525) },
+    // BEZ `dutyEnd` — dokładnie tak, jak wysyła to ekran „Zdaj samolot" (§3.6a: zdanie
+    // maszyny nie kończy dnia pilota). Fixture podawał tu godzinę i przez to ukrywał
+    // wadę, w której historia gubiła każdą poprawnie zdaną sesję.
+    payload: { finalReading: { fuelL: 110, mh: 1236.87 } },
     deviceTime: t(525),
   });
 }

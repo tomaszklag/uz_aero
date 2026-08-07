@@ -82,7 +82,11 @@ function cardSpec(day: HistoryDay): DayCardSpec {
 export function buildHistory(days: HistoryDay[], now: number): HistoryGroups {
   const groups: HistoryGroups = { editable: [], closed: [] };
   for (const day of days) {
-    if (day.state.sessionUuid == null || day.state.dutyEnd == null) continue;
+    // Warunkiem jest ZDANIE samolotu (`closed`), nie klamra służby. Do 2026-08-07 stało
+    // tu `dutyEnd == null` i po §3.6a znaczyło coś zupełnie innego, niż miało: ekran
+    // „Zdaj samolot" `dutyEnd` NIE WYSYŁA, więc poprawnie zdana sesja wypadała z historii
+    // W CAŁOŚCI — a to jedyny ekran, z którego pilot dosięga okna korekty.
+    if (day.state.sessionUuid == null || !day.state.closed) continue;
     const window = correctionWindow(day.state, now);
     if (window.open && window.closesAt != null) {
       groups.editable.push({
