@@ -8,7 +8,8 @@
  * Stan początkowy TEŻ jest komendą, nie tylko zbocza: po powrocie z headless-restartu
  * adoptuje działającą usługę (silnik gra), a po zamkniętym dniu sprząta osieroconą.
  * Dlatego hook wolno zamontować dopiero, gdy store zna PRAWDZIWY stan dnia —
- * po `loadSession` (patrz binder w `ResumeGate`), nigdy przed nim.
+ * po `loadSession` (patrz binder przy wznowieniu, `navigation/resumeTarget.ts`),
+ * nigdy przed nim.
  */
 
 import { useEffect } from 'react';

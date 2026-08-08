@@ -847,7 +847,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `StepList` | numerowana procedura wychodząca poza ten telefon | `.handover-steps` (07) |
 | `PillButton` | mała akcja nagłówka (pigułka z ikoną) | `.btn-add` (08) |
 | `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
-| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c; ⚠ etap C: godziny klamry służby przenoszą się na 01 / 01b |
+| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c (godzin klamry służby preflight od etapu C4 nie zbiera — należą do 01 / 01b) |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
@@ -858,7 +858,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `ResultBar` | samodzielny pasek wyniku z rachunkiem, na tonowanym tle | `.result-row` (06) |
 | `CalcBox` | wyliczenie zużycia paliwa z podaniem składników | `.calc-box` |
 | `GaugeHero`, `ScaleBar` | wskaźnik FOB z podziałką | `.fob-indicator` |
-| `DutyHero` | czas służby wielką czcionką + zakres | `.duty-hero` |
+| `SessionHero` | czas blokowy SESJI wielką czcionką + zakres (10). Nazwany `DutyHero` do etapu C5 — na karcie jednej maszyny bohaterem jest sesja, nie służba pilota | `.duty-hero` |
 | `DayCard` | karta dnia w historii; wariant `editable` = niebieska ramka + pas „OTWÓRZ I POPRAW" | `.day-card` (12) |
 | `CrewCard`, `CrewGrid` | karty załogi ze statystykami | `.crew-card` |
 | `DataTable` | tabela lotów z celem korekty ≥ 44 px | `.data-table` |
@@ -872,7 +872,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy — bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami (nieprzezroczyste — zakrywają kreskę), chipy, cel korekty ≥ 44 px. **Zieleń ma tylko wiersz `live`** — historia jest neutralna | `.day-log`, `.cycle-log` |
-| `DutyStrip` | ⚠ **DO USUNIĘCIA w etapie C** — czasu służby w kokpicie NIE MA (§3.2); jego miejsce zajmuje pasek sesji samolotu prowadzący do 01 | `.claim-strip` |
+| `ClaimStrip` | pasek SESJI w kokpicie: czyja maszyna, od kiedy, ile wzlotów; wariant klikalny jest jedyną drogą powrotną na 01. Zastąpił `DutyStrip` w etapie C5 — czasu służby w kokpicie NIE MA (§3.2) | `.claim-strip` |
 | `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
@@ -1166,12 +1166,14 @@ saver zabija proces). Konstrukcja, warstwa po warstwie:
   `gps/headlessTraceWriter.ts`, który pisze do `gps_trace` **tym samym**
   `TraceRecorder` + `appendTrace` co ścieżka żywa — `TraceSync` i `replay.ts` nie
   odróżniają trybów. Sesję wskazuje meta `active_session_uuid` (zapis w `claim`,
-  czyszczenie w `dayClose`, uzgodnienie w `loadSession`); bez niej paczka idzie do
-  kosza — fix bez atrybucji mógłby trafić do cudzej sesji.
+  czyszczenie w `releaseAircraft` — zdanie SAMOLOTU, nie zamknięcie dnia — uzgodnienie
+  w `loadSession`); bez niej paczka idzie do kosza — fix bez atrybucji mógłby trafić
+  do cudzej sesji.
 - **Uprawnienia**: usłudze pierwszoplanowej wystarcza while-in-use — o „w tle" NIE
   prosimy (na Androidzie 11+ to wycieczka do ustawień bez korzyści). Dialogi
-  (lokalizacja + powiadomienia 13+) wychodzą przy zatwierdzeniu preflight na 03,
-  nie przy pierwszym START ENGINE; odmowa niczego nie blokuje (§4.1).
+  (lokalizacja + powiadomienia 13+) wychodzą przy zatwierdzeniu preflight na 02a
+  („PRZEJMIJ I LEĆ" — ekran 03 zniknął w etapie C4), nie przy pierwszym START ENGINE;
+  odmowa niczego nie blokuje (§4.1).
 
 Degradacja bez modułu natywnego (stary dev client, Expo Go na Androidzie — tam
 lokalizacja w tle nie działa wcale): `backgroundLocationTask` robi MIĘKKI `require`
@@ -1560,11 +1562,11 @@ Wada znaleziona przy budowie analityki zużycia, naprawiona razem z nią — war
 bo jej **objawem był brak objawu**.
 
 `projectSession` obsługuje czas blokowy DWIEMA drogami. Para `engine_start`/`engine_stop`
-tworzy wpis w `state.engineRuns`; `manual_log_entry` (fallback GPS, ekran 08) dokłada
-odcinek off-block→on-block **wprost do `blockTimeMs`, bez wpisu w `engineRuns`**. Jest to
-sensowne — wpis ręczny nie opisuje cyklu silnika, tylko zaraportowany czas — ale każdy,
-kto liczy czas pracy silnika z samych `engineRuns`, dostanie w dniu z wpisem ręcznym
-mianownik za mały.
+tworzy wpis w `state.legs` (do etapu B2a tablica nazywała się `engineRuns`);
+`manual_log_entry` (fallback GPS, ekran 08) dokłada odcinek off-block→on-block **wprost
+do `blockTimeMs`, bez wpisu w `legs`**. Jest to sensowne — wpis ręczny nie opisuje cyklu
+silnika, tylko zaraportowany czas — ale każdy, kto liczy czas pracy silnika z samych
+`legs`, dostanie w dniu z wpisem ręcznym mianownik za mały.
 
 Robił tak ekran 06: `estimateConsumption` dzieliło ubytek paliwa przez czas z cykli, więc
 średnia L/h wychodziła **zawyżona**. Nic tego nie zdradzało: zła średnia wygląda dokładnie
@@ -1583,7 +1585,7 @@ Naprawa jest jedną funkcją dla obu stron — `consumption/timeInPhase.ts`:
   zamierzona i nazwana w obu miejscach.
 
 Test regresyjny: `app/src/__tests__/timeInPhase.test.ts`, przypadek nazwany wprost
-(„liczy ręczny off/on-block, którego NIE MA w engineRuns") plus asercja pokazująca,
+(„liczy ręczny off/on-block, którego NIE MA w legs") plus asercja pokazująca,
 że projekcja i miara odpowiadają na różne pytania.
 
 ---

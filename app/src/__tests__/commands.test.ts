@@ -258,10 +258,10 @@ describe('SessionCommands — pełny dzień przez komendy', () => {
 });
 
 describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle)', () => {
-  // Klucz żyje dokładnie tak długo jak OTWARTY dzień: writer headless czyta go po
-  // śmierci procesu, więc osierocona wartość przypisałaby fixy do cudzej sesji,
+  // Klucz żyje dokładnie tak długo, jak pilot TRZYMA SAMOLOT: writer headless czyta go
+  // po śmierci procesu, więc osierocona wartość przypisałaby fixy do cudzej sesji,
   // a brakująca — wyrzuciła ślad do kosza. Inny cykl życia niż `current_session_uuid`,
-  // którego nikt nie czyści (ResumeGate decyduje po `dutyEnd`).
+  // którego nikt nie czyści (`navigation/resumeTarget.ts` decyduje po `state.closed`).
 
   it('claim zapisuje klucz, udane day_close go czyści', async () => {
     const { adapter, commands, clock, seedCache } = setup();

@@ -4,11 +4,11 @@
  * Ten sam podział co `statsDay.ts`/`syncStatus.ts`: logika prezentacji w czystych
  * funkcjach, testowalnych bez React Native.
  *
- * Ekran 12 pokazuje wyłącznie dni ZAMKNIĘTE: dzień otwarty nie jest historią, tylko
- * teraźniejszością — po restarcie wraca prosto do kokpitu (`ResumeGate`), więc karta
- * w historii robiłaby z niego dwie prawdy naraz. Podział na grupy robi okno korekty
- * (decyzja 2026-07-23): w oknie → „Możesz jeszcze poprawić" (karta klikalna),
- * po oknie → „Zamknięte".
+ * Ekran 12 pokazuje wyłącznie sesje ZDANE: trzymany samolot nie jest historią, tylko
+ * teraźniejszością — po restarcie wznowienie prowadzi prosto do kokpitu
+ * (`navigation/resumeTarget.ts`), więc karta w historii robiłaby z niego dwie prawdy
+ * naraz. Podział na grupy robi okno korekty (decyzja 2026-07-23): w oknie → „Możesz
+ * jeszcze poprawić" (karta klikalna), po oknie → „Zamknięte".
  */
 
 import { correctionWindow, type SessionState } from '../../../domain';
@@ -23,7 +23,7 @@ export interface DayCardSpec {
   /** „22 JUNE 2026". */
   date: string;
   aircraft: string;
-  /** Loty / Block / Duty / Skoczków — kolejność z mockupu. */
+  /** Loty / Block / Sesja / Skoczków — „Duty" ustąpiło czasowi trzymania maszyny (§3.6a). */
   stats: { k: string; v: string }[];
   /** Tag wysyłki: zielony „Wysłane" albo amber „W kolejce · n zdarzeń". */
   sync: { label: string; pending: boolean };

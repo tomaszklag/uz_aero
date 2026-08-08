@@ -55,18 +55,20 @@ lotnego. Ruch klubu dokłada osobne polecenie, uruchamiane przy **działającym*
 npm run seed:demo
 ```
 
-Trzy tygodnie historii: ~35 dni lotnych na czterech samolotach, po jednym egzemplarzu
-każdego typu flagi z §4.5, dzień bez karty arkusza (zablokowany nakładką), dzień
-nadpisany przez drugą zmianę, korekta administracyjna po oknie 24 h, ślad w dzienniku
-audytu, konto wyłączone (JSE) i **jeden dzień otwarty DZIŚ** na SP-FGK (KRZ) — po to,
-żeby telefon miał co przejmować na ekranie 02. Mapa scenariusza: `server/scripts/demo/scenario.ts`.
+Cztery tygodnie historii: **51 sesji na czterech samolotach, ~1400 zdarzeń**, z czego
+flagę niesie 7 (~14%) — patologie są MNIEJSZOŚCIĄ, bo skrzynka pełna zawsze przestaje być
+czytana. W tle zwykłe dni klubu: dni skokowe po 4–9 wzlotów, egzaminy, przeloty, próba
+silnika bez startu. Poza tym po jednym egzemplarzu każdego typu flagi z §4.5, dzień bez
+karty arkusza (zablokowany nakładką), doba z dwiema zmianami jednej maszyny, zetknięcie
+sesji co do minuty, dwie sesje bez wzlotu z podanym powodem (09C), korekta administracyjna
+po oknie 24 h, ślad w dzienniku audytu, konto wyłączone (JSE) i **jedna sesja otwarta DZIŚ**
+na SP-FGK (KRZ) — po to, żeby telefon miał co przejmować na ekranie 02. Mapa scenariusza:
+`server/scripts/demo/scenario.ts`.
 
-> ⚠ **Scenariusz demo generuje dane w modelu sprzed 2026-08-06** — jeden dzień = jedna sesja
-> samolotu, `preflight_confirm` z `dutyStart`, `day_close` jako koniec pracy. Po przebudowie
-> flow (`docs/_main.md.txt` §3.6a) potrzebne będą dane w nowym kształcie: krótkie sesje,
-> kilka maszyn w jednej służbie pilota, wzloty z opcjonalnym odczytem liczników. To warunek
-> wstępny dla `consumptionReplay.ts` — bez nich nie da się skalibrować progów analityki
-> pod nowy model (§3.6b). Zadanie etapu B.
+> Scenariusz jest w modelu po przebudowie flow (`docs/_main.md.txt` §3.6a): sesja samolotu
+> jest krótka i niesie TABLICĘ wzlotów, payloady nie niosą klamry służby, a `leg_close` ma
+> opcjonalny odczyt liczników (164 wzloty, 88 z odczytem). To był warunek wstępny kalibracji
+> progów analityki (§3.6b) — `consumptionReplay.ts` ma od 2026-08-08 na czym pracować.
 
 Skrypt nie dotyka bazy: wysyła paczki przez `POST /events` i klika w panel przez
 `/admin/api/*`, więc `sessions`, `flags` i karty arkusza powstają z produkcyjnego kodu.

@@ -103,7 +103,8 @@ export class SessionCommands {
       aircraftId: input.aircraftId,
     });
     // Osobny klucz dla usługi GPS w tle: writer headless przypisuje nim fixy po
-    // śmierci procesu. Żyje dokładnie tak długo jak otwarty dzień (czyści `dayClose`).
+    // śmierci procesu. Żyje dokładnie tak długo, jak pilot trzyma samolot — czyści go
+    // `releaseAircraft` (zdanie maszyny), nie zamknięcie dnia: dzień pilota trwa dalej.
     await this.repo.setMeta(SESSION_META_KEYS.activeSessionUuid, input.sessionUuid);
     return result;
   }

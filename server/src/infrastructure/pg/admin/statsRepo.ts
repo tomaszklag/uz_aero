@@ -137,12 +137,13 @@ export class PgAdminStatsRepo implements StatsAdminPort {
   }
 
   async openSessions(db: Queryable, range: StatsRange): Promise<AdminStatsOpenSessionsRow> {
-    // Dzień otwarty nie ma `close_time`, więc jedyną jego datą jest duty start
-    // (`claim_time`) — tak samo lokuje go w czasie lista dni `A02`. Sesja z SAMYM
-    // `session_claim` (telefon padł przed preflightem) nie ma nawet tej daty:
-    // `claim_time IS NULL`, więc nie należy do ŻADNEGO zakresu. Liczymy ją ZAWSZE
-    // i osobno — to licznik rzeczy wymagających uwagi, a taka sesja jest połamana;
-    // uczciwiej ją pokazać, niż schować za predykatem BETWEEN.
+    // Sesja niezdana nie ma `close_time`, więc jedyną jej datą jest CHWILA PRZEJĘCIA
+    // (`claim_time`) — tak samo lokuje ją w czasie lista dni `A02`. Od 2026-08-07 ta
+    // kolumna niesie czas `session_claim`, a NIE godzinę meldunku z preflightu; sesja
+    // bez `session_claim` nie istnieje (§4.4), więc `claim_time IS NULL` jest stanem
+    // wyłącznie awaryjnym — strumień połamany albo przyjęty poza kolejnością. Taka
+    // sesja nie należy do ŻADNEGO zakresu, więc liczymy ją ZAWSZE i osobno: to licznik
+    // rzeczy wymagających uwagi, a uczciwiej ją pokazać, niż schować za `BETWEEN`.
     const { rows } = await db.query<{ in_range: string; undated: string }>(
       `SELECT COUNT(*) FILTER (WHERE s.claim_time IS NOT NULL) AS in_range,
               COUNT(*) FILTER (WHERE s.claim_time IS NULL)     AS undated

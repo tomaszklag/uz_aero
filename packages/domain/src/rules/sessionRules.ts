@@ -404,7 +404,12 @@ function checkByType(
 
     case 'preflight_confirm': {
       const p = candidate.payload;
-      if (state.dutyStart != null) {
+      // Pytamy o PREFLIGHT, nie o godzinę meldunku — ta sama poprawka co w `engine_start`
+      // niżej, tyle że znaleziona dopiero w audycie 2026-08-08. `dutyStart` jest od
+      // schemaVersion 2 opcjonalny i ekran 02a go NIE WYSYŁA, więc warunek oparty na nim
+      // przepuszczał drugi preflight, a ten nadpisuje `mh.start` i `fuel.startL`, czyli
+      // POCZĄTEK ŁAŃCUCHA MH (§4.5).
+      if (state.preflightAt != null) {
         v.push(
           error('PREFLIGHT_ALREADY_CONFIRMED', 'Preflight tego dnia jest już potwierdzony.'),
         );

@@ -119,8 +119,9 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
   ): Promise<AdminDayTotalsRow> {
     // Sumy jadą z KOLUMN PROJEKCJI, nigdy z ponownego liczenia po zdarzeniach — to ta
     // sama reguła, co na liście dni: „agreguj wartości projekcji, nigdy nie odtwarzaj
-    // projekcji SQL-em". Dzień bez preflightu (`claim_time IS NULL`) nie ma daty, więc
-    // wypada z zakresu — tak samo jak na `A02`.
+    // projekcji SQL-em". Sesja bez `session_claim` (`claim_time IS NULL` — od 2026-08-07
+    // ta kolumna niesie chwilę PRZEJĘCIA, nie godzinę meldunku) nie ma daty, więc wypada
+    // z zakresu — tak samo jak na `A02`.
     const { rows } = await db.query<TotalsRow>(
       `SELECT COUNT(*)                                  AS sessions,
               COUNT(DISTINCT aircraft_id)               AS aircraft,

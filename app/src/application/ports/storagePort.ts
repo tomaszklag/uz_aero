@@ -68,10 +68,11 @@ export const SESSION_META_KEYS = {
   currentPilotId: 'current_pilot_id',
   currentAircraftId: 'current_aircraft_id',
   /**
-   * Sesja OTWARTEGO dnia — dla writera headless (GPS w tle po śmierci procesu).
+   * Sesja TRZYMANEGO SAMOLOTU — dla writera headless (GPS w tle po śmierci procesu).
    * Inny cykl życia niż `current_session_uuid` (ten nigdy nie jest czyszczony,
-   * o wznowieniu decyduje `dutyEnd`): zapis przy claimie, czyszczenie przy
-   * `day_close`, uzgodnienie przy wznowieniu. Brak klucza = fixy do kosza.
+   * o wznowieniu decyduje `state.closed` — `navigation/resumeTarget.ts`): zapis przy
+   * claimie, czyszczenie przy zdaniu samolotu (`releaseAircraft`), uzgodnienie przy
+   * wznowieniu. Brak klucza = fixy do kosza.
    */
   activeSessionUuid: 'active_session_uuid',
 } as const;

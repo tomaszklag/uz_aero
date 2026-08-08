@@ -1564,9 +1564,11 @@ niczego, co da się pokazać).
 > produkowane — `packages/domain/src/flags.ts`, tabela w `_main.md.txt` §4.5 przepisana
 > 2026-08-07. Punkt zostaje jako zapis rozumowania, nie jako otwarte pytanie.
 >
-> Nowe otwarte pytanie w jego miejsce (etap D): `session_overlap` udaje dwie różne patologie —
-> nakładkę CLAIMÓW na maszynie i nakładkę CZASU PILOTA. Po §3.6a to drugie jest osobnym
-> zjawiskiem, a sesje jednego pilota na dwóch maszynach mogą legalnie sąsiadować co do minuty.
+> Pytanie postawione tu na etap D — czy `session_overlap` nie udaje dwóch różnych patologii
+> (nakładki CLAIMÓW na maszynie i nakładki CZASU PILOTA) — **ROZSTRZYGNIĘTE 2026-08-07
+> w etapie D4**: udawało. Katalog ma dziś SZEŚĆ pozycji, bo pozycja rozpadła się na
+> `aircraft_overlap` (jedyna bramka karty arkusza) i `pilot_overlap` (anomalia grafiku,
+> `server/src/domain/pilotOverlap.ts`). Sekcja 11 nie ma w tej sprawie otwartych pytań.
 
 1. **Katalog flag: 3 czy 6?** §4.5 obiecuje `DOUBLE_CLAIM`, `TIME_OVERLAP`, `MH_GAP`,
    `MH_REGRESSION`, `FUEL_MISMATCH`, `CLOCK_DRIFT`; `domain/mhChain.ts` produkuje trzy

@@ -448,24 +448,26 @@ Kręgosłupem scalania jest **łańcuch odczytów MH** — licznik motogodzin je
 i niezależny od zegarów oraz sieci. Każda sesja zaczyna się i kończy odczytem liczników;
 serwer porządkuje sesje samolotu po MH, timestampy są drugorzędne.
 
-Katalog przepisany z `packages/domain/src/flags.ts` (pięć pozycji — decyzja 2026-07-31
-zwinęła `DOUBLE_CLAIM` + `TIME_OVERLAP` w `session_overlap`; ta tabela wymieniała sześć
-starych do 2026-08-07):
+Katalog przepisany z `packages/domain/src/flags.ts` (**sześć pozycji**: decyzja 2026-07-31
+zwinęła `DOUBLE_CLAIM` + `TIME_OVERLAP` w jedną pozycję, a etap D4 rozdzielił ją z powrotem
+2026-08-07 — tym razem wzdłuż innej osi, patrz niżej):
 
 | Flaga | Warunek | Znaczenie |
 |-------|---------|-----------|
 | `mh_gap` | start MH > koniec MH poprzedniej sesji (+ tolerancja) | brak danych / lot bez aplikacji |
 | `mh_regression` | odczyt niższy niż poprzedni | cofnięty licznik albo błąd wpisu |
-| `session_overlap` | dwie niezamknięte sesje jednego samolotu | typowo przejęcie offline |
+| `aircraft_overlap` | dwie niezamknięte sesje jednego SAMOLOTU | typowo przejęcie offline; **jedyna bramka karty arkusza** |
+| `pilot_overlap` | sesje jednego PILOTA nachodzące w czasie | anomalia grafiku (rzekomo lata dwiema maszynami); arkusza NIE blokuje |
 | `fuel_mismatch` | odczyt vs przekazanie poza tolerancją | do wyjaśnienia (paliwomierz nieprecyzyjny — tolerancja szersza) |
 | `clock_drift` | \|device_time − gps_time\| > próg | zegar telefonu przestawiony |
 
-> **Do rozstrzygnięcia w etapie D** (§4.7): `session_overlap` udaje dziś dwie różne patologie —
-> nakładkę claimów na maszynie i nakładkę czasu pilota. Po §3.6a to drugie jest osobnym
-> zjawiskiem (pilot rzekomo lata dwiema maszynami naraz), a sesje tego samego pilota na
-> dwóch maszynach mogą legalnie sąsiadować co do minuty.
+> **ROZSTRZYGNIĘTE w etapie D4** (WDROŻONE 2026-08-07, §4.7): jedna flaga `session_overlap`
+> udawała dwie różne patologie — nakładkę claimów na maszynie i nakładkę czasu pilota.
+> Przy długich sesjach zbiegały się w praktyce; po §3.6a sesje są krótkie i to przestało być
+> prawdą, bo pilot legalnie zdaje jedną maszynę i bierze drugą **co do minuty**. Stąd podział
+> na `aircraft_overlap` i `pilot_overlap` w tabeli wyżej (`server/src/domain/pilotOverlap.ts`).
 >
-> **`mh_gap` przy krótszych sesjach**: gdy jedna maszyna ma w dobie pięć sesji, a dwie z nich
+> **`mh_gap` przy krótszych sesjach** — NADAL OTWARTE: gdy jedna maszyna ma w dobie pięć sesji, a dwie z nich
 > nie mają domknięcia (sesja porzucona bez zdania samolotu), reguła „start MH > koniec
 > poprzedniej" musi wiedzieć, którą sesję uznać za poprzednią. Dziś zakłada łańcuch bez dziur.
 
@@ -535,9 +537,10 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
 >
 > **`session_overlap` ROZDZIELONE na dwie patologie** (WDROŻONE 2026-08-07): nakładka CLAIMÓW
 > na jednej maszynie (dwa telefony piszą do tej samej maszyny) to co innego niż nakładka
-> CZASU PILOTA (jeden pilot rzekomo lata dwiema maszynami naraz). Dziś jedna flaga udaje obie,
-> a po zmianie modelu sesje tego samego pilota na dwóch maszynach mogą legalnie sąsiadować
-> co do minuty.
+> CZASU PILOTA (jeden pilot rzekomo lata dwiema maszynami naraz). Do etapu D4 jedna flaga
+> udawała obie; dziś są to `aircraft_overlap` (bramka karty) i `pilot_overlap` (grafik, bez
+> wpływu na arkusz), bo po zmianie modelu sesje tego samego pilota na dwóch maszynach mogą
+> legalnie sąsiadować co do minuty.
 
 ### 4.8 Cache referencyjny i świeżość danych
 

@@ -11,7 +11,7 @@
  * To uczy złej rzeczy — administrator, który widzi skrzynkę pełną zawsze, przestaje ją
  * czytać, a wrażenie „u nas ciągle coś nie gra" bierze się z danych demo, nie z lotów.
  *
- * Dziś proporcja jest odwrotna: **50 sesji, z czego 6 niesie flagę** (12%), a reszta to
+ * Dziś proporcja jest odwrotna: **51 sesji, z czego 7 niesie flagę** (~14%), a reszta to
  * zwykłe dni klubu — skoki, egzaminy, przeloty, próby silnika po obsłudze. Po jednym
  * egzemplarzu KAŻDEGO typu flagi zostaje, bo na nich stoją ekrany A03/A03a/A05 i bez
  * nich seed „cicho degraduje" do panelu, w którym nic nie ma. Wyjątkiem są nakładki

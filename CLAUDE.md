@@ -122,9 +122,13 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     dzielą datę, a na A05 także NAZWĘ KARTY (karta = doba samolotu). Skrzynka flag
     rozróżnia `aircraft_overlap` (bramka arkusza) od `pilot_overlap` (grafik pilota).
     Oś zdarzeń pokazuje `noFlightReason` z 09C.
-  - **Rozjazd z mockupami `design/admin/` jest ŚWIADOMY**: zostały przy modelu sprzed
-    2026-08-06 (mówią „Duty", „Dzień otwarty", `session_overlap`, „migracja N"). Kod
-    prowadzi, mockupy panelu czekają na osobne zadanie.
+  - **Rozjazd z mockupami `design/admin/` ZAMKNIĘTY 2026-08-08**: mockupy panelu dogoniły
+    kod (23 ekrany + `SZABLON.html`), więc `design/admin/` znów jest zatwierdzoną
+    specyfikacją i obowiązuje reguła „ekran wdrażamy 1:1". Napisy poszły za modelem
+    („zajęty" zamiast „duty", „Samolot zajęty" zamiast „Dzień otwarty"), `leg_close`
+    dostał wreszcie plakietkę i wiersz osi zdarzeń, a `ANALIZA.md` sekcje 1–12 jest
+    oznaczona jako archiwum decyzji sprzed 2026-08-06. Nazwa `session_overlap` zostaje
+    już tylko w narracji historycznej (legenda A03, `index.html`, `ANALIZA.md`).
 - **Dane demo i schemat bazy (2026-08-08)** — dwa zadania po etapie D:
   - **Generator demo przebudowany** (`server/scripts/demo/`): `dayStream.ts` → `sessionStream.ts`,
     `DemoDay` → `DemoSession`. Sesja ma TABLICĘ wzlotów (`engine_start`/`engine_stop` na

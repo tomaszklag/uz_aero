@@ -508,6 +508,25 @@ describe('preflight bez deklaracji meldunku (§3.6a — klamra jest opcjonalna)'
       'PREFLIGHT_REQUIRED',
     ]);
   });
+
+  /**
+   * ÓSME WYSTĄPIENIE wzorca „pole opcjonalne jako znacznik, że zdarzenie zaszło".
+   *
+   * `PREFLIGHT_ALREADY_CONFIRMED` pytało o `state.dutyStart`, czyli o godzinę meldunku —
+   * dokładnie tak, jak przed etapem B5 pytał `PREFLIGHT_REQUIRED`. Tamten przypadek
+   * naprawiono, ten SĄSIEDNI został, bo test na drugi preflight korzysta z fixture'u
+   * `preflight()`, który `dutyStart` wciąż podaje. Po C4 ekran 02a tego pola NIE WYSYŁA,
+   * więc w produkcji `dutyStart` jest `null` i gwardia nigdy się nie budzi: drugi
+   * `preflight_confirm` przechodzi i nadpisuje `mh.start` oraz `fuel.startL`, czyli
+   * POCZĄTEK ŁAŃCUCHA MH (§4.5) — kotwicę, po której serwer porządkuje sesje samolotu.
+   *
+   * Znacznikiem jest `preflightAt` i tylko on (`projections/session.ts`).
+   */
+  it('drugi preflight jest odrzucany także BEZ deklaracji meldunku', () => {
+    expect(hard(check(groundNoDuty(), preflightNoDuty()))).toEqual([
+      'PREFLIGHT_ALREADY_CONFIRMED',
+    ]);
+  });
 });
 
 describe('okno korekty po zamknięciu dnia (24 h)', () => {
