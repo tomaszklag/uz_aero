@@ -278,7 +278,7 @@ export function CockpitReadonlyScreen({
 
         {/* ── log jego dnia (`.day-log`) — BEZ kolumny korekty; cykle domyślnie
             zwinięte: podgląd to rzut oka na cudzy dzień, nie praca na nim ───── */}
-        <Card title={peekLogTitle(picCode, projection)} flush>
+        <Card title={peekLogTitle(aircraft?.reg ?? aircraftId, picCode, projection)} flush>
           <DayLog
             sections={daySections}
             initiallyExpanded="none"

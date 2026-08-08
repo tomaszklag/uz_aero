@@ -44,7 +44,13 @@ import { useAuthStore } from '../store/authStore';
 import { useDutyDay } from '../hooks/useDutyDay';
 import { utcDayStart } from '../../domain';
 import { dateUtcLong, plural } from '../format';
-import { buildMyDay, totalLabel, type BracketVm, type LegRowVm } from './logic/myDay';
+import {
+  buildMyDay,
+  closeDayBlocker,
+  totalLabel,
+  type BracketVm,
+  type LegRowVm,
+} from './logic/myDay';
 import { buildHeldAircraft, type HeldAircraftVm } from './logic/heldAircraft';
 import { editableBadge } from './logic/historyDays';
 
@@ -66,7 +72,7 @@ function useHalfMinuteTicker(): number {
 export function MyDayScreen({
   navigation,
 }: {
-  navigation: { navigate: (screen: string) => void };
+  navigation: { navigate: (screen: string, params?: object) => void };
 }) {
   const { theme } = useTheme();
 
@@ -155,10 +161,20 @@ export function MyDayScreen({
           onSettings={() => navigation.navigate('Settings')}
           right={
             <>
-              {/* Prawy slot należy do licznika wzlotów. SyncChip stoi obok, ale online
-                  NIE RYSUJE NIC (issue #12) — plakietka istnieje wyłącznie offline,
-                  a brak sieci musi być widoczny również na ekranie domowym. */}
-              {vm != null && vm.legCount > 0 && (
+              {/* Prawy slot należy do licznika wzlotów, a po zamknięciu dnia — do
+                  plakietki „ZAMKNIĘTY" (mockup 01B; 01 ma w tym miejscu „3 wzloty").
+                  SyncChip stoi obok, ale online NIE RYSUJE NIC (issue #12) — plakietka
+                  istnieje wyłącznie offline, a brak sieci musi być widoczny również
+                  na ekranie domowym. */}
+              {vm != null && dayClosed && (
+                <Tag
+                  label="ZAMKNIĘTY"
+                  tone="amber"
+                  size="md"
+                  style={{ borderRadius: theme.radius.pill }}
+                />
+              )}
+              {vm != null && !dayClosed && vm.legCount > 0 && (
                 <Tag
                   label={`${vm.legCount} ${plural(vm.legCount, 'wzlot', 'wzloty', 'wzlotów')}`}
                   tone="green"
@@ -177,6 +193,29 @@ export function MyDayScreen({
       }
     >
       <View style={styles.content}>
+        {/* ── okno korekty po zamknięciu dnia (01B) ────────────────────────────
+            Typ A: przyrząd, niezamykalny — odlicza prawo pilota do samodzielnej
+            poprawki. DWA terminy, nie jeden (§3.6a): klamra służby liczy 24 h od
+            zamknięcia DNIA, a każdy wzlot od SWOJEGO zamknięcia, więc poranny wygasa
+            wcześniej. Jedna data dla wszystkiego byłaby obietnicą, której model
+            nie dotrzyma. */}
+        {vm?.correction != null && (
+          <Banner
+            kind="status"
+            tone="amber"
+            icon="clock"
+            text={
+              `Dzień zamknięty. Klamrę służby poprawisz do ${vm.correction.dutyDeadline} UTC.` +
+              (vm.correction.firstToExpire != null
+                ? ` Każdy wzlot ma własne 24 h od swojego zamknięcia — pierwszy wygasa ` +
+                  `wzlot ${vm.correction.firstToExpire.startedAt}, już ` +
+                  `${vm.correction.firstToExpire.deadline} UTC.`
+                : '') +
+              ' Później korektę nanosi administrator.'
+            }
+          />
+        )}
+
         {/* ── reguła klamry (baner POUCZAJĄCY, trwały per pilot) ───────────────
             Typ `edu`: pomocny za pierwszym razem, szum przy każdym kolejnym. Mockup 01
             rysuje go zwiniętym, a 01A rozwiniętym — i to NIE jest reguła per wariant,
@@ -301,20 +340,47 @@ export function MyDayScreen({
               </AppText>
             </>
           ) : (
-            <ActionButton
-              label={held != null ? 'PRZEJMIJ INNY SAMOLOT' : 'PRZEJMIJ SAMOLOT'}
-              tone="neutral"
-              variant="secondary"
-              size="md"
-              icon="takeover"
-              onPress={() => navigation.navigate('PreflightAircraft')}
-            />
+            <>
+              {/* ── status synchronizacji (01B) ────────────────────────────────
+                  Na 01B stoi PONAD przejęciem i zastępuje „ZAMKNIJ DZIEŃ": dzień jest
+                  policzony, więc jedyne, co pilota jeszcze interesuje, to czy dane
+                  doszły na serwer. Ekran 11 nie kasuje już stosu, więc wejście tam
+                  jest bezpieczne w każdej chwili. */}
+              {dayClosed && (
+                <ActionButton
+                  label="STATUS SYNCHRONIZACJI"
+                  tone="neutral"
+                  variant="secondary"
+                  size="md"
+                  icon="sync"
+                  onPress={() => navigation.navigate('Sync')}
+                />
+              )}
+              <ActionButton
+                label={held != null ? 'PRZEJMIJ INNY SAMOLOT' : 'PRZEJMIJ SAMOLOT'}
+                tone="neutral"
+                variant="secondary"
+                size="md"
+                icon="takeover"
+                onPress={() => navigation.navigate('PreflightAircraft')}
+              />
+              {/* 01B: przejęcie ZOSTAJE po zamknięciu dnia i przypis mówi dlaczego —
+                  zamknięcie klamry nie jest zakazem latania (§3.6a: „nowy wzlot po
+                  zamknięciu otwiera dzień z powrotem i rozszerza klamrę"). Bez tego
+                  zdania przycisk wyglądałby jak niedopatrzenie. */}
+              {dayClosed && (
+                <AppText variant="mono" tone="muted" style={styles.btnNote}>
+                  Zamknięcie dnia nie jest końcem — jeśli jeszcze polecisz,{'\n'}dzień otworzy
+                  się z powrotem, a klamra się rozszerzy.
+                </AppText>
+              )}
+            </>
           ))}
 
         {/* ── zamknięcie dnia — OPCJONALNE i tak nazwane ──────────────────────
             Nie ma go przy pustym dniu ani po zamknięciu: to brak akcji, nie blokada
-            z powodem. Jest natomiast blokada z powodem, gdy silnik jeszcze pracuje —
-            wtedy klamry nie da się domknąć, bo ostatni wzlot trwa (`end.editable`). */}
+            z powodem. Jest natomiast blokada z powodem, gdy klamry nie da się domknąć
+            (`end.editable`) albo gdy nie ma czym jej domknąć — patrz niżej. */}
         {vm != null && !empty && !dayClosed && (
           <>
             <ActionButton
@@ -323,10 +389,11 @@ export function MyDayScreen({
               variant="secondary"
               size="md"
               icon="check"
-              disabledReason={
-                vm.end.editable ? null : 'Wzlot jeszcze trwa — najpierw wyłącz silnik'
-              }
-              onPress={() => navigation.navigate('ReleaseAircraft')}
+              disabledReason={closeDayBlocker(vm, held != null)}
+              // Zamknięcie dnia idzie przez 09B, bo klamra służby jedzie w payloadzie
+              // `day_close` (§5.1) — mockup mówi to wprost: „Zamknięcie dnia zda też
+              // SP-KLM". Intencja wchodzi parametrem, bo z danych jej nie widać.
+              onPress={() => navigation.navigate('ReleaseAircraft', { closeDuty: true })}
             />
             <AppText variant="mono" tone="muted" style={styles.btnNote}>
               {held != null ? `Zamknięcie dnia zda też ${held.aircraftId}. ` : ''}

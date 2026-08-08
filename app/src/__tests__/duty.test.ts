@@ -12,7 +12,7 @@
  * Reguła, której pilnuje cały ten plik: **służba ⊇ suma wzlotów, zawsze.**
  */
 
-import { projectDuty, utcDayStart, liveDutyMs, emptySessionState } from '../domain';
+import { projectDuty, utcDayStart, emptySessionState } from '../domain';
 import type { SessionState, Leg, Flight } from '../domain';
 
 const DAY0 = Date.UTC(2026, 7, 6, 0, 0, 0); // 06 SIE 2026
@@ -123,6 +123,22 @@ describe('projectDuty — jedna służba, dwa samoloty (scenariusz 01)', () => {
     expect(d.legs[1]!.flightMs).toBe(35 * MIN);
     expect(d.legs[2]!.flightMs).toBe(81 * MIN);
   });
+
+  it('wzlot niesie KOTWICĘ swojego okna korekty, nie samo „potwierdzony"', () => {
+    // §3.6a: każdy wzlot ma własne 24 h liczone od `leg_close`, a gdy pilot go nie
+    // potwierdził — awaryjnie od `engine_stop`. Ekran 01B podaje najbliższy wygasający
+    // termin, więc musi znać kotwicę; sam fakt „potwierdzony" na to nie odpowiada,
+    // bo dwa wzloty potwierdzone o różnych porach wygasają o różnych porach.
+    const s = session({
+      aircraftId: 'sp-axa',
+      legs: [leg('08:12', '09:05', true), leg('10:20', '11:02', false)],
+    });
+
+    const d = projectDuty([s], PIC, DAY0);
+
+    expect(d.legs[0]!.confirmedAt).toBe(at('09:05'));
+    expect(d.legs[1]!.confirmedAt).toBeNull();
+  });
 });
 
 describe('projectDuty — klamra jest KLAMRĄ (służba ⊇ suma wzlotów)', () => {
@@ -181,14 +197,6 @@ describe('projectDuty — służba w toku i dzień pusty', () => {
     expect(d.startAt).toBe(at('08:12'));
     expect(d.endAt).toBeNull();
     expect(d.durationMs).toBeNull();
-  });
-
-  it('`liveDutyMs` liczy trwającą służbę do `now`, zamkniętą oddaje bez zmian', () => {
-    const open = projectDuty([session({ aircraftId: 'a', legs: [leg('08:12', null)] })], PIC, DAY0);
-    expect(liveDutyMs(open, at('09:12'))).toBe(60 * MIN);
-
-    const closed = projectDuty([axa(), klm()], PIC, DAY0);
-    expect(liveDutyMs(closed, at('20:00'))).toBe(closed.durationMs);
   });
 
   it('doba bez wzlotów i bez deklaracji jest pusta, a nie zerowa', () => {

@@ -17,15 +17,17 @@
  * `null` — czyli razem z serwerowym eksportem do Sheets (faza 4). Ekran niczego
  * nie eksportuje (§4.7: „Pilot niczego nie eksportuje ręcznie").
  *
- * ODSTĘPSTWO OD MOCKUPU (zgłoszenie z urządzenia, 2026-07-29): mockupy 11 i 11a kończyły
- * się na strzałce wstecz — dzień lotny nie miał ostatniego kroku. Pilot po wysyłce zostawał
- * na ekranie bez wyjścia w przód, a cofanie prowadziło do kokpitu dnia, który przed chwilą
- * zamknął, z zapraszającym START ENGINE (zapis odrzuca dopiero reguła `DAY_CLOSED`).
- * Stąd „GOTOWE": RESETUJE stos na „Mój dzień" (01), więc wstecz nie ma już czego wskrzeszać.
- * To właściwy dom tego stanu — 01 pokazuje całą dobę pilota, zaległe potwierdzenia wzlotów
- * i wejście w historię z oknem korekty, czyli wszystko, co pilot może jeszcze chcieć zrobić.
- * Dokładnie tam trafia też zimny start po zdanym samolocie (`resumeTarget`).
- * Mockupy zostały uzupełnione o ten przycisk.
+ * „GOTOWE" prowadzi na „Mój dzień" (01) i jest jedynym wyjściem w przód — mockupy 11 i 11a
+ * kończyły się kiedyś na samej strzałce wstecz (zgłoszenie z urządzenia, 2026-07-29),
+ * więc przycisk do nich dopisano.
+ *
+ * **Ten ekran NIE JEST końcem dnia lotnego i nie kasuje stosu nawigacji** (mockup 11:
+ * „NIE czyści już stosu: ten ekran przestał być końcem drogi"). Do 2026-08-08 wołał
+ * `navigation.reset`, bo powstał w modelu, w którym dzień pilota domykało się jednym
+ * ekranem i za plecami synchronizacji stała cała droga zamknięcia. Po §3.6a synchronizacja
+ * jest STATUSEM, który pilot sprawdza w środku dnia — między jednym wzlotem a drugim —
+ * a skasowany stos zabierał mu wtedy drogę powrotną do kokpitu, w którym za chwilę
+ * uruchamia silnik.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -59,6 +61,7 @@ import {
   dropsShort,
   dropsSummary,
   eventsCount,
+  flagCatalog,
   flagLabel,
   fuelEquation,
   fuelSummary,
@@ -75,8 +78,12 @@ export function SyncScreen({
 }: {
   navigation: {
     goBack: () => void;
-    /** Podmiana całego stosu — dzień lotny kończy się tu, nie wraca do kokpitu. */
-    reset: (state: { index: number; routes: { name: string }[] }) => void;
+    /**
+     * Zwykłe przejście na 01. `reset` jest tu ŚWIADOMIE NIEDOSTĘPNY — ten ekran nie ma
+     * prawa kasować stosu (patrz nota na górze pliku), a brak metody w typie sprawia,
+     * że powrót do niej jest błędem kompilacji, nie cichą regresją.
+     */
+    navigate: (screen: string) => void;
   };
 }) {
   const { theme } = useTheme();
@@ -118,13 +125,14 @@ export function SyncScreen({
   }, [syncNow]);
 
   /**
-   * Koniec dnia lotnego. `reset` zamiast `navigate`, bo za plecami stoi cała droga
-   * zamknięcia (kokpit → 09 → 10 → 11) — po `day_close` żaden z tych ekranów nie
-   * opisuje już stanu prawdziwego. Pętla synca żyje poza nawigacją (`useSyncLoop`
-   * słucha AppState i pulsu), więc zejście z ekranu niczego nie przerywa.
+   * Powrót na „Mój dzień" — zwykłe przejście, BEZ kasowania stosu.
+   *
+   * Ekrany za plecami (kokpit, 09, 10) opisują stan nadal żywy: sesja się nie skończyła
+   * dlatego, że pilot zajrzał w status wysyłki. Pętla synca żyje poza nawigacją
+   * (`useSyncLoop` słucha AppState i pulsu), więc zejście z ekranu niczego nie przerywa.
    */
   const finishDay = useCallback((): void => {
-    navigation.reset({ index: 0, routes: [{ name: 'MyDay' }] });
+    navigation.navigate('MyDay');
   }, [navigation]);
 
   const offline = lastSync?.kind === 'offline';
@@ -154,11 +162,13 @@ export function SyncScreen({
       <Screen scroll padded={false} header={header}>
         <View style={[styles.content, { gap: theme.spacing.md }]}>
           <AppText variant="display" style={styles.centerText}>
-            BRAK DANYCH DNIA
+            BRAK DANYCH SESJI
           </AppText>
+          {/* „Gdy zaczniesz dzień" obiecywało krok, którego nie ma: pilot nie otwiera
+              dnia, tylko przejmuje samolot (§3.6a). Ten ekran opisuje SESJĘ i o nią pyta. */}
           <AppText variant="body" tone="muted" style={styles.centerText}>
-            Wysyłka dotyczy zdarzeń dnia lotnego. Gdy zaczniesz dzień, licznik i podgląd
-            arkusza pojawią się tu same.
+            Wysyłka dotyczy zdarzeń jednej sesji samolotu. Gdy przejmiesz maszynę, licznik
+            i podgląd arkusza pojawią się tu same.
           </AppText>
           <QueueBox
             active={outboxCount > 0}
@@ -173,7 +183,7 @@ export function SyncScreen({
           {/* Ten sam warunek prymatu co niżej: `solid` należy się GOTOWE zawsze, gdy
               obok nie stoi żywa wysyłka (kolejka pusta albo sync wygaszony offline). */}
           <DayDoneButton
-            hint={dayDoneHint('none', outboxCount)}
+            hint={dayDoneHint(outboxCount)}
             primary={outboxCount === 0 || offline}
             onPress={finishDay}
           />
@@ -186,7 +196,9 @@ export function SyncScreen({
   const dayLabel = projection.claimedAt != null ? dateUtcLong(projection.claimedAt) : '—';
   // Pytamy o ZDANIE samolotu (`closed`), nie o klamrę służby: od §3.6a `dutyEnd` jest
   // opcjonalny i ekran „Zdaj samolot" go nie wysyła, więc ten warunek nigdy by nie zaszedł.
-  const dayClosed = projection.closed;
+  // Nazwa mówi o SESJI, nie o dniu — ten ekran opisuje jeden strumień jednej maszyny,
+  // a dzień pilota trwa dalej także po zdaniu samolotu (§3.6a).
+  const sessionClosed = projection.closed;
   const mhFormat = projection.mhFormat ?? 'decimal';
   const tabName = sheetTabName(projection.claimedAt, projection.aircraftId);
   const showDrops = projection.drops.count > 0 || projection.operation === 'skoki';
@@ -303,9 +315,9 @@ export function SyncScreen({
                 />
               )}
               <AppText variant="mono" tone="muted" style={styles.note}>
-                {dayClosed
-                  ? 'Dzień jest zamknięty i policzony na telefonie. Brak sieci nie wpływa na kompletność danych — wpływa tylko na to, kiedy dotrą na serwer.'
-                  : 'Dzień liczy się na telefonie na bieżąco. Brak sieci nie wpływa na kompletność danych — wpływa tylko na to, kiedy dotrą na serwer.'}
+                {sessionClosed
+                  ? 'Samolot jest zdany, a jego sesja policzona na telefonie. Brak sieci nie wpływa na kompletność danych — wpływa tylko na to, kiedy dotrą na serwer.'
+                  : 'Sesja liczy się na telefonie na bieżąco. Brak sieci nie wpływa na kompletność danych — wpływa tylko na to, kiedy dotrą na serwer.'}
               </AppText>
             </View>
           </Card>
@@ -352,9 +364,8 @@ export function SyncScreen({
           >
             {flagsView.flags.length === 0 ? (
               <AppText variant="mono" tone="muted" style={styles.note}>
-                Serwer nie wykrył niespójności (nakładka czasowa · dziura MH · cofnięty licznik
-                · rozjazd zegara · podwójny claim). Ewentualne flagi rozwiązuje administrator —
-                nie wymagają akcji w kokpicie.
+                {`Serwer nie wykrył niespójności (${flagCatalog(' · ')}). Ewentualne flagi ` +
+                  'rozwiązuje administrator — nie wymagają akcji w kokpicie.'}
               </AppText>
             ) : (
               <View style={{ gap: theme.spacing.xs }}>
@@ -382,8 +393,8 @@ export function SyncScreen({
             title="Flagi serwera: nieznane"
             text={
               outboxCount > 0
-                ? `Serwer nie widział jeszcze ${eventsCount(outboxCount)} z tego dnia, więc nie mógł sprawdzić niespójności (nakładka czasowa, dziura MH, cofnięty licznik, rozjazd zegara, podwójny claim). Wynik pojawi się po synchronizacji.`
-                : 'Serwer jeszcze nie potwierdził sprawdzenia tego dnia. Wynik pojawi się po najbliższej synchronizacji.'
+                ? `Serwer nie widział jeszcze ${eventsCount(outboxCount)} z tej sesji, więc nie mógł sprawdzić niespójności (${flagCatalog(', ')}). Wynik pojawi się po synchronizacji.`
+                : 'Serwer jeszcze nie potwierdził sprawdzenia tej sesji. Wynik pojawi się po najbliższej synchronizacji.'
             }
           />
         )}
@@ -407,9 +418,9 @@ export function SyncScreen({
           sub="Zapisane lokalnie · nic nie ginie · nie wylogowuj się"
         />
 
-        {/* ── koniec dnia lotnego — jedyne wyjście w przód ─────────────────── */}
+        {/* ── powrót na „Mój dzień" — jedyne wyjście w przód ────────────────── */}
         <DayDoneButton
-          hint={dayDoneHint(dayClosed ? 'closed' : 'open', outboxCount)}
+          hint={dayDoneHint(outboxCount)}
           // O `solid` walczy tylko ŻYWA wysyłka: przy pustej kolejce nie ma czego wysyłać,
           // a offline przycisk synca jest i tak wygaszony (11a) — w obu razach GOTOWE
           // zostaje jedyną sensowną akcją ekranu i to ono ma być najgłośniejsze.
@@ -422,11 +433,11 @@ export function SyncScreen({
 }
 
 /**
- * „GOTOWE" — ostatni krok dnia lotnego.
+ * „GOTOWE" — powrót na „Mój dzień".
  *
  * Stoi POD kolejką, nie nad nią: pilot ma najpierw zobaczyć, ile jeszcze wisi, a dopiero
  * potem wyjść. Świadomie NIE blokuje się niepustym outboksem — §4.1 („brak sieci nigdy
- * nie blokuje pracy pilota") nie robi wyjątku dla ostatniego ekranu, a lądowanie poza
+ * nie blokuje pracy pilota") nie robi wyjątku dla tego ekranu, a lądowanie poza
  * zasięgiem jest normą, nie awarią. Podpis mówi wtedy, że wysyłka dokończy się sama.
  *
  * Wariant wędruje razem z sensem ekranu, bo `solid` przysługuje jednemu przyciskowi

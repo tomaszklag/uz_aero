@@ -11,7 +11,7 @@
  * czy ma co poprawiać.
  */
 
-import { buildMyDay, totalLabel } from '../ui/screens/logic/myDay';
+import { buildMyDay, closeDayBlocker, totalLabel } from '../ui/screens/logic/myDay';
 import { emptyDutyDay, projectDuty, emptySessionState } from '../domain';
 import type { SessionState, Leg, Flight } from '../domain';
 
@@ -162,6 +162,132 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
     expect(vm.end.value).toBe('— : —');
     expect(vm.totals.block).toBeNull();
     expect(totalLabel(vm.totals.block)).toBe('— —');
+  });
+
+  it('dzień pusty: końca NIE ma czego domykać (mockup 01A — ołówek wygaszony)', () => {
+    // 01A: ołówek przy „Koniec służby" ma `opacity:0.35` i tytuł „Nie ma jeszcze czego
+    // domykać", a ołówek przy meldunku jest CZYNNY („wpisz, jeśli jesteś od rana").
+    const vm = buildMyDay(emptyDutyDay(PIC, DAY0), at('09:00'), null);
+
+    expect(vm.end.editable).toBe(false);
+    expect(vm.start.editable).toBe(true);
+  });
+
+  it('deklaracja końca domyka klamrę: „potwierdzone · ostatni wzlot"', () => {
+    // Wariant 01B. Pilot zamknął dzień o 15:40, ostatni wzlot zgasł o 15:10 — klamra
+    // jest UNIĄ, więc obowiązuje 15:40 i to jego widzi pilot.
+    const a = session({ aircraftId: 'SP-AXA', dutyStart: at('07:10'), legs: [leg('08:12', '09:05')] });
+    const k = session({
+      sessionUuid: 's-klm',
+      aircraftId: 'SP-KLM',
+      legs: [leg('13:40', '15:10')],
+      dutyEnd: at('15:40'),
+    });
+
+    const vm = buildMyDay(dayOf(a, k), at('15:45'), null);
+
+    expect(vm.end.value).toBe('15:40');
+    expect(vm.end.origin).toBe('declared');
+    expect(vm.end.hint).toBe('potwierdzone · ostatni wzlot 15:10');
+    expect(vm.end.localTime).not.toBeNull();
+    // Służba ma teraz długość rozstrzygniętą: 07:10 → 15:40.
+    expect(vm.totals.duty).toBe('8:30');
+  });
+
+  it('wzlot PO zamknięciu otwiera dzień z powrotem — bez „—" w miejscu godziny', () => {
+    // §3.6a: „nowy wzlot po zamknięciu otwiera dzień z powrotem i rozszerza klamrę".
+    // Pułapka, którą to zamyka: `endAt` jest `null`, dopóki KTÓRYKOLWIEK wzlot trwa,
+    // a widok brał je wprost, gdy tylko istniała deklaracja — pilot z zadeklarowanym
+    // końcem i pracującym silnikiem drugiej maszyny zobaczyłby wielkie „—" pod
+    // podpisem „potwierdzone".
+    const closed = session({ aircraftId: 'SP-AXA', legs: [leg('08:12', '09:05')], dutyEnd: at('10:00') });
+    const again = session({ sessionUuid: 's-klm', aircraftId: 'SP-KLM', legs: [leg('11:00', null)] });
+
+    const vm = buildMyDay(dayOf(closed, again), at('11:30'), 'SP-KLM');
+
+    expect(vm.end.value).toBe('TRWA');
+    expect(vm.end.origin).toBe('running');
+    expect(vm.end.hint).toContain('wpisano 10:00');
+    // Otwartego wzlotu nie da się domknąć deklaracją.
+    expect(vm.end.editable).toBe(false);
+  });
+});
+
+describe('buildMyDay — okno korekty po zamknięciu dnia (wariant 01B)', () => {
+  const closedDay = () => {
+    const a = session({
+      aircraftId: 'SP-AXA',
+      dutyStart: at('07:10'),
+      legs: [leg('08:12', '09:05'), leg('10:20', '11:02')],
+    });
+    const k = session({
+      sessionUuid: 's-klm',
+      aircraftId: 'SP-KLM',
+      legs: [leg('13:40', '15:10')],
+      dutyEnd: at('15:40'),
+    });
+    return buildMyDay(dayOf(a, k), at('17:45'), null);
+  };
+
+  it('podaje DWA terminy, bo okna są dwa (§3.6a)', () => {
+    // Klamra służby liczy 24 h od zamknięcia DNIA, a każdy wzlot od SWOJEGO zamknięcia.
+    // Jedna data dla wszystkiego byłaby obietnicą, której model nie dotrzyma.
+    const c = closedDay().correction;
+
+    expect(c).not.toBeNull();
+    expect(c!.dutyDeadline).toBe('7 SIE 15:40');
+    expect(c!.firstToExpire).toEqual({ startedAt: '08:12', deadline: '7 SIE 09:05' });
+  });
+
+  it('dzień w toku nie ma okna korekty — nie ma czego odliczać', () => {
+    expect(buildMyDay(dayOf(axa(), klm()), at('15:25'), 'SP-KLM').correction).toBeNull();
+  });
+
+  it('termin wzlotu liczy się od POTWIERDZENIA, nie od zgaszenia silnika', () => {
+    // Wzlot 1 zgasł o 09:05, ale pilot potwierdził go dopiero o 12:00 („Potwierdzę
+    // później"), więc jego okno trwa dłużej niż wzlotu 2 — i to wzlot 2 wygasa pierwszy.
+    const late: Leg = { ...leg('08:12', '09:05'), confirmedAt: at('12:00') };
+    const s = session({
+      aircraftId: 'SP-AXA',
+      legs: [late, leg('10:20', '11:02')],
+      dutyEnd: at('16:00'),
+    });
+
+    const c = buildMyDay(dayOf(s), at('17:00'), null).correction;
+
+    expect(c!.firstToExpire).toEqual({ startedAt: '10:20', deadline: '7 SIE 11:02' });
+  });
+});
+
+describe('closeDayBlocker — kiedy „ZAMKNIJ DZIEŃ" nie ma czego zrobić', () => {
+  it('z maszyną w ręce i zgaszonym silnikiem: nic nie blokuje', () => {
+    const vm = buildMyDay(dayOf(axa(), klm()), at('15:25'), 'SP-KLM');
+
+    expect(closeDayBlocker(vm, true)).toBeNull();
+  });
+
+  it('pracujący silnik: nie ma czego domykać, bo ostatni wzlot trwa', () => {
+    const s = session({ aircraftId: 'SP-AXA', legs: [leg('08:12', null)] });
+    const vm = buildMyDay(dayOf(s), at('09:00'), 'SP-AXA');
+
+    expect(closeDayBlocker(vm, true)).toContain('Wzlot jeszcze trwa');
+  });
+
+  it('bez maszyny w ręce mówi POWÓD, zamiast prowadzić na pusty ekran', () => {
+    // Klamra służby jedzie WYŁĄCZNIE w `day_close.dutyEnd`, a to zdarzenie powstaje
+    // tylko przy zdawaniu maszyny. Pilot, który samolot już zdał, nie ma dziś czym
+    // zadeklarować końca — do 2026-08-08 przycisk prowadził go w takiej sytuacji
+    // na ekran „NIE TRZYMASZ SAMOLOTU", czyli w ślepy zaułek bez wyjaśnienia.
+    const vm = buildMyDay(dayOf(axa(), klm()), at('15:25'), null);
+
+    expect(closeDayBlocker(vm, false)).toContain('zdaniem maszyny');
+  });
+
+  it('doba z samą deklaracją meldunku nie ma jeszcze czego domykać', () => {
+    const s = session({ aircraftId: 'SP-AXA', dutyStart: at('07:10') });
+    const vm = buildMyDay(dayOf(s), at('09:00'), null);
+
+    expect(closeDayBlocker(vm, true)).toContain('czego domykać');
   });
 });
 

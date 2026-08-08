@@ -140,12 +140,15 @@ describe('baner podglądu', () => {
 });
 
 describe('nagłówek logu', () => {
-  it('odwzorowuje mockup: „Log dnia KRZ · UTC · 1 cykl · 1 T/O"', () => {
-    expect(peekLogTitle('KRZ', krzState)).toBe('Log dnia KRZ · UTC · 1 cykl · 1 T/O');
+  // Mockup 04b mówi „Log SP-FGK · KRZ · …", a nie „Log dnia KRZ · …", i to nie jest
+  // kosmetyka: podgląd opisuje SESJĘ JEDNEJ MASZYNY, a dzień KRZ-a po §3.6a może objąć
+  // kilka samolotów. „Log dnia KRZ" obiecywał przekrój, którego ten ekran nie pokazuje.
+  it('odwzorowuje mockup 04b: „Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O"', () => {
+    expect(peekLogTitle('SP-FGK', 'KRZ', krzState)).toBe('Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O');
   });
 
-  it('bez migawki nie udaje pustego dnia', () => {
-    expect(peekLogTitle('KRZ', null)).toBe('Log dnia KRZ · UTC · brak danych');
+  it('bez migawki nie udaje pustej sesji', () => {
+    expect(peekLogTitle('SP-FGK', 'KRZ', null)).toBe('Log SP-FGK · KRZ · UTC · brak danych');
   });
 
   it.each([
@@ -175,6 +178,21 @@ describe('chip stanu', () => {
   it('otwarty lot bije otwarty cykl — pilot ma wiedzieć, że samolot jest w powietrzu', () => {
     const airborne = projectSession(krzEvents.slice(0, 3));
     expect(peekStatusChip(airborne)).toEqual({ label: 'W powietrzu · wg serwera', tone: 'blue' });
+  });
+
+  it('sesja zamknięta mówi o SAMOLOCIE, nie o dniu poprzednika', () => {
+    // §3.6a: `day_close` zdaje MASZYNĘ i nie kończy dnia pilota — KRZ może za chwilę
+    // wziąć drugi samolot. Napis „Dzień zamknięty" mówił o cudzej służbie coś, czego
+    // ten strumień nie wie, i to na ekranie, którego tematem jest jedna maszyna.
+    const released = projectSession([
+      ...krzEvents,
+      event('day_close', at(8, 40), { finalReading: { fuelL: 150, mh: 4513.2 } }),
+    ]);
+
+    expect(peekStatusChip(released)).toEqual({
+      label: 'Samolot zdany · wg serwera',
+      tone: 'neutral',
+    });
   });
 
   it('bez migawki nie zmyśla stanu', () => {

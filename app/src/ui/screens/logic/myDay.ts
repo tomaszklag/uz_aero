@@ -10,9 +10,31 @@
  * wzięła — „poprawione" (deklaracja pilota) albo „z pierwszego wzlotu" (wyliczone).
  * Bez tego rozróżnienia ekran pokazywałby dwie identyczne liczby o zupełnie różnym
  * statusie, a pilot nie wiedziałby, czy ma co poprawiać.
+ *
+ * ────────────────────────────────────────────────────────────────────────────────
+ * BRAKUJĄCY NOŚNIK DEKLARACJI (audyt 2026-08-08) — czytaj, zanim dopiszesz tu ołówek.
+ *
+ * Mockupy 01, 01A i 01B mają `.edit-btn` przy OBU wierszach klamry i arkusz godziny
+ * (`design-notes.md`, „Klamra służby — meldunek i koniec"). Aplikacja umie dziś
+ * zadeklarować tylko KONIEC i tylko przy zdawaniu maszyny, bo klamra jedzie w dwóch
+ * opcjonalnych polach istniejących payloadów (§5.1): `preflight_confirm.dutyStart`
+ * powstaje raz, w chwili przejęcia (drugiego preflightu nie wolno dopisać —
+ * `PREFLIGHT_ALREADY_CONFIRMED`), a `day_close.dutyEnd` raz, przy zdaniu.
+ *
+ * Deklaracja „po fakcie" z §3.6a — a to jest jej JEDYNA przewidziana postać — nie ma
+ * więc czym pojechać: po zdaniu samolotu sesja przyjmuje wyłącznie korekty
+ * (`CORRECTION_EVENT_TYPES`), a doba bez ani jednej sesji (mockup 01A, ołówek meldunku
+ * CZYNNY) nie ma nawet nagłówka zdarzenia, bo ten wymaga `session_uuid` i `aircraft_id`.
+ * Stąd `BracketOrigin.declared` dla meldunku i `BracketVm.editable` dla wiersza meldunku
+ * są dziś nieosiągalne z aplikacji — pojawiają się wyłącznie na strumieniach
+ * `schemaVersion 1` i z korekt administratora.
+ *
+ * To NIE jest niedoróbka tego pliku ani rzecz do „dorobienia po cichu": wymaga decyzji
+ * o nośniku (patrz raport audytu 2026-08-08).
  */
 
-import { duration, timeLocal, timeUtc } from '../../format';
+import { dateTimeUtcShort, duration, timeLocal, timeUtc } from '../../format';
+import { CORRECTION_WINDOW_MS } from '../../../domain';
 import type { DutyDay, DutyLeg, EpochMillis } from '../../../domain';
 
 /** Skąd wzięła się godzina klamry — decyduje o podpisie i kolorze na ekranie. */
@@ -34,7 +56,16 @@ export interface BracketVm {
   /** Podpis mówiący, skąd ta godzina pochodzi. */
   hint: string;
   origin: BracketOrigin;
-  /** Czy pilot może ją teraz poprawić (arkusz godziny). */
+  /**
+   * Czy tę godzinę da się teraz ustalić.
+   *
+   * Dla KOŃCA klamry odpowiada na pytanie „czy jest co domykać": pusta doba nie ma czego
+   * (mockup 01A rysuje ten ołówek wygaszony — „Nie ma jeszcze czego domykać"), a doba
+   * z pracującym silnikiem jeszcze nie ma. Czyta to `closeDayBlocker`.
+   *
+   * Dla MELDUNKU pole czeka na nośnik deklaracji (nota na górze pliku) — ekran nie rysuje
+   * jeszcze tego ołówka, bo nie miałby czego zapisać.
+   */
   editable: boolean;
 }
 
@@ -71,10 +102,38 @@ export interface LegGroupVm {
   held: boolean;
 }
 
+/**
+ * Terminy okien korekty na wariancie 01B — **DWA, nie jedno** (§3.6a, 2026-08-07).
+ *
+ * Klamra służby i dane wzlotu to różne fakty o różnych momentach powstania, więc mają
+ * osobne zegary. Ekran nie może obiecywać jednej daty dla wszystkiego: wzlot zamknięty
+ * rano wygasa wcześniej niż klamra domknięta wieczorem.
+ */
+export interface CorrectionWindowVm {
+  /** „7 SIE 15:40" — 24 h od zamknięcia DNIA (deklaracji końca klamry). */
+  dutyDeadline: string;
+  /**
+   * Wzlot, którego okno zamknie się PIERWSZE — z godziną startu (żeby pilot wiedział,
+   * o który chodzi) i terminem. `null`, gdy doba nie ma ani jednego zamkniętego wzlotu.
+   *
+   * Mockup mówi „najstarszy", ale to skrót myślowy prawdziwy tylko wtedy, gdy pilot
+   * potwierdzał wzloty po kolei. Kotwicą jest POTWIERDZENIE (`leg_close`), więc wzlot
+   * poranny odłożony na „Potwierdzę później" wygasa PÓŹNIEJ niż popołudniowy zamknięty
+   * na bieżąco. Liczy się termin, nie kolejność.
+   */
+  firstToExpire: { startedAt: string; deadline: string } | null;
+}
+
 export interface MyDayVm {
   start: BracketVm;
   end: BracketVm;
   groups: LegGroupVm[];
+  /**
+   * Okno korekty — WYŁĄCZNIE dla dnia zamkniętego deklaracją (`01B`). Dzień w toku
+   * niczego nie odlicza: klamra jeszcze się nie ustaliła, więc nie ma od czego liczyć
+   * 24 h (§3.6a — niezamknięty dzień domyka się sam na ostatnim wzlocie).
+   */
+  correction: CorrectionWindowVm | null;
   /** Sumy doby — `null` tam, gdzie nie ma czego liczyć („— —", nigdy zero). */
   totals: {
     duty: string | null;
@@ -107,11 +166,13 @@ export function buildMyDay(
 ): MyDayVm {
   const groups = groupContiguously(duty.legs, heldAircraftId);
   const empty = duty.legs.length === 0 && duty.declaredStart == null && duty.declaredEnd == null;
+  const end = endBracket(duty);
 
   return {
     start: startBracket(duty),
-    end: endBracket(duty),
+    end,
     groups,
+    correction: end.origin === 'declared' ? correctionWindows(duty) : null,
     totals: {
       duty: dutyTotal(duty, now),
       block: duty.legs.length > 0 ? duration(duty.blockTimeMs) : null,
@@ -131,6 +192,30 @@ export function buildMyDay(
 /** „— —" zamiast liczby, gdy nie ma czego pokazać (ta sama zasada co na 01A). */
 export function totalLabel(value: string | null): string {
   return value ?? DASH;
+}
+
+/**
+ * Powód, dla którego „ZAMKNIJ DZIEŃ" nie zadziała; `null` = można zamykać.
+ *
+ * Trzeci warunek jest OGRANICZENIEM MODELU, nie regułą produktu, i tak trzeba go czytać:
+ * klamra służby jedzie wyłącznie w `day_close.dutyEnd` (§5.1 — „dwie opcjonalne klamry
+ * w istniejących payloadach"), a `day_close` powstaje tylko przy zdawaniu maszyny. Pilot,
+ * który samolot już zdał, nie ma dziś CZYM zadeklarować końca służby; do 2026-08-08
+ * przycisk prowadził go wtedy na ekran „NIE TRZYMASZ SAMOLOTU", czyli w ślepy zaułek.
+ * Powód zamiast zaułka jest naprawą doraźną — właściwa wymaga nośnika deklaracji
+ * niezwiązanego z sesją (decyzja właściciela projektu, patrz raport audytu 2026-08-08).
+ */
+export function closeDayBlocker(vm: MyDayVm, holdsAircraft: boolean): string | null {
+  if (vm.legCount === 0) {
+    return 'Nie ma jeszcze czego domykać — dzień zacznie się pierwszym wzlotem.';
+  }
+  // `end.editable` przy niezerowej liczbie wzlotów może być fałszywe wyłącznie z jednego
+  // powodu: któryś silnik nadal pracuje.
+  if (!vm.end.editable) return 'Wzlot jeszcze trwa — najpierw wyłącz silnik.';
+  if (!holdsAircraft) {
+    return 'Dzień zamyka się razem ze zdaniem maszyny — teraz żadnej nie trzymasz.';
+  }
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,9 +275,20 @@ function startBracket(duty: DutyDay): BracketVm {
  * Różnica jest prezentacyjna i tu jest jej miejsce.
  */
 function endBracket(duty: DutyDay): BracketVm {
-  const lastStop = lastClosedStop(duty.legs);
+  const lastStop = latestStopSoFar(duty.legs);
+  const anyLegOpen = duty.legs.some((l) => l.stoppedAt == null);
+  // Domknąć klamrę da się tylko wtedy, gdy JEST co domykać i nic już nie leci.
+  // Pusty dzień jest tu równie ważnym przypadkiem jak otwarty wzlot: mockup 01A rysuje
+  // ołówek końca wygaszonym („Nie ma jeszcze czego domykać"), a `!anyLegOpen` mówiło
+  // o dobie bez wzlotów, że koniec da się wpisać.
+  const editable = duty.legs.length > 0 && !anyLegOpen;
 
-  if (duty.declaredEnd != null) {
+  // Deklaracja + pracujący silnik = dzień OTWORZYŁ SIĘ Z POWROTEM (§3.6a: „nowy wzlot
+  // po zamknięciu otwiera dzień z powrotem i rozszerza klamrę"). Projekcja mówi to
+  // przez `endAt == null`, więc widok nie ma prawa czytać tej wartości wprost — inaczej
+  // pilot z zadeklarowanym końcem i drugą maszyną w powietrzu dostaje wielkie „—"
+  // pod podpisem „potwierdzone".
+  if (duty.declaredEnd != null && !anyLegOpen) {
     return {
       value: timeUtc(duty.endAt),
       localTime: timeLocal(duty.endAt),
@@ -202,23 +298,33 @@ function endBracket(duty: DutyDay): BracketVm {
           ? `potwierdzone · ostatni wzlot ${timeUtc(lastStop)}`
           : 'potwierdzone',
       origin: 'declared',
-      editable: true,
+      editable,
     };
   }
-
-  const anyLegOpen = duty.legs.some((l) => l.stoppedAt == null);
 
   return {
     value: duty.legs.length > 0 ? 'TRWA' : '— : —',
     localTime: null,
-    hint:
-      lastStop != null
-        ? `ustali się na ostatnim wzlocie — ${timeUtc(lastStop)}`
-        : 'ustali się na ostatnim wzlocie',
+    hint: endRunningHint(duty, lastStop),
     origin: duty.legs.length > 0 ? 'running' : 'pending',
-    // Końca nie da się wpisać, dopóki jakikolwiek silnik pracuje — nie ma czego domykać.
-    editable: !anyLegOpen,
+    editable,
   };
+}
+
+/**
+ * Podpis pod nierozstrzygniętym końcem klamry.
+ *
+ * Osobna gałąź dla dnia, który pilot ZAMKNĄŁ, a potem znów poleciał: wcześniejsza
+ * deklaracja nie znika ze strumienia (append-only) i nie może zniknąć z ekranu — pilot
+ * ma zobaczyć, że jego „koniec 15:40" zostanie rozszerzony przez trwający wzlot.
+ */
+function endRunningHint(duty: DutyDay, lastStop: EpochMillis | null): string {
+  if (duty.declaredEnd != null) {
+    return `wpisano ${timeUtc(duty.declaredEnd)} · wzlot trwa, klamra się rozszerzy`;
+  }
+  return lastStop != null
+    ? `ustali się na ostatnim wzlocie — ${timeUtc(lastStop)}`
+    : 'ustali się na ostatnim wzlocie';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -279,7 +385,44 @@ function dutyTotal(duty: DutyDay, now: EpochMillis): string | null {
   return duration(Math.max(0, now - duty.startAt));
 }
 
-function lastClosedStop(legs: readonly DutyLeg[]): EpochMillis | null {
+/**
+ * Terminy obu okien korekty dnia zamkniętego (`01B`).
+ *
+ * Kotwice bierzemy DOKŁADNIE te, którymi liczy je domena (`rules/sessionRules.ts`):
+ * klamra od deklaracji końca, wzlot od `leg_close`, a przy braku potwierdzenia
+ * awaryjnie od `engine_stop`. Druga implementacja tej arytmetyki w widoku kończyłaby
+ * się ekranem obiecującym termin, którego reguła nie honoruje.
+ */
+function correctionWindows(duty: DutyDay): CorrectionWindowVm | null {
+  if (duty.declaredEnd == null) return null;
+
+  let first: { startedAt: EpochMillis; closesAt: EpochMillis } | null = null;
+  for (const leg of duty.legs) {
+    if (leg.stoppedAt == null) continue;
+    const closesAt = (leg.confirmedAt ?? leg.stoppedAt) + CORRECTION_WINDOW_MS;
+    if (first == null || closesAt < first.closesAt) first = { startedAt: leg.startedAt, closesAt };
+  }
+
+  return {
+    dutyDeadline: dateTimeUtcShort(duty.declaredEnd + CORRECTION_WINDOW_MS),
+    firstToExpire:
+      first == null
+        ? null
+        : { startedAt: timeUtc(first.startedAt), deadline: dateTimeUtcShort(first.closesAt) },
+  };
+}
+
+/**
+ * Najpóźniejszy zamknięty wzlot doby — „ostatni wzlot" z podpisów klamry.
+ *
+ * NIE JEST tym samym co `lastClosedStop` w `projections/duty.ts`, choć do 2026-08-08
+ * nazywało się identycznie. Tamta wersja zwraca `null`, gdy KTÓRYKOLWIEK wzlot jest
+ * otwarty (bo klamra jest wtedy nierozstrzygnięta); ta ignoruje otwarte i oddaje
+ * najpóźniejsze zamknięcie, jakie już jest — bo podpis „ustali się na ostatnim wzlocie
+ * — 15:10" ma sens także w dniu, który trwa. Dwie różne odpowiedzi pod jedną nazwą to
+ * pułapka dla następnego czytelnika, więc nazwa mówi teraz, którą z nich dostaje.
+ */
+function latestStopSoFar(legs: readonly DutyLeg[]): EpochMillis | null {
   let last: EpochMillis | null = null;
   for (const leg of legs) {
     if (leg.stoppedAt == null) continue;

@@ -15,6 +15,9 @@ import {
   finalMhHint,
   handoverText,
   releaseBlocker,
+  releaseCta,
+  releaseNotice,
+  releasePayload,
 } from '../ui/screens/logic/releaseAircraft';
 import { emptySessionState } from '../domain';
 import type { ConsumptionNorm, Event, EventPayloadMap, EventType, Leg, SessionState } from '../domain';
@@ -265,5 +268,41 @@ describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
 
   it('sesja ZE WZLOTAMI nie pyta o powód — nie ma o co pytać', () => {
     expect(releaseBlocker(session(), { fuelL: 62, mh: 1241.15 }, null)).toBeNull();
+  });
+});
+
+describe('intencja wejścia — zdanie maszyny vs zamknięcie dnia (§3.6a)', () => {
+  const reading = { fuelL: 88, mh: 1241.15 };
+
+  it('domyślnie NIE wysyła klamry — zdanie samolotu nie kończy dnia pilota', () => {
+    const payload = releasePayload('aircraft', reading, null, at('15:40'));
+
+    expect(payload.finalReading).toEqual(reading);
+    expect(payload.dutyEnd).toBeUndefined();
+  });
+
+  it('„ZAMKNIJ DZIEŃ" niesie `dutyEnd` — to JEDYNA droga deklaracji końca klamry', () => {
+    // Klamra służby jedzie w `day_close.dutyEnd` (§5.1) i to zdarzenie powstaje wyłącznie
+    // tutaj. Pilot, który wszedł z 01 przyciskiem „ZAMKNIJ DZIEŃ", deklaruje koniec
+    // służby na chwilę zdania maszyny — mockup 01B: „15:40 · potwierdzone".
+    const payload = releasePayload('aircraft_and_duty', reading, null, at('15:40'));
+
+    expect(payload.dutyEnd).toBe(at('15:40'));
+  });
+
+  it('powód 09C jedzie niezależnie od intencji', () => {
+    expect(releasePayload('aircraft_and_duty', reading, 'weather', at('11:00')).noFlightReason).toBe(
+      'weather',
+    );
+  });
+
+  it('CTA i baner mówią, co się zaraz stanie — nie odwrotnie', () => {
+    // Baner 09B tłumaczy, że dzień trwa dalej. Wyświetlony pilotowi, który właśnie
+    // zamyka dzień, mówiłby dokładną odwrotność tego, co robi przycisk pod nim.
+    expect(releaseCta('aircraft')).toBe('ZDAJ SAMOLOT');
+    expect(releaseCta('aircraft_and_duty')).toBe('ZDAJ SAMOLOT I ZAMKNIJ DZIEŃ');
+
+    expect(releaseNotice('aircraft')).toContain('nie kończysz dnia');
+    expect(releaseNotice('aircraft_and_duty')).toContain('24 h');
   });
 });

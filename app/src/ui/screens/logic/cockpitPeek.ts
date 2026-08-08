@@ -171,11 +171,22 @@ export function cyclesLabel(count: number): string {
   return `${count} cykli`;
 }
 
-/** Nagłówek karty logu: „Log dnia KRZ · UTC · 1 cykl · 1 T/O". */
-export function peekLogTitle(picCode: string | null, state: SessionState | null): string {
+/**
+ * Nagłówek karty logu: „Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O" (mockup 04b).
+ *
+ * Samolot stoi PRZED pilotem, bo to log jednej MASZYNY. Do 2026-08-08 stało tu „Log dnia
+ * KRZ", czyli obietnica przekroju przez cały dzień poprzednika — a po §3.6a jego dzień
+ * może objąć kilka samolotów i ten ekran o pozostałych nic nie wie.
+ */
+export function peekLogTitle(
+  aircraftId: string | null,
+  picCode: string | null,
+  state: SessionState | null,
+): string {
+  const machine = aircraftId ?? 'samolotu';
   const who = picCode ?? 'prowadzącego';
-  if (state == null) return `Log dnia ${who} · UTC · brak danych`;
-  return `Log dnia ${who} · UTC · ${cyclesLabel(state.legs.length)} · ${state.takeoffCount} T/O`;
+  if (state == null) return `Log ${machine} · ${who} · UTC · brak danych`;
+  return `Log ${machine} · ${who} · UTC · ${cyclesLabel(state.legs.length)} · ${state.takeoffCount} T/O`;
 }
 
 export interface PeekStatus {
@@ -190,7 +201,10 @@ export interface PeekStatus {
  */
 export function peekStatusChip(state: SessionState | null): PeekStatus {
   if (state == null) return { label: 'Stan nieznany · brak danych z serwera', tone: 'neutral' };
-  if (state.closed) return { label: 'Dzień zamknięty · wg serwera', tone: 'neutral' };
+  // `closed` znaczy ZDANY SAMOLOT, nie zamknięty dzień poprzednika (§3.6a): `day_close`
+  // kończy pracę z tą maszyną, a pilot może za chwilę wziąć następną. Napis o „dniu"
+  // mówił o cudzej służbie coś, czego strumień jednej sesji nie wie.
+  if (state.closed) return { label: 'Samolot zdany · wg serwera', tone: 'neutral' };
   if (state.inFlight) return { label: 'W powietrzu · wg serwera', tone: 'blue' };
   if (state.engineRunning) return { label: 'Running · silnik pracuje · wg serwera', tone: 'green' };
   return { label: 'Ground · silnik wyłączony · wg serwera', tone: 'neutral' };

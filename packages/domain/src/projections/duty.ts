@@ -55,6 +55,15 @@ export interface DutyLeg {
   flightMs: number;
   /** Czy pilot potwierdził wzlot (`leg_close`). Niepotwierdzony i tak liczy się do sum. */
   confirmed: boolean;
+  /**
+   * Kiedy potwierdził — KOTWICA 24-godzinnego okna korekty tego wzlotu (§3.6a).
+   *
+   * `null` = „Potwierdzę później"; okno kotwiczy się wtedy awaryjnie w `stoppedAt`
+   * (`rules/sessionRules.ts`, `legWindowOpen`). Samo `confirmed` na pytanie o termin
+   * nie odpowiada: dwa wzloty potwierdzone o różnych porach wygasają o różnych porach,
+   * a ekran 01B ma podać ten NAJBLIŻSZY.
+   */
+  confirmedAt: EpochMillis | null;
 }
 
 /** Służba pilota w jednej dobie UTC — oś pilota, przekrojowa po samolotach. */
@@ -177,6 +186,7 @@ export function projectDuty(
         blockMs: leg.durationMs,
         flightMs: flightMsWithin(s, leg.startedAt, leg.stoppedAt),
         confirmed: leg.confirmed,
+        confirmedAt: leg.confirmedAt,
       });
     }
 
@@ -218,15 +228,23 @@ export function projectDuty(
   return duty;
 }
 
-/**
- * Długość służby „na żywo": od początku klamry do `now`, dopóki służba trwa.
- * Do licznika na ekranie 01 (UI podaje `now`, jak przy `liveBlockTimeMs`).
+/*
+ * `liveDutyMs` USUNIĘTE 2026-08-08 (audyt spójności) i to jest decyzja, nie porządki.
+ *
+ * Funkcja liczyła długość trwającej służby „do teraz" i domykała ją, gdy `durationMs`
+ * przestawało być `null` — czyli w chwili, w której zgasł OSTATNI silnik doby. Ekran 01
+ * liczy tę samą wielkość INACZEJ (`myDay.ts`, `dutyTotal`): domyka dopiero na deklaracji
+ * pilota, bo służba nie kończy się dlatego, że wzlot się skończył — pilot o 15:25 stoi
+ * przy samolocie, którego nie zdał (uzasadnienie w docblocku `endBracket`).
+ *
+ * Dwie reguły dla jednej liczby to gwarancja rozjazdu, a ta z domeny była tą BŁĘDNĄ dla
+ * jedynego ekranu, który ją pokazuje. Uzgodnienie w drugą stronę odpada: „dopóki pilot
+ * nie zadeklarował końca, koniec TRWA" jest regułą PREZENTACJI i w projekcji, z której
+ * czyta serwer, historia i arkusz, nie ma czego szukać. Domena zostaje przy `durationMs`
+ * — klamrze ROZSTRZYGNIĘTEJ — a wariant „na żywo" mieszka tam, gdzie jest potrzebny.
+ *
+ * Jedynym konsumentem był jej własny test.
  */
-export function liveDutyMs(duty: DutyDay, now: EpochMillis): number | null {
-  if (duty.startAt == null) return null;
-  if (duty.durationMs != null) return duty.durationMs;
-  return Math.max(0, now - duty.startAt);
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pomocnicze

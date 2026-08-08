@@ -37,7 +37,10 @@ import { LegCloseScreen } from '../screens/LegCloseScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { MyDayScreen } from '../screens/MyDayScreen';
-import { ReleaseAircraftScreen } from '../screens/ReleaseAircraftScreen';
+import {
+  ReleaseAircraftScreen,
+  type ReleaseAircraftParams,
+} from '../screens/ReleaseAircraftScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
 import { SyncScreen } from '../screens/SyncScreen';
@@ -61,7 +64,7 @@ export type RootStackParamList = {
   /** 09/09A — potwierdzenie WZLOTU po STOP ENGINE; wchodzi też z zaległości na 01. */
   LegClose: undefined;
   /** 09B/09C — zdanie samolotu. NIE kończy dnia pilota (§3.6a). */
-  ReleaseAircraft: undefined;
+  ReleaseAircraft: ReleaseAircraftParams | undefined;
   Stats: undefined;
   /** 14 — ślad lotu: trasa, profil pionowy i log punktów. Wejście z tabeli lotów na 10. */
   Track: TrackScreenParams;

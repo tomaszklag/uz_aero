@@ -76,44 +76,52 @@ describe('sentProgress + sentLabel', () => {
 });
 
 describe('dayDoneHint — podpis wyjścia z ekranu 11', () => {
-  it('komplet wysłany: dzień domknięty bez zastrzeżeń', () => {
-    expect(dayDoneHint('closed', 0)).toBe('Dzień zamknięty i wysłany');
+  // Podpis mówi WYŁĄCZNIE o wysyłce i to jest cała jego wiedza. Do 2026-08-08 mówił
+  // o „dniu" („Dzień zamknięty i wysłany", „Dzień pozostaje otwarty"), a pytał przy tym
+  // o `projection.closed`, czyli o ZDANIE SAMOLOTU. Po §3.6a to dwie różne rzeczy:
+  // zdanie maszyny nie kończy dnia pilota, więc obie wersje napisu kłamały — jedna
+  // ogłaszała koniec dnia, którego nie było, druga straszyła otwartym dniem, choć dzień
+  // otwarty jest stanem normalnym.
+  it('komplet wysłany — mockup 11', () => {
+    expect(dayDoneHint(0)).toBe('Wszystko wysłane — wróć do dnia');
   });
 
   it('zaległość w kolejce NIE blokuje wyjścia — podpis mówi, że wysyłka trwa (§4.1)', () => {
-    expect(dayDoneHint('closed', 12)).toBe('Wysyłka dokończy się sama');
-  });
-
-  it('dzień otwarty wygrywa z kolejką — to fakt najbardziej zaskakujący', () => {
-    expect(dayDoneHint('open', 0)).toBe('Dzień pozostaje otwarty');
-    expect(dayDoneHint('open', 12)).toBe('Dzień pozostaje otwarty');
-  });
-
-  it('bez sesji (sam ogon outboxa) nie udajemy, że coś zamykamy', () => {
-    expect(dayDoneHint('none', 0)).toBe('Wrócisz na ekran startowy');
-    expect(dayDoneHint('none', 3)).toBe('Wysyłka dokończy się sama');
+    expect(dayDoneHint(12)).toBe('Wysyłka dokończy się sama');
   });
 
   it('podpisy mieszczą się w jednej linii wersalików (ActionButton je podnosi)', () => {
-    const all = [
-      dayDoneHint('closed', 0),
-      dayDoneHint('closed', 12),
-      dayDoneHint('open', 0),
-      dayDoneHint('none', 0),
-    ];
-    for (const hint of all) expect(hint.length).toBeLessThanOrEqual(28);
+    // Granica jest długością NAJDŁUŻSZEGO napisu z mockupu, nie liczbą z sufitu.
+    for (const hint of [dayDoneHint(0), dayDoneHint(12)]) {
+      expect(hint.length).toBeLessThanOrEqual(31);
+    }
   });
 });
 
 describe('flagLabel', () => {
-  it('typy §4.5 mają polskie nazwy z mockupu', () => {
-    expect(flagLabel('mh_gap')).toBe('dziura MH');
-    expect(flagLabel('mh_regression')).toBe('cofnięty licznik');
-    expect(flagLabel('session_overlap')).toBe('nakładka czasowa');
+  // Pilot nie może zobaczyć `aircraft_overlap` ani `fuel_mismatch` — to kody dla
+  // programisty. Katalog ma KOMPLET sześciu typów §4.5 i mówi dokładnie tymi samymi
+  // słowami co panel (`admin/src/screens/flags/flagTypes.ts`, pole `short`), bo pilot
+  // i administrator rozmawiają o tej samej fladze przez telefon.
+  it.each([
+    ['aircraft_overlap', 'dwa telefony piszą do jednej maszyny'],
+    ['pilot_overlap', 'pilot rzekomo na dwóch maszynach naraz'],
+    ['mh_gap', 'dziura w łańcuchu MH'],
+    ['mh_regression', 'licznik się cofnął'],
+    ['fuel_mismatch', 'paliwo poza tolerancją'],
+    ['clock_drift', 'zegar telefonu przestawiony'],
+  ])('%s → %s', (type, label) => {
+    expect(flagLabel(type)).toBe(label);
+  });
+
+  it('nie zna już `session_overlap` — etap D4 rozdzielił go na dwie różne patologie', () => {
+    // Nazwa historyczna: żaden strumień po 2026-08-07 jej nie niesie, a katalog, który
+    // ją zna, uczy nieaktualnego modelu. Surowy kod jest tu WŁAŚCIWĄ odpowiedzią.
+    expect(flagLabel('session_overlap')).toBe('session_overlap');
   });
 
   it('nieznany typ wraca surowy — lepszy kod niż zgadywana etykieta', () => {
-    expect(flagLabel('clock_drift')).toBe('clock_drift');
+    expect(flagLabel('whatever_new')).toBe('whatever_new');
   });
 });
 

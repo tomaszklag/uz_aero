@@ -65,6 +65,10 @@ import {
   handoverText,
   mhRegressionWarning,
   releaseBlocker,
+  releaseCta,
+  releaseNotice,
+  releasePayload,
+  type ReleaseIntent,
 } from './logic/releaseAircraft';
 import type { NoFlightReason } from '../../domain';
 
@@ -94,10 +98,24 @@ function useHalfMinuteTicker(): number {
   return now;
 }
 
+/**
+ * Po co pilot tu wszedł — jedyny parametr nawigacji tego ekranu.
+ *
+ * Wariant 09B/09C nadal rozstrzygają DANE (są wzloty czy nie); to jest osobna oś:
+ * „ZDAJ SAMOLOT" oddaje maszynę, „ZAMKNIJ DZIEŃ" z 01 oddaje ją i zamyka klamrę
+ * służby (mockup 01: „Zamknięcie dnia zda też SP-KLM"). Intencja nie jest własnością
+ * strumienia, więc przychodzi z nawigacji i nigdzie indziej przyjść nie może.
+ */
+export interface ReleaseAircraftParams {
+  closeDuty?: boolean;
+}
+
 export function ReleaseAircraftScreen({
   navigation,
+  route,
 }: {
   navigation: { navigate: (s: string) => void; goBack: () => void };
+  route?: { params?: ReleaseAircraftParams };
 }) {
   const projection = useSessionStore((s) => s.projection);
   const synced = useSessionStore((s) => s.synced);
@@ -120,6 +138,7 @@ export function ReleaseAircraftScreen({
 
   const now = useHalfMinuteTicker();
   const vm = buildRelease(projection, now);
+  const intent: ReleaseIntent = route?.params?.closeDuty === true ? 'aircraft_and_duty' : 'aircraft';
 
   // Wartość pola podąża za rejestrem, dopóki pilot jej nie nadpisze — dzięki temu
   // późne wczytanie sesji nie zostawia pustego formularza z pustym stanem startowym.
@@ -132,21 +151,26 @@ export function ReleaseAircraftScreen({
     if (reading.fuelL == null || reading.mh == null) return;
     setBusy(true);
     try {
-      // `dutyEnd` świadomie POMINIĘTY — patrz nota na górze pliku. Powód jedzie tylko
-      // wtedy, gdy jest czego dotyczyć: przy sesji ze wzlotami nie ma go w formularzu.
-      await releaseAircraft({
-        finalReading: { fuelL: reading.fuelL, mh: reading.mh },
-        noFlightReason: reason,
-      });
+      // O `dutyEnd` decyduje INTENCJA wejścia, nie ten ekran (`releasePayload`): „ZDAJ
+      // SAMOLOT" klamry nie rusza, „ZAMKNIJ DZIEŃ" zapisuje jej koniec na teraz. Czas
+      // bierzemy z zegara w chwili tapnięcia, a nie z półminutowego tykacza podpisów.
+      await releaseAircraft(
+        releasePayload(
+          intent,
+          { fuelL: reading.fuelL, mh: reading.mh },
+          reason,
+          Date.now(),
+        ),
+      );
       // Wszystko wraca do „Mój dzień", nie do kokpitu: samolotu już nie ma w ręce,
-      // a dzień pilota trwa dalej.
+      // a dzień pilota trwa dalej (albo właśnie się domknął — wariant 01B).
       navigation.navigate('MyDay');
     } catch {
       // Powód jest w `lastError` — pokazany banerem niżej.
     } finally {
       setBusy(false);
     }
-  }, [navigation, reading.fuelL, reading.mh, releaseAircraft]);
+  }, [intent, navigation, reading.fuelL, reading.mh, reason, releaseAircraft]);
 
   if (vm == null) return <NoAircraft onBack={() => navigation.navigate('MyDay')} />;
 
@@ -191,7 +215,7 @@ export function ReleaseAircraftScreen({
       footer={
         <View style={styles.footer}>
           <ActionButton
-            label="ZDAJ SAMOLOT"
+            label={releaseCta(intent)}
             // Bursztyn zamiast czerwieni przy zdaniu bez wzlotu: nic się nie zepsuło,
             // dzień po prostu nie doszedł do skutku (mockup 09C).
             tone={withoutLeg ? 'amber' : 'red'}
@@ -237,11 +261,12 @@ export function ReleaseAircraftScreen({
             </Card>
 
             {/* ── jedyne pytanie tego ekranu ───────────────────────────────────
-                UWAGA: `DayClosePayload` nie ma dziś pola na powód (etap B domeny go nie
-                dodał), więc wybór ZOSTAJE W EKRANIE i nie trafia do rejestru. Blokada CTA
-                jest tu po to, żeby pilot nie oddał samolotu bez odpowiedzi — ale dopóki
-                nośnika nie ma, ekran obiecuje więcej, niż zapisuje. Do domknięcia razem
-                z etapem D (payload + kolumna + widok administratora). */}
+                Powód jedzie do rejestru w `day_close.noFlightReason` (§5.1, etap B5)
+                i pokazuje go oś zdarzeń w panelu. Blokada CTA jest ostrzejsza od domeny
+                świadomie: domena flaguje brak powodu MIĘKKO (`NO_FLIGHT_WITHOUT_REASON`),
+                bo fakt zajęcia maszyny jest cenniejszy od kompletności formularza —
+                ale pilot stoi przy samolocie i odpowie w sekundę, a administrator
+                czytający rejestr tydzień później nie ma już kogo zapytać. */}
             <Card title="Dlaczego nie poleciałeś?" flush>
               <View style={styles.reasons}>
                 <OptionGrid options={REASONS} value={reason} onChange={setReason} />
@@ -320,15 +345,7 @@ export function ReleaseAircraftScreen({
             </Card>
 
             {/* ── Typ A: przyrząd, niezamykalny ─────────────────────────────── */}
-            <Banner
-              kind="status"
-              tone="blue"
-              icon="info"
-              text={
-                'Zdajesz samolot, nie kończysz dnia. Służba liczy się dalej, a wzloty zostają ' +
-                'w „Mój dzień". Jeśli za chwilę weźmiesz inny samolot, wejdzie do tej samej służby.'
-              }
-            />
+            <Banner kind="status" tone="blue" icon="info" text={releaseNotice(intent)} />
           </>
         )}
 

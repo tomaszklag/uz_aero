@@ -387,7 +387,13 @@
             brak
           </span>
         </div>
-        <div class="flags-sub">Serwer nie wykrył niespójności (nakładka czasowa · dziura MH · cofnięty licznik · rozjazd zegara · podwójny claim). Ewentualne flagi rozwiązuje administrator — nie wymagają akcji w kokpicie.</div>
+        <!-- Nazwy sześciu typów §4.5 są WSPÓLNE dla telefonu, panelu i dokumentacji
+             (`admin/src/screens/flags/flagTypes.ts`, pole `short`). Do 2026-08-08 stała
+             tu piątka sprzed dwóch decyzji: „nakładka czasowa" i „podwójny claim" opisywały
+             jedną flagę `session_overlap`, którą etap D4 rozdzielił na nakładkę MASZYNY
+             i nakładkę PILOTA. Pilot i administrator muszą nazywać tę samą flagę tak samo,
+             bo rozmawiają o niej przez telefon. -->
+        <div class="flags-sub">Serwer nie wykrył niespójności (dwa telefony piszą do jednej maszyny · pilot rzekomo na dwóch maszynach naraz · dziura w łańcuchu MH · licznik się cofnął · paliwo poza tolerancją · zegar telefonu przestawiony). Ewentualne flagi rozwiązuje administrator — nie wymagają akcji w kokpicie.</div>
       </div>
 
       <!-- Manual sync (fallback; sync is automatic) — przygaszony, bo outbox pusty -->

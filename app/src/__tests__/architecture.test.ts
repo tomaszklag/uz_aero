@@ -262,3 +262,21 @@ describe('granice warstw', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+/**
+ * Decyzje nawigacyjne, które już raz wróciły tylnymi drzwiami.
+ *
+ * Skanujemy ŹRÓDŁO, bo nie ma tu czego wywołać: `navigation.reset` to jedno słowo
+ * w jednym callbacku i żaden test jednostkowy modelu widoku go nie zobaczy. Ten sam
+ * chwyt, którym panel pilnuje kształtu banera korekt, żeby bramka `day_open` nie
+ * wróciła (`admin/test/correctionWarnings.test.ts`).
+ */
+describe('nawigacja — decyzje zapisane w mockupach', () => {
+  it('ekran 11 NIE kasuje stosu — synchronizacja jest statusem, nie końcem drogi', () => {
+    // `design/11-eksport.html`: „NIE czyści już stosu: ten ekran przestał być końcem
+    // drogi. Synchronizacja jest statusem, który można sprawdzić w środku dnia."
+    // Pilot, który zajrzał w status między wzlotami, musi mieć drogę powrotną do kokpitu.
+    const source = readFileSync(join(SRC, 'ui/screens/SyncScreen.tsx'), 'utf8');
+    expect(source).not.toMatch(/navigation\.reset\s*\(/);
+  });
+});

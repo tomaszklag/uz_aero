@@ -10,7 +10,7 @@
  * nie informacja dla pilota.
  */
 
-import type { SessionState } from '../../../domain';
+import type { FlagType, SessionState } from '../../../domain';
 
 // Odmiana liczebników awansowała do `ui/format.ts` (używają jej też komponenty DS) —
 // re-eksport trzyma dotychczasowe importy ekranów i testów w mocy.
@@ -53,41 +53,61 @@ export function sentLabel(sent: number, total: number): string {
 }
 
 /**
- * Stan dnia widziany z ekranu 11 — decyduje o podpisie akcji domykającej.
- * `none` = wejście bez sesji (outbox niesie ogon poprzednich dni).
- */
-export type DayDoneState = 'closed' | 'open' | 'none';
-
-/**
- * Podpis pod „GOTOWE" — jedynym wyjściem w przód z ekranu 11.
+ * Podpis pod „GOTOWE" — wyjściem w przód z ekranu 11 (mockupy 11 i 11A).
  *
- * Kolejność warunków to kolejność zaskoczenia. Dzień otwarty jest najbardziej
- * nieoczekiwany (na 11 wchodzi się po zamknięciu, ale historia potrafi tu przywieźć
- * dzień sprzed korekty), więc mówi o sobie pierwszy. Dopiero potem kolejka: wyjścia
- * NIE blokujemy niepustym outboksem (§4.1 — brak sieci nigdy nie blokuje pracy
- * pilota), więc podpis musi wprost powiedzieć, że wysyłka dokończy się bez pilota.
+ * Mówi WYŁĄCZNIE o wysyłce i nie ma prawa mówić o niczym innym. Do 2026-08-08 opisywał
+ * „dzień" („Dzień pozostaje otwarty" / „Dzień zamknięty i wysłany"), pytając o
+ * `projection.closed` — czyli o ZDANIE SAMOLOTU. Po §3.6a to dwa różne byty: zdanie
+ * maszyny nie kończy dnia pilota, a dzień otwarty jest stanem normalnym, nie ostrzeżeniem.
+ * Napis, który tego nie rozróżnia, opowiada pilotowi o jego służbie coś nieprawdziwego,
+ * i to na ekranie, który o służbie nic nie wie.
  *
- * Podpisy są krótkie, bo `ActionButton` renderuje je wersalikami — dłuższe zdanie
- * rozjeżdża się na dwie linie. Rozwinięcie stoi w `QueueBox` obok („nic nie ginie").
+ * Wyjścia NIE blokujemy niepustym outboksem (§4.1 — brak sieci nigdy nie blokuje pracy
+ * pilota), więc przy zaległości podpis wprost mówi, że wysyłka dokończy się bez pilota.
+ * Podpisy są krótkie, bo `ActionButton` renderuje je wersalikami.
  */
-export function dayDoneHint(day: DayDoneState, outboxCount: number): string {
-  if (day === 'open') return 'Dzień pozostaje otwarty';
-  if (outboxCount > 0) return 'Wysyłka dokończy się sama';
-  return day === 'closed' ? 'Dzień zamknięty i wysłany' : 'Wrócisz na ekran startowy';
+export function dayDoneHint(outboxCount: number): string {
+  return outboxCount > 0 ? 'Wysyłka dokończy się sama' : 'Wszystko wysłane — wróć do dnia';
 }
 
 /**
- * Flagi §4.5 po polsku — nazwy z mockupu 11 („nakładka czasowa · dziura MH · …").
- * Nieznany typ wraca surowy: lepszy techniczny kod niż zgadywana etykieta.
+ * Flagi §4.5 po polsku — KOMPLET sześciu typów, tymi samymi słowami co panel.
+ *
+ * Napisy są przepisane z `admin/src/screens/flags/flagTypes.ts` (pole `short`) i to nie
+ * jest kosmetyka: pilot dzwoni do administratora, żeby zapytać o flagę, którą zobaczył
+ * na 11. Jeśli telefon mówi „nakładka czasowa", a panel „pilot rzekomo na dwóch maszynach
+ * naraz", rozmawiają o dwóch różnych rzeczach. Kopia zamiast importu, bo warstwa UI
+ * telefonu nie ma prawa importować z klienta panelu — pilnuje tego `Record<FlagType, …>`
+ * niżej: dopisanie siódmego typu w domenie WYWALA KOMPILACJĘ tego pliku.
+ *
+ * Do 2026-08-08 katalog znał trzy typy, w tym `session_overlap` skasowany w etapie D4 —
+ * pilot widział więc surowe `aircraft_overlap` i `fuel_mismatch`, a jedyna „ładna" nazwa
+ * opisywała flagę, której serwer już nie wystawia. Nieznany typ nadal wraca surowy:
+ * techniczny kod jest lepszy od zgadywanej etykiety.
  */
-const FLAG_LABELS: Record<string, string> = {
-  mh_gap: 'dziura MH',
-  mh_regression: 'cofnięty licznik',
-  session_overlap: 'nakładka czasowa',
+const FLAG_LABELS: Record<FlagType, string> = {
+  aircraft_overlap: 'dwa telefony piszą do jednej maszyny',
+  pilot_overlap: 'pilot rzekomo na dwóch maszynach naraz',
+  mh_gap: 'dziura w łańcuchu MH',
+  mh_regression: 'licznik się cofnął',
+  fuel_mismatch: 'paliwo poza tolerancją',
+  clock_drift: 'zegar telefonu przestawiony',
 };
 
 export function flagLabel(type: string): string {
-  return FLAG_LABELS[type] ?? type;
+  return FLAG_LABELS[type as FlagType] ?? type;
+}
+
+/**
+ * Wyliczenie WSZYSTKICH typów, których szuka serwer — do zdania „serwer nie wykrył
+ * niespójności (…)" na 11 i „nie mógł sprawdzić niespójności (…)" na 11A.
+ *
+ * Składane z tej samej mapy co pojedyncza etykieta, bo wypisane ręcznie rozjeżdżało się
+ * po cichu: ekran wyliczał pięć nazw sprzed etapu D4, w tym „podwójny claim", którego
+ * żaden detektor już nie wystawia.
+ */
+export function flagCatalog(separator: string): string {
+  return Object.values(FLAG_LABELS).join(separator);
 }
 
 const litres = (v: number | null): string => (v == null ? '—' : `${Math.round(v)}`);
