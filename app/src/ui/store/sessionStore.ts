@@ -142,9 +142,7 @@ export interface SessionStore {
   drop(input: DropInput): Promise<CommandResult>;
   crewChange(payload: CrewChangePayload): Promise<CommandResult>;
   manualLogEntry(payload: ManualLogEntryPayload): Promise<CommandResult>;
-  /** Potwierdzenie wzlotu (09) — odczyt liczników OPCJONALNY (§3.6). */
-  closeLeg(input?: { reading?: FuelMhReading | null; notes?: string | null }): Promise<CommandResult>;
-  /** Zdanie samolotu (09B) — NIE kończy dnia pilota, tylko pracę z tą maszyną. */
+  /** Zdanie samolotu (09B) = ZATWIERDZENIE logu sesji — NIE kończy dnia pilota. */
   releaseAircraft(payload: DayClosePayload): Promise<CommandResult>;
 
   /** Wczytuje istniejącą sesję z bazy i odtwarza kontekst (np. po restarcie aplikacji). */
@@ -324,10 +322,6 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     manualLogEntry(payload) {
       return run(() => requireCommands().manualLogEntry(requireContext(), payload));
-    },
-
-    closeLeg(input) {
-      return run(() => requireCommands().closeLeg(requireContext(), input));
     },
 
     releaseAircraft(payload) {

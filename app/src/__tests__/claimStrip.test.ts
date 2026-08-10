@@ -30,10 +30,6 @@ const leg = (from: string, to: string): Leg => ({
   startedAt: at(from),
   stoppedAt: at(to),
   durationMs: at(to) - at(from),
-  confirmed: true,
-  confirmedAt: at(to),
-  reading: null,
-  notes: null,
 });
 
 const session = (over: Partial<SessionState> = {}): SessionState => ({

@@ -33,7 +33,6 @@ import {
 import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualLogScreen } from '../screens/ManualLogScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
-import { LegCloseScreen } from '../screens/LegCloseScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { MyDayScreen } from '../screens/MyDayScreen';
@@ -61,9 +60,7 @@ export type RootStackParamList = {
   Refuel: undefined;
   CrewChange: undefined;
   ManualLog: undefined;
-  /** 09/09A — potwierdzenie WZLOTU po STOP ENGINE; wchodzi też z zaległości na 01. */
-  LegClose: undefined;
-  /** 09B/09C — zdanie samolotu. NIE kończy dnia pilota (§3.6a). */
+  /** 09B/09C — zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: ReleaseAircraftParams | undefined;
   Stats: undefined;
   /** 14 — ślad lotu: trasa, profil pionowy i log punktów. Wejście z tabeli lotów na 10. */
@@ -125,7 +122,6 @@ export function RootNavigator({
         <Stack.Screen name="Refuel" component={RefuelScreen} />
         <Stack.Screen name="CrewChange" component={CrewChangeScreen} />
         <Stack.Screen name="ManualLog" component={ManualLogScreen} />
-        <Stack.Screen name="LegClose" component={LegCloseScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />

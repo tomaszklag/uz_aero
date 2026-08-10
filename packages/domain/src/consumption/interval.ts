@@ -36,7 +36,7 @@ import type { EpochMillis } from '../time';
  * — §4.1 pkt 5 stawia licznik fizyczny nad rachubą. Dzieli więc sesję na krótsze
  * interwały dokładnie tak samo jak tankowanie, z tą różnicą, że nic nie dolewa.
  */
-export type FuelBoundKind = 'preflight' | 'refuel' | 'leg_close' | 'day_close';
+export type FuelBoundKind = 'preflight' | 'refuel' | 'day_close';
 
 /**
  * Powód, dla którego interwał nie wchodzi do regresji. `null` = interwał policzony.

@@ -273,37 +273,20 @@ describe('scenariusz danych demo', () => {
   });
 
   /**
-   * Cztery style pracy z ekranem 09 — warunek wstępny kalibracji progów (§3.6b).
+   * Strumień demo nie zawiera zdarzeń spoza modelu 2026-08-10.
    *
-   * Od nich zależy, ile interwałów paliwowych powstanie z jednej sesji: odczyt przy
-   * wzlocie ZAMYKA interwał, potwierdzenie bez odczytu nie tworzy granicy, a brak
-   * potwierdzenia zostawia wzlot do przejrzenia. Scenariusz bez któregokolwiek z tych
-   * kształtów daje replayowi materiał jednorodny, czyli bezużyteczny.
+   * Do 2026-08-10 ten test pilnował CZTERECH stylów pracy z ekranem 09 (`ConfirmStyle`)
+   * — warunku wstępnego kalibracji §3.6b. Pivot skasował i ekran, i zdarzenie: sesję
+   * zatwierdza `day_close` z obowiązkowym odczytem, więc jedyne, czego trzeba tu
+   * pilnować przejściowo, to żeby `leg_close` nie wróciło do generatora tylnymi
+   * drzwiami. Pełna przebudowa scenariusza (jedna sesja = jeden bieg silnika) i nowe
+   * asercje różnorodności materiału dla replayu to etap E.
    */
-  it('produkuje wzloty potwierdzone z odczytem, bez odczytu i całkiem niepotwierdzone', async () => {
-    const withReading = await harness.db.query<{ n: string }>(
-      `SELECT count(*)::text AS n FROM events
-        WHERE type = 'leg_close' AND payload -> 'reading' <> 'null'::jsonb`,
+  it('nie produkuje leg_close — zdarzenie usunięte z modelu (2026-08-10)', async () => {
+    const { rows } = await harness.db.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM events WHERE type = 'leg_close'`,
     );
-    const withoutReading = await harness.db.query<{ n: string }>(
-      `SELECT count(*)::text AS n FROM events
-        WHERE type = 'leg_close' AND payload -> 'reading' = 'null'::jsonb`,
-    );
-    // Sesje z cyklami silnika, których pilot nie potwierdził ANI RAZU („Potwierdzę
-    // później", §3.6) — legalny stan i jedyne źródło paska „do potwierdzenia" na `01`.
-    const unconfirmed = await harness.db.query<{ n: string }>(
-      `SELECT count(*)::text AS n FROM (
-         SELECT session_uuid
-           FROM events
-          GROUP BY session_uuid
-         HAVING count(*) FILTER (WHERE type = 'engine_stop') > 0
-            AND count(*) FILTER (WHERE type = 'leg_close') = 0
-       ) s`,
-    );
-
-    expect(Number(withReading.rows[0]!.n)).toBeGreaterThan(20);
-    expect(Number(withoutReading.rows[0]!.n)).toBeGreaterThan(20);
-    expect(Number(unconfirmed.rows[0]!.n)).toBeGreaterThanOrEqual(3);
+    expect(Number(rows[0]!.n)).toBe(0);
   });
 
   /**

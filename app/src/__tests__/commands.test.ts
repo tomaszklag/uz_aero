@@ -310,12 +310,13 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
 });
 
 /**
- * Potwierdzenie wzlotu (etap C1). Numeru NIE podaje ekran — komenda bierze go
- * z projekcji, bo musi wskazać NAJSTARSZY niepotwierdzony wzlot. Pilot może odłożyć
- * potwierdzenie („Potwierdzę później" na 09) i wraca do kolejki od najstarszego.
+ * Sesja = jeden bieg silnika (2026-08-10). Blok `closeLeg` (potwierdzenie wzlotu)
+ * zniknął razem z komendą i zdarzeniem — sesję zatwierdza `releaseAircraft`.
+ * Tu zostaje gwardia, przez którą tamte testy nie miały prawa dalej istnieć:
+ * ich helper `twoCycles()` budował DWA biegi w jednej sesji.
  */
-describe('closeLeg — potwierdzenie wzlotu', () => {
-  async function twoCycles() {
+describe('jeden bieg silnika na sesję (2026-08-10)', () => {
+  it('drugi startEngine po zakończonym biegu jest odrzucany', async () => {
     const h = setup();
     await openDay(h.commands, h.clock);
 
@@ -325,53 +326,8 @@ describe('closeLeg — potwierdzenie wzlotu', () => {
     await h.commands.stopEngine(CTX);
 
     h.clock.set(min(195));
-    await h.commands.startEngine(CTX);
-    h.clock.set(min(268));
-    await h.commands.stopEngine(CTX);
-
-    return h;
-  }
-
-  it('bez odczytu zapisuje potwierdzenie i nie rusza stanu paliwomierza', async () => {
-    const h = await twoCycles();
-    h.clock.set(min(270));
-
-    const { event } = await h.commands.closeLeg(CTX);
-
-    expect(event.type).toBe('leg_close');
-    expect((event.payload as { reading: unknown }).reading).toBeNull();
-    expect((await h.queries.sessionState(CTX.sessionUuid)).fuel.lastReadingL).toBe(150);
-  });
-
-  it('numer wzlotu bierze się z projekcji — najpierw NAJSTARSZY niepotwierdzony', async () => {
-    const h = await twoCycles();
-
-    h.clock.set(min(270));
-    const first = await h.commands.closeLeg(CTX);
-    expect((first.event.payload as { legIndex: number }).legIndex).toBe(1);
-
-    h.clock.set(min(272));
-    const second = await h.commands.closeLeg(CTX);
-    expect((second.event.payload as { legIndex: number }).legIndex).toBe(2);
-  });
-
-  it('odczyt z potwierdzenia staje się ostatnim znanym stanem paliwomierza', async () => {
-    const h = await twoCycles();
-    h.clock.set(min(270));
-
-    await h.commands.closeLeg(CTX, { reading: { fuelL: 118, mh: MH_START + 2 } });
-
-    expect((await h.queries.sessionState(CTX.sessionUuid)).fuel.lastReadingL).toBe(118);
-  });
-
-  it('trzecie potwierdzenie przy dwóch cyklach jest odrzucone jako duplikat', async () => {
-    const h = await twoCycles();
-    h.clock.set(min(270));
-    await h.commands.closeLeg(CTX);
-    await h.commands.closeLeg(CTX);
-
-    await expect(h.commands.closeLeg(CTX)).rejects.toMatchObject({
-      code: 'LEG_ALREADY_CLOSED',
+    await expect(h.commands.startEngine(CTX)).rejects.toMatchObject({
+      code: 'SESSION_ALREADY_RAN',
     });
   });
 });

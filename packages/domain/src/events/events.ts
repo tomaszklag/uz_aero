@@ -23,13 +23,14 @@ import type { EpochMillis } from '../time';
 /**
  * Wersja schematu payloadu — bump przy każdej zmianie kształtu payloadów (§5.1).
  *
- * 1 → 2 (2026-08-06, przebudowa flow §3.6a): doszedł `leg_close`, a klamry służby
- * (`dutyStart` w `preflight_confirm`, `dutyEnd` w `day_close`) stały się OPCJONALNE.
- * Strumień w wersji 1 musi projektować się bez zmiany wyników — pilnuje tego komplet
- * testów kanonicznego dnia w `app/src/__tests__/projections.test.ts`, budowany jawnie
- * z `schemaVersion: 1`.
+ * WERSJA 1 = MODEL 2026-08-10 („sesja = jeden bieg silnika"). Licznik wrócił do 1
+ * decyzją użytkownika z 2026-08-10: aplikacja nie była nigdzie wdrożona, więc
+ * zgodność z wcześniejszymi kształtami (wersja 1 sprzed 2026-08-06 z obowiązkową
+ * klamrą; wersja 2 z `leg_close`) została wyrzucona w całości, a kanoniczny dzień
+ * 22 JUNE w `app/src/__tests__/projections.test.ts` jest odtąd wzorcem POPRAWNOŚCI
+ * tego modelu, nie zgodności ze starym.
  */
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 1;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Typy pomocnicze wspólne dla payloadów
@@ -135,7 +136,7 @@ export interface PreflightConfirmPayload {
   /**
    * Czas meldowania = początek klamry służby (UTC).
    *
-   * **OPCJONALNY od schemaVersion 2** (§3.6a): przejęcie samolotu nie pyta już „od kiedy
+   * **OPCJONALNY** (§3.6a; historycznie: od 2026-08-06): przejęcie samolotu nie pyta już „od kiedy
    * jesteś na służbie" — klamra powstaje z pierwszego wzlotu doby, a pilot poprawia ją
    * po fakcie na ekranie 01. Zdarzenia w wersji 1 zawsze tę wartość niosą i nadal jest
    * respektowana; brak oznacza „pilot nie zadeklarował", nie „zero".
@@ -306,38 +307,20 @@ export interface DayClosePayload {
    */
   noFlightReason?: NoFlightReason | null;
   /**
-   * Godzina zakończenia służby (UTC) — **OPCJONALNA od schemaVersion 2** (§3.6a).
+   * Godzina zakończenia służby (UTC) — **OPCJONALNA** (§3.6a; historycznie: od 2026-08-06).
    * Zdanie samolotu nie jest końcem służby, więc nie ma powodu jej tu wymagać;
    * klamrę domyka pilot na `01b` albo domyka się sama na ostatnim wzlocie.
    */
   dutyEnd?: EpochMillis | null;
 }
 
-/**
- * `leg_close` — POTWIERDZENIE WZLOTU (§3.6). Jednostka potwierdzenia danych.
- *
- * Zapada po `engine_stop`: pilot przegląda czasy z detekcji, opcjonalnie dopisuje odczyt
- * liczników i uwagę. Samo zdarzenie NIE tworzy ani nie zamyka cyklu silnika — te wyznaczają
- * `engine_start`/`engine_stop`. Niesie fakt „pilot przejrzał ten wzlot", od którego liczy
- * się 24-godzinne okno korekty tego wzlotu (§3.6a — każdy wzlot ma własne okno).
- *
- * Wzlot bez `leg_close` jest legalny: pilot mógł wyjść przez „Potwierdzę później",
- * a offline-first zabrania więzić go przy telefonie. Czasy i tak są w rejestrze.
+/*
+ * `leg_close` (potwierdzenie wzlotu) ISTNIAŁO tu między 2026-08-06 a 2026-08-10
+ * i zostało USUNIĘTE razem z całym pojęciem „wzlotu": sesja = jeden bieg silnika,
+ * a jednostką potwierdzenia jest SESJA, zatwierdzana odczytami przy zdaniu
+ * (`day_close.finalReading`). Nie ma migracji — aplikacja nie była wdrożona,
+ * strumienie z `leg_close` nie istnieją poza testami i demo.
  */
-export interface LegClosePayload {
-  /** Numer wzlotu w dobie (1-based) — ten sam, którym „Mój dzień" numeruje wiersze. */
-  legIndex: number;
-  /**
-   * Odczyt liczników — **OPCJONALNY** i to jest decyzja, nie niedopatrzenie (§3.6):
-   * dzień skokowy to 8–12 wzlotów pod rząd i nikt nie chodzi do licznika po każdym,
-   * a wymóg zrobiłby z aplikacji coś wolniejszego od papieru. Gdy jest — jest
-   * PEŁNOPRAWNYM ogniwem łańcucha (§4.1 pkt 5: licznik fizyczny bije rachubę)
-   * i domyka interwał paliwowy analityki. Konsekwencje: `_main.md.txt` §3.6b.
-   */
-  reading?: FuelMhReading | null;
-  /** Uwaga pilota do wzlotu — wolny tekst, opisuje okoliczności tego lotu. */
-  notes?: string | null;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Rejestr typ → payload i typ zdarzenia
@@ -356,7 +339,6 @@ export interface EventPayloadMap {
   refuel: RefuelPayload;
   crew_change: CrewChangePayload;
   manual_log_entry: ManualLogEntryPayload;
-  leg_close: LegClosePayload;
   day_close: DayClosePayload;
   event_correction: EventCorrectionPayload;
 }
@@ -377,7 +359,6 @@ export const EVENT_TYPES: readonly EventType[] = [
   'refuel',
   'crew_change',
   'manual_log_entry',
-  'leg_close',
   'day_close',
   'event_correction',
 ];

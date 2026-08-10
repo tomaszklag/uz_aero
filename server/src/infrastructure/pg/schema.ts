@@ -240,8 +240,8 @@ export const MIGRATION_1 = `
     mh_end        DOUBLE PRECISION,
     fuel_start_l  DOUBLE PRECISION,
     fuel_end_l    DOUBLE PRECISION,
-    -- …a te żyją też W TRAKCIE sesji (tankowanie, opcjonalny odczyt z leg_close) —
-    -- z nich GET /aircraft/:id/state podpowiada stan bieżący.
+    -- …a te żyją też W TRAKCIE sesji (tankowanie) — z nich GET /aircraft/:id/state
+    -- podpowiada stan bieżący. (Do 2026-08-10 źródłem bywał też odczyt z leg_close.)
     fuel_last_l   DOUBLE PRECISION,
     mh_last       DOUBLE PRECISION,
 

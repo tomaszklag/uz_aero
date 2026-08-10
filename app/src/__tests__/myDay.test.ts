@@ -25,16 +25,12 @@ function at(hhmm: string): number {
 
 let legSeq = 0;
 
-function leg(from: string, to: string | null, confirmed = true): Leg {
+function leg(from: string, to: string | null): Leg {
   return {
     index: ++legSeq,
     startedAt: at(from),
     stoppedAt: to == null ? null : at(to),
     durationMs: to == null ? 0 : at(to) - at(from),
-    confirmed,
-    confirmedAt: to == null || !confirmed ? null : at(to),
-    reading: null,
-    notes: null,
   };
 }
 
@@ -64,6 +60,8 @@ const axa = (): SessionState =>
     dutyStart: at('07:10'),
     legs: [leg('08:12', '09:05'), leg('10:20', '11:02')],
     flights: [flight('08:20', '09:01'), flight('10:26', '11:01')],
+    closed: true,
+    closedAt: at('11:20'),
   });
 
 const klm = (): SessionState =>
@@ -84,21 +82,22 @@ beforeEach(() => {
 describe('buildMyDay — scenariusz mockupu 01', () => {
   const vm = () => buildMyDay(dayOf(axa(), klm()), at('15:25'), 'SP-KLM');
 
-  it('grupuje wzloty po maszynach, zachowując oś czasu', () => {
+  it('grupuje sesje po maszynach, zachowując oś czasu', () => {
     const groups = vm().groups;
 
     expect(groups.map((g) => g.aircraftId)).toEqual(['SP-AXA', 'SP-KLM']);
-    expect(groups[0]!.legs.map((l) => l.index)).toEqual([1, 2]);
-    expect(groups[1]!.legs.map((l) => l.index)).toEqual([3]);
+    expect(groups[0]!.sessions.map((x) => x.index)).toEqual([1, 2]);
+    expect(groups[1]!.sessions.map((x) => x.index)).toEqual([3]);
     // Trzymana jest wyłącznie ostatnia grupa — wcześniejsze maszyny pilot zdał.
     expect(groups[0]!.held).toBe(false);
     expect(groups[1]!.held).toBe(true);
   });
 
-  it('wiersz wzlotu niesie czasy i oba czasy trwania', () => {
-    const row = vm().groups[0]!.legs[0]!;
+  it('wiersz sesji niesie czasy, liczbę lotów i oba czasy trwania', () => {
+    const row = vm().groups[0]!.sessions[0]!;
 
     expect(row.times).toBe('08:12 → 09:05');
+    expect(row.flightsLabel).toBe('1');
     expect(row.blockLabel).toBe('0:53');
     expect(row.flightLabel).toBe('0:41');
   });
@@ -121,7 +120,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
 
     expect(start.value).toBe('07:10');
     expect(start.origin).toBe('declared');
-    expect(start.hint).toBe('poprawione · pierwszy wzlot 08:12');
+    expect(start.hint).toBe('poprawione · pierwsza sesja 08:12');
     expect(start.localTime).not.toBeNull();
   });
 
@@ -130,7 +129,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
 
     expect(start.value).toBe('13:40');
     expect(start.origin).toBe('derived');
-    expect(start.hint).toBe('z pierwszego wzlotu');
+    expect(start.hint).toBe('z pierwszej sesji');
   });
 
   it('deklaracja ZAWĘŻAJĄCA mówi wprost, że liczy się wzlot', () => {
@@ -140,7 +139,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
     const start = buildMyDay(dayOf(s), at('12:00'), null).start;
 
     expect(start.value).toBe('08:12');
-    expect(start.hint).toBe('wpisano 09:00 · liczy się pierwszy wzlot 08:12');
+    expect(start.hint).toBe('wpisano 09:00 · liczy się pierwsza sesja 08:12');
   });
 
   it('służba w toku: koniec pokazuje TRWA, nie zero', () => {
@@ -188,7 +187,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
 
     expect(vm.end.value).toBe('15:40');
     expect(vm.end.origin).toBe('declared');
-    expect(vm.end.hint).toBe('potwierdzone · ostatni wzlot 15:10');
+    expect(vm.end.hint).toBe('potwierdzone · ostatnia sesja 15:10');
     expect(vm.end.localTime).not.toBeNull();
     // Służba ma teraz długość rozstrzygniętą: 07:10 → 15:40.
     expect(vm.totals.duty).toBe('8:30');
@@ -219,43 +218,48 @@ describe('buildMyDay — okno korekty po zamknięciu dnia (wariant 01B)', () => 
       aircraftId: 'SP-AXA',
       dutyStart: at('07:10'),
       legs: [leg('08:12', '09:05'), leg('10:20', '11:02')],
+      closed: true,
+      closedAt: at('11:20'),
     });
     const k = session({
       sessionUuid: 's-klm',
       aircraftId: 'SP-KLM',
       legs: [leg('13:40', '15:10')],
       dutyEnd: at('15:40'),
+      closed: true,
+      closedAt: at('15:25'),
     });
     return buildMyDay(dayOf(a, k), at('17:45'), null);
   };
 
-  it('podaje DWA terminy, bo okna są dwa (§3.6a)', () => {
-    // Klamra służby liczy 24 h od zamknięcia DNIA, a każdy wzlot od SWOJEGO zamknięcia.
+  it('podaje DWA terminy, bo okna są dwa (kotwica sesji = ZDANIE, 2026-08-10)', () => {
+    // Klamra służby liczy 24 h od zamknięcia DNIA, a każda sesja od SWOJEGO zdania.
     // Jedna data dla wszystkiego byłaby obietnicą, której model nie dotrzyma.
     const c = closedDay().correction;
 
     expect(c).not.toBeNull();
     expect(c!.dutyDeadline).toBe('7 SIE 15:40');
-    expect(c!.firstToExpire).toEqual({ startedAt: '08:12', deadline: '7 SIE 09:05' });
+    expect(c!.firstToExpire).toEqual({ startedAt: '08:12', deadline: '7 SIE 11:20' });
   });
 
   it('dzień w toku nie ma okna korekty — nie ma czego odliczać', () => {
     expect(buildMyDay(dayOf(axa(), klm()), at('15:25'), 'SP-KLM').correction).toBeNull();
   });
 
-  it('termin wzlotu liczy się od POTWIERDZENIA, nie od zgaszenia silnika', () => {
-    // Wzlot 1 zgasł o 09:05, ale pilot potwierdził go dopiero o 12:00 („Potwierdzę
-    // później"), więc jego okno trwa dłużej niż wzlotu 2 — i to wzlot 2 wygasa pierwszy.
-    const late: Leg = { ...leg('08:12', '09:05'), confirmedAt: at('12:00') };
+  it('termin sesji liczy się od ZDANIA, nie od zgaszenia silnika', () => {
+    // Silnik zgasł o 11:02, ale pilot zdał maszynę dopiero o 12:00 — okno biegnie
+    // od zdania, bo to ono jest zatwierdzeniem logu (model 2026-08-10).
     const s = session({
       aircraftId: 'SP-AXA',
-      legs: [late, leg('10:20', '11:02')],
+      legs: [leg('10:20', '11:02')],
       dutyEnd: at('16:00'),
+      closed: true,
+      closedAt: at('12:00'),
     });
 
     const c = buildMyDay(dayOf(s), at('17:00'), null).correction;
 
-    expect(c!.firstToExpire).toEqual({ startedAt: '10:20', deadline: '7 SIE 11:02' });
+    expect(c!.firstToExpire).toEqual({ startedAt: '10:20', deadline: '7 SIE 12:00' });
   });
 });
 
@@ -270,7 +274,7 @@ describe('closeDayBlocker — kiedy „ZAMKNIJ DZIEŃ" nie ma czego zrobić', ()
     const s = session({ aircraftId: 'SP-AXA', legs: [leg('08:12', null)] });
     const vm = buildMyDay(dayOf(s), at('09:00'), 'SP-AXA');
 
-    expect(closeDayBlocker(vm, true)).toContain('Wzlot jeszcze trwa');
+    expect(closeDayBlocker(vm, true)).toContain('Sesja jeszcze trwa');
   });
 
   it('bez maszyny w ręce mówi POWÓD, zamiast prowadzić na pusty ekran', () => {
@@ -291,19 +295,9 @@ describe('closeDayBlocker — kiedy „ZAMKNIJ DZIEŃ" nie ma czego zrobić', ()
   });
 });
 
-describe('buildMyDay — wzloty niepotwierdzone i powrót do tej samej maszyny', () => {
-  it('liczy zaległe potwierdzenia i oznacza konkretny wiersz', () => {
-    const s = session({
-      aircraftId: 'SP-AXA',
-      legs: [leg('08:12', '09:05', true), leg('10:20', '11:02', false)],
-    });
-
-    const vm = buildMyDay(dayOf(s), at('12:00'), null);
-
-    expect(vm.unconfirmedCount).toBe(1);
-    expect(vm.groups[0]!.legs.map((l) => l.confirmed)).toEqual([true, false]);
-  });
-
+describe('buildMyDay — powrót do tej samej maszyny', () => {
+  // Blok „wzloty niepotwierdzone" zniknął 2026-08-10: zatwierdzenie = zdanie samolotu,
+  // a niezatwierdzona sesja nie ma jak trafić na 01 (kokpit jest modalny).
   it('powrót do tej samej maszyny daje TRZY grupy, nie dwie', () => {
     // Dzień czyta się jako oś czasu. Scalenie odległych odcinków w jedną kartę
     // kłamałoby o przebiegu dnia i ukrywało moment, w którym maszyna była zdana.
@@ -325,7 +319,7 @@ describe('buildMyDay — adresy dla ekranów, które przyjdą później', () => 
 
     expect(vm.groups[0]!.sessionUuid).toBe('s-axa');
     expect(vm.groups[1]!.sessionUuid).toBe('s-klm');
-    expect(vm.groups[0]!.legs.every((l) => l.sessionUuid === 's-axa')).toBe(true);
+    expect(vm.groups[0]!.sessions.every((x) => x.sessionUuid === 's-axa')).toBe(true);
   });
 
   it('liczba maszyn doby jest w modelu, nie liczona w widoku', () => {

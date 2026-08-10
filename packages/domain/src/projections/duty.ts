@@ -3,7 +3,7 @@
  *
  * Reguła, z której wynika cały ten moduł:
  * **loty są ZAPISYWANE, służba jest DEKLAROWANA i zawsze stanowi klamrę wokół lotów**
- * (służba ⊇ suma wzlotów, zawsze).
+ * (służba ⊇ suma sesji, zawsze).
  *
  * DLACZEGO TO OSOBNA PROJEKCJA, A NIE POLE `SessionState`:
  * służba należy do PILOTA, a `SessionState` opisuje jeden SAMOLOT. Pilot, który
@@ -35,13 +35,18 @@ export function utcDayStart(t: EpochMillis): UtcDayStart {
 }
 
 /**
- * Wzlot widziany z osi PILOTA — ten sam fakt co `Leg`, ale wzbogacony o samolot.
+ * Sesja widziana z osi PILOTA — bieg silnika wzbogacony o samolot.
  *
  * `Leg` żyje wewnątrz sesji i nie musi wiedzieć, czyj jest; tutaj samolot jest
- * informacją pierwszorzędną, bo lista wzlotów doby biegnie PRZEKROJOWO po maszynach
+ * informacją pierwszorzędną, bo lista sesji doby biegnie PRZEKROJOWO po maszynach
  * (ekran 01: „SP-AXA · Skoki" nad dwoma wierszami, „SP-KLM · Przelot" nad trzecim).
+ *
+ * Od 2026-08-10 sesja = jeden bieg silnika, więc wiersz doby OPISUJE SESJĘ: czasy
+ * silnika, liczba lotów w środku, blok i czas w powietrzu. Pola potwierdzenia per
+ * wzlot znikły — sesję zatwierdza zdanie samolotu, a `releasedAt` jest kotwicą
+ * JEDYNEGO okna korekty tej sesji (24 h od zdania, ekran 01B).
  */
-export interface DutyLeg {
+export interface DutySession {
   /** Numer w DOBIE (1-based) — nie w sesji. Ekran 01 numeruje ciągiem przez maszyny. */
   index: number;
   aircraftId: string;
@@ -49,21 +54,18 @@ export interface DutyLeg {
   startedAt: EpochMillis;
   /** `null` = silnik nadal pracuje. */
   stoppedAt: EpochMillis | null;
-  /** Czas blokowy wzlotu (ms); 0 dopóki otwarty. */
+  /** Czas blokowy sesji (ms); 0 dopóki bieg otwarty. */
   blockMs: number;
-  /** Suma czasu lotów, które zaczęły się wewnątrz tego wzlotu (ms). */
+  /** Suma czasu lotów, które zaczęły się wewnątrz biegu (ms). */
   flightMs: number;
-  /** Czy pilot potwierdził wzlot (`leg_close`). Niepotwierdzony i tak liczy się do sum. */
-  confirmed: boolean;
+  /** Liczba lotów (start → lądowanie) w tej sesji — kolumna „Loty" na 01. */
+  flightCount: number;
   /**
-   * Kiedy potwierdził — KOTWICA 24-godzinnego okna korekty tego wzlotu (§3.6a).
-   *
-   * `null` = „Potwierdzę później"; okno kotwiczy się wtedy awaryjnie w `stoppedAt`
-   * (`rules/sessionRules.ts`, `legWindowOpen`). Samo `confirmed` na pytanie o termin
-   * nie odpowiada: dwa wzloty potwierdzone o różnych porach wygasają o różnych porach,
-   * a ekran 01B ma podać ten NAJBLIŻSZY.
+   * Kiedy pilot zdał samolot (`day_close`) — KOTWICA okna korekty tej sesji.
+   * `null` = sesja jeszcze niezdana (pilot w kokpicie; na 01 tego stanu nie widać,
+   * bo kokpit jest modalny, ale projekcję czyta też serwer i historia).
    */
-  confirmedAt: EpochMillis | null;
+  releasedAt: EpochMillis | null;
 }
 
 /** Służba pilota w jednej dobie UTC — oś pilota, przekrojowa po samolotach. */
@@ -105,8 +107,8 @@ export interface DutyDay {
   /** Długość służby (ms); `null` dopóki służba trwa albo doba jest pusta. */
   durationMs: number | null;
 
-  /** Wzloty doby w kolejności chronologicznej, przekrojowo po samolotach. */
-  legs: DutyLeg[];
+  /** Sesje doby w kolejności chronologicznej, przekrojowo po samolotach. */
+  sessions: DutySession[];
   /** Samoloty użyte w tej dobie, w kolejności pierwszego użycia. */
   aircraftIds: string[];
 
@@ -114,8 +116,6 @@ export interface DutyDay {
   flightTimeMs: number;
   takeoffCount: number;
   landingCount: number;
-  /** Ile wzlotów czeka na potwierdzenie („Potwierdzę później", §3.6). */
-  unconfirmedLegCount: number;
 }
 
 /** Pusta służba — doba, w której pilot nic nie zrobił i niczego nie zadeklarował. */
@@ -130,13 +130,12 @@ export function emptyDutyDay(pilotId: string, day: UtcDayStart): DutyDay {
     declarationNarrowsStart: false,
     declarationNarrowsEnd: false,
     durationMs: null,
-    legs: [],
+    sessions: [],
     aircraftIds: [],
     blockTimeMs: 0,
     flightTimeMs: 0,
     takeoffCount: 0,
     landingCount: 0,
-    unconfirmedLegCount: 0,
   };
 }
 
@@ -149,8 +148,8 @@ export function emptyDutyDay(pilotId: string, day: UtcDayStart): DutyDay {
  *                 czyli JEDYNYM piszącym sesji — §4.1 pkt 3),
  * @param day      doba UTC (północ; użyj `utcDayStart`).
  *
- * Przynależność wzlotu do doby wyznacza czas URUCHOMIENIA silnika. Wzlot rozpoczęty
- * o 23:50 i zamknięty o 00:20 należy w całości do doby, w której wystartował — inaczej
+ * Przynależność sesji do doby wyznacza czas URUCHOMIENIA silnika. Sesja rozpoczęta
+ * o 23:50 i zatrzymana o 00:20 należy w całości do doby, w której wystartowała — inaczej
  * jeden lot rozpadłby się na dwie służby, czyli dokładnie ten problem, który ta
  * przebudowa usuwa.
  */
@@ -163,8 +162,8 @@ export function projectDuty(
 
   const mine = sessions.filter((s) => s.sessionPicId === pilotId);
 
-  // Wzloty ze wszystkich sesji doby, spłaszczone i uporządkowane w czasie.
-  const collected: DutyLeg[] = [];
+  // Sesje doby (po jednym biegu silnika każda), uporządkowane w czasie.
+  const collected: DutySession[] = [];
   for (const s of mine) {
     if (s.sessionUuid == null || s.aircraftId == null) continue;
 
@@ -175,6 +174,9 @@ export function projectDuty(
       duty.declaredEnd = later(duty.declaredEnd, s.dutyEnd);
     }
 
+    // Po 2026-08-10 `legs` ma zero albo jeden element (SESSION_ALREADY_RAN); pętla
+    // zostaje, bo projekcja musi opisać także strumień złamany — dwa biegi w jednej
+    // sesji dadzą dwa wiersze, a nie cichą utratę drugiego.
     for (const leg of s.legs) {
       if (utcDayStart(leg.startedAt) !== day) continue;
       collected.push({
@@ -185,8 +187,8 @@ export function projectDuty(
         stoppedAt: leg.stoppedAt,
         blockMs: leg.durationMs,
         flightMs: flightMsWithin(s, leg.startedAt, leg.stoppedAt),
-        confirmed: leg.confirmed,
-        confirmedAt: leg.confirmedAt,
+        flightCount: flightCountWithin(s, leg.startedAt, leg.stoppedAt),
+        releasedAt: s.closedAt,
       });
     }
 
@@ -198,29 +200,28 @@ export function projectDuty(
   }
 
   collected.sort((a, b) => a.startedAt - b.startedAt);
-  collected.forEach((leg, i) => {
-    leg.index = i + 1;
+  collected.forEach((session, i) => {
+    session.index = i + 1;
   });
-  duty.legs = collected;
+  duty.sessions = collected;
 
-  for (const leg of collected) {
-    duty.blockTimeMs += leg.blockMs;
-    duty.flightTimeMs += leg.flightMs;
-    if (!leg.confirmed) duty.unconfirmedLegCount += 1;
-    if (!duty.aircraftIds.includes(leg.aircraftId)) duty.aircraftIds.push(leg.aircraftId);
+  for (const session of collected) {
+    duty.blockTimeMs += session.blockMs;
+    duty.flightTimeMs += session.flightMs;
+    if (!duty.aircraftIds.includes(session.aircraftId)) duty.aircraftIds.push(session.aircraftId);
   }
 
-  const firstLegStart = collected.length > 0 ? collected[0]!.startedAt : null;
-  const lastLegStop = lastClosedStop(collected);
+  const firstSessionStart = collected.length > 0 ? collected[0]!.startedAt : null;
+  const lastSessionStop = lastClosedStop(collected);
 
   // KLAMRA = unia deklaracji i wzlotów. Tu mieszka reguła „służba ⊇ suma wzlotów".
-  duty.startAt = earlier(duty.declaredStart, firstLegStart);
-  duty.endAt = allLegsClosed(collected) ? later(duty.declaredEnd, lastLegStop) : null;
+  duty.startAt = earlier(duty.declaredStart, firstSessionStart);
+  duty.endAt = allClosed(collected) ? later(duty.declaredEnd, lastSessionStop) : null;
 
   duty.declarationNarrowsStart =
-    duty.declaredStart != null && firstLegStart != null && duty.declaredStart > firstLegStart;
+    duty.declaredStart != null && firstSessionStart != null && duty.declaredStart > firstSessionStart;
   duty.declarationNarrowsEnd =
-    duty.declaredEnd != null && lastLegStop != null && duty.declaredEnd < lastLegStop;
+    duty.declaredEnd != null && lastSessionStop != null && duty.declaredEnd < lastSessionStop;
 
   duty.durationMs =
     duty.startAt != null && duty.endAt != null ? Math.max(0, duty.endAt - duty.startAt) : null;
@@ -250,7 +251,7 @@ export function projectDuty(
 // Pomocnicze
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Czy sesja ma w tej dobie cokolwiek — wzlot albo zadeklarowaną klamrę. */
+/** Czy sesja ma w tej dobie cokolwiek — bieg silnika albo zadeklarowaną klamrę. */
 function sessionTouchesDay(s: SessionState, day: UtcDayStart): boolean {
   if (s.legs.some((l) => utcDayStart(l.startedAt) === day)) return true;
   if (s.dutyStart != null && utcDayStart(s.dutyStart) === day) return true;
@@ -258,7 +259,22 @@ function sessionTouchesDay(s: SessionState, day: UtcDayStart): boolean {
   return false;
 }
 
-/** Suma czasu lotów, które ZACZĘŁY się wewnątrz wzlotu. */
+/** Liczba lotów, które ZACZĘŁY się wewnątrz biegu — kolumna „Loty" na 01. */
+function flightCountWithin(
+  s: SessionState,
+  from: EpochMillis,
+  to: EpochMillis | null,
+): number {
+  let count = 0;
+  for (const f of s.flights) {
+    if (f.takeoffAt < from) continue;
+    if (to != null && f.takeoffAt > to) continue;
+    count += 1;
+  }
+  return count;
+}
+
+/** Suma czasu lotów, które ZACZĘŁY się wewnątrz biegu. */
 function flightMsWithin(
   s: SessionState,
   from: EpochMillis,
@@ -273,18 +289,18 @@ function flightMsWithin(
   return total;
 }
 
-/** Czas zamknięcia ostatniego wzlotu; `null`, gdy któryś jest otwarty albo brak wzlotów. */
-function lastClosedStop(legs: readonly DutyLeg[]): EpochMillis | null {
+/** Czas zatrzymania ostatniej sesji; `null`, gdy któraś trwa albo brak sesji. */
+function lastClosedStop(sessions: readonly DutySession[]): EpochMillis | null {
   let last: EpochMillis | null = null;
-  for (const leg of legs) {
-    if (leg.stoppedAt == null) return null;
-    last = last == null || leg.stoppedAt > last ? leg.stoppedAt : last;
+  for (const session of sessions) {
+    if (session.stoppedAt == null) return null;
+    last = last == null || session.stoppedAt > last ? session.stoppedAt : last;
   }
   return last;
 }
 
-function allLegsClosed(legs: readonly DutyLeg[]): boolean {
-  return legs.length > 0 ? legs.every((l) => l.stoppedAt != null) : false;
+function allClosed(sessions: readonly DutySession[]): boolean {
+  return sessions.length > 0 ? sessions.every((s) => s.stoppedAt != null) : false;
 }
 
 /** Wcześniejsza z dwóch wartości; `null` jest neutralne (brak wiedzy nie zawęża). */

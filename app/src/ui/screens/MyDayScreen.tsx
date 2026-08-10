@@ -49,7 +49,7 @@ import {
   closeDayBlocker,
   totalLabel,
   type BracketVm,
-  type LegRowVm,
+  type SessionRowVm,
 } from './logic/myDay';
 import { buildHeldAircraft, type HeldAircraftVm } from './logic/heldAircraft';
 import { editableBadge } from './logic/historyDays';
@@ -137,7 +137,7 @@ export function MyDayScreen({
           {
             label: 'Służba',
             value: totalLabel(vm.totals.duty),
-            unit: vm.empty ? 'brak wzlotów' : dayClosed ? 'zamknięta' : 'do teraz',
+            unit: vm.empty ? 'brak lotów' : dayClosed ? 'zamknięta' : 'do teraz',
             tone: vm.empty ? undefined : 'green',
           },
           { label: 'Blok', value: totalLabel(vm.totals.block) },
@@ -161,8 +161,8 @@ export function MyDayScreen({
           onSettings={() => navigation.navigate('Settings')}
           right={
             <>
-              {/* Prawy slot należy do licznika wzlotów, a po zamknięciu dnia — do
-                  plakietki „ZAMKNIĘTY" (mockup 01B; 01 ma w tym miejscu „3 wzloty").
+              {/* Prawy slot należy do licznika sesji, a po zamknięciu dnia — do
+                  plakietki „ZAMKNIĘTY" (mockup 01B; 01 ma w tym miejscu „3 sesje").
                   SyncChip stoi obok, ale online NIE RYSUJE NIC (issue #12) — plakietka
                   istnieje wyłącznie offline, a brak sieci musi być widoczny również
                   na ekranie domowym. */}
@@ -174,9 +174,9 @@ export function MyDayScreen({
                   style={{ borderRadius: theme.radius.pill }}
                 />
               )}
-              {vm != null && !dayClosed && vm.legCount > 0 && (
+              {vm != null && !dayClosed && vm.sessionCount > 0 && (
                 <Tag
-                  label={`${vm.legCount} ${plural(vm.legCount, 'wzlot', 'wzloty', 'wzlotów')}`}
+                  label={`${vm.sessionCount} ${plural(vm.sessionCount, 'sesja', 'sesje', 'sesji')}`}
                   tone="green"
                   size="md"
                   style={{ borderRadius: theme.radius.pill }}
@@ -207,8 +207,8 @@ export function MyDayScreen({
             text={
               `Dzień zamknięty. Klamrę służby poprawisz do ${vm.correction.dutyDeadline} UTC.` +
               (vm.correction.firstToExpire != null
-                ? ` Każdy wzlot ma własne 24 h od swojego zamknięcia — pierwszy wygasa ` +
-                  `wzlot ${vm.correction.firstToExpire.startedAt}, już ` +
+                ? ` Każda sesja ma własne 24 h od zdania samolotu — najstarsza ` +
+                  `(start ${vm.correction.firstToExpire.startedAt}) wygasa już ` +
                   `${vm.correction.firstToExpire.deadline} UTC.`
                 : '') +
               ' Później korektę nanosi administrator.'
@@ -228,7 +228,7 @@ export function MyDayScreen({
           icon="clock"
           text={
             'Loty zapisują się same — służby nie musisz zaczynać ani kończyć. Klamra bierze ' +
-            'się z pierwszego i ostatniego wzlotu; popraw ją tylko wtedy, gdy zameldowałeś ' +
+            'się z pierwszej i ostatniej sesji; popraw ją tylko wtedy, gdy zameldowałeś ' +
             'się wcześniej albo zostajesz dłużej niż samolot.'
           }
           collapsedLabel="Jak liczy się służba?"
@@ -247,7 +247,7 @@ export function MyDayScreen({
 
         {/* ── klamra służby: meldunek → wzloty → koniec → sumy ─────────────── */}
         {vm != null && (
-          <Card title="Służba · wzloty dnia · czasy UTC" flush>
+          <Card title="Służba · sesje dnia · czasy UTC" flush>
             <BracketRow label="Meldunek" bracket={vm.start} edge="top" />
 
             {vm.groups.length === 0 ? (
@@ -297,19 +297,10 @@ export function MyDayScreen({
                     )}
                   </View>
 
-                  {group.legs.map((leg) => (
-                    <View key={leg.index}>
-                      <LegRow leg={leg} />
-                      {!leg.confirmed && (
-                        <LegNote
-                          index={leg.index}
-                          // 09 bierze najstarszy niepotwierdzony wzlot sam (`buildLegClose`),
-                          // więc wiersz nie musi go wskazywać — kolejka rozładowuje się
-                          // od początku niezależnie od tego, w który pilot tapnął.
-                          onPress={() => navigation.navigate('LegClose')}
-                        />
-                      )}
-                    </View>
+                  {/* Paski „do potwierdzenia" znikły 2026-08-10: sesję zatwierdza
+                      zdanie samolotu (09B), więc na liście są wyłącznie zatwierdzone. */}
+                  {group.sessions.map((session) => (
+                    <SessionRow key={session.index} session={session} />
                   ))}
                 </View>
               ))
@@ -548,8 +539,8 @@ function BracketRow({
   );
 }
 
-/** `.leg-row` — jeden wzlot: numer w dobie, czasy i oba czasy trwania. */
-function LegRow({ leg }: { leg: LegRowVm }) {
+/** `.leg-row` — jedna SESJA: numer w dobie, czasy silnika, loty i czasy trwania. */
+function SessionRow({ session }: { session: SessionRowVm }) {
   const { theme } = useTheme();
 
   return (
@@ -559,21 +550,16 @@ function LegRow({ leg }: { leg: LegRowVm }) {
         { borderBottomWidth: theme.borderWidth, borderBottomColor: theme.colors.border },
       ]}
     >
-      {/* Numer wzlotu niepotwierdzonego jest bursztynowy — ten sam sygnał co pasek
-          niżej, widoczny również wtedy, gdy pasek zjedzie poza krawędź ekranu. */}
-      <AppText
-        variant="mono"
-        tone={leg.confirmed ? 'secondary' : 'amber'}
-        style={styles.legNumber}
-      >
-        {leg.index}
+      <AppText variant="mono" tone="secondary" style={styles.legNumber}>
+        {session.index}
       </AppText>
       <AppText variant="mono" style={styles.legTimes}>
-        {leg.times}
+        {session.times}
       </AppText>
       <View style={styles.legMetrics}>
-        <LegMetric label="Blok" value={leg.blockLabel} />
-        <LegMetric label="Lot" value={leg.flightLabel} />
+        <LegMetric label="Loty" value={session.flightsLabel} />
+        <LegMetric label="Blok" value={session.blockLabel} />
+        <LegMetric label="Lot" value={session.flightLabel} />
       </View>
     </View>
   );
@@ -593,41 +579,7 @@ function LegMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-/**
- * `.leg-note` — wzlot czeka na potwierdzenie.
- *
- * To ZAPROSZENIE, nie ostrzeżenie, i stąd bursztyn zamiast czerwieni: czasy są już
- * w rejestrze i wchodzą do sum (to fakty z detekcji), brakuje wyłącznie przejrzenia
- * i ewentualnych odczytów. Pilot wyszedł z ekranu 09 przez „Potwierdzę później",
- * co offline-first wprost dopuszcza — nic nie jest zepsute, coś jest niedokończone.
- */
-function LegNote({ index, onPress }: { index: number; onPress: () => void }) {
-  const { theme } = useTheme();
-  const amber = toneColors(theme, 'amber');
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Dokończ zamknięcie wzlotu ${index}`}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.legNote,
-        {
-          backgroundColor: amber.muted,
-          borderTopWidth: theme.borderWidth,
-          borderTopColor: amber.border,
-          opacity: pressed ? 0.7 : 1,
-        },
-      ]}
-    >
-      <Icon name="clock" size={13} color={amber.accent} />
-      <AppText variant="mono" style={[styles.legNoteLabel, { color: amber.accent }]}>
-        Wzlot {index} — do potwierdzenia
-      </AppText>
-      <Icon name="more" size={12} color={amber.accent} />
-    </Pressable>
-  );
-}
+// `LegNote` („wzlot N — do potwierdzenia") usunięty 2026-08-10 razem z leg_close.
 
 /**
  * `.empty-legs` — doba bez wzlotów mówi to wprost, zamiast udawać tabelę bez wierszy.
@@ -640,7 +592,7 @@ function EmptyLegs() {
     <View style={styles.emptyLegs}>
       <Icon name="aircraft" size={30} color={theme.colors.borderStrong} />
       <AppText variant="display" tone="secondary" style={styles.emptyTitle}>
-        JESZCZE ŻADNEGO WZLOTU
+        JESZCZE ŻADNEGO LOTU
       </AppText>
       <AppText variant="body" tone="muted" style={styles.emptyDesc}>
         Dzień zacznie się sam, gdy przejmiesz samolot i uruchomisz silnik. Nic nie trzeba
@@ -712,16 +664,6 @@ const styles = StyleSheet.create({
   legMetric: { gap: 1 },
   legMetricKey: { fontSize: 7, lineHeight: 10, letterSpacing: 1.5, textTransform: 'uppercase' },
   legMetricValue: { fontSize: 11, lineHeight: 15 },
-
-  legNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    minHeight: 44,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-  },
-  legNoteLabel: { flex: 1, fontSize: 9.5, lineHeight: 14, letterSpacing: 1, textTransform: 'uppercase' },
 
   // ── stan pusty listy ───────────────────────────────────────────────────────
   emptyLegs: { alignItems: 'center', gap: 8, paddingVertical: 26, paddingHorizontal: 20 },

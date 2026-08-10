@@ -37,41 +37,24 @@ import { applyCorrections, buildEventIndex, type IndexedEvent } from './correcti
  * ten sam byt, a dwie tablice opisujące jedną rzecz rozjechałyby się przy pierwszej
  * korekcie.
  *
- * `Leg` (cykl silnika) ≠ `Flight` (takeoff → landing). Jeden wzlot może nie mieć lotu
- * (kołowanie techniczne) albo mieć ich kilka (dzień skokowy z wieloma wyniesieniami
- * na jednym cyklu zdarza się rzadko, ale model tego nie zabrania).
+ * `Leg` (cykl silnika) ≠ `Flight` (takeoff → landing). Bieg może nie mieć lotu
+ * (kołowanie techniczne, próba silnika) albo mieć ich wiele (seria skokowa z gorącym
+ * załadunkiem, touch and go).
+ *
+ * Od 2026-08-10 sesja ma NAJWYŻEJ JEDEN bieg (`SESSION_ALREADY_RAN`), więc lista
+ * `legs` to w praktyce zero albo jeden element. Zostaje listą, bo reducer musi
+ * przeżyć także strumień ZŁAMANY (np. duplikat z dwóch telefonów przed syncem) —
+ * projekcja opisuje to, co się wydarzyło, reguły mówią, co było wolno.
+ * Pola potwierdzenia (`confirmed`/`confirmedAt`/`reading`/`notes`) znikły razem
+ * z `leg_close`: sesję zatwierdza `day_close.finalReading`.
  */
 export interface Leg {
-  /** Numer wzlotu w sesji (1-based) — ten sam, którym `leg_close.legIndex` się posługuje. */
+  /** Numer biegu w sesji (1-based) — historycznie; po 2026-08-10 zawsze 1. */
   index: number;
   startedAt: EpochMillis;
   stoppedAt: EpochMillis | null;
-  /** Czas blokowy wzlotu (ms); 0 dopóki cykl otwarty. */
+  /** Czas blokowy biegu (ms); 0 dopóki cykl otwarty. */
   durationMs: number;
-  /**
-   * Czy pilot potwierdził ten wzlot (`leg_close`, ekran 09).
-   *
-   * Wzlot niepotwierdzony jest LEGALNY — pilot mógł wyjść przez „Potwierdzę później",
-   * a offline-first zabrania więzić go przy telefonie. Czasy i tak są w rejestrze,
-   * więc wchodzą do sum; brakuje wyłącznie przejrzenia. To ta flaga rysuje pasek
-   * „do potwierdzenia" w „Mój dzień".
-   */
-  confirmed: boolean;
-  /**
-   * Kiedy pilot potwierdził (null = jeszcze nie).
-   *
-   * To jest **kotwica 24-godzinnego okna korekty tego wzlotu** (§3.6a — każdy wzlot
-   * ma własne okno). Wzlot niepotwierdzony kotwiczy się awaryjnie w `stoppedAt`,
-   * inaczej brak potwierdzenia dawałby bezterminowe prawo zapisu.
-   */
-  confirmedAt: EpochMillis | null;
-  /**
-   * Odczyt liczników z potwierdzenia — `null`, gdy pilot go pominął (§3.6: odczyt
-   * jest tu OPCJONALNY). `null` znaczy „nie wiem", nigdy „tyle samo co przed lotem".
-   */
-  reading: FuelMhReading | null;
-  /** Uwaga pilota do wzlotu. */
-  notes: string | null;
 }
 
 /** Lot (takeoff → landing). `landingAt: null` = w powietrzu. */
@@ -169,7 +152,7 @@ export interface SessionState {
    * Chwila potwierdzenia preflightu — JEDYNY uprawniony znacznik „preflight był".
    *
    * Do 2026-08-07 tę rolę pełnił `dutyStart` i było to poprawne tylko dopóty, dopóki
-   * godzina meldunku była obowiązkowa. Od schemaVersion 2 klamra jest opcjonalna (§3.6a),
+   * godzina meldunku była obowiązkowa. Klamra jest opcjonalna (§3.6a),
    * a ekran 02 w ogóle o nią nie pyta — `dutyStart` jest więc `null` w ZWYKŁYM przypadku
    * i mylenie go z brakiem preflightu blokowało pilotowi uruchomienie silnika.
    */
@@ -331,7 +314,7 @@ export function projectSession(events: Event[]): SessionState {
         state.notes = p.notes ?? null;
         state.mhFormat = p.mhFormat ?? null;
         state.preflightAt = t;
-        // `?? null`, bo od schemaVersion 2 klamra jest opcjonalna (§3.6a) — brak
+        // `?? null`, bo klamra jest opcjonalna (§3.6a) — brak
         // deklaracji ma być `null` („pilot nie podał"), nigdy `undefined`, inaczej
         // projekcja przestaje być totalna i psuje kontrakt DTO panelu.
         state.dutyStart = p.dutyStart ?? null;
@@ -347,10 +330,6 @@ export function projectSession(events: Event[]): SessionState {
           startedAt: t,
           stoppedAt: null,
           durationMs: 0,
-          confirmed: false,
-          confirmedAt: null,
-          reading: null,
-          notes: null,
         });
         state.engineRunning = true;
         state.openEngineStartAt = t;
@@ -464,31 +443,8 @@ export function projectSession(events: Event[]): SessionState {
         break;
       }
 
-      case 'leg_close': {
-        // Potwierdzenie wzlotu (§3.6). NIE tworzy ani nie zamyka cyklu — te wyznaczają
-        // `engine_start`/`engine_stop`. Przypina się do NAJSTARSZEGO niepotwierdzonego
-        // zamkniętego wzlotu, a nie do `legIndex` z payloadu: numer z telefonu bywa
-        // nieaktualny po korekcie (`event_correction` może unieważnić cykl i przenumerować
-        // resztę), a strumień efektywny jest tu jedynym źródłem prawdy o kolejności.
-        const p = event.payload;
-        const leg = state.legs.find((l) => l.stoppedAt != null && !l.confirmed);
-        if (leg) {
-          leg.confirmed = true;
-          leg.confirmedAt = t;
-          leg.reading = p.reading ?? null;
-          leg.notes = p.notes ?? null;
-        }
-        if (p.reading != null) {
-          // Odczyt z zamknięcia wzlotu jest PEŁNOPRAWNY (§4.1 pkt 5: licznik fizyczny
-          // bije rachubę), więc staje się ostatnim znanym stanem paliwomierza — tym
-          // samym domyka interwał paliwowy analityki (§3.6b).
-          state.fuel.lastReadingL = p.reading.fuelL;
-        }
-        // Odczyt MH z wzlotu NIE trafia do `mh.end` — to koniec ŁAŃCUCHA i należy do
-        // zdania samolotu. Tutaj mieszka na `leg.reading`, skąd analityka bierze go
-        // jako koniec interwału paliwowego, nie jako deltę sesji.
-        break;
-      }
+      // `leg_close` obsługiwane tu między 2026-08-06 a 2026-08-10 — usunięte razem
+      // z pojęciem wzlotu: sesję zatwierdza `day_close.finalReading`.
 
       case 'session_claim':
         // Tożsamość aktualizowana z nagłówka (wyżej), payload informacyjny. Zostaje sam

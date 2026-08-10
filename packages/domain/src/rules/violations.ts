@@ -40,6 +40,8 @@ export type ViolationCode =
   | 'PREFLIGHT_ALREADY_CONFIRMED'
   // ── silnik i lot ───────────────────────────────────────────────────────────
   | 'ENGINE_ALREADY_RUNNING'
+  /** Sesja = jeden bieg silnika (2026-08-10): po zamkniętym cyklu nie ma drugiego startu. */
+  | 'SESSION_ALREADY_RAN'
   | 'ENGINE_NOT_RUNNING'
   | 'ENGINE_STOP_IN_FLIGHT'
   | 'ENGINE_RUNNING_AT_DAY_CLOSE'
@@ -64,10 +66,8 @@ export type ViolationCode =
   // ── załoga ─────────────────────────────────────────────────────────────────
   | 'PIC_CHANGE_NOT_ALLOWED'
   | 'DUAL_IS_PIC'
-  // ── zamknięcie wzlotu (09) ─────────────────────────────────────────────────
-  | 'LEG_CLOSE_ENGINE_RUNNING'
-  | 'LEG_CLOSE_WITHOUT_CYCLE'
-  | 'LEG_ALREADY_CLOSED'
+  // (kody LEG_CLOSE_* usunięte 2026-08-10 razem z `leg_close` — sesję zatwierdza
+  //  `day_close`, patrz sekcja niżej)
   // ── wpis ręczny i zdanie samolotu ──────────────────────────────────────────
   | 'MANUAL_ENTRY_EMPTY'
   | 'MANUAL_ENTRY_TIME_ORDER'

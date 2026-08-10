@@ -156,6 +156,15 @@ describe('cykl silnika', () => {
     ]);
   });
 
+  it('drugi bieg silnika w sesji jest odrzucany — sesja = jeden bieg (2026-08-10)', () => {
+    // Po STOP ENGINE jedyną drogą naprzód jest zdanie samolotu (09b); kolejny lot
+    // to NOWE przejęcie. Bez tej gwardii stary model („kolejne wzloty w sesji")
+    // wracałby tylnymi drzwiami przez każdy zapis ręczny albo replay.
+    expect(hard(check(afterCycle(), ev('engine_start', {}, { t: min(170) })))).toEqual([
+      'SESSION_ALREADY_RAN',
+    ]);
+  });
+
   it('engine_stop tylko gdy silnik pracuje', () => {
     expect(hard(check(ground(), ev('engine_stop', {}, { t: min(20) })))).toEqual([
       'ENGINE_NOT_RUNNING',
@@ -346,18 +355,9 @@ describe('zamknięcie dnia', () => {
     expect(hard(v)).toContain('MH_REGRESSION');
   });
 
-  it('odczyt końcowy porównuje się z OSTATNIM wskazaniem, nie z chwilą przejęcia', () => {
-    // Pilot dopisał 1240:00 przy wzlocie. Odczyt końcowy 1239:45 jest wyższy niż stan
-    // przy przejęciu, ale niższy niż to, co sam przed chwilą zobaczył na liczniku.
-    const stream = [
-      ...afterCycle(),
-      ev('leg_close', { legIndex: 1, reading: { fuelL: 120, mh: 1240 } }, { t: min(160) }),
-    ];
-    const v = check(stream, dayClose({ finalReading: { fuelL: 112, mh: 1239.75 } }));
-
-    expect(hard(v)).toContain('MH_REGRESSION');
-    expect(v.find((x) => x.code === 'MH_REGRESSION')!.message).toContain('przy wzlocie 1');
-  });
+  // Test „odczyt końcowy porównuje się z OSTATNIM wskazaniem" usunięty 2026-08-10:
+  // pośrednie odczyty per wzlot znikły razem z `leg_close`, więc jedynym punktem
+  // odniesienia wewnątrz sesji jest stan przy przejęciu — a to pokrywa test wyżej.
 
   it('rozjazd Δ MH vs block time to miękka flaga — zdarzenie zostaje', () => {
     const v = check(afterCycle(), dayClose({ finalReading: { fuelL: 112, mh: MH_START + 5 } }));
@@ -419,48 +419,9 @@ describe('zamknięcie dnia', () => {
   });
 });
 
-describe('potwierdzenie wzlotu (`leg_close`, §3.6)', () => {
-  const legClose = (
-    payload: Partial<EventPayloadMap['leg_close']> = {},
-    t = min(160),
-  ): Event => ev('leg_close', { legIndex: 1, ...payload }, { t });
-
-  it('po pełnym cyklu potwierdzenie przechodzi — także BEZ odczytu', () => {
-    // Odczyt jest opcjonalny i to jest decyzja (§3.6), nie niedopatrzenie.
-    expect(check(afterCycle(), legClose())).toEqual([]);
-  });
-
-  it('przy pracującym silniku wzlot nie jest jeszcze kompletny', () => {
-    expect(hard(check(running(), legClose()))).toContain('LEG_CLOSE_ENGINE_RUNNING');
-  });
-
-  it('bez ani jednego cyklu nie ma czego zamykać', () => {
-    expect(hard(check(ground(), legClose()))).toEqual(['LEG_CLOSE_WITHOUT_CYCLE']);
-  });
-
-  it('drugie potwierdzenie tego samego wzlotu jest odrzucane', () => {
-    expect(hard(check([...afterCycle(), legClose()], legClose({}, min(170))))).toEqual([
-      'LEG_ALREADY_CLOSED',
-    ]);
-  });
-
-  it('łańcuch MH jest monotoniczny MIĘDZY WZLOTAMI, nie tylko od przejęcia', () => {
-    // Wzlot 1 zamknięty odczytem 1240:00. Wzlot 2 z odczytem 1239:45 jest wyższy niż
-    // stan przy przejęciu (1234:30), więc porównanie z samym startem sesji by go
-    // przepuściło — a licznik cofnął się względem tego, co pilot sam przed chwilą wpisał.
-    const stream = [
-      ...afterCycle(),
-      legClose({ reading: { fuelL: 120, mh: 1240 } }),
-      ev('engine_start', {}, { t: min(200) }),
-      ev('engine_stop', {}, { t: min(260) }),
-    ];
-
-    expect(hard(check(stream, legClose({ legIndex: 2, reading: { fuelL: 110, mh: 1239.75 } }, min(265)))))
-      .toContain('MH_REGRESSION');
-    expect(hard(check(stream, legClose({ legIndex: 2, reading: { fuelL: 110, mh: 1241 } }, min(265)))))
-      .toEqual([]);
-  });
-});
+// Blok „potwierdzenie wzlotu (leg_close)" usunięty 2026-08-10 razem ze zdarzeniem
+// i regułami LEG_CLOSE_* — sesję zatwierdza `day_close` (odczyty obowiązkowe), czego
+// pilnują testy „zamknięcie dnia" wyżej i gwardia SESSION_ALREADY_RAN w „cyklu silnika".
 
 describe('preflight bez deklaracji meldunku (§3.6a — klamra jest opcjonalna)', () => {
   /**
@@ -561,24 +522,25 @@ describe('okno korekty po zamknięciu dnia (24 h)', () => {
     expect(hard(check(closed(), late))).toEqual(['CORRECTION_WINDOW_EXPIRED']);
   });
 
-  it('correctionWindow liczy pozostały czas OD WZLOTU, nie od zdania samolotu', () => {
-    // §3.6a: kotwicą jest wzlot. Cykl kończy się o min(154), samolot jest zdawany
-    // o min(300) — okno biegnie od wcześniejszej z tych chwil, bo dotyczy danych lotu.
-    const LEG_END = min(154);
+  it('correctionWindow liczy pozostały czas OD ZDANIA — jedyna kotwica (2026-08-10)', () => {
+    // Do 2026-08-10 każdy wzlot miał własne okno od `leg_close`; po pivocie jednostką
+    // zatwierdzenia jest SESJA, a okno rusza w chwili zdania samolotu (min(300)).
+    const RELEASED = min(300);
     const state = projectSession(closed());
 
-    const open = correctionWindow(state, LEG_END + 3_600_000);
-    expect(open.hasClosedLeg).toBe(true);
+    const open = correctionWindow(state, RELEASED + 3_600_000);
+    expect(open.confirmed).toBe(true);
     expect(open.open).toBe(true);
     expect(open.remainingMs).toBe(CORRECTION_WINDOW_MS - 3_600_000);
-    expect(open.openLegCount).toBe(1);
 
-    const expired = correctionWindow(state, LEG_END + CORRECTION_WINDOW_MS + 1);
+    const expired = correctionWindow(state, RELEASED + CORRECTION_WINDOW_MS + 1);
     expect(expired.open).toBe(false);
     expect(expired.remainingMs).toBe(0);
 
-    // Wzlot świeżo zamknięty: okno dopiero ruszyło, korekta oczywiście dozwolona.
-    expect(correctionWindow(projectSession(afterCycle()), min(200)).open).toBe(true);
+    // Sesja NIEZDANA nie podlega oknu: korekta w kokpicie jest normalną pracą.
+    const active = correctionWindow(projectSession(afterCycle()), min(200));
+    expect(active.confirmed).toBe(false);
+    expect(active.open).toBe(true);
   });
 });
 

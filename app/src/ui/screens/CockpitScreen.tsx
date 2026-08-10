@@ -220,24 +220,24 @@ export function CockpitScreen({
   );
 
   /**
-   * STOP ENGINE prowadzi na 09 „Zamknij lot" (§7).
-   *
-   * Wzlot jest jednostką potwierdzenia danych (§3.6a), a jedyną chwilą, w której pilot
-   * pamięta przebieg lotu, jest ta zaraz po zgaszeniu silnika. Ekran otwieramy DOPIERO
-   * po udanym zapisie — gdyby `engine_stop` odbiła reguła, 09 nie miałby czego zamykać
-   * i pilot zobaczyłby pusty formularz zamiast powodu odmowy.
+   * STOP ENGINE kończy jedyny bieg tej sesji (model 2026-08-10) — dalej jest już tylko
+   * ZDAJ SAMOLOT. Zapis może odbić reguła (np. w powietrzu), więc nawigacji tu nie ma
+   * żadnej: sukces i odmowa oba zostawiają pilota w kokpicie, tylko w innych stanach.
    */
   const handleStop = useCallback(async () => {
     setBusy(true);
     try {
       await stopEngine();
-      navigation.navigate('LegClose');
+      // ZOSTAJEMY w kokpicie (model 2026-08-10): po STOP ENGINE ekran przechodzi sam
+      // w stan „po zatrzymaniu" (hero ZDAJ SAMOLOT), bo `engineRunning` gaśnie
+      // w projekcji. Do 2026-08-10 stąd otwierał się ekran 09 (zamknięcie wzlotu) —
+      // usunięty razem z `leg_close`; zatwierdzenie mieszka na 09B.
     } catch {
       // Powód jest w `lastError` — pokazujemy go banerem niżej.
     } finally {
       setBusy(false);
     }
-  }, [navigation, stopEngine]);
+  }, [stopEngine]);
 
   if (!context) return <NoSession onStart={() => navigation.navigate('PreflightAircraft')} />;
 

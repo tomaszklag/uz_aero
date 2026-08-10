@@ -15,16 +15,12 @@ const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
 
 let legSeq = 0;
 
-/** Wzlot bez potwierdzenia — ten test bada wyłącznie podział czasu blokowego. */
+/** Bieg silnika — ten test bada wyłącznie podział czasu blokowego. */
 const run = (from: number, to: number | null): Leg => ({
   index: ++legSeq,
   startedAt: from,
   stoppedAt: to,
   durationMs: to != null ? to - from : 0,
-  confirmed: false,
-  confirmedAt: null,
-  reading: null,
-  notes: null,
 });
 
 function crewEvent(time: number, pilotInId: string | null): Event {

@@ -25,8 +25,12 @@ Faza 7 **panel administracyjny (web)** — projekt UI zamknięty (`design/admin/
 **PIVOT MODELU 2026-08-10 — SESJA = JEDEN BIEG SILNIKA** (sekcja „Sesja = jeden bieg
 silnika" niżej). Story użytkownika częściowo odwraca przebudowę z 2026-08-06: `leg_close`
 do usunięcia, ekran 09 scala się z 09b, odczyty przy zdaniu OBOWIĄZKOWE, 09a ginie.
-Etapy pivotu: **A' design+docs (W TOKU)** → B' domena → C' app → D' serwer+panel →
-E' seed+demo. Opisy etapów B–D niżej zostają jako historia — częściowo będą cofane.
+Etapy pivotu: **A' design+docs ✅** → **B' domena ✅** (SESSION_ALREADY_RAN; `leg_close`
+wycięty z domeny, app i serwera z mechaniczną kaskadą; okno korekty = 24 h od ZDANIA
+z domkniętą granicą; `CURRENT_SCHEMA_VERSION` z powrotem = 1; kanoniczny dzień 22 JUNE
+przebudowany na TRZY sesje z łańcuchem MH przez zdania) → C' app (ekrany 1:1 z nowych
+mockupów) → D' serwer+panel (słownik, oś zdarzeń, admin/) → E' seed+demo.
+Opisy etapów B–D niżej zostają jako historia — częściowo już cofnięte.
 **PRZEBUDOWA FLOW** (od 2026-08-06, gałąź `poc-zmiany-flow`) — dzień służby przestał
 być kontenerem na loty (patrz sekcja „Czas służby" niżej). Rozjazd design↔kod jest świadomy
 i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN pod stare mockupy

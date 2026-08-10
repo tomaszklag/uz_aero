@@ -55,10 +55,6 @@ function leg(from: string, to: string, over: Partial<Leg> = {}): Leg {
     startedAt: at(from),
     stoppedAt: at(to),
     durationMs: at(to) - at(from),
-    confirmed: true,
-    confirmedAt: at(to),
-    reading: null,
-    notes: null,
     ...over,
   };
 }
@@ -132,18 +128,15 @@ describe('buildRelease — który wariant i co wiemy', () => {
     expect(buildRelease(emptySessionState(), at('15:35'))).toBeNull();
   });
 
-  it('podpowiedź startowa bierze ODCZYT Z WZLOTU, nie z przejęcia', () => {
-    // Pilot dopisał odczyt przy drugim wzlocie — to on jest ostatnim znanym stanem
-    // liczników, a nie wartość sprzed całego dnia.
+  it('podpowiedź startowa bierze OSTATNI znany stan: paliwomierz z tankowań, MH z przejęcia', () => {
+    // Po 2026-08-10 wewnątrz sesji nie ma pośrednich odczytów (leg_close znikł) —
+    // paliwo zna ostatnią granicę (np. tankowanie), a MH wyłącznie stan z przejęcia.
     const state = session({
-      legs: [
-        leg('08:00', '09:00'),
-        leg('10:00', '11:00', { reading: { fuelL: 70, mh: 1241.5 } }),
-      ],
+      legs: [leg('10:00', '11:00')],
       fuel: { startL: 96, addedL: 0, endL: null, consumedL: null, lastReadingL: 70 },
     });
 
-    expect(buildRelease(state, at('12:00'))!.initial).toEqual({ fuelL: 70, mh: 1241.5 });
+    expect(buildRelease(state, at('12:00'))!.initial).toEqual({ fuelL: 70, mh: 1239.65 });
   });
 });
 
@@ -232,15 +225,13 @@ describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
     );
   });
 
-  it('progiem jest OSTATNI odczyt, a nie stan przy przejęciu — tak jak w regule domeny', () => {
-    // Ekran musi ostrzegać dokładnie tam, gdzie komenda odmówi. Inaczej arkusz mówi
-    // „w porządku" chwilę przed odrzuceniem i wygląda to na błąd aplikacji.
-    const state = session({
-      legs: [leg('13:40', '15:10', { reading: { fuelL: 70, mh: 1241.5 } })],
-    });
+  it('progiem jest stan przy przejęciu — jedyny znany punkt łańcucha wewnątrz sesji', () => {
+    // Ekran musi ostrzegać dokładnie tam, gdzie komenda odmówi. Po 2026-08-10 nie ma
+    // pośrednich odczytów per wzlot, więc próg to zawsze odczyt z przejęcia.
+    const state = session({ legs: [leg('13:40', '15:10')] });
 
-    expect(releaseBlocker(state, { fuelL: 62, mh: 1241 })).toBe(
-      'Licznik nie może się cofnąć — przy wzlocie 1 1241:30.',
+    expect(releaseBlocker(state, { fuelL: 62, mh: 1239 })).toBe(
+      'Licznik nie może się cofnąć — przy przejęciu 1239:39.',
     );
     expect(releaseBlocker(state, { fuelL: 62, mh: 1242 })).toBeNull();
   });

@@ -1,18 +1,20 @@
 /**
  * UZ Aero — testy projekcji sesji (§5.2: stan liczony w pamięci ze strumienia zdarzeń).
  *
- * Scenariusz odwzorowuje **kanoniczną oś czasu dnia 22 JUNE** z `docs/design-notes.md`,
- * czyli te same liczby, które pokazują mockupy 04/09/10/11:
- *   cykl 1: 08:12–10:34 (blok 2:22) · loty 08:25→09:18, 09:35→10:22 · MH 1234:30→1236:52
- *   tankowanie 10:48: 112 +48 → 160 L
- *   cykl 2: 11:15–12:28 (blok 1:13) · lot 11:28→12:15
- *   cykl 3: 13:10–16:14 (blok 3:04) · loty 13:24→14:08, 14:21→15:03, 15:17→16:10
- *   dzień:  6 lotów · block 6:39 · paliwo 150 +48 −110 = 88 · MH 1234:30 → 1241:09
+ * Scenariusz odwzorowuje **kanoniczną oś czasu dnia 22 JUNE** z `docs/design-notes.md`.
+ * Od 2026-08-10 (pivot: sesja = jeden bieg silnika) dzień to TRZY SESJE na SP-AXA,
+ * każda domknięta odczytami z obu stron — a liczby dnia zostają te same:
+ *   s1: preflight 08:00 (150 L · 1234:30) · bieg 08:12–10:34, 2 loty · zdanie 10:40 (112 L · 1236:52)
+ *   s2: preflight 11:00 (112 L) · tankowanie 11:05 (+48 → 160) · bieg 11:15–12:28, 1 lot · zdanie 12:35 (138 L · 1238:05)
+ *   s3: preflight 13:00 (138 L) · bieg 13:10–16:14, 3 loty · 3 zrzuty · zdanie 16:45 (88 L · 1241:09)
+ *   dzień: 6 lotów · block 6:39 · paliwo 150 +48 −110 = 88 · MH 1234:30 → 1241:09
  *
- * Dzięki temu test pilnuje nie tylko poprawności kodu, ale i zgodności z designem.
+ * Ten dzień jest WZORCEM POPRAWNOŚCI modelu 2026-08-10 (strażnik zgodności ze starym
+ * strumieniem zdjęty decyzją użytkownika — nic nie było wdrożone). Pilnuje nie tylko
+ * kodu, ale i zgodności z designem.
  */
 
-import { projectSession, emptySessionState } from '../domain';
+import { projectSession, emptySessionState, projectDuty } from '../domain';
 import type { Event, EventType, EventPayloadMap } from '../domain';
 
 const SESSION = 'sess-22jun';
@@ -41,10 +43,11 @@ function ev<K extends EventType>(
   type: K,
   time: string,
   payload: EventPayloadMap[K],
+  sessionUuid: string = SESSION,
 ): Event {
   return {
     uuid: `e-${++seq}`,
-    sessionUuid: SESSION,
+    sessionUuid,
     aircraftId: AC,
     picId: PIC,
     dualId: null,
@@ -69,8 +72,13 @@ function singleCycle(): Event[] {
   ];
 }
 
-/** Kanoniczny dzień: 3 cykle, 6 lotów, jedno tankowanie, zamknięcie dnia. */
-function canonicalDay(): Event[] {
+/**
+ * Kanoniczny dzień po pivocie: TRZY sesje SP-AXA, każda = jeden bieg silnika,
+ * każda domknięta odczytami (przejęcie → zdanie). Łańcuch MH i paliwa biegnie
+ * PRZEZ sesje: odczyt zdania jednej jest odczytem przejęcia następnej (§4.5).
+ */
+function canonicalSession1(): Event[] {
+  const S = 'sess-22jun-1';
   return [
     ev('preflight_confirm', '08:00', {
       operation: 'skoki',
@@ -80,54 +88,74 @@ function canonicalDay(): Event[] {
       reading: { fuelL: 150, mh: mh('1234:30') },
       client: 'Strefa EPKK',
       mhFormat: 'hhmm',
-    }),
+    }, S),
+    ev('engine_start', '08:12', {}, S),
+    ev('takeoff', '08:25', { method: 'auto' }, S),
+    ev('landing', '09:18', { method: 'auto' }, S),
+    ev('takeoff', '09:35', { method: 'auto' }, S),
+    ev('landing', '10:22', { method: 'auto' }, S),
+    ev('engine_stop', '10:34', {}, S),
+    ev('day_close', '10:40', { finalReading: { fuelL: 112, mh: mh('1236:52') } }, S),
+  ];
+}
 
-    // ── cykl 1 (blok 2:22) ────────────────────────────────────────────────
-    ev('engine_start', '08:12', {}),
-    ev('takeoff', '08:25', { method: 'auto' }),
-    ev('landing', '09:18', { method: 'auto' }),
-    ev('takeoff', '09:35', { method: 'auto' }),
-    ev('landing', '10:22', { method: 'auto' }),
-    ev('engine_stop', '10:34', {}),
+function canonicalSession2(): Event[] {
+  const S = 'sess-22jun-2';
+  return [
+    ev('preflight_confirm', '11:00', {
+      operation: 'skoki',
+      departureIcao: 'EPKK',
+      arrivalIcao: 'EPKK',
+      reading: { fuelL: 112, mh: mh('1236:52') },
+      mhFormat: 'hhmm',
+    }, S),
+    // Tankowanie PRZED uruchomieniem — wpis sesji (kokpit 04a): 112 +48 → 160 L.
+    ev('refuel', '11:05', { beforeL: 112, addedL: 48, afterL: 160 }, S),
+    ev('engine_start', '11:15', {}, S),
+    ev('takeoff', '11:28', { method: 'auto' }, S),
+    ev('landing', '12:15', { method: 'auto' }, S),
+    ev('engine_stop', '12:28', {}, S),
+    ev('day_close', '12:35', { finalReading: { fuelL: 138, mh: mh('1238:05') } }, S),
+  ];
+}
 
-    // ── tankowanie: 112 +48 → 160 L ───────────────────────────────────────
-    ev('refuel', '10:48', { beforeL: 112, addedL: 48, afterL: 160 }),
-
-    // ── cykl 2 (blok 1:13) ────────────────────────────────────────────────
-    ev('engine_start', '11:15', {}),
-    ev('takeoff', '11:28', { method: 'auto' }),
-    ev('landing', '12:15', { method: 'auto' }),
-    ev('engine_stop', '12:28', {}),
-
-    // ── cykl 3 (blok 3:04) — popołudnie skokowe ───────────────────────────
-    ev('engine_start', '13:10', {}),
-    ev('takeoff', '13:24', { method: 'auto' }),
+function canonicalSession3(): Event[] {
+  const S = 'sess-22jun-3';
+  return [
+    ev('preflight_confirm', '13:00', {
+      operation: 'skoki',
+      departureIcao: 'EPKK',
+      arrivalIcao: 'EPKK',
+      reading: { fuelL: 138, mh: mh('1238:05') },
+      mhFormat: 'hhmm',
+    }, S),
+    ev('engine_start', '13:10', {}, S),
+    ev('takeoff', '13:24', { method: 'auto' }, S),
     ev('drop', '13:48', {
       dropNumber: 1,
       altitudeFt: 2450,
       jumpers: { tandem: 2, aff: 1, solo: 1 },
-    }),
-    ev('landing', '14:08', { method: 'auto' }),
-    ev('takeoff', '14:21', { method: 'auto' }),
+    }, S),
+    ev('landing', '14:08', { method: 'auto' }, S),
+    ev('takeoff', '14:21', { method: 'auto' }, S),
     ev('drop', '14:42', {
       dropNumber: 2,
       altitudeFt: 1800,
       jumpers: { tandem: 1, aff: 0, solo: 3 },
-    }),
-    ev('landing', '15:03', { method: 'manual' }),
-    ev('takeoff', '15:17', { method: 'auto' }),
+    }, S),
+    ev('landing', '15:03', { method: 'manual' }, S),
+    ev('takeoff', '15:17', { method: 'auto' }, S),
     ev('drop', '15:45', {
       dropNumber: 3,
       altitudeFt: 3200,
       jumpers: { tandem: 3, aff: 2, solo: 0 },
-    }),
-    ev('landing', '16:10', { method: 'auto' }),
-    ev('engine_stop', '16:14', {}),
-
+    }, S),
+    ev('landing', '16:10', { method: 'auto' }, S),
+    ev('engine_stop', '16:14', {}, S),
     ev('day_close', '16:45', {
       finalReading: { fuelL: 88, mh: mh('1241:09') },
       dutyEnd: at('16:45'),
-    }),
+    }, S),
   ];
 }
 
@@ -183,49 +211,64 @@ describe('projectSession — pojedynczy cykl', () => {
   });
 });
 
-describe('projectSession — kanoniczny dzień 22 JUNE (zgodność z design-notes)', () => {
-  const s = projectSession(canonicalDay());
+describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)', () => {
+  const s1 = projectSession(canonicalSession1());
+  const s2 = projectSession(canonicalSession2());
+  const s3 = projectSession(canonicalSession3());
+  const day = projectDuty([s1, s2, s3], PIC, DAY0);
 
-  it('block time = 6:39 (suma trzech cykli 2:22 + 1:13 + 3:04)', () => {
-    expect(s.blockTimeMs).toBe(399 * MIN);
-    expect(s.legs).toHaveLength(3);
-    expect(s.legs.map((r) => r.durationMs)).toEqual([
-      142 * MIN,
-      73 * MIN,
-      184 * MIN,
+  it('dzień: block 6:39 z trzech sesji 2:22 + 1:13 + 3:04 (projectDuty)', () => {
+    expect(day.sessions).toHaveLength(3);
+    expect(day.sessions.map((x) => x.blockMs)).toEqual([142 * MIN, 73 * MIN, 184 * MIN]);
+    expect(day.blockTimeMs).toBe(399 * MIN);
+  });
+
+  it('dzień: 6 lotów (2 + 1 + 3) i liczniki 6/6', () => {
+    expect(day.sessions.map((x) => x.flightCount)).toEqual([2, 1, 3]);
+    expect(day.takeoffCount).toBe(6);
+    expect(day.landingCount).toBe(6);
+  });
+
+  it('klamra służby: meldunek 08:00 (deklaracja), koniec 16:45', () => {
+    expect(day.startAt).toBe(at('08:00'));
+    expect(day.endAt).toBe(at('16:45'));
+    expect(day.sessions.map((x) => x.releasedAt)).toEqual([
+      at('10:40'),
+      at('12:35'),
+      at('16:45'),
     ]);
   });
 
-  it('6 lotów i liczniki 6/6', () => {
-    expect(s.flights).toHaveLength(6);
-    expect(s.takeoffCount).toBe(6);
-    expect(s.landingCount).toBe(6);
+  it('paliwo dnia: 150 +48 −110 = 88 L, rozliczone per sesja', () => {
+    expect(s1.fuel.consumedL).toBe(38); // 150 → 112
+    expect(s2.fuel.consumedL).toBe(22); // 112 +48 → 138
+    expect(s3.fuel.consumedL).toBe(50); // 138 → 88
+    expect(s1.fuel.consumedL! + s2.fuel.consumedL! + s3.fuel.consumedL!).toBe(110);
+    expect(s3.fuel.endL).toBe(88);
   });
 
-  it('paliwo: 150 +48 −110 = 88 L', () => {
-    expect(s.fuel.startL).toBe(150);
-    expect(s.fuel.addedL).toBe(48);
-    expect(s.fuel.endL).toBe(88);
-    expect(s.fuel.consumedL).toBe(110);
+  it('łańcuch MH biegnie PRZEZ sesje: zdanie jednej = przejęcie następnej (§4.5)', () => {
+    expect(s1.mh.start).toBeCloseTo(mh('1234:30'), 5);
+    expect(s1.mh.end).toBeCloseTo(mh('1236:52'), 5);
+    expect(s2.mh.start).toBeCloseTo(s1.mh.end!, 5);
+    expect(s2.mh.end).toBeCloseTo(mh('1238:05'), 5);
+    expect(s3.mh.start).toBeCloseTo(s2.mh.end!, 5);
+    expect(s3.mh.end).toBeCloseTo(mh('1241:09'), 5);
+    // Δ MH każdej sesji = jej block time — inwariant łańcucha (§4.5).
+    expect(s1.mh.deltaH! * 60 * MIN).toBeCloseTo(s1.blockTimeMs, 0);
+    expect(s2.mh.deltaH! * 60 * MIN).toBeCloseTo(s2.blockTimeMs, 0);
+    expect(s3.mh.deltaH! * 60 * MIN).toBeCloseTo(s3.blockTimeMs, 0);
   });
 
-  it('łańcuch MH: 1234:30 → 1241:09, delta = block time', () => {
-    expect(s.mh.start).toBeCloseTo(mh('1234:30'), 5);
-    expect(s.mh.end).toBeCloseTo(mh('1241:09'), 5);
-    // Δ MH (6.65 h) musi się zgadzać z block time (6:39) — inwariant łańcucha (§4.5).
-    expect(s.mh.deltaH).toBeCloseTo(6.65, 5);
-    expect(s.mh.deltaH! * 60 * MIN).toBeCloseTo(s.blockTimeMs, 0);
-  });
-
-  it('zrzuty: 3 wyniesienia, 13 skoczków, średnia wysokość', () => {
-    expect(s.drops.count).toBe(3);
-    expect(s.drops.jumpers).toEqual({ tandem: 6, aff: 3, solo: 4 });
-    expect(s.drops.totalJumpers).toBe(13);
+  it('zrzuty sesji skokowej: 3 wyniesienia, 13 skoczków, średnia wysokość', () => {
+    expect(s3.drops.count).toBe(3);
+    expect(s3.drops.jumpers).toEqual({ tandem: 6, aff: 3, solo: 4 });
+    expect(s3.drops.totalJumpers).toBe(13);
     // Suma i licznik wysokości jadą OSOBNO (panel A10 składa z nich średnią zakresu —
     // średnich per sesja nie da się składać), a średnia sesji jest z nich pochodną.
-    expect(s.drops.altitudeSumFt).toBe(2450 + 1800 + 3200);
-    expect(s.drops.altitudeFixCount).toBe(3);
-    expect(s.drops.avgAltitudeFt).toBeCloseTo((2450 + 1800 + 3200) / 3, 5);
+    expect(s3.drops.altitudeSumFt).toBe(2450 + 1800 + 3200);
+    expect(s3.drops.altitudeFixCount).toBe(3);
+    expect(s3.drops.avgAltitudeFt).toBeCloseTo((2450 + 1800 + 3200) / 3, 5);
   });
 
   it('zrzut BEZ wysokości nie wchodzi ani do sumy, ani do licznika fixów', () => {
@@ -242,14 +285,14 @@ describe('projectSession — kanoniczny dzień 22 JUNE (zgodność z design-note
     expect(partial.drops.avgAltitudeFt).toBe(3000);
   });
 
-  it('kontekst dnia i zamknięcie', () => {
-    expect(s.operation).toBe('skoki');
-    expect(s.departureIcao).toBe('EPKK');
-    expect(s.mhFormat).toBe('hhmm');
-    expect(s.dutyStart).toBe(at('08:00'));
-    expect(s.dutyEnd).toBe(at('16:45'));
-    expect(s.closed).toBe(true);
-    expect(s.engineRunning).toBe(false);
+  it('kontekst sesji i zamknięcie', () => {
+    expect(s1.operation).toBe('skoki');
+    expect(s1.departureIcao).toBe('EPKK');
+    expect(s1.mhFormat).toBe('hhmm');
+    expect(s1.dutyStart).toBe(at('08:00'));
+    expect(s3.dutyEnd).toBe(at('16:45'));
+    expect([s1, s2, s3].every((x) => x.closed)).toBe(true);
+    expect([s1, s2, s3].every((x) => !x.engineRunning)).toBe(true);
   });
 });
 
@@ -267,16 +310,16 @@ describe('projectSession — notatka dnia (issue #14)', () => {
     expect(state.notes).toBe('Lot z uczniem\nDrugi zbiornik nie działa');
   });
 
-  it('dzień bez notatki ma `null`, a nie pusty napis — stare telefony jej nie wysyłają', () => {
-    // Zdarzenie sprzed issue #14 nie ma pola `notes`; projekcja musi to znieść bez zmiany
-    // znaczenia („nie napisano" to nie to samo co „napisano pustkę").
-    expect(projectSession(canonicalDay()).notes).toBeNull();
+  it('sesja bez notatki ma `null`, a nie pusty napis', () => {
+    // Preflight bez pola `notes`; projekcja musi to znieść bez zmiany znaczenia
+    // („nie napisano" to nie to samo co „napisano pustkę").
+    expect(projectSession(canonicalSession1()).notes).toBeNull();
   });
 });
 
 describe('projectSession — odporność', () => {
   it('kolejność wejścia nie zmienia wyniku (porządkowanie po czasie)', () => {
-    const ordered = canonicalDay();
+    const ordered = canonicalSession3();
     const shuffled = [...ordered].reverse();
 
     const a = projectSession(ordered);
@@ -301,72 +344,9 @@ describe('projectSession — odporność', () => {
   });
 });
 
-/**
- * Zamknięcie wzlotu (`leg_close`) — etap B przebudowy flow (`docs/_main.md.txt` §3.6).
- *
- * Jednostką potwierdzenia danych jest WZLOT, nie doba. Odczyt liczników jest w nim
- * OPCJONALNY (w serii skokowej nikt nie chodzi do licznika po każdym wzlocie), ale gdy
- * jest — jest pełnoprawnym odczytem paliwomierza, bo §4.1 pkt 5 stawia licznik fizyczny
- * nad naszą rachubą.
- *
- * Strażnikiem regresji dla starego strumienia jest CAŁA reszta tego pliku: buduje
- * zdarzenia `schemaVersion: 1` i sprawdza kanoniczny dzień 22 JUNE. Jeśli dołożenie
- * `leg_close` cokolwiek w nim ruszy, te testy upadną — o to chodzi.
- */
-describe('projectSession — zamknięcie wzlotu (leg_close)', () => {
-  it('odczyt z zamknięcia wzlotu staje się ostatnim znanym stanem paliwomierza', () => {
-    const s = projectSession([
-      ev('preflight_confirm', '08:00', {
-        operation: 'skoki',
-        dutyStart: at('08:00'),
-        reading: { fuelL: 150, mh: mh('1234:30') },
-      }),
-      ...singleCycle(),
-      ev('leg_close', '10:40', {
-        legIndex: 1,
-        reading: { fuelL: 128, mh: mh('1236:52') },
-      }),
-    ]);
-
-    expect(s.fuel.lastReadingL).toBe(128);
-  });
-
-  it('wzlot zamknięty BEZ odczytu nie rusza stanu paliwomierza', () => {
-    const withoutReading = projectSession([
-      ev('preflight_confirm', '08:00', {
-        operation: 'skoki',
-        dutyStart: at('08:00'),
-        reading: { fuelL: 150, mh: mh('1234:30') },
-      }),
-      ...singleCycle(),
-      ev('leg_close', '10:40', { legIndex: 1 }),
-    ]);
-
-    // Brak odczytu to NIEWIEDZA, nie zero i nie „tyle samo co przed lotem" —
-    // ostatnim znanym stanem zostaje odczyt z przejęcia.
-    expect(withoutReading.fuel.lastReadingL).toBe(150);
-  });
-
-  it('liczy zamknięte wzloty niezależnie od tego, czy niosły odczyt', () => {
-    const s = projectSession([
-      ev('preflight_confirm', '08:00', {
-        operation: 'skoki',
-        dutyStart: at('08:00'),
-        reading: { fuelL: 150, mh: mh('1234:30') },
-      }),
-      ...singleCycle(),
-      ev('leg_close', '10:40', { legIndex: 1 }),
-      ev('engine_start', '11:15', {}),
-      ev('takeoff', '11:28', { method: 'auto' }),
-      ev('landing', '12:15', { method: 'auto' }),
-      ev('engine_stop', '12:28', {}),
-      ev('leg_close', '12:30', { legIndex: 2, reading: { fuelL: 96, mh: mh('1238:05') } }),
-    ]);
-
-    expect(s.legs.filter((l) => l.confirmed)).toHaveLength(2);
-    expect(s.fuel.lastReadingL).toBe(96);
-  });
-});
+// Blok „zamknięcie wzlotu (leg_close)" usunięty 2026-08-10 razem ze zdarzeniem:
+// sesja = jeden bieg silnika, a jej zatwierdzeniem jest `day_close` z obowiązkowym
+// odczytem. Stan paliwomierza wewnątrz sesji zmieniają wyłącznie tankowania.
 
 /**
  * Klamry służby są OPCJONALNE (§3.6a) — pilot nie deklaruje niczego, żeby polecieć.
@@ -405,48 +385,31 @@ describe('projectSession — opcjonalne klamry służby', () => {
 });
 
 /**
- * Wzlot jako byt (etap B2): `Leg` to cykl silnika RAZEM z jego potwierdzeniem.
- * Nie ma osobnej tablicy obok `legs` — wzlot i cykl to w tym modelu ten sam byt.
+ * Bieg silnika jako byt (`Leg`): para `engine_start`/`engine_stop` z czasem blokowym.
+ * Pola potwierdzenia znikły 2026-08-10 razem z `leg_close` — sesję zatwierdza
+ * `day_close`, a po regule SESSION_ALREADY_RAN sesja ma najwyżej jeden bieg.
  */
-describe('projectSession — wzlot jako byt (Leg)', () => {
+describe('projectSession — bieg silnika jako byt (Leg)', () => {
   const dayStart = () =>
     ev('preflight_confirm', '08:00', {
       operation: 'skoki',
       reading: { fuelL: 150, mh: mh('1234:30') },
     });
 
-  it('wzlot dostaje numer i startuje jako niepotwierdzony', () => {
+  it('bieg dostaje numer, czasy i czas blokowy', () => {
     const s = projectSession([dayStart(), ...singleCycle()]);
 
     expect(s.legs).toHaveLength(1);
     expect(s.legs[0]!.index).toBe(1);
-    expect(s.legs[0]!.confirmed).toBe(false);
-    expect(s.legs[0]!.confirmedAt).toBeNull();
-    expect(s.legs[0]!.reading).toBeNull();
+    expect(s.legs[0]!.startedAt).toBe(at('08:12'));
+    expect(s.legs[0]!.stoppedAt).toBe(at('10:34'));
+    expect(s.blockTimeMs).toBe(142 * MIN);
   });
 
-  it('potwierdzenie przypina się do wzlotu razem z odczytem i uwagą', () => {
-    const s = projectSession([
-      dayStart(),
-      ...singleCycle(),
-      ev('leg_close', '10:40', {
-        legIndex: 1,
-        reading: { fuelL: 128, mh: mh('1236:52') },
-        notes: 'drugi zbiornik nie ciągnie',
-      }),
-    ]);
-
-    const leg = s.legs[0]!;
-    expect(leg.confirmed).toBe(true);
-    expect(leg.confirmedAt).toBe(at('10:40'));
-    expect(leg.reading).toEqual({ fuelL: 128, mh: mh('1236:52') });
-    expect(leg.notes).toBe('drugi zbiornik nie ciągnie');
-  });
-
-  it('potwierdzenie trafia w NAJSTARSZY niepotwierdzony wzlot, nie w ostatni', () => {
-    // Pilot pominął potwierdzenie pierwszego wzlotu („Potwierdzę później"), poleciał
-    // drugi raz i dopiero wtedy potwierdził. Zaległy wzlot ma dostać to potwierdzenie
-    // jako pierwszy — inaczej kolejka zaległości nigdy by się nie rozładowała.
+  it('projekcja jest totalna także dla strumienia ZŁAMANEGO (dwa biegi w sesji)', () => {
+    // Reguła SESSION_ALREADY_RAN odrzuca drugi start, ale projekcja musi opisać
+    // również strumień, który powstał obok reguł (dwa telefony przed syncem) —
+    // dwa biegi dają dwa wiersze, a nie cichą utratę drugiego.
     const s = projectSession([
       dayStart(),
       ...singleCycle(),
@@ -454,29 +417,9 @@ describe('projectSession — wzlot jako byt (Leg)', () => {
       ev('takeoff', '11:28', { method: 'auto' }),
       ev('landing', '12:15', { method: 'auto' }),
       ev('engine_stop', '12:28', {}),
-      ev('leg_close', '12:30', { legIndex: 1 }),
     ]);
 
-    expect(s.legs[0]!.confirmed).toBe(true);
-    expect(s.legs[1]!.confirmed).toBe(false);
-  });
-
-  it('wzlot niepotwierdzony i tak wnosi czas blokowy — czasy są faktem z detekcji', () => {
-    const s = projectSession([dayStart(), ...singleCycle()]);
-
-    expect(s.legs[0]!.confirmed).toBe(false);
-    expect(s.blockTimeMs).toBe(142 * MIN);
-  });
-
-  it('otwarty wzlot nie jest jeszcze kandydatem do potwierdzenia', () => {
-    const s = projectSession([
-      dayStart(),
-      ev('engine_start', '08:12', {}),
-      ev('leg_close', '08:20', { legIndex: 1 }),
-    ]);
-
-    // Reguły blokują ten zapis (LEG_CLOSE_ENGINE_RUNNING), ale projekcja musi być
-    // totalna także dla strumienia, który jakimś cudem taki wpis zawiera.
-    expect(s.legs[0]!.confirmed).toBe(false);
+    expect(s.legs).toHaveLength(2);
+    expect(s.legs.map((l) => l.index)).toEqual([1, 2]);
   });
 });

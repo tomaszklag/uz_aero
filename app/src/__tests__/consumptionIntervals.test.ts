@@ -252,46 +252,25 @@ describe('bramka górna — znaleziona przebiegiem po realnej historii (2026-08-
  * implementacji — to bezpośrednia konsekwencja decyzji z §3.6 i dokładnie ten kompromis,
  * który §3.6b opisuje jako znane ryzyko.
  */
-describe('interwały paliwowe — zamknięcie wzlotu (leg_close)', () => {
-  /** Dwa wzloty, jedno zamknięcie z odczytem pośrodku, bez tankowania. */
-  const twoLegs = (legReading: boolean): Event[] => [
-    preflight(at(8, 0), 150),
-    event('engine_start', at(8, 12)),
-    event('takeoff', at(8, 25), { method: 'auto' }),
-    event('landing', at(9, 18), { method: 'auto' }),
-    event('engine_stop', at(9, 30)),
-    event(
-      'leg_close',
-      at(9, 35),
-      legReading ? { legIndex: 1, reading: { fuelL: 128, mh: 1235.8 } } : { legIndex: 1 },
-    ),
-    event('engine_start', at(10, 20)),
-    event('takeoff', at(10, 26), { method: 'auto' }),
-    event('landing', at(11, 1), { method: 'auto' }),
-    event('engine_stop', at(11, 10)),
-    dayClose(at(11, 20), 108, 1236.9),
-  ];
-
-  it('odczyt przy wzlocie DZIELI sesję na dwa interwały', () => {
-    const { intervals } = buildFuelIntervals(twoLegs(true));
-
-    expect(intervals).toHaveLength(2);
-    expect(intervals[0]!.startKind).toBe('preflight');
-    expect(intervals[0]!.endKind).toBe('leg_close');
-    expect(intervals[0]!.consumedL).toBeCloseTo(22, 6); // 150 → 128
-    expect(intervals[1]!.startKind).toBe('leg_close');
-    expect(intervals[1]!.endKind).toBe('day_close');
-    expect(intervals[1]!.consumedL).toBeCloseTo(20, 6); // 128 → 108
-  });
-
-  it('wzlot BEZ odczytu nie tworzy granicy — zostaje JEDEN interwał na całą sesję', () => {
-    // Przypadek z §3.6b: dzień skokowy, w którym pilot nie schodzi do licznika.
-    // Suma zużycia się zgadza, ale model traci punkt podparcia do rozdziału ziemia/lot.
-    const { intervals } = buildFuelIntervals(twoLegs(false));
+describe('interwały paliwowe — sesja domknięta odczytami z obu stron (2026-08-10)', () => {
+  // Do 2026-08-10 stał tu blok `leg_close`: odczyt przy wzlocie dzielił sesję na dwa
+  // interwały, a jego brak zostawiał jeden. Pivot skasował zdarzenie — granice stawia
+  // wyłącznie przejęcie, tankowanie i zdanie, a KAŻDA sesja jest domknięta z obu stron.
+  it('sesja bez tankowań to dokładnie JEDEN interwał: przejęcie → zdanie', () => {
+    const { intervals } = buildFuelIntervals([
+      preflight(at(8, 0), 150),
+      event('engine_start', at(8, 12)),
+      event('takeoff', at(8, 25), { method: 'auto' }),
+      event('landing', at(9, 18), { method: 'auto' }),
+      event('takeoff', at(9, 40), { method: 'auto' }),
+      event('landing', at(10, 55), { method: 'auto' }),
+      event('engine_stop', at(11, 10)),
+      dayClose(at(11, 20), 108, 1236.9),
+    ]);
 
     expect(intervals).toHaveLength(1);
     expect(intervals[0]!.startKind).toBe('preflight');
     expect(intervals[0]!.endKind).toBe('day_close');
-    expect(intervals[0]!.consumedL).toBeCloseTo(42, 6); // 150 → 108, to samo paliwo
+    expect(intervals[0]!.consumedL).toBeCloseTo(42, 6); // 150 → 108
   });
 });

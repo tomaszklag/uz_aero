@@ -26,16 +26,12 @@ function at(hhmm: string): number {
 
 let legSeq = 0;
 
-function leg(from: string, to: string | null, confirmed = true): Leg {
+function leg(from: string, to: string | null): Leg {
   return {
     index: ++legSeq,
     startedAt: at(from),
     stoppedAt: to == null ? null : at(to),
     durationMs: to == null ? 0 : at(to) - at(from),
-    confirmed,
-    confirmedAt: to == null || !confirmed ? null : at(to),
-    reading: null,
-    notes: null,
   };
 }
 
@@ -91,10 +87,10 @@ describe('projectDuty — jedna służba, dwa samoloty (scenariusz 01)', () => {
   it('składa wzloty z OBU maszyn w jedną oś, uporządkowaną w czasie', () => {
     const d = duty();
 
-    expect(d.legs).toHaveLength(3);
-    expect(d.legs.map((l) => l.aircraftId)).toEqual(['sp-axa', 'sp-axa', 'sp-klm']);
+    expect(d.sessions).toHaveLength(3);
+    expect(d.sessions.map((x) => x.aircraftId)).toEqual(['sp-axa', 'sp-axa', 'sp-klm']);
     // Numeracja biegnie ciągiem przez maszyny — tak, jak numeruje ekran 01.
-    expect(d.legs.map((l) => l.index)).toEqual([1, 2, 3]);
+    expect(d.sessions.map((x) => x.index)).toEqual([1, 2, 3]);
     expect(d.aircraftIds).toEqual(['sp-axa', 'sp-klm']);
   });
 
@@ -119,25 +115,30 @@ describe('projectDuty — jedna służba, dwa samoloty (scenariusz 01)', () => {
   it('czas lotu przypisuje się do wzlotu, w którym lot się zaczął', () => {
     const d = duty();
 
-    expect(d.legs[0]!.flightMs).toBe(41 * MIN);
-    expect(d.legs[1]!.flightMs).toBe(35 * MIN);
-    expect(d.legs[2]!.flightMs).toBe(81 * MIN);
+    expect(d.sessions[0]!.flightMs).toBe(41 * MIN);
+    expect(d.sessions[1]!.flightMs).toBe(35 * MIN);
+    expect(d.sessions[2]!.flightMs).toBe(81 * MIN);
   });
 
-  it('wzlot niesie KOTWICĘ swojego okna korekty, nie samo „potwierdzony"', () => {
-    // §3.6a: każdy wzlot ma własne 24 h liczone od `leg_close`, a gdy pilot go nie
-    // potwierdził — awaryjnie od `engine_stop`. Ekran 01B podaje najbliższy wygasający
-    // termin, więc musi znać kotwicę; sam fakt „potwierdzony" na to nie odpowiada,
-    // bo dwa wzloty potwierdzone o różnych porach wygasają o różnych porach.
-    const s = session({
+  it('sesja niesie KOTWICĘ swojego okna korekty — chwilę ZDANIA (2026-08-10)', () => {
+    // Okno 24 h liczy się od zdania samolotu (`day_close`), a sesja niezdana kotwicy
+    // nie ma. Ekran 01B podaje najbliższy wygasający termin, więc musi znać kotwicę.
+    const released = session({
       aircraftId: 'sp-axa',
-      legs: [leg('08:12', '09:05', true), leg('10:20', '11:02', false)],
+      legs: [leg('08:12', '09:05')],
+      closed: true,
+      closedAt: at('09:20'),
+    });
+    const active = session({
+      sessionUuid: 's-2',
+      aircraftId: 'sp-klm',
+      legs: [leg('10:20', '11:02')],
     });
 
-    const d = projectDuty([s], PIC, DAY0);
+    const d = projectDuty([released, active], PIC, DAY0);
 
-    expect(d.legs[0]!.confirmedAt).toBe(at('09:05'));
-    expect(d.legs[1]!.confirmedAt).toBeNull();
+    expect(d.sessions[0]!.releasedAt).toBe(at('09:20'));
+    expect(d.sessions[1]!.releasedAt).toBeNull();
   });
 });
 
@@ -206,7 +207,7 @@ describe('projectDuty — służba w toku i dzień pusty', () => {
     // co „— —" zamiast zer na ekranie 01A).
     expect(d.startAt).toBeNull();
     expect(d.durationMs).toBeNull();
-    expect(d.legs).toHaveLength(0);
+    expect(d.sessions).toHaveLength(0);
   });
 
   it('sama deklaracja bez wzlotu otwiera służbę — pilot był na miejscu', () => {
@@ -215,7 +216,7 @@ describe('projectDuty — służba w toku i dzień pusty', () => {
     const d = projectDuty([s], PIC, DAY0);
 
     expect(d.startAt).toBe(at('07:10'));
-    expect(d.legs).toHaveLength(0);
+    expect(d.sessions).toHaveLength(0);
   });
 });
 
@@ -225,7 +226,7 @@ describe('projectDuty — granice doby i cudze sesje', () => {
 
     const d = projectDuty([axa(), foreign], PIC, DAY0);
 
-    expect(d.legs.every((l) => l.aircraftId === 'sp-axa')).toBe(true);
+    expect(d.sessions.every((x) => x.aircraftId === 'sp-axa')).toBe(true);
   });
 
   it('wzlot rozpoczęty przed północą należy do doby, w której WYSTARTOWAŁ', () => {
@@ -240,10 +241,6 @@ describe('projectDuty — granice doby i cudze sesje', () => {
           startedAt: DAY0 + (23 * 60 + 50) * MIN,
           stoppedAt: DAY0 + (24 * 60 + 20) * MIN,
           durationMs: 30 * MIN,
-          confirmed: true,
-          confirmedAt: DAY0 + (24 * 60 + 20) * MIN,
-          reading: null,
-          notes: null,
         },
       ],
     });
@@ -251,9 +248,9 @@ describe('projectDuty — granice doby i cudze sesje', () => {
     const today = projectDuty([s], PIC, DAY0);
     const tomorrow = projectDuty([s], PIC, DAY0 + 86_400_000);
 
-    expect(today.legs).toHaveLength(1);
+    expect(today.sessions).toHaveLength(1);
     expect(today.blockTimeMs).toBe(30 * MIN);
-    expect(tomorrow.legs).toHaveLength(0);
+    expect(tomorrow.sessions).toHaveLength(0);
   });
 
   it('`utcDayStart` sprowadza dowolny moment doby do jej północy', () => {
@@ -263,17 +260,19 @@ describe('projectDuty — granice doby i cudze sesje', () => {
   });
 });
 
-describe('projectDuty — wzloty niepotwierdzone', () => {
-  it('liczy zaległe potwierdzenia, ale wlicza je do sum', () => {
+describe('projectDuty — liczba lotów sesji (kolumna „Loty" na 01)', () => {
+  // Blok „wzloty niepotwierdzone" zniknął 2026-08-10: zatwierdzenie = zdanie samolotu,
+  // więc stan „niepotwierdzony" nie istnieje. Wiersz sesji liczy za to LOTY w biegu.
+  it('zlicza loty, które zaczęły się wewnątrz biegu', () => {
     const s = session({
       aircraftId: 'sp-axa',
-      legs: [leg('08:12', '09:05', true), leg('10:20', '11:02', false)],
+      legs: [leg('08:12', '09:05')],
+      flights: [flight('08:20', '08:41'), flight('08:47', '09:01')],
     });
 
     const d = projectDuty([s], PIC, DAY0);
 
-    expect(d.unconfirmedLegCount).toBe(1);
-    // Czasy są faktem z detekcji — brak potwierdzenia niczego nie odejmuje.
-    expect(d.blockTimeMs).toBe((53 + 42) * MIN);
+    expect(d.sessions[0]!.flightCount).toBe(2);
+    expect(d.blockTimeMs).toBe(53 * MIN);
   });
 });

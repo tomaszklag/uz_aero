@@ -35,7 +35,7 @@
 
 import { dateTimeUtcShort, duration, timeLocal, timeUtc } from '../../format';
 import { CORRECTION_WINDOW_MS } from '../../../domain';
-import type { DutyDay, DutyLeg, EpochMillis } from '../../../domain';
+import type { DutyDay, DutySession, EpochMillis } from '../../../domain';
 
 /** Skąd wzięła się godzina klamry — decyduje o podpisie i kolorze na ekranie. */
 export type BracketOrigin =
@@ -69,35 +69,35 @@ export interface BracketVm {
   editable: boolean;
 }
 
-export interface LegRowVm {
+export interface SessionRowVm {
   /**
-   * Sesja, do której wzlot należy. Bez niej wiersz wie „kiedy", ale nie wie, KTÓRY
+   * Sesja, którą wiersz opisuje. Bez niej wiersz wie „kiedy", ale nie wie, KTÓRY
    * strumień otworzyć — a ślad (14) i korekta (04c) działają na konkretnej sesji.
    */
   sessionUuid: string;
   /** Numer w dobie — ciągiem przez samoloty, tak jak numeruje mockup. */
   index: number;
-  /** „08:12 → 09:05" albo „13:40 → …" dla wzlotu otwartego. */
+  /** „08:12 → 09:05" albo „13:40 → …" dla biegu jeszcze otwartego. */
   times: string;
+  /** Liczba lotów sesji — kolumna „Loty" z mockupu 01 (model 2026-08-10). */
+  flightsLabel: string;
   blockLabel: string;
   flightLabel: string;
-  /** `false` → wiersz dostaje pasek „do potwierdzenia" prowadzący na 09. */
-  confirmed: boolean;
 }
 
 /**
- * Grupa wzlotów jednej maszyny — CIĄGŁA w czasie, nie zbiorcza.
+ * Grupa sesji jednej maszyny — CIĄGŁA w czasie, nie zbiorcza.
  *
  * Pilot, który wziął SP-AXA, potem SP-KLM, a potem znów SP-AXA, zobaczy TRZY grupy,
  * nie dwie. Dzień czyta się jako oś czasu i scalanie odległych odcinków w jedną kartę
  * kłamałoby o przebiegu dnia — a przy okazji uniemożliwiało pokazanie, kiedy maszyna
  * była zdana.
  */
-export interface LegGroupVm {
+export interface SessionGroupVm {
   aircraftId: string;
-  /** Sesja tej maszyny — adres rozliczenia (10) dla KAŻDEJ grupy, nie tylko ostatniej. */
+  /** Ostatnia sesja tej maszyny w grupie — adres rozliczenia (10). */
   sessionUuid: string;
-  legs: LegRowVm[];
+  sessions: SessionRowVm[];
   /** Czy ta grupa dotyczy maszyny nadal trzymanej (ostatnia grupa z otwartą sesją). */
   held: boolean;
 }
@@ -105,21 +105,19 @@ export interface LegGroupVm {
 /**
  * Terminy okien korekty na wariancie 01B — **DWA, nie jedno** (§3.6a, 2026-08-07).
  *
- * Klamra służby i dane wzlotu to różne fakty o różnych momentach powstania, więc mają
- * osobne zegary. Ekran nie może obiecywać jednej daty dla wszystkiego: wzlot zamknięty
+ * Klamra służby i dane sesji to różne fakty o różnych momentach powstania, więc mają
+ * osobne zegary. Ekran nie może obiecywać jednej daty dla wszystkiego: sesja zdana
  * rano wygasa wcześniej niż klamra domknięta wieczorem.
  */
 export interface CorrectionWindowVm {
   /** „7 SIE 15:40" — 24 h od zamknięcia DNIA (deklaracji końca klamry). */
   dutyDeadline: string;
   /**
-   * Wzlot, którego okno zamknie się PIERWSZE — z godziną startu (żeby pilot wiedział,
-   * o który chodzi) i terminem. `null`, gdy doba nie ma ani jednego zamkniętego wzlotu.
+   * Sesja, której okno zamknie się PIERWSZE — z godziną startu (żeby pilot wiedział,
+   * o którą chodzi) i terminem. `null`, gdy doba nie ma ani jednej zdanej sesji.
    *
-   * Mockup mówi „najstarszy", ale to skrót myślowy prawdziwy tylko wtedy, gdy pilot
-   * potwierdzał wzloty po kolei. Kotwicą jest POTWIERDZENIE (`leg_close`), więc wzlot
-   * poranny odłożony na „Potwierdzę później" wygasa PÓŹNIEJ niż popołudniowy zamknięty
-   * na bieżąco. Liczy się termin, nie kolejność.
+   * Kotwicą jest ZDANIE samolotu (`day_close`, model 2026-08-10) — nie kolejność
+   * lotów: sesja poranna zdana późno wygasa później niż popołudniowa zdana od ręki.
    */
   firstToExpire: { startedAt: string; deadline: string } | null;
 }
@@ -127,7 +125,7 @@ export interface CorrectionWindowVm {
 export interface MyDayVm {
   start: BracketVm;
   end: BracketVm;
-  groups: LegGroupVm[];
+  groups: SessionGroupVm[];
   /**
    * Okno korekty — WYŁĄCZNIE dla dnia zamkniętego deklaracją (`01B`). Dzień w toku
    * niczego nie odlicza: klamra jeszcze się nie ustaliła, więc nie ma od czego liczyć
@@ -143,10 +141,8 @@ export interface MyDayVm {
     landings: number;
     aircraftCount: number;
   };
-  legCount: number;
-  /** Ile wzlotów czeka na potwierdzenie — zasila pasek amber. */
-  unconfirmedCount: number;
-  /** Czy dzień jest pusty (ani wzlotu, ani deklaracji) — wariant 01A. */
+  sessionCount: number;
+  /** Czy dzień jest pusty (ani sesji, ani deklaracji) — wariant 01A. */
   empty: boolean;
 }
 
@@ -164,8 +160,9 @@ export function buildMyDay(
   now: EpochMillis,
   heldAircraftId: string | null = null,
 ): MyDayVm {
-  const groups = groupContiguously(duty.legs, heldAircraftId);
-  const empty = duty.legs.length === 0 && duty.declaredStart == null && duty.declaredEnd == null;
+  const groups = groupContiguously(duty.sessions, heldAircraftId);
+  const empty =
+    duty.sessions.length === 0 && duty.declaredStart == null && duty.declaredEnd == null;
   const end = endBracket(duty);
 
   return {
@@ -175,16 +172,15 @@ export function buildMyDay(
     correction: end.origin === 'declared' ? correctionWindows(duty) : null,
     totals: {
       duty: dutyTotal(duty, now),
-      block: duty.legs.length > 0 ? duration(duty.blockTimeMs) : null,
-      flight: duty.legs.length > 0 ? duration(duty.flightTimeMs) : null,
+      block: duty.sessions.length > 0 ? duration(duty.blockTimeMs) : null,
+      flight: duty.sessions.length > 0 ? duration(duty.flightTimeMs) : null,
       takeoffs: duty.takeoffCount,
       landings: duty.landingCount,
       // Liczba maszyn doby zasila podpis „2 samoloty" pod sumą bloku. Widok NIE ma tego
       // liczyć sam — `Set` w JSX byłby dokładnie tym obliczeniem, którego tu unikamy.
       aircraftCount: duty.aircraftIds.length,
     },
-    legCount: duty.legs.length,
-    unconfirmedCount: duty.unconfirmedLegCount,
+    sessionCount: duty.sessions.length,
     empty,
   };
 }
@@ -206,12 +202,12 @@ export function totalLabel(value: string | null): string {
  * niezwiązanego z sesją (decyzja właściciela projektu, patrz raport audytu 2026-08-08).
  */
 export function closeDayBlocker(vm: MyDayVm, holdsAircraft: boolean): string | null {
-  if (vm.legCount === 0) {
-    return 'Nie ma jeszcze czego domykać — dzień zacznie się pierwszym wzlotem.';
+  if (vm.sessionCount === 0) {
+    return 'Nie ma jeszcze czego domykać — dzień zacznie się pierwszą sesją.';
   }
-  // `end.editable` przy niezerowej liczbie wzlotów może być fałszywe wyłącznie z jednego
+  // `end.editable` przy niezerowej liczbie sesji może być fałszywe wyłącznie z jednego
   // powodu: któryś silnik nadal pracuje.
-  if (!vm.end.editable) return 'Wzlot jeszcze trwa — najpierw wyłącz silnik.';
+  if (!vm.end.editable) return 'Sesja jeszcze trwa — najpierw wyłącz silnik.';
   if (!holdsAircraft) {
     return 'Dzień zamyka się razem ze zdaniem maszyny — teraz żadnej nie trzymasz.';
   }
@@ -223,7 +219,7 @@ export function closeDayBlocker(vm: MyDayVm, holdsAircraft: boolean): string | n
 // ─────────────────────────────────────────────────────────────────────────────
 
 function startBracket(duty: DutyDay): BracketVm {
-  const firstLeg = duty.legs.length > 0 ? duty.legs[0]!.startedAt : null;
+  const first = duty.sessions.length > 0 ? duty.sessions[0]!.startedAt : null;
 
   if (duty.declaredStart != null) {
     return {
@@ -232,20 +228,20 @@ function startBracket(duty: DutyDay): BracketVm {
       // Gdy deklaracja ZAWĘŻA klamrę, mówimy o tym wprost — pilot ma zobaczyć, że
       // wpisana godzina nie jest tą, którą system liczy (§3.6a: lot jest faktem).
       hint: duty.declarationNarrowsStart
-        ? `wpisano ${timeUtc(duty.declaredStart)} · liczy się pierwszy wzlot ${timeUtc(firstLeg)}`
-        : firstLeg != null
-          ? `poprawione · pierwszy wzlot ${timeUtc(firstLeg)}`
+        ? `wpisano ${timeUtc(duty.declaredStart)} · liczy się pierwsza sesja ${timeUtc(first)}`
+        : first != null
+          ? `poprawione · pierwsza sesja ${timeUtc(first)}`
           : 'poprawione',
       origin: 'declared',
       editable: true,
     };
   }
 
-  if (firstLeg != null) {
+  if (first != null) {
     return {
-      value: timeUtc(firstLeg),
-      localTime: timeLocal(firstLeg),
-      hint: 'z pierwszego wzlotu',
+      value: timeUtc(first),
+      localTime: timeLocal(first),
+      hint: 'z pierwszej sesji',
       origin: 'derived',
       editable: true,
     };
@@ -254,7 +250,7 @@ function startBracket(duty: DutyDay): BracketVm {
   return {
     value: '— : —',
     localTime: null,
-    hint: 'ustali się na pierwszym wzlocie',
+    hint: 'ustali się na pierwszej sesji',
     origin: 'pending',
     editable: true,
   };
@@ -275,27 +271,27 @@ function startBracket(duty: DutyDay): BracketVm {
  * Różnica jest prezentacyjna i tu jest jej miejsce.
  */
 function endBracket(duty: DutyDay): BracketVm {
-  const lastStop = latestStopSoFar(duty.legs);
-  const anyLegOpen = duty.legs.some((l) => l.stoppedAt == null);
+  const lastStop = latestStopSoFar(duty.sessions);
+  const anyOpen = duty.sessions.some((s) => s.stoppedAt == null);
   // Domknąć klamrę da się tylko wtedy, gdy JEST co domykać i nic już nie leci.
-  // Pusty dzień jest tu równie ważnym przypadkiem jak otwarty wzlot: mockup 01A rysuje
-  // ołówek końca wygaszonym („Nie ma jeszcze czego domykać"), a `!anyLegOpen` mówiło
-  // o dobie bez wzlotów, że koniec da się wpisać.
-  const editable = duty.legs.length > 0 && !anyLegOpen;
+  // Pusty dzień jest tu równie ważnym przypadkiem jak otwarty bieg: mockup 01A rysuje
+  // ołówek końca wygaszonym („Nie ma jeszcze czego domykać"), a `!anyOpen` mówiło
+  // o dobie bez sesji, że koniec da się wpisać.
+  const editable = duty.sessions.length > 0 && !anyOpen;
 
-  // Deklaracja + pracujący silnik = dzień OTWORZYŁ SIĘ Z POWROTEM (§3.6a: „nowy wzlot
+  // Deklaracja + pracujący silnik = dzień OTWORZYŁ SIĘ Z POWROTEM (§3.6a: „nowa sesja
   // po zamknięciu otwiera dzień z powrotem i rozszerza klamrę"). Projekcja mówi to
   // przez `endAt == null`, więc widok nie ma prawa czytać tej wartości wprost — inaczej
   // pilot z zadeklarowanym końcem i drugą maszyną w powietrzu dostaje wielkie „—"
   // pod podpisem „potwierdzone".
-  if (duty.declaredEnd != null && !anyLegOpen) {
+  if (duty.declaredEnd != null && !anyOpen) {
     return {
       value: timeUtc(duty.endAt),
       localTime: timeLocal(duty.endAt),
       hint: duty.declarationNarrowsEnd
-        ? `wpisano ${timeUtc(duty.declaredEnd)} · liczy się ostatni wzlot ${timeUtc(lastStop)}`
+        ? `wpisano ${timeUtc(duty.declaredEnd)} · liczy się ostatnia sesja ${timeUtc(lastStop)}`
         : lastStop != null
-          ? `potwierdzone · ostatni wzlot ${timeUtc(lastStop)}`
+          ? `potwierdzone · ostatnia sesja ${timeUtc(lastStop)}`
           : 'potwierdzone',
       origin: 'declared',
       editable,
@@ -303,10 +299,10 @@ function endBracket(duty: DutyDay): BracketVm {
   }
 
   return {
-    value: duty.legs.length > 0 ? 'TRWA' : '— : —',
+    value: duty.sessions.length > 0 ? 'TRWA' : '— : —',
     localTime: null,
     hint: endRunningHint(duty, lastStop),
-    origin: duty.legs.length > 0 ? 'running' : 'pending',
+    origin: duty.sessions.length > 0 ? 'running' : 'pending',
     editable,
   };
 }
@@ -316,45 +312,51 @@ function endBracket(duty: DutyDay): BracketVm {
  *
  * Osobna gałąź dla dnia, który pilot ZAMKNĄŁ, a potem znów poleciał: wcześniejsza
  * deklaracja nie znika ze strumienia (append-only) i nie może zniknąć z ekranu — pilot
- * ma zobaczyć, że jego „koniec 15:40" zostanie rozszerzony przez trwający wzlot.
+ * ma zobaczyć, że jego „koniec 15:40" zostanie rozszerzony przez trwającą sesję.
  */
 function endRunningHint(duty: DutyDay, lastStop: EpochMillis | null): string {
   if (duty.declaredEnd != null) {
-    return `wpisano ${timeUtc(duty.declaredEnd)} · wzlot trwa, klamra się rozszerzy`;
+    return `wpisano ${timeUtc(duty.declaredEnd)} · sesja trwa, klamra się rozszerzy`;
   }
   return lastStop != null
-    ? `ustali się na ostatnim wzlocie — ${timeUtc(lastStop)}`
-    : 'ustali się na ostatnim wzlocie';
+    ? `ustali się na ostatniej sesji — ${timeUtc(lastStop)}`
+    : 'ustali się na ostatniej sesji';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Wzloty
+// Sesje
 // ─────────────────────────────────────────────────────────────────────────────
 
-function groupContiguously(legs: readonly DutyLeg[], heldAircraftId: string | null): LegGroupVm[] {
-  const groups: LegGroupVm[] = [];
+function groupContiguously(
+  sessions: readonly DutySession[],
+  heldAircraftId: string | null,
+): SessionGroupVm[] {
+  const groups: SessionGroupVm[] = [];
 
-  for (const leg of legs) {
+  for (const session of sessions) {
     const last = groups[groups.length - 1];
-    const row: LegRowVm = {
-      sessionUuid: leg.sessionUuid,
-      index: leg.index,
+    const row: SessionRowVm = {
+      sessionUuid: session.sessionUuid,
+      index: session.index,
       times:
-        leg.stoppedAt != null
-          ? `${timeUtc(leg.startedAt)} → ${timeUtc(leg.stoppedAt)}`
-          : `${timeUtc(leg.startedAt)} → …`,
-      blockLabel: duration(leg.blockMs),
-      flightLabel: duration(leg.flightMs),
-      confirmed: leg.confirmed,
+        session.stoppedAt != null
+          ? `${timeUtc(session.startedAt)} → ${timeUtc(session.stoppedAt)}`
+          : `${timeUtc(session.startedAt)} → …`,
+      flightsLabel: String(session.flightCount),
+      blockLabel: duration(session.blockMs),
+      flightLabel: duration(session.flightMs),
     };
 
-    if (last != null && last.aircraftId === leg.aircraftId) {
-      last.legs.push(row);
+    if (last != null && last.aircraftId === session.aircraftId) {
+      last.sessions.push(row);
+      // Adres rozliczenia wskazuje OSTATNIĄ sesję grupy — ekran 10 opisuje sesję
+      // ze store'u, a ta jest najświeższa.
+      last.sessionUuid = session.sessionUuid;
     } else {
       groups.push({
-        aircraftId: leg.aircraftId,
-        sessionUuid: leg.sessionUuid,
-        legs: [row],
+        aircraftId: session.aircraftId,
+        sessionUuid: session.sessionUuid,
+        sessions: [row],
         held: false,
       });
     }
@@ -389,18 +391,20 @@ function dutyTotal(duty: DutyDay, now: EpochMillis): string | null {
  * Terminy obu okien korekty dnia zamkniętego (`01B`).
  *
  * Kotwice bierzemy DOKŁADNIE te, którymi liczy je domena (`rules/sessionRules.ts`):
- * klamra od deklaracji końca, wzlot od `leg_close`, a przy braku potwierdzenia
- * awaryjnie od `engine_stop`. Druga implementacja tej arytmetyki w widoku kończyłaby
- * się ekranem obiecującym termin, którego reguła nie honoruje.
+ * klamra od deklaracji końca, sesja od ZDANIA (`day_close`, model 2026-08-10).
+ * Druga implementacja tej arytmetyki w widoku kończyłaby się ekranem obiecującym
+ * termin, którego reguła nie honoruje.
  */
 function correctionWindows(duty: DutyDay): CorrectionWindowVm | null {
   if (duty.declaredEnd == null) return null;
 
   let first: { startedAt: EpochMillis; closesAt: EpochMillis } | null = null;
-  for (const leg of duty.legs) {
-    if (leg.stoppedAt == null) continue;
-    const closesAt = (leg.confirmedAt ?? leg.stoppedAt) + CORRECTION_WINDOW_MS;
-    if (first == null || closesAt < first.closesAt) first = { startedAt: leg.startedAt, closesAt };
+  for (const session of duty.sessions) {
+    if (session.releasedAt == null) continue;
+    const closesAt = session.releasedAt + CORRECTION_WINDOW_MS;
+    if (first == null || closesAt < first.closesAt) {
+      first = { startedAt: session.startedAt, closesAt };
+    }
   }
 
   return {
@@ -413,20 +417,20 @@ function correctionWindows(duty: DutyDay): CorrectionWindowVm | null {
 }
 
 /**
- * Najpóźniejszy zamknięty wzlot doby — „ostatni wzlot" z podpisów klamry.
+ * Najpóźniejsze zatrzymanie doby — „ostatnia sesja" z podpisów klamry.
  *
  * NIE JEST tym samym co `lastClosedStop` w `projections/duty.ts`, choć do 2026-08-08
- * nazywało się identycznie. Tamta wersja zwraca `null`, gdy KTÓRYKOLWIEK wzlot jest
- * otwarty (bo klamra jest wtedy nierozstrzygnięta); ta ignoruje otwarte i oddaje
- * najpóźniejsze zamknięcie, jakie już jest — bo podpis „ustali się na ostatnim wzlocie
+ * nazywało się identycznie. Tamta wersja zwraca `null`, gdy KTÓRAKOLWIEK sesja jest
+ * otwarta (bo klamra jest wtedy nierozstrzygnięta); ta ignoruje otwarte i oddaje
+ * najpóźniejsze zatrzymanie, jakie już jest — bo podpis „ustali się na ostatniej sesji
  * — 15:10" ma sens także w dniu, który trwa. Dwie różne odpowiedzi pod jedną nazwą to
  * pułapka dla następnego czytelnika, więc nazwa mówi teraz, którą z nich dostaje.
  */
-function latestStopSoFar(legs: readonly DutyLeg[]): EpochMillis | null {
+function latestStopSoFar(sessions: readonly DutySession[]): EpochMillis | null {
   let last: EpochMillis | null = null;
-  for (const leg of legs) {
-    if (leg.stoppedAt == null) continue;
-    last = last == null || leg.stoppedAt > last ? leg.stoppedAt : last;
+  for (const session of sessions) {
+    if (session.stoppedAt == null) continue;
+    last = last == null || session.stoppedAt > last ? session.stoppedAt : last;
   }
   return last;
 }

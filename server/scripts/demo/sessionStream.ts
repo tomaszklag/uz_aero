@@ -266,18 +266,9 @@ export function sessionStream(session: DemoSession): WireEvent[] {
       });
     }
 
-    if (leg.close != null) {
-      const close = leg.close;
-      timed.push({
-        min: close.atMin,
-        emit: () =>
-          push('leg_close', close.atMin, {
-            legIndex: index + 1,
-            reading: close.reading,
-            notes: close.notes,
-          }),
-      });
-    }
+    // `leg_close` emitowane tu do 2026-08-10 — usunięte razem ze zdarzeniem.
+    // POPRAWKA MECHANICZNA pod kompilację: pełna przebudowa generatora pod nowy
+    // model (jedna sesja = jeden bieg, odczyty zawsze przy zdaniu) to etap E.
   }
 
   for (const refuel of session.refuels) {

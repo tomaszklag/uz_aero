@@ -288,7 +288,7 @@ export function StatsScreen({
             Baner typu `status`: to odliczanie terminu, a nie pouczenie — nie wolno
             go zamknąć, bo razem z nim zniknąłby jedyny widoczny termin dnia. */}
         <CorrectionWindowBanner
-          hasClosedLeg={window24h.hasClosedLeg}
+          confirmed={window24h.confirmed}
           open={window24h.open}
           closesAt={window24h.closesAt}
         />
@@ -435,12 +435,12 @@ export function StatsScreen({
  * powiedzenia, co zamiast tego.
  */
 function CorrectionWindowBanner({
-  hasClosedLeg,
+  confirmed,
   open,
   closesAt,
 }: {
-  /** Czy jest już jakikolwiek zamknięty wzlot, czyli czy okno w ogóle ruszyło. */
-  hasClosedLeg: boolean;
+  /** Czy sesja jest już zatwierdzona zdaniem — dopiero wtedy okno w ogóle tyka. */
+  confirmed: boolean;
   open: boolean;
   closesAt: number | null;
 }) {
@@ -448,14 +448,14 @@ function CorrectionWindowBanner({
     'Później korektę nanosi administrator. Stuknij ołówek przy locie, żeby poprawić czas ' +
     'albo oznaczyć zdarzenie jako błędne.';
 
-  if (!hasClosedLeg) {
+  if (!confirmed) {
     return (
       <Banner
         kind="status"
         tone="blue"
         icon="clock"
-        title="Okno korekty: 24 h po zamknięciu wzlotu"
-        text={`Dane każdego wzlotu poprawisz przez 24 h od jego zamknięcia. ${tail}`}
+        title="Okno korekty: 24 h od zdania samolotu"
+        text={`Do zdania poprawiasz dane bez limitu; po zdaniu masz na to 24 h. ${tail}`}
       />
     );
   }
@@ -466,7 +466,7 @@ function CorrectionWindowBanner({
         kind="status"
         tone="blue"
         icon="clock"
-        title="Okno korekty: 24 h po zamknięciu wzlotu"
+        title="Okno korekty: 24 h od zdania samolotu"
         text={`Dane możesz poprawiać jeszcze do ${dateTimeUtcShort(closesAt)} UTC. ${tail}`}
       />
     );
@@ -478,7 +478,7 @@ function CorrectionWindowBanner({
       tone="amber"
       icon="clock"
       title="Okno korekty zamknięte"
-      text="Minęły 24 godziny od zamknięcia dnia — dalsze poprawki wprowadza administrator."
+      text="Minęły 24 godziny od zdania samolotu — dalsze poprawki wprowadza administrator."
     />
   );
 }

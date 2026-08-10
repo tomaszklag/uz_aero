@@ -58,15 +58,15 @@ const LIMITS: AircraftLimits = { capacityL: 330 };
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
 const min = (m: number): number => T0 + m * 60_000;
 const MH_START = 1234.5;
-/** Samolot zdany o 13:00 UTC (min 300). NIE jest już kotwicą okna korekty. */
-const CLOSED_AT = min(300);
 /**
- * Wzlot kończy się o 10:34 UTC (min 154) i jest niepotwierdzony, więc TO jest kotwica
- * okna 24 h (§3.6a, kotwica awaryjna w `stoppedAt`). Różnica 146 minut wobec zdania
- * samolotu jest w tym teście celowa — gdyby okno dalej wisiało na `day_close`,
- * asercje granicy przeszłyby przez przypadek.
+ * Samolot zdany o 13:00 UTC (min 300) — i TO jest kotwica okna korekty
+ * (model 2026-08-10: zdanie = zatwierdzenie logu, okno 24 h liczy się od niego).
+ * Silnik zgasł o 10:34 (min 154); różnica 146 minut jest w tym teście celowa —
+ * gdyby okno dalej wisiało na zgaszeniu silnika, asercje granicy przeszłyby
+ * przez przypadek.
  */
-const LEG_ANCHOR = min(154);
+const CLOSED_AT = min(300);
+const WINDOW_ANCHOR = CLOSED_AT;
 const MH_END = MH_START + 142 / 60;
 
 let seq = 0;
@@ -437,7 +437,7 @@ describe('A · dopóki okno korekty trwa, oba tryby są nierozróżnialne', () =
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Chwila zapisu korekty po upływie okna (24 h + 1 h od zamknięcia). */
-const LATE = LEG_ANCHOR + CORRECTION_WINDOW_MS + 3_600_000;
+const LATE = WINDOW_ANCHOR + CORRECTION_WINDOW_MS + 3_600_000;
 
 describe('B · po oknie 24 h administrator traci wyłącznie CORRECTION_WINDOW_EXPIRED', () => {
   it('poprawna korekta: pilot odbity, administrator przechodzi', () => {
@@ -451,14 +451,14 @@ describe('B · po oknie 24 h administrator traci wyłącznie CORRECTION_WINDOW_E
   });
 
   it('granica okna jest ostra i wspólna: równo 24 h przechodzi obu, milisekundę dalej już nie', () => {
-    const onEdge = correction(CLOSED_LANDING.uuid, LEG_ANCHOR + CORRECTION_WINDOW_MS);
+    const onEdge = correction(CLOSED_LANDING.uuid, WINDOW_ANCHOR + CORRECTION_WINDOW_MS);
     expect(asPilot(CLOSED_STREAM, onEdge)).toEqual([]);
     // Administrator też przechodzi, ale DOSTAJE OSTRZEŻENIE: okno pilota jeszcze trwa,
     // więc obaj mogliby poprawiać ten sam wzlot naraz. Ostrzeżenie, nie blokada.
     expect(hard(asAdmin(CLOSED_STREAM, onEdge))).toEqual([]);
     expect(codes(soft(asAdmin(CLOSED_STREAM, onEdge)))).toEqual(['ADMIN_EDIT_PILOT_WINDOW_OPEN']);
 
-    const past = correction(CLOSED_LANDING.uuid, LEG_ANCHOR + CORRECTION_WINDOW_MS + 1);
+    const past = correction(CLOSED_LANDING.uuid, WINDOW_ANCHOR + CORRECTION_WINDOW_MS + 1);
     expect(codes(asPilot(CLOSED_STREAM, past))).toEqual(['CORRECTION_WINDOW_EXPIRED']);
     // Milisekundę po granicy okno pilota jest zamknięte, więc administrator nie ma
     // już z kim kolidować — przechodzi zupełnie czysto.

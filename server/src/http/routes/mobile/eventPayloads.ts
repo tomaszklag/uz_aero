@@ -105,28 +105,19 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     notes: z.string().max(1000).nullable().optional(),
   }),
 
-  /**
-   * `leg_close` — POTWIERDZENIE WZLOTU (§3.6, schemaVersion 2).
-   *
-   * Odczyt jest OPCJONALNY i to jest decyzja, nie luźność walidacji: w dniu skokowym
-   * nikt nie schodzi do licznika po każdym z ośmiu wzlotów. Wymóg odczytu obowiązuje
-   * dopiero przy zdaniu samolotu (`day_close`).
-   */
-  leg_close: z.object({
-    legIndex: z.number().int().positive(),
-    reading: reading.nullable().optional(),
-    notes: z.string().max(1000).nullable().optional(),
-  }),
+  // `leg_close` walidowane tu między 2026-08-06 a 2026-08-10 — usunięte razem ze
+  // zdarzeniem (sesja = jeden bieg silnika; zatwierdzeniem jest `day_close`).
 
   /**
-   * `day_close` — ZDANIE SAMOLOTU. Odczyt końcowy wymagany (jest przekazaniem dla
-   * następnego pilota), godzina końca służby opcjonalna od schemaVersion 2 (§3.6a):
-   * zdanie maszyny nie kończy dnia pilota, więc ekran jej nie wysyła.
+   * `day_close` — ZDANIE SAMOLOTU = ZATWIERDZENIE LOGU SESJI (2026-08-10).
+   * Odczyt końcowy wymagany (jest przekazaniem dla następnego pilota i ogniwem
+   * łańcucha MH), godzina końca służby opcjonalna (§3.6a): zdanie maszyny nie
+   * kończy dnia pilota, więc ekran jej nie wysyła.
    */
   day_close: z.object({
     finalReading: reading,
     dutyEnd: epochMs.nullable().optional(),
-    /** Powód zdania bez ani jednego wzlotu (09C); brak = miękka flaga w domenie. */
+    /** Powód zdania bez uruchomienia silnika (09C); brak = miękka flaga w domenie. */
     noFlightReason: z.enum(['weather', 'malfunction', 'cancelled', 'other']).nullable().optional(),
   }),
 
