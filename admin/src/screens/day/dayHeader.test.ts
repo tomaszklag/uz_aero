@@ -111,10 +111,10 @@ describe('dayBanner', () => {
   it('mówi, że okno korekty kotwiczy się we WZLOCIE, a nie w zdaniu samolotu', () => {
     // Sprostowanie z etapu B3. Do etapu D baner obiecywał „przez dobę OD ZAMKNIĘCIA
     // poprawia sam pilot" — czyli od `day_close`. Po §3.6a każdy wzlot ma własną dobę
-    // liczoną od `leg_close` (awaryjnie od `engine_stop`), więc zdanie samolotu nie
+    // liczoną od `day_close` (zdanie = zatwierdzenie logu, 2026-08-10), więc dopiero ono
     // uruchamia ani nie kończy żadnego okna.
     const banner = dayBanner(session(), state(), NOW);
-    expect(banner.body).toContain('`leg_close`');
+    expect(banner.body).toContain('`day_close`');
     expect(banner.body).toContain('Administrator dopisuje zmianę zawsze');
     // Panel dalej nie trzyma kopii progu domeny.
     expect(banner.body).toContain('nie odlicza tych okien za Ciebie');

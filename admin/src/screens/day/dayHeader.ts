@@ -109,7 +109,7 @@ export function dayBanner(
     tone: 'warn',
     title: `Samolot zdany ${closed}${age == null ? '' : ` (${age} temu)`}.`,
     body:
-      'Okno samodzielnej korekty pilota liczy się od ZAMKNIĘCIA WZLOTU (`leg_close`), nie od ' +
+      'Okno samodzielnej korekty pilota liczy się od ZDANIA SAMOLOTU (`day_close`), nie od ' +
       'zdania samolotu — każdy wzlot ma własną dobę, a wzlot niepotwierdzony kotwiczy się ' +
       'w wyłączeniu silnika. Administrator dopisuje zmianę zawsze, nowym zdarzeniem ' +
       '`event_correction`, bo rejestr jest append-only i nic się w nim nie nadpisuje. Panel ' +

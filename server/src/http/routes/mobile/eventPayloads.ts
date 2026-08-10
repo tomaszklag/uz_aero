@@ -45,7 +45,7 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     arrivalIcao: z.string().max(8).nullable().optional(),
     /**
      * Godzina meldunku — **OPCJONALNA od schemaVersion 2** (§3.6a). Ekran przejęcia
-     * o nią nie pyta: służba jest klamrą wokół wzlotów, a nie czymś, co pilot otwiera,
+     * o nią nie pyta: służba jest klamrą wokół sesji, a nie czymś, co pilot otwiera,
      * żeby polecieć. Wymaganie jej tutaj odrzucałoby paczki z KAŻDEGO nowego telefonu.
      */
     dutyStart: epochMs.nullable().optional(),

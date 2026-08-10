@@ -157,7 +157,7 @@ function openDayTask(row: SessionListItemDto, nowMs: number, windowMs: number): 
     // więc dokładnie tyle, że samolot nie wrócił do puli — i tak ma się nazywać.
     name: `Samolot nieoddany · ${row.reg ?? row.aircraftId}`,
     // Mockup pisze tu „okno samodzielnej korekty pilota mija za 4 h". To nieprawda
-    // z DWÓCH powodów naraz: okno kotwiczy się w ZAMKNIĘCIU WZLOTU (`leg_close`,
+    // z DWÓCH powodów naraz: okno kotwiczy się w ZDANIU SAMOLOTU (`day_close`,
     // etap B3), więc biegnie niezależnie od zdania maszyny, a zdanie samolotu jest
     // opcjonalne i niczego nie odlicza. Doba jest tu MIARĄ tego, jak długo maszyna
     // stoi zajęta, a nie odliczaniem.

@@ -114,7 +114,7 @@ describe('treść wiersza', () => {
 
   it('nieoddany samolot NIE obiecuje odliczania okna korekty', () => {
     // Sprostowanie mockupu, po etapie B3 podwójne: okno korekty kotwiczy się
-    // w ZAMKNIĘCIU WZLOTU (`leg_close`), więc biegnie niezależnie od zdania maszyny,
+    // w ZDANIU SAMOLOTU (`day_close`) — dzień bez zdania nie ma kotwicy okna,
     // a samo zdanie jest opcjonalne i niczego nie odlicza.
     const task = todoTasks(attention(), NOW, DAY).find((t) => t.kind === 'open_day');
     expect(task?.name).toContain('Samolot nieoddany');

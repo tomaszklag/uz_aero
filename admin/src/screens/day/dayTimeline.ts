@@ -219,21 +219,9 @@ function describe(event: Event): string[] {
       }
       // Nazwa typu jest historyczna: od 2026-08-06 to ZDANIE SAMOLOTU, nie koniec
       // dnia pilota — służba liczy się dalej, a kolejna maszyna wchodzi do tej samej
-      // doby (§3.6). Okno korekty kotwiczy się dziś we wzlocie, nie tutaj (§3.6a).
-      lines.push('zdanie samolotu — koniec pracy z tą maszyną, nie koniec służby pilota');
-      return lines;
-    }
-
-    case 'leg_close': {
-      const p = event.payload;
-      const lines = [
-        `wzlot ${p.legIndex} potwierdzony przez pilota`,
-        p.reading != null
-          ? `odczyt: FOB ${litres(p.reading.fuelL)} · MH ${p.reading.mh}`
-          : 'bez odczytu liczników (opcjonalny — §3.6)',
-      ];
-      if (p.notes != null && p.notes !== '') lines.push(`uwagi: „${p.notes}"`);
-      lines.push('od tego zdarzenia liczy się okno korekty TEGO wzlotu');
+      // doby (§3.6). Od 2026-08-10 zdanie jest też ZATWIERDZENIEM logu sesji i od
+      // niego liczy się jedyne okno korekty (kotwica per wzlot odeszła z `leg_close`).
+      lines.push('zdanie samolotu — zatwierdzenie logu sesji; służba pilota trwa dalej');
       return lines;
     }
 

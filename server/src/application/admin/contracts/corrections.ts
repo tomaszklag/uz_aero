@@ -81,7 +81,7 @@ export interface AdminCorrectionPreview {
    *
    * Dwa kody, dwie różne kolizje: `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi
    * sesję i dośle własne zdarzenia — jego paczka trafi do tego samego strumienia)
-   * i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h wzlotu jeszcze biegnie, więc obie
+   * i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h od zdania jeszcze biegnie, więc obie
    * strony mogą poprawiać naraz). Rozstrzyga człowiek, nie kod.
    */
   warnings: RuleViolation[];

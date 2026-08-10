@@ -69,7 +69,7 @@ export function sheetDay(t: number): string {
  * maszyny musi dać się wyznaczyć zawsze.
  *
  * Sesja rozpoczęta o 23:50 i zdana po północy zostaje w dobie SWOJEGO przejęcia —
- * ta sama reguła, co w projekcji służby (`projectDuty`: „przynależność wzlotu do doby
+ * ta sama reguła, co w projekcji służby (`projectDuty`: „przynależność sesji do doby
  * wyznacza czas uruchomienia silnika, nie zamknięcia").
  */
 export function utcDayRange(day: string): { fromMs: number; toMs: number } {

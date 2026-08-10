@@ -97,7 +97,7 @@ export function correctionViolations(
  * Istnieją od 2026-08-07 i **zastępują bramkę `400 day_open`**: administrator nie jest
  * już NIGDY blokowany, ale ma zobaczyć, w co wchodzi. Domena produkuje tu dokładnie dwa
  * kody — `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi sesję i dośle własne
- * zdarzenia po synchronizacji) oraz `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h wzlotu
+ * zdarzenia po synchronizacji) oraz `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h od zdania
  * jeszcze trwa, więc obie strony mogą poprawiać naraz).
  *
  * Funkcja jest OSOBNA od `correctionViolations`, a nie drugim polem jednego obiektu,

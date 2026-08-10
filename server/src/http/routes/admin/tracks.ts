@@ -21,7 +21,7 @@ import { adminRoute, type AdminGate } from './adminRoute.ts';
 const params = z.object({
   uuid: z.string().min(1).max(100),
   // Numer lotu w dniu. Górna granica jest hojna z premedytacją — dzień skokowy potrafi
-  // mieć kilkadziesiąt wzlotów, a limit ma chronić przed absurdem, nie przed rekordem.
+  // mieć kilkadziesiąt sesji, a limit ma chronić przed absurdem, nie przed rekordem.
   flight: z.coerce.number().int().positive().max(500),
 });
 
