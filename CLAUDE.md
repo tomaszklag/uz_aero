@@ -32,7 +32,14 @@ przebudowany na TRZY sesje z łańcuchem MH przez zdania) → **C' app ✅** (ko
 w dwóch stanach ground z hero ZDAJ SAMOLOT, log = płaska oś jednej sesji bez `DayLog`,
 09b z przeglądem lotów i „ZDAJ I ZATWIERDŹ LOG", 01 bez karty claimu, NOWY ekran 15
 `ManualFlightScreen` + komenda `manualFlight` z próbą generalną przed zapisem) →
-D' serwer+panel (słownik, oś zdarzeń, admin/) → E' seed+demo.
+**D' serwer+panel ✅** (oś zdarzeń i plakietki bez `leg_close`, okno korekty „od zdania"
+w banerach, słownik sesja/lot w kontraktach) → **E' seed+demo ✅** (generator: `DemoRun`
+z tablicą LOTÓW zamiast tablicy wzlotów, `ConfirmStyle` i `gaugeNoise` wycięte, próba
+techniczna scala się z oblotem w JEDEN bieg, przerwany bieg = OSOBNA sesja z sufiksem
+uuid `-r2` i handoffem, dolewka PO zatrzymaniu jako materiał logu 04; 52 sesje).
+**PIVOT DOMKNIĘTY W KODZIE.** Baza dev NIE została przesiana — `npm run seed` +
+`npm run seed:demo` stawiają świat od nowa (decyzja o skasowaniu bazy należy do
+użytkownika); dopiero po tym ma sens przebieg `consumptionReplay.ts`.
 Opisy etapów B–D niżej zostają jako historia — częściowo już cofnięte.
 **PRZEBUDOWA FLOW** (od 2026-08-06, gałąź `poc-zmiany-flow`) — dzień służby przestał
 być kontenerem na loty (patrz sekcja „Czas służby" niżej). Rozjazd design↔kod jest świadomy
@@ -143,10 +150,11 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     już tylko w narracji historycznej (legenda A03, `index.html`, `ANALIZA.md`).
 - **Dane demo i schemat bazy (2026-08-08)** — dwa zadania po etapie D:
   - **Generator demo przebudowany** (`server/scripts/demo/`): `dayStream.ts` → `sessionStream.ts`,
-    `DemoDay` → `DemoSession`. Sesja ma TABLICĘ wzlotów (`engine_start`/`engine_stop` na
-    każdy), payloady NIE niosą klamry służby, jest `leg_close` z opcjonalnym odczytem,
+    `DemoDay` → `DemoSession`. (HISTORIA sprzed pivotu — ówczesna sesja miała TABLICĘ
+    wzlotów i `leg_close`; od etapu E' pivotu sesja ma JEDEN bieg `DemoRun` z tablicą
+    lotów, patrz status na górze.) Payloady NIE niosą klamry służby, jest
     `noFlightReason` (09C), dwie zmiany jednej maszyny w dobie i zetknięcie sesji co do
-    minuty. **51 sesji, ~1400 zdarzeń, 6 typów flag na 7 egzemplarzach** — patologie są
+    minuty. **52 sesje, 6 typów flag na 7 egzemplarzach** — patologie są
     mniejszością (panel ma pokazywać normalny klub, nie klub, w którym wszystko zepsute).
     `pilot_overlap` spadł z 5 do 1 ZAMIERZONEGO; regułę, która to trzyma („pilot z otwartą
     sesją nie siada do innej maszyny"), opisuje docblock `scenario.ts`.

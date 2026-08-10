@@ -6,22 +6,20 @@
  * (`test/demoScenario.test.ts`, PGlite przez prawdziwe gniazdo) i w skrypcie
  * (`scripts/seedDemo.ts`, HTTP do działającego serwera).
  *
- * ══ SESJA, NIE DZIEŃ (przebudowa flow, §3.6a — 2026-08-06) ══
- * Poprzednik tego pliku nazywał się `dayStream.ts` i produkował `DemoDay`: jeden samolot
- * = jeden dzień, klamra służby w payloadach, jeden cykl silnika na całą dobę. Po §3.6a
- * to jest błąd modelowy, a nie tylko nietrafiona nazwa — dzień służby należy do PILOTA
- * i obejmuje kilka maszyn, więc kontenerem zdarzeń jest **sesja samolotu**
- * (przejęcie → zdanie), a jednostką potwierdzenia danych **wzlot** (`leg_close`).
- *
- * Konsekwencje widoczne wprost w tym pliku:
+ * ══ SESJA = JEDEN BIEG SILNIKA (pivot 2026-08-10) ══
+ * Poprzednia wersja tego pliku niosła TABLICĘ wzlotów (`DemoLeg[]`) z opcjonalnym
+ * `leg_close` przy każdym — model z 2026-08-06. Po pivocie sesja ma NAJWYŻEJ JEDEN
+ * bieg silnika (`SESSION_ALREADY_RAN`), a dzień skokowy z gorącym załadunkiem to jeden
+ * bieg z WIELOMA LOTAMI (start → lądowanie) w środku. Konsekwencje w tym pliku:
+ *  • `DemoSession.run` to POJEDYNCZY bieg z tablicą lotów (`DemoFlight[]`), nie lista
+ *    cykli; próba silnika po obsłudze = bieg z pustą tablicą lotów;
+ *  • `leg_close` nie istnieje — jedyne odczyty sesji to preflight (przejęcie),
+ *    tankowania i `day_close.finalReading` (zdanie = ZATWIERDZENIE logu, wymagane);
+ *  • tankowanie zdarza się PRZED uruchomieniem albo PO zatrzymaniu (kokpit 04a/04),
+ *    nigdy w środku biegu;
  *  • `preflight_confirm` NIE niesie `dutyStart`, a `day_close` NIE niesie `dutyEnd` —
- *    ekrany 02/09b o nie nie pytają, więc strumień demo też ich nie ma prawa nieść.
- *    Klamra służby powstaje z projekcji `projectDuty`, nie z payloadu;
- *  • sesja ma TABLICĘ wzlotów, każdy z własną parą `engine_start`/`engine_stop`
- *    (dzień skokowy to 8–12 wzlotów pod rząd, nie jeden cykl z ośmioma lotami w środku);
- *  • `leg_close` jest OPCJONALNY, a jego odczyt liczników jeszcze bardziej opcjonalny
- *    (§3.6) — i to jest właśnie materiał, na którym kalibruje się analityka (§3.6b);
- *  • `day_close` bez ani jednego wzlotu niesie `noFlightReason` (ekran 09C).
+ *    klamra służby powstaje z projekcji `projectDuty`, nie z payloadu;
+ *  • `day_close` bez biegu niesie `noFlightReason` (ekran 09C).
  *
  * ══ DLACZEGO ZDARZENIA, A NIE `INSERT` DO PROJEKCJI ══
  * Bo `sessions`, `flags`, `export_log` i `exported_sheets` są PROJEKCJAMI — wiersze
@@ -58,47 +56,37 @@ import {
 export type WireEvent = { [K in EventType]: Omit<EventOf<K>, 'syncedAt'> }[EventType];
 
 /**
- * Potwierdzenie wzlotu (ekran 09) — `null` na wzlocie, który go nie dostał.
+ * LOT (start → lądowanie) wewnątrz jedynego biegu sesji. Minuty od północy UTC doby.
  *
- * Wzlot bez potwierdzenia jest LEGALNY („Potwierdzę później", §3.6) i demo musi takie
- * mieć: to na nich stoi pasek „do potwierdzenia" w „Mój dzień" i kolumna stanu w panelu.
+ * `landingMin === null` to lot W POWIETRZU — legalne wyłącznie w ostatnim locie sesji
+ * w toku (kokpit 05, karta „Samoloty w powietrzu" na `A01`).
  */
-export interface DemoLegClose {
-  atMin: number;
-  /**
-   * Odczyt liczników — `null` znaczy, że pilot go pominął, i to jest przypadek
-   * DOMYŚLNY w dniu skokowym (§3.6: nikt nie chodzi do licznika po każdym wzlocie).
-   * Dla analityki różnica jest zasadnicza: odczyt zamyka interwał paliwowy, jego brak
-   * zostawia całą sesję jednym odcinkiem (§3.6b).
-   */
-  reading: FuelMhReading | null;
-  notes: string | null;
+export interface DemoFlight {
+  takeoffMin: number;
+  landingMin: number | null;
+  /** Zrzut skoczków (operacja `skoki`); `null` dla lotów bez wyniesienia. */
+  drop: { altitudeFt: number; jumpers: JumperCounts } | null;
 }
 
 /**
- * WZLOT — jeden cykl silnika. Minuty liczone od północy UTC doby sesji.
+ * JEDYNY bieg silnika sesji (pivot 2026-08-10). Pusta tablica `flights` to próba
+ * silnika po obsłudze — dla analityki bezcenna, bo cały czas pracy przypada na ziemię
+ * i to ona rozdziela stawki ziemia/lot lepiej niż jakikolwiek lot.
  *
- * `takeoffMin === null` to wzlot BEZ LOTU: próba silnika po obsłudze technicznej.
- * Model tego nie zabrania i nie powinien — a dla analityki jest to jedyna obserwacja,
- * w której cały czas pracy silnika przypada na ziemię, więc rozdziela stawki lepiej
- * niż jakikolwiek lot.
+ * `engineStopMin === null` = silnik NADAL PRACUJE (sesja w toku), nie strumień z dziurą.
  */
-export interface DemoLeg {
+export interface DemoRun {
   engineStartMin: number;
   taxiMin: number | null;
-  takeoffMin: number | null;
-  landingMin: number | null;
-  /**
-   * `null` = silnik NADAL PRACUJE. Wzlot bez `engine_stop` to sesja w toku (kokpit 05,
-   * karta „Samoloty w powietrzu" na `A01`), a nie strumień z dziurą.
-   */
+  flights: DemoFlight[];
   engineStopMin: number | null;
-  /** Zrzut skoczków (operacja `skoki`); `null` dla wzlotów bez wyniesienia. */
-  drop: { altitudeFt: number; jumpers: JumperCounts } | null;
-  close: DemoLegClose | null;
 }
 
-/** Tankowanie między wzlotami (§3.4) — GRANICA interwału paliwowego, nie składnik. */
+/**
+ * Tankowanie — GRANICA interwału paliwowego, nie składnik. Po pivocie zdarza się
+ * wyłącznie przed uruchomieniem albo po zatrzymaniu (w środku biegu nie ma przerwy,
+ * w której pilot stoi przy dystrybutorze).
+ */
 export interface DemoRefuel {
   atMin: number;
   beforeL: number;
@@ -107,16 +95,17 @@ export interface DemoRefuel {
 }
 
 /**
- * Zdanie samolotu (ekran 09b/09C). `null` = sesja NIEZDANA — samolot zostaje zajęty.
+ * Zdanie samolotu (ekran 09b/09C) = ZATWIERDZENIE logu sesji. `null` = sesja NIEZDANA —
+ * samolot zostaje zajęty.
  *
  * To nie jest brak danych, tylko stan, który panel ma pokazywać: dwie niezamknięte
  * sesje jednej maszyny dają `aircraft_overlap` i wstrzymują kartę doby (§4.7).
  */
 export interface DemoRelease {
   atMin: number;
-  /** Odczyt końcowy = przekazanie dla następnego pilota (ogniwo łańcucha MH, §4.5). */
+  /** Odczyt końcowy WYMAGANY = przekazanie dla następnego pilota (łańcuch MH, §4.5). */
   finalReading: FuelMhReading;
-  /** Powód zdania BEZ wzlotu (09C) — wypełniony wyłącznie dla sesji bez cyklu silnika. */
+  /** Powód zdania BEZ uruchomienia silnika (09C) — wyłącznie dla sesji bez biegu. */
   noFlightReason: NoFlightReason | null;
 }
 
@@ -141,7 +130,8 @@ export interface DemoSession {
   mhFormat: MhFormat;
   /** Odczyt liczników w preflightcie — początek ogniwa łańcucha MH (§4.5). */
   reading: FuelMhReading;
-  legs: DemoLeg[];
+  /** Jedyny bieg sesji; `null` = silnik nie ruszył (materiał na 09C). */
+  run: DemoRun | null;
   refuels: DemoRefuel[];
   release: DemoRelease | null;
   /**
@@ -159,7 +149,7 @@ const BASE_ELEVATION_FT = 782;
  * Zdarzenia sesji w porządku chronologicznym.
  *
  * Kolejność ma znaczenie dla CZYTELNOŚCI rejestru (`A04` sortuje po czasie przyjęcia,
- * ale karta doby i log cyklu czytają strumień), nie dla poprawności: `projectSession`
+ * ale karta doby i log sesji czytają strumień), nie dla poprawności: `projectSession`
  * i tak sortuje po czasie zdarzenia.
  */
 export function sessionStream(session: DemoSession): WireEvent[] {
@@ -209,66 +199,64 @@ export function sessionStream(session: DemoSession): WireEvent[] {
     mhFormat: session.mhFormat,
   });
 
-  // Wszystko między preflightem a zdaniem wplatamy PO CZASIE, a nie blokami: rejestr
-  // `A04` i log cyklu czytają zdarzenia w kolejności, w jakiej stoją w strumieniu,
-  // a tankowanie zdarza się pomiędzy wzlotami.
+  // Tankowania i bieg wplatamy PO CZASIE, a nie blokami: rejestr `A04` i log sesji
+  // czytają zdarzenia w kolejności strumienia, a dolewka przed startem ma stać
+  // PRZED `engine_start`, dolewka po locie — za `engine_stop`.
   const timed: Array<{ min: number; emit: () => void }> = [];
 
-  for (const [index, leg] of session.legs.entries()) {
+  const run = session.run;
+  if (run != null) {
     timed.push({
-      min: leg.engineStartMin,
+      min: run.engineStartMin,
       emit: () =>
-        push('engine_start', leg.engineStartMin, {
+        push('engine_start', run.engineStartMin, {
           position: BASE_POSITION,
           fieldElevationFt: BASE_ELEVATION_FT,
         }),
     });
 
-    if (leg.taxiMin != null) {
-      const taxiMin = leg.taxiMin;
+    if (run.taxiMin != null) {
+      const taxiMin = run.taxiMin;
       timed.push({ min: taxiMin, emit: () => push('taxi', taxiMin, { method: 'auto' }) });
     }
-    if (leg.takeoffMin != null) {
-      const takeoffMin = leg.takeoffMin;
+
+    for (const [index, flight] of run.flights.entries()) {
       timed.push({
-        min: takeoffMin,
-        emit: () => push('takeoff', takeoffMin, { method: 'auto', position: BASE_POSITION }),
-      });
-    }
-    if (leg.drop != null && leg.takeoffMin != null && leg.landingMin != null) {
-      const drop = leg.drop;
-      // Zrzut w połowie między startem a lądowaniem — wyniesienie na wysokość i skok.
-      const dropMin = Math.round((leg.takeoffMin + leg.landingMin) / 2);
-      timed.push({
-        min: dropMin,
+        min: flight.takeoffMin,
         emit: () =>
-          push('drop', dropMin, {
-            dropNumber: index + 1,
-            altitudeFt: drop.altitudeFt,
-            jumpers: drop.jumpers,
-            client: session.client,
-          }),
+          push('takeoff', flight.takeoffMin, { method: 'auto', position: BASE_POSITION }),
       });
-    }
-    if (leg.landingMin != null) {
-      const landingMin = leg.landingMin;
-      timed.push({
-        min: landingMin,
-        emit: () => push('landing', landingMin, { method: 'auto', position: BASE_POSITION }),
-      });
+      if (flight.drop != null && flight.landingMin != null) {
+        const drop = flight.drop;
+        // Zrzut w połowie między startem a lądowaniem — wyniesienie na wysokość i skok.
+        const dropMin = Math.round((flight.takeoffMin + flight.landingMin) / 2);
+        timed.push({
+          min: dropMin,
+          emit: () =>
+            push('drop', dropMin, {
+              dropNumber: index + 1,
+              altitudeFt: drop.altitudeFt,
+              jumpers: drop.jumpers,
+              client: session.client,
+            }),
+        });
+      }
+      if (flight.landingMin != null) {
+        const landingMin = flight.landingMin;
+        timed.push({
+          min: landingMin,
+          emit: () => push('landing', landingMin, { method: 'auto', position: BASE_POSITION }),
+        });
+      }
     }
 
-    if (leg.engineStopMin != null) {
-      const engineStopMin = leg.engineStopMin;
+    if (run.engineStopMin != null) {
+      const engineStopMin = run.engineStopMin;
       timed.push({
         min: engineStopMin,
         emit: () => push('engine_stop', engineStopMin, { position: BASE_POSITION }),
       });
     }
-
-    // `leg_close` emitowane tu do 2026-08-10 — usunięte razem ze zdarzeniem.
-    // POPRAWKA MECHANICZNA pod kompilację: pełna przebudowa generatora pod nowy
-    // model (jedna sesja = jeden bieg, odczyty zawsze przy zdaniu) to etap E.
   }
 
   for (const refuel of session.refuels) {
@@ -284,8 +272,7 @@ export function sessionStream(session: DemoSession): WireEvent[] {
   }
 
   // Sort stabilny (ES2019+), więc zdarzenia o tej samej minucie zachowują kolejność
-  // dopisania — a ta jest tu celowa (taxi przed takeoff, drop przed landing,
-  // engine_stop przed leg_close).
+  // dopisania — a ta jest tu celowa (taxi przed takeoff, drop przed landing).
   for (const entry of [...timed].sort((a, b) => a.min - b.min)) entry.emit();
 
   if (session.release != null) {
