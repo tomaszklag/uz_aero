@@ -85,8 +85,8 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
     arkusza, załoga). **Karta historii mierzy SESJĘ (przejęcie → zdanie), nie „Duty"** —
     służba należy do pilota i potrafi objąć kilka maszyn.
   - **C5 ✅** kokpit i nawigacja. `DutyStrip` → **`ClaimStrip`** (pasek sesji: czyja
-    maszyna, od kiedy, ile wzlotów; klikalny wariant jest jedyną drogą powrotną z kokpitu
-    na 01). `DutyHero` → **`SessionHero`** na ekranie 10, gdzie bohaterem jest czas
+    maszyna, od kiedy, ile wzlotów). **Od 2026-08-10 pasek został tylko w 04B** — patrz
+    „Kokpit jest stanem modalnym" niżej. `DutyHero` → **`SessionHero`** na ekranie 10, gdzie bohaterem jest czas
     blokowy sesji, nie służba. **`SplashScreen` i `EndOfDayScreen` USUNIĘTE** — 01 jest
     ekranem domowym, a zdanie samolotu zastąpiło zamknięcie dnia. STOP ENGINE prowadzi
     na 09. Wznowienie po restarcie w `navigation/resumeTarget.ts`: pytamy o `closed`,
@@ -226,6 +226,31 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 **Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
 kroków flow: zaczyna się pierwszym wzlotem i domyka sam na ostatnim. Wyjście działa też
 offline — niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
+
+### Kokpit jest stanem modalnym (decyzja 2026-08-10)
+**Dopóki pilot trzyma samolot, z kokpitu nie ma wyjścia bokiem** — z 04/05 nie prowadzi
+żadna droga na 01. Maszynę oddaje się przez „Zdaj samolot" (09b) i to ona wraca na 01;
+akcje ground (06/07/08) i 09 wracają do kokpitu. Wyjątkiem są ustawienia (13), bo tam
+wraca się tym samym krokiem.
+Konsekwencje przy każdej zmianie kokpitu:
+- **nie dokładaj linków na 01** — ani paska, ani przycisku, ani wpisu w nagłówku. Pasek
+  sesji `ClaimStrip` z linkiem „Mój dzień →" był jedyną taką drogą i został USUNIĘTY
+  z 04/04A (żyje wyłącznie w 04B, gdzie opisuje CUDZĄ maszynę i nie prowadzi nikąd)
+- z tego samego powodu kokpit nie powtarza tego, co mówi już pasek górny (maszyna, trasa)
+  ani nagłówek logu dnia (liczba cykli) — 04A pokazywał tak „jeszcze żadnego wzlotu"
+  jako trzecią deklarację braku na jednym ekranie
+- **ta sama reguła dotyczy paliwa**: litry stoją na 04 w JEDNYM miejscu. Pasek „Paliwo ·
+  ostatni odczyt" pojawia się tylko wtedy, gdy jest przyrządem (jest norma → jest szacunek
+  wystarczalności, ton ostrzeżenia i adnotacja o źródle); bez normy paska nie ma i FOB
+  niesie podpis kafelka „Tankowanie". Podział ról ma test i mieszka w
+  `app/src/ui/screens/logic/cockpitFuel.ts` — nie rozstrzygaj tego w JSX
+- **reguła obowiązuje też przycisk sprzętowy** (wdrożone 2026-08-10): kokpit trzyma
+  `usePreventRemove(holdsAircraft(projection), …)` i zamiast wyjścia pokazuje arkusz 04d
+  („TRZYMASZ SP-AXA" → ZOSTAŃ / ZDAJ SAMOLOT). `usePreventRemove`, nie `BackHandler`,
+  bo obejmuje także gest cofania krawędzią. Warunek pyta o TRZYMANIE maszyny, nie
+  o istnienie sesji — inaczej zablokowałby powrót 09B → 01, który w stosie zdejmuje
+  kokpit. Blokada bez komunikatu jest zakazana (§6 pkt 3: przycisk, który nic nie robi,
+  wygląda jak zawieszona aplikacja)
 
 ## Czas służby — klamra, nie kontener (decyzja 2026-08-06)
 Reguła w jednym zdaniu: **loty są ZAPISYWANE, służba jest DEKLAROWANA i zawsze stanowi

@@ -71,6 +71,7 @@ export * from './sheets/ManualEntrySheet';
 export * from './sheets/CorrectionSheet';
 export * from './sheets/AirfieldSheet';
 export * from './sheets/TextEntrySheet';
+export * from './sheets/LeaveCockpitSheet';
 
 // Dane i akcje
 export * from './data/DayCard';

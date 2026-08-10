@@ -152,10 +152,12 @@ a kokpitem, do którego prowadzi „Przejmij i leć":
 ## Cockpit Ground — założenia
 
 ### Dwa warianty ekranu
-- `04a-cockpit-ground` — **świeżo przejęty samolot**: log pusty, pasek sesji „jeszcze żadnego wzlotu", START ENGINE prominentny. NIE „start dnia" — dzień pilota mógł zacząć się wcześniej, na innej maszynie
+- `04a-cockpit-ground` — **świeżo przejęty samolot**: log pusty, START ENGINE prominentny. NIE „start dnia" — dzień pilota mógł zacząć się wcześniej, na innej maszynie. Paska sesji tu NIE MA (2026-08-10): przy zerze wzlotów mówił „jeszcze żadnego wzlotu" jako trzecia deklaracja braku na jednym ekranie, a jego link „Mój dzień →" był jedyną drogą powrotną z kokpitu — a tej nie ma być, bo samolot oddaje się przez 09b
 - `04b-cockpit-readonly` — **podgląd cudzego samolotu** (single-writer): banner „tylko odczyt",
   log i stan z serwera, akcje disabled z podanym powodem, przycisk „Przejmij" → flow w 02
 - `04-cockpit-ground` — **w trakcie dnia**: log z historią cykli, akcje ground dostępne
+- `04d-wyjscie-z-kokpitu` — **blokada „wstecz"** (2026-08-10): kokpit jest stanem modalnym, więc przycisk sprzętowy i gest cofania nie zdejmują ekranu, dopóki maszyna jest w rękach pilota. Arkusz mówi, co go trzyma, i prowadzi na 09b — sama odmowa bez komunikatu łamałaby „nigdy cichy błąd", bo martwy przycisk czyta się jak zawieszona aplikacja. „Wstecz" po raz drugi i tapnięcie w tło zostawiają pilota w kokpicie, więc bezpieczne wyjście jest domyślne
+- **Paliwo mówimy RAZ** (2026-08-10): pasek „Paliwo · ostatni odczyt" stoi na 04 wyłącznie wtedy, gdy samolot ma normę zużycia — wtedy jest przyrządem (FOB + „wystarczy na ~6 wyniesień do rezerwy" + ton ostrzeżenia + adnotacja „decyduje paliwomierz"). Bez normy zostawała sama liczba, ta sama co w kafelku „Tankowanie", więc paska NIE MA, a litry przechodzą do kafelka. Podpis kafelka jest przez to KOMPLEMENTARNY: z paskiem „Dolej i zapisz odczyt" / „Dolane dziś: 45 L", bez paska „Na pokładzie: 141 L" (po dolewce obie liczby — inaczej FOB znika z ekranu)
 
 ### "Zakończ dzień" — dostępność
 - Dostępny **zawsze** od momentu rozpoczęcia dnia

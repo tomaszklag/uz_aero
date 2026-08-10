@@ -757,8 +757,11 @@ root i nawigację. Ekran nie wie, skąd biorą się zależności.
 ### `screens/logic/` — logika wyniesiona z ekranu
 
 Kilkanaście czystych modułów (`statsDay`, `refuelMath`, `cockpitLog`, `historyDays`,
-`syncStatus`, `operations`…) liczących to, co ekran pokazuje: statystyki dnia, arytmetykę
-dolewki, log cyklu, listę dni, nazwy operacji i napis trasy. **Bez importów z Reacta** —
+`syncStatus`, `operations`, `cockpitFuel`…) liczących to, co ekran pokazuje: statystyki dnia,
+arytmetykę dolewki, log cyklu, listę dni, nazwy operacji i napis trasy. Bywa, że moduł
+rozstrzyga nie wartość, a PODZIAŁ RÓL między elementami ekranu — `cockpitFuel.ts` mówi,
+czy litry niesie pasek paliwa, czy podpis kafelka „Tankowanie", żeby ta sama liczba nie
+stała na ekranie dwa razy ani nie zniknęła z niego całkiem. **Bez importów z Reacta** —
 testują się w gołym Node, bez urządzenia i bez RNTL, i stąd bierze się większość pokrycia
 testowego aplikacji.
 
@@ -866,14 +869,15 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `CounterRow` | licznik sztuk z przyciskami 46 px | `.type-row` (05e) |
 | `DropSheet`, `ManualEventSheet` | arkusze zrzutu i wpisu ręcznego nad kokpitem | 05e / 05f |
 | `CorrectionSheet` | arkusz korekty: czas ±1 min, wpływ na czasy, strefa „nie było" | 04c |
+| `LeaveCockpitSheet` | arkusz blokady wyjścia: co trzyma pilota w kokpicie + jedyne wyjście („ZDAJ SAMOLOT" → 09B). Wywołuje go `usePreventRemove` w kokpicie, więc łapie przycisk sprzętowy ORAZ gest cofania | 04d |
 | `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
 | `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy — bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami (nieprzezroczyste — zakrywają kreskę), chipy, cel korekty ≥ 44 px. **Zieleń ma tylko wiersz `live`** — historia jest neutralna | `.day-log`, `.cycle-log` |
-| `ClaimStrip` | pasek SESJI w kokpicie: czyja maszyna, od kiedy, ile wzlotów; wariant klikalny jest jedyną drogą powrotną na 01. Zastąpił `DutyStrip` w etapie C5 — czasu służby w kokpicie NIE MA (§3.2) | `.claim-strip` |
-| `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie) | `.fuel-strip` (04) |
+| `ClaimStrip` | pasek sesji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile wzlotów — **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
+| `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie). **Na 04 stoi tylko przy znanej normie** — bez niej byłby samą liczbą, tą samą co podpis kafelka „Tankowanie" (`logic/cockpitFuel.ts`, 2026-08-10) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
 | `Sheet` | arkusz od dołu dla decyzji dotykających innych | `.modal-overlay` (przejęcie) |

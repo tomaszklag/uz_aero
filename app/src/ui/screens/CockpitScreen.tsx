@@ -26,6 +26,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { usePreventRemove } from '@react-navigation/native';
 
 import {
   ActionButton,
@@ -38,8 +39,8 @@ import {
   DayLog,
   DetectToast,
   DropSheet,
-  ClaimStrip,
   FuelStrip,
+  LeaveCockpitSheet,
   EventLog,
   ManualEventSheet,
   NoGpsBanner,
@@ -54,6 +55,7 @@ import {
   type Tone,
 } from '../components';
 import { useTheme } from '../theme';
+import { holdsAircraft } from '../navigation/resumeTarget';
 import { useSessionStore } from '../store';
 import { useGps, useSensors } from '../bootstrap/servicesContext';
 import { useAircraft } from '../hooks/useAircraft';
@@ -61,9 +63,9 @@ import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
 import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
-import { enduranceLabel, fuelTone } from './logic/fuelNorm';
+import { fuelTone } from './logic/fuelNorm';
+import { buildCockpitFuel } from './logic/cockpitFuel';
 import { cyclesLabel } from './logic/cockpitPeek';
-import { buildClaimStrip } from './logic/claimStrip';
 import { flightsBadge } from './logic/statsDay';
 import {
   gpsAcquiringText,
@@ -149,6 +151,25 @@ export function CockpitScreen({
   const [busy, setBusy] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+
+  /**
+   * KOKPIT JEST STANEM MODALNYM (decyzja 2026-08-10) — i egzekwuje to także wobec
+   * przycisku sprzętowego. Bez tej bramki „wstecz" zdejmował kokpit ze stosu i pokazywał
+   * 02a: formularz przejęcia maszyny, która jest już przejęta.
+   *
+   * `usePreventRemove`, a nie `BackHandler`: łapie KAŻDE zdjęcie ekranu, więc obok
+   * przycisku obejmuje też gest cofania krawędzią — a to ten sam błąd popełniony innym
+   * ruchem palca.
+   *
+   * Warunek pyta o TRZYMANIE MASZYNY (`holdsAircraft`), nie o samo istnienie sesji, i to
+   * jest tu istotne: po zdaniu samolotu 09B wraca na 01 przez `navigate`, co w stosie
+   * ZDEJMUJE kokpit. Gdyby bramka patrzyła na sesję, zablokowałaby jedyne dozwolone
+   * wyjście. Ten sam predykat wybiera ekran startowy po restarcie, więc oba miejsca nie
+   * mają jak się rozjechać (`navigation/resumeTarget.ts`, test „ZDANY samolot wraca
+   * do «Mój dzień»").
+   */
+  usePreventRemove(holdsAircraft(projection), () => setLeaveOpen(true));
   const engineOn = projection.engineRunning;
   const inFlight = projection.inFlight;
   const now = useTicker(engineOn);
@@ -222,7 +243,6 @@ export function CockpitScreen({
 
 
   const mhFormat = projection.mhFormat ?? 'decimal';
-  const claimStrip = buildClaimStrip(projection);
   const liveFlightMs =
     projection.openTakeoffAt != null ? now - projection.openTakeoffAt : projection.flightTimeMs;
 
@@ -238,6 +258,16 @@ export function CockpitScreen({
    * zostaje neutralny zamiast świecić na pomarańczowo przy pełnych zbiornikach.
    */
   const fuelToneNow = fuelTone(projection.fuel.lastReadingL, aircraft?.consumption ?? null);
+
+  /**
+   * Podział ról między paskiem paliwa i kafelkiem „Tankowanie" — jedna liczba, jedno
+   * miejsce (`logic/cockpitFuel.ts`). Ekran sam tego NIE rozstrzyga, bo reguła ma test.
+   */
+  const fuel = buildCockpitFuel({
+    fobL: projection.fuel.lastReadingL,
+    addedL: projection.fuel.addedL,
+    norm: aircraft?.consumption ?? null,
+  });
 
   /** Komunikaty wspólne dla obu trybów — nigdy cichy błąd (§6 pkt 3). */
   const messages = (
@@ -268,6 +298,25 @@ export function CockpitScreen({
         onUndo={undo}
       />
     );
+
+  /**
+   * Arkusz blokady wyjścia (04d) — jeden dla OBU trybów kokpitu. „Wstecz" w locie jest
+   * dokładnie tą samą pomyłką co na ziemi, a arkusz na `Modal` z RN wyświetla się nad
+   * każdym układem, więc nie ma powodu utrzymywać dwóch kopii.
+   */
+  const leaveSheet = (
+    <LeaveCockpitSheet
+      visible={leaveOpen}
+      aircraftId={projection.aircraftId ?? '—'}
+      since={projection.claimedAt != null ? `${timeUtc(projection.claimedAt)} UTC` : null}
+      legCount={projection.legs.length}
+      onStay={() => setLeaveOpen(false)}
+      onRelease={() => {
+        setLeaveOpen(false);
+        navigation.navigate('ReleaseAircraft');
+      }}
+    />
+  );
 
   // ─────────────────────────────────────────────────────────────────────────
   // TRYB LOT (mockup 05) — układ stały, przewija się tylko log cyklu.
@@ -515,6 +564,7 @@ export function CockpitScreen({
           onCancel={() => setManualOpen(false)}
         />
 
+        {leaveSheet}
         {toast}
       </Screen>
     );
@@ -535,10 +585,9 @@ export function CockpitScreen({
       icon: 'refuel',
       label: 'Tankowanie',
       tone: 'amber',
-      sub:
-        projection.fuel.addedL > 0
-          ? `Dolane dziś: ${litres(projection.fuel.addedL)}`
-          : `Na pokładzie: ${litres(projection.fuel.lastReadingL)}`,
+      // Podpis zależy od tego, czy pasek paliwa jest na ekranie: gdy jest, kafelek nie
+      // powtarza litrów; gdy go nie ma, to ON niesie stan zbiorników (`cockpitFuel.ts`).
+      sub: fuel.refuelSub,
       onPress: () => navigation.navigate('Refuel'),
     },
     {
@@ -603,32 +652,26 @@ export function CockpitScreen({
           onPress={handleStart}
         />
 
-        {/* Pasek sesji samolotu — i zarazem JEDYNA droga powrotna z kokpitu na 01.
-            Stał tu wcześniej duty timer; czas służby jest wielkością pilota, obejmuje
-            też inne maszyny i mieszka w „Mój dzień" (§3.6a). */}
-        {claimStrip != null && (
-          <ClaimStrip
-            label={claimStrip.label}
-            legs={claimStrip.legs}
-            trailing={claimStrip.trailing}
-            onPress={() => navigation.navigate('MyDay')}
-          />
-        )}
+        {/* KOKPIT JEST STANEM MODALNYM (decyzja 2026-08-10) — stąd nie ma paska sesji
+            ani żadnego innego wyjścia na 01. Kto trzyma samolot, oddaje go przez „Zdaj
+            samolot" (09B); dopóki go trzyma, ekranem pilota jest kokpit.
 
-        {/* Pasek paliwa: odczyt z rejestru + szacunek z normy samolotu (serwer).
-            Bez normy pokazuje sam odczyt — brak podpowiedzi nie jest wartością
-            do wyświetlenia, a zmyślona liczba przy planowaniu paliwa jest gorsza
-            od jej braku. */}
-        {projection.fuel.lastReadingL != null && (
+            Pasek stał tu wcześniej i niósł dwie rzeczy, obie zbędne: link „Mój dzień →"
+            (czyli właśnie tę drogę powrotną) oraz „SP-AXA · Twój od 09:11 · N wzlotów"
+            — a maszynę i trasę mówi już pasek górny, a liczbę cykli nagłówek logu dnia.
+            Przed pierwszym uruchomieniem silnika wychodziło z tego pół ekranu na napis
+            „jeszcze żadnego wzlotu". */}
+
+        {/* Pasek paliwa stoi tu WYŁĄCZNIE jako przyrząd — czyli gdy ma czym być: odczyt
+            plus szacunek wystarczalności z normy samolotu, ton ostrzeżenia i adnotacja
+            o źródle. Bez normy pokazywał samą liczbę, tę samą co kafelek „Tankowanie"
+            niżej; decyzję i podział ról opisuje `logic/cockpitFuel.ts` (2026-08-10). */}
+        {fuel.strip != null && (
           <FuelStrip
             fuel={litres(projection.fuel.lastReadingL)}
             tone={fuelToneNow ?? 'neutral'}
-            endurance={enduranceLabel(projection.fuel.lastReadingL, aircraft?.consumption ?? null)}
-            source={
-              aircraft?.consumption == null
-                ? null
-                : `szacunek z normy samolotu (${aircraft.consumption.windowDays} dni) — decyduje paliwomierz`
-            }
+            endurance={fuel.strip.endurance}
+            source={fuel.strip.source}
           />
         )}
 
@@ -654,6 +697,7 @@ export function CockpitScreen({
         <ActionGrid actions={groundActions} />
       </View>
 
+      {leaveSheet}
       {toast}
     </Screen>
   );

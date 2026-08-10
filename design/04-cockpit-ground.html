@@ -287,15 +287,12 @@
   .action-label { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: var(--text-primary); }
   .action-sub { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
 
-  /* ===== PASEK SESJI SAMOLOTU ===== */
-  .claim-strip { text-decoration: none;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
+  /* ===== PASKI POD BOHATEREM =====
+     `.claim-strip` / `.claim-icon` / `.claim-val` zniknęły razem z paskiem sesji
+     (2026-08-10) — pasek został wyłącznie w 04B. `.strip-left` i `.strip-label`
+     ZOSTAJĄ: używa ich pasek paliwa niżej. */
   .strip-left { display: flex; align-items: center; gap: 8px; }
-  .claim-icon { color: var(--blue); }
   .strip-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
-  .claim-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
 
   /* Pasek paliwa — FOB z ostatniego odczytu + szacunek wystarczalności z NORMY
      serwera (dana referencyjna, 3 stany świeżości §4.8; offline: adnotacja
@@ -317,7 +314,6 @@
   .fuel-strip-est { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); letter-spacing: 0.5px; text-align: right; line-height: 1.6; }
   .fuel-strip-est b { color: var(--amber); font-weight: 700; }
   .fuel-strip-src { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.8px; color: var(--text-muted); }
-  .claim-since { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
 
   /* nav strip */
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
@@ -386,26 +382,30 @@
         <div class="start-engine-hint">Przytrzymaj 2 sekundy aby potwierdzić</div>
       </a>
 
-      <!-- PASEK SESJI SAMOLOTU — kokpit opisuje SAMOLOT, nie służbę.
-           Wcześniej stał tu duty timer, ale czas służby jest wielkością pilota,
-           obejmuje też inne samoloty i mieszka w „Mój dzień" (01). Trzymanie go
-           tutaj sugerowało, że dzień kończy się razem z tym samolotem — a to jest
-           dokładnie założenie, które ta przebudowa usuwa. Pasek jest zarazem
-           jedyną drogą powrotną z kokpitu do ekranu domowego. -->
-      <a href="01-moj-dzien.html" class="claim-strip">
-        <div class="strip-left">
-          <div class="claim-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2 3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
-          </div>
-          <div>
-            <div class="strip-label">SP-AXA · Twój od 08:04</div>
-            <div class="claim-val">2 wzloty</div>
-          </div>
-        </div>
-        <div class="claim-since">Mój dzień →</div>
-      </a>
+      <!-- TU STAŁ PASEK SESJI SAMOLOTU — USUNIĘTY 2026-08-10.
+           Niósł dwie rzeczy i obie okazały się zbędne:
 
-      <!-- FUEL STRIP — FOB z ostatniego odczytu + wystarczalność z normy (serwer, live) -->
+           1. link „Mój dzień →", czyli JEDYNĄ drogę powrotną z kokpitu na 01. Tej drogi
+              nie ma być: kokpit jest stanem modalnym, a pilot, który trzyma samolot,
+              wychodzi wyłącznie przez „Zdaj samolot" (09B). Dopóki maszyna jest w jego
+              rękach, jego ekranem jest kokpit;
+           2. „SP-AXA · Twój od 08:04 · 2 wzloty" — maszynę i trasę mówi pasek górny,
+              a liczbę cykli nagłówek logu dnia niżej. Przed pierwszym uruchomieniem
+              silnika (04A) zostawał z tego wielki napis „jeszcze żadnego wzlotu".
+
+           Sam pasek żyje dalej w 04B: tam opisuje CUDZĄ maszynę przed decyzją
+           o przejęciu i nie prowadzi nigdzie dalej. -->
+
+      <!-- FUEL STRIP — FOB z ostatniego odczytu + wystarczalność z normy (serwer, live).
+           WARUNKOWY (2026-08-10): pasek stoi tu WYŁĄCZNIE wtedy, gdy samolot ma normę
+           zużycia i da się z niej policzyć zapas nad rezerwą — czyli gdy pasek jest
+           przyrządem (szacunek + ton ostrzeżenia + adnotacja o źródle). Bez normy
+           zostawała sama liczba, ta sama co w kafelku „Tankowanie" niżej: dwa napisy
+           z tym samym FOB każą pilotowi sprawdzać, czy się zgadzają.
+           Bez normy paska NIE MA i litry niesie kafelek — jego podpis jest
+           KOMPLEMENTARNY, nie stały (patrz komentarz przy siatce akcji). -->
+      <!-- Ten mockup pokazuje stan Z NORMĄ; wariant bez normy = ten sam ekran bez tego
+           paska i z „Na pokładzie: 141 L" w kafelku. -->
       <div class="fuel-strip">
         <div class="strip-left">
           <div class="fuel-strip-icon">
@@ -522,6 +522,14 @@
       </div>
 
       <!-- ACTION GRID -->
+      <!-- PODPIS KAFELKA „TANKOWANIE" JEST KOMPLEMENTARNY DO PASKA PALIWA (2026-08-10):
+           • jest pasek (samolot z normą, jak tu) → kafelek NIE podaje litrów, bo mówi je
+             pasek; zostaje zaproszenie do akcji, a po dolewce „Dolane dziś: 45 L”
+             (fakt, którego pasek nie zna);
+           • nie ma paska (brak normy) → kafelek przejmuje stan zbiorników:
+             „Na pokładzie: 141 L", a po dolewce OBIE liczby („· dolane 45 L"),
+             bo inaczej FOB znika z całego ekranu.
+           Reguła ma test: `app/src/__tests__/cockpitFuel.test.ts`. -->
       <div class="action-grid">
         <a href="06-tankowanie.html" class="action-card amber">
           <div class="action-icon">
@@ -529,7 +537,7 @@
           </div>
           <div>
             <div class="action-label">Tankowanie</div>
-            <div class="action-sub">Ostatnie: 112 L → 160 L</div>
+            <div class="action-sub">Dolej i zapisz odczyt</div>
           </div>
         </a>
         <a href="07-zmiana-zalogi.html" class="action-card">
@@ -596,6 +604,13 @@
       <span class="vp-when">Autodetekcja pomyliła się — zapisała zdarzenie, którego nie było, albo o złym czasie. Otwierane z wiersza logu; append-only, działa offline.</span>
     </span>
   </a>
+  <a class="vp-item" href="04d-wyjscie-z-kokpitu.html">
+    <span class="vp-badge blue">04D</span>
+    <span class="vp-body">
+      <span class="vp-name">Blokada wyjścia z kokpitu</span>
+      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście — zdanie maszyny.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -606,6 +621,7 @@
   <a href="04-cockpit-ground.html" class="active">04 Ground (mid-day)</a>
   <a href="04b-cockpit-readonly.html">04B Podgląd</a>
   <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
+  <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
   <a href="05-cockpit-running.html">05 Running →</a>
   <span>·</span>
   <a href="06-tankowanie.html">06 Paliwo</a>

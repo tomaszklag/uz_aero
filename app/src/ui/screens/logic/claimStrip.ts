@@ -1,15 +1,19 @@
 /**
- * UZ Aero — pasek sesji samolotu (`.claim-strip` z mockupów 04 / 04A / 04B).
+ * UZ Aero — pasek sesji CUDZEGO samolotu (`.claim-strip` z mockupu 04B).
  *
  * Zastąpił duty timer i to jest zmiana MODELU, nie układu (§3.6a). Czas służby jest
  * wielkością PILOTA: obejmuje też inne maszyny i mieszka w „Mój dzień" (01). Trzymanie
  * go w kokpicie mówiło, że dzień kończy się razem z tym samolotem — czyli dokładnie to
  * założenie, które ta przebudowa usuwa.
  *
- * Kokpit opisuje SAMOLOT, więc pasek odpowiada na trzy pytania o maszynę: czyja jest,
- * od kiedy i ile już zrobiła. Ten sam byt obsługuje podgląd cudzej sesji (04B), bo to
- * te same trzy pytania zadane o czyjś samolot — różni się tylko to, czy prowadzą one
- * gdzieś dalej.
+ * Pasek odpowiada na trzy pytania o maszynę: czyja jest, od kiedy i ile już zrobiła —
+ * i zadaje je dziś wyłącznie o CZYJŚ samolot, jako przesłanki decyzji o przejęciu.
+ *
+ * BYŁ TU TAKŻE `buildClaimStrip` dla WŁASNEJ sesji (04 / 04A) — usunięty 2026-08-10
+ * razem z paskiem w kokpicie. Kokpit jest stanem modalnym: pilot, który trzyma samolot,
+ * wychodzi wyłącznie przez zdanie maszyny (09B), więc pasek stracił swoje jedyne
+ * niezastąpione zadanie (link „Mój dzień →"). Reszty tamtego napisu nie brakuje: maszynę
+ * mówi pasek górny, a liczbę cykli nagłówek logu dnia.
  */
 
 import { timeUtc } from '../../format';
@@ -17,34 +21,18 @@ import { plural } from '../../format';
 import type { EpochMillis, SessionState } from '../../../domain';
 
 export interface ClaimStripVm {
-  /** Górna linia: „SP-AXA · Twój od 08:04" albo „SP-FGK · KRZ od 07:10 UTC". */
+  /** Górna linia: „SP-FGK · KRZ od 07:10 UTC". */
   label: string;
   /**
    * Dolna linia — licznik wzlotów SESJI.
    *
    * Zero mówi „jeszcze żadnego wzlotu", a nie „0": zero jest wynikiem, a tu chodzi
-   * o brak wyniku. Świeżo przejęty samolot niczego jeszcze nie zrobił i pasek ma to
-   * powiedzieć po ludzku (mockup 04A).
+   * o brak wyniku. Przy CUDZEJ maszynie to pełnoprawna odpowiedź na pytanie „co ta
+   * maszyna dziś zrobiła" — i nikt inny na tym ekranie jej nie udziela.
    */
   legs: string;
-  /** Prawa strona: „Mój dzień →" przy własnej sesji, „zajęty" przy cudzej. */
+  /** Prawa strona: stan maszyny — „zajęty". */
   trailing: string;
-}
-
-/**
- * Buduje pasek dla WŁASNEJ sesji (04 / 04A) — klikalny, prowadzi na 01.
- *
- * @returns `null`, gdy pilot nie trzyma tej maszyny (sesja zdana albo pusta): pasek
- *          bez samolotu nie ma o czym mówić, a link „Mój dzień" i tak jest w nagłówku.
- */
-export function buildClaimStrip(state: SessionState): ClaimStripVm | null {
-  if (state.aircraftId == null || state.sessionUuid == null) return null;
-
-  return {
-    label: `${state.aircraftId} · Twój od ${sinceLabel(state.claimedAt)}`,
-    legs: legsLabel(state.legs.length),
-    trailing: 'Mój dzień →',
-  };
 }
 
 /**

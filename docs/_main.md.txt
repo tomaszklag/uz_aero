@@ -815,6 +815,19 @@ Pętla, nie prosta. Dzień pilota nie ma „startu" ani „końca" jako kroków 
 pierwszym wzlotem, a domyka sam na ostatnim. Ekranem, do którego wszystko wraca, jest
 **01 Mój dzień** — nie kokpit i nie zakończenie dnia.
 
+**Kokpit jest stanem modalnym** (decyzja 2026-08-10). Dopóki pilot trzyma samolot, z 04/05
+nie prowadzi żadna droga na 01: akcje ground i 09 wracają do kokpitu, a na 01 wraca się
+przez [09b Zdaj samolot] — czyli oddając maszynę. Do 2026-08-10 wyjątkiem był pasek sesji
+z linkiem „Mój dzień →"; został usunięty z 04/04a właśnie dlatego, że był tą drogą.
+Reguła jest o ODDANIU, nie o zamknięciu dnia: klamra służby zostaje otwarta i obejmie
+kolejny samolot (§3.6a).
+
+Dotyczy to również przycisku sprzętowego i gestu cofania — oba pokazują arkusz
+[04d Wyjście z kokpitu] zamiast zdejmować ekran (bez niego „wstecz" pokazywał 02a, czyli
+formularz przejęcia maszyny już przejętej). Arkusz nie jest samą odmową: mówi, co trzyma
+pilota na tym ekranie, i prowadzi na 09b. Blokada bez komunikatu byłaby złamaniem „nigdy
+cichy błąd" (§6) — martwy przycisk czyta się jak zawieszona aplikacja.
+
 Mockupy: `design/index.html` (komplet ekranów, stanów i wariantów — liczby nie podajemy,
 bo rozjeżdża się przy każdej zmianie). Szczegółowe założenia
 per ekran: `docs/design-notes.md`. Changelog decyzji designu: `design/ZMIANY.md`.

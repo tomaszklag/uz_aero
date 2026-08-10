@@ -1,13 +1,18 @@
 /**
- * UZ Aero — pasek sesji samolotu (04 / 04A / 04B) i decyzja o wznowieniu po restarcie.
+ * UZ Aero — pasek sesji cudzego samolotu (04B) i decyzja o wznowieniu po restarcie.
  *
  * Oba moduły pilnują tej samej granicy: **kokpit opisuje SAMOLOT, nie służbę pilota**.
  * Pasek mówi, czyja jest maszyna i ile zrobiła; bramka wznowienia pyta, czy pilot ją
  * jeszcze trzyma. Żadne z nich nie ma prawa sięgnąć po klamrę służby — ta należy do
  * pilota i po §3.6a bywa pusta w zupełnie normalnym dniu.
+ *
+ * Wariant WŁASNEJ sesji (`buildClaimStrip`, mockupy 04/04A) miał tu własny blok testów —
+ * zniknął razem z funkcją 2026-08-10, gdy kokpit stał się stanem modalnym bez drogi
+ * powrotnej na 01. Odmiana liczebnika i brak wzlotów przeszły do bloku 04B, bo to
+ * jedyny pasek, który dziś istnieje.
  */
 
-import { buildClaimStrip, buildPeekStrip } from '../ui/screens/logic/claimStrip';
+import { buildPeekStrip } from '../ui/screens/logic/claimStrip';
 import { holdsAircraft, resumeTarget } from '../ui/navigation/resumeTarget';
 import { emptySessionState } from '../domain';
 import type { Leg, SessionState } from '../domain';
@@ -45,41 +50,6 @@ beforeEach(() => {
   legSeq = 0;
 });
 
-describe('pasek sesji — własny samolot (04 / 04A)', () => {
-  it('mówi czyja maszyna, od kiedy i ile zrobiła', () => {
-    const vm = buildClaimStrip(session({ legs: [leg('08:12', '09:05'), leg('10:20', '11:02')] }))!;
-
-    expect(vm.label).toBe('SP-AXA · Twój od 08:04');
-    expect(vm.legs).toBe('2 wzloty');
-    expect(vm.trailing).toBe('Mój dzień →');
-  });
-
-  it('świeżo przejęty samolot mówi „jeszcze żadnego wzlotu", a nie „0"', () => {
-    // Zero jest WYNIKIEM, a tu chodzi o brak wyniku — maszyna dopiero co przeszła
-    // w ręce pilota i niczego nie zrobiła (mockup 04A).
-    expect(buildClaimStrip(session())!.legs).toBe('jeszcze żadnego wzlotu');
-  });
-
-  it('polska odmiana liczebnika: 1 / 2 / 5', () => {
-    const withLegs = (n: number) =>
-      buildClaimStrip(session({ legs: Array.from({ length: n }, () => leg('08:00', '08:30')) }))!.legs;
-
-    expect(withLegs(1)).toBe('1 wzlot');
-    expect(withLegs(2)).toBe('2 wzloty');
-    expect(withLegs(5)).toBe('5 wzlotów');
-  });
-
-  it('bez chwili przejęcia mówi mniej, zamiast podstawiać czas pierwszego wzlotu', () => {
-    const vm = buildClaimStrip(session({ claimedAt: null, legs: [leg('08:12', '09:05')] }))!;
-
-    expect(vm.label).toBe('SP-AXA · Twój od —');
-  });
-
-  it('brak samolotu to brak paska', () => {
-    expect(buildClaimStrip(emptySessionState())).toBeNull();
-  });
-});
-
 describe('pasek sesji — cudzy samolot (04B)', () => {
   it('opisuje maszynę, a NIE czas służby tamtego pilota', () => {
     // Wcześniej stało tu „Duty KRZ 02:31". Czas służby innego pilota nie jest informacją
@@ -92,6 +62,34 @@ describe('pasek sesji — cudzy samolot (04B)', () => {
     expect(vm.label).toBe('SP-FGK · KRZ od 07:10 UTC');
     expect(vm.legs).toBe('1 wzlot');
     expect(vm.trailing).toBe('zajęty');
+  });
+
+  it('maszyna, która dziś nic nie zrobiła, mówi to wprost — zero nie jest wynikiem', () => {
+    expect(buildPeekStrip(session({ aircraftId: 'SP-FGK' }), 'KRZ')!.legs).toBe(
+      'jeszcze żadnego wzlotu',
+    );
+  });
+
+  it('polska odmiana liczebnika: 1 / 2 / 5', () => {
+    const withLegs = (n: number) =>
+      buildPeekStrip(
+        session({ legs: Array.from({ length: n }, () => leg('08:00', '08:30')) }),
+        'KRZ',
+      )!.legs;
+
+    expect(withLegs(1)).toBe('1 wzlot');
+    expect(withLegs(2)).toBe('2 wzloty');
+    expect(withLegs(5)).toBe('5 wzlotów');
+  });
+
+  it('bez chwili przejęcia mówi mniej, zamiast podstawiać czas pierwszego wzlotu', () => {
+    const vm = buildPeekStrip(session({ claimedAt: null, legs: [leg('08:12', '09:05')] }), 'KRZ')!;
+
+    expect(vm.label).toBe('SP-AXA · KRZ od — UTC');
+  });
+
+  it('brak samolotu to brak paska', () => {
+    expect(buildPeekStrip(emptySessionState(), 'KRZ')).toBeNull();
   });
 });
 
