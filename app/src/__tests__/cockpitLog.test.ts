@@ -1,17 +1,16 @@
 /**
- * UZ Aero — test budowania wierszy LOGU DNIA (mockup 04 `.day-log`).
+ * UZ Aero — test budowania wierszy LOGU SESJI (mockup 04, model 2026-08-10).
  *
- * Log jest jedynym potwierdzeniem zapisu, jakie widzi pilot — jeśli pokaże złe czasy
- * albo zły stan licznika, błąd nie objawi się niczym innym niż niepoprawnym wpisem
- * w arkuszu na koniec miesiąca.
+ * Log jest jedynym potwierdzeniem zapisu, jakie widzi pilot — jeśli pokaże złe czasy,
+ * błąd nie objawi się niczym innym niż niepoprawnym wpisem w arkuszu na koniec miesiąca.
  *
- * Sprawdzamy zwłaszcza **łańcuch MH** (§4.5): licznik chodzi z silnikiem, więc chip przy
- * kolejnym `engine_start` musi pokazywać wartość podbitą o czas bloku poprzedniego cyklu.
- * To ta sama zależność, którą `projections.test.ts` sprawdza jako inwariant „Δ MH = block".
+ * Oś jest PŁASKA: sesja = jeden bieg silnika, więc harmonijka „CYKL n"
+ * (`buildDaySections`/`DayLog`) odeszła razem ze starym modelem. STOP nie nosi chipu
+ * MH — odczyty przychodzą przy ZDANIU (09b), a chip z łańcucha byłby przewidywaniem
+ * stojącym o wiersz od miejsca, w którym za chwilę stanie prawdziwy odczyt.
  */
 
-import { buildDaySections, buildLogRows } from '../ui/screens/logic/cockpitLog';
-import type { DayCycleSection, DayLooseSection } from '../ui/components';
+import { buildLogRows } from '../ui/screens/logic/cockpitLog';
 import type { Event, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);
@@ -104,22 +103,15 @@ describe('log dnia', () => {
     expect(rows.map((r) => r.time)).toEqual(['08:12', '10:34']);
   });
 
-  it('przesuwa łańcuch MH o czas bloku każdego cyklu (§4.5)', () => {
+  it('chip MH stoi wyłącznie przy starcie — STOP czeka na odczyt ze zdania', () => {
     const rows = buildLogRows(
-      [
-        event('engine_start', at(8, 12)),
-        event('engine_stop', at(10, 34)), // blok 2:22
-        event('engine_start', at(11, 15)),
-        event('engine_stop', at(12, 28)), // blok 1:13
-      ],
+      [event('engine_start', at(8, 12)), event('engine_stop', at(10, 34))],
       projection({ mh: { start: 1234.5, end: null, deltaH: null } } as Partial<SessionState>),
       'hhmm',
     );
 
     const mh = rows.map((r) => r.chips?.find((c) => c.label.startsWith('MH '))?.label);
-    // 1234:30 → +2:22 → 1236:52 → (drugi start z tej samej wartości) → +1:13 → 1238:05.
-    // To dokładnie liczby z mockupu 04.
-    expect(mh).toEqual(['MH 1234:30', 'MH 1236:52', 'MH 1236:52', 'MH 1238:05']);
+    expect(mh).toEqual(['MH 1234:30', undefined]);
   });
 
   it('dopisuje czas bloku przy stopie i długość lotu przy lądowaniu', () => {
@@ -229,77 +221,32 @@ describe('log dnia', () => {
   });
 });
 
-describe('sekcje dnia (zwijanie cykli)', () => {
-  /** Dzień z mockupu 04: dwa zamknięte cykle przedzielone tankowaniem. */
-  const dayEvents = (): Event[] => [
-    event('engine_start', at(8, 12)),
-    event('takeoff', at(8, 25), { method: 'auto' }),
-    event('landing', at(9, 18), { method: 'auto' }),
-    event('takeoff', at(9, 35), { method: 'auto' }),
-    event('landing', at(10, 22), { method: 'auto' }),
-    event('engine_stop', at(10, 34)),
-    event('refuel', at(10, 48), { beforeL: 112, addedL: 48, afterL: 160 }),
-    event('engine_start', at(11, 15)),
-    event('takeoff', at(11, 28), { method: 'auto' }),
-    event('landing', at(12, 15), { method: 'auto' }),
-    event('engine_stop', at(12, 28)),
-  ];
-
-  it('zamknięty cykl zwija się do nagłówka, którego liczby zgadzają się z wierszami', () => {
-    const sections = buildDaySections(dayEvents(), projection(), 'hhmm');
-    expect(sections.map((s) => s.kind)).toEqual(['cycle', 'loose', 'cycle']);
-
-    const c1 = sections[0] as DayCycleSection;
-    expect(c1.no).toBe(1);
-    expect(c1.range).toBe('08:12–10:34');
-    expect(c1.takeoffs).toBe(2);
-    expect(c1.block).toBe('blok 2:22');
-    expect(c1.closed).toBe(true);
-    expect(c1.rows.map((r) => r.label)).toEqual([
-      'Start engine',
-      'Takeoff',
-      'Landing',
-      'Takeoff',
-      'Landing',
-      'Stop engine',
-    ]);
-
-    const c2 = sections[2] as DayCycleSection;
-    expect(c2.no).toBe(2);
-    expect(c2.takeoffs).toBe(1);
-    expect(c2.block).toBe('blok 1:13');
-  });
-
-  it('zdarzenie naziemne między cyklami zostaje luzem — nigdy się nie zwija', () => {
-    const sections = buildDaySections(dayEvents(), projection(), 'hhmm');
-    const loose = sections[1] as DayLooseSection;
-    expect(loose.kind).toBe('loose');
-    expect(loose.row.label).toBe('Tankowanie');
-  });
-
-  it('cykl bez stopu jest otwarty: zakres z wielokropkiem, bez bloku', () => {
-    const sections = buildDaySections(
-      [event('engine_start', at(13, 10)), event('takeoff', at(13, 24), { method: 'auto' })],
-      projection(),
-      'hhmm',
-    );
-    const c = sections[0] as DayCycleSection;
-    expect(c.closed).toBe(false);
-    expect(c.range).toBe('13:10–…');
-    expect(c.block).toBeNull();
-    expect(c.takeoffs).toBe(1);
-  });
-
-  it('znacznik niewysłanych z wnętrza cyklu wypływa na nagłówek', () => {
-    const sections = buildDaySections(
+// Blok „sekcje dnia (zwijanie cykli)" usunięty 2026-08-10 razem z `buildDaySections`
+// i `DayLog` — log kokpitu jest płaską osią jednej sesji.
+describe('płaska oś sesji (model 2026-08-10)', () => {
+  it('tankowania przed startem i po zatrzymaniu są zwykłymi wpisami tej samej osi', () => {
+    const rows = buildLogRows(
       [
-        event('engine_start', at(8, 12)),
-        event('takeoff', at(8, 25), { method: 'auto' }, false),
-        event('engine_stop', at(10, 34)),
+        event('refuel', at(11, 10), { beforeL: 112, addedL: 48, afterL: 160 }),
+        event('engine_start', at(11, 15)),
+        event('takeoff', at(11, 28), { method: 'auto' }),
+        event('landing', at(12, 15), { method: 'auto' }),
+        event('engine_stop', at(12, 28)),
+        event('refuel', at(12, 35), { beforeL: 130, addedL: 30, afterL: 160 }),
       ],
       projection(),
       'hhmm',
     );
-    expect((sections[0] as DayCycleSection).pending).toBe(true);
+
+    expect(rows.map((r) => r.label)).toEqual([
+      'Tankowanie',
+      'Start engine',
+      'Takeoff',
+      'Landing',
+      'Stop engine',
+      'Tankowanie',
+    ]);
+    expect(rows[4]!.meta).toBe('blok 1:13');
+    expect(rows[4]!.chips).toBeUndefined();
   });
 });

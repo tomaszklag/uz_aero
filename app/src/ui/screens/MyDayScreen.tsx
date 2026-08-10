@@ -8,9 +8,9 @@
  * „z pierwszego wzlotu"), a „ZAMKNIJ DZIEŃ" jest opcją, nie krokiem procedury.
  *
  * Ekran NICZEGO NIE LICZY. Napisy, sumy i stany klamry przychodzą gotowe z `buildMyDay`
- * (`logic/myDay.ts`), karta samolotu w ręce z `buildHeldAircraft` (`logic/heldAircraft.ts`),
- * a sama doba z `useDutyDay`. To nie jest kosmetyka: te same liczby czyta serwer i arkusz,
- * więc druga implementacja w widoku rozjechałaby się przy pierwszej zmianie reguły.
+ * (`logic/myDay.ts`), a sama doba z `useDutyDay`. To nie jest kosmetyka: te same liczby
+ * czyta serwer i arkusz, więc druga implementacja w widoku rozjechałaby się przy
+ * pierwszej zmianie reguły.
  *
  * Wszystko jest projekcją LOKALNEGO strumienia, więc ekran działa w pełni offline —
  * to dane sesji z §6 pkt 1, bez wariantu „z cache". Jedynym śladem sieci jest SyncChip,
@@ -51,7 +51,6 @@ import {
   type BracketVm,
   type SessionRowVm,
 } from './logic/myDay';
-import { buildHeldAircraft, type HeldAircraftVm } from './logic/heldAircraft';
 import { editableBadge } from './logic/historyDays';
 
 /**
@@ -94,8 +93,7 @@ export function MyDayScreen({
   const day = utcDayStart(now);
   const duty = useDutyDay(pilotId, day);
 
-  const held = buildHeldAircraft(projection);
-  const vm = duty != null ? buildMyDay(duty, now, held?.aircraftId ?? null) : null;
+  const vm = duty != null ? buildMyDay(duty, now) : null;
 
   // Plakietka okna korekty na wejściu do historii (`.history-badge`) — okno 24 h ma być
   // widoczne, zanim pilot pomyśli o szukaniu go (ten sam wzorzec co na ekranie startowym).
@@ -236,14 +234,10 @@ export function MyDayScreen({
           onDismiss={setEduDismissed}
         />
 
-        {/* ── samolot w ręce — jedyna akcja „na teraz" ─────────────────────── */}
-        {held != null && (
-          <ClaimCard
-            held={held}
-            onCockpit={() => navigation.navigate('Cockpit')}
-            onRelease={() => navigation.navigate('ReleaseAircraft')}
-          />
-        )}
+        {/* TU STAŁA KARTA „SAMOLOT W RĘCE" (KOKPIT / ZDAJ SAMOLOT) — usunięta razem
+            z modelem 2026-08-10: kokpit jest modalny, więc pilot trzymający maszynę
+            nie ma jak zobaczyć tego ekranu. Na liście dziennej są wyłącznie sesje
+            zatwierdzone zdaniem. */}
 
         {/* ── klamra służby: meldunek → wzloty → koniec → sumy ─────────────── */}
         {vm != null && (
@@ -272,17 +266,12 @@ export function MyDayScreen({
                       <AppText variant="mono" style={styles.groupReg}>
                         {group.aircraftId}
                       </AppText>
-                      {group.held && (
-                        <AppText variant="mono" tone="green" style={styles.groupState}>
-                          w ręce
-                        </AppText>
-                      )}
                     </View>
-                    {/* „Rozliczenie" prowadzi do bilansu paliwa i MH tej maszyny (10),
-                        a ekran 10 opisuje SESJĘ ZE STORE'U. Dlatego link istnieje tylko
-                        przy maszynie trzymanej — dla grup wcześniejszych prowadziłby do
-                        cudzych liczb pod właściwym nagłówkiem. */}
-                    {group.held && (
+                    {/* „Rozliczenie" prowadzi do bilansu paliwa i MH (10), a ekran 10
+                        opisuje SESJĘ ZE STORE'U — czyli ostatnią. Dlatego link ma tylko
+                        OSTATNIA grupa; dla wcześniejszych prowadziłby do cudzych liczb
+                        pod właściwym nagłówkiem. */}
+                    {index === vm.groups.length - 1 && (
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={`Rozliczenie ${group.aircraftId}`}
@@ -348,12 +337,23 @@ export function MyDayScreen({
                 />
               )}
               <ActionButton
-                label={held != null ? 'PRZEJMIJ INNY SAMOLOT' : 'PRZEJMIJ SAMOLOT'}
+                label="PRZEJMIJ SAMOLOT"
                 tone="neutral"
                 variant="secondary"
                 size="md"
                 icon="takeover"
                 onPress={() => navigation.navigate('PreflightAircraft')}
+              />
+              {/* Ręczny wpis CAŁEGO lotu (mockup 15, story pkt 7): telefon został
+                  w kurtce, bateria padła, lot spisany na papierze. Tworzy kompletną
+                  sesję z oknem korekty 24 h. */}
+              <ActionButton
+                label="DODAJ LOT RĘCZNIE"
+                tone="neutral"
+                variant="secondary"
+                size="md"
+                icon="edit"
+                onPress={() => navigation.navigate('ManualFlight')}
               />
               {/* 01B: przejęcie ZOSTAJE po zamknięciu dnia i przypis mówi dlaczego —
                   zamknięcie klamry nie jest zakazem latania (§3.6a: „nowy wzlot po
@@ -380,15 +380,18 @@ export function MyDayScreen({
               variant="secondary"
               size="md"
               icon="check"
-              disabledReason={closeDayBlocker(vm, held != null)}
+              // Kokpit jest modalny, więc na 01 pilot nigdy nie trzyma maszyny —
+              // a klamra jedzie wyłącznie w `day_close.dutyEnd`. Blokada mówi to
+              // wprost; właściwa naprawa czeka na nośnik deklaracji (temat „służba",
+              // odłożony decyzją 2026-08-10).
+              disabledReason={closeDayBlocker(vm, false)}
               // Zamknięcie dnia idzie przez 09B, bo klamra służby jedzie w payloadzie
               // `day_close` (§5.1) — mockup mówi to wprost: „Zamknięcie dnia zda też
               // SP-KLM". Intencja wchodzi parametrem, bo z danych jej nie widać.
               onPress={() => navigation.navigate('ReleaseAircraft', { closeDuty: true })}
             />
             <AppText variant="mono" tone="muted" style={styles.btnNote}>
-              {held != null ? `Zamknięcie dnia zda też ${held.aircraftId}. ` : ''}
-              Nie musisz go zamykać —{'\n'}niezamknięty dzień domyka się na ostatnim wzlocie.
+              Nie musisz go zamykać —{'\n'}niezamknięty dzień domyka się na ostatniej sesji.
             </AppText>
           </>
         )}
@@ -419,59 +422,8 @@ export function MyDayScreen({
   );
 }
 
-/**
- * `.claim-card` — samolot, który pilot trzyma teraz.
- *
- * Zielona obwódka i pozycja nad klamrą są z mockupu i mają powód: to jedyny element
- * ekranu, który mówi „zrób coś TERAZ". Reszta ekranu opisuje to, co już się wydarzyło.
- */
-function ClaimCard({
-  held,
-  onCockpit,
-  onRelease,
-}: {
-  held: HeldAircraftVm;
-  onCockpit: () => void;
-  onRelease: () => void;
-}) {
-  const { theme } = useTheme();
-  const green = toneColors(theme, 'green');
-
-  return (
-    <Card flush style={{ borderColor: green.border }}>
-      <View style={styles.claimHead}>
-        <View style={styles.claimId}>
-          <AppText variant="mono" style={[styles.claimReg, { color: theme.colors.green }]}>
-            {held.aircraftId}
-          </AppText>
-          <AppText variant="mono" tone="muted" style={styles.claimSince}>
-            {held.since}
-          </AppText>
-        </View>
-        <StatusChip label={held.engineLabel} tone={held.engineRunning ? 'green' : 'neutral'} />
-      </View>
-
-      <View style={styles.claimActions}>
-        <ActionButton
-          label="KOKPIT"
-          tone="green"
-          variant="solid"
-          size="md"
-          icon="start"
-          onPress={onCockpit}
-          style={styles.claimPrimary}
-        />
-        <ActionButton
-          label="ZDAJ SAMOLOT"
-          tone="neutral"
-          variant="secondary"
-          size="md"
-          onPress={onRelease}
-        />
-      </View>
-    </Card>
-  );
-}
+// `ClaimCard` („samolot w ręce", KOKPIT / ZDAJ SAMOLOT) usunięty 2026-08-10 —
+// kokpit jest modalny, więc ten stan nie miał jak pojawić się na 01.
 
 /**
  * `.bracket-row` — jedna godzina klamry z podpisem, SKĄD pochodzi.
@@ -605,21 +557,7 @@ function EmptyLegs() {
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
 
-  // ── karta samolotu w ręce ──────────────────────────────────────────────────
-  claimHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingTop: 13,
-    paddingBottom: 11,
-  },
-  claimId: { flexShrink: 1, gap: 3 },
-  claimReg: { fontSize: 19, lineHeight: 23, letterSpacing: 1.5, fontFamily: fontFamily.monoBold },
-  claimSince: { fontSize: 9, lineHeight: 13, letterSpacing: 1, textTransform: 'uppercase' },
-  claimActions: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 12 },
-  claimPrimary: { flex: 1 },
+  // (style karty claimu odeszły razem z `ClaimCard`, 2026-08-10)
 
   // ── klamra ─────────────────────────────────────────────────────────────────
   bracketRow: {

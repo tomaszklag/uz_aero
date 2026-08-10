@@ -66,6 +66,25 @@ export interface ClaimInput extends SessionContext {
   gpsTime?: EpochMillis | null;
 }
 
+/** Wejście `manualFlight` (ekran 15) — kompletna sesja wpisana po fakcie. */
+export interface ManualFlightInput {
+  sessionUuid: string;
+  aircraftId: string;
+  picId: string;
+  dualId: string | null;
+  times: {
+    engineStart: EpochMillis;
+    takeoff: EpochMillis;
+    landing: EpochMillis;
+    engineStop: EpochMillis;
+  };
+  /** Początek łańcucha MH — przekazanie z cache (logika: `initialReadingFor`). */
+  initialReading: FuelMhReading;
+  /** Odczyt po locie — WYMAGANY, staje się przekazaniem (te same reguły co 09b). */
+  finalReading: FuelMhReading;
+  notes?: string | null;
+}
+
 /** Wejście `drop` — numer wyniesienia i klient dopełniane z projekcji. */
 export interface DropInput {
   jumpers: JumperCounts;
@@ -231,6 +250,94 @@ export class SessionCommands {
     // Czyścimy dopiero PO udanym zapisie — odrzucone zdanie zostawia klucz.
     await this.repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);
     return result;
+  }
+
+  // ── ręczny wpis CAŁEGO lotu (ekran 15, model 2026-08-10) ────────────────────
+
+  /**
+   * Tworzy KOMPLETNĄ sesję po fakcie: przejęcie → preflight → jeden bieg silnika
+   * z jednym lotem → zdanie z odczytami. Dla lotów zapisanych poza telefonem
+   * (papier, rozładowana bateria).
+   *
+   * Dwie rzeczy różnią tę ścieżkę od zwykłych komend:
+   *  • **czasy pilota jadą w `gpsTime`** (eventTime = gpsTime ?? deviceTime, §5.1) —
+   *    chwila zapisu zostaje w `deviceTime`, dokładnie jak przy wpisie ręcznym 05f.
+   *    Wyjątkiem jest `day_close`: BEZ gpsTime, bo zatwierdzenie zapada TERAZ i od
+   *    „teraz" ma biec okno korekty — wpis sprzed dwóch dni z kotwicą w przeszłości
+   *    rodziłby się z oknem już wygasłym;
+   *  • **próba generalna przed pierwszym zapisem**: strumień jest append-only i nie ma
+   *    transakcji, więc odrzucone piąte zdarzenie zostawiłoby osieroconą, otwartą
+   *    sesję. Wszystkie kandydaty przechodzą przez `checkAppend` na stanie liczonym
+   *    w pamięci — zapis rusza dopiero, gdy przejdzie KOMPLET.
+   *
+   * Świadomie NIE dotykamy `session_meta` (bieżąca sesja, klucz usługi GPS): to wpis
+   * historyczny — restart aplikacji nie ma prawa „wznowić" pilota w cudzej przeszłości.
+   */
+  async manualFlight(input: ManualFlightInput): Promise<CommandResult> {
+    const ctx: SessionContext = {
+      sessionUuid: input.sessionUuid,
+      aircraftId: input.aircraftId,
+      picId: input.picId,
+      dualId: input.dualId,
+    };
+
+    type Draft = { type: EventType; payload: unknown; gpsTime?: EpochMillis };
+    const drafts: Draft[] = [
+      {
+        type: 'session_claim',
+        payload: { mode: 'free', previousPicId: null },
+        gpsTime: input.times.engineStart,
+      },
+      {
+        type: 'preflight_confirm',
+        payload: {
+          // Wpis po fakcie nie pyta o rodzaj operacji (mockup 15) — „inne" jest
+          // jedyną uczciwą wartością; szczegóły niesie pole uwag.
+          operation: 'inne',
+          reading: input.initialReading,
+          notes: input.notes ?? null,
+        },
+        gpsTime: input.times.engineStart,
+      },
+      { type: 'engine_start', payload: {}, gpsTime: input.times.engineStart },
+      { type: 'takeoff', payload: { method: 'manual' }, gpsTime: input.times.takeoff },
+      { type: 'landing', payload: { method: 'manual' }, gpsTime: input.times.landing },
+      { type: 'engine_stop', payload: {}, gpsTime: input.times.engineStop },
+      {
+        type: 'day_close',
+        payload: { finalReading: input.finalReading, noFlightReason: null },
+      },
+    ];
+
+    const limits = await this.limitsFor(input.aircraftId);
+
+    // Próba generalna: stemplujemy i sprawdzamy KAŻDE zdarzenie na stanie liczonym
+    // w pamięci, zanim jakiekolwiek trafi do bazy.
+    const stamped = [];
+    let state = projectSession([]);
+    const warnings = [];
+    for (const draft of drafts) {
+      const candidate = this.repo.stampEvent({
+        sessionUuid: ctx.sessionUuid,
+        aircraftId: ctx.aircraftId,
+        picId: ctx.picId,
+        dualId: ctx.dualId,
+        type: draft.type,
+        payload: draft.payload,
+        ...(draft.gpsTime !== undefined ? { gpsTime: draft.gpsTime } : {}),
+      } as AppendEventInput);
+      const violations = checkAppend(state, candidate, limits);
+      assertNoErrors(violations);
+      warnings.push(...warningsOf(violations));
+      stamped.push(candidate);
+      state = projectSession([...stamped]);
+    }
+
+    let last = stamped[0]!;
+    for (const candidate of stamped) {
+      last = await this.repo.appendStamped(candidate);
+    }
+    return { event: last, warnings };
   }
 
   // ── wspólna ścieżka zapisu ──────────────────────────────────────────────────

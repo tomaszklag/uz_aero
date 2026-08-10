@@ -59,7 +59,7 @@ function leg(from: string, to: string, over: Partial<Leg> = {}): Leg {
   };
 }
 
-/** Sesja z mockupu 09B: SP-KLM, jeden wzlot 13:40 → 15:10, 96 L i 1239:39 przy przejęciu. */
+/** Sesja z mockupu 09B: SP-KLM, jeden bieg 13:40 → 15:10 z lotem 13:47 → 15:08. */
 function session(over: Partial<SessionState> = {}): SessionState {
   return {
     ...emptySessionState(),
@@ -72,6 +72,17 @@ function session(over: Partial<SessionState> = {}): SessionState {
     mh: { start: 1239.65, end: null, deltaH: null },
     fuel: { startL: 96, addedL: 0, endL: null, consumedL: null, lastReadingL: 96 },
     legs: [leg('13:40', '15:10')],
+    flights: [
+      {
+        index: 1,
+        method: 'auto',
+        takeoffAt: at('13:47'),
+        landingAt: at('15:08'),
+        durationMs: at('15:08') - at('13:47'),
+        takeoffUuid: 't-1',
+        landingUuid: 'l-1',
+      },
+    ],
     blockTimeMs: at('15:10') - at('13:40'),
     flightTimeMs: at('15:08') - at('13:47'),
     ...over,
@@ -98,16 +109,22 @@ beforeEach(() => {
 });
 
 describe('buildRelease — który wariant i co wiemy', () => {
-  it('sesja z wzlotami to 09B: pasek wyniku i godzina przejęcia ze strumienia', () => {
+  it('sesja z biegiem to 09B: pasek wyniku, przegląd lotów i godzina przejęcia', () => {
     const vm = buildRelease(session(), at('17:40'))!;
 
     expect(vm.withoutLeg).toBe(false);
     expect(vm.summary).toEqual({
-      legs: '1',
+      flights: '1',
       blockLabel: '1:30',
       flightLabel: '1:21',
       heldAt: '13:35',
     });
+    // Przegląd przejęty z dawnego ekranu 09 (2026-08-10): czasy z detekcji do
+    // przejrzenia przed zatwierdzeniem logu.
+    expect(vm.flightReview.map((r) => [r.key, r.value])).toEqual([
+      ['Lot 1', '13:47 → 15:08 · 1:21'],
+      ['Silnik', '13:40 → 15:10 · blok 1:30'],
+    ]);
   });
 
   it('sesja bez wzlotu to 09C — z miarą, jak długo samolot był zajęty', () => {
@@ -187,7 +204,7 @@ describe('rozliczenie sesji', () => {
     const rows = balanceRows(session(), { fuelL: 62, mh: 1241.15 }, norm());
 
     expect(rows.map((r) => [r.key, r.value])).toEqual([
-      ['Wzloty', '1 · 13:40 → 15:10'],
+      ['Sesja', '13:40 → 15:10 · 1 lot'],
       ['Paliwo start / koniec', '96 L → 62 L'],
       ['Średnie zużycie', '22,7 L/h · norma 20–24 L/h'],
       ['Motogodziny Δ', '+1:30'],
@@ -290,8 +307,9 @@ describe('intencja wejścia — zdanie maszyny vs zamknięcie dnia (§3.6a)', ()
   it('CTA i baner mówią, co się zaraz stanie — nie odwrotnie', () => {
     // Baner 09B tłumaczy, że dzień trwa dalej. Wyświetlony pilotowi, który właśnie
     // zamyka dzień, mówiłby dokładną odwrotność tego, co robi przycisk pod nim.
-    expect(releaseCta('aircraft')).toBe('ZDAJ SAMOLOT');
-    expect(releaseCta('aircraft_and_duty')).toBe('ZDAJ SAMOLOT I ZAMKNIJ DZIEŃ');
+    // Zdanie = zatwierdzenie logu sesji (2026-08-10) — napis to zapowiada.
+    expect(releaseCta('aircraft')).toBe('ZDAJ I ZATWIERDŹ LOG');
+    expect(releaseCta('aircraft_and_duty')).toBe('ZDAJ, ZATWIERDŹ I ZAMKNIJ DZIEŃ');
 
     expect(releaseNotice('aircraft')).toContain('nie kończysz dnia');
     expect(releaseNotice('aircraft_and_duty')).toContain('24 h');

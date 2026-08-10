@@ -94,7 +94,6 @@ export * from './data/ParamGrid';
 export * from './data/PhaseHero';
 export * from './data/CockpitActions';
 export * from './data/EventLog';
-export * from './data/DayLog';
 export * from './data/ClaimStrip';
 export * from './data/FuelStrip';
 export * from './data/ActionGrid';

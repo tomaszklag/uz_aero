@@ -198,12 +198,12 @@ export function ReleaseAircraftScreen({
             }
           />
           {/* Bilans sesji zostaje na ekranie, gdy pilot przewija formularz: to z nim
-              porównuje przyrost licznika, który właśnie przepisuje. Sesja bez wzlotu
+              porównuje przyrost licznika, który właśnie przepisuje. Sesja bez lotu
               nie ma czego podsumowywać — paska po prostu nie ma. */}
           {!withoutLeg && (
             <SummaryStrip
               items={[
-                { value: vm.summary.legs, label: 'Wzlotów' },
+                { value: vm.summary.flights, label: 'Loty' },
                 { value: vm.summary.blockLabel, label: 'Blok' },
                 { value: vm.summary.flightLabel, label: 'Lot' },
                 { value: vm.summary.heldAt, label: 'Przejęty' },
@@ -280,13 +280,26 @@ export function ReleaseAircraftScreen({
               text={
                 `Przejęcie samolotu zostaje w rejestrze — administrator widzi, że ` +
                 `${vm.aircraftId} był zajęty i dlaczego nie poleciał. Twój dzień liczy się ` +
-                'dalej: to nie był wzlot, ale byłeś na miejscu.'
+                'dalej: to nie był lot, ale byłeś na miejscu.'
               }
             />
           </>
         ) : (
           <>
-            {/* ── odczyt końcowy: JEDYNE miejsce w nowym flow, gdzie jest wymagany ── */}
+            {/* ── PRZEGLĄD LOTÓW — sekcja przejęta z dawnego ekranu 09 (2026-08-10).
+                Czasy z detekcji są TYLKO do przejrzenia: poprawki robi się korektą
+                w logu kokpitu (04c), zanim zapis tego ekranu zatwierdzi log. Stoi NAD
+                odczytami, bo kolejność pytań brzmi: najpierw „czy to się zgadza",
+                potem „ile zostało". ── */}
+            <Card title="Loty tej sesji · czasy UTC · z detekcji" flush>
+              <View style={styles.balance}>
+                {vm.flightReview.map((row) => (
+                  <KeyValueRow key={row.key} label={row.key} value={row.value} />
+                ))}
+              </View>
+            </Card>
+
+            {/* ── odczyt końcowy: wymagany — zapis ZATWIERDZA log sesji ── */}
             <Card
               title="Odczyt końcowy"
               flush

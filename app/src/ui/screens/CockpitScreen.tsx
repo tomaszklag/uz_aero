@@ -36,7 +36,6 @@ import {
   Banner,
   Card,
   CockpitActions,
-  DayLog,
   DetectToast,
   DropSheet,
   FuelStrip,
@@ -62,10 +61,9 @@ import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
-import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
+import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
 import { fuelTone } from './logic/fuelNorm';
 import { buildCockpitFuel } from './logic/cockpitFuel';
-import { cyclesLabel } from './logic/cockpitPeek';
 import { flightsBadge } from './logic/statsDay';
 import {
   gpsAcquiringText,
@@ -571,52 +569,70 @@ export function CockpitScreen({
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TRYB GROUND (mockup 04) — przewijalny ekran dnia.
+  // TRYB GROUND — DWA STANY (model 2026-08-10, mockupy 04a i 04):
+  //   • PRZED uruchomieniem: hero START ENGINE, tankowanie, zmiana załogi,
+  //     zdanie bez lotu;
+  //   • PO zatrzymaniu: hero ZDAJ SAMOLOT — drugiego startu NIE MA
+  //     (SESSION_ALREADY_RAN), tankowanie nadal, lista ręczna do naprawy
+  //     przegapionych zdarzeń przed zatwierdzeniem logu.
   // ─────────────────────────────────────────────────────────────────────────
-  const daySections = buildDaySections(events, projection, mhFormat);
+  const sessionEnded = projection.legs.some((l) => l.stoppedAt != null);
+
+  // Płaska oś JEDNEJ sesji (mockup 04) — harmonijka „CYKL n" odeszła razem z modelem
+  // wielu cykli. Tankowanie przed startem i po zatrzymaniu to zwykłe wpisy tej osi.
+  const sessionLogRows = buildLogRows(events, projection, mhFormat);
 
   /**
-   * Akcje naziemne (`.action-grid`). Każda niesie podpis ze stanem, żeby pilot widział,
-   * czy warto tam wchodzić, bez otwierania ekranu i wracania.
+   * Akcje naziemne (`.action-grid`) — skład zależy od STANU sesji, nie od jednej listy:
+   *  • zmiana załogi tylko PRZED startem (po biegu nowa załoga = nowe przejęcie),
+   *  • lista ręczna tylko PO biegu (pusta sesja nie ma czego naprawiać),
+   *  • kafelek zdania tylko PRZED startem (po biegu zdanie awansowało na hero);
+   *    prowadzi wtedy do wariantu 09C — rezygnacji bez lotu.
    */
-  const groundActions: ActionCardSpec[] = [
-    {
-      id: 'refuel',
-      icon: 'refuel',
-      label: 'Tankowanie',
-      tone: 'amber',
-      // Podpis zależy od tego, czy pasek paliwa jest na ekranie: gdy jest, kafelek nie
-      // powtarza litrów; gdy go nie ma, to ON niesie stan zbiorników (`cockpitFuel.ts`).
-      sub: fuel.refuelSub,
-      onPress: () => navigation.navigate('Refuel'),
-    },
-    {
-      id: 'crew',
-      icon: 'crew',
-      label: 'Zmiana załogi',
-      sub: `PIC: ${projection.picId ?? '—'}${projection.dualId != null ? ` · DUAL: ${projection.dualId}` : ''}`,
-      onPress: () => navigation.navigate('CrewChange'),
-    },
-    {
-      id: 'manual',
-      icon: 'manual-log',
-      label: 'Lista ręczna',
-      // Odmiana z `flightsBadge` — „1 lotów" na żywym kokpicie wyglądało jak literówka
-      // w przyrządzie. Ta sama funkcja liczy badge na 10 i 11.
-      sub: `Fallback GPS · ${flightsBadge(projection.flights.length)}`,
-      onPress: () => navigation.navigate('ManualLog'),
-    },
-    {
-      id: 'release',
-      icon: 'end-day',
-      label: 'Zdaj samolot',
-      tone: 'red',
-      // Nie „Zakończ dzień": zdanie maszyny NIE kończy służby pilota (§3.6a). Kafelek
-      // prowadzi na 09B, gdzie odczyt liczników jest wymagany, bo staje się przekazaniem.
-      sub: 'Odczyty końcowe · przekazanie',
-      onPress: () => navigation.navigate('ReleaseAircraft'),
-    },
-  ];
+  const refuelAction: ActionCardSpec = {
+    id: 'refuel',
+    icon: 'refuel',
+    label: 'Tankowanie',
+    tone: 'amber',
+    // Podpis zależy od tego, czy pasek paliwa jest na ekranie: gdy jest, kafelek nie
+    // powtarza litrów; gdy go nie ma, to ON niesie stan zbiorników (`cockpitFuel.ts`).
+    sub: fuel.refuelSub,
+    onPress: () => navigation.navigate('Refuel'),
+  };
+
+  const groundActions: ActionCardSpec[] = sessionEnded
+    ? [
+        refuelAction,
+        {
+          id: 'manual',
+          icon: 'manual-log',
+          label: 'Lista ręczna',
+          // Odmiana z `flightsBadge` — „1 lotów" na żywym kokpicie wyglądało jak
+          // literówka w przyrządzie. Ta sama funkcja liczy badge na 10 i 11.
+          sub: `Fallback GPS · ${flightsBadge(projection.flights.length)}`,
+          onPress: () => navigation.navigate('ManualLog'),
+        },
+      ]
+    : [
+        refuelAction,
+        {
+          id: 'crew',
+          icon: 'crew',
+          label: 'Zmiana załogi',
+          sub: `PIC: ${projection.picId ?? '—'}${projection.dualId != null ? ` · DUAL: ${projection.dualId}` : ''}`,
+          onPress: () => navigation.navigate('CrewChange'),
+        },
+        {
+          id: 'release',
+          icon: 'end-day',
+          label: 'Zdaj samolot',
+          tone: 'red',
+          // Przed startem zdanie = rezygnacja z lotu (pogoda, usterka) — wariant 09C
+          // włączy się na ekranie zdania sam, brakiem lotów.
+          sub: 'Nie lecisz? Zdanie bez lotu',
+          onPress: () => navigation.navigate('ReleaseAircraft'),
+        },
+      ];
 
   return (
     <Screen scroll padded={false}>
@@ -641,16 +657,31 @@ export function CockpitScreen({
       />
 
       <View style={{ padding: theme.spacing.lg, gap: 14 }}>
-        <ActionButton
-          label="START ENGINE"
-          tone="green"
-          size="hero"
-          icon="start"
-          holdMs={2000}
-          busy={busy}
-          hint="Przytrzymaj 2 sekundy aby potwierdzić"
-          onPress={handleStart}
-        />
+        {/* Hero mówi jedyną rzecz, która została do zrobienia. Po zatrzymaniu silnika
+            drugiego STARTU nie ma (sesja = jeden bieg, SESSION_ALREADY_RAN) — zostaje
+            oddanie maszyny z odczytami. Bez przytrzymania: to nawigacja do formularza
+            z własnym potwierdzeniem, nie akcja nieodwracalna. */}
+        {sessionEnded ? (
+          <ActionButton
+            label="ZDAJ SAMOLOT"
+            tone="red"
+            size="hero"
+            icon="end-day"
+            hint="Odczyt paliwa i motogodzin · zatwierdzenie logu sesji"
+            onPress={() => navigation.navigate('ReleaseAircraft')}
+          />
+        ) : (
+          <ActionButton
+            label="START ENGINE"
+            tone="green"
+            size="hero"
+            icon="start"
+            holdMs={2000}
+            busy={busy}
+            hint="Przytrzymaj 2 sekundy aby potwierdzić"
+            onPress={handleStart}
+          />
+        )}
 
         {/* KOKPIT JEST STANEM MODALNYM (decyzja 2026-08-10) — stąd nie ma paska sesji
             ani żadnego innego wyjścia na 01. Kto trzyma samolot, oddaje go przez „Zdaj
@@ -678,19 +709,17 @@ export function CockpitScreen({
         {messages}
 
         <Card
-          // `cyclesLabel` — ten sam nagłówek co w podglądzie 04b, gdzie odmiana była
-          // od początku poprawna („1 cykl", nie „1 cykli").
-          title={`Log dnia · UTC · ${cyclesLabel(projection.legs.length)} · ${projection.takeoffCount} T/O`}
+          // Log SESJI, nie dnia (mockup 04): jedna płaska oś od przejęcia do teraz,
+          // z liczbą LOTÓW w nagłówku — historia dnia mieszka na 01 i w rozliczeniu.
+          title={`Log sesji · UTC · ${flightsBadge(projection.flights.length)}`}
           flush
         >
-          {/* Log dnia jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków
+          {/* Log jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków
               (korekta = świadoma operacja w Liście ręcznej 08 i statystykach 10; tam
-              mieszka arkusz 04c). Zamknięte cykle zwijają się do nagłówków, ostatni
-              zostaje rozwinięty — świeża pamięć dnia (obie decyzje 2026-08-04). */}
-          <DayLog
-            sections={daySections}
-            initiallyExpanded="last"
-            emptyText="Brak zdarzeń — zacznij od START ENGINE."
+              mieszka arkusz 04c). */}
+          <EventLog
+            rows={sessionLogRows}
+            emptyText="Brak wpisów — uruchom silnik, aby rozpocząć pierwszy lot."
           />
         </Card>
 

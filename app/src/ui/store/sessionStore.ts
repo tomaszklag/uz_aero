@@ -47,6 +47,7 @@ import {
   type ClaimInput,
   type CommandResult,
   type DropInput,
+  type ManualFlightInput,
   type EventsRepo,
   type SessionContext,
   type SyncOutcome,
@@ -142,6 +143,11 @@ export interface SessionStore {
   drop(input: DropInput): Promise<CommandResult>;
   crewChange(payload: CrewChangePayload): Promise<CommandResult>;
   manualLogEntry(payload: ManualLogEntryPayload): Promise<CommandResult>;
+  /**
+   * Ręczny wpis CAŁEGO lotu z 01 (ekran 15) — tworzy kompletną, ZAKOŃCZONĄ sesję.
+   * Nie wymaga kontekstu: sesja historyczna nie jest „bieżącą" i nie ma jej wznawiać.
+   */
+  manualFlight(input: ManualFlightInput): Promise<CommandResult>;
   /** Zdanie samolotu (09B) = ZATWIERDZENIE logu sesji — NIE kończy dnia pilota. */
   releaseAircraft(payload: DayClosePayload): Promise<CommandResult>;
 
@@ -322,6 +328,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     manualLogEntry(payload) {
       return run(() => requireCommands().manualLogEntry(requireContext(), payload));
+    },
+
+    manualFlight(input) {
+      return run(() => requireCommands().manualFlight(input));
     },
 
     releaseAircraft(payload) {

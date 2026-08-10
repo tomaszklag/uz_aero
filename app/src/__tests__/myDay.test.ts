@@ -80,7 +80,7 @@ beforeEach(() => {
 });
 
 describe('buildMyDay — scenariusz mockupu 01', () => {
-  const vm = () => buildMyDay(dayOf(axa(), klm()), at('15:25'), 'SP-KLM');
+  const vm = () => buildMyDay(dayOf(axa(), klm()), at('15:25'));
 
   it('grupuje sesje po maszynach, zachowując oś czasu', () => {
     const groups = vm().groups;
@@ -88,9 +88,6 @@ describe('buildMyDay — scenariusz mockupu 01', () => {
     expect(groups.map((g) => g.aircraftId)).toEqual(['SP-AXA', 'SP-KLM']);
     expect(groups[0]!.sessions.map((x) => x.index)).toEqual([1, 2]);
     expect(groups[1]!.sessions.map((x) => x.index)).toEqual([3]);
-    // Trzymana jest wyłącznie ostatnia grupa — wcześniejsze maszyny pilot zdał.
-    expect(groups[0]!.held).toBe(false);
-    expect(groups[1]!.held).toBe(true);
   });
 
   it('wiersz sesji niesie czasy, liczbę lotów i oba czasy trwania', () => {
@@ -116,7 +113,7 @@ describe('buildMyDay — scenariusz mockupu 01', () => {
 
 describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
   it('deklaracja: „poprawione" z odniesieniem do pierwszego wzlotu', () => {
-    const start = buildMyDay(dayOf(axa()), at('12:00'), null).start;
+    const start = buildMyDay(dayOf(axa()), at('12:00')).start;
 
     expect(start.value).toBe('07:10');
     expect(start.origin).toBe('declared');
@@ -125,7 +122,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
   });
 
   it('brak deklaracji: godzina z pierwszego wzlotu i taki właśnie podpis', () => {
-    const start = buildMyDay(dayOf(klm()), at('16:00'), null).start;
+    const start = buildMyDay(dayOf(klm()), at('16:00')).start;
 
     expect(start.value).toBe('13:40');
     expect(start.origin).toBe('derived');
@@ -136,7 +133,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
     // Pilot wpisał meldunek 09:00, choć poleciał o 08:12. Klamra obejmuje lot,
     // a ekran nie może udawać, że wpisana godzina jest tą obowiązującą.
     const s = session({ aircraftId: 'SP-AXA', dutyStart: at('09:00'), legs: [leg('08:12', '09:05')] });
-    const start = buildMyDay(dayOf(s), at('12:00'), null).start;
+    const start = buildMyDay(dayOf(s), at('12:00')).start;
 
     expect(start.value).toBe('08:12');
     expect(start.hint).toBe('wpisano 09:00 · liczy się pierwsza sesja 08:12');
@@ -144,7 +141,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
 
   it('służba w toku: koniec pokazuje TRWA, nie zero', () => {
     const s = session({ aircraftId: 'SP-AXA', legs: [leg('08:12', null)] });
-    const vm = buildMyDay(dayOf(s), at('09:00'), 'SP-AXA');
+    const vm = buildMyDay(dayOf(s), at('09:00'));
 
     expect(vm.end.value).toBe('TRWA');
     expect(vm.end.origin).toBe('running');
@@ -153,7 +150,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
   });
 
   it('dzień pusty: obie godziny „— : —", sumy „— —", nigdy zera', () => {
-    const vm = buildMyDay(emptyDutyDay(PIC, DAY0), at('09:00'), null);
+    const vm = buildMyDay(emptyDutyDay(PIC, DAY0), at('09:00'));
 
     expect(vm.empty).toBe(true);
     expect(vm.start.value).toBe('— : —');
@@ -166,7 +163,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
   it('dzień pusty: końca NIE ma czego domykać (mockup 01A — ołówek wygaszony)', () => {
     // 01A: ołówek przy „Koniec służby" ma `opacity:0.35` i tytuł „Nie ma jeszcze czego
     // domykać", a ołówek przy meldunku jest CZYNNY („wpisz, jeśli jesteś od rana").
-    const vm = buildMyDay(emptyDutyDay(PIC, DAY0), at('09:00'), null);
+    const vm = buildMyDay(emptyDutyDay(PIC, DAY0), at('09:00'));
 
     expect(vm.end.editable).toBe(false);
     expect(vm.start.editable).toBe(true);
@@ -183,7 +180,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
       dutyEnd: at('15:40'),
     });
 
-    const vm = buildMyDay(dayOf(a, k), at('15:45'), null);
+    const vm = buildMyDay(dayOf(a, k), at('15:45'));
 
     expect(vm.end.value).toBe('15:40');
     expect(vm.end.origin).toBe('declared');
@@ -202,7 +199,7 @@ describe('buildMyDay — klamra mówi, skąd pochodzi', () => {
     const closed = session({ aircraftId: 'SP-AXA', legs: [leg('08:12', '09:05')], dutyEnd: at('10:00') });
     const again = session({ sessionUuid: 's-klm', aircraftId: 'SP-KLM', legs: [leg('11:00', null)] });
 
-    const vm = buildMyDay(dayOf(closed, again), at('11:30'), 'SP-KLM');
+    const vm = buildMyDay(dayOf(closed, again), at('11:30'));
 
     expect(vm.end.value).toBe('TRWA');
     expect(vm.end.origin).toBe('running');
@@ -229,7 +226,7 @@ describe('buildMyDay — okno korekty po zamknięciu dnia (wariant 01B)', () => 
       closed: true,
       closedAt: at('15:25'),
     });
-    return buildMyDay(dayOf(a, k), at('17:45'), null);
+    return buildMyDay(dayOf(a, k), at('17:45'));
   };
 
   it('podaje DWA terminy, bo okna są dwa (kotwica sesji = ZDANIE, 2026-08-10)', () => {
@@ -243,7 +240,7 @@ describe('buildMyDay — okno korekty po zamknięciu dnia (wariant 01B)', () => 
   });
 
   it('dzień w toku nie ma okna korekty — nie ma czego odliczać', () => {
-    expect(buildMyDay(dayOf(axa(), klm()), at('15:25'), 'SP-KLM').correction).toBeNull();
+    expect(buildMyDay(dayOf(axa(), klm()), at('15:25')).correction).toBeNull();
   });
 
   it('termin sesji liczy się od ZDANIA, nie od zgaszenia silnika', () => {
@@ -257,7 +254,7 @@ describe('buildMyDay — okno korekty po zamknięciu dnia (wariant 01B)', () => 
       closedAt: at('12:00'),
     });
 
-    const c = buildMyDay(dayOf(s), at('17:00'), null).correction;
+    const c = buildMyDay(dayOf(s), at('17:00')).correction;
 
     expect(c!.firstToExpire).toEqual({ startedAt: '10:20', deadline: '7 SIE 12:00' });
   });
@@ -265,14 +262,14 @@ describe('buildMyDay — okno korekty po zamknięciu dnia (wariant 01B)', () => 
 
 describe('closeDayBlocker — kiedy „ZAMKNIJ DZIEŃ" nie ma czego zrobić', () => {
   it('z maszyną w ręce i zgaszonym silnikiem: nic nie blokuje', () => {
-    const vm = buildMyDay(dayOf(axa(), klm()), at('15:25'), 'SP-KLM');
+    const vm = buildMyDay(dayOf(axa(), klm()), at('15:25'));
 
     expect(closeDayBlocker(vm, true)).toBeNull();
   });
 
   it('pracujący silnik: nie ma czego domykać, bo ostatni wzlot trwa', () => {
     const s = session({ aircraftId: 'SP-AXA', legs: [leg('08:12', null)] });
-    const vm = buildMyDay(dayOf(s), at('09:00'), 'SP-AXA');
+    const vm = buildMyDay(dayOf(s), at('09:00'));
 
     expect(closeDayBlocker(vm, true)).toContain('Sesja jeszcze trwa');
   });
@@ -282,14 +279,14 @@ describe('closeDayBlocker — kiedy „ZAMKNIJ DZIEŃ" nie ma czego zrobić', ()
     // tylko przy zdawaniu maszyny. Pilot, który samolot już zdał, nie ma dziś czym
     // zadeklarować końca — do 2026-08-08 przycisk prowadził go w takiej sytuacji
     // na ekran „NIE TRZYMASZ SAMOLOTU", czyli w ślepy zaułek bez wyjaśnienia.
-    const vm = buildMyDay(dayOf(axa(), klm()), at('15:25'), null);
+    const vm = buildMyDay(dayOf(axa(), klm()), at('15:25'));
 
     expect(closeDayBlocker(vm, false)).toContain('zdaniem maszyny');
   });
 
   it('doba z samą deklaracją meldunku nie ma jeszcze czego domykać', () => {
     const s = session({ aircraftId: 'SP-AXA', dutyStart: at('07:10') });
-    const vm = buildMyDay(dayOf(s), at('09:00'), null);
+    const vm = buildMyDay(dayOf(s), at('09:00'));
 
     expect(closeDayBlocker(vm, true)).toContain('czego domykać');
   });
@@ -305,17 +302,15 @@ describe('buildMyDay — powrót do tej samej maszyny', () => {
     const b = session({ sessionUuid: 'b', aircraftId: 'SP-KLM', legs: [leg('10:20', '11:02')] });
     const a2 = session({ sessionUuid: 'a2', aircraftId: 'SP-AXA', legs: [leg('13:40', '15:10')] });
 
-    const groups = buildMyDay(dayOf(a1, b, a2), at('16:00'), 'SP-AXA').groups;
+    const groups = buildMyDay(dayOf(a1, b, a2), at('16:00')).groups;
 
     expect(groups.map((g) => g.aircraftId)).toEqual(['SP-AXA', 'SP-KLM', 'SP-AXA']);
-    expect(groups[0]!.held).toBe(false);
-    expect(groups[2]!.held).toBe(true);
   });
 });
 
 describe('buildMyDay — adresy dla ekranów, które przyjdą później', () => {
   it('grupa i wiersz niosą sesję — bez niej link „Rozliczenie" i ołówek nie mają celu', () => {
-    const vm = buildMyDay(dayOf(axa(), klm()), at('15:25'), 'SP-KLM');
+    const vm = buildMyDay(dayOf(axa(), klm()), at('15:25'));
 
     expect(vm.groups[0]!.sessionUuid).toBe('s-axa');
     expect(vm.groups[1]!.sessionUuid).toBe('s-klm');
@@ -323,7 +318,7 @@ describe('buildMyDay — adresy dla ekranów, które przyjdą później', () => 
   });
 
   it('liczba maszyn doby jest w modelu, nie liczona w widoku', () => {
-    expect(buildMyDay(dayOf(axa(), klm()), at('15:25'), null).totals.aircraftCount).toBe(2);
-    expect(buildMyDay(dayOf(axa()), at('12:00'), null).totals.aircraftCount).toBe(1);
+    expect(buildMyDay(dayOf(axa(), klm()), at('15:25')).totals.aircraftCount).toBe(2);
+    expect(buildMyDay(dayOf(axa()), at('12:00')).totals.aircraftCount).toBe(1);
   });
 });

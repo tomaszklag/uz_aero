@@ -1,12 +1,14 @@
 /**
  * UZ Aero — szkielet nawigacji.
  *
- * Flow (docs `_main.md.txt` §7): 00 login → **01 „Mój dzień" (EKRAN DOMOWY)** →
- * 02/02e/02a przejęcie → 04/04a kokpit ground ⇄ 05x kokpit w locie → 06/07/08 akcje →
- * 09 zamknięcie wzlotu → kolejny wzlot ALBO 09b zdanie samolotu → z powrotem na 01.
+ * Flow (docs `_main.md.txt` §7, model 2026-08-10): 00 login → **01 „Mój dzień"
+ * (EKRAN DOMOWY)** → 02/02e/02a przejęcie → 04a kokpit PRZED uruchomieniem →
+ * 05x kokpit w locie (wiele LOTÓW jednej sesji) → 04 kokpit PO zatrzymaniu (drugiego
+ * startu nie ma) → 09b zdanie = zatwierdzenie logu → z powrotem na 01.
+ * Z 01 także 15 — ręczny wpis całego lotu po fakcie.
  *
  * **Wszystko wraca na 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
- * kroków flow: zaczyna się pierwszym wzlotem i domyka sam na ostatnim (§3.6a). Dlatego
+ * kroków flow: zaczyna się pierwszą sesją i domyka sam na ostatniej (§3.6a). Dlatego
  * w stosie nie ma już ani splasha („NOWY DZIEŃ LOTNY" otwierało coś, czego się nie
  * otwiera), ani ekranu zakończenia dnia — zastąpiło go zdanie SAMOLOTU.
  *
@@ -32,6 +34,7 @@ import {
 } from '../screens/CockpitReadonlyScreen';
 import { CrewChangeScreen } from '../screens/CrewChangeScreen';
 import { ManualLogScreen } from '../screens/ManualLogScreen';
+import { ManualFlightScreen } from '../screens/ManualFlightScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -60,6 +63,8 @@ export type RootStackParamList = {
   Refuel: undefined;
   CrewChange: undefined;
   ManualLog: undefined;
+  /** 15 — ręczny wpis CAŁEGO lotu z 01: kompletna sesja po fakcie (model 2026-08-10). */
+  ManualFlight: undefined;
   /** 09B/09C — zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: ReleaseAircraftParams | undefined;
   Stats: undefined;
@@ -122,6 +127,7 @@ export function RootNavigator({
         <Stack.Screen name="Refuel" component={RefuelScreen} />
         <Stack.Screen name="CrewChange" component={CrewChangeScreen} />
         <Stack.Screen name="ManualLog" component={ManualLogScreen} />
+        <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />

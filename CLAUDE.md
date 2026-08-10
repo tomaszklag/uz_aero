@@ -28,8 +28,11 @@ do usunięcia, ekran 09 scala się z 09b, odczyty przy zdaniu OBOWIĄZKOWE, 09a 
 Etapy pivotu: **A' design+docs ✅** → **B' domena ✅** (SESSION_ALREADY_RAN; `leg_close`
 wycięty z domeny, app i serwera z mechaniczną kaskadą; okno korekty = 24 h od ZDANIA
 z domkniętą granicą; `CURRENT_SCHEMA_VERSION` z powrotem = 1; kanoniczny dzień 22 JUNE
-przebudowany na TRZY sesje z łańcuchem MH przez zdania) → C' app (ekrany 1:1 z nowych
-mockupów) → D' serwer+panel (słownik, oś zdarzeń, admin/) → E' seed+demo.
+przebudowany na TRZY sesje z łańcuchem MH przez zdania) → **C' app ✅** (kokpit
+w dwóch stanach ground z hero ZDAJ SAMOLOT, log = płaska oś jednej sesji bez `DayLog`,
+09b z przeglądem lotów i „ZDAJ I ZATWIERDŹ LOG", 01 bez karty claimu, NOWY ekran 15
+`ManualFlightScreen` + komenda `manualFlight` z próbą generalną przed zapisem) →
+D' serwer+panel (słownik, oś zdarzeń, admin/) → E' seed+demo.
 Opisy etapów B–D niżej zostają jako historia — częściowo już cofnięte.
 **PRZEBUDOWA FLOW** (od 2026-08-06, gałąź `poc-zmiany-flow`) — dzień służby przestał
 być kontenerem na loty (patrz sekcja „Czas służby" niżej). Rozjazd design↔kod jest świadomy

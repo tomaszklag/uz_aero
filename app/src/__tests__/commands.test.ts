@@ -331,3 +331,72 @@ describe('jeden bieg silnika na sesję (2026-08-10)', () => {
     });
   });
 });
+
+/**
+ * Ręczny wpis CAŁEGO lotu (ekran 15) — komenda składa kompletną sesję po fakcie.
+ *
+ * Dwie własności są tu ważniejsze od szczęśliwej ścieżki: czasy pilota mają być czasami
+ * ZDARZEŃ (jadą w `gpsTime`, chwila zapisu zostaje w `deviceTime`), a próba generalna ma
+ * chronić strumień przed osieroconą sesją — odrzucony komplet nie zapisuje NICZEGO.
+ */
+describe('manualFlight — kompletna sesja po fakcie (ekran 15)', () => {
+  const T_START = min(600);
+  const input = (over: object = {}) => ({
+    sessionUuid: 'sess-manual',
+    aircraftId: AC,
+    picId: PIC,
+    dualId: null,
+    times: {
+      engineStart: T_START,
+      takeoff: T_START + 6 * 60_000,
+      landing: T_START + 49 * 60_000,
+      engineStop: T_START + 54 * 60_000,
+    },
+    initialReading: { fuelL: 121, mh: MH_START },
+    finalReading: { fuelL: 98, mh: MH_START + 0.9 },
+    notes: 'lot spisany z kartki',
+    ...over,
+  });
+
+  it('tworzy ZAMKNIĘTĄ sesję z jednym biegiem i jednym lotem o czasach pilota', async () => {
+    const h = setup();
+    h.clock.set(min(700)); // zapis godzinę PO locie — wpis po fakcie
+
+    await h.commands.manualFlight(input());
+    const s = await h.queries.sessionState('sess-manual');
+
+    expect(s.closed).toBe(true);
+    expect(s.legs).toHaveLength(1);
+    expect(s.legs[0]!.startedAt).toBe(T_START);
+    expect(s.legs[0]!.stoppedAt).toBe(T_START + 54 * 60_000);
+    expect(s.flights).toHaveLength(1);
+    expect(s.blockTimeMs).toBe(54 * 60_000);
+    expect(s.fuel.startL).toBe(121);
+    expect(s.fuel.endL).toBe(98);
+    // Okno korekty rusza od TERAZ (zapis), nie od przeszłego zatrzymania silnika —
+    // inaczej wpis sprzed dwóch dni rodziłby się z oknem już wygasłym.
+    expect(s.closedAt).toBe(min(700));
+  });
+
+  it('nie dotyka bieżącej sesji w session_meta — wpis historyczny nie jest „wznowieniem"', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await h.commands.manualFlight(input());
+
+    expect(await h.queries.currentSession()).toBeNull();
+  });
+
+  it('próba generalna: odrzucony komplet nie zapisuje ANI JEDNEGO zdarzenia', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    // Cofnięty licznik MH odbije się dopiero na `day_close` — czyli na SIÓDMYM
+    // kandydacie. Bez próby generalnej sześć wcześniejszych już byłoby w bazie.
+    await expect(
+      h.commands.manualFlight(input({ finalReading: { fuelL: 98, mh: MH_START - 1 } })),
+    ).rejects.toMatchObject({ code: 'MH_REGRESSION' });
+
+    expect(await h.repo.getAllEvents()).toHaveLength(0);
+  });
+});

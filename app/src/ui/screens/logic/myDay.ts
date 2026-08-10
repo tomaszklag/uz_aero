@@ -98,8 +98,6 @@ export interface SessionGroupVm {
   /** Ostatnia sesja tej maszyny w grupie — adres rozliczenia (10). */
   sessionUuid: string;
   sessions: SessionRowVm[];
-  /** Czy ta grupa dotyczy maszyny nadal trzymanej (ostatnia grupa z otwartą sesją). */
-  held: boolean;
 }
 
 /**
@@ -152,15 +150,13 @@ const DASH = '— —';
  * Buduje model widoku ekranu 01.
  *
  * @param duty projekcja służby (`projectDuty`),
- * @param now  „teraz" do liczenia trwającej służby; podaje wołający,
- * @param heldAircraftId samolot aktualnie trzymany przez pilota (`null`, gdy żaden).
+ * @param now  „teraz" do liczenia trwającej służby; podaje wołający.
+ *
+ * Parametru „trzymana maszyna" już nie ma (2026-08-10): kokpit jest modalny, więc
+ * pilot z maszyną w ręce nie ogląda tego ekranu — stan „w ręce" był nieosiągalny.
  */
-export function buildMyDay(
-  duty: DutyDay,
-  now: EpochMillis,
-  heldAircraftId: string | null = null,
-): MyDayVm {
-  const groups = groupContiguously(duty.sessions, heldAircraftId);
+export function buildMyDay(duty: DutyDay, now: EpochMillis): MyDayVm {
+  const groups = groupContiguously(duty.sessions);
   const empty =
     duty.sessions.length === 0 && duty.declaredStart == null && duty.declaredEnd == null;
   const end = endBracket(duty);
@@ -327,10 +323,7 @@ function endRunningHint(duty: DutyDay, lastStop: EpochMillis | null): string {
 // Sesje
 // ─────────────────────────────────────────────────────────────────────────────
 
-function groupContiguously(
-  sessions: readonly DutySession[],
-  heldAircraftId: string | null,
-): SessionGroupVm[] {
+function groupContiguously(sessions: readonly DutySession[]): SessionGroupVm[] {
   const groups: SessionGroupVm[] = [];
 
   for (const session of sessions) {
@@ -357,16 +350,8 @@ function groupContiguously(
         aircraftId: session.aircraftId,
         sessionUuid: session.sessionUuid,
         sessions: [row],
-        held: false,
       });
     }
-  }
-
-  // Trzymana jest co najwyżej OSTATNIA grupa — wcześniejsze maszyny pilot już zdał,
-  // nawet jeśli wróci do tej samej rejestracji później w ciągu dnia.
-  const last = groups[groups.length - 1];
-  if (last != null && heldAircraftId != null && last.aircraftId === heldAircraftId) {
-    last.held = true;
   }
 
   return groups;

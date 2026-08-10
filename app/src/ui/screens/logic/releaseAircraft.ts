@@ -38,6 +38,7 @@ import type {
 } from '../../../domain';
 import { duration, litres, motoHours, timeUtc } from '../../format';
 import { normBandLabel } from './fuelNorm';
+import { flightsBadge } from './statsDay';
 
 /**
  * Odczyt w trakcie wpisywania. `null` znaczy „nie wiem" — nigdy „zero litrów"
@@ -50,11 +51,22 @@ export interface DraftReading {
 
 /** Pasek wyniku sesji (09B) — liczby POLICZONE, pilot ich nie wpisuje. */
 export interface ReleaseSummaryVm {
-  legs: string;
+  /** Liczba LOTÓW sesji (start → lądowanie) — model 2026-08-10. */
+  flights: string;
   blockLabel: string;
   flightLabel: string;
   /** Godzina przejęcia („13:35"); „—", gdy strumień nie niesie `session_claim`. */
   heldAt: string;
+}
+
+/**
+ * Wiersz przeglądu lotów (sekcja przejęta z dawnego ekranu 09, scalenie 2026-08-10).
+ * Czasy z detekcji są TYLKO do przejrzenia — poprawki robi się korektą w logu
+ * kokpitu (04c), zanim zdanie zatwierdzi log.
+ */
+export interface FlightReviewVm {
+  key: string;
+  value: string;
 }
 
 /** Wiersz rozliczenia sesji („Paliwo start / koniec" → „96 L → 62 L"). */
@@ -67,9 +79,11 @@ export interface BalanceRowVm {
 
 export interface ReleaseVm {
   aircraftId: string;
-  /** 09C: sesja bez ani jednego wzlotu — silnik ani razu nie ruszył. */
+  /** 09C: sesja bez lotu — silnik ani razu nie ruszył. */
   withoutLeg: boolean;
   summary: ReleaseSummaryVm;
+  /** Loty sesji + zakres pracy silnika — przegląd przed zatwierdzeniem (09B). */
+  flightReview: FlightReviewVm[];
   /** „Trzymany 09:10 → 10:25 · 1:15" (09C); `null` bez zdarzenia przejęcia. */
   heldLabel: string | null;
   /** Wartości startowe pól odczytu — najlepsze, co wiemy z rejestru. */
@@ -92,11 +106,12 @@ export function buildRelease(state: SessionState, now: EpochMillis): ReleaseVm |
     aircraftId: state.aircraftId,
     withoutLeg: state.legs.length === 0,
     summary: {
-      legs: `${state.legs.length}`,
+      flights: `${state.flights.length}`,
       blockLabel: duration(state.blockTimeMs),
       flightLabel: duration(state.flightTimeMs),
       heldAt: claimedAt != null ? timeUtc(claimedAt) : '—',
     },
+    flightReview: flightReviewRows(state),
     // 09C nie ma czasów wzlotu, więc jedyną miarą tej sesji jest to, JAK DŁUGO samolot
     // był zajęty — administrator zobaczy w rejestrze, że stał zablokowany i dlaczego.
     heldLabel:
@@ -106,6 +121,34 @@ export function buildRelease(state: SessionState, now: EpochMillis): ReleaseVm |
     initial: { fuelL: state.fuel.lastReadingL, mh: lastKnownMh(state)?.value ?? null },
     mhFormat: state.mhFormat ?? 'decimal',
   };
+}
+
+/**
+ * Wiersze przeglądu: „Lot 1 · 13:48 → 14:35 · 0:47" + zakres pracy silnika.
+ * Lot w powietrzu pokazuje „…" zamiast lądowania — reguła i tak nie pozwoli zdać
+ * maszyny w locie (ENGINE_RUNNING_AT_DAY_CLOSE), ale przegląd musi być totalny.
+ */
+function flightReviewRows(state: SessionState): FlightReviewVm[] {
+  const rows: FlightReviewVm[] = state.flights.map((f) => ({
+    key: `Lot ${f.index}`,
+    value:
+      f.landingAt != null
+        ? `${timeUtc(f.takeoffAt)} → ${timeUtc(f.landingAt)} · ${duration(f.durationMs)}`
+        : `${timeUtc(f.takeoffAt)} → …`,
+  }));
+
+  const run = state.legs[0];
+  if (run != null) {
+    rows.push({
+      key: 'Silnik',
+      value:
+        run.stoppedAt != null
+          ? `${timeUtc(run.startedAt)} → ${timeUtc(run.stoppedAt)} · blok ${duration(run.durationMs)}`
+          : `${timeUtc(run.startedAt)} → trwa`,
+    });
+  }
+
+  return rows;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,14 +246,13 @@ export function balanceRows(
   const format = state.mhFormat ?? 'decimal';
   const rows: BalanceRowVm[] = [];
 
-  const first = state.legs[0];
-  const last = state.legs[state.legs.length - 1];
-  if (first != null && last != null) {
+  const run = state.legs[0];
+  if (run != null) {
     rows.push({
-      key: 'Wzloty',
-      value: `${state.legs.length} · ${timeUtc(first.startedAt)} → ${
-        last.stoppedAt != null ? timeUtc(last.stoppedAt) : 'trwa'
-      }`,
+      key: 'Sesja',
+      value: `${timeUtc(run.startedAt)} → ${
+        run.stoppedAt != null ? timeUtc(run.stoppedAt) : 'trwa'
+      } · ${flightsBadge(state.flights.length)}`,
       amber: false,
     });
   }
@@ -282,9 +324,12 @@ export function releasePayload(
   };
 }
 
-/** Napis na przycisku zapisu — musi zapowiadać KOMPLET tego, co się stanie. */
+/**
+ * Napis na przycisku zapisu — musi zapowiadać KOMPLET tego, co się stanie.
+ * Zdanie jest ZATWIERDZENIEM logu sesji (model 2026-08-10), więc napis to mówi.
+ */
 export function releaseCta(intent: ReleaseIntent): string {
-  return intent === 'aircraft_and_duty' ? 'ZDAJ SAMOLOT I ZAMKNIJ DZIEŃ' : 'ZDAJ SAMOLOT';
+  return intent === 'aircraft_and_duty' ? 'ZDAJ, ZATWIERDŹ I ZAMKNIJ DZIEŃ' : 'ZDAJ I ZATWIERDŹ LOG';
 }
 
 /**
