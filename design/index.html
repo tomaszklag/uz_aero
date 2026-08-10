@@ -309,21 +309,20 @@
   <span class="flow-sep">→</span>
   <a href="02a-preflight.html" class="flow-step">02A Liczniki 3/3</a>
   <span class="flow-sep">→</span>
-  <a href="04a-cockpit-ground.html" class="flow-step">04A Kokpit (pusty)</a>
+  <a href="04a-cockpit-ground.html" class="flow-step">04A Przed startem</a>
   <span class="flow-sep">→</span>
-  <a href="04-cockpit-ground.html" class="flow-step">04 Kokpit / Ground</a>
-  <span class="flow-sep">⇄</span>
   <a href="05-cockpit-running.html" class="flow-step">05 Kokpit / Running</a>
   <span class="flow-sep">→</span>
-  <a href="09-zamknij-lot.html" class="flow-step">09 Zamknij lot</a>
-  <span class="flow-sep">↺</span>
+  <a href="04-cockpit-ground.html" class="flow-step">04 Po zatrzymaniu</a>
+  <span class="flow-sep">→</span>
   <a href="09b-zdaj-samolot.html" class="flow-step">09B Zdaj samolot</a>
   <span class="flow-sep">→</span>
   <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
 </div>
-<!-- Pętla, nie prosta: po zamknięciu wzlotu (09) pilot wraca do kokpitu po kolejny
-     wzlot ALBO zdaje samolot (09B) i ląduje z powrotem w „Mój dzień". Statystyki (10)
-     i status synchronizacji (11) wiszą pod „Mój dzień" — nie są etapem dnia. -->
+<!-- SESJA = JEDEN BIEG SILNIKA (2026-08-10): po STOP ENGINE nie ma drugiego startu —
+     kokpit (04) prowadzi wyłącznie do zdania z obowiązkowymi odczytami (09B), a kolejny
+     lot to NOWE przejęcie. Ekrany 09 i 09A usunięte. Statystyki (10) i status
+     synchronizacji (11) wiszą pod „Mój dzień" — nie są etapem dnia. -->
 <div class="flow-arrow" style="margin-top:10px;">
   <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
   <span class="flow-sep">→</span>
@@ -348,8 +347,8 @@
     <div class="card-num">01</div>
     <div class="card-body">
       <div class="card-title">01-moj-dzien</div>
-      <div class="card-desc">Ekran domowy pilota — klamra służby (meldunek / koniec) wokół listy wzlotów dnia, przekrojowo po wszystkich samolotach. Loty są zapisane, klamra zadeklarowana i zawsze obejmuje loty; domyślnie bierze się z pierwszego i ostatniego wzlotu. Stąd wejście w kokpit, przejęcie samolotu i okno korekty 24 h</div>
-      <div class="card-tags"><span class="tag green">home</span><span class="tag">służba</span><span class="tag">wzloty dnia</span></div>
+      <div class="card-desc">Ekran domowy pilota — klamra służby (meldunek / koniec) wokół listy SESJI dnia (wiersz = jeden bieg silnika z lotami w środku), przekrojowo po wszystkich samolotach. Sesje na liście są zatwierdzone zdaniem; stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
+      <div class="card-tags"><span class="tag green">home</span><span class="tag">służba</span><span class="tag">sesje dnia</span></div>
     </div>
   </a>
   <a href="02-preflight.html" class="card">
@@ -388,15 +387,15 @@
     <div class="card-num">04A</div>
     <div class="card-body">
       <div class="card-title">04a-cockpit-ground</div>
-      <div class="card-desc">Kokpit tuż po przejęciu — zero wzlotów, pusty log, pierwszy START ENGINE. Czasu służby w kokpicie NIE MA, bo służba jest wielkością pilota, nie samolotu; od 2026-08-10 nie ma też paska sesji ani żadnego innego wyjścia na „Mój dzień" — kokpit jest stanem modalnym, a maszynę oddaje się przez 09b</div>
-      <div class="card-tags"><span class="tag green">ground state</span><span class="tag">świeżo przejęty</span></div>
+      <div class="card-desc">Kokpit PRZED uruchomieniem silnika — pusty log sesji, START ENGINE, tankowanie i zmiana załogi; zdanie bez lotu prowadzi na 09C. Kokpit jest stanem modalnym bez wyjścia na „Mój dzień", a sesja = jeden bieg silnika: po STOP wraca się do 04, nie tutaj</div>
+      <div class="card-tags"><span class="tag green">ground state</span><span class="tag">przed startem</span></div>
     </div>
   </a>
   <a href="04-cockpit-ground.html" class="card green">
     <div class="card-num">04</div>
     <div class="card-body">
       <div class="card-title">04-cockpit-ground</div>
-      <div class="card-desc">Kokpit — silnik wyłączony (GROUND), sesja samolotu w toku. Log cykli silnika, skróty akcji</div>
+      <div class="card-desc">Kokpit PO zatrzymaniu silnika — sesja zakończona: hero ZDAJ SAMOLOT (drugiego START ENGINE nie ma), log jednej sesji bez harmonijki cykli, tankowanie dozwolone przed zdaniem</div>
       <div class="card-tags"><span class="tag green">ground state</span><span class="tag">główny</span></div>
     </div>
   </a>
@@ -556,14 +555,8 @@
       <div class="card-tags"><span class="tag red">no GPS</span><span class="tag">degradacja czujnika</span><span class="tag amber">fallback ręczny</span></div>
     </div>
   </a>
-  <a href="09a-zamknij-lot-seria.html" class="card amber">
-    <div class="card-num">09A</div>
-    <div class="card-body">
-      <div class="card-title">09a-zamknij-lot-seria</div>
-      <div class="card-desc">Zamknięcie wzlotu w serii skokowej — siódmy pod rząd: zrzut podsumowany (zapisany w locie na 05E), liczniki zwinięte do jednego wiersza, ostrzeżenie warunkowe po pięciu pominięciach. Cały ekran zamyka się jednym kciukiem, inaczej potwierdzanie po każdym wzlocie byłoby krokiem wstecz wobec papieru</div>
-      <div class="card-tags"><span class="tag amber">seria</span><span class="tag">skoki</span><span class="tag">jeden tap</span></div>
-    </div>
-  </a>
+  <!-- Karta 09A (seria skokowa) usunięta 2026-08-10 — seria z gorącym załadunkiem
+       to dziś JEDNA sesja z wieloma lotami, potwierdzana raz, przy zdaniu. -->
   <a href="09c-zdaj-bez-lotu.html" class="card amber">
     <div class="card-num">09C</div>
     <div class="card-body">
@@ -636,19 +629,13 @@
 
 <div class="section-title">Zamknięcie wzlotu i zdanie samolotu</div>
 <div class="grid">
-  <a href="09-zamknij-lot.html" class="card green">
-    <div class="card-num">09</div>
-    <div class="card-body">
-      <div class="card-title">09-zamknij-lot</div>
-      <div class="card-desc">Potwierdzenie wzlotu po STOP ENGINE — czasy z detekcji do przejrzenia, liczniki OPCJONALNE (wymagane dopiero przy zdaniu samolotu), uwagi. Jednostką potwierdzenia jest wzlot, nie dzień; „Potwierdzę później" nigdy nie więzi pilota przy telefonie</div>
-      <div class="card-tags"><span class="tag green">wzlot</span><span class="tag">potwierdzenie</span><span class="tag">liczniki opcjonalne</span></div>
-    </div>
-  </a>
+  <!-- Karta 09 (zamknięcie wzlotu) usunięta 2026-08-10 — przegląd czasów przeszedł
+       na 09B, odczyty z opcjonalnych stały się obowiązkowe. -->
   <a href="09b-zdaj-samolot.html" class="card red">
     <div class="card-num">09B</div>
     <div class="card-body">
       <div class="card-title">09b-zdaj-samolot</div>
-      <div class="card-desc">Zdanie samolotu — jedyne miejsce w nowym flow, gdzie odczyt liczników jest WYMAGANY, bo staje się przekazaniem i ogniwem łańcucha MH. Baner statusu mówi wprost: zdajesz samolot, nie kończysz dnia — służba liczy się dalej</div>
+      <div class="card-desc">Zdanie samolotu po STOP ENGINE — przegląd lotów sesji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej sesji. Zdajesz samolot, nie kończysz dnia — służba liczy się dalej</div>
       <div class="card-tags"><span class="tag red">zdanie</span><span class="tag">przekazanie</span><span class="tag">łańcuch MH</span></div>
     </div>
   </a>
@@ -674,6 +661,14 @@
       <div class="card-title">14-slad</div>
       <div class="card-desc">Ślad lotu — trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy wysokości i log przeliczonych punktów ze stanem bramki jakości. Wejście z tabeli lotów (10); wszystko liczy się lokalnie — ekran nie pobiera niczego z sieci</div>
       <div class="card-tags"><span class="tag">mapa</span><span class="tag">profil</span><span class="tag">po locie</span></div>
+    </div>
+  </a>
+  <a href="15-reczny-lot.html" class="card">
+    <div class="card-num">15</div>
+    <div class="card-body">
+      <div class="card-title">15-reczny-lot</div>
+      <div class="card-desc">Ręczny wpis CAŁEGO lotu z listy dziennej (model 2026-08-10) — samolot, czasy silnika i lotu, odczyty OBOWIĄZKOWE jak przy zdaniu. Dla lotów zapisanych poza telefonem: papier, rozładowana bateria. Tworzy kompletną sesję z oknem korekty 24 h</div>
+      <div class="card-tags"><span class="tag">wpis po fakcie</span><span class="tag">pełna sesja</span></div>
     </div>
   </a>
   <a href="11-eksport.html" class="card green">

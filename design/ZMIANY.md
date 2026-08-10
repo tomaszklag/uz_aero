@@ -1494,3 +1494,50 @@ czego nie wyłapały przeglądy prowadzone greppem po linkach.
 > Powód: reszta zestawu jest po polsku (`22 CZE`, `22 CZERWCA`), a `AUG` wszedł razem
 > z nowymi ekranami. Aplikacja jest polska — dwie notacje w jednym zestawie to przeoczenie,
 > nie decyzja.
+
+---
+
+## 2026-08-10 — PIVOT MODELU: sesja = jeden bieg silnika (story użytkownika)
+
+Największa zmiana od przebudowy flow 2026-08-06 i częściowe jej odwrócenie. Nowy słownik:
+**sesja** = od uruchomienia do zatrzymania silnika (jeden bieg na sesję), **lot** = od
+startu do lądowania (w sesji wiele lotów, touch and go). Słowo „wzlot" WYCOFANE.
+
+**04A — kokpit PRZED uruchomieniem** (dawniej „świeżo przejęty").
+> Jedyny stan ground przed startem: START ENGINE, tankowanie, zmiana załogi, zdanie bez
+> lotu (→ 09C). „Lista ręczna" znikła — sesja nie ma jeszcze zdarzeń do naprawiania.
+> Log dostał tytuł „Log sesji · SP-AXA · UTC" i pasek paliwa (odczyt właśnie powstał na 02a).
+
+**04 — kokpit PO ZATRZYMANIU** (dawniej „w trakcie dnia, kolejne wzloty").
+> Powód: po STOP ENGINE drugiego startu NIE MA — kolejny lot to nowe przejęcie. Hero
+> START ENGINE zastąpione czerwonym hero ZDAJ SAMOLOT (geometria 1:1). Harmonijka
+> „CYKL 1 / CYKL 2" z tankowaniem między cyklami usunięta razem z akordeonem — log to
+> płaska oś JEDNEJ sesji (tankowanie przed startem, loty, STOP bez chipów odczytu,
+> tankowanie po zatrzymaniu). Akcje: tankowanie + lista ręczna; zmiana załogi i kafelek
+> zdania znikły (nowa załoga = nowe przejęcie; zdanie awansowało na hero).
+
+**09 i 09A — USUNIĘTE.**
+> Powód: nie ma już osobnego „zamknięcia wzlotu" — przegląd czasów z detekcji przeszedł
+> na 09B, odczyty z opcjonalnych stały się obowiązkowe, a seria skokowa z gorącym
+> załadunkiem to dziś JEDNA sesja z wieloma lotami, potwierdzana raz. STOP ENGINE
+> w rodzinie 05 prowadzi teraz do 04, nie do 09.
+
+**09B — zdanie samolotu = zatwierdzenie logu sesji.**
+> Dodany przegląd lotów sesji (czasy z detekcji, poprawki przez korektę 04C przed
+> zdaniem), przycisk „ZDAJ I ZATWIERDŹ LOG". Odczyty jak dotąd WYMAGANE — i stają się
+> ostatnimi wpisami logu. 09C przemianowane na „zdanie bez lotu", odczyty wypełnione
+> wartościami z przejęcia.
+
+**01 / 01A / 01B — wiersz listy = SESJA.**
+> Wiersz niesie czasy silnika, liczbę lotów, blok i czas w powietrzu. Karta „samolot
+> w ręce" usunięta (kokpit jest modalny — pilot z maszyną nie widzi 01), paski „do
+> potwierdzenia" znikły (zatwierdzenie = zdanie), kotwica okna korekty w 01B przesunięta
+> ze „zamknięcia wzlotu" na ZDANIE sesji. Nowy przycisk „DODAJ LOT RĘCZNIE" → 15.
+
+**15 — NOWY ekran: ręczny wpis całego lotu** (story pkt 7).
+> Z listy dziennej, po fakcie: samolot (lista kart), czasy uruchomienie/start/lądowanie/
+> zatrzymanie, odczyty WYMAGANE (te same reguły co przy zdaniu — ogniwo łańcucha MH),
+> uwagi. Jeden lot na wpis; kolejne starty/lądowania dopisuje się korektą po zapisaniu.
+> Różnica wobec 08: 08 naprawia sesję TRWAJĄCĄ (fallback GPS), 15 tworzy ZAKOŃCZONĄ.
+
+**Klamra służby i „Zamknij dzień" — BEZ ZMIAN** (decyzja odłożona do osobnego przemyślenia).

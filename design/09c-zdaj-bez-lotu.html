@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 09C Zdaj samolot · bez wzlotu</title>
+<title>UZ Aero — 09C Zdaj samolot · bez lotu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -75,7 +75,7 @@
   .scroll::-webkit-scrollbar { display:none; }
   .scroll > * { flex-shrink:0; }
 
-  /* Stan pusty — mówi wprost, że nie było wzlotu */
+  /* Stan pusty — mówi wprost, że nie było lotu */
   .empty-card {
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
     padding:24px 20px; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
@@ -169,11 +169,11 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 09C</span>
-  <span class="slug">zdaj samolot · bez wzlotu</span>
+  <span class="slug">zdaj samolot · bez lotu</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 09</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Zdaj samolot bez wzlotu">
+<main class="phone" role="region" aria-label="Mockup — Zdaj samolot bez lotu">
   <div class="status-bar">
     <span>12:25</span>
     <span class="status-right">
@@ -261,7 +261,7 @@
       <div class="status-box">
         <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <span class="status-text">Przejęcie samolotu <b>zostaje w rejestrze</b> — administrator widzi, że
-        SP-ANK był zajęty od 09:10 i dlaczego nie poleciał. Twój dzień liczy się dalej: to nie był wzlot,
+        SP-ANK był zajęty od 09:10 i dlaczego nie poleciał. Twój dzień liczy się dalej: to nie był lot,
         ale był na miejscu.</span>
       </div>
 
@@ -278,32 +278,19 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
-  <a class="vp-item" href="09-zamknij-lot.html">
-    <span class="vp-badge">09</span>
-    <span class="vp-body">
-      <span class="vp-name">Zamknięcie wzlotu — standard</span>
-      <span class="vp-when">Po STOP ENGINE przy operacji innej niż skoki. Czasy z detekcji do przejrzenia, liczniki opcjonalne.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="09a-zamknij-lot-seria.html">
-    <span class="vp-badge amber">09A</span>
-    <span class="vp-body">
-      <span class="vp-name">Zamknięcie wzlotu — seria skokowa</span>
-      <span class="vp-when">Siódmy wzlot pod rząd: zrzut podsumowany, liczniki zwinięte, ostrzeżenie warunkowe po pięciu pominięciach.</span>
-    </span>
-  </a>
+  <!-- 09 i 09A usunięte 2026-08-10 — patrz komentarz w 09B. -->
   <a class="vp-item" href="09b-zdaj-samolot.html">
     <span class="vp-badge red">09B</span>
     <span class="vp-body">
       <span class="vp-name">Zdanie samolotu</span>
-      <span class="vp-when">Koniec pracy z tym samolotem: TU liczniki są wymagane, bo odczyt staje się przekazaniem dla następnego pilota.</span>
+      <span class="vp-when">Po STOP ENGINE: odczyty OBOWIĄZKOWE, zapis zatwierdza log całej sesji (model 2026-08-10).</span>
     </span>
   </a>
   <a class="vp-item active" href="09c-zdaj-bez-lotu.html">
     <span class="vp-badge amber">09C</span>
     <span class="vp-body">
-      <span class="vp-name">Zdanie bez wzlotu</span>
-      <span class="vp-when">Pilot przejął samolot i nie poleciał — pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; liczniki zostają bez zmian z furtką korekty, a jedyne pytanie to powód. Zastępuje dawny „dzień bez lotów" (09A end-of-day), bo w nowym flow dniem nie jest sesja samolotu.</span>
+      <span class="vp-name">Zdanie bez lotu</span>
+      <span class="vp-when">Pilot przejął samolot i nie poleciał — pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; odczyty wypełnione wartościami z przejęcia (MH bez zmian) z furtką korekty, a jedyne pytanie to powód. Wejście: kafelek „Zdaj samolot" w stanie PRZED uruchomieniem silnika (04A).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -314,10 +301,8 @@
   <span>·</span>
   <a href="04a-cockpit-ground.html">← 04A Kokpit</a>
   <span>·</span>
-  <a href="09-zamknij-lot.html">09 Zamknij lot</a>
-  <a href="09a-zamknij-lot-seria.html">09A Seria</a>
   <a href="09b-zdaj-samolot.html">09B Zdaj samolot</a>
-  <a href="09c-zdaj-bez-lotu.html" class="active">09C Bez wzlotu</a>
+  <a href="09c-zdaj-bez-lotu.html" class="active">09C Bez lotu</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień →</a>
 </nav>

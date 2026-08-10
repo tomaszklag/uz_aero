@@ -97,27 +97,8 @@
   .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
   .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
 
-  /* ===== Karta samolotu w ręce =====
-     Stan claimu żyje lokalnie (dane sesji, §Offline-first pkt 1) — zero wariantów offline. */
-  .claim-card {
-    background:var(--surface); border:1px solid var(--green-border);
-    border-radius:14px; overflow:hidden; position:relative;
-  }
-  .claim-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:2px;
-    background:linear-gradient(90deg, transparent, var(--green), transparent);
-  }
-  .claim-head { padding:13px 14px 11px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .claim-id { display:flex; flex-direction:column; gap:3px; }
-  .claim-reg { font-family:var(--font-mono); font-size:19px; font-weight:700; letter-spacing:1.5px; color:var(--green); }
-  .claim-since { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
-  .claim-state {
-    display:inline-flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px;
-    background:var(--surface-raised); border:1px solid var(--border-strong);
-    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-secondary);
-  }
-  .claim-state .dot { width:6px; height:6px; border-radius:50%; background:var(--text-muted); }
-  .claim-actions { display:flex; gap:8px; padding:0 12px 12px; }
+  /* Karta „samolot w ręce" usunięta 2026-08-10 (kokpit modalny → stan nieosiągalny);
+     razem z nią reguły .claim-*. */
 
   /* ===== Klamra służby =====
      Serce ekranu: loty są zapisane, klamra jest zadeklarowana i zawsze obejmuje loty. */
@@ -164,7 +145,7 @@
 
   .leg-row { display:flex; align-items:center; gap:8px; padding:0 6px 0 0; border-bottom:1px solid var(--border); }
   .leg-row:last-child { border-bottom:none; }
-  /* Numer wzlotu = wejście w ślad; kreska pod cyfrą mówi, że jest klikalny (wzorzec z 10) */
+  /* Numer sesji = wejście w ślad; kreska pod cyfrą mówi, że jest klikalny (wzorzec z 10) */
   .leg-num {
     display:inline-flex; align-items:center; justify-content:center;
     min-width:44px; min-height:44px; text-decoration:none; position:relative;
@@ -186,21 +167,8 @@
   }
   .edit-btn:hover { border-color:var(--green-border); color:var(--green); }
 
-  /* Wzlot niepotwierdzony — pilot wyszedł z 09 przez „Potwierdzę później".
-     Czasy są w rejestrze i wchodzą do sum (to fakty z detekcji), brakuje tylko
-     przejrzenia i ewentualnych odczytów. Dlatego pasek jest ZAPROSZENIEM,
-     nie ostrzeżeniem: nic nie jest zepsute, coś jest niedokończone. */
-  .leg-num.pending { color:var(--amber); }
-  .leg-num.pending::after { background:var(--amber); opacity:0.7; }
-  .leg-note {
-    display:flex; align-items:center; gap:8px;
-    padding:9px 12px; min-height:44px;
-    background:var(--amber-muted); border-top:1px solid var(--amber-border);
-    font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; text-transform:uppercase;
-    color:var(--amber); text-decoration:none;
-  }
-  .leg-note svg { flex-shrink:0; }
-  .leg-note .chev { margin-left:auto; }
+  /* Stany „niepotwierdzone" (.leg-num.pending / .leg-note) usunięte 2026-08-10:
+     sesję zatwierdza zdanie samolotu (09b) i dopiero wtedy trafia na listę. */
 
   .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); border-top:1px solid var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
@@ -209,15 +177,8 @@
   .total-val.duty { color:var(--green); }
   .total-sub { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
 
-  /* ===== Przyciski ===== */
-  .btn-primary {
-    display:flex; align-items:center; justify-content:center; gap:10px;
-    flex:1; padding:15px; border-radius:14px;
-    background:var(--green); color:#0D0D0D;
-    font-family:var(--font-display); font-size:19px; letter-spacing:2.5px;
-    border:none; text-decoration:none; cursor:pointer;
-    box-shadow:0 0 24px rgba(46,204,113,0.28);
-  }
+  /* ===== Przyciski =====
+     (.btn-primary odszedł razem z kartą claimu — na 01 nie ma już akcji „na teraz") */
   .btn-secondary {
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; min-height:46px; padding:13px; border-radius:12px;
@@ -295,7 +256,7 @@
         <span class="screen-title">MÓJ DZIEŃ</span>
         <span class="header-subtitle">TMK · 06 SIE 2026 · UTC</span>
       </div>
-      <span class="badge">3 wzloty</span>
+      <span class="badge">3 sesje</span>
     </div>
 
     <div class="scroll">
@@ -307,7 +268,7 @@
       <div class="edu-box" id="eduDuty" style="display:none;">
         <svg class="edu-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
         <span class="edu-text">Loty zapisują się same — <b>służby nie musisz zaczynać ani kończyć</b>.
-        Klamra bierze się z pierwszego i ostatniego wzlotu; popraw ją tylko wtedy, gdy
+        Klamra bierze się z pierwszej i ostatniej sesji; popraw ją tylko wtedy, gdy
         zameldowałeś się wcześniej albo zostajesz dłużej niż samolot.</span>
         <button class="edu-dismiss" onclick="eduCollapse('eduDuty')" title="Rozumiem — schowaj wyjaśnienie">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -318,33 +279,20 @@
         Jak liczy się służba?
       </button>
 
-      <!-- Samolot w ręce — jedyna akcja „na teraz" -->
-      <div class="claim-card">
-        <div class="claim-head">
-          <div class="claim-id">
-            <span class="claim-reg">SP-KLM</span>
-            <span class="claim-since">Twój od 13:35 UTC · Przelot</span>
-          </div>
-          <span class="claim-state"><span class="dot"></span>Silnik wyłączony</span>
-        </div>
-        <div class="claim-actions">
-          <a href="04-cockpit-ground.html" class="btn-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            KOKPIT
-          </a>
-          <a href="09b-zdaj-samolot.html" class="btn-secondary narrow">ZDAJ SAMOLOT</a>
-        </div>
-      </div>
+      <!-- TU STAŁA KARTA „SAMOLOT W RĘCE" (KOKPIT / ZDAJ SAMOLOT) — USUNIĘTA 2026-08-10.
+           Kokpit jest stanem modalnym: pilot trzymający maszynę NIE MOŻE zobaczyć tego
+           ekranu, więc karta nie miała osiągalnego stanu. Na liście dziennej są wyłącznie
+           sesje ZAKOŃCZONE i zatwierdzone zdaniem samolotu (09b). -->
 
-      <!-- Klamra służby: meldunek → wzloty → koniec -->
+      <!-- Klamra służby: meldunek → sesje → koniec -->
       <div class="day-card">
-        <div class="day-head">Służba · wzloty dnia · czasy UTC</div>
+        <div class="day-head">Służba · sesje dnia · czasy UTC</div>
 
         <div class="bracket-row top">
           <span class="bracket-label">Meldunek</span>
           <span class="bracket-body">
             <span class="bracket-value">07:10<span class="bracket-lt">09:10 LT</span></span>
-            <span class="bracket-hint declared">poprawione · pierwszy wzlot 08:12</span>
+            <span class="bracket-hint declared">poprawione · pierwsza sesja 08:12</span>
           </span>
           <a href="01-moj-dzien.html" class="edit-btn" title="Popraw godzinę meldunku">
             <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
@@ -352,7 +300,10 @@
         </div>
 
         <div class="legs">
-          <!-- Grupa = jeden samolot; „rozliczenie" prowadzi do bilansu paliwa i MH (10) -->
+          <!-- WIERSZ = JEDNA SESJA (model 2026-08-10): silnik start → stop, liczba lotów
+               w środku, blok i czas w powietrzu. Grupa = jeden samolot; „rozliczenie"
+               prowadzi do bilansu paliwa i MH (10). Sesje na liście są już ZATWIERDZONE
+               (zatwierdzenie = zdanie samolotu na 09b) — nie ma pasków „do potwierdzenia". -->
           <div class="leg-group-head">
             <span class="leg-group-id">
               <span class="leg-group-reg">SP-AXA</span>
@@ -361,24 +312,26 @@
             <a href="10-statystyki.html" class="leg-group-link">Rozliczenie →</a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad wzlotu 1">1</a>
+            <a href="14-slad.html" class="leg-num" title="Ślad sesji 1">1</a>
             <span class="leg-times">08:12 → 09:05</span>
             <span class="leg-metrics">
+              <span class="leg-metric"><span class="leg-metric-key">Loty</span><span class="leg-metric-val">2</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">0:53</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">0:41</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta wzlotu 1">
+            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 1">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad wzlotu 2">2</a>
+            <a href="14-slad.html" class="leg-num" title="Ślad sesji 2">2</a>
             <span class="leg-times">10:20 → 11:02</span>
             <span class="leg-metrics">
+              <span class="leg-metric"><span class="leg-metric-key">Loty</span><span class="leg-metric-val">1</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">0:42</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">0:35</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta wzlotu 2">
+            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 2">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
@@ -386,33 +339,32 @@
           <div class="leg-group-head" style="border-top:1px solid var(--border);">
             <span class="leg-group-id">
               <span class="leg-group-reg">SP-KLM</span>
-              <span class="leg-group-op held">Przelot · w ręce</span>
+              <span class="leg-group-op">Przelot · zdany 15:25</span>
             </span>
             <a href="10-statystyki.html" class="leg-group-link">Rozliczenie →</a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num pending" title="Ślad wzlotu 3">3</a>
+            <a href="14-slad.html" class="leg-num" title="Ślad sesji 3">3</a>
             <span class="leg-times">13:40 → 15:10</span>
             <span class="leg-metrics">
+              <span class="leg-metric"><span class="leg-metric-key">Loty</span><span class="leg-metric-val">2</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">1:30</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">1:21</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta wzlotu 3">
+            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 3">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
-          <a href="09-zamknij-lot.html" class="leg-note" title="Dokończ zamknięcie wzlotu 3">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-            Wzlot 3 — do potwierdzenia
-            <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
+          <!-- Pasek „do potwierdzenia" USUNIĘTY 2026-08-10: sesję zatwierdza zdanie
+               samolotu (09b, odczyty obowiązkowe), więc niepotwierdzona sesja nie ma
+               jak trafić na tę listę. -->
         </div>
 
         <div class="bracket-row bottom">
           <span class="bracket-label">Koniec służby</span>
           <span class="bracket-body">
             <span class="bracket-value pending">TRWA</span>
-            <span class="bracket-hint">ustali się na ostatnim wzlocie — 15:10</span>
+            <span class="bracket-hint">ustali się na ostatniej sesji — 15:10</span>
           </span>
           <a href="01-moj-dzien.html" class="edit-btn" title="Wpisz godzinę zakończenia służby">
             <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
@@ -433,21 +385,29 @@
           <div class="total-cell">
             <span class="total-key">Loty</span>
             <span class="total-val">2:37</span>
-            <span class="total-sub">3 st / 3 ldg</span>
+            <span class="total-sub">5 st / 5 ldg</span>
           </div>
         </div>
       </div>
 
       <a href="02-preflight.html" class="btn-secondary">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        PRZEJMIJ INNY SAMOLOT
+        PRZEJMIJ SAMOLOT
+      </a>
+
+      <!-- Ręczny wpis CAŁEGO lotu (model 2026-08-10, story pkt 7): samolot, czasy
+           silnika i lotu, odczyty. Dla lotów zapisanych poza telefonem — papier,
+           rozładowana bateria, cudza rejestracja dnia. -->
+      <a href="15-reczny-lot.html" class="btn-secondary">
+        <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+        DODAJ LOT RĘCZNIE
       </a>
 
       <a href="01b-moj-dzien-zamkniety.html" class="btn-secondary">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         ZAMKNIJ DZIEŃ
       </a>
-      <div class="btn-note">Zamknięcie dnia zda też SP-KLM. Nie musisz go zamykać —<br>niezamknięty dzień domyka się na ostatnim wzlocie.</div>
+      <div class="btn-note">Nie musisz go zamykać —<br>niezamknięty dzień domyka się na ostatniej sesji.</div>
 
       <a href="12-historia.html" class="history-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
@@ -469,14 +429,14 @@
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Dzień w toku — samolot w ręce</span>
-      <span class="vp-when">Standard po pierwszym wzlocie: klamra służby wokół listy wzlotów, dwa samoloty w jednej służbie (SP-AXA zdany, SP-KLM trzymany), meldunek poprawiony ręcznie na 07:10. Wzlot 3 czeka na potwierdzenie — pilot wyszedł z 09 przez „Potwierdzę później", więc czasy już są w sumach, a pasek amber zaprasza do dokończenia.</span>
+      <span class="vp-when">Standard po pierwszej sesji: klamra służby wokół listy SESJI (model 2026-08-10 — wiersz to jeden bieg silnika z lotami w środku), dwa samoloty w jednej służbie, oba zdane, meldunek poprawiony ręcznie na 07:10. Wszystkie sesje zatwierdzone przy zdaniu — pasków „do potwierdzenia" już nie ma.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="01a-moj-dzien-pusty.html">
     <span class="vp-badge blue">01A</span>
     <span class="vp-body">
-      <span class="vp-name">Początek dnia — zero wzlotów</span>
+      <span class="vp-name">Początek dnia — zero sesji</span>
       <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: klamra pusta z wyjaśnieniem, że służba zacznie się sama przy pierwszym wzlocie, cały ekran prowadzi do przejęcia samolotu.</span>
     </span>
   </a>
@@ -484,7 +444,7 @@
     <span class="vp-badge amber">01B</span>
     <span class="vp-body">
       <span class="vp-name">Dzień zamknięty — okno korekty</span>
-      <span class="vp-when">Po „Zamknij dzień": klamra potwierdzona przez pilota, baner odliczający 24 h okna korekty, brak samolotu w ręce. Nowy wzlot tego samego dnia otwiera dzień z powrotem i rozszerza klamrę.</span>
+      <span class="vp-when">Po „Zamknij dzień": klamra potwierdzona przez pilota, baner odliczający 24 h okna korekty. Nowa sesja tego samego dnia otwiera dzień z powrotem i rozszerza klamrę.</span>
     </span>
   </a>
 </aside>
@@ -495,7 +455,7 @@
   <a href="00-login.html">← 00 Login</a>
   <span>·</span>
   <a href="01-moj-dzien.html" class="active">01 Mój dzień</a>
-  <a href="01a-moj-dzien-pusty.html">01A Zero wzlotów</a>
+  <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
   <a href="01b-moj-dzien-zamkniety.html">01B Zamknięty</a>
   <span>·</span>
   <a href="12-historia.html">12 Historia</a>

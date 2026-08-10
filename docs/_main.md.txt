@@ -228,27 +228,31 @@ Formularz dostępny między lotami:
 - **zmiana Dual** — wybór z listy pilotów; przy wymogu załogi 2-os. Dual nie może pozostać pusty
 - rejestracja czasu zmiany; każdy pilot ma osobny licznik czasu blokowego (wylicza serwer)
 
-### 3.6 Zamknięcie wzlotu i zdanie samolotu
+### 3.6 Zatwierdzenie sesji przy zdaniu samolotu
 
-Jednostką potwierdzenia jest **wzlot** (cykl silnika z lotem w środku), nie doba.
+**PRZEPISANE 2026-08-10 (pivot: sesja = jeden bieg silnika).** Jednostką potwierdzenia
+jest **sesja** — od uruchomienia do zatrzymania silnika, z dowolną liczbą LOTÓW
+(start → lądowanie, w tym touch and go) w środku. Po STOP ENGINE drugiego startu nie ma:
+kokpit (04) pokazuje hero „ZDAJ SAMOLOT", a kolejny lot to NOWE przejęcie.
 
-**Zamknięcie wzlotu (09)** — po STOP ENGINE: czasy off block / T/O / LDG / on block z
-detekcji do przejrzenia (ołówek prowadzi do korekty 04c), **odczyt FOB i MH OPCJONALNY**,
-uwagi. Przy operacji skokowej dochodzi podsumowanie zrzutu zapisanego w locie (05e).
+Osobnego „zamknięcia wzlotu" (dawny ekran 09, `leg_close`) już nie ma — jego przegląd
+czasów z detekcji przeszedł na 09b, a poprawki robi się korektą w logu kokpitu (04c)
+przed zdaniem. Nie ma też trybu „Potwierdzę później" ani pasków „do potwierdzenia" na 01:
+na listę dnia trafiają wyłącznie sesje zatwierdzone.
 
-> Dlaczego odczyt jest tu opcjonalny: dzień skokowy to 8–12 wzlotów pod rząd i nikt nie
-> chodzi do licznika po każdym. Wymóg zamieniłby aplikację w coś wolniejszego od papieru.
-> Każdy odczyt zamyka odcinek paliwowy, więc analityka na nich zyskuje — ale zachętą, nie
-> przymusem. Po pięciu pominięciach z rzędu wchodzi ostrzeżenie warunkowe (Typ B).
+> Dlaczego wymóg odczytu przestał być problemem dnia skokowego: seria z gorącym
+> załadunkiem to JEDEN bieg silnika z 8–12 lotami, czyli jedno przejęcie i jeden odczyt
+> na końcu. Stary argument („nikt nie chodzi do licznika po każdym wzlocie") opisywał
+> model, w którym każde wyniesienie było osobnym cyklem do potwierdzenia.
 
-Pilot może wyjść przez **„Potwierdzę później"** — czasy są już w rejestrze (to fakty
-z detekcji) i wchodzą do sum, a wzlot dostaje w `01` pasek „do potwierdzenia". Brak
-potwierdzenia nigdy nie więzi pilota przy telefonie (offline-first).
-
-**Zdanie samolotu (09b)** — koniec pracy z tą maszyną: **TU odczyt FOB i MH jest
-WYMAGANY**, bo staje się przekazaniem dla następnego pilota i ogniwem łańcucha MH (4.5).
-Wariant `09c` obsługuje zdanie bez wzlotu (pogoda, usterka) — silnik nie ruszył, więc
-liczniki zostają bez zmian i jedyne pytanie to powód.
+**Zdanie samolotu (09b)** — po zatrzymaniu silnika: przegląd lotów sesji (czasy
+z detekcji), **odczyt FOB i MH WYMAGANY** — staje się przekazaniem dla następnego pilota,
+ogniwem łańcucha MH (4.5) i ZATWIERDZENIEM logu całej sesji; odczyty trafiają do logu
+jako kolejne wpisy. Przed zdaniem wolno jeszcze dolać paliwa (tankowanie żyje w kokpicie:
+przed uruchomieniem i po zatrzymaniu). Wariant `09c` obsługuje zdanie bez lotu (pogoda,
+usterka) — silnik nie ruszył, odczyty wypełnione wartościami z przejęcia, jedyne pytanie
+to powód. Z listy dziennej można też dodać CAŁY lot ręcznie (15) — kompletną sesję
+z czasami i odczytami, dla lotów zapisanych poza telefonem.
 
 **Zdanie samolotu NIE kończy dnia pilota.** Kolejna maszyna wchodzi do tej samej służby.
 
@@ -283,6 +287,13 @@ klamrę wokół lotów** (duty ⊇ suma wzlotów, zawsze).
 > się brutto; przerwy pozostają poza aplikacją.
 
 ### 3.6b Znane ryzyko: opcjonalny odczyt kontra analityka zużycia
+
+**ROZWIĄZANE 2026-08-10 przez pivot modelu, nie przez kalibrację.** Odczyt przy zdaniu
+jest obowiązkowy, a sesja = jeden bieg silnika — więc KAŻDA sesja jest domknięta
+odczytami z obu stron (przejęcie → zdanie) i interwały degeneracyjne „między ostatnim
+`leg_close` a zdaniem" znikają z konstrukcji. Opis niżej zostaje jako uzasadnienie
+historyczne; progi (`consumption/policy.ts`) nadal kalibruje wyłącznie
+`consumptionReplay.ts` na danych demo po etapie E.
 
 **Nierozstrzygnięte świadomie** (2026-08-07) — do zamknięcia przez `consumptionReplay.ts`,
 nie przez dyskusję.
@@ -777,9 +788,11 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 [00 Login]  profil na telefonie → odblokowanie PIN-em (offline OK)
             brak profilu → login + hasło od administratora (wymaga sieci; offline: komunikat)
     ↓
-[01 Mój dzień]  EKRAN DOMOWY — klamra służby wokół listy wzlotów dnia, przekrojowo
-    │           po samolotach; stąd wejście w kokpit, przejęcie i okno korekty 24 h
-    │           warianty: 01a (zero wzlotów) · 01b (dzień zamknięty)
+[01 Mój dzień]  EKRAN DOMOWY — klamra służby wokół listy SESJI dnia (wiersz = jeden
+    │           bieg silnika z lotami w środku), przekrojowo po samolotach; stąd
+    │           przejęcie, ręczny wpis lotu i okno korekty 24 h
+    │           warianty: 01a (zero sesji) · 01b (dzień zamknięty)
+    ├─→ [15 Lot ręczny]  CAŁA sesja po fakcie: samolot · czasy · odczyty WYMAGANE
     ↓ Przejmij samolot
 [02 Przejęcie 1/3]  samolot (wolny / aktywny PIC / wyłączony) · Dual
     │        └─ samolot zajęty → [modal Przejmij?] (wariant online / offline)
@@ -789,22 +802,19 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     ↓
 [02a Przejęcie 3/3]  paliwo + MH od poprzednika · korekty przez modale (02b / 02c)
     ↓ „Przejmij i leć"  (claim + odczyt; BEZ osobnego ekranu podsumowania)
-[04a Cockpit ground — świeżo przejęty]  ⇄  [04 Cockpit ground — kolejne wzloty]
-    ↓ START ENGINE                            ↑ zamknięty wzlot
+[04a Cockpit — PRZED URUCHOMIENIEM]  tankowanie · zmiana załogi · zdanie bez lotu (09c)
+    ↓ START ENGINE  (jedyny w sesji — sesja = jeden bieg silnika, 2026-08-10)
 [05a Taxi] → autodetekcja T/O → [05b Toast T/O] → [05 Running / fazy lotu]
     → autodetekcja LDG → [05c Toast LDG] → [05d Taxi po lądowaniu]
-    → kolejny T/O (pętla) lub STOP ENGINE
-    ↓ akcje ground (z 04/04a):
-[06 Tankowanie] · [07 Zmiana załogi] · [08 Lista ręczna]
+    → kolejny T/O (pętla LOTÓW w tej samej sesji) lub STOP ENGINE
     ↓ STOP ENGINE
-[09 Zamknij lot]  czasy z detekcji do przejrzenia · liczniki OPCJONALNE · uwagi
-    │             09a = seria skokowa (jeden kciuk) · „Potwierdzę później" wraca do kokpitu
-    ├─→ kolejny wzlot: z powrotem do [04]
-    └─→ koniec pracy z tą maszyną:
-[09b Zdaj samolot]  odczyt WYMAGANY (= przekazanie, ogniwo łańcucha MH)
-    │               09c = zdanie bez wzlotu (pogoda / usterka)
+[04 Cockpit — PO ZATRZYMANIU]  hero = ZDAJ SAMOLOT (drugiego STARTU nie ma) ·
+    │                          log jednej sesji · [06 Tankowanie] · [08 Lista ręczna]
+    ↓ ZDAJ SAMOLOT
+[09b Zdaj samolot]  przegląd lotów sesji + odczyt WYMAGANY (= przekazanie, ogniwo
+    │               łańcucha MH, ZATWIERDZENIE logu) · 09c = zdanie bez lotu
     ↓
-[01 Mój dzień]  wzloty w klamrze służby; kolejny samolot wchodzi do TEJ SAMEJ służby
+[01 Mój dzień]  sesje w klamrze służby; kolejny samolot wchodzi do TEJ SAMEJ służby
     ├─ [10 Rozliczenie samolotu]  paliwo, MH, zrzuty — per sesja, nie per doba
     ├─ [11 Synchronizacja]  status wysyłki / eksportu serwera (nie akcja eksportu)
     ├─ [12 Historia]  poprzednie dni, okno korekty 24 h
@@ -812,7 +822,7 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 ```
 
 Pętla, nie prosta. Dzień pilota nie ma „startu" ani „końca" jako kroków flow: zaczyna się
-pierwszym wzlotem, a domyka sam na ostatnim. Ekranem, do którego wszystko wraca, jest
+pierwszą sesją, a domyka sam na ostatniej. Ekranem, do którego wszystko wraca, jest
 **01 Mój dzień** — nie kokpit i nie zakończenie dnia.
 
 **Kokpit jest stanem modalnym** (decyzja 2026-08-10). Dopóki pilot trzyma samolot, z 04/05

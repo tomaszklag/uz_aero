@@ -38,15 +38,16 @@ Cockpit cycle (powtarzalny):
   05d-cockpit-taxi-post     (kołowanie po lądowaniu — wzlot N ukończony)
     ↓ kolejny T/O → 05b  /  Stop engine → 09
 
-  akcje ground (z 04/04a): 06-tankowanie · 07-zmiana-zalogi · 08-lista-reczna
+  akcje ground: 04a (przed startem) → 06-tankowanie · 07-zmiana-zalogi;
+                04 (po zatrzymaniu) → 06-tankowanie · 08-lista-reczna
 
-Zamknięcie wzlotu i zdanie samolotu:
-  09-zamknij-lot            (czasy z detekcji, liczniki OPCJONALNE, uwagi;
-                             09a — seria skokowa, jeden kciuk)
-    ↓ kolejny wzlot → 04   /   koniec pracy z maszyną ↓
-  09b-zdaj-samolot          (odczyt WYMAGANY — przekazanie i ogniwo łańcucha MH;
-                             09c — zdanie bez wzlotu: pogoda, usterka)
-  → 01-moj-dzien            kolejny samolot wchodzi do TEJ SAMEJ służby
+Zdanie samolotu (model 2026-08-10 — sesja = jeden bieg silnika; ekrany 09 i 09a USUNIĘTE):
+  STOP ENGINE → 04 (hero ZDAJ SAMOLOT — drugiego startu nie ma) ↓
+  09b-zdaj-samolot          (przegląd lotów sesji + odczyt WYMAGANY — przekazanie,
+                             ogniwo łańcucha MH i ZATWIERDZENIE logu sesji;
+                             09c — zdanie bez lotu: pogoda, usterka)
+  → 01-moj-dzien            kolejny samolot wchodzi do TEJ SAMEJ służby;
+                            z 01 także [15] ręczny wpis CAŁEGO lotu po fakcie
 
 Odnogi pod 01 (nie etapy dnia):
   10-statystyki  rozliczenie SAMOLOTU (10a — bez wzlotów)

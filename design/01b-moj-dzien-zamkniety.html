@@ -235,24 +235,25 @@
       <!-- Typ A: przyrząd, nie da się zamknąć — odlicza okno samodzielnej korekty -->
       <div class="correction-window">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <!-- DWA okna, nie jedno (decyzja 2026-08-07): klamra służby liczy się od zamknięcia
-             DNIA, a każdy wzlot ma własne 24 h od swojego zamknięcia. Wzlot 1 zamknięty
-             o 09:05 wygasa więc wcześniej niż klamra. Jedna data dla wszystkiego byłaby
-             obietnicą, której model nie dotrzyma. -->
+        <!-- DWA okna, nie jedno (2026-08-07, kotwica przesunięta 2026-08-10): klamra
+             służby liczy się od zamknięcia DNIA, a każda SESJA ma własne 24 h od swojego
+             ZDANIA (zdanie = zatwierdzenie logu). Sesja poranna zdana o 09:20 wygasa
+             więc wcześniej niż klamra. Jedna data dla wszystkiego byłaby obietnicą,
+             której model nie dotrzyma. -->
         <span class="cw-text">Dzień zamknięty. <b>Klamrę służby</b> poprawisz do <b>07 SIE 15:40 UTC</b>.
-        Każdy wzlot ma <b>własne 24 h</b> od swojego zamknięcia — najstarszy (08:12) wygasa
-        już <b>07 SIE 09:05</b>. Później korektę nanosi administrator.</span>
+        Każda sesja ma <b>własne 24 h</b> od swojego zdania — najstarsza (08:12) wygasa
+        już <b>07 SIE 09:20</b>. Później korektę nanosi administrator.</span>
       </div>
 
       <!-- Klamra potwierdzona: obie godziny pochodzą od pilota -->
       <div class="day-card">
-        <div class="day-head">Służba · wzloty dnia · czasy UTC</div>
+        <div class="day-head">Służba · sesje dnia · czasy UTC</div>
 
         <div class="bracket-row top">
           <span class="bracket-label">Meldunek</span>
           <span class="bracket-body">
             <span class="bracket-value">07:10<span class="bracket-lt">09:10 LT</span></span>
-            <span class="bracket-hint declared">poprawione · pierwszy wzlot 08:12</span>
+            <span class="bracket-hint declared">poprawione · pierwsza sesja 08:12</span>
           </span>
           <a href="01b-moj-dzien-zamkniety.html" class="edit-btn" title="Popraw godzinę meldunku (okno 24 h)">
             <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
@@ -268,24 +269,24 @@
             <a href="10-statystyki.html" class="leg-group-link">Rozliczenie →</a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad wzlotu 1">1</a>
+            <a href="14-slad.html" class="leg-num" title="Ślad sesji 1">1</a>
             <span class="leg-times">08:12 → 09:05</span>
             <span class="leg-metrics">
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">0:53</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">0:41</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta wzlotu 1">
+            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 1">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad wzlotu 2">2</a>
+            <a href="14-slad.html" class="leg-num" title="Ślad sesji 2">2</a>
             <span class="leg-times">10:20 → 11:02</span>
             <span class="leg-metrics">
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">0:42</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">0:35</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta wzlotu 2">
+            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 2">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
@@ -298,13 +299,13 @@
             <a href="10-statystyki.html" class="leg-group-link">Rozliczenie →</a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad wzlotu 3">3</a>
+            <a href="14-slad.html" class="leg-num" title="Ślad sesji 3">3</a>
             <span class="leg-times">13:40 → 15:10</span>
             <span class="leg-metrics">
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">1:30</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">1:21</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta wzlotu 3">
+            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 3">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
@@ -314,7 +315,7 @@
           <span class="bracket-label">Koniec służby</span>
           <span class="bracket-body">
             <span class="bracket-value">15:40<span class="bracket-lt">17:40 LT</span></span>
-            <span class="bracket-hint declared">potwierdzone · ostatni wzlot 15:10</span>
+            <span class="bracket-hint declared">potwierdzone · ostatnia sesja 15:10</span>
           </span>
           <a href="01b-moj-dzien-zamkniety.html" class="edit-btn" title="Popraw godzinę zakończenia służby (okno 24 h)">
             <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
@@ -370,14 +371,14 @@
   <a class="vp-item" href="01-moj-dzien.html">
     <span class="vp-badge">01</span>
     <span class="vp-body">
-      <span class="vp-name">Dzień w toku — samolot w ręce</span>
-      <span class="vp-when">Standard po pierwszym wzlocie: klamra służby wokół listy wzlotów, dwa samoloty w jednej służbie, meldunek poprawiony ręcznie.</span>
+      <span class="vp-name">Dzień w toku</span>
+      <span class="vp-when">Standard po pierwszej sesji: klamra służby wokół listy sesji (wiersz = jeden bieg silnika), dwa samoloty w jednej służbie, wszystkie sesje zatwierdzone zdaniem.</span>
     </span>
   </a>
   <a class="vp-item" href="01a-moj-dzien-pusty.html">
     <span class="vp-badge blue">01A</span>
     <span class="vp-body">
-      <span class="vp-name">Początek dnia — zero wzlotów</span>
+      <span class="vp-name">Początek dnia — zero sesji</span>
       <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: klamra pusta, pełny baner pouczający, cały ekran prowadzi do przejęcia samolotu.</span>
     </span>
   </a>
@@ -385,7 +386,7 @@
     <span class="vp-badge amber">01B</span>
     <span class="vp-body">
       <span class="vp-name">Dzień zamknięty — okno korekty</span>
-      <span class="vp-when">Po „Zamknij dzień": obie godziny klamry pochodzą od pilota, baner odliczający 24 h okna korekty (Typ A — przyrząd, niezamykalny), samolot zdany. Nowy wzlot tego samego dnia otwiera dzień z powrotem i rozszerza klamrę — dlatego „Przejmij samolot" zostaje.</span>
+      <span class="vp-when">Po „Zamknij dzień": obie godziny klamry pochodzą od pilota, baner odliczający 24 h okna korekty (Typ A — przyrząd, niezamykalny), samoloty zdane. Nowa sesja tego samego dnia otwiera dzień z powrotem i rozszerza klamrę — dlatego „Przejmij samolot" zostaje.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -397,7 +398,7 @@
   <a href="00-login.html">← 00 Login</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień</a>
-  <a href="01a-moj-dzien-pusty.html">01A Zero wzlotów</a>
+  <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
   <a href="01b-moj-dzien-zamkniety.html" class="active">01B Zamknięty</a>
   <span>·</span>
   <a href="12-historia.html">12 Historia</a>
