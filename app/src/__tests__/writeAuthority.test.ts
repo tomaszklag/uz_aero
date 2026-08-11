@@ -259,13 +259,38 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     ),
   ],
   [
-    'zrzut bez skoczków',
+    // Skład jest opcjonalny (issue #21) — twarda gwardia została wyłącznie na
+    // składzie NIEMOŻLIWYM, więc baterię zasila ujemna liczba, nie zero.
+    'zrzut z ujemnym składem',
     inFlight(),
     ev(
       'drop',
-      { dropNumber: 1, altitudeFt: 2450, jumpers: { tandem: 0, aff: 0, solo: 0 } },
+      { dropNumber: 1, altitudeFt: 2450, jumpers: { tandem: -1, aff: 0, solo: 0 } },
       { t: min(40) },
     ),
+  ],
+  [
+    'załadunek z ujemnym składem',
+    running(),
+    ev('boarding', { jumpers: { tandem: 0, aff: -2, solo: 0 } }, { t: min(15) }),
+  ],
+  [
+    'załadunek w locie (miękko)',
+    inFlight(),
+    ev('boarding', { jumpers: { tandem: 2, aff: 0, solo: 0 } }, { t: min(30) }),
+  ],
+  [
+    'załadunek poza operacją skokową (miękko)',
+    [
+      claim(),
+      ev(
+        'preflight_confirm',
+        { operation: 'ferry', dutyStart: min(0), reading: { fuelL: 150, mh: MH_START } },
+        { t: min(0) },
+      ),
+      ev('engine_start', {}, { t: min(12) }),
+    ],
+    ev('boarding', { jumpers: { tandem: 1, aff: 0, solo: 0 } }, { t: min(15) }),
   ],
   [
     'zrzut na ziemi (miękko)',
@@ -411,9 +436,12 @@ describe('A · dopóki okno korekty trwa, oba tryby są nierozróżnialne', () =
       'MH_NEGATIVE',
       'MH_REGRESSION',
       'MH_DELTA_MISMATCH',
-      'DROP_NO_JUMPERS',
+      'DROP_NEGATIVE_JUMPERS',
       'DROP_ON_GROUND',
       'DROP_OUTSIDE_JUMP_OPERATION',
+      'BOARDING_NEGATIVE_JUMPERS',
+      'BOARDING_IN_FLIGHT',
+      'BOARDING_OUTSIDE_JUMP_OPERATION',
       'PIC_CHANGE_NOT_ALLOWED',
       'DUAL_IS_PIC',
       'MANUAL_ENTRY_EMPTY',

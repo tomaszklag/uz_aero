@@ -25,6 +25,7 @@ export * from './detection/onset';
 export * from './detection/imu';
 export * from './detection/flightDetector';
 export * from './detection/flightPhase';
+export * from './detection/dropAltitude';
 export * from './track/point';
 export * from './track/quality';
 export * from './track/simplify';

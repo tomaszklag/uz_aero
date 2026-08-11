@@ -116,3 +116,25 @@ describe('zrzut — istnieje w powietrzu dnia skokowego, aktywny tylko w Cruise'
     expect(build({ inFlight: true, phase: 'taxi' }).dropDisabledReason).toBeNull();
   });
 });
+
+describe('załadunek — naziemna połowa pary zrzut/załadunek (issue #21 pkt 7)', () => {
+  test('na ziemi dnia skokowego przycisk JEST — na postoju i w kołowaniu', () => {
+    expect(build().showBoarding).toBe(true);
+    expect(build({ taxiing: true, phase: 'taxi' }).showBoarding).toBe(true);
+  });
+
+  test('w powietrzu przycisku nie ma — jego slot zajmuje zrzut (stała geometria pary)', () => {
+    const view = build({ inFlight: true, phase: 'cruise' });
+    expect(view.showBoarding).toBe(false);
+    expect(view.showDrop).toBe(true);
+  });
+
+  test('poza dniem skokowym przycisku nie ma w żadnym stanie (brak akcji, nie blokada)', () => {
+    expect(build({ jumpDay: false }).showBoarding).toBe(false);
+    expect(build({ jumpDay: false, taxiing: true }).showBoarding).toBe(false);
+  });
+
+  test('brak GPS nie rusza załadunku — to zapis naziemny, nie zależy od detekcji', () => {
+    expect(build({ gpsLost: true }).showBoarding).toBe(true);
+  });
+});

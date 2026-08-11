@@ -59,10 +59,15 @@ export type ViolationCode =
   | 'MH_NEGATIVE'
   | 'MH_REGRESSION'
   | 'MH_DELTA_MISMATCH'
-  // ── zrzuty ─────────────────────────────────────────────────────────────────
-  | 'DROP_NO_JUMPERS'
+  // ── zrzuty i załadunek ─────────────────────────────────────────────────────
+  // (`DROP_NO_JUMPERS` usunięty 2026-08-11, issue #21 pkt 5: skład jest opcjonalny —
+  //  zrzut bez liczb to legalny znacznik faktu, nie błąd formularza)
+  | 'DROP_NEGATIVE_JUMPERS'
   | 'DROP_ON_GROUND'
   | 'DROP_OUTSIDE_JUMP_OPERATION'
+  | 'BOARDING_NEGATIVE_JUMPERS'
+  | 'BOARDING_IN_FLIGHT'
+  | 'BOARDING_OUTSIDE_JUMP_OPERATION'
   // ── załoga ─────────────────────────────────────────────────────────────────
   | 'PIC_CHANGE_NOT_ALLOWED'
   | 'DUAL_IS_PIC'

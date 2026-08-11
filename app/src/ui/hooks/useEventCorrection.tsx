@@ -33,6 +33,7 @@ const LABEL: Partial<Record<Event['type'], string>> = {
   takeoff: 'Takeoff',
   landing: 'Landing',
   drop: 'Zrzut',
+  boarding: 'Załadunek',
   refuel: 'Tankowanie',
   manual_log_entry: 'Wpis ręczny',
 };
@@ -124,7 +125,9 @@ export function useEventCorrection(): EventCorrectionApi {
               ? 'refuel'
               : target.type === 'drop'
                 ? 'drop'
-                : 'landing'
+                : target.type === 'boarding'
+                  ? 'boarding'
+                  : 'landing'
         }
         originalTime={originalTime}
         methodBadge={methodBadgeFor(target)}

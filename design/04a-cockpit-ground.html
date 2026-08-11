@@ -107,9 +107,11 @@
   .action-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:var(--hairline); }
   .action-card.amber:hover { border-color:var(--amber-border); }
   .action-card.red:hover { border-color:var(--red-border); }
+  .action-card.blue:hover { border-color:var(--blue-border); }
   .action-icon { width:36px; height:36px; border-radius:10px; background:var(--surface-raised); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; }
   .action-card.amber .action-icon { background:var(--amber-muted); border-color:var(--amber-border); }
   .action-card.red .action-icon { background:var(--red-muted); border-color:var(--red-border); }
+  .action-card.blue .action-icon { background:var(--blue-muted); border-color:var(--blue-border); }
   .action-label { font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:0.5px; color:var(--text-primary); }
   .action-sub { font-size:10px; color:var(--text-muted); line-height:1.3; }
 
@@ -244,6 +246,19 @@
             <!-- Litry mówi pasek wyżej, więc kafelek ich nie powtarza (2026-08-10) —
                  patrz komentarz przy siatce akcji w 04. -->
             <div class="action-sub">Dolej i zapisz odczyt</div>
+          </div>
+        </a>
+        <!-- ZAŁADUNEK (issue #21) — TYLKO dzień skokowy i TYLKO przed startem: pierwszy
+             skład wsiada zwykle przy wyłączonym silniku, a zadeklarowane tu liczby
+             wypełnią arkusz zrzutu 05E. Podpis jest STAŁY: zapisany załadunek widać
+             w logu sesji wyżej, a kokpit nie powtarza tego, co mówi log. -->
+        <a href="05i-zaladunek.html" class="action-card blue">
+          <div class="action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <div class="action-label">Załadunek</div>
+            <div class="action-sub">Skoczkowie na pokład</div>
           </div>
         </a>
         <a href="07-zmiana-zalogi.html" class="action-card">

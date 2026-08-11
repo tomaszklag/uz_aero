@@ -66,6 +66,7 @@ export * from './sheets/Sheet';
 export * from './sheets/PinChangeSheet';
 export * from './sheets/ReadingSheet';
 export * from './sheets/DropSheet';
+export * from './sheets/BoardingSheet';
 export * from './sheets/ManualEventSheet';
 export * from './sheets/ManualEntrySheet';
 export * from './sheets/CorrectionSheet';

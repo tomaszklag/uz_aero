@@ -176,6 +176,50 @@ describe('SessionCommands — miękkie flagi nie blokują zapisu', () => {
     expect(first.event.type === 'drop' && first.event.payload.client).toBe('Strefa EPKK');
     expect(first.warnings).toEqual([]);
   });
+
+  it('zrzut z zerowym składem zapisuje `jumpers: null` — „nie podano", nie „zero" (issue #21)', async () => {
+    // Arkusz nie ma pola „bez deklaracji": pilot po prostu nie rusza liczników.
+    // Znak tej decyzji normalizuje komenda, żeby nie zależał od ekranu.
+    const { commands, clock, seedCache } = setup();
+    await seedCache();
+    await openDay(commands, clock);
+    clock.set(min(12));
+    await commands.startEngine(CTX);
+    clock.set(min(25));
+    await commands.takeoff(CTX, 'auto');
+
+    clock.set(min(40));
+    const result = await commands.drop(CTX, { jumpers: { tandem: 0, aff: 0, solo: 0 } });
+    expect(result.event.type === 'drop' && result.event.payload.jumpers).toBeNull();
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('załadunek zapisuje się na ziemi; skład normalizuje się jak przy zrzucie (issue #21)', async () => {
+    const { commands, repo, clock, seedCache } = setup();
+    await seedCache();
+    await openDay(commands, clock);
+    clock.set(min(12));
+    await commands.startEngine(CTX);
+
+    clock.set(min(15));
+    const declared = await commands.boarding(CTX, { jumpers: { tandem: 2, aff: 1, solo: 0 } });
+    expect(declared.event.type).toBe('boarding');
+    expect(declared.event.type === 'boarding' && declared.event.payload.jumpers).toEqual({
+      tandem: 2,
+      aff: 1,
+      solo: 0,
+    });
+    expect(declared.warnings).toEqual([]);
+    expect(await repo.getEvent(declared.event.uuid)).not.toBeNull();
+
+    clock.set(min(17));
+    const bare = await commands.boarding(CTX, { jumpers: { tandem: 0, aff: 0, solo: 0 } });
+    expect(bare.event.type === 'boarding' && bare.event.payload.jumpers).toBeNull();
+
+    // Prefill dla arkusza zrzutu bierze się z projekcji — ostatni załadunek wygrywa.
+    const state = projectSession(await repo.getSessionEvents(SESSION));
+    expect(state.boarding).toEqual({ jumpers: null, at: min(17) });
+  });
 });
 
 describe('SessionCommands — limity z cache referencyjnego (§4.8)', () => {

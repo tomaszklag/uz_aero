@@ -536,6 +536,23 @@ wagę: jeden fix wyżej o 30 ft przy 5 s historii produkował **360 ft/min**, cz
 „Climb" z szumu. Regresja rozkłada ten sam błąd na całe okno (~275 ft/min, poniżej progu),
 a `VS_MIN_SPAN_SEC` odcina okna zbyt ciasne w czasie.
 
+### 10.1 Wysokość zrzutu — średnia z okna (issue #21, 2026-08-11)
+
+`dropAltitude.ts` liczy wysokość zapisywaną w zdarzeniu `drop` (arkusz 05e). Tak jak
+`flightPhase.ts` **nie generuje zdarzeń i nie wpływa na żadną decyzję automatu** — to
+odczyt dla dokumentów.
+
+Do issue #21 arkusz brał **ostatni fix**, czyli wpisywał do rozliczenia szum pojedynczego
+odczytu (kilkadziesiąt stóp). Teraz to **średnia arytmetyczna** wysokości z okna
+`DROP_ALT_WINDOW_SEC` liczonego wstecz od najnowszego fixa historii detektora — tej samej
+historii, z której idzie prędkość pionowa (jedna prawda o tym, co widział algorytm).
+
+Średnia, **nie regresja jak przy VS**, bo pytanie jest inne: VS to trend (nachylenie),
+wysokość zrzutu to **poziom** — a wyniesienie dzieje się w locie poziomym (bramka fazy
+przycisku zrzutu), więc uśrednianie poziomu nie goni trendu. Fixy bez wysokości są
+pomijane; brak jakiejkolwiek wysokości w oknie daje `null` (zapis zrzutu bez wysokości),
+nigdy zero.
+
 ---
 
 ## 11. Pełna tablica progów
@@ -608,6 +625,7 @@ Wszystkie w `packages/domain/src/detection/thresholds.ts`, wstrzykiwane jako `GP
 | `VS_MIN_SPAN_SEC` | 5 s | poniżej tej rozpiętości nie podajemy VS |
 | `VS_THRESHOLD_FPM` | 300 ft/min | granica Climb / Cruise / Descent |
 | `TAXI_MIN_KT` | 3 kt | granica Idle / Taxi w napisie fazy |
+| `DROP_ALT_WINDOW_SEC` | 15 s | okno średniej wysokości zrzutu (§10.1) — dłużej = gładszy odczyt, ale w dolocie ze wznoszeniem ciągnie wynik w dół; krócej = bliżej chwili, więcej szumu |
 
 ---
 

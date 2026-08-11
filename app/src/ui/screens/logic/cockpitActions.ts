@@ -18,8 +18,7 @@
  *
  * ZRZUT (ta sama decyzja):
  *  • istnieje TYLKO w dniu skokowym (issue #19 — brak akcji, nie blokada) i TYLKO
- *    w powietrzu: na ziemi przycisku nie ma wcale (mockupy 05h/05a/05c/05d nigdy go
- *    nie miały — kod się od nich odchylił, pokazując go przygaszonego),
+ *    w powietrzu: na ziemi jego slot zajmuje ZAŁADUNEK (patrz niżej),
  *  • w powietrzu jest AKTYWNY wyłącznie w locie poziomym: wyniesienie dzieje się
  *    w Cruise, więc w Climb i Descent stoi przygaszony z powodem. Stoi, a nie znika,
  *    bo w locie pasek musi trzymać stałą geometrię — pilot sięga nie patrząc,
@@ -29,6 +28,13 @@
  *    wierzy — start był ręczny, bo autodetekcja go nie złapała — i taki brak wiedzy
  *    nie ma prawa zamykać zrzutu na cały lot. Z tego samego powodu bez GPS (05g)
  *    przycisk zostaje aktywny: ręczny zapis to wtedy jedyna droga.
+ *
+ * ZAŁADUNEK (issue #21 pkt 7, 2026-08-11): na ziemi dnia skokowego — po wykołowaniu
+ * z pasa między lotami albo przed pierwszym startem serii — slot obok akcji głównej
+ * zajmuje „Załadunek": znacznik wejścia skoczków na pokład z opcjonalnym składem,
+ * który staje się prefill-em arkusza zrzutu. W powietrzu przycisku NIE MA (jest zrzut):
+ * to ta sama zasada „brak akcji, nie blokada" — w locie nikt nie wsiada. Dzięki parze
+ * zrzut/załadunek pasek dnia skokowego trzyma stałą geometrię w OBU stanach.
  */
 
 import type { FlightPhase } from '../../../domain';
@@ -47,6 +53,12 @@ export interface CockpitActionsView {
   showDrop: boolean;
   /** Powód przygaszenia widocznego przycisku zrzutu; `null` = aktywny. */
   dropDisabledReason: string | null;
+  /**
+   * `true` = na ziemi dnia skokowego slot obok akcji głównej zajmuje ZAŁADUNEK
+   * (issue #21 pkt 7). Wyklucza się ze `showDrop` — to dwa końce tej samej historii
+   * w dwóch stanach samolotu.
+   */
+  showBoarding: boolean;
 }
 
 const PRIMARY_LABEL: Record<CockpitPrimary, string> = {
@@ -72,6 +84,9 @@ export function buildCockpitActions(input: {
   const primary: CockpitPrimary = input.inFlight ? 'landing' : input.taxiing ? 'takeoff' : 'taxi';
 
   const showDrop = input.jumpDay && input.inFlight;
+  // Załadunek zawsze AKTYWNY, gdy jest: na ziemi nie ma fazy, która by go wykluczała,
+  // a pomyłka kosztuje jeden wiersz w logu (ta sama zasada co przy taxi).
+  const showBoarding = input.jumpDay && !input.inFlight;
 
   return {
     primary,
@@ -88,5 +103,6 @@ export function buildCockpitActions(input: {
       showDrop && !input.gpsLost && (input.phase === 'climb' || input.phase === 'descent')
         ? 'Zrzut zapiszesz w locie poziomym'
         : null,
+    showBoarding,
   };
 }

@@ -9,8 +9,15 @@
  * parametrów GPS — mockup dosłownie pokazuje kokpit prześwitujący nad arkuszem.
  *
  * Wysokość jest **odczytem z GPS, nie polem do wpisania** (`CLAUDE.md`: dane z pomiaru
- * mają pierwszeństwo). Pilot ustawia wyłącznie to, czego telefon nie wie — liczbę
- * skoczków w rozbiciu na typy, bo to ona jest przychodową stroną dnia.
+ * mają pierwszeństwo) — od issue #21 pkt 2 to ŚREDNIA z okna czasu
+ * (`detection/dropAltitude.ts`), nie ostatni fix, bo pojedynczy odczyt niesie
+ * kilkadziesiąt stóp szumu.
+ *
+ * Liczniki skoczków są OPCJONALNE (issue #21 pkt 4–5): gdy pilot zadeklarował skład
+ * przy załadunku, arkusz otwiera się WYPEŁNIONY i w locie wystarczy potwierdzenie;
+ * bez deklaracji zapis bez liczb też przechodzi — zrzut jest znacznikiem faktu,
+ * a raportowanie składu bywa odłożone. Dlatego przycisk zapisu nie ma stanu
+ * zablokowanego (napis „Ustaw liczbę skoczków" skakał layoutem i wyleciał).
  */
 
 import React, { useEffect, useState } from 'react';
@@ -24,7 +31,6 @@ import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
 import { CounterRow } from '../input/CounterRow';
 import { Icon } from '../foundation/Icon';
-import { InlineNote } from '../status/InlineNote';
 import { toneColors } from '../tone';
 
 export interface JumperCounts {
@@ -40,16 +46,25 @@ export interface DropSheetProps {
    * spójnie z podpisem fazy („Lot 6 · nad zrzutowiskiem").
    *
    * To NIE jest numer wyniesienia: w jednym locie bywa ich kilka, a numer zrzutu nadaje
-   * komenda (`DropInput.dropNumber` domyślnie kolejny). Wcześniej ekran wstawiał tu
-   * licznik zrzutów i pod etykietą „LOT" pokazywała się cudza liczba.
+   * komenda (`DropInput.dropNumber` domyślnie kolejny). Ekran liczy go helperem
+   * `logic/flightNumber.ts` — wpisanie tu wzoru „na piechotę" skończyło się „LOT 2"
+   * w pierwszym locie (issue #21 pkt 1).
    */
   flightNumber: number;
   /** Czas zrzutu (sformatowany, UTC). */
   time: string;
-  /** Wysokość z GPS; `null` = brak sygnału, wtedy zapisujemy zrzut bez niej. */
+  /** Wysokość z GPS (średnia z okna); `null` = brak danych, zapisujemy zrzut bez niej. */
   altitudeFt: number | null;
   /** Klient z preflightu — dziedziczy go zdarzenie zrzutu (denormalizacja dla arkusza). */
   client?: string | null;
+  /**
+   * Skład zadeklarowany przy załadunku (issue #21 pkt 5) — liczniki otwierają się
+   * z tymi wartościami i pilot tylko POTWIERDZA. `null` = załadunku nie było albo
+   * był bez liczb: liczniki startują od zera, zapis bez nich też jest legalny.
+   */
+  initialJumpers?: JumperCounts | null;
+  /** Czas załadunku (sformatowany, UTC) — podpis prefillu; `null` gdy brak. */
+  boardingTime?: string | null;
   busy?: boolean;
   onConfirm: (jumpers: JumperCounts) => void;
   onCancel: () => void;
@@ -63,6 +78,8 @@ export function DropSheet({
   time,
   altitudeFt,
   client,
+  initialJumpers = null,
+  boardingTime = null,
   busy = false,
   onConfirm,
   onCancel,
@@ -73,10 +90,12 @@ export function DropSheet({
   const keyboardHeight = useKeyboardHeight();
   const [jumpers, setJumpers] = useState<JumperCounts>(EMPTY);
 
-  // Każde otwarcie zaczyna od zera — arkusz nie pamięta poprzedniego wyniesienia.
+  // Każde otwarcie zaczyna od składu z załadunku (a bez niego — od zera): arkusz nie
+  // pamięta poprzedniego wyniesienia, bo tamten skład już wyskoczył. `initialJumpers`
+  // w zależnościach domyka rzadki wyścig arkusz-otwarty-podczas-zapisu-załadunku.
   useEffect(() => {
-    if (visible) setJumpers(EMPTY);
-  }, [visible]);
+    if (visible) setJumpers(initialJumpers ?? EMPTY);
+  }, [visible, initialJumpers]);
 
   const total = jumpers.tandem + jumpers.aff + jumpers.solo;
   const set = (key: keyof JumperCounts) => (value: number) =>
@@ -193,6 +212,16 @@ export function DropSheet({
             </AppText>
           </View>
 
+          {/* Podpis prefillu — skąd wzięły się liczby, zanim pilot czegokolwiek dotknął.
+              Bez niego wypełnione liczniki wyglądają jak resztki po poprzednim zrzucie. */}
+          {initialJumpers != null && (
+            <AppText variant="mono" tone="muted" style={styles.client}>
+              {boardingTime != null
+                ? `Skład z załadunku ${boardingTime} UTC — potwierdź albo popraw`
+                : 'Skład z załadunku — potwierdź albo popraw'}
+            </AppText>
+          )}
+
           {client != null && client.length > 0 && (
             <AppText variant="mono" tone="muted" style={styles.client}>
               {`Rozliczenie trafi do klienta ${client} (z preflightu)`}
@@ -208,24 +237,19 @@ export function DropSheet({
               onPress={onCancel}
               style={{ flex: 1 }}
             />
+            {/* Bez stanu zablokowanego (issue #21 pkt 4–5): skład jest opcjonalny, więc
+                zapis z zerami jest legalny („skład niepodany"), a znikający napis
+                powodu nie ma już jak szarpać layoutem. */}
             <ActionButton
               label="ZAPISZ ZRZUT"
               tone="blue"
               variant="solid"
               size="md"
               busy={busy}
-              // Zrzut bez skoczków nie jest wyniesieniem — blokujemy z podanym powodem.
-              disabledReason={total === 0 ? 'Ustaw liczbę skoczków' : null}
               onPress={() => onConfirm(jumpers)}
               style={{ flex: 2 }}
             />
           </View>
-
-          <InlineNote
-            icon="offline"
-            tone="neutral"
-            text="Zapis lokalny — działa bez zasięgu, wyśle się automatycznie"
-          />
         </View>
       </View>
     </Modal>

@@ -46,6 +46,13 @@ export interface CockpitActionsProps {
    */
   onDrop?: () => void;
   dropDisabledReason?: string | null;
+  /**
+   * Załadunek skoczków (issue #21 pkt 7) — naziemna połowa pary zrzut/załadunek:
+   * na ziemi dnia skokowego zajmuje slot, w którym w powietrzu stoi zrzut, więc pasek
+   * trzyma stałą geometrię w obu stanach. `undefined` = przycisku NIE MA (ta sama
+   * zasada „brak akcji, nie blokada" co przy zrzucie).
+   */
+  onBoarding?: () => void;
   /** STOP ENGINE. */
   onStop: () => void;
   stopDisabledReason?: string | null;
@@ -59,6 +66,7 @@ export function CockpitActions({
   onPrimary,
   onDrop,
   dropDisabledReason = null,
+  onBoarding,
   onStop,
   stopDisabledReason = null,
   style,
@@ -115,6 +123,18 @@ export function CockpitActions({
           colors={blue}
           disabledReason={dropDisabledReason}
           onPress={onDrop}
+        />
+      )}
+
+      {/* Naziemna połowa pary zrzut/załadunek — ten sam slot, ten sam ton: wsiadanie
+          i wynoszenie to jedna historia opowiedziana w dwóch stanach samolotu. */}
+      {onBoarding != null && (
+        <SideButton
+          icon="boarding"
+          label="Załadunek"
+          colors={blue}
+          disabledReason={null}
+          onPress={onBoarding}
         />
       )}
 

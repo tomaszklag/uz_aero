@@ -501,16 +501,21 @@ function checkByType(
 
     case 'drop': {
       const p = candidate.payload;
-      const { tandem, aff, solo } = p.jumpers;
-      const total = tandem + aff + solo;
-      if (tandem < 0 || aff < 0 || solo < 0 || total <= 0) {
-        v.push(
-          error('DROP_NO_JUMPERS', 'Zrzut musi mieć co najmniej jednego skoczka.', {
-            tandem,
-            aff,
-            solo,
-          }),
-        );
+      // Skład jest OPCJONALNY (issue #21 pkt 5): zrzut bez liczb to legalny znacznik
+      // faktu wyniesienia — raportowanie skoczków bywa odłożone albo pominięte.
+      // Twardo odrzucamy wyłącznie skład wewnętrznie sprzeczny: ujemna liczba
+      // skoczków nie jest podejrzana, jest niemożliwa.
+      if (p.jumpers != null) {
+        const { tandem, aff, solo } = p.jumpers;
+        if (tandem < 0 || aff < 0 || solo < 0) {
+          v.push(
+            error('DROP_NEGATIVE_JUMPERS', 'Liczba skoczków nie może być ujemna.', {
+              tandem,
+              aff,
+              solo,
+            }),
+          );
+        }
       }
       // Miękko: zrzut to strona PRZYCHODOWA dnia (decyzja 2026-07-23). Zablokowanie
       // wpisu, bo pilot kliknął sekundę po lądowaniu, kosztowałoby dane o pieniądzach —
@@ -523,6 +528,41 @@ function checkByType(
           warning('DROP_OUTSIDE_JUMP_OPERATION', `Zrzut przy operacji „${state.operation}".`, {
             operation: state.operation,
           }),
+        );
+      }
+      break;
+    }
+
+    case 'boarding': {
+      // Lustrzane odbicie gwardii zrzutu (issue #21 pkt 7): załadunek to znacznik
+      // faktu z opcjonalnym składem — twardo tylko skład niemożliwy, miękko
+      // okoliczności podejrzane. W locie nikt nie wsiada: to niemal na pewno pomyłka
+      // „chciałem zapisać zrzut" — ale fakt z terenu zostaje zapisany, flaga sygnalizuje.
+      const p = candidate.payload;
+      if (p.jumpers != null) {
+        const { tandem, aff, solo } = p.jumpers;
+        if (tandem < 0 || aff < 0 || solo < 0) {
+          v.push(
+            error('BOARDING_NEGATIVE_JUMPERS', 'Liczba skoczków nie może być ujemna.', {
+              tandem,
+              aff,
+              solo,
+            }),
+          );
+        }
+      }
+      if (state.inFlight) {
+        v.push(
+          warning('BOARDING_IN_FLIGHT', 'Załadunek zapisany w locie — czy to miał być zrzut?'),
+        );
+      }
+      if (state.operation != null && state.operation !== 'skoki') {
+        v.push(
+          warning(
+            'BOARDING_OUTSIDE_JUMP_OPERATION',
+            `Załadunek przy operacji „${state.operation}".`,
+            { operation: state.operation },
+          ),
         );
       }
       break;

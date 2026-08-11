@@ -38,6 +38,8 @@ export type LogKind =
   | 'takeoff'
   | 'landing'
   | 'drop'
+  /** Załadunek skoczków (issue #21) — para do `drop`: ta sama historia, drugi koniec. */
+  | 'boarding'
   | 'event'
   | 'ground'
   | 'live';
@@ -86,6 +88,7 @@ const KIND_ICON: Record<LogKind, IconName> = {
   takeoff: 'takeoff',
   landing: 'landing',
   drop: 'drop',
+  boarding: 'boarding',
   event: 'info',
   ground: 'refuel',
   live: 'start',
@@ -110,6 +113,7 @@ const KIND_TONE: Record<LogKind, Tone> = {
   takeoff: 'neutral',
   landing: 'neutral',
   drop: 'blue',
+  boarding: 'blue',
   event: 'neutral',
   ground: 'amber',
   live: 'green',

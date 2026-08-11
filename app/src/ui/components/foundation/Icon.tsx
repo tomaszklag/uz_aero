@@ -97,6 +97,10 @@ const REGISTRY = {
   'manual-log': f('file-text'),
   'end-day': f('log-out'),
   drop: m('parachute'),
+  // Załadunek skoczków (issue #21) — grupa ludzi, nie `user-check` (ten znaczy załogę)
+  // i nie spadochron (ten znaczy zrzut): wsiadanie i wynoszenie to dwa końce tej samej
+  // historii i mają wyglądać jak para, ale nie jak duplikat.
+  boarding: m('account-group'),
 
   // obiekty
   aircraft: m('airplane'),
