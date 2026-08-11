@@ -510,7 +510,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
         Landing · ręcznie
       </a>
-      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu działa — bez fixa wysokość wpiszesz z wysokościomierza (steppery w arkuszu)">
+      <!-- Zrzut AKTYWNY mimo reguły „tylko w Cruise" (2026-08-11): bez fixa faza jest
+           nieznana, a ręczny zapis to jedyna droga — bramka fazy bez danych o fazie
+           byłaby blokadą zapisu zdarzenia, które naprawdę zaszło. -->
+      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu działa — bez fixa wysokość wpiszesz z wysokościomierza (steppery w arkuszu); bramka fazy (Cruise) nie działa bez GPS">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
       </a>
@@ -525,7 +528,8 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: silnik ON, GS < 5 kt, przed pierwszym T/O — autodetekcja czeka na start"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
   <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
   <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
   <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>

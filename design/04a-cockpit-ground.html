@@ -177,8 +177,10 @@
 
       <!-- Bez chipa „GROUND · SILNIK WYŁĄCZONY" — hero START ENGINE mówi to samo mocniej
            (decyzja 2026-08-04, jak na 04). Chip stanu zostaje tylko na 04b („wg serwera"). -->
-      <!-- START ENGINE — główna akcja, bardziej prominentna niż w trakcie dnia -->
-      <a href="05-cockpit-running.html" class="start-engine">
+      <!-- START ENGINE — główna akcja, bardziej prominentna niż w trakcie dnia.
+           Prowadzi do 05H (Engine idle): zaraz po uruchomieniu samolot STOI, a pasek
+           akcji podpowiada Taxi — stany lotu (05) przychodzą później, z sekwencją. -->
+      <a href="05h-cockpit-idle.html" class="start-engine">
         <div class="start-icon">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0D0D0D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
         </div>
@@ -322,7 +324,7 @@
   <a href="04b-cockpit-readonly.html">04B Podgląd</a>
   <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
   <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
-  <a href="05-cockpit-running.html">05 Running →</a>
+  <a href="05h-cockpit-idle.html">05H Idle →</a>
 </nav>
 
 </body>

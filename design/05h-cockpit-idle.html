@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 05D Cockpit · Taxi po lądowaniu</title>
+<title>UZ Aero — 05H Cockpit · Engine idle (przed kołowaniem)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
     --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
-    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12);
+    --blue: #3498DB;
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,63 +59,26 @@
   .phase-text { display:flex; flex-direction:column; gap:3px; }
   .phase-hero-icon { width:52px; height:52px; border-radius:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); }
   .phase-hero-name { font-family:var(--font-display); font-size:54px; letter-spacing:6px; line-height:1; }
-  .phase-hero-name.active { color:var(--green); text-shadow:0 0 30px rgba(46,204,113,0.35); }
+  /* Idle jest NEUTRALNE — zieleń w hero należy do stanów, w których coś się dzieje
+     (Taxi), błękit do powietrza. Silnik na postoju to stan wyjściowy, nie osiągnięcie. */
+  .phase-hero-name.ground { color:var(--text-secondary); }
   .phase-hero-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-top:4px; }
 
   .param-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); margin:0; flex-shrink:0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
   .param-cell { background:var(--surface); padding:12px 14px; display:flex; flex-direction:column; gap:4px; }
-  /* WARIANT OSTRZEGAWCZY paliwa (issue #19), nie domyślny wygląd komórki: amber dopiero,
-     gdy szacunek czasu lotu z FOB spadnie do ~1h45 (godzina zapasu nad rezerwą 45 min),
-     czerwony na samej rezerwie. Powyżej — jak tutaj — paliwo jest neutralne, bo kolor
-     świecący zawsze przestaje być ostrzeżeniem. */
-  .param-cell.amber-bg { background:rgba(243,156,18,0.04); }
   .param-label { font-family:var(--font-mono); font-size: 10px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-muted); }
   .param-value { font-family:var(--font-mono); font-size:28px; font-weight:400; letter-spacing:2px; line-height:1; color:var(--text-primary); }
-  .param-value.amber { color:var(--amber); }
   .param-value.muted { color:var(--text-muted); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  .cycle-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
-  .cycle-log::-webkit-scrollbar { display:none; }
-  .cycle-log-header { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface-raised); z-index:2; }
-  .cycle-log-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
-  .log-row { display:flex; align-items:center; border-bottom:1px solid var(--border); }
-  .log-row:last-child { border-bottom:none; }
-  .log-tl { width:32px; flex-shrink:0; display:flex; align-items:center; justify-content:center; align-self:stretch; position:relative; }
-  .log-tl::before { content:''; position:absolute; left:50%; top:0; bottom:0; width:1px; background:var(--border); transform:translateX(-50%); }
-  .log-row:first-child .log-tl::before { top:50%; }
-  .log-row:last-child .log-tl::before { bottom:50%; }
-  .log-icon { width:22px; height:22px; border-radius:6px; flex-shrink:0; z-index:1; position:relative; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); }
-  /* Start engine neutralny (issue #19) — zieleń w logu należy wyłącznie do teraźniejszości.
-     Tła nieprzezroczyste, żeby plakietka ZAKRYWAŁA kreskę szyny (tony designu są
-     półprzezroczyste, więc kreska prześwitywała przez środek ikony). */
-  .log-icon.start { background:var(--surface-raised); border-color:var(--border); color:var(--text-secondary); }
-  .log-icon.zrzut { background:linear-gradient(var(--blue-muted), var(--blue-muted)), var(--surface); border-color:rgba(52,152,219,0.3); color:var(--blue); }
-  .log-icon.live { background:var(--green); border-color:var(--green); animation:pulse 1.5s ease-in-out infinite; width:10px; height:10px; border-radius:50%; border:none; }
-  .log-dot-sm { width:6px; height:6px; border-radius:50%; background:var(--border-strong); z-index:1; position:relative; flex-shrink:0; }
-  .log-body { flex:1; display:flex; align-items:center; gap:8px; padding:8px 10px 8px 2px; }
-  .log-t { font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:1.5px; width:46px; flex-shrink:0; color:var(--text-primary); }
-  .log-t.live { color:var(--green); font-size:11px; letter-spacing:0.5px; width:64px; }
-  .log-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; flex:1; color:var(--text-secondary); }
-  .log-lbl.live { color:var(--green); }
-  .log-dur { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); padding-right:10px; white-space:nowrap; }
-  .log-chip { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:4px; white-space:nowrap; }
-  .log-chip-mh { color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); }
-  .log-chip-fuel { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
-  .flight-sep { display:flex; align-items:center; gap:8px; padding:4px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border); }
-  .flight-sep::before, .flight-sep::after { content:''; flex:1; height:1px; background:var(--border); }
-  .flight-sep-label { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); white-space:nowrap; }
-  .flight-sep-dur { font-family:var(--font-mono); font-size:8px; color:var(--text-secondary); white-space:nowrap; }
-
+  /* ACTION ROW — next logbook event primary, STOP secondary right */
   .action-row { display:grid; grid-template-columns:1fr auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
-  /* STOP ENGINE — wymaganie 3.2; tu zamyka się wzlot (silnik ON, po dobiegu) → 09 */
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 16px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
-  .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
   .primary-btn { display:flex; align-items:center; justify-content:center; gap:9px; padding:16px 12px; background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:14px; color:var(--text-primary); font-family:var(--font-display); font-size:20px; letter-spacing:2px; cursor:pointer; text-decoration:none; width:100%; }
 
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
-  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
   .nav-strip a:hover { color:var(--green); }
   .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
@@ -147,14 +110,14 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 05D</span>
-  <span class="slug">cockpit · taxi · po lądowaniu</span>
-  <span class="canvas-meta"><span class="pulse"></span>Silnik ON · Lot 1 ukończony</span>
+  <span class="film-strip">UZ AERO — 05H</span>
+  <span class="slug">cockpit · engine idle · przed kołowaniem</span>
+  <span class="canvas-meta"><span class="pulse"></span>Silnik ON · 0 lotów</span>
 </header>
 
 <div class="phone-wrap"><main class="phone">
   <div class="status-bar">
-    <span>16:14</span>
+    <span>13:11</span>
     <span class="status-right">
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
       <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
@@ -174,7 +137,7 @@
       <div class="compact-right">
         <div class="offline-badge" title="Brak sieci — zdarzenia zapisują się lokalnie, wysyłka automatyczna po odzyskaniu zasięgu">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-          Offline · 14
+          Offline · 8
         </div>
         <div class="running-badge">
           <span class="live-dot"></span>
@@ -189,11 +152,12 @@
     <div class="phase-hero">
       <div class="phase-body">
         <div class="phase-hero-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M22.00,15.08C22.00,14.25 21.32,13.57 20.49,13.58L15.00,13.57L9.98,5.57L8.00,5.57L10.14,13.57L5.00,13.57L3.50,11.57L1.99,11.57L2.93,15.09L3.33,16.58L4.99,16.59L10.49,16.58L14.99,16.58L20.48,16.60C21.33,16.57 21.99,15.90 22.00,15.08Z"/><path d="M7.3,17.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 z"/><path d="M16.5,17.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 z"/><path d="M2.5,19H21.5V21H2.5V19"/></svg>
+          <!-- śmigło — kręci się tylko silnik (rejestr glifów: `phase-idle`) -->
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-1.6 0-2.4 2.7-2.4 5.2 0 1.7.9 3 2.4 3s2.4-1.3 2.4-3C14.4 4.7 13.6 2 12 2z"/><path d="M12 22c1.6 0 2.4-2.7 2.4-5.2 0-1.7-.9-3-2.4-3s-2.4 1.3-2.4 3C9.6 19.3 10.4 22 12 22z"/><circle cx="12" cy="12" r="2.1"/></svg>
         </div>
         <div class="phase-text">
-          <div class="phase-hero-name active">Taxi</div>
-          <div class="phase-hero-sub">6 KT · KOŁOWANIE</div>
+          <div class="phase-hero-name ground">Engine idle</div>
+          <div class="phase-hero-sub">0 KT · POSTÓJ</div>
         </div>
       </div>
     </div>
@@ -201,94 +165,50 @@
     <div class="param-grid">
       <div class="param-cell">
         <div class="param-label">Ground Speed</div>
-        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">6</div><div class="param-unit">KT</div></div>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <div class="param-value">0</div>
+          <div class="param-unit">KT</div>
+        </div>
       </div>
       <div class="param-cell">
         <div class="param-label">Track</div>
-        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">085</div><div class="param-unit">°</div></div>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <!-- Samolot stoi — kurs nie istnieje. Kreska zamiast przypadkowej liczby
+               z szumu GPS: to nie jest odczyt, którego ktoś dokonał. -->
+          <div class="param-value muted">—</div>
+        </div>
       </div>
       <div class="param-cell">
         <div class="param-label">Fuel on Board</div>
-        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">~89</div><div class="param-unit">L</div></div>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <div class="param-value">~141</div>
+          <div class="param-unit">L</div>
+        </div>
       </div>
       <div class="param-cell">
         <div class="param-label">Engine Time</div>
-        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value muted">03:04</div></div>
+        <div style="display:flex;align-items:baseline;gap:6px;">
+          <div class="param-value muted">00:01</div>
+        </div>
       </div>
     </div>
 
-    <!-- Karta „Cykl bieżący" pokazuje się dopiero, gdy w cyklu jest zdarzenie inne niż
-         uruchomienie silnika i wiersz „na żywo" (issue #19) — tu jest ich pełen cykl. -->
-    <div class="cycle-log">
-      <div class="cycle-log-header">
-        <span class="cycle-log-title">Cykl bieżący · 3 T/O · 3 LDG</span>
-        <span class="cycle-log-count">LOT #3</span>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-        <div class="log-body"><div class="log-t">13:10</div><div class="log-lbl">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
-      </div>
-      <div class="flight-sep"><span class="flight-sep-label">Lot 1</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">13:11</div><div class="log-lbl">Taxi</div><div class="log-dur">0:13</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">13:24</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">13:48</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 2 450 ft</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:08</div><div class="log-lbl">Landing</div><span class="log-chip log-chip-mh">~123 L</span><span class="log-chip log-chip-mh">24 L/h</span><div class="log-dur">0:44</div></div>
-      </div>
-      <div class="flight-sep"><span class="flight-sep-label">Lot 2</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:08</div><div class="log-lbl">Taxi</div><div class="log-dur">0:13</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:21</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">14:42</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">3 skoczków · 1 800 ft</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:03</div><div class="log-lbl">Landing</div><span class="log-chip log-chip-mh">~105 L</span><span class="log-chip log-chip-mh">26 L/h</span><div class="log-dur">0:42</div></div>
-      </div>
-      <div class="flight-sep"><span class="flight-sep-label">Lot 3</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:03</div><div class="log-lbl">Taxi</div><div class="log-dur">0:14</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:17</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">15:45</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 3 200 ft</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">16:10</div><div class="log-lbl">Landing</div><span class="log-chip log-chip-mh">~90 L</span><span class="log-chip log-chip-mh">24 L/h</span><div class="log-dur">0:53</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon live"></div></div>
-        <div class="log-body"><div class="log-t">16:10</div><div class="log-lbl live">Taxi</div><div class="log-dur" style="color:var(--green);opacity:0.7">00:04:22</div></div>
-      </div>
-    </div>
+    <!-- BEZ KARTY „CYKL BIEŻĄCY" (issue #19): karta pojawia się dopiero, gdy w cyklu
+         zaszło coś poza uruchomieniem silnika i wierszem „na żywo" — pierwszym takim
+         zdarzeniem jest zwykle kołowanie (05A). Między START ENGINE a kołowaniem
+         nagłówek „0 T/O · 0 LDG" nad jednym wierszem to trzy liczby o niczym, więc
+         środek ekranu zostaje pusty. To stan przejściowy liczony w sekundach. -->
+    <div style="flex:1"></div>
 
+    <!-- SEKWENCJA PASKA AKCJI (decyzja 2026-08-11): przycisk główny podpowiada NASTĘPNE
+         zdarzenie sekwencji lotu — idle → TAXI → kołowanie → TAKE OFF → lot → LANDING.
+         Zaraz po uruchomieniu silnika następnym zdarzeniem jest kołowanie, nie start:
+         „Take off" w tym stanie zapraszał do zapisu zdarzenia, które fizycznie nie może
+         być następne. Zrzutu nie ma na ziemi W OGÓLE (patrz komentarz w 05). -->
     <div class="action-row">
-      <a href="05f-zdarzenie-reczne.html" class="primary-btn" title="Zapisz ręcznie — GPS nie wykrył zdarzenia albo wykrył za późno">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
-        Take off
+      <a href="05a-cockpit-taxi.html" class="primary-btn" title="Zapisuje kołowanie OD RAZU — bez arkusza i bez okna COFNIJ: taxi nie wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz w logu. Gdy samolot ruszy, autodetekcja zapisze kołowanie sama — przycisk jest na wypadek, gdyby nie zdążyła albo nie było GPS">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.00,15.08C22.00,14.25 21.32,13.57 20.49,13.58L15.00,13.57L9.98,5.57L8.00,5.57L10.14,13.57L5.00,13.57L3.50,11.57L1.99,11.57L2.93,15.09L3.33,16.58L4.99,16.59L10.49,16.58L14.99,16.58L20.48,16.60C21.33,16.57 21.99,15.90 22.00,15.08Z"/><path d="M7.3,17.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 z"/><path d="M16.5,17.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 z"/><path d="M2.5,19H21.5V21H2.5V19"/></svg>
+        Taxi
       </a>
       <a href="04-cockpit-ground.html" class="stop-btn" title="Zapisuje engine_stop i wraca do kokpitu (04): sesja zakończona, stamtąd ZDAJ SAMOLOT · przytrzymaj 2 s aby potwierdzić">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
@@ -300,12 +220,12 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05h-cockpit-idle.html" class="active" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
   <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
   <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
   <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
   <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
-  <a href="05d-cockpit-taxi-post.html" class="active" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
+  <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
   <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — zapis liczby skoczków (rozliczenie)"><span class="dot"></span>Zrzut</a>
   <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa — parametry — —, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
 </nav>
@@ -314,10 +234,16 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="05c-cockpit-toast-ldg.html">← 05C Toast LDG</a>
-  <a href="05d-cockpit-taxi-post.html" class="active">05D Taxi post</a>
+  <a href="04a-cockpit-ground.html">← 04A Ground start</a>
   <span>·</span>
-  <a href="04-cockpit-ground.html">04 Ground mid-day →</a>
+  <a href="05h-cockpit-idle.html" class="active">05H Idle</a>
+  <a href="05a-cockpit-taxi.html">05A Taxi →</a>
+  <a href="05b-cockpit-inflight-toast.html">05B Toast T/O</a>
+  <a href="05-cockpit-running.html">05 In Flight</a>
+  <a href="05c-cockpit-toast-ldg.html">05C Toast LDG</a>
+  <a href="05d-cockpit-taxi-post.html">05D Taxi post</a>
+  <span>·</span>
+  <a href="04-cockpit-ground.html">04 Ground mid-day</a>
 </nav>
 
 

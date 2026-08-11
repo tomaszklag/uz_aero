@@ -61,6 +61,7 @@ import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
+import { buildCockpitActions } from './logic/cockpitActions';
 import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
 import { fuelTone } from './logic/fuelNorm';
 import { buildCockpitFuel } from './logic/cockpitFuel';
@@ -139,6 +140,7 @@ export function CockpitScreen({
   const startEngine = useSessionStore((s) => s.startEngine);
   const stopEngine = useSessionStore((s) => s.stopEngine);
   const drop = useSessionStore((s) => s.drop);
+  const taxi = useSessionStore((s) => s.taxi);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
 
@@ -340,6 +342,20 @@ export function CockpitScreen({
     const gpsLost = !gpsAvailable;
     const signal = gpsSignalState(gpsAvailable, lastFixAt, permissionDenied);
 
+    /**
+     * Pasek akcji = NASTĘPNE zdarzenie sekwencji lotu (idle → Taxi → Take off →
+     * Landing) plus reguły zrzutu (tylko dzień skokowy, w powietrzu, aktywny
+     * w Cruise). Ekran tego nie rozstrzyga — reguła mieszka w
+     * `logic/cockpitActions.ts` i ma test (decyzja 2026-08-11).
+     */
+    const actions = buildCockpitActions({
+      inFlight,
+      taxiing: projection.taxiing,
+      jumpDay,
+      gpsLost,
+      phase: phase.phase,
+    });
+
     return (
       <Screen padded={false}>
         <AppBar
@@ -498,29 +514,26 @@ export function CockpitScreen({
         </ScrollView>
 
         <CockpitActions
-          // 05g: bez fixa ręczny zapis to JEDYNA droga — etykieta i amber mówią to
-          // wprost, zanim pilot doczyta baner.
-          // Pełne nazwy zamiast skrótów „T/O" i „LAND" (issue #19): pasek akcji jest
-          // jedynym miejscem, gdzie pilot ZAPISUJE zdarzenie, a skrót oszczędzał znaki
-          // na przycisku, który ma dwie trzecie szerokości ekranu.
-          primaryLabel={
-            inFlight
-              ? gpsLost
-                ? 'Landing · ręcznie'
-                : 'Landing'
-              : gpsLost
-                ? 'Take off · ręcznie'
-                : 'Take off'
-          }
-          primaryTone={gpsLost ? 'amber' : undefined}
-          primaryIcon={inFlight ? 'landing' : 'takeoff'}
-          onPrimary={() => setManualOpen(true)}
-          // Zrzut istnieje TYLKO w dniu skokowym (issue #19): przy przelocie,
-          // egzaminie czy locie technicznym nie ma czego wynosić, więc przycisku nie
-          // ma w ogóle. `undefined` to brak akcji, nie blokada — patrz `CockpitActions`.
-          onDrop={jumpDay ? () => setDropOpen(true) : undefined}
-          // Wyniesienie z definicji dzieje się w powietrzu (§3.3).
-          dropDisabledReason={inFlight ? null : 'Zrzut zapiszesz w powietrzu'}
+          // Etykieta, ikona, ton, obecność i przygaszenie zrzutu — wszystko z
+          // `logic/cockpitActions.ts`: sekwencja idle → Taxi → Take off → Landing,
+          // zrzut tylko w powietrzu dnia skokowego i aktywny w Cruise, „· ręcznie"
+          // + amber przy utracie GPS (05g), pełne nazwy zamiast skrótów (issue #19).
+          primaryLabel={actions.primaryLabel}
+          primaryTone={actions.primaryTone ?? undefined}
+          primaryIcon={actions.primaryIcon}
+          onPrimary={() => {
+            // Kołowanie zapisuje się OD RAZU — bez arkusza 05f i bez okna COFNIJ:
+            // taxi nie wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz w logu
+            // (ta sama zasada co przy autodetekcji). Start i lądowanie idą przez
+            // arkusz, bo ich czas trafia do dokumentów i bywa cofany.
+            if (actions.primary === 'taxi') {
+              if (!busy) void run(() => taxi('manual', null));
+            } else {
+              setManualOpen(true);
+            }
+          }}
+          onDrop={actions.showDrop ? () => setDropOpen(true) : undefined}
+          dropDisabledReason={actions.dropDisabledReason}
           onStop={handleStop}
           // `engine_stop` w powietrzu byłby fałszywym wpisem — blokujemy z powodem (§3.2).
           stopDisabledReason={inFlight ? 'Silnik zatrzymasz po wylądowaniu i dobiegu' : null}

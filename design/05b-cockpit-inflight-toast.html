@@ -178,6 +178,7 @@
   .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
   .primary-btn { display:flex; align-items:center; justify-content:center; gap:9px; padding:16px 12px; background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:14px; color:var(--text-primary); font-family:var(--font-display); font-size:20px; letter-spacing:2px; cursor:pointer; text-decoration:none; }
   .zrzut-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:12px 14px; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; color:var(--text-secondary); cursor:pointer; }
+  .zrzut-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
   .zrzut-btn-lbl { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; white-space:nowrap; }
 
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
@@ -322,10 +323,14 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
         Landing
       </a>
-      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu — wysokość z GPS, pilot ustawia liczby skoczków">
+      <!-- ZRZUT PRZYGASZONY (decyzja 2026-08-11): wyniesienie dzieje się w locie
+           poziomym, a ten stan to Climb tuż po starcie — przycisk stoi w pasku, żeby
+           geometria nie skakała w locie (pilot sięga nie patrząc), ale aktywny robi
+           się dopiero w Cruise. Pełna reguła w komentarzu BOTTOM ACTIONS w 05. -->
+      <span class="zrzut-btn disabled" title="Zrzut zapiszesz w locie poziomym (Cruise) — w Climb przycisk jest przygaszony">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
-      </a>
+      </span>
       <span class="stop-btn disabled" title="Silnik zatrzymasz po wylądowaniu i zakończeniu dobiegu">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
         STOP
@@ -357,7 +362,8 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: silnik ON, GS < 5 kt, przed pierwszym T/O — autodetekcja czeka na start"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
   <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
   <a href="05b-cockpit-inflight-toast.html" class="active" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
   <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
