@@ -39,17 +39,14 @@ import { RefuelScreen } from '../screens/RefuelScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { MyDayScreen } from '../screens/MyDayScreen';
-import {
-  ReleaseAircraftScreen,
-  type ReleaseAircraftParams,
-} from '../screens/ReleaseAircraftScreen';
+import { ReleaseAircraftScreen } from '../screens/ReleaseAircraftScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
 import { SyncScreen } from '../screens/SyncScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
-  /** 01 — EKRAN DOMOWY: klamra służby i wzloty całej doby, przekrojowo po maszynach. */
+  /** 01 — EKRAN DOMOWY: płaski log sesji doby, przekrojowo po maszynach (issue #23). */
   MyDay: undefined;
   /** 12 — historia dni z oknem korekty; wejście z 01. */
   History: undefined;
@@ -66,7 +63,7 @@ export type RootStackParamList = {
   /** 15 — ręczny wpis CAŁEGO lotu z 01: kompletna sesja po fakcie (model 2026-08-10). */
   ManualFlight: undefined;
   /** 09B/09C — zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
-  ReleaseAircraft: ReleaseAircraftParams | undefined;
+  ReleaseAircraft: undefined;
   Stats: undefined;
   /** 14 — ślad lotu: trasa, profil pionowy i log punktów. Wejście z tabeli lotów na 10. */
   Track: TrackScreenParams;

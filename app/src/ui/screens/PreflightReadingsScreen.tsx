@@ -226,10 +226,10 @@ export function PreflightReadingsScreen({
         });
       }
 
-      if (e.kind === 'duty_start') {
+      if (e.kind === 'claim') {
         mh.push({
           id: `m-${e.at}`,
-          title: `Start służby · ${stamp(e.at)}`,
+          title: `Przejęcie · ${stamp(e.at)}`,
           meta: `przed włączeniem ${motoHours(e.mhAfter, mhFormat)} MH`,
         });
       }

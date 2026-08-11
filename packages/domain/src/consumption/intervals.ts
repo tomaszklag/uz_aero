@@ -193,7 +193,7 @@ function measure(
   const interval: FuelInterval = {
     sessionUuid: state.sessionUuid ?? '',
     aircraftId: state.aircraftId ?? '',
-    dayStart: state.dutyStart,
+    dayStart: state.claimedAt,
     startAt: from.at,
     endAt: to.at,
     startKind: from.kind,
@@ -261,7 +261,7 @@ function buildMhEquation(
 
   return {
     sessionUuid: state.sessionUuid,
-    dayStart: state.dutyStart,
+    dayStart: state.claimedAt,
     deltaMh: state.mh.deltaH,
     flightMs,
     groundMs: Math.max(0, engineMs - flightMs),

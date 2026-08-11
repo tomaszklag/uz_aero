@@ -347,15 +347,15 @@
     <div class="card-num">01</div>
     <div class="card-body">
       <div class="card-title">01-moj-dzien</div>
-      <div class="card-desc">Ekran domowy pilota — klamra służby (meldunek / koniec) wokół listy SESJI dnia (wiersz = jeden bieg silnika z lotami w środku), przekrojowo po wszystkich samolotach. Sesje na liście są zatwierdzone zdaniem; stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
-      <div class="card-tags"><span class="tag green">home</span><span class="tag">służba</span><span class="tag">sesje dnia</span></div>
+      <div class="card-desc">Ekran domowy pilota — płaska oś czasu SESJI dnia (wiersz = jeden bieg silnika z lotami w środku, rejestracja jako informacja wiersza), sumy Blok / Loty. Klamry służby i „Zamknij dzień" nie ma (issue #23): dzień to lista sesji, niczego się nie otwiera ani nie zamyka. Stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
+      <div class="card-tags"><span class="tag green">home</span><span class="tag">log dnia</span><span class="tag">sesje dnia</span></div>
     </div>
   </a>
   <a href="02-preflight.html" class="card">
     <div class="card-num">02</div>
     <div class="card-body">
       <div class="card-title">02-preflight</div>
-      <div class="card-desc">Przejęcie krok 1/3 — czym i z kim: samolot (karty + blokada PIC + przejęcie) i drugi pilot (Dual). Czasu meldowania TU NIE MA — służba nie jest kontenerem na loty, tylko klamrą wokół nich, więc powstaje sama przy pierwszym wzlocie i poprawia się po fakcie w „Mój dzień"</div>
+      <div class="card-desc">Przejęcie krok 1/3 — czym i z kim: samolot (karty + blokada PIC + przejęcie) i drugi pilot (Dual). Czasu meldowania TU NIE MA — dzień pilota to lista sesji (issue #23), więc żadnej godziny „od kiedy" się nie deklaruje</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">blokada PIC</span><span class="tag">Dual</span></div>
     </div>
   </a>
@@ -431,16 +431,16 @@
     <div class="card-num">01A</div>
     <div class="card-body">
       <div class="card-title">01a-moj-dzien-pusty</div>
-      <div class="card-desc">Mój dzień przed pierwszym wzlotem — klamra pusta („— : —", nigdy zera), pełny baner pouczający o regule klamry, cały ekran prowadzi do przejęcia samolotu. „Zamknij dzień" nie występuje: to brak akcji, nie blokada z powodem</div>
-      <div class="card-tags"><span class="tag">stan pusty</span><span class="tag">pouczenie</span></div>
+      <div class="card-desc">Mój dzień przed pierwszą sesją — pusty log dnia („— —", nigdy zera), cały ekran prowadzi do przejęcia samolotu. Niczego się nie otwiera: dzień zaczyna się pierwszą sesją (issue #23)</div>
+      <div class="card-tags"><span class="tag">stan pusty</span></div>
     </div>
   </a>
-  <a href="01b-moj-dzien-zamkniety.html" class="card amber">
-    <div class="card-num">01B</div>
+  <a href="01c-moj-dzien-offline.html" class="card amber">
+    <div class="card-num">01C</div>
     <div class="card-body">
-      <div class="card-title">01b-moj-dzien-zamkniety</div>
-      <div class="card-desc">Mój dzień po „Zamknij dzień" — obie godziny klamry pochodzą od pilota, baner odliczający 24 h okna korekty (Typ A, niezamykalny), samolot zdany. Nowy wzlot tego samego dnia otwiera dzień z powrotem i rozszerza klamrę</div>
-      <div class="card-tags"><span class="tag amber">zamknięty</span><span class="tag">okno 24 h</span></div>
+      <div class="card-title">01c-moj-dzien-offline</div>
+      <div class="card-desc">Mój dzień bez sieci — amber pill „OFFLINE · n" przed zębatką jako jedyny ślad sieci; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych — issue #23 pkt 5). Wzorzec obowiązuje każdy ekran z SyncChipem</div>
+      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">arkusz syncu</span></div>
     </div>
   </a>
   <a href="02d-preflight-offline.html" class="card amber">
@@ -651,7 +651,7 @@
     <div class="card-num">09B</div>
     <div class="card-body">
       <div class="card-title">09b-zdaj-samolot</div>
-      <div class="card-desc">Zdanie samolotu po STOP ENGINE — przegląd lotów sesji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej sesji. Zdajesz samolot, nie kończysz dnia — służba liczy się dalej</div>
+      <div class="card-desc">Zdanie samolotu po STOP ENGINE — przegląd lotów sesji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej sesji. Zdajesz samolot, nie kończysz dnia — kolejna maszyna dopisze się do listy sesji</div>
       <div class="card-tags"><span class="tag red">zdanie</span><span class="tag">przekazanie</span><span class="tag">łańcuch MH</span></div>
     </div>
   </a>
@@ -659,7 +659,7 @@
     <div class="card-num">10</div>
     <div class="card-body">
       <div class="card-title">10-statystyki (rozliczenie)</div>
-      <div class="card-desc">Rozliczenie SAMOLOTU (nie doby) — czas blokowy sesji, czas per pilot PIC/Dual, wzloty, paliwo na tle normy, MH, zrzuty. Wywoływane z „Mój dzień" przez grupę wzlotów danej maszyny; paliwo i MH nie sumują się przez służbę pilota lecącego dwiema maszynami</div>
+      <div class="card-desc">Rozliczenie SAMOLOTU (nie doby) — czas blokowy sesji, czas per pilot PIC/Dual, loty, paliwo na tle normy, MH, zrzuty. Wywoływane z „Mój dzień" linkiem „Rozliczenie" przy logu dnia; paliwo i MH są osią samolotu, nie pilota</div>
       <div class="card-tags"><span class="tag">rozliczenie</span><span class="tag">oś samolotu</span></div>
     </div>
   </a>

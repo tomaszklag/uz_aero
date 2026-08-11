@@ -166,20 +166,12 @@ export interface SessionState {
   /**
    * Chwila potwierdzenia preflightu — JEDYNY uprawniony znacznik „preflight był".
    *
-   * Do 2026-08-07 tę rolę pełnił `dutyStart` i było to poprawne tylko dopóty, dopóki
-   * godzina meldunku była obowiązkowa. Klamra jest opcjonalna (§3.6a),
-   * a ekran 02 w ogóle o nią nie pyta — `dutyStart` jest więc `null` w ZWYKŁYM przypadku
-   * i mylenie go z brakiem preflightu blokowało pilotowi uruchomienie silnika.
+   * Do 2026-08-07 tę rolę pełnił `dutyStart` (godzina meldunku) i było to poprawne
+   * tylko dopóty, dopóki była obowiązkowa. Potem stała się opcjonalna, a 2026-08-11
+   * klamra służby znikła z modelu W CAŁOŚCI (issue #23) — razem z polami
+   * `dutyStart`/`dutyEnd`, które tu stały.
    */
   preflightAt: EpochMillis | null;
-
-  /**
-   * Godziny KLAMRY SŁUŻBY zadeklarowane przez pilota — obie opcjonalne (§3.6a).
-   * Służba jest klamrą wokół wzlotów, nie kontenerem: brak deklaracji nie jest brakiem
-   * danych, tylko zgodą na wyliczenie klamry z lotów.
-   */
-  dutyStart: EpochMillis | null;
-  dutyEnd: EpochMillis | null;
 
   engineRunning: boolean;
   inFlight: boolean;
@@ -249,8 +241,6 @@ export function emptySessionState(): SessionState {
     mhFormat: null,
     claimedAt: null,
     preflightAt: null,
-    dutyStart: null,
-    dutyEnd: null,
     engineRunning: false,
     inFlight: false,
     taxiing: false,
@@ -332,10 +322,6 @@ export function projectSession(events: Event[]): SessionState {
         state.notes = p.notes ?? null;
         state.mhFormat = p.mhFormat ?? null;
         state.preflightAt = t;
-        // `?? null`, bo klamra jest opcjonalna (§3.6a) — brak
-        // deklaracji ma być `null` („pilot nie podał"), nigdy `undefined`, inaczej
-        // projekcja przestaje być totalna i psuje kontrakt DTO panelu.
-        state.dutyStart = p.dutyStart ?? null;
         state.fuel.startL = p.reading.fuelL;
         state.fuel.lastReadingL = p.reading.fuelL;
         state.mh.start = p.reading.mh;
@@ -468,7 +454,6 @@ export function projectSession(events: Event[]): SessionState {
         state.fuel.endL = p.finalReading.fuelL;
         state.fuel.lastReadingL = p.finalReading.fuelL;
         state.mh.end = p.finalReading.mh;
-        state.dutyEnd = p.dutyEnd ?? null;
         state.closed = true;
         state.closedAt = t;
         break;

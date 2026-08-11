@@ -35,7 +35,7 @@ export interface ProjectionFieldDiff {
 export interface ProjectionRowDiff {
   sessionUuid: string;
   aircraftId: string;
-  /** Dzień karty (`YYYY-MM-DD`, UTC) z przeliczonego duty startu; `null` = bez preflightu. */
+  /** Dzień karty (`YYYY-MM-DD`, UTC) z przeliczonego czasu przejęcia (`claim_time`); `null` = sesja bez daty. */
   day: string | null;
   /** `true` = wiersza projekcji NIE MA w ogóle, choć sesja jest w rejestrze zdarzeń. */
   missing: boolean;

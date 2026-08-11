@@ -135,23 +135,20 @@
       <!-- DZIEŃ W OKNIE KOREKTY.
            Karta opisuje DZIEŃ PILOTA, więc może obejmować kilka maszyn — to jest cała
            różnica względem starego modelu, w którym „dzień" był sesją jednego samolotu
-           i przesiadka rodziła dwa wpisy. Prowadzi do 01B: zamknięty dzień z klamrą
-           i wzlotami, nie do rozliczenia pojedynczej maszyny.
+           i przesiadka rodziła dwa wpisy. Klik prowadzi do rozliczenia (10) —
+           widoku „dzień zamknięty" nie ma, bo dnia się nie zamyka (issue #23).
 
            UWAGA co do dat: ten ekran opisuje moment widziany z 01 (dziś 06 SIE, dzień
-           w toku), więc w oknie korekty stoi DZIEŃ POPRZEDNI — 05 SIE. Kliknięcie
-           otwiera 01B, który tym samym układem pokazuje dzień 06 SIE. To celowe:
-           01B jest wzorcem widoku zamkniętego dnia, nie zrzutem tej konkretnej daty,
-           a osobnego mockupu „dzień z przeszłości" nie robimy. -->
-      <a href="01b-moj-dzien-zamkniety.html" class="day-card editable">
+           w toku), więc w oknie korekty stoi DZIEŃ POPRZEDNI — 05 SIE. -->
+      <a href="10-statystyki.html" class="day-card editable">
         <div class="day-top">
           <span class="day-date">05 SIERPNIA 2026</span>
           <span class="day-ac">SP-AXA · SP-KLM</span>
         </div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Wzloty</span><span class="stat-v">6</span></span>
+          <span class="stat"><span class="stat-k">Sesje</span><span class="stat-v">3</span></span>
           <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">6:39</span></span>
-          <span class="stat"><span class="stat-k">Służba</span><span class="stat-v">8:45</span></span>
+          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">5:41</span></span>
           <span class="stat"><span class="stat-k">Skoczków</span><span class="stat-v">22</span></span>
         </div>
         <div class="day-foot">
@@ -173,9 +170,9 @@
           <span class="day-ac">SP-AXA</span>
         </div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Wzloty</span><span class="stat-v">4</span></span>
+          <span class="stat"><span class="stat-k">Sesje</span><span class="stat-v">2</span></span>
           <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">4:12</span></span>
-          <span class="stat"><span class="stat-k">Służba</span><span class="stat-v">7:30</span></span>
+          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">3:28</span></span>
           <span class="stat"><span class="stat-k">Skoczków</span><span class="stat-v">15</span></span>
         </div>
         <div class="day-foot">
@@ -184,7 +181,7 @@
         </div>
       </div>
 
-      <!-- Dzień z JEDNYM wzlotem — przypadek, który po przebudowie jest typowy:
+      <!-- Dzień z JEDNĄ sesją — przypadek, który po przebudowie jest typowy:
            pilot przyszedł, poleciał raz, oddał maszynę. W starym modelu wymagał
            otwarcia i zamknięcia całej służby. -->
       <div class="day-card">
@@ -193,9 +190,9 @@
           <span class="day-ac">SP-FGK</span>
         </div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Wzloty</span><span class="stat-v">1</span></span>
+          <span class="stat"><span class="stat-k">Sesje</span><span class="stat-v">1</span></span>
           <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">1:18</span></span>
-          <span class="stat"><span class="stat-k">Służba</span><span class="stat-v">1:35</span></span>
+          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">1:07</span></span>
           <span class="stat"><span class="stat-k">Operacja</span><span class="stat-v">Przelot</span></span>
         </div>
         <div class="day-foot">
@@ -223,11 +220,11 @@
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="01b-moj-dzien-zamkniety.html">
-    <span class="vp-badge">01B</span>
+  <a class="vp-item" href="10-statystyki.html">
+    <span class="vp-badge">10</span>
     <span class="vp-body">
       <span class="vp-name">Rozliczenie samolotu</span>
-      <span class="vp-when">Bilans jednej maszyny (paliwo, MH, zrzuty) — wywoływany z grupy wzlotów w widoku dnia, nie wprost z historii.</span>
+      <span class="vp-when">Bilans jednej maszyny (paliwo, MH, zrzuty) — tu prowadzi karta dnia z okna korekty.</span>
     </span>
   </a>
   <a class="vp-item" href="04c-korekta-zdarzenia.html">

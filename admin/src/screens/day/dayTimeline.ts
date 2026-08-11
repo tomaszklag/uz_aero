@@ -122,10 +122,9 @@ function describe(event: Event): string[] {
     case 'preflight_confirm': {
       const p = event.payload;
       const lines = [
-        // Klamra służby jest opcjonalna od schemaVersion 2 (§3.6a) — zdarzenia
-        // z przejęcia po 2026-08-06 jej nie niosą. Brak deklaracji to informacja,
-        // nie luka: administrator ma widzieć „nie zadeklarowano", a nie pustkę.
-        `operacja: ${p.operation} · ${yesNo(p.departureIcao, '?')} → ${yesNo(p.arrivalIcao, '?')} · meldunek ${p.dutyStart != null ? timeUtcSeconds(p.dutyStart) : 'nie zadeklarowano'}`,
+        // „meldunek …" stało tu do 2026-08-11 — usunięte razem z klamrą służby
+        // (issue #23): payload nie niesie już godziny meldunku.
+        `operacja: ${p.operation} · ${yesNo(p.departureIcao, '?')} → ${yesNo(p.arrivalIcao, '?')}`,
         `odczyt: FOB ${litres(p.reading.fuelL)} · MH ${motoHours(p.reading.mh, p.mhFormat ?? null)}`,
       ];
       if (p.client != null) lines.push(`klient: ${p.client}`);
@@ -219,22 +218,22 @@ function describe(event: Event): string[] {
     case 'day_close': {
       const p = event.payload;
       const lines = [
+        // Wiersz „koniec służby: …" stał tu do 2026-08-11 — usunięty razem z klamrą
+        // służby (issue #23): payload nie niesie już `dutyEnd`.
         `odczyt końcowy (przekazanie): FOB ${litres(p.finalReading.fuelL)} · MH ${p.finalReading.mh}`,
-        `koniec służby: ${p.dutyEnd != null ? timeUtcSeconds(p.dutyEnd) : 'nie zadeklarowano'}`,
       ];
-      // Powód zdania BEZ WZLOTU (09C). To jest dokładnie ta informacja, której szuka
+      // Powód zdania BEZ LOTU (09C). To jest dokładnie ta informacja, której szuka
       // administrator patrząc na sesję z zerowym czasem blokowym: maszyna stała zajęta
-      // i ktoś powiedział, dlaczego. Pole jest opcjonalne (strumienie schemaVersion 1
-      // go nie niosą, a sesja ze wzlotami nie ma o co pytać), więc wiersz pojawia się
-      // wyłącznie wtedy, gdy powód naprawdę padł.
+      // i ktoś powiedział, dlaczego. Pole jest opcjonalne (sesja z lotami nie ma o co
+      // pytać), więc wiersz pojawia się wyłącznie wtedy, gdy powód naprawdę padł.
       if (p.noFlightReason != null) {
-        lines.push(`bez wzlotu — powód: ${NO_FLIGHT_LABEL[p.noFlightReason]}`);
+        lines.push(`bez lotu — powód: ${NO_FLIGHT_LABEL[p.noFlightReason]}`);
       }
       // Nazwa typu jest historyczna: od 2026-08-06 to ZDANIE SAMOLOTU, nie koniec
-      // dnia pilota — służba liczy się dalej, a kolejna maszyna wchodzi do tej samej
-      // doby (§3.6). Od 2026-08-10 zdanie jest też ZATWIERDZENIEM logu sesji i od
-      // niego liczy się jedyne okno korekty (kotwica per wzlot odeszła z `leg_close`).
-      lines.push('zdanie samolotu — zatwierdzenie logu sesji; służba pilota trwa dalej');
+      // dnia pilota — kolejna maszyna dopisze się do listy sesji tej samej doby (§3.6).
+      // Od 2026-08-10 zdanie jest też ZATWIERDZENIEM logu sesji i od niego liczy się
+      // jedyne okno korekty.
+      lines.push('zdanie samolotu — zatwierdzenie logu sesji; dzień pilota trwa dalej');
       return lines;
     }
 

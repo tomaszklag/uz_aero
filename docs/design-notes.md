@@ -7,13 +7,15 @@
 
 ## Przepływ ekranów (screen flow)
 
-> **Przebudowany 2026-08-06** (`_main.md.txt` §3.6a): dzień służby przestał być kontenerem
-> na loty. Wszystko wraca do `01`, jednostką potwierdzenia jest wzlot.
+> **Przebudowany 2026-08-06** (`_main.md.txt` §3.6a), a **2026-08-11 (issue #23) klamra
+> służby znikła w całości**: dzień pilota to lista sesji — niczego się nie otwiera ani
+> nie zamyka. Wszystko wraca do `01`, jednostką potwierdzenia jest sesja.
 
 ```
 00-login (odblokowanie PIN · warianty: 00a pełny login, 00b offline bez profilu)
-  → 01-moj-dzien          EKRAN DOMOWY — klamra służby wokół wzlotów dnia, przekrojowo
-                          po samolotach (warianty: 01a zero wzlotów, 01b dzień zamknięty)
+  → 01-moj-dzien          EKRAN DOMOWY — płaski log sesji dnia (oś czasu, rejestracja
+                          jako informacja wiersza; warianty: 01a zero sesji,
+                          01c offline + arkusz szczegółów synchronizacji)
 
 Przejęcie samolotu (trzy kroki, kilka sekund — nie otwiera doby):
   → 02-preflight          (krok 1/3 — samolot i Dual; wariant offline: 02d)
@@ -46,15 +48,14 @@ Zdanie samolotu (model 2026-08-10 — sesja = jeden bieg silnika; ekrany 09 i 09
   09b-zdaj-samolot          (przegląd lotów sesji + odczyt WYMAGANY — przekazanie,
                              ogniwo łańcucha MH i ZATWIERDZENIE logu sesji;
                              09c — zdanie bez lotu: pogoda, usterka)
-  → 01-moj-dzien            kolejny samolot wchodzi do TEJ SAMEJ służby;
+  → 01-moj-dzien            kolejna sesja dopisuje się do listy dnia;
                             z 01 także [15] ręczny wpis CAŁEGO lotu po fakcie
 
 Odnogi pod 01 (nie etapy dnia):
-  10-statystyki  rozliczenie SAMOLOTU (10a — bez wzlotów)
+  10-statystyki  rozliczenie SAMOLOTU (10a — bez lotów)
   11-eksport     status synchronizacji (11a — offline)
   12-historia    poprzednie dni pilota, okno korekty 24 h
   13-ustawienia
-  „Zamknij dzień" → 01b  (OPCJONALNE — potwierdzenie klamry)
 ```
 
 ---
@@ -94,33 +95,40 @@ opcjonalne), więc bez pamięci byłby codziennym tapnięciem w pusty formularz.
 operacja i klient **per pilot**, trasa **per samolot** (`TaskMemoryStore`). Podpowiedź
 ustępuje bez pytania — pierwsza zmiana któregokolwiek pola wyłącza ją do końca preflightu.
 
-### Klamra służby — meldunek i koniec (ekran 01, od 2026-08-06)
+### Klamra służby — USUNIĘTA (issue #23, 2026-08-11)
 
-Pole przeniesione z przejęcia na ekran domowy. **Domyślnie nie wymaga niczego**: klamra
-bierze się z pierwszego i ostatniego wzlotu doby, a pilot poprawia ją tylko wtedy, gdy
-zameldował się wcześniej albo został dłużej niż samolot.
-
-- Wyświetlana jako **UTC primary** (duża czcionka mono), pod spodem adnotacja o pochodzeniu:
-  „z pierwszego wzlotu" (wyliczone) albo „poprawione" (deklaracja pilota, kolor `--blue`)
-- Edycja przez ołówek = **arkusz z wpisaniem godziny** (`ReadingSheet`, ten sam wzorzec co
-  odczyty 02b/02c): pole „HH:MM" UTC, pod nim odniesienia („Teraz", „Pierwszy wzlot")
-  i miękkie ostrzeżenie, gdy wpis wypada w przyszłości albo **zawęża klamrę poniżej lotów**
-  (służba ⊇ suma wzlotów — to jest reguła, nie preferencja).
-  Klawiatura **numeryczna** — pilot wbija cztery cyfry (`0800`), dwukropek stawia maska;
-  QWERTY dla czterech cyfr zajmowałaby pół ekranu i podstawiała podpowiedzi słownikowe.
-  Powód: meldunek bywa godziny wstecz wobec chwili wypełniania — wpisanie wartości jest
-  jednym ruchem, stepper wymagałby serii tapnięć. Data pozostaje z doby (pilot poprawia
-  godzinę, nie datę)
+Sekcja „Służba" na 01 (meldunek / koniec służby / „Zamknij dzień") istniała między
+2026-08-06 a 2026-08-11 i została usunięta W CAŁOŚCI, razem z modelem: do pilota
+w danym dniu przypisana jest lista sesji i nie ma sensu opakowywać jej w klamrę
+„od meldunku do zamknięcia" — ta wielkość niczego nie mierzyła. Ekran 01 pokazuje
+płaski log sesji (oś czasu; rejestracja jest informacją wiersza, nie osią grupowania)
+i dwie sumy: **Blok** i **Loty**. Edu-baner tłumaczący regułę klamry odszedł razem
+z regułą. Dnia się nie otwiera i nie zamyka — zaczyna się pierwszą sesją.
 
 ### Strefa czasowa — reguła nadrzędna
 
 **UTC jest domyślnym czasem w całej aplikacji.** Wszystkie czasy zdarzeń (log samolotu,
-wzloty dnia, T/O, LDG, tankowanie, start/stop silnika, klamra służby, arkusz w eksporcie)
-są w UTC — czas nieoznaczony = UTC.
-LT pojawia się **wyłącznie jako wartość drugorzędna** przy deklaracji klamry służby na `01`,
-bo pilot melduje się o lokalnej godzinie; format: `08:00 UTC · 10:00 LT`.
-Logi i tabele mają jawny marker („Log SP-AXA · UTC", „Wzloty · czasy UTC"),
-żeby nie było wątpliwości. Scenariusz mockupów: offset LT = UTC+2.
+sesje dnia, T/O, LDG, tankowanie, start/stop silnika, arkusz w eksporcie) są w UTC —
+czas nieoznaczony = UTC.
+LT nie pojawia się już nigdzie: jedynym miejscem był meldunek klamry służby na `01`,
+usunięty razem z klamrą (issue #23).
+Logi i tabele mają jawny marker („Log SP-AXA · UTC", „Log dnia · czasy UTC"),
+żeby nie było wątpliwości.
+
+### Nagłówek ekranu i SyncChip (issue #23, 2026-08-11)
+
+**Jeden wzorzec nagłówka dla całej aplikacji**: tytuł i podtytuł wyrównane DO LEWEJ,
+ustawienia (zębatka) zawsze PO PRAWEJ. Ekran 01 miał zębatkę po lewej i tytuł na środku —
+był jedynym wyjątkiem i przestał nim być. Ekrany z powrotem („Wróć") zachowują swój
+układ kroków formularza; reguła dotyczy ekranów bez powrotu.
+
+**SyncChip = sam pill.** Offline rysuje wyłącznie `OFFLINE · n` (amber); stempla
+„SYNC HH:MM" pod pillem ani stopki „Dane referencyjne · sync" na ekranie NIE MA.
+Tapnięcie pilla otwiera **arkusz szczegółów synchronizacji** (wzorzec: `01c`):
+stan kolejki, ostatnia udana synchronizacja, wiek danych referencyjnych. Arkusz jest
+informacyjny — bez przycisku „wyślij teraz", bo outbox wysyła sam (§4.1), a przycisk-atrapa
+uczyłby, że trzeba pomagać. Online chip nie rysuje nic (issue #12) — bez zmian.
+Wzorzec obowiązuje KAŻDY ekran z SyncChipem, nie tylko 01.
 
 ### Paliwo na pokładzie
 - Wartość pochodzi z **przekazania przez poprzednika** na końcu jego zmiany — nie jest szacunkiem

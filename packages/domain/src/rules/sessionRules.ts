@@ -680,17 +680,8 @@ function checkByType(
         );
       }
 
-      // Klamra jest opcjonalna (§3.6a), więc reguła kolejności
-      // budzi się TYLKO wtedy, gdy pilot podał obie godziny. Brak deklaracji nie jest
-      // naruszeniem — jest stanem domyślnym.
-      if (state.dutyStart != null && p.dutyEnd != null && p.dutyEnd < state.dutyStart) {
-        v.push(
-          error('DUTY_END_BEFORE_START', 'Koniec służby jest wcześniejszy niż meldunek.', {
-            dutyStart: state.dutyStart,
-            dutyEnd: p.dutyEnd,
-          }),
-        );
-      }
+      // Reguła `DUTY_END_BEFORE_START` żyła tu do 2026-08-11 — usunięta razem
+      // z klamrą służby (issue #23): payload nie niesie już godzin do porównania.
 
       // Łańcuch MH (§4.5) — licznik motogodzin jest monotoniczny. Punktem odniesienia
       // jest OSTATNIE znane wskazanie (odczyt z wzlotu bije stan przy przejęciu), bo to

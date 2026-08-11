@@ -5,18 +5,21 @@
 > Architektura systemu (offline-first, sync, kontrakt API): `docs/_main.md.txt`.
 > Ten dokument mówi, **jak jest zbudowany kod** i gdzie dopisać nową rzecz.
 
-> ## ⚠ STATUS (2026-08-07): ten dokument opisuje kod WDROŻONY, czyli model sprzed 2026-08-06
+> ## ⚠ STATUS (aktualizacja 2026-08-11): przebudowa flow WYLĄDOWAŁA, słownik „duty" jest historią
 >
-> Decyzja z 2026-08-06 (`_main.md.txt` §3.6a) odwróciła fundament: dzień służby przestał być
-> kontenerem na loty, jednostką potwierdzenia jest **wzlot**, a służba jest **klamrą** wokół
-> lotów, należącą do pilota i mogącą obejmować kilka maszyn. Design jest już przebudowany,
-> **kod jeszcze nie** (faza 8, etapy B–D).
+> Nota z 2026-08-07 niżej opisywała okres przejściowy (design przebudowany, kod nie).
+> Od tego czasu: etapy B–D flow ✅, pivot „sesja = jeden bieg silnika" (2026-08-10) ✅,
+> a **klamra służby została usunięta w całości** (issue #23, 2026-08-11 — `dutyStart`/
+> `dutyEnd`/`DUTY_END_BEFORE_START` nie istnieją; `projections/duty.ts` →
+> `projections/pilotDay.ts`, `projectDuty` → `projectPilotDay`). Każde wystąpienie
+> „dutyStart", „klamra służby", „wzlot" czy `leg_close` w dalszej części dokumentu
+> czytaj jako narrację HISTORYCZNĄ. Specyfikacją modelu jest `_main.md.txt` §3.6/§3.6a
+> i `CLAUDE.md` (sekcje „Sesja = jeden bieg silnika" i „Dzień pilota = lista sesji").
 >
-> Wszystko poniżej, co mówi „dzień", `day_close`, `dutyStart`, „zamknięcie dnia" albo opisuje
-> ekran `03`/`01-splash`, jest **prawdziwym opisem dzisiejszego kodu i nieprawdziwym opisem
-> docelowego modelu**. Miejsca, w których ta różnica ma konsekwencje przy pisaniu etapu B,
-> są oznaczone w tekście blokiem `> ⚠ ETAP B`. Specyfikacją docelową jest `_main.md.txt`
-> §3.6, §3.6a, §3.6b i §7 — nie ten plik.
+> (Nota z 2026-08-07, zachowana jako historia:) Decyzja z 2026-08-06 (`_main.md.txt`
+> §3.6a) odwróciła fundament: dzień służby przestał być kontenerem na loty, jednostką
+> potwierdzenia jest **wzlot**, a służba jest **klamrą** wokół lotów. Miejsca oznaczone
+> blokiem `> ⚠ ETAP B` opisywały konsekwencje tej różnicy w trakcie przebudowy.
 
 ## 0. Monorepo (Faza 2)
 
@@ -844,13 +847,13 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `InlineNote` | przypis w kolorowym pudełku (mono 10 px + ikona) | `.certified-row`, `.none-box` |
 | `PeekBanner` | pasek „oglądasz cudzą sesję" ze źródłem i wiekiem danych | `.ro-banner` (04b) |
 | `OutboxGuard` | amber-box ochrony konta przy niepustym outboxie (§3.0) | `.outbox-guard` (00, 13) |
-| `RefDataStamp` | stempel cache referencyjnego: kropka + „sync HH:MM UTC" | `.ref-sync` (01, 13) |
+| `RefDataStamp` | stempel cache referencyjnego: kropka + „sync HH:MM UTC" | `.ref-sync` (13; z 01 usunięty — issue #23 pkt 5: stempel mieszka w arkuszu SyncChipa) |
 | `Caption` | wyśrodkowany podpis pod akcją (mono 9 px) | `.takeover-hint`, `.actions-reason` |
 | `CrewRow` | wiersz aktualnej załogi: rola, kod, „od kiedy", block | `.crew-row` (07) |
 | `StepList` | numerowana procedura wychodząca poza ten telefon | `.handover-steps` (07) |
 | `PillButton` | mała akcja nagłówka (pigułka z ikoną) | `.btn-add` (08) |
 | `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
-| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c (godzin klamry służby preflight od etapu C4 nie zbiera — należą do 01 / 01b) |
+| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c (godzin klamry służby nie zbiera — klamra usunięta, issue #23) |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |

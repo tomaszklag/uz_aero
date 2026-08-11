@@ -146,7 +146,6 @@ function flyingDay(o: DayOptions) {
         operation: 'skoki',
         departureIcao: 'EPKK',
         arrivalIcao: null,
-        dutyStart: at(8),
         reading: { fuelL: 150, mh },
         client: null,
         mhFormat: 'hhmm',
@@ -172,7 +171,7 @@ function flyingDay(o: DayOptions) {
     event(
       'day_close',
       at(16, 45),
-      { finalReading: { fuelL: 88, mh: mh + 2.2 }, dutyEnd: at(16, 45) },
+      { finalReading: { fuelL: 88, mh: mh + 2.2 } },
       base,
     ),
   );

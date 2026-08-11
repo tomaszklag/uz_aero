@@ -58,7 +58,7 @@ export function LeaveCockpitSheet({
       warning={
         'Dopóki maszyna jest przejęta, ekranem pracy jest kokpit — „Mój dzień" otworzy się ' +
         'po jej oddaniu. Zdanie samolotu to odczyt liczników i przekazanie następnemu ' +
-        'pilotowi; Twój dzień służby biegnie dalej i obejmie kolejną maszynę.'
+        'pilotowi; Twój dzień biegnie dalej — kolejna maszyna dopisze się do listy sesji.'
       }
       warningTone="amber"
       confirmLabel="ZDAJ SAMOLOT"

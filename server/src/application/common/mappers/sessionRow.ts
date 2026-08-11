@@ -25,9 +25,9 @@
  *    samolot i nie dokończył preflightu (wcześniej takie sesje były bez daty);
  *  • `GET /aircraft/:id/state` wystawia tę wartość jako `claimSince`, a telefon pokazuje
  *    „od kiedy zajęty" — i teraz jest to prawda dosłowna, nie przybliżenie;
- *  • klamry służby w `sessions` NIE MA i nie ma jej tu być: należy do PILOTA, obejmuje
- *    kilka maszyn i liczy ją `projectDuty` per pilot per doba UTC (§3.6a). Deklaracja
- *    pilota zostaje w rejestrze zdarzeń, skąd bierze ją ta projekcja.
+ *  • klamry służby w `sessions` NIE MA — najpierw dlatego, że należała do PILOTA
+ *    i obejmowała kilka maszyn, a od issue #23 (2026-08-11) dlatego, że nie istnieje
+ *    w modelu w ogóle: dzień pilota to lista sesji (`projectPilotDay`).
  */
 
 import { projectSession, type Event } from '@uzaero/domain';

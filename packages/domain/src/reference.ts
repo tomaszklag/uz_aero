@@ -37,7 +37,8 @@ export type ServiceStatus = 'active' | 'disabled';
  * Wypełnia to serwer przy `GET /reference` (§4.6); offline pole zwyczajnie jest puste.
  */
 export interface HandoverTrailEntry {
-  kind: 'refuel' | 'flight' | 'duty_start';
+  /** `claim` = przejęcie samolotu przez poprzednika (do 2026-08-11: `duty_start`). */
+  kind: 'refuel' | 'flight' | 'claim';
   at: EpochMillis;
   /** Kto — dla `refuel` bywa `null` (tankowanie techniczne). */
   pilotId: string | null;
@@ -47,7 +48,7 @@ export interface HandoverTrailEntry {
   fuelAfterL: number | null;
   /** Stan licznika motogodzin PO zdarzeniu (godziny dziesiętne). */
   mhAfter: number | null;
-  /** Czas trwania lotu/służby (ms) — dla `flight`. */
+  /** Czas trwania lotu (ms) — dla `flight`. */
   durationMs: number | null;
 }
 

@@ -6,6 +6,12 @@
  * jest celowe: numer kroku („1 / 3") i stan sieci muszą być widoczne również wtedy, gdy
  * pilot jest w połowie długiego formularza.
  *
+ * WZORZEC (issue #23 pkt 7, jeden dla całej aplikacji): tytuł i podtytuł DO LEWEJ,
+ * ustawienia (zębatka) zawsze PO PRAWEJ — za pillem łączności, na samym skraju.
+ * Ekran 01 miał zębatkę po lewej i tytuł na środku; był jedynym wyjątkiem i przestał
+ * nim być. Układ wyśrodkowany zostaje WYŁĄCZNIE dla kroków formularza z powrotem
+ * („Wróć" ← tytuł → badge kroku) — tam środek trzyma tytuł między dwoma slotami.
+ *
  * Różnica wobec `AppBar`: AppBar to pasek **dnia lotnego** (samolot, trasa) na ekranach
  * kokpitu. ScreenHeader to nagłówek **formularza** — nie ma jeszcze samolotu, którym można
  * by się przedstawić.
@@ -35,26 +41,11 @@ export interface ScreenHeaderProps {
    * tak jak w mockupach kroków 2 i 3, gdzie tytuł stoi między „Wróć" a numerem kroku.
    */
   onBack?: () => void;
-  /**
-   * Koło zębate w LEWYM slocie (`.icon-btn` z mockupu 01 „Mój dzień").
-   *
-   * Po lewej, a nie po prawej jak w `AppBar`, i to nie jest niekonsekwencja: na ekranie
-   * domowym prawy slot należy do licznika wzlotów i wskaźnika łączności, a lewy jest
-   * wolny — ekran domowy nie ma dokąd wracać. W kokpicie jest odwrotnie, bo lewą stronę
-   * zajmuje znak samolotu. Każdy pasek odwzorowuje swój mockup.
-   */
+  /** Koło zębate na PRAWYM skraju (`.icon-btn`) — wzorzec issue #23 pkt 7. */
   onSettings?: () => void;
   /** Napis przy strzałce powrotu; domyślnie „Wróć", ale bywa nazwą celu („Kokpit"). */
   backLabel?: string;
-  /**
-   * Wyśrodkowanie tytułu BEZ powrotu (mockup 10 `.app-header`).
-   *
-   * Pusty slot po lewej nie jest niedoróbką designu, tylko treścią: statystyki otwierają
-   * się po zamknięciu dnia, a „wstecz" prowadziłoby do formularza, którego nie da się
-   * powtórzyć. Zamiast martwej strzałki zostaje 56 px, które trzyma tytuł na środku.
-   */
-  centered?: boolean;
-  /** Prawa strona pod badgem kroku — zwykle `SyncChip`. */
+  /** Prawa strona przed zębatką — zwykle `SyncChip` i badge kroku. */
   right?: React.ReactNode;
   style?: ViewStyle;
 }
@@ -67,14 +58,25 @@ export function ScreenHeader({
   onBack,
   backLabel = 'Wróć',
   onSettings,
-  centered = false,
   right,
   style,
 }: ScreenHeaderProps) {
   const { theme } = useTheme();
   const titleSize = size === 'lg' ? styles.title : styles.titleMd;
 
-  if (onBack != null || onSettings != null || centered) {
+  const settingsButton =
+    onSettings != null ? (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Ustawienia"
+        onPress={onSettings}
+        style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
+      >
+        <Icon name="settings" size={19} color={theme.colors.textMuted} />
+      </Pressable>
+    ) : null;
+
+  if (onBack != null) {
     return (
       <View
         style={[
@@ -91,34 +93,19 @@ export function ScreenHeader({
         ]}
       >
         {/* `.back-btn`: chevron + słowo „Wróć". Sama ikona bywa nieczytelna w rękawicach
-            i w słońcu — podpis kosztuje 30 px, a usuwa wątpliwość.
-            Bez powrotu zostaje sam slot tej samej szerokości — inaczej tytuł uciekłby
-            w lewo o szerokość prawej kolumny. */}
-        {onBack != null ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Wróć do poprzedniego kroku"
-            onPress={onBack}
-            hitSlop={12}
-            style={({ pressed }) => [styles.back, styles.sideSlot, { opacity: pressed ? 0.6 : 1 }]}
-          >
-            <Icon name="back" size={14} color={theme.colors.textMuted} />
-            <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.backLabel}>
-              {backLabel}
-            </AppText>
-          </Pressable>
-        ) : onSettings != null ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Ustawienia"
-            onPress={onSettings}
-            style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}
-          >
-            <Icon name="settings" size={19} color={theme.colors.textMuted} />
-          </Pressable>
-        ) : (
-          <View style={styles.sideSlot} />
-        )}
+            i w słońcu — podpis kosztuje 30 px, a usuwa wątpliwość. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Wróć do poprzedniego kroku"
+          onPress={onBack}
+          hitSlop={12}
+          style={({ pressed }) => [styles.back, styles.sideSlot, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Icon name="back" size={14} color={theme.colors.textMuted} />
+          <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.backLabel}>
+            {backLabel}
+          </AppText>
+        </Pressable>
 
         <View style={styles.titleCentered}>
           <AppText variant="display" numberOfLines={1} style={[titleSize, styles.centerText]}>
@@ -134,6 +121,7 @@ export function ScreenHeader({
         <View style={[styles.right, styles.sideSlot]}>
           {step != null && <Tag label={step} size="md" />}
           {right}
+          {settingsButton}
         </View>
       </View>
     );
@@ -165,9 +153,12 @@ export function ScreenHeader({
         )}
       </View>
 
-      <View style={styles.right}>
+      {/* Zębatka STOI ZA pillem łączności: pill pojawia się i znika (online nie rysuje
+          nic — issue #12), a ustawienia mają stały adres na skraju ekranu. */}
+      <View style={[styles.right, styles.rightRow]}>
         {step != null && <Tag label={step} size="md" />}
         {right}
+        {settingsButton}
       </View>
     </View>
   );
@@ -183,11 +174,12 @@ const styles = StyleSheet.create({
   centerText: { textAlign: 'center' },
   subtitle: { fontSize: 10, letterSpacing: 1, lineHeight: 14 },
   right: { alignItems: 'flex-end', gap: 5, flexShrink: 0 },
+  /** Bez powrotu prawa kolumna układa się w RZĄD: [pill] [zębatka], wyrównane do środka. */
+  rightRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   backLabel: { fontSize: 11, letterSpacing: 0.5 },
   // Równe sloty po obu stronach trzymają tytuł naprawdę na środku (mockup: min-width 56).
   sideSlot: { minWidth: 56 },
-  // `.icon-btn` (01): wysokość 44 px — próg celu dotykowego dla rękawic, nie ozdoba.
-  // Szerokość jak pozostałe sloty boczne, żeby tytuł został naprawdę na środku.
-  iconBtn: { minWidth: 56, height: 44, alignItems: 'center', justifyContent: 'center' },
+  // `.icon-btn`: wysokość 44 px — próg celu dotykowego dla rękawic, nie ozdoba.
+  iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 });

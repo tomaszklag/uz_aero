@@ -71,7 +71,6 @@ function flyingDay(options: {
     wire(uuid, 'session_claim', start - 60_000, { mode: 'free' }),
     wire(uuid, 'preflight_confirm', start, {
       operation: 'skoki',
-      dutyStart: start,
       reading: { fuelL: 300, mh: mhStart },
     }),
     wire(uuid, 'engine_start', engineStart),
@@ -84,7 +83,6 @@ function flyingDay(options: {
     events.push(
       wire(uuid, 'day_close', engineStop + 10 * 60_000, {
         finalReading: { fuelL: 300 - burnL, mh: mhStart + mhDelta },
-        dutyEnd: engineStop + 10 * 60_000,
       }),
     );
   }

@@ -56,7 +56,6 @@ function openDay(sessionUuid: string, picId: string, mh: number) {
         operation: 'skoki',
         departureIcao: 'EPKK',
         arrivalIcao: null,
-        dutyStart: at(8, 0),
         reading: { fuelL: 150, mh },
         client: null,
         mhFormat: 'hhmm',
@@ -134,7 +133,7 @@ async function overlapping(options: Parameters<typeof testHarness>[0] = {}) {
     event(
       'day_close',
       at(16, 45),
-      { finalReading: { fuelL: 95, mh: 1237.4 }, dutyEnd: at(16, 45) },
+      { finalReading: { fuelL: 95, mh: 1237.4 } },
       { sessionUuid: 'sess-2', picId: 'KRZ' },
     ),
   ]);

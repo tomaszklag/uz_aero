@@ -33,13 +33,10 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     client: 'SKY CAMP',
     notes: null,
     mhFormat: 'decimal',
-    // Chwila PRZEJĘCIA maszyny — oś samolotu. Klamra służby (`dutyStart`/`dutyEnd`)
-    // jest po §3.6a opcjonalna, należy do pilota i tej karty nie dotyczy; fixture
-    // zostawia ją pustą, bo tak wygląda ZWYKŁA sesja po przebudowie flow.
+    // Chwila PRZEJĘCIA maszyny — oś samolotu. Klamra służby zniknęła z modelu
+    // w całości (issue #23, 2026-08-11) — karta i tak nigdy jej nie dotyczyła.
     claimedAt: at(5, 45),
     preflightAt: at(5, 45),
-    dutyStart: null,
-    dutyEnd: null,
     engineRunning: false,
     inFlight: false,
     // Doszło do `SessionState` razem z detekcją kołowania — dzień zamknięty nie kołuje.
@@ -117,10 +114,8 @@ describe('dayTiles — dzień zamknięty', () => {
 
   it('czas zajęcia maszyny to UPŁYW między przejęciem a zdaniem', () => {
     // ZASTĘPUJE kafel „Czas służby (duty)" z 2026-08-01. Tamten był pomyłką kategorii:
-    // karta opisuje sesję JEDNEJ maszyny, a służba należy do PILOTA i potrafi objąć
-    // kilka maszyn (§3.6a) — więc jej upływu nie da się z tej karty uczciwie policzyć.
-    // Do tego `dutyStart`/`dutyEnd` są dziś opcjonalne i w zwykłym dniu puste, więc
-    // stary kafel pokazywałby kreskę przy poprawnie przeprowadzonej sesji.
+    // karta opisuje sesję JEDNEJ maszyny, a służba należała do PILOTA i potrafiła
+    // objąć kilka maszyn. Od issue #23 klamra służby nie istnieje w modelu w ogóle.
     const held = tile(closedState(), 'Samolot zajęty');
     expect(held.value).toBe('07:37');
     expect(held.note).toContain('05:45:00 → 13:22:00 UTC');

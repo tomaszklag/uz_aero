@@ -95,10 +95,9 @@ describe('wznowienie po restarcie', () => {
   });
 
   it('ZDANY samolot wraca do „Mój dzień", nie do kokpitu', () => {
-    // Sedno: `day_close` ustawia `closed`, ale `dutyEnd` zostaje `null`, bo ekran
-    // „Zdaj samolot" go nie wysyła (§3.6a). Pytanie o `dutyEnd` wrzucałoby pilota
-    // do kokpitu maszyny, której już nie ma.
-    const released = session({ closed: true, dutyEnd: null });
+    // Sedno: pytamy o `closed` (fakt zdania), nie o dawną klamrę służby — historyczny
+    // warunek `dutyEnd == null` wrzucał pilota do kokpitu maszyny, której już nie ma.
+    const released = session({ closed: true });
 
     expect(holdsAircraft(released)).toBe(false);
     expect(resumeTarget(released)).toBe('MyDay');

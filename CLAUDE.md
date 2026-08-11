@@ -40,6 +40,14 @@ uuid `-r2` i handoffem, dolewka PO zatrzymaniu jako materiał logu 04; 52 sesje)
 **PIVOT DOMKNIĘTY W KODZIE.** Baza dev NIE została przesiana — `npm run seed` +
 `npm run seed:demo` stawiają świat od nowa (decyzja o skasowaniu bazy należy do
 użytkownika); dopiero po tym ma sens przebieg `consumptionReplay.ts`.
+**ISSUE #23 (2026-08-11) — KLAMRA SŁUŻBY USUNIĘTA W CAŁOŚCI** (sekcja „Dzień pilota =
+lista sesji" niżej). Zamyka temat odłożony przy pivocie: z modelu znikły
+`preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła `DUTY_END_BEFORE_START`
+i projekcja klamry (`projections/duty.ts` → `projections/pilotDay.ts`,
+`projectDuty` → `projectPilotDay`); z designu ekran `01b` i sekcja „Służba" na 01
+(w zamian wariant `01c` — offline + arkusz szczegółów syncu). Ekran 01 = płaski log
+sesji (bez grupowania po maszynie) + sumy Blok/Loty; nagłówki wg jednego wzorca
+(tytuł do lewej, ustawienia po prawej); SyncChip = sam pill z arkuszem pod tapnięciem.
 Opisy etapów B–D niżej zostają jako historia — częściowo już cofnięte.
 **PRZEBUDOWA FLOW** (od 2026-08-06, gałąź `poc-zmiany-flow`) — dzień służby przestał
 być kontenerem na loty (patrz sekcja „Czas służby" niżej). Rozjazd design↔kod jest świadomy
@@ -229,14 +237,21 @@ Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo — inne urzą
 - Ekran mający warianty → **panel „Warianty tego ekranu" na canvasie pod telefonem**: linki do całej rodziny + opis KIEDY dany wariant się wyświetla; bieżący ekran z tagiem „ten ekran"; badge amber dla stanów offline/warning. Wzorzec: `00-login.html`, `02-preflight.html`
 - Po zmianach: zero martwych linków (sprawdzaj greppem po `href`)
 
+### Nagłówek ekranu (issue #23 pkt 7 — jeden wzorzec dla całej aplikacji)
+Tytuł i podtytuł wyrównane **DO LEWEJ**, ustawienia (zębatka) zawsze **PO PRAWEJ** —
+za pillem łączności, na skraju. Układ wyśrodkowany zostaje wyłącznie dla kroków
+formularza z powrotem („Wróć" ← tytuł → badge kroku). Nie projektuj ekranu z zębatką
+po lewej ani tytułem na środku bez powrotu — 01 był takim wyjątkiem i przestał nim być.
+
 ## Strefa czasowa
-**UTC jest domyślnym czasem wszędzie** — log samolotu, sesje dnia, T/O, LDG, tankowanie, klamra służby, arkusz. Czas nieoznaczony = UTC.
-LT tylko jako wartość drugorzędna przy deklaracji klamry służby na `01`: `08:00 UTC · 10:00 LT` (scenariusz mockupów: LT = UTC+2).
+**UTC jest domyślnym czasem wszędzie** — log samolotu, sesje dnia, T/O, LDG, tankowanie, arkusz. Czas nieoznaczony = UTC.
+LT nie pojawia się już nigdzie: jedynym miejscem był meldunek klamry służby na `01`, usunięty razem z klamrą (issue #23).
 Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC").
 
-## Screen flow (kolejność ekranów — model 2026-08-10)
+## Screen flow (kolejność ekranów — model 2026-08-10, bez klamry od issue #23)
 ```
-00-login → 01-moj-dzien (EKRAN DOMOWY)
+00-login → 01-moj-dzien (EKRAN DOMOWY — płaski log sesji dnia; warianty: 01a pusty,
+  01c offline + arkusz szczegółów synchronizacji)
 01-moj-dzien → 02-przejecie → 02e-zadanie → 02a-liczniki → „Przejmij i leć"
 → 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
   zmiana załogi / zdanie bez lotu 09c)
@@ -247,11 +262,11 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
   wariant 09c: zdanie bez lotu) → 01-moj-dzien
 01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie: samolot, czasy, odczyty)
 01-moj-dzien → 10-statystyki (rozliczenie samolotu) / 11-eksport / 12-historia
-01-moj-dzien → „Zamknij dzień" (OPCJONALNE) → 01b (okno korekty 24 h)
 ```
 **Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
-kroków flow: zaczyna się pierwszą sesją i domyka sam na ostatniej. Wyjście działa też
-offline — niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
+kroków flow: zaczyna się pierwszą sesją i NICZYM się nie domyka — „Zamknij dzień",
+ekran 01b i klamra służby zostały usunięte (issue #23). Wyjście działa też offline —
+niepusty outbox nigdy nie więzi pilota na ostatnim ekranie (§4.1).
 
 ### Kokpit jest stanem modalnym (decyzja 2026-08-10)
 **Dopóki pilot trzyma samolot, z kokpitu nie ma wyjścia bokiem** — z 04/05 nie prowadzi
@@ -293,30 +308,28 @@ Story użytkownika zdefiniował model na nowo; częściowo odwraca §3.6a z 2026
 - kokpit pokazuje WYŁĄCZNIE bieżącą sesję — bez „Log dnia", bez „CYKL n", bez harmonijki
   wielu cykli. Kokpit pozostaje stanem modalnym (sekcja wyżej).
 - na 01 lista sesji dnia (różne zadania, różne maszyny) + ręczny wpis CAŁEGO lotu (15).
-- **klamra służby i „Zamknij dzień" na 01: BEZ ZMIAN** — użytkownik chce je przemyśleć
-  osobno; nie ruszaj ich przy okazji pivotu.
 - zysk uboczny analityki: każda sesja domknięta odczytami z OBU stron — znika patologia
   interwałów degeneracyjnych między ostatnim `leg_close` a zdaniem (§3.6b).
 
-## Czas służby — klamra, nie kontener (decyzja 2026-08-06)
-Reguła w jednym zdaniu: **loty są ZAPISYWANE, służba jest DEKLAROWANA i zawsze stanowi
-klamrę wokół lotów** (duty ⊇ suma sesji, zawsze). Z tego wynika wszystko inne:
-- służba należy do **pilota**, nie do samolotu — dwa samoloty mieszczą się w jednej służbie
-  (to odwraca „jeden samolot = jeden dzień" z 2026-07-23 i usuwa jego trade-off)
-- klamra bierze się domyślnie z pierwszej i ostatniej sesji doby UTC (pierwsze
-  uruchomienie → ostatnie zatrzymanie silnika); pilot **nie otwiera
-  ani nie zamyka niczego, żeby polecieć**. Deklaracja jest korektą po fakcie na ekranie 01
-- jednostką potwierdzenia danych jest **sesja**, potwierdzana przy zdaniu samolotu (09b)
-  — ZMIENIONE 2026-08-10 (sekcja „Sesja = jeden bieg silnika"); wcześniej wzlot + ekran 09
-- odczyt liczników przy zdaniu samolotu jest **OBOWIĄZKOWY** (zdanie = przekazanie
-  i ogniwo łańcucha MH) — ZMIENIONE 2026-08-10. Dawna opcjonalność per wzlot straciła
-  rację bytu: dzień skokowy z gorącym załadunkiem to JEDEN bieg silnika z 8–12 lotami,
-  czyli jedno przejęcie i jeden odczyt — do licznika nie trzeba chodzić w środku serii
-- **zdanie samolotu nie kończy dnia pilota**; „Zamknij dzień" jest opcjonalne
-- łańcuch MH nie ma ze służbą nic wspólnego: to oś samolotu
-Pełny opis: `docs/_main.md.txt` §3.6, §3.6a — czytany RAZEM z sekcją „Sesja = jeden bieg
-silnika" wyżej, która ma pierwszeństwo tam, gdzie się różnią (jednostka potwierdzenia,
-obowiązkowość odczytów, brak `leg_close`).
+## Dzień pilota = lista sesji (issue #23, 2026-08-11 — klamra służby USUNIĘTA)
+Reguła w jednym zdaniu: **do pilota w danej dobie UTC przypisana jest lista sesji
+i nic ponadto.** Klamra służby („loty zapisywane, służba deklarowana", 2026-08-06)
+przeżyła pięć dni — czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał
+deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Konsekwencje:
+- dzień należy do **pilota** i obejmuje sesje na różnych maszynach — na 01 jako PŁASKA
+  oś czasu (rejestracja to informacja wiersza, NIE oś grupowania); sumy doby: Blok i Loty
+- dnia **nie otwiera się ani nie zamyka** — zaczyna się pierwszą sesją; „Zamknij dzień",
+  ekran `01b` i edu-baner o klamrze nie istnieją
+- z modelu znikły: `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła
+  `DUTY_END_BEFORE_START`, projekcja klamry (`projectDuty` → **`projectPilotDay`**:
+  lista sesji + sumy, `projections/pilotDay.ts`)
+- okno korekty jest JEDNO, per sesja: 24 h od ZDANIA samolotu; drzwiami jest historia (12)
+- **zdanie samolotu nie kończy dnia pilota** — kolejna maszyna dopisze się do listy sesji
+- odczyt liczników przy zdaniu (09b) pozostaje **OBOWIĄZKOWY** (przekazanie + ogniwo
+  łańcucha MH); jednostką potwierdzenia pozostaje SESJA (pivot 2026-08-10)
+- łańcuch MH nie ma z dniem pilota nic wspólnego: to oś samolotu
+Pełny opis: `docs/_main.md.txt` §3.6, §3.6a — czytane RAZEM z sekcją „Sesja = jeden bieg
+silnika" wyżej.
 
 ## Pilot i samolot — UX
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth — decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
@@ -337,7 +350,7 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
   1. **dane sesji** (timery, log samolotu na `04`, lista sesji doby na `01`, liczniki, statystyki) — lokalne, zawsze świeże, zero wariantów offline
   2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) — 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych — wpisz z licznika")
   3. **akcje wymagające sieci** (pierwsze logowanie, zmiana konta, ręczny sync) — offline: disabled z podanym powodem, nigdy cichy błąd
-- Jeden globalny wskaźnik łączności: SyncChip — nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: `OFFLINE · n` + stempel ostatniej udanej synchronizacji pod spodem
+- Jeden globalny wskaźnik łączności: SyncChip — nie rozsiewamy komunikatów o braku sieci po ekranach. **Online nie rysuje NIC** (decyzja 2026-08-06, issue #12: „zsynchronizowano" to stan domyślny, a plakietka świecąca przez 99% czasu uczy oko ignorować róg ekranu). Offline: **SAM pill** `OFFLINE · n`; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych — issue #23 pkt 5, wzorzec `01c`). Stemple syncu nie wiszą na ekranie na stałe
 - Blokada PIC = optymistyczny claim — przejęcie samolotu działa też offline (ostrzeżenie z danych cache)
 - Wygasły token ≠ wylogowanie; wylogowanie zablokowane przy niepustym outboxie
 - Liczniki fizyczne (MH, paliwomierz) > dane z serwera — serwer tylko podpowiada
@@ -353,7 +366,7 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 5. Nazwy plików do stworzenia i docelowy katalog `d:\uz_areo\design\`
 6. Gdy ekran pokazuje dane z serwera — stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej). **Online SyncChip nie rysuje NIC** — plakietka istnieje wyłącznie offline
 7. Gdy ekran ma warianty — panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej)
-8. **Gdy ekran dotyka czasu, dnia albo zamknięcia czegokolwiek — sekcje „Sesja = jeden bieg silnika" i „Czas służby" wyżej**: sesja = jeden bieg silnika (po STOP nie ma drugiego startu — hero to ZDAJ SAMOLOT), lot = start→lądowanie, słowo „wzlot" wycofane; jednostką potwierdzenia jest SESJA, odczyty przy zdaniu (`09b`) OBOWIĄZKOWE; służba należy do pilota i może obejmować kilka maszyn; zdanie samolotu NIE kończy dnia. Bez tego punktu agent zbuduje ekran poprawny wizualnie i błędny modelowo — dokładnie tak powstał flow, który właśnie przebudowaliśmy
+8. **Gdy ekran dotyka czasu, dnia albo zamknięcia czegokolwiek — sekcje „Sesja = jeden bieg silnika" i „Dzień pilota = lista sesji" wyżej**: sesja = jeden bieg silnika (po STOP nie ma drugiego startu — hero to ZDAJ SAMOLOT), lot = start→lądowanie, słowo „wzlot" wycofane; jednostką potwierdzenia jest SESJA, odczyty przy zdaniu (`09b`) OBOWIĄZKOWE; dzień pilota to LISTA SESJI — klamry służby, meldunku i „Zamknij dzień" NIE MA (issue #23); zdanie samolotu NIE kończy dnia. Bez tego punktu agent zbuduje ekran poprawny wizualnie i błędny modelowo — dokładnie tak powstał flow, który właśnie przebudowaliśmy
 
 ## Banery — trzy typy (szczegóły: `docs/design-notes.md`)
 - **Status** (offline, tylko-odczyt, odliczanie) — nigdy zamykalny, to przyrząd

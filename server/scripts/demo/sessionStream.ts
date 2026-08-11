@@ -17,8 +17,8 @@
  *    tankowania i `day_close.finalReading` (zdanie = ZATWIERDZENIE logu, wymagane);
  *  • tankowanie zdarza się PRZED uruchomieniem albo PO zatrzymaniu (kokpit 04a/04),
  *    nigdy w środku biegu;
- *  • `preflight_confirm` NIE niesie `dutyStart`, a `day_close` NIE niesie `dutyEnd` —
- *    klamra służby powstaje z projekcji `projectDuty`, nie z payloadu;
+ *  • klamry służby (`dutyStart`/`dutyEnd`) nie ma w ogóle — pola znikły z payloadów
+ *    razem z modelem (issue #23, 2026-08-11);
  *  • `day_close` bez biegu niesie `noFlightReason` (ekran 09C).
  *
  * ══ DLACZEGO ZDARZENIA, A NIE `INSERT` DO PROJEKCJI ══
@@ -188,7 +188,7 @@ export function sessionStream(session: DemoSession): WireEvent[] {
 
   push('session_claim', session.claimMin, { mode: 'free' });
 
-  // Payload BEZ `dutyStart`: przejęcie samolotu nie pyta o godzinę meldunku (§3.6a).
+  // Godziny meldunku nie ma — klamra służby znikła z modelu (issue #23).
   push('preflight_confirm', session.preflightMin, {
     operation: session.operation,
     departureIcao: session.departureIcao,
@@ -277,7 +277,7 @@ export function sessionStream(session: DemoSession): WireEvent[] {
 
   if (session.release != null) {
     const release = session.release;
-    // Payload BEZ `dutyEnd`: zdanie samolotu NIE kończy dnia pilota (§3.6a).
+    // Zdanie samolotu NIE kończy dnia pilota; klamry służby nie ma (issue #23).
     push('day_close', release.atMin, {
       finalReading: release.finalReading,
       noFlightReason: release.noFlightReason,

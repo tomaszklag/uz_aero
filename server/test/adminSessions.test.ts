@@ -71,7 +71,6 @@ function flyingDay(o: DayOptions) {
         operation: o.operation ?? 'skoki',
         departureIcao: 'EPKK',
         arrivalIcao: null,
-        dutyStart: at(8, 0, d),
         reading: { fuelL: o.fuelStartL ?? 150, mh },
         client: o.client ?? null,
         mhFormat: 'hhmm',
@@ -89,7 +88,7 @@ function flyingDay(o: DayOptions) {
       event(
         'day_close',
         at(16, 45, d),
-        { finalReading: { fuelL: 88, mh: mh + 2.2 }, dutyEnd: at(16, 45, d) },
+        { finalReading: { fuelL: 88, mh: mh + 2.2 } },
         base,
       ),
     );
@@ -402,7 +401,6 @@ describe('karta dnia (A02a)', () => {
             operation: 'skoki',
             departureIcao: 'EPKK',
             arrivalIcao: null,
-            dutyStart: at(8, 0),
             reading: { fuelL: 150, mh: 1300 },
             client: null,
             mhFormat: 'hhmm',

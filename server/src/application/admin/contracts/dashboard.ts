@@ -206,7 +206,7 @@ export interface AdminDayTotals {
   /** Granice doby UTC (epoch ms), obustronnie domknięte — wprost do filtra `#/dni`. */
   fromMs: number;
   toMs: number;
-  /** Dni lotne z duty startem w tej dobie. */
+  /** Dni lotne z czasem przejęcia w tej dobie. */
   sessions: number;
   /** Ile RÓŻNYCH jednostek latało. */
   aircraft: number;

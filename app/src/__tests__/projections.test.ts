@@ -14,7 +14,7 @@
  * kodu, ale i zgodności z designem.
  */
 
-import { projectSession, emptySessionState, projectDuty } from '../domain';
+import { projectSession, emptySessionState, projectPilotDay } from '../domain';
 import type { Event, EventType, EventPayloadMap } from '../domain';
 
 const SESSION = 'sess-22jun';
@@ -84,7 +84,6 @@ function canonicalSession1(): Event[] {
       operation: 'skoki',
       departureIcao: 'EPKK',
       arrivalIcao: 'EPKK',
-      dutyStart: at('08:00'),
       reading: { fuelL: 150, mh: mh('1234:30') },
       client: 'Strefa EPKK',
       mhFormat: 'hhmm',
@@ -154,7 +153,6 @@ function canonicalSession3(): Event[] {
     ev('engine_stop', '16:14', {}, S),
     ev('day_close', '16:45', {
       finalReading: { fuelL: 88, mh: mh('1241:09') },
-      dutyEnd: at('16:45'),
     }, S),
   ];
 }
@@ -215,9 +213,9 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
   const s1 = projectSession(canonicalSession1());
   const s2 = projectSession(canonicalSession2());
   const s3 = projectSession(canonicalSession3());
-  const day = projectDuty([s1, s2, s3], PIC, DAY0);
+  const day = projectPilotDay([s1, s2, s3], PIC, DAY0);
 
-  it('dzień: block 6:39 z trzech sesji 2:22 + 1:13 + 3:04 (projectDuty)', () => {
+  it('dzień: block 6:39 z trzech sesji 2:22 + 1:13 + 3:04 (projectPilotDay)', () => {
     expect(day.sessions).toHaveLength(3);
     expect(day.sessions.map((x) => x.blockMs)).toEqual([142 * MIN, 73 * MIN, 184 * MIN]);
     expect(day.blockTimeMs).toBe(399 * MIN);
@@ -229,13 +227,14 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
     expect(day.landingCount).toBe(6);
   });
 
-  it('klamra służby: meldunek 08:00 (deklaracja), koniec 16:45', () => {
-    expect(day.startAt).toBe(at('08:00'));
-    expect(day.endAt).toBe(at('16:45'));
-    expect(day.sessions.map((x) => x.releasedAt)).toEqual([
-      at('10:40'),
-      at('12:35'),
-      at('16:45'),
+  it('oś dnia: sesje ponumerowane ciągiem, w kolejności uruchomień silnika', () => {
+    // Klamra służby żyła tu do 2026-08-11 (meldunek/koniec) — usunięta z modelem
+    // (issue #23). Dzień pilota to płaska lista sesji.
+    expect(day.sessions.map((x) => x.index)).toEqual([1, 2, 3]);
+    expect(day.sessions.map((x) => x.startedAt)).toEqual([
+      at('08:12'),
+      at('11:15'),
+      at('13:10'),
     ]);
   });
 
@@ -325,8 +324,6 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
     expect(s1.operation).toBe('skoki');
     expect(s1.departureIcao).toBe('EPKK');
     expect(s1.mhFormat).toBe('hhmm');
-    expect(s1.dutyStart).toBe(at('08:00'));
-    expect(s3.dutyEnd).toBe(at('16:45'));
     expect([s1, s2, s3].every((x) => x.closed)).toBe(true);
     expect([s1, s2, s3].every((x) => !x.engineRunning)).toBe(true);
   });
@@ -337,7 +334,6 @@ describe('projectSession — notatka dnia (issue #14)', () => {
     const state = projectSession([
       ev('preflight_confirm', '08:00', {
         operation: 'skoki',
-        dutyStart: at('08:00'),
         reading: { fuelL: 150, mh: 1234.5 },
         notes: 'Lot z uczniem\nDrugi zbiornik nie działa',
       }),
@@ -385,11 +381,11 @@ describe('projectSession — odporność', () => {
 // odczytem. Stan paliwomierza wewnątrz sesji zmieniają wyłącznie tankowania.
 
 /**
- * Klamry służby są OPCJONALNE (§3.6a) — pilot nie deklaruje niczego, żeby polecieć.
- * Stare zdarzenia (`schemaVersion: 1`) zawsze je niosą i muszą projektować się tak samo.
+ * Preflight i zdanie samolotu niosą WYŁĄCZNIE odczyty — klamra służby (dutyStart/
+ * dutyEnd) znikła z payloadów razem z modelem (issue #23, 2026-08-11).
  */
-describe('projectSession — opcjonalne klamry służby', () => {
-  it('preflight bez `dutyStart` nie ustawia klamry, ale ustawia odczyty', () => {
+describe('projectSession — preflight i zdanie to odczyty, nie deklaracje', () => {
+  it('preflight ustawia odczyty startowe', () => {
     const s = projectSession([
       ev('preflight_confirm', '08:00', {
         operation: 'ferry',
@@ -397,12 +393,12 @@ describe('projectSession — opcjonalne klamry służby', () => {
       }),
     ]);
 
-    expect(s.dutyStart).toBeNull();
+    expect(s.preflightAt).toBe(at('08:00'));
     expect(s.fuel.startL).toBe(96);
     expect(s.mh.start).toBeCloseTo(mh('1239:39'), 6);
   });
 
-  it('zdanie samolotu bez `dutyEnd` domyka odczyty, nie klamrę', () => {
+  it('zdanie samolotu domyka odczyty i sesję', () => {
     const s = projectSession([
       ev('preflight_confirm', '08:00', {
         operation: 'ferry',
@@ -414,8 +410,8 @@ describe('projectSession — opcjonalne klamry służby', () => {
       }),
     ]);
 
-    expect(s.dutyEnd).toBeNull();
     expect(s.closed).toBe(true);
+    expect(s.closedAt).toBe(at('11:20'));
     expect(s.fuel.endL).toBe(62);
   });
 });

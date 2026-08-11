@@ -900,7 +900,7 @@
 
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Kolumna <code>v</code> — dwie wersje schematu w jednym rejestrze i tak ma zostać.</b> Strumienie sprzed przebudowy flow niosą <code>schema_version 1</code>, nowe — <code>2</code> (doszedł typ <code>leg_close</code>, a <code>preflight_confirm.dutyStart</code> i <code>day_close.dutyEnd</code> przestały być wymagane). Rejestr jest append-only, więc <b>jedynki zostają w bazie na zawsze</b> i muszą projektować się bez zmiany wyników — starego dnia nie wolno „zaktualizować" pod nowy model. Panel niczego tu nie konwertuje: pokazuje wersję, z jaką zdarzenie przyszło.</span>
+          <span><b>Kolumna <code>v</code> — wersja schematu zdarzenia.</b> Dziś wszystkie strumienie niosą <code>schema_version 1</code>: strażnik zgodności ze starszymi wersjami został zdjęty (2026-08-10, nic nie było wdrożone), a klamra służby (<code>dutyStart</code>/<code>dutyEnd</code>) znikła z payloadów w całości (issue #23). Kolumna zostaje na przyszłość — rejestr jest append-only i przy następnej zmianie kształtu payloadu to ona powie, z jaką wersją zdarzenie przyszło; panel niczego nie konwertuje.</span>
         </div>
 
         <div class="filters">

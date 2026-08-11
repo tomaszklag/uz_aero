@@ -126,22 +126,18 @@ export interface SessionClaimPayload {
   previousPicId?: string | null;
 }
 
-/** `preflight_confirm` — trasa, operacja, duty start, odczyt FOB+MH, korekty z powodem. */
+/** `preflight_confirm` — trasa, operacja, odczyt FOB+MH, korekty z powodem. */
 export interface PreflightConfirmPayload {
   operation: OperationType;
   /** ICAO startu (np. „EPKK"). */
   departureIcao?: string | null;
   /** ICAO lądowania planowanego. */
   arrivalIcao?: string | null;
-  /**
-   * Czas meldowania = początek klamry służby (UTC).
-   *
-   * **OPCJONALNY** (§3.6a; historycznie: od 2026-08-06): przejęcie samolotu nie pyta już „od kiedy
-   * jesteś na służbie" — klamra powstaje z pierwszego wzlotu doby, a pilot poprawia ją
-   * po fakcie na ekranie 01. Zdarzenia w wersji 1 zawsze tę wartość niosą i nadal jest
-   * respektowana; brak oznacza „pilot nie zadeklarował", nie „zero".
+  /*
+   * `dutyStart` (czas meldowania) żyło tu do 2026-08-11 i zostało USUNIĘTE razem
+   * z całą klamrą służby (issue #23): dzień pilota to lista sesji, godziny „od kiedy"
+   * się nie deklaruje. Pole było opcjonalne od §3.6a i ekran 02 go nie wysyłał.
    */
-  dutyStart?: EpochMillis | null;
   /** Odczyt liczników na start dnia — początek łańcucha MH (§4.5). */
   reading: FuelMhReading;
   /** Log korekt podpowiedzi (append-only, nie nadpisuje `reading`). */
@@ -327,12 +323,11 @@ export interface DayClosePayload {
    * fakt zajęcia maszyny jest cenniejszy niż kompletność formularza.
    */
   noFlightReason?: NoFlightReason | null;
-  /**
-   * Godzina zakończenia służby (UTC) — **OPCJONALNA** (§3.6a; historycznie: od 2026-08-06).
-   * Zdanie samolotu nie jest końcem służby, więc nie ma powodu jej tu wymagać;
-   * klamrę domyka pilot na `01b` albo domyka się sama na ostatnim wzlocie.
+  /*
+   * `dutyEnd` (godzina zakończenia służby) żyło tu do 2026-08-11 i zostało USUNIĘTE
+   * razem z całą klamrą służby (issue #23) — zdanie samolotu kończy pracę z maszyną,
+   * a dzień pilota nie jest bytem, który się zamyka.
    */
-  dutyEnd?: EpochMillis | null;
 }
 
 /*

@@ -258,11 +258,8 @@ export class SessionCommands {
   /**
    * ZDANIE SAMOLOTU (ekran 09B). Typ zdarzenia nazywa się historycznie `day_close`,
    * ale od 2026-08-06 **nie kończy dnia pilota** — kończy jego pracę z tą maszyną.
-   * Służba liczy się dalej, a kolejny samolot wejdzie do tej samej doby (§3.6).
-   *
-   * `dutyEnd` jest opcjonalny i domyślnie go NIE wysyłamy: klamrę domyka pilot na `01b`
-   * albo domyka się sama na ostatnim wzlocie. Podajemy go tylko wtedy, gdy pilot
-   * świadomie zadeklarował koniec służby przy zdawaniu maszyny.
+   * Kolejny samolot dopisze się do listy sesji tej samej doby (§3.6; klamra służby
+   * i jej `dutyEnd` usunięte 2026-08-11 razem z issue #23).
    */
   async releaseAircraft(
     ctx: SessionContext,

@@ -43,10 +43,6 @@ async function writeDay(
       operation: 'skoki',
       departureIcao: null,
       arrivalIcao: null,
-      // Meldunek GODZINĘ PRZED przejęciem samolotu — tak wygląda zwykły dzień: pilot jest
-      // na lotnisku od 07:00, a maszynę bierze o 08:00. Te dwie godziny rozsuwamy celowo,
-      // żeby karta historii nie mogła pomylić sesji samolotu ze służbą pilota (§3.6a).
-      dutyStart: t(-60),
       reading: { fuelL: 150, mh: 1234.5 },
       client: null,
       mhFormat: 'hhmm',

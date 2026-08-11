@@ -605,12 +605,11 @@
             <span class="tile-note" data-when="open" data-disp="block" style="display:none;">Delta powstanie z odczytu końcowego licznika.</span>
           </div>
           <!-- STAŁ TU KAFEL „CZAS SŁUŻBY (DUTY)" I BYŁA TO POMYŁKA KATEGORII.
-               Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należy do PILOTA i potrafi
-               objąć kilka maszyn (§3.6a) — jej upływu nie da się z tej karty uczciwie
-               policzyć. Do tego `dutyStart`/`dutyEnd` są dziś opcjonalne i w zwykłym
-               przypadku puste, więc kafel pokazywałby kreskę przy poprawnie przeprowadzonym
-               dniu. Zadeklarowane godziny klamry zostają na OSI ZDARZEŃ, gdzie są treścią
-               zdarzenia, a nie wielkością sesji. -->
+               Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należała do PILOTA
+               i potrafiła objąć kilka maszyn — jej upływu nie dało się z tej karty
+               uczciwie policzyć. Od issue #23 (2026-08-11) klamra służby nie istnieje
+               w modelu w ogóle: payloady nie niosą `dutyStart`/`dutyEnd`, a oś zdarzeń
+               nie ma czego pokazywać. -->
           <div class="tile">
             <span class="tile-key">Samolot zajęty</span>
             <span class="tile-val blue" data-when="closed" data-disp="block">07:30</span>
@@ -649,7 +648,7 @@
                 <span>
                   <span class="tl-name">preflight_confirm</span>
                   <span class="tl-meta">
-                    operacja: skoki · EPRA → EPRA · meldunek <b>nie zadeklarowano</b> · klient: SKY CAMP (zlec. 2026/141)<br>
+                    operacja: skoki · EPRA → EPRA · klient: SKY CAMP (zlec. 2026/141)<br>
                     <span style="color:var(--text-muted)">klamra służby jest opcjonalna od <code>schemaVersion 2</code> (§3.6a) i ekran 02 o nią NIE PYTA — „nie zadeklarowano" to informacja, nie luka</span><br>
                     odczyt: FOB <b>780 L</b> · MH <b>3902.1</b> (format dziesiętny)<br>
                     korekta odczytu: mh 3901.4 → 3902.1 — „licznik pokazuje więcej niż przekazanie z 29 JUL"
@@ -981,7 +980,7 @@
                 <span class="tl-rail"><span class="tl-dot red"></span></span>
                 <span>
                   <span class="tl-name">day_close</span>
-                  <span class="tl-meta">odczyt końcowy (przekazanie): FOB <b>153 L</b> · MH <b>3907.8</b> · koniec służby: <b>nie zadeklarowano</b><br><b>zdanie samolotu</b> — koniec pracy z tą maszyną, nie koniec służby pilota; nazwa typu zdarzenia jest historyczna<br>wzlot 3 został zdany BEZ <code>leg_close</code> („Potwierdzę później") — jego okno korekty kotwiczy się awaryjnie w <code>engine_stop</code> 13:13:33</span>
+                  <span class="tl-meta">odczyt końcowy (przekazanie): FOB <b>153 L</b> · MH <b>3907.8</b><br><b>zdanie samolotu</b> — zatwierdzenie logu sesji; dzień pilota trwa dalej (nazwa typu zdarzenia jest historyczna, a klamra służby odeszła z modelu — issue #23)<br>od tej chwili liczy się okno korekty 24 h tej sesji</span>
                 </span>
                 <span class="pill red">zdanie</span>
               </div>

@@ -74,6 +74,7 @@ i zdaniu samolotu oraz potwierdzenie wzlotu po locie.
 | 2026-08-07 | **Okno korekty 24 h kotwiczy się w zamknięciu WZLOTU**, nie dnia. Każdy wzlot ma własne okno liczone od `leg_close`. Wzlot niepotwierdzony („Potwierdzę później", §3.6) dostaje kotwicę awaryjną w `engine_stop` — bez niej `closedAt == null` znaczyłoby „okno nie obowiązuje", czyli **bezterminowe prawo zapisu**, a `null` jest tu stanem domyślnym, nie brzegowym. Konsekwencja: `leg_close` MUSI być korygowalny (inaczej pilot nie poprawi literówki w odczycie, mimo że okno istnieje właśnie po to), co unieważnia argument z `architektura-kodu.md` §„flag łańcucha nie przeliczamy" |
 | 2026-08-07 | **Zdanie samolotu bez wzlotu wymaga POWODU, ale go nie warunkuje** (ekran 09C). `day_close.noFlightReason` (`weather`/`malfunction`/`cancelled`/`other`) jest wymagany przez EKRAN — pilot stoi przy samolocie i odpowie w sekundę — a przez domenę tylko flagowany (`NO_FLIGHT_WITHOUT_REASON`, waga `warning`). Powód takiego rozdziału: odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna była zajęta i nie poleciała, czyli dokładnie tę informację, o którą administratorowi chodzi. Twarda reguła kosztowałaby fakt, miękka kosztuje tylko kompletność formularza |
 | 2026-08-07 | **Fakty strumienia dostają JAWNE znaczniki w projekcji** — `claimedAt` i `preflightAt`. Powód: `PREFLIGHT_REQUIRED` pytało o `state.dutyStart`, co było poprawne wyłącznie dopóty, dopóki godzina meldunku była obowiązkowa; po jej uopcjonalnieniu ta sama reguła zaczęła blokować silnik i zdanie samolotu pilotowi, który niczego nie pominął. Reguła ogólna: **pole opcjonalne nie jest znacznikiem tego, że zdarzenie zaszło**, a komplet zielonych testów tego nie wyłapie, gdy każdy helper wypełnia je „bo tak było zawsze". Przy okazji `claimedAt` znosi przechodzenie po surowych zdarzeniach w modelach widoku |
+| 2026-08-11 | **Klamra służby USUNIĘTA W CAŁOŚCI (issue #23)** — zamyka temat odłożony przy pivocie 2026-08-10. Do pilota w danej dobie przypisana jest **lista sesji i nic ponadto**: czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Z modelu znikają `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła `DUTY_END_BEFORE_START` i projekcja klamry (`projectDuty` → `projectPilotDay` — lista sesji z sumami); z designu ekran `01b` i sekcja „Służba" na 01. Log dnia jest PŁASKĄ osią czasu (rejestracja to informacja wiersza, nie oś grupowania), sumy doby to Blok i Loty. Przy okazji: nagłówek wg jednego wzorca (tytuł do lewej, ustawienia po prawej — pkt 7) i SyncChip jako sam pill z arkuszem szczegółów pod tapnięciem (pkt 5, wariant `01c`) |
 | 2026-08-08 | **Historia (ekran 12) listuje DOBĘ PILOTA, z przeglądaniem w głąb.** Rozstrzyga sprzeczność wykrytą audytem: mockup `12-historia.html` (etap A) obiecywał kartę doby pilota obejmującą kilka maszyn, a kod (decyzja C4) robił kartę na SESJĘ — obie zapisane, obie uzasadnione, wzajemnie się wykluczające. Wygrywa doba pilota, bo ekran odpowiada na pytanie „co dziś zrobiłem", a to pytanie zadaje CZŁOWIEK o swoją służbę, nie o maszynę. Sesja samolotu nie znika — staje się drugim poziomem: **doba pilota → sesja na konkretnym samolocie → wzloty i loty ze szczegółami**. Konsekwencja: karta doby czyta `projectDuty` (projekcja per pilot per doba UTC), a nie `projectSession`; `historyDays.ts` i zapytanie `historyDays()` wymagają przebudowy, bo dziś grupują po sesji. Kod ma dogonić mockup, nie odwrotnie |
 | 2026-07-31 | **Panel administratora — DECYZJA ODWRÓCONA** (odwraca 2026-07-24): powstaje jako **osobna aplikacja web**. Zakres v1 = pełny back-office (konta, flota, skrzynka flag, korekty po oknie 24 h, przegląd dni, rejestr zdarzeń, monitor eksportu, statystyki, audyt, progi), **dwie role** (`administrator` — wszystko; `szef wyszkolenia` — podgląd, statystyki, rozwiązywanie flag), stan floty **na żywo** oraz dane po fakcie. Powód: backend jest gotowy i wymaga obsługi, a §4.7 postawiło bramkę, której **nikt nie może otworzyć** — otwarta flaga `session_overlap` blokuje eksport karty dnia, a `status='resolved'` nie ustawia dziś żaden kod w `server/src`. Projekt UI: `design/admin/` (20 ekranów); zakres, mapowanie na endpointy i braki serwera: `design/admin/ANALIZA.md` |
 
@@ -147,8 +148,8 @@ Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do
 - trasa (ICAO start / lądowanie) — na kroku 2 (`02e`), razem z operacją i klientem
 - **Dual** — opcjonalny wybór z listy pilotów; gdy samolot ma flagę załogi dwuosobowej
   (np. An-2), pole staje się wymagane i blokuje przejście dalej
-- **czasu meldowania TU NIE MA** — klamra służby powstaje z pierwszego wzlotu i poprawia
-  się po fakcie na `01` (sekcja 3.6a)
+- **czasu meldowania TU NIE MA** — dzień pilota to lista sesji (sekcja 3.6a, issue #23);
+  żadnej godziny „od kiedy" się nie deklaruje
 
 **Krok 3 — paliwo i motogodziny:**
 
@@ -256,35 +257,30 @@ z czasami i odczytami, dla lotów zapisanych poza telefonem.
 
 **Zdanie samolotu NIE kończy dnia pilota.** Kolejna maszyna wchodzi do tej samej służby.
 
-### 3.6a Czas służby — klamra, nie kontener
+### 3.6a Dzień pilota = lista sesji (klamra służby USUNIĘTA)
 
-> Decyzja 2026-08-06 (odwraca „jeden samolot = jeden dzień" z 2026-07-23).
+> Decyzja 2026-08-11 (issue #23) — zamyka temat odłożony przy pivocie 2026-08-10.
+> Historycznie: 2026-08-06 „służba jest klamrą wokół lotów" (odwracała „jeden samolot =
+> jeden dzień" z 2026-07-23); klamra przeżyła w tym kształcie pięć dni.
 
-Reguła w jednym zdaniu: **loty są zapisywane, służba jest deklarowana i zawsze stanowi
-klamrę wokół lotów** (duty ⊇ suma wzlotów, zawsze).
+Reguła w jednym zdaniu: **do pilota w danej dobie UTC przypisana jest lista sesji —
+i nic ponadto.** Czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał
+deklaracji, przycisku „Zamknij dzień" i osobnych reguł.
 
-- służba należy do **pilota**, nie do samolotu — dwa samoloty mieszczą się w jednej służbie
-- domyślnie klamra bierze się z **pierwszego i ostatniego wzlotu doby UTC**; pilot nie
-  otwiera ani nie zamyka niczego, żeby polecieć
-- deklaracja jest **korektą klamry po fakcie**, nie warunkiem startu: pilot poprawia ją
-  w `01`, gdy zameldował się wcześniej albo został dłużej niż samolot
-- „Zamknij dzień" (`01b`) jest **opcjonalne** — potwierdza klamrę i otwiera okno korekty
-  24 h **dla samej klamry**. Niezamknięty dzień domyka się sam na ostatnim wzlocie; nowy
-  wzlot po zamknięciu otwiera dzień z powrotem i rozszerza klamrę
+- dzień należy do **pilota**, nie do samolotu — sesje na różnych maszynach leżą na
+  jednej liście (płaska oś czasu; rejestracja jest informacją wiersza, nie osią
+  grupowania)
+- dnia **nie otwiera się ani nie zamyka**: zaczyna się pierwszą sesją; sumy doby to
+  czas blokowy i czas lotu (plus starty/lądowania)
+- z modelu znikły: `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła
+  `DUTY_END_BEFORE_START`, projekcja klamry (dziś `projectPilotDay` — lista sesji
+  i sumy), ekran `01b` („dzień zamknięty") i przycisk „Zamknij dzień"
+- **okno korekty jest JEDNO, per sesja**: 24 h od ZDANIA samolotu (`day_close`) —
+  osobno dla każdej sesji; drzwiami jest historia (12)
+- łańcuch MH nie ma z dniem pilota nic wspólnego: to oś **samolotu**
 
-> **Dwa okna korekty, nie jedno** (doprecyzowanie 2026-08-07). Klamra służby i dane wzlotu
-> to różne fakty o różnych momentach powstania, więc mają osobne zegary:
-> - **klamra służby** — 24 h od zamknięcia DNIA (`01b`); gdy dzień nie został zamknięty,
->   od ostatniego zdarzenia doby,
-> - **dane wzlotu** (czasy, odczyty, zrzuty) — 24 h od zamknięcia TEGO wzlotu (`leg_close`),
->   osobno dla każdego; wzlot zamknięty rano wygasa wcześniej niż zamknięty wieczorem.
->
-> Konsekwencja dla UI: ekran nie może obiecywać jednej daty dla wszystkiego. `01b` podaje
-> datę klamry i najbliższą wygasającą datę wzlotu; `10` podaje datę wzlotu, którego dotyczy.
-- łańcuch MH nie ma ze służbą nic wspólnego i mieć nie będzie: to oś **samolotu**
-
-> Opcja „przerwa" (pauzowanie duty) pozostaje **usunięta** — decyzja 2026-07-23. Duty liczy
-> się brutto; przerwy pozostają poza aplikacją.
+> Opcja „przerwa" (pauzowanie duty) pozostaje **usunięta** — decyzja 2026-07-23;
+> po issue #23 nie ma już nawet wielkości, którą miałaby pauzować.
 
 ### 3.6b Znane ryzyko: opcjonalny odczyt kontra analityka zużycia
 
@@ -344,8 +340,9 @@ Odpowiedzi na punkty 2 i 3 zapadną PO kalibracji na tych danych — nie tutaj.
 
 Dwa poziomy, bo dwie różne osie (3.6a):
 
-**Mój dzień (01) — oś pilota:** klamra służby, lista wzlotów przekrojowo po samolotach,
-sumy służby / czasu blokowego / czasu lotu, liczba startów i lądowań.
+**Mój dzień (01) — oś pilota:** płaski log sesji doby przekrojowo po samolotach
+(rejestracja jako informacja wiersza), sumy czasu blokowego / czasu lotu, liczba
+startów i lądowań. Klamry służby nie ma (issue #23).
 
 **Rozliczenie samolotu (10) — oś maszyny:** czas blokowy per pilot (PIC / Dual), czasy
 lotów per lot, paliwo (startowe / dolane / końcowe / zużyte / średnie L/h) na tle normy,
@@ -353,9 +350,9 @@ MH (początek / koniec / delta), **zrzuty** (liczba wyniesień, skoczkowie w roz
 średnia wysokość, klient — strona przychodowa). Paliwo i MH są wielkościami samolotu,
 więc nie sumują się przez służbę pilota lecącego dwiema maszynami.
 
-Dane edytowalne przed zamknięciem wzlotu oraz **przez 24 h po nim** (decyzja 2026-07-23,
-okno liczone od zamknięcia TEGO wzlotu — osobno dla każdego, patrz §3.6a): pilot nanosi
-korektę samodzielnie, bez akceptacji administratora. Po upływie okna korektę wprowadza
+Dane edytowalne w trakcie sesji oraz **przez 24 h od jej zdania** (decyzja 2026-07-23,
+kotwica = `day_close` — osobno dla każdej sesji, patrz §3.6a): pilot nanosi korektę
+samodzielnie, bez akceptacji administratora. Po upływie okna korektę wprowadza
 administrator. Korekta zawsze jest zdarzeniem append-only — nie kasuje oryginalnego odczytu.
 
 ### 3.8 Ręczna lista wzlotów (fallback GPS)
@@ -429,10 +426,12 @@ Każdy zalogowany pilot może otworzyć podgląd samolotu, którego nie claimuje
 - zdarzenia z `synced_at IS NULL` tworzą kolejkę; wysyłka paczkami, automatycznie,
   przy każdym odzyskaniu sieci i cyklicznie w tle; retry z backoffem
 - odpowiedź serwera: `accepted` / `duplicates` (już znane UUID — idempotencja) / `flags`
-- UI: chip `SYNC` / `OFFLINE · n` w pasku kokpitu; szczegóły na ekranie 11
+- UI: chip `OFFLINE · n` (online chip nie rysuje nic — issue #12); tapnięcie pilla
+  otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych
+  referencyjnych — issue #23 pkt 5); pełna kolejka na ekranie 11
 - po potwierdzeniu zdarzenia lokalnie dostają `synced_at`; przycinanie lokalnej historii
-  po N dniach od ostatniego zdarzenia doby (retencja do ustalenia, np. 30 dni) — NIE od
-  zamknięcia dnia, bo zamknięcie jest opcjonalne i może nigdy nie nastąpić (§3.6a)
+  po N dniach od ostatniego zdarzenia doby (retencja do ustalenia, np. 30 dni) — dzień
+  pilota nie ma „zamknięcia", od którego dałoby się liczyć (§3.6a)
 
 ### 4.4 Claim i przejęcie samolotu
 
@@ -603,39 +602,26 @@ Typy zdarzeń:
 | `refuel` | przed / dolano / po, wyliczone zużycie |
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |
-| `day_close` | **zdanie samolotu**: końcowy FOB + MH (przekazanie), OPCJONALNY `dutyEnd`, oraz `noFlightReason` dla sesji bez ani jednego wzlotu (09C: `weather` / `malfunction` / `cancelled` / `other`). Brak powodu przy takiej sesji to **miękka** flaga `NO_FLIGHT_WITHOUT_REASON` — odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna stała zajęta |
+| `day_close` | **zdanie samolotu**: końcowy FOB + MH (przekazanie) oraz `noFlightReason` dla sesji bez ani jednego biegu silnika (09C: `weather` / `malfunction` / `cancelled` / `other`). Brak powodu przy takiej sesji to **miękka** flaga `NO_FLIGHT_WITHOUT_REASON` — odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna stała zajęta. (`dutyEnd` usunięte 2026-08-11 razem z klamrą służby — issue #23) |
 | `event_correction` | `targetUuid` + akcja: `retime` (nowy czas) **lub** `void` („zdarzenia nie było") — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zamknięciu (decyzja 2026-07-23) |
 
-| `leg_close` | **potwierdzenie WZLOTU** (§3.6): numer wzlotu, OPCJONALNY odczyt FOB+MH, uwaga. Nie tworzy ani nie zamyka cyklu silnika — niesie fakt „pilot przejrzał ten wzlot", od którego liczy się okno korekty tego wzlotu. Wzlot bez `leg_close` jest legalny („Potwierdzę później") |
-
-> **Stan migracji modelu (etap B — DOMKNIĘTY, `schema_version` 2).**
+> **Stan modelu (po pivocie 2026-08-10 i issue #23 z 2026-08-11).**
 >
-> `leg_close` istnieje; `dutyStart` w `preflight_confirm` i `dutyEnd` w `day_close` są
-> **opcjonalne**; `CURRENT_SCHEMA_VERSION` = 2; `EngineRun` → **`Leg`** z odczytem
-> i potwierdzeniem per wzlot; `projectDuty` liczy klamrę służby per pilot per doba UTC
-> (unia deklaracji i wzlotów); okno korekty kotwiczy się w KAŻDYM wzlocie osobno;
-> `consumption/intervals.ts` traktuje odczyt przy wzlocie jak tankowanie bez dolewki.
+> `leg_close` NIE istnieje (usunięty z pivotem — sesję zatwierdza `day_close`);
+> `dutyStart`/`dutyEnd` NIE istnieją (usunięte z klamrą służby — issue #23);
+> `CURRENT_SCHEMA_VERSION` = 1 (strażnik zgodności zdjęty 2026-08-10 — nic nie było
+> wdrożone); `projectPilotDay` składa dzień pilota (listę sesji z sumami) per pilot
+> per doba UTC; okno korekty kotwiczy się w ZDANIU samolotu, per sesja.
 >
-> Odczyt MH z `leg_close` świadomie NIE wchodzi do `mh.end` — koniec łańcucha należy
-> do zdania samolotu.
->
-> **Pułapka wykryta 2026-08-07** (już naprawiona, warta zapamiętania przy kolejnych
-> polach opcjonalnych): reguła `PREFLIGHT_REQUIRED` pytała o `state.dutyStart` jako
-> o dowód „preflight był". Gdy godzina meldunku stała się opcjonalna, ten sam warunek
-> zaczął znaczyć coś zupełnie innego i blokował uruchomienie silnika u pilota, który
-> niczego nie pominął. Projekcja ma teraz JAWNE znaczniki faktów strumienia —
-> `claimedAt` (przejęcie) i `preflightAt` (preflight) — i to o nie pytają reguły.
-> **Pole opcjonalne przestaje być dobrym znacznikiem zdarzenia w chwili, gdy staje się
-> opcjonalne**, a komplet zielonych testów tego nie wyłapie, jeśli każdy helper podaje
-> wartość „bo tak było zawsze".
->
-> Nowej osi zdarzeń dla służby świadomie NIE tworzymy: nagłówek wymaga `session_uuid`
-> i `aircraft_id`, więc „meldunek" nie miałby gdzie mieszkać — dwie opcjonalne klamry
-> w istniejących payloadach dają to samo bez ruszania nagłówka.
->
-> **Strumień `schema_version 1` musi projektować się bez zmiany wyników** — to twardy
-> warunek każdego commitu etapu B. Strażnikiem jest komplet testów kanonicznego dnia
-> 22 JUNE w `app/src/__tests__/projections.test.ts`, budowany jawnie z `schemaVersion: 1`.
+> **Pułapka wykryta 2026-08-07** (warta zapamiętania przy kolejnych polach
+> opcjonalnych): reguła `PREFLIGHT_REQUIRED` pytała o `state.dutyStart` jako o dowód
+> „preflight był". Gdy godzina meldunku stała się opcjonalna, ten sam warunek zaczął
+> znaczyć coś zupełnie innego i blokował uruchomienie silnika u pilota, który niczego
+> nie pominął. Projekcja ma JAWNE znaczniki faktów strumienia — `claimedAt` (przejęcie)
+> i `preflightAt` (preflight) — i to o nie pytają reguły. **Pole opcjonalne przestaje
+> być dobrym znacznikiem zdarzenia w chwili, gdy staje się opcjonalne**, a komplet
+> zielonych testów tego nie wyłapie, jeśli każdy helper podaje wartość „bo tak było
+> zawsze".
 >
 > Nazwa `day_close` **zostaje mimo zmiany znaczenia** (dziś: zdanie samolotu, nie koniec
 > dnia). Strumień jest append-only — zdarzenia w bazie nie zmienią nazwy dlatego, że
@@ -741,18 +727,19 @@ według źródła danych:
 Globalny stan łączności pokazuje wyłącznie SyncChip — pojedynczy wskaźnik zamiast
 rozsianych komunikatów o braku sieci. Online chip NIE POJAWIA SIĘ w ogóle (decyzja
 2026-08-06, issue #12: stan domyślny nie zasługuje na plakietkę i uczy oko ignorować
-róg ekranu, w którym czasem pojawia się OFFLINE); offline pokazuje `OFFLINE · n`
-i pod spodem stempel ostatniej udanej synchronizacji („SYNC 17:30 UTC", z datą, gdy
-sync był wcześniej niż dziś).
+róg ekranu, w którym czasem pojawia się OFFLINE); offline pokazuje SAM pill
+`OFFLINE · n`, a tapnięcie otwiera arkusz szczegółów synchronizacji — stan kolejki,
+stempel ostatniej udanej synchronizacji, wiek danych referencyjnych (issue #23 pkt 5;
+wzorzec: `01c`). Stemple nie wiszą na ekranie na stałe.
 
 Warianty stanu zrealizowane w mockupach (rodziny wariantów; każdy ekran rodziny ma
 na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
 
 - **logowanie:** `00-login` (odblokowanie PIN, offline) · `00a-login-full` (pełny login,
   wymaga sieci) · `00b-login-offline` (twarda granica — brak profilu i brak sieci)
-- **mój dzień (ekran domowy):** `01-moj-dzien` (dzień w toku, samolot w ręce) ·
-  `01a-moj-dzien-pusty` (zero wzlotów) · `01b-moj-dzien-zamkniety` (klamra potwierdzona,
-  okno korekty 24 h)
+- **mój dzień (ekran domowy):** `01-moj-dzien` (dzień w toku — płaski log sesji) ·
+  `01a-moj-dzien-pusty` (zero sesji) · `01c-moj-dzien-offline` (pill OFFLINE + arkusz
+  szczegółów synchronizacji)
 - **przejęcie krok 1:** `02-preflight` (online, claim live) · `02d-preflight-offline`
   (dane z cache z adnotacją wieku, modal przejęcia w wariancie offline)
 - **przejęcie krok 2:** `02e-preflight-zadanie` (operacja, trasa, klient, notatka) ·
@@ -763,10 +750,9 @@ na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
   `04b-cockpit-readonly` (podgląd cudzego samolotu — single-writer, akcje disabled z powodem)
 - **kokpit w locie:** `05a` (taxi) · `05b` (toast T/O) · `05` (in flight) · `05c`
   (toast LDG) · `05d` (taxi po LDG) · `05g` (brak GPS)
-- **zamknięcie wzlotu i zdanie samolotu:** `09-zamknij-lot` (standard) ·
-  `09a-zamknij-lot-seria` (seria skokowa) · `09b-zdaj-samolot` (odczyt wymagany) ·
-  `09c-zdaj-bez-lotu` (pogoda / usterka)
-- **rozliczenie samolotu:** `10-statystyki` (z wzlotami) · `10a-statystyki-zero` (bez wzlotów)
+- **zdanie samolotu:** `09b-zdaj-samolot` (odczyt wymagany = zatwierdzenie logu sesji) ·
+  `09c-zdaj-bez-lotu` (pogoda / usterka); ekrany `09`/`09a` usunięte z pivotem 2026-08-10
+- **rozliczenie samolotu:** `10-statystyki` (z lotami) · `10a-statystyki-zero` (bez lotów)
 
 **Motywy:** para ciemna — Night (domyślny), Amber/NVG; para jasna pod pełne słońce —
 Paper (ciepła biel), Solar (czysta biel), Sky (chłodny błękitno-szary).
@@ -789,10 +775,10 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 [00 Login]  profil na telefonie → odblokowanie PIN-em (offline OK)
             brak profilu → login + hasło od administratora (wymaga sieci; offline: komunikat)
     ↓
-[01 Mój dzień]  EKRAN DOMOWY — klamra służby wokół listy SESJI dnia (wiersz = jeden
-    │           bieg silnika z lotami w środku), przekrojowo po samolotach; stąd
-    │           przejęcie, ręczny wpis lotu i okno korekty 24 h
-    │           warianty: 01a (zero sesji) · 01b (dzień zamknięty)
+[01 Mój dzień]  EKRAN DOMOWY — płaski log SESJI dnia (wiersz = jeden bieg silnika
+    │           z lotami w środku; rejestracja jako informacja wiersza), przekrojowo
+    │           po samolotach; stąd przejęcie, ręczny wpis lotu i okno korekty 24 h
+    │           warianty: 01a (zero sesji) · 01c (offline + arkusz syncu)
     ├─→ [15 Lot ręczny]  CAŁA sesja po fakcie: samolot · czasy · odczyty WYMAGANE
     ↓ Przejmij samolot
 [02 Przejęcie 1/3]  samolot (wolny / aktywny PIC / wyłączony) · Dual
@@ -815,11 +801,10 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 [09b Zdaj samolot]  przegląd lotów sesji + odczyt WYMAGANY (= przekazanie, ogniwo
     │               łańcucha MH, ZATWIERDZENIE logu) · 09c = zdanie bez lotu
     ↓
-[01 Mój dzień]  sesje w klamrze służby; kolejny samolot wchodzi do TEJ SAMEJ służby
+[01 Mój dzień]  kolejna sesja dopisuje się do listy dnia
     ├─ [10 Rozliczenie samolotu]  paliwo, MH, zrzuty — per sesja, nie per doba
     ├─ [11 Synchronizacja]  status wysyłki / eksportu serwera (nie akcja eksportu)
-    ├─ [12 Historia]  poprzednie dni, okno korekty 24 h
-    └─ „Zamknij dzień" (OPCJONALNE) → [01b]  potwierdzenie klamry służby
+    └─ [12 Historia]  poprzednie dni, okno korekty 24 h
 ```
 
 Pętla, nie prosta. Dzień pilota nie ma „startu" ani „końca" jako kroków flow: zaczyna się
@@ -830,8 +815,8 @@ pierwszą sesją, a domyka sam na ostatniej. Ekranem, do którego wszystko wraca
 nie prowadzi żadna droga na 01: akcje ground i 09 wracają do kokpitu, a na 01 wraca się
 przez [09b Zdaj samolot] — czyli oddając maszynę. Do 2026-08-10 wyjątkiem był pasek sesji
 z linkiem „Mój dzień →"; został usunięty z 04/04a właśnie dlatego, że był tą drogą.
-Reguła jest o ODDANIU, nie o zamknięciu dnia: klamra służby zostaje otwarta i obejmie
-kolejny samolot (§3.6a).
+Reguła jest o ODDANIU, nie o „zamknięciu dnia": dzień pilota po prostu trwa, a kolejna
+maszyna dopisze się do listy sesji (§3.6a).
 
 Dotyczy to również przycisku sprzętowego i gestu cofania — oba pokazują arkusz
 [04d Wyjście z kokpitu] zamiast zdejmować ekran (bez niego „wstecz" pokazywał 02a, czyli
@@ -1082,5 +1067,5 @@ duplikaty zdarzeń. Walidacja: zdarzenia sesji przyjmowane tylko od jej PIC-a (J
 
 *Dokument aktualizowany przy każdej zmianie wymagań. Decyzje designu: `design/ZMIANY.md`;
 założenia per ekran: `docs/design-notes.md`.*
-*Wersja: 0.4 — 2026-08-07 — design przebudowany (§3.6a: służba jest klamrą, nie kontenerem); aplikacja w budowie
+*Wersja: 0.5 — 2026-08-11 — klamra służby usunięta w całości (§3.6a: dzień pilota = lista sesji, issue #23); aplikacja w budowie
 (fazy 1 ✅ i 3 🔶 — patrz §10); architektura kodu: `docs/architektura-kodu.md`.*

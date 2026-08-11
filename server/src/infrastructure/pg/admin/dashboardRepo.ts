@@ -133,8 +133,8 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
       [range.fromMs, range.toMs],
     );
 
-    // Zdarzenia liczymy DRUGIM zapytaniem, bo mierzą co innego: dni lotne po duty
-    // starcie (zegar telefonu), zdarzenia po przyjęciu (zegar serwera). Złączenie ich
+    // Zdarzenia liczymy DRUGIM zapytaniem, bo mierzą co innego: dni lotne po czasie
+    // przejęcia (zegar telefonu), zdarzenia po przyjęciu (zegar serwera). Złączenie ich
     // w jedno zapytanie zrosłoby dwie osie czasu w jedną liczbę.
     const accepted = await db.query<{ n: string }>(
       `SELECT COUNT(*) AS n

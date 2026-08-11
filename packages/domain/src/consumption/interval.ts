@@ -74,7 +74,12 @@ export type IntervalRejection =
 export interface FuelInterval {
   sessionUuid: string;
   aircraftId: string;
-  /** Duty start sesji — oś grupowania miesięcznego w trendzie. `null` = dzień bez preflightu. */
+  /**
+   * Przejęcie sesji (`claimedAt`) — oś grupowania miesięcznego w trendzie.
+   * Do 2026-08-11 stał tu `dutyStart` (godzina meldunku), usunięty razem z klamrą
+   * służby (issue #23) — a że meldunek był opcjonalny i ekran 02 go nie wysyłał,
+   * pole było w praktyce zawsze puste. `null` = strumień bez `session_claim`.
+   */
   dayStart: EpochMillis | null;
 
   startAt: EpochMillis;

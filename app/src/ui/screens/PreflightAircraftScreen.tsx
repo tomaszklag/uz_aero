@@ -9,11 +9,11 @@
  * najcięższą decyzję preflightu) razem z opisem zadania, a obie listy rosną z flotą
  * i liczbą pilotów.
  *
- * CZASU MELDOWANIA TU NIE MA (§3.6a, 2026-08-06). Służba jest klamrą wokół wzlotów,
- * a nie czymś, co pilot otwiera, żeby polecieć: klamra bierze się z lotów doby i poprawia
- * po fakcie na ekranie 01. Pytanie o godzinę w drodze do kokpitu kosztowało krok i mówiło
- * nieprawdę — sugerowało, że bez odpowiedzi nie wolno lecieć. **Przejęcie ma trwać kilka
- * sekund** (`CLAUDE.md`), a to był jedyny ekran preflightu z pytaniem o czas.
+ * CZASU MELDOWANIA TU NIE MA (§3.6a; od issue #23 razem z całą klamrą służby).
+ * Dzień pilota to lista sesji — godziny „od kiedy" się nie deklaruje. Pytanie o nią
+ * w drodze do kokpitu kosztowało krok i mówiło nieprawdę — sugerowało, że bez
+ * odpowiedzi nie wolno lecieć. **Przejęcie ma trwać kilka sekund** (`CLAUDE.md`),
+ * a to był jedyny ekran preflightu z pytaniem o czas.
  *
  * Reguły, których ten ekran pilnuje:
  *  • wybór z **listy kart**, nigdy z natywnego selecta; operacje jako **siatka ikon**

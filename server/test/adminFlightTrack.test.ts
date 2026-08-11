@@ -48,7 +48,6 @@ function dayWithOneFlight() {
       operation: 'skoki',
       departureIcao: 'EPZG',
       arrivalIcao: null,
-      dutyStart: at(8, 0),
       reading: { fuelL: 150, mh: 1200 },
       client: null,
       mhFormat: 'hhmm',

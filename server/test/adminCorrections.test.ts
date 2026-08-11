@@ -64,7 +64,6 @@ const DAY_EVENTS = [
     operation: 'skoki',
     departureIcao: 'EPKK',
     arrivalIcao: null,
-    dutyStart: at(8, 0),
     reading: { fuelL: 150, mh: 1234.5 },
     client: null,
     mhFormat: 'hhmm',
@@ -77,7 +76,6 @@ const DAY_EVENTS = [
 
 const CLOSE_EVENT = event(UUID.dayClose, 'day_close', at(16, 45), {
   finalReading: { fuelL: 88, mh: 1236.87 },
-  dutyEnd: at(16, 45),
 });
 
 const BLOCK_MS = (10 * 60 + 34 - (8 * 60 + 12)) * 60_000; // 2:22

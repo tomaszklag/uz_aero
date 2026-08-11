@@ -1,18 +1,18 @@
 /**
  * UZ Aero — 09B ZDAJ SAMOLOT (mockupy `design/09b-zdaj-samolot.html` + `09c-zdaj-bez-lotu.html`).
  *
- * Koniec pracy z TĄ maszyną — i **nie koniec dnia pilota** (§3.6a). Służba liczy się
- * dalej, wzloty zostają w „Mój dzień", a kolejny samolot wejdzie do tej samej doby.
+ * Koniec pracy z TĄ maszyną — i **nie koniec dnia pilota** (§3.6a). Loty zostają
+ * w „Mój dzień", a kolejny samolot dopisze się do listy sesji tej samej doby.
  * To najważniejsze zdanie całej przebudowy flow i dlatego stoi na ekranie banerem
  * typu STATUS (przyrząd, niezamykalny), a nie w komentarzu do kodu.
  *
  * Jeden ekran, dwa stany rozstrzygane DANYMI, nie parametrem nawigacji:
  *
- *   • 09B — sesja ma wzloty: **odczyt liczników jest WYMAGANY**, bo staje się
+ *   • 09B — sesja ma loty: **odczyt liczników jest WYMAGANY**, bo staje się
  *     przekazaniem dla następnego pilota i ogniwem łańcucha MH (§4.5). Pod odczytem
- *     stoi rozliczenie sesji: wzloty, paliwo start → koniec, średnie zużycie na tle
+ *     stoi rozliczenie sesji: loty, paliwo start → koniec, średnie zużycie na tle
  *     normy samolotu i przyrost licznika;
- *   • 09C — sesja bez ani jednego wzlotu (pogoda, usterka): silnik nie ruszył, więc nie
+ *   • 09C — sesja bez ani jednego biegu (pogoda, usterka): silnik nie ruszył, więc nie
  *     ma czasów do potwierdzenia ani zużycia do rozliczenia. Liczniki zostają bez zmian
  *     — z furtką korekty, bo licznik fizyczny jest ważniejszy od naszej rachuby (§4.1
  *     pkt 5) — a jedyne pytanie brzmi „dlaczego nie poleciałeś".
@@ -20,9 +20,8 @@
  * Ekran NICZEGO NIE LICZY: napisy, sumy i blokady przychodzą z `buildRelease`
  * i funkcji obok niego (`logic/releaseAircraft.ts`).
  *
- * `dutyEnd` NIE JEST tu wysyłany i to jest decyzja (§3.6a): klamrę służby domyka pilot
- * na `01b` albo domyka się sama na ostatnim wzlocie. Gdyby zdanie samolotu ustawiało
- * koniec służby, pilot biorący drugą maszynę zamykałby dzień w jej połowie.
+ * Payload niesie odczyt końcowy i (na 09C) powód — dawny `dutyEnd` odszedł razem
+ * z klamrą służby (issue #23, 2026-08-11).
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -58,6 +57,8 @@ import {
   parseMotoHours,
 } from '../format';
 import {
+  RELEASE_CTA,
+  RELEASE_NOTICE,
   balanceRows,
   buildRelease,
   finalFuelHint,
@@ -65,10 +66,7 @@ import {
   handoverText,
   mhRegressionWarning,
   releaseBlocker,
-  releaseCta,
-  releaseNotice,
   releasePayload,
-  type ReleaseIntent,
 } from './logic/releaseAircraft';
 import type { NoFlightReason } from '../../domain';
 
@@ -98,24 +96,16 @@ function useHalfMinuteTicker(): number {
   return now;
 }
 
-/**
- * Po co pilot tu wszedł — jedyny parametr nawigacji tego ekranu.
- *
- * Wariant 09B/09C nadal rozstrzygają DANE (są wzloty czy nie); to jest osobna oś:
- * „ZDAJ SAMOLOT" oddaje maszynę, „ZAMKNIJ DZIEŃ" z 01 oddaje ją i zamyka klamrę
- * służby (mockup 01: „Zamknięcie dnia zda też SP-KLM"). Intencja nie jest własnością
- * strumienia, więc przychodzi z nawigacji i nigdzie indziej przyjść nie może.
+/*
+ * `ReleaseAircraftParams` (`closeDuty`) żyło tu do 2026-08-11 — parametr nawigacji
+ * niósł intencję „ZAMKNIJ DZIEŃ" z 01. Usunięty razem z klamrą służby (issue #23):
+ * ekran ma jedno znaczenie, a wariant 09B/09C nadal rozstrzygają DANE (są loty czy nie).
  */
-export interface ReleaseAircraftParams {
-  closeDuty?: boolean;
-}
 
 export function ReleaseAircraftScreen({
   navigation,
-  route,
 }: {
   navigation: { navigate: (s: string) => void; goBack: () => void };
-  route?: { params?: ReleaseAircraftParams };
 }) {
   const projection = useSessionStore((s) => s.projection);
   const synced = useSessionStore((s) => s.synced);
@@ -138,7 +128,6 @@ export function ReleaseAircraftScreen({
 
   const now = useHalfMinuteTicker();
   const vm = buildRelease(projection, now);
-  const intent: ReleaseIntent = route?.params?.closeDuty === true ? 'aircraft_and_duty' : 'aircraft';
 
   // Wartość pola podąża za rejestrem, dopóki pilot jej nie nadpisze — dzięki temu
   // późne wczytanie sesji nie zostawia pustego formularza z pustym stanem startowym.
@@ -151,26 +140,16 @@ export function ReleaseAircraftScreen({
     if (reading.fuelL == null || reading.mh == null) return;
     setBusy(true);
     try {
-      // O `dutyEnd` decyduje INTENCJA wejścia, nie ten ekran (`releasePayload`): „ZDAJ
-      // SAMOLOT" klamry nie rusza, „ZAMKNIJ DZIEŃ" zapisuje jej koniec na teraz. Czas
-      // bierzemy z zegara w chwili tapnięcia, a nie z półminutowego tykacza podpisów.
-      await releaseAircraft(
-        releasePayload(
-          intent,
-          { fuelL: reading.fuelL, mh: reading.mh },
-          reason,
-          Date.now(),
-        ),
-      );
+      await releaseAircraft(releasePayload({ fuelL: reading.fuelL, mh: reading.mh }, reason));
       // Wszystko wraca do „Mój dzień", nie do kokpitu: samolotu już nie ma w ręce,
-      // a dzień pilota trwa dalej (albo właśnie się domknął — wariant 01B).
+      // a dzień pilota trwa dalej.
       navigation.navigate('MyDay');
     } catch {
       // Powód jest w `lastError` — pokazany banerem niżej.
     } finally {
       setBusy(false);
     }
-  }, [intent, navigation, reading.fuelL, reading.mh, reason, releaseAircraft]);
+  }, [navigation, reading.fuelL, reading.mh, reason, releaseAircraft]);
 
   if (vm == null) return <NoAircraft onBack={() => navigation.navigate('MyDay')} />;
 
@@ -186,7 +165,7 @@ export function ReleaseAircraftScreen({
           <ScreenHeader
             title="ZDAJ SAMOLOT"
             size="md"
-            subtitle={`${vm.aircraftId} · ${dateUtcLong(now)} · UTC`}
+            subtitle={`${vm.aircraftId} · ${dateUtcLong(now)}`}
             onBack={navigation.goBack}
             backLabel="Kokpit"
             right={
@@ -215,7 +194,7 @@ export function ReleaseAircraftScreen({
       footer={
         <View style={styles.footer}>
           <ActionButton
-            label={releaseCta(intent)}
+            label={RELEASE_CTA}
             // Bursztyn zamiast czerwieni przy zdaniu bez wzlotu: nic się nie zepsuło,
             // dzień po prostu nie doszedł do skutku (mockup 09C).
             tone={withoutLeg ? 'amber' : 'red'}
@@ -358,7 +337,7 @@ export function ReleaseAircraftScreen({
             </Card>
 
             {/* ── Typ A: przyrząd, niezamykalny ─────────────────────────────── */}
-            <Banner kind="status" tone="blue" icon="info" text={releaseNotice(intent)} />
+            <Banner kind="status" tone="blue" icon="info" text={RELEASE_NOTICE} />
           </>
         )}
 

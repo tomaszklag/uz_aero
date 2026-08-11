@@ -4,13 +4,9 @@
  *
  * Ekran kończy pracę z JEDNĄ maszyną — i to jest jedyne miejsce w nowym flow, w którym
  * odczyt liczników jest **WYMAGANY**: staje się przekazaniem dla następnego pilota
- * i ogniwem łańcucha MH (§4.5). Zdanie samolotu **nie kończy dnia pilota** (§3.6a).
- *
- * Wyjątkiem jest wejście przyciskiem „ZAMKNIJ DZIEŃ" z ekranu 01 (`ReleaseIntent`):
- * mockup 01 mówi wprost „Zamknięcie dnia zda też SP-KLM", więc jedno zdarzenie
- * `day_close` niesie wtedy i przekazanie, i klamrę służby (`dutyEnd`). To zarazem
- * JEDYNA droga deklaracji końca klamry, jaką ma dziś aplikacja — patrz nota o brakującym
- * nośniku w `myDay.ts`.
+ * i ogniwem łańcucha MH (§4.5). Zdanie samolotu **nie kończy dnia pilota** — dzień
+ * pilota to lista sesji i nie jest bytem, który się zamyka (issue #23; wcześniejsze
+ * wejście „ZAMKNIJ DZIEŃ" z `dutyEnd` w payloadzie umarło razem z klamrą służby).
  *
  * Moduł odpowiada na cztery pytania, których widok nie ma prawa rozstrzygać sam:
  *
@@ -287,71 +283,36 @@ export function consumedL(state: SessionState, fuelL: number | null): number | n
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Intencja wejścia: sama maszyna czy maszyna razem z dniem
+// Payload i napisy zdania
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Po co pilot tu wszedł. **To jedyna rzecz na tym ekranie, o którą pyta nawigacja,
- * a nie dane** — i tak być musi: 09B wygląda identycznie w obu przypadkach, bo w obu
- * pilot oddaje maszynę i przepisuje te same dwie liczby. Różni się INTENCJA, a intencja
- * nie jest własnością strumienia (wariant 09B/09C nadal rozstrzygają dane).
- *
- *  • `aircraft` — „ZDAJ SAMOLOT" z 01 albo z kokpitu: koniec pracy z tą maszyną,
- *    dzień pilota trwa dalej (§3.6a);
- *  • `aircraft_and_duty` — „ZAMKNIJ DZIEŃ" z 01: mockup 01 mówi wprost „Zamknięcie dnia
- *    zda też SP-KLM", więc jedno zdarzenie `day_close` niesie i przekazanie, i klamrę.
+/*
+ * `ReleaseIntent` (`aircraft` / `aircraft_and_duty`) żył tu do 2026-08-11 — druga
+ * intencja niosła `dutyEnd` z przycisku „ZAMKNIJ DZIEŃ" na 01. Usunięty razem z klamrą
+ * służby (issue #23): zdanie samolotu ma dziś jedno znaczenie i jeden payload.
  */
-export type ReleaseIntent = 'aircraft' | 'aircraft_and_duty';
 
-/**
- * Payload `day_close` — jedyne miejsce, w którym `dutyEnd` w ogóle powstaje.
- *
- * `dutyEnd` = chwila zdania maszyny, bo tę godzinę pilot właśnie potwierdza tapnięciem
- * (mockup 01B: koniec 15:40 przy ostatnim wzlocie 15:10). Przy intencji `aircraft`
- * pola NIE MA — nie `null`, tylko brak: `null` znaczyłby „pilot zadeklarował, że nic",
- * a chodzi o „pilot nie deklarował".
- */
+/** Payload `day_close` — odczyt końcowy i (na 09C) powód braku lotu. */
 export function releasePayload(
-  intent: ReleaseIntent,
   reading: { fuelL: number; mh: number },
   reason: NoFlightReason | null,
-  now: EpochMillis,
-): { finalReading: { fuelL: number; mh: number }; noFlightReason: NoFlightReason | null; dutyEnd?: EpochMillis } {
-  return {
-    finalReading: reading,
-    noFlightReason: reason,
-    ...(intent === 'aircraft_and_duty' ? { dutyEnd: now } : {}),
-  };
+): { finalReading: { fuelL: number; mh: number }; noFlightReason: NoFlightReason | null } {
+  return { finalReading: reading, noFlightReason: reason };
 }
 
 /**
- * Napis na przycisku zapisu — musi zapowiadać KOMPLET tego, co się stanie.
+ * Napis na przycisku zapisu — zapowiada KOMPLET tego, co się stanie.
  * Zdanie jest ZATWIERDZENIEM logu sesji (model 2026-08-10), więc napis to mówi.
  */
-export function releaseCta(intent: ReleaseIntent): string {
-  return intent === 'aircraft_and_duty' ? 'ZDAJ, ZATWIERDŹ I ZAMKNIJ DZIEŃ' : 'ZDAJ I ZATWIERDŹ LOG';
-}
+export const RELEASE_CTA = 'ZDAJ I ZATWIERDŹ LOG';
 
 /**
- * Baner typu STATUS pod formularzem — przyrząd, nie ozdoba.
- *
- * Wersja `aircraft` niesie najważniejsze zdanie całej przebudowy flow („zdajesz samolot,
- * nie kończysz dnia"). Pokazana pilotowi, który właśnie zamyka dzień, mówiłaby dokładną
- * ODWROTNOŚĆ tego, co zrobi przycisk pod nią — stąd druga treść, a nie jedna dla obu.
+ * Baner typu STATUS pod formularzem — przyrząd, nie ozdoba. Niesie najważniejsze
+ * zdanie przebudowy flow: zdajesz samolot, nie kończysz dnia.
  */
-export function releaseNotice(intent: ReleaseIntent): string {
-  if (intent === 'aircraft_and_duty') {
-    return (
-      'Zamykasz dzień razem ze zdaniem maszyny: koniec służby zapisze się na teraz, ' +
-      'a klamrę poprawisz jeszcze przez 24 h na ekranie „Mój dzień". Jeśli dziś jeszcze ' +
-      'polecisz, dzień otworzy się z powrotem i klamra się rozszerzy.'
-    );
-  }
-  return (
-    'Zdajesz samolot, nie kończysz dnia. Służba liczy się dalej, a wzloty zostają ' +
-    'w „Mój dzień". Jeśli za chwilę weźmiesz inny samolot, wejdzie do tej samej służby.'
-  );
-}
+export const RELEASE_NOTICE =
+  'Zdajesz samolot, nie kończysz dnia. Loty zostają w „Mój dzień", a jeśli za chwilę ' +
+  'przejmiesz inny samolot, jego sesja dopisze się do listy dnia.';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Blokada zapisu

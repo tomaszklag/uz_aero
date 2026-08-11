@@ -74,7 +74,6 @@ async function openDay(commands: SessionCommands, clock: FixedClock): Promise<vo
     operation: 'skoki',
     departureIcao: 'EPKK',
     arrivalIcao: 'EPKK',
-    dutyStart: min(0),
     reading: { fuelL: 150, mh: MH_START },
     client: 'Strefa EPKK',
     mhFormat: 'hhmm',
@@ -132,7 +131,6 @@ describe('SessionCommands — odrzucenie nie zostawia śladu', () => {
     await expect(
       commands.releaseAircraft(CTX, {
         finalReading: { fuelL: 112, mh: MH_START - 2 },
-        dutyEnd: min(300),
       }),
     ).rejects.toMatchObject({ code: 'MH_REGRESSION' });
 
@@ -266,7 +264,6 @@ describe('SessionCommands — pełny dzień przez komendy', () => {
     clock.set(min(300));
     const closed = await commands.releaseAircraft(CTX, {
       finalReading: { fuelL: 160, mh: MH_START + 142 / 60 },
-      dutyEnd: min(300),
     });
 
     expect(closed.warnings).toEqual([]);
@@ -317,7 +314,6 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
     clock.set(min(300));
     await commands.releaseAircraft(CTX, {
       finalReading: { fuelL: 150, mh: MH_START },
-      dutyEnd: min(300),
     });
 
     expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBeNull();
@@ -334,7 +330,7 @@ describe('SessionCommands — active_session_uuid dla zapisu headless (GPS w tle
     // wiedzieć, do której sesji pisać.
     clock.set(min(30));
     await expect(
-      commands.releaseAircraft(CTX, { finalReading: { fuelL: 150, mh: MH_START }, dutyEnd: min(30) }),
+      commands.releaseAircraft(CTX, { finalReading: { fuelL: 150, mh: MH_START } }),
     ).rejects.toBeInstanceOf(DomainRuleError);
 
     expect(await adapter.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBe(SESSION);

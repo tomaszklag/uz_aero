@@ -110,7 +110,6 @@ function flyingDay(base: EventBase = BASE, gpsShift = 0) {
         operation: 'skoki',
         departureIcao: 'EPKK',
         arrivalIcao: null,
-        dutyStart: at(6, 5),
         reading: { fuelL: 150, mh: 1200 },
         client: null,
         mhFormat: 'hhmm',

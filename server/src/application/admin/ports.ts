@@ -257,7 +257,7 @@ export const PAGE_LIMIT_MAX = 500;
  * SORTOWANIA SQL-a, więc jego kształt jest sprawą adaptera (`infrastructure/pg/keyset.ts`).
  */
 export interface SessionListFilter {
-  /** Zakres po duty starcie (`sessions.claim_time`, epoch ms UTC), obustronnie domknięty. */
+  /** Zakres po czasie przejęcia (`sessions.claim_time`, epoch ms UTC), obustronnie domknięty. */
   fromMs?: number;
   toMs?: number;
   aircraftId?: string;
@@ -353,7 +353,7 @@ export function isExportState(value: string): value is ExportState {
  * porównujący liczniki z wierszami odpowiedzi (`test/adminExports.test.ts`).
  */
 export interface ExportListFilter {
-  /** Zakres po duty starcie (`sessions.claim_time`, epoch ms UTC), obustronnie domknięty. */
+  /** Zakres po czasie przejęcia (`sessions.claim_time`, epoch ms UTC), obustronnie domknięty. */
   fromMs?: number;
   toMs?: number;
   aircraftId?: string;
@@ -1057,7 +1057,7 @@ export interface AdminStatsTotalsRow extends AdminStatsGroupRow {
 }
 
 /**
- * Dni OTWARTE: `inRange` — z duty startem w zakresie; `undated` — z SAMYM
+ * Dni OTWARTE: `inRange` — z czasem przejęcia w zakresie; `undated` — z SAMYM
  * `session_claim` (`claim_time IS NULL`), których nie da się przypisać do żadnego
  * zakresu, więc liczone są ZAWSZE.
  */
@@ -1223,14 +1223,14 @@ export interface DashboardAdminPort {
   recent(db: Queryable, limit: number): Promise<AdminRecentEventRow[]>;
 
   /**
-   * Sumy doby `[fromMs, toMs]` — dni lotne po duty starcie, zdarzenia po przyjęciu.
+   * Sumy doby `[fromMs, toMs]` — dni lotne po czasie przejęcia, zdarzenia po przyjęciu.
    * Dwa różne zegary w jednym wyniku i to jest świadome: kontrakt nazywa je osobno.
    */
   dayTotals(db: Queryable, range: { fromMs: number; toMs: number }): Promise<AdminDayTotalsRow>;
 
   /**
-   * Duty start NAJNOWSZEGO dnia lotnego (epoch ms UTC); `null` = projekcja jest pusta
-   * albo żadna sesja nie ma preflightu. Po nim pulpit wskazuje „ostatni dzień lotny",
+   * Czas przejęcia NAJNOWSZEGO dnia lotnego (epoch ms UTC); `null` = projekcja jest
+   * pusta albo żadna sesja nie ma daty. Po nim pulpit wskazuje „ostatni dzień lotny",
    * gdy dziś nic nie lata.
    */
   lastFlyingDayStart(db: Queryable): Promise<number | null>;

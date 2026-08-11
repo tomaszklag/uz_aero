@@ -79,7 +79,6 @@ const preflight = (): Event =>
       operation: 'skoki',
       departureIcao: 'EPKK',
       arrivalIcao: 'EPKK',
-      dutyStart: min(0),
       reading: { fuelL: 150, mh: MH_START },
       mhFormat: 'hhmm',
     },
@@ -309,7 +308,6 @@ describe('paliwo', () => {
       'preflight_confirm',
       {
         operation: 'skoki',
-        dutyStart: min(0),
         reading: { fuelL: 400, mh: MH_START },
       },
       { t: min(0) },
@@ -330,7 +328,6 @@ describe('zamknięcie dnia', () => {
       'day_close',
       {
         finalReading: { fuelL: 112, mh: MH_END },
-        dutyEnd: min(300),
         ...payload,
       },
       { t },
@@ -412,23 +409,21 @@ describe('zamknięcie dnia', () => {
     expect(soft(check(afterCycle(), dayClose()))).not.toContain('NO_FLIGHT_WITHOUT_REASON');
   });
 
-  it('koniec służby przed meldunkiem jest odrzucany', () => {
-    expect(hard(check(afterCycle(), dayClose({ dutyEnd: min(-60) })))).toContain(
-      'DUTY_END_BEFORE_START',
-    );
-  });
+  // Test `DUTY_END_BEFORE_START` żył tu do 2026-08-11 — reguła usunięta razem
+  // z klamrą służby (issue #23): payload nie niesie już godzin do porównania.
 });
 
 // Blok „potwierdzenie wzlotu (leg_close)" usunięty 2026-08-10 razem ze zdarzeniem
 // i regułami LEG_CLOSE_* — sesję zatwierdza `day_close` (odczyty obowiązkowe), czego
 // pilnują testy „zamknięcie dnia" wyżej i gwardia SESSION_ALREADY_RAN w „cyklu silnika".
 
-describe('preflight bez deklaracji meldunku (§3.6a — klamra jest opcjonalna)', () => {
+describe('preflightAt jest znacznikiem preflightu (nie dawna godzina meldunku)', () => {
   /**
-   * Od schemaVersion 2 ekran 02 NIE PYTA o godzinę meldunku, więc `dutyStart` jest
-   * `null` w ZWYKŁYM przypadku, nie w brzegowym. Reguły nie mogą traktować jego braku
-   * jak braku preflightu — inaczej pilot, który po prostu przeszedł preflight, nie
-   * uruchomi silnika ani nie zda samolotu.
+   * Godzina meldunku (`dutyStart`) była opcjonalna od §3.6a, a 2026-08-11 znikła
+   * z payloadu w ogóle (issue #23). Ten blok pilnuje, żeby reguły pytały o
+   * `preflightAt` — historycznie DWA RAZY pytały o meldunek i pilot, który zrobił
+   * wszystko dobrze, nie mógł uruchomić silnika (B5) albo przechodził drugi
+   * preflight nadpisujący początek łańcucha MH.
    */
   const preflightNoDuty = (): Event =>
     ev(
@@ -473,13 +468,10 @@ describe('preflight bez deklaracji meldunku (§3.6a — klamra jest opcjonalna)'
   /**
    * ÓSME WYSTĄPIENIE wzorca „pole opcjonalne jako znacznik, że zdarzenie zaszło".
    *
-   * `PREFLIGHT_ALREADY_CONFIRMED` pytało o `state.dutyStart`, czyli o godzinę meldunku —
-   * dokładnie tak, jak przed etapem B5 pytał `PREFLIGHT_REQUIRED`. Tamten przypadek
-   * naprawiono, ten SĄSIEDNI został, bo test na drugi preflight korzysta z fixture'u
-   * `preflight()`, który `dutyStart` wciąż podaje. Po C4 ekran 02a tego pola NIE WYSYŁA,
-   * więc w produkcji `dutyStart` jest `null` i gwardia nigdy się nie budzi: drugi
-   * `preflight_confirm` przechodzi i nadpisuje `mh.start` oraz `fuel.startL`, czyli
-   * POCZĄTEK ŁAŃCUCHA MH (§4.5) — kotwicę, po której serwer porządkuje sesje samolotu.
+   * `PREFLIGHT_ALREADY_CONFIRMED` pytało o `state.dutyStart` (godzinę meldunku) —
+   * dokładnie tak, jak przed etapem B5 pytał `PREFLIGHT_REQUIRED`. W produkcji pole
+   * było `null`, gwardia się nie budziła i drugi `preflight_confirm` nadpisywał
+   * `mh.start` oraz `fuel.startL`, czyli POCZĄTEK ŁAŃCUCHA MH (§4.5).
    *
    * Znacznikiem jest `preflightAt` i tylko on (`projections/session.ts`).
    */
@@ -495,7 +487,7 @@ describe('okno korekty po zamknięciu dnia (24 h)', () => {
     ...afterCycle(),
     ev(
       'day_close',
-      { finalReading: { fuelL: 112, mh: MH_START + 142 / 60 }, dutyEnd: min(300) },
+      { finalReading: { fuelL: 112, mh: MH_START + 142 / 60 } },
       { t: min(300) },
     ),
   ];
@@ -609,7 +601,7 @@ describe('zrzuty', () => {
       claim(),
       ev(
         'preflight_confirm',
-        { operation: 'ferry', dutyStart: min(0), reading: { fuelL: 150, mh: MH_START } },
+        { operation: 'ferry', reading: { fuelL: 150, mh: MH_START } },
         { t: min(0) },
       ),
       ev('engine_start', {}, { t: min(12) }),
@@ -651,7 +643,7 @@ describe('załadunek (issue #21 pkt 7)', () => {
       claim(),
       ev(
         'preflight_confirm',
-        { operation: 'ferry', dutyStart: min(0), reading: { fuelL: 150, mh: MH_START } },
+        { operation: 'ferry', reading: { fuelL: 150, mh: MH_START } },
         { t: min(0) },
       ),
       ev('engine_start', {}, { t: min(12) }),

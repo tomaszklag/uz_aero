@@ -41,7 +41,7 @@ const KEY: readonly [string, string] = ['s.claim_time', 's.session_uuid'];
 
 /**
  * Kształt kursora listy dni: `claim_time` to `BIGINT` z epoką w ms (NULL-owalny —
- * sesja bez preflightu nie ma duty startu), a tie-breakerem jest `session_uuid`, czyli
+ * sesja bez przejęcia nie ma daty), a tie-breakerem jest `session_uuid`, czyli
  * zwykły tekst. Jeden obiekt dla dekodowania i dla predykatu, żeby deklaracja klucza
  * była w tym pliku jedna.
  */
@@ -177,7 +177,7 @@ export class PgAdminSessionsRepo implements SessionsAdminPort {
    * Wszystkie filtry są OPCJONALNE i pomijane, gdy nieustawione — numerację `$n` nadaje
    * `SqlFilter`, żeby nie było jej w tym pliku wcale.
    *
-   * Filtr zakresu dat działa na `claim_time`, czyli na duty starcie; sesja bez
+   * Filtr zakresu dat działa na `claim_time`, czyli na czasie przejęcia; sesja bez
    * `preflight_confirm` nie ma daty dnia i wypada z zakresu (zobaczy ją filtr stanu
    * albo lista bez dat). Domyślanie się daty z `close_time` byłoby zgadywaniem
    * w narzędziu, którego jedynym zadaniem jest nie zgadywać.

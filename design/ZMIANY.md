@@ -1541,3 +1541,49 @@ startu do lądowania (w sesji wiele lotów, touch and go). Słowo „wzlot" WYCO
 > Różnica wobec 08: 08 naprawia sesję TRWAJĄCĄ (fallback GPS), 15 tworzy ZAKOŃCZONĄ.
 
 **Klamra służby i „Zamknij dzień" — BEZ ZMIAN** (decyzja odłożona do osobnego przemyślenia).
+
+---
+
+## 2026-08-11 — Mój dzień bez służby (issue #23)
+
+Klamra służby, odłożona 2026-08-10 „do osobnego przemyślenia", została przemyślana
+i **usunięta w całości**: do pilota w danym dniu przypisana jest lista sesji i nie ma
+sensu opakowywać jej w czas „od meldunku do zamknięcia" — ta wielkość niczego nie
+mierzyła. Razem z klamrą znika jej model w kodzie (payloady `dutyStart`/`dutyEnd`,
+projekcja klamry).
+
+**01 — log dnia zamiast klamry.**
+> Usunięte: baner pouczający „Loty zapisują się same…" (pkt 1 — nie ma już reguły,
+> którą tłumaczył), wiersze Meldunek / Koniec służby, kafel sumy „Służba", przycisk
+> „ZAMKNIJ DZIEŃ" z przypisem „Nie musisz go zamykać…" (pkt 2 i 4), pill „n sesji"
+> w nagłówku (pkt 6 — liczbę sesji widać na liście). Lista sesji jest PŁASKĄ osią
+> czasu (pkt 3): grupowanie po samolocie skasowane, rejestracja zeszła do wiersza
+> pod czasy silnika; „Rozliczenie →" przeniosło się do nagłówka karty. Sumy: Blok
+> i Loty (dwie kolumny).
+
+**01 — nagłówek wg jednego wzorca** (pkt 7).
+> Tytuł i podtytuł do LEWEJ, zębatka ustawień PO PRAWEJ — 01 był jedynym ekranem
+> z zębatką po lewej i tytułem na środku. Wzorzec obowiązuje całą aplikację.
+
+**01C — NOWY wariant: offline + arkusz szczegółów synchronizacji** (pkt 5).
+> Ekran pokazywał dwa stemple syncu naraz (pod pillem w nagłówku i w stopce „Dane
+> referencyjne") — oba znikły. Offline rysuje SAM pill `OFFLINE · n`; tapnięcie
+> otwiera arkusz od dołu: stan kolejki, ostatnia udana synchronizacja, wiek danych
+> referencyjnych. Arkusz jest informacyjny (bez „wyślij teraz" — outbox wysyła sam,
+> §4.1). Wzorzec obowiązuje każdy ekran z SyncChipem.
+
+**01B — USUNIĘTY.**
+> „Dzień zamknięty — okno korekty" był widokiem stanu, który przestał istnieć.
+> Karta dnia w historii (12) prowadzi teraz do rozliczenia (10). Okno korekty 24 h
+> per sesja zostaje bez zmian — kotwicą jest zdanie samolotu, drzwiami ekran 12.
+
+**Sprzątanie słownika po ekranach.**
+> 04D, 07, 09B, 15, 12, index: „służba liczy się dalej" → „kolejna maszyna dopisze
+> się do listy sesji"; karty dnia w 12 pokazują Sesje / Blok / Loty zamiast
+> Wzloty / Służba; 15 obiecuje okno korekty zamiast „wejścia do klamry".
+
+**Nagłówki bez „· UTC" w podtytule** (uwaga użytkownika przy przeglądzie).
+> 01/01A/01C, 09B/09C, 15: data w podtytule nagłówka nie niesie znacznika strefy —
+> był szumem. Znacznik zostaje tam, gdzie mówi coś o TABELI czasów („Log dnia ·
+> czasy UTC", „Czasy · UTC", „Log SP-XXX · UTC") — zgodnie z regułą „logi i tabele
+> oznaczaj jawnie".
