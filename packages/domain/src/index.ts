@@ -35,6 +35,8 @@ export * from './track/mercator';
 export * from './airfields';
 export * from './airfieldSearch';
 export * from './magneticDeclination';
+export * from './geoid/grid';
+export * from './geoid/undulation';
 export * from './track/airfieldsInView';
 export * from './consumption/interval';
 export * from './consumption/timeInPhase';

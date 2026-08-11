@@ -6,8 +6,8 @@
 > Kontekst architektoniczny: `docs/architektura-kodu.md` §8.1–8.2.
 > Wymagania produktowe: `docs/_main.md.txt` §3.3.
 > Kod: `packages/domain/src/detection/`.
-> Stan na 2026-08-04 (odczulenie kanału ruchu + gwardia `ALREADY_TAXIING`;
-> przebudowa na okno historii: 2026-07-30).
+> Stan na 2026-08-11 (korekta geoidalna wysokości w adapterze — §4a; wcześniej
+> 2026-08-04: odczulenie kanału ruchu + gwardia `ALREADY_TAXIING`).
 
 ---
 
@@ -102,11 +102,14 @@ musi być znana i niższa od `TAXI_SPEED_KT`.
 **Wartość zostaje z GPS — nigdy z katalogu lotnisk** (`airfields.ts`), i to również jest
 wynik issue #5. Wysokość fixa i elewacja pola **odejmują się** w `heightAboveField()`, więc
 muszą pochodzić z tego samego układu odniesienia: wspólny błąd odbiornika się skraca.
-Elewacja z katalogu jest AMSL, a `expo-location` na Androidzie podaje wysokość nad
-elipsoidą WGS84 — undulacja geoidy w Polsce to ~35 m, czyli **~115 ft stałego błędu AGL**,
-więcej niż `TAKEOFF_ALT_DIFF_FT` (50 ft) i `LANDING_ALT_DIFF_FT` (30 ft) razem wzięte.
-Podstawienie elewacji z mapy dałoby fałszywy start na postoju i lądowanie, które nigdy nie
-zapada.
+Historycznie głównym składnikiem rozjazdu była undulacja geoidy (~35 m w Polsce, czyli
+**~115 ft stałego błędu AGL** — więcej niż `TAKEOFF_ALT_DIFF_FT` i `LANDING_ALT_DIFF_FT`
+razem wzięte): katalog jest AMSL, a `expo-location` na Androidzie podaje wysokość nad
+elipsoidą WGS84. Od 2026-08-11 adapter tę undulację odejmuje (§4a), ale zasada NIE
+słabnie: zostaje dzienny błąd pionowy odbiornika (±10–20 m), a poza pokryciem
+wkompilowanej siatki korekty nie ma wcale — samo-odniesienie „GPS minus GPS" jest odporne
+na jedno i drugie. Podstawienie elewacji z mapy dałoby fałszywy start na postoju
+i lądowanie, które nigdy nie zapada.
 
 Gdy **nie było ani jednego fixa na postoju**, elewacja zostaje `null` i automat dalej
 świadomie milczy przy lądowaniu: pilot ma wpis ręczny (05f) i korektę (04c), a zmyślone
@@ -192,7 +195,7 @@ kolejnością, nie obejściem w teście.
 |---|---|---|
 | `time` | epoch ms | zegar **GPS**, nie telefonu (§4.5 — zegar telefonu bywa przestawiony) |
 | `groundSpeedKt` | węzły | `null` = brak pomiaru; patrz niżej |
-| `altitudeFt` | stopy AMSL | `null` częściej niż pozycja — GPS kłamie na wysokości najbardziej |
+| `altitudeFt` | stopy AMSL | po korekcie geoidalnej w adapterze (§4a); `null` częściej niż pozycja — GPS kłamie na wysokości najbardziej |
 | `trackDeg` | stopnie 0–360 | kurs nad ziemią; na postoju zwykle `null` albo losowy |
 | `lat` / `lon` | stopnie dziesiętne | |
 | `accuracyM` | metry | deklarowana dokładność pozioma |
@@ -205,6 +208,29 @@ na `null`.
 > zeruje ją filtrem **static-hold** w układzie GNSS (żeby zaparkowany telefon nie dryfował po
 > mapie). Detektor dostawał twarde „0 kt" — pomiar, którego nikt nie wykonał, w przebraniu
 > pomiaru wiarygodnego — i miał rację co do liczby, a nie co do rzeczywistości.
+
+### 4a. Wysokość: elipsoida → AMSL (korekta geoidalna, 2026-08-11)
+
+Android podaje wysokość nad **elipsoidą WGS84**, a lotnictwo mierzy **AMSL** (nad geoidą).
+Różnica — undulacja geoidy — wynosi w Polsce ~30–40 m i była widoczna gołym okiem: na EPNL
+(elewacja 830 ft) loger wskazywał ~950 ft. Adapter (`locationToFix`) odejmuje więc od
+wysokości platformy undulację EGM96, interpolowaną dwuliniowo z wkompilowanego wycinka
+oficjalnej siatki NGA 15′×15′ (`packages/domain/src/geoid/`, pokrycie 41–62°N, 5°W–35°E;
+generator `packages/domain/scripts/generateGeoid.ts` waliduje pobrany plik na wzorcach NGA
+`OUTINTPT.DAT`, zanim cokolwiek wytnie). Undulacja na EPNL to 38,9 m ≈ 128 ft — zgadza się
+ze zgłoszonym rozjazdem co do szumu GPS.
+
+Konsekwencje dla detekcji: **żadnych mechanicznych**. AGL liczy się względem wysokości
+z chwili ENGINE START (§2), więc stały składnik skracał się przed korektą i skraca się po
+niej. Poza pokryciem siatki korekta uczciwie znika (`geoidUndulationM` → `null`, wysokość
+zostaje elipsoidalna) — kolejny powód, żeby elewacji pola nigdy nie brać z katalogu.
+Ślady nagrane PRZED 2026-08-11 niosą wysokość elipsoidalną, nowsze — AMSL; `replay.ts`
+liczy różnicowo, więc detekcje na starych nagraniach nie drgną, ale bezwzględne wysokości
+w starych śladach czyta się z tą świadomością. Po korekcie zostaje zwykły szum pionowy
+GNSS (±10–25 m) — pełną stabilność wskazań dałby dopiero barometr (§12).
+
+Gdyby kiedyś doszedł iOS: CoreLocation podaje AMSL od razu i korekta musiałaby dostać
+bramkę platformy — bez niej odjęlibyśmy undulację podwójnie (docblock adaptera).
 
 ---
 

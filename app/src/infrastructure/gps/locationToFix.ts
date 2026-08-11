@@ -8,7 +8,7 @@
  * w miejscu wywołania. Wzorzec ekstrakcji: `infrastructure/storage/schema.ts`.
  */
 
-import type { GpsFix } from '../../domain';
+import { geoidUndulationM, type GpsFix } from '../../domain';
 
 /** Kształt odczytu platformy — dokładnie te pola, które konsumujemy. */
 export interface RawLocation {
@@ -38,16 +38,29 @@ export const MPS_TO_KNOTS = 1.943844492;
  * jest jawny i domena odtwarza prędkość z przemieszczenia (`trends.groundSpeed`).
  *
  * Wartości ujemne to androidowy idiom „niedostępne" (−1) — traktujemy jak brak.
+ *
+ * WYSOKOŚĆ PRZECHODZI KOREKTĘ ELIPSOIDA→AMSL (poprawka 2026-08-11, zgłoszenie
+ * z EPNL: elewacja 830 ft, wskazanie ~950 ft). Android podaje wysokość nad elipsoidą
+ * WGS84, a domena kontraktowo mówi stopami AMSL — różnicę (undulację geoidy, w Polsce
+ * ~30–40 m) odejmujemy TUTAJ, bo to własność układu odniesienia platformy, nie danych
+ * lotu: nagrane ślady niosą już wysokość po korekcie i `replay.ts` nie może jej
+ * nakładać drugi raz. Poza pokryciem wkompilowanej siatki (Europa, patrz
+ * `egm96Grid.ts`) korekty nie ma i wysokość zostaje elipsoidalna — uczciwa degradacja
+ * zamiast ekstrapolacji. Detekcji to nie dotyczy: liczy AGL względem wysokości
+ * z ENGINE START, więc stały składnik i tak się skraca. Gdyby kiedyś doszedł iOS,
+ * korekta MUSI dostać bramkę platformy — CoreLocation podaje AMSL i odjęlibyśmy
+ * undulację podwójnie.
  */
 export function locationToFix(loc: RawLocation): GpsFix {
   const { coords, timestamp } = loc;
   const speed = coords.speed;
   const heading = coords.heading;
+  const undulationM = geoidUndulationM({ lat: coords.latitude, lon: coords.longitude });
   return {
     // `timestamp` pochodzi z fixa, nie z zegara aplikacji — to jest ten „drugi zegar".
     time: timestamp,
     groundSpeedKt: speed == null || speed < 0 ? null : speed * MPS_TO_KNOTS,
-    altitudeFt: coords.altitude == null ? null : coords.altitude * METERS_TO_FEET,
+    altitudeFt: coords.altitude == null ? null : (coords.altitude - (undulationM ?? 0)) * METERS_TO_FEET,
     // Kurs nad ziemią: był w każdym odczycie i szedł do kosza. Domena liczy z niego
     // prędkość kątową — drugą, niezależną obronę przed „ciasnym zakrętem udającym
     // lądowanie" (§8), za darmo i bez dodatkowego czujnika.

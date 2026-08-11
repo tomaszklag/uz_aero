@@ -7,6 +7,7 @@
  * pomiar, którego nikt nie wykonał — i opóźniał wykrycie kołowania.
  */
 
+import { geoidUndulationM } from '../domain';
 import {
   METERS_TO_FEET,
   MPS_TO_KNOTS,
@@ -49,12 +50,23 @@ describe('locationToFix — brak pomiaru to null, nigdy zero', () => {
 });
 
 describe('locationToFix — jednostki i zegar', () => {
-  it('metry → stopy, m/s → węzły', () => {
-    const fix = locationToFix(raw({ altitude: 100, speed: 10 }));
-    expect(fix.altitudeFt).toBeCloseTo(100 * METERS_TO_FEET, 6);
-    expect(fix.altitudeFt).toBeCloseTo(328.0839895, 6);
+  it('m/s → węzły', () => {
+    const fix = locationToFix(raw({ speed: 10 }));
     expect(fix.groundSpeedKt).toBeCloseTo(10 * MPS_TO_KNOTS, 6);
     expect(fix.groundSpeedKt).toBeCloseTo(19.43844492, 6);
+  });
+
+  it('wysokość: elipsoida − undulacja geoidy → stopy AMSL', () => {
+    // Android podaje wysokość nad elipsoidą WGS84; do domeny ma wejść AMSL.
+    const undulationM = geoidUndulationM({ lat: 52.1, lon: 21.0 });
+    expect(undulationM).not.toBeNull();
+    const fix = locationToFix(raw({ altitude: 100 }));
+    expect(fix.altitudeFt).toBeCloseTo((100 - undulationM!) * METERS_TO_FEET, 6);
+  });
+
+  it('poza pokryciem siatki geoidy wysokość zostaje elipsoidalna', () => {
+    const fix = locationToFix(raw({ latitude: 10, longitude: -150, altitude: 100 }));
+    expect(fix.altitudeFt).toBeCloseTo(100 * METERS_TO_FEET, 6);
   });
 
   it('czas fixa pochodzi z timestampu GPS, nie z zegara urządzenia', () => {
@@ -72,5 +84,15 @@ describe('locationToFix — jednostki i zegar', () => {
     expect(fix.lat).toBe(52.1);
     expect(fix.lon).toBe(21.0);
     expect(fix.accuracyM).toBe(5);
+  });
+});
+
+describe('locationToFix — regresja EPNL (zgłoszenie 2026-08-11)', () => {
+  it('na EPNL surowe ~950 ft elipsoidalnie pokazuje się jako ~830 ft AMSL', () => {
+    // Elewacja EPNL (Łososina Dolna) to 830 ft AMSL, a loger wskazywał ~950 ft:
+    // różnica to undulacja geoidy (~37 m). 289,56 m = dokładnie 950 ft.
+    const fix = locationToFix(raw({ latitude: 49.74532, longitude: 20.62347, altitude: 289.56 }));
+    expect(fix.altitudeFt).toBeGreaterThan(815);
+    expect(fix.altitudeFt).toBeLessThan(845);
   });
 });
