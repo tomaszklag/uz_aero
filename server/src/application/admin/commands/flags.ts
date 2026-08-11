@@ -2,7 +2,7 @@
  * UZ Aero (serwer) — komendy cyklu życia flagi (panel, mockup `A03a-flaga.html`).
  *
  * To pierwszy pionowy przekrój panelu i wzorzec dla następnych. Domyka też §4.7:
- * do dziś otwarta flaga `session_overlap` blokowała kartę dnia BEZTERMINOWO, bo
+ * do dziś otwarta flaga `aircraft_overlap` (dawniej `session_overlap`) blokowała kartę dnia BEZTERMINOWO, bo
  * w całym `server/src` nie było kodu ustawiającego `status='resolved'` — jedynym
  * odblokowaniem był ręczny `UPDATE` w bazie.
  *
@@ -122,7 +122,7 @@ export class AdminFlagCommands {
   }
 
   /**
-   * Re-eksport WYŁĄCZNIE dla `session_overlap` — bo tylko ten typ jest bramką
+   * Re-eksport WYŁĄCZNIE dla `aircraft_overlap` — bo tylko ten typ jest bramką
    * w `DayExporter`. Rozwiązanie `mh_gap` czy `mh_regression` niczego nie odblokowuje
    * i udawanie inaczej myliłoby panel (odpowiedź z „rewizja 2" po akcji, która na
    * kartę nie wpłynęła, uczy nieufności do narzędzia).
@@ -131,7 +131,7 @@ export class AdminFlagCommands {
    * flaga zatrzyma eksportera na jego własnej bramce i wróci `overlap_flag`.
    */
   private async reexport(closed: ResolvedFlag): Promise<ExportAttempt[]> {
-    if (closed.type !== 'session_overlap') return [];
+    if (closed.type !== 'aircraft_overlap') return [];
 
     const attempts: ExportAttempt[] = [];
     for (const sessionUuid of closed.sessionUuids) {

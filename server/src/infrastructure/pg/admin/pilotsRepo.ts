@@ -53,7 +53,7 @@ const toAccount = (r: {
   name: r.name,
   email: r.email,
   active: r.active,
-  // Ta sama nieufność, co w adapterze logowania: bazy pilnuje CHECK z migracji 7,
+  // Ta sama nieufność, co w adapterze logowania: bazy pilnuje CHECK na `pilots.role`,
   // ale nierozpoznana rola schodzi do najmniejszej, nigdy nie awansuje.
   role: isPilotRole(r.role) ? r.role : DEFAULT_ROLE,
 });

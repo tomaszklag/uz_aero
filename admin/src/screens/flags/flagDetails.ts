@@ -11,7 +11,7 @@
  * to złożenie napisu z gotowych liczb funkcjami `@uzaero/format`.
  */
 
-import { litres, motoHours, plural } from '@uzaero/format';
+import { litres, motoHours, plural, timeUtc } from '@uzaero/format';
 
 import type { FlagListItemDto } from '../../api/dto';
 
@@ -61,14 +61,29 @@ export function discrepancyOf(flag: FlagListItemDto): Discrepancy {
   const d = flag.details;
 
   switch (flag.type) {
-    case 'session_overlap': {
+    case 'aircraft_overlap': {
       const open = num(d, 'openSessions');
       return {
         main:
           open == null
-            ? 'sesje bez zamknięcia dnia'
+            ? 'sesje bez zdania samolotu'
             : `${open} ${plural(open, 'sesja', 'sesje', 'sesji')} bez day_close`,
-        sub: `${flag.sessionUuids.length} ${plural(flag.sessionUuids.length, 'sesja', 'sesje', 'sesji')} w sprawie`,
+        sub: `${flag.sessionUuids.length} ${plural(flag.sessionUuids.length, 'sesja', 'sesje', 'sesji')} na tej maszynie`,
+      };
+    }
+    case 'pilot_overlap': {
+      // `details` z `pilotOverlap.ts`: `aircraft` („SP-ABC + SP-KLM"), `from`, a `to`
+      // WYŁĄCZNIE gdy obie sesje są zamknięte — przy otwartej nakładka trwa nadal
+      // i domyślanie się końca byłoby twierdzeniem o przyszłości.
+      const pair = text(d, 'aircraft');
+      const from = num(d, 'from');
+      const to = num(d, 'to');
+      return {
+        main: pair == null ? 'dwie maszyny naraz' : `${pair} naraz`,
+        sub:
+          from == null
+            ? null
+            : `${timeUtc(from)} → ${to == null ? 'trwa' : timeUtc(to)} UTC`,
       };
     }
     case 'mh_gap':
@@ -105,7 +120,7 @@ export function detailRows(flag: FlagListItemDto): DetailRow[] {
   const d = flag.details;
 
   switch (flag.type) {
-    case 'session_overlap': {
+    case 'aircraft_overlap': {
       const open = num(d, 'openSessions');
       return [
         {
@@ -113,6 +128,18 @@ export function detailRows(flag: FlagListItemDto): DetailRow[] {
           value: open == null ? NONE : String(open),
           tone: 'red',
         },
+        { key: 'Sesje w sprawie', value: String(flag.sessionUuids.length) },
+      ];
+    }
+    case 'pilot_overlap': {
+      const from = num(d, 'from');
+      const to = num(d, 'to');
+      return [
+        { key: 'Maszyny', value: text(d, 'aircraft') ?? NONE, tone: 'amber' },
+        { key: 'Wspólny odcinek od', value: from == null ? NONE : `${timeUtc(from)} UTC` },
+        // „trwa", nie kreska: brak `to` znaczy, że któraś sesja jest nadal otwarta,
+        // czyli nakładka NIE SKOŃCZYŁA SIĘ — to fakt, a nie brak danych.
+        { key: 'Wspólny odcinek do', value: to == null ? 'trwa' : `${timeUtc(to)} UTC` },
         { key: 'Sesje w sprawie', value: String(flag.sessionUuids.length) },
       ];
     }

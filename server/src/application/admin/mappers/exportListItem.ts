@@ -27,8 +27,9 @@ import type { AdminExportJoin } from '../ports.ts';
 /**
  * Stan karty dnia. Pierwsze dopasowanie wygrywa i **kolejność jest regułą**:
  *
- *  1. **`impossible` przed wszystkim** — sesja bez duty startu nie ma nawet nazwy karty,
- *     więc mówienie o niej „brakuje karty" sugerowałoby, że da się ją dorobić.
+ *  1. **`impossible` przed wszystkim** — sesja bez chwili przejęcia nie ma nawet nazwy
+ *     karty, więc mówienie o niej „brakuje karty" sugerowałoby, że da się ją dorobić.
+ *     Od 2026-08-07 to stan wyłącznie awaryjny: `session_claim` ma KAŻDA sesja (§4.4).
  *  2. **`waiting` przed `blocked`** — dzień, który jeszcze trwa, nie jest zablokowany
  *     przez flagę, tylko po prostu niegotowy; obie bramki są w eksporterze, ale tylko
  *     jedna wymaga decyzji człowieka.
@@ -43,7 +44,7 @@ import type { AdminExportJoin } from '../ports.ts';
  * `contracts/exports.ts`.
  */
 export function exportState(join: AdminExportJoin): ExportState {
-  if (join.dutyStart == null) return 'impossible';
+  if (join.claimedAt == null) return 'impossible';
   if (join.status !== 'closed') return 'waiting';
   if (join.blockingFlagIds.length > 0) return 'blocked';
   if (join.revision == null || join.exportedAt == null) return 'missing';
@@ -56,13 +57,13 @@ export function exportListItem(join: AdminExportJoin): AdminExportListItem {
   // Druga konwencja nazw w monitorze znaczyłaby, że panel pokazuje link do karty,
   // której w bazie nie ma — a wyglądałoby to na awarię eksportu.
   const tab =
-    join.dutyStart == null ? null : sheetTabName(join.dutyStart, join.aircraftId);
+    join.claimedAt == null ? null : sheetTabName(join.claimedAt, join.aircraftId);
 
   return {
     sessionUuid: join.sessionUuid,
     tab,
-    day: join.dutyStart == null ? null : sheetDay(join.dutyStart),
-    dutyStart: join.dutyStart,
+    day: join.claimedAt == null ? null : sheetDay(join.claimedAt),
+    claimedAt: join.claimedAt,
 
     aircraftId: join.aircraftId,
     reg: join.reg,

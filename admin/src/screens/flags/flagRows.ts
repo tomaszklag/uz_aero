@@ -13,8 +13,10 @@
  *    mówi „blokuje", podczas gdy eksporter przepuszcza, i nikt by tego nie zauważył,
  *    bo obie strony byłyby „poprawne" osobno.
  *
- * Otwarta `session_overlap` wstrzymuje kartę dnia, więc jest INNYM RODZAJEM SPRAWY
- * niż `mh_gap` sprzed godziny — i dlatego stoi wyżej niezależnie od wieku.
+ * Otwarta `aircraft_overlap` wstrzymuje kartę doby, więc jest INNYM RODZAJEM SPRAWY
+ * niż `mh_gap` sprzed godziny — i dlatego stoi wyżej niezależnie od wieku. `pilot_overlap`
+ * mimo podobnej nazwy stoi po drugiej stronie tej granicy: opisuje grafik człowieka
+ * i arkusza nie dotyka.
  */
 
 import type { FlagType } from '@uzaero/domain';

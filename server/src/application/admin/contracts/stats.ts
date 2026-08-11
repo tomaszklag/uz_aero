@@ -16,10 +16,10 @@
  *     (`sessions.close_time`): dzień otwarty zmieniłby sumy po zamknięciu, więc jest
  *     poza zakresem — `totals.openSessionsInRange` mówi, ile takich dni pominięto.
  *  3. **`null` znaczy „nie wiemy", nigdy zero.** Dwa różne powody niewiedzy są tu
- *     rozdzielone: `staleRows` to wiersze projekcji sprzed migracji 18 (kolumn statystyk
- *     jeszcze nie przeliczono — naprawia przebudowa na `A11`), a `fuelUnknownSessions`/
+ *     rozdzielone: `staleRows` to wiersze projekcji z pustymi kolumnami statystyk
+ *     (jeszcze ich nie przeliczono — naprawia przebudowa na `A11`), a `fuelUnknownSessions`/
  *     `mhUnknownSessions` to dni zamknięte, których bilansu NIE DA SIĘ policzyć (brak
- *     odczytu początkowego). Przy `staleRows > 0` agregaty kolumn migracji 18 jadą jako
+ *     odczytu początkowego). Przy `staleRows > 0` agregaty kolumn statystyk jadą jako
  *     `null` — suma po części wierszy podana jako całość byłaby kłamstwem.
  */
 
@@ -54,7 +54,7 @@ export interface AdminStatsTotals {
   flightMs: number;
   /** Czas lotu jako % nalotu blokowego; `null` przy zerowym bloku. */
   flightVsBlockPct: number | null;
-  /** `null` = w zakresie są wiersze sprzed migracji 18 (`staleRows` mówi ile). */
+  /** `null` = w zakresie są wiersze sprzed kolumn statystyk (`staleRows` mówi ile). */
   takeoffs: number | null;
   landings: number | null;
   /** `null` = `staleRows > 0` albo żaden dzień zakresu nie ma bilansu paliwa. */
@@ -71,15 +71,19 @@ export interface AdminStatsTotals {
   mhBlockHours: number;
   /** Rozjazd `Δ MH − blok dni ze znanym Δ` (h); `null`, gdy `mhDeltaH` jest `null`. */
   mhVsBlockH: number | null;
-  /** Wiersze projekcji sprzed migracji 18 — do przebudowy na `A11`. */
+  /** Wiersze projekcji sprzed kolumn statystyk — do przebudowy na `A11`. */
   staleRows: number;
-  /** Dni OTWARTE z duty startem w zakresie — celowo poza sumami. */
+  /** Sesje OTWARTE z chwilą przejęcia w zakresie — celowo poza sumami. */
   openSessionsInRange: number;
   /**
-   * Dni OTWARTE z SAMYM `session_claim` (bez duty startu, telefon padł przed
-   * preflightem) — nie mają daty, więc nie należą do żadnego zakresu i są liczone
-   * ZAWSZE. Osobno od `openSessionsInRange`, bo podtytuł ekranu musi umieć je
-   * odróżnić.
+   * Dni OTWARTE BEZ `session_claim` — czyli rejestr niekompletny: nie mają daty, więc
+   * nie należą do żadnego zakresu i są liczone ZAWSZE. Osobno od `openSessionsInRange`,
+   * bo podtytuł ekranu musi umieć je odróżnić.
+   *
+   * Do 2026-08-07 licznik obejmował sesje z SAMYM claimem (kolumna niosła wtedy
+   * opcjonalny meldunek). Dziś taka sesja MA datę i jest zwykłym dniem w toku, więc ten
+   * licznik zszedł do roli, którą powinien był mieć od początku: sygnału o połamanym
+   * strumieniu. W zdrowym klubie stoi na zerze — i to jest właściwe zachowanie.
    */
   openSessionsUndated: number;
 }
@@ -198,7 +202,7 @@ export interface AdminStatsDrops {
   dropsWithoutAltitude: number | null;
   jumpersPerFlightHour: number | null;
   /**
-   * Wiersze, przez które sekcja mówi „nie wiem": dni skokowe sprzed migracji 18
+   * Wiersze, przez które sekcja mówi „nie wiem": dni skokowe sprzed kolumn statystyk
    * ORAZ dni z `operation IS NULL` w zakresie — rodzaju operacji nie znamy, więc
    * każdy z nich MÓGŁ być dniem skokowym.
    */

@@ -59,7 +59,7 @@ describe('aircraftRows', () => {
     });
   });
 
-  it('wiersz sprzed migracji 18: starty/paliwo/ΔMH to kreski, nie zera', () => {
+  it('wiersz sprzed kolumn statystyk: starty/paliwo/ΔMH to kreski, nie zera', () => {
     const data = statsFixture();
     const klm = data.aircraft[0]!;
     klm.staleRows = klm.sessions;

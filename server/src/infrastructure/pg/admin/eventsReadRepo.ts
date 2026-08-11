@@ -12,7 +12,7 @@
  * W adapterach flag i operacji stoi strażnik rzucający na wartościach spoza katalogu —
  * bo tam wartość jest pilnowana `CHECK`-iem w bazie, więc jej naruszenie znaczy ręczną
  * ingerencję w dane. **Tutaj takiego strażnika NIE MA i nie wolno go dodać.** Kolumna
- * `events.type` celowo nie ma `CHECK`-a (migracja 1), a `payload` jest `JSONB`
+ * `events.type` celowo nie ma `CHECK`-a, a `payload` jest `JSONB`
  * dowolnego kształtu. Strażnik przy odczycie znaczyłby, że narzędzie śledcze przestaje
  * się otwierać przez własną historię — dokładnie wtedy, gdy jest potrzebne.
  *
@@ -39,11 +39,12 @@ import { SqlFilter } from '../sqlFilter.ts';
 
 /**
  * Klucz porządku rejestru — dokładnie ten, pod który stoi `idx_events_received`
- * po migracji 17. Obie kolumny są `NOT NULL` (`uuid` jest kluczem głównym), stąd
+ * po ujednoliceniu reguły `NULLS` (`architektura-panelu-serwer.md` §7.8). Obie kolumny
+ * są `NOT NULL` (`uuid` jest kluczem głównym), stąd
  * `k1Nullable: false`: gałąź `IS NULL` byłaby martwym warunkiem, a martwy warunek
  * w `WHERE` potrafi odciąć planerowi indeks. Ta sama deklaracja zdejmuje `NULLS LAST`
  * z `ORDER BY`, dzięki czemu jeden indeks obsługuje `?sort=desc` skanem w przód
- * i `?sort=asc` skanem wstecz (`keysetOrderBy`, migracja 17).
+ * i `?sort=asc` skanem wstecz (`keysetOrderBy`, reguła `NULLS` — §7.8).
  *
  * `uuid` jako tie-breaker, bo CAŁA paczka z jednego synca ma identyczny `received_at`
  * — `now()` w Postgresie zwraca czas rozpoczęcia transakcji. Bez rozstrzygnięcia
@@ -188,7 +189,7 @@ export class PgAdminEventsReadRepo implements AdminEventsReadPort {
    * musiałoby więc i tak wyłamać się z jej `WHERE` — czyli byłoby tym samym zapytaniem,
    * tylko trudniejszym do przeczytania i do zaplanowania.
    *
-   * Stoi pod `idx_events_correction_target` (migracja 16): indeks CZĘŚCIOWY po
+   * Stoi pod `idx_events_correction_target`: indeks CZĘŚCIOWY po
    * `payload->>'targetUuid'` wyłącznie dla `type = 'event_correction'`. Bez niego to
    * jest pełne skanowanie rejestru raz na stronę — dokładnie ten koszt, przed którym
    * broni kursor.

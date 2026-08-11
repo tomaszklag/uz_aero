@@ -12,7 +12,7 @@
  * Do modelu wchodzą wyłącznie dni ZAMKNIĘTE — dzień bez `day_close` nie ma odczytu
  * końcowego paliwomierza, więc jego zużycia po prostu nie znamy. Predykat jest ten sam,
  * co w statystykach zakresu, i obsługuje go ten sam częściowy indeks
- * `idx_sessions_closed_day` (migracja 18).
+ * `idx_sessions_closed_day`.
  */
 
 import { type MhFormat } from '@uzaero/domain';

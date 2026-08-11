@@ -24,13 +24,27 @@
  * mylniejsza niż brak informacji. Czas po korekcie stoi w opisie, obok powodu.
  */
 
-import type { Event } from '@uzaero/domain';
+import type { Event, NoFlightReason } from '@uzaero/domain';
 import { formatLatLon, litres, motoHours, plural, timeUtcSeconds } from '@uzaero/format';
 
 import type { TimelineEntryDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components/Pill';
 import type { TimelineTone } from '../../ui/components/TimelineRow';
 import { EVENT_META } from './eventTypes';
+
+/**
+ * Powody zdania samolotu bez wzlotu (09C) po polsku.
+ *
+ * `Record` po unii domeny wymusza komplet: dopisanie piątego powodu w `@uzaero/domain`
+ * wywali kompilację tutaj, zamiast pokazać administratorowi surowy identyfikator.
+ * Identyfikatory zostają angielskie — to klucze rejestru, nie napisy (issue #13).
+ */
+const NO_FLIGHT_LABEL: Record<NoFlightReason, string> = {
+  weather: 'pogoda',
+  malfunction: 'usterka',
+  cancelled: 'odwołane',
+  other: 'inny',
+};
 
 export interface TimelineRowView {
   uuid: string;
@@ -108,7 +122,10 @@ function describe(event: Event): string[] {
     case 'preflight_confirm': {
       const p = event.payload;
       const lines = [
-        `operacja: ${p.operation} · ${yesNo(p.departureIcao, '?')} → ${yesNo(p.arrivalIcao, '?')} · duty start ${timeUtcSeconds(p.dutyStart)}`,
+        // Klamra służby jest opcjonalna od schemaVersion 2 (§3.6a) — zdarzenia
+        // z przejęcia po 2026-08-06 jej nie niosą. Brak deklaracji to informacja,
+        // nie luka: administrator ma widzieć „nie zadeklarowano", a nie pustkę.
+        `operacja: ${p.operation} · ${yesNo(p.departureIcao, '?')} → ${yesNo(p.arrivalIcao, '?')} · meldunek ${p.dutyStart != null ? timeUtcSeconds(p.dutyStart) : 'nie zadeklarowano'}`,
         `odczyt: FOB ${litres(p.reading.fuelL)} · MH ${motoHours(p.reading.mh, p.mhFormat ?? null)}`,
       ];
       if (p.client != null) lines.push(`klient: ${p.client}`);
@@ -188,11 +205,24 @@ function describe(event: Event): string[] {
 
     case 'day_close': {
       const p = event.payload;
-      return [
+      const lines = [
         `odczyt końcowy (przekazanie): FOB ${litres(p.finalReading.fuelL)} · MH ${p.finalReading.mh}`,
-        `duty end ${timeUtcSeconds(p.dutyEnd)}`,
-        'od tego zdarzenia liczy się okno korekty pilota',
+        `koniec służby: ${p.dutyEnd != null ? timeUtcSeconds(p.dutyEnd) : 'nie zadeklarowano'}`,
       ];
+      // Powód zdania BEZ WZLOTU (09C). To jest dokładnie ta informacja, której szuka
+      // administrator patrząc na sesję z zerowym czasem blokowym: maszyna stała zajęta
+      // i ktoś powiedział, dlaczego. Pole jest opcjonalne (strumienie schemaVersion 1
+      // go nie niosą, a sesja ze wzlotami nie ma o co pytać), więc wiersz pojawia się
+      // wyłącznie wtedy, gdy powód naprawdę padł.
+      if (p.noFlightReason != null) {
+        lines.push(`bez wzlotu — powód: ${NO_FLIGHT_LABEL[p.noFlightReason]}`);
+      }
+      // Nazwa typu jest historyczna: od 2026-08-06 to ZDANIE SAMOLOTU, nie koniec
+      // dnia pilota — służba liczy się dalej, a kolejna maszyna wchodzi do tej samej
+      // doby (§3.6). Od 2026-08-10 zdanie jest też ZATWIERDZENIEM logu sesji i od
+      // niego liczy się jedyne okno korekty (kotwica per wzlot odeszła z `leg_close`).
+      lines.push('zdanie samolotu — zatwierdzenie logu sesji; służba pilota trwa dalej');
+      return lines;
     }
 
     case 'event_correction': {

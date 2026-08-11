@@ -35,8 +35,8 @@ import {
   AppText,
   Banner,
   Card,
-  DutyStrip,
-  DayLog,
+  ClaimStrip,
+  EventLog,
   Screen,
   StatusChip,
   SyncChip,
@@ -49,8 +49,8 @@ import { PeekBanner } from '../components/status/PeekBanner';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
-import { litres, timeLocal, timeUtc } from '../format';
-import { buildDaySections } from './logic/cockpitLog';
+import { litres } from '../format';
+import { buildLogRows } from './logic/cockpitLog';
 import {
   peekBanner,
   peekFreshness,
@@ -60,10 +60,8 @@ import {
   takeoverWarning,
   type PeekSnapshot,
 } from './logic/cockpitPeek';
+import { buildPeekStrip } from './logic/claimStrip';
 import { operationTag, routeLabel } from './logic/operations';
-// Ten sam „HH:MM" z wiodącym zerem, co w tabelach ekranu 10 (`.duty-val` w mockupie
-// pokazuje „02:31") — drugi format tej samej wielkości byłby rozjazdem, nie niuansem.
-import { hhmm } from './logic/statsDay';
 import { projectSession, type ReferenceAircraft, type ReferencePilot } from '../../domain';
 
 export type { PeekSnapshot };
@@ -127,16 +125,16 @@ export function CockpitReadonlyScreen({
 
   const mhFormat = projection?.mhFormat ?? aircraft?.mhFormat ?? 'decimal';
 
-  const daySections = useMemo(() => {
+  const logRows = useMemo(() => {
     if (snapshot == null || projection == null) return [];
     // Outbox opisuje TEN telefon. Cudze zdarzenia przyszły z serwera, więc znacznik
-    // „czeka na wysyłkę" byłby tu informacją o cudzej kolejce, której nie znamy —
-    // gasimy go i w wierszach, i na nagłówkach cykli.
-    return buildDaySections(snapshot.events, projection, mhFormat).map((s) =>
-      s.kind === 'cycle'
-        ? { ...s, pending: false, rows: s.rows.map((row) => ({ ...row, pending: false })) }
-        : { ...s, row: { ...s.row, pending: false } },
-    );
+    // „czeka na wysyłkę" byłby tu informacją o cudzej kolejce, której nie znamy.
+    // Oś jest PŁASKA (model 2026-08-10): cudza sesja też ma najwyżej jeden bieg,
+    // więc harmonijka cykli nie ma czego zwijać.
+    return buildLogRows(snapshot.events, projection, mhFormat).map((row) => ({
+      ...row,
+      pending: false,
+    }));
   }, [snapshot, projection, mhFormat]);
 
   if (aircraftId == null) {
@@ -172,12 +170,8 @@ export function CockpitReadonlyScreen({
   });
   const status = peekStatusChip(projection);
 
-  // Wszystko, co liczone z czasu, odnosimy do chwili POBRANIA migawki — tak samo robi
-  // mockup (meldunek 07:10, pobrano 09:41, duty 02:31). Liczenie do „teraz" dokładałoby
-  // do cudzego duty czas, przez który pilot patrzył na ekran.
-  const asOf = snapshot?.fetchedAt ?? openedAt;
-  const dutyMs =
-    projection?.dutyStart != null ? Math.max(0, asOf - projection.dutyStart) : null;
+  const peekStrip =
+    projection != null ? buildPeekStrip(projection, picCode ?? 'prowadzący') : null;
 
   const capacityL = aircraft?.capacityL ?? null;
   const fobL = projection?.fuel.lastReadingL ?? null;
@@ -274,25 +268,23 @@ export function CockpitReadonlyScreen({
         {/* ── stan samolotu wg serwera (`.ground-chip`) ──────────────────────── */}
         <StatusChip label={status.label} tone={status.tone} style={{ alignSelf: 'center' }} />
 
-        {/* ── czas służby prowadzącego (`.duty-strip`) ───────────────────────── */}
-        {dutyMs != null && projection?.dutyStart != null && (
-          <DutyStrip
-            label={`Duty ${picCode ?? 'prowadzącego'}`}
-            elapsed={hhmm(dutyMs)}
-            since={`Meldunek ${timeUtc(projection.dutyStart)} UTC · ${timeLocal(projection.dutyStart)} LT`}
-          />
+        {/* ── pasek sesji cudzego samolotu (`.claim-strip`) ───────────────────
+            Stało tu „Duty KRZ 02:31". Czas służby innego pilota nie jest informacją
+            o SAMOLOCIE i nie wnosi nic do decyzji o przejęciu (§3.6a) — liczy się,
+            od kiedy maszyna jest zajęta i ile już zrobiła. */}
+        {peekStrip != null && (
+          <ClaimStrip label={peekStrip.label} legs={peekStrip.legs} trailing={peekStrip.trailing} />
         )}
 
         {/* ── log jego dnia (`.day-log`) — BEZ kolumny korekty; cykle domyślnie
             zwinięte: podgląd to rzut oka na cudzy dzień, nie praca na nim ───── */}
-        <Card title={peekLogTitle(picCode, projection)} flush>
-          <DayLog
-            sections={daySections}
-            initiallyExpanded="none"
+        <Card title={peekLogTitle(aircraft?.reg ?? aircraftId, picCode, projection)} flush>
+          <EventLog
+            rows={logRows}
             emptyText={
               snapshot == null
-                ? 'Nie mamy migawki tego dnia — log pojawi się po połączeniu z serwerem.'
-                : 'Serwer nie zna jeszcze żadnego zdarzenia z tego dnia.'
+                ? 'Nie mamy migawki tej sesji — log pojawi się po połączeniu z serwerem.'
+                : 'Serwer nie zna jeszcze żadnego zdarzenia z tej sesji.'
             }
           />
         </Card>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 15 Lot ręczny · wpis po fakcie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ===== App header (wzorzec formularzy: wstecz · tytuł · pusty slot) ===== */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:8px 10px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .back-btn {
+    display:inline-flex; align-items:center; gap:6px; min-width:56px; height:44px;
+    color:var(--text-muted); text-decoration:none;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.5px;
+  }
+  .back-btn:hover { color:var(--text-secondary); }
+  .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .header-slot { min-width:56px; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ===== Baner pouczający (Typ C) — czym ten wpis JEST ===== */
+  .edu-box {
+    position:relative;
+    background:var(--blue-muted); border:1px solid var(--blue-border);
+    border-radius:12px; padding:12px 40px 12px 14px;
+    display:flex; align-items:flex-start; gap:10px;
+  }
+  .edu-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
+  .edu-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .edu-text b { color:var(--blue); font-weight:700; }
+  .edu-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; background:none; border:none; }
+  .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
+  .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+
+  /* ===== Sekcje formularza (wzorzec z 09b) ===== */
+  .form-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .form-section-title {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted);
+  }
+  .req { color:var(--amber); }
+  .opt { color:var(--text-muted); }
+
+  /* Samolot — lista kart, NIE select (wzorzec formularzy) */
+  .ac-list { display:flex; flex-direction:column; gap:8px; padding:10px 12px 12px; }
+  .ac-option {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    min-height:52px; padding:10px 14px; border-radius:12px;
+    background:var(--surface-raised); border:1px solid var(--border);
+    text-decoration:none; cursor:pointer;
+  }
+  .ac-option:hover { border-color:var(--border-strong); }
+  .ac-option.selected { border-color:var(--green-border); box-shadow:0 0 0 3px rgba(46,204,113,0.06); }
+  .ac-reg { font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
+  .ac-option.selected .ac-reg { color:var(--green); }
+  .ac-type { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .ac-check { color:var(--green); display:none; }
+  .ac-option.selected .ac-check { display:block; }
+
+  /* Czasy — siatka 2×2 pól (wzorzec .field-input z 09b) */
+  .times-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px 12px 12px; }
+  .field-label { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-bottom:5px; }
+  .field-input {
+    display:flex; align-items:baseline; gap:6px;
+    min-height:46px; padding:10px 14px; border-radius:12px;
+    background:var(--surface-raised); border:1px solid var(--border);
+    text-decoration:none; cursor:pointer;
+  }
+  .field-input:hover { border-color:var(--border-strong); }
+  .field-input.focus { border-color:var(--green-border); box-shadow:0 0 0 3px rgba(46,204,113,0.06); }
+  .field-value { font-family:var(--font-mono); font-size:19px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
+  .field-unit { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
+  .field-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); margin-top:5px; line-height:1.5; }
+  .field-sub.amber { color:var(--amber); }
+
+  /* Odczyty — dwa pola obok siebie */
+  .counters { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px 12px 12px; }
+
+  /* Uwagi */
+  .notes-box { padding:10px 12px 12px; }
+  .notes-input {
+    width:100%; min-height:64px; padding:11px 14px; border-radius:12px;
+    background:var(--surface-raised); border:1px solid var(--border);
+    color:var(--text-muted); font-family:var(--font-body); font-size:12px; line-height:1.5;
+  }
+
+  /* ===== Przyciski ===== */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:15px; border-radius:14px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:19px; letter-spacing:2.5px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.28);
+  }
+  .btn-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; line-height:1.6; margin-top:-4px; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 15</span>
+  <span class="slug">lot ręczny · wpis po fakcie</span>
+  <span class="canvas-meta"><span class="pulse"></span>Z ekranu 01</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Ręczny wpis całego lotu">
+  <div class="status-bar">
+    <span>16:20</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="17" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Mój dzień
+      </a>
+      <div class="app-header-center">
+        <span class="screen-title">LOT RĘCZNY</span>
+        <span class="header-subtitle">wpis po fakcie · 10 SIE · UTC</span>
+      </div>
+      <span class="header-slot"></span>
+    </div>
+
+    <div class="scroll">
+
+      <!-- NOWY EKRAN (model 2026-08-10, story pkt 7): pełna sesja wpisana z listy
+           dziennej PO FAKCIE — telefon został w kurtce, bateria padła, lot spisany
+           na papierze. Wpis tworzy KOMPLETNĄ sesję (uruchomienie → start → lądowanie
+           → zatrzymanie + odczyty), więc obowiązują te same wymagania co przy zdaniu
+           na 09b: odczyty są WYMAGANE, bo są ogniwem łańcucha MH i przekazaniem.
+
+           RÓŻNICA wobec 08 (lista ręczna w kokpicie): 08 naprawia zdarzenia sesji
+           TRWAJĄCEJ (fallback GPS), ten ekran tworzy sesję ZAKOŃCZONĄ od zera.
+
+           JEDEN LOT na wpis: dzień z touch and go wpisuje się jako jedna sesja,
+           a dodatkowe starty/lądowania dopisuje korektą (04c) po zapisaniu —
+           formularz na N lotów byłby dłuższy od papieru, który zastępuje. -->
+
+      <div class="edu-box" id="eduManual">
+        <svg class="edu-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span class="edu-text">Wpis trafi na listę dnia jak każda sesja — <b>z pełnym oknem korekty 24 h</b>.
+        Odczyty są wymagane, bo stają się przekazaniem dla następnego pilota. Kolejne starty
+        i lądowania tego samego biegu silnika dopiszesz korektą po zapisaniu.</span>
+        <button class="edu-dismiss" onclick="eduCollapse('eduManual')" title="Rozumiem — schowaj wyjaśnienie">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <button class="edu-mini" id="eduManual-mini" onclick="eduExpand('eduManual')" title="Pokaż wyjaśnienie">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Czym jest wpis ręczny?
+      </button>
+
+      <!-- ── Samolot: lista kart, nie select ─────────────────────────────── -->
+      <div class="form-section">
+        <div class="form-section-title"><span>Samolot</span><span class="req">wymagane</span></div>
+        <div class="ac-list">
+          <a href="15-reczny-lot.html" class="ac-option selected">
+            <span>
+              <span class="ac-reg">SP-AXA</span><br>
+              <span class="ac-type">Cessna 182</span>
+            </span>
+            <svg class="ac-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </a>
+          <a href="15-reczny-lot.html" class="ac-option">
+            <span>
+              <span class="ac-reg">SP-ANK</span><br>
+              <span class="ac-type">Antonov An-2 · załoga 2-os.</span>
+            </span>
+            <svg class="ac-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- ── Czasy sesji: silnik i lot ───────────────────────────────────── -->
+      <div class="form-section">
+        <div class="form-section-title"><span>Czasy · UTC</span><span class="req">wymagane</span></div>
+        <div class="times-grid">
+          <div>
+            <div class="field-label">Uruchomienie</div>
+            <a href="15-reczny-lot.html" class="field-input"><span class="field-value">09:42</span></a>
+          </div>
+          <div>
+            <div class="field-label">Start</div>
+            <a href="15-reczny-lot.html" class="field-input"><span class="field-value">09:48</span></a>
+          </div>
+          <div>
+            <div class="field-label">Lądowanie</div>
+            <a href="15-reczny-lot.html" class="field-input"><span class="field-value">10:31</span></a>
+          </div>
+          <div>
+            <div class="field-label">Zatrzymanie</div>
+            <a href="15-reczny-lot.html" class="field-input"><span class="field-value">10:36</span></a>
+            <div class="field-sub">blok 0:54 · lot 0:43</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Odczyty po locie: te same wymagania co przy zdaniu (09b) ────── -->
+      <div class="form-section">
+        <div class="form-section-title"><span>Odczyt po locie</span><span class="req">wymagane</span></div>
+        <div class="counters">
+          <div>
+            <div class="field-label">Paliwo na pokładzie</div>
+            <a href="15-reczny-lot.html" class="field-input"><span class="field-value">98</span><span class="field-unit">L</span></a>
+            <div class="field-sub">ostatnie przekazanie 121 L</div>
+          </div>
+          <div>
+            <div class="field-label">Motogodziny</div>
+            <a href="15-reczny-lot.html" class="field-input"><span class="field-value">1 307:15</span><span class="field-unit">MH</span></a>
+            <div class="field-sub">format hh:mm · poprzednio 1 306:21</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Uwagi ───────────────────────────────────────────────────────── -->
+      <div class="form-section">
+        <div class="form-section-title"><span>Uwagi</span><span class="opt">opcjonalne</span></div>
+        <div class="notes-box">
+          <div class="notes-input">Telefon został w hangarze — lot spisany z kartki.</div>
+        </div>
+      </div>
+
+      <a href="01-moj-dzien.html" class="btn-primary">
+        ZAPISZ LOT
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </a>
+      <div class="btn-note">Zapis tworzy kompletną sesję na liście dnia<br>i wchodzi do klamry służby jak każda inna.</div>
+
+    </div>
+  </div>
+</main>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">← 01 Mój dzień</a>
+  <span>·</span>
+  <a href="15-reczny-lot.html" class="active">15 Lot ręczny</a>
+  <span>·</span>
+  <a href="12-historia.html">12 Historia</a>
+</nav>
+
+<script>
+  function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }
+  function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
+</script>
+</body>
+</html>

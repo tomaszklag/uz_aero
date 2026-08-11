@@ -54,7 +54,7 @@ describe('wiersze tabeli migracji', () => {
 
   it('opis migracji pochodzi z SERWERA — panel nie trzyma drugiej listy', () => {
     // Lista opisów po stronie panelu rozjechałaby się przy pierwszej nowej migracji
-    // i wypisywała opis migracji 17 przy migracji 18.
+    // i wypisywała opis jednej pozycji przy następnej.
     expect(schemaRows(state())[2]!.title).toBe('Motyw pilota');
   });
 });

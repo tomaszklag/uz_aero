@@ -1,16 +1,16 @@
 /**
- * UZ Aero — DutyHero (`.duty-hero` z mockupu 10)
+ * UZ Aero — SessionHero (`.duty-hero` z mockupu 10 „Rozliczenie samolotu")
  *
- * Wyśrodkowana karta z jedną liczbą podaną wielkim krojem: czas służby dnia, pod nim
- * zakres, z którego powstał.
+ * Wyśrodkowana karta z jedną liczbą podaną wielkim krojem: czas blokowy SESJI, pod nim
+ * zakres, z którego powstał („przejęty 08:04 → zdany 11:20 UTC · 2 wzloty").
  *
- * Dlaczego ta wartość, a nie block time, dostaje 52 px: block time mówi, ile zrobiono,
- * duty time mówi, ile **wolno było** — to jedyna liczba na tym ekranie związana z limitem
- * czasu pracy, a jednocześnie pierwsza, którą przepisuje się do dokumentów. Zakres pod
- * spodem jest tu dlatego, że sam licznik nie pozwala sprawdzić, czy meldunek i zamknięcie
- * mają właściwe godziny.
+ * Bohaterem był tu czas służby, dopóki dzień pilota i sesja samolotu były tym samym.
+ * Po §3.6a nie są: służba należy do PILOTA, obejmuje kilka maszyn i mieszka na 01, więc
+ * na ekranie rozliczającym JEDEN samolot nie ma czego szukać. Zostaje wielkość, która
+ * naprawdę opisuje tę maszynę i którą przepisuje się do dokumentów — czas blokowy.
+ * Zakres pod spodem pozwala sprawdzić, czy przejęcie i zdanie mają właściwe godziny.
  *
- * Czym różni się od `DutyStrip` (04): tam licznik **bieżący** tyka w pasku obok innych
+ * Czym różni się od `ClaimStrip` (04): tam licznik **bieżący** tyka w pasku obok innych
  * przyrządów; tu wartość jest zamknięta i jest bohaterem ekranu podsumowania.
  */
 
@@ -21,7 +21,7 @@ import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { toneColors, type Tone } from '../tone';
 
-export interface DutyHeroProps {
+export interface SessionHeroProps {
   /** Etykieta nad wartością. */
   label?: string;
   /** Wartość główna („08:45"). */
@@ -33,13 +33,13 @@ export interface DutyHeroProps {
   style?: ViewStyle;
 }
 
-export function DutyHero({
-  label = 'Czas służby',
+export function SessionHero({
+  label = 'Czas blokowy sesji',
   value,
   range,
   tone = 'green',
   style,
-}: DutyHeroProps) {
+}: SessionHeroProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
 

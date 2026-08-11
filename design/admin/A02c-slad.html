@@ -623,7 +623,7 @@
   .legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
   .legend-dot.line { width:14px; height:2.5px; border-radius:2px; }
 
-  /* Pasek wyboru lotu nad mapą — przeglądanie dnia lot po locie bez wracania do tabeli. */
+  /* Pasek wyboru lotu nad mapą — przeglądanie sesji lot po locie bez wracania do tabeli. */
   .flight-picker { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .flight-picker-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); margin-right:4px; }
   .fp-item { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); background:var(--surface-raised); border:1px solid var(--border); border-radius:7px; padding:5px 10px; text-decoration:none; cursor:pointer; }
@@ -649,7 +649,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">A02C — ŚLAD LOTU</span>
-  <span class="slug">panel / dni lotne / dzień / ślad</span>
+  <span class="slug">panel / dni lotne / sesja samolotu / ślad</span>
   <span class="canvas-meta"><span class="pulse"></span>UZ AERO</span>
 </header>
 
@@ -658,15 +658,15 @@
   <a class="vp-item" href="A02a-dzien.html">
     <span class="vp-badge">A02A</span>
     <span class="vp-body">
-      <span class="vp-name">Karta dnia — tabela lotów</span>
-      <span class="vp-when">Wejście właściwe: przycisk „Ślad" w wierszu lotu. Ekran śladu zastępuje kartę dnia (pełna strona), bo mapa i profil nie zmieszczą się w szufladzie nad tabelą.</span>
+      <span class="vp-name">Karta sesji — tabela lotów</span>
+      <span class="vp-when">Wejście właściwe: przycisk „Ślad" w wierszu lotu. Ekran śladu zastępuje kartę sesji (pełna strona), bo mapa i profil nie zmieszczą się w szufladzie nad tabelą.</span>
     </span>
   </a>
   <a class="vp-item active" href="A02c-slad.html">
     <span class="vp-badge">A02C</span>
     <span class="vp-body">
       <span class="vp-name">Ślad lotu — mapa, profil, log</span>
-      <span class="vp-when">Ten ekran. Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy i log przeliczonych punktów ze stanem bramki jakości. Loty dnia przełącza się paskiem nad mapą — bez wracania do tabeli.</span>
+      <span class="vp-when">Ten ekran. Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy i log przeliczonych punktów ze stanem bramki jakości. Loty sesji przełącza się paskiem nad mapą — bez wracania do tabeli.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -785,7 +785,7 @@
           <div>
             <h1 class="page-title">ŚLAD LOTU 3</h1>
             <p class="page-sub">
-              SP-KLM · 30 JUL 2026 · PIC Tomasz Małkiewicz · 08:02:30 → 08:26:12 UTC.
+              SP-KLM · 30 JUL 2026 · PIC Anna Wrzosek · 08:02:30 → 08:26:12 UTC.
               Trasa odtworzona z fixów przysłanych przez telefon, po bramce jakości.
               Zapis jest materiałem badawczym, nie rejestrem — czasy w rejestrze zdarzeń
               są źródłem prawdy niezależnie od tego, co widać na mapie.
@@ -793,7 +793,7 @@
           </div>
           <div class="page-actions">
             <a class="btn ghost" href="A04-zdarzenia.html">Zdarzenia lotu</a>
-            <a class="btn ghost" href="A02a-dzien.html">Wróć do dnia</a>
+            <a class="btn ghost" href="A02a-dzien.html">Wróć do sesji</a>
           </div>
         </div>
 
@@ -830,7 +830,7 @@
           </div>
 
           <div class="flight-picker" style="margin-bottom:12px;">
-            <span class="flight-picker-label">Loty dnia</span>
+            <span class="flight-picker-label">Loty sesji</span>
             <a class="fp-item" href="#">1</a>
             <a class="fp-item" href="#">2</a>
             <a class="fp-item active" href="#">3</a>
@@ -1084,7 +1084,7 @@
   <a href="index.html">↩ Index panelu</a>
   <span>·</span>
   <a href="A02-dni.html">← A02 Dni lotne</a>
-  <a href="A02a-dzien.html">A02A Karta dnia</a>
+  <a href="A02a-dzien.html">A02A Karta sesji</a>
   <span>·</span>
   <a href="A02c-slad.html" class="active">A02C Ślad lotu</a>
   <span>·</span>

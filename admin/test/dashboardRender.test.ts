@@ -244,7 +244,7 @@ describe('pulpit: wariant CISZA wygląda jak potwierdzenie, nie jak awaria', () 
       openTakeoffAt: null,
       engineStoppedAt: null,
       lastEventAt: null,
-      dutyStart: null,
+      claimedAt: null,
       departureIcao: null,
       dualId: null,
       dualName: null,

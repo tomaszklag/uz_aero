@@ -31,25 +31,29 @@ export interface ExportStateMeta {
 export const EXPORT_STATE_META: Record<ExportStateDto, ExportStateMeta> = {
   waiting: {
     tone: 'blue',
-    label: 'Czeka · dzień otwarty',
-    note: 'karta powstaje po day_close',
+    // Stan opisuje SESJĘ, nie dokument: od 2026-08-07 karta jest DOBĄ SAMOLOTU, więc
+    // sesja „w toku" bywa już wierszem karty, którą zbudowała wcześniejsza zmiana.
+    label: 'Czeka · sesja w toku',
+    note: 'wiersz karty domknie zdanie samolotu',
     dot: true,
   },
   blocked: {
     tone: 'red',
     label: 'Zablokowana',
-    note: 'otwarta flaga session_overlap',
+    // Bramka zawęziła się 2026-08-07 z całej karty do SESJI (§4.7): sporna zmiana
+    // wypada z karty, a reszta doby idzie do arkusza z adnotacją „niekompletna".
+    note: 'aircraft_overlap — ta sesja wypada z karty doby',
     dot: true,
   },
   missing: {
     tone: 'red',
     label: 'Brak karty',
-    note: 'dzień zamknięty, eksport nie doszedł',
+    note: 'samolot zdany, eksport nie doszedł',
     dot: false,
   },
   impossible: {
     tone: 'dim',
-    label: 'Bez preflightu',
+    label: 'Bez claimu',
     note: 'karty nie da się nazwać',
     dot: false,
   },
@@ -66,10 +70,10 @@ export const EXPORT_STATE_META: Record<ExportStateDto, ExportStateMeta> = {
  * nazywa — i nazywa WSZYSTKIE, bo `Record` po unii nie pozwala pominąć żadnego.
  */
 const REFUSAL_LABEL: Record<ExportRefusalDto, string> = {
-  no_events: 'ta sesja nie ma ani jednego zdarzenia w rejestrze',
-  session_open: 'dzień jest wciąż otwarty — karta powstaje po day_close',
-  no_preflight: 'sesja bez preflightu — karty nie da się nazwać',
-  overlap_flag: 'otwarta flaga session_overlap trzyma kartę poza arkuszem',
+  no_events: 'ta doba nie ma ani jednej sesji w rejestrze',
+  session_open: 'żadnej maszyny tej doby jeszcze nie zdano — karta powstaje po day_close',
+  no_preflight: 'sesja bez session_claim — karty nie da się nazwać',
+  overlap_flag: 'otwarta flaga aircraft_overlap trzyma tę sesję poza kartą doby',
 };
 
 export interface RetryMessage {

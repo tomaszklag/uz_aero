@@ -38,7 +38,8 @@ import { SqlFilter } from '../sqlFilter.ts';
 
 /**
  * Klucz porządku dziennika — dokładnie ten, pod który stoi `idx_audit_created`
- * (migracja 12). Obie kolumny są `NOT NULL`, stąd `k1Nullable: false`: gałąź `IS NULL`
+ * (reguła `NULLS` — `architektura-panelu-serwer.md` §7.8). Obie kolumny są `NOT NULL`,
+ * stąd `k1Nullable: false`: gałąź `IS NULL`
  * byłaby martwym warunkiem, a martwy warunek w `WHERE` potrafi odciąć planerowi indeks.
  */
 const KEY: readonly [string, string] = ['a.created_at', 'a.id'];

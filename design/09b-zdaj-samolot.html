@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 09B Zdaj samolot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(231,76,60,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--red); box-shadow:0 0 0 4px var(--red-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--red-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--red); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ===== App header ===== */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px 8px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; }
+  .back-btn {
+    display:inline-flex; align-items:center; gap:5px; min-height:34px;
+    font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
+    text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
+  }
+  .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--red); }
+  .header-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .header-slot { width:62px; flex-shrink:0; }
+
+  .summary-strip {
+    background:var(--surface-raised); border-bottom:1px solid var(--border);
+    padding:9px 14px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
+  }
+  .summary-item { display:flex; flex-direction:column; gap:2px; align-items:center; }
+  .summary-val { font-family:var(--font-display); font-size:19px; letter-spacing:1px; color:var(--text-primary); line-height:1; }
+  .summary-label { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .summary-sep { width:1px; height:28px; background:var(--border); }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ===== Liczniki — TU są wymagane ===== */
+  .form-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .form-section-title {
+    padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary);
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+  }
+  .form-section-title .req { color:var(--red); letter-spacing:1.5px; }
+  .counters { padding:12px; display:flex; flex-direction:column; gap:11px; }
+  .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+  .field-input {
+    background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:12px; padding:12px 14px; width:100%; min-height:52px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    text-decoration:none; cursor:pointer;
+  }
+  .field-value { color:var(--amber); font-family:var(--font-display); font-size:26px; letter-spacing:1px; line-height:1; }
+  .field-unit { font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
+  .field-sub { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:5px; letter-spacing:0.5px; }
+
+  /* Rozliczenie sesji — policzone, nie do wpisania */
+  .balance-row {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 12px; border-bottom:1px solid var(--border);
+  }
+  .balance-row:last-child { border-bottom:none; }
+  .balance-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .balance-val { font-family:var(--font-mono); font-size:13px; color:var(--text-secondary); letter-spacing:0.5px; }
+  .balance-val.amber { color:var(--amber); }
+
+  /* Przekazanie (Typ C — pouczający, zamykalny → mini) */
+  .handover-box {
+    position:relative;
+    background:var(--green-muted); border:1px solid var(--green-border);
+    border-radius:12px; padding:12px 40px 12px 14px;
+    display:flex; align-items:flex-start; gap:10px;
+  }
+  .handover-icon { color:var(--green); flex-shrink:0; margin-top:1px; }
+  .handover-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .handover-text b { color:var(--green); font-weight:700; font-family:var(--font-mono); }
+  .edu-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; background:none; border:none; }
+  .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
+  .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--green-border); background:var(--green-muted); color:var(--green); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+
+  /* Baner statusu (Typ A — przyrząd, niezamykalny): co się NIE dzieje przy zdaniu */
+  .status-box {
+    background:var(--blue-muted); border:1px solid var(--blue-border);
+    border-radius:12px; padding:11px 13px; display:flex; align-items:flex-start; gap:9px;
+  }
+  .status-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
+  .status-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .status-text b { color:var(--blue); font-weight:600; }
+
+  /* ===== Przyciski ===== */
+  .btn-primary-red {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:17px; border-radius:16px;
+    background:var(--red); color:#fff;
+    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px var(--red-muted);
+  }
+  .btn-later {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:46px; padding:12px; border-radius:12px;
+    background:none; color:var(--text-muted);
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:1.5px;
+    border:1px solid var(--border); text-decoration:none; cursor:pointer;
+  }
+  .btn-later:hover { color:var(--text-secondary); border-color:var(--border-strong); }
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--red-border); background:rgba(231,76,60,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--red); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 09B</span>
+  <span class="slug">zdaj samolot · zatwierdzenie logu sesji</span>
+  <span class="canvas-meta"><span class="pulse"></span>Po locie</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Zdaj samolot">
+  <div class="status-bar">
+    <span>17:40</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="04-cockpit-ground.html" class="back-btn">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Kokpit
+      </a>
+      <div class="app-header-center">
+        <span class="screen-title">ZDAJ SAMOLOT</span>
+        <span class="header-date">SP-KLM · 06 SIE · UTC</span>
+      </div>
+      <span class="header-slot"></span>
+    </div>
+
+    <div class="summary-strip">
+      <div class="summary-item"><span class="summary-val">2</span><span class="summary-label">Loty</span></div>
+      <div class="summary-sep"></div>
+      <div class="summary-item"><span class="summary-val">1:30</span><span class="summary-label">Blok</span></div>
+      <div class="summary-sep"></div>
+      <div class="summary-item"><span class="summary-val">1:21</span><span class="summary-label">Lot</span></div>
+      <div class="summary-sep"></div>
+      <div class="summary-item"><span class="summary-val">13:35</span><span class="summary-label">Przejęty</span></div>
+    </div>
+
+    <div class="scroll">
+
+      <!-- PRZEGLĄD LOTÓW — sekcja przejęta z dawnego ekranu 09 (scalenie 2026-08-10).
+           Czasy pochodzą z detekcji i są TYLKO do przejrzenia: poprawki robi się
+           korektą w logu kokpitu (04C), zanim pilot zatwierdzi sesję tym ekranem.
+           Zdanie samolotu jest zatwierdzeniem CAŁEGO logu — dlatego przegląd stoi
+           nad odczytami: najpierw „czy to się zgadza", potem „ile zostało". -->
+      <div class="form-section">
+        <div class="form-section-title"><span>Loty tej sesji · czasy UTC · z detekcji</span></div>
+        <div class="balance-row">
+          <span class="balance-key">Lot 1</span>
+          <span class="balance-val">13:48 → 14:35 · 0:47</span>
+        </div>
+        <div class="balance-row">
+          <span class="balance-key">Lot 2</span>
+          <span class="balance-val">14:42 → 15:01 · 0:19</span>
+        </div>
+        <div class="balance-row">
+          <span class="balance-key">Silnik</span>
+          <span class="balance-val">13:40 → 15:10 · blok 1:30</span>
+        </div>
+      </div>
+
+      <!-- Liczniki: odczyt WYMAGANY — zapis tego ekranu zatwierdza log sesji -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <span>Odczyt końcowy</span>
+          <span class="req">wymagane</span>
+        </div>
+        <div class="counters">
+          <div>
+            <div class="field-label">Paliwo na pokładzie</div>
+            <a href="09b-zdaj-samolot.html" class="field-input">
+              <span class="field-value">62</span>
+              <span class="field-unit">L</span>
+            </a>
+            <div class="field-sub">przy przejęciu 96 L · bez tankowania · zużyte 34 L</div>
+          </div>
+          <div>
+            <div class="field-label">Motogodziny</div>
+            <a href="09b-zdaj-samolot.html" class="field-input">
+              <span class="field-value">1 241:09</span>
+              <span class="field-unit">MH</span>
+            </a>
+            <div class="field-sub">format hh:mm · przy przejęciu 1 239:39 · Δ +1:30 (= blok)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="handover-box" id="eduHandover">
+        <svg class="handover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        <span class="handover-text">Te odczyty — <b>62 L</b> i <b>1 241:09 MH</b> — zobaczy następny pilot jako
+        <strong>przekazanie</strong>. Stają się ogniwem łańcucha SP-KLM: serwer porównuje z nimi start
+        kolejnej sesji i flaguje dziury albo cofnięcia licznika.</span>
+        <button class="edu-dismiss" onclick="eduCollapse('eduHandover')" title="Rozumiem — schowaj wyjaśnienie">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <button class="edu-mini" id="eduHandover-mini" onclick="eduExpand('eduHandover')" title="Pokaż wyjaśnienie">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Co znaczą te odczyty?
+      </button>
+
+      <div class="form-section">
+        <div class="form-section-title"><span>Rozliczenie tego samolotu</span></div>
+        <div class="balance-row">
+          <span class="balance-key">Sesja</span>
+          <span class="balance-val">13:40 → 15:10 · 2 loty</span>
+        </div>
+        <div class="balance-row">
+          <span class="balance-key">Paliwo start / koniec</span>
+          <span class="balance-val amber">96 L → 62 L</span>
+        </div>
+        <div class="balance-row">
+          <span class="balance-key">Średnie zużycie</span>
+          <span class="balance-val amber">22,7 L/h · norma 20–24 L/h</span>
+        </div>
+        <div class="balance-row">
+          <span class="balance-key">Motogodziny Δ</span>
+          <span class="balance-val">+1:30</span>
+        </div>
+      </div>
+
+      <!-- Typ A: przyrząd. Najważniejsze zdanie całej przebudowy — zdanie samolotu
+           NIE jest końcem dnia pilota. -->
+      <div class="status-box">
+        <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span class="status-text">Zdajesz samolot, <b>nie kończysz dnia</b>. Służba liczy się dalej,
+        a loty zostają w „Mój dzień". Jeśli za chwilę przejmiesz inny samolot, jego sesja wejdzie do tej samej służby.</span>
+      </div>
+
+      <a href="01-moj-dzien.html" class="btn-primary-red">
+        ZDAJ I ZATWIERDŹ LOG
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+
+      <a href="04-cockpit-ground.html" class="btn-later">JESZCZE NIE — WRÓĆ DO KOKPITU</a>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <!-- Ekrany 09 (zamknięcie wzlotu) i 09A (seria skokowa) USUNIĘTE 2026-08-10:
+       sesja = jeden bieg silnika, więc nie ma już osobnego „zamknięcia wzlotu" —
+       przegląd czasów przeszedł na ten ekran, a odczyty z opcjonalnych stały się
+       obowiązkowe. Seria skokowa to dziś JEDNA sesja z wieloma lotami. -->
+  <a class="vp-item active" href="09b-zdaj-samolot.html">
+    <span class="vp-badge red">09B</span>
+    <span class="vp-body">
+      <span class="vp-name">Zdanie samolotu</span>
+      <span class="vp-when">Po STOP ENGINE (kokpit 04 prowadzi tu hero „ZDAJ SAMOLOT"). Odczyty paliwa i MH są OBOWIĄZKOWE — stają się przekazaniem i ogniwem łańcucha MH, a zapis ZATWIERDZA log całej sesji. Dzień pilota trwa dalej.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="09c-zdaj-bez-lotu.html">
+    <span class="vp-badge amber">09C</span>
+    <span class="vp-body">
+      <span class="vp-name">Zdanie bez lotu</span>
+      <span class="vp-when">Pilot przejął samolot i nie poleciał (pogoda, usterka). Liczniki bez zmian, więc formularz pyta tylko o powód.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="04-cockpit-ground.html">← 04 Kokpit</a>
+  <span>·</span>
+  <a href="09b-zdaj-samolot.html" class="active">09B Zdaj samolot</a>
+  <a href="09c-zdaj-bez-lotu.html">09C Bez lotu</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">01 Mój dzień →</a>
+</nav>
+
+<script>
+  function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }
+  function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
+</script>
+
+</body>
+</html>

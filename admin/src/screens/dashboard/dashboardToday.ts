@@ -74,10 +74,13 @@ export function dayView(totals: DayTotalsDto): DayView {
 }
 
 function noteOf(totals: DayTotalsDto): string {
+  // Jednostką liczenia jest SESJA (przejęcie → zdanie), nie „dzień lotny": po §3.6a
+  // jedna maszyna bierze w dobie dwie zmiany, a jeden pilot potrafi objąć dwie maszyny
+  // jedną służbą. Liczba `sessions` mówi więc, ile razy KTOŚ WZIĄŁ SAMOLOT.
   const flew =
     totals.sessions === 0
-      ? 'Żaden dzień lotny nie ma w tej dobie duty startu.'
-      : `${totals.sessions} ${plural(totals.sessions, 'dzień lotny', 'dni lotne', 'dni lotnych')} na ${totals.aircraft} ${plural(totals.aircraft, 'samolocie', 'samolotach', 'samolotach')}.`;
+      ? 'Żadnej maszyny nie przejęto w tej dobie.'
+      : `${totals.sessions} ${plural(totals.sessions, 'sesja', 'sesje', 'sesji')} na ${totals.aircraft} ${plural(totals.aircraft, 'samolocie', 'samolotach', 'samolotach')}.`;
 
-  return `${flew} „Zdarzenia" liczą to, co serwer PRZYJĄŁ w tej dobie (paczka z wczoraj przyjęta dziś liczy się do dziś), a loty i blok pochodzą z projekcji dni. Zrzutów i skoczków nie ma: projekcja \`sessions\` nie niesie takich kolumn, więc zamiast zera stoi kreska.`;
+  return `${flew} „Zdarzenia" liczą to, co serwer PRZYJĄŁ w tej dobie (paczka z wczoraj przyjęta dziś liczy się do dziś), a loty i blok pochodzą z projekcji sesji przejętych w tej dobie. Zrzutów i skoczków nie ma: projekcja \`sessions\` nie niesie takich kolumn, więc zamiast zera stoi kreska.`;
 }

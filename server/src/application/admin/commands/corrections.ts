@@ -5,6 +5,14 @@
  * trafia do rejestru NIE z telefonu pilota — i dlatego jedyne, które wolno wołać
  * `checkAppend` z uprawnieniem `'administrative'`.
  *
+ * ══ ADMINISTRATOR NIE JEST NIGDY BLOKOWANY (decyzja 2026-08-07) ══
+ * Do etapu D komenda odmawiała `day_open`, gdy sesja nie miała `day_close`. Reguła
+ * opierała się na równości „brak zamknięcia = dzień trwa", którą §3.6a unieważnił:
+ * zdanie samolotu jest OPCJONALNE, więc sesja sprzed tygodnia wygląda tak samo jak ta
+ * z dzisiejszego poranka. Bramka odmawiałaby więc korekty w większości przypadków,
+ * w których jest ona potrzebna. Zamiast niej `CorrectionResult.warnings` niesie kolizje
+ * (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`) i decyduje człowiek.
+ *
  * TRZY ZASADY, KTÓRE TA KOMENDA MUSI UTRZYMAĆ:
  *
  *  1. **Append-only bez wyjątków.** Korekta DOPISUJE `event_correction`; oryginalne
@@ -38,7 +46,11 @@ import {
   type SessionState,
 } from '@uzaero/domain';
 
-import { correctionCandidate, correctionViolations } from '../correctionCandidate.ts';
+import {
+  correctionCandidate,
+  correctionViolations,
+  correctionWarnings,
+} from '../correctionCandidate.ts';
 import { adminSourceDevice } from '../sourceDevice.ts';
 import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
 import type { DayExporter, ExportOutcome } from '../../common/export/dayExporter.ts';
@@ -74,6 +86,16 @@ export interface CorrectionResult {
    */
   state: SessionState;
   /**
+   * Miękkie naruszenia policzone PRZED zapisem — nie powód odmowy, tylko treść.
+   *
+   * Od 2026-08-07 zastępują bramkę `400 day_open`: administrator zapisuje ZAWSZE,
+   * a panel ma powiedzieć, w co właśnie wszedł (`ADMIN_EDIT_SESSION_ACTIVE`,
+   * `ADMIN_EDIT_PILOT_WINDOW_OPEN`). Jadą w odpowiedzi POZYTYWNEJ, bo korekta jest
+   * już w rejestrze — komunikat o kolizji przy błędzie zapisu opisywałby zdarzenie,
+   * które się nie odbyło.
+   */
+  warnings: RuleViolation[];
+  /**
    * Re-eksport karty dnia. `null` = eksport rzucił — awarię arkuszy łapiemy tak samo
    * jak ingest (§4.7: karta to SKUTEK, nie warunek). Korekta jest wtedy zapisana,
    * a panel musi to pokazać uczciwie: 500 sugerowałoby, że nic się nie zapisało.
@@ -89,7 +111,6 @@ export interface CorrectionResult {
 export type CorrectEventOutcome =
   | { ok: true; result: CorrectionResult }
   | { ok: false; reason: 'session_not_found' }
-  | { ok: false; reason: 'day_open' }
   | { ok: false; reason: 'rule_violation'; violations: RuleViolation[] };
 
 /**
@@ -98,8 +119,6 @@ export type CorrectEventOutcome =
  * o operacji, która się nie zdarzyła. Poza ten plik nie wychodzą.
  */
 class SessionNotFound extends Error {}
-
-class DayStillOpen extends Error {}
 
 class RuleRejection extends Error {
   constructor(readonly violations: RuleViolation[]) {
@@ -111,6 +130,8 @@ class RuleRejection extends Error {
 interface Applied {
   candidate: Event;
   state: SessionState;
+  /** Kolizje policzone na stanie SPRZED zapisu — panel pokazuje je nad wynikiem. */
+  warnings: RuleViolation[];
 }
 
 export class AdminCorrectionCommands {
@@ -146,11 +167,6 @@ export class AdminCorrectionCommands {
         if (stream.length === 0) throw new SessionNotFound();
 
         const before = projectSession(stream);
-        // Dzień OTWARTY = pilot ma pełne prawo zapisu i poprawia sam (04c), więc panel
-        // nie ma tu czego naprawiać. Odmowa jest tu uczciwsza niż uprzejme wyręczenie:
-        // korekta administratora nie wraca na telefon (sync jest jednokierunkowy), więc
-        // wchodzenie w otwarty dzień rozjeżdżałoby dwa żywe obrazy tej samej sesji.
-        if (!before.closed) throw new DayStillOpen();
 
         const candidate = correctionCandidate(before, stream, input.correction, this.newId(), at);
         const limits: AircraftLimits = {
@@ -159,6 +175,14 @@ export class AdminCorrectionCommands {
 
         const errors = correctionViolations(before, candidate, limits);
         if (errors.length > 0) throw new RuleRejection(errors);
+
+        // ZNIKNĘŁA STĄD BRAMKA `day_open` (decyzja 2026-08-07). Brzmiała: „sesja bez
+        // `day_close` = dzień trwa, więc pilot poprawia sam". Po §3.6a to przestało być
+        // prawdą — zdanie samolotu jest OPCJONALNE, więc sesje sprzed tygodnia też go
+        // nie mają, a bramka odmawiałaby korekty w większości przypadków, w których
+        // jest potrzebna. Kolizja z pilotem nie znika, ale przestaje być odmową: jedzie
+        // jako OSTRZEŻENIE, a decyzję podejmuje człowiek, który widzi całą sytuację.
+        const warnings = correctionWarnings(before, candidate, limits);
 
         // Znacznik zapisu panelu jedzie ze wspólnego modułu, bo ma DRUGIEGO czytelnika:
         // po nim adapter osi zdarzeń poznaje, że korektę wykonał administrator, a nie
@@ -177,7 +201,7 @@ export class AdminCorrectionCommands {
         // (`CORRECTION_TARGET_NOT_ALLOWED`). Otwarta flaga `clock_drift` też zostaje —
         // A02b mówi to wprost: „zamyka ją człowiek na A03".
         return {
-          result: { candidate, state },
+          result: { candidate, state, warnings },
           audit: {
             action: 'event.correct',
             targetType: 'event',
@@ -196,7 +220,6 @@ export class AdminCorrectionCommands {
       });
     } catch (err) {
       if (err instanceof SessionNotFound) return { ok: false, reason: 'session_not_found' };
-      if (err instanceof DayStillOpen) return { ok: false, reason: 'day_open' };
       if (err instanceof RuleRejection) {
         return { ok: false, reason: 'rule_violation', violations: err.violations };
       }
@@ -212,6 +235,7 @@ export class AdminCorrectionCommands {
         action: input.correction.action,
         recordedAt: at,
         state: applied.state,
+        warnings: applied.warnings,
         reexport: await this.reexport(input.sessionUuid),
       },
     };

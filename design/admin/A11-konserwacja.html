@@ -635,7 +635,7 @@
 
             <span class="hint"><b>Hipoteza do sprawdzenia, zanim cokolwiek zapiszesz.</b> Obie sesje są z 24 JUL — z dnia, w którym weszło wydanie domeny zmieniające regułę liczenia bloku. Jeśli to ta zmiana, przebudowa jest dokładnie tym, czego trzeba: stare wiersze policzył stary kod, a strumień zdarzeń jest nietknięty. Jeśli jednak wydanie tego nie tłumaczy, zostają tylko możliwości spoza normalnej pracy serwera — <b>ręczny UPDATE w bazie</b>, import albo odtworzenie z kopii zrobionej w połowie strumienia. Wyścigu dwóch paczek tu nie ma: ingest szereguje sesje blokadą advisory i zapisuje zdarzenia razem z projekcją w jednej transakcji, więc przerwanie cofa oba zapisy naraz. W każdym z tych przypadków nadpisanie zatrze ślad, zamiast naprawić przyczynę. Rozstrzyga <a href="A09-audyt.html" style="color:var(--green);">audyt</a> i data wydania, nie sam przycisk.</span>
 
-            <span class="hint"><b>Czego przebudowa nie zrobi.</b> Nie doda kolumn, których projekcja nie ma: <code>operation</code>, <code>dutyStart</code> i <code>client</code> siedzą w payloadach <code>preflight_confirm</code> i <code>day_close</code>, więc żeby trafiły do <code>sessions</code>, trzeba najpierw przepisać samą projekcję. To zmiana kodu i wydanie, nie akcja z panelu.</span>
+            <span class="hint"><b>Czego przebudowa nie zrobi.</b> Nie doda kolumn, których projekcja nie ma. <code>operation</code> i <code>client</code> weszły migracją 11, ale zadeklarowana klamra służby (<code>dutyStart</code> / <code>dutyEnd</code>) zostaje wyłącznie w payloadach <code>preflight_confirm</code> i <code>day_close</code> — i <b>nie dostanie własnej kolumny</b>: po §3.6a jest opcjonalna i należy do PILOTA, nie do sesji, więc w tabeli <code>sessions</code> nie ma czego trzymać. <code>claim_time</code> niesie od migracji 21 czas zdarzenia <code>session_claim</code>, a nie meldunek. Przebudowa liczy projekcję ze strumienia tym samym kodem co ingest — nowego pola nie wymyśli; to zmiana kodu i wydanie, nie akcja z panelu.</span>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -728,17 +728,17 @@
                   <td><div class="row-actions"><a class="btn sm ghost" href="A05-eksporty.html">Karta</a><button class="btn sm">Ponów teraz</button></div></td>
                 </tr>
                 <tr style="background:var(--red-muted);">
-                  <td class="mono">2026-07-30_SP-KLM<span class="cell-sub">nigdy nie powstała</span></td>
+                  <td class="mono">2026-07-30_SP-KLM<span class="cell-sub">niekompletna — 2 sesje wycięte</span></td>
                   <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
-                  <td><span class="pill red"><span class="dot"></span>Zablokowana flagą</span><span class="cell-sub"><a href="A03a-flaga.html" style="color:var(--red);">#1046 · session_overlap</a> · otwarta od 30 JUL 18:41</span></td>
+                  <td><span class="pill red"><span class="dot"></span>Zablokowana flagą</span><span class="cell-sub"><a href="A03a-flaga.html" style="color:var(--red);">#1046 · aircraft_overlap</a> · otwarta od 30 JUL 18:41</span></td>
                   <td class="num dim">—</td>
                   <td class="num dim">—<span class="cell-sub">bez ponowień</span></td>
                   <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter — ponowienie odbije się o tę samą flagę">Ponów</button></div></td>
                 </tr>
                 <tr style="background:var(--red-muted);">
-                  <td class="mono">2026-07-29_SP-XYZ<span class="cell-sub">nigdy nie powstała</span></td>
+                  <td class="mono">2026-07-29_SP-XYZ<span class="cell-sub">niekompletna — 2 sesje wycięte</span></td>
                   <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
-                  <td><span class="pill red"><span class="dot"></span>Zablokowana flagą</span><span class="cell-sub"><a href="A03-flagi.html" style="color:var(--red);">#1043 · session_overlap</a> · otwarta od 29 JUL 13:50</span></td>
+                  <td><span class="pill red"><span class="dot"></span>Zablokowana flagą</span><span class="cell-sub"><a href="A03-flagi.html" style="color:var(--red);">#1043 · aircraft_overlap</a> · otwarta od 29 JUL 13:50</span></td>
                   <td class="num dim">—</td>
                   <td class="num dim">—<span class="cell-sub">bez ponowień</span></td>
                   <td><div class="row-actions"><a class="btn sm ghost" href="A03-flagi.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter — ponowienie odbije się o tę samą flagę">Ponów</button></div></td>
@@ -748,7 +748,7 @@
           </div>
 
           <div class="cols even">
-            <span class="hint"><b>Dlaczego przy dwóch pozycjach „Ponów" jest wyszarzone.</b> <code>dayExporter</code> sprawdza otwarte flagi <b>przed</b> zapisem karty i przy <code>session_overlap</code> wychodzi po cichu, bez błędu — sporny dzień nie ma prawa utrwalić się w dokumencie klubu. Ponowienie dostałoby więc dokładnie ten sam wynik i tylko podbiłoby licznik prób. Droga wiedzie przez <a href="A03-flagi.html" style="color:var(--green);">skrzynkę flag</a>: rozwiązanie flagi jest tu jedyną skuteczną „akcją naprawczą", a eksport rusza po niej sam.</span>
+            <span class="hint"><b>Dlaczego przy dwóch pozycjach „Ponów" jest wyszarzone.</b> <code>dayExporter</code> sprawdza otwarte flagi <b>przed</b> zapisem karty i przy <code>aircraft_overlap</code> pomija sporną sesję po cichu, bez błędu — sporna zmiana nie ma prawa utrwalić się w dokumencie klubu. Karta doby i tak powstaje, ale <b>niekompletna</b>: bramka obejmuje SESJE, nie cały dokument (§4.7). Ponowienie dostałoby dokładnie ten sam wynik i tylko podbiłoby licznik prób. Droga wiedzie przez <a href="A03-flagi.html" style="color:var(--green);">skrzynkę flag</a>: rozwiązanie flagi jest tu jedyną skuteczną „akcją naprawczą", a eksport rusza po niej sam.</span>
             <span class="hint"><b>Zaległość, którą ten ekran zakładał za wykonaną — stan na 2026-08-02.</b> Dwie z trzech rzeczy są już zrobione: re-eksport po rozwiązaniu flagi działa (<a href="A03a-flaga.html" style="color:var(--green);">A03a</a>), a <code>export_log</code> ma <code>UNIQUE (session_uuid, revision)</code> razem z blokadą advisory (migracja 14). <b>Kolejki ponowień z backoffem nadal NIE MA</b> i to jest decyzja o schemacie, nie pole do wypełnienia: nieudana próba nie zostawia wiersza w żadnej tabeli, więc kolumny „Próba" i „Następna" nie mają skąd wziąć wartości. Wdrożony ekran ich nie rysuje i mówi o tym wprost, zamiast pokazywać liczby wzięte znikąd.</span>
           </div>
 

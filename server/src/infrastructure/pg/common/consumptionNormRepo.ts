@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — adapter normy zużycia (`ConsumptionNormPort`, migracja 19).
+ * UZ Aero (serwer) — adapter normy zużycia (`ConsumptionNormPort`, `aircraft_consumption`).
  *
  * Tabela `aircraft_consumption` jest MATERIALIZACJĄ modelu, nie źródłem prawdy: każdy
  * jej wiersz da się odtworzyć ze strumienia zdarzeń, więc skasowanie tabeli jest

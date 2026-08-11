@@ -18,7 +18,7 @@
  *  2. **Deaktywacja i reset ZRYWAJĄ sesje — OBU powierzchni.** Refresh tokeny telefonu
  *     kasujemy z tabeli; sesji panelu skasować się nie da, bo jest podpisanym JWT
  *     w ciasteczku i nie ma dla niej wiersza. Dlatego te same dwie operacje przesuwają
- *     `credentials_valid_from` konta (migracja 13), a brama odrzuca token wydany
+ *     `credentials_valid_from` konta, a brama odrzuca token wydany
  *     wcześniej (`http/authorize.ts`). Bez tego „Deaktywuj" jest obietnicą bez pokrycia
  *     w obie strony: pilot z żywym refreshem pracuje dalej, a wykradzione poświadczenie
  *     panelu przeżywa reset hasła o osiem godzin. Liczba unieważnionych TOKENÓW jedzie

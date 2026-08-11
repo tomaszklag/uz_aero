@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02E Preflight · Zadanie dnia</title>
+<title>UZ Aero — 02E Przejęcie · Zadanie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -71,7 +71,6 @@
   .step-badge { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px 10px; flex-shrink:0; white-space:nowrap; }
   .back-btn { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); text-decoration:none; letter-spacing:0.5px; }
   .header-right { display:flex; align-items:center; gap:8px; }
-  .sync-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
 
   /* Treść: przewijana, a akcja siedzi na jej końcu — przy krótkiej treści dosuwa się
      do dolnej krawędzi (reguła „Akcja kończąca ekran" z docs/design-notes.md). */
@@ -86,7 +85,7 @@
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   /* ===== POLE W TRYBIE ODCZYTU (issue #14) =====
      Na tym ekranie nie ma już ANI JEDNEGO inputu. Każde pole jest PRZYCISKIEM z wartością
-     — ten sam kształt, co „Czas meldowania" na kroku 1 (`.field-input.filled` w 02) —
+     — ten sam kształt, co odczyty liczników na kroku 3 (`.field-input.filled` w 02A) —
      a wpisywanie dzieje się w arkuszu wysuwanym od dołu. Ikona po prawej mówi, co się
      stanie po tapnięciu: LUPA przy trasie (bo tam się szuka w katalogu), OŁÓWEK przy
      polach tekstowych (bo tam się pisze). Zgłoszenie z urządzenia brzmiało „trochę nie
@@ -215,7 +214,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 02E</span>
-  <span class="slug">preflight · zadanie dnia · krok 2 / 4</span>
+  <span class="slug">przejęcie · zadanie · krok 2 / 3</span>
   <span class="canvas-meta">Screen 2E / 11</span>
 </header>
 
@@ -236,15 +235,11 @@
         Wróć
       </a>
       <div class="header-center">
-        <div class="screen-title">PREFLIGHT</div>
+        <div class="screen-title">PRZEJĘCIE</div>
         <div class="screen-subtitle">SP-AXA · Cessna 182</div>
       </div>
       <div class="header-right">
-        <div class="step-badge">2 / 4</div>
-        <div class="sync-chip">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          SYNC
-        </div>
+        <div class="step-badge">2 / 3</div>
       </div>
     </div>
 
@@ -323,7 +318,7 @@
 
            Sekcja jednego pola NIE MA NAGŁÓWKA: „Miejsce skoków" nad „Lotnisko skoków"
            nazywało tę samą rzecz dwa razy. Etykieta pola wystarcza — tak samo zbudowany
-           jest czas meldowania na kroku 1. Nagłówek „Trasa" wraca przy parze kodów,
+           jest odczyt licznika na kroku 3. Nagłówek „Trasa" wraca przy parze kodów,
            gdzie ma co spinać.
            Pozostałe operacje (przelot, egzamin, lot techniczny, inne) mogą skończyć gdzie
            indziej i zostają przy PARZE kodów — dwa pola JEDNO POD DRUGIM, z etykietami
@@ -608,7 +603,7 @@
   <a href="02f-preflight-lotnisko.html">02F Wybór lotniska →</a>
   <a href="02a-preflight.html">02A Paliwo/MH →</a>
   <span>·</span>
-  <a href="03-preflight-confirm.html">03 Potwierdź →</a>
+  <a href="04a-cockpit-ground.html">04A Kokpit →</a>
 </nav>
 
 <script>

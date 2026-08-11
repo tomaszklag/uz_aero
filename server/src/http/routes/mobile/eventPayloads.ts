@@ -43,7 +43,12 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     operation: z.enum(['skoki', 'ferry', 'egzamin', 'techniczny', 'inne']),
     departureIcao: z.string().max(8).nullable().optional(),
     arrivalIcao: z.string().max(8).nullable().optional(),
-    dutyStart: epochMs,
+    /**
+     * Godzina meldunku — **OPCJONALNA od schemaVersion 2** (§3.6a). Ekran przejęcia
+     * o nią nie pyta: służba jest klamrą wokół sesji, a nie czymś, co pilot otwiera,
+     * żeby polecieć. Wymaganie jej tutaj odrzucałoby paczki z KAŻDEGO nowego telefonu.
+     */
+    dutyStart: epochMs.nullable().optional(),
     reading,
     corrections: z.array(z.record(z.unknown())).optional(),
     client: z.string().max(200).nullable().optional(),
@@ -100,7 +105,21 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     notes: z.string().max(1000).nullable().optional(),
   }),
 
-  day_close: z.object({ finalReading: reading, dutyEnd: epochMs }),
+  // `leg_close` walidowane tu między 2026-08-06 a 2026-08-10 — usunięte razem ze
+  // zdarzeniem (sesja = jeden bieg silnika; zatwierdzeniem jest `day_close`).
+
+  /**
+   * `day_close` — ZDANIE SAMOLOTU = ZATWIERDZENIE LOGU SESJI (2026-08-10).
+   * Odczyt końcowy wymagany (jest przekazaniem dla następnego pilota i ogniwem
+   * łańcucha MH), godzina końca służby opcjonalna (§3.6a): zdanie maszyny nie
+   * kończy dnia pilota, więc ekran jej nie wysyła.
+   */
+  day_close: z.object({
+    finalReading: reading,
+    dutyEnd: epochMs.nullable().optional(),
+    /** Powód zdania bez uruchomienia silnika (09C); brak = miękka flaga w domenie. */
+    noFlightReason: z.enum(['weather', 'malfunction', 'cancelled', 'other']).nullable().optional(),
+  }),
 
   event_correction: z.discriminatedUnion('action', [
     z.object({ targetUuid: z.string().min(1).max(100), action: z.literal('retime'), newTime: epochMs }),

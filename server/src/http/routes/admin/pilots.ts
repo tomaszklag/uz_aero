@@ -45,7 +45,7 @@ const code = z
 const name = z.string().trim().min(2).max(100);
 
 /**
- * E-mail jest OPCJONALNY, bo kolumna `pilots.email` jest `NULL`-owalna od migracji 1,
+ * E-mail jest OPCJONALNY, bo kolumna `pilots.email` jest `NULL`-owalna od schematu bazowego,
  * a loginem bywa sam kod pilota. Pusty napis znaczy „bez e-maila" (`null`), a nie
  * „e-mail o zerowej długości" — inaczej wyczyszczone pole w formularzu wjechałoby do
  * bazy jako wartość i zajęło unikalny indeks.

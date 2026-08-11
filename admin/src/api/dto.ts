@@ -257,7 +257,7 @@ export interface ResolveFlagResultDto {
 /**
  * Stan karty dnia — wnioskuje go SERWER, panel wyłącznie nazywa.
  *
- * Wniosek składa się z czterech faktów naraz (status sesji, obecność duty startu,
+ * Wniosek składa się z czterech faktów naraz (status sesji, obecność chwili przejęcia,
  * otwarte flagi blokujące, obecność wiersza w `export_log`), a panel widzi każdy z nich
  * osobno — złożenie ich tutaj byłoby drugą definicją reguły, która i tak musi istnieć
  * na serwerze, bo to ona bramkuje eksport.
@@ -282,13 +282,13 @@ export interface ExportListItemDto {
    * Nazwa karty wg konwencji §4.7 (`YYYY-MM-DD_SP-XXX`) — policzona przez serwer TĄ
    * SAMĄ funkcją, którą eksporter nazywa kartę przy zapisie. Panel jej NIE skleja:
    * druga konwencja nazw znaczyłaby link do karty, której w bazie nie ma.
-   * `null` = sesja bez `preflight_confirm`, czyli karty nie da się nazwać.
+   * `null` = sesja bez `session_claim`, czyli karty nie da się nazwać.
    */
   tab: string | null;
-  /** Dzień karty `YYYY-MM-DD` (UTC z duty startu); `null` razem z `tab`. */
+  /** Dzień karty `YYYY-MM-DD` (UTC z chwili przejęcia); `null` razem z `tab`. */
   day: string | null;
-  /** Duty start (epoch ms UTC) — kolumna „Dzień". */
-  dutyStart: number | null;
+  /** Chwila przejęcia samolotu (epoch ms UTC) — kolumna „Dzień". `null` = rejestr bez claimu. */
+  claimedAt: number | null;
 
   aircraftId: string;
   /** `null` = samolotu nie ma już w rejestrze floty; dzień zostaje widoczny. */
@@ -440,8 +440,13 @@ export interface ExportRetryResultDto {
  * policzoną tym samym kodem. Panel je wyłącznie FORMATUJE (`@uzaero/format`).
  *
  * Czasy zdarzeń w epoch ms UTC, stemple serwera w ISO 8601 — i to nie jest
- * niekonsekwencja: `dutyStart` jest czasem, który zapisał telefon (ta sama domena, co
+ * niekonsekwencja: `claimedAt` jest czasem, który zapisał telefon (ta sama domena, co
  * `Event.gpsTime`), a `updatedAt` chwilą, w której serwer przyjął paczkę.
+ *
+ * **Ten wiersz opisuje SESJĘ SAMOLOTU (przejęcie → zdanie), nie służbę pilota.** Po
+ * §3.6a służba jest klamrą należącą do PILOTA i potrafi objąć kilka maszyn, więc nie ma
+ * jej czego szukać w wierszu jednej sesji — a sesje bywają krótkie (dwie zmiany dziennie
+ * na maszynie to norma).
  */
 export interface SessionListItemDto {
   sessionUuid: string;
@@ -474,10 +479,11 @@ export interface SessionListItemDto {
   client: string | null;
 
   /**
-   * Początek służby — meldunek z `preflight_confirm`, kolumna „Dzień · UTC".
-   * `null` = sesja bez preflightu; taki dzień NIE MA daty i wypada z filtra zakresu.
+   * Chwila PRZEJĘCIA samolotu (`session_claim`), kolumna „Dzień · UTC". Każda sesja ją
+   * ma (§4.4), więc od 2026-08-07 żaden dzień nie wypada z filtra zakresu z powodu
+   * braku daty. `null` znaczy rejestr niekompletny, nie „bez preflightu".
    */
-  dutyStart: number | null;
+  claimedAt: number | null;
   closeTime: number | null;
 
   blockMs: number;
@@ -846,7 +852,7 @@ export interface AircraftClaimDto {
   /** `null` = konta nie ma już w `pilots`; claim zostaje z samym identyfikatorem. */
   picCode: string | null;
   picName: string | null;
-  /** Duty start (epoch ms UTC); `null` przy sesji bez `preflight_confirm`. */
+  /** Chwila PRZEJĘCIA samolotu (epoch ms UTC); `null` = rejestr bez `session_claim`. */
   since: number | null;
 }
 
@@ -1020,6 +1026,16 @@ export interface CorrectionPreviewDto {
   after: SessionState;
   /** Naruszenia, które ZABLOKOWAŁYBY zapis. Pusta lista = w tej chwili wolno. */
   violations: RuleViolation[];
+  /**
+   * Miękkie naruszenia — KOLIZJE, nie powody odmowy. Panel pokazuje je jako baner nad
+   * formularzem korekty.
+   *
+   * Zastąpiły bramkę `400 day_open` (2026-08-07). Dwa kody:
+   * `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi sesję i dośle własne zdarzenia)
+   * i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h wzlotu jeszcze biegnie, więc obie
+   * strony mogą poprawiać naraz). Rozstrzyga człowiek — panel nie blokuje przycisku.
+   */
+  warnings: RuleViolation[];
 }
 
 /**
@@ -1039,6 +1055,12 @@ export interface CorrectionResultDto {
   recordedAt: string;
   /** Stan dnia PO korekcie, policzony `projectSession`. Panel go formatuje. */
   state: SessionState;
+  /**
+   * Kolizje policzone PRZED zapisem — te same dwa kody, co w podglądzie. Jadą
+   * w odpowiedzi POZYTYWNEJ, bo korekta JEST w rejestrze: panel ma powiedzieć, w co
+   * administrator wszedł, a nie udawać, że zapis się nie odbył.
+   */
+  warnings: RuleViolation[];
   reexport: ExportOutcomeDto | null;
 }
 
@@ -1066,7 +1088,12 @@ export interface EngineStateDto {
   /** Koniec ostatniego ZAMKNIĘTEGO cyklu silnika; `null` = silnik nigdy nie stanął. */
   engineStoppedAt: number | null;
   lastEventAt: number | null;
-  dutyStart: number | null;
+  /**
+   * Chwila PRZEJĘCIA samolotu (`session_claim`, epoch ms UTC) — od kiedy maszyna jest
+   * zajęta. Do 2026-08-07 stał tu meldunek pilota; po §3.6a klamra służby należy do
+   * PILOTA i potrafi objąć kilka maszyn, więc na wierszu FLOTY nie miała czego szukać.
+   */
+  claimedAt: number | null;
   departureIcao: string | null;
   dualId: string | null;
   dualName: string | null;
@@ -1194,7 +1221,7 @@ export interface StatsRangeDto {
  * a dzielenie dwóch sum po swojemu byłoby właśnie własną metryką.
  *
  * `null` znaczy „nie wiemy" i ma tu DWA źródła, oba nazwane: `staleRows` (wiersze
- * projekcji sprzed migracji 18 — naprawia przebudowa na `A11`) oraz
+ * projekcji sprzed kolumn statystyk — naprawia przebudowa na `A11`) oraz
  * `fuelUnknownSessions`/`mhUnknownSessions` (dni zamknięte, których bilansu nie da
  * się policzyć). Panel nigdy nie zamienia `null` na zero.
  */
@@ -1216,9 +1243,15 @@ export interface StatsTotalsDto {
   mhBlockHours: number;
   mhVsBlockH: number | null;
   staleRows: number;
-  /** Dni OTWARTE z duty startem w zakresie — celowo poza sumami. */
+  /** Sesje OTWARTE z chwilą przejęcia w zakresie — celowo poza sumami. */
   openSessionsInRange: number;
-  /** Dni OTWARTE bez duty startu (sam claim) — bez daty, więc liczone ZAWSZE. */
+  /**
+   * Sesje OTWARTE BEZ `session_claim` — rejestr niekompletny: nie mają daty, więc nie
+   * należą do żadnego zakresu i są liczone ZAWSZE. Do 2026-08-07 licznik obejmował
+   * sesje z samym claimem (kolumna niosła wtedy opcjonalny meldunek); dziś taka sesja
+   * MA datę, a ten licznik jest sygnałem o połamanym strumieniu i w zdrowym klubie stoi
+   * na zerze.
+   */
   openSessionsUndated: number;
 }
 
@@ -1314,7 +1347,7 @@ export interface StatsDropsDto {
   dropsWithAltitude: number | null;
   dropsWithoutAltitude: number | null;
   jumpersPerFlightHour: number | null;
-  /** Dni skokowe sprzed migracji 18 ORAZ dni bez rodzaju operacji (mogły być skokowe). */
+  /** Dni skokowe sprzed kolumn statystyk ORAZ dni bez rodzaju operacji (mogły być skokowe). */
   staleRows: number;
   /** Pusta przy `staleRows > 0` — częściowa tabela wyglądałaby na kompletną. */
   clients: StatsClientItemDto[];

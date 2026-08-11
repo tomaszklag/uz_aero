@@ -4,15 +4,17 @@
  * §4.4 rozróżnia trzy tryby claimu i to rozróżnienie czyta później serwer przy
  * scalaniu nakładających się sesji:
  *  • `free`             — cache mówił „wolny" (kolizję z kimś, kogo cache nie widział,
- *                         wykryje flaga `session_overlap` — §4.5);
+ *                         wykryje flaga `aircraft_overlap` — §4.5; do 2026-08-07 jedna
+ *                         flaga `session_overlap` udawała tu dwie różne patologie);
  *  • `takeover_online`  — przejęcie ZWERYFIKOWANE: w chwili claimu zapytaliśmy serwer
  *                         i wiemy, czyją sesję przejmujemy (żywy `claimPicId`);
  *  • `takeover_offline` — przejęcie na podstawie cache, który mógł się zdezaktualizować.
  *
  * Zasada uczciwości wobec serwera: `takeover_online` wolno zadeklarować WYŁĄCZNIE
  * z odpowiedzią serwera w ręku. Gdy żywy stan mówi, że samolot jednak jest wolny
- * (poprzednik zamknął dzień, a cache tego nie widział), przejęcie ZNIKA — claim
- * jest zwykłym `free`, bo nie ma czyjej sesji przejmować.
+ * (poprzednik ZDAŁ SAMOLOT, a cache tego nie widział), przejęcie ZNIKA — claim
+ * jest zwykłym `free`, bo nie ma czyjej sesji przejmować. Zdanie maszyny nie kończy
+ * dnia poprzednika (§3.6a) — kończy jego sesję z tą maszyną i tylko to nas tu obchodzi.
  */
 
 export type ClaimMode = 'free' | 'takeover_online' | 'takeover_offline';

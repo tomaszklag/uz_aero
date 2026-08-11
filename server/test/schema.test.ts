@@ -5,6 +5,13 @@
  * ↔ interfejsy wierszy ↔ mapowanie to trzy miejsca, które muszą się zgadzać, a literówka
  * w nazwie kolumny nie jest błędem typów — tylko `undefined` w runtime. Listy kolumn
  * są tu przybite na sztywno; zmiana schematu bez zmiany testu ma NIE przejść.
+ *
+ * ══ TEN PLIK BYŁ DOWODEM ZGNIECENIA MIGRACJI (2026-08-08) ══
+ * Dwadzieścia trzy migracje zwinęły się w jedną bazową. Listy niżej NIE ZMIENIŁY SIĘ ani
+ * o kolumnę, ani o pozycję — i to jest cała weryfikacja tamtej zmiany: zgnieciony skrypt
+ * produkuje ten sam schemat, który produkowała historia. Stąd też porządek kolumn wygląda,
+ * jak wygląda (rzeczy dokładane `ALTER`-em siedzą na końcu tabel); jest zachowany
+ * świadomie, żeby to porównanie dało się zrobić.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -54,8 +61,8 @@ describe('schemat PostgreSQL (kontrakt)', () => {
   it.each([
     [
       'pilots',
-      // `theme`/`theme_updated_at`/`role`/`credentials_valid_from` na końcu: migracje
-      // 6, 7 i 13 (ALTER) dokładają kolumny za istniejącymi, w kolejności stosowania.
+      // `theme`/`theme_updated_at`/`role`/`credentials_valid_from` na końcu: dołożone
+      // `ALTER`-em, w kolejności, w jakiej powstawały.
       ['id', 'code', 'name', 'email', 'password_hash', 'active', 'updated_at', 'theme', 'theme_updated_at', 'role', 'credentials_valid_from'],
     ],
     [
@@ -69,17 +76,15 @@ describe('schemat PostgreSQL (kontrakt)', () => {
     ],
     [
       'sessions',
-      // `operation`/`client` na końcu — migracja 11 (ALTER) dokłada je za istniejącymi
-      // kolumnami. `claim_time` NIESIE DUTY START (uzasadnienie: `application/sessionRow.ts`),
-      // dlatego migracja 11 świadomie NIE dokłada kolumny `duty_start`.
-      // Kolumny statystyk (od `takeoff_count`) dokłada migracja 18 — także na końcu,
-      // a `notes` (notatka pilota do dnia) migracja 20.
+      // `operation`/`client`, kolumny statystyk (od `takeoff_count`) i `notes` na końcu —
+      // dołożone `ALTER`-em. `claim_time` niesie CZAS PRZEJĘCIA maszyny (uzasadnienie:
+      // `application/common/mappers/sessionRow.ts`), i dlatego kolumny `duty_start` tu
+      // świadomie NIE MA: klamra służby należy do PILOTA, nie do sesji (§3.6a).
       ['session_uuid', 'aircraft_id', 'pic_id', 'dual_id', 'status', 'claim_time', 'close_time', 'mh_start', 'mh_end', 'fuel_start_l', 'fuel_end_l', 'fuel_last_l', 'mh_last', 'block_ms', 'flight_ms', 'flights_count', 'updated_at', 'operation', 'client', 'takeoff_count', 'landing_count', 'mh_delta_h', 'fuel_consumed_l', 'drop_count', 'jumpers_tandem', 'jumpers_aff', 'jumpers_solo', 'drop_alt_sum_ft', 'drop_alt_count', 'notes'],
     ],
     [
       'flags',
-      // `resolved_by`/`resolution_note` na końcu — migracja 10 (ALTER) dokłada je
-      // za istniejącymi kolumnami.
+      // `resolved_by`/`resolution_note` na końcu — dołożone `ALTER`-em.
       ['id', 'type', 'aircraft_id', 'session_uuids', 'details', 'status', 'created_at', 'resolved_at', 'resolved_by', 'resolution_note'],
     ],
     [
@@ -91,6 +96,10 @@ describe('schemat PostgreSQL (kontrakt)', () => {
       'admin_audit',
       ['id', 'actor_pilot_id', 'actor_role', 'action', 'target_type', 'target_id', 'details', 'ip', 'created_at'],
     ],
+    // Dopisana przy zgnieceniu: tabela istniała od materializacji normy zużycia
+    // (2026-08-05), ale wypadła z tego kontraktu — czyli jedyna tabela schematu, której
+    // literówka w nazwie kolumny nie zatrzymałaby żadnego testu.
+    ['aircraft_consumption', ['aircraft_id', 'window_days', 'model', 'computed_at']],
   ])('tabela %s ma dokładnie uzgodnione kolumny', async (table, expected) => {
     const db = await migrated();
     expect(await columnsOf(db, table as string)).toEqual(expected);

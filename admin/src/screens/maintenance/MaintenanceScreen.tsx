@@ -441,7 +441,7 @@ export function MaintenanceScreen() {
         <span className="hint">
           <b>Dlaczego przy pozycjach z flagą „Ponów" jest wyszarzone.</b>{' '}
           <code>dayExporter</code> sprawdza otwarte flagi <b>przed</b> zapisem karty i przy{' '}
-          <code>session_overlap</code> wychodzi po cichu — sporny dzień nie ma prawa utrwalić
+          <code>aircraft_overlap</code> wychodzi po cichu — sporny dzień nie ma prawa utrwalić
           się w dokumencie klubu. Ponowienie dostałoby dokładnie ten sam wynik. Droga wiedzie
           przez{' '}
           <CellLink to="/flagi" title="Skrzynka flag">

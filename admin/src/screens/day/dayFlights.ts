@@ -59,7 +59,7 @@ export interface FlightRow {
  * cyklu nie należy.
  */
 function cycleOf(state: SessionState, takeoffAt: number): string {
-  const index = state.engineRuns.findIndex(
+  const index = state.legs.findIndex(
     (run) => run.startedAt <= takeoffAt && (run.stoppedAt == null || takeoffAt <= run.stoppedAt),
   );
   return index === -1 ? '—' : String(index + 1);

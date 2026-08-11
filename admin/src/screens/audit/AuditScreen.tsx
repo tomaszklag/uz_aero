@@ -355,7 +355,7 @@ export function AuditScreen() {
         <div className="cols-stack">
           <Card
             title="Tabela admin_audit"
-            actions={<Pill tone="green">migracja 9</Pill>}
+            actions={<Pill tone="green">append-only</Pill>}
           >
             <KeyValue label="id" value="BIGSERIAL" unit="PRIMARY KEY" />
             <KeyValue label="created_at" value="TIMESTAMPTZ" unit="NOT NULL · DEFAULT now()" />

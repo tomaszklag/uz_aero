@@ -133,7 +133,7 @@ describe('spłaszczenie raportu do wierszy tabeli', () => {
       missing: true,
       field: 'CAŁY WIERSZ',
       stored: 'brak w sessions',
-      // Sesja bez preflightu nie ma dnia i panel mówi to wprost, zamiast wnioskować.
+      // Sesja bez claimu nie ma dnia i panel mówi to wprost, zamiast wnioskować.
       day: '—',
     });
   });

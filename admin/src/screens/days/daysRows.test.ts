@@ -1,10 +1,11 @@
 /**
  * UZ Aero — panel: wiersz listy dni (moduł czysty).
  *
- * Testujemy REGUŁY, nie brzmienie napisów. Trzy z nich nie są widoczne w typach:
+ * Testujemy REGUŁY, nie brzmienie napisów. Cztery z nich nie są widoczne w typach:
  *  • mapowanie NIE MA PRAWA przestawić kolejności (porządek należy do serwera),
  *  • motogodziny formatuje się WEDŁUG FORMATU LICZNIKA TEGO SAMOLOTU,
- *  • dzień otwarty pokazuje „—" w odczytach końcowych i niczego nie ekstrapoluje.
+ *  • otwarta sesja pokazuje „—" w odczytach końcowych i niczego nie ekstrapoluje,
+ *  • dwie zmiany tej samej maszyny w jednej dobie muszą dać się ODRÓŻNIĆ (§3.6a).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -31,7 +32,7 @@ function day(over: Partial<SessionListItemDto> = {}): SessionListItemDto {
     status: 'closed',
     operation: 'skoki',
     client: 'SKY CAMP',
-    dutyStart: Date.UTC(2026, 6, 30, 5, 45),
+    claimedAt: Date.UTC(2026, 6, 30, 5, 45),
     closeTime: Date.UTC(2026, 6, 30, 13, 22),
     blockMs: (5 * 60 + 53) * 60_000,
     flightMs: (3 * 60 + 35) * 60_000,
@@ -53,9 +54,9 @@ describe('dayRows — porządek', () => {
     // pozycję w TYM porządku. Przesortowanie na kliencie przestawiłoby wiersze
     // wewnątrz przypadkowego wycinka, bo lista jest sklejona z kolejnych stron.
     const items = [
-      day({ sessionUuid: 'b', dutyStart: Date.UTC(2026, 6, 28) }),
-      day({ sessionUuid: 'a', dutyStart: Date.UTC(2026, 6, 31) }),
-      day({ sessionUuid: 'c', dutyStart: null }),
+      day({ sessionUuid: 'b', claimedAt: Date.UTC(2026, 6, 28) }),
+      day({ sessionUuid: 'a', claimedAt: Date.UTC(2026, 6, 31) }),
+      day({ sessionUuid: 'c', claimedAt: null }),
     ];
 
     expect(dayRows(items, NOW).map((row) => row.sessionUuid)).toEqual(['b', 'a', 'c']);
@@ -63,24 +64,46 @@ describe('dayRows — porządek', () => {
 });
 
 describe('dayRows — kolumna „Dzień"', () => {
-  it('bierze datę z MELDUNKU, a podpis mówi, czy dzień się domknął', () => {
+  it('bierze datę z CHWILI PRZEJĘCIA, a podpis niesie CAŁY odcinek sesji', () => {
     expect(dayRows([day()], NOW)[0]!.day).toEqual({
       text: '30 JUL 2026',
-      sub: 'zamknięty 13:22',
+      sub: '05:45 → 13:22',
     });
 
     expect(dayRows([day({ status: 'active', closeTime: null })], NOW)[0]!.day).toEqual({
       text: '30 JUL 2026',
-      sub: 'meldunek 05:45',
+      sub: '05:45 → trwa',
     });
   });
 
-  it('sesja bez preflightu NIE MA daty i mówi to wprost', () => {
+  it('dwie zmiany tej samej maszyny w jednej dobie są ROZRÓŻNIALNE', () => {
+    // Po §3.6a to norma, a nie przypadek brzegowy: poranna i popołudniowa mają tę samą
+    // rejestrację i tę samą datę w kolumnie „Dzień". Do etapu D podpis niósł sam koniec
+    // („zamknięty 13:22"), więc sesja jeszcze trwająca nie mówiła o sobie NIC poza datą.
+    const morning = day({
+      sessionUuid: 'am',
+      claimedAt: Date.UTC(2026, 6, 30, 5, 45),
+      closeTime: Date.UTC(2026, 6, 30, 11, 2),
+    });
+    const afternoon = day({
+      sessionUuid: 'pm',
+      status: 'active',
+      claimedAt: Date.UTC(2026, 6, 30, 12, 8),
+      closeTime: null,
+    });
+
+    const rows = dayRows([morning, afternoon], NOW);
+    expect(rows[0]!.day.text).toBe(rows[1]!.day.text);
+    expect(rows[0]!.day.sub).toBe('05:45 → 11:02');
+    expect(rows[1]!.day.sub).toBe('12:08 → trwa');
+  });
+
+  it('sesja bez claimu NIE MA daty i mówi to wprost', () => {
     // Wywnioskowanie daty z `closeTime` albo z pierwszego zdarzenia byłoby zgadywaniem
-    // — i rozjechałoby się z filtrem zakresu, który takich dni po prostu nie widzi.
-    const row = dayRows([day({ dutyStart: null })], NOW)[0]!;
+    // — i rozjechałoby się z filtrem zakresu, który takich sesji po prostu nie widzi.
+    const row = dayRows([day({ claimedAt: null })], NOW)[0]!;
     expect(row.day.text).toBe('—');
-    expect(row.day.sub).toContain('bez preflightu');
+    expect(row.day.sub).toContain('bez claimu');
   });
 });
 
@@ -136,12 +159,14 @@ describe('dayRows — kolumna „Stan"', () => {
     expect(of(5)).toBe('5 flag');
   });
 
-  it('sesja bez `day_close` to „Dzień otwarty", NIGDY „W locie"', () => {
-    // Projekcja niesie `status`, nie niesie „silnik pracuje". Plakietka „W locie"
-    // kłamałaby o każdym dniu, w którym samolot stoi na płycie z otwartą sesją.
+  it('sesja bez `day_close` to „Samolot zajęty", NIGDY „W locie" ani „Dzień otwarty"', () => {
+    // Dwa osobne sprostowania w jednym napisie. Projekcja niesie `status`, nie niesie
+    // „silnik pracuje", więc „W locie" kłamałoby o maszynie stojącej na płycie. A po
+    // §3.6a otwarta jest SESJA jednej maszyny, nie dzień: ten sam pilot może w tej
+    // samej służbie zdać ją i wziąć następną.
     const row = dayRows([day({ status: 'active', closeTime: null, exportRevision: null })], NOW)[0]!;
 
-    expect(row.state.text).toBe('Dzień otwarty');
+    expect(row.state.text).toBe('Samolot zajęty');
     expect(row.state.tone).toBe('blue');
     // Świeżość podana WZGLĘDNIE — administrator ocenia, czy dane są aktualne,
     // a nie o której dotarły.
@@ -153,7 +178,7 @@ describe('dayRows — kolumna „Stan"', () => {
     expect(row.state.sub).toBe('dane w drodze · czas ostatniego syncu nieznany');
   });
 
-  it('dzień zamknięty rozróżnia kartę arkusza od jej braku', () => {
+  it('sesja zdana rozróżnia kartę arkusza od jej braku', () => {
     expect(dayRows([day({ exportRevision: 2 })], NOW)[0]!.state).toEqual({
       tone: 'green',
       text: 'Wyeksportowany',
@@ -163,7 +188,7 @@ describe('dayRows — kolumna „Stan"', () => {
 
     expect(dayRows([day({ exportRevision: null })], NOW)[0]!.state).toMatchObject({
       tone: 'dim',
-      text: 'Zamknięty',
+      text: 'Samolot zdany',
       sub: 'bez karty arkusza',
     });
   });

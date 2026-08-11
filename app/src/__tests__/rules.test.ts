@@ -156,6 +156,15 @@ describe('cykl silnika', () => {
     ]);
   });
 
+  it('drugi bieg silnika w sesji jest odrzucany — sesja = jeden bieg (2026-08-10)', () => {
+    // Po STOP ENGINE jedyną drogą naprzód jest zdanie samolotu (09b); kolejny lot
+    // to NOWE przejęcie. Bez tej gwardii stary model („kolejne wzloty w sesji")
+    // wracałby tylnymi drzwiami przez każdy zapis ręczny albo replay.
+    expect(hard(check(afterCycle(), ev('engine_start', {}, { t: min(170) })))).toEqual([
+      'SESSION_ALREADY_RAN',
+    ]);
+  });
+
   it('engine_stop tylko gdy silnik pracuje', () => {
     expect(hard(check(ground(), ev('engine_stop', {}, { t: min(20) })))).toEqual([
       'ENGINE_NOT_RUNNING',
@@ -346,6 +355,10 @@ describe('zamknięcie dnia', () => {
     expect(hard(v)).toContain('MH_REGRESSION');
   });
 
+  // Test „odczyt końcowy porównuje się z OSTATNIM wskazaniem" usunięty 2026-08-10:
+  // pośrednie odczyty per wzlot znikły razem z `leg_close`, więc jedynym punktem
+  // odniesienia wewnątrz sesji jest stan przy przejęciu — a to pokrywa test wyżej.
+
   it('rozjazd Δ MH vs block time to miękka flaga — zdarzenie zostaje', () => {
     const v = check(afterCycle(), dayClose({ finalReading: { fuelL: 112, mh: MH_START + 5 } }));
     expect(hard(v)).toEqual([]);
@@ -371,10 +384,109 @@ describe('zamknięcie dnia', () => {
     expect(hard(check(stream, dayClose({ finalReading: { fuelL: 160, mh: MH_END } })))).toEqual([]);
   });
 
+  it('zdanie bez ani jednego wzlotu i bez powodu daje MIĘKKĄ flagę (09C)', () => {
+    // Zdarzenie ZOSTAJE: odrzucenie skasowałoby jedyny ślad po tym, że maszyna stała
+    // zajęta. Administrator dostaje flagę zamiast pytania bez adresata.
+    const noFlight = [claim(), preflight()];
+    const close = ev(
+      'day_close',
+      { finalReading: { fuelL: 150, mh: MH_START } },
+      { t: min(75) },
+    );
+
+    expect(hard(check(noFlight, close))).toEqual([]);
+    expect(soft(check(noFlight, close))).toContain('NO_FLIGHT_WITHOUT_REASON');
+  });
+
+  it('z podanym powodem flagi nie ma', () => {
+    const close = ev(
+      'day_close',
+      { finalReading: { fuelL: 150, mh: MH_START }, noFlightReason: 'weather' },
+      { t: min(75) },
+    );
+
+    expect(check([claim(), preflight()], close)).toEqual([]);
+  });
+
+  it('sesja ZE WZLOTAMI nie jest o powód pytana', () => {
+    expect(soft(check(afterCycle(), dayClose()))).not.toContain('NO_FLIGHT_WITHOUT_REASON');
+  });
+
   it('koniec służby przed meldunkiem jest odrzucany', () => {
     expect(hard(check(afterCycle(), dayClose({ dutyEnd: min(-60) })))).toContain(
       'DUTY_END_BEFORE_START',
     );
+  });
+});
+
+// Blok „potwierdzenie wzlotu (leg_close)" usunięty 2026-08-10 razem ze zdarzeniem
+// i regułami LEG_CLOSE_* — sesję zatwierdza `day_close` (odczyty obowiązkowe), czego
+// pilnują testy „zamknięcie dnia" wyżej i gwardia SESSION_ALREADY_RAN w „cyklu silnika".
+
+describe('preflight bez deklaracji meldunku (§3.6a — klamra jest opcjonalna)', () => {
+  /**
+   * Od schemaVersion 2 ekran 02 NIE PYTA o godzinę meldunku, więc `dutyStart` jest
+   * `null` w ZWYKŁYM przypadku, nie w brzegowym. Reguły nie mogą traktować jego braku
+   * jak braku preflightu — inaczej pilot, który po prostu przeszedł preflight, nie
+   * uruchomi silnika ani nie zda samolotu.
+   */
+  const preflightNoDuty = (): Event =>
+    ev(
+      'preflight_confirm',
+      {
+        operation: 'skoki',
+        departureIcao: 'EPKK',
+        arrivalIcao: 'EPKK',
+        reading: { fuelL: 150, mh: MH_START },
+        mhFormat: 'hhmm',
+      },
+      { t: min(0) },
+    );
+
+  const groundNoDuty = (): Event[] => [claim(), preflightNoDuty()];
+
+  it('silnik wolno uruchomić — preflight był, choć meldunku nie zadeklarowano', () => {
+    expect(hard(check(groundNoDuty(), ev('engine_start', {}, { t: min(12) })))).toEqual([]);
+  });
+
+  it('samolot wolno zdać bez deklaracji meldunku', () => {
+    const stream = [
+      ...groundNoDuty(),
+      ev('engine_start', {}, { t: min(12) }),
+      ev('engine_stop', {}, { t: min(154) }),
+    ];
+    const close = ev(
+      'day_close',
+      { finalReading: { fuelL: 112, mh: MH_START + 142 / 60 } },
+      { t: min(300) },
+    );
+
+    expect(hard(check(stream, close))).toEqual([]);
+  });
+
+  it('bez preflightu silnik nadal jest zablokowany — regułę przesuwamy, nie kasujemy', () => {
+    expect(hard(check([claim()], ev('engine_start', {}, { t: min(12) })))).toEqual([
+      'PREFLIGHT_REQUIRED',
+    ]);
+  });
+
+  /**
+   * ÓSME WYSTĄPIENIE wzorca „pole opcjonalne jako znacznik, że zdarzenie zaszło".
+   *
+   * `PREFLIGHT_ALREADY_CONFIRMED` pytało o `state.dutyStart`, czyli o godzinę meldunku —
+   * dokładnie tak, jak przed etapem B5 pytał `PREFLIGHT_REQUIRED`. Tamten przypadek
+   * naprawiono, ten SĄSIEDNI został, bo test na drugi preflight korzysta z fixture'u
+   * `preflight()`, który `dutyStart` wciąż podaje. Po C4 ekran 02a tego pola NIE WYSYŁA,
+   * więc w produkcji `dutyStart` jest `null` i gwardia nigdy się nie budzi: drugi
+   * `preflight_confirm` przechodzi i nadpisuje `mh.start` oraz `fuel.startL`, czyli
+   * POCZĄTEK ŁAŃCUCHA MH (§4.5) — kotwicę, po której serwer porządkuje sesje samolotu.
+   *
+   * Znacznikiem jest `preflightAt` i tylko on (`projections/session.ts`).
+   */
+  it('drugi preflight jest odrzucany także BEZ deklaracji meldunku', () => {
+    expect(hard(check(groundNoDuty(), preflightNoDuty()))).toEqual([
+      'PREFLIGHT_ALREADY_CONFIRMED',
+    ]);
   });
 });
 
@@ -410,19 +522,25 @@ describe('okno korekty po zamknięciu dnia (24 h)', () => {
     expect(hard(check(closed(), late))).toEqual(['CORRECTION_WINDOW_EXPIRED']);
   });
 
-  it('correctionWindow liczy pozostały czas', () => {
+  it('correctionWindow liczy pozostały czas OD ZDANIA — jedyna kotwica (2026-08-10)', () => {
+    // Do 2026-08-10 każdy wzlot miał własne okno od `leg_close`; po pivocie jednostką
+    // zatwierdzenia jest SESJA, a okno rusza w chwili zdania samolotu (min(300)).
+    const RELEASED = min(300);
     const state = projectSession(closed());
-    const open = correctionWindow(state, min(300) + 3_600_000);
-    expect(open.dayClosed).toBe(true);
+
+    const open = correctionWindow(state, RELEASED + 3_600_000);
+    expect(open.confirmed).toBe(true);
     expect(open.open).toBe(true);
     expect(open.remainingMs).toBe(CORRECTION_WINDOW_MS - 3_600_000);
 
-    const expired = correctionWindow(state, min(300) + CORRECTION_WINDOW_MS + 1);
+    const expired = correctionWindow(state, RELEASED + CORRECTION_WINDOW_MS + 1);
     expect(expired.open).toBe(false);
     expect(expired.remainingMs).toBe(0);
 
-    // Dzień otwarty: korekta zawsze dozwolona.
-    expect(correctionWindow(projectSession(afterCycle()), min(200)).open).toBe(true);
+    // Sesja NIEZDANA nie podlega oknu: korekta w kokpicie jest normalną pracą.
+    const active = correctionWindow(projectSession(afterCycle()), min(200));
+    expect(active.confirmed).toBe(false);
+    expect(active.open).toBe(true);
   });
 });
 

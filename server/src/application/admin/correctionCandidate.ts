@@ -29,6 +29,7 @@ import {
   type EventCorrectionPayload,
   type RuleViolation,
   type SessionState,
+  warningsOf,
 } from '@uzaero/domain';
 
 /**
@@ -88,4 +89,27 @@ export function correctionViolations(
   limits: AircraftLimits,
 ): RuleViolation[] {
   return errorsOf(checkAppend(state, candidate, limits, 'administrative'));
+}
+
+/**
+ * Ostrzeżenia (miękkie naruszenia) tej samej oceny — czyli to, O CZYM UPRZEDZIĆ.
+ *
+ * Istnieją od 2026-08-07 i **zastępują bramkę `400 day_open`**: administrator nie jest
+ * już NIGDY blokowany, ale ma zobaczyć, w co wchodzi. Domena produkuje tu dokładnie dwa
+ * kody — `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi sesję i dośle własne
+ * zdarzenia po synchronizacji) oraz `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h od zdania
+ * jeszcze trwa, więc obie strony mogą poprawiać naraz).
+ *
+ * Funkcja jest OSOBNA od `correctionViolations`, a nie drugim polem jednego obiektu,
+ * z tego samego powodu, dla którego tamta zwraca same błędy: wołający ma jawnie
+ * rozstrzygnąć, czy pyta „czy wolno zapisać", czy „o czym uprzedzić". Sklejenie tych
+ * dwóch list kończy się zbiorem, który ktoś kiedyś potraktuje jak powód odmowy —
+ * a wtedy bramka wróci tylnymi drzwiami.
+ */
+export function correctionWarnings(
+  state: SessionState,
+  candidate: Event,
+  limits: AircraftLimits,
+): RuleViolation[] {
+  return warningsOf(checkAppend(state, candidate, limits, 'administrative'));
 }

@@ -1,12 +1,17 @@
 /**
  * UZ Aero — szkic preflightu (stan UI, nie domena).
  *
- * Preflight to trzy ekrany (02 → 02a → 03), które wspólnie budują JEDNO zdarzenie
- * `preflight_confirm`. Dopóki pilot nie potwierdzi na ekranie 3, **nic nie jest
- * zapisane** — dlatego szkic żyje w pamięci UI, a nie w rejestrze zdarzeń.
+ * Przejęcie to trzy ekrany (02 → 02e → 02a), które wspólnie budują JEDNO zdarzenie
+ * `preflight_confirm`. Dopóki pilot nie naciśnie „PRZEJMIJ I LEĆ" na kroku 3, **nic nie
+ * jest zapisane** — dlatego szkic żyje w pamięci UI, a nie w rejestrze zdarzeń.
  *
  * To rozróżnienie jest celowe: rejestr jest append-only, więc nie wolno do niego
  * wpisywać stanów pośrednich, które pilot może jeszcze zmienić albo porzucić.
+ *
+ * GODZINY MELDUNKU TU NIE MA i to jest decyzja (§3.6a, 2026-08-06): służba jest klamrą
+ * wokół wzlotów, a nie czymś, co pilot otwiera, żeby polecieć. Klamra bierze się z lotów
+ * doby, a poprawia się ją po fakcie na ekranie 01. Pytanie o nią przy przejęciu kosztowało
+ * krok w drodze do kokpitu i sugerowało, że bez odpowiedzi nie wolno lecieć.
  */
 
 import { create } from 'zustand';
@@ -19,16 +24,6 @@ export interface PreflightDraft {
   operation: OperationType;
   departureIcao: string;
   arrivalIcao: string;
-  /** Czas meldowania (UTC) — domyślnie „teraz" z chwili WEJŚCIA na krok 1, edytowalny. */
-  dutyStart: number;
-  /**
-   * Czy pilot podał godzinę meldunku sam (arkusz na kroku 1).
-   *
-   * Rozstrzyga, czy wolno podstawić „teraz" przy kolejnym wejściu na ekran
-   * (`refreshDutyStart`). Bez tej flagi powrót z kroku 2 kasowałby świeżo wpisaną
-   * godzinę — dokładnie ten sam mechanizm, co `taskTouched` niżej.
-   */
-  dutyStartEdited: boolean;
   dualId: string | null;
   client: string | null;
   /**
@@ -87,15 +82,6 @@ interface PreflightDraftStore extends PreflightDraft {
   setAircraft(aircraft: ReferenceAircraft): void;
   set<K extends keyof PreflightDraft>(key: K, value: PreflightDraft[K]): void;
   /**
-   * Podstawia „teraz" jako godzinę meldunku — woła to krok 1 przy każdym wejściu.
-   *
-   * Osobna akcja, bo szkic żyje w pamięci procesu tak długo jak aplikacja: wartość
-   * z `initial()` powstawała RAZ, przy pierwszym dotknięciu store'u, więc pilot, który
-   * otworzył aplikację o 6:00, a zaczynał dzień o 8:00, dostawał na ekranie 6:00
-   * (zgłoszenie z urządzenia, issue #12). Godzina wpisana ręcznie jest nietykalna.
-   */
-  refreshDutyStart(now: number): void;
-  /**
    * Wypełnienie zadania podpowiedzią z ostatniego dnia. Osobno od `set`, bo NIE liczy
    * się jako dotknięcie pól przez pilota — inaczej podpowiedź zablokowałaby samą siebie.
    */
@@ -113,8 +99,6 @@ function initial(): PreflightDraft {
     operation: 'skoki',
     departureIcao: '',
     arrivalIcao: '',
-    dutyStart: Date.now(),
-    dutyStartEdited: false,
     dualId: null,
     client: null,
     notes: null,
@@ -147,13 +131,6 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
     set((state) => withRouteShape({ ...state, [key]: value }));
     // Dotknięcie zadania zamyka drogę podpowiedzi — od tej chwili obowiązuje wpis pilota.
     if (TASK_FIELDS.includes(key)) set({ taskTouched: true });
-    // Ta sama zasada dla godziny meldunku: wpis pilota wygrywa z „teraz".
-    if (key === 'dutyStart') set({ dutyStartEdited: true });
-  },
-
-  refreshDutyStart(now) {
-    if (get().dutyStartEdited) return;
-    set({ dutyStart: now });
   },
 
   suggestTask(task, route) {

@@ -14,7 +14,7 @@
  * Wszystkie predykaty to `status = 'closed' AND close_time BETWEEN $1 AND $2`:
  * do sum wchodzą wyłącznie dni ZAMKNIĘTE (otwarte zmieniłyby sumy po zamknięciu),
  * a dzień liczy się tam, gdzie został domknięty. Obsługuje to częściowy indeks
- * `idx_sessions_closed_day` (migracja 18).
+ * `idx_sessions_closed_day`.
  *
  * ══ `NULL` W KOLUMNACH MIGRACJI 18 ══
  * `SUM` po cichu pomija `NULL`, więc sama suma nie odróżnia „zera" od „wiersza sprzed
@@ -137,12 +137,13 @@ export class PgAdminStatsRepo implements StatsAdminPort {
   }
 
   async openSessions(db: Queryable, range: StatsRange): Promise<AdminStatsOpenSessionsRow> {
-    // Dzień otwarty nie ma `close_time`, więc jedyną jego datą jest duty start
-    // (`claim_time`) — tak samo lokuje go w czasie lista dni `A02`. Sesja z SAMYM
-    // `session_claim` (telefon padł przed preflightem) nie ma nawet tej daty:
-    // `claim_time IS NULL`, więc nie należy do ŻADNEGO zakresu. Liczymy ją ZAWSZE
-    // i osobno — to licznik rzeczy wymagających uwagi, a taka sesja jest połamana;
-    // uczciwiej ją pokazać, niż schować za predykatem BETWEEN.
+    // Sesja niezdana nie ma `close_time`, więc jedyną jej datą jest CHWILA PRZEJĘCIA
+    // (`claim_time`) — tak samo lokuje ją w czasie lista dni `A02`. Od 2026-08-07 ta
+    // kolumna niesie czas `session_claim`, a NIE godzinę meldunku z preflightu; sesja
+    // bez `session_claim` nie istnieje (§4.4), więc `claim_time IS NULL` jest stanem
+    // wyłącznie awaryjnym — strumień połamany albo przyjęty poza kolejnością. Taka
+    // sesja nie należy do ŻADNEGO zakresu, więc liczymy ją ZAWSZE i osobno: to licznik
+    // rzeczy wymagających uwagi, a uczciwiej ją pokazać, niż schować za `BETWEEN`.
     const { rows } = await db.query<{ in_range: string; undated: string }>(
       `SELECT COUNT(*) FILTER (WHERE s.claim_time IS NOT NULL) AS in_range,
               COUNT(*) FILTER (WHERE s.claim_time IS NULL)     AS undated
@@ -315,7 +316,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
     }
 
     // Sumy jadą z dni JAWNIE skokowych, ale licznik stale patrzy na CAŁY zakres:
-    // dzień z `operation IS NULL` (sprzed migracji 11 albo bez preflightu) MÓGŁ być
+    // dzień z `operation IS NULL` (bez rozpoznanej operacji albo bez preflightu) MÓGŁ być
     // dniem skokowym, więc zawężenie `operation = 'skoki'` nie ma prawa wyrzucić go
     // ze zbioru nawet jako „nieznany". Do czasu przebudowy projekcji (`A11`) to jest
     // DOMYŚLNY stan bazy migrującej ze starego schematu — sekcja mówi wtedy „nie
@@ -362,7 +363,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
       alt_count: string;
     }
 
-    // Wiersze sprzed migracji 18 (`drop_count IS NULL`) są tu ODFILTROWANE, a nie
+    // Wiersze sprzed kolumn statystyk (`drop_count IS NULL`) są tu ODFILTROWANE, a nie
     // liczone jako zero — o tym, że tabela klientów przy takich wierszach w ogóle
     // nie ma prawa się pokazać, rozstrzyga mapper (`drops.staleRows`).
     const { rows } = await db.query<Row>(
@@ -396,7 +397,7 @@ export class PgAdminStatsRepo implements StatsAdminPort {
 }
 
 /**
- * Wartość spoza katalogu rzuca, a nie jest po cichu zerowana — od migracji 11 pilnuje
+ * Wartość spoza katalogu rzuca, a nie jest po cichu zerowana — `sessions_operation_known` pilnuje
  * jej `CHECK`, więc obecność innej znaczy ręczną ingerencję (ten sam argument, co
  * w `sessionDbRow.ts`).
  */

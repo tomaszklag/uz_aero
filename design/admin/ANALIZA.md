@@ -7,6 +7,56 @@
 >
 > Wersja 1.0 — 2026-07-31.
 
+> ## ⚠ STATUS (2026-08-08): MOCKUPY SĄ PRZEBUDOWANE, TREŚĆ TEGO DOKUMENTU — NIE
+>
+> Panel zaprojektowano przy założeniu **dzień lotny = sesja jednego samolotu**
+> (`session_claim` → `day_close`). Decyzja z 2026-08-06 (`docs/_main.md.txt` §3.6a) to
+> unieważniła: jednostką potwierdzenia jest **wzlot**, służba należy do **pilota** i może
+> obejmować kilka maszyn, a zdanie samolotu jest **opcjonalne** i nie kończy dnia pilota.
+>
+> **Etap D jest domknięty**: serwer, klient web (`admin/`) oraz **pliki `.html` w tym
+> katalogu** opisują już nowy model. Nieprzebudowana została wyłącznie PROZA poniżej —
+> sekcje 1–12 tego dokumentu są **zapisem projektu sprzed 2026-08-06**. Czytaj je jak
+> archiwum decyzji, nie jak specyfikację; przy każdej rozbieżności prowadzi mockup, a za
+> nim kod (`admin/src/screens/**` — moduły czyste z testami 1:1).
+>
+> **Co konkretnie w treści poniżej jest już nieprawdą** (lista zamknięta, sprawdzona
+> greppem 2026-08-08):
+>
+> | Miejsce | Co mówi dokument | Stan po przebudowie |
+> |---|---|---|
+> | §4 A02, §6.2 | kolumna „Dzień" z `preflight_confirm.dutyStart` | doba wynika z `claim_time` = czas `session_claim` (migracja 21). `duty_start` **nie dostanie kolumny** — klamra należy do pilota, nie do sesji |
+> | §6.2, §6.3 | pole DTO `dutyStart` | `claimedAt` |
+> | §6.3 | kafel „Czas służby (duty)" na karcie dnia | **usunięty** — pomyłka kategorii; zastąpiony kaflem „Samolot zajęty" (przejęcie → zdanie). Zadeklarowane godziny zostają na osi zdarzeń, gdzie są treścią zdarzenia |
+> | §6.3, §6.4, §7 | plakietka „Dzień otwarty" | „Samolot zajęty"; „Zamknięty" → „Samolot zdany" |
+> | §6.3 | bramka `400 day_open` przy korekcie | **BRAMKI NIE MA** (decyzja 2026-08-07). Administrator nie jest nigdy blokowany; kolizja jedzie jako `warnings` (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`) i panel rysuje z nich baner **bez pola, z którego dałoby się wyprowadzić `disabled`** |
+> | §6.3, §6.5, §6.7, §8 | okno korekty 24 h liczone od `day_close` | okno kotwiczy się w **zamknięciu WZLOTU** (`leg_close`), osobno dla każdego; wzlot niepotwierdzony kotwiczy się awaryjnie w `engine_stop` |
+> | §6.5, §6.7, §7 | flaga `session_overlap` | **rozdzielona** (migracja 22) na `aircraft_overlap` (dwa telefony przy jednej maszynie — **jedyna bramka arkusza**) i `pilot_overlap` (jeden pilot na dwóch maszynach naraz — grafiku dotyczy, arkusza nie bramkuje). Katalog ma dziś **sześć** typów, nie pięć |
+> | §6.5, §6.7 | otwarta flaga blokuje CAŁĄ kartę dnia | bramka obejmuje **wyłącznie sesje objęte flagą** (§4.7): sporna zmiana wypada z karty, reszta doby wychodzi z adnotacją „niekompletna" |
+> | §6.7 | karta arkusza = jedna sesja | **karta = DOBA SAMOLOTU** (migracja 23). Sesje są jej wierszami z kolumną `Sesja` (S1, S2…); rewizja należy do pary (doba, samolot), a `export_log` dostaje po jednym wierszu na sesję wchodzącą do rewizji, wszystkie z tym samym numerem. Stan „Karta nadpisana" przestał być możliwy |
+> | §6.7 | sumy karty jako suma sesji | paliwo bierze odczyt PIERWSZEJ i OSTATNIEJ zmiany (poziom w zbiorniku nie jest addytywny), MH doby to **ruch licznika**; rozjazd wobec sumy delt ma zgłosić `mh_gap`, nie zamaskować go arytmetyka karty |
+> | §5, §12 | katalog typów zdarzeń bez `leg_close` | `leg_close` istnieje od `CURRENT_SCHEMA_VERSION = 2`; jest **korygowalny** (od niego liczy się okno wzlotu) i niesie OPCJONALNY odczyt FOB+MH. `day_close` ma dodatkowo `noFlightReason` (09C) |
+> | §11 ryzyko „przebudowa" | `operation`, `dutyStart`, `client` brakują w projekcji | `operation` i `client` weszły migracją 11; `dutyStart` świadomie zostaje wyłącznie w payloadzie |
+>
+> **Czego z listy z 2026-08-07 NIE zrobiono i było to świadome:** A02 „Dni lotne" miało
+> „rozpaść się na dwie listy" — dni PILOTÓW i sesje SAMOLOTÓW. Powstała tylko druga:
+> A02 jest listą **sesji samolotów**, a klamra służby pilota nie ma dziś w panelu żadnego
+> ekranu. Jest projekcją czystą (`packages/domain/src/projections/duty.ts`) i widzi ją
+> wyłącznie aplikacja pilota (ekran 01). **Widok służby per pilot w panelu to otwarty
+> zakres, nie brak w implementacji** — wymaga decyzji, czy back-office ma w ogóle
+> rozliczać czas pracy pilotów, i osobnego endpointu.
+>
+> **Trzy napisy zostały świadomie nietknięte i są dziś jedynym rozjazdem mockup↔kod
+> w drugą stronę** (mockup prowadzi): nazwa pozycji sidebara **„Dni lotne"** i kafel
+> pulpitu **„Dni otwarte"** zostały, bo mają dokładny odpowiednik w kodzie
+> (`admin/src/screens/dashboard/dashboardTiles.ts`, sidebar) i ich przemianowanie na
+> „Sesje samolotów" / „Samoloty zajęte" dotyka nawigacji CAŁEGO panelu — to decyzja
+> produktowa do podjęcia raz, dla wszystkich ekranów, nie po jednym. Natomiast **chipy
+> filtra stanu na A02** mockup już przemianował („Samolot zajęty" / „Samolot zdany"),
+> bo stały obok plakietek wiersza, które D6 przemianował — chip mówiący „Dzień otwarty"
+> nad wierszami mówiącymi „Samolot zajęty" jest tą samą pomyłką kategorii w miniaturze.
+> `STATE_CHIPS` w `admin/src/screens/days/DaysScreen.tsx` ma to dogonić.
+
 ---
 
 ## 0. Zgodność z plikami, które powstały

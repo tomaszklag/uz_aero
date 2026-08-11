@@ -2,9 +2,9 @@
  * UZ Aero — test czasu pracy silnika i czasu lotu w oknie.
  *
  * Ten plik istnieje przez konkretną awarię (2026-08-05). Ekran 06 liczył czas pracy
- * silnika wyłącznie z `state.engineRuns`, a `projectSession` obsługuje `manual_log_entry`
+ * silnika wyłącznie z `state.legs`, a `projectSession` obsługuje `manual_log_entry`
  * inaczej niż parę `engine_start`/`engine_stop`: dokłada czas off-block→on-block wprost
- * do `blockTimeMs` i NIE tworzy wpisu w `engineRuns`. W dniu z wpisem ręcznym mianownik
+ * do `blockTimeMs` i NIE tworzy wpisu w `legs`. W dniu z wpisem ręcznym mianownik
  * był więc za mały, a średnia L/h — zawyżona. Nie było tego jak zauważyć: zła średnia
  * wygląda dokładnie tak samo jak dobra.
  *
@@ -44,7 +44,7 @@ function event<T extends Event['type']>(type: T, time: number, payload: unknown 
 }
 
 describe('czas pracy silnika obejmuje wpis ręczny (regresja z 2026-08-05)', () => {
-  it('liczy ręczny off/on-block, którego NIE MA w engineRuns', () => {
+  it('liczy ręczny off/on-block, którego NIE MA w legs', () => {
     const events = [
       event('manual_log_entry', at(12, 0), {
         offBlock: at(9, 0),
@@ -55,9 +55,9 @@ describe('czas pracy silnika obejmuje wpis ręczny (regresja z 2026-08-05)', () 
     ];
     const state = projectSession(events);
 
-    // Dowód, że wada była realna: projekcja zna ten czas, ale `engineRuns` jest puste,
+    // Dowód, że wada była realna: projekcja zna ten czas, ale `legs` jest puste,
     // więc każdy, kto liczy z samych cykli, dostanie zero.
-    expect(state.engineRuns).toHaveLength(0);
+    expect(state.legs).toHaveLength(0);
     expect(state.blockTimeMs).toBe(minutes(90));
 
     const spans = blockSpans(state, events);

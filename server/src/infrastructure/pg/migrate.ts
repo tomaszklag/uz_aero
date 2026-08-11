@@ -10,7 +10,7 @@
  * dwa osobne polecenia i między nimi istniała szczelina: śmierć procesu (restart
  * kontenera, deploy, OOM) zostawiała bazę ZMIGROWANĄ, ale NIEODNOTOWANĄ, więc przy
  * następnym starcie runner puszczał ten sam skrypt drugi raz. Migracje oparte na
- * `CREATE TABLE IF NOT EXISTS` to przeżywały, ale migracja 3 (`ADD CONSTRAINT`)
+ * `CREATE TABLE IF NOT EXISTS` to przeżywały, ale `ADD CONSTRAINT`
  * i 6 (`ADD COLUMN`) nie mają takiego zabezpieczenia — powtórka kończyła się błędem
  * i serwer NIE WSTAWAŁ, aż ktoś ręcznie poprawił bazę.
  *
@@ -58,6 +58,26 @@ export async function migrate(
     'SELECT COALESCE(MAX(version), 0) AS version FROM schema_migrations',
   );
   const current = Number(rows[0]?.version ?? 0);
+
+  // ── Baza NOWSZA niż kod = odmowa startu ──────────────────────────────────────
+  // Runner pyta o `MAX(version)`, więc gdy baza odnotowała więcej pozycji, niż zna kod,
+  // pętla niżej nie ma ANI JEDNEJ iteracji — także wtedy, gdy dojdzie kolejna migracja
+  // (`for (v = 23; v < 2; …)`). Serwer wstałby wtedy na bazie bez nowej kolumny, a
+  // pierwszym objawem byłby błąd zapytania w losowym miejscu. Cisza jest tu gorsza niż
+  // odmowa startu.
+  //
+  // Dwie drogi do tego stanu: WYCOFANIE wdrożenia na starszy kod oraz — jednorazowo —
+  // zgniecenie 23 migracji w jedną bazową (2026-08-08). Bazy deweloperskie założone przed
+  // zgnieceniem mają w `schema_migrations` numery do 23; schemat jest identyczny, więc
+  // naprawą jest `DELETE FROM schema_migrations WHERE version > 1`, a nie migracja.
+  if (current > migrations.length) {
+    throw new Error(
+      `Baza jest nowsza niż kod: schema_migrations ma wersję ${current}, a kod zna ${migrations.length}. ` +
+        'Kolejne migracje NIE zostałyby uruchomione, więc runner odmawia startu. ' +
+        'Po zgnieceniu migracji (2026-08-08) na bazie deweloperskiej: ' +
+        'DELETE FROM schema_migrations WHERE version > 1.',
+    );
+  }
 
   for (let v = current; v < migrations.length; v += 1) {
     // Numer wersji wstawiamy do SQL-a dosłownie, bo polecenie wieloczłonowe nie

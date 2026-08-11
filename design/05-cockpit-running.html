@@ -366,10 +366,14 @@
     <div class="phase-hero">
       <div class="phase-body">
         <div class="phase-hero-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5,19H21.5V21H2.5V19M22.07,9.64C21.86,8.84 21.03,8.36 20.23,8.58L14.92,10L8,3.57L6.09,4.08L10.23,11.25L5.26,12.58L3.29,11.04L1.84,11.43L3.66,14.59L4.43,15.92L6.03,15.5L11.34,14.07L15.69,12.91L21,11.5C21.81,11.26 22.28,10.44 22.07,9.64Z"/></svg>
+          <!-- dziób w prawo, poziomo — przelot; wznoszenie/zniżanie mają własne glify -->
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(90 12 12)"><path d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z"/></g></svg>
         </div>
         <div class="phase-text">
-          <div class="phase-hero-name air">Climb</div>
+          <!-- CRUISE, nie Climb (2026-08-11): ten mockup pokazuje AKTYWNY przycisk
+               zrzutu, a zrzut jest aktywny wyłącznie w locie poziomym — wyniesienie
+               w Climb pokazuje 05B, z przygaszonym przyciskiem. -->
+          <div class="phase-hero-name air">Cruise</div>
           <!-- Bez prędkości wznoszenia (2026-08-04): aplikacja to rejestrator, nie
                przyrząd — wariometr jest na tablicy, a trend niesie nazwa fazy.
                Linia `.phase-hero-sub` wraca tylko w kontekstach statusowych (05f/05g). -->
@@ -483,13 +487,22 @@
     </div>
 
     <!-- BOTTOM ACTIONS
-         PRZYCISK „ZRZUT" ISTNIEJE TYLKO W DNIU SKOKOWYM (issue #19). Ten mockup opisuje
-         dzień skoków, więc przycisk tu jest — ale przy przelocie, egzaminie, locie
-         technicznym i „innych" NIE MA GO W OGÓLE, a nie jest wyszarzony: nie ma czego
-         wynosić, więc zdarzenie `drop` nie może się wydarzyć. Wyszarzenie mówiłoby
-         „teraz nie, ale kiedyś tak", a to nieprawda o tym dniu. Przygaszenie zostaje
-         wyłącznie dla dnia skokowego NA ZIEMI (wyniesienie dzieje się w powietrzu) —
-         i bez mikropodpisu pod etykietą, bo pilotowi nie tłumaczymy jego własnej roboty.
+         PRZYCISK „ZRZUT" ISTNIEJE TYLKO W DNIU SKOKOWYM (issue #19): przy przelocie,
+         egzaminie, locie technicznym i „innych" NIE MA GO W OGÓLE — nie ma czego
+         wynosić, więc zdarzenie `drop` nie może się wydarzyć, a wyszarzenie mówiłoby
+         „teraz nie, ale kiedyś tak".
+         W dniu skokowym przycisk żyje WYŁĄCZNIE w powietrzu (w stanach naziemnych
+         05H/05A/05C/05D nie ma go wcale) i jest AKTYWNY tylko w locie poziomym
+         (decyzja 2026-08-11): wyniesienie dzieje się w Cruise, więc w Climb i Descent
+         stoi przygaszony (patrz 05B) — w locie pasek musi trzymać stałą geometrię,
+         bo pilot sięga po przyciski nie patrząc.
+         Bramka fazy działa TYLKO na pozytywnej wiedzy detektora (poprawka 2026-08-11
+         z urządzenia): przygasza wyłącznie Climb/Descent, które GPS aktywnie widzi.
+         Po starcie zapisanym RĘCZNIE detektor dalej twierdzi, że samolot stoi — taki
+         brak wiedzy nie przygasza niczego, inaczej zamykałby zrzut na cały lot.
+         Z tego samego powodu bez GPS (05G) przycisk zostaje aktywny: faza nieznana,
+         a ręczny zapis to jedyna droga.
+         Bez mikropodpisu pod etykietą, bo pilotowi nie tłumaczymy jego własnej roboty.
          Pełne nazwy zamiast skrótów „T/O" i „LAND": pasek akcji jest jedynym miejscem,
          gdzie pilot ZAPISUJE zdarzenie, a skrót oszczędzał znaki na przycisku o dwóch
          trzecich szerokości ekranu. -->
@@ -498,7 +511,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
         Landing
       </a>
-      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu — wysokość z GPS, pilot ustawia liczby skoczków">
+      <a href="05e-zrzut.html" class="zrzut-btn" title="Zapis zrzutu — wysokość z GPS, pilot ustawia liczby skoczków · aktywny w locie poziomym (Cruise)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 8c0 5 7 14 7 14s7-9 7-14c0-3-2.5-6-7-6z"/><circle cx="12" cy="8" r="2" fill="currentColor" stroke="none"/></svg>
         <span class="zrzut-btn-lbl">Zrzut</span>
       </a>
@@ -513,7 +526,8 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: silnik ON, GS < 5 kt, przed pierwszym T/O — autodetekcja czeka na start"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
   <a href="05-cockpit-running.html" class="active" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
   <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
   <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
@@ -526,6 +540,7 @@
   <a href="index.html">↩ Index</a>
   <span>·</span>
   <a href="04a-cockpit-ground.html">← 04A Ground start</a>
+  <a href="05h-cockpit-idle.html">05H Idle</a>
   <a href="05a-cockpit-taxi.html">05A Taxi</a>
   <a href="05b-cockpit-inflight-toast.html">05B Toast T/O</a>
   <a href="05-cockpit-running.html" class="active">05 In Flight</a>
@@ -536,7 +551,9 @@
   <span>·</span>
   <a href="04-cockpit-ground.html">04 Ground mid-day</a>
   <span>·</span>
-  <a href="06-tankowanie.html">06 Paliwo →</a>
+  <a href="06-tankowanie.html">06 Paliwo</a>
+  <span>·</span>
+  <a href="04-cockpit-ground.html">04 Po zatrzymaniu →</a>
 </nav>
 </body>
 </html>

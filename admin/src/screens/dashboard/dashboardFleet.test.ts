@@ -32,7 +32,7 @@ const engine = (over: Partial<EngineStateDto> = {}): EngineStateDto => ({
   openTakeoffAt: null,
   engineStoppedAt: null,
   lastEventAt: NOW - 10 * MINUTE,
-  dutyStart: NOW - 6 * HOUR,
+  claimedAt: NOW - 6 * HOUR,
   departureIcao: 'EPMO',
   dualId: null,
   dualName: null,
@@ -66,7 +66,7 @@ function row(over: {
               picId: 'TMK',
               picCode: 'TMK',
               picName: 'Tomasz Małkiewicz',
-              since: over.engine.dutyStart,
+              since: over.engine.claimedAt,
             },
       reading:
         over.reading === undefined
@@ -221,28 +221,31 @@ describe('wiek odczytu przy jednostce WOLNEJ nie jest ostrzeżeniem', () => {
   });
 });
 
-describe('opis dnia i przejście wiersza', () => {
-  it('linia opisu składa claim, duty, lotnisko i drugiego pilota', () => {
+describe('opis sesji i przejście wiersza', () => {
+  it('linia opisu składa claim, czas zajęcia MASZYNY, lotnisko i drugiego pilota', () => {
+    // Do etapu D stało tu „duty 6:24". Po §3.6a to pomyłka kategorii: wiersz floty
+    // mierzy, jak długo MASZYNA jest w czyichś rękach, a służba należy do PILOTA
+    // i potrafi objąć kilka maszyn — więc jednej z nich nie opisuje.
     const view = one(
       row({
         engine: engine({
           engineRunning: true,
           inFlight: true,
-          dutyStart: NOW - 6 * HOUR - 24 * MINUTE,
+          claimedAt: NOW - 6 * HOUR - 24 * MINUTE,
           departureIcao: 'EPMO',
           dualId: 'MBK',
           dualName: 'Marek Bąk',
         }),
       }),
     );
-    expect(view.since).toBe('claim 07:58 · duty 6:24 · EPMO · dual: Marek Bąk');
+    expect(view.since).toBe('claim 07:58 · zajęty 6:24 · EPMO · dual: Marek Bąk');
   });
 
-  it('sesja bez preflightu NIE UDAJE duty startu', () => {
-    // Dzień bez `preflight_confirm` nie ma daty ani duty startu — liczenie „duty 0:00"
+  it('sesja bez claimu NIE UDAJE daty przejęcia', () => {
+    // Rejestr bez `session_claim` jest niekompletny (§4.4) — liczenie „zajęty 0:00"
     // byłoby wymyśleniem wielkości, której nie ma.
-    const view = one(row({ engine: engine({ dutyStart: null, departureIcao: null }) }));
-    expect(view.since).toBe('claim bez preflightu');
+    const view = one(row({ engine: engine({ claimedAt: null, departureIcao: null }) }));
+    expect(view.since).toBe('claim bez daty w rejestrze');
   });
 
   it('wiersz z otwartym dniem prowadzi na KARTĘ DNIA, wolny — do szuflady jednostki', () => {

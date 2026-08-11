@@ -255,14 +255,14 @@ export function CrewChangeScreen({
           />
 
           <ActionButton
-            label="PRZEKAŻ — ZAMKNIJ DZIEŃ"
+            label="PRZEKAŻ — ZDAJ SAMOLOT"
             tone="red"
             variant="secondary"
             size="md"
             icon="end-day"
-            onPress={() => navigation.navigate('EndOfDay')}
+            onPress={() => navigation.navigate('ReleaseAircraft')}
           />
-          <Caption text="Prowadzi do zamknięcia dnia (odczyty końcowe) · działa offline — dane dojdą po powrocie zasięgu" />
+          <Caption text="Prowadzi do zdania samolotu (odczyty końcowe) · działa offline — dane dojdą po powrocie zasięgu" />
         </Card>
 
         {lastError != null && (

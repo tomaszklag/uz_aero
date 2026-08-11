@@ -85,7 +85,7 @@ interface RevisionDbRow {
  * TRZECH pól z tego samego, najświeższego wiersza (`revision`, `exported_at`,
  * `sheet_url`), a agregat oddałby maksimum każdego z osobna — czyli mógłby skleić numer
  * z jednej wysyłki z adresem z innej. Przy `ORDER BY revision DESC LIMIT 1` planer
- * schodzi po indeksie unikalności z migracji 14.
+ * schodzi po `uq_export_log_card_revision`.
  *
  * Flagi blokujące jadą podzapytaniem agregującym IDENTYFIKATORY, nie samą liczbą: wiersz
  * ma prowadzić DO KONKRETNEJ flagi („Do flagi #1046"), a licznik kazałby administratorowi
@@ -99,19 +99,28 @@ interface RevisionDbRow {
  * wycofany z rejestru nie mogą usuwać dnia lotnego z monitora eksportu.
  *
  * DRUGI `LEFT JOIN LATERAL` (`ow`) odpowiada na pytanie, którego ekran do 2026-08-01 nie
- * zadawał: **czy kartę o tej nazwie zapisał ktoś inny PÓŹNIEJ**. Nazwa karty niesie dzień
- * i samolot (`YYYY-MM-DD_SP-XXX`), ale nie sesję, więc poranna i popołudniowa zmiana na
- * jednym samolocie budują kartę o tej samej nazwie — a `exported_sheets` jest po `tab`
- * UPSERT-owane, czyli druga nadpisuje pierwszą. Szukamy po `(day, aircraft_id)`, bo TE
- * DWIE KOLUMNY dziennika są nazwą karty rozłożoną na czynniki (`sheetTabName` skleja
- * dokładnie je). Warunek porównania jest kierunkowy z rozmysłem: nadpisany jest ten, kto
- * pisał WCZEŚNIEJ, a ostatni autor nie jest niczyją ofiarą.
+ * zadawał: **czy kartę o tej nazwie zapisano PÓŹNIEJ BEZ TEJ SESJI**. Szukamy po
+ * `(day, aircraft_id)`, bo TE DWIE KOLUMNY dziennika są nazwą karty rozłożoną na czynniki
+ * (`sheetTab` skleja dokładnie je).
  *
- * Porównujemy PARĘ `(exported_at, id)`, nie sam stempel. `exported_at` nadaje `Clock`
- * aplikacji i dwa eksporty potrafią trafić w tę samą milisekundę — wtedy sam stempel nie
- * rozstrzyga NICZEGO i obie karty wyszłyby jako nienadpisane (albo, przy `>=`, obie jako
- * nadpisane wzajemnie). `id` jest sekwencją, więc niesie kolejność WPISU do dziennika
- * i domyka remis w jedyną stronę, w którą da się go domknąć uczciwie.
+ * ══ CO TO ZNACZY PO PRZEJŚCIU NA KARTĘ DOBY (2026-08-07) ══
+ * Wada, dla której to pole powstało, ZNIKNĘŁA z konstrukcji: karta jest dobą samolotu,
+ * więc poranna i popołudniowa zmiana są dziś WIERSZAMI jednego dokumentu, a nie dwoma
+ * dokumentami o wspólnej nazwie. Wszystkie sesje jednej rewizji mają ten sam numer, więc
+ * `o.revision > e.revision` nie zapali się między nimi — i o to chodzi.
+ *
+ * Pole zostaje z dwóch powodów. Po pierwsze, dalej ma realną treść: sesja WYŁĄCZONA
+ * z karty otwartą flagą (§4.7 — bramka obejmuje sesję, nie kartę) zostaje przy swojej
+ * ostatniej rewizji, a doba idzie dalej bez niej; wtedy `overwrittenBy` mówi dokładnie to,
+ * co powinno — „treść leżąca dziś pod tą nazwą nie opisuje tego wiersza". Po drugie jest
+ * SYGNALIZATOREM: gdyby kiedykolwiek zapaliło się dla dwóch sesji tej samej doby, znaczyłoby,
+ * że powstały dwie karty jednego dokumentu — czyli że zmiana z 2026-08-07 gdzieś się cofnęła.
+ *
+ * Porównanie idzie po REWIZJI, a nie po parze `(exported_at, id)` jak do 2026-08-07.
+ * Stempel czasu przestał rozstrzygać: wiersze jednej rewizji dzielą `exported_at` z tego
+ * samego `Clock`, a `id` rośnie w obrębie jednego `INSERT`-a — porównanie po `id` uznałoby
+ * pierwszą sesję karty za nadpisaną przez drugą sesję TEJ SAMEJ karty. Numer rewizji jest
+ * jedyną osią, która opisuje kolejność DOKUMENTÓW, a nie kolejność wierszy.
  */
 const selectSql = (blockingTypes: string): string => `
   SELECT s.session_uuid,
@@ -144,7 +153,7 @@ const selectSql = (blockingTypes: string): string => `
       SELECT el.revision, el.exported_at, el.sheet_url, el.day, el.aircraft_id, el.id
         FROM export_log el
        WHERE el.session_uuid = s.session_uuid
-       ORDER BY el.revision DESC, el.id DESC
+       ORDER BY el.exported_at DESC, el.id DESC
        LIMIT 1
     ) e ON TRUE
     LEFT JOIN LATERAL (
@@ -153,8 +162,8 @@ const selectSql = (blockingTypes: string): string => `
        WHERE o.day = e.day
          AND o.aircraft_id = e.aircraft_id
          AND o.session_uuid <> s.session_uuid
-         AND (o.exported_at, o.id) > (e.exported_at, e.id)
-       ORDER BY o.exported_at DESC, o.id DESC
+         AND o.revision > e.revision
+       ORDER BY o.revision DESC, o.id DESC
        LIMIT 1
     ) ow ON TRUE`;
 
@@ -199,10 +208,9 @@ const toJoin = (r: ExportJoinDbRow): AdminExportJoin => ({
   // Kolumna jest wolnym tekstem z `DEFAULT 'active'`; monitor rozróżnia wyłącznie
   // „zamknięty czy nie", bo tylko to jest bramką eksportera.
   status: r.status === 'closed' ? 'closed' : 'active',
-  // `claim_time` NIESIE `SessionState.dutyStart` — tak mapuje je `sessionRowFrom` od
-  // pierwszej wersji projekcji (rozbieżność NAZWY z zawartością jest osobną sprawą,
-  // opisaną w `application/common/mappers/sessionRow.ts`).
-  dutyStart: r.claim_time == null ? null : Number(r.claim_time),
+  // `claim_time` niesie chwilę przejęcia samolotu (decyzja 2026-08-07) — dobę karty liczymy
+  // z niej, bo karta jest DOBĄ SAMOLOTU (§4.7), a nie służbą pilota.
+  claimedAt: r.claim_time == null ? null : Number(r.claim_time),
   updatedAt: new Date(r.updated_at),
   blockingFlagIds: r.blocking_flag_ids.map(Number),
   revision: r.revision,

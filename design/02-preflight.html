@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02 Preflight</title>
+<title>UZ Aero — 02 Przejęcie samolotu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -326,7 +326,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 02</span>
-  <span class="slug">preflight briefing · formularz</span>
+  <span class="slug">przejęcie · samolot i załoga</span>
   <span class="canvas-meta"><span class="pulse"></span>Screen 2 / 11</span>
 </header>
 
@@ -348,10 +348,10 @@
          Online w nagłówku zostaje sam badge kroku. -->
     <div class="app-header">
       <div class="header-left">
-        <div class="screen-title">PREFLIGHT</div>
+        <div class="screen-title">PRZEJĘCIE</div>
       </div>
       <div class="header-right">
-        <div class="step-badge">1 / 4</div>
+        <div class="step-badge">1 / 3</div>
       </div>
     </div>
 
@@ -382,9 +382,9 @@
           <!-- SP-FGK prowadzi inny PIC: cała karta jest LINKIEM do podglądu 04B, a nie
                pozycją do zaznaczenia. Przejęcie (§4.4) odbiera poprzedniemu PIC prawo
                zapisu, więc tej decyzji nie podejmuje się z listy — dopiero na 04B, po
-               zobaczeniu, co się z samolotem dzieje (log dnia, wiek danych, ostrzeżenie).
+               zobaczeniu, co się z samolotem dzieje (log samolotu, wiek danych, ostrzeżenie).
                Dlatego zamiast kółka wyboru stoi tu oko. -->
-          <a class="aircraft-option locked" href="04b-cockpit-readonly.html" title="Podgląd read-only — stan i log dnia; stamtąd przejmujesz samolot (04B)">
+          <a class="aircraft-option locked" href="04b-cockpit-readonly.html" title="Podgląd read-only — stan i log samolotu; stamtąd przejmujesz samolot (04B)">
             <div class="aircraft-body">
               <div class="aircraft-row">
                 <div class="aircraft-reg">SP-FGK</div>
@@ -439,26 +439,16 @@
       </div>
 
       <!-- USUNIĘTE STĄD (decyzja 2026-07-30): rodzaj operacji, trasa i oznaczenie
-           klienta przeniosły się do kroku 2 (02E „Zadanie dnia"). Ten ekran zbiera
-           WYBORY Z LIST — samolot (z przejęciem po innym PIC) i drugiego pilota —
-           a obie listy rosną z flotą i liczbą kont. Meldunek zostaje tutaj, bo
-           odpowiada na „od kiedy jesteś na służbie", nie na „co dziś robimy". -->
-      <!-- SEKCJA: CZAS SŁUŻBY -->
-      <div class="section">
-        <div class="field">
-          <div class="field-label">Czas meldowania</div>
-          <div class="field-input filled">
-            <span style="font-family: var(--font-mono); font-size: 22px; font-weight: 700; letter-spacing: 2px;">08:00 <span style="font-size: 12px; color: var(--text-muted); letter-spacing: 1px;">UTC</span></span>
-            <span style="display:flex; align-items:center; gap:10px;">
-              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1px;">10:00 LT</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </span>
-          </div>
-          <div class="time-row">
-            <div class="time-date-badge">22 CZERWCA 2026</div>
-          </div>
-        </div>
-      </div>
+           klienta przeniosły się do kroku 2 (02E „Zadanie"). Ten ekran zbiera WYBORY
+           Z LIST — samolot (z przejęciem po innym PIC) i drugiego pilota — a obie
+           listy rosną z flotą i liczbą kont.
+
+           USUNIĘTY STĄD TAKŻE CZAS MELDOWANIA (przebudowa flow): pytanie „od kiedy
+           jesteś na służbie" nie ma prawa stać na drodze do samolotu. Służba nie
+           jest kontenerem na loty, tylko klamrą wokół nich — domyślnie bierze się
+           z pierwszego wzlotu, a pilot poprawia ją po fakcie w „Mój dzień" (01),
+           jeśli zameldował się wcześniej. Przejęcie samolotu ma trwać kilka
+           sekund, nie otwierać dnia. -->
 
       <!-- CTA Button -->
       <a href="02e-preflight-zadanie.html" class="btn-primary" id="btn-next">
@@ -471,7 +461,7 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty ekranu preflight (krok 1) — kiedy który?</div>
+  <div class="vp-title">Warianty ekranu przejęcia (krok 1) — kiedy który?</div>
   <a class="vp-item active" href="02-preflight.html">
     <span class="vp-badge">02</span>
     <span class="vp-body">
@@ -492,14 +482,14 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="01-splash.html">← 01 Splash</a>
+  <a href="01-moj-dzien.html">← 01 Mój dzień</a>
   <span>·</span>
   <a href="02-preflight.html" class="active">02 Preflight</a>
   <a href="02d-preflight-offline.html">02D Offline →</a>
   <a href="02e-preflight-zadanie.html">02E Zadanie →</a>
   <a href="02a-preflight.html">02A Paliwo/MH →</a>
   <span>·</span>
-  <a href="03-preflight-confirm.html">03 Potwierdź →</a>
+  <a href="04a-cockpit-ground.html">04A Kokpit →</a>
 </nav>
 
 <script>

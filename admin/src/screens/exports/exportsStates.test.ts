@@ -22,12 +22,23 @@ describe('stany karty', () => {
   });
 
   it('kropka „to trwa" tylko tam, gdzie coś faktycznie trwa', () => {
-    // Dzień w toku i flaga czekająca na człowieka — tak. Karta w arkuszu i sesja bez
-    // preflightu to stany zastane, nie procesy.
+    // Sesja w toku i flaga czekająca na człowieka — tak. Karta w arkuszu i sesja bez
+    // claimu to stany zastane, nie procesy.
     expect(EXPORT_STATE_META.waiting.dot).toBe(true);
     expect(EXPORT_STATE_META.blocked.dot).toBe(true);
     expect(EXPORT_STATE_META.current.dot).toBe(false);
     expect(EXPORT_STATE_META.impossible.dot).toBe(false);
+  });
+
+  it('stany nazywają SESJĘ, a nie „dzień lotny" — karta jest DOBĄ SAMOLOTU', () => {
+    // Po §4.7 jedna karta zbiera wszystkie sesje pary (doba, maszyna), więc „Czeka ·
+    // dzień otwarty" mówiło o niewłaściwym bycie: sesja w toku bywa już wierszem karty,
+    // którą zbudowała poranna zmiana tej samej maszyny.
+    expect(EXPORT_STATE_META.waiting.label).toBe('Czeka · sesja w toku');
+    expect(EXPORT_STATE_META.blocked.note).toContain('karty doby');
+    // `impossible` to brak `session_claim`, a nie brak preflightu — po §3.6a preflight
+    // przestał być warunkiem daty.
+    expect(EXPORT_STATE_META.impossible.label).toBe('Bez claimu');
   });
 });
 
@@ -59,7 +70,7 @@ describe('wynik ponowienia jako zdanie', () => {
     const message = retryMessage({ exported: false, reason: 'overlap_flag' }, 2, null);
 
     expect(message.tone).toBe('warn');
-    expect(message.body).toContain('session_overlap');
+    expect(message.body).toContain('aircraft_overlap');
     expect(message.body).toContain('nie omija');
   });
 

@@ -43,7 +43,10 @@ async function writeDay(
       operation: 'skoki',
       departureIcao: null,
       arrivalIcao: null,
-      dutyStart: t(0),
+      // Meldunek GODZINĘ PRZED przejęciem samolotu — tak wygląda zwykły dzień: pilot jest
+      // na lotnisku od 07:00, a maszynę bierze o 08:00. Te dwie godziny rozsuwamy celowo,
+      // żeby karta historii nie mogła pomylić sesji samolotu ze służbą pilota (§3.6a).
+      dutyStart: t(-60),
       reading: { fuelL: 150, mh: 1234.5 },
       client: null,
       mhFormat: 'hhmm',
@@ -63,7 +66,10 @@ async function writeDay(
   await repo.appendEvent({
     ...base,
     type: 'day_close',
-    payload: { finalReading: { fuelL: 110, mh: 1236.87 }, dutyEnd: t(525) },
+    // BEZ `dutyEnd` — dokładnie tak, jak wysyła to ekran „Zdaj samolot" (§3.6a: zdanie
+    // maszyny nie kończy dnia pilota). Fixture podawał tu godzinę i przez to ukrywał
+    // wadę, w której historia gubiła każdą poprawnie zdaną sesję.
+    payload: { finalReading: { fuelL: 110, mh: 1236.87 } },
     deviceTime: t(525),
   });
 }
@@ -84,9 +90,15 @@ describe('historia dni (ekran 12)', () => {
     expect(day.stats).toEqual([
       { k: 'Loty', v: '1' },
       { k: 'Block', v: '2:22' }, // 8:12 → 10:34, ta sama liczba co na ekranie 10
-      { k: 'Duty', v: '8:45' },
+      // Karta opisuje SESJĘ SAMOLOTU: przejęcie 08:00 → zdanie 16:45 = 8:45. Służba
+      // pilota trwała 9:45 (meldunek 07:00) i celowo NIE jest tą liczbą — należy do
+      // pilota, nie do maszyny, i potrafi objąć kilka samolotów (§3.6a).
+      { k: 'Sesja', v: '8:45' },
       { k: 'Skoczków', v: '4' },
     ]);
+    // Model 2026-08-10: okno kotwiczy się w ZDANIU samolotu (zatwierdzenie logu),
+    // nie w zgaszeniu silnika. Pilot oddał maszynę o 16:45, więc termin to
+    // 23 CZE 16:45 — od tej chwili biegnie jego prawo do samodzielnej poprawki.
     expect(day.deadline).toBe('Korekta do 23 CZE 16:45');
     expect(day.remaining).toBe('zostało 23 h 04 min');
   });

@@ -243,3 +243,34 @@ describe('bramka górna — znaleziona przebiegiem po realnej historii (2026-08-
     expect(buildFuelIntervals(events).intervals[0]!.rejected).toBeNull();
   });
 });
+
+/**
+ * Zamknięcie wzlotu jako granica interwału (etap B4, §3.6b).
+ *
+ * Odczyt przy `leg_close` jest OPCJONALNY, więc ten sam dzień daje różną liczbę
+ * interwałów w zależności od tego, czy pilot go zrobił. To nie jest niedoskonałość
+ * implementacji — to bezpośrednia konsekwencja decyzji z §3.6 i dokładnie ten kompromis,
+ * który §3.6b opisuje jako znane ryzyko.
+ */
+describe('interwały paliwowe — sesja domknięta odczytami z obu stron (2026-08-10)', () => {
+  // Do 2026-08-10 stał tu blok `leg_close`: odczyt przy wzlocie dzielił sesję na dwa
+  // interwały, a jego brak zostawiał jeden. Pivot skasował zdarzenie — granice stawia
+  // wyłącznie przejęcie, tankowanie i zdanie, a KAŻDA sesja jest domknięta z obu stron.
+  it('sesja bez tankowań to dokładnie JEDEN interwał: przejęcie → zdanie', () => {
+    const { intervals } = buildFuelIntervals([
+      preflight(at(8, 0), 150),
+      event('engine_start', at(8, 12)),
+      event('takeoff', at(8, 25), { method: 'auto' }),
+      event('landing', at(9, 18), { method: 'auto' }),
+      event('takeoff', at(9, 40), { method: 'auto' }),
+      event('landing', at(10, 55), { method: 'auto' }),
+      event('engine_stop', at(11, 10)),
+      dayClose(at(11, 20), 108, 1236.9),
+    ]);
+
+    expect(intervals).toHaveLength(1);
+    expect(intervals[0]!.startKind).toBe('preflight');
+    expect(intervals[0]!.endKind).toBe('day_close');
+    expect(intervals[0]!.consumedL).toBeCloseTo(42, 6); // 150 → 108
+  });
+});

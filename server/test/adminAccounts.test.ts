@@ -775,7 +775,7 @@ describe('POST /admin/api/pilots/:id/password-reset — jedyna ścieżka zmiany 
   it('RESET ZABIJA SESJĘ PANELU — tę, której nie ma w żadnej tabeli', async () => {
     // Najcięższa własność tego przekroju. Sesja panelu to podpisany JWT w ciasteczku
     // `uzaero_admin` z TTL 8 h — `revokeAllFor` kasuje `refresh_tokens`, czyli sesje
-    // TELEFONU, i nie ma czego skasować tutaj. Przed migracją 13 wykradzione
+    // TELEFONU, i nie ma czego skasować tutaj. Przed `pilots.credentials_valid_from` wykradzione
     // poświadczenie panelu przeżywało reset hasła o cały TTL, a ekran A06a pisał
     // „Aktywne sesje pilota — unieważnione".
     const { app, clock } = await testHarness();

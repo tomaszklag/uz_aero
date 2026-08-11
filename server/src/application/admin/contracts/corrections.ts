@@ -70,4 +70,19 @@ export interface AdminCorrectionPreview {
   before: SessionState;
   after: SessionState;
   violations: RuleViolation[];
+  /**
+   * Miękkie naruszenia — KOLIZJE, nie powody odmowy. Panel pokazuje je jako baner nad
+   * formularzem korekty.
+   *
+   * Istnieją od 2026-08-07 i zastępują bramkę `400 day_open`, którą podgląd i komenda
+   * odrzucały wcześniej razem. Powód zniknięcia bramki jest merytoryczny: po §3.6a brak
+   * `day_close` przestał znaczyć „dzień trwa" (zdanie samolotu jest opcjonalne), więc
+   * odmowa dotykałaby przede wszystkim spraw, w których korekta jest naprawdę potrzebna.
+   *
+   * Dwa kody, dwie różne kolizje: `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi
+   * sesję i dośle własne zdarzenia — jego paczka trafi do tego samego strumienia)
+   * i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h od zdania jeszcze biegnie, więc obie
+   * strony mogą poprawiać naraz). Rozstrzyga człowiek, nie kod.
+   */
+  warnings: RuleViolation[];
 }

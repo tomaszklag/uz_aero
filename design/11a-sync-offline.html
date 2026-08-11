@@ -59,6 +59,9 @@
 
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
+  /* Karty z `overflow:hidden` zapadaja sie w kolumnie flex zamiast wyjechac poza
+     ekran do przewiniecia — ta sama wada, co naprawiona w 01 i 10. */
+  .scroll > * { flex-shrink:0; }
 
   /* status wysyłki */
   .sync-box { background:var(--surface); border:1px solid var(--amber-border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:9px; }
@@ -92,7 +95,7 @@
   /* przycisk synca — disabled z powodem */
   .btn-sync { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; padding:17px; border-radius:16px; background:var(--surface-hover); color:var(--text-muted); font-family:var(--font-display); font-size:21px; letter-spacing:3px; border:1px solid var(--border); cursor:not-allowed; }
   .btn-sync-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
-  /* GOTOWE — koniec dnia lotnego. Tu dostaje pełną zieleń, bo sync obok jest wygaszony
+  /* GOTOWE — powrót do „Mój dzień". Tu dostaje pełną zieleń, bo sync obok jest wygaszony
      (brak sieci) i to jedyna żywa akcja ekranu. Na 11 online z zaległością byłoby odwrotnie. */
   .btn-done { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; padding:18px 17px; border-radius:16px; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:22px; letter-spacing:3px; border:none; text-decoration:none; cursor:pointer; box-shadow:0 0 32px rgba(46,204,113,0.35); }
   .btn-done-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:rgba(13,13,13,0.6); text-transform:uppercase; }
@@ -179,9 +182,9 @@
 
       <!-- DANE LOKALNE — kompletne mimo braku sieci -->
       <div class="card">
-        <div class="card-head">Dane dnia · lokalne · kompletne</div>
+        <div class="card-head">Dane doby · lokalne · kompletne</div>
         <div class="card-body">
-          <div class="row"><span>22 CZERWCA 2026 · SP-AXA</span><span class="row-val">6 lotów</span></div>
+          <div class="row"><span>06 SIERPNIA 2026 · SP-AXA · SP-KLM</span><span class="row-val">3 wzloty</span></div>
           <div class="row"><span>Block time · MH</span><span class="row-val">6:39 · 1 234:30 → 1 241:09</span></div>
           <div class="row"><span>Paliwo</span><span class="row-val">150 +48 −110 = 88 L</span></div>
           <div class="row"><span>Zrzuty · klient SKY CAMP</span><span class="row-val">6 wyniesień · 22 skoczków</span></div>
@@ -201,7 +204,8 @@
       <!-- FLAGI — stan „nieznane", NIE zielone „brak ✓" -->
       <div class="unknown-box">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span class="unknown-text"><b>Flagi serwera: nieznane.</b> Serwer nie widział jeszcze 12 zdarzeń z tego dnia, więc nie mógł sprawdzić niespójności (nakładka czasowa, dziura MH, cofnięty licznik, rozjazd zegara, podwójny claim). Wynik pojawi się po synchronizacji.</span>
+        <!-- Nazwy typów flag: te same sześć co na 11 i w panelu (§4.5). -->
+        <span class="unknown-text"><b>Flagi serwera: nieznane.</b> Serwer nie widział jeszcze 12 zdarzeń z tego dnia, więc nie mógł sprawdzić niespójności (dwa telefony piszą do jednej maszyny, pilot rzekomo na dwóch maszynach naraz, dziura w łańcuchu MH, licznik się cofnął, paliwo poza tolerancją, zegar telefonu przestawiony). Wynik pojawi się po synchronizacji.</span>
       </div>
 
       <!-- RĘCZNY SYNC — disabled Z POWODEM -->
@@ -225,10 +229,10 @@
         </div>
       </div>
 
-      <!-- KONIEC DNIA — wyjście w przód działa TAKŻE offline.
-           §4.1 nie robi wyjątku dla ostatniego ekranu: 12 zdarzeń w kolejce nie może
-           uwięzić pilota na 11. Podpis mówi wprost, że wysyłka dokończy się bez niego. -->
-      <a class="btn-done" href="01-splash.html">
+      <!-- POWRÓT DO DNIA — wyjście w przód działa TAKŻE offline.
+           §4.1 nie robi wyjątku: 12 zdarzeń w kolejce nie może uwięzić pilota na 11.
+           Podpis mówi wprost, że wysyłka dokończy się bez niego. -->
+      <a class="btn-done" href="01-moj-dzien.html">
         <span>&#10003; GOTOWE</span>
         <span class="btn-done-sub">Wysyłka dokończy się sama</span>
       </a>
@@ -250,7 +254,7 @@
     <span class="vp-badge amber">11A</span>
     <span class="vp-body">
       <span class="vp-name">Offline — outbox niepusty</span>
-      <span class="vp-when">Brak sieci: licznik częściowy 35/47 z paskiem postępu, ręczny sync disabled z powodem, arkusz „jeszcze nie powstał", a flagi w stanie <b>nieznane</b> — bo serwer danych nie widział. Dane dnia są kompletne lokalnie.</span>
+      <span class="vp-when">Brak sieci: licznik częściowy 35/47 z paskiem postępu, ręczny sync disabled z powodem, arkusz „jeszcze nie powstał", a flagi w stanie <b>nieznane</b> — bo serwer danych nie widział. Dane doby są kompletne lokalnie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -259,11 +263,11 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="10-statystyki.html">← 10 Statystyki</a>
+  <a href="10-statystyki.html">← 10 Rozliczenie</a>
   <a href="11-eksport.html">11 Synchronizacja</a>
   <a href="11a-sync-offline.html" class="active">11A Offline</a>
   <span>·</span>
-  <a href="01-splash.html">01 Start dnia →</a>
+  <a href="01-moj-dzien.html">01 Mój dzień →</a>
 </nav>
 
 </body>

@@ -192,7 +192,7 @@ export function PreflightTaskScreen({
         <ScreenHeader
           title="PREFLIGHT"
           subtitle={[aircraft.reg, aircraft.type].filter(Boolean).join(' · ')}
-          step="2 / 4"
+          step="2 / 3"
           onBack={navigation.goBack}
           right={
             <SyncChip

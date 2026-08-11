@@ -28,10 +28,10 @@ import { denialReason } from '../../auth/can';
  * administratorowi surowy kod z bazy.
  */
 const REFUSAL_LABEL: Record<ExportRefusalDto, string> = {
-  no_events: 'brak zdarzeń w rejestrze tej sesji',
-  session_open: 'dzień nie jest zamknięty — karta powstaje dopiero po `day_close`',
-  no_preflight: 'brak potwierdzenia przedlotowego, nie ma z czego zbudować karty',
-  overlap_flag: 'otwarta flaga nakładki sesji wciąż trzyma tę kartę',
+  no_events: 'brak zdarzeń w rejestrze tej doby',
+  session_open: 'żadnej maszyny tej doby jeszcze nie zdano — karta powstaje po `day_close`',
+  no_preflight: 'sesja bez `session_claim`, więc karty nie da się nazwać',
+  overlap_flag: 'otwarta flaga `aircraft_overlap` wciąż trzyma tę sesję poza kartą doby',
 };
 
 export interface CorrectionOutcome {
@@ -136,20 +136,9 @@ export function correctionFailure(
     };
   }
 
-  if (status === 400 && body?.error === 'day_open') {
-    return {
-      tone: 'warn',
-      title: 'Ten dzień jest jeszcze otwarty.',
-      detail:
-        'Do zamknięcia dnia poprawia sam pilot, w aplikacji. Korekta administratora nie ' +
-        'wraca na telefon, więc wejście w otwartą sesję rozjechałoby dwa żywe obrazy tego ' +
-        'samego dnia. Panel nie powinien był tu wpuścić — jeśli to widzisz, dzień otworzył ' +
-        'się między wczytaniem karty a zapisem.',
-      violations: [],
-      final: true,
-    };
-  }
-
+  // ZNIKŁA STĄD GAŁĄŹ `400 day_open` (decyzja 2026-08-07). Serwer takiej odmowy już nie
+  // wysyła: administrator może edytować ZAWSZE, a kolizja z pilotem jedzie jako
+  // OSTRZEŻENIE nad formularzem (`correctionWarnings.ts`), nie jako odmowa po zapisie.
   if (status === 400) {
     return {
       tone: 'danger',

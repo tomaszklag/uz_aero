@@ -120,8 +120,9 @@ export function boundLabel(kind: string): string {
       return 'preflight';
     case 'refuel':
       return 'tankowanie';
+    // ('leg_close' bywał granicą interwału do 2026-08-10 — znikł razem ze zdarzeniem)
     case 'day_close':
-      return 'zamknięcie';
+      return 'zdanie';
     default:
       return kind;
   }

@@ -39,7 +39,7 @@ export type AuthOutcome =
 
 /**
  * Czy token wydany w chwili `issuedAt` (sekundy epoki) jest STARSZY niż unieważnienie
- * poświadczeń konta (`pilots.credentials_valid_from`, migracja 13).
+ * poświadczeń konta (`pilots.credentials_valid_from`).
  *
  * To jedyny sposób, w jaki reset hasła i deaktywacja zrywają sesję PANELU: ta sesja
  * jest podpisanym JWT w ciasteczku `HttpOnly` i NIE MA dla niej wiersza w bazie, więc

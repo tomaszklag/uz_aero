@@ -534,7 +534,7 @@
         <div class="tiles">
           <div class="tile"><span class="tile-key">Wpisy w zawężeniu</span><span class="tile-val">13</span><span class="tile-note">Liczba z serwera (<code>total</code> całym filtrem), nie z pobranej strony.</span></div>
           <div class="tile"><span class="tile-key">Wpisy dziś · UTC</span><span class="tile-val blue">7</span><span class="tile-note">Doba UTC, nie lokalna — przy zachowanym pozostałym zawężeniu.</span></div>
-          <div class="tile"><span class="tile-key">Korekty rejestru · 30 dni</span><span class="tile-val amber">3</span><span class="tile-note">Dopisania <code>event_correction</code> po oknie 24 h. Wyłącznie administrator.</span></div>
+          <div class="tile"><span class="tile-key">Korekty rejestru · 30 dni</span><span class="tile-val amber">3</span><span class="tile-note">Dopisania <code>event_correction</code> z panelu. Wyłącznie administrator.</span></div>
           <div class="tile"><span class="tile-key">Retencja</span><span class="tile-val green">∞</span><span class="tile-note">Bez limitu i bez czyszczenia — w kodzie nie ma <code>UPDATE</code> ani <code>DELETE</code> na tej tabeli.</span></div>
         </div>
 
@@ -619,7 +619,7 @@
               <tr>
                 <td class="num">31 JUL 2026 11:02:10<span class="cell-sub">#8812</span></td>
                 <td class="cell-strong"><a class="cell-link" href="#">Tomasz Małkiewicz</a><span class="cell-sub">admin · TMK</span></td>
-                <td><span class="pill amber">event.correct</span><span class="cell-sub">korekta po oknie 24 h</span></td>
+                <td><span class="pill amber">event.correct</span><span class="cell-sub">korekta administratora</span></td>
                 <td class="mono"><a class="cell-link" href="#">4c88…9a01</a><span class="cell-sub">event</span></td>
                 <td>
                   <span class="det">
@@ -743,7 +743,7 @@
                 <td>
                   <span class="det">
                     <span class="det-row"><span class="det-k">komentarz</span><span class="det-v">Telefon KRZ dosłał day_close o 07:58 — nakładka pozorna.</span></span>
-                    <span class="det-row"><span class="det-k">typ flagi</span><span class="det-v">session_overlap</span></span>
+                    <span class="det-row"><span class="det-k">typ flagi</span><span class="det-v">aircraft_overlap</span></span>
                     <span class="det-row"><span class="det-k">sesje</span><span class="det-v">9a11…77c4 · 2f60…01ab</span></span>
                   </span>
                 </td>
@@ -801,7 +801,7 @@
                 </thead>
                 <tbody>
                   <tr><td><span class="pill green">flag.resolve</span></td><td class="dim">rozwiązanie flagi</td><td><span class="pill green">admin + szef</span></td><td class="dim">Numer i typ flagi, sesje, których dotyczyła, oraz pełna treść komentarza.</td></tr>
-                  <tr><td><span class="pill amber">event.correct</span></td><td class="dim">korekta po oknie 24 h</td><td><span class="pill dim">admin</span></td><td class="dim">UUID poprawianego zdarzenia, rodzaj (<code>retime</code>/<code>void</code>), nowy czas i powód.</td></tr>
+                  <tr><td><span class="pill amber">event.correct</span></td><td class="dim">korekta administratora</td><td><span class="pill dim">admin</span></td><td class="dim">UUID poprawianego zdarzenia, rodzaj (<code>retime</code>/<code>void</code>), nowy czas i powód.</td></tr>
                   <tr><td><span class="pill blue">export.retry</span></td><td class="dim">ponowienie eksportu</td><td><span class="pill dim">admin</span></td><td class="dim">Nazwa karty, numer rewizji i próby, treść poprzedniego błędu.</td></tr>
                   <tr><td><span class="pill green">pilot.create</span></td><td class="dim">założenie konta</td><td><span class="pill dim">admin</span></td><td class="dim">Kod pilota, imię i nazwisko, e-mail, rola startowa.</td></tr>
                   <tr><td><span class="pill blue">pilot.update</span></td><td class="dim">edycja konta</td><td><span class="pill dim">admin</span></td><td class="dim">Każde zmienione pole przed → po — razem ze <b>zmianą roli</b>, która nie ma osobnego kodu.</td></tr>

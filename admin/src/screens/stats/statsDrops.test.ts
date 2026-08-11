@@ -78,7 +78,7 @@ describe('dropsView — dane kompletne', () => {
 });
 
 describe('dropsView — niewiedza i pustka', () => {
-  it('wiersze sprzed migracji 18: kafle „—", ZERO tabeli klientów, baner z powodem', () => {
+  it('wiersze sprzed kolumn statystyk: kafle „—", ZERO tabeli klientów, baner z powodem', () => {
     const data = statsFixture();
     data.drops.staleRows = 2;
     data.drops.lifts = null;
@@ -91,10 +91,10 @@ describe('dropsView — niewiedza i pustka', () => {
     for (const tile of view.tiles) expect(tile.value).toBe('—');
     expect(view.ribbon).toEqual([]);
     expect(view.clients).toEqual([]);
-    expect(view.note).toContain('migracji 18');
+    expect(view.note).toContain('kolumn statystyk');
     expect(view.note).toContain('twierdziłyby, że nikt nie skakał');
     // Licznik stale obejmuje TAKŻE dni bez rodzaju operacji (każdy MÓGŁ być skokowy)
-    // — zdanie stanu musi nazwać oba powody, nie tylko migrację 18.
+    // — zdanie stanu musi nazwać oba powody, nie tylko kolumny statystyk.
     expect(view.note).toContain('MÓGŁ być skokowy');
   });
 

@@ -56,10 +56,14 @@
   .route-info { display:flex; flex-direction:column; gap:2px; }
   .aircraft-code { font-family:var(--font-mono); color:var(--green); font-size:13px; font-weight:700; letter-spacing:1.5px; }
   .route-line { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; }
-  .sync-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
 
-  /* tło — log dnia (przygaszony, bo modal jest na wierzchu) */
+  /* tło — log sesji samolotu (przygaszony, bo modal jest na wierzchu) */
   .scroll { flex:1; overflow:hidden; padding:16px; display:flex; flex-direction:column; gap:14px; }
+  /* Karta z `overflow:hidden` zapada się w kolumnie flex zamiast zostać przycięta
+     krawędzią ekranu — ta sama wada, co naprawiona w 01 i 10. Tutaj `.scroll` samo
+     ma `overflow:hidden` (ekran jest tłem pod modalem), więc log ma być UCIĘTY,
+     a nie zgnieciony do wysokości nagłówka. */
+  .scroll > * { flex-shrink:0; }
   .day-log { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
   .day-log-header { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-raised); }
   .day-log-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
@@ -171,17 +175,13 @@
         <span class="aircraft-code">SP-AXA</span>
         <span class="route-line">EPKK · SKOKI</span>
       </div>
-      <div class="sync-chip" title="Korekta to zdarzenie lokalne — działa też offline, trafia do outboxa">
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        SYNC
-      </div>
     </div>
 
-    <!-- TŁO: log dnia z podświetlonym wierszem -->
+    <!-- TŁO: log sesji samolotu z podświetlonym wierszem -->
     <div class="scroll">
       <div class="day-log">
         <div class="day-log-header">
-          <span class="day-log-title">Log dnia · UTC · 2 cykle · 3 T/O</span>
+          <span class="day-log-title">Log SP-AXA · UTC · 2 cykle · 3 T/O</span>
         </div>
         <div class="log-cycle">
           <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
@@ -270,15 +270,15 @@
   <a class="vp-item" href="04a-cockpit-ground.html">
     <span class="vp-badge">04A</span>
     <span class="vp-body">
-      <span class="vp-name">Start dnia</span>
-      <span class="vp-when">Zaraz po potwierdzeniu preflightu — pusty log, pierwszy START ENGINE.</span>
+      <span class="vp-name">Przed uruchomieniem silnika</span>
+      <span class="vp-when">Zaraz po przejęciu — pusty log, zero wzlotów, pierwszy START ENGINE.</span>
     </span>
   </a>
   <a class="vp-item" href="04-cockpit-ground.html">
     <span class="vp-badge">04</span>
     <span class="vp-body">
-      <span class="vp-name">W trakcie dnia</span>
-      <span class="vp-when">Silnik OFF między lotami — log cykli, akcje ground.</span>
+      <span class="vp-name">Po zatrzymaniu silnika</span>
+      <span class="vp-when">Sesja zakończona: hero ZDAJ SAMOLOT, log jednej sesji (2026-08-10).</span>
     </span>
   </a>
   <a class="vp-item" href="04b-cockpit-readonly.html">
@@ -296,6 +296,13 @@
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
+  <a class="vp-item" href="04d-wyjscie-z-kokpitu.html">
+    <span class="vp-badge blue">04D</span>
+    <span class="vp-body">
+      <span class="vp-name">Blokada wyjścia z kokpitu</span>
+      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście — zdanie maszyny.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -304,6 +311,7 @@
   <a href="08-lista-reczna.html">← 08 Lista ręczna</a>
   <a href="04b-cockpit-readonly.html">04B Podgląd</a>
   <a href="04c-korekta-zdarzenia.html" class="active">04C Korekta</a>
+  <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
   <span>·</span>
   <a href="08-lista-reczna.html">08 Lista ręczna</a>
 </nav>

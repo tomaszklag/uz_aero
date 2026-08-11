@@ -1360,3 +1360,184 @@ i wyśle się sam.". W 05E analogiczna plakietka zostaje (inny arkusz, poza tą 
 > Powód: dwa komunikaty o jednym zapisie kazały czytać dwa razy, żeby dowiedzieć się raz.
 > To jest dokończenie tej samej myśli — „co się stanie z moim wpisem" — a nie druga
 > informacja, więc stoi w jednym miejscu.
+
+---
+
+## 2026-08-06 — Przebudowa flow: dzień służby przestaje być kontenerem na loty
+
+**Powód całości** (odwraca „jeden samolot = jeden dzień" z 2026-07-23): flow był zbudowany
+wokół dnia służby — żeby zapisać jeden lot, pilot musiał otworzyć i zamknąć służbę, a
+przesiadka na drugi samolot dawała dwie służby. W rzeczywistości typowy dzień to JEDEN lot
+i przekazanie maszyny; służba trwająca cały dzień jest rzadkością i przypadkiem szczególnym.
+> Nowa reguła: **loty są ZAPISYWANE, służba jest DEKLAROWANA i zawsze stanowi klamrę wokół
+> lotów** (duty ⊇ suma wzlotów). Klamra należy do pilota, nie do samolotu.
+
+**01-splash → 01-moj-dzien** (+ warianty 01a zero wzlotów, 01b dzień zamknięty) — splash
+awansuje na ekran domowy: klamra służby (meldunek / koniec) wokół listy wzlotów dnia,
+przekrojowo po WSZYSTKICH samolotach, z sumami służby / bloku / lotów.
+> Powód: odpowiedź na „jak pogodzić czas służby z pojedynczymi lotami" jest układem, nie
+> tekstem — jedna karta, w której klamra fizycznie otacza wzloty. Scenariusz główny pokazuje
+> jedną służbę na dwóch samolotach, bo to jest rzecz, której stary model nie umiał.
+
+**02-preflight → PRZEJĘCIE, czas meldowania usunięty** (także z 02D). Stepper 4 → 3 kroki.
+> Powód: pytanie „od kiedy jesteś na służbie" stało między pilotem a samolotem. Klamra
+> powstaje sama z pierwszego wzlotu i poprawia się po fakcie na 01.
+
+**03-preflight-confirm USUNIĘTY** — CTA „Przejmij i leć" na 02A prowadzi wprost do kokpitu.
+> Powód: ekran powtarzał to, co pilot wpisał sekundę wcześniej, i był czwartym tapem
+> w drodze do samolotu.
+
+**09-end-of-day → 09-zamknij-lot** (+ 09A seria skokowa, 09B zdaj samolot, 09C bez wzlotu).
+Jednostką potwierdzenia jest wzlot; odczyt liczników OPCJONALNY, wymagany dopiero przy
+zdaniu samolotu.
+> Powód opcjonalności: dzień skokowy to 8–12 wzlotów pod rząd i nikt nie chodzi do licznika
+> po każdym — wymóg zrobiłby z aplikacji coś wolniejszego od papieru. 09A mieści się
+> w całości z przyciskiem i to był warunek przyjęcia tego wariantu.
+> 09C zastępuje dawny „dzień bez lotów" (09A end-of-day): w nowym modelu dniem nie jest
+> sesja samolotu, więc stanem zerowym jest „przejąłem i nie poleciałem".
+
+**04, 04A, 04B** — duty timer zastąpiony paskiem sesji samolotu („SP-AXA · Twój od 09:05 ·
+2 wzloty"), który jest zarazem jedyną drogą powrotną do 01. „Log dnia" → „Log SP-AXA".
+> Powód: czas służby w kokpicie sugerował, że dzień kończy się razem z tym samolotem —
+> czyli dokładnie założenie, które ta przebudowa usuwa. W podglądzie cudzej maszyny (04B)
+> duty obcego pilota nie wnosiło nic do decyzji o przejęciu.
+
+**05A, 05D** — STOP ENGINE prowadzi do 09 (zamknięcie wzlotu), nie z powrotem do kokpitu.
+
+**01** — wzlot porzucony przez „Potwierdzę później" dostaje amber pasek „do potwierdzenia".
+> Powód: bez niego wzlot niepotwierdzony był w liście nieodróżnialny od potwierdzonego.
+> Pasek ZAPRASZA, nie ostrzega: czasy z detekcji już są w rejestrze i wchodzą do sum,
+> brakuje wyłącznie przejrzenia.
+
+**10, 10A → rozliczenie SAMOLOTU** (było: „statystyki dnia"). Bohaterem 10 jest czas
+blokowy sesji, nie czas służby; nagłówki bilansu mówią „przy przejęciu / przy zdaniu"
+zamiast „początek / koniec dnia"; CTA „ZATWIERDŹ → SYNC" zastąpione powrotem do 01.
+W 10A wielką cyfrą stoi czas TRZYMANIA maszyny.
+> Powód: paliwo i motogodziny są wielkościami samolotu i nie sumują się przez służbę
+> pilota lecącego dwiema maszynami — więc ekran, który je pokazuje, nie może być ekranem
+> doby. Sesja jest już zamknięta przez zdanie samolotu (09B), więc rozliczenie tylko ją
+> opisuje i nie ma czego zatwierdzać. W 10A czas blokowy wynosi zero: gdyby to on stał
+> wielką cyfrą, ekran krzyczałby „0:00" zamiast powiedzieć rzecz prawdziwą — maszyna
+> była zajęta 3,5 godziny i nikt inny nie mógł jej wziąć.
+
+**12** — karta historii opisuje DZIEŃ PILOTA i obejmuje wszystkie maszyny z doby
+(05 SIE: SP-AXA · SP-KLM); „Loty/Block/Duty" → „Wzloty/Blok/Służba"; dzień w oknie
+korekty prowadzi do 01B zamiast do rozliczenia jednej maszyny. Dołożony dzień z jednym
+wzlotem (02 SIE).
+> Powód: w starym modelu przesiadka rodziła dwa wpisy w historii tej samej doby.
+> Dzień z jednym wzlotem jest po przebudowie przypadkiem typowym i powinien być widoczny
+> w zestawie jako norma, nie jako wyjątek.
+
+**11, 11A, 04C** — „GOTOWE · dzień zamknięty i wysłany" → „wszystko wysłane — wróć do
+dnia"; ekran 11 przestaje czyścić stos nawigacji; „log dnia" → „log SP-AXA".
+> Powód: synchronizacja przestała być ostatnim krokiem dnia i jest statusem, który można
+> sprawdzić w środku pracy. Czyszczenie stosu miało sens, gdy po `day_close` kokpit
+> opisywał stan nieistniejący — teraz dzień trwa dalej.
+
+**10, 10A, 12** — chip SYNC usunięty z nagłówków.
+> Powód: reguła z 2026-08-06 (issue #12) mówi, że online nie rysuje nic; te trzy ekrany
+> zostały wtedy przeoczone i plakietka świeciła na nich przez 99% czasu.
+
+---
+
+## 2026-08-06 — Audyt spójności całego zestawu (po przebudowie flow)
+
+Zlecony przegląd wszystkich 47 mockupów po TREŚCI, nie po nazwach plików. Znalazł to,
+czego nie wyłapały przeglądy prowadzone greppem po linkach.
+
+**10, 10A, 11, 11A — przeliczone na scenariusz 06 SIE.**
+> Powód: „Rozliczenie →" przy grupie SP-AXA z dwoma wzlotami otwierało czerwcowy ekran
+> z sześcioma i oknem korekty „do 23 CZE". Ekran, który ma potwierdzać regułę
+> „służba ⊇ suma wzlotów", zaprzeczał jej pierwszą liczbą.
+> 10A i 09C przeniesione na SP-ANK / 03 SIE, bo opisywały maszynę trzymaną bez wzlotu
+> w dniu, w którym ta sama maszyna latała.
+
+**07 — „Zamykasz dzień odczytami końcowymi" → „Zdajesz samolot".**
+> Powód: ekran prowadził przyciskiem do 09B, gdzie stoi baner „Zdajesz samolot, NIE
+> kończysz dnia". Dwa sąsiadujące ekrany twierdziły rzeczy przeciwne.
+
+**04/04A — godzina przejęcia SP-AXA ujednolicona na 08:04.**
+> Powód: 04 mówiło „Twój od 09:05" przy logu zaczynającym się o 08:12 — samolot był
+> w logu przed przejęciem.
+
+**Chip SYNC usunięty z 12 ekranów** (02A, 02E, 02F, 04, 04A, 04C, 05G, 06, 07, 08, 14, 14B).
+> Powód: reguła „online nie rysuje nic" (issue #12) nigdy nie została dociągnięta poza
+> kilka ekranów. Plakietka świeciła przez 99% czasu, ucząc oko ignorować róg, w którym
+> ma się pojawiać wyłącznie ostrzeżenie. W 05G była świadoma — pokazywała, że awaria GPS
+> nie jest awarią sieci — ale jeden ekran z plakietką, której nie ma nigdzie indziej, uczy
+> czegoś odwrotnego niż reguła. Lekcja przeniesiona do treści banera GPS.
+
+**`.scroll > * { flex-shrink:0 }` dołożone w 8 plikach** (04, 04A, 04C, 08, 11, 11A, 14, 14B).
+> Powód: karty z `overflow:hidden` zapadają się w kolumnie flex poniżej swojej treści —
+> sekcje pokazywały same nagłówki. Wada zastana, ta sama co naprawiona w 01 i 10.
+
+**Nawigacja:** rodzina 05 dostała link do 09 (faktyczny następny krok), 04B, 06, 07, 08,
+10A i 13 — drogę powrotną do „Mój dzień", 05E prowadzi do 09A zamiast do rozliczenia.
+
+---
+
+## 2026-08-07 — Zgodność designu z dokumentacją (po audycie dokumentacji)
+
+**01, 01B — LT przy klamrze służby** (`07:10 · 09:10 LT`).
+> Powód: reguła strefy czasowej mówi, że czas lokalny pojawia się jako wartość drugorzędna
+> przy deklaracji klamry, bo pilot melduje się o lokalnej godzinie. Designy pokazywały sam
+> UTC — dokumentacja obiecywała coś, czego ekran nie robił.
+
+**01B — dwa okna korekty zamiast jednego.**
+> Powód: decyzja z 2026-08-07 zakotwiczyła okno w zamknięciu WZLOTU, a klamra służby liczy
+> się od zamknięcia dnia. Wzlot zamknięty rano wygasa wcześniej niż wieczorny, więc jedna
+> data dla wszystkiego („do 07 SIE 15:40") była obietnicą, której model nie dotrzyma.
+> Ekran podaje teraz datę klamry i najbliższą wygasającą datę wzlotu.
+
+**Notacja miesiąca ujednolicona na polską** (`06 SIE`, `06 SIERPNIA 2026`) — ekrany 01, 01A,
+01B, 09, 09B, 09C używały angielskiego `AUG`.
+> Powód: reszta zestawu jest po polsku (`22 CZE`, `22 CZERWCA`), a `AUG` wszedł razem
+> z nowymi ekranami. Aplikacja jest polska — dwie notacje w jednym zestawie to przeoczenie,
+> nie decyzja.
+
+---
+
+## 2026-08-10 — PIVOT MODELU: sesja = jeden bieg silnika (story użytkownika)
+
+Największa zmiana od przebudowy flow 2026-08-06 i częściowe jej odwrócenie. Nowy słownik:
+**sesja** = od uruchomienia do zatrzymania silnika (jeden bieg na sesję), **lot** = od
+startu do lądowania (w sesji wiele lotów, touch and go). Słowo „wzlot" WYCOFANE.
+
+**04A — kokpit PRZED uruchomieniem** (dawniej „świeżo przejęty").
+> Jedyny stan ground przed startem: START ENGINE, tankowanie, zmiana załogi, zdanie bez
+> lotu (→ 09C). „Lista ręczna" znikła — sesja nie ma jeszcze zdarzeń do naprawiania.
+> Log dostał tytuł „Log sesji · SP-AXA · UTC" i pasek paliwa (odczyt właśnie powstał na 02a).
+
+**04 — kokpit PO ZATRZYMANIU** (dawniej „w trakcie dnia, kolejne wzloty").
+> Powód: po STOP ENGINE drugiego startu NIE MA — kolejny lot to nowe przejęcie. Hero
+> START ENGINE zastąpione czerwonym hero ZDAJ SAMOLOT (geometria 1:1). Harmonijka
+> „CYKL 1 / CYKL 2" z tankowaniem między cyklami usunięta razem z akordeonem — log to
+> płaska oś JEDNEJ sesji (tankowanie przed startem, loty, STOP bez chipów odczytu,
+> tankowanie po zatrzymaniu). Akcje: tankowanie + lista ręczna; zmiana załogi i kafelek
+> zdania znikły (nowa załoga = nowe przejęcie; zdanie awansowało na hero).
+
+**09 i 09A — USUNIĘTE.**
+> Powód: nie ma już osobnego „zamknięcia wzlotu" — przegląd czasów z detekcji przeszedł
+> na 09B, odczyty z opcjonalnych stały się obowiązkowe, a seria skokowa z gorącym
+> załadunkiem to dziś JEDNA sesja z wieloma lotami, potwierdzana raz. STOP ENGINE
+> w rodzinie 05 prowadzi teraz do 04, nie do 09.
+
+**09B — zdanie samolotu = zatwierdzenie logu sesji.**
+> Dodany przegląd lotów sesji (czasy z detekcji, poprawki przez korektę 04C przed
+> zdaniem), przycisk „ZDAJ I ZATWIERDŹ LOG". Odczyty jak dotąd WYMAGANE — i stają się
+> ostatnimi wpisami logu. 09C przemianowane na „zdanie bez lotu", odczyty wypełnione
+> wartościami z przejęcia.
+
+**01 / 01A / 01B — wiersz listy = SESJA.**
+> Wiersz niesie czasy silnika, liczbę lotów, blok i czas w powietrzu. Karta „samolot
+> w ręce" usunięta (kokpit jest modalny — pilot z maszyną nie widzi 01), paski „do
+> potwierdzenia" znikły (zatwierdzenie = zdanie), kotwica okna korekty w 01B przesunięta
+> ze „zamknięcia wzlotu" na ZDANIE sesji. Nowy przycisk „DODAJ LOT RĘCZNIE" → 15.
+
+**15 — NOWY ekran: ręczny wpis całego lotu** (story pkt 7).
+> Z listy dziennej, po fakcie: samolot (lista kart), czasy uruchomienie/start/lądowanie/
+> zatrzymanie, odczyty WYMAGANE (te same reguły co przy zdaniu — ogniwo łańcucha MH),
+> uwagi. Jeden lot na wpis; kolejne starty/lądowania dopisuje się korektą po zapisaniu.
+> Różnica wobec 08: 08 naprawia sesję TRWAJĄCĄ (fallback GPS), 15 tworzy ZAKOŃCZONĄ.
+
+**Klamra służby i „Zamknij dzień" — BEZ ZMIAN** (decyzja odłożona do osobnego przemyślenia).

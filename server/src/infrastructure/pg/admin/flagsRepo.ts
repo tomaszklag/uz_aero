@@ -45,7 +45,7 @@ const FLAG_COLUMNS = `f.id, f.type, f.aircraft_id, f.session_uuids, f.details, f
                       f.created_at, f.resolved_at, f.resolved_by, f.resolution_note`;
 
 const toFlag = (r: AdminFlagDbRow): AdminFlag => {
-  // Ten sam strażnik i to samo uzasadnienie co w `pg/flagsRepo.ts`: od migracji 8
+  // Ten sam strażnik i to samo uzasadnienie co w `pg/flagsRepo.ts`: od wprowadzenia `flags_type_known`
   // pilnuje tego CHECK w bazie, więc wartość spoza katalogu znaczy, że ktoś zdjął
   // ograniczenie albo grzebał ręcznie. CICHE pominięcie byłoby wtedy najgorszą
   // z opcji, bo flaga istnieje po to, żeby być widoczna.

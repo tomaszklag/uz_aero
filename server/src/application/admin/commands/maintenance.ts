@@ -230,7 +230,7 @@ export class AdminMaintenanceCommands {
    * **Ograniczenie testowe, nazwane zamiast udawanego pokrycia:** PGlite ma JEDNO
    * połączenie, więc prawdziwej równoległości nie odtworzy i żaden test nie zobaczy tu
    * wyścigu. Testowalna jest kolejność (blokada przed odczytem, oba w jednej transakcji)
-   * i tyle test przybija — dokładnie jak przy `ExportLogPort.lock` (migracja 14).
+   * i tyle test przybija — dokładnie jak przy `ExportLogPort.lock` i `uq_export_log_card_revision`.
    */
   private async rewrite(tx: AuditedTx, sessionUuid: string): Promise<boolean> {
     await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [sessionUuid]);

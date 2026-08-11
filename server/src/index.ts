@@ -97,7 +97,7 @@ await migrate(db);
 const tokens = new Hs256Tokens(env.JWT_SECRET, clock);
 const events = new PgEventsStore();
 const sessions = new PgSessionsProjection();
-// Norma zużycia (migracja 19) — produkuje ją analityka panelu, konsumuje aplikacja
+// Norma zużycia (`aircraft_consumption`) — produkuje ją analityka panelu, konsumuje aplikacja
 // pilota, więc port siedzi w `application/common/` i trafia do OBU stron: ingestu
 // (przelicza po zamknięciu dnia) i `GET /reference` (oddaje telefonom).
 const consumptionNorms = new PgConsumptionNormRepo();
@@ -115,7 +115,10 @@ const pilots = new PgPilotsRepo(db);
 // `PUBLIC_BASE_URL` = adres, pod którym telefony widzą serwer — linki do kart
 // muszą być klikalne z telefonu, nie z localhosta serwera.
 const sheets = new PgSheets(db, env.PUBLIC_BASE_URL ?? `http://localhost:${env.PORT}`, clock);
-const exporter = new DayExporter(db, events, flags, exportLog, sheets, pilots, clock);
+// Eksporter dostaje projekcję sesji, bo karta jest DOBĄ SAMOLOTU (§4.7): jej skład —
+// które zmiany przejęły maszynę tego dnia i czy zostały zdane — czyta się z `sessions`,
+// a nie ze strumienia. Strumień wchodzi dopiero per sesja, po tabelę lotów.
+const exporter = new DayExporter(db, events, sessions, flags, exportLog, sheets, pilots, clock);
 
 // Panel administracyjny. `AuditedWrite` jest JEDYNĄ drogą zapisu komend panelu —
 // dlatego to ono, a nie `db`, wędruje do konstruktora `AdminFlagCommands`.

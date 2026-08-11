@@ -79,26 +79,43 @@ export const CORRECTION_EVENT_TYPES: readonly EventType[] = [
   'event_correction',
 ];
 
-/** Stan okna korekty po zamknięciu dnia — do bannera z odliczaniem (design-notes). */
+/**
+ * Okno korekty SESJI — JEDNA kotwica: zdanie samolotu (model 2026-08-10).
+ *
+ * Do 2026-08-10 każdy wzlot miał własne okno kotwiczone w `leg_close.confirmedAt`
+ * (awaryjnie w `stoppedAt`). Po pivocie jednostką zatwierdzenia jest SESJA, a jej
+ * zatwierdzeniem jest `day_close` — więc i okno jest jedno, liczone od `closedAt`.
+ *
+ * Sesja NIEZDANA nie ma okna, bo nie ma czego chronić: to sesja w toku, w której pilot
+ * i tak może dopisywać zdarzenia i korekty (kokpit, 04c). Okno rusza dopiero wtedy,
+ * gdy log został zatwierdzony — i od tej chwili odlicza prawo do samodzielnej poprawki.
+ */
 export interface CorrectionWindow {
-  /** Czy dzień jest zamknięty. */
-  dayClosed: boolean;
-  /** Czy pilot może jeszcze korygować samodzielnie. */
+  /** Czy sesja jest zatwierdzona (zdana) — dopiero wtedy okno w ogóle tyka. */
+  confirmed: boolean;
+  /** Czy pilot może jeszcze poprawiać samodzielnie (sesja w toku ALBO okno trwa). */
   open: boolean;
-  /** Kiedy okno się zamyka (UTC) — null, gdy dzień otwarty. */
+  /** Kiedy okno się zamyka (UTC); `null`, gdy sesja jeszcze niezdana albo już po. */
   closesAt: EpochMillis | null;
-  /** Ile zostało (ms); 0 gdy zamknięte lub nie dotyczy. */
+  /** Ile zostało (ms); 0 gdy nie tyka albo już wygasło. */
   remainingMs: number;
 }
 
-/** Liczy stan 24-godzinnego okna korekty. Czysta funkcja — `now` podaje wołający. */
+/** Liczy stan okna korekty sesji. Czysta funkcja — `now` podaje wołający. */
 export function correctionWindow(state: SessionState, now: EpochMillis): CorrectionWindow {
   if (!state.closed || state.closedAt == null) {
-    return { dayClosed: false, open: true, closesAt: null, remainingMs: 0 };
+    return { confirmed: false, open: true, closesAt: null, remainingMs: 0 };
   }
   const closesAt = state.closedAt + CORRECTION_WINDOW_MS;
-  const remainingMs = Math.max(0, closesAt - now);
-  return { dayClosed: true, open: remainingMs > 0, closesAt, remainingMs };
+  // Granica jest DOMKNIĘTA: równo 24 h jeszcze przechodzi, milisekundę dalej już nie —
+  // ta sama ostra krawędź, którą miały okna per wzlot (pilnuje jej writeAuthority).
+  const open = now <= closesAt;
+  return {
+    confirmed: true,
+    open,
+    closesAt: open ? closesAt : null,
+    remainingMs: Math.max(0, closesAt - now),
+  };
 }
 
 /**
@@ -118,12 +135,19 @@ export function checkAppend(
   limits: AircraftLimits = UNKNOWN_LIMITS,
   authority: WriteAuthority = 'pilot',
 ): RuleViolation[] {
-  // Naruszenia „koperty" (tożsamość sesji, single-writer, zamknięty dzień) unieważniają
-  // sens dalszych sprawdzeń — zwracamy je same, żeby pilot dostał JEDEN konkretny powód.
+  // TWARDE naruszenia „koperty" (tożsamość sesji, single-writer, zdany samolot)
+  // unieważniają sens dalszych sprawdzeń — zwracamy je same, żeby pilot dostał JEDEN
+  // konkretny powód, a nie listę następstw.
+  //
+  // Warunek pyta o `severity`, nie o długość listy, i to jest istotne: od 2026-08-07
+  // koperta produkuje też OSTRZEŻENIA (kolizje administratora, `ADMIN_EDIT_*`).
+  // Skrót „cokolwiek w kopercie → wracaj" sprawiłby, że jedno miękkie ostrzeżenie
+  // wycina komplet reguł per typ — administrator zapisałby wtedy pusty wpis ręczny
+  // albo korektę z czasem z przyszłości bez jednego sprzeciwu.
   const envelope = checkEnvelope(state, candidate, authority);
-  if (envelope.length > 0) return envelope;
+  if (envelope.some((v) => v.severity === 'error')) return envelope;
 
-  return [...checkClocks(candidate), ...checkByType(state, candidate, limits)];
+  return [...envelope, ...checkClocks(candidate), ...checkByType(state, candidate, limits)];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -185,36 +209,103 @@ function checkEnvelope(
 
   if (state.closed) {
     if (candidate.type === 'day_close') {
-      v.push(error('DAY_ALREADY_CLOSED', 'Dzień jest już zamknięty.'));
+      v.push(error('DAY_ALREADY_CLOSED', 'Samolot jest już zdany.'));
     } else if (!CORRECTION_EVENT_TYPES.includes(candidate.type)) {
       v.push(
         error(
           'DAY_CLOSED',
-          'Dzień jest zamknięty — po zamknięciu można dopisać wyłącznie korektę (wpis ręczny).',
+          'Samolot jest zdany — potem można dopisać wyłącznie korektę (wpis ręczny).',
           { type: candidate.type },
-        ),
-      );
-    } else if (
-      // JEDYNA gałąź w całym pliku, która pyta o uprawnienie zapisu. Komunikat mówił
-      // „korektę wprowadza administrator" na długo zanim administrator miał czym ją
-      // wprowadzić — ten warunek wreszcie daje regule adresata, zamiast robić z niej
-      // ślepy zaułek. Reszta reguł (tożsamość sesji, single-writer, zamknięty dzień,
-      // gwardie per typ) obowiązuje administratora TAK SAMO: korekta z panelu to nadal
-      // zdarzenie w rejestrze, a nie zapis „obok" domeny.
-      authority === 'pilot' &&
-      state.closedAt != null &&
-      eventTime(candidate) - state.closedAt > CORRECTION_WINDOW_MS
-    ) {
-      v.push(
-        error(
-          'CORRECTION_WINDOW_EXPIRED',
-          'Minęło 24 h od zamknięcia dnia — korektę wprowadza administrator.',
         ),
       );
     }
   }
 
+  v.push(...checkCorrectionWindow(state, candidate, authority));
+
   return v;
+}
+
+/**
+ * Okno samodzielnej korekty — JEDYNE miejsce w tym pliku, które pyta o uprawnienie.
+ *
+ * Dwie zmiany względem modelu sprzed 2026-08-06:
+ *
+ * 1. **Okno kotwiczy się we WZLOCIE, nie w zamknięciu dnia** (§3.6a). Każdy wzlot ma
+ *    własne 24 h liczone od jego potwierdzenia — a gdy pilot go nie potwierdził,
+ *    awaryjnie od wyłączenia silnika. Bez tej kotwicy awaryjnej niepotwierdzenie
+ *    dawałoby bezterminowe prawo zapisu, a jest to stan legalny i częsty.
+ *
+ * 2. **Administrator nie jest już NIGDY blokowany** (decyzja użytkownika 2026-08-07,
+ *    zastępuje bramkę `400 day_open`). Powód: po przebudowie brak `day_close` przestał
+ *    znaczyć „dzień trwa" — zdanie samolotu jest opcjonalne, więc sesje sprzed tygodnia
+ *    też go nie mają. Bramka odmawiałaby korekty w większości przypadków, w których
+ *    jest potrzebna. Zamiast blokady administrator dostaje **jasne ostrzeżenie**, gdy
+ *    wchodzi w kolizję z pilotem, i sam decyduje.
+ */
+function checkCorrectionWindow(
+  state: SessionState,
+  candidate: Event,
+  authority: WriteAuthority,
+): RuleViolation[] {
+  if (!CORRECTION_EVENT_TYPES.includes(candidate.type)) return [];
+
+  const now = eventTime(candidate);
+
+  if (authority === 'administrative') {
+    const v: RuleViolation[] = [];
+    // Kolizja 1: pilot nadal prowadzi sesję i może dopisywać zdarzenia. Jego paczka
+    // dosłana po synchronizacji trafi do tego samego strumienia.
+    if (!state.closed) {
+      v.push(
+        warning(
+          'ADMIN_EDIT_SESSION_ACTIVE',
+          'Pilot nadal prowadzi tę sesję — może dopisać własne zdarzenia po synchronizacji.',
+        ),
+      );
+    }
+    // Kolizja 2: okno pilota jeszcze trwa, więc obie strony mogą poprawiać naraz.
+    // (Sesja zdana z otwartym oknem; sesję NIEZDANĄ pokrywa już kolizja 1.)
+    const window = correctionWindow(state, now);
+    if (window.confirmed && window.open) {
+      v.push(
+        warning(
+          'ADMIN_EDIT_PILOT_WINDOW_OPEN',
+          'Pilot może jeszcze poprawić tę sesję samodzielnie (okno 24 h od zdania trwa).',
+        ),
+      );
+    }
+    return v;
+  }
+
+  // Pilot: JEDNO okno sesji, kotwiczone w zdaniu (model 2026-08-10). Sesja w toku nie
+  // podlega oknu — korekta w kokpicie przed zatwierdzeniem jest normalną pracą. Do
+  // 2026-08-10 okno liczyło się per wzlot od `leg_close`; razem z nim znikły funkcje
+  // `legWindowOpen`/`targetLeg` i przypisywanie korekty do konkretnego cyklu.
+  //
+  // Wpis ręczny, który nie dotyka BIEGU (brak czasów albo czasy poza nim), dokłada
+  // NOWY fakt zamiast poprawiać zatwierdzony log — nie podlega oknu, a jego poprawność
+  // rozstrzygają reguły per typ (np. MANUAL_ENTRY_EMPTY). Ta sama zasada co przed
+  // pivotem, tylko z jedną kotwicą zamiast okien per wzlot.
+  if (candidate.type === 'manual_log_entry' && !manualEntryTouchesRun(state, candidate)) {
+    return [];
+  }
+  if (correctionWindow(state, now).open) return [];
+  return [
+    error(
+      'CORRECTION_WINDOW_EXPIRED',
+      'Minęło 24 h od zdania samolotu — tę poprawkę wprowadzi administrator.',
+    ),
+  ];
+}
+
+/** Czy czasy wpisu ręcznego wpadają w zamknięty bieg silnika tej sesji. */
+function manualEntryTouchesRun(state: SessionState, candidate: Event): boolean {
+  if (candidate.type !== 'manual_log_entry') return false;
+  const p = candidate.payload;
+  const at = p.offBlock ?? p.takeoff ?? p.landing ?? p.onBlock ?? null;
+  if (at == null) return false;
+  return state.legs.some((l) => l.stoppedAt != null && at >= l.startedAt && at <= l.stoppedAt);
 }
 
 /** Rozjazd zegarów device↔GPS (§4.5 CLOCK_DRIFT) — miękko: zapisujemy i sygnalizujemy. */
@@ -251,7 +342,12 @@ function checkByType(
 
     case 'preflight_confirm': {
       const p = candidate.payload;
-      if (state.dutyStart != null) {
+      // Pytamy o PREFLIGHT, nie o godzinę meldunku — ta sama poprawka co w `engine_start`
+      // niżej, tyle że znaleziona dopiero w audycie 2026-08-08. `dutyStart` jest od
+      // schemaVersion 2 opcjonalny i ekran 02a go NIE WYSYŁA, więc warunek oparty na nim
+      // przepuszczał drugi preflight, a ten nadpisuje `mh.start` i `fuel.startL`, czyli
+      // POCZĄTEK ŁAŃCUCHA MH (§4.5).
+      if (state.preflightAt != null) {
         v.push(
           error('PREFLIGHT_ALREADY_CONFIRMED', 'Preflight tego dnia jest już potwierdzony.'),
         );
@@ -264,13 +360,29 @@ function checkByType(
     }
 
     case 'engine_start': {
-      if (state.dutyStart == null) {
+      // Pytamy o PREFLIGHT, nie o godzinę meldunku. Klamra służby jest
+      // opcjonalna (§3.6a) i `dutyStart` bywa `null` u pilota, który zrobił wszystko jak
+      // trzeba — warunkowanie tym startu silnika unieruchamiało go bez powodu.
+      if (state.preflightAt == null) {
         v.push(
           error('PREFLIGHT_REQUIRED', 'Najpierw potwierdź preflight — bez odczytu MH i paliwa nie ma dnia.'),
         );
       }
       if (state.engineRunning) {
         v.push(error('ENGINE_ALREADY_RUNNING', 'Silnik już pracuje.'));
+      } else if (state.legs.some((l) => l.stoppedAt != null)) {
+        // Sesja = JEDEN bieg silnika (2026-08-10): po zamkniętym cyklu nie ma drugiego
+        // startu — kokpit pokazuje hero ZDAJ SAMOLOT, a kolejny lot to NOWE przejęcie.
+        // Gwardia jest w domenie, nie tylko w UI, bo bez niej stary model („kolejne
+        // wzloty w sesji") wracałby każdą inną drogą zapisu: wpisem ręcznym, korektą
+        // administratora, replayem. `else` świadomie: przy pracującym silniku pilot ma
+        // dostać JEDEN komunikat o właściwej rzeczy, nie dwa o tej samej.
+        v.push(
+          error(
+            'SESSION_ALREADY_RAN',
+            'Ta sesja miała już swój bieg silnika — zdaj samolot; kolejny lot to nowe przejęcie.',
+          ),
+        );
       }
       break;
     }
@@ -434,7 +546,7 @@ function checkByType(
 
     case 'event_correction': {
       const p = candidate.payload;
-      const targetType = state.eventIndex[p.targetUuid];
+      const targetType = state.eventIndex[p.targetUuid]?.type;
 
       if (targetType == null) {
         // Cel spoza tej sesji (albo literówka w uuid) — poprawka wisiałaby w próżni,
@@ -471,6 +583,11 @@ function checkByType(
       break;
     }
 
+    // Reguły `leg_close` (LEG_CLOSE_ENGINE_RUNNING / LEG_CLOSE_WITHOUT_CYCLE /
+    // LEG_ALREADY_CLOSED) żyły tu między 2026-08-06 a 2026-08-10 — usunięte razem
+    // ze zdarzeniem: sesję zatwierdza `day_close`, a monotoniczność MH pilnowana
+    // jest tam (`MH_REGRESSION` na `finalReading`).
+
     case 'manual_log_entry': {
       const p = candidate.payload;
       const times: Array<[string, EpochMillis | null | undefined]> = [
@@ -499,18 +616,34 @@ function checkByType(
 
     case 'day_close': {
       const p = candidate.payload;
-      if (state.dutyStart == null) {
-        v.push(error('PREFLIGHT_REQUIRED', 'Dzień nie został rozpoczęty — brak preflightu.'));
+      if (state.preflightAt == null) {
+        v.push(error('PREFLIGHT_REQUIRED', 'Samolot nie został przejęty — brak preflightu.'));
       }
       if (state.engineRunning || state.inFlight) {
         v.push(
           error(
             'ENGINE_RUNNING_AT_DAY_CLOSE',
-            'Silnik pracuje — wyłącz silnik przed zamknięciem dnia.',
+            'Silnik pracuje — wyłącz silnik przed zdaniem samolotu.',
           ),
         );
       }
-      if (state.dutyStart != null && p.dutyEnd < state.dutyStart) {
+      // Sesja bez ani jednego cyklu silnika (09C): samolot był zajęty i nikt nie poleciał.
+      // Bez powodu rejestr zostawia administratorowi pytanie zamiast informacji — ale to
+      // MIĘKKA flaga, nie blokada. Odrzucenie zdarzenia skasowałoby jedyny ślad po tym,
+      // że maszyna stała zablokowana, a to fakt cenniejszy od kompletności formularza.
+      if (state.legs.length === 0 && p.noFlightReason == null) {
+        v.push(
+          warning(
+            'NO_FLIGHT_WITHOUT_REASON',
+            'Samolot zdany bez uruchomienia silnika i bez podanego powodu.',
+          ),
+        );
+      }
+
+      // Klamra jest opcjonalna (§3.6a), więc reguła kolejności
+      // budzi się TYLKO wtedy, gdy pilot podał obie godziny. Brak deklaracji nie jest
+      // naruszeniem — jest stanem domyślnym.
+      if (state.dutyStart != null && p.dutyEnd != null && p.dutyEnd < state.dutyStart) {
         v.push(
           error('DUTY_END_BEFORE_START', 'Koniec służby jest wcześniejszy niż meldunek.', {
             dutyStart: state.dutyStart,
@@ -519,15 +652,17 @@ function checkByType(
         );
       }
 
-      // Łańcuch MH (§4.5) — licznik motogodzin jest monotoniczny. Odczyt niższy niż
-      // startowy to literówka, którą pilot poprawi na miejscu; zapisanie jej zatrułoby
+      // Łańcuch MH (§4.5) — licznik motogodzin jest monotoniczny. Punktem odniesienia
+      // jest OSTATNIE znane wskazanie (odczyt z wzlotu bije stan przy przejęciu), bo to
+      // ta wartość zamyka łańcuch. Literówkę pilot poprawi na miejscu; zapisana zatrułaby
       // scalanie sesji na serwerze (MH_REGRESSION).
-      if (state.mh.start != null && p.finalReading.mh < state.mh.start - MH_EPSILON_H) {
+      const previousMh = lastKnownMh(state);
+      if (previousMh != null && p.finalReading.mh < previousMh.value - MH_EPSILON_H) {
         v.push(
           error(
             'MH_REGRESSION',
-            `Odczyt MH (${round2(p.finalReading.mh)}) jest niższy niż na starcie dnia (${round2(state.mh.start)}). Sprawdź licznik.`,
-            { start: state.mh.start, end: p.finalReading.mh },
+            `Odczyt MH (${round2(p.finalReading.mh)}) jest niższy niż ${previousMh.since} (${round2(previousMh.value)}). Sprawdź licznik.`,
+            { previous: previousMh.value, end: p.finalReading.mh },
           ),
         );
       }
@@ -577,6 +712,29 @@ function checkByType(
 // ─────────────────────────────────────────────────────────────────────────────
 // Pomocnicze
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** Ostatnie znane wskazanie licznika MH razem ze źródłem — punkt odniesienia łańcucha. */
+export interface KnownMh {
+  value: number;
+  /** „przy przejęciu" / „przy wzlocie 2" — wprost do komunikatu dla pilota. */
+  since: string;
+}
+
+/**
+ * Ostatnie znane wskazanie licznika motogodzin wraz z tym, SKĄD pochodzi.
+ *
+ * Po 2026-08-10 jedynym źródłem wewnątrz sesji jest stan przy przejęciu — pośrednie
+ * odczyty per wzlot znikły razem z `leg_close`, a kolejny odczyt zapada dopiero przy
+ * zdaniu (`day_close.finalReading`).
+ *
+ * PUBLICZNE, bo ekrany muszą ostrzegać dokładnie tym samym progiem, którym reguła
+ * odrzuca zapis. Własna kopia porównania w widoku znaczyłaby, że arkusz mówi „w porządku"
+ * chwilę przed tym, jak komenda odmawia — a to najgorszy rodzaj rozjazdu, bo wygląda
+ * jak błąd aplikacji, nie jak literówka pilota.
+ */
+export function lastKnownMh(state: SessionState): KnownMh | null {
+  return state.mh.start != null ? { value: state.mh.start, since: 'przy przejęciu' } : null;
+}
 
 /** Odczyt paliwomierza: nieujemny i mieszczący się w zbiornikach (§3.4). */
 function checkFuelReading(

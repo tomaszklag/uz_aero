@@ -38,7 +38,7 @@ export interface AdminConsumptionHeadline {
   litersPerFlightHour: number | null;
   /** `Σ L / Σ h pracy silnika` — ta sama definicja, co „Śr. L/h" w statystykach zakresu. */
   litersPerBlockHour: number | null;
-  /** `Σ L / Σ wzlotów`; dla dni skokowych czyta się jako „na wyniesienie". */
+  /** `Σ L / Σ sesji`; dla dni skokowych czyta się jako „na wyniesienie". */
   litersPerFlight: number | null;
   /**
    * `Σ ΔMH / Σ h pracy silnika` — iloraz sum z kolumn projekcji, NIE z modelu.
@@ -57,7 +57,7 @@ export interface AdminConsumptionBasis {
   /** Dni OTWARTE w oknie — pominięte, bo bez odczytu końcowego nie znamy ich zużycia. */
   openSessions: number;
   /**
-   * Dni z kolumnami sprzed migracji 18 (`takeoff_count IS NULL`). Ich `mh_delta_h`
+   * Dni z projekcją sprzed kolumn statystyk (`takeoff_count IS NULL`). Ich `mh_delta_h`
    * bywa pusta, więc model motogodzin ma wtedy mniej równań — ekran mówi o tym wprost
    * i odsyła do przebudowy projekcji (`A11`), zamiast pokazywać niższą liczbę jako fakt.
    */

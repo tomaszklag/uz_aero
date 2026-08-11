@@ -1,0 +1,626 @@
+/**
+ * UZ Aero — 01 MÓJ DZIEŃ (mockupy `design/01-moj-dzien.html` + `01a-moj-dzien-pusty.html`).
+ *
+ * EKRAN DOMOWY po przebudowie flow (§3.6a): klamra służby wokół listy wzlotów doby,
+ * przekrojowo po wszystkich samolotach. Reguła, którą ten ekran ma UCZYNIĆ WIDOCZNĄ:
+ * **loty są zapisywane, służba jest deklarowana i zawsze stanowi klamrę wokół lotów**.
+ * Dlatego każda z dwóch godzin klamry niesie podpis, SKĄD pochodzi („poprawione" vs
+ * „z pierwszego wzlotu"), a „ZAMKNIJ DZIEŃ" jest opcją, nie krokiem procedury.
+ *
+ * Ekran NICZEGO NIE LICZY. Napisy, sumy i stany klamry przychodzą gotowe z `buildMyDay`
+ * (`logic/myDay.ts`), a sama doba z `useDutyDay`. To nie jest kosmetyka: te same liczby
+ * czyta serwer i arkusz, więc druga implementacja w widoku rozjechałaby się przy
+ * pierwszej zmianie reguły.
+ *
+ * Wszystko jest projekcją LOKALNEGO strumienia, więc ekran działa w pełni offline —
+ * to dane sesji z §6 pkt 1, bez wariantu „z cache". Jedynym śladem sieci jest SyncChip,
+ * który online **nie rysuje nic** (issue #12) i stempel cache referencyjnego w stopce.
+ */
+
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { REFERENCE_META_CHECKED_AT } from '../../application';
+import {
+  ActionButton,
+  AppText,
+  Banner,
+  Card,
+  Icon,
+  RefDataStamp,
+  Screen,
+  ScreenHeader,
+  StatGrid,
+  StatusChip,
+  SyncChip,
+  Tag,
+  toneColors,
+  type StatCell,
+} from '../components';
+import { useTheme } from '../theme';
+import { fontFamily } from '../theme/tokens';
+import { useCurrentPilot, useEduBanner, useSessionStore } from '../store';
+import { useAuthStore } from '../store/authStore';
+import { useDutyDay } from '../hooks/useDutyDay';
+import { utcDayStart } from '../../domain';
+import { dateUtcLong, plural } from '../format';
+import {
+  buildMyDay,
+  closeDayBlocker,
+  totalLabel,
+  type BracketVm,
+  type SessionRowVm,
+} from './logic/myDay';
+import { editableBadge } from './logic/historyDays';
+
+/**
+ * Tick co pół minuty. Służba w toku liczy się DO TERAZ („8:15 · do teraz"), a liczba,
+ * która zastyga w chwili wejścia na ekran, jest gorsza od braku liczby — pilot
+ * przepisuje ją do dokumentów. Rozdzielczość `duration` to minuta, więc sekundowy
+ * zegar (jak w kokpicie) budziłby ekran 30 razy bez zmiany napisu.
+ */
+function useHalfMinuteTicker(): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
+
+export function MyDayScreen({
+  navigation,
+}: {
+  navigation: { navigate: (screen: string, params?: object) => void };
+}) {
+  const { theme } = useTheme();
+
+  const repo = useSessionStore((s) => s.repo);
+  const queries = useSessionStore((s) => s.queries);
+  const projection = useSessionStore((s) => s.projection);
+  const synced = useSessionStore((s) => s.synced);
+  const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
+
+  // Tożsamość: kod pilota z profilu logowania, a gdy go jeszcze nie ma — identyfikator
+  // z bieżącej sesji. NIGDZIE nie pytamy o kod (`CLAUDE.md`, sekcja „Pilot i samolot").
+  const pilotCode = useAuthStore((s) => s.pilot?.code);
+  const pilotId = useCurrentPilot((s) => s.id);
+
+  const [eduDismissed, setEduDismissed] = useEduBanner('my-day-duty');
+
+  const now = useHalfMinuteTicker();
+  const day = utcDayStart(now);
+  const duty = useDutyDay(pilotId, day);
+
+  const vm = duty != null ? buildMyDay(duty, now) : null;
+
+  // Plakietka okna korekty na wejściu do historii (`.history-badge`) — okno 24 h ma być
+  // widoczne, zanim pilot pomyśli o szukaniu go (ten sam wzorzec co na ekranie startowym).
+  const [historyBadge, setHistoryBadge] = useState<string | null>(null);
+  useEffect(() => {
+    if (queries == null) return;
+    let alive = true;
+    void queries.historyDays().then((days) => {
+      if (alive) setHistoryBadge(editableBadge(days, Date.now()));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [queries]);
+
+  // Stempel ostatniego potwierdzenia cache referencyjnego (§4.8). Zależność od
+  // `lastSyncAt` odświeża napis, gdy pętla okazji właśnie zsynchronizowała.
+  const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (repo == null) return;
+    let alive = true;
+    void repo.getMeta(REFERENCE_META_CHECKED_AT).then((value) => {
+      if (alive) setRefCheckedAt(value != null ? Number(value) : null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [repo, lastSyncAt]);
+
+  const empty = vm != null && vm.empty;
+  // Dzień zamknięty = pilot ZADEKLAROWAŁ koniec klamry. Nie ma wtedy czego zamykać,
+  // więc przycisku nie ma w ogóle — to brak akcji, nie blokada z powodem (issue #19).
+  const dayClosed = vm != null && vm.end.origin === 'declared';
+
+  const totals: StatCell[] =
+    vm == null
+      ? []
+      : [
+          {
+            label: 'Służba',
+            value: totalLabel(vm.totals.duty),
+            unit: vm.empty ? 'brak lotów' : dayClosed ? 'zamknięta' : 'do teraz',
+            tone: vm.empty ? undefined : 'green',
+          },
+          { label: 'Blok', value: totalLabel(vm.totals.block) },
+          {
+            label: 'Loty',
+            value: totalLabel(vm.totals.flight),
+            unit: `${vm.totals.takeoffs} st / ${vm.totals.landings} ldg`,
+          },
+        ];
+
+  return (
+    <Screen
+      scroll
+      padded={false}
+      header={
+        <ScreenHeader
+          title="MÓJ DZIEŃ"
+          size="md"
+          centered
+          subtitle={`${pilotCode ?? pilotId} · ${dateUtcLong(now)} · UTC`}
+          onSettings={() => navigation.navigate('Settings')}
+          right={
+            <>
+              {/* Prawy slot należy do licznika sesji, a po zamknięciu dnia — do
+                  plakietki „ZAMKNIĘTY" (mockup 01B; 01 ma w tym miejscu „3 sesje").
+                  SyncChip stoi obok, ale online NIE RYSUJE NIC (issue #12) — plakietka
+                  istnieje wyłącznie offline, a brak sieci musi być widoczny również
+                  na ekranie domowym. */}
+              {vm != null && dayClosed && (
+                <Tag
+                  label="ZAMKNIĘTY"
+                  tone="amber"
+                  size="md"
+                  style={{ borderRadius: theme.radius.pill }}
+                />
+              )}
+              {vm != null && !dayClosed && vm.sessionCount > 0 && (
+                <Tag
+                  label={`${vm.sessionCount} ${plural(vm.sessionCount, 'sesja', 'sesje', 'sesji')}`}
+                  tone="green"
+                  size="md"
+                  style={{ borderRadius: theme.radius.pill }}
+                />
+              )}
+              <SyncChip
+                status={synced ? 'synced' : 'offline'}
+                outboxCount={outboxCount}
+                lastSyncAt={lastSyncAt}
+              />
+            </>
+          }
+        />
+      }
+    >
+      <View style={styles.content}>
+        {/* ── okno korekty po zamknięciu dnia (01B) ────────────────────────────
+            Typ A: przyrząd, niezamykalny — odlicza prawo pilota do samodzielnej
+            poprawki. DWA terminy, nie jeden (§3.6a): klamra służby liczy 24 h od
+            zamknięcia DNIA, a każdy wzlot od SWOJEGO zamknięcia, więc poranny wygasa
+            wcześniej. Jedna data dla wszystkiego byłaby obietnicą, której model
+            nie dotrzyma. */}
+        {vm?.correction != null && (
+          <Banner
+            kind="status"
+            tone="amber"
+            icon="clock"
+            text={
+              `Dzień zamknięty. Klamrę służby poprawisz do ${vm.correction.dutyDeadline} UTC.` +
+              (vm.correction.firstToExpire != null
+                ? ` Każda sesja ma własne 24 h od zdania samolotu — najstarsza ` +
+                  `(start ${vm.correction.firstToExpire.startedAt}) wygasa już ` +
+                  `${vm.correction.firstToExpire.deadline} UTC.`
+                : '') +
+              ' Później korektę nanosi administrator.'
+            }
+          />
+        )}
+
+        {/* ── reguła klamry (baner POUCZAJĄCY, trwały per pilot) ───────────────
+            Typ `edu`: pomocny za pierwszym razem, szum przy każdym kolejnym. Mockup 01
+            rysuje go zwiniętym, a 01A rozwiniętym — i to NIE jest reguła per wariant,
+            tylko skutek pamiętania stanu: pilot w trzecim wzlocie dnia zamknął
+            wyjaśnienie dawno temu. Dlatego stan bierzemy z `useEduBanner`, a nie
+            z liczby wzlotów (tak samo tłumaczy to komentarz w samym mockupie). */}
+        <Banner
+          kind="edu"
+          tone="blue"
+          icon="clock"
+          text={
+            'Loty zapisują się same — służby nie musisz zaczynać ani kończyć. Klamra bierze ' +
+            'się z pierwszej i ostatniej sesji; popraw ją tylko wtedy, gdy zameldowałeś ' +
+            'się wcześniej albo zostajesz dłużej niż samolot.'
+          }
+          collapsedLabel="Jak liczy się służba?"
+          dismissed={eduDismissed}
+          onDismiss={setEduDismissed}
+        />
+
+        {/* TU STAŁA KARTA „SAMOLOT W RĘCE" (KOKPIT / ZDAJ SAMOLOT) — usunięta razem
+            z modelem 2026-08-10: kokpit jest modalny, więc pilot trzymający maszynę
+            nie ma jak zobaczyć tego ekranu. Na liście dziennej są wyłącznie sesje
+            zatwierdzone zdaniem. */}
+
+        {/* ── klamra służby: meldunek → wzloty → koniec → sumy ─────────────── */}
+        {vm != null && (
+          <Card title="Służba · sesje dnia · czasy UTC" flush>
+            <BracketRow label="Meldunek" bracket={vm.start} edge="top" />
+
+            {vm.groups.length === 0 ? (
+              <EmptyLegs />
+            ) : (
+              vm.groups.map((group, index) => (
+                <View key={`${group.aircraftId}-${index}`}>
+                  <View
+                    style={[
+                      styles.groupHead,
+                      {
+                        borderBottomWidth: theme.borderWidth,
+                        borderBottomColor: theme.colors.hairline,
+                      },
+                      index > 0 && {
+                        borderTopWidth: theme.borderWidth,
+                        borderTopColor: theme.colors.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.groupId}>
+                      <AppText variant="mono" style={styles.groupReg}>
+                        {group.aircraftId}
+                      </AppText>
+                    </View>
+                    {/* „Rozliczenie" prowadzi do bilansu paliwa i MH (10), a ekran 10
+                        opisuje SESJĘ ZE STORE'U — czyli ostatnią. Dlatego link ma tylko
+                        OSTATNIA grupa; dla wcześniejszych prowadziłby do cudzych liczb
+                        pod właściwym nagłówkiem. */}
+                    {index === vm.groups.length - 1 && (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`Rozliczenie ${group.aircraftId}`}
+                        onPress={() => navigation.navigate('Stats')}
+                        style={({ pressed }) => [styles.groupLink, { opacity: pressed ? 0.6 : 1 }]}
+                      >
+                        <AppText variant="mono" tone="muted" style={styles.groupLinkLabel}>
+                          Rozliczenie
+                        </AppText>
+                        <Icon name="next" size={11} color={theme.colors.textMuted} />
+                      </Pressable>
+                    )}
+                  </View>
+
+                  {/* Paski „do potwierdzenia" znikły 2026-08-10: sesję zatwierdza
+                      zdanie samolotu (09B), więc na liście są wyłącznie zatwierdzone. */}
+                  {group.sessions.map((session) => (
+                    <SessionRow key={session.index} session={session} />
+                  ))}
+                </View>
+              ))
+            )}
+
+            <BracketRow label="Koniec służby" bracket={vm.end} edge="bottom" />
+            <StatGrid cells={totals} columns={3} />
+          </Card>
+        )}
+
+        {/* ── przejęcie: jedyna główna akcja pustego dnia, drugorzędna przy dniu w toku ──
+            Cały blok akcji czeka na wczytanie doby (`vm`), bo inaczej pierwsza klatka
+            pokazywałaby wielki zielony przycisk pustego dnia pilotowi, który ma za sobą
+            trzy wzloty — a potem podmieniałaby go pod palcem. */}
+        {vm != null &&
+          (empty ? (
+            <>
+              <ActionButton
+                label="PRZEJMIJ SAMOLOT"
+                tone="green"
+                variant="solid"
+                icon="start"
+                onPress={() => navigation.navigate('PreflightAircraft')}
+              />
+              <AppText variant="mono" tone="muted" style={styles.btnNote}>
+                Odczytasz paliwo i motogodziny, potwierdzisz zadanie — i lecisz.{'\n'}
+                Służba zacznie się sama.
+              </AppText>
+            </>
+          ) : (
+            <>
+              {/* ── status synchronizacji (01B) ────────────────────────────────
+                  Na 01B stoi PONAD przejęciem i zastępuje „ZAMKNIJ DZIEŃ": dzień jest
+                  policzony, więc jedyne, co pilota jeszcze interesuje, to czy dane
+                  doszły na serwer. Ekran 11 nie kasuje już stosu, więc wejście tam
+                  jest bezpieczne w każdej chwili. */}
+              {dayClosed && (
+                <ActionButton
+                  label="STATUS SYNCHRONIZACJI"
+                  tone="neutral"
+                  variant="secondary"
+                  size="md"
+                  icon="sync"
+                  onPress={() => navigation.navigate('Sync')}
+                />
+              )}
+              <ActionButton
+                label="PRZEJMIJ SAMOLOT"
+                tone="neutral"
+                variant="secondary"
+                size="md"
+                icon="takeover"
+                onPress={() => navigation.navigate('PreflightAircraft')}
+              />
+              {/* Ręczny wpis CAŁEGO lotu (mockup 15, story pkt 7): telefon został
+                  w kurtce, bateria padła, lot spisany na papierze. Tworzy kompletną
+                  sesję z oknem korekty 24 h. */}
+              <ActionButton
+                label="DODAJ LOT RĘCZNIE"
+                tone="neutral"
+                variant="secondary"
+                size="md"
+                icon="edit"
+                onPress={() => navigation.navigate('ManualFlight')}
+              />
+              {/* 01B: przejęcie ZOSTAJE po zamknięciu dnia i przypis mówi dlaczego —
+                  zamknięcie klamry nie jest zakazem latania (§3.6a: „nowy wzlot po
+                  zamknięciu otwiera dzień z powrotem i rozszerza klamrę"). Bez tego
+                  zdania przycisk wyglądałby jak niedopatrzenie. */}
+              {dayClosed && (
+                <AppText variant="mono" tone="muted" style={styles.btnNote}>
+                  Zamknięcie dnia nie jest końcem — jeśli jeszcze polecisz,{'\n'}dzień otworzy
+                  się z powrotem, a klamra się rozszerzy.
+                </AppText>
+              )}
+            </>
+          ))}
+
+        {/* ── zamknięcie dnia — OPCJONALNE i tak nazwane ──────────────────────
+            Nie ma go przy pustym dniu ani po zamknięciu: to brak akcji, nie blokada
+            z powodem. Jest natomiast blokada z powodem, gdy klamry nie da się domknąć
+            (`end.editable`) albo gdy nie ma czym jej domknąć — patrz niżej. */}
+        {vm != null && !empty && !dayClosed && (
+          <>
+            <ActionButton
+              label="ZAMKNIJ DZIEŃ"
+              tone="neutral"
+              variant="secondary"
+              size="md"
+              icon="check"
+              // Kokpit jest modalny, więc na 01 pilot nigdy nie trzyma maszyny —
+              // a klamra jedzie wyłącznie w `day_close.dutyEnd`. Blokada mówi to
+              // wprost; właściwa naprawa czeka na nośnik deklaracji (temat „służba",
+              // odłożony decyzją 2026-08-10).
+              disabledReason={closeDayBlocker(vm, false)}
+              // Zamknięcie dnia idzie przez 09B, bo klamra służby jedzie w payloadzie
+              // `day_close` (§5.1) — mockup mówi to wprost: „Zamknięcie dnia zda też
+              // SP-KLM". Intencja wchodzi parametrem, bo z danych jej nie widać.
+              onPress={() => navigation.navigate('ReleaseAircraft', { closeDuty: true })}
+            />
+            <AppText variant="mono" tone="muted" style={styles.btnNote}>
+              Nie musisz go zamykać —{'\n'}niezamknięty dzień domyka się na ostatniej sesji.
+            </AppText>
+          </>
+        )}
+
+        {/* ── okno korekty 24 h ma mieć drzwi (12) ─────────────────────────── */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Poprzednie dni"
+          onPress={() => navigation.navigate('History')}
+          style={({ pressed }) => [
+            styles.historyLink,
+            {
+              borderWidth: theme.borderWidth,
+              borderColor: pressed ? theme.colors.greenBorder : theme.colors.border,
+            },
+          ]}
+        >
+          <Icon name="clock" size={14} color={theme.colors.textSecondary} />
+          <AppText variant="body" tone="secondary" style={styles.historyLabel}>
+            Poprzednie dni
+          </AppText>
+          {historyBadge != null && <Tag label={historyBadge} tone="blue" />}
+        </Pressable>
+
+        <RefDataStamp checkedAt={refCheckedAt} style={styles.refStamp} />
+      </View>
+    </Screen>
+  );
+}
+
+// `ClaimCard` („samolot w ręce", KOKPIT / ZDAJ SAMOLOT) usunięty 2026-08-10 —
+// kokpit jest modalny, więc ten stan nie miał jak pojawić się na 01.
+
+/**
+ * `.bracket-row` — jedna godzina klamry z podpisem, SKĄD pochodzi.
+ *
+ * Podpis nie jest ozdobą: bez niego ekran pokazywałby dwie identyczne liczby o zupełnie
+ * różnym statusie — „07:10, bo tak wyszło z lotów" i „07:10, bo pilot tak wpisał" —
+ * a pilot nie wiedziałby, czy ma co poprawiać. Kolor podpisu niesie tę samą różnicę:
+ * błękit = deklaracja pilota, szarość = wartość wyliczona.
+ *
+ * Czas lokalny stoi TYLKO tutaj i tylko przy zadeklarowanej godzinie — reguła strefy
+ * czasowej z `CLAUDE.md`: pilot melduje się o godzinie lokalnej, wszystko inne jest UTC.
+ */
+function BracketRow({
+  label,
+  bracket,
+  edge,
+}: {
+  label: string;
+  bracket: BracketVm;
+  edge: 'top' | 'bottom';
+}) {
+  const { theme } = useTheme();
+  const resolved = bracket.origin === 'declared' || bracket.origin === 'derived';
+
+  return (
+    <View
+      style={[
+        styles.bracketRow,
+        { backgroundColor: theme.colors.surfaceRaised },
+        edge === 'top'
+          ? { borderBottomWidth: theme.borderWidth, borderBottomColor: theme.colors.border }
+          : { borderTopWidth: theme.borderWidth, borderTopColor: theme.colors.border },
+      ]}
+    >
+      <AppText variant="mono" tone="muted" style={styles.bracketLabel}>
+        {label}
+      </AppText>
+
+      <View style={styles.bracketBody}>
+        <View style={styles.bracketValueRow}>
+          <AppText
+            variant="display"
+            style={[
+              resolved ? styles.bracketValue : styles.bracketValuePending,
+              resolved ? null : { color: theme.colors.textMuted },
+            ]}
+          >
+            {bracket.value}
+          </AppText>
+          {bracket.localTime != null && (
+            <AppText variant="mono" tone="muted" style={styles.bracketLocal}>
+              {bracket.localTime} LT
+            </AppText>
+          )}
+        </View>
+        <AppText
+          variant="mono"
+          tone={bracket.origin === 'declared' ? 'blue' : 'muted'}
+          style={styles.bracketHint}
+        >
+          {bracket.hint}
+        </AppText>
+      </View>
+    </View>
+  );
+}
+
+/** `.leg-row` — jedna SESJA: numer w dobie, czasy silnika, loty i czasy trwania. */
+function SessionRow({ session }: { session: SessionRowVm }) {
+  const { theme } = useTheme();
+
+  return (
+    <View
+      style={[
+        styles.legRow,
+        { borderBottomWidth: theme.borderWidth, borderBottomColor: theme.colors.border },
+      ]}
+    >
+      <AppText variant="mono" tone="secondary" style={styles.legNumber}>
+        {session.index}
+      </AppText>
+      <AppText variant="mono" style={styles.legTimes}>
+        {session.times}
+      </AppText>
+      <View style={styles.legMetrics}>
+        <LegMetric label="Loty" value={session.flightsLabel} />
+        <LegMetric label="Blok" value={session.blockLabel} />
+        <LegMetric label="Lot" value={session.flightLabel} />
+      </View>
+    </View>
+  );
+}
+
+/** `.leg-metric` — mikro-para „klucz nad wartością" wewnątrz wiersza wzlotu. */
+function LegMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.legMetric}>
+      <AppText variant="mono" tone="muted" style={styles.legMetricKey}>
+        {label}
+      </AppText>
+      <AppText variant="mono" tone="secondary" style={styles.legMetricValue}>
+        {value}
+      </AppText>
+    </View>
+  );
+}
+
+// `LegNote` („wzlot N — do potwierdzenia") usunięty 2026-08-10 razem z leg_close.
+
+/**
+ * `.empty-legs` — doba bez wzlotów mówi to wprost, zamiast udawać tabelę bez wierszy.
+ * Napis obiecuje dokładnie to, co robi model: dzień zacznie się sam.
+ */
+function EmptyLegs() {
+  const { theme } = useTheme();
+
+  return (
+    <View style={styles.emptyLegs}>
+      <Icon name="aircraft" size={30} color={theme.colors.borderStrong} />
+      <AppText variant="display" tone="secondary" style={styles.emptyTitle}>
+        JESZCZE ŻADNEGO LOTU
+      </AppText>
+      <AppText variant="body" tone="muted" style={styles.emptyDesc}>
+        Dzień zacznie się sam, gdy przejmiesz samolot i uruchomisz silnik. Nic nie trzeba
+        otwierać.
+      </AppText>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { padding: 14, gap: 12 },
+
+  // (style karty claimu odeszły razem z `ClaimCard`, 2026-08-10)
+
+  // ── klamra ─────────────────────────────────────────────────────────────────
+  bracketRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingLeft: 12,
+    paddingRight: 12,
+  },
+  bracketLabel: { width: 74, fontSize: 8, lineHeight: 11, letterSpacing: 2, textTransform: 'uppercase' },
+  bracketBody: { flex: 1, gap: 3 },
+  bracketValueRow: { flexDirection: 'row', alignItems: 'baseline' },
+  bracketValue: { fontSize: 26, lineHeight: 28, letterSpacing: 1.5 },
+  /** Wartość jeszcze nieustalona („— : —", „TRWA") — mniejsza i przygaszona. */
+  bracketValuePending: { fontSize: 18, lineHeight: 28, letterSpacing: 2 },
+  bracketLocal: { fontSize: 10, lineHeight: 14, letterSpacing: 1, marginLeft: 7 },
+  bracketHint: { fontSize: 8.5, lineHeight: 12, letterSpacing: 0.5 },
+
+  // ── grupa wzlotów jednej maszyny ───────────────────────────────────────────
+  groupHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 9,
+    paddingBottom: 7,
+  },
+  groupId: { flexDirection: 'row', alignItems: 'baseline', gap: 8, flexShrink: 1 },
+  groupReg: { fontSize: 12, lineHeight: 16, letterSpacing: 1, fontFamily: fontFamily.monoBold },
+  groupState: { fontSize: 8, lineHeight: 12, letterSpacing: 1.5, textTransform: 'uppercase' },
+  // Cel dotykowy 44 px mimo drobnego napisu — link stoi w gęstej liście.
+  groupLink: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44, paddingHorizontal: 4 },
+  groupLinkLabel: { fontSize: 8.5, letterSpacing: 1.5, textTransform: 'uppercase' },
+
+  // ── wiersz wzlotu ──────────────────────────────────────────────────────────
+  legRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 12 },
+  legNumber: { minWidth: 44, height: 44, fontSize: 12, lineHeight: 44, textAlign: 'center' },
+  legTimes: { width: 104, fontSize: 12, lineHeight: 16, letterSpacing: 0.5 },
+  legMetrics: { flex: 1, flexDirection: 'row', gap: 12 },
+  legMetric: { gap: 1 },
+  legMetricKey: { fontSize: 7, lineHeight: 10, letterSpacing: 1.5, textTransform: 'uppercase' },
+  legMetricValue: { fontSize: 11, lineHeight: 15 },
+
+  // ── stan pusty listy ───────────────────────────────────────────────────────
+  emptyLegs: { alignItems: 'center', gap: 8, paddingVertical: 26, paddingHorizontal: 20 },
+  emptyTitle: { fontSize: 19, lineHeight: 22, letterSpacing: 1.5, textAlign: 'center' },
+  emptyDesc: { fontSize: 11, lineHeight: 17, textAlign: 'center', maxWidth: 260 },
+
+  // ── stopka ekranu ──────────────────────────────────────────────────────────
+  // `.btn-note`: przypis pod przyciskiem, dosunięty do niego ujemnym marginesem.
+  btnNote: { fontSize: 8.5, lineHeight: 13, letterSpacing: 0.5, textAlign: 'center', marginTop: -4 },
+  historyLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    minHeight: 46,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 12,
+  },
+  historyLabel: { fontSize: 12.5, fontFamily: fontFamily.bodySemiBold },
+  refStamp: { justifyContent: 'center', paddingTop: 2, paddingBottom: 4 },
+});

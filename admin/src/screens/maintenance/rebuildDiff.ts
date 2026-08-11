@@ -25,7 +25,7 @@ export interface DiffRow {
   sessionUuid: string;
   sessionShort: string;
   aircraftId: string;
-  /** Dzień karty w zapisie skrzynki („24 JUN 2026"); „—" = sesja bez preflightu. */
+  /** Dzień karty w zapisie skrzynki („24 JUN 2026"); „—" = sesja bez claimu. */
   day: string;
   field: string;
   stored: string;
@@ -68,7 +68,7 @@ export function fieldValue(field: string, value: unknown): string {
   return JSON.stringify(value) ?? String(value);
 }
 
-/** „2026-06-24" → „24 JUN 2026"; `null` (sesja bez preflightu) → „—". */
+/** „2026-06-24" → „24 JUN 2026"; `null` (sesja bez claimu) → „—". */
 function dayLabel(day: string | null): string {
   if (day == null) return '—';
   const at = Date.parse(`${day}T00:00:00.000Z`);

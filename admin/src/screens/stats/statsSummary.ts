@@ -12,15 +12,17 @@ import type { StatsRangeDto, StatsTotalsDto } from '../../api/dto';
 import { dayShort, dayShortYear } from './statsFormat';
 
 const CONSTITUTION =
-  'Suma dni zamkniętych w zakresie. Każda liczba to złożenie projekcji `projectSession` z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk.';
+  'Suma sesji zdanych w zakresie. Każda liczba to złożenie projekcji `projectSession` z pojedynczych sesji — panel sumuje gotowe wyniki, nie liczy własnych metryk.';
 
 /**
- * Oś zakresu jest INNA niż na liście dni: A02 stawia dzień pod duty startem, A10 sumuje
- * po dniu zamknięcia. Obie osie są udokumentowane i celowe — zdanie stoi w podtytule,
- * żeby ta sama para dat dająca inny zbiór dni nie wyglądała na błąd którejś z list.
+ * Oś zakresu jest INNA niż na liście dni: A02 stawia sesję pod chwilą PRZEJĘCIA, A10
+ * sumuje po dniu ZDANIA maszyny. Obie osie są udokumentowane i celowe — zdanie stoi
+ * w podtytule, żeby ta sama para dat dająca inny zbiór sesji nie wyglądała na błąd
+ * którejś z list. Po §3.6a rozjazd bywa realny: zmiana wieczorna przejęta 30 JUL bywa
+ * zdana 31 JUL nad ranem.
  */
 const CLOSE_AXIS =
-  'Sumy liczą się po dniu zamknięcia sesji, więc zbiór dni może różnić się od listy dni z tym samym zakresem — tam dzień stoi pod duty startem.';
+  'Sumy liczą się po dniu zdania samolotu, więc zbiór sesji może różnić się od listy dni z tym samym zakresem — tam sesja stoi pod chwilą przejęcia.';
 
 /** Podtytuł strony: konstytucja ekranu, oś zakresu i zdania o dniach otwartych. */
 export function statsPageSub(totals: StatsTotalsDto | null): string {
@@ -32,18 +34,20 @@ export function statsPageSub(totals: StatsTotalsDto | null): string {
   const parts = [head];
 
   if (open === 0 && undated === 0) {
-    parts.push('W zakresie nie ma dni jeszcze otwartych.');
+    parts.push('W zakresie nie ma sesji jeszcze otwartych.');
   }
   if (open > 0) {
     parts.push(
-      `${open} ${plural(open, 'dzień jeszcze otwarty jest', 'dni jeszcze otwarte są', 'dni jeszcze otwartych jest')} celowo poza zakresem, bo ich sumy zmieniłyby się po zamknięciu.`,
+      `${open} ${plural(open, 'sesja jest', 'sesje są', 'sesji jest')} celowo poza zakresem, bo maszyny jeszcze nie zdano i sumy zmieniłyby się po zdaniu.`,
     );
   }
-  // Sesja z samym claimem nie ma duty startu, więc nie należy do ŻADNEGO zakresu —
-  // zdanie odróżnia ją od dni otwartych w zakresie, zamiast sklejać w jedną liczbę.
+  // Sesja BEZ `session_claim` nie ma daty, więc nie należy do ŻADNEGO zakresu. Po
+  // zmianie z 2026-08-07 to już nie „telefon padł przed preflightem" (taka sesja ma datę
+  // z claimu i jest zwykłą sesją w toku), tylko POŁAMANY STRUMIEŃ — §4.4 mówi, że
+  // każda sesja zaczyna się claimem. W zdrowym klubie ta liczba stoi na zerze.
   if (undated > 0) {
     parts.push(
-      `${undated} ${plural(undated, 'dzień jeszcze otwarty nie ma', 'dni jeszcze otwarte nie mają', 'dni jeszcze otwartych nie ma')} duty startu (sam claim, telefon padł przed preflightem) — bez daty ${plural(undated, 'liczy się', 'liczą się', 'liczy się')} przy każdym zakresie.`,
+      `${undated} ${plural(undated, 'otwarta sesja nie ma', 'otwarte sesje nie mają', 'otwartych sesji nie ma')} zdarzenia \`session_claim\` — rejestr niekompletny, więc bez daty ${plural(undated, 'liczy się', 'liczą się', 'liczy się')} przy każdym zakresie.`,
     );
   }
   return parts.join(' ');

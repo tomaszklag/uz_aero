@@ -108,7 +108,7 @@
   .flight-sep-dur { font-family:var(--font-mono); font-size:8px; color:var(--text-secondary); white-space:nowrap; }
 
   .action-row { display:grid; grid-template-columns:1fr auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
-  /* STOP ENGINE — wymaganie 3.2; tu zamyka się cykl dnia (silnik ON, po dobiegu) → 04 */
+  /* STOP ENGINE — wymaganie 3.2; tu zamyka się wzlot (silnik ON, po dobiegu) → 09 */
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 16px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
   .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }
@@ -290,7 +290,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
         Take off
       </a>
-      <a href="04-cockpit-ground.html" class="stop-btn" title="Zapisuje engine_stop z odczytem MH i FOB · przytrzymaj 2 s aby potwierdzić">
+      <a href="04-cockpit-ground.html" class="stop-btn" title="Zapisuje engine_stop i wraca do kokpitu (04): sesja zakończona, stamtąd ZDAJ SAMOLOT · przytrzymaj 2 s aby potwierdzić">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
         STOP
         <span class="stop-btn-lbl">przytrzymaj 2 s</span>
@@ -300,7 +300,8 @@
 </main>
 <nav class="state-sidebar">
   <div class="state-sidebar-lbl">Kokpit</div>
-  <a href="05a-cockpit-taxi.html" title="Kiedy: silnik ON, GS < 5 kt, przed pierwszym T/O — autodetekcja czeka na start"><span class="dot"></span>Taxi przed T/O</a>
+  <a href="05h-cockpit-idle.html" title="Kiedy: silnik ON, samolot jeszcze stoi — przycisk Taxi otwiera sekwencję; ruch zapisze też autodetekcja"><span class="dot"></span>Engine idle</a>
+  <a href="05a-cockpit-taxi.html" title="Kiedy: kołowanie trwa (zapisane przez autodetekcję albo przycisk Taxi) — przycisk podpowiada Take off"><span class="dot"></span>Taxi przed T/O</a>
   <a href="05-cockpit-running.html" title="Kiedy: w locie — phase hero (Climb/Cruise/Descent), GPS live, log zdarzeń, buforowanie offline"><span class="dot"></span>In Flight</a>
   <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
   <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>

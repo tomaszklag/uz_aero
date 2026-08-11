@@ -79,8 +79,10 @@ describe('statystyki: liczby serwera docierają do DOM-u', () => {
     expect(html).toContain('3 samoloty · 5 pilotów · 30 dni kalendarzowych.');
   });
 
-  it('podtytuł mówi o dniach otwartych POZA zakresem', () => {
-    expect(html).toContain('2 dni jeszcze otwarte są celowo poza zakresem');
+  it('podtytuł mówi o SESJACH otwartych POZA zakresem', () => {
+    // Jednostką jest sesja (przejęcie → zdanie), nie „dzień lotny" — po §3.6a jedna
+    // maszyna bierze w dobie dwie zmiany, a jeden pilot potrafi objąć dwie maszyny.
+    expect(html).toContain('2 sesje są celowo poza zakresem');
   });
 
   it('wykres: polyline, kropki dni zerowych i podpisy osi', () => {
@@ -158,7 +160,7 @@ describe('statystyki: `null` to „nie wiemy", nigdy zero — aż do DOM-u', () 
     expect(html.split('—').length - 1).toBeGreaterThanOrEqual(6);
   });
 
-  it('wiersze sprzed migracji 18: baner, kreski w kaflach i pusta sekcja zrzutów', () => {
+  it('wiersze sprzed kolumn statystyk: baner, kreski w kaflach i pusta sekcja zrzutów', () => {
     const data = statsFixture();
     data.totals.staleRows = 3;
     data.totals.takeoffs = null;
@@ -173,7 +175,7 @@ describe('statystyki: `null` to „nie wiemy", nigdy zero — aż do DOM-u', () 
     data.drops.clients = [];
 
     const html = render(data);
-    expect(html).toContain('sprzed migracji 18');
+    expect(html).toContain('sprzed kolumn statystyk');
     expect(html).toContain('Konserwacja');
     expect(html).toContain('twierdziłyby, że nikt nie skakał');
     // Sekcja zrzutów bez wstęgi i bez tabeli klientów — częściowa wyglądałaby na pełną.

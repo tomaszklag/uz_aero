@@ -16,12 +16,13 @@
  *
  * **`ORDER BY` niżej jest BEZ `NULLS LAST` i to jest decyzja, nie przeoczenie.**
  * `events.received_at` jest `NOT NULL`, więc dopisek nie zmienia wyniku — a planer
- * dopasowuje porządek SKŁADNIOWO i o ograniczeniu kolumny nie wnioskuje. Po migracji 17
+ * dopasowuje porządek SKŁADNIOWO i o ograniczeniu kolumny nie wnioskuje.
  * `idx_events_received` stoi jako `(received_at DESC, uuid DESC)`, czyli w postaci
  * DOMYŚLNEJ, którą ten sam indeks obsługuje w obie strony. Zapytanie z `NULLS LAST`
  * przestałoby do niego pasować i „ostatnie sześć zdarzeń" zaczęłoby sortować cały
  * rejestr — pulpit ładowałby się natychmiast w pierwszym miesiącu i coraz wolniej
- * w każdym następnym. Krótka historia tej pomyłki: migracje 12, 16 i 17.
+ * w każdym następnym. Trzy podejścia do tej pomyłki opisuje
+ * `docs/architektura-panelu-serwer.md` §7.8.
  */
 
 import type {
@@ -118,8 +119,9 @@ export class PgAdminDashboardRepo implements DashboardAdminPort {
   ): Promise<AdminDayTotalsRow> {
     // Sumy jadą z KOLUMN PROJEKCJI, nigdy z ponownego liczenia po zdarzeniach — to ta
     // sama reguła, co na liście dni: „agreguj wartości projekcji, nigdy nie odtwarzaj
-    // projekcji SQL-em". Dzień bez preflightu (`claim_time IS NULL`) nie ma daty, więc
-    // wypada z zakresu — tak samo jak na `A02`.
+    // projekcji SQL-em". Sesja bez `session_claim` (`claim_time IS NULL` — od 2026-08-07
+    // ta kolumna niesie chwilę PRZEJĘCIA, nie godzinę meldunku) nie ma daty, więc wypada
+    // z zakresu — tak samo jak na `A02`.
     const { rows } = await db.query<TotalsRow>(
       `SELECT COUNT(*)                                  AS sessions,
               COUNT(DISTINCT aircraft_id)               AS aircraft,

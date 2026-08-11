@@ -2,7 +2,7 @@
  * UZ Aero — panel: wiersz monitora eksportu, DTO → treść komórek (moduł CZYSTY).
  *
  * ══ PORZĄDEK LISTY NIE JEST WŁASNOŚCIĄ TEGO PLIKU ══
- * Dni przychodzą posortowane przez serwer po duty starcie (`NULLS LAST`). Ta funkcja
+ * Sesje przychodzą posortowane przez serwer po chwili przejęcia (`NULLS LAST`). Ta funkcja
  * MAPUJE i nie sortuje — przesortowanie tego, co przyszło, przestawiłoby wiersze
  * wewnątrz wycinka obciętego `LIMIT`-em i rozjechało się z tym, co opisują liczniki.
  *
@@ -72,26 +72,33 @@ export interface ExportRow {
 }
 
 /**
- * Kolumna „Dzień · UTC". Data pochodzi z MELDUNKU (`dutyStart`), bo to on wyznacza dzień
- * lotny, wyznacza nazwę karty i po nim filtruje zakres. Sesja bez `preflight_confirm`
- * nie ma daty i panel mówi to wprost, zamiast wnioskować ją z czego innego.
+ * Kolumna „Dzień · UTC". Data pochodzi z CHWILI PRZEJĘCIA (`claimedAt`) — ona przypisuje
+ * sesję do doby, ona wyznacza nazwę karty i po niej filtruje się zakres. Sesja bez
+ * `session_claim` nie ma daty i panel mówi to wprost, zamiast wnioskować ją z czego innego.
+ *
+ * Podpis niesie godzinę przejęcia, a nie samo „UTC": karta jest DOBĄ SAMOLOTU (§4.7),
+ * więc dwie zmiany tej samej maszyny mają tę samą datę I TĘ SAMĄ NAZWĘ KARTY — bez
+ * godziny wiersze byłyby nieodróżnialne dokładnie tam, gdzie pytanie brzmi „która to".
  */
 function dayCell(item: ExportListItemDto): { text: string; sub: string } {
-  if (item.dutyStart == null) return { text: '—', sub: 'bez preflightu · poza zakresem dat' };
-  return { text: dateUtcShort(item.dutyStart), sub: 'UTC' };
+  if (item.claimedAt == null) return { text: '—', sub: 'bez claimu · poza zakresem dat' };
+  return { text: dateUtcShort(item.claimedAt), sub: `przejęcie ${timeUtc(item.claimedAt)} UTC` };
 }
 
 function tabCell(item: ExportListItemDto): { text: string; sub: string; known: boolean } {
   if (item.tab == null) {
     return {
       text: '—',
-      sub: 'brak duty startu — nazwy karty nie ma z czego złożyć',
+      sub: 'brak chwili przejęcia — nazwy karty nie ma z czego złożyć',
       known: false,
     };
   }
   return {
+    // Karta jest DOBĄ SAMOLOTU (§4.7), więc ta sama nazwa wraca w wierszach wszystkich
+    // sesji tej maszyny tego dnia — i to jest poprawne, a nie duplikat: one są WIERSZAMI
+    // jednego dokumentu, spiętymi kolumną `Sesja`.
     text: item.tab,
-    sub: item.revision == null ? 'nazwa policzona z duty start' : 'nazwa z konwencji §4.7',
+    sub: item.revision == null ? 'doba samolotu · karta jeszcze nie powstała' : 'doba samolotu · §4.7',
     known: true,
   };
 }
@@ -148,13 +155,13 @@ function syncedAgo(updatedAt: string, nowMs: number): string {
  * zgadywać, czy funkcji nie ma w produkcie, czy nie ma jej w tej sytuacji. Serwer i tak
  * odmówi tak samo — blokada tutaj oszczędza żądanie, a nie zastępuje bramkę.
  *
- * Dzień OTWARTY i sesja BEZ PREFLIGHTU są zablokowane, bo ich odmowa jest pewna
- * i niezmienna do czasu, aż zmieni się rejestr. Dzień ZABLOKOWANY FLAGĄ — również, ale
+ * Sesja NIEZDANA i sesja BEZ CLAIMU są zablokowane, bo ich odmowa jest pewna
+ * i niezmienna do czasu, aż zmieni się rejestr. Sesja ZABLOKOWANA FLAGĄ — również, ale
  * z innym powodem i z linkiem do flagi: tam jest praca do wykonania.
  */
 function retryBlockedReason(item: ExportListItemDto): string | null {
-  if (item.sessionStatus === 'active') return 'dzień jest wciąż otwarty — karta powstaje po day_close';
-  if (item.tab == null) return 'sesja bez preflightu — karty nie da się nazwać';
+  if (item.sessionStatus === 'active') return 'samolot nie został zdany — wiersz karty domknie day_close';
+  if (item.tab == null) return 'sesja bez session_claim — karty nie da się nazwać';
   if (item.blockingFlagIds.length > 0) {
     return `najpierw rozstrzygnij flagę #${item.blockingFlagIds[0]}`;
   }

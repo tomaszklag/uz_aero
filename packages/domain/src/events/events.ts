@@ -20,7 +20,16 @@
 
 import type { EpochMillis } from '../time';
 
-/** Wersja schematu payloadu — bump przy każdej zmianie kształtu payloadów (§5.1). */
+/**
+ * Wersja schematu payloadu — bump przy każdej zmianie kształtu payloadów (§5.1).
+ *
+ * WERSJA 1 = MODEL 2026-08-10 („sesja = jeden bieg silnika"). Licznik wrócił do 1
+ * decyzją użytkownika z 2026-08-10: aplikacja nie była nigdzie wdrożona, więc
+ * zgodność z wcześniejszymi kształtami (wersja 1 sprzed 2026-08-06 z obowiązkową
+ * klamrą; wersja 2 z `leg_close`) została wyrzucona w całości, a kanoniczny dzień
+ * 22 JUNE w `app/src/__tests__/projections.test.ts` jest odtąd wzorcem POPRAWNOŚCI
+ * tego modelu, nie zgodności ze starym.
+ */
 export const CURRENT_SCHEMA_VERSION = 1;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -124,8 +133,15 @@ export interface PreflightConfirmPayload {
   departureIcao?: string | null;
   /** ICAO lądowania planowanego. */
   arrivalIcao?: string | null;
-  /** Czas meldowania = początek duty (UTC, §3.1). */
-  dutyStart: EpochMillis;
+  /**
+   * Czas meldowania = początek klamry służby (UTC).
+   *
+   * **OPCJONALNY** (§3.6a; historycznie: od 2026-08-06): przejęcie samolotu nie pyta już „od kiedy
+   * jesteś na służbie" — klamra powstaje z pierwszego wzlotu doby, a pilot poprawia ją
+   * po fakcie na ekranie 01. Zdarzenia w wersji 1 zawsze tę wartość niosą i nadal jest
+   * respektowana; brak oznacza „pilot nie zadeklarował", nie „zero".
+   */
+  dutyStart?: EpochMillis | null;
   /** Odczyt liczników na start dnia — początek łańcucha MH (§4.5). */
   reading: FuelMhReading;
   /** Log korekt podpowiedzi (append-only, nie nadpisuje `reading`). */
@@ -253,13 +269,58 @@ export interface ManualLogEntryPayload {
   notes?: string | null;
 }
 
-/** `day_close` — końcowy FOB+MH (przekazanie dla następnego) + koniec duty (§3.6). */
+/**
+ * `day_close` — ZDANIE SAMOLOTU: końcowy FOB+MH (przekazanie dla następnego pilota).
+ *
+ * Nazwa typu jest historyczna i zostaje, bo strumień jest append-only — miliony zdarzeń
+ * w bazie nie zmienią nazwy dlatego, że zmieniło się jej znaczenie. Od 2026-08-06 (§3.6)
+ * to zdarzenie **nie kończy dnia pilota**, tylko jego pracę z TĄ maszyną: służba liczy się
+ * dalej, a kolejny samolot wchodzi do tej samej doby.
+ */
+/**
+ * Powód zdania samolotu BEZ ANI JEDNEGO WZLOTU (ekran 09C) — silnik nie ruszył.
+ *
+ * Identyfikatory po angielsku, napisy dla pilota składa ekran: ta sama zasada, którą
+ * `OperationType` trzyma od issue #13 (`ferry` to identyfikator, nie napis).
+ */
+export type NoFlightReason = 'weather' | 'malfunction' | 'cancelled' | 'other';
+
+/** Lista powodów (runtime) — walidacja przy odczycie i siatka kart na 09C. */
+export const NO_FLIGHT_REASONS: readonly NoFlightReason[] = [
+  'weather',
+  'malfunction',
+  'cancelled',
+  'other',
+];
+
 export interface DayClosePayload {
-  /** Odczyt końcowy = przekazanie dla kolejnego pilota (koniec łańcucha MH). */
+  /** Odczyt końcowy = przekazanie dla kolejnego pilota (ogniwo łańcucha MH). */
   finalReading: FuelMhReading;
-  /** Godzina zakończenia duty (UTC). */
-  dutyEnd: EpochMillis;
+  /**
+   * Powód, dla którego nie było wzlotu — **tylko dla sesji bez cyklu silnika** (09C).
+   *
+   * Bez niego rejestr mówi „samolot był zajęty 1:15 i nikt nigdzie nie poleciał", co dla
+   * administratora jest pytaniem, nie informacją. Pole jest opcjonalne, bo przy sesji ze
+   * wzlotami nie ma o co pytać, a strumienie schemaVersion 1 go nie niosą — brak przy
+   * sesji bez wzlotu daje miękką flagę (`NO_FLIGHT_WITHOUT_REASON`), nigdy odrzucenie:
+   * fakt zajęcia maszyny jest cenniejszy niż kompletność formularza.
+   */
+  noFlightReason?: NoFlightReason | null;
+  /**
+   * Godzina zakończenia służby (UTC) — **OPCJONALNA** (§3.6a; historycznie: od 2026-08-06).
+   * Zdanie samolotu nie jest końcem służby, więc nie ma powodu jej tu wymagać;
+   * klamrę domyka pilot na `01b` albo domyka się sama na ostatnim wzlocie.
+   */
+  dutyEnd?: EpochMillis | null;
 }
+
+/*
+ * `leg_close` (potwierdzenie wzlotu) ISTNIAŁO tu między 2026-08-06 a 2026-08-10
+ * i zostało USUNIĘTE razem z całym pojęciem „wzlotu": sesja = jeden bieg silnika,
+ * a jednostką potwierdzenia jest SESJA, zatwierdzana odczytami przy zdaniu
+ * (`day_close.finalReading`). Nie ma migracji — aplikacja nie była wdrożona,
+ * strumienie z `leg_close` nie istnieją poza testami i demo.
+ */
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Rejestr typ → payload i typ zdarzenia

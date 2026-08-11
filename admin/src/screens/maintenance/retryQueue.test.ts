@@ -47,7 +47,7 @@ const item = (over: Partial<ExportListItemDto>): ExportListItemDto => ({
   sessionUuid: 'sess-1',
   tab: '2026-07-29_SP-KLM',
   day: '2026-07-29',
-  dutyStart: Date.UTC(2026, 6, 29, 8, 0),
+  claimedAt: Date.UTC(2026, 6, 29, 8, 0),
   aircraftId: 'ac-klm',
   reg: 'SP-KLM',
   aircraftType: 'Cessna 208 Caravan',

@@ -31,8 +31,10 @@ export function useCorrectionPreview(
     queryKey: keys.corrections.preview(sessionUuid, draft ?? EMPTY_DRAFT),
     queryFn: () => previewCorrection(sessionUuid, draft!),
     enabled: sessionUuid !== '' && draft != null,
-    // Odmowa serwera (403 bez zdolności, 400 przy otwartym dniu, 404 przy złym uuid)
-    // nie naprawi się przez powtórzenie. Powtarzamy wyłącznie awarie sieci.
+    // Odmowa serwera (403 bez zdolności, 404 przy złym uuid) nie naprawi się przez
+    // powtórzenie. Powtarzamy wyłącznie awarie sieci. Odmowy „przy otwartym dniu"
+    // już nie ma — bramka `400 day_open` znikła 2026-08-07, a kolizja z pilotem jedzie
+    // w ciele odpowiedzi 200 jako `warnings`.
     retry: (attempt, error) => attempt < 2 && !isHttpError(error),
   });
 }

@@ -2,7 +2,7 @@
  * UZ Aero — panel: katalog akcji dziennika (`A09`).
  *
  * Najważniejszy przypadek w tym pliku to NIEZNANY KOD. Kolumna `admin_audit.action`
- * celowo nie ma `CHECK`-a (migracja 9), więc dziennik może nieść akcję wycofaną
+ * celowo nie ma `CHECK`-a, więc dziennik może nieść akcję wycofaną
  * z katalogu — a ekran nadzoru, który wywraca się na własnej historii albo ją ukrywa,
  * przestaje być narzędziem nadzoru.
  */

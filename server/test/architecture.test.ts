@@ -36,14 +36,21 @@ function filesUnder(dir: string): string[] {
 const read = (file: string): string => readFileSync(join(SRC, file), 'utf8');
 
 /**
- * Treść pliku BEZ komentarzy. Skaner szuka SQL-a, a nie prozy o SQL-u: docblock
- * migracji tłumaczy, dlaczego `UPDATE admin_audit` jest zakazane, i bez tego kroku
- * sam wywoływałby naruszenie, którego opisuje zakaz.
+ * Treść pliku BEZ komentarzy. Skaner szuka SQL-a, a nie prozy o SQL-u: opis schematu
+ * tłumaczy, dlaczego `UPDATE admin_audit` jest zakazane, i bez tego kroku sam wywoływałby
+ * naruszenie, którego opisuje zakaz.
+ *
+ * **Trzecia forma — komentarz SQL `-- …` — doszła 2026-08-08 razem ze zgnieceniem
+ * migracji.** Uzasadnienia przeniosły się wtedy z docbloków TypeScriptu do komentarzy
+ * przy kolumnach, czyli DO WNĘTRZA szablonu z DDL-em, gdzie oba wzorce wyżej nie sięgają.
+ * Wzorzec wymaga spacji po myślnikach (`-- `), żeby nie zjeść operatora dekrementacji:
+ * `i--` i `--i` nigdy jej nie mają, a komentarz SQL bez spacji się nie zdarza.
  */
 const codeOf = (file: string): string =>
   read(file)
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+    .replace(/(^|[^:])\/\/.*$/gm, '$1')
+    .replace(/(^|\s)--\s.*$/gm, '$1');
 
 /** Ścieżki modułów, z których plik importuje (`from '…'`). */
 function importedFrom(code: string): string[] {
@@ -148,7 +155,7 @@ describe('granice, których nie pilnuje kompilator', () => {
 
   it('dziennik `export_log` jest append-only — bez UPDATE, DELETE i bez UPSERT-u', () => {
     // Ta własność NIE jest ozdobą schematu — stoi pod całą treścią przekroju A05.
-    // Opiera się na niej docblock migracji 14 („po nim, i tylko po nim, da się
+    // Opiera się na niej komentarz przy `export_log` w `schema.ts` („po nim, i tylko po nim, da się
     // odpowiedzieć, co widział skarbnik klubu"), baner ekranu („dwie tabele, dwa różne
     // zadania") i podsumowanie historii rewizji („3 wiersze dziennika, 1 wiersz karty").
     // Do 2026-08-01 inwariant był ZACHOWANY, ale niepilnowany: nic nie broniło następnej

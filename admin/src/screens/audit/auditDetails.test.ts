@@ -14,7 +14,7 @@ describe('szczegóły wpisu audytu', () => {
   it('nazywa po polsku pola, które zapisuje `flag.resolve`', () => {
     const rows = detailRows({
       note: 'Nakładka pozorna — telefon dosłał day_close.',
-      type: 'session_overlap',
+      type: 'aircraft_overlap',
       sessionUuids: ['sess-1', 'sess-2'],
     });
 

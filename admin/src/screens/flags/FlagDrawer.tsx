@@ -266,15 +266,15 @@ export function FlagDrawer({ flagId, flag, pilot, capabilities, onClose, onWiden
           <b>Co się stanie po rozwiązaniu.</b>{' '}
           {flag.blocksExport ? (
             <>
-              Bramka <code>dayExporter</code> przestaje trzymać sesje objęte flagą, a karta dnia
-              generuje się od razu po zatwierdzeniu transakcji — odpowiedź serwera poda numer
-              rewizji. Eksport idzie PO commicie, żeby dokument klubu nigdy nie opisał stanu,
-              który się nie zapisał.
+              Bramka <code>dayExporter</code> przestaje wycinać sesje objęte flagą, a karta
+              doby generuje się od razu po zatwierdzeniu transakcji — tym razem KOMPLETNA,
+              i odpowiedź serwera poda numer rewizji. Eksport idzie PO commicie, żeby dokument
+              klubu nigdy nie opisał stanu, który się nie zapisał.
             </>
           ) : (
             <>
               Zmieni się status flagi i przybędzie wpis w audycie. Re-eksportu <b>nie
-              będzie</b> — serwer ponawia karty wyłącznie dla <code>session_overlap</code>,
+              będzie</b> — serwer ponawia karty wyłącznie dla <code>aircraft_overlap</code>,
               bo tylko ten typ jest bramką eksportera, a odpowiedź z rewizją po akcji, która
               na kartę nie wpłynęła, uczyłaby nieufności do narzędzia.
             </>

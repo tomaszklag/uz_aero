@@ -81,6 +81,10 @@ const resultToWire = (result: CorrectionResult) => ({
   // `SessionState` jest bytem DOMENOWYM, więc jedzie bez własnego DTO (reguła granicy
   // typów, `docs/architektura-panelu-serwer.md` §1.2). Panel formatuje i nic nie liczy.
   state: result.state,
+  // Kolizje z pilotem jadą w odpowiedzi POZYTYWNEJ: korekta jest zapisana, a panel ma
+  // powiedzieć, w co administrator wszedł. Do 2026-08-07 była tu zamiast tego odmowa
+  // `400 day_open` — patrz komenda.
+  warnings: result.warnings,
   // Wynik re-eksportu w odpowiedzi, żeby panel powiedział „arkusz · rewizja 3",
   // a nie samo „zapisano" — i uczciwie pokazał `null`, gdy eksport padł.
   reexport: result.reexport,
@@ -118,12 +122,10 @@ export function registerAdminCorrectionRoutes(
         correction: payloadOf(body.data),
       });
 
-      if (!outcome.ok) {
-        if (outcome.reason === 'session_not_found') {
-          return reply.code(404).send({ error: 'not_found' });
-        }
-        return reply.code(400).send({ error: 'day_open' });
-      }
+      // Jedyna odmowa podglądu. `400 day_open` ZNIKŁO 2026-08-07 razem z bramką
+      // w zapytaniu: sesja bez `day_close` jest dziś stanem normalnym, a kolizja
+      // z pilotem jedzie w `preview.warnings`.
+      if (!outcome.ok) return reply.code(404).send({ error: 'not_found' });
 
       // Naruszenia jadą W CIELE 200, a nie jako 422. Podgląd ODPOWIEDZIAŁ na pytanie
       // „co się stanie": odpowiedź brzmi „nic, bo tego nie wolno" i jest kompletna
@@ -154,9 +156,6 @@ export function registerAdminCorrectionRoutes(
         if (outcome.reason === 'session_not_found') {
           return reply.code(404).send({ error: 'not_found' });
         }
-        // 400: nie ma czego poprawiać — dzień jest otwarty, więc pilot poprawia sam
-        // na 04c. To wada ŻĄDANIA (panel nie powinien wystawić tu formularza).
-        if (outcome.reason === 'day_open') return reply.code(400).send({ error: 'day_open' });
         // 422, a nie 400: żądanie jest poprawnie zbudowane, to DOMENA odmawia (cel
         // spoza sesji, cel niekorygowalny, czas z przyszłości). Panel ma pokazać
         // konkretny powód z listy naruszeń, a nie „popraw formularz".

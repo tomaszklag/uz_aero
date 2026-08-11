@@ -58,17 +58,30 @@ export function verdictLabel(verdict: NormVerdict | null): string | null {
 }
 
 /**
- * Podpis normy — „norma tego samolotu 15–17 L/h · 90 dni".
+ * Samo PASMO normy — „15–17 L/h".
  *
  * Zaokrąglenie do pełnych litrów jest celowe: pasmo pochodzi z par odczytów
  * paliwomierza, a ten nie ma dokładności uzasadniającej miejsce po przecinku.
+ *
+ * Istnieje obok `normLabel`, bo rozliczenie samolotu (09B) stawia pasmo w jednym
+ * wierszu obok wyniku sesji („22,7 L/h · norma 20–24 L/h") i pełne zdanie z oknem
+ * obserwacji rozpychałoby ten wiersz na dwie linie. `normLabel` składa się z tej
+ * funkcji, więc zaokrąglenie jest jedno i nie ma jak się rozjechać.
  */
-export function normLabel(norm: ConsumptionNorm | null): string | null {
+export function normBandLabel(norm: ConsumptionNorm | null): string | null {
   if (norm == null) return null;
   const low = Math.round(norm.blockLPerHLow);
   const high = Math.round(norm.blockLPerHHigh);
-  const band = low === high ? `${low}` : `${low}–${high}`;
-  return `norma tego samolotu ${band} L/h · ${norm.windowDays} dni`;
+  return `${low === high ? `${low}` : `${low}–${high}`} L/h`;
+}
+
+/**
+ * Podpis normy — „norma tego samolotu 15–17 L/h · 90 dni".
+ */
+export function normLabel(norm: ConsumptionNorm | null): string | null {
+  const band = normBandLabel(norm);
+  if (band == null || norm == null) return null;
+  return `norma tego samolotu ${band} · ${norm.windowDays} dni`;
 }
 
 /**

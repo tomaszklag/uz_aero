@@ -138,7 +138,7 @@ export function ManualLogScreen({
               Fallback GPS
             </AppText>
             <AppText variant="micro" tone="muted">
-              {`· tryb ręczny · ${projection.dutyStart != null ? dateUtcLong(projection.dutyStart) : dateUtcLong(now)}`}
+              {`· tryb ręczny · ${projection.claimedAt != null ? dateUtcLong(projection.claimedAt) : dateUtcLong(now)}`}
             </AppText>
           </View>
         </>
@@ -161,7 +161,7 @@ export function ManualLogScreen({
       <View style={{ padding: 14, gap: theme.spacing.md }}>
         {/* `.section-label` — mikro-etykieta z tokenu (dryf światła 2 → 1.5 celowy). */}
         <AppText variant="micro" tone="muted">
-          {`Log zdarzeń · ${projection.dutyStart != null ? dateUtcLong(projection.dutyStart) : dateUtcLong(now)}`}
+          {`Log zdarzeń · ${projection.claimedAt != null ? dateUtcLong(projection.claimedAt) : dateUtcLong(now)}`}
         </AppText>
 
         {groups.length === 0 && (

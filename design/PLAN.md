@@ -1,5 +1,15 @@
 # UZ Aero — plan wdrożenia architektury w mockupach
 
+> ## ⚠ HISTORYCZNY (2026-08-07)
+>
+> Ta checklista dotyczy audytu z 2026-07-22 i została odhaczona w całości. Opisuje
+> mockupy **sprzed przebudowy flow z 2026-08-06** — wymienia ekrany, których już nie ma
+> (`01-splash`, `03-preflight-confirm`, `09-end-of-day`) i zadania sformułowane w modelu,
+> w którym dzień służby był kontenerem na loty. Zostaje jako zapis rozumowania.
+>
+> Aktualne reguły designu: `CLAUDE.md`. Aktualny flow: `docs/design-notes.md`
+> i `docs/_main.md.txt` §7. Changelog zmian: `design/ZMIANY.md`.
+
 > Wynik audytu z 2026-07-22: przegląd 21 mockupów pod kątem przyjętej architektury
 > offline-first (`docs/_main.md.txt` sekcje 4–6, `CLAUDE.md` sekcja "Offline-first").
 > Kolejność bloków = kolejność użycia aplikacji (decyzja użytkownika).

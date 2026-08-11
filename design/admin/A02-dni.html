@@ -401,27 +401,27 @@
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Dzień lotny — trzy ekrany, kiedy który?</div>
+  <div class="vp-title">Sesja samolotu — trzy ekrany, kiedy który?</div>
   <a class="vp-item active" href="A02-dni.html">
     <span class="vp-badge">A02</span>
     <span class="vp-body">
-      <span class="vp-name">Lista dni lotnych</span>
-      <span class="vp-when">Wejście do operacji: wszystkie sesje w zakresie dat, z filtrami po samolocie, pilocie i stanie. Stąd wchodzi się w konkretny dzień.</span>
+      <span class="vp-name">Lista sesji samolotów</span>
+      <span class="vp-when">Wejście do operacji: wszystkie sesje (przejęcie → zdanie) w zakresie dat, z filtrami po samolocie, pilocie i stanie. Jedna maszyna może mieć w dobie kilka wierszy — odróżnia je godzina przejęcia.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="A02a-dzien.html">
     <span class="vp-badge">A02A</span>
     <span class="vp-body">
-      <span class="vp-name">Szczegół dnia</span>
-      <span class="vp-when">Kliknięcie wiersza: kafle podsumowania, pełna oś zdarzeń, lista lotów i flagi dnia. Ma też stan „dzień otwarty — telefon dosyła zdarzenia".</span>
+      <span class="vp-name">Karta sesji</span>
+      <span class="vp-when">Kliknięcie wiersza: kafle podsumowania, pełna oś zdarzeń, lista wzlotów i flagi sesji. Ma też stan „samolot nieoddany — telefon dosyła zdarzenia".</span>
     </span>
   </a>
   <a class="vp-item" href="A02b-korekta.html">
     <span class="vp-badge amber">A02B</span>
     <span class="vp-body">
       <span class="vp-name">Korekta administratora</span>
-      <span class="vp-when">Tylko po zamknięciu okna 24 h (do 24 h pilot poprawia sam na ekranie 04C aplikacji). Szuflada nad osią zdarzeń: <code>retime</code> albo <code>void</code>, zawsze z powodem.</span>
+      <span class="vp-when">Zawsze dostępna — administrator nie jest nigdy blokowany (decyzja 2026-08-07). Kolizja z pilotem (trwająca sesja, otwarte okno wzlotu) jest OSTRZEŻENIEM nad formularzem, nie odmową. Szuflada nad osią zdarzeń: <code>retime</code> albo <code>void</code>, zawsze z powodem.</span>
     </span>
   </a>
 </aside>
@@ -528,7 +528,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">DNI LOTNE</h1>
-            <p class="page-sub">Jeden wiersz = jedna sesja (<code>session_claim</code> → <code>day_close</code>). Wszystkie liczby to projekcja <code>projectSession</code> ze strumienia zdarzeń — ta sama funkcja, która liczy statystyki w telefonie pilota. Panel niczego nie przelicza po swojemu.</p>
+            <p class="page-sub">Jeden wiersz = jedna sesja samolotu: <b>przejęcie</b> (<code>session_claim</code>) → <b>zdanie</b> (<code>day_close</code> — nazwa typu jest historyczna, zdarzenie znaczy „koniec pracy z tą maszyną", nie „koniec dnia pilota"). Wszystkie liczby to projekcja <code>projectSession</code> ze strumienia zdarzeń — ta sama funkcja, która liczy statystyki w telefonie pilota. Panel niczego nie przelicza po swojemu.</p>
           </div>
           <div class="page-actions">
             <button class="btn ghost">
@@ -539,10 +539,12 @@
         </div>
 
         <div class="tiles">
-          <div class="tile"><span class="tile-key">Dni w zakresie</span><span class="tile-val">12</span><span class="tile-note">25–31 JUL 2026 · 3 samoloty.</span></div>
-          <div class="tile"><span class="tile-key">W locie teraz</span><span class="tile-val green">1<small> / 3</small></span><span class="tile-note">SP-ABC — aktywny claim, silnik pracuje.</span></div>
-          <div class="tile"><span class="tile-key">Dni z flagą</span><span class="tile-val amber">2</span><span class="tile-note">SP-KLM 29 i 30 JUL — <code>MH_GAP</code> spina obie sesje.</span></div>
-          <div class="tile"><span class="tile-key">Wyeksportowane</span><span class="tile-val">8<small> / 9 zamkniętych</small></span><span class="tile-note">SP-XYZ 31 JUL czeka w kolejce eksportu.</span></div>
+          <!-- Jednostką kafli jest SESJA, nie doba (§3.6a): jedna maszyna bierze w dobie
+               dwie zmiany, więc „dni" liczyłoby co innego niż wiersze pod spodem. -->
+          <div class="tile"><span class="tile-key">Sesje w zawężeniu</span><span class="tile-val">13</span><span class="tile-note">25–31 JUL 2026 · 3 samoloty · doba SP-KLM 28 JUL ma dwie zmiany.</span></div>
+          <div class="tile"><span class="tile-key">Samoloty zajęte</span><span class="tile-val blue">2</span><span class="tile-note">Sesje bez <code>day_close</code> — odczyty końcowe są puste.</span></div>
+          <div class="tile"><span class="tile-key">Z otwartą flagą</span><span class="tile-val amber">2</span><span class="tile-note">SP-KLM 29 i 30 JUL — <code>mh_gap</code> spina obie sesje.</span></div>
+          <div class="tile"><span class="tile-key">Wyeksportowane</span><span class="tile-val">8</span><span class="tile-note">Wiersz karty powstaje po zdaniu samolotu, nie w trakcie sesji.</span></div>
         </div>
 
         <div class="filters">
@@ -561,15 +563,17 @@
         </div>
 
         <div class="filters">
+          <!-- Chipa „W locie" TU NIE MA i nie może być: projekcja `sessions` niesie
+               `status`, nie niesie stanu silnika (baner niżej). Stany są dwa i opisują
+               SESJĘ SAMOLOTU, nie dobę — przejęcie → zdanie (§3.6a). -->
           <span class="chip on">Wszystkie stany</span>
-          <span class="chip">W locie</span>
-          <span class="chip">Dzień otwarty</span>
+          <span class="chip">Samolot zajęty</span>
           <span class="chip amber">Z flagą</span>
-          <span class="chip">Zamknięte</span>
+          <span class="chip">Samolot zdany</span>
           <span class="chip">Wyeksportowane</span>
           <span style="margin-left:auto;display:inline-flex;align-items:center;gap:9px;">
             <span class="pill blue"><span class="dot"></span>Wszystkie czasy UTC</span>
-            <span class="pill dim">12 wierszy</span>
+            <span class="pill dim">13 wierszy</span>
           </span>
         </div>
 
@@ -588,12 +592,12 @@
 
         <div class="banner warn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>DO DOROBIENIA: plakietka „W locie".</b> Kolumna <b>Stan</b> odróżnia dzień otwarty od samolotu, który właśnie leci — a tej różnicy projekcja <code>sessions</code> NIE niesie: ma <code>status</code> (<code>active</code>/<code>closed</code>), nie ma <code>engine_running</code>. „Silnik pracuje" jest polem <code>SessionState</code>, czyli wielkością liczoną ze strumienia; lista celowo go nie czyta (§7.1: listy nie wołają <code>projectSession</code>). Żeby ta plakietka mogła powstać, ktoś musi zdecydować, czy projekcja dostaje kolumnę „silnik pracuje" — i to jest decyzja człowieka, nie brak w migracji. Do tego czasu panel pokazuje <b>„Dzień otwarty"</b> dla każdej sesji bez <code>day_close</code> i niczego nie udaje. Tak samo <b>filtr po kliencie</b> (kolumna jest, parametru trasy nie ma) i <b>sortowanie po kolumnach innych niż „Dzień"</b> — kursor keyset jedzie po <code>claim_time</code>.</span>
+          <span><b>DO DOROBIENIA: plakietka „W locie".</b> Kolumna <b>Stan</b> odróżnia zajęty samolot od samolotu, który właśnie leci — a tej różnicy projekcja <code>sessions</code> NIE niesie: ma <code>status</code> (<code>active</code>/<code>closed</code>), nie ma <code>engine_running</code>. „Silnik pracuje" jest polem <code>SessionState</code>, czyli wielkością liczoną ze strumienia; lista celowo go nie czyta (§7.1: listy nie wołają <code>projectSession</code>). Żeby ta plakietka mogła powstać, ktoś musi zdecydować, czy projekcja dostaje kolumnę „silnik pracuje" — i to jest decyzja człowieka, nie brak w migracji. Do tego czasu panel pokazuje <b>„Samolot zajęty"</b> dla każdej sesji bez <code>day_close</code> i niczego nie udaje. Tak samo <b>filtr po kliencie</b> (kolumna jest, parametru trasy nie ma) i <b>sortowanie po kolumnach innych niż „Dzień"</b> — kursor keyset jedzie po <code>claim_time</code>.</span>
         </div>
 
         <div class="banner ok">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-          <span><b>Sprostowanie z 2026-07-31: projekcja jest gotowa.</b> Ten ekran nosił wcześniej ostrzeżenie, że serwer nie ma kolumn <code>operation</code>, <code>client</code> ani <code>duty_start</code>. Stan faktyczny: <code>operation</code> i <code>client</code> weszły <b>migracją 11</b> (razem z indeksem <code>idx_sessions_day</code> pod kursor listy), a czasu służby nigdy nie brakowało — niesie go <code>sessions.claim_time</code> od pierwszej wersji projekcji i to on jest kluczem sortowania oraz filtra zakresu dat. Osobnej kolumny <code>duty_start</code> świadomie NIE dokładamy, bo byłaby duplikatem tej samej liczby (uzasadnienie: <code>application/common/mappers/sessionRow.ts</code>). Filtr operacji (<code>?operation=</code>) działa po stronie bazy.</span>
+          <span><b>Sprostowanie z 2026-08-07: kolumna „Dzień" mierzy SESJĘ, nie służbę.</b> Ten ekran nosił wcześniej ostrzeżenie o brakującej kolumnie <code>duty_start</code>. Stan faktyczny po migracji 21: <code>sessions.claim_time</code> niesie <b>czas zdarzenia <code>session_claim</code></b>, a nie godzinę meldunku — i to on jest kluczem sortowania, kursora keyset oraz filtra zakresu dat. Kolumny <code>duty_start</code> nie ma i <b>nie będzie</b>: po §3.6a klamra służby należy do PILOTA, obejmuje kilka maszyn i nie jest właściwością żadnej pojedynczej sesji, więc nie ma jej gdzie ani po co trzymać w tej tabeli. <code>operation</code> i <code>client</code> weszły migracją 11 razem z indeksem <code>idx_sessions_day</code>; filtr operacji (<code>?operation=</code>) działa po stronie bazy.</span>
         </div>
 
         <div class="table-wrap">
@@ -616,7 +620,7 @@
             <tbody>
 
               <tr class="clickable">
-                <td class="mono">31 JUL 2026<span class="cell-sub">claim 12:08</span></td>
+                <td class="mono">31 JUL 2026<span class="cell-sub">12:08 → trwa</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
                 <td><span class="pill dim">EGZAMIN</span><span class="cell-sub">EPWA · CPL(A)</span></td>
                 <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">TML · dual: —</span></td>
@@ -630,7 +634,7 @@
               </tr>
 
               <tr class="clickable">
-                <td class="mono">31 JUL 2026<span class="cell-sub">claim 05:38</span></td>
+                <td class="mono">31 JUL 2026<span class="cell-sub">05:38 → trwa</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                 <td><span class="pill blue">SKOKI</span><span class="cell-sub">SKY CAMP</span></td>
                 <td class="cell-strong">Anna Wrzosek<span class="cell-sub">AWR · dual: K. Nowak</span></td>
@@ -639,12 +643,12 @@
                 <td class="num">8</td>
                 <td class="num">3907.8 → <span style="color:var(--text-muted)">—</span></td>
                 <td class="num">812 → <span style="color:var(--text-muted)">—</span></td>
-                <td><span class="pill blue"><span class="dot"></span>Dzień otwarty</span><span class="cell-sub">dane w drodze · sync 24 min temu</span></td>
+                <td><span class="pill blue"><span class="dot"></span>Samolot zajęty</span><span class="cell-sub">dane w drodze · sync 24 min temu</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
               </tr>
 
               <tr class="clickable">
-                <td class="mono">31 JUL 2026<span class="cell-sub">zamknięty 11:02</span></td>
+                <td class="mono">31 JUL 2026<span class="cell-sub">09:20 → 11:02</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                 <td><span class="pill dim">INNE</span><span class="cell-sub">szkolenie · EPBC</span></td>
                 <td class="cell-strong">Piotr Czarnecki<span class="cell-sub">PCZ · dual: —</span></td>
@@ -653,12 +657,12 @@
                 <td class="num">4</td>
                 <td class="num">645:06 → 646:24<span class="cell-sub">licznik hh:mm</span></td>
                 <td class="num">92 → 68</td>
-                <td><span class="pill dim">Zamknięty</span><span class="cell-sub">eksport w kolejce</span></td>
+                <td><span class="pill dim">Samolot zdany</span><span class="cell-sub">bez karty arkusza</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
               </tr>
 
               <tr class="clickable" style="background:var(--amber-muted);">
-                <td class="mono">30 JUL 2026<span class="cell-sub">zamknięty 13:22</span></td>
+                <td class="mono">30 JUL 2026<span class="cell-sub">06:40 → 13:22</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                 <td><span class="pill blue">SKOKI</span><span class="cell-sub">SKY CAMP · zlec. 2026/141</span></td>
                 <td class="cell-strong">Anna Wrzosek<span class="cell-sub">AWR · dual: M. Bąk → K. Nowak</span></td>
@@ -667,12 +671,12 @@
                 <td class="num">9</td>
                 <td class="num">3902.1 → 3907.8<span class="cell-sub">Δ 5.7 h vs blok 5:53</span></td>
                 <td class="num">780 → 153</td>
-                <td><span class="pill amber"><span class="dot"></span>2 flagi</span><span class="cell-sub">MH_GAP · CLOCK_DRIFT</span></td>
+                <td><span class="pill amber"><span class="dot"></span>2 flagi</span><span class="cell-sub">mh_gap · clock_drift</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
               </tr>
 
               <tr class="clickable">
-                <td class="mono">30 JUL 2026<span class="cell-sub">zamknięty 16:41</span></td>
+                <td class="mono">30 JUL 2026<span class="cell-sub">12:55 → 16:41</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
                 <td><span class="pill dim">PRZELOT</span><span class="cell-sub">EPWA → EPMO</span></td>
                 <td class="cell-strong">Jacek Zieliński<span class="cell-sub">JZI · dual: —</span></td>
@@ -686,7 +690,7 @@
               </tr>
 
               <tr class="clickable">
-                <td class="mono">30 JUL 2026<span class="cell-sub">zamknięty 14:09</span></td>
+                <td class="mono">30 JUL 2026<span class="cell-sub">11:10 → 14:09</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                 <td><span class="pill dim">EGZAMIN</span><span class="cell-sub">EPBC · PPL(A)</span></td>
                 <td class="cell-strong">Karolina Nowak<span class="cell-sub">KNO · dual: —</span></td>
@@ -700,7 +704,7 @@
               </tr>
 
               <tr class="clickable" style="background:var(--amber-muted);">
-                <td class="mono">29 JUL 2026<span class="cell-sub">zamknięty 15:47</span></td>
+                <td class="mono">29 JUL 2026<span class="cell-sub">10:20 → 15:47</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                 <td><span class="pill blue">SKOKI</span><span class="cell-sub">STREFA RADOM</span></td>
                 <td class="cell-strong">Marek Bąk<span class="cell-sub">MBK · dual: —</span></td>
@@ -709,12 +713,12 @@
                 <td class="num">7</td>
                 <td class="num">3896.7 → 3901.4</td>
                 <td class="num">720 → 388</td>
-                <td><span class="pill amber"><span class="dot"></span>1 flaga</span><span class="cell-sub">MH_GAP (z 30 JUL)</span></td>
+                <td><span class="pill amber"><span class="dot"></span>1 flaga</span><span class="cell-sub">mh_gap (z 30 JUL)</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
               </tr>
 
               <tr class="clickable">
-                <td class="mono">29 JUL 2026<span class="cell-sub">zamknięty 13:12</span></td>
+                <td class="mono">29 JUL 2026<span class="cell-sub">09:50 → 13:12</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
                 <td><span class="pill dim">INNE</span><span class="cell-sub">przelot zapoznawczy</span></td>
                 <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">TML · dual: —</span></td>
@@ -727,8 +731,29 @@
                 <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
               </tr>
 
+              <!-- DWIE ZMIANY TEJ SAMEJ MASZYNY W TEJ SAMEJ DOBIE (§3.6a + §4.7).
+                   Ten wiersz i następny mają tę samą datę, tę samą rejestrację i TĘ SAMĄ
+                   nazwę karty arkusza (`2026-07-28_SP-KLM`) — odróżnia je wyłącznie
+                   godzina przejęcia w kolumnie „Dzień". To jest powód, dla którego podpis
+                   niesie cały odcinek sesji, a nie sam jej koniec. Zetknięcie co do minuty
+                   (10:34 → 10:34) NIE jest nakładką: `pilot_overlap` pyta o wspólny
+                   ODCINEK, a granice ma domknięte od lewej i otwarte od prawej. -->
               <tr class="clickable">
-                <td class="mono">28 JUL 2026<span class="cell-sub">zamknięty 17:26</span></td>
+                <td class="mono">28 JUL 2026<span class="cell-sub">06:05 → 10:34</span></td>
+                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
+                <td><span class="pill blue">SKOKI</span><span class="cell-sub">SKY CAMP</span></td>
+                <td class="cell-strong">Marek Bąk<span class="cell-sub">MBK · dual: —</span></td>
+                <td class="num">03:41</td>
+                <td class="num">02:26</td>
+                <td class="num">6</td>
+                <td class="num">3886.2 → 3890.5</td>
+                <td class="num">1180 → 806</td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-28_SP-KLM · rewizja 1 — ta sama karta co zmiana popołudniowa">Wyeksportowany ↗</a><span class="cell-sub">S1 karty <code>2026-07-28_SP-KLM</code></span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
+              </tr>
+
+              <tr class="clickable">
+                <td class="mono">28 JUL 2026<span class="cell-sub">10:34 → 17:26</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                 <td><span class="pill blue">SKOKI</span><span class="cell-sub">SKY CAMP</span></td>
                 <td class="cell-strong">Anna Wrzosek<span class="cell-sub">AWR · dual: M. Bąk</span></td>
@@ -737,12 +762,12 @@
                 <td class="num">10</td>
                 <td class="num">3890.5 → 3896.7</td>
                 <td class="num">806 → 344</td>
-                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-28_SP-KLM · rewizja 1">Wyeksportowany ↗</a></td>
+                <td><a class="pill green" style="text-decoration:none;" href="A05-eksporty.html" title="Karta arkusza 2026-07-28_SP-KLM · rewizja 1 — ta sama karta co zmiana poranna">Wyeksportowany ↗</a><span class="cell-sub">S2 karty <code>2026-07-28_SP-KLM</code></span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A02a-dzien.html">Szczegóły</a></div></td>
               </tr>
 
               <tr class="clickable">
-                <td class="mono">28 JUL 2026<span class="cell-sub">zamknięty 12:03</span></td>
+                <td class="mono">28 JUL 2026<span class="cell-sub">09:58 → 12:03</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                 <td><span class="pill dim">EGZAMIN</span><span class="cell-sub">EPBC · PPL(A)</span></td>
                 <td class="cell-strong">Piotr Czarnecki<span class="cell-sub">PCZ · dual: K. Nowak</span></td>
@@ -756,7 +781,7 @@
               </tr>
 
               <tr class="clickable">
-                <td class="mono">27 JUL 2026<span class="cell-sub">zamknięty 11:58</span></td>
+                <td class="mono">27 JUL 2026<span class="cell-sub">10:06 → 11:58</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
                 <td><span class="pill dim">TECHNICZNY</span><span class="cell-sub">oblot po przeglądzie</span></td>
                 <td class="cell-strong">Anna Wrzosek<span class="cell-sub">AWR · dual: —</span></td>
@@ -770,7 +795,7 @@
               </tr>
 
               <tr class="clickable">
-                <td class="mono">27 JUL 2026<span class="cell-sub">zamknięty 10:14</span></td>
+                <td class="mono">27 JUL 2026<span class="cell-sub">09:02 → 10:14</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                 <td><span class="pill dim">INNE</span><span class="cell-sub">szkolenie · EPBC</span></td>
                 <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">TML · dual: —</span></td>
@@ -789,7 +814,7 @@
 
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Dzień otwarty ≠ dzień niekompletny.</b> Sesja bez <code>day_close</code> pokazuje sumy z tego, co dotarło — telefon dosyła zdarzenia w miarę zasięgu, a kolumny „koniec" (MH, FOB) wypełnia dopiero zamknięcie dnia. Do czasu <code>day_close</code> panel niczego nie domyśla i nie ekstrapoluje.</span>
+          <span><b>Wiersz to SESJA SAMOLOTU, nie dzień służby.</b> Jednostką listy jest odcinek <b>przejęcie → zdanie</b> jednej maszyny (§3.6a), dlatego nie ma tu kolumny „duty" i nie może jej być: klamra służby należy do PILOTA i potrafi objąć kilka samolotów. Praktyczna konsekwencja stoi w kolumnie „Dzień": <b>SP-KLM 28 JUL to dwa wiersze</b> o tej samej dacie i tej samej nazwie karty arkusza, więc odróżnia je wyłącznie <b>godzina przejęcia</b>. <b style="color:var(--text-secondary)">Samolot zajęty ≠ dane niekompletne</b> — sesja bez <code>day_close</code> pokazuje sumy z tego, co dotarło, a kolumny „koniec" (MH, FOB) wypełni dopiero zdanie samolotu. Do tego czasu panel niczego nie domyśla i nie ekstrapoluje.</span>
         </div>
 
       </div>
@@ -802,7 +827,7 @@
   <span>·</span>
   <a href="A01-pulpit.html">← A01 Pulpit</a>
   <a href="A02-dni.html" class="active">A02 Dni lotne</a>
-  <a href="A02a-dzien.html">A02A Szczegół dnia</a>
+  <a href="A02a-dzien.html">A02A Karta sesji</a>
   <a href="A02b-korekta.html">A02B Korekta</a>
   <span>·</span>
   <a href="A03-flagi.html">A03 Flagi →</a>

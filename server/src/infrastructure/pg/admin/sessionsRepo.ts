@@ -97,7 +97,7 @@ const toMhFormat = (value: string | null): MhFormat | null =>
 
 const toFlagTypes = (values: string[] | null): FlagType[] => {
   if (values == null) return [];
-  // Ten sam strażnik i to samo uzasadnienie, co w adapterach flag: od migracji 8
+  // Ten sam strażnik i to samo uzasadnienie, co w adapterach flag: od wprowadzenia `flags_type_known`
   // pilnuje tego `CHECK`, więc wartość spoza katalogu znaczy ręczną ingerencję —
   // a ciche pominięcie flagi byłoby najgorszą z opcji, bo flaga istnieje po to,
   // żeby być widoczna.

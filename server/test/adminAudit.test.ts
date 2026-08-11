@@ -197,7 +197,7 @@ describe('audyt wymuszony typem, nie dyscypliną', () => {
         target_id: String(flagId),
         details: {
           note: 'Nakładka pozorna — dane dosłane z kopii.',
-          type: 'session_overlap',
+          type: 'aircraft_overlap',
           sessionUuids: ['sess-1', 'sess-2'],
         },
       },
@@ -398,7 +398,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
   });
 
   it('NIEZNANY KOD AKCJI nie wywraca odczytu — wiersz wraca dosłownie', async () => {
-    // To jest przypadek, dla którego migracja 9 świadomie nie ma `CHECK`-a na `action`
+    // To jest przypadek, dla którego `admin_audit` świadomie nie ma `CHECK`-a na `action`
     // (komentarz nad `MIGRATION_9`). Strażnik przy odczycie znaczyłby, że dziennik
     // nadzoru przestaje się otwierać przez własną historię; ciche pominięcie wiersza
     // znaczyłoby, że zaczyna ukrywać wpisy. Obie odpowiedzi są gorsze od surowego kodu.
@@ -717,7 +717,7 @@ describe('dziennik audytu — strona odczytu (A09)', () => {
   });
 });
 
-// ══ PLAN ZAPYTAŃ (`idx_audit_created`, `idx_audit_actor`, migracja 12) ═════════════
+// ══ PLAN ZAPYTAŃ (`idx_audit_created`, `idx_audit_actor`) ═════════════
 
 /**
  * Nagrywa SQL, który adapter FAKTYCZNIE wysyła do bazy. Plan sprawdzamy dla tego
@@ -778,11 +778,11 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
   it.each(['desc', 'asc'] as const)(
     'pierwsza strona BEZ filtra (`%s`) idzie indeksem — w planie nie ma węzła `Sort`',
     async (direction) => {
-      // To jest wykonywalna postać zdania z migracji 12. Dopóki istniało wyłącznie
+      // To jest wykonywalna postać reguły `NULLS` (§7.8). Dopóki istniało wyłącznie
       // w prozie, ta sama wada zdążyła się powielić na drugi indeks, a potem na rejestr
       // zdarzeń — za każdym razem w postaci „naprawmy indeks pod `NULLS LAST`".
       //
-      // OBA KIERUNKI, bo naprawa migracji 12 działała tylko dla `desc`: indeks
+      // OBA KIERUNKI, bo pierwsza naprawa działała tylko dla `desc`: indeks
       // `created_at DESC NULLS LAST` skanowany wstecz daje `ASC NULLS FIRST`, a zapytanie
       // prosiło o `ASC NULLS LAST`. Zmierzone na 4 000 wierszy: `?sort=asc` sortował CAŁY
       // dziennik przed `LIMIT`-em, koszt 527 zamiast 5,3. Migracja 17 zdejmuje `NULLS
@@ -800,7 +800,7 @@ describe('porządek dziennika daje INDEKS, nie sortowanie w pamięci', () => {
     'zawężenie po AKTORZE (`%s`) idzie własnym indeksem — też bez `Sort`',
     async (direction) => {
       // Kolumna „Kto" na `A09` jest linkiem, więc to najczęstsze zawężenie ekranu.
-      // `idx_audit_actor` z migracji 9 nie miał ani `id`, ani porządku pasującego do
+      // pierwsza wersja `idx_audit_actor` nie miała ani `id`, ani porządku pasującego do
       // zapytania, więc planer schodził na indeks czasu z filtrem albo na `Seq Scan`:
       // PIERWSZA strona zawężenia kosztowała tyle, co cały dziennik.
       const { db } = await bigJournal();

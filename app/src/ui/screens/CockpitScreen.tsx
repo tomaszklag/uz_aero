@@ -26,6 +26,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { usePreventRemove } from '@react-navigation/native';
 
 import {
   ActionButton,
@@ -35,11 +36,10 @@ import {
   Banner,
   Card,
   CockpitActions,
-  DayLog,
   DetectToast,
   DropSheet,
-  DutyStrip,
   FuelStrip,
+  LeaveCockpitSheet,
   EventLog,
   ManualEventSheet,
   NoGpsBanner,
@@ -54,15 +54,17 @@ import {
   type Tone,
 } from '../components';
 import { useTheme } from '../theme';
+import { holdsAircraft } from '../navigation/resumeTarget';
 import { useSessionStore } from '../store';
 import { useGps, useSensors } from '../bootstrap/servicesContext';
 import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
-import { buildCycleRows, buildDaySections } from './logic/cockpitLog';
-import { enduranceLabel, fuelTone } from './logic/fuelNorm';
-import { cyclesLabel } from './logic/cockpitPeek';
+import { buildCockpitActions } from './logic/cockpitActions';
+import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
+import { fuelTone } from './logic/fuelNorm';
+import { buildCockpitFuel } from './logic/cockpitFuel';
 import { flightsBadge } from './logic/statsDay';
 import {
   gpsAcquiringText,
@@ -138,6 +140,7 @@ export function CockpitScreen({
   const startEngine = useSessionStore((s) => s.startEngine);
   const stopEngine = useSessionStore((s) => s.stopEngine);
   const drop = useSessionStore((s) => s.drop);
+  const taxi = useSessionStore((s) => s.taxi);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
 
@@ -148,9 +151,28 @@ export function CockpitScreen({
   const [busy, setBusy] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+
+  /**
+   * KOKPIT JEST STANEM MODALNYM (decyzja 2026-08-10) — i egzekwuje to także wobec
+   * przycisku sprzętowego. Bez tej bramki „wstecz" zdejmował kokpit ze stosu i pokazywał
+   * 02a: formularz przejęcia maszyny, która jest już przejęta.
+   *
+   * `usePreventRemove`, a nie `BackHandler`: łapie KAŻDE zdjęcie ekranu, więc obok
+   * przycisku obejmuje też gest cofania krawędzią — a to ten sam błąd popełniony innym
+   * ruchem palca.
+   *
+   * Warunek pyta o TRZYMANIE MASZYNY (`holdsAircraft`), nie o samo istnienie sesji, i to
+   * jest tu istotne: po zdaniu samolotu 09B wraca na 01 przez `navigate`, co w stosie
+   * ZDEJMUJE kokpit. Gdyby bramka patrzyła na sesję, zablokowałaby jedyne dozwolone
+   * wyjście. Ten sam predykat wybiera ekran startowy po restarcie, więc oba miejsca nie
+   * mają jak się rozjechać (`navigation/resumeTarget.ts`, test „ZDANY samolot wraca
+   * do «Mój dzień»").
+   */
+  usePreventRemove(holdsAircraft(projection), () => setLeaveOpen(true));
   const engineOn = projection.engineRunning;
   const inFlight = projection.inFlight;
-  const now = useTicker(engineOn || projection.dutyStart != null);
+  const now = useTicker(engineOn);
 
   // Elewacja lotniska = wysokość GPS z chwili ENGINE START (§3.3). Bierzemy ją
   // z payloadu zdarzenia, żeby przetrwała restart aplikacji.
@@ -197,12 +219,32 @@ export function CockpitScreen({
     [fix, run, startEngine],
   );
 
+  /**
+   * STOP ENGINE kończy jedyny bieg tej sesji (model 2026-08-10) — dalej jest już tylko
+   * ZDAJ SAMOLOT. Zapis może odbić reguła (np. w powietrzu), więc nawigacji tu nie ma
+   * żadnej: sukces i odmowa oba zostawiają pilota w kokpicie, tylko w innych stanach.
+   */
+  const handleStop = useCallback(async () => {
+    setBusy(true);
+    try {
+      await stopEngine();
+      // ZOSTAJEMY w kokpicie (model 2026-08-10): po STOP ENGINE ekran przechodzi sam
+      // w stan „po zatrzymaniu" (hero ZDAJ SAMOLOT), bo `engineRunning` gaśnie
+      // w projekcji. Do 2026-08-10 stąd otwierał się ekran 09 (zamknięcie wzlotu) —
+      // usunięty razem z `leg_close`; zatwierdzenie mieszka na 09B.
+    } catch {
+      // Powód jest w `lastError` — pokazujemy go banerem niżej.
+    } finally {
+      setBusy(false);
+    }
+  }, [stopEngine]);
+
   if (!context) return <NoSession onStart={() => navigation.navigate('PreflightAircraft')} />;
+
 
   const mhFormat = projection.mhFormat ?? 'decimal';
   const liveFlightMs =
     projection.openTakeoffAt != null ? now - projection.openTakeoffAt : projection.flightTimeMs;
-  const dutyMs = projection.dutyStart != null ? now - projection.dutyStart : 0;
 
   /**
    * Czy w tym dniu wynosi się skoczków — od tego zależy, czy pasek akcji ma przycisk
@@ -216,6 +258,16 @@ export function CockpitScreen({
    * zostaje neutralny zamiast świecić na pomarańczowo przy pełnych zbiornikach.
    */
   const fuelToneNow = fuelTone(projection.fuel.lastReadingL, aircraft?.consumption ?? null);
+
+  /**
+   * Podział ról między paskiem paliwa i kafelkiem „Tankowanie" — jedna liczba, jedno
+   * miejsce (`logic/cockpitFuel.ts`). Ekran sam tego NIE rozstrzyga, bo reguła ma test.
+   */
+  const fuel = buildCockpitFuel({
+    fobL: projection.fuel.lastReadingL,
+    addedL: projection.fuel.addedL,
+    norm: aircraft?.consumption ?? null,
+  });
 
   /** Komunikaty wspólne dla obu trybów — nigdy cichy błąd (§6 pkt 3). */
   const messages = (
@@ -247,6 +299,25 @@ export function CockpitScreen({
       />
     );
 
+  /**
+   * Arkusz blokady wyjścia (04d) — jeden dla OBU trybów kokpitu. „Wstecz" w locie jest
+   * dokładnie tą samą pomyłką co na ziemi, a arkusz na `Modal` z RN wyświetla się nad
+   * każdym układem, więc nie ma powodu utrzymywać dwóch kopii.
+   */
+  const leaveSheet = (
+    <LeaveCockpitSheet
+      visible={leaveOpen}
+      aircraftId={projection.aircraftId ?? '—'}
+      since={projection.claimedAt != null ? `${timeUtc(projection.claimedAt)} UTC` : null}
+      legCount={projection.legs.length}
+      onStay={() => setLeaveOpen(false)}
+      onRelease={() => {
+        setLeaveOpen(false);
+        navigation.navigate('ReleaseAircraft');
+      }}
+    />
+  );
+
   // ─────────────────────────────────────────────────────────────────────────
   // TRYB LOT (mockup 05) — układ stały, przewija się tylko log cyklu.
   // ─────────────────────────────────────────────────────────────────────────
@@ -270,6 +341,20 @@ export function CockpitScreen({
     // odbiornika po START ENGINE to nie awaria (decyzja UX 2026-08-04).
     const gpsLost = !gpsAvailable;
     const signal = gpsSignalState(gpsAvailable, lastFixAt, permissionDenied);
+
+    /**
+     * Pasek akcji = NASTĘPNE zdarzenie sekwencji lotu (idle → Taxi → Take off →
+     * Landing) plus reguły zrzutu (tylko dzień skokowy, w powietrzu, aktywny
+     * w Cruise). Ekran tego nie rozstrzyga — reguła mieszka w
+     * `logic/cockpitActions.ts` i ma test (decyzja 2026-08-11).
+     */
+    const actions = buildCockpitActions({
+      inFlight,
+      taxiing: projection.taxiing,
+      jumpDay,
+      gpsLost,
+      phase: phase.phase,
+    });
 
     return (
       <Screen padded={false}>
@@ -429,30 +514,27 @@ export function CockpitScreen({
         </ScrollView>
 
         <CockpitActions
-          // 05g: bez fixa ręczny zapis to JEDYNA droga — etykieta i amber mówią to
-          // wprost, zanim pilot doczyta baner.
-          // Pełne nazwy zamiast skrótów „T/O" i „LAND" (issue #19): pasek akcji jest
-          // jedynym miejscem, gdzie pilot ZAPISUJE zdarzenie, a skrót oszczędzał znaki
-          // na przycisku, który ma dwie trzecie szerokości ekranu.
-          primaryLabel={
-            inFlight
-              ? gpsLost
-                ? 'Landing · ręcznie'
-                : 'Landing'
-              : gpsLost
-                ? 'Take off · ręcznie'
-                : 'Take off'
-          }
-          primaryTone={gpsLost ? 'amber' : undefined}
-          primaryIcon={inFlight ? 'landing' : 'takeoff'}
-          onPrimary={() => setManualOpen(true)}
-          // Zrzut istnieje TYLKO w dniu skokowym (issue #19): przy przelocie,
-          // egzaminie czy locie technicznym nie ma czego wynosić, więc przycisku nie
-          // ma w ogóle. `undefined` to brak akcji, nie blokada — patrz `CockpitActions`.
-          onDrop={jumpDay ? () => setDropOpen(true) : undefined}
-          // Wyniesienie z definicji dzieje się w powietrzu (§3.3).
-          dropDisabledReason={inFlight ? null : 'Zrzut zapiszesz w powietrzu'}
-          onStop={() => run(stopEngine)}
+          // Etykieta, ikona, ton, obecność i przygaszenie zrzutu — wszystko z
+          // `logic/cockpitActions.ts`: sekwencja idle → Taxi → Take off → Landing,
+          // zrzut tylko w powietrzu dnia skokowego i aktywny w Cruise, „· ręcznie"
+          // + amber przy utracie GPS (05g), pełne nazwy zamiast skrótów (issue #19).
+          primaryLabel={actions.primaryLabel}
+          primaryTone={actions.primaryTone ?? undefined}
+          primaryIcon={actions.primaryIcon}
+          onPrimary={() => {
+            // Kołowanie zapisuje się OD RAZU — bez arkusza 05f i bez okna COFNIJ:
+            // taxi nie wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz w logu
+            // (ta sama zasada co przy autodetekcji). Start i lądowanie idą przez
+            // arkusz, bo ich czas trafia do dokumentów i bywa cofany.
+            if (actions.primary === 'taxi') {
+              if (!busy) void run(() => taxi('manual', null));
+            } else {
+              setManualOpen(true);
+            }
+          }}
+          onDrop={actions.showDrop ? () => setDropOpen(true) : undefined}
+          dropDisabledReason={actions.dropDisabledReason}
+          onStop={handleStop}
           // `engine_stop` w powietrzu byłby fałszywym wpisem — blokujemy z powodem (§3.2).
           stopDisabledReason={inFlight ? 'Silnik zatrzymasz po wylądowaniu i dobiegu' : null}
         />
@@ -493,57 +575,77 @@ export function CockpitScreen({
           onCancel={() => setManualOpen(false)}
         />
 
+        {leaveSheet}
         {toast}
       </Screen>
     );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TRYB GROUND (mockup 04) — przewijalny ekran dnia.
+  // TRYB GROUND — DWA STANY (model 2026-08-10, mockupy 04a i 04):
+  //   • PRZED uruchomieniem: hero START ENGINE, tankowanie, zmiana załogi,
+  //     zdanie bez lotu;
+  //   • PO zatrzymaniu: hero ZDAJ SAMOLOT — drugiego startu NIE MA
+  //     (SESSION_ALREADY_RAN), tankowanie nadal, lista ręczna do naprawy
+  //     przegapionych zdarzeń przed zatwierdzeniem logu.
   // ─────────────────────────────────────────────────────────────────────────
-  const daySections = buildDaySections(events, projection, mhFormat);
+  const sessionEnded = projection.legs.some((l) => l.stoppedAt != null);
+
+  // Płaska oś JEDNEJ sesji (mockup 04) — harmonijka „CYKL n" odeszła razem z modelem
+  // wielu cykli. Tankowanie przed startem i po zatrzymaniu to zwykłe wpisy tej osi.
+  const sessionLogRows = buildLogRows(events, projection, mhFormat);
 
   /**
-   * Akcje naziemne (`.action-grid`). Każda niesie podpis ze stanem, żeby pilot widział,
-   * czy warto tam wchodzić, bez otwierania ekranu i wracania.
+   * Akcje naziemne (`.action-grid`) — skład zależy od STANU sesji, nie od jednej listy:
+   *  • zmiana załogi tylko PRZED startem (po biegu nowa załoga = nowe przejęcie),
+   *  • lista ręczna tylko PO biegu (pusta sesja nie ma czego naprawiać),
+   *  • kafelek zdania tylko PRZED startem (po biegu zdanie awansowało na hero);
+   *    prowadzi wtedy do wariantu 09C — rezygnacji bez lotu.
    */
-  const groundActions: ActionCardSpec[] = [
-    {
-      id: 'refuel',
-      icon: 'refuel',
-      label: 'Tankowanie',
-      tone: 'amber',
-      sub:
-        projection.fuel.addedL > 0
-          ? `Dolane dziś: ${litres(projection.fuel.addedL)}`
-          : `Na pokładzie: ${litres(projection.fuel.lastReadingL)}`,
-      onPress: () => navigation.navigate('Refuel'),
-    },
-    {
-      id: 'crew',
-      icon: 'crew',
-      label: 'Zmiana załogi',
-      sub: `PIC: ${projection.picId ?? '—'}${projection.dualId != null ? ` · DUAL: ${projection.dualId}` : ''}`,
-      onPress: () => navigation.navigate('CrewChange'),
-    },
-    {
-      id: 'manual',
-      icon: 'manual-log',
-      label: 'Lista ręczna',
-      // Odmiana z `flightsBadge` — „1 lotów" na żywym kokpicie wyglądało jak literówka
-      // w przyrządzie. Ta sama funkcja liczy badge na 10 i 11.
-      sub: `Fallback GPS · ${flightsBadge(projection.flights.length)}`,
-      onPress: () => navigation.navigate('ManualLog'),
-    },
-    {
-      id: 'end-day',
-      icon: 'end-day',
-      label: 'Zakończ dzień',
-      tone: 'red',
-      sub: 'Statystyki + synchronizacja',
-      onPress: () => navigation.navigate('EndOfDay'),
-    },
-  ];
+  const refuelAction: ActionCardSpec = {
+    id: 'refuel',
+    icon: 'refuel',
+    label: 'Tankowanie',
+    tone: 'amber',
+    // Podpis zależy od tego, czy pasek paliwa jest na ekranie: gdy jest, kafelek nie
+    // powtarza litrów; gdy go nie ma, to ON niesie stan zbiorników (`cockpitFuel.ts`).
+    sub: fuel.refuelSub,
+    onPress: () => navigation.navigate('Refuel'),
+  };
+
+  const groundActions: ActionCardSpec[] = sessionEnded
+    ? [
+        refuelAction,
+        {
+          id: 'manual',
+          icon: 'manual-log',
+          label: 'Lista ręczna',
+          // Odmiana z `flightsBadge` — „1 lotów" na żywym kokpicie wyglądało jak
+          // literówka w przyrządzie. Ta sama funkcja liczy badge na 10 i 11.
+          sub: `Fallback GPS · ${flightsBadge(projection.flights.length)}`,
+          onPress: () => navigation.navigate('ManualLog'),
+        },
+      ]
+    : [
+        refuelAction,
+        {
+          id: 'crew',
+          icon: 'crew',
+          label: 'Zmiana załogi',
+          sub: `PIC: ${projection.picId ?? '—'}${projection.dualId != null ? ` · DUAL: ${projection.dualId}` : ''}`,
+          onPress: () => navigation.navigate('CrewChange'),
+        },
+        {
+          id: 'release',
+          icon: 'end-day',
+          label: 'Zdaj samolot',
+          tone: 'red',
+          // Przed startem zdanie = rezygnacja z lotu (pogoda, usterka) — wariant 09C
+          // włączy się na ekranie zdania sam, brakiem lotów.
+          sub: 'Nie lecisz? Zdanie bez lotu',
+          onPress: () => navigation.navigate('ReleaseAircraft'),
+        },
+      ];
 
   return (
     <Screen scroll padded={false}>
@@ -568,63 +670,76 @@ export function CockpitScreen({
       />
 
       <View style={{ padding: theme.spacing.lg, gap: 14 }}>
-        <ActionButton
-          label="START ENGINE"
-          tone="green"
-          size="hero"
-          icon="start"
-          holdMs={2000}
-          busy={busy}
-          hint="Przytrzymaj 2 sekundy aby potwierdzić"
-          onPress={handleStart}
-        />
-
-        {projection.dutyStart != null && (
-          <DutyStrip
-            elapsed={duration(dutyMs)}
-            since={`Meldunek ${timeUtc(projection.dutyStart)} UTC · ${timeLocal(projection.dutyStart)} LT`}
+        {/* Hero mówi jedyną rzecz, która została do zrobienia. Po zatrzymaniu silnika
+            drugiego STARTU nie ma (sesja = jeden bieg, SESSION_ALREADY_RAN) — zostaje
+            oddanie maszyny z odczytami. Bez przytrzymania: to nawigacja do formularza
+            z własnym potwierdzeniem, nie akcja nieodwracalna. */}
+        {sessionEnded ? (
+          <ActionButton
+            label="ZDAJ SAMOLOT"
+            tone="red"
+            size="hero"
+            icon="end-day"
+            hint="Odczyt paliwa i motogodzin · zatwierdzenie logu sesji"
+            onPress={() => navigation.navigate('ReleaseAircraft')}
+          />
+        ) : (
+          <ActionButton
+            label="START ENGINE"
+            tone="green"
+            size="hero"
+            icon="start"
+            holdMs={2000}
+            busy={busy}
+            hint="Przytrzymaj 2 sekundy aby potwierdzić"
+            onPress={handleStart}
           />
         )}
 
-        {/* Pasek paliwa: odczyt z rejestru + szacunek z normy samolotu (serwer).
-            Bez normy pokazuje sam odczyt — brak podpowiedzi nie jest wartością
-            do wyświetlenia, a zmyślona liczba przy planowaniu paliwa jest gorsza
-            od jej braku. */}
-        {projection.fuel.lastReadingL != null && (
+        {/* KOKPIT JEST STANEM MODALNYM (decyzja 2026-08-10) — stąd nie ma paska sesji
+            ani żadnego innego wyjścia na 01. Kto trzyma samolot, oddaje go przez „Zdaj
+            samolot" (09B); dopóki go trzyma, ekranem pilota jest kokpit.
+
+            Pasek stał tu wcześniej i niósł dwie rzeczy, obie zbędne: link „Mój dzień →"
+            (czyli właśnie tę drogę powrotną) oraz „SP-AXA · Twój od 09:11 · N wzlotów"
+            — a maszynę i trasę mówi już pasek górny, a liczbę cykli nagłówek logu dnia.
+            Przed pierwszym uruchomieniem silnika wychodziło z tego pół ekranu na napis
+            „jeszcze żadnego wzlotu". */}
+
+        {/* Pasek paliwa stoi tu WYŁĄCZNIE jako przyrząd — czyli gdy ma czym być: odczyt
+            plus szacunek wystarczalności z normy samolotu, ton ostrzeżenia i adnotacja
+            o źródle. Bez normy pokazywał samą liczbę, tę samą co kafelek „Tankowanie"
+            niżej; decyzję i podział ról opisuje `logic/cockpitFuel.ts` (2026-08-10). */}
+        {fuel.strip != null && (
           <FuelStrip
             fuel={litres(projection.fuel.lastReadingL)}
             tone={fuelToneNow ?? 'neutral'}
-            endurance={enduranceLabel(projection.fuel.lastReadingL, aircraft?.consumption ?? null)}
-            source={
-              aircraft?.consumption == null
-                ? null
-                : `szacunek z normy samolotu (${aircraft.consumption.windowDays} dni) — decyduje paliwomierz`
-            }
+            endurance={fuel.strip.endurance}
+            source={fuel.strip.source}
           />
         )}
 
         {messages}
 
         <Card
-          // `cyclesLabel` — ten sam nagłówek co w podglądzie 04b, gdzie odmiana była
-          // od początku poprawna („1 cykl", nie „1 cykli").
-          title={`Log dnia · UTC · ${cyclesLabel(projection.engineRuns.length)} · ${projection.takeoffCount} T/O`}
+          // Log SESJI, nie dnia (mockup 04): jedna płaska oś od przejęcia do teraz,
+          // z liczbą LOTÓW w nagłówku — historia dnia mieszka na 01 i w rozliczeniu.
+          title={`Log sesji · UTC · ${flightsBadge(projection.flights.length)}`}
           flush
         >
-          {/* Log dnia jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków
+          {/* Log jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków
               (korekta = świadoma operacja w Liście ręcznej 08 i statystykach 10; tam
-              mieszka arkusz 04c). Zamknięte cykle zwijają się do nagłówków, ostatni
-              zostaje rozwinięty — świeża pamięć dnia (obie decyzje 2026-08-04). */}
-          <DayLog
-            sections={daySections}
-            initiallyExpanded="last"
-            emptyText="Brak zdarzeń — zacznij od START ENGINE."
+              mieszka arkusz 04c). */}
+          <EventLog
+            rows={sessionLogRows}
+            emptyText="Brak wpisów — uruchom silnik, aby rozpocząć pierwszy lot."
           />
         </Card>
 
         <ActionGrid actions={groundActions} />
       </View>
 
+      {leaveSheet}
       {toast}
     </Screen>
   );

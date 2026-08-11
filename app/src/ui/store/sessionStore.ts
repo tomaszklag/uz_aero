@@ -20,6 +20,7 @@ import {
   emptySessionState,
   type CrewChangePayload,
   type DayClosePayload,
+  type FuelMhReading,
   type DetectionMethod,
   type EngineStartPayload,
   type EngineStopPayload,
@@ -46,6 +47,7 @@ import {
   type ClaimInput,
   type CommandResult,
   type DropInput,
+  type ManualFlightInput,
   type EventsRepo,
   type SessionContext,
   type SyncOutcome,
@@ -141,7 +143,13 @@ export interface SessionStore {
   drop(input: DropInput): Promise<CommandResult>;
   crewChange(payload: CrewChangePayload): Promise<CommandResult>;
   manualLogEntry(payload: ManualLogEntryPayload): Promise<CommandResult>;
-  dayClose(payload: DayClosePayload): Promise<CommandResult>;
+  /**
+   * Ręczny wpis CAŁEGO lotu z 01 (ekran 15) — tworzy kompletną, ZAKOŃCZONĄ sesję.
+   * Nie wymaga kontekstu: sesja historyczna nie jest „bieżącą" i nie ma jej wznawiać.
+   */
+  manualFlight(input: ManualFlightInput): Promise<CommandResult>;
+  /** Zdanie samolotu (09B) = ZATWIERDZENIE logu sesji — NIE kończy dnia pilota. */
+  releaseAircraft(payload: DayClosePayload): Promise<CommandResult>;
 
   /** Wczytuje istniejącą sesję z bazy i odtwarza kontekst (np. po restarcie aplikacji). */
   loadSession(sessionUuid: string): Promise<void>;
@@ -322,8 +330,12 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       return run(() => requireCommands().manualLogEntry(requireContext(), payload));
     },
 
-    dayClose(payload) {
-      return run(() => requireCommands().dayClose(requireContext(), payload));
+    manualFlight(input) {
+      return run(() => requireCommands().manualFlight(input));
+    },
+
+    releaseAircraft(payload) {
+      return run(() => requireCommands().releaseAircraft(requireContext(), payload));
     },
 
     async loadSession(sessionUuid) {
@@ -356,7 +368,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       try {
         const repo = get().repo;
         if (repo != null && projection.sessionUuid != null) {
-          if (projection.dutyEnd == null) {
+          // Pytamy o ZDANIE samolotu, nie o klamrę służby. `dutyEnd` po §3.6a zostaje
+          // `null` także po `day_close`, więc ten warunek trzymał klucz usługi w tle
+          // wskazujący na sesję, której pilot już nie ma.
+          if (!projection.closed) {
             await repo.setMeta(SESSION_META_KEYS.activeSessionUuid, projection.sessionUuid);
           } else {
             await repo.deleteMeta(SESSION_META_KEYS.activeSessionUuid);

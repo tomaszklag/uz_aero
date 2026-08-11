@@ -199,7 +199,8 @@ describe('lista dni (A02)', () => {
       status: 'closed',
       operation: 'egzamin',
       client: null,
-      dutyStart: at(8, 0, 1),
+      // Kolumna „Dzień · UTC" idzie od PRZEJĘCIA samolotu (7:50), nie od meldunku (8:00).
+      claimedAt: at(7, 50, 1),
       closeTime: at(16, 45, 1),
       flightsCount: 1,
       mhStart: 900,
@@ -606,7 +607,7 @@ describe('karta dnia (A02a)', () => {
     const tmk = await login(app, 'TMK');
     const krz = await login(app, 'KRZ');
 
-    // Nakładka: dwie niezamknięte sesje jednego samolotu → `session_overlap`.
+    // Nakładka: dwie niezamknięte sesje jednego samolotu → `aircraft_overlap`.
     await post(app, tmk, flyingDay({ sessionUuid: 'sess-1', picId: 'TMK', close: false }));
     await post(app, krz, flyingDay({ sessionUuid: 'sess-2', picId: 'KRZ', close: false, mh: 1240 }));
 
@@ -619,7 +620,7 @@ describe('karta dnia (A02a)', () => {
       'sess-1',
       'sess-2',
     ]);
-    expect(flagged.items[0].openFlags).toEqual(['session_overlap']);
+    expect(flagged.items[0].openFlags).toEqual(['aircraft_overlap']);
 
     await app.inject({
       method: 'POST',
@@ -638,7 +639,7 @@ describe('karta dnia (A02a)', () => {
 
     expect(body.flags).toHaveLength(1);
     expect(body.flags[0]).toMatchObject({
-      type: 'session_overlap',
+      type: 'aircraft_overlap',
       status: 'resolved',
       resolvedBy: 'TMK',
       // Rozwiązana nakładka już NIE blokuje karty — to samo mówi bramka eksportera.

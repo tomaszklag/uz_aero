@@ -7,7 +7,7 @@
  *     równość z `projectSession` przybija osobno `contract.test.ts`;
  *  2. **tylko dni ZAMKNIĘTE wchodzą do sum**, zakres liczy się po DNIU ZAMKNIĘCIA,
  *     a odpowiedź mówi, ile dni otwartych pominęła;
- *  3. **`null` to „nie wiemy", nigdy zero** — wiersz sprzed migracji 18 nie staje się
+ *  3. **`null` to „nie wiemy", nigdy zero** — wiersz sprzed kolumn statystyk nie staje się
  *     zerem startów, a zrzut bez wysokości nie wchodzi do średniej.
  *
  * Dni powstają przez `POST /events` tokenem PIC-a (single-writer), żeby agregaty
@@ -347,12 +347,16 @@ describe('A10 · dni otwarte i oś zakresu', () => {
     expect(daily.map((p) => p.blockMs)).toEqual([0, BLOCK_MS, BLOCK_MS, 0]);
   });
 
-  it('dzień otwarty z SAMYM claimem (bez duty startu) jest liczony ZAWSZE, osobno', async () => {
+  it('dzień otwarty BEZ CLAIMU (rejestr niekompletny) jest liczony ZAWSZE, osobno', async () => {
     const { app, stats } = await threeDays();
-    // Pilot wziął samolot, telefon padł przed preflightem: sesja `active` bez
-    // `claim_time` (kolumna niesie duty start z preflightu, nie czas claimu).
-    // Nie ma jak przypisać jej do zakresu — uczciwiej pokazać ją zawsze, niż schować:
-    // to licznik rzeczy wymagających uwagi, a ta sesja jest połamana.
+    // Strumień bez `session_claim`, czyli bez `claim_time`. Wg §4.4 claim jest pierwszym
+    // zdarzeniem każdej sesji, więc taki strumień nie powstaje w normalnej pracy — ale
+    // serwer go przyjmie (§4.5: nie odrzuca danych z terenu) i nie ma jak przypisać go
+    // do zakresu dat. Uczciwiej pokazać go zawsze, niż schować: to licznik rzeczy
+    // wymagających uwagi, a ta sesja jest połamana.
+    //
+    // Do 2026-08-07 rolę „bez daty" pełniła sesja z SAMYM claimem, bo kolumna niosła
+    // wtedy meldunek z preflightu. Dziś taka sesja ma datę i jest zwykłym dniem w toku.
     await ingest(app, [
       {
         sessionUuid: 'st-lost',
@@ -360,11 +364,18 @@ describe('A10 · dni otwarte i oś zakresu', () => {
         picId: 'JSE',
         dualId: null,
         schemaVersion: 1,
-        uuid: 'st-lost-claim',
-        type: 'session_claim',
+        uuid: 'st-lost-preflight',
+        type: 'preflight_confirm',
         deviceTime: D21 + 7 * HOUR_MS,
         gpsTime: D21 + 7 * HOUR_MS,
-        payload: { mode: 'free' },
+        payload: {
+          operation: 'skoki',
+          departureIcao: 'EPKK',
+          arrivalIcao: null,
+          reading: { fuelL: 150, mh: 1234.5 },
+          client: null,
+          mhFormat: 'hhmm',
+        },
       },
     ]);
 
@@ -475,7 +486,7 @@ describe('A10 · strona przychodowa — zrzuty', () => {
 
   it('dzień z `operation IS NULL` w zakresie unieważnia sekcję zrzutów — mógł być skokowy', async () => {
     const { db, stats } = await threeDays();
-    // Wiersz historyczny sprzed migracji 11: rodzaju operacji NIE ZNAMY, więc każdy
+    // Wiersz historyczny bez rodzaju operacji: rodzaju operacji NIE ZNAMY, więc każdy
     // taki dzień MÓGŁ być dniem skokowym. Zawężenie `operation = 'skoki'` nie ma prawa
     // wyrzucić go ze zbioru nawet jako „nieznany" — sekcja pokazywałaby sumę z części
     // wierszy podaną jako całość i przeczyła banerowi o wierszach do przebudowy.
@@ -495,7 +506,7 @@ describe('A10 · strona przychodowa — zrzuty', () => {
 });
 
 describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
-  it('wiersz sprzed migracji 18 unieważnia agregaty jej kolumn — z licznikiem, nie po cichu', async () => {
+  it('wiersz sprzed kolumn statystyk unieważnia agregaty jej kolumn — z licznikiem, nie po cichu', async () => {
     const { db, stats } = await threeDays();
     // Symulacja wiersza sprzed migracji: dokładnie tak wygląda projekcja zapisana przed
     // wdrożeniem, dopóki nie przejdzie przebudowa z `A11`.

@@ -20,17 +20,40 @@ import type {
   DetectionMethod,
   Event,
   EventType,
+  FuelMhReading,
   JumperCounts,
   MhFormat,
   OperationType,
 } from '../events';
-import { applyCorrections, buildEventIndex } from './corrections';
+import { applyCorrections, buildEventIndex, type IndexedEvent } from './corrections';
 
-/** Cykl pracy silnika (engine_start → engine_stop). `stoppedAt: null` = wciąż pracuje. */
-export interface EngineRun {
+/**
+ * WZLOT — cykl pracy silnika (engine_start → engine_stop) wraz z jego potwierdzeniem.
+ * `stoppedAt: null` = silnik wciąż pracuje.
+ *
+ * Nazwa zmieniona z `EngineRun` w etapie B2: od 2026-08-06 to nie jest już tylko
+ * „silnik chodził", tylko **jednostka potwierdzania danych** (§3.6). Nie dokładamy
+ * osobnej tablicy `Leg[]` obok `engineRuns` — wzlot i cykl silnika to w tym modelu
+ * ten sam byt, a dwie tablice opisujące jedną rzecz rozjechałyby się przy pierwszej
+ * korekcie.
+ *
+ * `Leg` (cykl silnika) ≠ `Flight` (takeoff → landing). Bieg może nie mieć lotu
+ * (kołowanie techniczne, próba silnika) albo mieć ich wiele (seria skokowa z gorącym
+ * załadunkiem, touch and go).
+ *
+ * Od 2026-08-10 sesja ma NAJWYŻEJ JEDEN bieg (`SESSION_ALREADY_RAN`), więc lista
+ * `legs` to w praktyce zero albo jeden element. Zostaje listą, bo reducer musi
+ * przeżyć także strumień ZŁAMANY (np. duplikat z dwóch telefonów przed syncem) —
+ * projekcja opisuje to, co się wydarzyło, reguły mówią, co było wolno.
+ * Pola potwierdzenia (`confirmed`/`confirmedAt`/`reading`/`notes`) znikły razem
+ * z `leg_close`: sesję zatwierdza `day_close.finalReading`.
+ */
+export interface Leg {
+  /** Numer biegu w sesji (1-based) — historycznie; po 2026-08-10 zawsze 1. */
+  index: number;
   startedAt: EpochMillis;
   stoppedAt: EpochMillis | null;
-  /** Czas trwania (ms); 0 dopóki cykl otwarty. */
+  /** Czas blokowy biegu (ms); 0 dopóki cykl otwarty. */
   durationMs: number;
 }
 
@@ -117,6 +140,29 @@ export interface SessionState {
   notes: string | null;
   mhFormat: MhFormat | null;
 
+  /**
+   * Chwila przejęcia samolotu (`session_claim`) — początek sesji tej maszyny.
+   *
+   * To jest OŚ SAMOLOTU, nie oś służby: mówi, od kiedy maszyna jest zajęta, i tym samym
+   * jak długo stała zablokowana, gdy pilot nigdzie nie poleciał (09C). Sesja bez claimu
+   * nie istnieje (§4.4), więc `null` znaczy „strumienia jeszcze nie wczytano".
+   */
+  claimedAt: EpochMillis | null;
+  /**
+   * Chwila potwierdzenia preflightu — JEDYNY uprawniony znacznik „preflight był".
+   *
+   * Do 2026-08-07 tę rolę pełnił `dutyStart` i było to poprawne tylko dopóty, dopóki
+   * godzina meldunku była obowiązkowa. Klamra jest opcjonalna (§3.6a),
+   * a ekran 02 w ogóle o nią nie pyta — `dutyStart` jest więc `null` w ZWYKŁYM przypadku
+   * i mylenie go z brakiem preflightu blokowało pilotowi uruchomienie silnika.
+   */
+  preflightAt: EpochMillis | null;
+
+  /**
+   * Godziny KLAMRY SŁUŻBY zadeklarowane przez pilota — obie opcjonalne (§3.6a).
+   * Służba jest klamrą wokół wzlotów, nie kontenerem: brak deklaracji nie jest brakiem
+   * danych, tylko zgodą na wyliczenie klamry z lotów.
+   */
   dutyStart: EpochMillis | null;
   dutyEnd: EpochMillis | null;
 
@@ -133,8 +179,9 @@ export interface SessionState {
   /** Start otwartego lotu (do liczenia flight time „na żywo"). */
   openTakeoffAt: EpochMillis | null;
 
-  engineRuns: EngineRun[];
-  /** Suma zamkniętych cykli silnika + ręcznych off/on-block (ms). */
+  /** Wzloty sesji w kolejności chronologicznej (cykle silnika + ich potwierdzenia). */
+  legs: Leg[];
+  /** Suma zamkniętych wzlotów + ręcznych off/on-block (ms). */
   blockTimeMs: number;
 
   flights: Flight[];
@@ -147,7 +194,7 @@ export interface SessionState {
   mh: MhState;
   drops: DropSummary;
 
-  /** Czy padł `day_close`. */
+  /** Czy padł `day_close` (zdanie samolotu). */
   closed: boolean;
   /**
    * Czas zdarzenia `day_close` (null dopóki dzień otwarty). Od niego liczy się
@@ -160,7 +207,7 @@ export interface SessionState {
    * korekt. Reguły walidują nim cel `event_correction`; obejmuje też zdarzenia już
    * unieważnione, bo ponowna korekta unieważnionego jest legalna („ostatnia wygrywa").
    */
-  eventIndex: Record<string, EventType>;
+  eventIndex: Record<string, IndexedEvent>;
   lastEventAt: EpochMillis | null;
 }
 
@@ -183,6 +230,8 @@ export function emptySessionState(): SessionState {
     client: null,
     notes: null,
     mhFormat: null,
+    claimedAt: null,
+    preflightAt: null,
     dutyStart: null,
     dutyEnd: null,
     engineRunning: false,
@@ -190,7 +239,7 @@ export function emptySessionState(): SessionState {
     taxiing: false,
     openEngineStartAt: null,
     openTakeoffAt: null,
-    engineRuns: [],
+    legs: [],
     blockTimeMs: 0,
     flights: [],
     flightTimeMs: 0,
@@ -264,7 +313,11 @@ export function projectSession(events: Event[]): SessionState {
         state.client = p.client ?? null;
         state.notes = p.notes ?? null;
         state.mhFormat = p.mhFormat ?? null;
-        state.dutyStart = p.dutyStart;
+        state.preflightAt = t;
+        // `?? null`, bo klamra jest opcjonalna (§3.6a) — brak
+        // deklaracji ma być `null` („pilot nie podał"), nigdy `undefined`, inaczej
+        // projekcja przestaje być totalna i psuje kontrakt DTO panelu.
+        state.dutyStart = p.dutyStart ?? null;
         state.fuel.startL = p.reading.fuelL;
         state.fuel.lastReadingL = p.reading.fuelL;
         state.mh.start = p.reading.mh;
@@ -272,14 +325,19 @@ export function projectSession(events: Event[]): SessionState {
       }
 
       case 'engine_start': {
-        state.engineRuns.push({ startedAt: t, stoppedAt: null, durationMs: 0 });
+        state.legs.push({
+          index: state.legs.length + 1,
+          startedAt: t,
+          stoppedAt: null,
+          durationMs: 0,
+        });
         state.engineRunning = true;
         state.openEngineStartAt = t;
         break;
       }
 
       case 'engine_stop': {
-        const run = lastOpen(state.engineRuns, (r) => r.stoppedAt == null);
+        const run = lastOpen(state.legs, (r) => r.stoppedAt == null);
         if (run) {
           run.stoppedAt = t;
           run.durationMs = Math.max(0, t - run.startedAt);
@@ -379,13 +437,21 @@ export function projectSession(events: Event[]): SessionState {
         state.fuel.endL = p.finalReading.fuelL;
         state.fuel.lastReadingL = p.finalReading.fuelL;
         state.mh.end = p.finalReading.mh;
-        state.dutyEnd = p.dutyEnd;
+        state.dutyEnd = p.dutyEnd ?? null;
         state.closed = true;
         state.closedAt = t;
         break;
       }
 
+      // `leg_close` obsługiwane tu między 2026-08-06 a 2026-08-10 — usunięte razem
+      // z pojęciem wzlotu: sesję zatwierdza `day_close.finalReading`.
+
       case 'session_claim':
+        // Tożsamość aktualizowana z nagłówka (wyżej), payload informacyjny. Zostaje sam
+        // czas: to on mówi, od kiedy samolot jest zajęty (09C, `claim_time` panelu).
+        state.claimedAt = t;
+        break;
+
       case 'crew_change':
         // Tożsamość/załoga aktualizowana z nagłówka (wyżej). Payload informacyjny.
         break;

@@ -1,14 +1,19 @@
 /**
- * UZ Aero — 02 PREFLIGHT · krok 1/4: kto, czym i od kiedy.
+ * UZ Aero — 02 PRZEJĘCIE · krok 1/3: kto i czym.
  *
  * Odwzorowanie mockupu `design/02-preflight.html` — kolejność i treść sekcji są stamtąd,
- * nie z improwizacji: pasek tożsamości → samolot → drugi pilot → czas meldowania → DALEJ.
+ * nie z improwizacji: pasek tożsamości → samolot → drugi pilot → DALEJ.
  *
  * Rodzaj operacji, trasa i klient przeniosły się do kroku 2 (`PreflightTaskScreen`,
  * decyzja 2026-07-30): ten ekran zbierał WYBORY Z LIST (w tym przejęcie samolotu —
  * najcięższą decyzję preflightu) razem z opisem zadania, a obie listy rosną z flotą
- * i liczbą pilotów. Meldunek zostaje tutaj, bo odpowiada na „od kiedy jesteś na służbie",
- * a nie na „co dziś robisz".
+ * i liczbą pilotów.
+ *
+ * CZASU MELDOWANIA TU NIE MA (§3.6a, 2026-08-06). Służba jest klamrą wokół wzlotów,
+ * a nie czymś, co pilot otwiera, żeby polecieć: klamra bierze się z lotów doby i poprawia
+ * po fakcie na ekranie 01. Pytanie o godzinę w drodze do kokpitu kosztowało krok i mówiło
+ * nieprawdę — sugerowało, że bez odpowiedzi nie wolno lecieć. **Przejęcie ma trwać kilka
+ * sekund** (`CLAUDE.md`), a to był jedyny ekran preflightu z pytaniem o czas.
  *
  * Reguły, których ten ekran pilnuje:
  *  • wybór z **listy kart**, nigdy z natywnego selecta; operacje jako **siatka ikon**
@@ -18,9 +23,7 @@
  *  • samolotu zajętego przez innego pilota **nie da się stąd wybrać**: wiersz prowadzi
  *    do podglądu 04b, a przejęcie jest decyzją TAMTEGO ekranu (issue #12; §4.4 — claim
  *    odbiera poprzednikowi prawo zapisu, więc nie zapada przy liście);
- *  • samolot z wymogiem załogi 2-osobowej blokuje przejście dalej bez Duala;
- *  • czas meldowania w UTC, LT tylko jako wartość drugorzędna; „teraz" bierzemy z chwili
- *    WEJŚCIA na ekran, nie z uruchomienia aplikacji.
+ *  • samolot z wymogiem załogi 2-osobowej blokuje przejście dalej bez Duala.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -65,16 +68,8 @@ export function PreflightAircraftScreen({
   const setPilotProfile = useCurrentPilot((s) => s.setProfile);
 
   const draft = usePreflightDraft();
-  const refreshDutyStart = usePreflightDraft((s) => s.refreshDutyStart);
   const [fleet, setFleet] = useState<ReferenceAircraft[]>([]);
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
-  /**
-   * Arkusz czasu meldowania — `null` = zamknięty, liczba = „teraz" z chwili otwarcia.
-   *
-   * Snapshot, nie `Date.now()` w renderze: godzina odniesienia w arkuszu ma stać w miejscu,
-   * kiedy pilot wpisuje wartość, a nie przesuwać mu się pod palcami.
-   */
-  const [dutyEditorNow, setDutyEditorNow] = useState<number | null>(null);
 
   useEffect(() => {
     if (!queries) return;
@@ -84,13 +79,6 @@ export function PreflightAircraftScreen({
       setPilotProfile(list.find((p) => p.id === pilotId) ?? null);
     });
   }, [pilotId, queries, setPilotProfile]);
-
-  // Godzina meldunku = „teraz" z chwili wejścia na ekran (issue #12). Szkic przeżywa
-  // całą sesję aplikacji, więc bez tego pilot widział godzinę uruchomienia telefonu.
-  // Wpis własny zostaje nietknięty — o tym decyduje `dutyStartEdited` w szkicu.
-  useEffect(() => {
-    refreshDutyStart(Date.now());
-  }, [refreshDutyStart]);
 
   const selected = draft.aircraft;
   const needsDual = selected?.dualRequired === true && draft.dualId == null;
@@ -154,7 +142,7 @@ export function PreflightAircraftScreen({
           // Bez podtytułu (issue #12): „Kto, czym i od kiedy" opisywało formularz, który
           // pilot i tak ma przed oczami, a numer kroku mówi już wszystko o miejscu w flow.
           title="PREFLIGHT"
-          step="1 / 4"
+          step="1 / 3"
           right={
             <SyncChip
               status={synced ? 'synced' : 'offline'}
@@ -238,74 +226,7 @@ export function PreflightAircraftScreen({
             />
           )}
         </Card>
-
-        {/* ── czas meldowania ─────────────────────────────────────────────
-            Mockup pokazuje pole ODCZYTU: „08:00 UTC" dużym mono, obok „10:00 LT"
-            i ołówek, pod spodem badge z datą. Sekcja nie ma etykiety — pole samo się
-            przedstawia. Ołówek otwiera arkusz z wpisaniem godziny (wzorzec 02b/02c dla
-            odczytów): meldunek bywa godziny wstecz wobec chwili wypełniania formularza,
-            a wtedy wpisanie „08:00" jest jednym ruchem zamiast serii tapnięć w stepper. */}
-        <Card header="inline">
-          {/* Bez „(duty start)" — angielski termin w nawiasie nie tłumaczył już niczego,
-              czego nie mówi polska etykieta (issue #12). */}
-          <Field label="Czas meldowania">
-            <ValueBox
-              value={timeUtc(draft.dutyStart)}
-              unit="UTC"
-              meta={`${timeLocal(draft.dutyStart)} LT`}
-              actionIcon="edit"
-              accessibilityLabel={`Czas meldowania ${timeUtc(draft.dutyStart)} UTC — zmień`}
-              onPress={() => setDutyEditorNow(Date.now())}
-            />
-            <View style={{ flexDirection: 'row' }}>
-              <Tag label={dateUtcLong(draft.dutyStart)} size="md" />
-            </View>
-          </Field>
-        </Card>
-
       </View>
-
-      {/* ── godzina meldunku (arkusz jak 02b/02c dla odczytów) ─────────── */}
-      <ReadingSheet
-        visible={dutyEditorNow != null}
-        title="Godzina meldowania"
-        unit="UTC"
-        // Ton NEUTRALNY, czyli ten sam kolor cyfr co w polu, z którego arkusz się otwiera
-        // (issue #12). Niebieski był tu tonem „informacja o czasie UTC", ale w praktyce
-        // wyglądał jak zmiana wartości w połowie edycji: pilot tapał białe „08:00",
-        // a dostawał niebieskie. Amber w 02b/02c niesie stan (paliwo/MH); godzina
-        // meldunku nie niesie żadnego.
-        tone="neutral"
-        // Cyfry z klawiatury numerycznej — dwukropek w „HH:MM" stawia maska arkusza.
-        keyboard="time"
-        initialText={timeUtc(draft.dutyStart)}
-        rows={[
-          {
-            label: 'Teraz',
-            value:
-              dutyEditorNow != null
-                ? `${timeUtc(dutyEditorNow)} UTC · ${timeLocal(dutyEditorNow)} LT`
-                : '—',
-          },
-          { label: 'Dzień lotny', value: dateUtcLong(draft.dutyStart) },
-        ]}
-        // Data zostaje z dnia lotnego — pilot poprawia godzinę, nie datę.
-        parse={(text) => parseTimeUtcOnDay(text, draft.dutyStart)}
-        warningFor={(v) => {
-          // Ostrzeżenie miękkie, jak w arkuszach odczytów: meldunek „w przyszłość" bywa
-          // pomyłką (14:00 zamiast 04:00), ale zegarek telefonu nie jest tu wyrocznią.
-          if (dutyEditorNow == null || v <= dutyEditorNow + 60_000) return null;
-          return (
-            `Wpisana godzina jest późniejsza niż teraz (${timeUtc(dutyEditorNow)} UTC). ` +
-            'Sprawdź, czy to godzina meldunku, a nie pomyłka w zapisie.'
-          );
-        }}
-        onConfirm={(v) => {
-          draft.set('dutyStart', v);
-          setDutyEditorNow(null);
-        }}
-        onCancel={() => setDutyEditorNow(null)}
-      />
 
       {/* Arkusza przejęcia tu już nie ma (issue #12): pytanie „PRZEJMIJ SP-FGK?" padało
           nad listą, na której nie było widać ani stanu samolotu, ani tego, co poprzednik

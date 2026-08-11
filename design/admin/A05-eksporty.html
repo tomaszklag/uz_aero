@@ -396,8 +396,8 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — PANEL · A05 EKSPORTY</span>
-  <span class="slug">monitor kart dziennych · export_log vs exported_sheets</span>
-  <span class="canvas-meta"><span class="pulse"></span>2 karty zablokowane flagą · 1 błąd regeneracji</span>
+  <span class="slug">monitor kart doby samolotu · export_log vs exported_sheets</span>
+  <span class="canvas-meta"><span class="pulse"></span>2 sesje wycięte z kart flagą · 1 błąd regeneracji</span>
 </header>
 
 <main class="browser" role="region" aria-label="Panel administracyjny — monitor eksportu arkuszy">
@@ -502,8 +502,8 @@
 
         <div class="page-head">
           <div>
-            <h1 class="page-title">EKSPORT KART DZIENNYCH</h1>
-            <p class="page-sub">Jedna karta na dzień i samolot (<code>YYYY-MM-DD_SP-XXX</code>), budowana po <code>day_close</code> danej sesji (§4.7). Eksport jest <b>skutkiem</b> przyjęcia zdarzeń, nigdy warunkiem — telefon dostał 200 zanim karta powstała, więc błąd tutaj niczego pilotowi nie cofa. Ten ekran jest jedynym miejscem, w którym widać, że arkusz i rejestr się rozjechały.</p>
+            <h1 class="page-title">EKSPORT KART DOBY</h1>
+            <p class="page-sub"><b>Karta = DOBA SAMOLOTU</b> (<code>YYYY-MM-DD_SP-XXX</code>), a sesje są jej WIERSZAMI, spiętymi kolumną <code>Sesja</code> (S1, S2…). Dobę wyznacza chwila PRZEJĘCIA (<code>claim_time</code>), więc sesja przejęta o 23:50 i zdana po północy należy do doby swojego przejęcia. Karta powstaje po pierwszym <code>day_close</code> tej doby i jest przebudowywana przy każdym kolejnym zdaniu maszyny (§4.7). Eksport jest <b>skutkiem</b> przyjęcia zdarzeń, nigdy warunkiem — telefon dostał 200 zanim karta powstała, więc błąd tutaj niczego pilotowi nie cofa. Ten ekran jest jedynym miejscem, w którym widać, że arkusz i rejestr się rozjechały.</p>
           </div>
           <div class="page-actions">
             <a class="btn ghost" href="#slownik">Czym różni się dziennik od karty</a>
@@ -516,13 +516,13 @@
 
         <div class="banner danger">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          <span><b>Dwie karty nie powstaną, dopóki nie zamknie się flag.</b> <code>dayExporter</code> przerywa eksport sesji, dla której otwarta jest flaga <code>session_overlap</code> (§4.7 — sporny dzień nie ma prawa utrwalić się w dokumencie klubu). Ponowienie tej bramki <b>nie omija</b>: rozstrzygnięcie flagi jest jedyną drogą i wykonuje je człowiek. <a href="A03-flagi.html" style="color:var(--red);font-weight:700;">Skrzynka flag →</a></span>
+          <span><b>Dwie sesje są wycięte z kart, dopóki nie zamknie się flag.</b> <code>dayExporter</code> pomija sesję, dla której otwarta jest flaga <code>aircraft_overlap</code> — <b>i tylko ją</b>. Od 2026-08-07 bramka obejmuje SESJE, nie cały dokument (§4.7): pozostałe zmiany doby idą do arkusza, a karta wychodzi z adnotacją <b>„niekompletna"</b>. Powód zawężenia: po skróceniu sesji nakładki są częstsze, więc blokowanie całej doby uczyniłoby z bramki stan domyślny. Ponowienie bramki <b>nie omija</b>: rozstrzygnięcie flagi jest jedyną drogą i wykonuje je człowiek. <a href="A03-flagi.html" style="color:var(--red);font-weight:700;">Skrzynka flag →</a></span>
         </div>
 
         <div class="tiles">
           <div class="tile"><span class="tile-key">Karty w arkuszu · 30 dni</span><span class="tile-val green">42</span><span class="tile-note">Ostatnia: <code>2026-07-30_SP-ABC</code>, 31 JUL 06:18 UTC.</span></div>
           <div class="tile"><span class="tile-key">Rewizje &gt; 1</span><span class="tile-val blue">9</span><span class="tile-note">Spóźnione dane i korekty po eksporcie.</span></div>
-          <div class="tile"><span class="tile-key">Zablokowane flagą</span><span class="tile-val red">2</span><span class="tile-note">SP-KLM 30 JUL · SP-XYZ 29 JUL.</span></div>
+          <div class="tile"><span class="tile-key">Sesje poza kartą</span><span class="tile-val red">2</span><span class="tile-note"><code>aircraft_overlap</code> · SP-KLM 30 JUL · SP-XYZ 29 JUL.</span></div>
           <div class="tile"><span class="tile-key">Błąd regeneracji</span><span class="tile-val red">1</span><span class="tile-note">Próba 3/6 · następna 14:38 UTC.</span></div>
         </div>
 
@@ -531,8 +531,8 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input placeholder="Szukaj: nazwa karty, rejestracja, UUID sesji…" />
           </label>
-          <span class="chip on">Wszystkie · 8</span>
-          <span class="chip">Wyeksportowane · 2</span>
+          <span class="chip on">Wszystkie · 10</span>
+          <span class="chip">Wyeksportowane · 4</span>
           <span class="chip">Rewizje · 2</span>
           <span class="chip amber">Zablokowane · 2</span>
           <span class="chip amber">Błędy · 1</span>
@@ -544,7 +544,7 @@
           <table>
             <thead>
               <tr>
-                <th class="sortable">Dzień <span class="arrow">↓</span></th>
+                <th class="sortable">Dzień · UTC <span class="arrow">↓</span></th>
                 <th>Samolot</th>
                 <th>Karta arkusza</th>
                 <th class="num">Rewizja</th>
@@ -556,37 +556,37 @@
             <tbody>
 
               <tr>
-                <td class="mono">31 JUL 2026<span class="cell-sub">UTC</span></td>
+                <td class="mono">31 JUL 2026<span class="cell-sub">przejęcie 12:08 UTC</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
-                <td class="mono dim">2026-07-31_SP-ABC<span class="cell-sub">nazwa policzona z duty start</span></td>
+                <td class="mono dim">2026-07-31_SP-ABC<span class="cell-sub">doba samolotu · nazwa z <code>claim_time</code></span></td>
                 <td class="num dim">—</td>
                 <td class="num dim">—</td>
-                <td><span class="pill blue"><span class="dot live"></span>Czeka · dzień otwarty</span><span class="cell-sub">sesja d7e5…3081 · A. Wrzosek</span></td>
-                <td><div class="row-actions"><button class="btn sm ghost disabled" disabled title="Karta powstaje dopiero po day_close">Podgląd</button></div></td>
+                <td><span class="pill blue"><span class="dot live"></span>Czeka · sesja w toku</span><span class="cell-sub">wiersz karty domknie zdanie samolotu · sesja d7e5…3081 · A. Wrzosek</span></td>
+                <td><div class="row-actions"><button class="btn sm ghost disabled" disabled title="Samolot nie został zdany — wiersz karty domknie day_close">Podgląd</button></div></td>
               </tr>
 
               <tr>
-                <td class="mono">31 JUL 2026<span class="cell-sub">UTC</span></td>
+                <td class="mono">31 JUL 2026<span class="cell-sub">przejęcie 09:20 UTC</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                 <td class="mono dim">2026-07-31_SP-XYZ</td>
                 <td class="num dim">—</td>
                 <td class="num dim">—</td>
-                <td><span class="pill blue"><span class="dot live"></span>Czeka · dzień otwarty</span><span class="cell-sub">sesja 6f30…b52e · P. Czarnecki</span></td>
-                <td><div class="row-actions"><button class="btn sm ghost disabled" disabled title="Karta powstaje dopiero po day_close">Podgląd</button></div></td>
+                <td><span class="pill blue"><span class="dot live"></span>Czeka · sesja w toku</span><span class="cell-sub">wiersz karty domknie zdanie samolotu · sesja 6f30…b52e · P. Czarnecki</span></td>
+                <td><div class="row-actions"><button class="btn sm ghost disabled" disabled title="Samolot nie został zdany — wiersz karty domknie day_close">Podgląd</button></div></td>
               </tr>
 
               <tr style="background:var(--red-muted);">
-                <td class="mono">30 JUL 2026<span class="cell-sub">UTC</span></td>
+                <td class="mono">30 JUL 2026<span class="cell-sub">przejęcie 05:41 UTC</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                 <td class="mono dim">2026-07-30_SP-KLM</td>
                 <td class="num dim">—<span class="cell-sub">nigdy nie powstała</span></td>
                 <td class="num dim">—</td>
-                <td><span class="pill red"><span class="dot"></span>Zablokowana</span><span class="cell-sub">flaga <a href="A03a-flaga.html" style="color:var(--red);">#1046 · session_overlap</a> · od 30 JUL 18:41</span></td>
+                <td><span class="pill red"><span class="dot"></span>Zablokowana</span><span class="cell-sub">aircraft_overlap — ta sesja wypada z karty doby<br />flaga <a href="A03a-flaga.html" style="color:var(--red);">#1046</a> · od 30 JUL 18:41</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A03a-flaga.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter — najpierw rozwiąż flagę #1046">Ponów</button></div></td>
               </tr>
 
               <tr>
-                <td class="mono">30 JUL 2026<span class="cell-sub">UTC</span></td>
+                <td class="mono">30 JUL 2026<span class="cell-sub">przejęcie 07:30 UTC</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
                 <td class="mono">2026-07-30_SP-ABC</td>
                 <td class="num" style="color:var(--blue);font-weight:700">3</td>
@@ -625,17 +625,17 @@
               </tr>
 
               <tr style="background:var(--red-muted);">
-                <td class="mono">29 JUL 2026<span class="cell-sub">UTC</span></td>
+                <td class="mono">29 JUL 2026<span class="cell-sub">przejęcie 13:33 UTC</span></td>
                 <td><span class="reg">SP-XYZ</span><span class="cell-sub">Aero AT-3</span></td>
                 <td class="mono dim">2026-07-29_SP-XYZ</td>
                 <td class="num dim">—<span class="cell-sub">nigdy nie powstała</span></td>
                 <td class="num dim">—</td>
-                <td><span class="pill red"><span class="dot"></span>Zablokowana</span><span class="cell-sub">flaga <a href="A03-flagi.html" style="color:var(--red);">#1043 · session_overlap</a> · od 29 JUL 13:50</span></td>
+                <td><span class="pill red"><span class="dot"></span>Zablokowana</span><span class="cell-sub">aircraft_overlap — ta sesja wypada z karty doby<br />flaga <a href="A03-flagi.html" style="color:var(--red);">#1043</a> · od 29 JUL 13:50</span></td>
                 <td><div class="row-actions"><a class="btn sm ghost" href="A03-flagi.html">Do flagi</a><button class="btn sm ghost disabled" disabled title="Bramka dayExporter — najpierw rozwiąż flagę #1043">Ponów</button></div></td>
               </tr>
 
               <tr>
-                <td class="mono">29 JUL 2026<span class="cell-sub">UTC</span></td>
+                <td class="mono">29 JUL 2026<span class="cell-sub">przejęcie 10:20 UTC</span></td>
                 <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
                 <td class="mono">2026-07-29_SP-KLM</td>
                 <td class="num" style="color:var(--amber);font-weight:700">2<span class="cell-sub">w arkuszu</span></td>
@@ -644,8 +644,36 @@
                 <td><div class="row-actions"><a class="btn sm ghost" href="#podglad">Podgląd</a><button class="btn sm">Ponów teraz</button></div></td>
               </tr>
 
+              <!-- DWIE SESJE, JEDNA KARTA (§4.7). Oba wiersze niosą tę samą nazwę
+                   `2026-07-28_SP-KLM` i ten sam numer rewizji — i to NIE jest duplikat:
+                   są WIERSZAMI jednego dokumentu, spiętymi kolumną `Sesja` (S1, S2).
+                   `export_log` dostaje po jednym wierszu na sesję wchodzącą do rewizji,
+                   wszystkie z tym samym numerem — bo `GET /sessions/:uuid/sync-status`
+                   (ekran 11 telefonu) pyta o link PO SESJI i każda zmiana musi go
+                   znaleźć, także ta, która eksportu nie wyzwoliła. Kolumna „Dzień"
+                   niesie godzinę przejęcia, bo bez niej te dwa wiersze są nieodróżnialne. -->
               <tr>
-                <td class="mono">28 JUL 2026<span class="cell-sub">UTC</span></td>
+                <td class="mono">28 JUL 2026<span class="cell-sub">przejęcie 06:05 UTC</span></td>
+                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
+                <td class="mono">2026-07-28_SP-KLM<span class="cell-sub">doba samolotu · §4.7</span></td>
+                <td class="num">1<span class="cell-sub">wspólna z S2</span></td>
+                <td class="num">28 JUL 17:41</td>
+                <td><span class="pill green"><span class="dot"></span>W arkuszu</span><span class="cell-sub">S1 doby · sesja 3a71…c204 · M. Bąk</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="#podglad">Podgląd</a><button class="btn sm ghost">Ponów</button></div></td>
+              </tr>
+
+              <tr>
+                <td class="mono">28 JUL 2026<span class="cell-sub">przejęcie 10:34 UTC</span></td>
+                <td><span class="reg">SP-KLM</span><span class="cell-sub">Cessna 208 Caravan</span></td>
+                <td class="mono">2026-07-28_SP-KLM<span class="cell-sub">ta sama karta co S1</span></td>
+                <td class="num">1<span class="cell-sub">wspólna z S1</span></td>
+                <td class="num">28 JUL 17:41</td>
+                <td><span class="pill green"><span class="dot"></span>W arkuszu</span><span class="cell-sub">S2 doby · sesja e17b…9f45 · A. Wrzosek</span></td>
+                <td><div class="row-actions"><a class="btn sm ghost" href="#podglad">Podgląd</a><button class="btn sm ghost">Ponów</button></div></td>
+              </tr>
+
+              <tr>
+                <td class="mono">28 JUL 2026<span class="cell-sub">przejęcie 09:12 UTC</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
                 <td class="mono">2026-07-28_SP-ABC</td>
                 <td class="num">2</td>
@@ -655,7 +683,7 @@
               </tr>
 
               <tr>
-                <td class="mono">27 JUL 2026<span class="cell-sub">UTC</span></td>
+                <td class="mono">27 JUL 2026<span class="cell-sub">przejęcie 10:06 UTC</span></td>
                 <td><span class="reg">SP-ABC</span><span class="cell-sub">Cessna 182</span></td>
                 <td class="mono">2026-07-27_SP-ABC</td>
                 <td class="num">1</td>
@@ -671,40 +699,70 @@
         <div class="cols">
 
           <div class="card" id="podglad">
-            <div class="card-title">Podgląd karty <span class="spacer"></span><span class="pill dim">GET /sheets/2026-07-30_SP-ABC</span><span class="pill blue">rewizja 3</span></div>
+            <!-- KARTA = DOBA SAMOLOTU (§4.7, migracja 23). Do 2026-08-07 karta była
+                 budowana z JEDNEJ sesji i nazywana `YYYY-MM-DD_SP-XXX` — po skróceniu
+                 sesji ta nazwa przestała być kluczem unikalnym i druga zmiana dnia
+                 NADPISYWAŁA pierwszą. Dziś jednostką jest doba, a zmiany są jej wierszami,
+                 spiętymi kolumną `Sesja`: numer lotu liczy się w obrębie sesji, więc
+                 w dobie z dwiema zmianami się powtórzy. -->
+            <div class="card-title">Podgląd karty <span class="spacer"></span><span class="pill dim">GET /admin/api/exports/&lt;uuid sesji&gt;/sheet</span><span class="pill blue">rewizja 1</span></div>
             <div class="table-wrap" style="border:none;border-radius:0;background:none;">
               <table>
                 <tbody>
-                  <tr><td class="cell-strong">UZ Aero — dzień lotny</td><td class="mono" colspan="4">2026-07-30 (UTC)</td></tr>
-                  <tr><td class="dim">Samolot</td><td class="mono" colspan="4">SP-ABC</td></tr>
-                  <tr><td class="dim">PIC</td><td class="mono" colspan="4">PCZ</td></tr>
-                  <tr><td class="dim">Dual</td><td class="mono" colspan="4">—</td></tr>
-                  <tr><td class="dim">Operacja</td><td class="mono" colspan="4">szkolenie</td></tr>
-                  <tr><td class="dim">Duty (UTC)</td><td class="mono" colspan="4">07:30 → 12:05</td></tr>
-                  <tr><td class="dim">Block time</td><td class="mono" colspan="4">00:58</td></tr>
-                  <tr><td class="cell-strong" colspan="5" style="padding-top:16px;">Loty · czasy UTC</td></tr>
+                  <tr><td class="cell-strong">UZ Aero — doba samolotu</td><td class="mono" colspan="5">2026-07-28 (UTC)</td></tr>
+                  <tr><td class="dim">Samolot</td><td class="mono" colspan="5">SP-KLM · Cessna 208 Caravan</td></tr>
+                  <tr><td class="dim">Zmiany w dobie</td><td class="mono" colspan="5">2</td></tr>
+                  <tr><td class="dim">Czas blokowy doby</td><td class="mono" colspan="5">09:53</td></tr>
+
+                  <tr><td class="cell-strong" colspan="6" style="padding-top:16px;">Sesje doby · czasy UTC</td></tr>
                   <tr>
+                    <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Sesja</td>
+                    <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">PIC · dual</td>
+                    <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Operacja</td>
+                    <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Przejęcie → zdanie</td>
+                    <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Block</td>
+                    <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Stan</td>
+                  </tr>
+                  <tr><td class="mono">S1</td><td class="mono">MBK · —</td><td class="mono">SKOKI</td><td class="mono">06:05 → 10:34</td><td class="mono">03:41</td><td class="mono">ZDANY</td></tr>
+                  <tr><td class="mono">S2</td><td class="mono">AWR · MBK</td><td class="mono">SKOKI</td><td class="mono">10:34 → 17:26</td><td class="mono">06:12</td><td class="mono">ZDANY</td></tr>
+
+                  <tr><td class="cell-strong" colspan="6" style="padding-top:16px;">Loty · czasy UTC</td></tr>
+                  <tr>
+                    <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Sesja</td>
                     <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">#</td>
                     <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Takeoff</td>
                     <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Landing</td>
                     <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Block</td>
                     <td class="dim mono" style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;">Metoda</td>
                   </tr>
-                  <tr><td class="mono">1</td><td class="mono">07:58</td><td class="mono">08:26</td><td class="mono">00:28</td><td class="mono">AUTO</td></tr>
-                  <tr><td class="mono">2</td><td class="mono">11:12</td><td class="mono" style="color:var(--blue)">11:38</td><td class="mono">00:26</td><td class="mono">RĘCZNIE</td></tr>
-                  <tr><td class="cell-strong" colspan="5" style="padding-top:16px;">Paliwo (L)</td></tr>
-                  <tr><td class="dim">Start</td><td class="mono num" colspan="4">132</td></tr>
-                  <tr><td class="dim">Dolane</td><td class="mono num" colspan="4">60</td></tr>
-                  <tr><td class="dim">Zużyte</td><td class="mono num" colspan="4">68</td></tr>
-                  <tr><td class="dim">Koniec</td><td class="mono num" colspan="4">124</td></tr>
-                  <tr><td class="cell-strong" colspan="5" style="padding-top:16px;">Motogodziny</td></tr>
-                  <tr><td class="dim">Start</td><td class="mono num" colspan="4">1284.1</td></tr>
-                  <tr><td class="dim">Koniec</td><td class="mono num" colspan="4">1285.1</td></tr>
-                  <tr><td class="dim">Delta</td><td class="mono num" colspan="4">1.0</td></tr>
+                  <tr><td class="mono">S1</td><td class="mono">1</td><td class="mono">06:34</td><td class="mono">06:58</td><td class="mono">00:24</td><td class="mono">AUTO</td></tr>
+                  <tr><td class="mono">S1</td><td class="mono">2</td><td class="mono">07:19</td><td class="mono">07:43</td><td class="mono">00:24</td><td class="mono">AUTO</td></tr>
+                  <tr><td class="mono dim" colspan="6">… S1 loty 3–6 …</td></tr>
+                  <tr><td class="mono">S2</td><td class="mono">1</td><td class="mono">11:02</td><td class="mono">11:27</td><td class="mono">00:25</td><td class="mono">AUTO</td></tr>
+                  <tr><td class="mono">S2</td><td class="mono">2</td><td class="mono">11:48</td><td class="mono" style="color:var(--blue)">12:11</td><td class="mono">00:23</td><td class="mono">RĘCZNIE</td></tr>
+                  <tr><td class="mono dim" colspan="6">… S2 loty 3–10 …</td></tr>
+
+                  <tr><td class="cell-strong" colspan="6" style="padding-top:16px;">Paliwo (L)</td></tr>
+                  <tr><td class="dim">Startowe</td><td class="mono num" colspan="5">1180 <small>odczyt PIERWSZEJ zmiany</small></td></tr>
+                  <tr><td class="dim">Dolane</td><td class="mono num" colspan="5">620 <small>suma tankowań doby</small></td></tr>
+                  <tr><td class="dim">Zużyte</td><td class="mono num" colspan="5">1456</td></tr>
+                  <tr><td class="dim">Końcowe</td><td class="mono num" colspan="5">344 <small>odczyt OSTATNIEJ zmiany</small></td></tr>
+
+                  <tr><td class="cell-strong" colspan="6" style="padding-top:16px;">Motogodziny</td></tr>
+                  <tr><td class="dim">Początek</td><td class="mono num" colspan="5">3886.2</td></tr>
+                  <tr><td class="dim">Koniec</td><td class="mono num" colspan="5">3896.7</td></tr>
+                  <tr><td class="dim">Ruch licznika</td><td class="mono num" colspan="5">10.5 <small>= suma delt per sesja (4.3 + 6.2)</small></td></tr>
+
+                  <tr><td class="cell-strong" colspan="6" style="padding-top:16px;">Zrzuty</td></tr>
+                  <tr><td class="dim">Wyniesień</td><td class="mono num" colspan="5">16 <small>S1: 6 · S2: 10</small></td></tr>
+                  <tr><td class="dim">Skoczków</td><td class="mono num" colspan="5">78</td></tr>
+                  <tr><td class="dim">Klient</td><td class="mono" colspan="5">SKY CAMP</td></tr>
                 </tbody>
               </table>
             </div>
-            <span class="hint">Karta to <b>dosłowne wiersze dokumentu</b> (<code>rows</code> jako <code>string[][]</code>), nie projekcja do dalszego liczenia — dlatego motogodziny są sformatowane wg <code>mh_format</code> samolotu, a nie surową liczbą. Podgląd czyta ten sam endpoint co link z ekranu 11 telefonu; autoryzacja Bearer, bo karta jest dokumentem klubu, nie stroną publiczną. Podświetlone <code>11:38</code> to skutek korekty z rewizji 3.</span>
+            <span class="hint">Karta to <b>dosłowne wiersze dokumentu</b> (<code>rows</code> jako <code>string[][]</code>), nie projekcja do dalszego liczenia — dlatego motogodziny są sformatowane wg <code>mh_format</code> samolotu, a nie surową liczbą. Panel jej NIE interpretuje: nie szuka nagłówków, nie parsuje liczb, wyświetla to, co poszło do klubu, znak w znak.
+              <b style="display:block;padding-top:7px;color:var(--text-secondary);">Sumy doby nie są sumą wszystkiego.</b> Paliwo startowe to odczyt PIERWSZEJ zmiany, a końcowe — OSTATNIEJ, bo poziom w zbiorniku nie jest wielkością addytywną. Motogodziny doby to <b>RUCH LICZNIKA</b> od pierwszego do ostatniego odczytu; rozjazd wobec sumy delt per sesja ma zgłosić <code>mh_gap</code>, a nie zamaskować go arytmetyka karty.
+              <b style="display:block;padding-top:7px;color:var(--text-secondary);">Sesja jeszcze niezdana jest w karcie</b> ze stanem „W TOKU" — karta odzwierciedla aktualny stan doby i jest przebudowywana przy każdym kolejnym zdaniu maszyny.</span>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -734,7 +792,7 @@
               <div class="kv"><span class="kv-k">W tym regeneracje</span><span class="kv-v blue">4</span></div>
               <div class="kv"><span class="kv-k">Mediana opóźnienia</span><span class="kv-v">4 min <small>od day_close</small></span></div>
               <div class="kv"><span class="kv-k">Najdłuższe opóźnienie</span><span class="kv-v amber">3 h 17 min <small>SP-ABC 30 JUL · outbox</small></span></div>
-              <div class="kv"><span class="kv-k">Dni zablokowane flagą</span><span class="kv-v red">2</span></div>
+              <div class="kv"><span class="kv-k">Sesje wycięte flagą</span><span class="kv-v red">2</span></div>
             </div>
 
           </div>
@@ -755,12 +813,16 @@
 
           <div class="banner ok">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
-            <span><b>Sprostowanie z 2026-08-01: podgląd karty w panelu NIE jedzie przez <code>GET /sheets/:tab</code>.</b> Podpis pod podglądem mówi „ten sam endpoint co link z ekranu 11; autoryzacja Bearer" — i to jest właśnie powód, dla którego panel z niej nie skorzysta. Sesja panelu to ciasteczko <code>uzaero_admin</code> z <code>Path=/admin</code>, którego przeglądarka do <code>/sheets/*</code> po prostu nie wyśle; poszerzenie ścieżki ciasteczka posłałoby poświadczenie back-office'u razem z KAŻDYM żądaniem telefonu, czyli byłoby odwrotnością tego, co ma osiągnąć. Trasa telefonu zostaje nietknięta, a panel czyta tę samą treść tym samym portem pod <code>GET /admin/api/exports/&lt;uuid sesji&gt;/sheet</code>. Nazwę karty liczy przy tym SERWER — panel nigdy nie skleja <code>YYYY-MM-DD_SP-XXX</code> u siebie, bo druga konwencja nazw znaczyłaby link do karty, której w bazie nie ma.</span>
+            <span><b>Sprostowanie z 2026-08-01: podgląd karty w panelu NIE jedzie przez <code>GET /sheets/:tab</code>.</b> Podpis pod podglądem mówił „ten sam endpoint co link z ekranu 11; autoryzacja Bearer" — i to był właśnie powód, dla którego panel z niej nie skorzysta (dziś w plakietce podglądu stoi już trasa panelu). Sesja panelu to ciasteczko <code>uzaero_admin</code> z <code>Path=/admin</code>, którego przeglądarka do <code>/sheets/*</code> po prostu nie wyśle; poszerzenie ścieżki ciasteczka posłałoby poświadczenie back-office'u razem z KAŻDYM żądaniem telefonu, czyli byłoby odwrotnością tego, co ma osiągnąć. Trasa telefonu zostaje nietknięta, a panel czyta tę samą treść tym samym portem pod <code>GET /admin/api/exports/&lt;uuid sesji&gt;/sheet</code>. Nazwę karty liczy przy tym SERWER — panel nigdy nie skleja <code>YYYY-MM-DD_SP-XXX</code> u siebie, bo druga konwencja nazw znaczyłaby link do karty, której w bazie nie ma.</span>
           </div>
 
-          <div class="banner warn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>Otwarta decyzja produktowa (2026-08-01): dwie zmiany na jednym samolocie tego samego dnia mają JEDNĄ kartę.</b> Nazwa karty (<code>YYYY-MM-DD_SP-XXX</code>) niesie dzień i samolot, ale <b>nie sesję</b>, a <code>exported_sheets</code> trzyma jedną treść na nazwę — więc zmiana popołudniowa nadpisuje kartę porannej i poranny lot znika z dokumentu klubu. Flaga <code>session_overlap</code> tego nie łapie i nie ma prawa łapać: obie sesje są ZAMKNIĘTE poprawnie, więc sporu nie ma. Konwencja nazw jest lustrem <code>sheetTabName</code> w telefonie (ekran 11 liczy ją u siebie) i częścią §4.7, więc jej zmiana — <b>scalanie wszystkich sesji dnia w jedną kartę</b> albo <b>wpuszczenie sesji do nazwy</b> — dotyka OBU końców i czeka na decyzję człowieka. Do tego czasu monitor przynajmniej nie kłamie: wiersz nadpisanej karty dostaje plakietkę „Karta nadpisana" z odesłaniem do sesji, która nadpisała, kafle liczą takie dni osobno, a podgląd karty ostrzega, że pokazuje treść innej sesji. Dziennik <code>export_log</code> pamięta obie wysyłki — jest append-only.</span>
+          <div class="banner ok">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12.5 11 15.5 16 9.5"/></svg>
+            <span><b>DECYZJA ZAPADŁA (2026-08-07, migracja 23): karta arkusza to DOBA SAMOLOTU, a sesje są jej wierszami.</b> <span class="pill green" style="margin:0 0 0 4px;">WDROŻONE</span>
+              <span style="display:block;padding-top:7px;">Problem, który to zamyka: nazwa <code>YYYY-MM-DD_SP-XXX</code> niesie dzień i samolot, ale <b>nie sesję</b>, a <code>exported_sheets</code> trzyma jedną treść na nazwę — więc po skróceniu sesji (§3.6a) zmiana popołudniowa <b>nadpisywała</b> kartę porannej i poranny lot znikał z dokumentu klubu. Nazwa nie była już kluczem unikalnym, bo w typowym dniu skokowym tą samą maszyną lata dwóch pilotów. Flaga nakładki tego nie łapała i nie miała prawa: obie sesje są zdane poprawnie, więc sporu nie ma.</span>
+              <span style="display:block;padding-top:7px;">Wybrano <b>scalanie wszystkich sesji doby w jedną kartę</b>, a nie wpuszczenie sesji do nazwy — bo klub czyta dzień per SAMOLOT, nie per zmianę pilota. Zmiany dostają etykiety <code>S1</code>, <code>S2</code>… chronologicznie, a <code>Sesja</code> jest pierwszą kolumną tabeli lotów, bo numer lotu liczy się w obrębie sesji i w dobie z dwiema zmianami się powtarza.</span>
+              <span style="display:block;padding-top:7px;"><b>Rewizja należy do pary (doba, samolot)</b>, nie do sesji: <code>export_log</code> dostaje po jednym wierszu na sesję wchodzącą do rewizji, wszystkie z tym samym numerem — bo <code>GET /sessions/:uuid/sync-status</code> (ekran 11 telefonu) pyta o link PO SESJI i każda zmiana musi go znaleźć, także ta, która eksportu nie wyzwoliła. Blokada advisory obejmuje ten sam klucz (<code>export_log:&lt;doba&gt;:&lt;samolot&gt;</code>). Stan „Karta nadpisana", który monitor pokazywał przed decyzją, <b>przestał być możliwy</b>.</span>
+            </span>
           </div>
 
           <div class="banner status">

@@ -28,7 +28,7 @@ export interface AircraftRowView {
   days: string;
   block: string;
   flight: string;
-  /** `186 / 186` — z kolumn projekcji; kreska przy wierszach sprzed migracji 18. */
+  /** `186 / 186` — z kolumn projekcji; kreska przy wierszach sprzed kolumn statystyk. */
   takeoffsLandings: string;
   fuel: string;
   avgLph: string;

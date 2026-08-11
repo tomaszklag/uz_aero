@@ -81,7 +81,12 @@ describe('korekta zapisana, eksporter ODMÓWIŁ z powodem', () => {
 
   it('tłumaczy powód po ludzku, zamiast pokazać kod z bazy', () => {
     expect(outcome.tone).toBe('warn');
-    expect(outcome.steps[2]).toContain('flaga nakładki');
+    // Po rozdzieleniu `session_overlap` (2026-08-07) „flaga nakładki" przestała być
+    // jednoznaczna: bramką arkusza jest WYŁĄCZNIE `aircraft_overlap`, a `pilot_overlap`
+    // dokumentu klubu nie dotyka. Napis musi więc mówić, KTÓRA to nakładka — i że
+    // trzyma poza kartą DOBY jedną sesję, a nie całą kartę (§4.7).
+    expect(outcome.steps[2]).toContain('aircraft_overlap');
+    expect(outcome.steps[2]).toContain('poza kartą doby');
   });
 
   it('nazywa odmowę stanem świata, a nie awarią', () => {
@@ -109,10 +114,16 @@ describe('odmowy zapisu', () => {
     expect(failure.final).toBe(false);
   });
 
-  it('400 `day_open` odróżnia się od zwykłego 400 — to inny problem', () => {
+  it('`day_open` NIE JEST już osobną odmową — bramka znikła po obu stronach', () => {
+    // ODWRÓCENIE testu z 2026-08-01, który brzmiał „400 `day_open` odróżnia się od
+    // zwykłego 400". Serwer takiej odmowy nie wysyła od 2026-08-07: administrator może
+    // edytować ZAWSZE, a kolizja z pilotem jedzie jako ostrzeżenie nad formularzem
+    // (`correctionWarnings.ts`). Gdyby stary kod jednak nadszedł ze starego wdrożenia,
+    // panel ma go potraktować jak każde inne odrzucenie formularza — a nie tłumaczyć
+    // regułę, której już nie ma.
     const dayOpen = correctionFailure(400, { error: 'day_open' });
-    expect(dayOpen.title).toContain('otwarty');
-    expect(dayOpen.final).toBe(true);
+    expect(dayOpen.title).toContain('formularz');
+    expect(dayOpen.final).toBe(false);
 
     const badRequest = correctionFailure(400, { error: 'bad_request' });
     expect(badRequest.title).toContain('formularz');

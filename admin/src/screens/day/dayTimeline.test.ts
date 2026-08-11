@@ -215,6 +215,39 @@ describe('timelineRows — payload w opisie', () => {
     expect(text).toContain('licznik pokazuje więcej niż przekazanie');
   });
 
+  it('zdanie BEZ WZLOTU podaje powód po polsku — to jedyny ślad po zajętej maszynie', () => {
+    // Ekran 09C pyta o powód, a domena go tylko flaguje (`NO_FLIGHT_WITHOUT_REASON`),
+    // bo twarda reguła skasowałaby fakt, że samolot stał zajęty. Panel MUSI ten powód
+    // pokazać: bez niego administrator widzi sesję z zerowym czasem blokowym i nie ma
+    // gdzie przeczytać, dlaczego.
+    const row = timelineRows([
+      entry(
+        event({
+          type: 'day_close',
+          payload: { finalReading: { fuelL: 150, mh: 1234.5 }, noFlightReason: 'weather' },
+        }),
+      ),
+    ])[0]!;
+
+    const text = row.meta.join(' | ');
+    expect(text).toContain('bez wzlotu — powód: pogoda');
+    // Klamry służby nikt nie zadeklarował i tak wygląda ZWYKŁE zdanie po §3.6a.
+    expect(text).toContain('koniec służby: nie zadeklarowano');
+  });
+
+  it('sesja ZE WZLOTAMI nie dostaje wiersza o powodzie — nie ma o co pytać', () => {
+    const row = timelineRows([
+      entry(
+        event({
+          type: 'day_close',
+          payload: { finalReading: { fuelL: 88, mh: 1236.87 }, dutyEnd: at(13, 0) },
+        }),
+      ),
+    ])[0]!;
+
+    expect(row.meta.join(' | ')).not.toContain('bez wzlotu');
+  });
+
   it('zrzut bez fixa GPS mówi „brak wysokości", a nie zero', () => {
     const row = timelineRows([
       entry(

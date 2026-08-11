@@ -10,11 +10,16 @@
  * powie, że jedną zapomniano zmienić. Cykl życia flagi dokłada tu `status` i `id`,
  * więc rozjazd przestałby być hipotetyczny.
  *
- * **Katalog ma pięć pozycji, choć §4.5 wymienia sześć.** `session_overlap` jest
- * następcą `DOUBLE_CLAIM` i `TIME_OVERLAP`: obie opisywały ten sam fakt — dwie
- * niezamknięte sesje jednego samolotu — a rozdzielanie ich wymagałoby zgadywania,
- * czy nakładka wzięła się z przejęcia, czy z przestawionego zegara. Decyzja
- * 2026-07-31 (log w `docs/_main.md.txt`).
+ * **`session_overlap` ROZDZIELONE na dwie flagi** (2026-08-07, §4.7). Do tej pory jedna
+ * pozycja udawała dwie różne patologie, bo przy długich sesjach zbiegały się w praktyce:
+ * dwie niezamknięte sesje na jednej maszynie prawie zawsze znaczyły też, że któryś pilot
+ * „lata dwiema naraz". Po §3.6a sesje są krótkie i to przestało być prawdą — pilot
+ * legalnie zdaje jedną maszynę i bierze drugą **co do minuty**, a jedna maszyna bywa
+ * zajęta przez dwa telefony bez żadnego udziału zegarów.
+ *
+ * Stąd `aircraft_overlap` (kto pisze do MASZYNY) i `pilot_overlap` (co robi PILOT).
+ * Rozróżnienie nie jest kosmetyczne: pierwsza blokuje kartę arkusza tej maszyny, druga
+ * nie ma z arkuszem nic wspólnego — opisuje grafik człowieka.
  */
 
 /**
@@ -27,8 +32,18 @@ export const FLAG_TYPES = [
   'mh_gap',
   /** Odczyt niższy od poprzedniego — cofnięty licznik albo błąd wpisu. */
   'mh_regression',
-  /** Dwie niezamknięte sesje jednego samolotu — typowo przejęcie offline. */
-  'session_overlap',
+  /**
+   * Dwie NIEZAMKNIĘTE sesje jednego SAMOLOTU — dwa telefony piszą do tej samej maszyny
+   * (typowo przejęcie offline, §4.4). Jedyna flaga bramkująca kartę arkusza: dopóki nie
+   * wiadomo, który strumień opisuje maszynę, doba tej maszyny nie ma jednej prawdy.
+   */
+  'aircraft_overlap',
+  /**
+   * Sesje jednego PILOTA nachodzące na siebie w czasie — rzekomo lata dwiema maszynami
+   * naraz. To anomalia GRAFIKU, nie danych maszyny, więc arkusza NIE blokuje.
+   * Zetknięcie się co do minuty (zdał jedną, wziął drugą) nie jest nakładką.
+   */
+  'pilot_overlap',
   /** Odczyt paliwomierza poza tolerancją względem przekazania. */
   'fuel_mismatch',
   /** |device_time − gps_time| powyżej progu — przestawiony zegar telefonu. */

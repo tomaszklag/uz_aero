@@ -2,8 +2,8 @@
  * UZ Aero — panel: wiersz monitora eksportu.
  *
  * Najważniejsze asercje dotyczą tego, czego wiersz NIE robi: nie skleja nazwy karty,
- * nie wnioskuje daty z niczego poza duty startem i nie proponuje ponowienia tam, gdzie
- * serwer i tak odmówi.
+ * nie wnioskuje daty z niczego poza chwilą przejęcia i nie proponuje ponowienia tam,
+ * gdzie serwer i tak odmówi.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -18,7 +18,7 @@ const item = (patch: Partial<ExportListItemDto> = {}): ExportListItemDto => ({
   sessionUuid: 'd7e5aaaa-bbbb-cccc-dddd-000000003081',
   tab: '2026-07-30_SP-ABC',
   day: '2026-07-30',
-  dutyStart: DAY,
+  claimedAt: DAY,
   aircraftId: 'SP-ABC',
   reg: 'SP-ABC',
   aircraftType: 'Cessna 182',
@@ -48,14 +48,28 @@ describe('wiersz monitora eksportu', () => {
     expect(row!.exportedAt.text).toContain('30 JUL 2026');
   });
 
-  it('sesja bez preflightu nie ma ani daty, ani nazwy — i mówi o tym wprost', () => {
-    const [row] = rowsOf([item({ dutyStart: null, tab: null, day: null, state: 'impossible' })]);
+  it('sesja bez claimu nie ma ani daty, ani nazwy — i mówi o tym wprost', () => {
+    const [row] = rowsOf([item({ claimedAt: null, tab: null, day: null, state: 'impossible' })]);
 
     expect(row!.day.text).toBe('—');
     expect(row!.tab).toMatchObject({ text: '—', known: false });
     // „Brakuje karty" sugerowałoby, że da się ją dorobić; tu nie ma jak.
     expect(row!.canRetry).toBe(false);
-    expect(row!.retryReason).toContain('bez preflightu');
+    expect(row!.retryReason).toContain('bez session_claim');
+  });
+
+  it('kolumna „Dzień" niesie GODZINĘ przejęcia, bo dwie zmiany dzielą datę I nazwę karty', () => {
+    // Karta jest DOBĄ SAMOLOTU (§4.7), więc poranna i popołudniowa zmiana SP-ABC mają
+    // ten sam `tab` — i to jest poprawne, bo są wierszami jednego dokumentu. Wiersz
+    // monitora musi wtedy powiedzieć, KTÓREJ sesji dotyczy, a jedyną taką liczbą jest
+    // godzina przejęcia. Do etapu D stało tu samo „UTC".
+    const morning = item({ sessionUuid: 'am', claimedAt: Date.UTC(2026, 6, 30, 6, 12) });
+    const afternoon = item({ sessionUuid: 'pm', claimedAt: Date.UTC(2026, 6, 30, 13, 40) });
+
+    const rows = rowsOf([morning, afternoon]);
+    expect(rows[0]!.tab.text).toBe(rows[1]!.tab.text);
+    expect(rows[0]!.day.sub).toBe('przejęcie 06:12 UTC');
+    expect(rows[1]!.day.sub).toBe('przejęcie 13:40 UTC');
   });
 
   it('brak karty pokazuje WIEK DANYCH zamiast pustej komórki', () => {

@@ -18,7 +18,7 @@ import { TEST_PASSWORD, testHarness } from './helpers.ts';
 type App = Awaited<ReturnType<typeof testHarness>>['app'];
 
 const DAY = Date.UTC(2026, 5, 22);
-/** Meldunek `d`-tego dnia o godzinie `h` UTC — steruje `claim_time` w projekcji. */
+/** Przejęcie samolotu `d`-tego dnia o godzinie `h` UTC — steruje `claim_time` w projekcji. */
 const at = (d: number, h: number): number => DAY + d * 86_400_000 + h * 3_600_000;
 
 let seq = 0;
@@ -26,7 +26,8 @@ let seq = 0;
 interface PreflightSpec {
   session: string;
   pic: string;
-  dutyStart: number;
+  /** Chwila przejęcia samolotu — steruje `claim_time`, czyli porządkiem podpowiedzi. */
+  claimedAt: number;
   client?: string | null;
   notes?: string | null;
   operation?: string;
@@ -34,31 +35,52 @@ interface PreflightSpec {
 }
 
 /**
- * Sam `preflight_confirm` — do podpowiedzi wystarczy meldunek. Dzień bez lotu jest
- * realnym stanem (pilot zameldował się i nie poleciał), więc fixture nie udaje, że
- * podpowiedź wymaga zamkniętego dnia.
+ * Przejęcie + preflight — dwa zdarzenia, bo tak wygląda KAŻDA sesja (§4.4: `session_claim`
+ * jest pierwszym zdarzeniem). Dzień bez lotu jest realnym stanem (pilot wziął samolot
+ * i nie poleciał), więc fixture nie udaje, że podpowiedź wymaga zamkniętego dnia.
+ *
+ * Do 2026-08-07 wystarczał tu sam `preflight_confirm`, bo porządek szedł po meldunku.
+ * Odkąd niesie go chwila przejęcia (decyzja 2026-08-07), strumień bez claimu nie ma znacznika
+ * dnia — i słusznie, bo taki strumień nie powstaje w normalnej pracy.
  */
 function preflight(spec: PreflightSpec) {
-  seq += 1;
-  return {
-    uuid: `e-${seq}-preflight`,
+  const head = {
     sessionUuid: spec.session,
     aircraftId: spec.aircraft ?? 'SP-AXA',
     picId: spec.pic,
     dualId: null,
+    schemaVersion: 1,
+  };
+
+  seq += 1;
+  const claim = {
+    ...head,
+    uuid: `e-${seq}-claim`,
+    type: 'session_claim',
+    deviceTime: spec.claimedAt,
+    gpsTime: spec.claimedAt,
+    payload: { mode: 'free' },
+  };
+
+  seq += 1;
+  const confirm = {
+    ...head,
+    uuid: `e-${seq}-preflight`,
     type: 'preflight_confirm',
-    deviceTime: spec.dutyStart,
-    gpsTime: spec.dutyStart,
+    // Preflight minutę po przejęciu — bliżej prawdy niż ta sama sekunda i przy okazji
+    // pokazuje, że porządek podpowiedzi bierze się z CLAIMU, a nie z preflightu.
+    deviceTime: spec.claimedAt + 60_000,
+    gpsTime: spec.claimedAt + 60_000,
     payload: {
       operation: spec.operation ?? 'skoki',
-      dutyStart: spec.dutyStart,
       reading: { fuelL: 150, mh: 1234.5 },
       client: spec.client ?? null,
       notes: spec.notes ?? null,
       mhFormat: 'hhmm',
     },
-    schemaVersion: 1,
   };
+
+  return [claim, confirm];
 }
 
 async function login(app: App, who: string): Promise<string> {
@@ -70,14 +92,14 @@ async function login(app: App, who: string): Promise<string> {
   return res.json().token as string;
 }
 
-/** Wysyła meldunki JAKO ich PIC — single-writer §4.4 nie ma tu wyjątków. */
+/** Wysyła sesje JAKO ich PIC — single-writer §4.4 nie ma tu wyjątków. */
 async function send(app: App, pic: string, specs: PreflightSpec[]): Promise<void> {
   const token = await login(app, pic);
   const res = await app.inject({
     method: 'POST',
     url: '/events',
     headers: { authorization: `Bearer ${token}` },
-    payload: { events: specs.map(preflight) },
+    payload: { events: specs.flatMap(preflight) },
   });
   expect(res.statusCode, `paczka ${pic} odrzucona: ${res.payload}`).toBe(200);
 }
@@ -114,13 +136,13 @@ describe('GET /me/task-suggestions', () => {
       {
         session: 'sess-krz',
         pic: 'KRZ',
-        dutyStart: at(0, 8),
+        claimedAt: at(0, 8),
         client: 'SKY CAMP',
         notes: 'notatka KRZ-a',
       },
     ]);
     await send(app, 'TMK', [
-      { session: 'sess-tmk', pic: 'TMK', dutyStart: at(1, 8), notes: 'lot z uczniem' },
+      { session: 'sess-tmk', pic: 'TMK', claimedAt: at(1, 8), notes: 'lot z uczniem' },
     ]);
 
     const body = (await suggestions(app, await login(app, 'TMK'))).json();
@@ -136,11 +158,11 @@ describe('GET /me/task-suggestions', () => {
   it('najnowsze pierwsze i BEZ duplikatów — powtórzona wartość to jedna pozycja', async () => {
     const { app } = await testHarness();
     await send(app, 'TMK', [
-      { session: 's1', pic: 'TMK', dutyStart: at(0, 8), client: 'SKY CAMP', notes: 'stara' },
-      { session: 's2', pic: 'TMK', dutyStart: at(1, 8), client: 'AEROKLUB', notes: 'nowsza' },
+      { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: 'SKY CAMP', notes: 'stara' },
+      { session: 's2', pic: 'TMK', claimedAt: at(1, 8), client: 'AEROKLUB', notes: 'nowsza' },
       // Ten sam klient i ta sama notatka co w `s1`, ale najświeższego dnia — wartość
       // ma zostać JEDNA, z podbitym stemplem, a nie trafić na listę drugi raz.
-      { session: 's3', pic: 'TMK', dutyStart: at(2, 8), client: 'SKY CAMP', notes: 'stara' },
+      { session: 's3', pic: 'TMK', claimedAt: at(2, 8), client: 'SKY CAMP', notes: 'stara' },
     ]);
 
     const body = (await suggestions(app, await login(app, 'TMK'))).json();
@@ -160,8 +182,8 @@ describe('GET /me/task-suggestions', () => {
     // co robiono ostatnio — starsza operacja podpowiadałaby wczorajszy kontekst.
     const { app } = await testHarness();
     await send(app, 'TMK', [
-      { session: 's1', pic: 'TMK', dutyStart: at(0, 8), client: 'SKY CAMP', operation: 'skoki' },
-      { session: 's2', pic: 'TMK', dutyStart: at(1, 8), client: 'SKY CAMP', operation: 'ferry' },
+      { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: 'SKY CAMP', operation: 'skoki' },
+      { session: 's2', pic: 'TMK', claimedAt: at(1, 8), client: 'SKY CAMP', operation: 'ferry' },
     ]);
 
     const body = (await suggestions(app, await login(app, 'TMK'))).json();
@@ -175,8 +197,8 @@ describe('GET /me/task-suggestions', () => {
     // — pusty wiersz do wyboru byłby gorszy niż brak listy.
     const { app } = await testHarness();
     await send(app, 'TMK', [
-      { session: 's1', pic: 'TMK', dutyStart: at(0, 8), client: '', notes: '   ' },
-      { session: 's2', pic: 'TMK', dutyStart: at(1, 8), client: null, notes: null },
+      { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: '', notes: '   ' },
+      { session: 's2', pic: 'TMK', claimedAt: at(1, 8), client: null, notes: null },
     ]);
 
     expect((await suggestions(app, await login(app, 'TMK'))).json()).toEqual({
@@ -192,7 +214,7 @@ describe('GET /me/task-suggestions', () => {
       specs.push({
         session: `s-${i}`,
         pic: 'TMK',
-        dutyStart: at(i, 8),
+        claimedAt: at(i, 8),
         client: `KLIENT ${i}`,
         notes: `notatka ${i}`,
       });
@@ -240,7 +262,7 @@ describe('GET /me/task-suggestions', () => {
     expect(claim.statusCode).toBe(200);
 
     await send(app, 'TMK', [
-      { session: 's1', pic: 'TMK', dutyStart: at(0, 8), client: 'SKY CAMP', notes: 'uwaga' },
+      { session: 's1', pic: 'TMK', claimedAt: at(0, 8), client: 'SKY CAMP', notes: 'uwaga' },
     ]);
 
     const body = (await suggestions(app, token)).json();

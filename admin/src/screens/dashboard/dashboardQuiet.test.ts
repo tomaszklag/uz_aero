@@ -109,7 +109,7 @@ describe('cisza PODEJRZANA — cztery warunki, każdy osobno wystarcza', () => {
       openTakeoffAt: null,
       engineStoppedAt: null,
       lastEventAt: null,
-      dutyStart: null,
+      claimedAt: null,
       departureIcao: null,
       dualId: null,
       dualName: null,

@@ -34,12 +34,15 @@ export interface CockpitActionsProps {
   primaryTone?: Tone;
   onPrimary: () => void;
   /**
-   * Zrzut — dostępny tylko w powietrzu i tylko w dniu skokowym.
+   * Zrzut — istnieje tylko w powietrzu dnia skokowego, AKTYWNY tylko w Cruise
+   * (reguły i wyjątek bez GPS: `logic/cockpitActions.ts`, decyzja 2026-08-11).
    *
    * `undefined` = przycisku NIE MA. To nie jest blokada z powodem, tylko brak akcji:
    * w dniu przelotu czy egzaminu nie ma czego wynosić, więc `drop` nie może się wydarzyć
    * (issue #19 — pilot zgłosił zrzut dostępny przy operacji „Przelot"). Wyszarzony
    * przycisk mówiłby „teraz nie, ale kiedyś tak", a to nieprawda o tym dniu.
+   * W locie natomiast przycisk STOI przygaszony zamiast znikać: pasek trzyma stałą
+   * geometrię, bo pilot sięga po niego nie patrząc.
    */
   onDrop?: () => void;
   dropDisabledReason?: string | null;

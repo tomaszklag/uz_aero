@@ -189,7 +189,7 @@ describe('tabela interwałów', () => {
     const row = intervalRows(consumptionFixture())[0]!;
 
     expect(row.day).toBe('30 JUL');
-    expect(row.span).toBe('preflight 09:58 → zamknięcie 11:31');
+    expect(row.span).toBe('preflight 09:58 → zdanie 11:31');
     expect(row.consumed).toBe('22 L');
     expect(row.reading).toBe('odczyt 96 → 74 L');
     expect(row.state).toBe('ok');

@@ -366,7 +366,9 @@ describe('konserwacja: kolejka ponowień korzysta z maszynerii `A05`', () => {
   it('pusta kolejka to POTWIERDZENIE, nie awaria', () => {
     const empty = render({ failed: false, blocked: false });
     expect(empty).toContain('class="empty"');
-    expect(empty).toContain('KAŻDY ZAMKNIĘTY DZIEŃ MA KARTĘ');
+    // Jednostką jest ZDANA MASZYNA, nie „zamknięty dzień": karta powstaje po
+    // `day_close` sesji, a jedna doba maszyny bierze dwie zmiany (§3.6a, §4.7).
+    expect(empty).toContain('KAŻDA ZDANA MASZYNA MA KARTĘ');
     expect(empty).toContain('kolejka pusta');
   });
 

@@ -72,8 +72,12 @@ export interface AdminEngineState {
   engineStoppedAt: number | null;
   /** Czas ostatniego zdarzenia W STRUMIENIU (GPS przed zegarem telefonu). */
   lastEventAt: number | null;
-  /** Meldunek z `preflight_confirm` (epoch ms UTC); `null` = sesja bez preflightu. */
-  dutyStart: number | null;
+  /**
+   * Chwila PRZEJĘCIA samolotu (`session_claim`, epoch ms UTC) — od kiedy maszyna jest
+   * zajęta. Do 2026-08-07 stał tu meldunek pilota; po §3.6a klamra służby należy do
+   * PILOTA i potrafi objąć kilka maszyn, więc na wierszu FLOTY nie miała czego szukać.
+   */
+  claimedAt: number | null;
   /** Lotnisko odlotu z preflightu — podpis wiersza floty („EPMO"). */
   departureIcao: string | null;
   /** Drugi pilot dnia; `null` = lot pojedynczy. Nazwisko `null` = konta już nie ma. */

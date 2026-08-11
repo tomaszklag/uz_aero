@@ -7,7 +7,7 @@
  *
  * ══ CO TU JEST WYBOREM, A NIE PRZEPISANIEM ══
  *  1. **`engineStoppedAt` bierzemy z ostatniego ZAMKNIĘTEGO cyklu**, a nie z ostatniego
- *     zdarzenia typu `engine_stop`. Cykle liczy domena (`EngineRun`) i to ona wie, co
+ *     zdarzenia typu `engine_stop`. Wzloty liczy domena (`Leg`) i to ona wie, co
  *     zrobić z korektami i z ręcznymi wpisami off-block — drugie przejście po strumieniu
  *     byłoby drugą definicją „kiedy silnik stanął".
  *  2. **`flightsCount` to `flights.length`, czyli numer bieżącego lotu**, a nie liczba
@@ -32,7 +32,7 @@ export function engineState(
   // Ostatni cykl silnika, KTÓRY SIĘ ZAMKNĄŁ. Cykl otwarty ma `stoppedAt: null`, więc
   // przy pracującym silniku ta wartość zostaje z poprzedniego postoju — i tak ma być:
   // wiersz mówi wtedy „W locie", a nie „silnik OFF".
-  const stopped = [...state.engineRuns].reverse().find((run) => run.stoppedAt != null);
+  const stopped = [...state.legs].reverse().find((run) => run.stoppedAt != null);
 
   return {
     sessionUuid,
@@ -42,7 +42,7 @@ export function engineState(
     openTakeoffAt: state.openTakeoffAt,
     engineStoppedAt: stopped?.stoppedAt ?? null,
     lastEventAt: state.lastEventAt,
-    dutyStart: state.dutyStart,
+    claimedAt: state.claimedAt,
     departureIcao: state.departureIcao,
     dualId: state.dualId,
     dualName,

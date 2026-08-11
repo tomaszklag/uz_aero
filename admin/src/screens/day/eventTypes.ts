@@ -60,6 +60,9 @@ export const EVENT_META: Record<EventType, EventMeta> = {
   refuel: { dot: 'amber', badge: 'paliwo', badgeTone: 'amber', correctable: true },
   crew_change: { dot: 'amber', badge: 'załoga', badgeTone: 'amber', correctable: true },
   manual_log_entry: { dot: 'amber', badge: 'ręcznie', badgeTone: 'amber', correctable: true },
-  day_close: { dot: 'red', badge: 'koniec', badgeTone: 'red', correctable: false },
+  // Wpis `leg_close` żył tu między 2026-08-06 a 2026-08-10 — usunięty razem ze
+  // zdarzeniem (pivot: sesja = jeden bieg silnika; zatwierdzeniem jest `day_close`,
+  // od którego liczy się JEDYNE okno korekty sesji).
+  day_close: { dot: 'red', badge: 'zdanie', badgeTone: 'red', correctable: false },
   event_correction: { dot: 'red', badge: 'korekta', badgeTone: 'red', correctable: false },
 };

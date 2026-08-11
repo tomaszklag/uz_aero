@@ -8,7 +8,7 @@
  * z nich WNIOSKI — a panel już tylko formatuje.
  *
  * ══ DWIE RÓŻNE NIEWIEDZE, DWA RÓŻNE `null` ══
- *  1. `staleRows > 0` — w grupie są wiersze projekcji sprzed migracji 18. Suma po
+ *  1. `staleRows > 0` — w grupie są wiersze projekcji sprzed kolumn statystyk. Suma po
  *     części wierszy podana jako całość byłaby kłamstwem, więc KAŻDY agregat kolumn
  *     tej migracji jedzie wtedy jako `null`, a `staleRows` mówi, ile wierszy czeka
  *     na przebudowę (`A11`).
@@ -78,7 +78,7 @@ export function statsReport(input: StatsReportInput): AdminStatsReport {
 const over = (numerator: number | null, denominator: number): number | null =>
   numerator == null || denominator <= 0 ? null : numerator / denominator;
 
-/** Agregat kolumn migracji 18 — `null`, gdy w grupie są wiersze nieprzeliczone. */
+/** Agregat kolumn statystyk — `null`, gdy w grupie są wiersze nieprzeliczone. */
 const unlessStale = (staleRows: number, value: number): number | null =>
   staleRows > 0 ? null : value;
 

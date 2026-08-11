@@ -8,8 +8,17 @@
  *   `refuel`             →  ZAMYKA bieżący (`beforeL`) i OTWIERA następny (`afterL`)
  *   `day_close`          →  ZAMYKA ostatni (`finalReading.fuelL`)
  *
+ * (`leg_close` bywał czwartą granicą między 2026-08-06 a 2026-08-10 — znikł razem
+ * z opcjonalnym odczytem per wzlot; sesję domykają odczyty przejęcia i zdania.)
+ *
  * Dolewka nie jest więc składnikiem żadnego równania — jest GRANICĄ. To dlatego zużycie
  * w interwale liczy się jako różnica dwóch odczytów, bez żadnej arytmetyki dolewek.
+ *
+ * ══ RYZYKO §3.6b ZAMKNIĘTE PRZEZ PIVOT (2026-08-10) ══
+ * Odczyty są obowiązkowe przy zdaniu, a sesja = jeden bieg silnika — każda sesja jest
+ * więc domknięta odczytami z OBU stron i interwały degeneracyjne „między ostatnim
+ * odczytem wzlotu a zdaniem" znikają z konstrukcji. Progów nadal NIE stroimy tutaj —
+ * od tego jest `server/scripts/consumptionReplay.ts` na danych demo (etap E).
  *
  * ══ SESJA BEZ `day_close` NIE PRODUKUJE OSTATNIEGO INTERWAŁU ══
  * I nie jest to niedopatrzenie: bez odczytu zamykającego nie wiadomo, ile paliwa ubyło.

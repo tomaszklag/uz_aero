@@ -113,7 +113,10 @@ describe('nakładanie korekt na strumień', () => {
 
     expect(applyCorrections(stream).some((e) => e.uuid === landing.uuid)).toBe(false);
     // Unieważnione wciąż jest celem — ponowna korekta może je przywrócić.
-    expect(buildEventIndex(stream)[landing.uuid]).toBe('landing');
+    expect(buildEventIndex(stream)[landing.uuid]?.type).toBe('landing');
+    // Indeks niesie też CZAS — reguła okna korekty potrzebuje go, żeby ustalić,
+    // do którego wzlotu należy korygowane zdarzenie (§3.6a).
+    expect(buildEventIndex(stream)[landing.uuid]?.at).toBe(landing.gpsTime ?? landing.deviceTime);
   });
 
   it('ostatnia korekta wygrywa — retime po void przywraca zdarzenie', () => {

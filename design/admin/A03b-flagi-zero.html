@@ -539,7 +539,7 @@
 
         <div class="banner ok">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          <span><b>Żadna karta dnia nie czeka na odblokowanie.</b> Blokadę eksportu powoduje wyłącznie otwarta flaga <code>session_overlap</code> (§4.7) — skoro nie ma ani jednej, wszystkie zamknięte dni z ostatnich 30 dni są w arkuszu. <a href="A05-eksporty.html" style="color:var(--green);font-weight:700;">Monitor eksportu →</a></span>
+          <span><b>Żadna karta doby nie czeka na odblokowanie.</b> Bramką arkusza jest wyłącznie otwarta flaga <code>aircraft_overlap</code> (§4.7) — skoro nie ma ani jednej, żadna sesja nie wypada dziś z karty i wszystkie doby z ostatnich 30 dni są w arkuszu komplet. <b style="color:var(--text-secondary)">Pozostałe pięć typów, w tym <code>pilot_overlap</code>, arkusza nie bramkuje nigdy</b> — opisują rozbieżność, nie wstrzymują dokumentu. <a href="A05-eksporty.html" style="color:var(--green);font-weight:700;">Monitor eksportu →</a></span>
         </div>
 
         <div class="tiles">
@@ -564,7 +564,7 @@
           <div class="empty">
             <span class="empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg></span>
             <span class="empty-title">BRAK OTWARTYCH FLAG</span>
-            <span class="empty-note">Wszystkie rozbieżności są wyjaśnione i podpisane. Nowa flaga pojawi się tu automatycznie, gdy serwer przyjmie zdarzenia z dziurą albo cofnięciem w łańcuchu motogodzin (<code>mh_gap</code>, <code>mh_regression</code>) albo zobaczy dwie niezamknięte sesje jednego samolotu (<code>session_overlap</code>).<br /><br />Flag nie zakłada i nie kasuje człowiek — pustej skrzynki nie da się „wyczyścić", da się ją tylko wypracować.</span>
+            <span class="empty-note">Wszystkie rozbieżności są wyjaśnione i podpisane. Nowa flaga pojawi się tu automatycznie, gdy serwer przyjmie zdarzenia z dziurą albo cofnięciem w łańcuchu motogodzin (<code>mh_gap</code>, <code>mh_regression</code>), zobaczy dwie niezamknięte sesje <b>jednej maszyny</b> (<code>aircraft_overlap</code>) albo jednego pilota na <b>dwóch maszynach naraz</b> (<code>pilot_overlap</code>).<br /><br />Flag nie zakłada i nie kasuje człowiek — pustej skrzynki nie da się „wyczyścić", da się ją tylko wypracować.</span>
           </div>
         </div>
 
@@ -598,13 +598,13 @@
                   <td class="dim">„Licznik odczytany przy złym świetle: 1283.6 zamiast 1283.2. Paliwo zgodne (Δ 4 L), brak śladu lotu poza aplikacją. Odczyt poprawiony korektą."</td>
                 </tr>
                 <tr>
-                  <td><span class="pill green">mh_gap</span><span class="cell-sub">#1054</span></td>
-                  <td><span class="reg">SP-ABC</span></td>
+                  <td><span class="pill green">pilot_overlap</span><span class="cell-sub">#1054</span></td>
+                  <td><span class="reg">SP-ABC + SP-KLM</span></td>
                   <td class="num dim">31 JUL 11:26</td>
                   <td class="num">31 JUL 12:52</td>
                   <td class="num">1 h 26 min</td>
                   <td class="cell-strong">Anna Wrzosek<span class="cell-sub">szef wyszkolenia</span></td>
-                  <td class="dim">„Kołowanie techniczne po tankowaniu, 0.2 h bez sesji. Odczyt startowy poprawny — bez korekty."</td>
+                  <td class="dim">„T. Małkiewicz zapomniał zdać SP-ABC przed przejęciem SP-KLM. Zdanie dopisane korektą 12:52; arkusza to nie dotyczyło — <code>pilot_overlap</code> nie jest bramką."</td>
                 </tr>
                 <tr>
                   <td><span class="pill green">mh_regression</span><span class="cell-sub">#1052</span></td>
@@ -616,13 +616,13 @@
                   <td class="dim">„3906.9 zamiast 3907.9 — literówka przy przejęciu. Odczyt poprawiony <code>event_correction</code>, oryginał zostaje w rejestrze."</td>
                 </tr>
                 <tr>
-                  <td><span class="pill green">session_overlap</span><span class="cell-sub">#1046</span></td>
+                  <td><span class="pill green">aircraft_overlap</span><span class="cell-sub">#1046</span></td>
                   <td><span class="reg">SP-KLM</span></td>
                   <td class="num dim">30 JUL 05:58</td>
                   <td class="num">31 JUL 08:15</td>
                   <td class="num">1 dzień 2 h</td>
                   <td class="cell-strong">Tomasz Małkiewicz<span class="cell-sub">administrator</span></td>
-                  <td class="dim">„Telefon A. Wrzosek dosłał <code>day_close</code> — nakładka pozorna. Karta <code>2026-07-30_SP-KLM</code> odblokowana, rewizja 1 poszła 08:16."</td>
+                  <td class="dim">„Telefon A. Wrzosek dosłał <code>day_close</code> — nakładka pozorna. Obie sesje wróciły do karty doby <code>2026-07-30_SP-KLM</code>, adnotacja „niekompletna" zniknęła, rewizja poszła 08:16."</td>
                 </tr>
               </tbody>
             </table>

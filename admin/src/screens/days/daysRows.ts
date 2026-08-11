@@ -1,8 +1,15 @@
 /**
  * UZ Aero — panel: wiersz listy dni, DTO → treść komórek (moduł CZYSTY).
  *
+ * ══ WIERSZ OPISUJE SESJĘ SAMOLOTU, NIE DZIEŃ SŁUŻBY ══
+ * Po §3.6a jednostką listy jest odcinek PRZEJĘCIE → ZDANIE jednej maszyny. Klamra
+ * służby należy do PILOTA, potrafi objąć kilka samolotów i nie jest właściwością
+ * żadnego z tych wierszy — dlatego nie ma tu kolumny „duty" i nie może jej być.
+ * Konsekwencja praktyczna: dwie zmiany na jednej maszynie tego samego dnia to dwa
+ * wiersze z tą samą datą, więc odróżnia je godzina przejęcia (patrz `dayCell`).
+ *
  * ══ PORZĄDEK LISTY NIE JEST WŁASNOŚCIĄ TEGO PLIKU ══
- * Dni przychodzą posortowane przez serwer po dniu służby (`sessions.claim_time`,
+ * Sesje przychodzą posortowane przez serwer po chwili przejęcia (`sessions.claim_time`,
  * `NULLS LAST`, kierunek z parametru `sort`). Ta funkcja MAPUJE i nie sortuje — lista
  * jest przycięta `LIMIT`-em i sklejona z kolejnych stron kursora, więc przesortowanie
  * tego, co przyszło, przestawiłoby wiersze wewnątrz przypadkowego wycinka i rozjechało
@@ -77,35 +84,42 @@ function mhFormatLabel(format: MhFormat | null): string {
 }
 
 /**
- * Kolumna „Dzień · UTC". Data pochodzi z MELDUNKU (`dutyStart`), bo to on wyznacza
- * dzień lotny — i tak samo działa filtr zakresu po stronie bazy.
+ * Kolumna „Dzień · UTC". Data pochodzi z CHWILI PRZEJĘCIA (`claimedAt`), bo to ona
+ * przypisuje sesję do doby — i tak samo działa filtr zakresu po stronie bazy.
  *
- * Sesja bez `preflight_confirm` NIE MA daty i panel to mówi wprost. Wywnioskowanie jej
+ * ══ PODPIS NIESIE CAŁY ODCINEK SESJI, NIE JEDEN JEJ KONIEC ══
+ * Do etapu D stało tu „zamknięty 11:02" — sam koniec. Wystarczało, dopóki sesja trwała
+ * cały dzień lotny. Po §3.6a jedna maszyna bierze w dobie DWIE zmiany (poranną
+ * i popołudniową), więc dwa wiersze mają tę samą rejestrację i tę samą datę w kolumnie
+ * „Dzień": bez godziny przejęcia administrator nie ma jak ich odróżnić, a właśnie to
+ * pytanie zadaje, patrząc na listę. Podpis mówi więc „06:12 → 11:02", a przy sesji
+ * trwającej „06:12 → trwa" — bo koniec, którego nie ma, nie jest brakiem danych.
+ *
+ * Sesja bez `session_claim` NIE MA daty i panel to mówi wprost. Wywnioskowanie jej
  * z `closeTime` albo z czasu pierwszego zdarzenia byłoby zgadywaniem w narzędziu,
  * którego jedynym zadaniem jest nie zgadywać — i rozjechałoby się z filtrem, który
- * takich dni po prostu nie widzi.
+ * takich sesji po prostu nie widzi.
  */
 function dayCell(day: SessionListItemDto): { text: string; sub: string } {
-  if (day.dutyStart == null) {
-    return { text: '—', sub: 'bez preflightu · poza zakresem dat' };
+  if (day.claimedAt == null) {
+    return { text: '—', sub: 'bez claimu · poza zakresem dat' };
   }
-  const sub =
-    day.closeTime == null
-      ? `meldunek ${timeUtc(day.dutyStart)}`
-      : `zamknięty ${timeUtc(day.closeTime)}`;
-  return { text: dateUtcShort(day.dutyStart), sub };
+  const sub = `${timeUtc(day.claimedAt)} → ${day.closeTime == null ? 'trwa' : timeUtc(day.closeTime)}`;
+  return { text: dateUtcShort(day.claimedAt), sub };
 }
 
 /**
- * Kolumna „Stan" — jedna plakietka na dzień, w kolejności PILNOŚCI.
+ * Kolumna „Stan" — jedna plakietka na sesję, w kolejności PILNOŚCI.
  *
- * Otwarta flaga wygrywa z każdym innym stanem, także z „wyeksportowany": dzień
+ * Otwarta flaga wygrywa z każdym innym stanem, także z „wyeksportowany": sesja
  * z rozbieżnością jest sprawą dla człowieka niezależnie od tego, czy karta poszła
- * do arkusza. Dopiero potem liczy się, czy dzień trwa, a na końcu — czy ma kartę.
+ * do arkusza. Dopiero potem liczy się, czy sesja trwa, a na końcu — czy ma kartę.
  *
  * Czego tu NIE MA: plakietki „W locie". Wymaga wiedzy, czy silnik pracuje, a projekcja
- * jej nie niesie (baner na `A02-dni.html`). „Dzień otwarty" jest tym, co da się
- * powiedzieć uczciwie o sesji bez `day_close`.
+ * jej nie niesie (baner na `A02-dni.html`). „Samolot zajęty" jest tym, co da się
+ * powiedzieć uczciwie o sesji bez `day_close` — mockup pisze tu „Dzień otwarty",
+ * ale po §3.6a otwarta jest SESJA jednej maszyny, a nie dzień: pilot potrafi w tej
+ * samej służbie zdać jedną maszynę i wziąć drugą.
  */
 function stateCell(day: SessionListItemDto, nowMs: number): DayStatePill {
   if (day.openFlags.length > 0) {
@@ -121,7 +135,7 @@ function stateCell(day: SessionListItemDto, nowMs: number): DayStatePill {
   if (day.status === 'active') {
     return {
       tone: 'blue',
-      text: 'Dzień otwarty',
+      text: 'Samolot zajęty',
       dot: true,
       sub: `dane w drodze · ${syncedAgo(day.updatedAt, nowMs)}`,
     };
@@ -136,7 +150,7 @@ function stateCell(day: SessionListItemDto, nowMs: number): DayStatePill {
     };
   }
 
-  return { tone: 'dim', text: 'Zamknięty', dot: false, sub: 'bez karty arkusza' };
+  return { tone: 'dim', text: 'Samolot zdany', dot: false, sub: 'bez karty arkusza' };
 }
 
 /**

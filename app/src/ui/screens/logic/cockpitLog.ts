@@ -16,7 +16,7 @@
 
 import { applyCorrections } from '../../../domain';
 import type { Event, EventOf, MhFormat, SessionState } from '../../../domain';
-import type { DayCycleSection, DaySection, EventLogRow, LogChip, LogKind } from '../../components';
+import type { EventLogRow, LogChip, LogKind } from '../../components';
 import { duration, durationLong, litres, motoHours, timeUtc } from '../../format';
 
 const LABEL: Record<string, string> = {
@@ -111,13 +111,13 @@ export function buildLogRows(
 
       case 'engine_stop': {
         const blockMs = openStart != null ? at(event) - openStart : null;
-        // Licznik motogodzin chodzi z silnikiem — o tyle przesuwa się łańcuch (§4.5).
-        if (mhCursor != null && blockMs != null) mhCursor += blockMs / 3_600_000;
         openStart = null;
+        // STOP bez chipów odczytu (mockup 04, model 2026-08-10): paliwo i MH pilot
+        // poda przy ZDANIU — chip z łańcucha byłby przewidywaniem stojącym o wiersz
+        // od miejsca, w którym za chwilę stanie prawdziwy odczyt.
         rows.push({
           ...base,
           meta: blockMs != null ? `blok ${duration(blockMs)}` : undefined,
-          chips: mhCursor != null ? [{ label: `MH ${motoHours(mhCursor, mhFormat)}` }] : undefined,
         });
         break;
       }
@@ -171,58 +171,11 @@ export function buildLogRows(
   return rows;
 }
 
-/**
- * Log dnia pocięty na sekcje do zwijania (mockup 04 `.cycle-head`): cykl START→…→STOP
- * jako całość z nagłówkiem-podsumowaniem, zdarzenia naziemne między cyklami luzem.
- *
- * Wszystko w nagłówku pochodzi z gotowych wierszy `buildLogRows` — czasy, blok
- * i MH mają jedno źródło, więc zwinięty nagłówek nie może rozjechać się z tym,
- * co pilot zobaczy po rozwinięciu.
+/*
+ * `buildDaySections` (harmonijka „CYKL n" z mockupu 04 sprzed pivotu) usunięte
+ * 2026-08-10 razem z komponentem `DayLog`: sesja = jeden bieg silnika, więc log
+ * kokpitu to płaska oś `buildLogRows` — nie ma czego zwijać.
  */
-export function buildDaySections(
-  events: Event[],
-  projection: SessionState,
-  mhFormat: MhFormat,
-): DaySection[] {
-  const sections: DaySection[] = [];
-  let current: DayCycleSection | null = null;
-  let no = 0;
-
-  for (const row of buildLogRows(events, projection, mhFormat)) {
-    if (row.kind === 'start') {
-      no += 1;
-      current = {
-        kind: 'cycle',
-        id: row.id,
-        no,
-        range: `${row.time}–…`,
-        takeoffs: 0,
-        block: null,
-        closed: false,
-        pending: row.pending === true,
-        rows: [row],
-      };
-      sections.push(current);
-      continue;
-    }
-
-    if (current != null && !current.closed) {
-      current.rows.push(row);
-      if (row.pending === true) current.pending = true;
-      if (row.kind === 'takeoff') current.takeoffs += 1;
-      if (row.kind === 'stop') {
-        current.closed = true;
-        current.range = `${current.rows[0]!.time}–${row.time}`;
-        current.block = row.meta ?? null;
-      }
-      continue;
-    }
-
-    sections.push({ kind: 'loose', row });
-  }
-
-  return sections;
-}
 
 /**
  * Log **bieżącego cyklu** (mockup 05 `.cycle-log`): zdarzenia od ostatniego `engine_start`,

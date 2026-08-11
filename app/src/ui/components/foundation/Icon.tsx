@@ -65,6 +65,9 @@ const REGISTRY = {
   // z „DALEJ".
   takeover: f('maximize-2'),
   edit: f('edit-2'),
+  // Dopisanie czegoś, czego jeszcze nie ma (zwinięte liczniki serii na 09A) — plus,
+  // a nie ołówek: ołówek obiecuje poprawianie istniejącej wartości.
+  add: f('plus'),
   // Lupa, a nie ołówek, przy polach otwierających arkusz z WYSZUKIWANIEM (trasa, 02E):
   // zgłoszenie z urządzenia mówiło wprost, że po polu tekstowym „nie widać, że tam jest
   // przeszukiwanie" — ikona jest pierwszym miejscem, w którym to widać (issue #14).
@@ -97,6 +100,15 @@ const REGISTRY = {
 
   // obiekty
   aircraft: m('airplane'),
+  // Sesja, w której silnik ani razu nie ruszył (09C) — samolot PRZEKREŚLONY, nie zwykły:
+  // stan pusty ma powiedzieć „nie było wzlotu", a nie „tu był samolot".
+  'aircraft-off': m('airplane-off'),
+
+  // powody zdania samolotu bez wzlotu (siatka kart 09C)
+  'reason-weather': f('cloud-drizzle'),
+  'reason-malfunction': f('tool'),
+  'reason-cancelled': f('minus-circle'),
+  'reason-other': f('align-left'),
 
   // fazy lotu — hero kokpitu 05 (komplet zatwierdzony 2026-08-04)
   'phase-idle': p('propeller'),

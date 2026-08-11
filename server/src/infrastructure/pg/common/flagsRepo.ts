@@ -21,7 +21,7 @@ interface FlagDbRow {
 
 const toFlag = (r: FlagDbRow): FlagRecord => {
   // Wartość spoza katalogu jest niemożliwa: pisze tu wyłącznie `ensureOpen` (typowany
-  // na `FlagType`), a od migracji 8 pilnuje tego CHECK w bazie. Jeśli mimo to wystąpi,
+  // na `FlagType`), a pilnuje tego `flags_type_known` w bazie. Jeśli mimo to wystąpi,
   // znaczy to, że ktoś zdjął ograniczenie albo grzebał ręcznie — i wtedy CICHE
   // pominięcie byłoby najgorszą z opcji, bo flaga istnieje po to, żeby być widoczna.
   if (!isFlagType(r.type)) {
@@ -46,7 +46,7 @@ export class PgFlagsRepo implements FlagsPort {
     // Dedupe po (typ, zestaw sesji) — CELOWO obejmuje też flagi `resolved`: anomalia
     // łańcucha jest trwała (odczyty się nie zmienią), więc ponowne otwarcie po decyzji
     // administratora produkowałoby szum uczący ignorowania flag. Nowa sesja w nakładce
-    // = nowy zestaw = nowa flaga. Ostatnim słowem jest UNIQUE w bazie (migracja 3) —
+    // = nowy zestaw = nowa flaga. Ostatnim słowem jest UNIQUE w bazie (`uq_flags_type_sessions`) —
     // sam SELECT-then-INSERT przegrywa wyścig równoległych transakcji.
     await tx.query(
       `INSERT INTO flags (type, aircraft_id, session_uuids, details)

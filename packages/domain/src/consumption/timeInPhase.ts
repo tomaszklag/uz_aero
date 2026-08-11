@@ -7,11 +7,11 @@
  * a interwał paliwowy zaczyna się i kończy w środku dnia — często w środku cyklu.
  *
  * ══ BŁĄD, KTÓRY TEN MODUŁ NAPRAWIA (2026-08-05) ══
- * Ekran 06 liczył czas pracy silnika wyłącznie z `state.engineRuns`
+ * Ekran 06 liczył czas pracy silnika wyłącznie z `state.legs` (dawniej `engineRuns`)
  * (`app/src/ui/screens/logic/refuelMath.ts`). Tymczasem `projectSession` obsługuje
  * `manual_log_entry` (fallback GPS, ekran 08) INACZEJ niż parę `engine_start`/`engine_stop`:
  * dokłada czas off-block→on-block wprost do `blockTimeMs` i **nie tworzy wpisu
- * w `engineRuns`** (patrz `projections/session.ts`, gałąź `manual_log_entry`).
+ * w `legs`** (patrz `projections/session.ts`, gałąź `manual_log_entry`).
  * Skutek: w dniu z wpisem ręcznym mianownik był za mały, a średnia L/h — zawyżona,
  * i wyglądała dokładnie tak samo jak prawidłowa. Dokładnie ten tryb awarii, przed
  * którym ostrzega docblok `refuelMath.ts`: „zła średnia wygląda jak dobra".
@@ -53,7 +53,7 @@ export interface ClosedSpan {
  *   korektą (`void` na wpisie ręcznym) dalej powiększałby mianownik.
  */
 export function blockSpans(state: SessionState, events: readonly Event[]): Span[] {
-  const spans: Span[] = state.engineRuns.map((run) => ({
+  const spans: Span[] = state.legs.map((run) => ({
     from: run.startedAt,
     to: run.stoppedAt,
   }));

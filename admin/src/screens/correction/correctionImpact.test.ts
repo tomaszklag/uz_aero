@@ -25,7 +25,7 @@ const state = (over: Partial<SessionState> = {}): SessionState =>
     takeoffCount: 9,
     landingCount: 9,
     flights: Array.from({ length: 9 }, () => ({})),
-    engineRuns: [
+    legs: [
       { startedAt: at(6, 0), stoppedAt: at(7, 0), durationMs: HOUR },
       { startedAt: at(8, 0), stoppedAt: at(9, 0), durationMs: HOUR },
       { startedAt: at(11, 56), stoppedAt: at(13, 13), durationMs: 77 * MIN },
@@ -33,8 +33,12 @@ const state = (over: Partial<SessionState> = {}): SessionState =>
     engineRunning: false,
     fuel: { startL: 500, addedL: 0, endL: 153, consumedL: 347, lastReadingL: 153 },
     mh: { start: 3902.1, end: 3907.8, deltaH: 5.7 },
-    dutyStart: at(5, 45),
-    dutyEnd: at(13, 20),
+    // Ramy SESJI (oś samolotu). Klamra służby jest po §3.6a opcjonalna i należy do
+    // pilota, więc w tym fixture jej nie ma — tak wygląda zwykła sesja po przebudowie.
+    claimedAt: at(5, 45),
+    closedAt: at(13, 20),
+    dutyStart: null,
+    dutyEnd: null,
     eventCount: 84,
     ...over,
   }) as unknown as SessionState;
@@ -46,7 +50,7 @@ describe('retime — skraca cykl i czas blokowy', () => {
   const before = state();
   const after = state({
     blockTimeMs: 5 * HOUR + 41 * MIN,
-    engineRuns: [
+    legs: [
       { startedAt: at(6, 0), stoppedAt: at(7, 0), durationMs: HOUR },
       { startedAt: at(8, 0), stoppedAt: at(9, 0), durationMs: HOUR },
       { startedAt: at(11, 56), stoppedAt: at(13, 1), durationMs: 65 * MIN },
@@ -79,7 +83,11 @@ describe('retime — skraca cykl i czas blokowy', () => {
     // tego, co miała dotknąć.
     expect(find(rows, 'Starty / lądowania').changed).toBe(false);
     expect(find(rows, 'Δ motogodzin')).toMatchObject({ changed: false, after: '5.7' });
-    expect(find(rows, 'Czas służby (duty)')).toMatchObject({ changed: false, after: '07:35' });
+    // Wiersz opisuje RAMY SESJI (przejęcie → zdanie), nie służbę pilota: ta należy do
+    // człowieka i obejmuje kilka maszyn (§3.6a), więc korekta zdarzenia jednej sesji
+    // nie ma jak jej opisać. Do etapu D stało tu „Czas służby (duty)".
+    expect(find(rows, 'Samolot zajęty')).toMatchObject({ changed: false, after: '07:35' });
+    expect(rows.some((r) => r.label.toLowerCase().includes('duty'))).toBe(false);
   });
 
   it('motogodziny formatuje wg licznika TEGO samolotu', () => {
@@ -96,7 +104,7 @@ describe('void na engine_stop — cykl zostaje OTWARTY', () => {
   const after = state({
     blockTimeMs: 4 * HOUR + 36 * MIN,
     engineRunning: true,
-    engineRuns: [
+    legs: [
       { startedAt: at(6, 0), stoppedAt: at(7, 0), durationMs: HOUR },
       { startedAt: at(8, 0), stoppedAt: at(9, 0), durationMs: HOUR },
       { startedAt: at(11, 56), stoppedAt: null, durationMs: 0 },

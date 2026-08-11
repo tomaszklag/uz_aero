@@ -2,6 +2,46 @@
 
 > Faza 7. Dokument **decyzyjny**: każde rozwidlenie kończy się rekomendacją i powodem;
 > tam, gdzie coś odradzam, jest napisane wprost, czego NIE robić.
+
+> ## ⚠ STATUS (2026-08-07): opisuje model sprzed 2026-08-06 — czytaj razem z §3.6a `_main.md.txt`
+>
+> Panel powstał przy założeniu **dzień lotny = sesja jednego samolotu**. Decyzja z 2026-08-06
+> je unieważniła: jednostką potwierdzenia jest wzlot, służba należy do pilota i może objąć
+> kilka maszyn, a zamknięcie dnia jest opcjonalne. Przebudowa panelu to **faza 8 etap D**.
+>
+> Cztery miejsca, w których ten dokument prowadzi dziś na minę — opisane w tekście blokami
+> `⚠ ETAP D`:
+> 1. **`claim_time` niesie `dutyStart`** (§7.2, §7.5) — **ZROBIONE (D1)**: `claim_time`
+>    to czas `session_claim` (migracja 21), a pole DTO nazywa się `claimedAt` po obu
+>    stronach drutu, razem z panelem.
+> 2. **Okno korekty od `day_close`** (§6.2) — kotwiczy się teraz w zamknięciu WZLOTU.
+> 3. **Bramka `400 day_open`** (§6.5) — **USUNIĘTA (D2, 2026-08-07).** „Brak `day_close`
+>    = dzień trwa" przestało być prawdą (zdanie samolotu jest opcjonalne), więc bramka
+>    odmawiałaby korekty w większości przypadków, w których jest potrzebna. Decyzja
+>    użytkownika: **administrator może edytować ZAWSZE**, a przy kolizji dostaje jasne
+>    ostrzeżenie i sam decyduje.
+>    Wdrożone: `DayStillOpen` i `reason: 'day_open'` zniknęły z `commands/corrections.ts`
+>    i `queries/corrections.ts`, trasa nie zwraca już `400 day_open` (podgląd ma dziś
+>    JEDNĄ odmowę — `404`), a `correctionWarnings()` w `admin/correctionCandidate.ts`
+>    oddaje miękkie naruszenia domeny. Jadą jako `warnings` w `AdminCorrectionPreview`
+>    i w wyniku zapisu; panel rysuje z nich baner nad formularzem
+>    (`admin/src/screens/correction/correctionWarnings.ts` — moduł czysty z testem,
+>    świadomie BEZ pola, z którego dałoby się wyprowadzić blokadę przycisku).
+> 4. **Interwały paliwowe** (§7.7) — lista źródeł odczytu nie zna `leg_close` ani zdania
+>    samolotu; patrz `_main.md.txt` §3.6b.
+> ## ⚠ NUMERY MIGRACJI W TYM DOKUMENCIE SĄ HISTORIĄ, NIE STANEM BAZY (2026-08-08)
+>
+> 2026-08-08 dwadzieścia trzy migracje zostały **zgniecione w jedną bazową** (§7.8):
+> `SCHEMA_VERSION = 1`, a `A11` pokazuje jeden wiersz. Wszystkie „migracja 9", „migracja 18"
+> itd. poniżej opisują **przebieg prac z lipca i sierpnia 2026** — kolejność, w jakiej rzeczy
+> powstawały, i to, co z czego wynikało. Zostawiamy je celowo: rozdział §11 i noty
+> „Aktualizacja …" są kroniką decyzji, a przepisanie ich na nazwy kolumn zamieniłoby
+> kronikę w listę faktów bez chronologii.
+>
+> **O stan bazy pytaj `server/src/infrastructure/pg/schema.ts`** — tam każda kolumna,
+> ograniczenie i indeks ma komentarz z uzasadnieniem. Odwołania w KODZIE zostały przepisane
+> na nazwy rzeczy; numery zostały wyłącznie w narracji historycznej.
+
 > Zakres: `server/` i `packages/domain` — czyli to, co panel konsumuje.
 > Zakres UI panelu (20 ekranów, role, mapowanie ekran→endpoint): `design/admin/ANALIZA.md`.
 > Architektura istniejącego kodu i reguły twarde: `docs/architektura-kodu.md`.
@@ -62,6 +102,8 @@
 > `POST /events` — tamta trasa należy do telefonu i jej single-writer zostaje nietknięty.
 > Odmowy mapujemy 404 / 400 `day_open` / **422 `rule_violation`** (§6.5 mówił tylko o 400
 > dla dnia otwartego; 422 rozdziela „popraw formularz" od „domena odmawia").
+> **Sprostowanie z 2026-08-07 (D2): `400 day_open` już nie istnieje** — zostają 404
+> i 422, a kolizja z pilotem jedzie jako `warnings` w ciele odpowiedzi. Patrz §6.5.
 >
 > **Aktualizacja 2026-08-01 — PODGLĄD korekty (dry-run) WDROŻONY**: `POST
 > /admin/api/sessions/:uuid/corrections/preview` (zdolność `events.correct`),
@@ -83,8 +125,12 @@
 >
 > **Aktualizacja 2026-08-01 — przekrój EKSPORTY (A05) WDROŻONY** (§11 poz. 5):
 > migracja **14** (`UNIQUE (session_uuid, revision)` na `export_log` + usunięcie
-> nadmiarowego `idx_export_log_session`), `ExportLogPort.lock` (advisory na sesji) razem
-> z przeniesieniem nadania rewizji w `DayExporter` do JEDNEJ transakcji,
+> nadmiarowego `idx_export_log_session`) — **przekluczona migracją 23 na
+> `UNIQUE (day, aircraft_id, revision, session_uuid)`, gdy karta stała się dobą samolotu;
+> `idx_export_log_session` wtedy wrócił, bo `session_uuid` przestał być kolumną wiodącą** —
+> `ExportLogPort.lock` (advisory; od migracji 23 na PARZE doba+samolot, czyli na tym samym
+> kluczu co rewizja) razem z przeniesieniem nadania rewizji w `DayExporter` do JEDNEJ
+> transakcji,
 > `ExportsAdminPort` + `PgAdminExportsRepo`, `AdminExportQueries`,
 > `AdminExportCommands.retry`, `application/admin/mappers/exportListItem.ts`,
 > `contracts/exports.ts`, `GET /admin/api/exports`, `/exports/:uuid`,
@@ -129,13 +175,17 @@
 > w mapperze i `CASE` w `PgAdminExportsRepo`. Rozjazd łapie `test/adminExports.test.ts`
 > (liczniki vs policzone wiersze, `?state=X` vs wiersze o tym stanie);
 > (b) **kolizja nazw kart tego samego dnia** — `AdminExportListItem.overwrittenBy`. Dwie
-> ZAMKNIĘTE zmiany na jednym samolocie tego samego dnia budują kartę o tej samej nazwie
+> ZAMKNIĘTE zmiany na jednym samolocie tego samego dnia budowały kartę o tej samej nazwie
 > (`sheetTabName` niesie dzień i samolot, nie sesję), a `exported_sheets` jest po `tab`
-> UPSERT-owane — druga nadpisuje pierwszą, `session_overlap` tego nie łapie (dotyczy sesji
+> UPSERT-owane — druga nadpisywała pierwszą, flaga nakładki tego nie łapała (dotyczy sesji
 > NIEZAMKNIĘTYCH), a monitor raportował obie jako „W arkuszu". Konwencji nazw ani schematu
-> **nie zmieniamy** (lustro `app/src/ui/screens/syncStatus.ts`, §4.7 — decyzja produktowa
-> dotykająca telefonu, OTWARTA). Serwer wykrywa fakt po `(day, aircraft_id)` w `export_log`,
-> ekran go pokazuje, a podgląd karty ostrzega, że wyświetla treść innej sesji;
+> wtedy **nie zmienialiśmy** (lustro `app/src/ui/screens/syncStatus.ts`, §4.7 — decyzja
+> produktowa dotykająca telefonu). Serwer wykrywał fakt po `(day, aircraft_id)`
+> w `export_log`, ekran go pokazywał, a podgląd karty ostrzegał, że wyświetla treść innej
+> sesji. **ZAMKNIĘTE 2026-08-07 (migracja 23): karta jest DOBĄ SAMOLOTU**, a zmiany są jej
+> wierszami — wada zniknęła z konstrukcji. Porównanie w `ow` idzie odtąd po REWIZJI (wiersze
+> jednej rewizji dzielą `exported_at`, więc stempel przestał rozstrzygać), a samo pole
+> zostaje: opisuje sesję WYŁĄCZONĄ z karty flagą i jest sygnalizatorem powrotu wady;
 > (c) **awaria adaptera arkuszy odróżniona od błędu po naszej stronie** — `SheetsAdapterError`
 > w `DayExporter` (opakowuje WYŁĄCZNIE wywołanie `writeDaySheet`) i `ExportFailureDto`
 > w kontrakcie. Wcześniej komenda łapała każdy wyjątek i zwracała `outcome: null`, a panel
@@ -1087,8 +1137,16 @@ chroni outbox telefonu (§4.3), za darmo, bez nowego kodu.
 
 ### 6.5 Bramki, które zostają
 
-- sesja **bez** `day_close` → korekta administracyjna odmówiona (`400 day_open`):
-  pilot ma pełne prawo zapisu, więc panel nie ma czego naprawiać (A02b, stan brzegowy);
+> **⚠ ZMIANA (D2, 2026-08-07): bramka `400 day_open` USUNIĘTA.** Pierwszy punkt tej listy
+> brzmiał „sesja bez `day_close` → korekta administracyjna odmówiona (`400 day_open`)".
+> Reguła opierała się na równości „brak zamknięcia = dzień trwa", którą §3.6a unieważnił:
+> zdanie samolotu jest OPCJONALNE, więc sesja sprzed tygodnia wygląda tak samo jak ta
+> z dzisiejszego poranka — bramka odmawiałaby korekty przede wszystkim tam, gdzie jest
+> potrzebna. **Administrator nie jest NIGDY blokowany.** Kolizję opisują miękkie
+> naruszenia domeny (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`), które
+> jadą jako `warnings` w podglądzie i w wyniku zapisu; panel rysuje z nich baner nad
+> formularzem i **nie wyszarza przycisku**. Decyduje człowiek.
+
 - cel korekty musi być w tej sesji i być korygowalnym typem — pilnuje `checkAppend`;
 - odpowiedź niesie `state: SessionState` **po** korekcie (policzony `projectSession`),
   żeby panel odświeżył kartę dnia bez drugiego żądania i bez własnego liczenia.
@@ -1165,7 +1223,7 @@ na stronę** (tyle, co maksymalna paczka `POST /events` — jedna liczba, jedno 
 (dziesiątki tysięcy zdarzeń) dokładne liczenie jest tanie. **Nie budujemy szacowania
 z `pg_class.reltuples`** — to optymalizacja problemu, którego nie ma.
 
-### 7.4 Indeksy (migracja 11)
+### 7.4 Indeksy rejestru — PLAN z 2026-07-31
 
 ```sql
 CREATE INDEX IF NOT EXISTS idx_events_received ON events (received_at DESC, uuid DESC);
@@ -1173,9 +1231,16 @@ CREATE INDEX IF NOT EXISTS idx_events_type     ON events (type, received_at DESC
 CREATE INDEX IF NOT EXISTS idx_events_pic      ON events (pic_id, received_at DESC);
 ```
 
-`idx_events_session` i `idx_events_aircraft` już są (migracja 1). Test: `EXPLAIN`
-na zapytaniu listy potwierdza użycie indeksu — dokładnie tak, jak
-`sqliteSchema.test.ts` sprawdza planer w aplikacji.
+`idx_events_session` i `idx_events_aircraft` już są. Test: `EXPLAIN` na zapytaniu listy
+potwierdza użycie indeksu — dokładnie tak, jak `sqliteSchema.test.ts` sprawdza planer
+w aplikacji.
+
+> **Wdrożono WĘŻEJ, niż zakładał ten plan** (sprostowanie 2026-08-08): `idx_events_type`
+> i `idx_events_pic` NIE powstały — filtry rejestru schodzą po `idx_events_received`,
+> a pomiar nie pokazał potrzeby dwóch dodatkowych indeksów na tabeli, do której pisze
+> każdy sync. Powstał za to `idx_events_correction_target` (częściowy, wyrażeniowy),
+> którego plan nie przewidywał. **Jedynym źródłem prawdy o indeksach jest
+> `server/src/infrastructure/pg/schema.ts`** — ten blok opisuje zamiar, nie stan.
 
 ### 7.5 Karta dnia — jedyne miejsce z `projectSession` na żądanie
 
@@ -1190,9 +1255,13 @@ na zapytaniu listy potwierdza użycie indeksu — dokładnie tak, jak
   'closed'` — sesje otwarte wypadają z sum (nie mają `mh_end` ani `fuel_end_l`, więc
   wliczenie ich zafałszowałoby delty), a odpowiedź niesie `openSessionsInRange`, żeby
   UI mogło pokazać baner „w okresie są 2 sesje otwarte — ich liczby nie wchodzą do sum".
-  Osobno jedzie `openSessionsUndated`: sesja `active` z samym `session_claim` ma
-  `claim_time IS NULL` (kolumna niesie duty start z preflightu), więc nie należy do
-  ŻADNEGO zakresu — liczona jest zawsze, zamiast znikać za predykatem `BETWEEN`.
+  Osobno jedzie `openSessionsUndated`: sesja bez `claim_time` nie należy do ŻADNEGO
+  zakresu, więc liczona jest zawsze, zamiast znikać za predykatem `BETWEEN`.
+
+  > **Sprostowanie 2026-08-07**: do przebudowy flow `claim_time` niosło `dutyStart`
+  > z preflightu, więc sesja z samym `session_claim` faktycznie bywała bez daty. Dziś
+  > kolumna niesie czas PRZEJĘCIA maszyny, a claim ma każda sesja (§4.4) — `openSessionsUndated`
+  > zostaje jako licznik stanu WYŁĄCZNIE awaryjnego (rejestr niekompletny po imporcie).
 
 ### 7.6 Rozszerzenie `test/contract.test.ts`
 
@@ -1244,8 +1313,63 @@ dokłada regułę po ścieżce: `sessionStreams` ma dokładnie jednego użytkown
 (`application/admin/queries/consumption.ts`) — poza deklaracją portu i adapterem.
 
 **Model motogodzin nie potrzebuje tej furtki w ogóle.** `ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`
-składa się wyłącznie z kolumn migracji 18 (`mh_delta_h`, `flight_ms`, `block_ms`), więc
-liczy się bez jednego odczytu rejestru — czysty przypadek §7.2.
+składa się wyłącznie z kolumn statystyk projekcji (`mh_delta_h`, `flight_ms`, `block_ms`),
+więc liczy się bez jednego odczytu rejestru — czysty przypadek §7.2.
+
+### 7.8 Schemat jest JEDNĄ migracją bazową — co z historii zostało i gdzie (2026-08-08)
+
+Do 2026-08-08 `infrastructure/pg/schema.ts` niósł 23 migracje. Zgnieliśmy je w jedną
+bazową, bo faza 5 (testy z pilotami) się nie zaczęła i **nie ma żadnych danych
+produkcyjnych do zachowania** — dwa backfille danych, które tam stały, nie miały już czego
+przepisywać. Zgniecenie jest wierne: 99 kolumn, 28 indeksów i 19 ograniczeń zgadza się
+co do definicji, a `test/schema.test.ts` nie zmienił ani jednej listy kolumn.
+
+**Uzasadnienia per kolumna, ograniczenie i indeks przeniosły się do samego DDL-a** —
+komentarzem SQL przy rzeczy, której dotyczą. Poniżej zostaje to, co opisuje DROGĘ do tego
+schematu: trzy pułapki, każda kosztowna, każda możliwa do powtórzenia.
+
+**(a) `NULLS LAST` na kluczu `NOT NULL` — trzy podejścia, wszystkie mierzone.**
+`keysetOrderBy` emitował kiedyś `NULLS LAST` bezwarunkowo, a indeksy stały bez niego —
+planer nie mógł ich wtedy użyć do PORZĄDKOWANIA, więc każda strona listy kończyła się
+pełnym `Sort`-em (koszt pierwszej strony dziennika audytu: 109 zamiast 4 przy 2000
+wierszy; rejestr zdarzeń przy 5000 wierszy schodził z `Index Only Scan` na `Bitmap Heap
+Scan` + `Sort` całej tabeli). Pierwsza „naprawa" dopisała `NULLS LAST` do indeksu — i tylko
+PRZESUNĘŁA wadę na drugi kierunek: indeks `DESC NULLS LAST` skanowany wstecz daje
+`ASC NULLS FIRST`, a `?sort=asc` prosił o `ASC NULLS LAST` (koszt 442 zamiast ~10, po
+jednym kliknięciu w nagłówek kolumny). Dopiero trzecie podejście poszło do ŹRÓDŁA:
+`NULLS` emitujemy i indeksujemy **wyłącznie dla klucza, który faktycznie bywa `NULL`**
+(dziś jest nim tylko `sessions.claim_time`). Wniosek do zapamiętania: ta wada **nie zmienia
+żadnego wyniku**, więc nie złapie jej test na danych — łapią ją `EXPLAIN`-y
+w `test/adminEvents.test.ts` i `test/adminAudit.test.ts`, i to jest jedyny powód, dla
+którego przestała wracać.
+
+**(b) Co `UNIQUE` naprawdę łapie, a czego nie.** `uq_export_log_card_revision`
+i `uq_flags_type_sessions` istnieją, bo dedupe w adapterze (SELECT-then-INSERT) przegrywa
+wyścig dwóch transakcji. Nie istnieją natomiast po to, żeby chronić przed drugą instancją
+serwera — `pg_advisory_xact_lock` jest blokadą KLASTROWĄ i szereguje dwie instancje
+dokładnie tak samo jak dwie transakcje w jednym procesie (poprzednia wersja tego
+komentarza twierdziła inaczej i było to po prostu nieprawdą). `UNIQUE` broni przed czymś
+węższym: ręcznym `INSERT`-em w `psql`, przyszłą ścieżką kodu, która zapomni zawołać
+`lock()`, i starymi duplikatami — te ujawnia przy zakładaniu ograniczenia.
+**Sama blokada advisory NIE MA testu i to jest luka nazwana, nie przeoczona**: PGlite ma
+jedno połączenie i szereguje transakcje własnym mutexem, więc po usunięciu
+`pg_advisory_xact_lock` testy nadal przechodzą (sprawdzone). Test udający równoległość
+dawałby fałszywe poczucie pokrycia.
+Przegrany wyścig wraca jako `23505` i kończy się **pięćsetką** — tłumaczenia na odmowę
+NIE MA i nie należy go obiecywać: `uniqueConflictOn` obsługuje formularze, gdzie kolizja
+jest zajętą wartością do poprawienia przez człowieka, a tutaj jest awarią serializacji.
+
+**(c) Karta arkusza dwa razy zmieniła znaczenie, a nazwa została.** `export_log.session_uuid`
+znaczyło „sesja, której to karta"; dziś znaczy **członkostwo sesji w rewizji**, bo karta
+jest DOBĄ SAMOLOTU (§4.7). Rozważona i odrzucona była wersja normalizacyjnie czystsza —
+jeden wiersz na rewizję plus tabela członkostwa — i odpadła w jedynym miejscu, które się
+liczy: `GET /sessions/:uuid/sync-status` (ekran 11 telefonu) pyta o link PO SESJI, więc
+zmiana, która eksportu nie wyzwoliła, nie miałaby własnego wiersza i pilot zobaczyłby
+„jeszcze nie wyeksportowano" o danych, które są w arkuszu. Cena wybranego wariantu to
+dokładnie jedno zdanie: kolumna nazywa się „sesja", a znaczy „członkostwo".
+Podobnie `exported_sheets.tab`: klucz `YYYY-MM-DD_SP-XXX` był od początku poprawny — to
+nie nazwa była za wąska, tylko TREŚĆ za wąska wobec nazwy (druga zmiana dnia nadpisywała
+pierwszą zamiast do niej dołączyć).
 
 ---
 
@@ -1425,7 +1549,7 @@ niczego, co da się pokazać).
 | **2** | **Czytanie dni** | migracja 10 (5 kolumn + indeks) · rozszerzenie `sessionRowFrom` · `POST maintenance/rebuild-projections` · `SqlFilter` + `keyset` · `SessionsAdminPort.list` · `GET /admin/api/sessions`, `/sessions/:uuid` · rozszerzenie `contract.test.ts` | A02, A02a | przebudowa projekcji **musi** wejść w tym samym przekroju co migracja 10 — inaczej nowe kolumny są puste |
 | **3** | **Korekta administracyjna** | `WriteAuthority` w `@uzaero/domain` · `AdminCorrectionCommands` · `POST /admin/api/sessions/:uuid/corrections` | A02b | wymaga #2 (wybór celu na karcie dnia) i #0 (audyt) |
 | **4** | **Rejestr zdarzeń** | migracja 11 (indeksy) · `EventsAdminPort.list` · `GET /admin/api/events` | A04 | narzędzie diagnostyczne; po #2, bo dzieli `SqlFilter`/`keyset` |
-| **5** | **Eksporty** | migracja **14** `UNIQUE (session_uuid, revision)` + `ExportLogPort.lock` (advisory na sesji) · `ExportsAdminPort` (list/byUuid/history) · `AdminExportCommands.retry` · `GET /admin/api/exports`, `/exports/:uuid`, `/exports/:uuid/sheet` · `POST /exports/:uuid/retry` | A05 | ponowienie to `ExportOutcome` z #1 wystawiony trasą |
+| **5** | **Eksporty** | migracja **14** `UNIQUE (session_uuid, revision)` → **23** `UNIQUE (day, aircraft_id, revision, session_uuid)` + `ExportLogPort.lock` (advisory; od 23 na parze doba+samolot) · `ExportsAdminPort` (list/byUuid/history) · `AdminExportCommands.retry` · `GET /admin/api/exports`, `/exports/:uuid`, `/exports/:uuid/sheet` · `POST /exports/:uuid/retry` | A05 | ponowienie to `ExportOutcome` z #1 wystawiony trasą |
 | **6** | **Konta** | `PilotsAdminPort` · `AdminPilotCommands` (create/update/reset/deactivate, hasło generowane, kasowanie `refresh_tokens`, blokada „ostatni administrator") · trasy | A06, A06a | pierwszy przekrój czysto CRUD-owy — po nim widać, czy §2.4 się broni w praktyce |
 | **7** | **Flota** | `FleetAdminPort` · `AdminFleetCommands` (z podbiciem `aircraft.updated_at` → ETag `/reference`) · trasy | A07, A07a | test regresji: zmiana `capacity_l` musi dojechać na telefon (ETag) |
 | **8** | **Statystyki** | atrybucja block time per pilot **w `@uzaero/domain`** (wspólna z aplikacją, dziś tylko w `crewChange.test.ts`) · `AdminStatsQueries` z kolumn `sessions` · rozszerzenie `contract.test.ts` | A10 | wymaga kolumn z #2 |
@@ -1435,6 +1559,16 @@ niczego, co da się pokazać).
 ---
 
 ## 11. Do decyzji człowieka
+
+> **ROZSTRZYGNIĘTE 2026-07-31** (punkt 1 niżej): katalog ma **pięć** pozycji i wszystkie są
+> produkowane — `packages/domain/src/flags.ts`, tabela w `_main.md.txt` §4.5 przepisana
+> 2026-08-07. Punkt zostaje jako zapis rozumowania, nie jako otwarte pytanie.
+>
+> Pytanie postawione tu na etap D — czy `session_overlap` nie udaje dwóch różnych patologii
+> (nakładki CLAIMÓW na maszynie i nakładki CZASU PILOTA) — **ROZSTRZYGNIĘTE 2026-08-07
+> w etapie D4**: udawało. Katalog ma dziś SZEŚĆ pozycji, bo pozycja rozpadła się na
+> `aircraft_overlap` (jedyna bramka karty arkusza) i `pilot_overlap` (anomalia grafiku,
+> `server/src/domain/pilotOverlap.ts`). Sekcja 11 nie ma w tej sprawie otwartych pytań.
 
 1. **Katalog flag: 3 czy 6?** §4.5 obiecuje `DOUBLE_CLAIM`, `TIME_OVERLAP`, `MH_GAP`,
    `MH_REGRESSION`, `FUEL_MISMATCH`, `CLOCK_DRIFT`; `domain/mhChain.ts` produkuje trzy

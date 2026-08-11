@@ -91,4 +91,36 @@ export class PgSessionsProjection implements SessionsProjectionPort {
     );
     return rows.map(toSessionRow);
   }
+
+  /**
+   * Skład karty doby (§4.7): sesje maszyny PRZEJĘTE w oknie, chronologicznie.
+   *
+   * `BETWEEN` jest domknięty obustronnie, bo `utcDayRange` oddaje ostatnią milisekundę
+   * doby, a nie północ następnej — inaczej sesja przejęta dokładnie o 00:00:00.000
+   * wpadłaby do dwóch kart albo do żadnej, zależnie od strony ostrego nierówności.
+   * Porządek `(claim_time, session_uuid)` jest treścią, nie ozdobą: karta numeruje
+   * zmiany `S1`, `S2`… i dwie sesje przejęte w tej samej minucie muszą mieć stabilną
+   * kolejność między rewizjami. Zapytanie schodzi po `idx_sessions_day`.
+   */
+  async listByAircraftDay(
+    db: Queryable,
+    aircraftId: string,
+    range: { fromMs: number; toMs: number },
+  ): Promise<SessionRow[]> {
+    const { rows } = await db.query<SessionDbRow>(
+      `SELECT ${sessionColumns('s')} FROM sessions s
+        WHERE s.aircraft_id = $1 AND s.claim_time BETWEEN $2 AND $3
+        ORDER BY s.claim_time ASC, s.session_uuid ASC`,
+      [aircraftId, range.fromMs, range.toMs],
+    );
+    return rows.map(toSessionRow);
+  }
+
+  async listByPilot(db: Queryable, picId: string): Promise<SessionRow[]> {
+    const { rows } = await db.query<SessionDbRow>(
+      `SELECT ${sessionColumns('s')} FROM sessions s WHERE s.pic_id = $1`,
+      [picId],
+    );
+    return rows.map(toSessionRow);
+  }
 }

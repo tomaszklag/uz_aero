@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 09C Zdaj samolot · bez lotu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 4px var(--amber-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--amber); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ===== App header ===== */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px 8px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; }
+  .back-btn {
+    display:inline-flex; align-items:center; gap:5px; min-height:34px;
+    font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
+    text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
+  }
+  .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--amber); }
+  .header-date { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .header-slot { width:62px; flex-shrink:0; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* Stan pusty — mówi wprost, że nie było lotu */
+  .empty-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:24px 20px; display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
+  }
+  .empty-icon { color:var(--border-strong); }
+  .empty-title { font-family:var(--font-display); font-size:22px; letter-spacing:1.5px; color:var(--text-secondary); }
+  .empty-desc { font-size:11.5px; color:var(--text-muted); line-height:1.55; max-width:250px; }
+  .empty-hold {
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:999px; padding:4px 10px; margin-top:4px;
+  }
+
+  .form-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .form-section-title {
+    padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-secondary);
+    display:flex; align-items:center; justify-content:space-between; gap:6px;
+  }
+  .form-section-title .unchanged { color:var(--text-muted); letter-spacing:1.5px; }
+
+  /* Liczniki bez zmian — read-only z furtką korekty (licznik fizyczny > nasza rachuba) */
+  .counter-row { display:flex; align-items:center; gap:10px; padding:0 6px 0 12px; border-bottom:1px solid var(--border); }
+  .counter-row:last-child { border-bottom:none; }
+  .counter-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); width:88px; flex-shrink:0; }
+  .counter-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; color:var(--text-primary); line-height:1; }
+  .counter-unit { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); margin-left:5px; }
+  .counter-spacer { flex:1; }
+  .edit-btn {
+    background:none; border:1px solid var(--border-strong); border-radius:8px;
+    color:var(--text-secondary); text-decoration:none;
+    min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .edit-btn:hover { border-color:var(--amber-border); color:var(--amber); }
+
+  /* Powód — siatka kart z ikonami, nigdy natywny select */
+  .reason-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px; }
+  .reason-card {
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    min-height:74px; padding:10px 8px; border-radius:12px;
+    background:var(--surface-raised); border:1px solid var(--border);
+    color:var(--text-secondary); text-decoration:none; cursor:pointer;
+  }
+  .reason-card:hover { border-color:var(--amber-border); }
+  .reason-card.selected { border-color:var(--green-border); background:var(--green-muted); color:var(--green); }
+  .reason-label { font-family:var(--font-mono); font-size:9.5px; letter-spacing:1px; text-transform:uppercase; }
+
+  /* Baner statusu (Typ A — przyrząd, niezamykalny) */
+  .status-box {
+    background:var(--blue-muted); border:1px solid var(--blue-border);
+    border-radius:12px; padding:11px 13px; display:flex; align-items:flex-start; gap:9px;
+  }
+  .status-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
+  .status-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .status-text b { color:var(--blue); font-weight:600; }
+
+  /* ===== Przyciski ===== */
+  .btn-primary-amber {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:17px; border-radius:16px;
+    background:var(--amber); color:#0D0D0D;
+    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px var(--amber-muted);
+  }
+  .btn-later {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:46px; padding:12px; border-radius:12px;
+    background:none; color:var(--text-muted);
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:1.5px;
+    border:1px solid var(--border); text-decoration:none; cursor:pointer;
+  }
+  .btn-later:hover { color:var(--text-secondary); border-color:var(--border-strong); }
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 09C</span>
+  <span class="slug">zdaj samolot · bez lotu</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 09</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Zdaj samolot bez lotu">
+  <div class="status-bar">
+    <span>12:25</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <div class="app-header">
+      <a href="04a-cockpit-ground.html" class="back-btn">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Kokpit
+      </a>
+      <div class="app-header-center">
+        <span class="screen-title">ZDAJ SAMOLOT</span>
+        <span class="header-date">SP-ANK · 03 SIE · UTC</span>
+      </div>
+      <span class="header-slot"></span>
+    </div>
+
+    <div class="scroll">
+
+      <div class="empty-card">
+        <svg class="empty-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/>
+          <line x1="3" y1="3" x2="21" y2="21"/>
+        </svg>
+        <span class="empty-title">NIE BYŁO WZLOTU</span>
+        <span class="empty-desc">Silnik ani razu nie ruszył, więc nie ma czasów do potwierdzenia ani zużycia do rozliczenia.</span>
+        <span class="empty-hold">Trzymany 09:10 → 10:25 · 1:15</span>
+      </div>
+
+      <!-- Liczniki bez zmian: nie każemy przepisywać tego samego. Ale furtka korekty
+           zostaje, bo licznik fizyczny jest ważniejszy od naszej rachuby (§4.1 pkt 5) —
+           ktoś mógł ruszyć samolot poza aplikacją. -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <span>Liczniki</span>
+          <span class="unchanged">bez zmian</span>
+        </div>
+        <div class="counter-row">
+          <span class="counter-key">Paliwo</span>
+          <span class="counter-val">240<span class="counter-unit">L</span></span>
+          <span class="counter-spacer"></span>
+          <a href="09c-zdaj-bez-lotu.html" class="edit-btn" title="Popraw odczyt, jeśli różni się od stanu przy przejęciu">
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+          </a>
+        </div>
+        <div class="counter-row">
+          <span class="counter-key">Motogodziny</span>
+          <span class="counter-val">2 815:12<span class="counter-unit">MH</span></span>
+          <span class="counter-spacer"></span>
+          <a href="09c-zdaj-bez-lotu.html" class="edit-btn" title="Popraw odczyt, jeśli różni się od stanu przy przejęciu">
+            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Jedyne pytanie tego ekranu — siatka kart, nie natywny select -->
+      <div class="form-section">
+        <div class="form-section-title"><span>Dlaczego nie poleciałeś?</span></div>
+        <div class="reason-grid">
+          <a href="09c-zdaj-bez-lotu.html" class="reason-card selected">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6-1.6A4 4 0 0 0 6.5 19Z"/><line x1="8" y1="22" x2="8.01" y2="22"/><line x1="12" y1="22" x2="12.01" y2="22"/><line x1="16" y1="22" x2="16.01" y2="22"/></svg>
+            <span class="reason-label">Pogoda</span>
+          </a>
+          <a href="09c-zdaj-bez-lotu.html" class="reason-card">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9 9a2.8 2.8 0 0 1-4-4l8-10Z"/></svg>
+            <span class="reason-label">Usterka</span>
+          </a>
+          <a href="09c-zdaj-bez-lotu.html" class="reason-card">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span class="reason-label">Odwołane</span>
+          </a>
+          <a href="09c-zdaj-bez-lotu.html" class="reason-card">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="14" x2="20" y2="14"/><line x1="4" y1="20" x2="14" y2="20"/></svg>
+            <span class="reason-label">Inne</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="status-box">
+        <svg class="status-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span class="status-text">Przejęcie samolotu <b>zostaje w rejestrze</b> — administrator widzi, że
+        SP-ANK był zajęty od 09:10 i dlaczego nie poleciał. Twój dzień liczy się dalej: to nie był lot,
+        ale był na miejscu.</span>
+      </div>
+
+      <a href="01-moj-dzien.html" class="btn-primary-amber">
+        ZDAJ SAMOLOT
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+
+      <a href="04a-cockpit-ground.html" class="btn-later">JESZCZE NIE — WRÓĆ DO KOKPITU</a>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <!-- 09 i 09A usunięte 2026-08-10 — patrz komentarz w 09B. -->
+  <a class="vp-item" href="09b-zdaj-samolot.html">
+    <span class="vp-badge red">09B</span>
+    <span class="vp-body">
+      <span class="vp-name">Zdanie samolotu</span>
+      <span class="vp-when">Po STOP ENGINE: odczyty OBOWIĄZKOWE, zapis zatwierdza log całej sesji (model 2026-08-10).</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="09c-zdaj-bez-lotu.html">
+    <span class="vp-badge amber">09C</span>
+    <span class="vp-body">
+      <span class="vp-name">Zdanie bez lotu</span>
+      <span class="vp-when">Pilot przejął samolot i nie poleciał — pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; odczyty wypełnione wartościami z przejęcia (MH bez zmian) z furtką korekty, a jedyne pytanie to powód. Wejście: kafelek „Zdaj samolot" w stanie PRZED uruchomieniem silnika (04A).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="04a-cockpit-ground.html">← 04A Kokpit</a>
+  <span>·</span>
+  <a href="09b-zdaj-samolot.html">09B Zdaj samolot</a>
+  <a href="09c-zdaj-bez-lotu.html" class="active">09C Bez lotu</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">01 Mój dzień →</a>
+</nav>
+
+</body>
+</html>

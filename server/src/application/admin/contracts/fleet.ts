@@ -41,7 +41,7 @@ export interface AdminAircraftClaim {
   /** `null` = konta nie ma już w `pilots`; claim zostaje widoczny z identyfikatorem. */
   picCode: string | null;
   picName: string | null;
-  /** Duty start (epoch ms UTC) — `null` przy sesji bez `preflight_confirm`. */
+  /** Chwila PRZEJĘCIA samolotu (`session_claim`, epoch ms UTC) — od kiedy maszyna zajęta. */
   since: number | null;
 }
 

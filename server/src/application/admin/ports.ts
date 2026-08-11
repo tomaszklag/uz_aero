@@ -116,7 +116,7 @@ export interface AuditListFilter {
  *
  * ══ DLACZEGO `action` I `actor_role` SĄ TU NAPISAMI, A NIE UNIAMI ══
  * Bo wiersz `admin_audit` jest zapisem HISTORYCZNYM i tak został zaprojektowany:
- * migracja 9 celowo nie ma `CHECK`-a na tych kolumnach, żeby przemianowanie akcji
+ * `admin_audit` celowo nie ma `CHECK`-a na tych kolumnach, żeby przemianowanie akcji
  * albo wycofanie roli z katalogu nie unieważniało tego, co zdarzyło się rok temu.
  * Zwężenie do `AdminAction`/`PilotRole` przy ODCZYCIE odwróciłoby tę decyzję: adapter
  * musiałby albo rzucić na nieznanym kodzie (dziennik nadzoru przestałby się otwierać
@@ -381,8 +381,8 @@ export interface AdminExportJoin {
   picCode: string | null;
   picName: string | null;
   status: 'active' | 'closed';
-  /** Duty start (epoch ms UTC); `null` = sesja bez `preflight_confirm`. */
-  dutyStart: number | null;
+  /** Chwila przejęcia samolotu (epoch ms UTC); `null` = strumień bez `session_claim`. */
+  claimedAt: number | null;
   /** Ostatnia przyjęta paczka tej sesji — oś porównania „karta starsza niż dane". */
   updatedAt: Date;
   /**
@@ -470,7 +470,7 @@ export interface ExportsAdminPort {
 export interface EventsAdminPort {
   /**
    * `source_device` pojedynczego zdarzenia. Zewnętrzne `null` = nie ma takiego uuid-a
-   * w rejestrze; wewnętrzne = zdarzenie jest, ale bez pola (wpisy sprzed migracji 4).
+   * w rejestrze; wewnętrzne = zdarzenie jest, ale bez pola (wpisy sprzed kolumny).
    * Dwie różne odpowiedzi na dwa różne pytania, więc opakowane, a nie sklejone.
    */
   sourceDeviceOf(db: Queryable, eventUuid: string): Promise<{ sourceDevice: string | null } | null>;
@@ -743,7 +743,7 @@ export interface PilotsAdminPort {
   insert(tx: Queryable, account: NewPilotAccount): Promise<void>;
   update(tx: Queryable, id: string, patch: PilotPatch): Promise<void>;
   /**
-   * `at` = chwila DEAKTYWACJI, zapisywana jako `credentials_valid_from` (migracja 13).
+   * `at` = chwila DEAKTYWACJI, zapisywana jako `pilots.credentials_valid_from`.
    * Bez niej odebranie dostępu nie dotykałoby sesji PANELU, bo ta nie ma wiersza
    * w bazie — kasowanie `refresh_tokens` zrywa wyłącznie sesje telefonu.
    * Aktywacja znacznika NIE cofa: token sprzed odcięcia ma zostać martwy.
@@ -1023,7 +1023,7 @@ export interface StatsRange {
  * Wspólny rdzeń wiersza agregatu — te same liczby w każdym ujęciu, bo to ten sam
  * zbiór dni policzony w trzech przekrojach (sumy MUSZĄ się zgadzać między ujęciami).
  *
- * `staleRows` = wiersze projekcji sprzed migracji 18 (`takeoff_count IS NULL` —
+ * `staleRows` = wiersze projekcji sprzed kolumn statystyk (`takeoff_count IS NULL` —
  * kolumny statystyk wypełnia się razem, więc jedna wystarcza za wskaźnik).
  * `fuelKnownSessions`/`mhKnownSessions` liczą wiersze, które WESZŁY do sumy —
  * mapper odróżnia nimi „bilansu nie ma z czego policzyć" od „wiersz nieprzeliczony".
@@ -1116,7 +1116,7 @@ export interface AdminStatsDropsRow {
   altCount: number;
   /**
    * Wiersze, przez które sum zrzutów nie da się uczciwie podać: dni skokowe sprzed
-   * migracji 18 ORAZ dni z `operation IS NULL` w zakresie — rodzaju operacji nie
+   * kolumn statystyk ORAZ dni z `operation IS NULL` w zakresie — rodzaju operacji nie
    * znamy, więc KAŻDY z nich mógł być dniem skokowym. To domyślny stan bazy
    * migrującej ze starego schematu, aż do przebudowy projekcji (`A11`).
    */
@@ -1202,7 +1202,7 @@ export interface AdminDayTotalsRow {
  * jest to, że ingest nie ma jak zregresować od zmian w pulpicie.
  *
  * **Wszystkie trzy metody chodzą po `events.received_at`, więc wymagają indeksu**
- * (`idx_events_received`, migracja 15). Bez niego „ostatnie sześć zdarzeń" to pełne
+ * (`idx_events_received`). Bez niego „ostatnie sześć zdarzeń" to pełne
  * skanowanie rejestru, który rośnie bez granicy — czyli pulpit wolniejszy z każdym
  * miesiącem pracy klubu.
  */
@@ -1244,7 +1244,7 @@ export interface DashboardAdminPort {
  *
  * Podział pracy jest tu istotny i celowy. Model MH (`ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`)
  * składa się WYŁĄCZNIE z wartości, które wyprodukowała projekcja — `mh_delta_h`,
- * `flight_ms`, `block_ms` (migracja 18) — więc liczy się bez ani jednego odczytu
+ * `flight_ms`, `block_ms` (kolumny statystyk) — więc liczy się bez ani jednego odczytu
  * rejestru zdarzeń, dokładnie tak, jak każe §7.2. Strumień jest potrzebny dopiero
  * modelowi PALIWA, bo granice interwałów wyznaczają odczyty paliwomierza z payloadów,
  * a tych projekcja nie niesie i nieść nie powinna (jest ich kilka na sesję).
@@ -1256,7 +1256,7 @@ export interface ConsumptionSessionRef {
   mhDeltaH: number | null;
   blockMs: number;
   flightMs: number;
-  /** `null` = wiersz sprzed migracji 18, jeszcze nieprzeliczony (`A11`). */
+  /** `null` = wiersz sprzed kolumn statystyk, jeszcze nieprzeliczony (`A11`). */
   takeoffCount: number | null;
 }
 

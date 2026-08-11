@@ -1,54 +1,18 @@
 /**
  * UZ Aero — testy SZKICU PREFLIGHTU (`ui/store/preflightDraft.ts`).
  *
- * Dwie reguły, które szkic egzekwuje sam — bo obie da się zepsuć z dowolnego ekranu
- * preflightu, a żadna nie ma szansy przetrwać, jeśli pilnuje jej pamięć programisty:
- * świeżość godziny meldunku (issue #12) i kształt trasy zależny od operacji (issue #13).
+ * Reguła, którą szkic egzekwuje sam — bo da się ją zepsuć z dowolnego ekranu przejęcia,
+ * a nie ma szansy przetrwać, jeśli pilnuje jej pamięć programisty: kształt trasy zależny
+ * od rodzaju operacji (issue #13).
  *
- * Część „od kiedy":
- *
- * Godzina meldunku jest jedyną wartością szkicu, która **starzeje się sama**. Reszta pól
- * czeka na pilota; ta jedna udaje „teraz" i przestaje być prawdą w chwili, w której nikt
- * na nią nie patrzy. Zgłoszenie z urządzenia (issue #12) brzmiało dokładnie tak: godzina
- * ustawiała się w momencie uruchomienia aplikacji, a nie wejścia na ekran — bo szkic
- * powstaje raz, przy pierwszym dotknięciu store'u, i żyje tak długo jak proces.
- *
- * Testy pilnują obu stron tej reguły: świeżości przy wejściu i NIETYKALNOŚCI wpisu pilota
- * (bez tego drugiego powrót z kroku 2 kasowałby ręcznie wpisany meldunek — czyli lek
- * gorszy od choroby).
+ * GODZINY MELDUNKU W SZKICU JUŻ NIE MA (§3.6a, 2026-08-07) i razem z nią zniknęły testy
+ * jej starzenia się. Nie jest to uproszczenie testów, tylko konsekwencja modelu: służba
+ * jest klamrą wokół wzlotów, więc godzina bierze się z pierwszego wzlotu doby, a pilot
+ * poprawia ją po fakcie na ekranie 01 — nie ma już wartości, która „udaje teraz"
+ * i starzeje się między wejściami na ekran (issue #12).
  */
 
 import { usePreflightDraft } from '../ui/store/preflightDraft';
-
-const T8 = Date.UTC(2026, 5, 22, 8, 0);
-const T10 = Date.UTC(2026, 5, 22, 10, 0);
-
-describe('szkic preflightu — czas meldowania', () => {
-  beforeEach(() => {
-    usePreflightDraft.getState().reset();
-  });
-
-  it('wejście na krok 1 podstawia „teraz" zamiast godziny sprzed sesji', () => {
-    usePreflightDraft.getState().refreshDutyStart(T10);
-    expect(usePreflightDraft.getState().dutyStart).toBe(T10);
-  });
-
-  it('godzina wpisana przez pilota przeżywa kolejne wejścia na ekran', () => {
-    usePreflightDraft.getState().set('dutyStart', T8);
-    usePreflightDraft.getState().refreshDutyStart(T10);
-
-    expect(usePreflightDraft.getState().dutyStart).toBe(T8);
-    expect(usePreflightDraft.getState().dutyStartEdited).toBe(true);
-  });
-
-  it('nowy dzień lotny (reset) znów przyjmuje „teraz"', () => {
-    usePreflightDraft.getState().set('dutyStart', T8);
-    usePreflightDraft.getState().reset();
-    usePreflightDraft.getState().refreshDutyStart(T10);
-
-    expect(usePreflightDraft.getState().dutyStart).toBe(T10);
-  });
-});
 
 /**
  * Kształt trasy (issue #13). Formularz pyta o jedno lotnisko przy skokach, ale rekord

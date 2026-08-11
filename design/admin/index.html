@@ -98,26 +98,42 @@
   </div>
   <h1>UZ AERO — <span>PANEL</span></h1>
   <div class="hero-sub">Aplikacja web dla administratora i szefa wyszkolenia · 23 ekrany</div>
-  <div class="hero-tag"><span class="dot"></span> Projekt — do zatwierdzenia, nie wdrożony</div>
+  <div class="hero-tag"><span class="dot"></span> Projekt zatwierdzony · backend i klient web wdrożone (A01–A11)</div>
+</div>
+
+<div class="note">
+  <div class="note-title">Model, który te ekrany opisują — przebudowa flow z 2026-08-06</div>
+  <p>
+    Panel opisuje <b>trzy osie, wcześniej zlane w jedną</b>. <b>WZLOT</b> to cykl silnika i jednostka potwierdzenia
+    danych (zdarzenie <code>leg_close</code>, własne 24-godzinne okno korekty). <b>SESJA SAMOLOTU</b> to odcinek
+    przejęcie (<code>session_claim</code>) → zdanie (<code>day_close</code>) — i to ona jest wierszem list A02 i A05.
+    <b>SŁUŻBA PILOTA</b> to klamra per pilot per doba UTC, która <b>obejmuje kilka maszyn</b> — dlatego
+    <span class="warn">nie ma jej na żadnym ekranie opisującym pojedynczą sesję ani pojedynczy samolot</span>:
+    tam byłaby pomyłką kategorii. Z tego wynika reszta: karta arkusza to <b>DOBA SAMOLOTU</b> (sesje są jej
+    wierszami, spięte kolumną <code>Sesja</code>), dawny <code>session_overlap</code> jest rozdzielony na
+    <code>aircraft_overlap</code> (jedyna bramka arkusza) i <code>pilot_overlap</code> (grafik pilota, arkusza nie
+    bramkuje), a bramka <code>400 day_open</code> przy korekcie <b>nie istnieje</b> — administrator nie jest nigdy
+    blokowany, kolizja jest ostrzeżeniem. Pełny opis: <code>docs/_main.md.txt</code> §3.6, §3.6a, §4.5, §4.7.
+  </p>
 </div>
 
 <div class="note">
   <div class="note-title">Zanim przeczytasz ekrany</div>
   <p>
     Panel odwraca decyzję z <b>2026-07-24</b> („Panel administratora — nie teraz"), która zostawiła zakładanie kont, resety haseł,
-    rozwiązywanie flag i korekty po oknie 24 h jako proces ręczny w SQL. Zakres v1: pełny back-office, dwie role
+    rozwiązywanie flag i korekty administratora jako proces ręczny w SQL. Zakres v1: pełny back-office, dwie role
     (<b>administrator</b> i <b>szef wyszkolenia</b>), stan floty na żywo oraz dane po fakcie.
   </p>
   <p>
     <b>Rola konta — zrobiona 2026-07-31</b>: migracja 7 dokłada <code>pilots.role</code>, JWT niesie trzeci claim,
     a mapa ról na zdolności mieszka w <code>server/src/domain/roles.ts</code>.
     <b>Cykl życia flagi — wdrożony</b>: <code>POST /admin/api/flags/:id/resolve</code> zamyka flagę komentarzem i sam
-    wyzwala re-eksport karty, więc <code>session_overlap</code> przestał blokować dokument klubu bezterminowo.
+    wyzwala re-eksport karty, więc <code>aircraft_overlap</code> (dawny <code>session_overlap</code>, rozdzielony 2026-08-07) przestał trzymać sesje poza dokumentem klubu bezterminowo.
     Wpis do dziennika <code>admin_audit</code> powstaje tą samą transakcją co skutek, a mechanizm wymusza go TYPEM —
     komenda panelu bez śladu nie kompiluje się. <b>Katalog flag kompletny</b>: <code>fuel_mismatch</code>
     i <code>clock_drift</code> serwer liczy od 2026-07-31.
     <span class="warn">Zostaje jeden brak</span>: reszta endpointów <code>/admin/api/*</code> — listy, filtry, konta,
-    flota, korekty po oknie 24 h. Bez nich te ekrany nie mają skąd wziąć danych.
+    flota, korekty administratora. Bez nich te ekrany nie mają skąd wziąć danych.
   </p>
   <p>
     Pełna analiza — role, mapowanie każdego ekranu na endpoint, braki serwera z wyceną, ryzyka:
@@ -167,7 +183,7 @@
     <div class="card-num">A02</div>
     <div class="card-body">
       <div class="card-title">A02-dni</div>
-      <div class="card-desc">Lista dni lotnych z projekcji <code>sessions</code> — samolot, PIC, blok, czas lotu, MH i FOB start→koniec. Filtry po dacie, samolocie, pilocie i stanie.</div>
+      <div class="card-desc">Lista SESJI SAMOLOTÓW (przejęcie → zdanie) z projekcji <code>sessions</code> — samolot, PIC, blok, czas lotu, MH i FOB start→koniec. Jedna maszyna może mieć w dobie kilka wierszy, odróżnia je godzina przejęcia. Filtry po dacie, samolocie, pilocie i stanie.</div>
       <div class="card-tags"><span class="tag">tabela</span><span class="tag">UTC</span></div>
     </div>
   </a>
@@ -175,7 +191,7 @@
     <div class="card-num">A02A</div>
     <div class="card-body">
       <div class="card-title">A02a-dzien</div>
-      <div class="card-desc">Karta jednego dnia — kafle podsumowania, pełna oś zdarzeń z payloadami, lista lotów, flagi. Zdarzenie unieważnione jest przekreślone, nie usunięte.</div>
+      <div class="card-desc">Karta jednej SESJI SAMOLOTU — kafle podsumowania, pełna oś zdarzeń z payloadami (w tym <code>leg_close</code>), lista lotów, flagi. Zdarzenie unieważnione jest przekreślone, nie usunięte. Czasu służby tu nie ma: klamra należy do PILOTA i obejmuje kilka maszyn.</div>
       <div class="card-tags"><span class="tag green">oś zdarzeń</span><span class="tag">append-only</span></div>
     </div>
   </a>
@@ -183,7 +199,7 @@
     <div class="card-num">A02B</div>
     <div class="card-body">
       <div class="card-title">A02b-korekta</div>
-      <div class="card-desc">Korekta administratora po oknie 24 h. Nie ma edycji ani kasowania — są dwie akcje dopisujące <code>event_correction</code>: <code>retime</code> i <code>void</code>. Korekta nie wróci na telefon pilota.</div>
+      <div class="card-desc">Korekta administratora — dostępna ZAWSZE (bramka <code>400 day_open</code> usunięta 2026-08-07); kolizja z pilotem to baner ostrzegawczy, nie odmowa. Nie ma edycji ani kasowania — są dwie akcje dopisujące <code>event_correction</code>: <code>retime</code> i <code>void</code>. Korekta nie wróci na telefon pilota.</div>
       <div class="card-tags"><span class="tag red">append-only</span><span class="tag amber">sync jednokierunkowy</span></div>
     </div>
   </a>
@@ -211,7 +227,7 @@
     <div class="card-num">A03</div>
     <div class="card-body">
       <div class="card-title">A03-flagi</div>
-      <div class="card-desc">Skrzynka niespójności — główne narzędzie szefa wyszkolenia. Blokujące eksport na górze, potem po wieku. Trzy typy z kodu; <code>fuel_mismatch</code> i <code>clock_drift</code> oznaczone jako niewdrożone.</div>
+      <div class="card-desc">Skrzynka niespójności — główne narzędzie szefa wyszkolenia. Bramkujące arkusz na górze, potem po wieku. Sześć typów: <code>aircraft_overlap</code> (jedyna bramka arkusza) i <code>pilot_overlap</code> po rozdzieleniu dawnego <code>session_overlap</code>, <code>mh_gap</code>, <code>mh_regression</code>, <code>fuel_mismatch</code>, <code>clock_drift</code>.</div>
       <div class="card-tags"><span class="tag amber">kolejka</span><span class="tag red">blokuje arkusz</span></div>
     </div>
   </a>
@@ -219,7 +235,7 @@
     <div class="card-num">A03A</div>
     <div class="card-body">
       <div class="card-title">A03a-flaga</div>
-      <div class="card-desc">Szczegół i rozstrzygnięcie: liczby rozbieżności, obie sesje, oś wokół problemu. Rozwiązanie to komentarz i zmiana statusu — nie edycja danych; odblokowuje kartę arkusza.</div>
+      <div class="card-desc">Szczegół i rozstrzygnięcie: liczby rozbieżności, obie sesje, oś wokół problemu. Rozwiązanie to komentarz i zmiana statusu — nie edycja danych; wpuszcza sporne sesje z powrotem do karty doby.</div>
       <div class="card-tags"><span class="tag amber">wariant</span><span class="tag red">endpointu brak</span></div>
     </div>
   </a>
@@ -235,7 +251,7 @@
     <div class="card-num">A05</div>
     <div class="card-body">
       <div class="card-title">A05-eksporty</div>
-      <div class="card-desc">Monitor kart dziennych: w arkuszu / rewizja N / zablokowana flagą / błąd regeneracji / czeka. Wyjaśnia różnicę <code>export_log</code> (historia) vs <code>exported_sheets</code> (stan karty).</div>
+      <div class="card-desc">Monitor kart DOBY SAMOLOTU (sesje są wierszami karty, spięte kolumną <code>Sesja</code>): w arkuszu / rewizja N / zablokowana flagą / błąd regeneracji / czeka. Wyjaśnia różnicę <code>export_log</code> (historia) vs <code>exported_sheets</code> (stan karty).</div>
       <div class="card-tags"><span class="tag blue">eksport</span><span class="tag">rewizje</span></div>
     </div>
   </a>

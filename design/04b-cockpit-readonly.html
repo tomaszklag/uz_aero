@@ -76,7 +76,7 @@
   /* ===== SCROLL AREA ===== */
   .scroll { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: none; }
   .scroll::-webkit-scrollbar { display: none; }
-  /* Kolumna flex ŚCISKA dzieci, zanim pozwoli im wyjechać poza ekran — a log dnia ma
+  /* Kolumna flex ŚCISKA dzieci, zanim pozwoli im wyjechać poza ekran — a log samolotu ma
      `overflow: hidden`, więc zamiast się przewinąć, zapadał się do zera po dołożeniu
      banera ostrzegawczego. Treść przewijamy, nie zgniatamy. */
   .scroll > * { flex-shrink: 0; }
@@ -127,18 +127,18 @@
     color: var(--text-muted); text-align: center; line-height: 1.6; margin-top: -6px;
   }
 
-  /* ===== DUTY TIME ===== */
-  .duty-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
-  .duty-left { display: flex; align-items: center; gap: 8px; }
-  .duty-icon { color: var(--blue); }
-  .duty-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
-  .duty-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
-  .duty-since { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+  /* ===== PASEK SESJI SAMOLOTU ===== */
+  .claim-strip { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .strip-left { display: flex; align-items: center; gap: 8px; }
+  .claim-icon { color: var(--blue); }
+  .strip-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+  .claim-val { font-family: var(--font-mono); font-size: 16px; font-weight: 400; letter-spacing: 2px; color: var(--text-primary); }
+  .claim-since { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
 
   /* ===== DAY LOG ===== */
-  .day-log { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-  .day-log-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
-  .day-log-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+  .session-log { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .session-log-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
+  .session-log-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
   /* Akordeon cykli jak na 04 — w podglądzie WSZYSTKIE cykle domyślnie zwinięte:
      to szybki rzut oka na cudzy dzień, nie praca na nim (2026-08-04). */
   .cycle-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
@@ -292,7 +292,7 @@
         <div class="ro-body">
           <div class="ro-title">PODGLĄD — TYLKO ODCZYT</div>
           <div class="ro-text">Samolot prowadzi <strong>KRZ · od 07:10</strong>. Dane zapisuje wyłącznie jego telefon — Ty widzisz stan pobrany z serwera.</div>
-          <div class="stale-warn only-cache">Brak łączności — to <strong>ostatni znany stan</strong>. KRZ mógł już wylądować, zatankować albo zamknąć dzień.</div>
+          <div class="stale-warn only-cache">Brak łączności — to <strong>ostatni znany stan</strong>. KRZ mógł już wylądować, zatankować albo zdać samolot.</div>
           <div class="ro-meta only-live"><span class="dot"></span>Dane z serwera · pobrano 09:41 · ostatnia aktywność KRZ 09:38</div>
           <div class="ro-meta only-cache"><span class="dot"></span>Ostatnie pobrane dane · 21 CZE 17:30 · stan sprzed ponad doby</div>
         </div>
@@ -304,24 +304,27 @@
         GROUND · SILNIK WYŁĄCZONY · WG SERWERA
       </div>
 
-      <!-- DUTY -->
-      <div class="duty-strip">
-        <div class="duty-left">
-          <div class="duty-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <!-- PASEK SESJI SAMOLOTU — podgląd cudzej sesji.
+           Wcześniej stał tu „Duty KRZ 02:31". Czas służby innego pilota nie jest
+           informacją o SAMOLOCIE i nie ma czego wnosić do decyzji o przejęciu —
+           liczy się, od kiedy maszyna jest zajęta i ile już zrobiła. -->
+      <div class="claim-strip">
+        <div class="strip-left">
+          <div class="claim-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2 3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
           </div>
           <div>
-            <div class="duty-label">Duty KRZ</div>
-            <div class="duty-val">02:31</div>
+            <div class="strip-label">SP-FGK · KRZ od 07:10 UTC</div>
+            <div class="claim-val">1 wzlot</div>
           </div>
         </div>
-        <div class="duty-since">Meldunek 07:10 UTC · 09:10 LT</div>
+        <div class="claim-since">zajęty</div>
       </div>
 
       <!-- DAY LOG (KRZ) -->
-      <div class="day-log">
-        <div class="day-log-header">
-          <span class="day-log-title">Log dnia KRZ · UTC · 1 cykl · 1 T/O</span>
+      <div class="session-log">
+        <div class="session-log-header">
+          <span class="session-log-title">Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O</span>
         </div>
 
         <!-- W podglądzie cykle domyślnie zwinięte -->
@@ -374,12 +377,12 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint only-live">Wrócisz do preflightu z wybranym SP-FGK — dzień zapisze się dopiero po potwierdzeniu danych</div>
+      <div class="takeover-hint only-live">Wrócisz do przejęcia z wybranym SP-FGK — zapisze się dopiero po potwierdzeniu odczytów</div>
       <a href="02d-preflight-offline.html" class="takeover-btn only-cache">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint only-cache">Wrócisz do preflightu z wybranym SP-FGK — dzień zapisze się dopiero po potwierdzeniu danych</div>
+      <div class="takeover-hint only-cache">Wrócisz do przejęcia z wybranym SP-FGK — zapisze się dopiero po potwierdzeniu odczytów</div>
 
       <!-- ACTIONS (disabled) -->
       <div class="action-grid">
@@ -415,8 +418,8 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </div>
           <div>
-            <div class="action-label">Zakończ dzień</div>
-            <div class="action-sub">Statystyki + synchronizacja</div>
+            <div class="action-label">Zdaj samolot</div>
+            <div class="action-sub">Odczyt końcowy — dzień trwa dalej</div>
           </div>
         </span>
       </div>
@@ -431,22 +434,22 @@
   <a class="vp-item" href="04a-cockpit-ground.html">
     <span class="vp-badge">04A</span>
     <span class="vp-body">
-      <span class="vp-name">Start dnia</span>
-      <span class="vp-when">Zaraz po potwierdzeniu preflightu — pusty log, świeży duty, pierwszy START ENGINE.</span>
+      <span class="vp-name">Przed uruchomieniem silnika</span>
+      <span class="vp-when">Zaraz po przejęciu — pusty log sesji, START ENGINE, tankowanie i zmiana załogi. Jedyny stan ground PRZED startem; nie „start dnia" — dzień pilota mógł zacząć się wcześniej, na innej maszynie.</span>
     </span>
   </a>
   <a class="vp-item" href="04-cockpit-ground.html">
     <span class="vp-badge">04</span>
     <span class="vp-body">
-      <span class="vp-name">W trakcie dnia</span>
-      <span class="vp-when">Silnik OFF między lotami — log cykli z odczytami MH/paliwa, akcje ground, kolejne START ENGINE.</span>
+      <span class="vp-name">Po zatrzymaniu silnika</span>
+      <span class="vp-when">Sesja zakończona (sesja = jeden bieg silnika, 2026-08-10): hero ZDAJ SAMOLOT — drugiego START ENGINE nie ma, log jednej sesji, tankowanie dozwolone przed zdaniem.</span>
     </span>
   </a>
   <a class="vp-item active" href="04b-cockpit-readonly.html">
     <span class="vp-badge blue">04B</span>
     <span class="vp-body">
       <span class="vp-name">Podgląd read-only</span>
-      <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log dnia z serwera, zero możliwości zapisu, ostrzeżenie i akcja „Przejmij". Wejście z karty zajętego samolotu w preflightcie (cała karta prowadzi tutaj) — to JEDYNE miejsce, w którym przejmuje się samolot.</span>
+      <span class="vp-when">Cudzy samolot — inny pilot ma aktywny claim: stan i log samolotu z serwera, zero możliwości zapisu, ostrzeżenie i akcja „Przejmij". Wejście z karty zajętego samolotu w preflightcie (cała karta prowadzi tutaj) — to JEDYNE miejsce, w którym przejmuje się samolot.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -457,17 +460,27 @@
       <span class="vp-when">Autodetekcja pomyliła się — zapisała zdarzenie, którego nie było, albo o złym czasie. Otwierane z wiersza logu; append-only, działa offline.</span>
     </span>
   </a>
+  <a class="vp-item" href="04d-wyjscie-z-kokpitu.html">
+    <span class="vp-badge blue">04D</span>
+    <span class="vp-body">
+      <span class="vp-name">Blokada wyjścia z kokpitu</span>
+      <span class="vp-when">Pilot trzyma samolot i nacisnął „wstecz" (albo cofnął gestem). Kokpit jest stanem modalnym: arkusz mówi, co go tu trzyma, i pokazuje jedyne wyjście — zdanie maszyny.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="04a-cockpit-ground.html">04A Ground (start)</a>
-  <a href="04-cockpit-ground.html">04 Ground (mid-day)</a>
+  <a href="04a-cockpit-ground.html">04A Przed startem</a>
+  <a href="04-cockpit-ground.html">04 Po zatrzymaniu</a>
   <a href="04b-cockpit-readonly.html" class="active">04B Podgląd</a>
   <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
+  <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
   <span>·</span>
-  <a href="02-preflight.html">02 Preflight (powrót)</a>
+  <a href="02-preflight.html">02 Przejęcie</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">01 Mój dzień →</a>
 </nav>
 
 <script>

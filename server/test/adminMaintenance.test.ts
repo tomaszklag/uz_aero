@@ -276,8 +276,8 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     expect(await projectionOf(db)).toMatchObject({ flights_count: 1, status: 'closed' });
   });
 
-  it('wypełnia kolumny dołożone migracją 11 w wierszach sprzed migracji', async () => {
-    // To jest powód, dla którego przebudowa MUSI wejść razem z migracją 11: `upsert`
+  it('wypełnia kolumny `operation`/`client` w wierszach, które ich nie mają', async () => {
+    // To jest powód, dla którego przebudowa MUSI wejść razem z nowymi kolumnami projekcji: `upsert`
     // uruchamia dopiero następna paczka zdarzeń sesji, a dla dnia zamkniętego takiej
     // paczki już nie będzie. Bez przeliczenia kolumna „Operacja" na liście dni byłaby
     // pusta dla całej historii.
@@ -293,8 +293,8 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     expect(await projectionOf(db)).toMatchObject({ operation: 'skoki', client: 'SKY CAMP' });
   });
 
-  it('wypełnia kolumny dołożone migracją 18 w wierszach sprzed migracji', async () => {
-    // Ten sam powód, co przy migracji 11: `upsert` uruchamia dopiero następna paczka
+  it('wypełnia kolumny statystyk w wierszach sprzed migracji', async () => {
+    // Ten sam powód, co przy `operation`/`client`: `upsert` uruchamia dopiero następna paczka
     // zdarzeń sesji, a dla dnia zamkniętego takiej paczki już nie będzie. Bez
     // przeliczenia statystyki `A10` widziałyby w całej historii `NULL` — i uczciwie
     // pokazywałyby kreskę zamiast startów, paliwa i zrzutów.
@@ -367,7 +367,7 @@ describe('A11 · nadpisanie projekcji: komenda przez bramę audytu', () => {
     //
     // PGlite ma JEDNO połączenie, więc prawdziwej równoległości nie odtworzy i tego
     // wyścigu nie da się tu wywołać (to samo ograniczenie, co przy `ExportLogPort.lock`,
-    // migracja 14). Testowalna jest KOLEJNOŚĆ: w chwili odczytu poprzedzającego zapis
+    // `uq_export_log_card_revision`). Testowalna jest KOLEJNOŚĆ: w chwili odczytu poprzedzającego zapis
     // blokada advisory musi już być trzymana przez tę transakcję. Dekorator portu pyta
     // o to `pg_locks` — czyli sam silnik, a nie nasz kod.
     const held: number[] = [];

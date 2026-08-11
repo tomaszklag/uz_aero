@@ -48,14 +48,16 @@ export function daysTiles(counts: DaysCounts, narrowed: boolean): DaysTile[] {
 
   return [
     {
-      label: 'Dni w zawężeniu',
+      // Jednostką jest SESJA, nie doba: po §3.6a jedna maszyna bierze w dobie dwie
+      // zmiany, więc „dni" liczyłoby coś innego niż wiersze pod spodem.
+      label: 'Sesje w zawężeniu',
       value: total ?? '—',
       note: narrowed
         ? 'Tyle sesji spełnia filtr z adresu — liczba z serwera, nie z pobranych stron.'
         : 'Wszystkie sesje w rejestrze, od pierwszego dnia klubu.',
     },
     {
-      label: 'Dni otwarte',
+      label: 'Samoloty zajęte',
       value: open ?? '—',
       tone: open == null || open === 0 ? undefined : 'blue',
       note: 'Sesje bez `day_close`. Telefon dosyła do nich zdarzenia — odczyty końcowe są puste.',
@@ -66,12 +68,12 @@ export function daysTiles(counts: DaysCounts, narrowed: boolean): DaysTile[] {
       // Zielone zero znaczy „sprawdziliśmy i nie ma nic do wyjaśnienia" — dlatego
       // należy się WYŁĄCZNIE odpowiedzi serwera, nigdy jej brakowi.
       tone: flagged == null ? undefined : flagged === 0 ? 'green' : 'amber',
-      note: 'Dni z rozbieżnością do wyjaśnienia. Flaga nie zmienia liczb — opisuje je.',
+      note: 'Sesje z rozbieżnością do wyjaśnienia. Flaga nie zmienia liczb — opisuje je.',
     },
     {
       label: 'Wyeksportowane',
       value: exported ?? '—',
-      note: 'Dni z kartą w `export_log`. Karta powstaje po zamknięciu dnia, nie w jego trakcie.',
+      note: 'Sesje z kartą w `export_log`. Wiersz karty powstaje po zdaniu samolotu, nie w trakcie sesji.',
     },
   ];
 }

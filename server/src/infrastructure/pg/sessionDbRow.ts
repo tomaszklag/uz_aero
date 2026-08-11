@@ -91,8 +91,8 @@ export const sessionColumns = (alias: string): string =>
  * `BIGINT` wraca z `pg` jako string (nie mieści się w `number` bez straty) — konwersja
  * jest tu jawna i w jednym miejscu.
  *
- * Wartość `operation` spoza katalogu rzuca, a nie jest po cichu zerowana: od migracji 11
- * pilnuje jej `CHECK` w bazie, więc obecność innej wartości znaczy, że ktoś zdjął
+ * Wartość `operation` spoza katalogu rzuca, a nie jest po cichu zerowana:
+ * `sessions_operation_known` pilnuje jej w bazie, więc obecność innej wartości znaczy, że ktoś zdjął
  * ograniczenie albo grzebał ręcznie — a wtedy cisza byłaby najgorszą z opcji (ten sam
  * argument, co przy `flags.type` w `flagsRepo.ts`).
  */
@@ -120,7 +120,7 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     blockMs: Number(r.block_ms),
     flightMs: Number(r.flight_ms),
     flightsCount: r.flights_count,
-    // `NULL` w kolumnach migracji 18 zostaje `null` — to „wiersz sprzed migracji,
+    // `NULL` w kolumnach kolumn statystyk zostaje `null` — to „wiersz sprzed migracji,
     // nieprzeliczony", a nie zero. Zamiana na 0 zafałszowałaby agregaty `A10`.
     takeoffCount: r.takeoff_count,
     landingCount: r.landing_count,

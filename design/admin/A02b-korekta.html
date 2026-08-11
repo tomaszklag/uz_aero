@@ -396,34 +396,43 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — PANEL · A02B</span>
-  <span class="slug">korekta administratora · append-only · po oknie 24 h</span>
+  <span class="slug">korekta administratora · append-only · nigdy nie blokowana</span>
   <span class="canvas-meta"><span class="pulse"></span>Rodzina A02 · A02a · A02b</span>
 </header>
 
 <aside class="variants-panel">
-  <div class="vp-title">Dzień lotny — trzy ekrany, kiedy który?</div>
+  <div class="vp-title">Sesja samolotu — trzy ekrany, kiedy który?</div>
   <a class="vp-item" href="A02-dni.html">
     <span class="vp-badge">A02</span>
     <span class="vp-body">
-      <span class="vp-name">Lista dni lotnych</span>
-      <span class="vp-when">Wejście do operacji: wszystkie sesje w zakresie dat, z filtrami po samolocie, pilocie i stanie.</span>
+      <span class="vp-name">Lista sesji samolotów</span>
+      <span class="vp-when">Wejście do operacji: wszystkie sesje (przejęcie → zdanie) w zakresie dat, z filtrami po samolocie, pilocie i stanie.</span>
     </span>
   </a>
   <a class="vp-item" href="A02a-dzien.html">
     <span class="vp-badge">A02A</span>
     <span class="vp-body">
-      <span class="vp-name">Szczegół dnia</span>
-      <span class="vp-when">Kafle podsumowania, oś zdarzeń, lista lotów, flagi. Stąd otwiera się ta szuflada.</span>
+      <span class="vp-name">Karta sesji</span>
+      <span class="vp-when">Kafle podsumowania, oś zdarzeń, lista wzlotów, flagi. Stąd otwiera się ta szuflada — z konkretnego wiersza osi, bo korekta zawsze dotyczy JEDNEGO zdarzenia.</span>
     </span>
   </a>
   <a class="vp-item active" href="A02b-korekta.html">
     <span class="vp-badge amber">A02B</span>
     <span class="vp-body">
       <span class="vp-name">Korekta administratora</span>
-      <span class="vp-when">Wyłącznie <b>po zamknięciu okna 24 h</b> — do tego czasu pilot poprawia sam, na ekranie <a href="../04c-korekta-zdarzenia.html" style="color:var(--green);">04C</a> aplikacji, i panel nie ma tu nic do roboty. Dwie akcje, obie dopisują zdarzenie: <code>retime</code> i <code>void</code>.</span>
+      <span class="vp-when"><b>Zawsze dostępna</b> — bramka <code>400 day_open</code> została usunięta 2026-08-07: administrator nie jest nigdy blokowany. Gdy pilot ma jeszcze otwarte okno wzlotu albo trzyma sesję, panel pokazuje <b>ostrzeżenie</b> nad formularzem i zostawia decyzję człowiekowi. Pilot poprawia sam na ekranie <a href="../04c-korekta-zdarzenia.html" style="color:var(--green);">04C</a> aplikacji przez 24 h od zamknięcia SWOJEGO wzlotu. Dwie akcje, obie dopisują zdarzenie: <code>retime</code> i <code>void</code>.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
+</aside>
+
+<aside class="variants-panel">
+  <div class="vp-title">Baner kolizji — dwa stany tej szuflady</div>
+  <div style="grid-column:1/-1;display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:2px;">
+    <span class="chip on" id="swNoWarn" onclick="warnState('none')">Bez kolizji · ten scenariusz</span>
+    <span class="chip" id="swWarn" onclick="warnState('collision')">Kolizja z pilotem · <code>ADMIN_EDIT_*</code></span>
+    <span class="vp-when" style="flex:1;min-width:280px;">Baner ostrzegawczy pojawia się <b>wyłącznie</b> wtedy, gdy serwer zwróci ostrzeżenia w podglądzie korekty — świecąc przy każdej korekcie, nauczyłby oko go pomijać. W obu stanach przycisk zapisu <b>działa tak samo</b>: administrator nie jest nigdy blokowany (bramka <code>400 day_open</code> usunięta 2026-08-07), a ostrzeżenie nie ma pola, z którego dałoby się wyprowadzić <code>disabled</code>.</span>
+  </div>
 </aside>
 
 <main class="browser" role="region" aria-label="Panel administracyjny — korekta administratora">
@@ -536,11 +545,11 @@
           <div class="tile"><span class="tile-key">Czas blokowy</span><span class="tile-val amber">05:53</span><span class="tile-note">Przedmiot korekty — patrz podgląd wpływu.</span></div>
           <div class="tile"><span class="tile-key">Czas lotu</span><span class="tile-val">03:35</span><span class="tile-note">9 lotów.</span></div>
           <div class="tile"><span class="tile-key">Δ motogodzin</span><span class="tile-val">5.7<small> h</small></span><span class="tile-note">3902.1 → 3907.8 · odczyt fizyczny, nietykalny.</span></div>
-          <div class="tile"><span class="tile-key">Zdarzeń w rejestrze</span><span class="tile-val">84<small> + 1</small></span><span class="tile-note">Korekta doda 85. zdarzenie, nie zmieni żadnego z 84.</span></div>
+          <div class="tile"><span class="tile-key">Zdarzeń w rejestrze</span><span class="tile-val">86<small> + 1</small></span><span class="tile-note">Korekta doda 87. zdarzenie, nie zmieni żadnego z 86.</span></div>
         </div>
 
         <div class="card">
-          <div class="card-title">Oś zdarzeń dnia · fragment końcowy <span class="spacer"></span><span class="pill blue">czasy UTC</span></div>
+          <div class="card-title">Oś zdarzeń sesji · fragment końcowy <span class="spacer"></span><span class="pill blue">czasy UTC</span></div>
           <div class="tl">
             <div class="tl-row">
               <span class="tl-time">12:47:30</span>
@@ -563,13 +572,13 @@
             <div class="tl-row">
               <span class="tl-time">13:22:47</span>
               <span class="tl-rail"><span class="tl-dot red"></span></span>
-              <span><span class="tl-name">day_close</span><span class="tl-meta">FOB 153 L · MH 3907.8 · duty end 13:20</span></span>
-              <span class="pill red">koniec</span>
+              <span><span class="tl-name">day_close</span><span class="tl-meta">zdanie samolotu · FOB 153 L · MH 3907.8 · koniec służby: nie zadeklarowano</span></span>
+              <span class="pill red">zdanie</span>
             </div>
             <div class="tl-row">
               <span class="tl-time">18:22:05</span>
               <span class="tl-rail"><span class="tl-dot"></span></span>
-              <span><span class="tl-name">event_correction</span><span class="tl-meta"><code>void</code> landing 08:14:09 · autor: Anna Wrzosek (PIC), w oknie 24 h</span></span>
+              <span><span class="tl-name">event_correction</span><span class="tl-meta"><code>void</code> landing 08:14:09 · autor: Anna Wrzosek (PIC), w oknie korekty wzlotu 1</span></span>
               <span class="pill red">korekta</span>
             </div>
           </div>
@@ -583,12 +592,46 @@
         <div class="drawer-head">
           <div>
             <div class="drawer-title">KOREKTA ADMINISTRATORA</div>
-            <div class="drawer-sub">SP-KLM · 30 JUL 2026 · sesja 7c1e5a9b…83b4 · okno pilota minęło 31 JUL 13:22 UTC</div>
+            <div class="drawer-sub">SP-KLM · 30 JUL 2026 · sesja 7c1e5a9b…83b4 · zdarzenie z wzlotu 3 (bez <code>leg_close</code>, okno kotwiczy się w <code>engine_stop</code>)</div>
           </div>
           <a class="x-btn" href="A02a-dzien.html" title="Zamknij bez zapisu"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></a>
         </div>
 
         <div class="drawer-body">
+
+          <!-- ══ TO JEST MIEJSCE PO BRAMCE `400 day_open` (decyzja 2026-08-07) ══
+               Do etapu D serwer ODMAWIAŁ korekty, gdy sesja nie miała `day_close`, a panel
+               wyszarzał przycisk. Bramka opierała się na równości „brak `day_close` = dzień
+               trwa", którą §3.6a unieważnił: zdanie samolotu jest OPCJONALNE, więc sesja
+               sprzed tygodnia wygląda tak samo jak ta z dzisiejszego poranka — bramka
+               odmawiałaby korekty przede wszystkim tam, gdzie jest potrzebna.
+
+               W jej miejscu stoi BANER OSTRZEGAWCZY i on NIE BLOKUJE — to jest cała jego
+               konstrukcja. Nie ma tu ani jednego pola, z którego dałoby się wyprowadzić
+               wyszarzenie przycisku zapisu: ostrzeżenie, które po cichu odbiera możliwość
+               działania, jest bramką z ładniejszym napisem. Baner pojawia się WYŁĄCZNIE
+               przy kolizji — świecąc przy każdej korekcie, nauczyłby oko go pomijać.
+               Przełącznik na canvasie pokazuje oba stany. -->
+          <div class="banner status" data-warn="none" data-disp="flex">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span><b>Bez kolizji — serwer nie zwrócił ani jednego ostrzeżenia.</b> Samolot jest zdany (<code>day_close</code> 30 JUL 13:22:47), a okno samodzielnej korekty wzlotu 3 wygasło <b>31 JUL 13:13 UTC</b> — 24 h od <code>engine_stop</code>, bo pilot tego wzlotu nie potwierdził (<code>leg_close</code> nie padł, więc kotwicą jest wyłączenie silnika). Nikt inny nie pisze dziś do tego strumienia. <b style="color:var(--text-secondary)">Brak banera ostrzegawczego nie jest tu warunkiem zapisu</b> — administrator dopisuje korektę także wtedy, gdy kolizja istnieje.</span>
+          </div>
+
+          <div class="banner warn" data-warn="collision" data-disp="flex" style="display:none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span><b>Ta korekta wchodzi w kolizję z pilotem.</b> <span style="color:var(--text-muted);font-size:11px;">(ta sama szuflada otwarta 31 JUL <b>12:40</b> UTC, czyli przed wygaśnięciem okna wzlotu 3)</span>
+              <span style="display:block;padding-top:7px;line-height:1.65;">
+                <code style="color:var(--amber);">ADMIN_EDIT_PILOT_WINDOW_OPEN</code> — „Pilot może jeszcze poprawić ten wzlot samodzielnie (okno 24 h wzlotu 3 trwa)".<br />
+                <span style="color:var(--text-secondary);">Co z tego wyniknie: pilot może poprawić ten sam wzlot sam, na ekranie 04C. Twoja korekta do niego NIE wróci (synchronizacja jest jednokierunkowa), więc rozważ, czy nie wystarczy telefon do niego.</span>
+              </span>
+              <span style="display:block;padding-top:7px;line-height:1.65;">
+                <code style="color:var(--amber);">ADMIN_EDIT_SESSION_ACTIVE</code> — drugi możliwy kod, gdy samolot nie został jeszcze zdany: „Pilot nadal prowadzi tę sesję — może dopisać własne zdarzenia po synchronizacji".<br />
+                <span style="color:var(--text-secondary);">Co z tego wyniknie: zapis się uda, ale nie jest ostatni — paczka z telefonu dojdzie do tego samego strumienia i liczby sesji policzą się jeszcze raz. Sprawdź oś zdarzeń po synchronizacji.</span>
+              </span>
+              <b style="display:block;padding-top:8px;color:var(--text-primary);">To jest ostrzeżenie, nie odmowa — zapis jest możliwy i przycisk działa.</b>
+              <span style="color:var(--text-secondary);">Rejestr jest append-only, więc nic się nie nadpisze; obie strony po prostu dopiszą swoje. Decyzja należy do Ciebie.</span>
+            </span>
+          </div>
 
           <div class="banner danger">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -603,7 +646,7 @@
             <div class="kv"><span class="kv-k">gps_time</span><span class="kv-v red">brak fixa <small>null</small></span></div>
             <div class="kv"><span class="kv-k">Czas użyty w projekcji</span><span class="kv-v amber">13:13:33 <small>fallback na device_time</small></span></div>
             <div class="kv"><span class="kv-k">Zapisane przez</span><span class="kv-v"><small>Pixel 7a · a41f9c (telefon PIC-a)</small></span></div>
-            <div class="kv"><span class="kv-k">Powiązana flaga</span><span class="kv-v amber"><small>CLOCK_DRIFT · 720 s</small></span></div>
+            <div class="kv"><span class="kv-k">Powiązana flaga</span><span class="kv-v amber"><small>clock_drift · 720 s</small></span></div>
           </div>
 
           <div class="field">
@@ -639,26 +682,26 @@
 
           <div class="field">
             <span class="label">Powód korekty · pole obowiązkowe</span>
-            <textarea class="input" rows="4" style="min-height:96px;resize:vertical;font-family:var(--font-body);line-height:1.5;">Zegar telefonu spieszył 12 min (flaga CLOCK_DRIFT, pierwsze przekroczenie 30 JUL 11:56:14 UTC). Ostatni cykl bez fixa GPS, więc czas zdarzenia spadł na device_time. Godzinę wyłączenia potwierdza odczyt licznika MH (3907.8 = Δ 5.7 h) oraz wpis w książce samolotu.</textarea>
+            <textarea class="input" rows="4" style="min-height:96px;resize:vertical;font-family:var(--font-body);line-height:1.5;">Zegar telefonu spieszył 12 min (flaga clock_drift, pierwsze przekroczenie 30 JUL 11:56:14 UTC). Ostatni cykl bez fixa GPS, więc czas zdarzenia spadł na device_time. Godzinę wyłączenia potwierdza odczyt licznika MH (3907.8 = Δ 5.7 h) oraz wpis w książce samolotu.</textarea>
             <span class="hint">Bez powodu przycisk zapisu jest nieaktywny. Powód idzie do audit logu razem z obiema wartościami — po roku to jedyna rzecz, która wyjaśni, dlaczego liczby dnia różnią się od tego, co zapisał telefon.</span>
           </div>
 
           <div class="card" style="padding:14px 16px;">
-            <div class="card-title">Wpływ na liczby dnia <span class="spacer"></span><span class="pill dim">przed → po</span></div>
+            <div class="card-title">Wpływ na liczby sesji <span class="spacer"></span><span class="pill dim">przed → po</span></div>
 
             <div data-act="retime">
-              <div class="kv"><span class="kv-k">Czas blokowy dnia</span><span class="kv-v"><span style="color:var(--text-muted);">05:53</span> → <span class="green">05:41</span> <small>−12 min</small></span></div>
+              <div class="kv"><span class="kv-k">Czas blokowy sesji</span><span class="kv-v"><span style="color:var(--text-muted);">05:53</span> → <span class="green">05:41</span> <small>−12 min</small></span></div>
               <div class="kv"><span class="kv-k">Cykl silnika 3</span><span class="kv-v"><span style="color:var(--text-muted);">01:17:19</span> → <span class="green">01:05:19</span></span></div>
               <div class="kv"><span class="kv-k">Średnie zużycie</span><span class="kv-v"><span style="color:var(--text-muted);">171 L/h</span> → <span class="amber">177 L/h</span></span></div>
               <div class="kv"><span class="kv-k">Blok − Δ MH</span><span class="kv-v"><span style="color:var(--text-muted);">+0.18 h</span> → <span class="green">−0.02 h</span> <small>w tolerancji 0.1</small></span></div>
               <div class="kv"><span class="kv-k">Czas lotu</span><span class="kv-v">03:35 <small>bez zmian</small></span></div>
               <div class="kv"><span class="kv-k">Starty / lądowania</span><span class="kv-v">9 / 9 <small>bez zmian</small></span></div>
-              <div class="kv"><span class="kv-k">Duty</span><span class="kv-v">07:35 <small>bez zmian — z day_close</small></span></div>
+              <div class="kv"><span class="kv-k">Samolot zajęty</span><span class="kv-v">07:30 <small>bez zmian — od <code>session_claim</code> do <code>day_close</code>, obu nie da się korygować</small></span></div>
               <div class="kv"><span class="kv-k">Δ motogodzin</span><span class="kv-v">5.7 h <small>bez zmian — odczyt fizyczny</small></span></div>
             </div>
 
             <div data-act="void" style="display:none;">
-              <div class="kv"><span class="kv-k">Czas blokowy dnia</span><span class="kv-v"><span style="color:var(--text-muted);">05:53</span> → <span class="red">04:36</span> <small>−1 h 17 min</small></span></div>
+              <div class="kv"><span class="kv-k">Czas blokowy sesji</span><span class="kv-v"><span style="color:var(--text-muted);">05:53</span> → <span class="red">04:36</span> <small>−1 h 17 min</small></span></div>
               <div class="kv"><span class="kv-k">Cykl silnika 3</span><span class="kv-v red">otwarty <small>brak engine_stop</small></span></div>
               <div class="kv"><span class="kv-k">Średnie zużycie</span><span class="kv-v"><span style="color:var(--text-muted);">171 L/h</span> → <span class="red">219 L/h</span></span></div>
               <div class="kv"><span class="kv-k">Blok − Δ MH</span><span class="kv-v red">−1.10 h <small>daleko poza tolerancją</small></span></div>
@@ -682,11 +725,11 @@
 
           <div class="card" style="padding:14px 16px;">
             <div class="card-title">Co się stanie po zapisie</div>
-            <div class="kv"><span class="kv-k">1 · Rejestr</span><span class="kv-v"><small>+1 zdarzenie <code>event_correction</code> (85)</small></span></div>
+            <div class="kv"><span class="kv-k">1 · Rejestr</span><span class="kv-v"><small>+1 zdarzenie <code>event_correction</code> (87)</small></span></div>
             <div class="kv"><span class="kv-k">2 · Audyt</span><span class="kv-v"><small>kto, kiedy, obie wartości, powód</small></span></div>
             <div class="kv"><span class="kv-k">3 · Arkusz</span><span class="kv-v amber"><small>2026-07-30_SP-KLM · rewizja 2 → 3</small></span></div>
-            <div class="kv"><span class="kv-k">4 · Flaga CLOCK_DRIFT</span><span class="kv-v"><small>zostaje otwarta — zamyka ją człowiek na A03</small></span></div>
-            <span class="hint">Re-eksport jest <b>wymuszony</b>, nie opcjonalny: karta arkusza pokazuje aktualny stan dnia, więc po zmianie liczb serwer regeneruje ją i dopisuje wiersz w <code>export_log</code> z podbitą rewizją. Historia „co i kiedy poszło do arkusza" zostaje kompletna.</span>
+            <div class="kv"><span class="kv-k">4 · Flaga clock_drift</span><span class="kv-v"><small>zostaje otwarta — zamyka ją człowiek na A03</small></span></div>
+            <span class="hint">Re-eksport jest <b>wymuszony</b>, nie opcjonalny: karta arkusza pokazuje aktualny stan <b>doby samolotu</b> (§4.7), więc po zmianie liczb serwer składa ją od nowa — razem z drugą zmianą SP-KLM z tego samego dnia, bo obie są wierszami tej samej karty — i dopisuje do <code>export_log</code> po jednym wierszu na sesję wchodzącą do rewizji, wszystkie z tym samym numerem. Historia „co i kiedy poszło do arkusza" zostaje kompletna, a ekran 11 telefonu znajdzie link po SWOJEJ sesji, także wtedy, gdy eksportu nie wyzwoliła.</span>
           </div>
 
         </div>
@@ -708,14 +751,14 @@
   <a href="index.html">↩ Index panelu</a>
   <span>·</span>
   <a href="A02-dni.html">← A02 Dni lotne</a>
-  <a href="A02a-dzien.html">A02A Szczegół dnia</a>
+  <a href="A02a-dzien.html">A02A Karta sesji</a>
   <a href="A02b-korekta.html" class="active">A02B Korekta</a>
   <span>·</span>
   <a href="A04-zdarzenia.html">A04 Zdarzenia</a>
   <a href="A09-audyt.html">A09 Audyt</a>
   <a href="A05-eksporty.html">A05 Eksporty</a>
   <span>·</span>
-  <a href="../04c-korekta-zdarzenia.html">Ekran 04C pilota (okno 24 h)</a>
+  <a href="../04c-korekta-zdarzenia.html">Ekran 04C pilota (okno 24 h od zamknięcia wzlotu)</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>
@@ -734,6 +777,21 @@
     document.getElementById('optVoid').classList.toggle('selected', action === 'void');
   }
   setAction('retime');
+
+  // Baner kolizji — dwa stany tej samej szuflady. Przełącznik istnieje po to, żeby oba
+  // dało się obejrzeć na jednym pliku: w kanonicznym scenariuszu (samolot zdany, okno
+  // wzlotu 3 wygasło 31 JUL 13:13 UTC) serwer nie zwraca żadnych ostrzeżeń, więc baner
+  // NIE POWSTAJE. Stan „kolizja" pokazuje tę samą szufladę otwartą godzinę wcześniej.
+  // W OBU stanach przycisk zapisu jest czynny — to jest cała treść tej zmiany modelu.
+  function warnState(state) {
+    document.querySelectorAll('[data-warn]').forEach(function (el) {
+      var show = el.getAttribute('data-warn') === state;
+      el.style.display = show ? (el.getAttribute('data-disp') || '') : 'none';
+    });
+    document.getElementById('swNoWarn').classList.toggle('on', state === 'none');
+    document.getElementById('swWarn').classList.toggle('on', state === 'collision');
+  }
+  warnState('none');
 </script>
 
 </body>
