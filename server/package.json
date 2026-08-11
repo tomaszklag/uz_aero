@@ -10,6 +10,7 @@
     "start": "tsx --env-file-if-exists=.env src/index.ts",
     "seed": "tsx --env-file-if-exists=.env src/bin/seedCli.ts",
     "seed:demo": "tsx --env-file-if-exists=.env scripts/seedDemo.ts",
+    "db:demo": "tsx --env-file-if-exists=.env scripts/bootstrapDemoDb.ts",
     "rebuild-projections": "tsx --env-file-if-exists=.env src/bin/rebuildProjectionsCli.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
