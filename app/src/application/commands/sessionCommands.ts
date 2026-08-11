@@ -87,10 +87,26 @@ export interface ManualFlightInput {
 
 /** Wejście `drop` — numer wyniesienia i klient dopełniane z projekcji. */
 export interface DropInput {
+  /** Skład z liczników arkusza 05e; suma 0 = „skład niepodany" (normalizacja niżej). */
   jumpers: JumperCounts;
   altitudeFt?: number | null;
   dropNumber?: number;
   position?: GpsPosition | null;
+}
+
+/** Wejście `boarding` (załadunek, issue #21 pkt 7) — te same liczniki co zrzut. */
+export interface BoardingInput {
+  jumpers: JumperCounts;
+}
+
+/**
+ * Skład o sumie 0 zapisujemy jako `null` — „nie podano", nie „zero skoczków".
+ * Arkusze nie mają pola „bez deklaracji": pilot po prostu nie rusza liczników, a znak
+ * tej decyzji nie może zależeć od tego, który ekran zapisywał (zrzut i załadunek
+ * normalizują identycznie).
+ */
+function declaredJumpers(jumpers: JumperCounts): JumperCounts | null {
+  return jumpers.tandem + jumpers.aff + jumpers.solo > 0 ? jumpers : null;
 }
 
 export class SessionCommands {
@@ -213,10 +229,17 @@ export class SessionCommands {
       payload: {
         dropNumber: input.dropNumber ?? state.drops.count + 1,
         altitudeFt: input.altitudeFt ?? null,
-        jumpers: input.jumpers,
+        jumpers: declaredJumpers(input.jumpers),
         client: state.client,
         position: input.position ?? null,
       },
+    }));
+  }
+
+  /** Załadunek skoczków (issue #21 pkt 7) — znacznik faktu, skład opcjonalny. */
+  boarding(ctx: SessionContext, input: BoardingInput): Promise<CommandResult> {
+    return this.execute(ctx, 'boarding', () => ({
+      payload: { jumpers: declaredJumpers(input.jumpers) },
     }));
   }
 

@@ -27,6 +27,7 @@ const LABEL: Record<string, string> = {
   takeoff: 'Takeoff',
   landing: 'Landing',
   drop: 'Zrzut',
+  boarding: 'Załadunek',
   refuel: 'Tankowanie',
   crew_change: 'Zmiana załogi',
   manual_log_entry: 'Wpis ręczny',
@@ -42,17 +43,24 @@ const KIND: Record<string, LogKind> = {
   refuel: 'ground',
   crew_change: 'ground',
   manual_log_entry: 'ground',
+  boarding: 'boarding',
 };
 
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
 const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
 
-/** Chip zrzutu: liczba skoczków i wysokość — tak jak w mockupie 05. */
-function dropChip(payload: EventOf<'drop'>['payload']): LogChip {
-  const jumpers = payload.jumpers.tandem + payload.jumpers.aff + payload.jumpers.solo;
-  const parts = [`${jumpers} skoczków`];
+/**
+ * Chip zrzutu: liczba skoczków i wysokość — tak jak w mockupie 05. Skład jest od
+ * issue #21 opcjonalny: bez deklaracji chip niesie samą wysokość, a bez niej nie ma
+ * chipa wcale — „0 skoczków · — ft" wyglądałoby jak zepsuty zapis, nie jak decyzja.
+ */
+function dropChips(payload: EventOf<'drop'>['payload']): LogChip[] {
+  const parts: string[] = [];
+  if (payload.jumpers != null) {
+    parts.push(`${payload.jumpers.tandem + payload.jumpers.aff + payload.jumpers.solo} skoczków`);
+  }
   if (payload.altitudeFt != null) parts.push(`${Math.round(payload.altitudeFt)} ft`);
-  return { label: parts.join(' · '), tone: 'blue' };
+  return parts.length > 0 ? [{ label: parts.join(' · '), tone: 'blue' }] : [];
 }
 
 /**
@@ -159,7 +167,18 @@ export function buildLogRows(
       }
 
       case 'drop': {
-        rows.push({ ...base, kind: 'drop', chips: [dropChip(event.payload)] });
+        rows.push({ ...base, kind: 'drop', chips: dropChips(event.payload) });
+        break;
+      }
+
+      case 'boarding': {
+        // Skład na chipie tylko, gdy go zadeklarowano — załadunek bez liczb to czysty
+        // znacznik faktu i wiersz z samą etykietą mówi dokładnie tyle, ile wiemy.
+        const j = event.payload.jumpers;
+        rows.push({
+          ...base,
+          chips: j != null ? [{ label: `${j.tandem + j.aff + j.solo} skoczków`, tone: 'blue' }] : [],
+        });
         break;
       }
 

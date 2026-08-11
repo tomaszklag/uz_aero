@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 05E Zrzut · rozliczenie</title>
+<title>UZ Aero — 05I Załadunek · skoczkowie na pokład</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -40,7 +40,6 @@
   .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
   .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
   .status-right { display:inline-flex; align-items:center; gap:6px; }
-  .wifi-off { color:var(--amber); }
   .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; background:var(--bg); }
 
   .compact-bar { display:flex; align-items:center; justify-content:space-between; padding:7px 14px; border-bottom:1px solid var(--border); background:var(--surface); flex-shrink:0; height:40px; }
@@ -50,14 +49,13 @@
   .compact-sep { color:var(--border-strong); }
   .running-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--green-muted); border:1px solid var(--green-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); }
   .running-badge .live-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
-  .offline-badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--amber-muted); border:1px solid var(--amber-border); font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); }
 
-  /* tło — faza lotu, przygaszona przez sheet */
+  /* tło — kokpit na ziemi po dobiegu, przygaszony przez sheet */
   .phase-hero { display:flex; flex-direction:column; padding:10px 16px 12px; background:var(--bg); flex-shrink:0; position:relative; gap:8px; }
   .phase-body { display:flex; align-items:center; gap:14px; align-self:center; }
   .phase-text { display:flex; flex-direction:column; gap:3px; }
   .phase-hero-icon { width:52px; height:52px; border-radius:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); }
-  .phase-hero-name { font-family:var(--font-display); font-size:54px; letter-spacing:6px; line-height:1; color:var(--blue); text-shadow:0 0 30px rgba(52,152,219,0.35); }
+  .phase-hero-name { font-family:var(--font-display); font-size:54px; letter-spacing:6px; line-height:1; color:var(--text-secondary); }
   .phase-hero-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-top:4px; }
   .param-grid { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); flex-shrink:0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
   .param-cell { background:var(--surface); padding:12px 14px; display:flex; flex-direction:column; gap:4px; }
@@ -66,7 +64,8 @@
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
   .spacer { flex:1; }
 
-  /* ===== SHEET ZRZUTU ===== */
+  /* ===== SHEET ZAŁADUNKU — te same klocki co arkusz zrzutu (05E): to ta sama lista,
+     opowiedziana chwilę wcześniej. Bez wiersza wysokości: samolot stoi na ziemi. ===== */
   .sheet-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.74); display:flex; flex-direction:column; justify-content:flex-end; }
   .sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:16px 16px 26px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--blue-border); }
   .sheet-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
@@ -74,12 +73,7 @@
   .sheet-title { font-family:var(--font-display); font-size:23px; letter-spacing:2px; color:var(--blue); }
   .sheet-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* wysokość z GPS */
-  .alt-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--blue-border); border-radius:13px; padding:11px 14px; }
-  .alt-val { font-family:var(--font-mono); font-size:24px; font-weight:700; letter-spacing:1px; color:var(--blue); flex:1; }
-  .alt-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
-
-  /* steppery typów — duże cele dotykowe (rękawice) */
+  /* steppery typów — duże cele dotykowe (rękawice), 1:1 z 05E */
   .type-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:9px 11px; }
   .type-name { flex:1; display:flex; flex-direction:column; gap:2px; }
   .type-lbl { font-size:14px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
@@ -90,23 +84,17 @@
   .step-val { font-family:var(--font-mono); font-size:26px; font-weight:700; min-width:30px; text-align:center; color:var(--text-primary); }
   .step-val.zero { color:var(--text-muted); }
 
-  /* suma */
+  /* suma — to jest skład, który za chwilę pokaże się w 05E jako prefill */
   .total-row { display:flex; align-items:center; justify-content:space-between; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:13px; padding:12px 15px; }
   .total-lbl { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--blue); opacity:0.85; }
   .total-val { font-family:var(--font-display); font-size:30px; letter-spacing:1px; color:var(--blue); line-height:1; }
 
-  .client-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; }
-  .client-note b { color:var(--text-secondary); }
-  /* Podpis prefillu (issue #21 pkt 5): skąd wzięły się liczby, zanim pilot czegokolwiek
-     dotknął — bez niego wypełnione liczniki wyglądają jak resztki po poprzednim zrzucie. */
-  .prefill-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--blue); opacity:0.85; text-align:center; }
+  /* Skład jest opcjonalny — mówimy to, zanim pilot zacznie szukać, czemu wolno zapisać zero. */
+  .optional-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; }
 
   .sheet-actions { display:grid; grid-template-columns:1fr 2fr; gap:9px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-save { display:flex; align-items:center; justify-content:center; gap:8px; padding:15px; border-radius:14px; border:none; background:var(--blue); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(52,152,219,0.3); }
-  /* `.offline-hint` („Zapis lokalny — działa bez zasięgu") USUNIĘTY (issue #21 pkt 3):
-     offline-first to zasada całej aplikacji, a nie cecha tego arkusza — stały baner
-     był szumem. Stan sieci mówi SyncChip w pasku górnym, wyłącznie offline. */
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -131,17 +119,16 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 05E</span>
-  <span class="slug">zrzut · rozliczenie · interaktywny</span>
+  <span class="film-strip">UZ AERO — 05I</span>
+  <span class="slug">załadunek · skoczkowie na pokład · interaktywny</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 05</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Zapis zrzutu">
+<main class="phone" role="region" aria-label="Mockup — Załadunek skoczków">
   <div class="status-bar">
-    <span>15:45</span>
+    <span>16:12</span>
     <span class="status-right">
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5" opacity="0.4"/><rect x="10" y="2" width="3" height="10" rx="0.5" opacity="0.4"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
-      <svg class="wifi-off" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
       <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="14" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
     </span>
   </div>
@@ -154,22 +141,19 @@
         <span>EPKK · SKOKI</span>
       </div>
       <div class="compact-right">
-        <div class="offline-badge" title="Brak sieci — zrzut zapisze się lokalnie i wyśle po odzyskaniu zasięgu">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-          Offline · 14
-        </div>
         <div class="running-badge"><span class="live-dot"></span>RUNNING</div>
       </div>
     </div>
 
+    <!-- Tło: kokpit po dobiegu (05D) — silnik pracuje, samolot stoi, skład wsiada. -->
     <div class="phase-hero">
       <div class="phase-body">
         <div class="phase-hero-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" style="transform:rotate(-45deg)"><path d="M20.56 3.91C21.15 4.5 21.15 5.45 20.56 6.03L16.67 9.92L18.79 19.11L17.38 20.53L13.5 13.1L9.6 17L9.96 19.47L8.89 20.53L7.13 17.35L3.94 15.58L5 14.5L7.5 14.87L11.37 11L3.94 7.09L5.36 5.68L14.55 7.8L18.44 3.91C19 3.33 20 3.33 20.56 3.91Z"/></svg>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M22.00,15.08C22.00,14.25 21.32,13.57 20.49,13.58L15.00,13.57L9.98,5.57L8.00,5.57L10.14,13.57L5.00,13.57L3.50,11.57L1.99,11.57L2.93,15.09L3.33,16.58L4.99,16.59L10.49,16.58L14.99,16.58L20.48,16.60C21.33,16.57 21.99,15.90 22.00,15.08Z"/></svg>
         </div>
         <div class="phase-text">
-          <div class="phase-hero-name">Cruise</div>
-          <div class="phase-hero-sub">Lot 6 · nad zrzutowiskiem</div>
+          <div class="phase-hero-name">Engine idle</div>
+          <div class="phase-hero-sub">po locie 6 · gorący załadunek</div>
         </div>
       </div>
     </div>
@@ -177,29 +161,23 @@
     <div class="param-grid">
       <div class="param-cell">
         <div class="param-label">Ground Speed</div>
-        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">78</div><div class="param-unit">KT</div></div>
+        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">0</div><div class="param-unit">KT</div></div>
       </div>
       <div class="param-cell">
         <div class="param-label">Altitude</div>
-        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">3 200</div><div class="param-unit">FT</div></div>
+        <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value">715</div><div class="param-unit">FT</div></div>
       </div>
     </div>
 
     <div class="spacer"></div>
 
-    <!-- SHEET ZRZUTU -->
+    <!-- SHEET ZAŁADUNKU (issue #21 pkt 7) -->
     <div class="sheet-overlay">
       <div class="sheet">
         <div class="sheet-handle"></div>
         <div class="sheet-head">
-          <span class="sheet-title">ZRZUT · LOT 6</span>
-          <span class="sheet-sub">15:45 UTC</span>
-        </div>
-
-        <div class="alt-row">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 20h16L12 2z"/></svg>
-          <span class="alt-val" id="alt">3 200 ft</span>
-          <span class="alt-tag">wysokość z GPS</span>
+          <span class="sheet-title">ZAŁADUNEK · LOT 7</span>
+          <span class="sheet-sub">16:12 UTC</span>
         </div>
 
         <div class="type-row">
@@ -209,7 +187,7 @@
           </div>
           <div class="stepper">
             <div class="step-btn" onclick="bump('tandem',-1)">−</div>
-            <span class="step-val" id="v-tandem">2</span>
+            <span class="step-val zero" id="v-tandem">0</span>
             <div class="step-btn" onclick="bump('tandem',1)">+</div>
           </div>
         </div>
@@ -221,7 +199,7 @@
           </div>
           <div class="stepper">
             <div class="step-btn" onclick="bump('aff',-1)">−</div>
-            <span class="step-val" id="v-aff">1</span>
+            <span class="step-val zero" id="v-aff">0</span>
             <div class="step-btn" onclick="bump('aff',1)">+</div>
           </div>
         </div>
@@ -233,30 +211,23 @@
           </div>
           <div class="stepper">
             <div class="step-btn" onclick="bump('solo',-1)">−</div>
-            <span class="step-val" id="v-solo">1</span>
+            <span class="step-val zero" id="v-solo">0</span>
             <div class="step-btn" onclick="bump('solo',1)">+</div>
           </div>
         </div>
 
         <div class="total-row">
-          <span class="total-lbl">Skoczków w tym wyniesieniu</span>
-          <span class="total-val" id="total">4</span>
+          <span class="total-lbl">Skoczków na pokładzie</span>
+          <span class="total-val" id="total">0</span>
         </div>
 
-        <!-- Prefill z załadunku (issue #21 pkt 5): liczniki wyżej otwierają się już
-             WYPEŁNIONE składem zadeklarowanym na ziemi (05i) — w locie pilot tylko
-             potwierdza. Liczby są OPCJONALNE: zapis bez nich też przechodzi (skład
-             „niepodany", nie „zero"), więc ZAPISZ ZRZUT nie ma stanu zablokowanego —
-             dawny napis „Ustaw listę skoczków" szarpał layoutem i wyleciał (pkt 4). -->
-        <div class="prefill-note">Skład z załadunku 15:12 UTC — potwierdź albo popraw</div>
-
-        <div class="client-note">Rozliczenie trafi do klienta <b>SKY CAMP · zlec. 2026/114</b> (z preflightu)</div>
+        <div class="optional-note">Skład możesz pominąć — zapis i tak odnotuje załadunek w logu</div>
 
         <div class="sheet-actions">
-          <a href="05-cockpit-running.html" class="btn-cancel">Anuluj</a>
-          <a href="05-cockpit-running.html" class="btn-save">
+          <a href="05d-cockpit-taxi-post.html" class="btn-cancel">Anuluj</a>
+          <a href="05d-cockpit-taxi-post.html" class="btn-save">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            ZAPISZ ZRZUT
+            ZAPISZ ZAŁADUNEK
           </a>
         </div>
       </div>
@@ -265,34 +236,27 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Kokpit w locie — gdzie to siedzi?</div>
-  <a class="vp-item" href="05-cockpit-running.html">
-    <span class="vp-badge">05</span>
+  <div class="vp-title">Para zrzut / załadunek — kiedy który?</div>
+  <a class="vp-item active" href="05i-zaladunek.html">
+    <span class="vp-badge blue">05I</span>
     <span class="vp-body">
-      <span class="vp-name">In flight</span>
-      <span class="vp-when">Lot w toku — phase hero, GPS live, log zdarzeń. Przycisk <b>Zrzut</b> w pasku akcji otwiera ten arkusz.</span>
-    </span>
-  </a>
-  <a class="vp-item active" href="05e-zrzut.html">
-    <span class="vp-badge blue">05E</span>
-    <span class="vp-body">
-      <span class="vp-name">Zapis zrzutu (rozliczenie)</span>
-      <span class="vp-when">Po tapnięciu „Zrzut" nad zrzutowiskiem. Wysokość podstawia GPS jako <b>średnią z okna 15 s</b> (pojedynczy fix niósł szum — issue #21), a liczniki otwierają się <b>wypełnione składem z załadunku</b> (05I) — w locie pilot tylko potwierdza. Liczby są opcjonalne: zapis bez nich też przechodzi, więc ZAPISZ ZRZUT nigdy nie jest zablokowany. Klient dziedziczony z preflightu.</span>
+      <span class="vp-name">Załadunek skoczków</span>
+      <span class="vp-when">Na ziemi dnia skokowego: przed startem serii (kafelek na 04A) albo po wykołowaniu z pasa między lotami (slot paska akcji — 05H/05A/05D). Znacznik wejścia składu na pokład; liczby OPCJONALNE — zapis bez nich odnotowuje sam fakt (skład „niepodany", nie „zero"). Zadeklarowany skład wypełnia arkusz zrzutu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="05i-zaladunek.html">
-    <span class="vp-badge blue">05I</span>
+  <a class="vp-item" href="05e-zrzut.html">
+    <span class="vp-badge blue">05E</span>
     <span class="vp-body">
-      <span class="vp-name">Załadunek skoczków (para tego arkusza)</span>
-      <span class="vp-when">Na ziemi — przed startem serii albo po wykołowaniu z pasa: znacznik wejścia składu na pokład. Zadeklarowane tu liczby wypełniają TEN arkusz; zrzut je konsumuje (drugi zrzut w tym samym locie zaczyna od zera).</span>
+      <span class="vp-name">Zapis zrzutu (druga połowa pary)</span>
+      <span class="vp-when">W locie, nad zrzutowiskiem — liczniki otwierają się wypełnione TYM składem i pilot tylko potwierdza. Zrzut konsumuje załadunek: drugi zrzut w tym samym locie zaczyna od zera, dopóki nikt nowy nie wsiądzie.</span>
     </span>
   </a>
-  <a class="vp-item" href="05g-cockpit-no-gps.html">
-    <span class="vp-badge" style="color:var(--red);background:var(--red-muted);border-color:var(--red-border);">05G</span>
+  <a class="vp-item" href="05d-cockpit-taxi-post.html">
+    <span class="vp-badge">05D</span>
     <span class="vp-body">
-      <span class="vp-name">Kokpit bez fixa GPS</span>
-      <span class="vp-when">GPS stracił sygnał w locie — autodetekcja wstrzymana, zapis ręczny. Zrzut działa dalej, ale wysokość wpisujesz z wysokościomierza (GPS jej nie podpowie).</span>
+      <span class="vp-name">Kokpit po dobiegu (stąd się otwiera)</span>
+      <span class="vp-when">„Jak wyląduję i wykołuję z pasa" (issue #21 pkt 7) — skład kolejnego lotu wsiada przy pracującym silniku; przycisk Załadunek stoi w pasku akcji obok Take off i STOP.</span>
     </span>
   </a>
 </aside>
@@ -300,16 +264,14 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="05-cockpit-running.html">← 05 In Flight</a>
-  <a href="05e-zrzut.html" class="active">05E Zrzut</a>
-  <a href="05i-zaladunek.html">05I Załadunek</a>
-  <span>·</span>
-  <a href="04-cockpit-ground.html">04 Po zatrzymaniu →</a>
+  <a href="05d-cockpit-taxi-post.html">← 05D Taxi po LDG</a>
+  <a href="05i-zaladunek.html" class="active">05I Załadunek</a>
+  <a href="05e-zrzut.html">05E Zrzut →</a>
 </nav>
 
 <script>
-  // Trzy steppery zamiast „suma + rozbicie" — o jedno pojęcie mniej przy obsłudze w rękawicach.
-  const c = { tandem: 2, aff: 1, solo: 1 };
+  // Te same steppery co w 05E — zero jest legalne: skład opcjonalny (issue #21).
+  const c = { tandem: 0, aff: 0, solo: 0 };
   function bump(k, d) {
     c[k] = Math.max(0, c[k] + d);
     const el = document.getElementById('v-' + k);

@@ -71,8 +71,12 @@
   .param-value.muted { color:var(--text-muted); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  /* ACTION ROW — next logbook event primary, STOP secondary right */
-  .action-row { display:grid; grid-template-columns:1fr auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
+  /* ACTION ROW — next logbook event primary, ZAŁADUNEK middle (slot pary zrzut/załadunek), STOP right */
+  .action-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
+  /* Załadunek (issue #21) — naziemna połowa pary zrzut/załadunek: ten sam slot i ton,
+     w którym w locie stoi Zrzut, więc pasek dnia skokowego trzyma stałą geometrię. */
+  .boarding-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:12px 14px; background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:14px; color:var(--blue); cursor:pointer; text-decoration:none; }
+  .boarding-btn-lbl { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; white-space:nowrap; }
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 16px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
   .primary-btn { display:flex; align-items:center; justify-content:center; gap:9px; padding:16px 12px; background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:14px; color:var(--text-primary); font-family:var(--font-display); font-size:20px; letter-spacing:2px; cursor:pointer; text-decoration:none; width:100%; }
@@ -204,11 +208,17 @@
          zdarzenie sekwencji lotu — idle → TAXI → kołowanie → TAKE OFF → lot → LANDING.
          Zaraz po uruchomieniu silnika następnym zdarzeniem jest kołowanie, nie start:
          „Take off" w tym stanie zapraszał do zapisu zdarzenia, które fizycznie nie może
-         być następne. Zrzutu nie ma na ziemi W OGÓLE (patrz komentarz w 05). -->
+         być następne. Zrzutu nie ma na ziemi W OGÓLE — jego slot zajmuje ZAŁADUNEK
+         (issue #21): skoczkowie wsiadają na ziemi, wyskakują w locie; para trzyma
+         stałą geometrię paska w obu stanach dnia skokowego. -->
     <div class="action-row">
       <a href="05a-cockpit-taxi.html" class="primary-btn" title="Zapisuje kołowanie OD RAZU — bez arkusza i bez okna COFNIJ: taxi nie wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz w logu. Gdy samolot ruszy, autodetekcja zapisze kołowanie sama — przycisk jest na wypadek, gdyby nie zdążyła albo nie było GPS">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22.00,15.08C22.00,14.25 21.32,13.57 20.49,13.58L15.00,13.57L9.98,5.57L8.00,5.57L10.14,13.57L5.00,13.57L3.50,11.57L1.99,11.57L2.93,15.09L3.33,16.58L4.99,16.59L10.49,16.58L14.99,16.58L20.48,16.60C21.33,16.57 21.99,15.90 22.00,15.08Z"/><path d="M7.3,17.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 z"/><path d="M16.5,17.7 a1.3,1.3 0 1 0 2.6,0 a1.3,1.3 0 1 0 -2.6,0 z"/><path d="M2.5,19H21.5V21H2.5V19"/></svg>
         Taxi
+      </a>
+      <a href="05i-zaladunek.html" class="boarding-btn" title="Załadunek skoczków (issue #21) — znacznik wejścia składu na pokład; liczby opcjonalne, zadeklarowany skład wypełni arkusz zrzutu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="boarding-btn-lbl">Załadunek</span>
       </a>
       <a href="04-cockpit-ground.html" class="stop-btn" title="Zapisuje engine_stop i wraca do kokpitu (04): sesja zakończona, stamtąd ZDAJ SAMOLOT · przytrzymaj 2 s aby potwierdzić">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
@@ -226,7 +236,8 @@
   <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
   <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
   <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
-  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — zapis liczby skoczków (rozliczenie)"><span class="dot"></span>Zrzut</a>
+  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
+  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego — skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
   <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa — parametry — —, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
 </nav>
 </div>

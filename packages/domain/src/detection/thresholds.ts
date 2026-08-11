@@ -96,6 +96,17 @@ export const COOLDOWN_AFTER_LANDING_SEC = 30;
 /** Okno „Cofnij" w toaście autodetekcji zanim zdarzenie zostanie zapisane (§3.2). */
 export const AUTODETECT_TOAST_SEC = 5;
 
+/**
+ * Okno (s) uśredniania WYSOKOŚCI ZRZUTU (issue #21 pkt 2).
+ *
+ * Pojedynczy fix niesie szum wysokości rzędu kilkudziesięciu stóp — zapis zrzutu
+ * „z jednego odczytu" wpisywał ten szum wprost do rozliczenia. Średnia z okna wygładza
+ * go: przy 1 Hz to ~15 próbek. Dłużej = gładszy odczyt, ale jeśli samolot jeszcze się
+ * wznosi w dolocie nad zrzutowisko, wartość ciągnie w dół (uśrednia niższe fixy);
+ * krócej = bliżej chwili otwarcia arkusza, więcej szumu.
+ */
+export const DROP_ALT_WINDOW_SEC = 15;
+
 // ── Cechy trendowe (przebudowa 2026-07-30) ───────────────────────────────────
 
 /** Okno (s), z którego liczymy przyspieszenie podłużne i prędkość kątową. */
@@ -198,6 +209,7 @@ export const GPS_THRESHOLDS = {
   COOLDOWN_AFTER_TAKEOFF_SEC,
   COOLDOWN_AFTER_LANDING_SEC,
   AUTODETECT_TOAST_SEC,
+  DROP_ALT_WINDOW_SEC,
   TREND_WINDOW_SEC,
   TAKEOFF_MAX_DECEL_KT_PER_SEC,
   LANDING_TURN_RATE_VETO_DPS,

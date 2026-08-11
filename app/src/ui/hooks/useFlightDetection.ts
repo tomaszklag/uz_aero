@@ -21,6 +21,7 @@ import {
   AUTODETECT_TOAST_SEC,
   GPS_STALE_SEC,
   VS_WINDOW_SEC,
+  averageAltitudeFt,
   createDetectorState,
   fixUsable,
   fixesInWindow,
@@ -54,6 +55,13 @@ export interface FlightDetectionState {
   fix: GpsFix | null;
   /** Faza lotu i prędkość pionowa — napis w `PhaseHero` (mockup 05). */
   phase: PhaseReading;
+  /**
+   * Wysokość dla ZAPISU ZRZUTU: średnia z okna `DROP_ALT_WINDOW_SEC` historii detektora
+   * (issue #21 pkt 2) — pojedynczy fix niesie kilkadziesiąt stóp szumu i nie nadaje się
+   * do dokumentów. Liczona z TEJ SAMEJ historii co prędkość pionowa (jedna prawda
+   * o tym, co widział algorytm); po utracie sygnału zostaje ostatnia wartość — jak `fix`.
+   */
+  dropAltitudeFt: number | null;
   /** Detekcja czekająca na potwierdzenie ciszą albo cofnięcie. */
   pending: PendingDetection | null;
   /** Anuluje oczekującą detekcję — nic nie zostaje zapisane. */
@@ -104,6 +112,7 @@ export function useFlightDetection({
 
   const [fix, setFix] = useState<GpsFix | null>(null);
   const [phase, setPhase] = useState<PhaseReading>({ phase: 'idle', verticalSpeedFpm: null });
+  const [dropAltitudeFt, setDropAltitudeFt] = useState<number | null>(null);
   const [pending, setPending] = useState<PendingDetection | null>(null);
   const [gpsAvailable, setGpsAvailable] = useState(false);
   const [lastFixAt, setLastFixAt] = useState<number | null>(null);
@@ -230,6 +239,9 @@ export function useFlightDetection({
           fixesInWindow(step.state.history, VS_WINDOW_SEC),
         ),
       );
+      // Ta sama historia, inne pytanie: nie „jaki trend", tylko „na jakim poziomie" —
+      // średnia z okna zamiast ostatniego fixa (issue #21 pkt 2).
+      setDropAltitudeFt(averageAltitudeFt(step.state.history.fixes));
 
       if (step.detection === 'takeoff' || step.detection === 'landing') {
         schedule(step.detection, step.detectedAt ?? incoming.time, incoming);
@@ -302,5 +314,5 @@ export function useFlightDetection({
     };
   }, [clearTimers, enabled, gps, schedule, sessionUuid, taxi, trace]);
 
-  return { fix, phase, pending, undo, gpsAvailable, lastFixAt, permissionDenied };
+  return { fix, phase, dropAltitudeFt, pending, undo, gpsAvailable, lastFixAt, permissionDenied };
 }

@@ -99,8 +99,12 @@
   .log-chip-mh { color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); }
   .log-chip-fuel { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
 
-  /* ACTION ROW — next logbook event primary, STOP secondary right */
-  .action-row { display:grid; grid-template-columns:1fr auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
+  /* ACTION ROW — next logbook event primary, ZAŁADUNEK middle (slot pary zrzut/załadunek), STOP right */
+  .action-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
+  /* Załadunek (issue #21) — naziemna połowa pary zrzut/załadunek: ten sam slot i ton,
+     w którym w locie stoi Zrzut, więc pasek dnia skokowego trzyma stałą geometrię. */
+  .boarding-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:12px 14px; background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:14px; color:var(--blue); cursor:pointer; text-decoration:none; }
+  .boarding-btn-lbl { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; white-space:nowrap; }
   /* STOP ENGINE — wymaganie 3.2; na ziemi (GS < 5 kt) aktywny, zamyka wzlot → 09 */
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 16px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
@@ -248,6 +252,10 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>
         Take off
       </a>
+      <a href="05i-zaladunek.html" class="boarding-btn" title="Załadunek skoczków (issue #21) — znacznik wejścia składu na pokład; liczby opcjonalne, zadeklarowany skład wypełni arkusz zrzutu">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="boarding-btn-lbl">Załadunek</span>
+      </a>
       <a href="04-cockpit-ground.html" class="stop-btn" title="Zapisuje engine_stop i wraca do kokpitu (04): sesja zakończona, stamtąd ZDAJ SAMOLOT · przytrzymaj 2 s aby potwierdzić">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
         STOP
@@ -264,7 +272,8 @@
   <a href="05b-cockpit-inflight-toast.html" title="Kiedy: GPS wykrył start (GS > 50 kt) — toast z odliczaniem, 5 s na Cofnij"><span class="dot"></span>Toast Takeoff</a>
   <a href="05c-cockpit-toast-ldg.html" title="Kiedy: GPS wykrył lądowanie (GS < 30 kt + niska wysokość) — toast z Cofnij podczas rolloutu"><span class="dot"></span>Toast Landing</a>
   <a href="05d-cockpit-taxi-post.html" title="Kiedy: lot ukończony, silnik nadal ON — kołowanie; kolejny T/O albo STOP ENGINE"><span class="dot"></span>Taxi po LDG</a>
-  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — zapis liczby skoczków (rozliczenie)"><span class="dot"></span>Zrzut</a>
+  <a href="05e-zrzut.html" title="Kiedy: nad zrzutowiskiem — potwierdzenie składu z załadunku (rozliczenie)"><span class="dot"></span>Zrzut</a>
+  <a href="05i-zaladunek.html" title="Kiedy: na ziemi dnia skokowego — skoczkowie wsiadają; skład opcjonalny, wypełni arkusz zrzutu (issue #21)"><span class="dot"></span>Załadunek</a>
   <a href="05g-cockpit-no-gps.html" title="Kiedy: GPS stracił fixa — parametry — —, autodetekcja wstrzymana, wejścia ręczne aktywne; sieć osobno (SYNC może być zielony)"><span class="dot"></span>No GPS</a>
 </nav>
 </div>

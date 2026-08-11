@@ -57,6 +57,8 @@ export const EVENT_META: Record<EventType, EventMeta> = {
   takeoff: { dot: 'blue', badge: 'start', badgeTone: 'blue', correctable: true },
   landing: { dot: 'blue', badge: 'lądowanie', badgeTone: 'blue', correctable: true },
   drop: { dot: 'blue', badge: 'zrzut', badgeTone: 'blue', correctable: true },
+  // Załadunek (issue #21): opisuje lot jak zrzut — to dwa końce tego samego wyniesienia.
+  boarding: { dot: 'blue', badge: 'załadunek', badgeTone: 'blue', correctable: true },
   refuel: { dot: 'amber', badge: 'paliwo', badgeTone: 'amber', correctable: true },
   crew_change: { dot: 'amber', badge: 'załoga', badgeTone: 'amber', correctable: true },
   manual_log_entry: { dot: 'amber', badge: 'ręcznie', badgeTone: 'amber', correctable: true },

@@ -119,6 +119,21 @@ export interface DropSummary {
   avgAltitudeFt: number | null;
 }
 
+/**
+ * Ostatni załadunek CZEKAJĄCY na zrzut (issue #21 pkt 5+7).
+ *
+ * Prefill arkusza zrzutu 05e: pilot deklaruje skład na ziemi, w locie tylko potwierdza.
+ * Zrzut konsumuje stan (projekcja czyści go na `drop`) — ci skoczkowie już wyszli,
+ * więc drugi zrzut w tym samym locie zaczyna od pustych liczników. Kolejny załadunek
+ * nadpisuje poprzedni: liczy się skład faktycznie siedzący na pokładzie.
+ */
+export interface BoardingState {
+  /** Zadeklarowany skład; `null` = załadunek odnotowany bez liczb. */
+  jumpers: JumperCounts | null;
+  /** Czas załadunku — arkusz zrzutu podpisuje nim prefill („skład z załadunku 09:12"). */
+  at: EpochMillis;
+}
+
 /** Pełny stan/statystyki sesji wyliczone ze strumienia zdarzeń. */
 export interface SessionState {
   sessionUuid: string | null;
@@ -193,6 +208,8 @@ export interface SessionState {
   fuel: FuelState;
   mh: MhState;
   drops: DropSummary;
+  /** Załadunek czekający na zrzut; `null` = brak (nikt nie siedzi / już wynieśli). */
+  boarding: BoardingState | null;
 
   /** Czy padł `day_close` (zdanie samolotu). */
   closed: boolean;
@@ -255,6 +272,7 @@ export function emptySessionState(): SessionState {
       altitudeFixCount: 0,
       avgAltitudeFt: null,
     },
+    boarding: null,
     closed: false,
     closedAt: null,
     eventCount: 0,
@@ -395,14 +413,27 @@ export function projectSession(events: Event[]): SessionState {
       case 'drop': {
         const p = event.payload;
         state.drops.count += 1;
-        state.drops.jumpers.tandem += p.jumpers.tandem;
-        state.drops.jumpers.aff += p.jumpers.aff;
-        state.drops.jumpers.solo += p.jumpers.solo;
+        // Skład jest opcjonalny (issue #21 pkt 5): zrzut bez liczb liczy się do
+        // `count`, ale nie dokłada zer do sum — brak deklaracji to niewiedza, nie zero
+        // (ta sama zasada, co przy wysokości niżej).
+        if (p.jumpers != null) {
+          state.drops.jumpers.tandem += p.jumpers.tandem;
+          state.drops.jumpers.aff += p.jumpers.aff;
+          state.drops.jumpers.solo += p.jumpers.solo;
+        }
         if (p.altitudeFt != null) {
           state.drops.altitudeSumFt += p.altitudeFt;
           state.drops.altitudeFixCount += 1;
         }
         if (state.client == null && p.client != null) state.client = p.client;
+        // Zrzut konsumuje załadunek — ci skoczkowie już wyszli; kolejny arkusz 05e
+        // zaczyna od pustych liczników, dopóki nie będzie nowego załadunku.
+        state.boarding = null;
+        break;
+      }
+
+      case 'boarding': {
+        state.boarding = { jumpers: event.payload.jumpers ?? null, at: t };
         break;
       }
 

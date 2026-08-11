@@ -75,13 +75,30 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
   drop: z.object({
     dropNumber: z.number().int().positive(),
     altitudeFt: finite.nullable().optional(),
-    jumpers: z.object({
-      tandem: z.number().int().nonnegative(),
-      aff: z.number().int().nonnegative(),
-      solo: z.number().int().nonnegative(),
-    }),
+    // Skład OPCJONALNY od issue #21 pkt 5 (`null` = niepodany, nie zero) — telefony
+    // sprzed zmiany wysyłają go zawsze i ich paczki mają nadal przechodzić.
+    jumpers: z
+      .object({
+        tandem: z.number().int().nonnegative(),
+        aff: z.number().int().nonnegative(),
+        solo: z.number().int().nonnegative(),
+      })
+      .nullable()
+      .optional(),
     client: z.string().max(200).nullable().optional(),
     position: gpsPosition.optional(),
+  }),
+
+  /** `boarding` — załadunek skoczków (issue #21 pkt 7): znacznik faktu, skład opcjonalny. */
+  boarding: z.object({
+    jumpers: z
+      .object({
+        tandem: z.number().int().nonnegative(),
+        aff: z.number().int().nonnegative(),
+        solo: z.number().int().nonnegative(),
+      })
+      .nullable()
+      .optional(),
   }),
 
   refuel: z.object({

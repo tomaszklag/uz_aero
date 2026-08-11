@@ -44,6 +44,7 @@ import {
   SyncEngine,
   ThemePrefsSync,
   TraceSync,
+  type BoardingInput,
   type ClaimInput,
   type CommandResult,
   type DropInput,
@@ -141,6 +142,8 @@ export interface SessionStore {
   /** Korekta zdarzenia (04c) — zmiana czasu albo unieważnienie, zapis append-only. */
   correctEvent(payload: EventCorrectionPayload): Promise<CommandResult>;
   drop(input: DropInput): Promise<CommandResult>;
+  /** Załadunek skoczków (issue #21 pkt 7) — znacznik faktu, skład opcjonalny. */
+  boarding(input: BoardingInput): Promise<CommandResult>;
   crewChange(payload: CrewChangePayload): Promise<CommandResult>;
   manualLogEntry(payload: ManualLogEntryPayload): Promise<CommandResult>;
   /**
@@ -313,6 +316,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     drop(input) {
       return run(() => requireCommands().drop(requireContext(), input));
+    },
+
+    boarding(input) {
+      return run(() => requireCommands().boarding(requireContext(), input));
     },
 
     async crewChange(payload) {

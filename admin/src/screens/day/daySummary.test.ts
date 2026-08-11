@@ -70,6 +70,8 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
       altitudeFixCount: 8,
       avgAltitudeFt: 12856.25,
     },
+    // Ostatni zrzut skonsumował załadunek — tak wygląda domknięta sesja (issue #21).
+    boarding: null,
     closed: true,
     closedAt: at(13, 22),
     eventCount: 82,

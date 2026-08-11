@@ -90,6 +90,7 @@ export function voidLabelFor(type: EventType): string {
     taxi: 'KOŁOWANIA',
     refuel: 'TANKOWANIA',
     drop: 'ZRZUTU',
+    boarding: 'ZAŁADUNKU',
     engine_start: 'URUCHOMIENIA',
     engine_stop: 'WYŁĄCZENIA',
     manual_log_entry: 'WPISU',

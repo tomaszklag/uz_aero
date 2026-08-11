@@ -163,15 +163,28 @@ function describe(event: Event): string[] {
 
     case 'drop': {
       const p = event.payload;
-      const total = p.jumpers.tandem + p.jumpers.aff + p.jumpers.solo;
       const lines = [
         `wyniesienie ${p.dropNumber} · wysokość ${p.altitudeFt == null ? 'brak (bez fixa GPS)' : `${p.altitudeFt} ft`}`,
-        `skoczkowie: ${p.jumpers.tandem} tandem · ${p.jumpers.aff} aff · ${p.jumpers.solo} solo = ${total}`,
+        // Skład jest opcjonalny (issue #21 pkt 5): brak deklaracji to informacja,
+        // nie luka — administrator ma widzieć „nie podano", a nie zera udające pomiar.
+        p.jumpers != null
+          ? `skoczkowie: ${p.jumpers.tandem} tandem · ${p.jumpers.aff} aff · ${p.jumpers.solo} solo = ${p.jumpers.tandem + p.jumpers.aff + p.jumpers.solo}`
+          : 'skoczkowie: nie podano składu',
       ];
       if (p.client != null) lines.push(`klient: ${p.client}`);
       const pos = position(p.position);
       if (pos != null) lines.push(pos);
       return lines;
+    }
+
+    case 'boarding': {
+      const p = event.payload;
+      return [
+        p.jumpers != null
+          ? `na pokładzie: ${p.jumpers.tandem} tandem · ${p.jumpers.aff} aff · ${p.jumpers.solo} solo = ${p.jumpers.tandem + p.jumpers.aff + p.jumpers.solo}`
+          : 'na pokładzie: skład nie zadeklarowany',
+        'załadunek — zadeklarowany skład wypełnia arkusz najbliższego zrzutu',
+      ];
     }
 
     case 'refuel': {

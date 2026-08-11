@@ -285,6 +285,42 @@ describe('kanoniczny dzień 22 JUNE — trzy sesje (zgodność z design-notes)',
     expect(partial.drops.avgAltitudeFt).toBe(3000);
   });
 
+  it('zrzut BEZ składu liczy się do wyniesień, ale nie dokłada zer do sum (issue #21)', () => {
+    const s = projectSession([
+      ev('drop', '13:48', { dropNumber: 1, altitudeFt: 2500, jumpers: null }),
+      ev('drop', '14:42', { dropNumber: 2, altitudeFt: 2600, jumpers: { tandem: 2, aff: 0, solo: 1 } }),
+    ]);
+    expect(s.drops.count).toBe(2);
+    expect(s.drops.jumpers).toEqual({ tandem: 2, aff: 0, solo: 1 });
+    expect(s.drops.totalJumpers).toBe(3);
+  });
+
+  it('załadunek czeka na zrzut: prefill ze składem, czasem i nadpisaniem (issue #21)', () => {
+    const first = projectSession([
+      ev('boarding', '13:05', { jumpers: { tandem: 2, aff: 1, solo: 0 } }),
+    ]);
+    expect(first.boarding).toEqual({
+      jumpers: { tandem: 2, aff: 1, solo: 0 },
+      at: at('13:05'),
+    });
+
+    // Kolejny załadunek NADPISUJE poprzedni — liczy się skład faktycznie na pokładzie.
+    const overwritten = projectSession([
+      ev('boarding', '13:05', { jumpers: { tandem: 2, aff: 1, solo: 0 } }),
+      ev('boarding', '13:20', { jumpers: null }),
+    ]);
+    expect(overwritten.boarding).toEqual({ jumpers: null, at: at('13:20') });
+  });
+
+  it('zrzut KONSUMUJE załadunek — drugi arkusz w tym samym locie zaczyna od zera', () => {
+    const s = projectSession([
+      ev('boarding', '13:05', { jumpers: { tandem: 2, aff: 1, solo: 0 } }),
+      ev('takeoff', '13:24', { method: 'auto' }),
+      ev('drop', '13:48', { dropNumber: 1, altitudeFt: 2450, jumpers: { tandem: 2, aff: 1, solo: 0 } }),
+    ]);
+    expect(s.boarding).toBeNull();
+  });
+
   it('kontekst sesji i zamknięcie', () => {
     expect(s1.operation).toBe('skoki');
     expect(s1.departureIcao).toBe('EPKK');

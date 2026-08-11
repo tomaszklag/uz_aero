@@ -585,9 +585,16 @@ describe('zrzuty', () => {
     expect(check(inFlight(), drop())).toEqual([]);
   });
 
-  it('zrzut bez skoczków jest odrzucany', () => {
-    expect(hard(check(inFlight(), drop({ jumpers: { tandem: 0, aff: 0, solo: 0 } })))).toEqual([
-      'DROP_NO_JUMPERS',
+  it('zrzut BEZ składu przechodzi — raportowanie skoczków jest opcjonalne (issue #21)', () => {
+    // `null` = „skład niepodany" (tak normalizuje komenda), a suma 0 wprost z payloadu
+    // też nie ma prawa blokować: zrzut jest znacznikiem faktu, nie formularzem.
+    expect(check(inFlight(), drop({ jumpers: null }))).toEqual([]);
+    expect(check(inFlight(), drop({ jumpers: { tandem: 0, aff: 0, solo: 0 } }))).toEqual([]);
+  });
+
+  it('ujemna liczba skoczków jest odrzucana — skład niemożliwy, nie podejrzany', () => {
+    expect(hard(check(inFlight(), drop({ jumpers: { tandem: -1, aff: 0, solo: 1 } })))).toEqual([
+      'DROP_NEGATIVE_JUMPERS',
     ]);
   });
 
@@ -611,6 +618,47 @@ describe('zrzuty', () => {
     const v = check(ferry, drop());
     expect(hard(v)).toEqual([]);
     expect(soft(v)).toEqual(['DROP_OUTSIDE_JUMP_OPERATION']);
+  });
+});
+
+describe('załadunek (issue #21 pkt 7)', () => {
+  const boarding = (
+    payload: EventPayloadMap['boarding'] = { jumpers: { tandem: 2, aff: 1, solo: 3 } },
+    t = min(15),
+  ): Event => ev('boarding', payload, { t });
+
+  it('załadunek na ziemi dnia skokowego przechodzi — ze składem i bez', () => {
+    expect(check(running(), boarding())).toEqual([]);
+    expect(check(running(), boarding({ jumpers: null }))).toEqual([]);
+    // Także przed uruchomieniem silnika: pierwszy skład wsiada na postoju (04a).
+    expect(check(ground(), boarding())).toEqual([]);
+  });
+
+  it('ujemna liczba skoczków jest odrzucana', () => {
+    expect(
+      hard(check(running(), boarding({ jumpers: { tandem: 0, aff: -1, solo: 0 } }))),
+    ).toEqual(['BOARDING_NEGATIVE_JUMPERS']);
+  });
+
+  it('załadunek w locie to miękka flaga — w powietrzu nikt nie wsiada', () => {
+    const v = check(inFlight(), boarding(undefined, min(30)));
+    expect(hard(v)).toEqual([]);
+    expect(soft(v)).toEqual(['BOARDING_IN_FLIGHT']);
+  });
+
+  it('załadunek przy operacji innej niż skoki to miękka flaga', () => {
+    const ferry = [
+      claim(),
+      ev(
+        'preflight_confirm',
+        { operation: 'ferry', dutyStart: min(0), reading: { fuelL: 150, mh: MH_START } },
+        { t: min(0) },
+      ),
+      ev('engine_start', {}, { t: min(12) }),
+    ];
+    const v = check(ferry, boarding());
+    expect(hard(v)).toEqual([]);
+    expect(soft(v)).toEqual(['BOARDING_OUTSIDE_JUMP_OPERATION']);
   });
 });
 

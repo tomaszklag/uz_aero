@@ -598,7 +598,8 @@ Typy zdarzeń:
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
 | `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
-| `drop` | numer zrzutu, wysokość (z GPS), **liczba skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm`. Możliwy WYŁĄCZNIE w dniu skokowym (`isJumpOperation`) — w kokpicie innej operacji przycisku zrzutu nie ma (issue #19) |
+| `drop` | numer zrzutu, wysokość (**średnia z okna GPS** `DROP_ALT_WINDOW_SEC`, nie pojedynczy fix — issue #21), **skład skoczków w rozbiciu na typy** (`tandem` / `aff` / `solo`) — strona przychodowa dnia; klient dziedziczony z `preflight_confirm`. Skład jest **OPCJONALNY** (issue #21: `null` = niepodany, nie zero) — arkusz otwiera się wypełniony składem z `boarding` i pilot tylko potwierdza. Możliwy WYŁĄCZNIE w dniu skokowym (`isJumpOperation`) — w kokpicie innej operacji przycisku zrzutu nie ma (issue #19) |
+| `boarding` | **załadunek skoczków** (issue #21): znacznik wejścia składu na pokład — na ziemi, przed startem serii albo po wykołowaniu z pasa między lotami; skład OPCJONALNY jak przy `drop`. Zadeklarowany skład wypełnia arkusz najbliższego zrzutu (projekcja czyści go pierwszym `drop`). W kokpicie zajmuje na ziemi slot, w którym w powietrzu stoi zrzut — para trzyma stałą geometrię paska akcji |
 | `refuel` | przed / dolano / po, wyliczone zużycie |
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |

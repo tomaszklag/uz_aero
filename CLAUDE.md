@@ -238,7 +238,8 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 ```
 00-login → 01-moj-dzien (EKRAN DOMOWY)
 01-moj-dzien → 02-przejecie → 02e-zadanie → 02a-liczniki → „Przejmij i leć"
-→ 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / zmiana załogi / zdanie bez lotu 09c)
+→ 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
+  zmiana załogi / zdanie bez lotu 09c)
 → START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej sesji)
 → STOP ENGINE → 04-kokpit PO ZATRZYMANIU (hero = ZDAJ SAMOLOT; tankowanie nadal;
   drugiego START ENGINE NIE MA — kolejny lot to nowe przejęcie)
@@ -325,6 +326,7 @@ obowiązkowość odczytów, brak `leg_close`).
 - Rodzaj operacji — siatka kart z ikonami, NIE select. Nazwy dla pilota: Skoki / **Przelot** / Egzamin / Lot tech. / Inne (wartości w rejestrze zostają angielskie — `ferry` to identyfikator, nie napis)
 - **Rodzaj operacji wyznacza pola trasy** (issue #13): skoki = JEDNO lotnisko (startują i lądują na tym samym placu), pozostałe operacje = para start → lądowanie. Reguła mieszka w domenie (`isSameFieldOperation`) i tą samą odpowiedzią uzbraja bramkę lądowania w detekcji — formularz i detekcja nie mają jak się rozjechać
 - **Rodzaj operacji wyznacza też dostępne akcje** (issue #19): zrzut skoczków istnieje wyłącznie w dniu skokowym (`isJumpOperation`) — przy przelocie czy egzaminie przycisku NIE MA (to brak akcji, nie blokada z powodem: `drop` nie może się tam wydarzyć)
+- **Zrzut i załadunek to para** (issue #21, 2026-08-11): na ziemi dnia skokowego slot zrzutu w pasku akcji zajmuje ZAŁADUNEK (`boarding` — znacznik wejścia skoczków na pokład, skład OPCJONALNY), przed startem także kafelek na 04a. Zadeklarowany skład wypełnia arkusz zrzutu 05e — w locie pilot tylko POTWIERDZA listę; zrzut konsumuje załadunek. Skład przy zrzucie też OPCJONALNY (`null` = niepodany, nie zero) — przycisk zapisu zrzutu nie ma stanu zablokowanego. Wysokość zrzutu = średnia z okna `DROP_ALT_WINDOW_SEC` (15 s), nie ostatni fix
 
 ## Offline-first (obowiązuje w designie i implementacji)
 Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:

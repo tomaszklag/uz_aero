@@ -230,13 +230,34 @@ export interface LandingPayload {
 export interface DropPayload {
   /** Kolejny numer wyniesienia w dniu (1-based). */
   dropNumber: number;
-  /** Wysokość zrzutu (stopy, z GPS). */
+  /** Wysokość zrzutu (stopy) — średnia z okna GPS (`detection/dropAltitude.ts`). */
   altitudeFt?: number | null;
-  /** Liczba skoczków w rozbiciu na typy (przychód dnia). */
-  jumpers: JumperCounts;
+  /**
+   * Skład w rozbiciu na typy (przychód dnia) — OPCJONALNY od issue #21 pkt 5:
+   * zrzut jest znacznikiem FAKTU wyniesienia, a raportowanie liczby skoczków bywa
+   * odłożone albo pominięte. `null`/brak = „skład niepodany", NIE zero — dokładnie
+   * ta sama zasada, co `noFlightReason` (brak ≠ wartość) i `boarding.jumpers`.
+   */
+  jumpers?: JumperCounts | null;
   /** Klient dziedziczony z `preflight_confirm` (denormalizacja dla arkusza). */
   client?: string | null;
   position?: GpsPosition | null;
+}
+
+/**
+ * `boarding` — załadunek skoczków na pokład (issue #21 pkt 7).
+ *
+ * Znacznik FAKTU w logu: skoczkowie weszli na pokład — na ziemi, przed startem serii
+ * albo po wykołowaniu z pasa między lotami. Skład jest OPCJONALNY: `null` znaczy
+ * „załadunek był, składu nie zadeklarowano" — zero nigdy nie udaje pomiaru.
+ *
+ * Zadeklarowany skład staje się PREFILL-em arkusza zrzutu (05e): w locie pilot tylko
+ * potwierdza gotową listę zamiast klikać liczniki (issue #21 pkt 5). Konsumuje go
+ * pierwszy `drop` — projekcja czyści wtedy stan załadunku, bo ci skoczkowie już wyszli.
+ */
+export interface BoardingPayload {
+  /** Skład w rozbiciu na typy; `null`/brak = załadunek bez deklaracji liczby. */
+  jumpers?: JumperCounts | null;
 }
 
 /** `refuel` — przed / dolano / po + wyliczone zużycie (§3.4). */
@@ -336,6 +357,7 @@ export interface EventPayloadMap {
   takeoff: TakeoffPayload;
   landing: LandingPayload;
   drop: DropPayload;
+  boarding: BoardingPayload;
   refuel: RefuelPayload;
   crew_change: CrewChangePayload;
   manual_log_entry: ManualLogEntryPayload;
@@ -356,6 +378,7 @@ export const EVENT_TYPES: readonly EventType[] = [
   'takeoff',
   'landing',
   'drop',
+  'boarding',
   'refuel',
   'crew_change',
   'manual_log_entry',

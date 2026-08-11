@@ -34,6 +34,7 @@ import {
   AppBar,
   AppText,
   Banner,
+  BoardingSheet,
   Card,
   CockpitActions,
   DetectToast,
@@ -63,6 +64,7 @@ import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
 import { buildCockpitActions } from './logic/cockpitActions';
 import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
+import { currentFlightNumber } from './logic/flightNumber';
 import { fuelTone } from './logic/fuelNorm';
 import { buildCockpitFuel } from './logic/cockpitFuel';
 import { flightsBadge } from './logic/statsDay';
@@ -140,6 +142,7 @@ export function CockpitScreen({
   const startEngine = useSessionStore((s) => s.startEngine);
   const stopEngine = useSessionStore((s) => s.stopEngine);
   const drop = useSessionStore((s) => s.drop);
+  const boarding = useSessionStore((s) => s.boarding);
   const taxi = useSessionStore((s) => s.taxi);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
@@ -150,6 +153,11 @@ export function CockpitScreen({
 
   const [busy, setBusy] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
+  const [boardingOpen, setBoardingOpen] = useState(false);
+  // Czas w nagłówku arkusza załadunku — łapany przy OTWARCIU: na ziemi przed startem
+  // ticker sekundowy nie chodzi (`useTicker(engineOn)`), więc „teraz" z rendera
+  // potrafiłoby być sprzed kilku minut.
+  const [boardingOpenedAt, setBoardingOpenedAt] = useState(0);
   const [manualOpen, setManualOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
 
@@ -183,7 +191,7 @@ export function CockpitScreen({
     return start?.payload.fieldElevationFt ?? null;
   }, [events]);
 
-  const { fix, phase, pending, undo, gpsAvailable, lastFixAt, permissionDenied } =
+  const { fix, phase, dropAltitudeFt, pending, undo, gpsAvailable, lastFixAt, permissionDenied } =
     useFlightDetection({
       gps,
       enabled: engineOn,
@@ -315,6 +323,30 @@ export function CockpitScreen({
         setLeaveOpen(false);
         navigation.navigate('ReleaseAircraft');
       }}
+    />
+  );
+
+  /**
+   * Arkusz załadunku (05i) — JEDEN dla obu trybów kokpitu, jak arkusz blokady wyjścia:
+   * przed pierwszym uruchomieniem silnika załadunek wchodzi z siatki akcji naziemnych
+   * (04a), między lotami — ze slotu paska akcji (issue #21 pkt 7). Skład jest
+   * opcjonalny; zadeklarowany stanie się prefill-em arkusza zrzutu.
+   */
+  const openBoarding = () => {
+    setBoardingOpenedAt(Date.now());
+    setBoardingOpen(true);
+  };
+  const boardingSheet = (
+    <BoardingSheet
+      visible={boardingOpen}
+      flightNumber={currentFlightNumber(projection.flights.length, inFlight)}
+      time={timeUtc(boardingOpenedAt)}
+      busy={busy}
+      onConfirm={(jumpers) => {
+        setBoardingOpen(false);
+        void run(() => boarding({ jumpers }));
+      }}
+      onCancel={() => setBoardingOpen(false)}
     />
   );
 
@@ -497,7 +529,11 @@ export function CockpitScreen({
           {cycleHasEvents && (
             <Card
               title={`Cykl bieżący · ${takeoffs} T/O · ${landings} LDG`}
-              headerRight={<Tag label={`Lot #${projection.flights.length + (inFlight ? 1 : 0)}`} />}
+              // Helper, nie wzór w JSX — inline'owe `+ (inFlight ? 1 : 0)` dawało
+              // „Lot #2" w pierwszym locie (issue #21 pkt 1, `logic/flightNumber.ts`).
+              headerRight={
+                <Tag label={`Lot #${currentFlightNumber(projection.flights.length, inFlight)}`} />
+              }
               flush
               style={{
                 flexGrow: 1,
@@ -534,6 +570,7 @@ export function CockpitScreen({
           }}
           onDrop={actions.showDrop ? () => setDropOpen(true) : undefined}
           dropDisabledReason={actions.dropDisabledReason}
+          onBoarding={actions.showBoarding ? openBoarding : undefined}
           onStop={handleStop}
           // `engine_stop` w powietrzu byłby fałszywym wpisem — blokujemy z powodem (§3.2).
           stopDisabledReason={inFlight ? 'Silnik zatrzymasz po wylądowaniu i dobiegu' : null}
@@ -543,15 +580,19 @@ export function CockpitScreen({
         <DropSheet
           visible={dropOpen}
           // Numer LOTU, nie zrzutu — w jednym locie bywa kilka wyniesień.
-          flightNumber={projection.flights.length + (inFlight ? 1 : 0)}
+          flightNumber={currentFlightNumber(projection.flights.length, inFlight)}
           time={timeUtc(now)}
-          // Wysokość bierzemy z GPS, nie z palca — pilot ustawia tylko liczby skoczków.
-          altitudeFt={fix?.altitudeFt ?? null}
+          // Wysokość z GPS, ale ŚREDNIA z okna, nie ostatni fix (issue #21 pkt 2) —
+          // pilot ustawia wyłącznie liczby skoczków, i to tylko gdy prefill z załadunku
+          // nie zrobił tego za niego.
+          altitudeFt={dropAltitudeFt}
           client={projection.client}
+          initialJumpers={projection.boarding?.jumpers ?? null}
+          boardingTime={projection.boarding != null ? timeUtc(projection.boarding.at) : null}
           busy={busy}
           onConfirm={(jumpers) => {
             setDropOpen(false);
-            void run(() => drop({ jumpers, altitudeFt: fix?.altitudeFt ?? null }));
+            void run(() => drop({ jumpers, altitudeFt: dropAltitudeFt }));
           }}
           onCancel={() => setDropOpen(false)}
         />
@@ -575,6 +616,7 @@ export function CockpitScreen({
           onCancel={() => setManualOpen(false)}
         />
 
+        {boardingSheet}
         {leaveSheet}
         {toast}
       </Screen>
@@ -628,6 +670,23 @@ export function CockpitScreen({
       ]
     : [
         refuelAction,
+        // Załadunek TYLKO w dniu skokowym i TYLKO przed startem (issue #21 pkt 7):
+        // pierwszy skład wsiada zwykle przy wyłączonym silniku, a jego deklaracja tu
+        // otwiera arkusz zrzutu już wypełniony. Po biegu kafelka nie ma — kolejny lot
+        // to nowe przejęcie. Podpis jest STAŁY: zapisany załadunek widać w logu sesji
+        // niżej, a kokpit nie powtarza tego, co mówi log (reguła stanu modalnego).
+        ...(jumpDay
+          ? [
+              {
+                id: 'boarding',
+                icon: 'boarding',
+                label: 'Załadunek',
+                tone: 'blue',
+                sub: 'Skoczkowie na pokład',
+                onPress: openBoarding,
+              } satisfies ActionCardSpec,
+            ]
+          : []),
         {
           id: 'crew',
           icon: 'crew',
@@ -739,6 +798,7 @@ export function CockpitScreen({
         <ActionGrid actions={groundActions} />
       </View>
 
+      {boardingSheet}
       {leaveSheet}
       {toast}
     </Screen>
