@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — wzorzec ładowania (skeletony)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* ===== App header — bez zmian względem 01 =====
+     Nagłówek NIE JEST skeletonem: kod pilota zna store tożsamości, a datę zegar.
+     Skeleton dostaje wyłącznie to, na co naprawdę czekamy (reguła 3 w panelu niżej). */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 6px 8px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-left { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .app-header-right { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .icon-btn {
+    width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center;
+    border-radius:12px; color:var(--text-muted); text-decoration:none; flex-shrink:0;
+  }
+  .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ===== SKELETON — jedyny nowy prymityw tego arkusza =====
+     Plamka w kolorze `--surface-hover` — środek zakresu, po którym w panelu webowym
+     przesuwa się gradient; jedyny odcień widoczny i na `--surface` (wnętrze karty),
+     i na `--bg` (goła treść ekranu), we wszystkich pięciu motywach.
+     Puls, NIE shimmer: panel admin (`design/admin/SZABLON.html`) przesuwa gradient, bo
+     w przeglądarce to darmowe; aplikacja jest React Native bez modułu natywnego do
+     gradientów, a animacja `opacity` jedzie na wątku UI (`useNativeDriver`).
+     Wszystkie plamki na ekranie oddychają WSPÓLNYM rytmem — rozjechane fazy czyta się
+     jak migotanie, a nie jak jedna rzecz, która się ładuje. */
+  .skel { display:block; height:13px; border-radius:6px; background:var(--surface-hover); animation:skel 1400ms ease-in-out infinite; }
+  @keyframes skel { 0%,100% { opacity:1; } 50% { opacity:0.45; } }
+
+  /* ===== Log dnia w stanie ładowania =====
+     Geometria 1:1 z `01-moj-dzien.html` — karta, wiersze i sumy mają te same wysokości
+     co wersja z danymi, więc gdy doba dojdzie, NIC się nie przesuwa. */
+  .day-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .day-head {
+    padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted);
+    display:flex; align-items:center; gap:6px;
+  }
+  .day-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--green); }
+
+  .legs { display:flex; flex-direction:column; }
+  .leg-row { display:flex; align-items:center; gap:8px; padding:5px 6px 5px 0; border-bottom:1px solid var(--border); }
+  .leg-row:last-child { border-bottom:none; }
+  .leg-num { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; }
+  .leg-id { display:flex; flex-direction:column; gap:4px; width:112px; flex-shrink:0; }
+  .leg-metrics { flex:1; display:flex; gap:12px; }
+  .leg-metric { display:flex; flex-direction:column; gap:3px; }
+  /* Ołówek wiersza: pełny obrys, pusty środek. Cel dotykowy istnieje, ale jeszcze
+     nie ma dokąd prowadzić — skeleton nie jest klikalny (reguła 6). */
+  .edit-slot { border:1px solid var(--border); border-radius:8px; min-width:44px; min-height:44px; flex-shrink:0; }
+
+  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border-top:1px solid var(--border); }
+  .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:6px; }
+
+  /* Blok akcji: JEDEN przycisk, bo tylko tyle wiadomo na pewno (reguła 2).
+     Doba pusta dostanie zielone „ROZPOCZNIJ LOT" z przypisem, doba z sesjami — dwa
+     przyciski drugorzędne. Skeleton obiecuje część wspólną, nie zgaduje wariantu. */
+  .btn-slot { width:100%; min-height:46px; border-radius:12px; background:var(--surface-hover); animation:skel 1400ms ease-in-out infinite; }
+
+  /* Wejście w historię rysuje się NORMALNIE — jest statycznym linkiem, nie danymi.
+     Plakietki okna korekty (async, opcjonalna) skeleton NIE rezerwuje: może nigdy
+     nie przyjść, a wtedy trzymalibyśmy miejsce na nic (reguła 2). */
+  .history-link {
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    min-height:46px; padding:10px 18px; border-radius:12px;
+    border:1px solid var(--border); background:transparent; color:var(--text-secondary);
+    font-size:12.5px; font-weight:600; text-decoration:none;
+  }
+  .history-link:hover { border-color:var(--green-border); color:var(--green); }
+
+  /* ===== Panel wzorca na canvasie ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; min-width:26px; text-align:center; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-badge.red { color:var(--red); background:var(--red-muted); border-color:var(--red-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+
+  /* Inwentarz plamek — próbki w rozmiarach, których używają ekrany */
+  .inv { display:flex; flex-direction:column; gap:9px; }
+  .inv-row { display:grid; grid-template-columns:118px 1fr; align-items:center; gap:12px; }
+  .inv-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — SKEL</span>
+  <span class="slug">ładowanie · skeletony</span>
+  <span class="canvas-meta"><span class="pulse"></span>issue #33</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — ekran 01 w stanie ładowania">
+  <div class="status-bar">
+    <span>17:25</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+
+    <!-- Nagłówek bez skeletonu: kod pilota i data są znane od pierwszej klatki -->
+    <div class="app-header">
+      <div class="app-header-left">
+        <span class="screen-title">MÓJ DZIEŃ</span>
+        <span class="header-subtitle">TMK · 12 SIE 2026</span>
+      </div>
+      <div class="app-header-right">
+        <a href="13-ustawienia.html" class="icon-btn" title="Ustawienia">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <!-- Karta i jej nagłówek są STAŁE — „Log dnia · czasy UTC" nie jest daną.
+           Skeletonem są trzy wiersze sesji i dwie sumy: dokładnie te miejsca,
+           w których za chwilę pojawią się liczby. Trzy wiersze, bo tyle mieści się
+           bez przewijania — skeleton pokazuje KSZTAŁT listy, nie jej długość. -->
+      <div class="day-card">
+        <div class="day-head">Log dnia · czasy UTC</div>
+
+        <div class="legs">
+          <div class="leg-row">
+            <span class="leg-num"><span class="skel" style="width:14px;height:12px;"></span></span>
+            <span class="leg-id">
+              <span class="skel" style="width:96px;height:12px;"></span>
+              <span class="skel" style="width:54px;height:9px;"></span>
+            </span>
+            <span class="leg-metrics">
+              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:18px;height:11px;"></span></span>
+              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
+              <span class="leg-metric"><span class="skel" style="width:22px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
+            </span>
+            <span class="edit-slot"></span>
+          </div>
+          <div class="leg-row">
+            <span class="leg-num"><span class="skel" style="width:14px;height:12px;"></span></span>
+            <span class="leg-id">
+              <span class="skel" style="width:96px;height:12px;"></span>
+              <span class="skel" style="width:54px;height:9px;"></span>
+            </span>
+            <span class="leg-metrics">
+              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:18px;height:11px;"></span></span>
+              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
+              <span class="leg-metric"><span class="skel" style="width:22px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
+            </span>
+            <span class="edit-slot"></span>
+          </div>
+          <div class="leg-row">
+            <span class="leg-num"><span class="skel" style="width:14px;height:12px;"></span></span>
+            <span class="leg-id">
+              <span class="skel" style="width:96px;height:12px;"></span>
+              <span class="skel" style="width:54px;height:9px;"></span>
+            </span>
+            <span class="leg-metrics">
+              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:18px;height:11px;"></span></span>
+              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
+              <span class="leg-metric"><span class="skel" style="width:22px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
+            </span>
+            <span class="edit-slot"></span>
+          </div>
+        </div>
+
+        <div class="totals">
+          <div class="total-cell">
+            <span class="skel" style="width:28px;height:7px;"></span>
+            <span class="skel" style="width:62px;height:22px;"></span>
+            <span class="skel" style="width:50px;height:8px;"></span>
+          </div>
+          <div class="total-cell">
+            <span class="skel" style="width:28px;height:7px;"></span>
+            <span class="skel" style="width:62px;height:22px;"></span>
+            <span class="skel" style="width:50px;height:8px;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Jeden blok przycisku: część wspólna obu wariantów dnia -->
+      <div class="btn-slot"></div>
+
+      <!-- Statyczne wejście w historię rysuje się od razu, bez plakietki -->
+      <a href="12-historia.html" class="history-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        Poprzednie dni
+      </a>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Inwentarz plamek — rozmiary używane przez ekrany</div>
+  <div class="inv">
+    <div class="inv-row"><span class="inv-key">micro · 7 px</span><span class="skel" style="width:26px;height:7px;"></span></div>
+    <div class="inv-row"><span class="inv-key">mono · 11–12 px</span><span class="skel" style="width:96px;height:12px;"></span></div>
+    <div class="inv-row"><span class="inv-key">display · 22 px</span><span class="skel" style="width:62px;height:22px;"></span></div>
+    <div class="inv-row"><span class="inv-key">wiersz listy</span><span class="skel" style="height:44px;border-radius:8px;"></span></div>
+    <div class="inv-row"><span class="inv-key">przycisk · 46 px</span><span class="skel" style="height:46px;border-radius:12px;"></span></div>
+    <div class="inv-row"><span class="inv-key">karta · 96 px</span><span class="skel" style="height:96px;border-radius:14px;"></span></div>
+  </div>
+</aside>
+
+<aside class="variants-panel">
+  <div class="vp-title">Reguły wzorca — obowiązują każdy ekran</div>
+
+  <div class="vp-item">
+    <span class="vp-badge">1</span>
+    <span class="vp-body">
+      <span class="vp-name">Skeleton zamiast spinnera</span>
+      <span class="vp-when">Kręcące się kółko nie mówi, co się pojawi, i pozwala treści wskoczyć pod palec już trzymany nad ekranem. Skeleton trzyma miejsce w tej samej geometrii, więc po dojściu danych NIC się nie przesuwa. Spinnera na cały ekran nie ma nigdzie — ta sama reguła, co w panelu (`docs/architektura-panelu-frontend.md` §3.2).</span>
+    </span>
+  </div>
+
+  <div class="vp-item">
+    <span class="vp-badge">2</span>
+    <span class="vp-body">
+      <span class="vp-name">Plamka tylko tam, gdzie coś na pewno przyjdzie</span>
+      <span class="vp-when">Wiersze logu, sumy doby, przycisk akcji — te elementy będą. Plakietka okna korekty przy „Poprzednie dni" może nie przyjść nigdy, więc miejsca się dla niej NIE rezerwuje; gdy przyjdzie, dopisze się w linii. Gdy warianty różnią się kształtem (pusty dzień = jeden przycisk z przypisem, dzień z sesjami = dwa przyciski), skeleton obiecuje ich część wspólną.</span>
+    </span>
+  </div>
+
+  <div class="vp-item">
+    <span class="vp-badge">3</span>
+    <span class="vp-body">
+      <span class="vp-name">Co znamy lokalnie, nie czeka</span>
+      <span class="vp-when">Nagłówek ekranu, tytuł karty, statyczne wejścia nawigacyjne rysują się od pierwszej klatki. Skeleton opisuje CZEKANIE NA DANE, a nie „ekran się otwiera" — inaczej zaczyna udawać splash, który został z aplikacji usunięty.</span>
+    </span>
+  </div>
+
+  <div class="vp-item">
+    <span class="vp-badge amber">4</span>
+    <span class="vp-body">
+      <span class="vp-name">Skeleton to nie stan pusty</span>
+      <span class="vp-when">„JESZCZE ŻADNEGO LOTU" (01A) wolno napisać dopiero wtedy, gdy wiadomo, że jest pusto — czyli po odtworzeniu rejestru z serwera (§4.9). Do tej chwili miejsce trzyma skeleton. Pusty stan pokazany komuś, kto ma dziś trzy sesje, wygląda jak utrata danych; plamki nie kłamią o niczym.</span>
+    </span>
+  </div>
+
+  <div class="vp-item">
+    <span class="vp-badge blue">5</span>
+    <span class="vp-body">
+      <span class="vp-name">Próg 180 ms, minimum 420 ms</span>
+      <span class="vp-when">Odczyt z lokalnego SQLite trwa zwykle kilkadziesiąt milisekund — skeleton pokazany natychmiast byłby mrugnięciem, gorszym niż brak czegokolwiek. Pojawia się więc dopiero, gdy czekanie przekroczy 180 ms, a jak już się pojawi, zostaje co najmniej 420 ms, żeby nie zniknął w połowie animacji.</span>
+    </span>
+  </div>
+
+  <div class="vp-item">
+    <span class="vp-badge red">6</span>
+    <span class="vp-body">
+      <span class="vp-name">Skeleton nie jest interaktywny</span>
+      <span class="vp-when">Pod plamką nie ma przycisku do trafienia — ołówek wiersza ma obrys i cel dotykowy, ale nie prowadzi jeszcze nigdzie. Czytnik ekranu dostaje jeden komunikat „Ładowanie" na blok, a nie listę pustych elementów.</span>
+    </span>
+  </div>
+
+  <div class="vp-item">
+    <span class="vp-badge">7</span>
+    <span class="vp-body">
+      <span class="vp-name">Puls, nie shimmer</span>
+      <span class="vp-when">Plamka pulsuje przezroczystością 1 → 0.45 w cyklu 1400 ms, wspólnym dla całego ekranu. Panel webowy przesuwa gradient (`.skel` w `design/admin/SZABLON.html`), bo w przeglądarce to darmowe; aplikacja jest React Native bez modułu natywnego do gradientów, a `opacity` animuje się na wątku UI. Rozjechane fazy czytają się jak migotanie — dlatego rytm jest jeden.</span>
+    </span>
+  </div>
+</aside>
+
+<aside class="variants-panel">
+  <div class="vp-title">Gdzie ten wzorzec obowiązuje</div>
+  <a class="vp-item" href="01-moj-dzien.html">
+    <span class="vp-badge">01</span>
+    <span class="vp-body">
+      <span class="vp-name">Mój dzień — log sesji doby</span>
+      <span class="vp-when">Stan pokazany na tym arkuszu: wiersze sesji, sumy i blok akcji. Do czasu odtworzenia rejestru (§4.9) skeleton stoi także zamiast stanu pustego 01A.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="12-historia.html">
+    <span class="vp-badge">12</span>
+    <span class="vp-body">
+      <span class="vp-name">Historia dni — karty dób</span>
+      <span class="vp-when">Dwie karty w geometrii `DayCard` zamiast pustego ekranu; „BRAK ZAMKNIĘTYCH DNI" dopiero po odtworzeniu rejestru.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="02-preflight.html">
+    <span class="vp-badge">02</span>
+    <span class="vp-body">
+      <span class="vp-name">Nowy lot — lista floty i drugi pilot</span>
+      <span class="vp-when">Bez skeletonu pusta flota pisała „Brak samolotów w pamięci urządzenia" w trakcie odczytu — komunikat o awarii pokazywany przy normalnym starcie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="07-zmiana-zalogi.html">
+    <span class="vp-badge">07</span>
+    <span class="vp-body">
+      <span class="vp-name">Zmiana załogi — kandydaci na Duala</span>
+      <span class="vp-when">Zanim lista dojdzie, stoi na niej jedna pozycja („Bez drugiego pilota"), a kandydaci dopisują się NAD nią — czyli przycisk zapisu ucieka w dół dokładnie wtedy, gdy pilot po niego sięga.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="16-lot.html">
+    <span class="vp-badge">16</span>
+    <span class="vp-body">
+      <span class="vp-name">Szczegóły lotu i ślad (14)</span>
+      <span class="vp-when">Ślad czyta się z osobnego magazynu (setki punktów), więc czekanie bywa widoczne. Miniatura, mapa i profil pionowy dostają plamki w swoich wymiarach.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="13-ustawienia.html">
+    <span class="vp-badge">13</span>
+    <span class="vp-body">
+      <span class="vp-name">Ustawienia — wiersz rejestratora śladu</span>
+      <span class="vp-when">Pojedyncza wartość w wierszu klucz–wartość: plamka jest wielkości SAMEJ WARTOŚCI, nie całego wiersza. Wiersz dorysowany dopiero po odczycie przepychał w dół diagnostykę, którą pilot właśnie czytał.</span>
+    </span>
+  </a>
+  <div class="vp-item">
+    <span class="vp-badge blue">↑</span>
+    <span class="vp-body">
+      <span class="vp-name">Start aplikacji</span>
+      <span class="vp-when">Trzy bramki przed pierwszym ekranem (fonty i baza, poświadczenia, wznowienie sesji) miały spinner na środku czerni. Mają teraz skeleton RAMY — pasek nagłówka i blok treści — bo za nimi idzie się na 01, do kokpitu albo na login i plamki w kształcie logu dnia byłyby obietnicą nie do dotrzymania.</span>
+    </span>
+  </div>
+</aside>
+
+<aside class="variants-panel">
+  <div class="vp-title">Gdzie ten wzorzec CELOWO nie obowiązuje</div>
+  <a class="vp-item" href="11-eksport.html">
+    <span class="vp-badge amber">11</span>
+    <span class="vp-body">
+      <span class="vp-name">Flagi serwera — to nie jest czekanie</span>
+      <span class="vp-when">Dane z serwera mają swoją własną skalę: `live` / `cache` / `brak` (§6 pkt 2). „Serwer jeszcze nie potwierdził sprawdzenia tej sesji" to ODPOWIEDŹ, a nie oczekiwanie — może nie zmienić się do najbliższej synchronizacji, więc plamka obiecywałaby coś, co nie przyjdzie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="04b-cockpit-readonly.html">
+    <span class="vp-badge amber">04B</span>
+    <span class="vp-body">
+      <span class="vp-name">Podgląd cudzej maszyny — disabled z powodem</span>
+      <span class="vp-when">Ekran czeka na dane samolotu z cache, ale mówi to wprost przyciskiem zablokowanym z podanym powodem — a to jest osobna, starsza reguła (§6 pkt 3). Dwa sposoby mówienia o jednym czekaniu w jednym miejscu byłyby szumem.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10-statystyki.html">
+    <span class="vp-badge amber">10</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozliczenie — identyfikator to wartość</span>
+      <span class="vp-when">Karty załogi pokazują kod pilota z cache, a do czasu odczytu jego identyfikator. To nie jest dziura po danej — to ta sama dana, tylko mniej ładna. Reguła 3: co znamy lokalnie, nie czeka.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="LOADERY.html" class="active">Wzorzec ładowania</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">01 Mój dzień</a>
+  <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
+  <a href="12-historia.html">12 Historia</a>
+  <a href="02-preflight.html">02 Nowy lot</a>
+  <a href="07-zmiana-zalogi.html">07 Załoga</a>
+  <a href="13-ustawienia.html">13 Ustawienia</a>
+  <span>·</span>
+  <a href="admin/SZABLON.html">Szablon panelu →</a>
+</nav>
+
+</body>
+</html>

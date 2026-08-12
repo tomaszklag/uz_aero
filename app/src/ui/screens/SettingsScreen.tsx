@@ -302,12 +302,16 @@ function TraceRow() {
     };
   }, [trace]);
 
-  if (trace == null || stats == null) return null;
+  if (trace == null) return null;
+  // Wiersz istnieje od pierwszej klatki, także zanim policzymy fixy (issue #33):
+  // dorysowany po odczycie przepychał w dół resztę diagnostyki, którą pilot właśnie
+  // czytał. Plamka ma szerokość typowej wartości tego wiersza.
   return (
     <KeyValueRow
       divider
       label="Rejestrator śladu"
-      value={`${stats.total} fixów · ${stats.pendingUpload} do wysłania`}
+      pendingWidth={132}
+      value={stats == null ? null : `${stats.total} fixów · ${stats.pendingUpload} do wysłania`}
     />
   );
 }

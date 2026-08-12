@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
@@ -29,7 +29,7 @@ import {
 } from '@expo-google-fonts/jetbrains-mono';
 
 import { ThemeProvider, useTheme } from './src/ui/theme';
-import { AppText } from './src/ui/components';
+import { AppText, SkeletonScreen } from './src/ui/components';
 import { RootNavigator } from './src/ui/navigation/RootNavigator';
 import { resumeTarget, type ResumeTarget } from './src/ui/navigation/resumeTarget';
 import { useAppBootstrap, useGpsPort, useSensorPort } from './src/ui/bootstrap/appBootstrap';
@@ -38,6 +38,7 @@ import { useGps } from './src/ui/bootstrap/servicesContext';
 import { useAuthStore } from './src/ui/store/authStore';
 import { useSessionStore } from './src/ui/store/sessionStore';
 import { useBackgroundTracking } from './src/ui/hooks/useBackgroundTracking';
+import { useSkeleton } from './src/ui/hooks/useSkeleton';
 import { useSyncLoop } from './src/ui/hooks/useSyncLoop';
 import { LoginScreen } from './src/ui/screens/LoginScreen';
 import { PinScreen } from './src/ui/screens/PinScreen';
@@ -99,6 +100,12 @@ function AppRoot() {
 
   const fontsReady = fontsLoaded || fontError != null;
 
+  // Bramka startu (issue #33): fonty i baza. Skeleton zamiast spinnera, a bramka
+  // pilnuje, żeby na ciepłym starcie — kiedy jedno i drugie jest gotowe w kilkadziesiąt
+  // milisekund — nie mrugnął ani przez klatkę.
+  const booting = !themeReady || !fontsReady || boot.phase !== 'ready';
+  const bootSkeleton = useSkeleton(booting);
+
   // Brak lokalnego zapisu = aplikacja nie ma prawa udawać, że działa (offline-first §4.1).
   if (boot.phase === 'error') {
     return (
@@ -118,11 +125,13 @@ function AppRoot() {
     );
   }
 
-  if (!themeReady || !fontsReady || boot.phase !== 'ready') {
-    return (
-      <View style={[styles.center, { backgroundColor: theme.colors.bg }]}>
-        <ActivityIndicator color={theme.colors.green} size="large" />
-      </View>
+  // `|| bootSkeleton`: plamki, które już weszły na ekran, dotrzymują swojego minimum —
+  // inaczej dane, które przyszły tuż po progu, kasowałyby je w połowie pierwszego pulsu.
+  if (booting || bootSkeleton) {
+    return bootSkeleton ? (
+      <SkeletonScreen />
+    ) : (
+      <View style={[styles.center, { backgroundColor: theme.colors.bg }]} />
     );
   }
 
@@ -156,11 +165,16 @@ function AuthGate() {
 
   useSyncLoop();
 
-  if (status === 'loading') {
-    return (
-      <View style={[styles.center, { backgroundColor: theme.colors.bg }]}>
-        <ActivityIndicator color={theme.colors.green} size="large" />
-      </View>
+  // Magazyn poświadczeń czyta się zwykle szybciej niż próg bramki, więc skeleton
+  // najczęściej nie pojawia się tu wcale — i o to chodzi.
+  const reading = status === 'loading';
+  const skeleton = useSkeleton(reading);
+
+  if (reading || skeleton) {
+    return skeleton ? (
+      <SkeletonScreen />
+    ) : (
+      <View style={[styles.center, { backgroundColor: theme.colors.bg }]} />
     );
   }
 
@@ -205,11 +219,13 @@ function ResumeGate() {
     };
   }, [queries, loadSession]);
 
-  if (initial == null) {
-    return (
-      <View style={[styles.center, { backgroundColor: theme.colors.bg }]}>
-        <ActivityIndicator color={theme.colors.green} size="large" />
-      </View>
+  const skeleton = useSkeleton(initial == null);
+
+  if (initial == null || skeleton) {
+    return skeleton ? (
+      <SkeletonScreen />
+    ) : (
+      <View style={[styles.center, { backgroundColor: theme.colors.bg }]} />
     );
   }
 

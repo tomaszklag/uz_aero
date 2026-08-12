@@ -30,6 +30,7 @@ import {
   DataTable,
   Screen,
   ScreenHeader,
+  Skeleton,
   StatGrid,
   SyncChip,
   TrackMap,
@@ -39,6 +40,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
+import { useSkeleton } from '../hooks/useSkeleton';
 
 /** Wysokość mapy i profilu — proporcje z mockupu 14 przy szerokości telefonu. */
 const MAP_HEIGHT = 300;
@@ -65,6 +67,7 @@ export function TrackScreen({
 
   const [view, setView] = useState<FlightTrackView | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const skeleton = useSkeleton(!loaded);
 
   const { sessionUuid, flightIndex } = route.params;
 
@@ -122,7 +125,19 @@ export function TrackScreen({
   );
 
   if (!loaded) {
-    return <Screen scroll padded={false} header={header} />;
+    // Pełny ślad to najcięższy odczyt w aplikacji — mapa, profil pionowy i log punktów
+    // z osobnego magazynu. Plamki trzymają te trzy wysokości (issue #33).
+    return (
+      <Screen scroll padded={false} header={header}>
+        {skeleton && (
+          <View accessible accessibilityLabel="Ładowanie" style={styles.content}>
+            <Skeleton height={MAP_HEIGHT + 88} radius={theme.radius.md} />
+            <Skeleton height={PROFILE_HEIGHT + 44} radius={theme.radius.md} />
+            <Skeleton height={160} radius={theme.radius.md} />
+          </View>
+        )}
+      </Screen>
+    );
   }
 
   if (view == null) {

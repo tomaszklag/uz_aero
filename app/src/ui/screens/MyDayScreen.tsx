@@ -33,6 +33,7 @@ import {
   Icon,
   Screen,
   ScreenHeader,
+  Skeleton,
   StatGrid,
   SyncChip,
   Tag,
@@ -43,6 +44,7 @@ import { fontFamily } from '../theme/tokens';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { usePilotDay } from '../hooks/usePilotDay';
+import { useSkeleton } from '../hooks/useSkeleton';
 import { utcDayStart } from '../../domain';
 import { dateUtcLong, plural } from '../format';
 import { buildMyDay, totalLabel, type SessionRowVm } from './logic/myDay';
@@ -130,6 +132,14 @@ export function MyDayScreen({
    * wtedy najlepszą dostępną prawdą, a odtworzenie wraca natychmiast bez zmian.
    */
   const ready = vm != null && (!empty || streamHydrated);
+  /**
+   * Dopóki dobie nie wolno wierzyć, miejsce trzymają plamki (issue #33). To NIE JEST
+   * to samo, co stan pusty: „JESZCZE ŻADNEGO LOTU" mówi, że dziś nic nie było, a
+   * skeleton — że jeszcze nie wiemy (wzorzec `design/LOADERY.html`, reguła 4).
+   * Odczyt z SQLite mieści się zwykle pod progiem bramki, więc na co dzień pilot nie
+   * zobaczy tu niczego poza gotowym logiem.
+   */
+  const skeleton = useSkeleton(!ready);
 
   const totals: StatCell[] =
     vm == null
@@ -249,6 +259,12 @@ export function MyDayScreen({
             </>
           ))}
 
+        {/* Ta sama przestrzeń w stanie ładowania: karta logu i JEDEN blok akcji.
+            Jeden, bo tyle wiadomo na pewno — pusty dzień dostanie zielone „ROZPOCZNIJ
+            LOT" z przypisem, a dzień z sesjami dwa przyciski drugorzędne (wzorzec,
+            reguła 2: skeleton obiecuje część wspólną, nie zgaduje wariantu). */}
+        {!ready && skeleton && <MyDaySkeleton />}
+
         {/* ── okno korekty 24 h ma mieć drzwi (12) ─────────────────────────── */}
         <Pressable
           accessibilityRole="button"
@@ -361,6 +377,85 @@ function EmptySessions() {
   );
 }
 
+/**
+ * Stan ŁADOWANIA logu dnia (issue #33, `design/LOADERY.html`).
+ *
+ * Geometria jest przepisana z `SessionRow` i `StatGrid` co do piksela — o to w tym
+ * wzorcu chodzi: gdy doba dojdzie, plamki podmieniają się na liczby, a nic nie
+ * przeskakuje pod palcem trzymanym już nad ołówkiem wiersza.
+ *
+ * Trzy wiersze, bo tyle mieści się bez przewijania. Liczba mówi o KSZTAŁCIE listy,
+ * nie o jej długości — tej nikt jeszcze nie zna.
+ */
+function MyDaySkeleton() {
+  const { theme } = useTheme();
+
+  return (
+    <View accessible accessibilityLabel="Ładowanie" style={styles.skeletonBlock}>
+      <Card title="Log dnia · czasy UTC" flush>
+        {[0, 1, 2].map((row) => (
+          <View
+            key={row}
+            style={[
+              styles.legRow,
+              { borderBottomWidth: theme.borderWidth, borderBottomColor: theme.colors.border },
+            ]}
+          >
+            <View style={styles.skeletonNumber}>
+              <Skeleton width={14} height={12} />
+            </View>
+            <View style={[styles.legId, styles.skeletonId]}>
+              <Skeleton width={96} height={12} />
+              <Skeleton width={54} height={9} />
+            </View>
+            <View style={styles.legMetrics}>
+              <SkeletonMetric value={18} />
+              <SkeletonMetric value={30} />
+              <SkeletonMetric value={30} />
+            </View>
+            {/* Ołówek ma obrys i cel dotykowy, ale pusty środek: skeleton nie jest
+                interaktywny (wzorzec, reguła 6) — nie ma jeszcze dokąd prowadzić. */}
+            <View
+              style={[
+                styles.legEdit,
+                { borderWidth: theme.borderWidth, borderColor: theme.colors.border },
+              ]}
+            />
+          </View>
+        ))}
+
+        {/* Sumy doby w geometrii `StatGrid`: tło prześwieca przez 1-pikselowe odstępy. */}
+        <View style={[styles.skeletonTotals, { backgroundColor: theme.colors.border }]}>
+          {[0, 1].map((cell) => (
+            <View
+              key={cell}
+              style={[styles.skeletonTotalCell, { backgroundColor: theme.colors.surface }]}
+            >
+              <Skeleton width={28} height={8} />
+              <Skeleton width={62} height={24} />
+              <Skeleton width={50} height={9} />
+            </View>
+          ))}
+        </View>
+      </Card>
+
+      {/* Wysokość i zaokrąglenie `ActionButton size="md"` — mniejszego z dwóch
+          wariantów, czyli części wspólnej pustego dnia i dnia z sesjami. */}
+      <Skeleton height={48} radius={theme.radius.md} />
+    </View>
+  );
+}
+
+/** `.leg-metric` w stanie ładowania: etykieta nad wartością, ta sama para wysokości. */
+function SkeletonMetric({ value }: { value: number }) {
+  return (
+    <View style={styles.skeletonMetric}>
+      <Skeleton width={26} height={7} />
+      <Skeleton width={value} height={11} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
 
@@ -376,6 +471,17 @@ const styles = StyleSheet.create({
   legMetric: { gap: 1 },
   legMetricKey: { fontSize: 7, lineHeight: 10, letterSpacing: 1.5, textTransform: 'uppercase' },
   legMetricValue: { fontSize: 11, lineHeight: 15 },
+
+  // ── stan ładowania ─────────────────────────────────────────────────────────
+  // Odstęp taki sam jak `content.gap`: skeleton zajmuje miejsce karty ORAZ przycisku.
+  skeletonBlock: { gap: 12 },
+  skeletonNumber: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  // Plamki potrzebują odrobinę więcej luzu niż wiersze tekstu, które zastępują —
+  // linia ma światło wewnątrz swojej wysokości, prostokąt nie ma go wcale.
+  skeletonId: { gap: 4 },
+  skeletonMetric: { gap: 3 },
+  skeletonTotals: { flexDirection: 'row', flexWrap: 'wrap', gap: 1 },
+  skeletonTotalCell: { flexGrow: 1, flexBasis: '45%', gap: 3, paddingHorizontal: 12, paddingVertical: 10 },
 
   // ── stan pusty listy ───────────────────────────────────────────────────────
   emptyLegs: { alignItems: 'center', gap: 8, paddingVertical: 26, paddingHorizontal: 20 },
