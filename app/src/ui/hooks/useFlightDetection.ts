@@ -27,6 +27,7 @@ import {
   fixesInWindow,
   flightPhase,
   stepDetector,
+  syncDetectorPhase,
   type Detection,
   type DetectorState,
   type GpsFix,
@@ -35,6 +36,7 @@ import {
 import type { GpsPort } from '../../application/ports';
 import { useSessionStore } from '../store';
 import { useTrace } from '../bootstrap/servicesContext';
+import { taxiWrite } from './taxiWrite';
 
 /** Oczekujące zdarzenie w oknie „COFNIJ". */
 export interface PendingDetection {
@@ -126,6 +128,17 @@ export function useFlightDetection({
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tickTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  /**
+   * DETEKCJA W TOKU: od pokazania toasta „COFNIJ" do końca zapisu (albo cofnięcia).
+   *
+   * To jedyne okno, w którym automat i rejestr MUSZĄ się różnić — faza już się zmieniła,
+   * a zdarzenia z rozmysłem jeszcze nie ma. Uzgadnianie faz i natychmiastowy zapis
+   * kołowania są w nim wyłączone; poza nim rejestr rządzi.
+   */
+  const settling = useRef(false);
+  /** Kołowanie wstrzymane oknem „COFNIJ" (para „landing → taxi", `taxiWrite`). */
+  const heldTaxiAt = useRef<number | null>(null);
+
   // Elewacja pojawia się dopiero przy starcie silnika — aktualizujemy bez resetu fazy,
   // żeby nie zgubić stanu „w powietrzu" przy ponownym renderze. Tryb operacji tak samo.
   useEffect(() => {
@@ -139,15 +152,56 @@ export function useFlightDetection({
     tickTimer.current = null;
   }, []);
 
+  /**
+   * Kołowanie do rejestru — jedna droga dla emisji bieżącej i dla wpisu wstrzymanego
+   * oknem „COFNIJ". Co z nim zrobić, orzeka czysta `taxiWrite`; tutaj zostaje sam zapis.
+   */
+  const recordTaxi = useCallback(
+    (at: number, settlingNow: boolean) => {
+      const { projection } = useSessionStore.getState();
+      const decision = taxiWrite({
+        settling: settlingNow,
+        recordedTaxiing: projection.taxiing,
+        recordedInFlight: projection.inFlight,
+      });
+      if (decision === 'hold') {
+        heldTaxiAt.current = at;
+        return;
+      }
+      heldTaxiAt.current = null;
+      if (decision === 'skip') return;
+      void taxi('auto', null, at).catch(() => {
+        // Odmowa reguły dla zapisu Z AUTOMATU nie trafia na ekran — store trzyma ją
+        // z dala od `lastError` (issue #30). Pilot nie nacisnął niczego, więc nie ma
+        // czego mu prostować; ślad do kalibracji zostaje w markerach.
+      });
+    },
+    [taxi],
+  );
+
+  /** Rozstrzygnięcie okna „COFNIJ": dopisuje wstrzymane kołowanie albo je porzuca. */
+  const releaseHeldTaxi = useCallback(
+    (write: boolean) => {
+      const at = heldTaxiAt.current;
+      heldTaxiAt.current = null;
+      if (at != null && write) recordTaxi(at, false);
+    },
+    [recordTaxi],
+  );
+
   const undo = useCallback(() => {
     clearTimers();
+    settling.current = false;
+    // Nie było lądowania — nie było i dobiegu. Kołowanie wstrzymane oknem znika razem
+    // ze zdarzeniem, które je otworzyło.
+    releaseHeldTaxi(false);
     setPending((p) => {
       // Marker COFNIJ do śladu (faza 5): fałszywa detekcja oznaczona przez pilota —
       // rejestr zdarzeń tego nie widzi, bo COFNIJ z definicji zapobiega zdarzeniu.
       if (p != null) trace?.marker('undo', p.detection, p.at, sessionUuid);
       return null;
     });
-  }, [clearTimers, sessionUuid, trace]);
+  }, [clearTimers, releaseHeldTaxi, sessionUuid, trace]);
 
   /** Po upływie okna zapisujemy zdarzenie — metodą `auto`, z czasem RETRO-DATOWANYM. */
   const commit = useCallback(
@@ -160,16 +214,23 @@ export function useFlightDetection({
         if (d === 'takeoff') await takeoff('auto', null, at);
         else await landing('auto', null, at);
       } catch {
-        // Twarde odrzucenie inwariantu (np. landing bez startu) trafia do `lastError`
-        // w store i jest pokazywane na ekranie — tutaj nie ma czego dodać.
+        // Odrzucenie reguły (np. lądowanie bez startu w rejestrze) NIE idzie na ekran:
+        // to spór automatu z rejestrem, nie pomyłka pilota. Rejestr wygrywa, a fazę
+        // automatu wyprostuje `syncDetectorPhase` na następnym fixie.
+      } finally {
+        // Zapis się dokonał (albo odbił), więc rejestr jest znów aktualny: okno się
+        // zamyka, a wstrzymane kołowanie idzie ZA zdarzeniem, które je otworzyło.
+        settling.current = false;
+        releaseHeldTaxi(true);
       }
     },
-    [landing, takeoff],
+    [landing, releaseHeldTaxi, takeoff],
   );
 
   const schedule = useCallback(
     (d: Exclude<Detection, 'taxi'>, at: number, fix: GpsFix) => {
       clearTimers();
+      settling.current = true;
       // Marker do śladu (faza 5): „toast pokazany". Razem z ewentualnym `undo`
       // i zdarzeniem w rejestrze daje pełny obraz trafności progu.
       trace?.marker('detection', d, at, sessionUuid);
@@ -213,21 +274,28 @@ export function useFlightDetection({
       setLastFixAt(incoming.time);
       lastFixDeviceMs.current = Date.now();
 
+      // REJESTR STERUJE AUTOMATEM (issue #30). Faza automatu żyje w pamięci ekranu
+      // i nie widzi zapisów spoza siebie: wpisu ręcznego, „COFNIJ", restartu aplikacji.
+      // Rozjazd kosztuje więcej niż fałszywą detekcję — automat w złej fazie szuka
+      // NIE TEGO zdarzenia i potrafi przegapić cały lot. Poza oknem „COFNIJ" (gdzie
+      // różnica jest zamierzona) prostujemy go przed każdym krokiem.
+      if (!settling.current) {
+        detector.current = syncDetectorPhase(
+          detector.current,
+          useSessionStore.getState().projection.inFlight,
+        );
+      }
+
       const step = stepDetector(detector.current, incoming);
       detector.current = step.state;
 
       // Kołowanie zapisujemy OD RAZU, bez okna „COFNIJ". Okno istnieje po to, żeby
       // fałszywy start albo lądowanie nie trafiły do czasów lotu — kołowanie żadnego
       // czasu nie wyznacza, więc pytanie „czy na pewno?" byłoby samym szumem.
-      //
-      // Gdy projekcja już wie o trwającym kołowaniu, detekcja jest duplikatem z odrodzonego
-      // detektora (powrót na ekran, restart aplikacji) — pomijamy ją PO CICHU. Gwardia
-      // `ALREADY_TAXIING` odrzuciłaby zapis i tak, ale jej odmowa ląduje w `lastError`,
-      // a pilot nie powinien oglądać błędu za zdarzenie, którego sam nie wywołał.
-      if (step.detection === 'taxi' && !useSessionStore.getState().projection.taxiing) {
-        void taxi('auto', null, step.detectedAt ?? incoming.time).catch(() => {
-          // Powód odrzucenia trafia do `lastError` w store i jest widoczny w kokpicie.
-        });
+      // Duplikat odrodzonego detektora i dobieg zapisany przed lądowaniem rozstrzyga
+      // `taxiWrite` — po cichu, bo pilot niczego tu nie nacisnął.
+      if (step.detection === 'taxi') {
+        recordTaxi(step.detectedAt ?? incoming.time, settling.current);
       }
 
       // Okno prędkości pionowej bierzemy z historii DETEKTORA — hook nie prowadzi już
@@ -312,7 +380,7 @@ export function useFlightDetection({
       clearTimers();
       clearInterval(staleTimer);
     };
-  }, [clearTimers, enabled, gps, schedule, sessionUuid, taxi, trace]);
+  }, [clearTimers, enabled, gps, recordTaxi, schedule, sessionUuid, trace]);
 
   return { fix, phase, dropAltitudeFt, pending, undo, gpsAvailable, lastFixAt, permissionDenied };
 }

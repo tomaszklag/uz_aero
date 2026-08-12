@@ -18,6 +18,7 @@ import {
   fixUsable,
   runDetector,
   stepDetector,
+  syncDetectorPhase,
   MAX_FIX_GAP_SEC,
   type GpsFix,
 } from '../domain';
@@ -681,5 +682,58 @@ describe('geofence lądowania (operacja jednolotniskowa)', () => {
   it('distanceNm: minuta szerokości geograficznej = 1 NM (sanity trygonometrii)', () => {
     expect(distanceNm(FIELD, nmNorth(1))).toBeCloseTo(1, 2);
     expect(distanceNm(FIELD, FIELD)).toBe(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Rejestr steruje automatem (issue #30). Faza automatu żyje w pamięci ekranu, więc
+// nie widzi zapisów spoza siebie: wpisu ręcznego, „COFNIJ", restartu aplikacji.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('uzgodnienie fazy z rejestrem', () => {
+  it('zgodna faza zostawia stan NIETKNIĘTY (ten sam obiekt)', () => {
+    const ground = onGround();
+    const air = airborne();
+
+    expect(syncDetectorPhase(ground, false)).toBe(ground);
+    expect(syncDetectorPhase(air, true)).toBe(air);
+  });
+
+  it('rejestr mówi „w locie" — automat przestawia się na wypatrywanie lądowania', () => {
+    // Tak wygląda automat po ręcznym starcie z kokpitu albo po restarcie w locie.
+    const stale = { ...onGround(), candidateSince: t(3), taxiing: true };
+    const synced = syncDetectorPhase(stale, true);
+
+    expect(synced.phase).toBe('airborne');
+    // Kandydat zbierał się pod warunek startu — po przestawieniu nie ma czego liczyć.
+    expect(synced.candidateSince).toBeNull();
+    expect(synced.taxiing).toBe(false);
+  });
+
+  it('rejestr mówi „na ziemi" — automat wraca do wypatrywania startu', () => {
+    expect(syncDetectorPhase(airborne(), false).phase).toBe('ground');
+  });
+
+  it('histereza przeżywa uzgodnienie — „COFNIJ" nie wystawia tego samego toasta na nowo', () => {
+    // Warunek, który wywołał cofniętą detekcję, zwykle trzyma się jeszcze kilkanaście
+    // sekund. Wyzerowana histereza odpaliłaby ją ponownie na następnym fixie.
+    const undone = { ...airborne(), cooldownUntil: t(60) };
+
+    expect(syncDetectorPhase(undone, false).cooldownUntil).toBe(t(60));
+  });
+
+  it('bez uzgodnienia automat po cofniętym starcie GUBI prawdziwy start', () => {
+    // Fałszywy start: automat przeszedł w `airborne`, ale pilot cofnął toast, więc
+    // w rejestrze NIE MA zdarzenia. Od tej chwili automat wypatruje wyłącznie lądowania.
+    const afterUndo = runDetector(onGround(), series(0, 8, 60, FIELD_ELEV)).state;
+    expect(afterUndo.phase).toBe('airborne');
+
+    // Prawdziwy start dwie minuty później — poza histerezą, więc nic go nie tłumi.
+    const realTakeoff = series(120, 12, 60, FIELD_ELEV + 200);
+    expect(runDetector(afterUndo, realTakeoff).detections).toEqual([]);
+
+    // Rejestr („nie ma otwartego lotu") prostuje fazę i lot zostaje zapisany.
+    const synced = syncDetectorPhase(afterUndo, false);
+    expect(runDetector(synced, realTakeoff).detections.map((d) => d.detection)).toEqual(['takeoff']);
   });
 });

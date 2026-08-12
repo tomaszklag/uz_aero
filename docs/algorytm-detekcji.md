@@ -6,8 +6,9 @@
 > Kontekst architektoniczny: `docs/architektura-kodu.md` §8.1–8.2.
 > Wymagania produktowe: `docs/_main.md.txt` §3.3.
 > Kod: `packages/domain/src/detection/`.
-> Stan na 2026-08-11 (korekta geoidalna wysokości w adapterze — §4a; wcześniej
-> 2026-08-04: odczulenie kanału ruchu + gwardia `ALREADY_TAXIING`).
+> Stan na 2026-08-12 (rejestr steruje fazą automatu — §2.2; wcześniej 2026-08-11:
+> korekta geoidalna wysokości w adapterze — §4a; 2026-08-04: odczulenie kanału ruchu
+> + gwardia `ALREADY_TAXIING`).
 
 ---
 
@@ -121,12 +122,46 @@ z góry, a dobrana wartość zgadza się co do cyfry z medianą wysokości posto
 używa `server/scripts/replay.ts`. Narzędzie kalibracyjne liczyło elewację „z ziemi" od
 początku — teraz robi to samo runtime.
 
+### 2.2 Automat a rejestr — kto ma pierwszeństwo (issue #30, 2026-08-12)
+
+`DetectorState.phase` żyje w pamięci zamontowanego kokpitu i zna wyłącznie własne
+detekcje. Rejestr zdarzeń przeżywa restart, zbiera także zapisy pilota i to on trafia do
+dokumentów. Te dwa przekonania o tym samym samolocie rozjeżdżają się przy każdym zapisie
+spoza automatu:
+
+| Skąd rozjazd | Automat | Rejestr |
+|---|---|---|
+| pilot zapisał start ręcznie (przycisk w kokpicie, 05f) | `ground` | w locie |
+| „COFNIJ" w toaście — faza już się zmieniła, zdarzenie z rozmysłem NIE powstało | `airborne` | na ziemi |
+| powrót na ekran albo restart aplikacji w locie | `ground` | w locie |
+
+Rozjazd nie jest kosmetyczny, bo faza wybiera, **czego automat szuka** (§8): stojąc
+w `airborne` wypatruje wyłącznie lądowania i po cofniętym fałszywym starcie przegapiłby
+prawdziwy start — a z nim cały lot.
+
+**Pierwszeństwo ma rejestr.** `syncDetectorPhase(state, inFlight)` prostuje fazę przed
+każdym krokiem, z jednym wyjątkiem: w oknie „COFNIJ" różnica jest zamierzona (faza już się
+zmieniła, zdarzenia jeszcze nie ma), więc uzgadnianie jest wtedy wyłączone. Uzgodnienie
+zeruje `candidateSince` (kandydat zbierał się pod porzucony warunek) i `taxiing`, ale
+**`cooldownUntil` zostawia nietknięty**: „COFNIJ" znaczy „to nie był start", a warunek,
+który detekcję wywołał, zwykle jeszcze się trzyma — wyzerowana histereza wystawiłaby
+ten sam toast na następnym fixie.
+
+**Konsekwencja dla banerów:** odmowa reguły dla zdarzenia z **autodetekcji** nie idzie na
+ekran (nie trafia do `lastError` w store). Zasada „nigdy cichy błąd" (§6 pkt 3
+`docs/_main.md.txt`) broni pilota przed martwym przyciskiem — nacisnął, nic się nie stało,
+nie wie dlaczego. Tutaj pilot nie nacisnął niczego: czerwone „Nie zapisano" opisywałoby
+pomyłkę MASZYNY językiem jego straty. Wyjątek jest wąski z rozmysłem — dotyczy wyłącznie
+odmowy reguły; każda inna awaria zapisu (baza, magazyn) zostaje widoczna, bo cisza
+o nieudanym zapisie to utrata danych.
+
 ---
 
 ## 3. Przepływ jednego fixa
 
 Kolejność jest częścią algorytmu, nie szczegółem implementacji. Numeracja odpowiada
-komentarzom w `stepDetector`.
+komentarzom w `stepDetector`. Uzgodnienie fazy z rejestrem (§2.2) dzieje się **przed**
+tym przepływem, w spoinie — automat dostaje fix, gdy jego faza jest już aktualna.
 
 ```
                         ┌─────────────────────────────┐
@@ -400,9 +435,10 @@ własny stan `taxiing` (otwiera `taxi`, zamyka dopiero `takeoff` albo `engine_st
 a gwardia `ALREADY_TAXIING` w `sessionRules.ts` twardo odrzuca drugie `taxi` z rzędu.
 Flaga detektora żyje bowiem tylko tak długo, jak zamontowany ekran kokpitu — po powrocie
 na ekran albo restarcie aplikacji odrodzony detektor emitował kołowanie jeszcze raz.
-`useFlightDetection` dodatkowo pomija emisję **po cichu**, gdy projekcja już kołuje —
-duplikat z odrodzonego detektora nie jest błędem pilota i nie ma czego pokazywać
-w `lastError`.
+Spoina dodatkowo pomija emisję **po cichu**, gdy projekcja już kołuje — duplikat
+z odrodzonego detektora nie jest błędem pilota i nie ma czego pokazywać w `lastError`.
+Od issue #30 rozstrzyga to tablica `taxiWrite` (`app/src/ui/hooks/taxiWrite.ts`), która
+obok duplikatu zna też dobieg wstrzymany oknem „COFNIJ" (§7.4).
 
 ### 7.4 Para „landing → taxi"
 
@@ -414,6 +450,14 @@ po ziemi, więc jest to poprawne semantycznie, nie obejście.
 Kotwica na punkcie przyziemienia, a nie liczona od nowa z okna: gdyby liczyła się z okna,
 jej centroid siedziałby gdzieś na prostej do lądowania i retro-datowanie kołowania
 wskazywałoby moment na finalu.
+
+**Dobieg czeka na rozstrzygnięcie okna „COFNIJ"** (issue #30). Kołowanie zapisuje się
+natychmiast, ale `landing` leży wtedy jeszcze w toaście z odliczaniem — rejestr mówi więc
+„w powietrzu" i twardo odrzuca dobieg (`ALREADY_IN_FLIGHT`). Tak powstawał czerwony baner
+„Nie zapisano — samolot jest w powietrzu, kołowanie nie ma sensu" za zdarzenie, którego
+pilot nie wywołał. Spoina wstrzymuje więc kołowanie do końca okna: po zapisie lądowania
+dopisuje je z zachowanym momentem retro-datowanym, a po „COFNIJ" porzuca — nie było
+lądowania, to i dobiegu nie było.
 
 ---
 
@@ -703,7 +747,9 @@ Co bronimy, czym i gdzie jest test.
 | Odskok multipathu (fix za progiem, wraca po sekundach) | fałszywe kołowanie 🔴 | utrzymanie warunku ruchu `TAXI_CONFIRM_SEC` | `flightDetector.test.ts` |
 | Słaby fix „przenosi" odbiornik (accuracy 25–50 m) | fałszywe kołowanie 🔴 | próg ruchu powiększany o `accuracyM` | `flightDetector.test.ts` |
 | Szum dopplera przy dostępnej pozycji | fałszywe kołowanie | kanał wsparcia głosuje tylko bez pozycji | `flightDetector.test.ts` |
-| Odrodzony detektor (powrót na ekran, restart) | zdublowane `taxi` | projekcja `taxiing` + gwardia `ALREADY_TAXIING`; hook pomija duplikat po cichu | `rules.test.ts`, `projections.test.ts` |
+| Odrodzony detektor (powrót na ekran, restart) | zdublowane `taxi` | projekcja `taxiing` + gwardia `ALREADY_TAXIING`; spoina pomija duplikat po cichu | `rules.test.ts`, `taxiWrite.test.ts` |
+| Faza automatu rozjechana z rejestrem (COFNIJ, wpis ręczny, restart w locie) | **przegapiony start albo lądowanie — cały lot** 🔴 | rejestr prostuje fazę: `syncDetectorPhase` (§2.2) | `flightDetector.test.ts` |
+| Dobieg emitowany, gdy `landing` jest jeszcze w oknie „COFNIJ" | baner „Nie zapisano" bez winy pilota | wstrzymanie kołowania do końca okna (§7.4) | `taxiWrite.test.ts` |
 | Jamming (dokładność 120 m) | fałszywe lądowanie w locie | bramka jakości; fix nie wchodzi do historii | `flightDetector.test.ts` |
 | Spoofing / multipath (teleportacja) | fałszywy start | plauzybilność skoku pozycji | `flightDetector.test.ts` |
 | Utrata sygnału | detekcja „z rozpędu" | `MAX_FIX_GAP_SEC` zeruje kandydatów | `flightDetector.test.ts` |
@@ -765,7 +811,8 @@ Warstwa aplikacji i UI:
 
 | Plik | Rola |
 |---|---|
-| `app/src/ui/hooks/useFlightDetection.ts` | GPS → automat → okno „COFNIJ" → komenda |
+| `app/src/ui/hooks/useFlightDetection.ts` | GPS → automat → okno „COFNIJ" → komenda; uzgadnia fazę z rejestrem (§2.2) |
+| `app/src/ui/hooks/taxiWrite.ts` | kołowanie z automatu: zapisać, wstrzymać czy pominąć (§7.3, §7.4) |
 | `app/src/ui/hooks/useSensorTrace.ts` | czujniki → ślad kalibracyjny (nic nie decyduje) |
 | `app/src/application/traceRecorder.ts` | zapis śladu (fire-and-forget, nie może przeszkodzić lotowi) |
 | `server/scripts/replay.ts` | odtworzenie nagrania przez ten sam automat |
