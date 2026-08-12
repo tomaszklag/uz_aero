@@ -102,6 +102,11 @@ const REGISTRY = {
   // historii i mają wyglądać jak para, ale nie jak duplikat.
   boarding: m('account-group'),
 
+  // Lot bez zapisu GPS (16A): pinezka PRZEKREŚLONA — mówi „nie ma śladu", a nie
+  // „nie ma sieci" (`offline` znaczy brak łączności) ani „nie było lotu"
+  // (`aircraft-off` znaczy sesję bez lotu). Ślad nie ma z siecią nic wspólnego.
+  'no-track': m('map-marker-off'),
+
   // obiekty
   aircraft: m('airplane'),
   // Sesja, w której silnik ani razu nie ruszył (09C) — samolot PRZEKREŚLONY, nie zwykły:

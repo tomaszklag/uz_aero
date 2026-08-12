@@ -119,12 +119,18 @@ export function StatsScreen({
 
   const codeOf = useCallback((id: string) => codes[id] ?? id, [codes]);
 
-  /** Wejście w ślad lotu (14) — numer lotu w tabeli jest celem dotykowym. */
-  const openTrack = useCallback(
+  /**
+   * Wejście w SZCZEGÓŁY LOTU (16) — numer lotu w tabeli jest celem dotykowym.
+   *
+   * Do issue #25 numer prowadził wprost w ślad (14) i to była pomyłka kategorii: ślad
+   * opisuje LOT, a lista pokazuje loty sesji, więc tabela udawała nawigację po mapach.
+   * Dziś numer otwiera lot, a ślad jest jednym z jego detali — miniaturą na 16.
+   */
+  const openFlight = useCallback(
     (flightIndex: number) => {
       const sessionUuid = projection.sessionUuid;
       if (sessionUuid == null) return;
-      navigation.navigate('Track', { sessionUuid, flightIndex });
+      navigation.navigate('FlightDetails', { sessionUuid, flightIndex });
     },
     [navigation, projection.sessionUuid],
   );
@@ -148,14 +154,15 @@ export function StatsScreen({
         id: row.id,
         label: row.label,
         cells: [
-          // Numer lotu otwiera ślad (14) — wejście z mockupu 10. Lot ręczny też jest
-          // klikalny: ekran 14 tłumaczy wtedy, DLACZEGO trasy nie ma (wariant 14B),
-          // a martwy numer kazałby pilotowi zgadywać, czy to brak danych, czy awaria.
+          // Numer lotu otwiera SZCZEGÓŁY LOTU (16) — wejście z mockupu 10. Lot ręczny
+          // też jest klikalny: ekran 16 tłumaczy wtedy, DLACZEGO trasy nie ma
+          // (wariant 16A), a martwy numer kazałby pilotowi zgadywać, czy to brak
+          // danych, czy awaria.
           {
             text: row.no,
             muted: true,
-            pressLabel: `Ślad lotu ${row.no}`,
-            onPress: () => openTrack(Number(row.no)),
+            pressLabel: `Szczegóły lotu ${row.no}`,
+            onPress: () => openFlight(Number(row.no)),
           },
           { text: row.takeoff },
           { text: row.landing },
@@ -163,7 +170,7 @@ export function StatsScreen({
           { text: row.methodLabel, chip: row.method === 'auto' ? 'green' : 'amber' },
         ],
       })),
-    [projection.flights, openTrack],
+    [projection.flights, openFlight],
   );
 
   // Dzień bez sesji nie ma czego podsumowywać — pokazujemy to wprost, zamiast

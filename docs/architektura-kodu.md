@@ -760,8 +760,9 @@ root i nawigację. Ekran nie wie, skąd biorą się zależności.
 ### `screens/logic/` — logika wyniesiona z ekranu
 
 Kilkanaście czystych modułów (`statsDay`, `refuelMath`, `cockpitLog`, `historyDays`,
-`syncStatus`, `operations`, `cockpitFuel`…) liczących to, co ekran pokazuje: statystyki dnia,
-arytmetykę dolewki, log cyklu, listę dni, nazwy operacji i napis trasy. Bywa, że moduł
+`syncStatus`, `operations`, `cockpitFuel`, `flightDetails`…) liczących to, co ekran pokazuje:
+statystyki dnia, arytmetykę dolewki, log cyklu, listę dni, nazwy operacji, napis trasy
+i treść ekranu jednego lotu (16). Bywa, że moduł
 rozstrzyga nie wartość, a PODZIAŁ RÓL między elementami ekranu — `cockpitFuel.ts` mówi,
 czy litry niesie pasek paliwa, czy podpis kafelka „Tankowanie", żeby ta sama liczba nie
 stała na ekranie dwa razy ani nie zniknęła z niego całkiem. **Bez importów z Reacta** —
@@ -1342,6 +1343,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `flightPhase.test.ts` | fazy lotu i prędkości pionowej — patrz niżej |
 | `refuelMath.test.ts` | wyliczeń tankowania: zużycie L/h, limit dolewki, podziałka |
 | `statsDay.test.ts` | składania statystyk dnia: tabela lotów, zużycie, rozbicie skoczków |
+| `flightDetails.test.ts` | ekranu 16: kafle czasów lotu, metryki miniatury śladu i przynależność zrzutu do lotu liczona ze strumienia EFEKTYWNEGO (korekta przenosi zrzut do sąsiedniego lotu, unieważnienie usuwa go zupełnie) |
 | `cockpitPeek.test.ts` | podglądu cudzej sesji: świeżość migawki, treść ostrzeżeń |
 | `crewChange.test.ts` | atrybucji block time per pilot i blokad zmiany Duala |
 | `manualLog.test.ts` | grupowania logu w cykle silnikowe i wierszy oczekiwanych |

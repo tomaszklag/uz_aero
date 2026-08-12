@@ -97,14 +97,11 @@
   .legs { display:flex; flex-direction:column; }
   .leg-row { display:flex; align-items:center; gap:8px; padding:5px 6px 5px 0; border-bottom:1px solid var(--border); }
   .leg-row:last-child { border-bottom:none; }
+  /* Sama liczba porządkowa, nie link do śladu (issue #25 pkt 2) — patrz 01. */
   .leg-num {
     display:inline-flex; align-items:center; justify-content:center;
-    min-width:44px; min-height:44px; text-decoration:none; position:relative;
+    min-width:44px; min-height:44px;
     font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);
-  }
-  .leg-num::after {
-    content:''; position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
-    width:12px; height:1.5px; border-radius:1px; background:var(--green); opacity:0.5;
   }
   .leg-id { display:flex; flex-direction:column; gap:2px; width:112px; flex-shrink:0; }
   .leg-times { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); letter-spacing:0.5px; }
@@ -230,7 +227,7 @@
         <div class="day-head">Log dnia · czasy UTC</div>
         <div class="legs">
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad sesji 1">1</a>
+            <span class="leg-num">1</span>
             <span class="leg-id">
               <span class="leg-times">08:12 → 09:05</span>
               <span class="leg-reg">SP-AXA</span>
@@ -245,7 +242,7 @@
             </a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad sesji 2">2</a>
+            <span class="leg-num">2</span>
             <span class="leg-id">
               <span class="leg-times">10:20 → 11:02</span>
               <span class="leg-reg">SP-AXA</span>
@@ -260,7 +257,7 @@
             </a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad sesji 3">3</a>
+            <span class="leg-num">3</span>
             <span class="leg-id">
               <span class="leg-times">13:40 → 15:10</span>
               <span class="leg-reg">SP-KLM</span>

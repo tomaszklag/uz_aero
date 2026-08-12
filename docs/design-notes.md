@@ -55,6 +55,12 @@ Odnogi pod 01 (nie etapy dnia):
   10-statystyki  detale i korekty JEDNEJ sesji — wejście OŁÓWKIEM wiersza logu na 01
                  albo kartą dnia w historii (10a — bez lotów); niczego się tu nie
                  zatwierdza: zdanie samolotu już potwierdziło dane
+    → 16-lot     szczegóły JEDNEGO lotu — wejście NUMEREM lotu w tabeli na 10: czasy,
+                 miejsce, zrzuty tego wyniesienia i uproszczona miniatura śladu
+                 (16a — lot bez zapisu GPS: powód zamiast miniatury, bez linku dalej)
+      → 14-slad  pełny ślad pod miniaturą: trasa, profil pionowy, log punktów
+                 (14b — stan zabezpieczający, gdy zapis zniknął). Issue #25: z LIST
+                 wejścia w ślad nie ma — ślad opisuje LOT, nie sesję
   11-eksport     status synchronizacji (11a — offline) — wejście z ustawień (13)
   12-historia    poprzednie dni pilota, okno korekty 24 h
   13-ustawienia  motyw · PIN · konto · status synchronizacji · diagnostyka GPS

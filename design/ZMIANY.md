@@ -1661,3 +1661,34 @@ użytkownika po przeglądzie).
 > **„Przejmij / przejęcie" zostaje TAM, GDZIE JEST PRAWDĄ**: przycisk i ostrzeżenie na
 > 04B, modal claimu i nazwa zdarzenia `session_claim` — tam maszynę odbiera się innemu
 > pilotowi. Identyfikatory w kodzie bez zmian: to nazwy techniczne, nie napisy.
+
+---
+
+## 2026-08-12 — Ślad należy do LOTU (issue #25)
+
+**Nowe: 16-lot + 16a-lot-bez-sladu — szczegóły JEDNEGO lotu.**
+> Ślad opisuje lot (start → lądowanie), a listy pokazują sesje i loty sesji — więc
+> skrót z listy prosto na mapę musiał zgadywać, o który lot chodzi (sesja z trzema
+> lotami nie ma „swojego" śladu). Nowy ekran wchodzi między rozliczenie a mapę:
+> **10 → 16 → 14**. Zawiera uproszczoną miniaturę trasy (sama linia i dwa końce —
+> bez siatki, podziałki, lotnisk, a przez to i bez atrybucji ODbL, bo nie ma czego
+> podpisywać), czasy lotu, miejsce, zrzuty TEGO wyniesienia i korektę czasów
+> (ten sam cel, co ołówek w tabeli na 10). Czasu blokowego, paliwa i MH tam NIE MA —
+> to wielkości sesji i mieszkają na 10.
+> **16A** = lot bez zapisu GPS (wpis ręczny albo retencja 14 dni): w miejscu miniatury
+> kafelek z POWODEM i **bez linku** — za nim nie ma ani jednego detalu więcej, więc
+> stuknięcie prowadziłoby na ekran powtarzający to samo zdanie.
+
+**Wejścia w ślad usunięte z LIST (pkt 2 issue).**
+> 01/01C: numer wiersza sesji przestał być linkiem do 14 (jest samą liczbą porządkową,
+> bez podkreślenia „klikalne"). 10: numer lotu w tabeli prowadzi do 16, a lot ręczny
+> do 16A — nadal klikalny, bo martwy numer kazałby pilotowi zgadywać, czy to brak
+> danych, czy awaria.
+
+**14/14B — powrót prowadzi do LOTU, nie do rozliczenia.**
+> „‹ Rozliczenie" → „‹ Lot", przycisk „WRÓĆ DO STATYSTYK" → „WRÓĆ DO LOTU", nav-stripy
+> na 16. Wariant **14B jest odtąd stanem ZABEZPIECZAJĄCYM**, nie celem drogi: powód
+> braku śladu mówi już 16A, a ekran zostaje na wypadek, gdy zapis zniknie (retencja)
+> między jednym a drugim otwarciem.
+
+**Index** — karty 16 i 16A, opis wejścia w 14 przepisany („miniaturą ze szczegółów lotu").
