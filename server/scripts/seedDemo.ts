@@ -24,7 +24,7 @@
  * przyjęcia — jeden blok. To nie jest usterka do obejścia: kolumnę wypełnia baza przy
  * `INSERT`, a rejestr jest append-only, więc jedynym sposobem na rozłożenie tych
  * znaczników byłoby ominięcie ingestu — czyli utrata wszystkiego, po co ten seed jedzie
- * przez API. Sesje, wzloty, flagi i karty mają daty prawdziwe.
+ * przez API. Sesje, loty, flagi i karty mają daty prawdziwe.
  */
 
 import { z } from 'zod';

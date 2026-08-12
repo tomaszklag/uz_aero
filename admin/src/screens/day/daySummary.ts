@@ -12,10 +12,11 @@
  * wysokości zrzutu do pełnych stóp. Oba są prezentacją liczb serwera, nie drugim ich
  * wyliczeniem.
  *
- * ══ KARTA OPISUJE SESJĘ SAMOLOTU, NIE SŁUŻBĘ PILOTA ══
- * Nie ma tu i nie może być czasu służby: po §3.6a klamra należy do PILOTA i potrafi
- * objąć kilka maszyn, więc na karcie jednej z nich byłaby pomyłką kategorii (patrz
- * `heldTile`). Jednostką jest odcinek PRZEJĘCIE → ZDANIE.
+ * ══ KARTA OPISUJE SESJĘ SAMOLOTU, NIE DZIEŃ PILOTA ══
+ * Nie ma tu i nie może być czasu służby: klamra służby nie istnieje w modelu w ogóle
+ * (issue #23 — dzień pilota to lista sesji), a na karcie jednej maszyny byłaby pomyłką
+ * kategorii także wcześniej (patrz `heldTile`). Jednostką jest odcinek
+ * PRZEJĘCIE → ZDANIE.
  *
  * ══ SAMOLOT NIEODDANY: „—" I KONIEC ══
  * Sesja bez `day_close` nie ma odczytów końcowych, więc nie ma zużycia paliwa, delty
@@ -129,13 +130,10 @@ export function dayTiles(state: SessionState, mhFormat: MhFormat | null): DayTil
  * Czas ZAJĘCIA MASZYNY: przejęcie → zdanie.
  *
  * ══ TU STAŁ KAFEL „CZAS SŁUŻBY (DUTY)" I BYŁA TO POMYŁKA KATEGORII ══
- * Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należy do PILOTA i potrafi objąć kilka
- * maszyn (§3.6a) — więc jej upływ nie jest własnością tej karty i nigdy nie da się go
- * z niej uczciwie policzyć. Do tego po §3.6a `dutyStart`/`dutyEnd` są OPCJONALNE i w
- * zwykłym przypadku puste, więc kafel i tak pokazywałby kreskę przy poprawnie
- * przeprowadzonym dniu. Zadeklarowane godziny klamry nie znikają z panelu: widać je na
- * OSI ZDARZEŃ, przy `preflight_confirm` i `day_close`, czyli tam, gdzie są tym, czym są
- * — treścią zdarzenia, a nie wielkością sesji.
+ * Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należała do PILOTA i potrafiła objąć
+ * kilka maszyn — więc jej upływ nigdy nie był własnością tej karty. Od issue #23
+ * (2026-08-11) klamra służby nie istnieje w modelu w ogóle: payloady nie niosą
+ * `dutyStart`/`dutyEnd`, więc i oś zdarzeń nie ma czego pokazywać.
  *
  * Zostaje **odjęcie dwóch stempli** — to samo działanie, co wiek sprawy w skrzynce flag
  * (`flagRows.ts`): upływ między dwiema chwilami, które podał serwer, a nie druga wersja

@@ -720,25 +720,9 @@
                 <td class="mono">e50a7731…c9b8</td>
                 <td><div class="row-actions"><span class="btn sm ghost">Rozwiń ▾</span></div></td>
               </tr>
-
-              <!-- `leg_close` — POTWIERDZENIE WZLOTU (§3.6, schema_version 2). Nie tworzy
-                   i nie zamyka cyklu silnika; niesie fakt „pilot przejrzał ten wzlot",
-                   OPCJONALNY odczyt FOB+MH i uwagę. Od niego liczy się 24-godzinne okno
-                   korekty TEGO wzlotu — osobno dla każdego. Wzlot bez `leg_close` jest
-                   legalny („Potwierdzę później") i kotwiczy okno w `engine_stop`. -->
-              <tr class="clickable">
-                <td class="mono">31 JUL 10:59:07</td>
-                <td class="num">10:58:58</td>
-                <td class="num">10:58:57</td>
-                <td class="num dim">1 s</td>
-                <td><span class="pill green">leg_close</span></td>
-                <td><span class="reg">SP-XYZ</span></td>
-                <td>Piotr Czarnecki<span class="cell-sub">PCZ</span></td>
-                <td class="mono dim">Pixel 6 · 03c8e1</td>
-                <td class="num">2</td>
-                <td class="mono">a90fd41c…6b73</td>
-                <td><div class="row-actions"><span class="btn sm ghost">Rozwiń ▾</span></div></td>
-              </tr>
+              <!-- Wiersza `leg_close` tu NIE MA: zdarzenie odeszło z pivotem 2026-08-10
+                   (sesja = jeden bieg silnika; log sesji zatwierdza `day_close`
+                   z obowiązkowym odczytem). -->
 
               <tr class="clickable">
                 <td class="mono">30 JUL 18:22:11</td>
@@ -747,7 +731,7 @@
                 <td class="num dim">0 s</td>
                 <td><span class="pill red">event_correction</span></td>
                 <td><span class="reg">SP-KLM</span></td>
-                <td>Anna Wrzosek<span class="cell-sub">AWR · okno wzlotu 1</span></td>
+                <td>Anna Wrzosek<span class="cell-sub">AWR · okno korekty pilota (04C)</span></td>
                 <td class="mono dim">Pixel 7a · a41f9c</td>
                 <td class="num">1</td>
                 <td class="mono">4b6f2ad9…08e7</td>
@@ -900,7 +884,7 @@
 
         <div class="banner status">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Kolumna <code>v</code> — dwie wersje schematu w jednym rejestrze i tak ma zostać.</b> Strumienie sprzed przebudowy flow niosą <code>schema_version 1</code>, nowe — <code>2</code> (doszedł typ <code>leg_close</code>, a <code>preflight_confirm.dutyStart</code> i <code>day_close.dutyEnd</code> przestały być wymagane). Rejestr jest append-only, więc <b>jedynki zostają w bazie na zawsze</b> i muszą projektować się bez zmiany wyników — starego dnia nie wolno „zaktualizować" pod nowy model. Panel niczego tu nie konwertuje: pokazuje wersję, z jaką zdarzenie przyszło.</span>
+          <span><b>Kolumna <code>v</code> — wersja schematu zdarzenia.</b> Dziś wszystkie strumienie niosą <code>schema_version 1</code>: strażnik zgodności ze starszymi wersjami został zdjęty (2026-08-10, nic nie było wdrożone), a klamra służby (<code>dutyStart</code>/<code>dutyEnd</code>) znikła z payloadów w całości (issue #23). Kolumna zostaje na przyszłość — rejestr jest append-only i przy następnej zmianie kształtu payloadu to ona powie, z jaką wersją zdarzenie przyszło; panel niczego nie konwertuje.</span>
         </div>
 
         <div class="filters">

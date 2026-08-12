@@ -343,10 +343,10 @@ function checkByType(
     case 'preflight_confirm': {
       const p = candidate.payload;
       // Pytamy o PREFLIGHT, nie o godzinę meldunku — ta sama poprawka co w `engine_start`
-      // niżej, tyle że znaleziona dopiero w audycie 2026-08-08. `dutyStart` jest od
-      // schemaVersion 2 opcjonalny i ekran 02a go NIE WYSYŁA, więc warunek oparty na nim
-      // przepuszczał drugi preflight, a ten nadpisuje `mh.start` i `fuel.startL`, czyli
-      // POCZĄTEK ŁAŃCUCHA MH (§4.5).
+      // niżej, tyle że znaleziona dopiero w audycie 2026-08-08. `dutyStart` był od §3.6a
+      // opcjonalny i ekran 02a go nie wysyłał (od issue #23 nie istnieje w ogóle), więc
+      // warunek oparty na nim przepuszczał drugi preflight, a ten nadpisuje `mh.start`
+      // i `fuel.startL`, czyli POCZĄTEK ŁAŃCUCHA MH (§4.5).
       if (state.preflightAt != null) {
         v.push(
           error('PREFLIGHT_ALREADY_CONFIRMED', 'Preflight tego dnia jest już potwierdzony.'),
@@ -360,9 +360,10 @@ function checkByType(
     }
 
     case 'engine_start': {
-      // Pytamy o PREFLIGHT, nie o godzinę meldunku. Klamra służby jest
-      // opcjonalna (§3.6a) i `dutyStart` bywa `null` u pilota, który zrobił wszystko jak
-      // trzeba — warunkowanie tym startu silnika unieruchamiało go bez powodu.
+      // Pytamy o PREFLIGHT, nie o godzinę meldunku. Klamra służby najpierw stała się
+      // opcjonalna (§3.6a), a od issue #23 nie istnieje w ogóle — warunkowanie startu
+      // silnika godziną meldunku unieruchamiało go u pilota, który zrobił wszystko
+      // jak trzeba.
       if (state.preflightAt == null) {
         v.push(
           error('PREFLIGHT_REQUIRED', 'Najpierw potwierdź preflight — bez odczytu MH i paliwa nie ma dnia.'),
@@ -680,17 +681,8 @@ function checkByType(
         );
       }
 
-      // Klamra jest opcjonalna (§3.6a), więc reguła kolejności
-      // budzi się TYLKO wtedy, gdy pilot podał obie godziny. Brak deklaracji nie jest
-      // naruszeniem — jest stanem domyślnym.
-      if (state.dutyStart != null && p.dutyEnd != null && p.dutyEnd < state.dutyStart) {
-        v.push(
-          error('DUTY_END_BEFORE_START', 'Koniec służby jest wcześniejszy niż meldunek.', {
-            dutyStart: state.dutyStart,
-            dutyEnd: p.dutyEnd,
-          }),
-        );
-      }
+      // Reguła `DUTY_END_BEFORE_START` żyła tu do 2026-08-11 — usunięta razem
+      // z klamrą służby (issue #23): payload nie niesie już godzin do porównania.
 
       // Łańcuch MH (§4.5) — licznik motogodzin jest monotoniczny. Punktem odniesienia
       // jest OSTATNIE znane wskazanie (odczyt z wzlotu bije stan przy przejęciu), bo to

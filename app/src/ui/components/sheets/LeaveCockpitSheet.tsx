@@ -20,7 +20,7 @@
 
 import React from 'react';
 
-import { legsLabel } from '../../screens/logic/claimStrip';
+import { flightsLine } from '../../screens/logic/claimStrip';
 import { Sheet } from './Sheet';
 
 export interface LeaveCockpitSheetProps {
@@ -29,8 +29,8 @@ export interface LeaveCockpitSheetProps {
   aircraftId: string;
   /** Godzina przejęcia („09:11 UTC") albo `null`, gdy strumień jej nie zna. */
   since: string | null;
-  /** Liczba wzlotów sesji — ile pracy jest już w tej sesji zapisane. */
-  legCount: number;
+  /** Liczba LOTÓW sesji — ile pracy jest już w tej sesji zapisane. */
+  flightCount: number;
   /** Zostaw pilota w kokpicie (anuluj, „wstecz", tapnięcie w tło). */
   onStay: () => void;
   /** Przejdź do zdania samolotu (09B) — jedyne wyjście z kokpitu. */
@@ -41,7 +41,7 @@ export function LeaveCockpitSheet({
   visible,
   aircraftId,
   since,
-  legCount,
+  flightCount,
   onStay,
   onRelease,
 }: LeaveCockpitSheetProps) {
@@ -53,12 +53,12 @@ export function LeaveCockpitSheet({
         // Godzinę pomijamy, gdy jej nie znamy, zamiast pokazywać „—": wiersz odniesienia
         // ma przypominać kontekst sesji, a kreska niczego nie przypomina.
         ...(since != null ? [{ label: 'W Twoich rękach od', value: since }] : []),
-        { label: 'Zapisane w tej sesji', value: legsLabel(legCount) },
+        { label: 'Zapisane w tej sesji', value: flightsLine(flightCount) },
       ]}
       warning={
         'Dopóki maszyna jest przejęta, ekranem pracy jest kokpit — „Mój dzień" otworzy się ' +
         'po jej oddaniu. Zdanie samolotu to odczyt liczników i przekazanie następnemu ' +
-        'pilotowi; Twój dzień służby biegnie dalej i obejmie kolejną maszynę.'
+        'pilotowi; Twój dzień biegnie dalej — kolejna maszyna dopisze się do listy sesji.'
       }
       warningTone="amber"
       confirmLabel="ZDAJ SAMOLOT"

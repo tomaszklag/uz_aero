@@ -70,7 +70,7 @@
     text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
   }
   .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
-  /* Okno korekty po zamknięciu wzlotu — decyzja: 24 h samodzielnie, potem administrator */
+  /* Okno korekty po ZDANIU samolotu (jedno na sesję) — 24 h samodzielnie, potem administrator */
   .correction-window {
     display:flex; align-items:flex-start; gap:9px;
     background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
@@ -308,7 +308,7 @@
         <span class="header-subtitle">SP-AXA · 08:04 → 11:20 UTC</span>
       </div>
       <div class="app-header-right">
-        <span class="badge">2 wzloty</span>
+        <span class="badge">2 loty</span>
       </div>
     </div>
 
@@ -318,7 +318,7 @@
       <!-- Okno korekty (decyzja: 24 h samodzielnie) -->
       <div class="correction-window">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zamknięciu wzlotu</b> — do 07 SIE 11:20 UTC. Później korektę nanosi administrator. Stuknij ołówek przy wzlocie, żeby poprawić czas albo oznaczyć zdarzenie jako błędne.</span>
+        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> — do 07 SIE 11:20 UTC. Później korektę nanosi administrator. Stuknij ołówek przy locie, żeby poprawić czas albo oznaczyć zdarzenie jako błędne.</span>
       </div>
 
       <!-- Bohater ekranu: CZAS BLOKOWY, nie czas służby.
@@ -328,7 +328,7 @@
       <div class="session-hero">
         <div class="session-label">Czas blokowy sesji</div>
         <div class="session-time">01:35</div>
-        <div class="session-range">przejęty 08:04 → zdany 11:20 UTC · 2 wzloty</div>
+        <div class="session-range">przejęty 08:04 → zdany 11:20 UTC · 2 loty</div>
       </div>
 
       <!-- Crew cards -->
@@ -367,7 +367,7 @@
 
       <!-- Flight list -->
       <div class="section-card">
-        <div class="section-card-head">Wzloty · czasy UTC</div>
+        <div class="section-card-head">Lista lotów · czasy UTC</div>
         <table class="data-table">
           <thead>
             <tr>
@@ -379,25 +379,27 @@
               <th></th>
             </tr>
           </thead>
-          <!-- Kolumna „Lot" to czas T/O→LDG. Czas blokowy (cykl silnika) stoi w bohaterze
-               ekranu jako suma sesji, a per wzlot pokazuje go „Mój dzień" — dwie różne
-               wielkości nie mogą dzielić jednej kolumny o nazwie „Czas". -->
+          <!-- Kolumna „Lot" to czas T/O→LDG. Czas blokowy (bieg silnika) stoi w bohaterze
+               ekranu jako suma sesji, a per sesję pokazuje go „Mój dzień" — dwie różne
+               wielkości nie mogą dzielić jednej kolumny o nazwie „Czas".
+               Czasy lotów mieszczą się w JEDNYM biegu silnika (sesja = jeden bieg,
+               2026-08-10): stare 10:26→11:01 wymagałoby drugiego uruchomienia. -->
           <tbody>
             <tr>
-              <td><a href="14-slad.html" class="flight-btn" title="Ślad wzlotu 1">1</a></td>
+              <td><a href="14-slad.html" class="flight-btn" title="Ślad lotu 1">1</a></td>
               <td>08:20</td>
               <td>09:01</td>
               <td>00:41</td>
               <td><span class="type-auto">AUTO</span></td>
-              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta wzlotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
+              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
-              <td><a href="14b-slad-brak.html" class="flight-btn no-track" title="Wzlot wpisany ręcznie — brak zapisu GPS">2</a></td>
-              <td>10:26</td>
-              <td>11:01</td>
+              <td><a href="14b-slad-brak.html" class="flight-btn no-track" title="Lot wpisany ręcznie — brak zapisu GPS">2</a></td>
+              <td>09:12</td>
+              <td>09:47</td>
               <td>00:35</td>
               <td><span class="type-manual">RĘCZNIE</span></td>
-              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta wzlotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
+              <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
           </tbody>
         </table>
@@ -493,7 +495,10 @@
 
       <!-- Action buttons -->
       <div class="btn-row">
-        <a href="04c-korekta-zdarzenia.html" class="btn-secondary">
+        <!-- Do listy ręcznej (08), nie do arkusza 04c: 04c jest arkuszem NAD logiem
+             i otwierany stąd wyglądał jak popup bez kontekstu (uwaga użytkownika po
+             issue #23). Korekty pojedynczych lotów robią ołówki w tabeli wyżej. -->
+        <a href="08-lista-reczna.html" class="btn-secondary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
         </a>
@@ -515,16 +520,16 @@
   <a class="vp-item active" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu — z wzlotami</span>
-      <span class="vp-when">Standard, wywoływany z „Mój dzień" przez grupę wzlotów danej maszyny: tabela wzlotów z ołówkami korekty, bilans paliwa i MH, rozliczenie zrzutów (6 wzlotów na SP-AXA). Opisuje oś SAMOLOTU — paliwo i MH nie sumują się przez służbę pilota lecącego dwiema maszynami.</span>
+      <span class="vp-name">Rozliczenie samolotu — z lotami</span>
+      <span class="vp-when">Detale JEDNEJ sesji, wywoływane ołówkiem wiersza w logu dnia (01) i kartą dnia w historii (12): tabela lotów z ołówkami korekty, bilans paliwa i MH, rozliczenie zrzutów. Zdanie samolotu już POTWIERDZIŁO dane — tu się je tylko ogląda i koryguje, niczego się nie zatwierdza ani nie wysyła. Opisuje oś SAMOLOTU — paliwo i MH nie sumują się po pilocie lecącym dwiema maszynami.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu — bez wzlotów</span>
-      <span class="vp-when">Dzień zamknięty bez ani jednego lotu: pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji; edycja wraca do odczytów końcowych (09A).</span>
+      <span class="vp-name">Rozliczenie samolotu — bez lotów</span>
+      <span class="vp-when">Sesja zdana bez ani jednego lotu: pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji; „Edytuj dane" wraca do zdania samolotu (09C).</span>
     </span>
   </a>
 </aside>
@@ -535,9 +540,9 @@
   <a href="01-moj-dzien.html">← 01 Mój dzień</a>
   <span>·</span>
   <a href="10-statystyki.html" class="active">10 Rozliczenie</a>
-  <a href="10a-statystyki-zero.html">10A Bez wzlotów</a>
+  <a href="10a-statystyki-zero.html">10A Bez lotów</a>
   <span>·</span>
-  <a href="14-slad.html">14 Ślad wzlotu</a>
+  <a href="14-slad.html">14 Ślad lotu</a>
   <span>·</span>
   <a href="11-eksport.html">11 Synchronizacja</a>
 </nav>

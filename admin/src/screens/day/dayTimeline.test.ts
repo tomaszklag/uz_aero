@@ -194,7 +194,6 @@ describe('timelineRows — payload w opisie', () => {
             operation: 'skoki',
             departureIcao: 'EPRA',
             arrivalIcao: 'EPRA',
-            dutyStart: at(5, 45),
             reading: { fuelL: 780, mh: 3902.1 },
             client: 'SKY CAMP',
             mhFormat: 'decimal',
@@ -215,7 +214,7 @@ describe('timelineRows — payload w opisie', () => {
     expect(text).toContain('licznik pokazuje więcej niż przekazanie');
   });
 
-  it('zdanie BEZ WZLOTU podaje powód po polsku — to jedyny ślad po zajętej maszynie', () => {
+  it('zdanie BEZ LOTU podaje powód po polsku — to jedyny ślad po zajętej maszynie', () => {
     // Ekran 09C pyta o powód, a domena go tylko flaguje (`NO_FLIGHT_WITHOUT_REASON`),
     // bo twarda reguła skasowałaby fakt, że samolot stał zajęty. Panel MUSI ten powód
     // pokazać: bez niego administrator widzi sesję z zerowym czasem blokowym i nie ma
@@ -230,22 +229,22 @@ describe('timelineRows — payload w opisie', () => {
     ])[0]!;
 
     const text = row.meta.join(' | ');
-    expect(text).toContain('bez wzlotu — powód: pogoda');
-    // Klamry służby nikt nie zadeklarował i tak wygląda ZWYKŁE zdanie po §3.6a.
-    expect(text).toContain('koniec służby: nie zadeklarowano');
+    expect(text).toContain('bez lotu — powód: pogoda');
+    // Wiersza „koniec służby: …" nie ma — klamra służby usunięta (issue #23).
+    expect(text).not.toContain('koniec służby');
   });
 
-  it('sesja ZE WZLOTAMI nie dostaje wiersza o powodzie — nie ma o co pytać', () => {
+  it('sesja Z LOTAMI nie dostaje wiersza o powodzie — nie ma o co pytać', () => {
     const row = timelineRows([
       entry(
         event({
           type: 'day_close',
-          payload: { finalReading: { fuelL: 88, mh: 1236.87 }, dutyEnd: at(13, 0) },
+          payload: { finalReading: { fuelL: 88, mh: 1236.87 } },
         }),
       ),
     ])[0]!;
 
-    expect(row.meta.join(' | ')).not.toContain('bez wzlotu');
+    expect(row.meta.join(' | ')).not.toContain('bez lotu');
   });
 
   it('zrzut bez fixa GPS mówi „brak wysokości", a nie zero', () => {
@@ -316,7 +315,7 @@ describe('timelineRows — wejście w korektę (A02b)', () => {
     // a korekty się nie poprawia — poprawia się fakt.
     const entries = [
       entry(event({ type: 'session_claim', payload: { mode: 'free', previousPicId: null } })),
-      entry(event({ type: 'day_close', payload: { finalReading: { fuelL: 1, mh: 1 }, dutyEnd: at(13, 0) } })),
+      entry(event({ type: 'day_close', payload: { finalReading: { fuelL: 1, mh: 1 } } })),
       entry(event({ type: 'event_correction', payload: { targetUuid: 'x', action: 'void' } })),
       entry(takeoff(at(8, 0), 'lot')),
     ];

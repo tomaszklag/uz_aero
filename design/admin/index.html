@@ -102,14 +102,17 @@
 </div>
 
 <div class="note">
-  <div class="note-title">Model, który te ekrany opisują — przebudowa flow z 2026-08-06</div>
+  <div class="note-title">Model, który te ekrany opisują — po pivocie 2026-08-10 i issue #23 (2026-08-11)</div>
   <p>
-    Panel opisuje <b>trzy osie, wcześniej zlane w jedną</b>. <b>WZLOT</b> to cykl silnika i jednostka potwierdzenia
-    danych (zdarzenie <code>leg_close</code>, własne 24-godzinne okno korekty). <b>SESJA SAMOLOTU</b> to odcinek
-    przejęcie (<code>session_claim</code>) → zdanie (<code>day_close</code>) — i to ona jest wierszem list A02 i A05.
-    <b>SŁUŻBA PILOTA</b> to klamra per pilot per doba UTC, która <b>obejmuje kilka maszyn</b> — dlatego
-    <span class="warn">nie ma jej na żadnym ekranie opisującym pojedynczą sesję ani pojedynczy samolot</span>:
-    tam byłaby pomyłką kategorii. Z tego wynika reszta: karta arkusza to <b>DOBA SAMOLOTU</b> (sesje są jej
+    Panel opisuje <b>dwie osie</b>. <b>SESJA SAMOLOTU</b> to odcinek przejęcie (<code>session_claim</code>) →
+    zdanie (<code>day_close</code>) i dokładnie <b>jeden bieg silnika</b> z dowolną liczbą <b>LOTÓW</b>
+    (start → lądowanie) w środku — słowo „wzlot" jest wycofane (pivot 2026-08-10), a <code>leg_close</code>
+    nie istnieje: sesję zatwierdzają obowiązkowe odczyty przy zdaniu i od zdania liczy się JEDNO
+    24-godzinne okno korekty tej sesji. To sesja jest wierszem list A02 i A05.
+    <b>DZIEŃ PILOTA</b> to lista sesji per pilot per doba UTC (issue #23; klamra służby nie istnieje) —
+    <b>obejmuje kilka maszyn</b>, dlatego
+    <span class="warn">nie ma go na żadnym ekranie opisującym pojedynczą sesję ani pojedynczy samolot</span>:
+    tam byłby pomyłką kategorii. Z tego wynika reszta: karta arkusza to <b>DOBA SAMOLOTU</b> (sesje są jej
     wierszami, spięte kolumną <code>Sesja</code>), dawny <code>session_overlap</code> jest rozdzielony na
     <code>aircraft_overlap</code> (jedyna bramka arkusza) i <code>pilot_overlap</code> (grafik pilota, arkusza nie
     bramkuje), a bramka <code>400 day_open</code> przy korekcie <b>nie istnieje</b> — administrator nie jest nigdy

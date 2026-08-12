@@ -9,14 +9,14 @@
 
 import {
   balanceRows,
+  RELEASE_CTA,
+  RELEASE_NOTICE,
   buildRelease,
   consumedL,
   finalFuelHint,
   finalMhHint,
   handoverText,
   releaseBlocker,
-  releaseCta,
-  releaseNotice,
   releasePayload,
 } from '../ui/screens/logic/releaseAircraft';
 import { emptySessionState } from '../domain';
@@ -279,39 +279,26 @@ describe('releaseBlocker — odczyt jest tu WYMAGANY (§3.6)', () => {
   });
 });
 
-describe('intencja wejścia — zdanie maszyny vs zamknięcie dnia (§3.6a)', () => {
+describe('payload i napisy zdania (issue #23 — jedna intencja)', () => {
   const reading = { fuelL: 88, mh: 1241.15 };
 
-  it('domyślnie NIE wysyła klamry — zdanie samolotu nie kończy dnia pilota', () => {
-    const payload = releasePayload('aircraft', reading, null, at('15:40'));
+  it('payload niesie odczyt i powód — klamry służby nie ma w ogóle', () => {
+    // `ReleaseIntent` z drugą odnogą „ZAMKNIJ DZIEŃ" (dutyEnd) żył do 2026-08-11
+    // i został usunięty razem z klamrą służby (issue #23).
+    const payload = releasePayload(reading, null);
 
-    expect(payload.finalReading).toEqual(reading);
-    expect(payload.dutyEnd).toBeUndefined();
+    expect(payload).toEqual({ finalReading: reading, noFlightReason: null });
   });
 
-  it('„ZAMKNIJ DZIEŃ" niesie `dutyEnd` — to JEDYNA droga deklaracji końca klamry', () => {
-    // Klamra służby jedzie w `day_close.dutyEnd` (§5.1) i to zdarzenie powstaje wyłącznie
-    // tutaj. Pilot, który wszedł z 01 przyciskiem „ZAMKNIJ DZIEŃ", deklaruje koniec
-    // służby na chwilę zdania maszyny — mockup 01B: „15:40 · potwierdzone".
-    const payload = releasePayload('aircraft_and_duty', reading, null, at('15:40'));
-
-    expect(payload.dutyEnd).toBe(at('15:40'));
-  });
-
-  it('powód 09C jedzie niezależnie od intencji', () => {
-    expect(releasePayload('aircraft_and_duty', reading, 'weather', at('11:00')).noFlightReason).toBe(
-      'weather',
-    );
+  it('powód 09C jedzie w payloadzie', () => {
+    expect(releasePayload(reading, 'weather').noFlightReason).toBe('weather');
   });
 
   it('CTA i baner mówią, co się zaraz stanie — nie odwrotnie', () => {
-    // Baner 09B tłumaczy, że dzień trwa dalej. Wyświetlony pilotowi, który właśnie
-    // zamyka dzień, mówiłby dokładną odwrotność tego, co robi przycisk pod nim.
-    // Zdanie = zatwierdzenie logu sesji (2026-08-10) — napis to zapowiada.
-    expect(releaseCta('aircraft')).toBe('ZDAJ I ZATWIERDŹ LOG');
-    expect(releaseCta('aircraft_and_duty')).toBe('ZDAJ, ZATWIERDŹ I ZAMKNIJ DZIEŃ');
-
-    expect(releaseNotice('aircraft')).toContain('nie kończysz dnia');
-    expect(releaseNotice('aircraft_and_duty')).toContain('24 h');
+    // Zdanie = zatwierdzenie logu sesji (2026-08-10) — napis to zapowiada,
+    // a baner niesie najważniejsze zdanie przebudowy flow.
+    expect(RELEASE_CTA).toBe('ZDAJ I ZATWIERDŹ LOG');
+    expect(RELEASE_NOTICE).toContain('nie kończysz dnia');
+    expect(RELEASE_NOTICE).toContain('listy dnia');
   });
 });

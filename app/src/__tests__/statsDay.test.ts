@@ -138,7 +138,8 @@ describe('karty załogi', () => {
     // Ten sam czas na pokładzie…
     expect(pic!.stats[0]).toEqual({ key: 'Block time', value: '06:39' });
     expect(dual!.stats[0]).toEqual({ key: 'Block time', value: '06:39' });
-    // …ale wzloty zapisuje PIC (single-writer §4.1) i tylko jemu są przypisane.
+    // …ale starty i lądowania zapisuje PIC (single-writer §4.1) i tylko jemu
+    // są przypisane.
     expect(pic!.stats[1]).toEqual({ key: 'St / Ld', value: '6 / 6' });
     expect(dual!.stats[1]).toEqual({ key: 'St / Ld', value: '0 / 0' });
   });
@@ -148,16 +149,18 @@ describe('karty załogi', () => {
     expect(pic!.role).toBe('PIC · zalogowany');
   });
 
-  it('po zmianie załogi milczy zamiast obiecywać pełny dzień', () => {
+  it('po zmianie załogi milczy zamiast obiecywać całą sesję', () => {
     const [pic, dual] = buildCrewCards(projection(), 'TMK', (id) => id, true);
     expect(pic!.tag).toBeNull();
     expect(dual!.tag).toBeNull();
 
+    // „Cała sesja" jak w mockupie 10 — „Pełny dzień" mówił językiem modelu,
+    // w którym dzień był sesją jednego samolotu (usunięty issue #23).
     const [picFull] = buildCrewCards(projection(), 'TMK', (id) => id, false);
-    expect(picFull!.tag).toBe('Pełny dzień');
+    expect(picFull!.tag).toBe('Cała sesja');
   });
 
-  it('dzień jednoosobowy pokazuje pustą kartę Duala, a nie wyzerowane statystyki', () => {
+  it('sesja jednoosobowa pokazuje pustą kartę Duala, a nie wyzerowane statystyki', () => {
     const [, dual] = buildCrewCards(projection({ dualId: null }), 'TMK', (id) => id, false);
     expect(dual!.emptyText).not.toBeNull();
     expect(dual!.stats).toEqual([]);

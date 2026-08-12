@@ -206,6 +206,19 @@ export function SettingsScreen({
           <SectionNote text="Ponowne logowanie wymaga internetu — konta zakłada administrator." />
         </Card>
 
+        {/* ── synchronizacja (wejście do ekranu 11 — status, nie akcja) ──────
+            Przeniesione z rozliczenia (10) po issue #23: tam wisiało na przycisku
+            „ZATWIERDŹ → SYNC", a zdanie samolotu już potwierdza dane — po locie
+            niczego się nie zatwierdza ani nie wysyła ponownie. */}
+        <Card title="Synchronizacja" header="inline">
+          <SettingsAction
+            icon="sync"
+            name="Status synchronizacji"
+            sub="kolejka wysyłki i eksport arkuszy — wysyłką zarządza outbox sam"
+            onPress={() => navigation.navigate('Sync')}
+          />
+        </Card>
+
         {/* ── diagnostyka GPS (czujnik — oś niezależna od sieci) ────────────── */}
         <Card title="Diagnostyka GPS" header="inline">
           {/* `.diag-row` — wiersze klucz/wartość z DS (KeyValueRow). */}

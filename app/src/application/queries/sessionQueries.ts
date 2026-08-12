@@ -91,9 +91,9 @@ export class SessionQueries {
    * Liczy się w pamięci przy każdym odczycie — jak wszystkie projekcje (§5.2: sezon
    * klubu to tysiące zdarzeń, nie miliony; tabela agregująca byłaby przedwczesna).
    * Kolejność: najnowsze PRZEJĘCIE pierwsze (`claimedAt`). Do 2026-08-07 sortowaliśmy
-   * po `dutyStart`, ale odkąd godzina meldunku jest opcjonalna i przejęcie o nią nie
-   * pyta (§3.6a), było to sortowanie po wartości, której prawie nigdy nie ma — czyli
-   * po zerze. `session_claim` jest pierwszym zdarzeniem KAŻDEJ sesji (§4.4).
+   * po `dutyStart`, ale gdy godzina meldunku stała się opcjonalna (§3.6a; od issue #23
+   * nie istnieje w ogóle), było to sortowanie po wartości, której prawie nigdy nie ma —
+   * czyli po zerze. `session_claim` jest pierwszym zdarzeniem KAŻDEJ sesji (§4.4).
    */
   async historyDays(): Promise<HistoryDay[]> {
     const events = await this.repo.getAllEvents();

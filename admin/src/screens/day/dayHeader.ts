@@ -2,7 +2,7 @@
  * UZ Aero — panel: NAGŁÓWEK KARTY DNIA, banery stanu i brama korekty (moduł CZYSTY).
  *
  * Trzy decyzje o treści, których nie da się podjąć w komórce ani w JSX-ie: jak nazwać
- * ten dzień, co powiedzieć nad nim (dzień trwa czy jest zamknięty) i czy wolno wejść
+ * tę kartę, co powiedzieć nad nią (sesja trwa czy samolot zdany) i czy wolno wejść
  * w korektę — a jeśli nie, to DLACZEGO.
  */
 
@@ -26,9 +26,10 @@ export interface DayHeader {
  * działa filtr zakresu na liście. Sesja bez `session_claim` nie ma daty i panel to mówi,
  * zamiast podstawiać datę pierwszego zdarzenia albo „dzisiaj".
  *
- * Karta opisuje SESJĘ SAMOLOTU (przejęcie → zdanie), nie służbę pilota: ta należy do
- * PILOTA i potrafi objąć kilka maszyn (§3.6a), więc na karcie jednej z nich byłaby
- * pomyłką kategorii. Stąd też brak czasu służby w podsumowaniu (`daySummary.ts`).
+ * Karta opisuje SESJĘ SAMOLOTU (przejęcie → zdanie), nie dzień pilota: dzień pilota
+ * to lista sesji na różnych maszynach (issue #23), więc na karcie jednej z nich byłby
+ * pomyłką kategorii. Stąd też brak czasu służby w podsumowaniu (`daySummary.ts`) —
+ * klamra służby nie istnieje w modelu w ogóle.
  */
 export function dayHeader(session: SessionListItemDto, state: SessionState): DayHeader {
   const reg = session.reg ?? session.aircraftId;
@@ -73,14 +74,14 @@ export interface DayBanner {
 /**
  * Baner nad kartą — jedno zdanie o tym, czy patrzymy na stan KOŃCOWY, czy na migawkę.
  *
- * Dzień otwarty jest tu ważniejszy niż dzień zamknięty i dlatego dostaje pełny opis:
+ * Samolot nieoddany jest tu ważniejszy niż zdany i dlatego dostaje pełny opis:
  * wszystkie liczby poniżej są stanem na ostatnią przyjętą paczkę, a kolumny „koniec"
  * po prostu nie istnieją. Panel niczego nie domyśla — i to jest CAŁA treść tego stanu.
  *
- * Czego ten baner NIE ROBI: nie odlicza okna korekty pilota. Próg doby jest wartością
- * domeny (`packages/domain/src/rules/tolerances.ts`), a panelowi wolno importować
- * z domeny wyłącznie typy — kopia progu tutaj byłaby liczbą, która rozjedzie się po
- * cichu z regułą, którą serwer naprawdę egzekwuje przy zapisie.
+ * Czego ten baner NIE ROBI: nie odlicza okna korekty pilota. Długość okna (24 h) jest
+ * wartością domeny (`packages/domain/src/rules/tolerances.ts`), a panelowi wolno
+ * importować z domeny wyłącznie typy — kopia progu tutaj byłaby liczbą, która rozjedzie
+ * się po cichu z regułą, którą serwer naprawdę egzekwuje przy zapisie.
  */
 export function dayBanner(
   session: SessionListItemDto,
@@ -97,7 +98,7 @@ export function dayBanner(
       title: 'Samolot nieoddany — telefon dosyła zdarzenia.',
       body:
         `Sesja nie ma jeszcze \`day_close\`; ${last}. Liczby poniżej są stanem na ostatni sync, ` +
-        'nie stanem końcowym — dojdą kolejne wzloty, tankowania i odczyt końcowy. Odczyty ' +
+        'nie stanem końcowym — dojdą kolejne loty, tankowania i odczyt końcowy. Odczyty ' +
         '„koniec" (MH, FOB) wypełni dopiero zdanie samolotu; do tego czasu panel pokazuje „—" ' +
         'zamiast zgadywać, a wiersz tej zmiany w karcie doby zostaje otwarty.',
     };
@@ -109,11 +110,11 @@ export function dayBanner(
     tone: 'warn',
     title: `Samolot zdany ${closed}${age == null ? '' : ` (${age} temu)`}.`,
     body:
-      'Okno samodzielnej korekty pilota liczy się od ZDANIA SAMOLOTU (`day_close`), nie od ' +
-      'zdania samolotu — każdy wzlot ma własną dobę, a wzlot niepotwierdzony kotwiczy się ' +
-      'w wyłączeniu silnika. Administrator dopisuje zmianę zawsze, nowym zdarzeniem ' +
-      '`event_correction`, bo rejestr jest append-only i nic się w nim nie nadpisuje. Panel ' +
-      'nie odlicza tych okien za Ciebie: kolizję nazywa serwer w chwili podglądu korekty.',
+      'Okno samodzielnej korekty pilota liczy się od ZDANIA SAMOLOTU (`day_close`) — jest ' +
+      'JEDNO na sesję i trwa 24 h (model 2026-08-10: zdanie = zatwierdzenie logu). ' +
+      'Administrator dopisuje zmianę zawsze, nowym zdarzeniem `event_correction`, bo ' +
+      'rejestr jest append-only i nic się w nim nie nadpisuje. Panel nie odlicza tego ' +
+      'okna za Ciebie: kolizję nazywa serwer w chwili podglądu korekty.',
   };
 }
 

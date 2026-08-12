@@ -33,12 +33,10 @@ const state = (over: Partial<SessionState> = {}): SessionState =>
     engineRunning: false,
     fuel: { startL: 500, addedL: 0, endL: 153, consumedL: 347, lastReadingL: 153 },
     mh: { start: 3902.1, end: 3907.8, deltaH: 5.7 },
-    // Ramy SESJI (oś samolotu). Klamra służby jest po §3.6a opcjonalna i należy do
-    // pilota, więc w tym fixture jej nie ma — tak wygląda zwykła sesja po przebudowie.
+    // Ramy SESJI (oś samolotu). Klamra służby zniknęła z modelu w całości
+    // (issue #23, 2026-08-11).
     claimedAt: at(5, 45),
     closedAt: at(13, 20),
-    dutyStart: null,
-    dutyEnd: null,
     eventCount: 84,
     ...over,
   }) as unknown as SessionState;

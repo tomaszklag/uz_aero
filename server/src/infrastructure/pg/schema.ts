@@ -226,9 +226,9 @@ export const MIGRATION_1 = `
     -- na niej: sortowanie listy dni, kursor keyset, idx_sessions_day, filtr zakresu dat,
     -- rozpoznanie sesji „bez daty" i przynależność sesji do karty doby (§4.7).
     --
-    -- Kolumny duty_start tu NIE MA i nie ma jej być: klamra służby należy do PILOTA,
-    -- obejmuje kilka maszyn i liczy ją projectDuty per pilot per doba UTC (§3.6a).
-    -- Deklaracja pilota zostaje w rejestrze zdarzeń, skąd bierze ją ta projekcja.
+    -- Kolumny duty_start tu NIE MA: klamra służby najpierw należała do PILOTA
+    -- (nie do sesji), a od issue #23 (2026-08-11) nie istnieje w modelu w ogóle —
+    -- dzień pilota to lista sesji (projectPilotDay per pilot per doba UTC).
     -- NULL-owalna, bo rejestr bywa niekompletny po imporcie — stąd NULLS LAST w indeksie.
     claim_time    BIGINT,
     -- Czas day_close, czyli ZDANIA SAMOLOTU. Nie kończy dnia pilota (§3.6a).

@@ -64,13 +64,13 @@ export function sheetDay(t: number): string {
  * Zakres doby UTC w milisekundach — `[fromMs, toMs]`, granice DOMKNIĘTE.
  *
  * Odpowiada na pytanie „które sesje należą do tej karty" i jest odwrotnością
- * `sheetDay`: przynależność wyznacza chwila PRZEJĘCIA samolotu (`session_claim`),
- * nie meldunek pilota. Meldunek jest od §3.6a opcjonalny i zwykle pusty, a doba
- * maszyny musi dać się wyznaczyć zawsze.
+ * `sheetDay`: przynależność wyznacza chwila PRZEJĘCIA samolotu (`session_claim`) —
+ * doba maszyny musi dać się wyznaczyć zawsze. (Historyczny meldunek pilota odszedł
+ * razem z klamrą służby, issue #23.)
  *
  * Sesja rozpoczęta o 23:50 i zdana po północy zostaje w dobie SWOJEGO przejęcia —
- * ta sama reguła, co w projekcji służby (`projectDuty`: „przynależność sesji do doby
- * wyznacza czas uruchomienia silnika, nie zamknięcia").
+ * ta sama reguła, co w projekcji dnia pilota (`projectPilotDay`: „przynależność sesji
+ * do doby wyznacza czas uruchomienia silnika, nie zamknięcia").
  */
 export function utcDayRange(day: string): { fromMs: number; toMs: number } {
   const fromMs = Date.parse(`${day}T00:00:00.000Z`);

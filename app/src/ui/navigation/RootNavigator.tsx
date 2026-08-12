@@ -8,7 +8,7 @@
  * Z 01 także 15 — ręczny wpis całego lotu po fakcie.
  *
  * **Wszystko wraca na 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
- * kroków flow: zaczyna się pierwszą sesją i domyka sam na ostatniej (§3.6a). Dlatego
+ * kroków flow: zaczyna się pierwszą sesją i NICZYM się nie domyka (issue #23). Dlatego
  * w stosie nie ma już ani splasha („NOWY DZIEŃ LOTNY" otwierało coś, czego się nie
  * otwiera), ani ekranu zakończenia dnia — zastąpiło go zdanie SAMOLOTU.
  *
@@ -39,22 +39,19 @@ import { RefuelScreen } from '../screens/RefuelScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { MyDayScreen } from '../screens/MyDayScreen';
-import {
-  ReleaseAircraftScreen,
-  type ReleaseAircraftParams,
-} from '../screens/ReleaseAircraftScreen';
+import { ReleaseAircraftScreen } from '../screens/ReleaseAircraftScreen';
 import { StatsScreen } from '../screens/StatsScreen';
 import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
 import { SyncScreen } from '../screens/SyncScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
-  /** 01 — EKRAN DOMOWY: klamra służby i wzloty całej doby, przekrojowo po maszynach. */
+  /** 01 — EKRAN DOMOWY: płaski log sesji doby, przekrojowo po maszynach (issue #23). */
   MyDay: undefined;
   /** 12 — historia dni z oknem korekty; wejście z 01. */
   History: undefined;
   Cockpit: undefined;
-  /** Przejęcie w trzech krokach (§3.1): kto i czym → zadanie → odczyty i „Przejmij i leć". */
+  /** Nowy lot w trzech krokach (§3.1): kto i czym → zadanie → odczyty i „ROZPOCZNIJ LOT". */
   PreflightAircraft: undefined;
   PreflightTask: undefined;
   PreflightReadings: undefined;
@@ -66,10 +63,12 @@ export type RootStackParamList = {
   /** 15 — ręczny wpis CAŁEGO lotu z 01: kompletna sesja po fakcie (model 2026-08-10). */
   ManualFlight: undefined;
   /** 09B/09C — zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
-  ReleaseAircraft: ReleaseAircraftParams | undefined;
+  ReleaseAircraft: undefined;
+  /** 10 — detale i korekty JEDNEJ sesji; wejście ołówkiem wiersza na 01 i z historii (12). */
   Stats: undefined;
   /** 14 — ślad lotu: trasa, profil pionowy i log punktów. Wejście z tabeli lotów na 10. */
   Track: TrackScreenParams;
+  /** 11 — status synchronizacji; wejście z ustawień (13), sekcja „Synchronizacja". */
   Sync: undefined;
   /** 13 — ustawienia: motyw, PIN, konto, diagnostyka GPS. */
   Settings: undefined;

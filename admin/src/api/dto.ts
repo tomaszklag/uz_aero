@@ -443,10 +443,10 @@ export interface ExportRetryResultDto {
  * niekonsekwencja: `claimedAt` jest czasem, który zapisał telefon (ta sama domena, co
  * `Event.gpsTime`), a `updatedAt` chwilą, w której serwer przyjął paczkę.
  *
- * **Ten wiersz opisuje SESJĘ SAMOLOTU (przejęcie → zdanie), nie służbę pilota.** Po
- * §3.6a służba jest klamrą należącą do PILOTA i potrafi objąć kilka maszyn, więc nie ma
- * jej czego szukać w wierszu jednej sesji — a sesje bywają krótkie (dwie zmiany dziennie
- * na maszynie to norma).
+ * **Ten wiersz opisuje SESJĘ SAMOLOTU (przejęcie → zdanie), nie dzień pilota.** Dzień
+ * pilota to lista sesji na różnych maszynach (issue #23; klamra służby nie istnieje
+ * w modelu w ogóle), więc nie ma go czego szukać w wierszu jednej sesji — a sesje
+ * bywają krótkie (dwie zmiany dziennie na maszynie to norma).
  */
 export interface SessionListItemDto {
   sessionUuid: string;
@@ -1032,8 +1032,8 @@ export interface CorrectionPreviewDto {
    *
    * Zastąpiły bramkę `400 day_open` (2026-08-07). Dwa kody:
    * `ADMIN_EDIT_SESSION_ACTIVE` (pilot nadal prowadzi sesję i dośle własne zdarzenia)
-   * i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h wzlotu jeszcze biegnie, więc obie
-   * strony mogą poprawiać naraz). Rozstrzyga człowiek — panel nie blokuje przycisku.
+   * i `ADMIN_EDIT_PILOT_WINDOW_OPEN` (okno 24 h od zdania sesji jeszcze biegnie, więc
+   * obie strony mogą poprawiać naraz). Rozstrzyga człowiek — panel nie blokuje przycisku.
    */
   warnings: RuleViolation[];
 }
@@ -1090,8 +1090,8 @@ export interface EngineStateDto {
   lastEventAt: number | null;
   /**
    * Chwila PRZEJĘCIA samolotu (`session_claim`, epoch ms UTC) — od kiedy maszyna jest
-   * zajęta. Do 2026-08-07 stał tu meldunek pilota; po §3.6a klamra służby należy do
-   * PILOTA i potrafi objąć kilka maszyn, więc na wierszu FLOTY nie miała czego szukać.
+   * zajęta. Do 2026-08-07 stał tu meldunek pilota — odszedł najpierw z §3.6a (klamra
+   * per pilot, nie per maszyna), a od issue #23 klamra służby nie istnieje w ogóle.
    */
   claimedAt: number | null;
   departureIcao: string | null;

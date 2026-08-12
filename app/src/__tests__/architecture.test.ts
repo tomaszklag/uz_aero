@@ -275,7 +275,8 @@ describe('nawigacja — decyzje zapisane w mockupach', () => {
   it('ekran 11 NIE kasuje stosu — synchronizacja jest statusem, nie końcem drogi', () => {
     // `design/11-eksport.html`: „NIE czyści już stosu: ten ekran przestał być końcem
     // drogi. Synchronizacja jest statusem, który można sprawdzić w środku dnia."
-    // Pilot, który zajrzał w status między wzlotami, musi mieć drogę powrotną do kokpitu.
+    // Pilot, który zajrzał w status między jedną sesją a drugą, musi mieć drogę
+    // powrotną do kokpitu.
     const source = readFileSync(join(SRC, 'ui/screens/SyncScreen.tsx'), 'utf8');
     expect(source).not.toMatch(/navigation\.reset\s*\(/);
   });

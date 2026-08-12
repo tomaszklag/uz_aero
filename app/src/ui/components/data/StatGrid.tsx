@@ -41,7 +41,12 @@ export interface StatGridProps {
 
 export function StatGrid({ cells, flat = false, columns = 2, style }: StatGridProps) {
   const { theme } = useTheme();
-  const cellWidth = columns === 3 ? '32.9%' : '49.9%';
+  // `flexBasis` ZAUWAŻALNIE mniejsze niż pełny podział (45% zamiast 49,9%), bo luz musi
+  // pomieścić 1-pikselowy `gap`: przy 49,9% zapas wynosił 0,2% szerokości rodzica, czyli
+  // na telefonie ~0,7 px — MNIEJ niż odstęp — i druga komórka spadała do nowego wiersza
+  // (zgłoszenie z urządzenia przy issue #23: „Blok" i „Loty" jedno pod drugim).
+  // `flexGrow` dociąga komórki z powrotem do pełnej szerokości rzędu.
+  const cellBasis = columns === 3 ? '30%' : '45%';
 
   return (
     <View
@@ -63,7 +68,7 @@ export function StatGrid({ cells, flat = false, columns = 2, style }: StatGridPr
             key={cell.label}
             style={[
               styles.cell,
-              { width: cellWidth, backgroundColor: flat ? 'transparent' : theme.colors.surface },
+              { flexBasis: cellBasis, backgroundColor: flat ? 'transparent' : theme.colors.surface },
             ]}
           >
             <AppText variant="mono" tone="muted" numberOfLines={1} style={styles.label}>
@@ -86,7 +91,7 @@ export function StatGrid({ cells, flat = false, columns = 2, style }: StatGridPr
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 1 },
-  // Szerokość ustawiana dynamicznie (2 albo 3 kolumny); ułamek zostawia miejsce na linię.
+  // Baza szerokości ustawiana dynamicznie (`cellBasis` — 2 albo 3 kolumny).
   cell: { flexGrow: 1, gap: 3, paddingHorizontal: 12, paddingVertical: 10 },
   label: { fontSize: 8, lineHeight: 12, letterSpacing: 1.5, textTransform: 'uppercase' },
   value: { fontSize: 24, lineHeight: 26, letterSpacing: 1 },

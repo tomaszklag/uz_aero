@@ -51,14 +51,14 @@ export interface CorrectionWarningBanner {
  *
  * Rozdzielone, bo prowadzą w RÓŻNE strony: przy otwartej sesji problemem jest to, że
  * pilot dopisze zdarzenia PO korekcie (i liczby znów się zmienią), a przy otwartym oknie
- * wzlotu — że pilot poprawi to samo drugi raz, po swojemu.
+ * sesji (24 h od zdania) — że pilot poprawi to samo drugi raz, po swojemu.
  */
 const CONSEQUENCE: Record<string, string> = {
   ADMIN_EDIT_SESSION_ACTIVE:
     'Zapis się uda, ale nie jest ostatni: paczka z telefonu dojdzie do tego samego ' +
     'strumienia i liczby dnia policzą się jeszcze raz. Sprawdź oś zdarzeń po synchronizacji.',
   ADMIN_EDIT_PILOT_WINDOW_OPEN:
-    'Pilot może poprawić ten sam wzlot sam, na 04C. Twoja korekta do niego NIE wróci ' +
+    'Pilot może poprawić tę samą sesję sam, na 04C. Twoja korekta do niego NIE wróci ' +
     '(synchronizacja jest jednokierunkowa), więc rozważ, czy nie wystarczy telefon do niego.',
 };
 

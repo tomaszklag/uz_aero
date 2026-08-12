@@ -74,7 +74,12 @@ export type IntervalRejection =
 export interface FuelInterval {
   sessionUuid: string;
   aircraftId: string;
-  /** Duty start sesji — oś grupowania miesięcznego w trendzie. `null` = dzień bez preflightu. */
+  /**
+   * Przejęcie sesji (`claimedAt`) — oś grupowania miesięcznego w trendzie.
+   * Do 2026-08-11 stał tu `dutyStart` (godzina meldunku), usunięty razem z klamrą
+   * służby (issue #23) — a że meldunek był opcjonalny i ekran 02 go nie wysyłał,
+   * pole było w praktyce zawsze puste. `null` = strumień bez `session_claim`.
+   */
   dayStart: EpochMillis | null;
 
   startAt: EpochMillis;
@@ -109,7 +114,7 @@ export interface FuelInterval {
   cruiseMs: number | null;
   descentMs: number | null;
 
-  /** Liczba wzlotów zamkniętych w oknie — mianownik metryki „paliwo na lot". */
+  /** Liczba lotów (start → lądowanie) zamkniętych w oknie — mianownik metryki „paliwo na lot". */
   flightCount: number;
 
   /** `null` = interwał wchodzi do regresji; wartość = powód pominięcia. */
@@ -117,12 +122,12 @@ export interface FuelInterval {
 }
 
 /**
- * Równanie motogodzin dla JEDNEGO zamkniętego dnia: `ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`.
+ * Równanie motogodzin dla JEDNEJ zdanej sesji: `ΔMH = k_lot·t_lot + k_ziemia·t_ziemia`.
  *
- * DLACZEGO JEDNO NA DZIEŃ, A NIE NA INTERWAŁ: licznik motogodzin odczytujemy dokładnie
- * dwa razy — na preflightcie i przy zamknięciu dnia. Gęstszych odczytów nie ma i nie
+ * DLACZEGO JEDNO NA SESJĘ, A NIE NA INTERWAŁ: licznik motogodzin odczytujemy dokładnie
+ * dwa razy — przy przejęciu i przy zdaniu samolotu. Gęstszych odczytów nie ma i nie
  * potrzeba: `k` są stałymi maszyny, więc identyfikuje je zmienność proporcji faz MIĘDZY
- * dniami, a nie wewnątrz dnia.
+ * sesjami, a nie wewnątrz sesji.
  *
  * `k` to przelicznik motogodzin na godzinę ZEGARA. Licznik obrotomierzowy zlicza obroty
  * przeliczone na godziny przy obrotach znamionowych, więc na ziemi przyrasta wolniej niż
@@ -131,8 +136,9 @@ export interface FuelInterval {
  */
 export interface MhEquation {
   sessionUuid: string;
+  /** Przejęcie sesji (`claimedAt`) — ta sama oś, co `FuelInterval.dayStart`. */
   dayStart: EpochMillis | null;
-  /** Przyrost licznika w dniu (godziny dziesiętne) — z projekcji, odczyt fizyczny. */
+  /** Przyrost licznika w sesji (godziny dziesiętne) — z projekcji, odczyt fizyczny. */
   deltaMh: number;
   flightMs: number;
   groundMs: number;
@@ -144,7 +150,7 @@ export interface MhEquation {
   clamped: boolean;
 }
 
-/** Wynik ekstrakcji z jednej sesji: interwały paliwowe i równanie MH (o ile dzień zamknięty). */
+/** Wynik ekstrakcji z jednej sesji: interwały paliwowe i równanie MH (o ile sesja zdana). */
 export interface SessionIntervals {
   intervals: FuelInterval[];
   mh: MhEquation | null;

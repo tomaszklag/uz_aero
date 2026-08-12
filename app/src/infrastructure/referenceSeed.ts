@@ -63,7 +63,7 @@ const AIRCRAFT: SeedAircraft[] = [
           durationMs: null,
         },
         {
-          kind: 'duty_start',
+          kind: 'claim',
           at: at(7, 0),
           pilotId: 'AKO',
           fuelDeltaL: null,

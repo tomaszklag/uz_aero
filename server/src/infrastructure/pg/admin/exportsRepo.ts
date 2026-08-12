@@ -362,7 +362,7 @@ export class PgAdminExportsRepo implements ExportsAdminPort {
 /**
  * Wszystkie filtry OPCJONALNE i pomijane, gdy nieustawione.
  *
- * Zakres dat idzie po `claim_time`, czyli po DUTY STARCIE — tej samej osi, co lista dni
+ * Zakres dat idzie po `claim_time`, czyli po CZASIE PRZEJĘCIA — tej samej osi, co lista dni
  * (`A02`) i tej samej, z której powstaje nazwa karty. Filtrowanie po `exported_at`
  * odpowiadałoby na inne pytanie („co wysłano w tym tygodniu") i gubiłoby dokładnie te
  * dni, dla których karta nigdy nie powstała — czyli te, dla których ekran istnieje.

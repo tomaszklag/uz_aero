@@ -974,16 +974,9 @@
                 <span><span class="tl-name">landing</span><span class="tl-meta">unieważnione przez <code>event_correction</code> · powód: „fałszywa detekcja"</span></span>
                 <span class="pill red">void</span>
               </div>
-              <!-- `leg_close` — POTWIERDZENIE WZLOTU (§3.6). Jednostką potwierdzenia
-                   danych jest WZLOT, nie doba: od tego zdarzenia liczy się 24-godzinne
-                   okno korekty TEGO wzlotu. Odczyt liczników jest tu OPCJONALNY —
-                   w dniu skokowym nikt nie chodzi do licznika po każdym wzlocie. -->
-              <div class="tl-row">
-                <span class="tl-time">08:41:55</span>
-                <span class="tl-rail"><span class="tl-dot green"></span></span>
-                <span><span class="tl-name">leg_close</span><span class="tl-meta">wzlot 1 potwierdzony przez pilota · odczyt: FOB 96 L · MH 1284.6<br>okno korekty tego wzlotu: do 31 JUL 08:41 UTC</span></span>
-                <span class="pill green">wzlot</span>
-              </div>
+              <!-- Wiersza `leg_close` tu NIE MA: zdarzenie odeszło z pivotem 2026-08-10 —
+                   sesję zatwierdza `day_close` z obowiązkowym odczytem, a okno korekty
+                   (24 h) jest JEDNO na sesję i liczy się od zdania. -->
               <div class="tl-row">
                 <span class="tl-time">08:44:19</span>
                 <span class="tl-rail"><span class="tl-dot amber"></span></span>
@@ -994,10 +987,7 @@
                    jedynym miejscem, w którym wybiera się zdarzenie do korekty
                    administratora (A02b). Przejście stoi wyłącznie przy zdarzeniach
                    KORYGOWALNYCH — claim, preflight, day_close i same korekty jej nie
-                   podlegają, więc tam przycisku nie ma w ogóle. `leg_close` KORYGOWALNY
-                   JEST: od niego liczy się 24-godzinne okno korekty TEGO wzlotu, więc
-                   pilot musi móc poprawić literówkę w odczycie, który sam w tym oknie
-                   zatwierdził. -->
+                   podlegają, więc tam przycisku nie ma w ogóle. -->
               <div class="tl-row">
                 <span class="tl-time">10:34:07</span>
                 <span class="tl-rail"><span class="tl-dot red"></span></span>

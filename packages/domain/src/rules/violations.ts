@@ -77,7 +77,7 @@ export type ViolationCode =
   | 'MANUAL_ENTRY_EMPTY'
   | 'MANUAL_ENTRY_TIME_ORDER'
   | 'DAY_ALREADY_CLOSED'
-  | 'DUTY_END_BEFORE_START'
+  // (DUTY_END_BEFORE_START usunięte 2026-08-11 razem z klamrą służby, issue #23)
   | 'NO_FLIGHT_WITHOUT_REASON'
   // ── korekta zdarzenia (04c) ────────────────────────────────────────────────
   | 'CORRECTION_TARGET_NOT_FOUND'

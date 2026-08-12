@@ -113,7 +113,7 @@ export class PgAdminConsumptionRepo implements ConsumptionAdminPort {
   }
 
   async openSessions(db: Queryable, aircraftId: string, range: StatsRange): Promise<number> {
-    // Dzień otwarty nie ma `close_time`, więc jedyną jego datą jest duty start — tak samo
+    // Dzień otwarty nie ma `close_time`, więc jedyną jego datą jest czas przejęcia (`claim_time`) — tak samo
     // lokuje go w czasie lista dni (`A02`) i licznik otwartych w statystykach (`A10`).
     const { rows } = await db.query<{ n: string }>(
       `SELECT COUNT(*) AS n

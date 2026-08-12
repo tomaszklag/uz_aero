@@ -5,18 +5,21 @@
 > Architektura systemu (offline-first, sync, kontrakt API): `docs/_main.md.txt`.
 > Ten dokument mówi, **jak jest zbudowany kod** i gdzie dopisać nową rzecz.
 
-> ## ⚠ STATUS (2026-08-07): ten dokument opisuje kod WDROŻONY, czyli model sprzed 2026-08-06
+> ## ⚠ STATUS (aktualizacja 2026-08-11): przebudowa flow WYLĄDOWAŁA, słownik „duty" jest historią
 >
-> Decyzja z 2026-08-06 (`_main.md.txt` §3.6a) odwróciła fundament: dzień służby przestał być
-> kontenerem na loty, jednostką potwierdzenia jest **wzlot**, a służba jest **klamrą** wokół
-> lotów, należącą do pilota i mogącą obejmować kilka maszyn. Design jest już przebudowany,
-> **kod jeszcze nie** (faza 8, etapy B–D).
+> Nota z 2026-08-07 niżej opisywała okres przejściowy (design przebudowany, kod nie).
+> Od tego czasu: etapy B–D flow ✅, pivot „sesja = jeden bieg silnika" (2026-08-10) ✅,
+> a **klamra służby została usunięta w całości** (issue #23, 2026-08-11 — `dutyStart`/
+> `dutyEnd`/`DUTY_END_BEFORE_START` nie istnieją; `projections/duty.ts` →
+> `projections/pilotDay.ts`, `projectDuty` → `projectPilotDay`). Każde wystąpienie
+> „dutyStart", „klamra służby", „wzlot" czy `leg_close` w dalszej części dokumentu
+> czytaj jako narrację HISTORYCZNĄ. Specyfikacją modelu jest `_main.md.txt` §3.6/§3.6a
+> i `CLAUDE.md` (sekcje „Sesja = jeden bieg silnika" i „Dzień pilota = lista sesji").
 >
-> Wszystko poniżej, co mówi „dzień", `day_close`, `dutyStart`, „zamknięcie dnia" albo opisuje
-> ekran `03`/`01-splash`, jest **prawdziwym opisem dzisiejszego kodu i nieprawdziwym opisem
-> docelowego modelu**. Miejsca, w których ta różnica ma konsekwencje przy pisaniu etapu B,
-> są oznaczone w tekście blokiem `> ⚠ ETAP B`. Specyfikacją docelową jest `_main.md.txt`
-> §3.6, §3.6a, §3.6b i §7 — nie ten plik.
+> (Nota z 2026-08-07, zachowana jako historia:) Decyzja z 2026-08-06 (`_main.md.txt`
+> §3.6a) odwróciła fundament: dzień służby przestał być kontenerem na loty, jednostką
+> potwierdzenia jest **wzlot**, a służba jest **klamrą** wokół lotów. Miejsca oznaczone
+> blokiem `> ⚠ ETAP B` opisywały konsekwencje tej różnicy w trakcie przebudowy.
 
 ## 0. Monorepo (Faza 2)
 
@@ -819,7 +822,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót, wariant wyśrodkowany | `.app-header` |
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
 | `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` / `.form-card` (00a) |
-| `SyncChip` | **jedyny** globalny wskaźnik sieci; online nic nie rysuje, offline `OFFLINE · n` + stempel ostatniego synca (`syncStamp`) | reguła z `CLAUDE.md` |
+| `SyncChip` | **jedyny** globalny wskaźnik sieci; online nic nie rysuje, offline SAM pill `OFFLINE · n` — tapnięcie otwiera arkusz szczegółów (kolejka, ostatni sync z `syncStamp`, wiek danych referencyjnych; issue #23 pkt 5) | reguła z `CLAUDE.md` |
 | `SyncStatusBox` | przyrząd statusu wysyłki: plakietka, licznik, pasek postępu | `.google-box` (11) / `.sync-box` (11a) |
 | `QueueBox` | kolejka outboxa: aktywna (amber) albo przygaszona do 30% | `.queue-box` (11a) / `.offline-queue` (11) |
 | `ExportedBox` | pudełko „Serwer zaktualizował arkusz": link do karty, jawny błąd otwarcia (§6 pkt 3) | `.success-box` (11) |
@@ -844,13 +847,13 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `InlineNote` | przypis w kolorowym pudełku (mono 10 px + ikona) | `.certified-row`, `.none-box` |
 | `PeekBanner` | pasek „oglądasz cudzą sesję" ze źródłem i wiekiem danych | `.ro-banner` (04b) |
 | `OutboxGuard` | amber-box ochrony konta przy niepustym outboxie (§3.0) | `.outbox-guard` (00, 13) |
-| `RefDataStamp` | stempel cache referencyjnego: kropka + „sync HH:MM UTC" | `.ref-sync` (01, 13) |
+| `RefDataStamp` | stempel cache referencyjnego: kropka + „sync HH:MM UTC" | `.ref-sync` (13; z 01 usunięty — issue #23 pkt 5: stempel mieszka w arkuszu SyncChipa) |
 | `Caption` | wyśrodkowany podpis pod akcją (mono 9 px) | `.takeover-hint`, `.actions-reason` |
 | `CrewRow` | wiersz aktualnej załogi: rola, kod, „od kiedy", block | `.crew-row` (07) |
 | `StepList` | numerowana procedura wychodząca poza ten telefon | `.handover-steps` (07) |
 | `PillButton` | mała akcja nagłówka (pigułka z ikoną) | `.btn-add` (08) |
 | `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
-| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c (godzin klamry służby preflight od etapu C4 nie zbiera — należą do 01 / 01b) |
+| `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c (godzin klamry służby nie zbiera — klamra usunięta, issue #23) |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
 | `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
 | `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
@@ -876,7 +879,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy — bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami (nieprzezroczyste — zakrywają kreskę), chipy, cel korekty ≥ 44 px. **Zieleń ma tylko wiersz `live`** — historia jest neutralna | `.day-log`, `.cycle-log` |
-| `ClaimStrip` | pasek sesji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile wzlotów — **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
+| `ClaimStrip` | pasek sesji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile lotów — **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
 | `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie). **Na 04 stoi tylko przy znanej normie** — bez niej byłby samą liczbą, tą samą co podpis kafelka „Tankowanie" (`logic/cockpitFuel.ts`, 2026-08-10) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
@@ -1005,7 +1008,7 @@ buildu) — sięgamy po niego dopiero, gdy własna droga okaże się niewystarcz
 ### Stan UI vs rejestr zdarzeń
 
 > ⚠ **ETAP C — cały ten akapit opisuje ścieżkę, której już nie ma.** Ekran `03` został
-> usunięty, ścieżka to `02 → 02e → 02a`, a zdarzenia powstają przy „Przejmij i leć" na `02a`.
+> usunięty, ścieżka to `02 → 02e → 02a`, a zdarzenia powstają przy „ROZPOCZNIJ LOT" na `02a`.
 > Czas meldowania zniknął z przejęcia, więc `refreshDutyStart`, `dutyStartEdited` i cała
 > historia issue #12 dotyczą pola, które przestało istnieć — do usunięcia razem ze szkicem.
 > Sam mechanizm „szkic nie dotyka rejestru" pozostaje w mocy i jest nadal słuszny.
@@ -1096,15 +1099,17 @@ To najważniejsza decyzja w tej warstwie.
 Reguła kciuka: *niemożliwe → error; wymagające rozstrzygnięcia przez człowieka → warning*.
 
 **Punkt odniesienia łańcucha MH: `lastKnownMh(state)`, nie `state.mh.start`** (2026-08-07).
-Odkąd `leg_close` niesie odczyt, sesja ma więcej niż jedno wskazanie licznika i porównywanie
-wyłącznie ze stanem przy przejęciu przepuszczało wartość niższą od tej, którą pilot sam
-wpisał wzlot wcześniej — formalnie „wyższą niż na starcie", faktycznie cofnięty licznik.
+Reguła powstała, gdy `leg_close` niósł odczyt (2026-08-06→08-10): sesja miała więcej niż
+jedno wskazanie licznika i porównywanie wyłącznie ze stanem przy przejęciu przepuszczało
+wartość niższą od tej, którą pilot sam wpisał chwilę wcześniej — formalnie „wyższą niż na
+starcie", faktycznie cofnięty licznik. Zasada zostaje po pivocie (ostatni ZNANY odczyt,
+np. z ręcznego wpisu, zamiast stanu przy przejęciu).
 Ta sama funkcja jest **wołana przez ekran** (`releaseAircraft.mhRegressionWarning`), bo próg
 ostrzeżenia w arkuszu i próg odrzucenia w komendzie muszą być jedną liczbą: rozjazd wygląda
 dla pilota jak awaria aplikacji, nie jak jego literówka.
 
 **Miękkie, choć wymagane przez ekran: `NO_FLIGHT_WITHOUT_REASON`.** Zdanie samolotu bez
-ani jednego wzlotu i bez powodu (09C) jest flagą, nie odrzuceniem — twarda reguła kasowałaby
+ani jednego biegu silnika i bez powodu (09C) jest flagą, nie odrzuceniem — twarda reguła kasowałaby
 jedyny ślad po tym, że maszyna stała zajęta, czyli dokładnie tę informację, której szuka
 administrator. Wymóg mieszka w ekranie, gdzie kosztuje jedno tapnięcie pilota stojącego
 przy samolocie.
@@ -1582,7 +1587,7 @@ Naprawa jest jedną funkcją dla obu stron — `consumption/timeInPhase.ts`:
 - `blockSpans(state, events)` zbiera odcinki z OBU źródeł i nakłada korekty (wpis
   unieważniony `void` przestaje liczyć się do mianownika);
 - `spanTimeInWindow` **scala nakładki zamiast sumować długości**. Ręczny wpis potrafi
-  nachodzić na zarejestrowany cykl (pilot dopisał wzlot, który aplikacja też złapała),
+  nachodzić na zarejestrowany cykl (pilot dopisał lot, który aplikacja też złapała),
   a suma policzyłaby te minuty dwa razy — mianownik rośnie, L/h spada, i znowu nic tego
   nie widać. `state.blockTimeMs` sumuje bez scalania i **to zostaje**: tam liczba opisuje
   „ile czasu zaraportowano", tu miara opisuje „ile silnik pracował". Różnica jest

@@ -303,7 +303,7 @@
   <span class="flow-sep">→</span>
   <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
   <span class="flow-sep">→</span>
-  <a href="02-preflight.html" class="flow-step">02 Przejęcie 1/3</a>
+  <a href="02-preflight.html" class="flow-step">02 Nowy lot 1/3</a>
   <span class="flow-sep">→</span>
   <a href="02e-preflight-zadanie.html" class="flow-step">02E Zadanie 2/3</a>
   <span class="flow-sep">→</span>
@@ -347,15 +347,15 @@
     <div class="card-num">01</div>
     <div class="card-body">
       <div class="card-title">01-moj-dzien</div>
-      <div class="card-desc">Ekran domowy pilota — klamra służby (meldunek / koniec) wokół listy SESJI dnia (wiersz = jeden bieg silnika z lotami w środku), przekrojowo po wszystkich samolotach. Sesje na liście są zatwierdzone zdaniem; stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
-      <div class="card-tags"><span class="tag green">home</span><span class="tag">służba</span><span class="tag">sesje dnia</span></div>
+      <div class="card-desc">Ekran domowy pilota — płaska oś czasu SESJI dnia (wiersz = jeden bieg silnika z lotami w środku, rejestracja jako informacja wiersza), sumy Blok / Loty. Klamry służby i „Zamknij dzień" nie ma (issue #23): dzień to lista sesji, niczego się nie otwiera ani nie zamyka. Stąd przejęcie samolotu, ręczny wpis lotu (15) i okno korekty 24 h</div>
+      <div class="card-tags"><span class="tag green">home</span><span class="tag">log dnia</span><span class="tag">sesje dnia</span></div>
     </div>
   </a>
   <a href="02-preflight.html" class="card">
     <div class="card-num">02</div>
     <div class="card-body">
       <div class="card-title">02-preflight</div>
-      <div class="card-desc">Przejęcie krok 1/3 — czym i z kim: samolot (karty + blokada PIC + przejęcie) i drugi pilot (Dual). Czasu meldowania TU NIE MA — służba nie jest kontenerem na loty, tylko klamrą wokół nich, więc powstaje sama przy pierwszym wzlocie i poprawia się po fakcie w „Mój dzień"</div>
+      <div class="card-desc">Nowy lot krok 1/3 — czym i z kim: samolot (karty + blokada PIC + przejęcie) i drugi pilot (Dual). Czasu meldowania TU NIE MA — dzień pilota to lista sesji (issue #23), więc żadnej godziny „od kiedy" się nie deklaruje</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag amber">blokada PIC</span><span class="tag">Dual</span></div>
     </div>
   </a>
@@ -363,7 +363,7 @@
     <div class="card-num">02E</div>
     <div class="card-body">
       <div class="card-title">02e-preflight-zadanie</div>
-      <div class="card-desc">Przejęcie krok 2/3 — co teraz robimy: rodzaj operacji, trasa, klient i notatka do dnia; pola uzupełnione z ostatniego dnia (operacja i klient per pilot, trasa per samolot). Operacja wyznacza kształt trasy: skoki = jedno lotnisko, pozostałe = dwa pola start / lądowanie. Pola nie są inputami — to przyciski z wartością (lupa przy trasie, ołówek przy tekstach), a wpisywanie dzieje się w arkuszu wysuwanym od dołu</div>
+      <div class="card-desc">Nowy lot krok 2/3 — co teraz robimy: rodzaj operacji, trasa, klient i notatka do dnia; pola uzupełnione z ostatniego dnia (operacja i klient per pilot, trasa per samolot). Operacja wyznacza kształt trasy: skoki = jedno lotnisko, pozostałe = dwa pola start / lądowanie. Pola nie są inputami — to przyciski z wartością (lupa przy trasie, ołówek przy tekstach), a wpisywanie dzieje się w arkuszu wysuwanym od dołu</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag">pamięć</span><span class="tag">arkusze</span></div>
     </div>
   </a>
@@ -379,7 +379,7 @@
     <div class="card-num">02A</div>
     <div class="card-body">
       <div class="card-title">02a-preflight</div>
-      <div class="card-desc">Przejęcie krok 3/3 (ostatni) — paliwo na pokładzie i motogodziny z historią, korekty odczytów. CTA „Przejmij i leć" prowadzi wprost do kokpitu: ekranu podsumowania (dawny 03) nie ma, bo powtarzał to, co pilot przed chwilą wpisał</div>
+      <div class="card-desc">Nowy lot krok 3/3 (ostatni) — paliwo na pokładzie i motogodziny z historią, korekty odczytów. CTA „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu: ekranu podsumowania (dawny 03) nie ma, bo powtarzał to, co pilot przed chwilą wpisał</div>
       <div class="card-tags"><span class="tag amber">paliwo</span><span class="tag">motogodziny</span></div>
     </div>
   </a>
@@ -431,16 +431,16 @@
     <div class="card-num">01A</div>
     <div class="card-body">
       <div class="card-title">01a-moj-dzien-pusty</div>
-      <div class="card-desc">Mój dzień przed pierwszym wzlotem — klamra pusta („— : —", nigdy zera), pełny baner pouczający o regule klamry, cały ekran prowadzi do przejęcia samolotu. „Zamknij dzień" nie występuje: to brak akcji, nie blokada z powodem</div>
-      <div class="card-tags"><span class="tag">stan pusty</span><span class="tag">pouczenie</span></div>
+      <div class="card-desc">Mój dzień przed pierwszą sesją — pusty log dnia („— —", nigdy zera), cały ekran prowadzi do przejęcia samolotu. Niczego się nie otwiera: dzień zaczyna się pierwszą sesją (issue #23)</div>
+      <div class="card-tags"><span class="tag">stan pusty</span></div>
     </div>
   </a>
-  <a href="01b-moj-dzien-zamkniety.html" class="card amber">
-    <div class="card-num">01B</div>
+  <a href="01c-moj-dzien-offline.html" class="card amber">
+    <div class="card-num">01C</div>
     <div class="card-body">
-      <div class="card-title">01b-moj-dzien-zamkniety</div>
-      <div class="card-desc">Mój dzień po „Zamknij dzień" — obie godziny klamry pochodzą od pilota, baner odliczający 24 h okna korekty (Typ A, niezamykalny), samolot zdany. Nowy wzlot tego samego dnia otwiera dzień z powrotem i rozszerza klamrę</div>
-      <div class="card-tags"><span class="tag amber">zamknięty</span><span class="tag">okno 24 h</span></div>
+      <div class="card-title">01c-moj-dzien-offline</div>
+      <div class="card-desc">Mój dzień bez sieci — amber pill „OFFLINE · n" przed zębatką jako jedyny ślad sieci; tapnięcie otwiera arkusz szczegółów synchronizacji (kolejka, ostatni udany sync, wiek danych referencyjnych — issue #23 pkt 5). Wzorzec obowiązuje każdy ekran z SyncChipem</div>
+      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">arkusz syncu</span></div>
     </div>
   </a>
   <a href="02d-preflight-offline.html" class="card amber">
@@ -577,7 +577,7 @@
     <div class="card-num">09C</div>
     <div class="card-body">
       <div class="card-title">09c-zdaj-bez-lotu</div>
-      <div class="card-desc">Zdanie samolotu bez wzlotu — pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; liczniki zostają bez zmian (z furtką korekty), a jedyne pytanie to powód jako siatka kart. Zastępuje dawny „dzień bez lotów"</div>
+      <div class="card-desc">Zdanie samolotu bez lotu — pogoda, usterka, odwołany skok. Silnik nie ruszył, więc nie ma czasów ani zużycia; liczniki zostają bez zmian (z furtką korekty), a jedyne pytanie to powód jako siatka kart. Zastępuje dawny „dzień bez lotów"</div>
       <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">powód</span></div>
     </div>
   </a>
@@ -585,7 +585,7 @@
     <div class="card-num">10A</div>
     <div class="card-body">
       <div class="card-title">10a-statystyki-zero</div>
-      <div class="card-desc">Rozliczenie samolotu bez wzlotów — pusta lista jako komunikat wprost, średnie „— —" zamiast udawanych liczb; wielką cyfrą stoi czas TRZYMANIA maszyny, bo czas blokowy wynosi zero i nie ma o czym krzyczeć. Edycja wraca do zdania samolotu (09C)</div>
+      <div class="card-desc">Rozliczenie samolotu bez lotów — pusta lista jako komunikat wprost, średnie „— —" zamiast udawanych liczb; wielką cyfrą stoi czas TRZYMANIA maszyny, bo czas blokowy wynosi zero i nie ma o czym krzyczeć. Edycja wraca do zdania samolotu (09C)</div>
       <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">rozliczenie</span></div>
     </div>
   </a>
@@ -629,7 +629,7 @@
     <div class="card-num">08</div>
     <div class="card-body">
       <div class="card-title">08-lista-reczna</div>
-      <div class="card-desc">Ręczna lista wzlotów (fallback GPS) — rejestr dnia z kolumną „Uwagi" + interaktywny arkusz „Nowy wpis ręczny" (§3.8: 4 czasy ze stepperami ±1 min, uwagi, chip RĘCZNIE)</div>
+      <div class="card-desc">Ręczna lista lotów (fallback GPS) — rejestr dnia z kolumną „Uwagi" + interaktywny arkusz „Nowy wpis ręczny" (§3.8: 4 czasy ze stepperami ±1 min, uwagi, chip RĘCZNIE)</div>
       <div class="card-tags"><span class="tag">fallback GPS</span><span class="tag">tabela</span><span class="tag amber">wpis ręczny</span></div>
     </div>
   </a>
@@ -637,13 +637,13 @@
     <div class="card-num">13</div>
     <div class="card-body">
       <div class="card-title">13-ustawienia</div>
-      <div class="card-desc">Ustawienia (zębatka w app-barze kokpitu) — motyw (5 kart), zmiana PIN offline, konto z ochroną wylogowania przy niewysłanych zapisach, diagnostyka GPS, o aplikacji ze stemplem danych referencyjnych</div>
+      <div class="card-desc">Ustawienia (zębatka w app-barze kokpitu) — motyw (5 kart), zmiana PIN offline, konto z ochroną wylogowania przy niewysłanych zapisach, status synchronizacji (wejście do 11), diagnostyka GPS, o aplikacji ze stemplem danych referencyjnych</div>
       <div class="card-tags"><span class="tag">ustawienia</span><span class="tag green">offline OK</span><span class="tag amber">ochrona wylogowania</span></div>
     </div>
   </a>
 </div>
 
-<div class="section-title">Zamknięcie wzlotu i zdanie samolotu</div>
+<div class="section-title">Zdanie samolotu i rozliczenie</div>
 <div class="grid">
   <!-- Karta 09 (zamknięcie wzlotu) usunięta 2026-08-10 — przegląd czasów przeszedł
        na 09B, odczyty z opcjonalnych stały się obowiązkowe. -->
@@ -651,7 +651,7 @@
     <div class="card-num">09B</div>
     <div class="card-body">
       <div class="card-title">09b-zdaj-samolot</div>
-      <div class="card-desc">Zdanie samolotu po STOP ENGINE — przegląd lotów sesji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej sesji. Zdajesz samolot, nie kończysz dnia — służba liczy się dalej</div>
+      <div class="card-desc">Zdanie samolotu po STOP ENGINE — przegląd lotów sesji (czasy z detekcji) + odczyty paliwa i MH OBOWIĄZKOWE: stają się przekazaniem, ogniwem łańcucha MH i zatwierdzeniem logu całej sesji. Zdajesz samolot, nie kończysz dnia — kolejna maszyna dopisze się do listy sesji</div>
       <div class="card-tags"><span class="tag red">zdanie</span><span class="tag">przekazanie</span><span class="tag">łańcuch MH</span></div>
     </div>
   </a>
@@ -659,7 +659,7 @@
     <div class="card-num">10</div>
     <div class="card-body">
       <div class="card-title">10-statystyki (rozliczenie)</div>
-      <div class="card-desc">Rozliczenie SAMOLOTU (nie doby) — czas blokowy sesji, czas per pilot PIC/Dual, wzloty, paliwo na tle normy, MH, zrzuty. Wywoływane z „Mój dzień" przez grupę wzlotów danej maszyny; paliwo i MH nie sumują się przez służbę pilota lecącego dwiema maszynami</div>
+      <div class="card-desc">Detale JEDNEJ sesji (oś SAMOLOTU, nie doby) — czas blokowy, czas per pilot PIC/Dual, tabela lotów z ołówkami korekty, paliwo na tle normy, MH, zrzuty. Wywoływane ołówkiem wiersza w logu dnia (01) i kartą dnia w historii (12). Zdanie samolotu już potwierdziło dane — tu się je ogląda i koryguje, niczego się nie zatwierdza</div>
       <div class="card-tags"><span class="tag">rozliczenie</span><span class="tag">oś samolotu</span></div>
     </div>
   </a>
@@ -667,7 +667,7 @@
     <div class="card-num">12</div>
     <div class="card-body">
       <div class="card-title">12-historia</div>
-      <div class="card-desc">Historia dni PILOTA — jedna karta obejmuje wszystkie maszyny z doby (05 SIE: SP-AXA i SP-KLM), bo przesiadka nie rodzi już drugiego dnia. Dzień w oknie korekty 24 h wyróżniony i klikalny, prowadzi do 01B; starsze zamknięte</div>
+      <div class="card-desc">Historia dni PILOTA — jedna karta obejmuje wszystkie maszyny z doby (05 SIE: SP-AXA i SP-KLM), bo przesiadka nie rodzi już drugiego dnia. Dzień w oknie korekty 24 h wyróżniony i klikalny, prowadzi do rozliczenia sesji (10); starsze po oknie — korekty przez administratora</div>
       <div class="card-tags"><span class="tag">historia</span><span class="tag">okno 24 h</span></div>
     </div>
   </a>

@@ -8,10 +8,11 @@
  * To rozróżnienie jest celowe: rejestr jest append-only, więc nie wolno do niego
  * wpisywać stanów pośrednich, które pilot może jeszcze zmienić albo porzucić.
  *
- * GODZINY MELDUNKU TU NIE MA i to jest decyzja (§3.6a, 2026-08-06): służba jest klamrą
- * wokół wzlotów, a nie czymś, co pilot otwiera, żeby polecieć. Klamra bierze się z lotów
- * doby, a poprawia się ją po fakcie na ekranie 01. Pytanie o nią przy przejęciu kosztowało
- * krok w drodze do kokpitu i sugerowało, że bez odpowiedzi nie wolno lecieć.
+ * GODZINY MELDUNKU TU NIE MA i to jest decyzja (§3.6a, 2026-08-06; domknięta issue #23,
+ * 2026-08-11): dzień pilota to LISTA SESJI — klamra służby nie istnieje w modelu
+ * w ogóle, więc nie ma godziny, którą szkic miałby zbierać. Pytanie o nią przy
+ * przejęciu kosztowało krok w drodze do kokpitu i sugerowało, że bez odpowiedzi
+ * nie wolno lecieć.
  */
 
 import { create } from 'zustand';

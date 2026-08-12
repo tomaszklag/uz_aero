@@ -105,10 +105,10 @@ const REGISTRY = {
   // obiekty
   aircraft: m('airplane'),
   // Sesja, w której silnik ani razu nie ruszył (09C) — samolot PRZEKREŚLONY, nie zwykły:
-  // stan pusty ma powiedzieć „nie było wzlotu", a nie „tu był samolot".
+  // stan pusty ma powiedzieć „nie było lotu", a nie „tu był samolot".
   'aircraft-off': m('airplane-off'),
 
-  // powody zdania samolotu bez wzlotu (siatka kart 09C)
+  // powody zdania samolotu bez lotu (siatka kart 09C)
   'reason-weather': f('cloud-drizzle'),
   'reason-malfunction': f('tool'),
   'reason-cancelled': f('minus-circle'),

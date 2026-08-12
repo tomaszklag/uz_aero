@@ -41,7 +41,6 @@ function day() {
       operation: 'skoki',
       departureIcao: 'EPKK',
       arrivalIcao: null,
-      dutyStart: at(8, 0),
       reading: { fuelL: 150, mh: 1234.5 },
       client: null,
       mhFormat: 'hhmm',
@@ -50,7 +49,7 @@ function day() {
     event('takeoff', at(8, 25), { method: 'auto' }),
     event('landing', at(9, 18), { method: 'auto' }),
     event('engine_stop', at(10, 34), {}),
-    event('day_close', at(16, 45), { finalReading: { fuelL: 88, mh: 1241.15 }, dutyEnd: at(16, 45) }),
+    event('day_close', at(16, 45), { finalReading: { fuelL: 88, mh: 1241.15 } }),
   ];
 }
 

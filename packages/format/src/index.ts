@@ -92,6 +92,17 @@ export function dateTimeUtcShort(t: EpochMillis): string {
   return `${d.getUTCDate()} ${month} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
 }
 
+/**
+ * Data jako „06 SIE" (UTC) — dzień i skrót miesiąca BEZ roku; podtytuł nagłówka śladu
+ * (mockup 14: „Lot 3 · 06 SIE · SP-KLM"). Rok tam nie mieści się obok rejestracji,
+ * a ślad ogląda się w kontekście dnia, który i tak jest na ekranie obok. Skrót jest
+ * prefiksem pełnej nazwy z `MONTHS_PL` — ta sama zasada co w `dateTimeUtcShort`.
+ */
+export function dateUtcDayMonth(t: EpochMillis): string {
+  const d = new Date(t);
+  return `${pad2(d.getUTCDate())} ${MONTHS_PL[d.getUTCMonth()]!.slice(0, 3)}`;
+}
+
 /** Miesiące dla PANELU — trzyliterowe skróty lotnicze; powód rozdziału przy `dateUtcShort`. */
 const MONTHS_SHORT = [
   'JAN',

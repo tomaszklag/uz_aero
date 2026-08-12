@@ -50,7 +50,7 @@ export function sessionSubtitle(
  * Badge nagłówka: „1 lot" / „3 loty" / „6 lotów".
  *
  * Polska liczba mnoga ma trzy formy, a badge stoi w nagłówku ekranu — „6 lot" byłoby
- * pierwszą rzeczą, którą pilot zobaczy po zamknięciu dnia.
+ * pierwszą rzeczą, którą pilot zobaczy po zdaniu samolotu.
  */
 export function flightsBadge(count: number): string {
   const mod10 = count % 10;
@@ -151,10 +151,11 @@ export interface CrewCardSpec {
  * Dwie decyzje warte wyjaśnienia:
  *  • **Dual dostaje ten sam block time, ale „0 / 0" startów i lądowań.** Rejestr jest
  *    single-writer (§4.1 pkt 3) — starty i lądowania zapisuje PIC i to jemu są
- *    przypisane. Dual dzieli czas na pokładzie, a nie wzloty; wpisanie mu tych samych
- *    liczb byłoby podwójnym liczeniem tego samego dnia w dwóch książkach lotów.
- *  • **Przypis „Pełny dzień" tylko wtedy, gdy nie było zmiany załogi.** Po `crew_change`
- *    nie wiemy z projekcji, ile kto był na pokładzie, więc zamiast zgadywać — milczymy.
+ *    przypisane. Dual dzieli czas na pokładzie, a nie loty; wpisanie mu tych samych
+ *    liczb byłoby podwójnym liczeniem tej samej sesji w dwóch książkach lotów.
+ *  • **Przypis „Cała sesja" (mockup 10) tylko wtedy, gdy nie było zmiany załogi.**
+ *    Po `crew_change` nie wiemy z projekcji, ile kto był na pokładzie, więc zamiast
+ *    zgadywać — milczymy. Napis „Pełny dzień" odszedł razem z modelem dnia-sesji.
  */
 export function buildCrewCards(
   projection: SessionState,
@@ -163,7 +164,7 @@ export function buildCrewCards(
   crewChanged: boolean,
 ): CrewCardSpec[] {
   const block = hhmm(projection.blockTimeMs);
-  const tag = crewChanged ? null : 'Pełny dzień';
+  const tag = crewChanged ? null : 'Cała sesja';
   const picId = projection.picId;
   const dualId = projection.dualId;
 
@@ -196,7 +197,7 @@ export function buildCrewCards(
           : [],
       tag: dualId != null ? tag : null,
       active: false,
-      emptyText: dualId != null ? null : 'brak — dzień jednoosobowy',
+      emptyText: dualId != null ? null : 'brak — sesja jednoosobowa',
     },
   ];
 }

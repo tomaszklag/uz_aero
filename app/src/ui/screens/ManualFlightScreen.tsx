@@ -147,7 +147,7 @@ export function ManualFlightScreen({
         <ScreenHeader
           title="LOT RĘCZNY"
           size="md"
-          subtitle={`wpis po fakcie · ${dateUtcLong(Date.now())} · UTC`}
+          subtitle={`wpis po fakcie · ${dateUtcLong(Date.now())}`}
           onBack={() => navigation.navigate('MyDay')}
           backLabel="Mój dzień"
           right={

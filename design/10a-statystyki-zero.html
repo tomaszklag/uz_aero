@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10A Rozliczenie samolotu · bez wzlotów</title>
+<title>UZ Aero — 10A Rozliczenie samolotu · bez lotów</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -239,11 +239,11 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 10A</span>
-  <span class="slug">rozliczenie samolotu · bez wzlotów</span>
+  <span class="slug">rozliczenie samolotu · bez lotów</span>
   <span class="canvas-meta"><span class="pulse"></span>Wariant 10</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Rozliczenie samolotu bez wzlotów">
+<main class="phone" role="region" aria-label="Mockup — Rozliczenie samolotu bez lotów">
   <div class="status-bar">
     <span>11:32</span>
     <span class="status-right">
@@ -265,28 +265,28 @@
         <span class="header-subtitle">SP-ANK · 09:10 → 10:25 UTC</span>
       </div>
       <div class="app-header-right">
-        <span class="badge">0 wzlotów</span>
+        <span class="badge">0 lotów</span>
       </div>
     </div>
 
     <!-- Scroll content -->
     <div class="scroll">
 
-      <!-- Okno korekty (24 h) — bez wzlotu do poprawy zostają tylko odczyty -->
+      <!-- Okno korekty (24 h) — bez lotu do poprawy zostają tylko odczyty -->
       <div class="correction-window">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="cw-text">Dane możesz poprawiać jeszcze przez <b>24 h</b> — do 04 SIE 10:25 UTC. Później korektę nanosi administrator. Bez wzlotu do poprawy zostają wyłącznie odczyty liczników — „Edytuj dane" wraca do zdania samolotu (09C).</span>
+        <span class="cw-text">Dane możesz poprawiać jeszcze przez <b>24 h</b> — do 04 SIE 10:25 UTC. Później korektę nanosi administrator. Bez lotu do poprawy zostają wyłącznie odczyty liczników — „Edytuj dane" wraca do zdania samolotu (09C).</span>
       </div>
 
       <!-- Bohater ekranu: CZAS TRZYMANIA, nie czas służby.
-           Sesja bez wzlotu ma czas blokowy zero, więc gdyby wielką cyfrą stał blok,
+           Sesja bez lotu ma czas blokowy zero, więc gdyby wielką cyfrą stał blok,
            ekran krzyczałby „0:00". Prawdziwa informacja brzmi: maszyna była zajęta
            3,5 godziny i nikt inny nie mógł jej wziąć. Czas służby pilota mieszka
            w „Mój dzień" — ten postój jest tylko jego fragmentem. -->
       <div class="session-hero">
         <div class="session-label">Samolot trzymany</div>
         <div class="session-time">01:15</div>
-        <div class="session-range">przejęty 09:10 → zdany 10:25 UTC · bez wzlotu</div>
+        <div class="session-range">przejęty 09:10 → zdany 10:25 UTC · bez lotu</div>
       </div>
 
       <!-- Crew cards — załoga z preflightu, uczciwe zera -->
@@ -304,7 +304,7 @@
               <span class="crew-stat-val">0 / 0</span>
             </div>
           </div>
-          <div class="crew-tag">Sesja bez wzlotu</div>
+          <div class="crew-tag">Sesja bez lotu</div>
         </div>
         <div class="crew-card">
           <div class="crew-role">Dual · drugi pilot</div>
@@ -319,7 +319,7 @@
               <span class="crew-stat-val">0 / 0</span>
             </div>
           </div>
-          <div class="crew-tag">Sesja bez wzlotu</div>
+          <div class="crew-tag">Sesja bez lotu</div>
         </div>
       </div>
 
@@ -358,19 +358,19 @@
           </div>
         </div>
         <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Średnie zużycie (na block time)</span>
+          <span class="fuel-avg-label">Średnie zużycie (na czas blokowy)</span>
           <span class="fuel-avg-val na">— —</span>
         </div>
         <div class="fuel-avg-row" style="border-top:none;padding-top:0;">
-          <span class="fuel-avg-note">nie liczymy — block time 0:00 (dzielenie przez zero to nie statystyka)</span>
+          <span class="fuel-avg-note">nie liczymy — czas blokowy 0:00 (dzielenie przez zero to nie statystyka)</span>
         </div>
       </div>
 
       <!-- Motogodziny — bez zmian, ale nadal ogniwo łańcucha -->
       <div class="section-card">
-        <div class="section-card-head">Motogodziny · licznik w formacie hh:mm</div>
+        <div class="section-card-head">Motogodziny · licznik w formacie hh:mm · łańcuch samolotu</div>
         <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Początek dnia</span>
+          <span class="fuel-avg-label">Przy przejęciu</span>
           <span class="fuel-avg-val" style="color:var(--text-primary);">2 815:12</span>
         </div>
         <div class="fuel-avg-row">
@@ -378,7 +378,7 @@
           <span class="fuel-avg-val" style="color:var(--text-primary);">2 815:12</span>
         </div>
         <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Δ dnia (= block time)</span>
+          <span class="fuel-avg-label">Δ sesji (= czas blokowy)</span>
           <span class="fuel-avg-val" style="color:var(--text-secondary);">+0:00</span>
         </div>
       </div>
@@ -414,7 +414,7 @@
 
       <!-- Action buttons — ołówków brak (nie ma wierszy), edycja wraca do odczytów w 09A -->
       <div class="btn-row">
-        <a href="09c-zdaj-bez-lotu.html" class="btn-secondary" title="Bez wzlotu jedyne dane do poprawy to odczyty liczników i powód">
+        <a href="09c-zdaj-bez-lotu.html" class="btn-secondary" title="Bez lotu jedyne dane do poprawy to odczyty liczników i powód">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
         </a>
@@ -433,15 +433,15 @@
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu — z wzlotami</span>
-      <span class="vp-when">Standard: tabela wzlotów z ołówkami korekty, bilans paliwa i MH, rozliczenie zrzutów (SP-AXA, 06 SIE — 2 wzloty).</span>
+      <span class="vp-name">Rozliczenie samolotu — z lotami</span>
+      <span class="vp-when">Standard: tabela lotów z ołówkami korekty, bilans paliwa i MH, rozliczenie zrzutów (SP-AXA, 06 SIE — 2 loty).</span>
     </span>
   </a>
   <a class="vp-item active" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu — bez wzlotów</span>
-      <span class="vp-when">Samolot zdany bez ani jednego wzlotu (pogoda, usterka): pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji. Odczyty liczników są, bo przekazanie obowiązuje też bez lotu. Wielką cyfrą stoi czas TRZYMANIA maszyny, nie czas blokowy — ten wynosi zero i nie ma o czym krzyczeć.</span>
+      <span class="vp-name">Rozliczenie samolotu — bez lotów</span>
+      <span class="vp-when">Samolot zdany bez ani jednego lotu (pogoda, usterka): pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji. Odczyty liczników są, bo przekazanie obowiązuje też bez lotu. Wielką cyfrą stoi czas TRZYMANIA maszyny, nie czas blokowy — ten wynosi zero i nie ma o czym krzyczeć.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -450,10 +450,10 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="09c-zdaj-bez-lotu.html">← 09C Bez wzlotu</a>
+  <a href="09c-zdaj-bez-lotu.html">← 09C Bez lotu</a>
   <span>·</span>
   <a href="10-statystyki.html">10 Rozliczenie</a>
-  <a href="10a-statystyki-zero.html" class="active">10A Bez wzlotów</a>
+  <a href="10a-statystyki-zero.html" class="active">10A Bez lotów</a>
   <span>·</span>
   <a href="11-eksport.html">11 Synchronizacja</a>
   <span>·</span>

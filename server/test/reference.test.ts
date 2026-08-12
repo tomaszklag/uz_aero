@@ -94,7 +94,6 @@ describe('GET /reference', () => {
           mk(1, 'session_claim', at(8, 0), { mode: 'free' }),
           mk(2, 'preflight_confirm', at(8, 0), {
             operation: 'skoki',
-            dutyStart: at(8, 0),
             reading: { fuelL: 150, mh: 1234.5 },
             mhFormat: 'hhmm',
           }),

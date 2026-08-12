@@ -14,8 +14,8 @@
     --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
-    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
-    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --red:   #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue:  #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -56,52 +56,38 @@
   .nav-strip span { color:var(--border-strong); }
 
   /* ===== App header =====
-     SyncChip online NIE RYSUJE NIC (decyzja 2026-08-06, issue #12) — po prawej
-     stoi tylko licznik lotów dnia. Wariant offline pokazuje 01A/01B. */
+     Wzorzec od issue #23 pkt 7 — JEDEN dla całej aplikacji: tytuł i podtytuł
+     wyrównane DO LEWEJ, ustawienia zawsze PO PRAWEJ. SyncChip stoi przed zębatką
+     i online NIE RYSUJE NIC (issue #12) — wariant offline pokazuje 01C.
+     Licznika sesji w nagłówku nie ma (issue #23 pkt 6): liczbę sesji widać na liście. */
   .app-header {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:8px 10px 8px 6px; border-bottom:1px solid var(--border); flex-shrink:0;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 6px 8px 16px; border-bottom:1px solid var(--border); flex-shrink:0;
   }
-  .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; }
+  .app-header-left { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
   .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .app-header-right { display:flex; align-items:center; gap:4px; flex-shrink:0; }
   .icon-btn {
     width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center;
     border-radius:12px; color:var(--text-muted); text-decoration:none; flex-shrink:0;
   }
   .icon-btn:hover { color:var(--text-secondary); background:var(--surface-raised); }
-  .badge {
-    font-family:var(--font-mono); font-size:10px; letter-spacing:1px;
-    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
-    padding:4px 10px; border-radius:999px; margin-right:4px; white-space:nowrap;
-  }
 
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
   /* Karty mają `overflow:hidden` (zaokrąglone rogi tabel), co w kolumnie flex zeruje
-     ich minimalną wysokość — bez tego dolna klamra i sumy zostają UCIĘTE zamiast
-     wyjechać poza ekran do przewinięcia. */
+     ich minimalną wysokość — bez tego sumy zostają UCIĘTE zamiast wyjechać poza ekran
+     do przewinięcia. */
   .scroll > * { flex-shrink:0; }
 
-  /* ===== Baner pouczający (Typ C — zamykalny → mini, stan pamiętany per pilot) ===== */
-  .edu-box {
-    position:relative;
-    background:var(--blue-muted); border:1px solid var(--blue-border);
-    border-radius:12px; padding:12px 40px 12px 14px;
-    display:flex; align-items:flex-start; gap:10px;
-  }
-  .edu-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
-  .edu-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .edu-text b { color:var(--blue); font-weight:700; }
-  .edu-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; background:none; border:none; }
-  .edu-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
-  .edu-mini { display:none; align-items:center; gap:6px; align-self:flex-start; padding:7px 12px; min-height:34px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
+  /* Baner pouczający o klamrze służby USUNIĘTY (issue #23 pkt 1) razem z samą klamrą:
+     nie ma już reguły, którą musiałby tłumaczyć. */
 
-  /* Karta „samolot w ręce" usunięta 2026-08-10 (kokpit modalny → stan nieosiągalny);
-     razem z nią reguły .claim-*. */
-
-  /* ===== Klamra służby =====
-     Serce ekranu: loty są zapisane, klamra jest zadeklarowana i zawsze obejmuje loty. */
+  /* ===== Log dnia =====
+     Serce ekranu po issue #23: PŁASKA oś czasu sesji doby, posortowana po
+     uruchomieniu silnika. Samolot jest INFORMACJĄ wiersza, nie osią grupowania —
+     grupy per maszyna kłamały o przebiegu dnia przy każdej przesiadce. */
   .day-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
   .day-head {
     padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
@@ -109,41 +95,11 @@
     display:flex; align-items:center; gap:6px;
   }
   .day-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--green); }
-
-  .bracket-row {
-    display:flex; align-items:center; gap:10px; padding:10px 6px 10px 12px;
-    background:var(--surface-raised);
-  }
-  .bracket-row.top { border-bottom:1px solid var(--border); }
-  .bracket-row.bottom { border-top:1px solid var(--border); }
-  .bracket-label { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); width:74px; flex-shrink:0; line-height:1.4; }
-  .bracket-value { font-family:var(--font-display); font-size:26px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
-  /* LT obok UTC — reguła strefy czasowej: czas lokalny pojawia się WYŁĄCZNIE jako
-     wartość drugorzędna przy deklaracji klamry, bo pilot melduje się o lokalnej
-     godzinie. Scenariusz mockupów: LT = UTC+2. */
-  .bracket-lt { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-muted); margin-left:7px; }
-  .bracket-value.pending { color:var(--text-muted); font-size:18px; letter-spacing:2px; }
-  .bracket-body { flex:1; display:flex; flex-direction:column; gap:3px; }
-  .bracket-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
-  .bracket-hint.declared { color:var(--blue); }
+  /* Link „Rozliczenie →" w nagłówku karty USUNIĘTY (uwaga użytkownika po issue #23):
+     napis nic nie mówił, a detale sesji mają jedno wejście — ołówek wiersza. */
 
   .legs { display:flex; flex-direction:column; }
-  .leg-group-head {
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-    padding:9px 12px 7px; border-bottom:1px solid var(--hairline);
-  }
-  .leg-group-id { display:flex; align-items:baseline; gap:8px; }
-  .leg-group-reg { font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
-  .leg-group-op { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  .leg-group-op.held { color:var(--green); }
-  .leg-group-link {
-    display:inline-flex; align-items:center; gap:5px; min-height:32px; padding:0 4px;
-    font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase;
-    color:var(--text-muted); text-decoration:none;
-  }
-  .leg-group-link:hover { color:var(--green); }
-
-  .leg-row { display:flex; align-items:center; gap:8px; padding:0 6px 0 0; border-bottom:1px solid var(--border); }
+  .leg-row { display:flex; align-items:center; gap:8px; padding:5px 6px 5px 0; border-bottom:1px solid var(--border); }
   .leg-row:last-child { border-bottom:none; }
   /* Numer sesji = wejście w ślad; kreska pod cyfrą mówi, że jest klikalny (wzorzec z 10) */
   .leg-num {
@@ -155,7 +111,11 @@
     content:''; position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
     width:12px; height:1.5px; border-radius:1px; background:var(--green); opacity:0.5;
   }
-  .leg-times { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); letter-spacing:0.5px; width:104px; flex-shrink:0; }
+  /* Czasy nad rejestracją: oś czasu jest treścią pierwszorzędną wiersza, maszyna
+     tylko informacją (issue #23 pkt 3) — stąd hierarchia rozmiaru i koloru. */
+  .leg-id { display:flex; flex-direction:column; gap:2px; width:112px; flex-shrink:0; }
+  .leg-times { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); letter-spacing:0.5px; }
+  .leg-reg { font-family:var(--font-mono); font-size:8.5px; font-weight:700; letter-spacing:1.5px; color:var(--text-muted); }
   .leg-metrics { flex:1; display:flex; gap:12px; }
   .leg-metric { display:flex; flex-direction:column; gap:1px; }
   .leg-metric-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
@@ -167,18 +127,15 @@
   }
   .edit-btn:hover { border-color:var(--green-border); color:var(--green); }
 
-  /* Stany „niepotwierdzone" (.leg-num.pending / .leg-note) usunięte 2026-08-10:
-     sesję zatwierdza zdanie samolotu (09b) i dopiero wtedy trafia na listę. */
-
-  .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); border-top:1px solid var(--border); }
+  /* Sumy doby: Blok i Loty. Kafla „Służba" nie ma (issue #23 pkt 2) — czas
+     „od pierwszej do ostatniej czynności" niczego nie mierzył. */
+  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border-top:1px solid var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-primary); }
-  .total-val.duty { color:var(--green); }
   .total-sub { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
 
-  /* ===== Przyciski =====
-     (.btn-primary odszedł razem z kartą claimu — na 01 nie ma już akcji „na teraz") */
+  /* ===== Przyciski ===== */
   .btn-secondary {
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; min-height:46px; padding:13px; border-radius:12px;
@@ -187,8 +144,9 @@
     border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
   }
   .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
-  .btn-secondary.narrow { width:auto; padding:13px 16px; }
-  .btn-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; margin-top:-4px; line-height:1.5; }
+
+  /* „ZAMKNIJ DZIEŃ" i przypis „Nie musisz go zamykać…" USUNIĘTE (issue #23 pkt 2 i 4)
+     razem z klamrą służby — dzień pilota nie jest bytem, który się zamyka. */
 
   /* Wejście w okno korekty 24 h — przeniesione ze splasha */
   .history-link {
@@ -204,13 +162,8 @@
     border-radius:5px; padding:3px 7px; white-space:nowrap;
   }
 
-  /* Cache referencyjny — stan świeżości danych z serwera (§4.8) */
-  .ref-sync {
-    font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
-    color:var(--text-muted); display:flex; align-items:center; justify-content:center; gap:7px;
-    padding:2px 0 4px;
-  }
-  .ref-sync .dot { width:6px; height:6px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green-glow); }
+  /* Stopka „Dane referencyjne · sync" USUNIĘTA (issue #23 pkt 5): stempel mieszka
+     teraz w arkuszu szczegółów synchronizacji pod pillem OFFLINE (wariant 01C). */
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -247,136 +200,83 @@
 
   <div class="screen">
 
-    <!-- App Header — online SyncChip nie rysuje nic (issue #12) -->
+    <!-- App Header — tytuł do lewej, ustawienia po prawej (issue #23 pkt 7);
+         online SyncChip nie rysuje nic (issue #12) -->
     <div class="app-header">
-      <a href="13-ustawienia.html" class="icon-btn" title="Ustawienia">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
-      </a>
-      <div class="app-header-center">
+      <div class="app-header-left">
         <span class="screen-title">MÓJ DZIEŃ</span>
-        <span class="header-subtitle">TMK · 06 SIE 2026 · UTC</span>
+        <!-- Bez „UTC" w podtytule (uwaga użytkownika, issue #23): znacznik strefy
+             niesie nagłówek karty „Log dnia · czasy UTC" — tam mówi coś o tabeli,
+             w nagłówku ekranu był szumem. -->
+        <span class="header-subtitle">TMK · 06 SIE 2026</span>
       </div>
-      <span class="badge">3 sesje</span>
+      <div class="app-header-right">
+        <a href="13-ustawienia.html" class="icon-btn" title="Ustawienia">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+        </a>
+      </div>
     </div>
 
     <div class="scroll">
 
-      <!-- Baner pouczający (Typ C) — reguła klamry powiedziana raz, potem mini (?).
-           W TYM wariancie startuje ZWINIĘTY: pilot jest w trzecim wzlocie dnia, więc
-           wyjaśnienie zamknął dawno (stan schowany pamiętany NA STAŁE per pilot).
-           Rozwinięty baner pokazuje 01A — tam jest pierwszy raz. -->
-      <div class="edu-box" id="eduDuty" style="display:none;">
-        <svg class="edu-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="edu-text">Loty zapisują się same — <b>służby nie musisz zaczynać ani kończyć</b>.
-        Klamra bierze się z pierwszej i ostatniej sesji; popraw ją tylko wtedy, gdy
-        zameldowałeś się wcześniej albo zostajesz dłużej niż samolot.</span>
-        <button class="edu-dismiss" onclick="eduCollapse('eduDuty')" title="Rozumiem — schowaj wyjaśnienie">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-      <button class="edu-mini" id="eduDuty-mini" style="display:inline-flex;" onclick="eduExpand('eduDuty')" title="Pokaż wyjaśnienie">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Jak liczy się służba?
-      </button>
-
-      <!-- TU STAŁA KARTA „SAMOLOT W RĘCE" (KOKPIT / ZDAJ SAMOLOT) — USUNIĘTA 2026-08-10.
-           Kokpit jest stanem modalnym: pilot trzymający maszynę NIE MOŻE zobaczyć tego
-           ekranu, więc karta nie miała osiągalnego stanu. Na liście dziennej są wyłącznie
-           sesje ZAKOŃCZONE i zatwierdzone zdaniem samolotu (09b). -->
-
-      <!-- Klamra służby: meldunek → sesje → koniec -->
+      <!-- Log dnia: płaska oś czasu sesji (issue #23 pkt 3). Wiersz = jedna sesja
+           (bieg silnika z lotami w środku), rejestracja jest informacją wiersza.
+           Sesje na liście są już ZATWIERDZONE — zdanie samolotu (09b) potwierdziło
+           dane, więc po locie niczego się nie potwierdza ani nie wysyła ponownie.
+           Ołówek wiersza prowadzi do DETALI TEJ SESJI (10): bilans paliwa i MH,
+           tabela lotów i tam korekty. Numer = ślad (14). -->
       <div class="day-card">
-        <div class="day-head">Służba · sesje dnia · czasy UTC</div>
-
-        <div class="bracket-row top">
-          <span class="bracket-label">Meldunek</span>
-          <span class="bracket-body">
-            <span class="bracket-value">07:10<span class="bracket-lt">09:10 LT</span></span>
-            <span class="bracket-hint declared">poprawione · pierwsza sesja 08:12</span>
-          </span>
-          <a href="01-moj-dzien.html" class="edit-btn" title="Popraw godzinę meldunku">
-            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
-          </a>
-        </div>
+        <div class="day-head">Log dnia · czasy UTC</div>
 
         <div class="legs">
-          <!-- WIERSZ = JEDNA SESJA (model 2026-08-10): silnik start → stop, liczba lotów
-               w środku, blok i czas w powietrzu. Grupa = jeden samolot; „rozliczenie"
-               prowadzi do bilansu paliwa i MH (10). Sesje na liście są już ZATWIERDZONE
-               (zatwierdzenie = zdanie samolotu na 09b) — nie ma pasków „do potwierdzenia". -->
-          <div class="leg-group-head">
-            <span class="leg-group-id">
-              <span class="leg-group-reg">SP-AXA</span>
-              <span class="leg-group-op">Skoki · zdany 11:20</span>
-            </span>
-            <a href="10-statystyki.html" class="leg-group-link">Rozliczenie →</a>
-          </div>
           <div class="leg-row">
             <a href="14-slad.html" class="leg-num" title="Ślad sesji 1">1</a>
-            <span class="leg-times">08:12 → 09:05</span>
+            <span class="leg-id">
+              <span class="leg-times">08:12 → 09:05</span>
+              <span class="leg-reg">SP-AXA</span>
+            </span>
             <span class="leg-metrics">
               <span class="leg-metric"><span class="leg-metric-key">Loty</span><span class="leg-metric-val">2</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">0:53</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">0:41</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 1">
+            <a href="10-statystyki.html" class="edit-btn" title="Sesja 1 — szczegóły i korekty">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
           <div class="leg-row">
             <a href="14-slad.html" class="leg-num" title="Ślad sesji 2">2</a>
-            <span class="leg-times">10:20 → 11:02</span>
+            <span class="leg-id">
+              <span class="leg-times">10:20 → 11:02</span>
+              <span class="leg-reg">SP-AXA</span>
+            </span>
             <span class="leg-metrics">
               <span class="leg-metric"><span class="leg-metric-key">Loty</span><span class="leg-metric-val">1</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">0:42</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">0:35</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 2">
+            <a href="10-statystyki.html" class="edit-btn" title="Sesja 2 — szczegóły i korekty">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
-
-          <div class="leg-group-head" style="border-top:1px solid var(--border);">
-            <span class="leg-group-id">
-              <span class="leg-group-reg">SP-KLM</span>
-              <span class="leg-group-op">Przelot · zdany 15:25</span>
-            </span>
-            <a href="10-statystyki.html" class="leg-group-link">Rozliczenie →</a>
-          </div>
           <div class="leg-row">
             <a href="14-slad.html" class="leg-num" title="Ślad sesji 3">3</a>
-            <span class="leg-times">13:40 → 15:10</span>
+            <span class="leg-id">
+              <span class="leg-times">13:40 → 15:10</span>
+              <span class="leg-reg">SP-KLM</span>
+            </span>
             <span class="leg-metrics">
               <span class="leg-metric"><span class="leg-metric-key">Loty</span><span class="leg-metric-val">2</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">1:30</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">1:21</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 3">
+            <a href="10-statystyki.html" class="edit-btn" title="Sesja 3 — szczegóły i korekty">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
-          <!-- Pasek „do potwierdzenia" USUNIĘTY 2026-08-10: sesję zatwierdza zdanie
-               samolotu (09b, odczyty obowiązkowe), więc niepotwierdzona sesja nie ma
-               jak trafić na tę listę. -->
-        </div>
-
-        <div class="bracket-row bottom">
-          <span class="bracket-label">Koniec służby</span>
-          <span class="bracket-body">
-            <span class="bracket-value pending">TRWA</span>
-            <span class="bracket-hint">ustali się na ostatniej sesji — 15:10</span>
-          </span>
-          <a href="01-moj-dzien.html" class="edit-btn" title="Wpisz godzinę zakończenia służby">
-            <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
-          </a>
         </div>
 
         <div class="totals">
-          <div class="total-cell">
-            <span class="total-key">Służba</span>
-            <span class="total-val duty">8:15</span>
-            <span class="total-sub">do teraz</span>
-          </div>
           <div class="total-cell">
             <span class="total-key">Blok</span>
             <span class="total-val">3:05</span>
@@ -392,7 +292,7 @@
 
       <a href="02-preflight.html" class="btn-secondary">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        PRZEJMIJ SAMOLOT
+        ROZPOCZNIJ LOT
       </a>
 
       <!-- Ręczny wpis CAŁEGO lotu (model 2026-08-10, story pkt 7): samolot, czasy
@@ -403,21 +303,11 @@
         DODAJ LOT RĘCZNIE
       </a>
 
-      <a href="01b-moj-dzien-zamkniety.html" class="btn-secondary">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        ZAMKNIJ DZIEŃ
-      </a>
-      <div class="btn-note">Nie musisz go zamykać —<br>niezamknięty dzień domyka się na ostatniej sesji.</div>
-
       <a href="12-historia.html" class="history-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
         Poprzednie dni
         <span class="history-badge">05 SIE — można poprawić</span>
       </a>
-
-      <div class="ref-sync" title="Cache referencyjny (samoloty, konfiguracje, piloci) odświeżany przy każdym kontakcie z siecią">
-        <span class="dot"></span>Dane referencyjne · sync 17:22
-      </div>
 
     </div>
   </div>
@@ -428,8 +318,8 @@
   <a class="vp-item active" href="01-moj-dzien.html">
     <span class="vp-badge">01</span>
     <span class="vp-body">
-      <span class="vp-name">Dzień w toku — samolot w ręce</span>
-      <span class="vp-when">Standard po pierwszej sesji: klamra służby wokół listy SESJI (model 2026-08-10 — wiersz to jeden bieg silnika z lotami w środku), dwa samoloty w jednej służbie, oba zdane, meldunek poprawiony ręcznie na 07:10. Wszystkie sesje zatwierdzone przy zdaniu — pasków „do potwierdzenia" już nie ma.</span>
+      <span class="vp-name">Dzień w toku</span>
+      <span class="vp-when">Standard po pierwszej sesji: płaska oś czasu sesji doby (wiersz = jeden bieg silnika z lotami w środku, rejestracja jako informacja wiersza — bez grupowania po maszynie), sumy Blok / Loty. Klamry służby i „Zamknij dzień" nie ma (issue #23) — dzień pilota to lista sesji, niczego się nie otwiera ani nie zamyka.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -437,14 +327,14 @@
     <span class="vp-badge blue">01A</span>
     <span class="vp-body">
       <span class="vp-name">Początek dnia — zero sesji</span>
-      <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: klamra pusta z wyjaśnieniem, że służba zacznie się sama przy pierwszym wzlocie, cały ekran prowadzi do przejęcia samolotu.</span>
+      <span class="vp-when">Pilot wszedł do aplikacji i nie przejął jeszcze nic: pusty log dnia („— —", nigdy zera), cały ekran prowadzi do przejęcia samolotu.</span>
     </span>
   </a>
-  <a class="vp-item" href="01b-moj-dzien-zamkniety.html">
-    <span class="vp-badge amber">01B</span>
+  <a class="vp-item" href="01c-moj-dzien-offline.html">
+    <span class="vp-badge amber">01C</span>
     <span class="vp-body">
-      <span class="vp-name">Dzień zamknięty — okno korekty</span>
-      <span class="vp-when">Po „Zamknij dzień": klamra potwierdzona przez pilota, baner odliczający 24 h okna korekty. Nowa sesja tego samego dnia otwiera dzień z powrotem i rozszerza klamrę.</span>
+      <span class="vp-name">Offline — pill i szczegóły synchronizacji</span>
+      <span class="vp-when">Brak sieci: w nagłówku amber pill „OFFLINE · n" (jedyny ślad sieci na ekranie), tapnięcie otwiera arkusz ze szczegółami — ostatnia udana synchronizacja, kolejka, stempel danych referencyjnych (issue #23 pkt 5).</span>
     </span>
   </a>
 </aside>
@@ -456,18 +346,12 @@
   <span>·</span>
   <a href="01-moj-dzien.html" class="active">01 Mój dzień</a>
   <a href="01a-moj-dzien-pusty.html">01A Zero sesji</a>
-  <a href="01b-moj-dzien-zamkniety.html">01B Zamknięty</a>
+  <a href="01c-moj-dzien-offline.html">01C Offline</a>
   <span>·</span>
   <a href="12-historia.html">12 Historia</a>
   <span>·</span>
-  <a href="02-preflight.html">02 Przejęcie →</a>
+  <a href="02-preflight.html">02 Nowy lot →</a>
 </nav>
-
-<script>
-  /* Baner pouczający: × chowa do mini-(?), w aplikacji stan zapamiętany NA STAŁE per pilot */
-  function eduCollapse(id){ document.getElementById(id).style.display='none'; document.getElementById(id+'-mini').style.display='inline-flex'; }
-  function eduExpand(id){ document.getElementById(id).style.display=''; document.getElementById(id+'-mini').style.display='none'; }
-</script>
 
 </body>
 </html>

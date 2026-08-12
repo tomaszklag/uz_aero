@@ -38,7 +38,6 @@ async function openDay(clock: FixedClock): Promise<void> {
   clock.set(min(0));
   await s.confirmPreflight({
     operation: 'skoki',
-    dutyStart: min(0),
     reading: { fuelL: 150, mh: 1234.5 },
   });
 }
@@ -53,7 +52,7 @@ describe('useSessionStore', () => {
 
     expect(store().context?.sessionUuid).toBe(SESSION);
     expect(store().projection.engineRunning).toBe(true);
-    expect(store().projection.dutyStart).toBe(min(0));
+    expect(store().projection.preflightAt).toBe(min(0));
     expect(store().events).toHaveLength(3);
   });
 

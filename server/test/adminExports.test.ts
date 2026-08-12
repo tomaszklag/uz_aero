@@ -73,7 +73,6 @@ function openDay(o: DayOptions) {
         operation: 'skoki',
         departureIcao: 'EPKK',
         arrivalIcao: null,
-        dutyStart: at(8, 0, d),
         reading,
         client: null,
         mhFormat: 'hhmm',
@@ -93,7 +92,7 @@ function closeDay(o: DayOptions & { mh?: number }) {
     event(
       'day_close',
       at(16, 45, d),
-      { finalReading: { fuelL: 88, mh: o.mh ?? 1235.4 }, dutyEnd: at(16, 45, d) },
+      { finalReading: { fuelL: 88, mh: o.mh ?? 1235.4 } },
       o,
     ),
   ];

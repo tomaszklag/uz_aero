@@ -258,7 +258,6 @@ describe('reguły korekty', () => {
   it('odrzuca korektę zdarzeń cyklu życia sesji (preflight, day_close)', () => {
     const preflight = event('preflight_confirm', at(8, 0), {
       operation: 'skoki',
-      dutyStart: at(8, 0),
       reading: { fuelL: 150, mh: 1234.5 },
       mhFormat: 'hhmm',
     });
@@ -286,7 +285,6 @@ describe('reguły korekty', () => {
       ...events,
       event('day_close', closedAt, {
         finalReading: { fuelL: 88, mh: 1241.15 },
-        dutyEnd: closedAt,
       }),
     ];
     const state = projectSession(closed);

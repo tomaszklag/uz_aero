@@ -107,7 +107,6 @@ const preflight = (): Event =>
       operation: 'skoki',
       departureIcao: 'EPKK',
       arrivalIcao: 'EPKK',
-      dutyStart: min(0),
       reading: { fuelL: 150, mh: MH_START },
       mhFormat: 'hhmm',
     },
@@ -127,7 +126,7 @@ const CLOSED_STREAM: Event[] = [
   ...afterCycle(),
   ev(
     'day_close',
-    { finalReading: { fuelL: 112, mh: MH_END }, dutyEnd: CLOSED_AT },
+    { finalReading: { fuelL: 112, mh: MH_END } },
     { t: CLOSED_AT },
   ),
 ];
@@ -179,7 +178,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     [claim()],
     ev(
       'preflight_confirm',
-      { operation: 'skoki', dutyStart: min(0), reading: { fuelL: 150, mh: -1 } },
+      { operation: 'skoki', reading: { fuelL: 150, mh: -1 } },
       { t: min(0) },
     ),
   ],
@@ -218,7 +217,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     running(),
     ev(
       'day_close',
-      { finalReading: { fuelL: 112, mh: MH_END }, dutyEnd: min(300) },
+      { finalReading: { fuelL: 112, mh: MH_END } },
       { t: min(300) },
     ),
   ],
@@ -227,7 +226,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     afterCycle(),
     ev(
       'day_close',
-      { finalReading: { fuelL: 112, mh: MH_START - 1 }, dutyEnd: min(300) },
+      { finalReading: { fuelL: 112, mh: MH_START - 1 } },
       { t: min(300) },
     ),
   ],
@@ -236,7 +235,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     afterCycle(),
     ev(
       'day_close',
-      { finalReading: { fuelL: 112, mh: MH_START + 5 }, dutyEnd: min(300) },
+      { finalReading: { fuelL: 112, mh: MH_START + 5 } },
       { t: min(300) },
     ),
   ],
@@ -245,19 +244,12 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     afterCycle(),
     ev(
       'day_close',
-      { finalReading: { fuelL: 200, mh: MH_END }, dutyEnd: min(300) },
+      { finalReading: { fuelL: 200, mh: MH_END } },
       { t: min(300) },
     ),
   ],
-  [
-    'koniec służby przed meldunkiem',
-    afterCycle(),
-    ev(
-      'day_close',
-      { finalReading: { fuelL: 112, mh: MH_END }, dutyEnd: min(-60) },
-      { t: min(300) },
-    ),
-  ],
+  // (Przypadek „koniec służby przed meldunkiem" usunięty 2026-08-11 razem z regułą
+  //  DUTY_END_BEFORE_START i klamrą służby, issue #23.)
   [
     // Skład jest opcjonalny (issue #21) — twarda gwardia została wyłącznie na
     // składzie NIEMOŻLIWYM, więc baterię zasila ujemna liczba, nie zero.
@@ -285,7 +277,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
       claim(),
       ev(
         'preflight_confirm',
-        { operation: 'ferry', dutyStart: min(0), reading: { fuelL: 150, mh: MH_START } },
+        { operation: 'ferry', reading: { fuelL: 150, mh: MH_START } },
         { t: min(0) },
       ),
       ev('engine_start', {}, { t: min(12) }),
@@ -307,7 +299,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
       claim(),
       ev(
         'preflight_confirm',
-        { operation: 'ferry', dutyStart: min(0), reading: { fuelL: 150, mh: MH_START } },
+        { operation: 'ferry', reading: { fuelL: 150, mh: MH_START } },
         { t: min(0) },
       ),
       ev('engine_start', {}, { t: min(12) }),
@@ -352,7 +344,7 @@ const SAME_IN_BOTH_MODES: Array<[string, Event[], Event]> = [
     CLOSED_STREAM,
     ev(
       'day_close',
-      { finalReading: { fuelL: 112, mh: MH_END }, dutyEnd: CLOSED_AT },
+      { finalReading: { fuelL: 112, mh: MH_END } },
       { t: min(320) },
     ),
   ],
@@ -446,7 +438,6 @@ describe('A · dopóki okno korekty trwa, oba tryby są nierozróżnialne', () =
       'DUAL_IS_PIC',
       'MANUAL_ENTRY_EMPTY',
       'MANUAL_ENTRY_TIME_ORDER',
-      'DUTY_END_BEFORE_START',
       'CORRECTION_TARGET_NOT_FOUND',
       'CORRECTION_TARGET_NOT_ALLOWED',
       'CORRECTION_TIME_IN_FUTURE',
@@ -562,7 +553,7 @@ describe('B · po oknie 24 h administrator traci wyłącznie CORRECTION_WINDOW_E
 
     const secondClose = ev(
       'day_close',
-      { finalReading: { fuelL: 112, mh: MH_END }, dutyEnd: CLOSED_AT },
+      { finalReading: { fuelL: 112, mh: MH_END } },
       { t: LATE },
     );
     expect(codes(asAdmin(CLOSED_STREAM, secondClose))).toEqual(['DAY_ALREADY_CLOSED']);

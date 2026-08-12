@@ -78,7 +78,6 @@ describe('wiersze aktualnej załogi', () => {
     const projection = {
       picId: 'TMK',
       dualId: null,
-      dutyStart: at(8, 0),
       legs: [],
     } as unknown as SessionState;
 

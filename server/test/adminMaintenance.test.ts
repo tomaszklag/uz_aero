@@ -51,7 +51,6 @@ const fullDay = () => [
     operation: 'skoki',
     departureIcao: 'EPKK',
     arrivalIcao: null,
-    dutyStart: at(8, 0),
     reading: { fuelL: 150, mh: 1234.5 },
     client: 'SKY CAMP',
     mhFormat: 'hhmm',
@@ -62,7 +61,6 @@ const fullDay = () => [
   event('engine_stop', at(10, 34), {}),
   event('day_close', at(16, 45), {
     finalReading: { fuelL: 88, mh: 1241.15 },
-    dutyEnd: at(16, 45),
   }),
 ];
 

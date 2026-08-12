@@ -83,7 +83,6 @@ function flyingDay(o: DayOptions) {
       operation: o.operation ?? 'skoki',
       departureIcao: 'EPKK',
       arrivalIcao: null,
-      dutyStart: at(8, 0),
       reading: { fuelL: 150, mh },
       client: o.client ?? null,
       mhFormat: 'hhmm',
@@ -106,7 +105,6 @@ function flyingDay(o: DayOptions) {
     events.push(
       ev('day_close', closeAt, {
         finalReading: { fuelL: o.fuelEnd ?? 88, mh: mh + 2.2 },
-        dutyEnd: closeAt,
       }),
     );
   }
@@ -288,7 +286,7 @@ describe('A10 · dni otwarte i oś zakresu', () => {
         type: 'day_close',
         deviceTime: D22 + 16 * HOUR_MS,
         gpsTime: D22 + 16 * HOUR_MS,
-        payload: { finalReading: { fuelL: 90, mh: 1202.2 }, dutyEnd: D22 + 16 * HOUR_MS },
+        payload: { finalReading: { fuelL: 90, mh: 1202.2 } },
         schemaVersion: 1,
       },
     ]);
@@ -572,7 +570,7 @@ describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
         type: 'day_close',
         deviceTime: D21 + 15 * HOUR_MS,
         gpsTime: D21 + 15 * HOUR_MS,
-        payload: { finalReading: { fuelL: 40, mh: 700 }, dutyEnd: D21 + 15 * HOUR_MS },
+        payload: { finalReading: { fuelL: 40, mh: 700 } },
       },
     ]);
 
@@ -618,7 +616,6 @@ describe('A10 · `null` to „nie wiemy", nigdy zero', () => {
       ev('st-nb-stop', 'engine_stop', at(10, 34)),
       ev('st-nb-close', 'day_close', at(16, 45), {
         finalReading: { fuelL: 80, mh: 1210 },
-        dutyEnd: at(16, 45),
       }),
     ]);
 

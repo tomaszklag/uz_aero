@@ -54,7 +54,6 @@ function day(sessionUuid = 'sess-1', overrides: Record<string, unknown> = {}) {
         operation: 'skoki',
         departureIcao: 'EPKK',
         arrivalIcao: null,
-        dutyStart: at(8, 0),
         reading: { fuelL: 150, mh: 1234.5 },
         client: null,
         mhFormat: 'hhmm',
@@ -68,7 +67,7 @@ function day(sessionUuid = 'sess-1', overrides: Record<string, unknown> = {}) {
     event(
       'day_close',
       at(16, 45),
-      { finalReading: { fuelL: 88, mh: 1241.15 }, dutyEnd: at(16, 45) },
+      { finalReading: { fuelL: 88, mh: 1241.15 } },
       base,
     ),
   ];
@@ -114,7 +113,7 @@ function shift(o: {
   if (o.closed === false) return events;
   return [
     ...events,
-    event('day_close', t(70), { finalReading: o.finalReading, dutyEnd: t(70) }, base),
+    event('day_close', t(70), { finalReading: o.finalReading }, base),
   ];
 }
 
@@ -278,7 +277,7 @@ describe('eksport dziennego arkusza (§4.7)', () => {
       event(
         'day_close',
         at(16, 45),
-        { finalReading: { fuelL: 95, mh: 1237.4 }, dutyEnd: at(16, 45) },
+        { finalReading: { fuelL: 95, mh: 1237.4 } },
         { sessionUuid: 'sess-2', picId: 'KRZ' },
       ),
     ]);

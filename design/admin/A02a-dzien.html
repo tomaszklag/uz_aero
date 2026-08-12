@@ -413,7 +413,7 @@
     <span class="vp-badge">A02A</span>
     <span class="vp-body">
       <span class="vp-name">Karta sesji</span>
-      <span class="vp-when">Kliknięcie wiersza z A02. Kafle podsumowania, pełna oś zdarzeń ze wszystkimi typami, lista wzlotów i flagi sesji. Ma dwa stany — przełącznik pod spodem.</span>
+      <span class="vp-when">Kliknięcie wiersza z A02. Kafle podsumowania, pełna oś zdarzeń ze wszystkimi typami, lista lotów i flagi sesji. Ma dwa stany — przełącznik pod spodem.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -559,20 +559,20 @@
 
         <div class="banner status" id="openBanner" data-when="open" data-disp="flex" style="display:none;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span><b>Samolot nieoddany — telefon dosyła zdarzenia.</b> Sesja nie ma jeszcze <code>day_close</code>; ostatnie zdarzenie dotarło <b>13:58:21 UTC</b> (24 min temu). Liczby poniżej są <b>stanem na ostatni sync, nie stanem końcowym</b> — dojdą kolejne wzloty, tankowania i odczyt końcowy. Odczyty „koniec" (MH, FOB) wypełni dopiero <b>zdanie samolotu</b>; do tego czasu panel pokazuje „—" zamiast zgadywać, a wiersz tej zmiany w karcie doby zostaje otwarty.</span>
+          <span><b>Samolot nieoddany — telefon dosyła zdarzenia.</b> Sesja nie ma jeszcze <code>day_close</code>; ostatnie zdarzenie dotarło <b>13:58:21 UTC</b> (24 min temu). Liczby poniżej są <b>stanem na ostatni sync, nie stanem końcowym</b> — dojdą kolejne loty, tankowania i odczyt końcowy. Odczyty „koniec" (MH, FOB) wypełni dopiero <b>zdanie samolotu</b>; do tego czasu panel pokazuje „—" zamiast zgadywać, a wiersz tej zmiany w karcie doby zostaje otwarty.</span>
         </div>
 
         <div class="banner warn" data-when="closed" data-disp="flex">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span><b>Samolot zdany 30 JUL 13:22:47 UTC</b> (dobę temu). <b style="color:var(--text-secondary)">Okno samodzielnej korekty pilota liczy się od ZAMKNIĘCIA WZLOTU</b> (<code>leg_close</code>), a nie od zdania samolotu — każdy wzlot ma własną dobę, a wzlot niepotwierdzony kotwiczy się w wyłączeniu silnika. W tej sesji wzlot 1 wygasł już 31 JUL 08:41, a wzlot 3 dopiero 31 JUL 13:22; Anna Wrzosek zdążyła w swoim oknie unieważnić fałszywe lądowanie o 08:14:09. Administrator dopisuje zmianę <b>zawsze</b>, nowym zdarzeniem <code>event_correction</code> — rejestr jest append-only i nic się w nim nie nadpisuje. Panel nie odlicza tych okien za Ciebie: kolizję nazywa serwer w chwili podglądu korekty (<a href="A02b-korekta.html" style="color:var(--amber);">A02B</a>).</span>
+          <span><b>Samolot zdany 30 JUL 13:22:47 UTC</b> (dobę temu). <b style="color:var(--text-secondary)">Okno samodzielnej korekty pilota liczy się od ZDANIA SAMOLOTU</b> (<code>day_close</code>) — jest JEDNO na sesję i trwa 24 h (model 2026-08-10: zdanie = zatwierdzenie logu): tu do <b>31 JUL 13:22 UTC</b>. Anna Wrzosek zdążyła w swoim oknie unieważnić fałszywe lądowanie o 08:14:09. Administrator dopisuje zmianę <b>zawsze</b>, nowym zdarzeniem <code>event_correction</code> — rejestr jest append-only i nic się w nim nie nadpisuje. Panel nie odlicza tego okna za Ciebie: kolizję nazywa serwer w chwili podglądu korekty (<a href="A02b-korekta.html" style="color:var(--amber);">A02B</a>).</span>
         </div>
 
         <div class="tiles">
           <div class="tile">
             <span class="tile-key">Czas blokowy</span>
-            <span class="tile-val">05:53</span>
-            <span class="tile-note" data-when="closed" data-disp="block">3 cykle silnika · suma <code>engine_start</code> → <code>engine_stop</code>.</span>
-            <span class="tile-note" data-when="open" data-disp="block" style="display:none;">2 zamknięte cykle + 1 trwający (nie wchodzi do sumy).</span>
+            <span class="tile-val">06:42</span>
+            <span class="tile-note" data-when="closed" data-disp="block">Jeden bieg silnika: <code>engine_start</code> → <code>engine_stop</code> (sesja = jeden bieg).</span>
+            <span class="tile-note" data-when="open" data-disp="block" style="display:none;">Bieg trwa — suma domknie się na <code>engine_stop</code>.</span>
           </div>
           <div class="tile">
             <span class="tile-key">Czas lotu</span>
@@ -593,7 +593,7 @@
           </div>
           <div class="tile">
             <span class="tile-key">Średnie zużycie</span>
-            <span class="tile-val amber" data-when="closed" data-disp="block">171<small> L/h</small></span>
+            <span class="tile-val amber" data-when="closed" data-disp="block">150<small> L/h</small></span>
             <span class="tile-val amber" data-when="open" data-disp="block" style="display:none;">—</span>
             <span class="tile-note">Liczone na czas blokowy, nie na czas lotu.</span>
           </div>
@@ -601,16 +601,15 @@
             <span class="tile-key">Δ motogodzin</span>
             <span class="tile-val" data-when="closed" data-disp="block">5.7<small> h</small></span>
             <span class="tile-val" data-when="open" data-disp="block" style="display:none;">—</span>
-            <span class="tile-note" data-when="closed" data-disp="block" style="color:var(--amber);">Blok 05:53 = 5.88 h — rozjazd 0.18 h. Patrz flaga <code>clock_drift</code>.</span>
+            <span class="tile-note" data-when="closed" data-disp="block" style="color:var(--amber);">Blok 06:42 = 6.71 h — rozjazd 1.0 h: licznik obrotomierzowy przyrasta na ziemi wolniej niż zegar, a dzień skokowy to dużo pracy na ziemi (por. przelicznik MH w A10b); swoje dokłada <code>clock_drift</code>.</span>
             <span class="tile-note" data-when="open" data-disp="block" style="display:none;">Delta powstanie z odczytu końcowego licznika.</span>
           </div>
           <!-- STAŁ TU KAFEL „CZAS SŁUŻBY (DUTY)" I BYŁA TO POMYŁKA KATEGORII.
-               Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należy do PILOTA i potrafi
-               objąć kilka maszyn (§3.6a) — jej upływu nie da się z tej karty uczciwie
-               policzyć. Do tego `dutyStart`/`dutyEnd` są dziś opcjonalne i w zwykłym
-               przypadku puste, więc kafel pokazywałby kreskę przy poprawnie przeprowadzonym
-               dniu. Zadeklarowane godziny klamry zostają na OSI ZDARZEŃ, gdzie są treścią
-               zdarzenia, a nie wielkością sesji. -->
+               Karta opisuje SESJĘ JEDNEGO SAMOLOTU, a służba należała do PILOTA
+               i potrafiła objąć kilka maszyn — jej upływu nie dało się z tej karty
+               uczciwie policzyć. Od issue #23 (2026-08-11) klamra służby nie istnieje
+               w modelu w ogóle: payloady nie niosą `dutyStart`/`dutyEnd`, a oś zdarzeń
+               nie ma czego pokazywać. -->
           <div class="tile">
             <span class="tile-key">Samolot zajęty</span>
             <span class="tile-val blue" data-when="closed" data-disp="block">07:30</span>
@@ -627,8 +626,8 @@
               Oś zdarzeń sesji
               <span class="spacer"></span>
               <span class="pill blue">czasy UTC</span>
-              <span class="pill dim" data-when="closed" data-disp="inline-flex">84 zdarzenia</span>
-              <span class="pill green" data-when="open" data-disp="inline-flex" style="display:none;"><span class="dot live"></span>62 · dane w drodze</span>
+              <span class="pill dim" data-when="closed" data-disp="inline-flex">81 zdarzeń</span>
+              <span class="pill green" data-when="open" data-disp="inline-flex" style="display:none;"><span class="dot live"></span>59 · dane w drodze</span>
             </div>
 
             <div class="tl">
@@ -649,8 +648,8 @@
                 <span>
                   <span class="tl-name">preflight_confirm</span>
                   <span class="tl-meta">
-                    operacja: skoki · EPRA → EPRA · meldunek <b>nie zadeklarowano</b> · klient: SKY CAMP (zlec. 2026/141)<br>
-                    <span style="color:var(--text-muted)">klamra służby jest opcjonalna od <code>schemaVersion 2</code> (§3.6a) i ekran 02 o nią NIE PYTA — „nie zadeklarowano" to informacja, nie luka</span><br>
+                    operacja: skoki · EPRA → EPRA · klient: SKY CAMP (zlec. 2026/141)<br>
+                    <span style="color:var(--text-muted)">payload nie niesie godziny meldunku — klamra służby odeszła z modelu w całości (issue #23)</span><br>
                     odczyt: FOB <b>780 L</b> · MH <b>3902.1</b> (format dziesiętny)<br>
                     korekta odczytu: mh 3901.4 → 3902.1 — „licznik pokazuje więcej niż przekazanie z 29 JUL"
                   </span>
@@ -659,11 +658,31 @@
               </div>
 
               <div class="tl-row">
+                <span class="tl-time">06:12:05</span>
+                <span class="tl-rail"><span class="tl-dot amber"></span></span>
+                <span>
+                  <span class="tl-name">refuel</span>
+                  <span class="tl-meta">przed <b>780 L</b> · dolano <b>379 L</b> · po <b>1159 L</b> (pojemność 1250 L)<br>tankowanie PRZED uruchomieniem (kokpit 04a) — po pivocie nie ma przerwy w środku biegu, w której pilot stałby przy dystrybutorze<br>para odczytów przed/po = granica interwału paliwowego analityki (A10a)</span>
+                </span>
+                <span class="pill amber">paliwo</span>
+              </div>
+
+              <div class="tl-row">
+                <span class="tl-time">06:21:30</span>
+                <span class="tl-rail"><span class="tl-dot amber"></span></span>
+                <span>
+                  <span class="tl-name">crew_change</span>
+                  <span class="tl-meta">rola: <b>dual</b> · schodzi Marek Bąk (MBK) · wchodzi Karolina Nowak (KNO)<br>zmiana załogi możliwa wyłącznie PRZED uruchomieniem — po biegu nowa załoga = nowe przejęcie<br>PIC bez zmian — sesję pisze jedno urządzenie (single-writer)</span>
+                </span>
+                <span class="pill amber">załoga</span>
+              </div>
+
+              <div class="tl-row">
                 <span class="tl-time">06:31:02</span>
                 <span class="tl-rail"><span class="tl-dot green"></span></span>
                 <span>
-                  <span class="tl-name">engine_start · cykl 1</span>
-                  <span class="tl-meta">GPS 51.3892 N · 21.2133 E · dokł. 5 m<br>elewacja lotniska: <b>604 ft</b> (baza dla detekcji startu i lądowania)</span>
+                  <span class="tl-name">engine_start</span>
+                  <span class="tl-meta">GPS 51.3892 N · 21.2133 E · dokł. 5 m<br>elewacja lotniska: <b>604 ft</b> (baza dla detekcji startu i lądowania)<br>JEDYNY bieg sesji — sesja = jeden bieg silnika (pivot 2026-08-10)</span>
                 </span>
                 <span class="pill green">silnik</span>
               </div>
@@ -765,7 +784,7 @@
                   <span class="tl-name">landing</span>
                   <span class="tl-meta">
                     <b style="color:var(--red);">Unieważnione</b> — <code>event_correction</code> · <code>action: void</code> z 30 JUL 18:22:05 UTC<br>
-                    unieważniła: <b>Anna Wrzosek (PIC)</b>, w oknie korekty wzlotu 1, z ekranu 04C aplikacji<br>
+                    unieważniła: <b>Anna Wrzosek (PIC)</b>, w swoim oknie korekty, z ekranu 04C aplikacji<br>
                     powód: „zniżanie po zrzucie zaliczone jako lądowanie — samolot nie dotknął pasa"<br>
                     wiersz zostaje w rejestrze na zawsze; nie wchodzi do wyliczeń
                   </span>
@@ -793,50 +812,12 @@
                 <span class="pill blue">auto</span>
               </div>
 
-              <div class="tl-row">
-                <span class="tl-time">08:41:18</span>
-                <span class="tl-rail"><span class="tl-dot red"></span></span>
-                <span>
-                  <span class="tl-name">engine_stop · koniec cyklu 1</span>
-                  <span class="tl-meta">cykl 1: 06:31:02 → 08:41:18 = <b>02:10:16</b> · GPS 51.3889 N · 21.2128 E</span>
-                </span>
-                <span class="pill red">silnik</span>
-              </div>
-
-              <!-- WZLOT JEST JEDNOSTKĄ POTWIERDZENIA DANYCH (§3.6), nie doba. `leg_close`
-                   nie tworzy ani nie zamyka cyklu silnika — niesie fakt „pilot przejrzał
-                   ten wzlot", i to OD NIEGO liczy się 24-godzinne okno korekty TEGO wzlotu.
-                   Odczyt jest tu OPCJONALNY; gdy padnie, jest pełnoprawnym ogniwem łańcucha
-                   MH i domyka interwał paliwowy analityki. -->
-              <div class="tl-row">
-                <span class="tl-time">08:43:02</span>
-                <span class="tl-rail"><span class="tl-dot green"></span></span>
-                <span>
-                  <span class="tl-name">leg_close · wzlot 1</span>
-                  <span class="tl-meta">wzlot 1 potwierdzony przez pilota · odczyt: FOB <b>409 L</b> · MH <b>3904.3</b><br>uwagi: „drugi zrzut z 3800 m zamiast 4000 — chmury"<br>okno korekty tego wzlotu: do 31 JUL 08:43 UTC</span>
-                </span>
-                <span class="pill green">wzlot</span>
-              </div>
-
-              <div class="tl-row">
-                <span class="tl-time">08:52:14</span>
-                <span class="tl-rail"><span class="tl-dot amber"></span></span>
-                <span>
-                  <span class="tl-name">refuel</span>
-                  <span class="tl-meta">przed <b>409 L</b> · dolano <b>379 L</b> · po <b>788 L</b> (pojemność 1250 L)<br>zużycie od poprzedniego punktu kontrolnego: 171 L/h</span>
-                </span>
-                <span class="pill amber">paliwo</span>
-              </div>
-
-              <div class="tl-row">
-                <span class="tl-time">09:12:40</span>
-                <span class="tl-rail"><span class="tl-dot green"></span></span>
-                <span>
-                  <span class="tl-name">engine_start · cykl 2</span>
-                  <span class="tl-meta">GPS 51.3891 N · 21.2131 E · elewacja 604 ft</span>
-                </span>
-                <span class="pill green">silnik</span>
-              </div>
+              <!-- STAŁY TU: `engine_stop · koniec cyklu 1`, `leg_close · wzlot 1`,
+                   tankowanie między cyklami i `engine_start · cykl 2` — model sprzed
+                   pivotu 2026-08-10. Sesja = JEDEN bieg silnika: dzień skokowy z gorącym
+                   załadunkiem to jeden `engine_start` → `engine_stop` z wieloma lotami,
+                   `leg_close` nie istnieje (zatwierdzeniem jest `day_close`), a tankowanie
+                   mieszka przed uruchomieniem albo po zatrzymaniu (kokpit 04a/04). -->
 
               <div class="tl-row">
                 <span class="tl-time">09:20:15</span>
@@ -858,15 +839,9 @@
                 <span class="pill dim">zwinięte</span>
               </div>
 
-              <div class="tl-row">
-                <span class="tl-time">10:02:38</span>
-                <span class="tl-rail"><span class="tl-dot amber"></span></span>
-                <span>
-                  <span class="tl-name">crew_change</span>
-                  <span class="tl-meta">rola: <b>dual</b> · schodzi Marek Bąk (MBK) · wchodzi Karolina Nowak (KNO)<br>PIC bez zmian — sesję pisze jedno urządzenie (single-writer)</span>
-                </span>
-                <span class="pill amber">załoga</span>
-              </div>
+              <!-- STAŁA TU zmiana załogi 10:02 (w środku biegu) — po pivocie 2026-08-10
+                   `crew_change` jest legalny wyłącznie PRZED uruchomieniem; wiersz
+                   przeniósł się na początek sesji (06:21:30). -->
 
               <div class="tl-row">
                 <span class="tl-time">11:33:20</span>
@@ -878,44 +853,18 @@
                 <span class="pill blue">auto</span>
               </div>
 
-              <div class="tl-row">
-                <span class="tl-time">11:38:05</span>
-                <span class="tl-rail"><span class="tl-dot red"></span></span>
-                <span>
-                  <span class="tl-name">engine_stop · koniec cyklu 2</span>
-                  <span class="tl-meta">cykl 2: 09:12:40 → 11:38:05 = <b>02:25:25</b></span>
-                </span>
-                <span class="pill red">silnik</span>
-              </div>
-
-              <div class="tl-row">
-                <span class="tl-time">11:40:51</span>
-                <span class="tl-rail"><span class="tl-dot green"></span></span>
-                <span>
-                  <span class="tl-name">leg_close · wzlot 2</span>
-                  <span class="tl-meta"><b>bez odczytu liczników</b> — dzień skokowy, pilot nie chodził do licznika po tym wzlocie<br>wzlot bez odczytu NIE tworzy granicy interwału paliwowego: nie ma czego porównać, a zgadywanie stanu paliwa byłoby wymyślaniem pomiaru<br>okno korekty tego wzlotu: do 31 JUL 11:40 UTC</span>
-                </span>
-                <span class="pill green">wzlot</span>
-              </div>
-
-              <div class="tl-row">
-                <span class="tl-time">11:56:14</span>
-                <span class="tl-rail"><span class="tl-dot green"></span></span>
-                <span>
-                  <span class="tl-name">engine_start · cykl 3</span>
-                  <span class="tl-meta" style="color:var(--amber);">pierwsze przekroczenie progu <code>CLOCK_DRIFT</code>: device_time 12:08:14 vs gps_time 11:56:14 = <b>720 s</b> (próg 120 s)<br>od tej chwili zegar telefonu spieszy 12 min — czas zdarzeń bierzemy z GPS</span>
-                </span>
-                <span class="pill amber">drift</span>
-              </div>
+              <!-- STAŁY TU: `engine_stop · koniec cyklu 2`, `leg_close · wzlot 2` (bez
+                   odczytu) i `engine_start · cykl 3` — patrz komentarz-strażnik wyżej.
+                   Nauka o CLOCK_DRIFT przeniosła się na start lotu 8 niżej. -->
 
               <div class="tl-row">
                 <span class="tl-time">12:03:41</span>
-                <span class="tl-rail"><span class="tl-dot blue"></span></span>
+                <span class="tl-rail"><span class="tl-dot amber"></span></span>
                 <span>
                   <span class="tl-name">takeoff · lot 8</span>
-                  <span class="tl-meta">metoda: auto</span>
+                  <span class="tl-meta">metoda: auto<br><span style="color:var(--amber);">pierwsze przekroczenie progu <code>CLOCK_DRIFT</code>: device_time 12:15:41 vs gps_time 12:03:41 = <b>720 s</b> (próg 120 s) — od tej chwili zegar telefonu spieszy 12 min; czas zdarzeń bierzemy z GPS</span></span>
                 </span>
-                <span class="pill blue">auto</span>
+                <span class="pill amber">drift</span>
               </div>
 
               <div class="tl-row">
@@ -955,7 +904,7 @@
                   <span class="tl-name">manual_log_entry · lot 9</span>
                   <span class="tl-meta">
                     takeoff 12:35:00 · landing 12:59:00 (czas lotu 00:24:00) · off/on block: <b>—</b><br>
-                    uwagi: „brak fixa GPS nad strefą — wzlot wpisany ręcznie po wylądowaniu"<br>
+                    uwagi: „brak fixa GPS nad strefą — lot wpisany ręcznie po wylądowaniu"<br>
                     wpis retro: zapisany o 13:02:11, ale niesie czasy sprzed 27 minut — projekcja sortuje po czasie zdarzenia, nie zapisu
                   </span>
                 </span>
@@ -966,10 +915,10 @@
                 <span class="tl-time">13:13:33</span>
                 <span class="tl-rail"><span class="tl-dot red"></span></span>
                 <span>
-                  <span class="tl-name">engine_stop · koniec cyklu 3</span>
+                  <span class="tl-name">engine_stop</span>
                   <span class="tl-meta" style="color:var(--amber);">
                     <b>gps_time: brak fixa</b> — czas zdarzenia spadł na zegar urządzenia (device_time 13:13:33)<br>
-                    cykl 3: 11:56:14 → 13:13:33 = <b>01:17:19</b>; przy drifcie +720 s realne wyłączenie to ok. 13:01:33<br>
+                    bieg: 06:31:02 → 13:13:33 = <b>06:42:31</b>; przy drifcie +720 s realne wyłączenie to ok. 13:01:33<br>
                     to jest cel korekty administratora → <a href="A02b-korekta.html" style="color:var(--amber);">A02B</a>
                   </span>
                 </span>
@@ -981,7 +930,7 @@
                 <span class="tl-rail"><span class="tl-dot red"></span></span>
                 <span>
                   <span class="tl-name">day_close</span>
-                  <span class="tl-meta">odczyt końcowy (przekazanie): FOB <b>153 L</b> · MH <b>3907.8</b> · koniec służby: <b>nie zadeklarowano</b><br><b>zdanie samolotu</b> — koniec pracy z tą maszyną, nie koniec służby pilota; nazwa typu zdarzenia jest historyczna<br>wzlot 3 został zdany BEZ <code>leg_close</code> („Potwierdzę później") — jego okno korekty kotwiczy się awaryjnie w <code>engine_stop</code> 13:13:33</span>
+                  <span class="tl-meta">odczyt końcowy (przekazanie): FOB <b>153 L</b> · MH <b>3907.8</b><br><b>zdanie samolotu</b> — zatwierdzenie logu sesji; dzień pilota trwa dalej (nazwa typu zdarzenia jest historyczna, a klamra służby odeszła z modelu — issue #23)<br>od tej chwili liczy się okno korekty 24 h tej sesji</span>
                 </span>
                 <span class="pill red">zdanie</span>
               </div>
@@ -993,7 +942,7 @@
                   <span class="tl-name">event_correction</span>
                   <span class="tl-meta">
                     <code>action: void</code> · <code>targetUuid: 5e2b91c7…ab34</code> (landing 08:14:09)<br>
-                    autor: Anna Wrzosek (PIC), okno korekty wzlotu 1 (do 31 JUL 08:43) · powód: „zniżanie po zrzucie zaliczone jako lądowanie"<br>
+                    autor: Anna Wrzosek (PIC), w swoim oknie korekty (do 31 JUL 13:22) · powód: „zniżanie po zrzucie zaliczone jako lądowanie"<br>
                     korekta jest zdarzeniem jak każde inne — dopisuje się do rejestru, niczego nie nadpisuje
                   </span>
                 </span>
@@ -1005,7 +954,7 @@
                 <span class="tl-rail"><span class="tl-dot green"></span></span>
                 <span>
                   <span class="tl-name">Ostatnie zdarzenie przyjęte przez serwer</span>
-                  <span class="tl-meta">Sesja trwa. Brak <code>engine_stop</code> ostatniego cyklu, brak <code>day_close</code>.<br>Kolejne zdarzenia dojdą, gdy telefon złapie zasięg — outbox pilota nigdy nie blokuje pracy.</span>
+                  <span class="tl-meta">Sesja trwa: bieg silnika otwarty — brak <code>engine_stop</code> i <code>day_close</code>.<br>Kolejne zdarzenia dojdą, gdy telefon złapie zasięg — outbox pilota nigdy nie blokuje pracy.</span>
                 </span>
                 <span class="pill green"><span class="dot live"></span>live</span>
               </div>
@@ -1021,12 +970,12 @@
               <div class="kv"><span class="kv-k">Przejęcie samolotu</span><span class="kv-v">30 JUL 05:52:14 <small>UTC · free</small></span></div>
               <div class="kv" data-when="closed" data-disp="flex"><span class="kv-k">Zdanie samolotu</span><span class="kv-v">30 JUL 13:22:47 <small>UTC</small></span></div>
               <div class="kv" data-when="open" data-disp="flex" style="display:none;"><span class="kv-k">Zdanie samolotu</span><span class="kv-v amber"><small>maszyna wciąż zajęta</small></span></div>
-              <!-- NIE MA TU „okna korekty" JAKO JEDNEJ DATY: po §3.6a okno kotwiczy się
-                   w ZAMKNIĘCIU WZLOTU, osobno dla każdego, więc jedna liczba na sesję
-                   byłaby nieprawdą. Terminy per wzlot stoją na osi zdarzeń. -->
+              <!-- Okno korekty NIE jest wierszem tej karty: jest JEDNO na sesję, 24 h
+                   od ZDANIA samolotu (issue #23), a jego termin pokazuje baner nagłówka.
+                   (Wiersz „Wzloty potwierdzone" stał tu do pivotu — `leg_close` nie
+                   istnieje, sesję zatwierdza `day_close`.) -->
               <div class="kv" data-when="closed" data-disp="flex"><span class="kv-k">Zdany przed</span><span class="kv-v"><small>25 godz.</small></span></div>
-              <div class="kv"><span class="kv-k">Zdarzeń w rejestrze</span><span class="kv-v" data-when="closed" data-disp="inline">86 <small>w tym 1 korekta</small></span><span class="kv-v green" data-when="open" data-disp="inline" style="display:none;">64 <small>sync 24 min temu</small></span></div>
-              <div class="kv"><span class="kv-k">Wzloty potwierdzone</span><span class="kv-v" data-when="closed" data-disp="inline">2 <small>z 3 · wzlot 3 bez <code>leg_close</code></small></span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">2 <small>z 2 zamkniętych</small></span></div>
+              <div class="kv"><span class="kv-k">Zdarzeń w rejestrze</span><span class="kv-v" data-when="closed" data-disp="inline">81 <small>w tym 1 korekta</small></span><span class="kv-v green" data-when="open" data-disp="inline" style="display:none;">59 <small>sync 24 min temu</small></span></div>
               <div class="kv"><span class="kv-k">Karta arkusza</span><span class="kv-v" data-when="closed" data-disp="inline"><small><code>2026-07-30_SP-KLM</code> · rewizja 2</small></span><span class="kv-v amber" data-when="open" data-disp="inline" style="display:none;"><small>wiersz zmiany domknie zdanie samolotu</small></span></div>
             </div>
 
@@ -1037,7 +986,7 @@
               <div class="kv"><span class="kv-k">Końcowe</span><span class="kv-v" data-when="closed" data-disp="inline">153</span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">—</span></div>
               <div class="kv"><span class="kv-k">Zużyte</span><span class="kv-v amber" data-when="closed" data-disp="inline">1006</span><span class="kv-v amber" data-when="open" data-disp="inline" style="display:none;">—</span></div>
               <div class="kv"><span class="kv-k">Średnie L/h</span><span class="kv-v amber" data-when="closed" data-disp="inline">171 <small>na blok</small></span><span class="kv-v amber" data-when="open" data-disp="inline" style="display:none;">—</span></div>
-              <div class="kv"><span class="kv-k">Ostatni odczyt</span><span class="kv-v" data-when="closed" data-disp="inline">153 <small>day_close</small></span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">788 <small>po tankowaniu</small></span></div>
+              <div class="kv"><span class="kv-k">Ostatni odczyt</span><span class="kv-v" data-when="closed" data-disp="inline">153 <small>day_close</small></span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">1159 <small>po tankowaniu</small></span></div>
             </div>
 
             <div class="card">
@@ -1045,7 +994,7 @@
               <div class="kv"><span class="kv-k">Początek</span><span class="kv-v">3902.1</span></div>
               <div class="kv"><span class="kv-k">Koniec</span><span class="kv-v" data-when="closed" data-disp="inline">3907.8</span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;">—</span></div>
               <div class="kv"><span class="kv-k">Delta</span><span class="kv-v green" data-when="closed" data-disp="inline">5.7 <small>h</small></span><span class="kv-v green" data-when="open" data-disp="inline" style="display:none;">—</span></div>
-              <div class="kv"><span class="kv-k">Blok vs Δ MH</span><span class="kv-v amber" data-when="closed" data-disp="inline">+0.18 <small>h — flaga</small></span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;"><small>po zamknięciu</small></span></div>
+              <div class="kv"><span class="kv-k">Blok vs Δ MH</span><span class="kv-v amber" data-when="closed" data-disp="inline">+1.0 <small>h — flaga</small></span><span class="kv-v" data-when="open" data-disp="inline" style="display:none;"><small>po zamknięciu</small></span></div>
               <div class="kv"><span class="kv-k">Poprzednie przekazanie</span><span class="kv-v amber">3901.4 <small>29 JUL · dziura 0.7 h</small></span></div>
             </div>
 

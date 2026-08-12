@@ -269,11 +269,15 @@ export function CockpitReadonlyScreen({
         <StatusChip label={status.label} tone={status.tone} style={{ alignSelf: 'center' }} />
 
         {/* ── pasek sesji cudzego samolotu (`.claim-strip`) ───────────────────
-            Stało tu „Duty KRZ 02:31". Czas służby innego pilota nie jest informacją
+            Stało tu „Duty KRZ 02:31". Czas pracy innego pilota nie jest informacją
             o SAMOLOCIE i nie wnosi nic do decyzji o przejęciu (§3.6a) — liczy się,
             od kiedy maszyna jest zajęta i ile już zrobiła. */}
         {peekStrip != null && (
-          <ClaimStrip label={peekStrip.label} legs={peekStrip.legs} trailing={peekStrip.trailing} />
+          <ClaimStrip
+            label={peekStrip.label}
+            flights={peekStrip.flights}
+            trailing={peekStrip.trailing}
+          />
         )}
 
         {/* ── log jego dnia (`.day-log`) — BEZ kolumny korekty; cykle domyślnie

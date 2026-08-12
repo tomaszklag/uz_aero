@@ -413,14 +413,14 @@
     <span class="vp-badge">A02A</span>
     <span class="vp-body">
       <span class="vp-name">Karta sesji</span>
-      <span class="vp-when">Kafle podsumowania, oś zdarzeń, lista wzlotów, flagi. Stąd otwiera się ta szuflada — z konkretnego wiersza osi, bo korekta zawsze dotyczy JEDNEGO zdarzenia.</span>
+      <span class="vp-when">Kafle podsumowania, oś zdarzeń, lista lotów, flagi. Stąd otwiera się ta szuflada — z konkretnego wiersza osi, bo korekta zawsze dotyczy JEDNEGO zdarzenia.</span>
     </span>
   </a>
   <a class="vp-item active" href="A02b-korekta.html">
     <span class="vp-badge amber">A02B</span>
     <span class="vp-body">
       <span class="vp-name">Korekta administratora</span>
-      <span class="vp-when"><b>Zawsze dostępna</b> — bramka <code>400 day_open</code> została usunięta 2026-08-07: administrator nie jest nigdy blokowany. Gdy pilot ma jeszcze otwarte okno wzlotu albo trzyma sesję, panel pokazuje <b>ostrzeżenie</b> nad formularzem i zostawia decyzję człowiekowi. Pilot poprawia sam na ekranie <a href="../04c-korekta-zdarzenia.html" style="color:var(--green);">04C</a> aplikacji przez 24 h od zamknięcia SWOJEGO wzlotu. Dwie akcje, obie dopisują zdarzenie: <code>retime</code> i <code>void</code>.</span>
+      <span class="vp-when"><b>Zawsze dostępna</b> — bramka <code>400 day_open</code> została usunięta 2026-08-07: administrator nie jest nigdy blokowany. Gdy pilot ma jeszcze otwarte okno sesji albo trzyma sesję, panel pokazuje <b>ostrzeżenie</b> nad formularzem i zostawia decyzję człowiekowi. Pilot poprawia sam na ekranie <a href="../04c-korekta-zdarzenia.html" style="color:var(--green);">04C</a> aplikacji przez 24 h od zdania samolotu. Dwie akcje, obie dopisują zdarzenie: <code>retime</code> i <code>void</code>.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -572,13 +572,13 @@
             <div class="tl-row">
               <span class="tl-time">13:22:47</span>
               <span class="tl-rail"><span class="tl-dot red"></span></span>
-              <span><span class="tl-name">day_close</span><span class="tl-meta">zdanie samolotu · FOB 153 L · MH 3907.8 · koniec służby: nie zadeklarowano</span></span>
+              <span><span class="tl-name">day_close</span><span class="tl-meta">zdanie samolotu · FOB 153 L · MH 3907.8</span></span>
               <span class="pill red">zdanie</span>
             </div>
             <div class="tl-row">
               <span class="tl-time">18:22:05</span>
               <span class="tl-rail"><span class="tl-dot"></span></span>
-              <span><span class="tl-name">event_correction</span><span class="tl-meta"><code>void</code> landing 08:14:09 · autor: Anna Wrzosek (PIC), w oknie korekty wzlotu 1</span></span>
+              <span><span class="tl-name">event_correction</span><span class="tl-meta"><code>void</code> landing 08:14:09 · autor: Anna Wrzosek (PIC), w swoim oknie korekty (04C)</span></span>
               <span class="pill red">korekta</span>
             </div>
           </div>
@@ -592,7 +592,7 @@
         <div class="drawer-head">
           <div>
             <div class="drawer-title">KOREKTA ADMINISTRATORA</div>
-            <div class="drawer-sub">SP-KLM · 30 JUL 2026 · sesja 7c1e5a9b…83b4 · zdarzenie z wzlotu 3 (bez <code>leg_close</code>, okno kotwiczy się w <code>engine_stop</code>)</div>
+            <div class="drawer-sub">SP-KLM · 30 JUL 2026 · sesja 7c1e5a9b…83b4 · sesja zdana 30 JUL 13:22 UTC — okno korekty pilota: 24 h od zdania</div>
           </div>
           <a class="x-btn" href="A02a-dzien.html" title="Zamknij bez zapisu"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></a>
         </div>
@@ -614,15 +614,15 @@
                Przełącznik na canvasie pokazuje oba stany. -->
           <div class="banner status" data-warn="none" data-disp="flex">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span><b>Bez kolizji — serwer nie zwrócił ani jednego ostrzeżenia.</b> Samolot jest zdany (<code>day_close</code> 30 JUL 13:22:47), a okno samodzielnej korekty wzlotu 3 wygasło <b>31 JUL 13:13 UTC</b> — 24 h od <code>engine_stop</code>, bo pilot tego wzlotu nie potwierdził (<code>leg_close</code> nie padł, więc kotwicą jest wyłączenie silnika). Nikt inny nie pisze dziś do tego strumienia. <b style="color:var(--text-secondary)">Brak banera ostrzegawczego nie jest tu warunkiem zapisu</b> — administrator dopisuje korektę także wtedy, gdy kolizja istnieje.</span>
+            <span><b>Bez kolizji — serwer nie zwrócił ani jednego ostrzeżenia.</b> Samolot jest zdany (<code>day_close</code> 30 JUL 13:22:47), a okno samodzielnej korekty tej sesji wygasło <b>31 JUL 13:22 UTC</b> — 24 h od zdania samolotu (jedno okno na sesję, model 2026-08-10). Nikt inny nie pisze dziś do tego strumienia. <b style="color:var(--text-secondary)">Brak banera ostrzegawczego nie jest tu warunkiem zapisu</b> — administrator dopisuje korektę także wtedy, gdy kolizja istnieje.</span>
           </div>
 
           <div class="banner warn" data-warn="collision" data-disp="flex" style="display:none;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>Ta korekta wchodzi w kolizję z pilotem.</b> <span style="color:var(--text-muted);font-size:11px;">(ta sama szuflada otwarta 31 JUL <b>12:40</b> UTC, czyli przed wygaśnięciem okna wzlotu 3)</span>
+            <span><b>Ta korekta wchodzi w kolizję z pilotem.</b> <span style="color:var(--text-muted);font-size:11px;">(ta sama szuflada otwarta 31 JUL <b>12:40</b> UTC, czyli przed wygaśnięciem okna sesji)</span>
               <span style="display:block;padding-top:7px;line-height:1.65;">
-                <code style="color:var(--amber);">ADMIN_EDIT_PILOT_WINDOW_OPEN</code> — „Pilot może jeszcze poprawić ten wzlot samodzielnie (okno 24 h wzlotu 3 trwa)".<br />
-                <span style="color:var(--text-secondary);">Co z tego wyniknie: pilot może poprawić ten sam wzlot sam, na ekranie 04C. Twoja korekta do niego NIE wróci (synchronizacja jest jednokierunkowa), więc rozważ, czy nie wystarczy telefon do niego.</span>
+                <code style="color:var(--amber);">ADMIN_EDIT_PILOT_WINDOW_OPEN</code> — „Pilot może jeszcze poprawić tę sesję samodzielnie (okno 24 h od zdania trwa)".<br />
+                <span style="color:var(--text-secondary);">Co z tego wyniknie: pilot może poprawić tę samą sesję sam, na ekranie 04C. Twoja korekta do niego NIE wróci (synchronizacja jest jednokierunkowa), więc rozważ, czy nie wystarczy telefon do niego.</span>
               </span>
               <span style="display:block;padding-top:7px;line-height:1.65;">
                 <code style="color:var(--amber);">ADMIN_EDIT_SESSION_ACTIVE</code> — drugi możliwy kod, gdy samolot nie został jeszcze zdany: „Pilot nadal prowadzi tę sesję — może dopisać własne zdarzenia po synchronizacji".<br />
@@ -758,7 +758,7 @@
   <a href="A09-audyt.html">A09 Audyt</a>
   <a href="A05-eksporty.html">A05 Eksporty</a>
   <span>·</span>
-  <a href="../04c-korekta-zdarzenia.html">Ekran 04C pilota (okno 24 h od zamknięcia wzlotu)</a>
+  <a href="../04c-korekta-zdarzenia.html">Ekran 04C pilota (okno 24 h od zdania samolotu)</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>
@@ -780,7 +780,7 @@
 
   // Baner kolizji — dwa stany tej samej szuflady. Przełącznik istnieje po to, żeby oba
   // dało się obejrzeć na jednym pliku: w kanonicznym scenariuszu (samolot zdany, okno
-  // wzlotu 3 wygasło 31 JUL 13:13 UTC) serwer nie zwraca żadnych ostrzeżeń, więc baner
+  // sesji wygasło 31 JUL 13:22 UTC) serwer nie zwraca żadnych ostrzeżeń, więc baner
   // NIE POWSTAJE. Stan „kolizja" pokazuje tę samą szufladę otwartą godzinę wcześniej.
   // W OBU stanach przycisk zapisu jest czynny — to jest cała treść tej zmiany modelu.
   function warnState(state) {

@@ -8,7 +8,7 @@
  *
  * ══ CO JEST NAKŁADKĄ, A CO NIĄ NIE JEST ══
  * Po §3.6a pilot legalnie zdaje jedną maszynę i bierze drugą **co do minuty** — dzień
- * służby obejmuje kilka samolotów i to jest normalny przebieg, nie anomalia. Dlatego
+ * pilota to lista sesji na kilku samolotach i to jest normalny przebieg, nie anomalia. Dlatego
  * granice traktujemy jako **domknięte od lewej, otwarte od prawej**: sesja kończąca się
  * o 11:20 i następna zaczynająca się o 11:20 NIE nachodzą na siebie. Nakładką jest
  * dopiero wspólny odcinek o niezerowej długości, czyli sytuacja, w której rejestr

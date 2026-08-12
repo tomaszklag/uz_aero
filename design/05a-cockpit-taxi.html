@@ -105,7 +105,7 @@
      w którym w locie stoi Zrzut, więc pasek dnia skokowego trzyma stałą geometrię. */
   .boarding-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:12px 14px; background:rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,0.3); border-radius:14px; color:var(--blue); cursor:pointer; text-decoration:none; }
   .boarding-btn-lbl { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; white-space:nowrap; }
-  /* STOP ENGINE — wymaganie 3.2; na ziemi (GS < 5 kt) aktywny, zamyka wzlot → 09 */
+  /* STOP ENGINE — wymaganie 3.2; na ziemi (GS < 5 kt) aktywny — kończy SESJĘ i wraca do kokpitu 04 (hero ZDAJ SAMOLOT); drugiego startu nie ma (pivot 2026-08-10) */
   .stop-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:12px 16px; background:var(--red-muted); border:1px solid var(--red-border); border-radius:14px; color:var(--red); text-decoration:none; cursor:pointer; font-family:var(--font-display); font-size:16px; letter-spacing:1.5px; white-space:nowrap; }
   .stop-btn-lbl { font-family:var(--font-mono); font-size:7px; letter-spacing:1px; text-transform:uppercase; opacity:0.7; }
   .stop-btn.disabled { opacity:0.32; filter:saturate(0.4); pointer-events:none; }

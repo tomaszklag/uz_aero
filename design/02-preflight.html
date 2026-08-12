@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 02 Przejęcie samolotu</title>
+<title>UZ Aero — 02 Nowy lot · Samolot i załoga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -344,11 +344,12 @@
     <!-- App Header -->
     <!-- BEZ chipa SYNC (reguła 2026-08-06): „zsynchronizowano" jest stanem DOMYŚLNYM
          i nie zasługuje na plakietkę — chip pokazujemy wyłącznie offline (02D), gdzie
-         niesie realną informację (ile zdarzeń czeka i jak stare są dane referencyjne).
+         niesie realną informację (licznik kolejki; szczegóły — w tym wiek danych
+         referencyjnych — pod tapnięciem, issue #23 pkt 5).
          Online w nagłówku zostaje sam badge kroku. -->
     <div class="app-header">
       <div class="header-left">
-        <div class="screen-title">PRZEJĘCIE</div>
+        <div class="screen-title">NOWY LOT</div>
       </div>
       <div class="header-right">
         <div class="step-badge">1 / 3</div>
@@ -443,12 +444,11 @@
            Z LIST — samolot (z przejęciem po innym PIC) i drugiego pilota — a obie
            listy rosną z flotą i liczbą kont.
 
-           USUNIĘTY STĄD TAKŻE CZAS MELDOWANIA (przebudowa flow): pytanie „od kiedy
-           jesteś na służbie" nie ma prawa stać na drodze do samolotu. Służba nie
-           jest kontenerem na loty, tylko klamrą wokół nich — domyślnie bierze się
-           z pierwszego wzlotu, a pilot poprawia ją po fakcie w „Mój dzień" (01),
-           jeśli zameldował się wcześniej. Przejęcie samolotu ma trwać kilka
-           sekund, nie otwierać dnia. -->
+           USUNIĘTY STĄD TAKŻE CZAS MELDOWANIA (przebudowa flow; od issue #23 razem
+           z całą klamrą służby): pytanie „od kiedy jesteś na służbie" nie ma prawa
+           stać na drodze do samolotu. Dzień pilota to lista sesji — żadnej godziny
+           „od kiedy" się nie deklaruje. Rozpoczęcie lotu ma trwać kilka sekund,
+           nie otwierać dnia. -->
 
       <!-- CTA Button -->
       <a href="02e-preflight-zadanie.html" class="btn-primary" id="btn-next">
@@ -461,7 +461,7 @@
 </main>
 
 <aside class="variants-panel">
-  <div class="vp-title">Warianty ekranu przejęcia (krok 1) — kiedy który?</div>
+  <div class="vp-title">Warianty kroku 1 (samolot i załoga) — kiedy który?</div>
   <a class="vp-item active" href="02-preflight.html">
     <span class="vp-badge">02</span>
     <span class="vp-body">

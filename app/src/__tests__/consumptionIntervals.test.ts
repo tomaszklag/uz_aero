@@ -36,15 +36,15 @@ function event<T extends Event['type']>(type: T, time: number, payload: unknown 
   } as Event;
 }
 
+// Payloady BEZ pól klamry służby (`dutyStart`/`dutyEnd` znikły z modelu — issue #23).
 const preflight = (time: number, fuelL: number, mh = 1234.5): Event =>
   event('preflight_confirm', time, {
     operation: 'skoki',
-    dutyStart: time,
     reading: { fuelL, mh },
   });
 
 const dayClose = (time: number, fuelL: number, mh: number): Event =>
-  event('day_close', time, { finalReading: { fuelL, mh }, dutyEnd: time });
+  event('day_close', time, { finalReading: { fuelL, mh } });
 
 /**
  * Kanoniczny dzień: preflight 150 L, cykl 08:12–10:34 (blok 2:22), tankowanie 10:48

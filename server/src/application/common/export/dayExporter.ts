@@ -15,11 +15,10 @@
  *
  * ══ DOBĘ WYZNACZA CHWILA PRZEJĘCIA, NIE MELDUNEK ══
  * Przynależność sesji do karty liczymy z `session_claim` (`sessions.claim_time`,
- * decyzja 2026-08-07). Meldunek (`dutyStart`) jest od §3.6a OPCJONALNY i ekran 02 o niego
- * nie pyta — oparcie na nim nazwy karty znaczyłoby, że po przebudowie flow nie
- * eksportuje się NIC (bramka `dutyStart == null` odrzucała wtedy każdą sesję).
- * Klamra służby zresztą do sesji nie należy: jest własnością PILOTA i obejmuje kilka
- * maszyn (`projectDuty`, §3.6a).
+ * decyzja 2026-08-07). Historyczny meldunek (`dutyStart`) najpierw stał się opcjonalny
+ * (§3.6a) — oparcie na nim nazwy karty znaczyłoby, że po przebudowie flow nie
+ * eksportuje się NIC — a od issue #23 (2026-08-11) nie istnieje w modelu w ogóle:
+ * klamra służby odeszła razem z pojęciem służby.
  *
  * ══ TRZY BRAMKI, KAŻDA O CZYMŚ INNYM ══
  *  • **doba bez ani jednej sesji** (`no_events`) — nie ma z czego zrobić karty;

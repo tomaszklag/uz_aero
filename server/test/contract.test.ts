@@ -82,7 +82,6 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
     const stream = [
       event('preflight_confirm', at(8, 0), {
         operation: 'skoki',
-        dutyStart: at(8, 0),
         reading: { fuelL: 150, mh: 1234.5 },
         mhFormat: 'hhmm',
       }),
@@ -110,7 +109,6 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
     const stream = [
       event('preflight_confirm', at(8, 0), {
         operation: 'skoki',
-        dutyStart: at(8, 0),
         reading: { fuelL: 150, mh: 1234.5 },
         mhFormat: 'hhmm',
       }),
@@ -118,7 +116,6 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
       event('engine_stop', at(10, 34)),
       event('day_close', at(16, 45), {
         finalReading: { fuelL: 88, mh: 1241.15 },
-        dutyEnd: at(16, 45),
       }),
     ];
 
@@ -138,7 +135,6 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
     const stream = [
       event('preflight_confirm', at(8, 0), {
         operation: 'skoki',
-        dutyStart: at(8, 0),
         reading: { fuelL: 150, mh: 1234.5 },
         mhFormat: 'hhmm',
       }),
@@ -168,7 +164,6 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
     const openStream = [
       event('preflight_confirm', at(8, 0), {
         operation: 'skoki',
-        dutyStart: at(8, 0),
         reading: { fuelL: 150, mh: 1234.5 },
         mhFormat: 'hhmm',
       }),
@@ -209,7 +204,6 @@ describe('projekcja domenowa ↔ wiersz sesji', () => {
       ...openStream,
       event('day_close', at(16, 45), {
         finalReading: { fuelL: 88, mh: 1241.15 },
-        dutyEnd: at(16, 45),
       }),
     ];
     const closed = projectSession(closedStream);
@@ -225,7 +219,6 @@ describe('DTO listy dni ↔ wiersz projekcji', () => {
   const row = sessionRowFrom('sess-1', [
     event('preflight_confirm', at(8, 0), {
       operation: 'ferry',
-      dutyStart: at(8, 0),
       reading: { fuelL: 150, mh: 1234.5 },
       mhFormat: 'hhmm',
     }),
@@ -285,7 +278,6 @@ describe('granica: listy panelu nie odtwarzają projekcji ze strumienia', () => 
         operation: 'skoki',
         departureIcao: 'EPKK',
         arrivalIcao: null,
-        dutyStart: at(8, 0),
         reading: { fuelL: 150, mh: 1234.5 },
         client: null,
         mhFormat: 'hhmm',
@@ -444,7 +436,6 @@ describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie li
   const closedDay = (sessionUuid: string, aircraftId: string, mh: number, fuelEnd: number) => [
     wire(sessionUuid, aircraftId, 'preflight_confirm', at(8, 0), {
       operation: 'skoki',
-      dutyStart: at(8, 0),
       reading: { fuelL: 150, mh },
       client: 'SKY CAMP',
       mhFormat: 'hhmm',
@@ -460,7 +451,6 @@ describe('agregat statystyk = suma projekcji (wykonywalna wersja „panel nie li
     wire(sessionUuid, aircraftId, 'engine_stop', at(10, 34)),
     wire(sessionUuid, aircraftId, 'day_close', at(16, 45), {
       finalReading: { fuelL: fuelEnd, mh: mh + 2.2 },
-      dutyEnd: at(16, 45),
     }),
   ];
 
