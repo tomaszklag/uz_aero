@@ -287,6 +287,28 @@ wolno go zamknąć:
 - Wyjątek: instrukcje **rzadkich** akcji (np. 3-kroki przekazania) zostają — przy rzadkim
   użyciu pilot i tak zapomina, więc coaching wciąż pomaga.
 
+## Stan ładowania — skeleton, nigdy spinner (issue #33)
+
+Pełna specyfikacja z inwentarzem rozmiarów i siedmioma regułami: **`design/LOADERY.html`**.
+Skrót, który wystarcza przy projektowaniu ekranu:
+
+- ekran czekający na dane rysuje **plamki w geometrii docelowej** (`.skel`), więc po
+  nadejściu danych nic się nie przesuwa. Spinnera na cały ekran nie ma nigdzie — ta sama
+  reguła, co w panelu (`architektura-panelu-frontend.md` §3.2);
+- plamka należy się temu, co **na pewno przyjdzie**. Element opcjonalny (plakietka okna
+  korekty) miejsca nie rezerwuje; gdy warianty różnią się kształtem, skeleton obiecuje ich
+  część wspólną;
+- **co znamy lokalnie, nie czeka** — nagłówek, tytuł karty i statyczne wejścia nawigacyjne
+  rysują się od pierwszej klatki. Skeleton opisuje czekanie NA DANE, a nie „ekran się otwiera";
+- **skeleton ≠ stan pusty** i **skeleton ≠ triada świeżości**. „Brak wyników" wolno napisać
+  dopiero, gdy wiadomo, że jest pusto; dane z serwera mają swoje `live`/`cache`/`brak`,
+  a akcja bez sieci — `disabled` z podanym powodem;
+- pojawia się po **180 ms** czekania i zostaje co najmniej **420 ms**: prawie każdy odczyt
+  w tej aplikacji jest lokalny i kończy się przed progiem, więc na co dzień plamek nie widać;
+- **puls przezroczystości 1 → 0.45 / 1400 ms, wspólny dla całego ekranu** (nie shimmer —
+  aplikacja jest RN bez modułu do gradientów; rozjechane fazy czyta się jak migotanie);
+- skeleton nie jest interaktywny, a czytnik ekranu dostaje jedno „Ładowanie" na blok.
+
 ## UX rules — co unikamy
 
 - Nie używamy natywnego `<select>` — zawsze stylizowana lista kart

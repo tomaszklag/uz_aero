@@ -31,12 +31,14 @@ import {
   FreshnessNote,
   Screen,
   ScreenHeader,
+  SkeletonRows,
   StepList,
   SyncChip,
   Tag,
   type PickerOption,
 } from '../components';
 import { useTheme } from '../theme';
+import { useSkeleton } from '../hooks/useSkeleton';
 import { useCurrentPilot, useEduBanner, useSessionStore } from '../store';
 import { duration, timeUtc } from '../format';
 import { NO_DUAL, crewRows, dualChangeBlocker } from './logic/crewChange';
@@ -63,13 +65,30 @@ export function CrewChangeScreen({
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [whyDismissed, setWhyDismissed] = useEduBanner('crew-two-sections');
+  /**
+   * Czy lista pilotów została przeczytana (issue #33). Bez tego przez chwilę stała tu
+   * lista z jedną pozycją („Bez drugiego pilota"), a kandydaci dopisywali się nad nią
+   * — czyli przycisk zapisu uciekał w dół dokładnie wtedy, gdy pilot po niego sięgał.
+   */
+  const [loaded, setLoaded] = useState(false);
+  const skeleton = useSkeleton(!loaded);
 
   useEffect(() => {
     if (!queries) return;
-    void queries.pilots().then(setPilots);
+    let alive = true;
+    void queries.pilots().then((list) => {
+      if (!alive) return;
+      setPilots(list);
+      setLoaded(true);
+    });
     if (projection.aircraftId != null) {
-      void queries.aircraftById(projection.aircraftId).then(setAircraft);
+      void queries.aircraftById(projection.aircraftId).then((found) => {
+        if (alive) setAircraft(found);
+      });
     }
+    return () => {
+      alive = false;
+    };
   }, [queries, projection.aircraftId]);
 
   const now = Date.now();
@@ -189,7 +208,13 @@ export function CrewChangeScreen({
             <AppText variant="micro" tone="muted">
               Nowy DUAL
             </AppText>
-            <CardPicker options={options} value={selected} onChange={setSelected} />
+            {!loaded ? (
+              skeleton ? (
+                <SkeletonRows rows={3} height={56} radius={theme.radius.md} gap={6} />
+              ) : null
+            ) : (
+              <CardPicker options={options} value={selected} onChange={setSelected} />
+            )}
             {/* Lista pilotów to dane z serwera — wiek musi być widoczny (§4.8). */}
             <FreshnessNote
               state={synced ? 'live' : 'cache'}

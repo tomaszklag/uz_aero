@@ -31,6 +31,7 @@ import {
   ResultRow,
   Screen,
   ScreenHeader,
+  Skeleton,
   StatGrid,
   SyncChip,
   Tag,
@@ -39,6 +40,7 @@ import {
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useEventCorrection } from '../hooks/useEventCorrection';
+import { useSkeleton } from '../hooks/useSkeleton';
 import { timeUtc } from '../format';
 import { routeLabel } from './logic/operations';
 import {
@@ -83,6 +85,7 @@ export function FlightDetailsScreen({
 
   const [view, setView] = useState<FlightTrackView | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const skeleton = useSkeleton(!loaded);
 
   useEffect(() => {
     if (trackQueries == null) {
@@ -155,7 +158,22 @@ export function FlightDetailsScreen({
   );
 
   if (!loaded) {
-    return <Screen scroll padded={false} header={header} />;
+    // Ślad czyta się z magazynu punktów, nie z rejestru zdarzeń — kilkaset fixów potrafi
+    // wyjść poza próg bramki (issue #33). Plamki mają wymiary miniatury i dwóch kart
+    // pod nią, więc gdy ślad dojdzie, „PEŁNY ŚLAD" nie ucieknie spod palca.
+    return (
+      <Screen scroll padded={false} header={header}>
+        {skeleton && (
+          <View accessible accessibilityLabel="Ładowanie" style={styles.content}>
+            {/* Karta śladu (nagłówek + miniatura + metryki), karta czasów, karta miejsca —
+                w tych wysokościach, w jakich przyjdą. */}
+            <Skeleton height={THUMB_HEIGHT + 96} radius={theme.radius.md} />
+            <Skeleton height={128} radius={theme.radius.md} />
+            <Skeleton height={92} radius={theme.radius.md} />
+          </View>
+        )}
+      </Screen>
+    );
   }
 
   if (view == null) {

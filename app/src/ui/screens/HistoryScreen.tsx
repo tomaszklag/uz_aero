@@ -26,11 +26,13 @@ import {
   Icon,
   Screen,
   ScreenHeader,
+  SkeletonRows,
   SyncChip,
   Tag,
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
+import { useSkeleton } from '../hooks/useSkeleton';
 import { buildHistory, type DayCardSpec, type EditableDaySpec } from './logic/historyDays';
 
 export function HistoryScreen({
@@ -82,6 +84,16 @@ export function HistoryScreen({
     groups.closed.length === 0 &&
     streamHydrated;
 
+  /**
+   * Ekran czeka, dopóki nie wie ANI że są dni, ANI że ich nie ma (issue #33). Historia
+   * po sezonie czyta się z lokalnego strumienia zauważalnie dłużej niż jedna doba,
+   * a pusty ekran bez wyjaśnienia wygląda przy tym jak zawieszona aplikacja.
+   */
+  const waiting =
+    groups == null ||
+    (groups.editable.length === 0 && groups.closed.length === 0 && !streamHydrated);
+  const skeleton = useSkeleton(waiting);
+
   return (
     <Screen
       scroll
@@ -103,6 +115,13 @@ export function HistoryScreen({
       }
     >
       <View style={styles.content}>
+        {/* Dwie karty w geometrii `DayCard` — data nad statystykami nad stopką.
+            Stan pusty („BRAK ZAMKNIĘTYCH DNI") czeka na swoją kolej: wolno go napisać
+            dopiero, gdy wiadomo, że jest pusto (wzorzec `design/LOADERY.html` reguła 4). */}
+        {waiting && skeleton && (
+          <SkeletonRows rows={2} height={116} radius={theme.radius.btn} />
+        )}
+
         {empty && (
           <View style={styles.empty}>
             <AppText variant="display" style={styles.emptyTitle}>

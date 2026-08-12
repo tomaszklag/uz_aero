@@ -396,6 +396,27 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 6. Gdy ekran pokazuje dane z serwera — stany świeżości `live`/`cache`/`brak` i SyncChip (sekcja Offline-first wyżej). **Online SyncChip nie rysuje NIC** — plakietka istnieje wyłącznie offline
 7. Gdy ekran ma warianty — panel „Warianty tego ekranu" na canvasie z opisem kiedy który (sekcja Nawigacja i warianty wyżej)
 8. **Gdy ekran dotyka czasu, dnia albo zamknięcia czegokolwiek — sekcje „Sesja = jeden bieg silnika" i „Dzień pilota = lista sesji" wyżej**: sesja = jeden bieg silnika (po STOP nie ma drugiego startu — hero to ZDAJ SAMOLOT), lot = start→lądowanie, słowo „wzlot" wycofane; jednostką potwierdzenia jest SESJA, odczyty przy zdaniu (`09b`) OBOWIĄZKOWE; dzień pilota to LISTA SESJI — klamry służby, meldunku i „Zamknij dzień" NIE MA (issue #23); zdanie samolotu NIE kończy dnia. Bez tego punktu agent zbuduje ekran poprawny wizualnie i błędny modelowo — dokładnie tak powstał flow, który właśnie przebudowaliśmy
+9. **Gdy ekran czeka na jakikolwiek odczyt** — sekcja „Stan ładowania" niżej i arkusz
+   `design/LOADERY.html`: skeleton w geometrii docelowej, nigdy spinner, nigdy pustka;
+   stan pusty i triada świeżości `live`/`cache`/`brak` zostają osobnymi rzeczami
+
+## Stan ładowania — skeleton, nigdy spinner (issue #33)
+Wzorzec obowiązuje **każdy ekran** i ma swój arkusz: `design/LOADERY.html` (siedem reguł
++ inwentarz rozmiarów plamek). W kodzie: `docs/architektura-kodu.md` §2 „Stan ładowania".
+- ekran, który czeka na odczyt, rysuje **plamki w geometrii docelowej** — nigdy spinnera
+  i nigdy pustki. Jedno wejście: `const skeleton = useSkeleton(!loaded)`
+- plamka należy się temu, co **na pewno przyjdzie**; element opcjonalny miejsca nie
+  rezerwuje, a przy wariantach o różnym kształcie skeleton obiecuje ich część wspólną
+- **co znamy lokalnie, nie czeka**: nagłówek, tytuł karty, statyczne wejścia nawigacyjne
+- **skeleton ≠ stan pusty** („brak wyników" dopiero po `streamHydrated`, §4.9)
+  i **skeleton ≠ triada świeżości** (`live`/`cache`/`brak` zostaje tam, gdzie jest —
+  serwer, który nie odpowiedział, nie jest tym samym co odczyt w toku)
+- próg **180 ms**, minimum **420 ms** (`ui/screens/logic/skeletonGate.ts`, testy) — odczyt
+  z SQLite mieści się zwykle pod progiem, więc na co dzień plamek nie widać
+- puls przezroczystości wspólny dla całego ekranu, `useNativeDriver`; **nie shimmer** —
+  gradienty w RN wymagają modułu natywnego, którego projekt unika
+- **pusta tablica nie znaczy „brak danych"** — każdy odczyt listy ma osobną flagę `loaded`.
+  Bez niej ekran pisze „Brak samolotów w pamięci urządzenia" w trakcie normalnego startu
 
 ## Banery — trzy typy (szczegóły: `docs/design-notes.md`)
 - **Status** (offline, tylko-odczyt, odliczanie) — nigdy zamykalny, to przyrząd
@@ -403,7 +424,9 @@ Gdy tworzysz prompt dla agenta do tworzenia HTML mockupów, zawsze dołącz:
 - **Pouczający jednorazowy** — zamykalny `×` → zwija się do mini-`(?)` w miejscu; stan schowany zapamiętany NA STAŁE per pilot. Klasy `.edu-dismiss`/`.edu-mini`, funkcje `eduCollapse/eduExpand`
 
 ## Czego unikać
-- Nie dodawaj loadera/spinnera bez określonego celu (patrz: feedback do dawnego ekranu splash, dziś `01-moj-dzien`)
+- Nie dodawaj **spinnera** — nigdzie. Czekanie na dane pokazuje skeleton w geometrii
+  docelowej (sekcja „Stan ładowania" wyżej); ekranu ładowania z logo też nie ma
+  (dawny splash został usunięty)
 - Nie używaj natywnego `<select>` — zawsze stylizowana lista kart
 - Nie wpisuj hardcoded kolorów — tylko zmienne CSS
 - Nie twórz nowych plików poza `design/` i `app/` bez pytania

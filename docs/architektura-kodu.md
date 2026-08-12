@@ -820,6 +820,9 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `AppText` | typografia z tokenów (`display`/`timer`/`param`/`body`/`label`/`mono`/`micro`) | wszystkie |
 | `Brand` | znak marki (kafel z ikoną, „UZ AERO", tagline), rozmiary `md`/`hero` | `.brand` (00/00a), `.app-icon` (01) |
 | `Icon` | ikony po nazwie **znaczeniowej** (`peek`, `warning`, `op-skoki`) | wklejone SVG Feather |
+| `Skeleton` | plamka trzymająca miejsce po danej, której jeszcze nie ma; wymiary podaje się **wprost, w rozmiarze wartości**, którą zastąpi | `.skel` (`LOADERY.html`) |
+| `SkeletonRows` | n plamek w geometrii wiersza listy; tu mieszka komunikat „Ładowanie" dla czytnika ekranu | `LOADERY.html` |
+| `SkeletonScreen` | skeleton **ramy** dla bramek startu w `App.tsx` — nagłówek i blok treści, bez udawania konkretnego ekranu | `LOADERY.html` |
 | `CheckIcon` | ptaszek „✓" bez `react-native-svg` (obrócony prostokąt, 2 krawędzie) | `.aircraft-check` |
 | `Avatar` | kafelek z inicjałami (albo z kodem pilota — `code`), 40/32 px | `.pilot-avatar`, `.crew-avatar` |
 | `AppBar` | pasek **sesji samolotu**: samolot, trasa, wskaźnik łączności | `.app-bar` / `.compact-bar` |
@@ -939,6 +942,43 @@ tokenu `display` (34 px), bo to rozmiar tytułu ekranu.
 `Stepper` istnieje z konkretnego powodu: audyt użyteczności wykazał, że dolewka paliwa
 była ustawiana uchwytem suwaka 16×16 px na torze 312 px — około **1,4 litra na piksel**.
 W rękawicach to nie precyzja, tylko loteria.
+
+### Stan ładowania — jeden wzorzec, zero spinnerów (issue #33)
+
+Specyfikacją jest `design/LOADERY.html` (siedem reguł na canvasie); tu mieszka to, jak
+wzorzec wygląda w kodzie. Zasada w jednym zdaniu: **ekran, który czeka na odczyt, rysuje
+plamki w geometrii docelowej — nigdy spinnera i nigdy pustki.**
+
+Trzy kawałki, każdy w swojej warstwie:
+
+| Plik | Rola |
+|---|---|
+| `ui/components/foundation/Skeleton.tsx` | plamka: wymiary wartości, kolor `surfaceHover`, niewidzialna dla czytnika ekranu |
+| `ui/components/foundation/skeletonPulse.ts` | **jedna** `Animated.Value` na aplikację — wspólna faza; pętla chodzi tylko, gdy jest co animować; `useNativeDriver` |
+| `ui/screens/logic/skeletonGate.ts` | CZYSTA reguła progu (180 ms) i minimum (420 ms) + „kiedy obudzić Reacta"; testy w `__tests__/skeletonGate.test.ts` |
+| `ui/hooks/useSkeleton.ts` | pamięć chwil i jeden `setTimeout` na granicę — jedyne wejście dla ekranu |
+
+Ekran pyta o jedno: `const skeleton = useSkeleton(!loaded)`. Reszta to układ.
+
+**Trzy pułapki, po jednej na każdą regułę, którą łatwo złamać w dobrej wierze:**
+
+1. **Pusta tablica to nie „brak danych".** `PreflightAircraftScreen` wypisywał „Brak
+   samolotów w pamięci urządzenia" w trakcie normalnego odczytu cache'u, bo `fleet.length
+   === 0` znaczyło naraz „jeszcze nie wiem" i „nie ma ani jednego". Każdy odczyt listy
+   potrzebuje osobnej flagi `loaded` — nie da się jej wyprowadzić z długości wyniku.
+2. **Skeleton nie zastępuje triady świeżości.** Dane z serwera mają własną skalę
+   `live` / `cache` / `brak` (§6 pkt 2 wymagań). „Serwer jeszcze nie potwierdził tej sesji"
+   (11) jest ODPOWIEDZIĄ, nie oczekiwaniem — plamka obiecywałaby coś, co może nie przyjść.
+   Tak samo `disabled` z podanym powodem (04B) zostaje tym, czym jest.
+3. **Skeleton nie zastępuje stanu pustego.** „JESZCZE ŻADNEGO LOTU" wolno napisać dopiero,
+   gdy wiadomo, że jest pusto — czyli po odtworzeniu rejestru z serwera (`streamHydrated`,
+   §4.9). Do tej chwili miejsce trzymają plamki. To ta sama zasada, dla której `usePilotDay`
+   oddaje `null` zamiast pustej doby.
+
+Wysokości plamek przepisujemy z komponentu, który zastąpią (`CardPicker` 56, `ActionButton
+size="md"` 48, `DayCard` 116) — dlatego skeleton listy sesji na 01 jest lokalnym
+komponentem ekranu obok `SessionRow`, a nie kolejnym wariantem w DS: geometria wiersza
+i jego skeleton mają się zmieniać w jednym pliku, w jednym commicie.
 
 ### Klawiatura i pola edycji (Android edge-to-edge, Expo SDK 54 / RN 0.81)
 
@@ -1247,6 +1287,9 @@ Wzorzec: `ui/screens/CockpitScreen.tsx` (pierwszy ekran wpięty end-to-end).
 7. Ekran z polem tekstowym albo arkuszem → przeczytaj wcześniej **„Klawiatura i pola
    edycji"** w §2. Wysokość klawiatury, zapas pod akcjami arkusza i zaznaczenie tekstu mają
    po jednym poprawnym rozwiązaniu i po kilka objawów, gdy się je obejdzie własnym kodem.
+8. Ekran czekający na odczyt (lista z cache'u, ślad, doba pilota) → **„Stan ładowania"**
+   w §2: `useSkeleton` + plamki w geometrii docelowej. Pustka i spinner są zakazane, a stan
+   pusty („brak wyników") wolno pokazać dopiero wtedy, gdy wiadomo, że jest pusto.
 
 ### Nowa metryka analityki zużycia
 

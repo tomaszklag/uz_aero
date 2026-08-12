@@ -40,6 +40,7 @@ import {
   ReadingSheet,
   Screen,
   ScreenHeader,
+  SkeletonRows,
   SyncChip,
   Tag,
   ValueBox,
@@ -47,6 +48,7 @@ import {
 } from '../components';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
+import { useSkeleton } from '../hooks/useSkeleton';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { dateUtcLong, parseTimeUtcOnDay, timeLocal, timeUtc } from '../format';
 import type { ReferenceAircraft, ReferencePilot } from '../../domain';
@@ -70,14 +72,28 @@ export function PreflightAircraftScreen({
   const draft = usePreflightDraft();
   const [fleet, setFleet] = useState<ReferenceAircraft[]>([]);
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
+  /**
+   * Czy cache referencyjny został już PRZECZYTANY. Bez tej flagi pusta tablica znaczyła
+   * dwie różne rzeczy — „jeszcze nie wiem" i „nie ma ani jednego samolotu" — i ekran
+   * wypisywał „Brak samolotów w pamięci urządzenia" w trakcie normalnego odczytu,
+   * czyli komunikat o awarii przy poprawnym starcie (issue #33).
+   */
+  const [loaded, setLoaded] = useState(false);
+  const skeleton = useSkeleton(!loaded);
 
   useEffect(() => {
     if (!queries) return;
-    void queries.aircraft().then(setFleet);
-    void queries.pilots().then((list) => {
+    let alive = true;
+    void Promise.all([queries.aircraft(), queries.pilots()]).then(([aircraft, list]) => {
+      if (!alive) return;
+      setFleet(aircraft);
       setPilots(list);
       setPilotProfile(list.find((p) => p.id === pilotId) ?? null);
+      setLoaded(true);
     });
+    return () => {
+      alive = false;
+    };
   }, [pilotId, queries, setPilotProfile]);
 
   const selected = draft.aircraft;
@@ -181,7 +197,14 @@ export function PreflightAircraftScreen({
 
         {/* ── samolot ─────────────────────────────────────────────────── */}
         <Card title="Samolot" header="inline">
-          {fleet.length === 0 ? (
+          {/* Trzy pozycje w geometrii `CardPicker` (minHeight 56, odstęp 6) — flota
+              klubu jest tego rzędu, a plamki nie mają prawa udawać, że wiedzą ile
+              dokładnie (wzorzec `design/LOADERY.html`). */}
+          {!loaded ? (
+            skeleton ? (
+              <SkeletonRows rows={3} height={56} radius={theme.radius.md} gap={6} />
+            ) : null
+          ) : fleet.length === 0 ? (
             <AppText variant="body" tone="muted">
               Brak samolotów w pamięci urządzenia.
             </AppText>
@@ -213,11 +236,17 @@ export function PreflightAircraftScreen({
             />
           }
         >
-          <CardPicker
-            options={dualOptions}
-            value={draft.dualId}
-            onChange={(id) => draft.set('dualId', draft.dualId === id ? null : id)}
-          />
+          {!loaded ? (
+            skeleton ? (
+              <SkeletonRows rows={2} height={56} radius={theme.radius.md} gap={6} />
+            ) : null
+          ) : (
+            <CardPicker
+              options={dualOptions}
+              value={draft.dualId}
+              onChange={(id) => draft.set('dualId', draft.dualId === id ? null : id)}
+            />
+          )}
           {needsDual && (
             <Banner
               kind="warning"
