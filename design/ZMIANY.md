@@ -1755,3 +1755,72 @@ użytkownika po przeglądzie).
 > 00:53:14", a kokpit nie mówi tego samego dwa razy (decyzja 2026-08-10). Przy okazji
 > znika rozjazd w samych mockupach: 05 miało 00:47, którego nie dawało się wyprowadzić
 > z żadnego czytania logu.
+
+---
+
+## 2026-08-12 — Poprzednie dni bez dzisiejszych sesji, sesja zamknięta do obejrzenia (issue #35)
+
+**12 — kafelek = SESJA, nie doba.**
+> Mockup opisywał kartę jako cały DZIEŃ PILOTA (kilka maszyn, „Sesje 3"), a kod od
+> początku rysował sesje — i to kod miał rację. Kafelek-doba nie miałby czego otworzyć:
+> jego celem jest rozliczenie (10), które opisuje JEDNĄ maszynę, bo paliwo i motogodziny
+> dwóch samolotów nie sumują się w jedną liczbę. Doba z dwiema sesjami daje więc dwie
+> karty z tą samą datą, rozróżnione godzinami biegu silnika.
+
+**12 — dzisiejsze sesje wypadają z listy; ekran nazywa się „POPRZEDNIE DNI".**
+> Były drugą listą tych samych lotów, które pilot ma na 01 — i to listą, w której ta
+> sama sesja wyglądała inaczej. Doba liczy się tak samo jak na 01: po URUCHOMIENIU
+> silnika, więc sesja spod północy nie wpada w dziurę między ekranami. Plakietka wejścia
+> („11 SIE — można poprawić") pomija dziś z tego samego powodu.
+
+**12 — metryki kafelka: Loty · Blok · Lot (były: Sesje · Blok · Loty · Skoczków).**
+> Te same trzy wielkości i te same nazwy, co wiersz sesji na „Mój dzień". Skoczkowie
+> zeszli do szczegółów lotu, do których ta karta prowadzi; czas trzymania maszyny był
+> wielkością, o którą nikt nie pytał.
+
+**12 — „Wysłane" i „Okno minęło" usunięte.**
+> Pierwsze jest stanem domyślnym (ta sama reguła, dla której SyncChip online nie rysuje
+> nic — issue #12): plakietka świecąca przy prawie każdej karcie uczy oko pomijać
+> stopkę. Zostaje amber plakietka zaległości w dwóch odmianach — „Oczekuje na przesłanie"
+> (kolejka czeka na sieć) i „W trakcie wysyłania" (pętla synca pracuje). Drugie mówiło
+> to samo, co etykieta grupy „Zamknięte" nad kartami i przypis z kłódką pod nimi.
+> Stopka karty pojawia się dopiero wtedy, gdy ma co powiedzieć.
+
+**12 → 10B (NOWY) — sesja po oknie 24 h otwiera się do podglądu.**
+> Karta w grupie „Zamknięte" była martwa: pilot widział cztery liczby i nie mógł
+> sprawdzić, co właściwie zapisał. Teraz prowadzi do TEGO SAMEGO rozliczenia
+> w wariancie bez elementów zapisu: znika kolumna ołówków w tabeli lotów i „Edytuj
+> dane", niebieski termin zastępuje amber baner z kłódką, w nagłówku staje plakietka
+> „Podgląd". Wyszarzony ołówek byłby gorszy od jego braku — obiecywałby akcję, którą
+> reguły domeny i tak odrzucą. Numery lotów zostają klikalne: szczegóły lotu (16)
+> i ślad (14) to oglądanie, nie zapis, więc na 16 znika sam przycisk korekty czasów.
+
+---
+
+## 2026-08-12 — Ekran 11 „Synchronizacja" USUNIĘTY, jego resztki w Ustawieniach
+
+**11 + 11A — kasujemy oba pliki.**
+> Ekran stał się trzecim widokiem tej samej sesji i drugim wskaźnikiem sieci:
+> „Podgląd arkusza" powtarzał tabelę lotów z 10, „Dane dnia" — blok, paliwo i zrzuty
+> z 10, status wysyłki i kolejka dublowały arkusz pod SyncChipem (issue #23 pkt 5),
+> a „Arkusz docelowy" opisywał funkcję fazy 4, której `exportUrl` nigdy nie włączał.
+> Do tego „SYNCHRONIZUJ TERAZ" przeczyło regule zapisanej w tym samym arkuszu:
+> outbox wysyła się sam, a przycisk-atrapa uczy, że trzeba mu pomagać. Jedyne wejście
+> prowadziło z Ustawień — po usunięciu „ZATWIERDŹ → SYNC" z 10 (issue #23) ekran
+> wisiał na jednym linku.
+
+**13 — sekcja „Synchronizacja" zamiast wejścia w 11.**
+> Zostało dokładnie to, czego nie ma nigdzie indziej: kolejka, ostatnia udana wysyłka,
+> **uwagi serwera** (§4.5) i awaryjne ponaglenie wysyłki. Uwagi mieszkają tu, a nie pod
+> SyncChipem, bo chip pojawia się WYŁĄCZNIE offline — flaga wystawiona przez serwer po
+> udanej wysyłce nie miałaby się gdzie pokazać. Wiersz uwag stoi zawsze, także z „brak
+> uwag": cisza nie może znaczyć naraz „sprawdzone i czysto" i „nic nie sprawdzono".
+
+**08 — język po pivocie: BIEG SILNIKA zamiast „cykli".**
+> Mockup pokazywał trzy „cykle silnikowe" z licznikiem „1 / 3" — układ z modelu, w którym
+> dzień był kontenerem na wiele uruchomień. Po 2026-08-10 sesja ma dokładnie jeden bieg,
+> więc taki zapis jest niemożliwy do wyprodukowania poprawną drogą. Ekran pokazuje teraz
+> tankowanie przed uruchomieniem i JEDEN bieg z dwoma lotami w środku; „Log zdarzeń ·
+> data" → „Log sesji · czasy UTC". Klamra grupy zostaje (pilot odtwarzający zapis myśli
+> „od uruchomienia do zgaszenia"), a numer biegu stał się OSTRZEŻENIEM: w kodzie
+> plakietka „2 / 3" pojawia się wyłącznie przy strumieniu złamanym.

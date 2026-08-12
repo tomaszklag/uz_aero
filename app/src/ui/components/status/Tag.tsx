@@ -17,6 +17,7 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { Icon, type IconName } from '../foundation/Icon';
 import { toneColors, type Tone } from '../tone';
 
 export type TagSize = 'sm' | 'md';
@@ -26,10 +27,15 @@ export interface TagProps {
   tone?: Tone;
   /** `sm` = przypis w wierszu listy (8 px), `md` = badge nagłówka (11 px). */
   size?: TagSize;
+  /**
+   * Ikona przed napisem — dla plakietek, które muszą być czytelne kątem oka
+   * (stan wysyłki na karcie sesji, mockup 12). Bez niej tag zostaje samym tekstem.
+   */
+  icon?: IconName;
   style?: ViewStyle;
 }
 
-export function Tag({ label, tone = 'neutral', size = 'sm', style }: TagProps) {
+export function Tag({ label, tone = 'neutral', size = 'sm', icon, style }: TagProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
   const small = size === 'sm';
@@ -49,6 +55,7 @@ export function Tag({ label, tone = 'neutral', size = 'sm', style }: TagProps) {
         style,
       ]}
     >
+      {icon != null && <Icon name={icon} size={small ? 9 : 12} color={c.accent} />}
       <AppText
         variant="mono"
         style={{
@@ -66,5 +73,11 @@ export function Tag({ label, tone = 'neutral', size = 'sm', style }: TagProps) {
 }
 
 const styles = StyleSheet.create({
-  tag: { alignSelf: 'flex-start', flexShrink: 0 },
+  tag: {
+    alignSelf: 'flex-start',
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
 });

@@ -1,37 +1,64 @@
 /**
- * UZ Aero — dni z lokalnego strumienia → treść ekranu 12 (mockup `design/12-historia.html`).
+ * UZ Aero — sesje z lokalnego strumienia → treść ekranu 12 (mockup `design/12-historia.html`).
  *
  * Ten sam podział co `statsDay.ts`/`syncStatus.ts`: logika prezentacji w czystych
  * funkcjach, testowalnych bez React Native.
  *
- * Ekran 12 pokazuje wyłącznie sesje ZDANE: trzymany samolot nie jest historią, tylko
- * teraźniejszością — po restarcie wznowienie prowadzi prosto do kokpitu
- * (`navigation/resumeTarget.ts`), więc karta w historii robiłaby z niego dwie prawdy
- * naraz. Podział na grupy robi okno korekty (decyzja 2026-07-23): w oknie → „Możesz
- * jeszcze poprawić" (karta klikalna), po oknie → „Zamknięte".
+ * CO EKRAN POKAZUJE (issue #35, 2026-08-12): sesje z dni WCZEŚNIEJSZYCH. Dzisiejsze
+ * stoją na „Mój dzień" (01) i tam prowadzi je ołówek wiersza — powtórzone tutaj były
+ * drugą listą tych samych lotów, a ekran nazywa się „Poprzednie dni". Doba liczy się
+ * tak samo jak na 01: po URUCHOMIENIU silnika (`projectPilotDay`), więc sesja
+ * rozpoczęta o 23:50 należy w całości do doby, w której wystartowała.
+ *
+ * Trzymany samolot też nie jest historią, tylko teraźniejszością — po restarcie
+ * wznowienie prowadzi prosto do kokpitu (`navigation/resumeTarget.ts`).
+ *
+ * Podział na grupy robi okno korekty (decyzja 2026-07-23): w oknie → „Możesz jeszcze
+ * poprawić" (karta prowadzi do korekty), po oknie → „Zamknięte" (karta prowadzi do
+ * PODGLĄDU — ten sam ekran 10 bez elementów zapisu, mockup `10b`). Do issue #35 sesja
+ * po oknie nie miała żadnego wejścia: pilot widział cztery liczby i nie mógł sprawdzić,
+ * co właściwie zapisał.
  */
 
-import { correctionWindow, type SessionState } from '../../../domain';
+import { correctionWindow, utcDayStart, type SessionState } from '../../../domain';
 import type { HistoryDay } from '../../../application';
-import { dateUtcLong, duration } from '../../format';
+import { dateUtcLong, duration, timeUtc } from '../../format';
 import { dateTimeUtcShort } from './statsDay';
-import { eventsCount } from './syncStatus';
 
-/** Karta dnia (mockup `.day-card`). */
-export interface DayCardSpec {
-  sessionUuid: string;
-  /** „22 JUNE 2026". */
-  date: string;
-  aircraft: string;
-  /** Loty / Block / Sesja / Skoczków — „Duty" ustąpiło czasowi trzymania maszyny (§3.6a). */
-  stats: { k: string; v: string }[];
-  /** Tag wysyłki: zielony „Wysłane" albo amber „W kolejce · n zdarzeń". */
-  sync: { label: string; pending: boolean };
+/**
+ * Stan wysyłki sesji — plakietka istnieje WYŁĄCZNIE wtedy, gdy coś czeka w kolejce.
+ *
+ * „Wysłane" zostało usunięte (issue #35 pkt 3): to stan domyślny, a plakietka świecąca
+ * przy 99% kart uczy oko ignorować stopkę — dokładnie ta sama reguła, dla której
+ * SyncChip online nie rysuje nic (issue #12).
+ */
+export interface UploadSpec {
+  /** „Oczekuje na przesłanie · 8" / „W trakcie wysyłania · 8". */
+  label: string;
+  /** `queued` = kolejka czeka na okazję, `sending` = pętla synca właśnie pracuje. */
+  state: 'queued' | 'sending';
 }
 
-/** Karta dnia w oknie korekty — dodatkowo termin i odliczanie. */
+/** Karta sesji (mockup `.day-card`). */
+export interface DayCardSpec {
+  sessionUuid: string;
+  /** „22 CZERWCA 2026". */
+  date: string;
+  aircraft: string;
+  /**
+   * Godziny biegu silnika („08:12 → 10:34 UTC"); `null`, gdy silnik nie ruszył ani razu.
+   * Bez nich dwie sesje tej samej doby na tej samej maszynie są nie do odróżnienia.
+   */
+  times: string | null;
+  /** Loty / Blok / Lot — te same trzy wielkości, co wiersz sesji na 01 (issue #35 pkt 6). */
+  stats: { k: string; v: string }[];
+  /** Zaległość wysyłki albo `null` = wszystko poszło (nie rysujemy nic). */
+  upload: UploadSpec | null;
+}
+
+/** Karta sesji w oknie korekty — dodatkowo termin i odliczanie. */
 export interface EditableDaySpec extends DayCardSpec {
-  /** „Korekta do 23 JUN 16:45". */
+  /** „Korekta do 23 CZE 16:45". */
   deadline: string;
   /** „zostało 23 h 04 min". */
   remaining: string;
@@ -50,52 +77,89 @@ export function remainingLabel(ms: number): string {
   return h > 0 ? `zostało ${h} h ${String(min).padStart(2, '0')} min` : `zostało ${min} min`;
 }
 
-function cardSpec(day: HistoryDay): DayCardSpec {
+/**
+ * Doba UTC, do której należy sesja — kotwicą jest URUCHOMIENIE silnika, a dopiero
+ * w jego braku przejęcie maszyny.
+ *
+ * Reguła jest przepisana z `projectPilotDay` celowo: to ona decyduje, co stoi na 01,
+ * a ekran 12 pokazuje „wszystko poza dniem dzisiejszym". Dwie różne kotwice zrobiłyby
+ * przy sesji spod północy dziurę (sesja zniknęłaby z obu list) albo duplikat.
+ * Sesja bez biegu silnika (zdanie bez lotu, 09C) na 01 nie ma wiersza — tutaj ma kartę,
+ * bo maszyna była zajęta i jest to fakt do obejrzenia.
+ */
+export function sessionDay(state: SessionState): number | null {
+  const anchor = state.legs[0]?.startedAt ?? state.claimedAt;
+  return anchor != null ? utcDayStart(anchor) : null;
+}
+
+/**
+ * Plakietka wysyłki sesji. `null` = nic nie czeka, czyli stan domyślny — bez napisu.
+ *
+ * @param pushing czy ostatni przebieg synca dosięgnął serwera. Aplikacja nie zna stanu
+ *                „online" inaczej niż po wyniku ostatniej próby (§4.3), więc to jedyna
+ *                uczciwa podstawa rozróżnienia „czeka na sieć" od „już leci".
+ */
+export function uploadSpec(pendingCount: number, pushing: boolean): UploadSpec | null {
+  if (pendingCount <= 0) return null;
+  return pushing
+    ? { label: `W trakcie wysyłania · ${pendingCount}`, state: 'sending' }
+    : { label: `Oczekuje na przesłanie · ${pendingCount}`, state: 'queued' };
+}
+
+function cardSpec(day: HistoryDay, pushing: boolean): DayCardSpec {
   const { state, pendingCount } = day;
-  // Karta opisuje SESJĘ SAMOLOTU, więc jej miarą jest czas trzymania maszyny:
-  // przejęcie → zdanie. Do 2026-08-07 stała tu „Duty" liczone z klamry służby, co po
-  // §3.6a jest pomyłką kategorii — służba należy do PILOTA i potrafi objąć kilka maszyn,
-  // więc przypisanie jej do jednej sesji kłamałoby przy każdej przesiadce.
-  const heldMs =
-    state.claimedAt != null && state.closedAt != null ? state.closedAt - state.claimedAt : null;
+  const leg = state.legs[0];
   return {
     sessionUuid: state.sessionUuid ?? '',
     date: state.claimedAt != null ? dateUtcLong(state.claimedAt) : '—',
     aircraft: state.aircraftId ?? '—',
+    times:
+      leg != null
+        ? `${timeUtc(leg.startedAt)} → ${leg.stoppedAt != null ? timeUtc(leg.stoppedAt) : '—'} UTC`
+        : null,
+    // Loty / Blok / Lot — dokładnie to, co niesie wiersz sesji na „Mój dzień"
+    // (issue #35 pkt 6). „Sesja" (czas trzymania maszyny) i „Skoczków" wypadły:
+    // pierwsza była wielkością, o którą nikt nie pytał, druga mieszka w szczegółach
+    // lotu, do których ta karta prowadzi.
     stats: [
       { k: 'Loty', v: `${state.flights.length}` },
-      { k: 'Block', v: duration(state.blockTimeMs) },
-      { k: 'Sesja', v: heldMs != null ? duration(heldMs) : '—' },
-      { k: 'Skoczków', v: `${state.drops.totalJumpers}` },
+      { k: 'Blok', v: duration(state.blockTimeMs) },
+      { k: 'Lot', v: duration(state.flightTimeMs) },
     ],
-    sync:
-      pendingCount === 0
-        ? { label: 'Wysłane', pending: false }
-        : { label: `W kolejce · ${eventsCount(pendingCount)}`, pending: true },
+    upload: uploadSpec(pendingCount, pushing),
   };
 }
 
 /**
- * Podział zamkniętych dni na grupy ekranu 12. Dni otwarte i sesje bez claimu
- * (śmieciowe strumienie) odpadają — patrz docblock modułu.
+ * Podział zamkniętych sesji na grupy ekranu 12.
+ *
+ * Odpadają: sesje dnia dzisiejszego (są na 01), sesje trzymane (mają kokpit) i strumienie
+ * bez claimu (śmieciowe) — patrz docblock modułu.
+ *
+ * @param now      teraz (epoch ms) — wyznacza dobę dzisiejszą i stan okien korekty,
+ * @param pushing  czy sync dosięga serwera (etykieta plakietki wysyłki).
  */
-export function buildHistory(days: HistoryDay[], now: number): HistoryGroups {
+export function buildHistory(days: HistoryDay[], now: number, pushing = false): HistoryGroups {
   const groups: HistoryGroups = { editable: [], closed: [] };
+  const today = utcDayStart(now);
+
   for (const day of days) {
     // Warunkiem jest ZDANIE samolotu (`closed`), nie klamra służby. Do 2026-08-07 stało
     // tu `dutyEnd == null` i po §3.6a znaczyło coś zupełnie innego, niż miało: ekran
     // „Zdaj samolot" `dutyEnd` NIE WYSYŁA, więc poprawnie zdana sesja wypadała z historii
     // W CAŁOŚCI — a to jedyny ekran, z którego pilot dosięga okna korekty.
     if (day.state.sessionUuid == null || !day.state.closed) continue;
+    if (sessionDay(day.state) === today) continue;
+
     const window = correctionWindow(day.state, now);
     if (window.open && window.closesAt != null) {
       groups.editable.push({
-        ...cardSpec(day),
+        ...cardSpec(day, pushing),
         deadline: `Korekta do ${dateTimeUtcShort(window.closesAt)}`,
         remaining: remainingLabel(window.closesAt - now),
       });
     } else {
-      groups.closed.push(cardSpec(day));
+      groups.closed.push(cardSpec(day, pushing));
     }
   }
   return groups;
@@ -103,16 +167,24 @@ export function buildHistory(days: HistoryDay[], now: number): HistoryGroups {
 
 /**
  * Plakietka na przycisku „Poprzednie dni" ekranu 01 (`.history-badge`):
- * najświeższy dzień w oknie korekty → „22 JUN — można poprawić"; brak → null.
+ * najświeższa sesja W OKNIE KOREKTY spoza dnia dzisiejszego → „11 SIE — można poprawić";
+ * brak → null.
+ *
+ * Dzień dzisiejszy jest pominięty z tego samego powodu, dla którego nie ma go na liście
+ * (issue #35 pkt 1): plakietka obiecuje coś, co pilot znajdzie po wejściu. Sesję z dziś
+ * poprawia się ołówkiem wiersza tuż obok, na tym samym ekranie.
  */
 export function editableBadge(days: HistoryDay[], now: number): string | null {
+  const today = utcDayStart(now);
   for (const day of days) {
     // Warunkiem jest OTWARTE OKNO, nie obecność klamry służby. Po §3.6a okno kotwiczy się
-    // we wzlocie, więc `correctionWindow` odpowiada samo — a wymóg `dutyEnd`/`dutyStart`
+    // w ZDANIU samolotu, więc `correctionWindow` odpowiada samo — a wymóg `dutyEnd`/`dutyStart`
     // wyciszał plakietkę na każdej sesji bez deklaracji, czyli na prawie każdej.
     if (day.state.claimedAt == null) continue;
+    if (!day.state.closed) continue;
+    if (sessionDay(day.state) === today) continue;
     if (correctionWindow(day.state, now).open) {
-      // `dateTimeUtcShort` daje „22 JUN 16:45" — plakietka bierze samą datę.
+      // `dateTimeUtcShort` daje „22 CZE 16:45" — plakietka bierze samą datę.
       const label = dateTimeUtcShort(day.state.claimedAt).split(' ').slice(0, 2).join(' ');
       return `${label} — można poprawić`;
     }

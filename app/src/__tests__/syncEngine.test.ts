@@ -255,7 +255,7 @@ describe('SyncEngine.syncOnce', () => {
   });
 });
 
-describe('SyncEngine.fetchStatus (ekran 11)', () => {
+describe('SyncEngine.fetchStatus (zaparkowane po usunięciu ekranu 11)', () => {
   const STATUS: SessionSyncStatus = {
     sessionUuid: 'sess-1',
     received: 7,

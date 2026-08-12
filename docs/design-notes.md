@@ -61,9 +61,9 @@ Odnogi pod 01 (nie etapy dnia):
       → 14-slad  pełny ślad pod miniaturą: trasa, profil pionowy, log punktów
                  (14b — stan zabezpieczający, gdy zapis zniknął). Issue #25: z LIST
                  wejścia w ślad nie ma — ślad opisuje LOT, nie sesję
-  11-eksport     status synchronizacji (11a — offline) — wejście z ustawień (13)
-  12-historia    poprzednie dni pilota, okno korekty 24 h
-  13-ustawienia  motyw · PIN · konto · status synchronizacji · diagnostyka GPS
+  12-historia    poprzednie dni pilota (sesje spoza dzisiejszej doby), okno korekty 24 h
+  13-ustawienia  motyw · PIN · konto · synchronizacja (kolejka, uwagi serwera,
+                 awaryjny sync — dawny ekran 11) · diagnostyka GPS
 ```
 
 ---

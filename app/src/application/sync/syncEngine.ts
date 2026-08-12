@@ -71,11 +71,19 @@ export class SyncEngine {
   }
 
   /**
-   * Stan sesji po stronie serwera (ekran 11: flagi, `exportUrl`).
+   * Stan sesji po stronie serwera: flagi §4.5 i `exportUrl`.
    *
    * `null` znaczy „nie wiadomo TERAZ" — offline, wygasła sesja albo odmowa serwera.
    * Pytający zostaje wtedy przy tym, co ma (flagi z ostatniego pusha = stan `cache`,
    * §4.8) — semantykę zwijania przyczyn do `null` opisuje `authorizedFetch`.
+   *
+   * **BEZ KONSUMENTA OD 2026-08-12 — ZAPARKOWANE ŚWIADOMIE.** Jedynym wołającym był
+   * ekran 11, usunięty jako trzecia kopia rozliczenia; uwagi serwera pokazują dziś
+   * Ustawienia, biorąc je z odpowiedzi na wysyłkę (jedna sesja to za mało — pilot
+   * pyta o wszystkie swoje). Metody nie kasujemy, bo endpoint `GET /me/sessions/:uuid/status`
+   * po stronie serwera istnieje i ma tu komplet testów; wróci przy skrzynce uwag,
+   * jeśli taka powstanie. To jest parkowanie w tym samym sensie co `SheetsPort`
+   * i `exportUrl` — nie zapomniany kod.
    */
   fetchStatus(sessionUuid: string): Promise<SessionSyncStatus | null> {
     return authorizedFetch(this.auth, (token) => this.server.getSyncStatus(token, sessionUuid));

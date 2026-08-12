@@ -2,19 +2,23 @@
  * UZ Aero — 08 LISTA RĘCZNA (fallback GPS).
  *
  * Odwzorowanie mockupu `design/08-lista-reczna.html`: nagłówek z akcją „Dodaj wpis" →
- * pasek trybu → log dnia pocięty na CYKLE SILNIKOWE → stany paliwa → powrót do kokpitu.
+ * pasek trybu → log SESJI z klamrą biegu silnika → stany paliwa → powrót do kokpitu.
  *
  * §8 klasyfikuje fałszywe detekcje GPS jako ryzyko czerwone: przelot nad pasem bywa
  * uznany za lądowanie, ciasny zakręt gubi start, a bez wysokości automat świadomie
- * nie zgaduje. Ten ekran jest RATUNKIEM na te sytuacje — dzień musi dać się odtworzyć
+ * nie zgaduje. Ten ekran jest RATUNKIEM na te sytuacje — sesja musi dać się odtworzyć
  * z pamięci — i dlatego jego ton jest zachowawczy: dopisywanie jest dyskretną akcją
  * (`GhostAction`), nie wielkim CTA, a każdy wpis niesie metodę `manual`, widoczną
  * potem w statystykach i arkuszu obok wpisów `auto`.
  *
- * Układ cyklami (nie płaską listą) też jest z §8: pilot odtwarzający dzień myśli
- * „drugie uruchomienie, po tankowaniu" — i to w cyklu widzi, czego brakuje. Wiersze
- * oczekiwane („— · Landing · W locie…") są dosłownie listą tego, co będzie musiał
- * dopisać ręcznie, jeśli GPS nie wykryje.
+ * Klamra biegu (nie płaska lista) też jest z §8: pilot odtwarzający zapis myśli
+ * „od uruchomienia do zgaszenia" — i to w niej widzi, czego brakuje. Wiersze oczekiwane
+ * („— · Landing · W locie…") są dosłownie listą tego, co będzie musiał dopisać ręcznie,
+ * jeśli GPS nie wykryje.
+ *
+ * Słownik po pivocie 2026-08-10: sesja ma DOKŁADNIE JEDEN bieg silnika, więc nie ma tu
+ * „cykli" ani licznika „2 / 3" — numer biegu pokazujemy wyłącznie wtedy, gdy strumień
+ * jest złamany i niesie więcej niż jeden. Wiele LOTÓW w jednym biegu jest normą.
  */
 
 import React, { useCallback, useMemo, useState } from 'react';
@@ -41,7 +45,7 @@ import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useEventCorrection } from '../hooks/useEventCorrection';
 import { dateUtcLong, timeLocal, timeUtc } from '../format';
-import { buildLogGroups, cycleCount } from './logic/manualLog';
+import { buildLogGroups, runCount } from './logic/manualLog';
 import { toneColors } from '../components/tone';
 
 export function ManualLogScreen({
@@ -73,7 +77,7 @@ export function ManualLogScreen({
     () => buildLogGroups(events, projection, mhFormat),
     [events, projection, mhFormat],
   );
-  const cycles = cycleCount(groups);
+  const runs = runCount(groups);
 
   /**
    * Wpis ręczny = ta sama komenda co autodetekcja, tylko z metodą `manual` i czasem
@@ -160,19 +164,22 @@ export function ManualLogScreen({
     >
       <View style={{ padding: 14, gap: theme.spacing.md }}>
         {/* `.section-label` — mikro-etykieta z tokenu (dryf światła 2 → 1.5 celowy). */}
+        {/* Log SESJI, nie dnia: ekran opisuje jeden strumień jednej maszyny, a dzień
+            pilota jest listą sesji (issue #23) i mieszka na 01. Data zostaje, bo sesja
+            spod północy potrafi należeć do wczorajszej doby. */}
         <AppText variant="micro" tone="muted">
-          {`Log zdarzeń · ${projection.claimedAt != null ? dateUtcLong(projection.claimedAt) : dateUtcLong(now)}`}
+          {`Log sesji · ${projection.claimedAt != null ? dateUtcLong(projection.claimedAt) : dateUtcLong(now)} · UTC`}
         </AppText>
 
         {groups.length === 0 && (
           <AppText variant="body" tone="muted">
-            Dzień jeszcze nie ma zdarzeń — pierwszy cykl pojawi się po START ENGINE.
+            Sesja jeszcze nie ma zdarzeń — pojawią się po START ENGINE.
           </AppText>
         )}
 
         {groups.map((group, i) =>
           group.kind === 'ground' ? (
-            // Zdarzenie naziemne między cyklami — pełną szerokością, w tonie amber.
+            // Zdarzenie naziemne poza biegiem — pełną szerokością, w tonie amber.
             <Card key={`g-${i}`} flush>
               <EventLog rows={[group.row]} onCorrect={openCorrection} />
               <NotesFooter notes={group.notes} />
@@ -180,8 +187,11 @@ export function ManualLogScreen({
           ) : (
             <Card
               key={`c-${group.index}`}
-              title={group.active ? 'Cykl silnikowy · aktywny' : 'Cykl silnikowy'}
-              headerRight={<Tag label={`${group.index} / ${cycles}`} />}
+              title={group.active ? 'Bieg silnika · aktywny' : 'Bieg silnika'}
+              // Numer biegu to OSTRZEŻENIE, nie ozdoba: poprawna sesja ma jeden bieg
+              // (pivot 2026-08-10), więc plakietka „2 / 3" znaczy strumień złamany.
+              // Przy jednym biegu jej nie ma — licznik „1 / 1" byłby szumem.
+              headerRight={runs > 1 ? <Tag label={`${group.index} / ${runs}`} tone="amber" /> : undefined}
               flush
               style={
                 group.active
@@ -215,9 +225,9 @@ export function ManualLogScreen({
           <Banner kind="warning" tone="red" icon="warning" title="Nie zapisano" text={lastError} />
         )}
 
-        {/* ── stany paliwa dnia (`.fuel-card`) ─────────────────────────── */}
+        {/* ── stany paliwa sesji (`.fuel-card`) ────────────────────────── */}
         <Card
-          title="Stany paliwa dnia"
+          title="Stany paliwa sesji"
           header="inline"
           style={{ borderColor: amber.border, backgroundColor: amber.muted }}
         >

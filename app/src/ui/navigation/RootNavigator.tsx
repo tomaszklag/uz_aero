@@ -46,7 +46,6 @@ import {
   type FlightDetailsScreenParams,
 } from '../screens/FlightDetailsScreen';
 import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
-import { SyncScreen } from '../screens/SyncScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
 export type RootStackParamList = {
@@ -137,7 +136,6 @@ export function RootNavigator({
         <Stack.Screen name="Stats" component={StatsScreen} />
         <Stack.Screen name="FlightDetails" component={FlightDetailsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />
-        <Stack.Screen name="Sync" component={SyncScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="StyleGuide" component={StyleGuideScreen} />
       </Stack.Navigator>

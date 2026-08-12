@@ -272,12 +272,21 @@ describe('granice warstw', () => {
  * wróciła (`admin/test/correctionWarnings.test.ts`).
  */
 describe('nawigacja — decyzje zapisane w mockupach', () => {
-  it('ekran 11 NIE kasuje stosu — synchronizacja jest statusem, nie końcem drogi', () => {
-    // `design/11-eksport.html`: „NIE czyści już stosu: ten ekran przestał być końcem
-    // drogi. Synchronizacja jest statusem, który można sprawdzić w środku dnia."
-    // Pilot, który zajrzał w status między jedną sesją a drugą, musi mieć drogę
-    // powrotną do kokpitu.
-    const source = readFileSync(join(SRC, 'ui/screens/SyncScreen.tsx'), 'utf8');
-    expect(source).not.toMatch(/navigation\.reset\s*\(/);
+  it('ŻADEN ekran nie kasuje stosu nawigacji — dzień pilota nie ma „końca drogi"', () => {
+    // Reguła pilnowała ekranu 11 („synchronizacja jest statusem, nie końcem drogi"),
+    // a po jego usunięciu (2026-08-12) dotyczy WSZYSTKICH ekranów: po issue #23 dnia
+    // się nie zamyka, więc nie ma czynności, po której stos byłby już niepotrzebny.
+    // Skasowany stos zabiera pilotowi drogę powrotną do kokpitu, w którym za chwilę
+    // uruchamia silnik. Skanujemy źródło, bo `navigation.reset` to jedno słowo
+    // w jednym callbacku i żaden test modelu widoku go nie zobaczy.
+    const screens = readdirSync(join(SRC, 'ui/screens')).filter((f) => f.endsWith('.tsx'));
+    expect(screens.length).toBeGreaterThan(10); // sanity: katalog na pewno się czyta
+    for (const file of screens) {
+      const source = readFileSync(join(SRC, 'ui/screens', file), 'utf8');
+      expect({ file, reset: /navigation\.reset\s*\(/.test(source) }).toEqual({
+        file,
+        reset: false,
+      });
+    }
   });
 });

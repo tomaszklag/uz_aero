@@ -1,13 +1,6 @@
-/**
- * UZ Aero — test grupowania logu w CYKLE SILNIKOWE (ekran 08, lista ręczna).
- *
- * Ekran 08 jest fallbackiem po zawodnym GPS — pilot odtwarza dzień z pamięci, myśląc
- * cyklami. Jeśli grupowanie przetnie dzień źle (tankowanie wpadnie do cyklu, aktywny
- * cykl nie dostanie wierszy oczekiwanych), pilot nie zobaczy, czego brakuje — a to
- * jedyny powód istnienia tego ekranu.
- */
+/** * UZ Aero — test grupowania logu wokół BIEGU SILNIKA (ekran 08, lista ręczna). * * Ekran 08 jest fallbackiem po zawodnym GPS — pilot odtwarza sesję z pamięci, myśląc * klamrą „od uruchomienia do zgaszenia". Jeśli grupowanie przetnie strumień źle * (tankowanie wpadnie do biegu, aktywny bieg nie dostanie wierszy oczekiwanych), pilot * nie zobaczy, czego brakuje — a to jedyny powód istnienia tego ekranu. * * Fixture celowo niesie TRZY biegi: po pivocie 2026-08-10 poprawna sesja ma jeden, * więc test opisuje tu strumień ZŁAMANY — grupowanie musi go pokazać w całości, * zamiast po cichu gubić drugi i trzeci bieg. */
 
-import { buildLogGroups, cycleCount } from '../ui/screens/logic/manualLog';
+import { buildLogGroups, runCount } from '../ui/screens/logic/manualLog';
 import type { Event, SessionState } from '../domain';
 
 const DAY = Date.UTC(2026, 5, 22);
@@ -41,7 +34,7 @@ function projection(over: Partial<SessionState> = {}): SessionState {
   } as SessionState;
 }
 
-/** Dzień z mockupu 08: dwa zamknięte cykle, tankowanie między nimi, trzeci w locie. */
+/** Strumień ZŁAMANY (fixture): dwa zamknięte biegi, tankowanie między nimi, trzeci w locie. */
 function mockupDay(): Event[] {
   return [
     event('engine_start', at(8, 12)),
@@ -60,31 +53,31 @@ function mockupDay(): Event[] {
   ];
 }
 
-describe('grupowanie w cykle', () => {
-  it('odtwarza układ mockupu: cykl · tankowanie · cykl · cykl aktywny', () => {
+describe('grupowanie wokół biegu silnika', () => {
+  it('odtwarza układ mockupu: bieg · tankowanie · bieg · bieg aktywny', () => {
     const groups = buildLogGroups(
       mockupDay(),
       projection({ engineRunning: true, inFlight: true }),
       'hhmm',
     );
 
-    expect(groups.map((g) => g.kind)).toEqual(['cycle', 'ground', 'cycle', 'cycle']);
-    expect(cycleCount(groups)).toBe(3);
+    expect(groups.map((g) => g.kind)).toEqual(['run', 'ground', 'run', 'run']);
+    expect(runCount(groups)).toBe(3);
   });
 
-  it('tankowanie NIE wpada do żadnego cyklu', () => {
+  it('tankowanie NIE wpada do żadnego biegu', () => {
     const groups = buildLogGroups(mockupDay(), projection(), 'hhmm');
     const ground = groups.find((g) => g.kind === 'ground')!;
     expect(ground.kind).toBe('ground');
 
     for (const g of groups) {
-      if (g.kind === 'cycle') {
+      if (g.kind === 'run') {
         expect(g.rows.some((r) => r.kind === 'ground')).toBe(false);
       }
     }
   });
 
-  it('aktywny cykl dostaje wiersze oczekiwane: Landing (w locie) i Stop engine', () => {
+  it('aktywny bieg dostaje wiersze oczekiwane: Landing (w locie) i Stop engine', () => {
     const groups = buildLogGroups(
       mockupDay(),
       projection({ engineRunning: true, inFlight: true }),
@@ -92,8 +85,8 @@ describe('grupowanie w cykle', () => {
     );
 
     const last = groups[groups.length - 1]!;
-    expect(last.kind).toBe('cycle');
-    if (last.kind !== 'cycle') return;
+    expect(last.kind).toBe('run');
+    if (last.kind !== 'run') return;
 
     expect(last.active).toBe(true);
     const awaited = last.rows.filter((r) => r.awaited === true);
@@ -111,25 +104,25 @@ describe('grupowanie w cykle', () => {
     );
 
     const last = groups[groups.length - 1]!;
-    if (last.kind !== 'cycle') return;
+    if (last.kind !== 'run') return;
     expect(last.rows.filter((r) => r.awaited === true).map((r) => r.label)).toEqual([
       'Stop engine',
     ]);
   });
 
-  it('zamknięty dzień nie ma cyklu aktywnego ani wierszy oczekiwanych', () => {
+  it('zamknięta sesja nie ma biegu aktywnego ani wierszy oczekiwanych', () => {
     const events = [...mockupDay(), event('landing', at(14, 8), { method: 'manual' }), event('engine_stop', at(14, 20))];
     const groups = buildLogGroups(events, projection(), 'hhmm');
 
     for (const g of groups) {
-      if (g.kind === 'cycle') {
+      if (g.kind === 'run') {
         expect(g.active).toBe(false);
         expect(g.rows.some((r) => r.awaited === true)).toBe(false);
       }
     }
   });
 
-  it('zdarzenia organizacyjne (preflight) nie zaśmiecają listy cykli', () => {
+  it('zdarzenia organizacyjne (preflight) nie zaśmiecają listy biegów', () => {
     const events = [
       event('preflight_confirm', at(8, 0), {
         operation: 'skoki',
@@ -140,6 +133,6 @@ describe('grupowanie w cykle', () => {
     ];
     const groups = buildLogGroups(events, projection({ engineRunning: true }), 'hhmm');
 
-    expect(groups[0]!.kind).toBe('cycle'); // dzień na liście zaczyna się od silnika
+    expect(groups[0]!.kind).toBe('run'); // dzień na liście zaczyna się od silnika
   });
 });
