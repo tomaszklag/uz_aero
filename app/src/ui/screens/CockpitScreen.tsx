@@ -64,6 +64,7 @@ import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
 import { boardingPrefill } from './logic/boardingPrefill';
 import { buildCockpitActions } from './logic/cockpitActions';
+import { cockpitFlightTimeMs } from './logic/cockpitFlightTime';
 import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
 import { currentFlightNumber } from './logic/flightNumber';
 import { fuelTone } from './logic/fuelNorm';
@@ -252,8 +253,17 @@ export function CockpitScreen({
 
 
   const mhFormat = projection.mhFormat ?? 'decimal';
-  const liveFlightMs =
-    projection.openTakeoffAt != null ? now - projection.openTakeoffAt : projection.flightTimeMs;
+  /**
+   * Czas lotu SESJI: loty zamknięte (wszystko jedno, czy z GPS, czy dopisane ręcznie)
+   * plus lot otwarty na żywo. Reguła ma test i mieszka w `logic/cockpitFlightTime.ts` —
+   * ekran jej nie rozstrzyga, bo poprzedni wzór stał w JSX i po cichu gubił w locie
+   * wszystkie wcześniejsze loty.
+   */
+  const liveFlightMs = cockpitFlightTimeMs({
+    closedMs: projection.flightTimeMs,
+    openTakeoffAt: projection.openTakeoffAt,
+    now,
+  });
 
   /**
    * Czy w tym dniu wynosi się skoczków — od tego zależy, czy pasek akcji ma przycisk

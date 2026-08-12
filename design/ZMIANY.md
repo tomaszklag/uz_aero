@@ -1739,3 +1739,19 @@ użytkownika po przeglądzie).
 > zostaje przyrządem: mówi, co się stało z czujnikiem, i wskazuje pasek akcji zdaniem,
 > nie własnym przyciskiem. Przy okazji treść banerów nazywa przyciski tak, jak są
 > podpisane na ekranie („T-O / LAND" → „Take off / Landing").
+
+---
+
+## 2026-08-12 — Flight Time mierzy SESJĘ (zgłoszenie z urządzenia)
+
+**05 / 05B / 05C / 05G — kafelek „Flight Time" to czas lotu CAŁEJ SESJI, nie bieżącego wyniesienia.**
+> Zgłoszenie z urządzenia: pilot dopisał przegapiony lot ręcznie (05F, 08) i przyrząd
+> nie drgnął. Powód: w locie kafelek podstawiał sam licznik od otwartego startu, więc
+> wszystkie wcześniejsze loty — wykryte i dopisane — znikały z niego w chwili oderwania
+> i wracały po przyziemieniu. Teraz kafelek sumuje loty zamknięte i dolicza otwarty na
+> żywo (fixture 0:44 + 0:42 + 0:53 = **02:19**); 05B zostaje przy 00:03, bo to pierwszy
+> lot cyklu i suma zamkniętych jest zerowa.
+> Czasu bieżącego lotu kafelek NIE powtarza — stoi w logu cyklu jako wiersz „In flight…
+> 00:53:14", a kokpit nie mówi tego samego dwa razy (decyzja 2026-08-10). Przy okazji
+> znika rozjazd w samych mockupach: 05 miało 00:47, którego nie dawało się wyprowadzić
+> z żadnego czytania logu.

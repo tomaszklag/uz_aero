@@ -407,10 +407,17 @@
           <div class="param-unit">L</div>
         </div>
       </div>
+      <!-- FLIGHT TIME = CZAS LOTU CAŁEJ SESJI, nie bieżącego wyniesienia (zgłoszenie
+           z urządzenia, 2026-08-12): 0:44 + 0:42 z logu niżej plus 0:53 lotu otwartego.
+           Wcześniej kafelek pokazywał sam licznik lotu bieżącego — wtedy każdy
+           poprzedni lot znikał z przyrządu w chwili oderwania, a lot DOPISANY RĘCZNIE
+           (05F, 08) nie ruszał go w ogóle i wyglądał jak zgubiony zapis. Czas
+           bieżącego lotu stoi w logu cyklu („In flight… 00:53:14"), więc kafelek go
+           nie powtarza. -->
       <div class="param-cell">
         <div class="param-label">Flight Time</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
-          <div class="param-value">00:47</div>
+          <div class="param-value">02:19</div>
         </div>
       </div>
     </div>
