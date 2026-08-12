@@ -4,7 +4,7 @@
  * Siatka bilansowa: dwie kolumny komórek „etykieta → wielka liczba → jednostka",
  * rozdzielonych włosową linią i dociągniętych do krawędzi karty.
  *
- * Czym różni się od `ParamGrid` (05) i `MetricGrid`: tam wartość jest odczytem przyrządu
+ * Czym różni się od `ParamGrid` (05): tam wartość jest odczytem przyrządu
  * — cyfry mono, jednostka w tej samej linii, bo liczba może się zmienić w każdej sekundzie
  * i musi być czytelna kątem oka. Tutaj wartości są **zamknięte**: to bilans dnia, który
  * pilot przepisuje do dokumentów. Stąd krój display i jednostka słowem („litrów",

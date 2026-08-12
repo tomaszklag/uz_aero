@@ -856,8 +856,6 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
 | `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c (godzin klamry służby nie zbiera — klamra usunięta, issue #23) |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
-| `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
-| `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
 | `KeyValueRow` | wiersz klucz—wartość (kroje `micro`/`mono`, `valueTone`, `divider`) | `.diag-row` (13), `.row` „Dane dnia" (11a) |
 | `SettingsAction` | wiersz akcji ustawień: ikona, nazwa, podpis (przy blokadzie niesie powód), strzałka | `.action-item` (13) |
 | `SummaryStrip` | pasek bilansu dnia poza obszarem przewijania | `.summary-strip` |
@@ -874,7 +872,6 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `DropSheet`, `ManualEventSheet` | arkusze zrzutu i wpisu ręcznego nad kokpitem | 05e / 05f |
 | `CorrectionSheet` | arkusz korekty: czas ±1 min, wpływ na czasy, strefa „nie było" | 04c |
 | `LeaveCockpitSheet` | arkusz blokady wyjścia: co trzyma pilota w kokpicie + jedyne wyjście („ZDAJ SAMOLOT" → 09B). Wywołuje go `usePreventRemove` w kokpicie, więc łapie przycisk sprzętowy ORAZ gest cofania | 04d |
-| `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
 | `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |

@@ -76,8 +76,10 @@ export * from './sheets/LeaveCockpitSheet';
 
 // Dane i akcje
 export * from './data/DayCard';
-export * from './data/SummaryHero';
-export * from './data/SummaryGrid';
+// `SummaryHero` i `SummaryGrid` USUNIĘTE 2026-08-12 — były komponentami ekranu 03
+// (podsumowanie preflightu), a ten zniknął przy skróceniu przejęcia do trzech kroków
+// (etap C4: „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu). Rolę siatki klucz/wartość
+// pełni dziś `StatGrid`.
 export * from './data/SummaryStrip';
 export * from './data/ResultBar';
 export * from './data/CalcBox';
@@ -92,7 +94,9 @@ export * from './data/TrackMap';
 export * from './data/TrackThumbnail';
 export * from './data/VerticalProfile';
 export * from './data/StatGrid';
-export * from './data/Metric';
+// `Metric` i `MetricGrid` USUNIĘTE 2026-08-12 — komórka i zawijana siatka liczników
+// dnia na ziemi ze starego kokpitu. Po przebudowie flow role przejęły `ParamGrid`
+// (sztywna siatka przyrządów w locie) i `StatGrid` (bilanse do przepisania).
 export * from './data/ParamGrid';
 export * from './data/PhaseHero';
 export * from './data/CockpitActions';

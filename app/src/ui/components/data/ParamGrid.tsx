@@ -5,10 +5,10 @@
  * Komórki stykają się i są rozdzielone włosową linią, a nie osobnymi ramkami — dzięki
  * temu czyta się je jak jeden przyrząd, a nie cztery kafelki.
  *
- * Czym różni się od `MetricGrid`: tam kafelki mają własne ramki i zawijają się dla
- * dowolnej liczby pozycji (liczniki dnia na ziemi). Tutaj układ jest sztywny 2×2, bo
- * w locie te cztery wartości stoją zawsze w tych samych miejscach — pilot sięga po nie
- * pamięcią mięśniową, nie wzrokiem.
+ * Czym różni się od `StatGrid`: tam komórki zawijają się dla dowolnej liczby pozycji
+ * i niosą bilans do przepisania. Tutaj układ jest sztywny 2×2, bo w locie te cztery
+ * wartości stoją zawsze w tych samych miejscach — pilot sięga po nie pamięcią
+ * mięśniową, nie wzrokiem.
  *
  * `tint` delikatnie podbija tło komórki (paliwo amber, czas lotu green), tak jak
  * `.param-cell.amber-bg` / `.green-bg` w mockupie.

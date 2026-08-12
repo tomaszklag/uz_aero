@@ -16,9 +16,9 @@
  * w porządku, czerwony gdy łamie limit), bo w mockupie 06 wynik jest równorzędny
  * ze wskaźnikiem FOB, a nie przypisem do pola.
  *
- * Czym różni się od `Metric`: metryka to przyrząd czytany kątem oka (własna ramka,
- * etykieta nad wartością). Tu wartość ma sens wyłącznie razem z rachunkiem obok,
- * więc oba stoją w jednym wierszu i dzielą jedno tło.
+ * Czym różni się od komórki `ParamGrid`: parametr to przyrząd czytany kątem oka
+ * (etykieta nad wartością, stałe miejsce w siatce). Tu wartość ma sens wyłącznie razem
+ * z rachunkiem obok, więc oba stoją w jednym wierszu i dzielą jedno tło.
  */
 
 import React from 'react';
