@@ -17,6 +17,7 @@
 
 import type { EpochMillis } from './time';
 import type { FuelMhReading, MhFormat } from './events';
+import type { CounterKind } from './consumption/mhModel';
 
 // Format licznika MH należy do konfiguracji samolotu (§5.4), więc re-eksportujemy go
 // przez powierzchnię `reference` — konsumenci cache'u nie muszą sięgać do `events`.
@@ -95,13 +96,57 @@ export interface ConsumptionNorm {
   blockLPerH: number;
   /** Stawka W LOCIE z modelu fazowego (L/h); `null`, gdy model nie rozdzielił faz. */
   airLPerH: number | null;
+  /**
+   * Stawka NA ZIEMI (L/h) — silnik pracuje, samolot nie leci; `null` razem z `airLPerH`.
+   *
+   * Bez niej normy nie da się odnieść do KONKRETNEJ sesji, a tylko do średniej mieszanki
+   * faz z okna — i dokładnie na to skarżył się issue #38 pkt 6. Para (ziemia, powietrze)
+   * jest minimalnym zestawem, który telefon policzy zawsze: czas lotu i czas blokowy zna
+   * z własnej projekcji, bez śladu GPS i bez sieci.
+   */
+  groundLPerH: number | null;
   /** Paliwo na jeden wzlot (L); `null`, gdy w oknie nie było startów. */
   litersPerFlight: number | null;
+  /**
+   * Rozrzut sesji wokół przewidywania z pary stawek: 10. i 90. centyl ilorazu fakt/model.
+   * `null`, gdy stawek nie ma albo nie było z czego liczyć ilorazów.
+   */
+  fuelRatioLow: number | null;
+  fuelRatioHigh: number | null;
+  /** Przeliczniki motogodzin; `null` = model MH poniżej progu publikacji. */
+  mh: MhNorm | null;
   /** Ile interwałów i ile godzin silnika stoi za tymi liczbami — podstawa zaufania. */
   intervals: number;
   engineMs: number;
   /** Kiedy model policzono — NIE to samo, co `fetchedAt` rekordu. */
   computedAt: EpochMillis;
+}
+
+/**
+ * Przeliczniki motogodzin dla APLIKACJI PILOTA (issue #38 pkt 4).
+ *
+ * ══ PO CO TO JEST ══
+ * Przyrost licznika NIE równa się czasowi blokowemu i nie ma prawa się równać
+ * (`consumption/mhModel.ts`): obrotomierz na ziemi przyrasta wolniej niż zegar. Do
+ * issue #38 ekran 10 twierdził coś przeciwnego — pisał „Δ sesji (= czas blokowy)" —
+ * więc pilot, którego licznik zachował się poprawnie, widział rozjazd bez wyjaśnienia.
+ * Mając te dwie liczby, ekran umie powiedzieć, ILE licznik POWINIEN był pokazać.
+ *
+ * Panel dostaje cały model (`MhModel`: przedziały, reszty, wiersze per sesja); telefon
+ * dostaje tyle, ile trzeba do jednego zdania — ta sama zasada, co przy `ConsumptionNorm`.
+ */
+export interface MhNorm {
+  /** Charakter licznika odczytany z danych — `unknown`, gdy dane nie rozstrzygają. */
+  kind: CounterKind;
+  /** Motogodziny na godzinę zegara W LOCIE. */
+  perFlightHour: number;
+  /** Motogodziny na godzinę zegara NA ZIEMI (silnik pracuje, samolot nie leci). */
+  perGroundHour: number;
+  /** Rozrzut sesji wokół przewidywania (10. i 90. centyl ilorazu fakt/model). */
+  ratioLow: number | null;
+  ratioHigh: number | null;
+  /** Ile zdanych sesji stoi za przelicznikami. */
+  sessions: number;
 }
 
 /**

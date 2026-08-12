@@ -109,6 +109,29 @@ export const MAX_VARIANCE_INFLATION = 100;
 export const CI_LEVEL = 0.95;
 
 /**
+ * DOLNA GRANICA pasma oczekiwania dla paliwa (L) — issue #38.
+ *
+ * Pasmo liczy się z rozrzutu obserwacji (`ratio.ts`), a ten przy danych wewnętrznie
+ * spójnych potrafi zejść do zera — dokładnie tak, jak przedziały w `mhModel.ts` przy
+ * historii bez szumu. Werdykt „powyżej normy" zapalałby się wtedy na różnicy mniejszej
+ * niż to, co paliwomierz w ogóle umie pokazać.
+ *
+ * Sześć litrów, bo zużycie sesji jest RÓŻNICĄ dwóch odczytów, a każdy z nich ma błąd
+ * rzędu trzech litrów (to samo rozumowanie, co przy `MIN_INTERVAL_ENGINE_MS`).
+ * DO KALIBRACJI razem z resztą progów tego pliku — `server/scripts/consumptionReplay.ts`.
+ */
+export const FUEL_BAND_FLOOR_L = 6;
+
+/**
+ * DOLNA GRANICA pasma oczekiwania dla motogodzin (h) — issue #38.
+ *
+ * Ten sam argument co wyżej, tylko jednostką jest podziałka licznika: przyrost MH to
+ * różnica dwóch odczytów po 0,05 h rozdzielczości, więc 0,1 h to czysta arytmetyka
+ * zaokrągleń, a nie próg „na wyczucie". Poniżej tej wartości nie ma o czym orzekać.
+ */
+export const MH_BAND_FLOOR_H = 0.1;
+
+/**
  * Dlaczego interwał nie wchodzi do regresji — bez odstających, bo te rozstrzyga
  * dopiero dopasowany model (`model.ts`), a ta funkcja działa przed nim.
  */

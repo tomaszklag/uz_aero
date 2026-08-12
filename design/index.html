@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="UTF-8" />
@@ -326,7 +326,7 @@
 <div class="flow-arrow" style="margin-top:10px;">
   <a href="01-moj-dzien.html" class="flow-step">01 Mój dzień</a>
   <span class="flow-sep">→</span>
-  <a href="10-statystyki.html" class="flow-step">10 Rozliczenie samolotu</a>
+  <a href="10-statystyki.html" class="flow-step">10 Sesja</a>
   <span class="flow-sep">·</span>
   <span class="flow-sep">·</span>
   <a href="12-historia.html" class="flow-step">12 Poprzednie dni</a>
@@ -575,25 +575,17 @@
   <a href="10a-statystyki-zero.html" class="card amber">
     <div class="card-num">10A</div>
     <div class="card-body">
-      <div class="card-title">10a-statystyki-zero</div>
-      <div class="card-desc">Rozliczenie samolotu bez lotów — pusta lista jako komunikat wprost, średnie „— —" zamiast udawanych liczb; wielką cyfrą stoi czas TRZYMANIA maszyny, bo czas blokowy wynosi zero i nie ma o czym krzyczeć. Edycja wraca do zdania samolotu (09C)</div>
+      <div class="card-title">10a-statystyki-zero (sesja bez lotu)</div>
+      <div class="card-desc">Sesja bez ani jednego lotu — oś ma dwa punkty (przejęcie i zdanie), w miejscu śladu stoi powód, a werdykty paliwa i MH MILCZĄ: norma opisuje godzinę pracy silnika, więc przy zerze nie ma z czym porównywać. Wielką liczbą stoi czas TRZYMANIA maszyny. Edycja wraca do zdania samolotu (09C)</div>
       <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">rozliczenie</span></div>
     </div>
   </a>
   <a href="10b-rozliczenie-zamkniete.html" class="card amber">
     <div class="card-num">10B</div>
     <div class="card-body">
-      <div class="card-title">10b-rozliczenie-zamkniete</div>
-      <div class="card-desc">Rozliczenie sesji po oknie 24 h — te same liczby, zero elementów zapisu: bez ołówków przy lotach, bez „Edytuj dane", amber baner zamiast terminu korekty. Cel karty z grupy „Zamknięte" na 12: sesji po oknie nie dało się dotąd otworzyć w ogóle (issue #35 pkt 2)</div>
+      <div class="card-title">10b-rozliczenie-zamkniete (podgląd)</div>
+      <div class="card-desc">Sesja po oknie 24 h — te same liczby, zero elementów zapisu: bez ołówków na osi czasu, bez „Edytuj dane", amber baner z kłódką zamiast terminu korekty. Ślad zostaje klikalny, bo oglądanie to nie zapis. Cel karty z grupy „Zamknięte" na 12</div>
       <div class="card-tags"><span class="tag amber">tylko odczyt</span><span class="tag">okno minęło</span></div>
-    </div>
-  </a>
-  <a href="16a-lot-bez-sladu.html" class="card">
-    <div class="card-num">16A</div>
-    <div class="card-body">
-      <div class="card-title">16a-lot-bez-sladu</div>
-      <div class="card-desc">Szczegóły lotu bez zapisu GPS — lot wpisany ręcznie albo ślad starszy niż 14 dni. W miejscu miniatury kafelek z POWODEM i bez linku: za nim nie ma ani jednego detalu więcej. Czasy, miejsce i zrzuty zostają pełnoprawne</div>
-      <div class="card-tags"><span class="tag">stan pusty</span><span class="tag">retencja</span></div>
     </div>
   </a>
   <a href="14b-slad-brak.html" class="card">
@@ -674,9 +666,9 @@
   <a href="10-statystyki.html" class="card">
     <div class="card-num">10</div>
     <div class="card-body">
-      <div class="card-title">10-statystyki (rozliczenie)</div>
-      <div class="card-desc">Detale JEDNEJ sesji (oś SAMOLOTU, nie doby) — czas blokowy, czas per pilot PIC/Dual, tabela lotów (numer → szczegóły lotu 16, ołówek → korekta), paliwo na tle normy, MH, zrzuty. Wywoływane ołówkiem wiersza w logu dnia (01) i kartą dnia w historii (12). Zdanie samolotu już potwierdziło dane — tu się je ogląda i koryguje, niczego się nie zatwierdza</div>
-      <div class="card-tags"><span class="tag">rozliczenie</span><span class="tag">oś samolotu</span></div>
+      <div class="card-title">10-statystyki (sesja)</div>
+      <div class="card-desc">Detale JEDNEJ sesji (oś SAMOLOTU, nie doby) — ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania (uruchomienie, starty, zrzuty, lądowania, wyłączenie), rachunek paliwa i motogodzin na tle normy fazowej, zrzuty. Wywoływane ołówkiem wiersza w logu dnia (01) i kartą sesji w historii (12). Zdanie samolotu już potwierdziło dane — tu się je ogląda i koryguje, niczego się nie zatwierdza</div>
+      <div class="card-tags"><span class="tag">sesja</span><span class="tag">oś samolotu</span><span class="tag">norma</span></div>
     </div>
   </a>
   <a href="12-historia.html" class="card">
@@ -687,20 +679,12 @@
       <div class="card-tags"><span class="tag">historia</span><span class="tag">okno 24 h</span><span class="tag">podgląd</span></div>
     </div>
   </a>
-  <a href="16-lot.html" class="card">
-    <div class="card-num">16</div>
-    <div class="card-body">
-      <div class="card-title">16-lot (szczegóły lotu)</div>
-      <div class="card-desc">Szczegóły JEDNEGO lotu (start → lądowanie) — uproszczona miniatura śladu, czasy, miejsce, zrzuty tego wyniesienia i korekta czasów. Wejście: numer lotu w tabeli rozliczenia (10). Miniatura otwiera pełny ślad (14): z listy lotów prosto do mapy skrótu już nie ma (issue #25)</div>
-      <div class="card-tags"><span class="tag">jeden lot</span><span class="tag">wejście w ślad</span></div>
-    </div>
-  </a>
   <a href="14-slad.html" class="card">
     <div class="card-num">14</div>
     <div class="card-body">
-      <div class="card-title">14-slad</div>
-      <div class="card-desc">Ślad lotu — trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy wysokości i log przeliczonych punktów ze stanem bramki jakości. Wejście miniaturą ze szczegółów lotu (16); wszystko liczy się lokalnie — ekran nie pobiera niczego z sieci</div>
-      <div class="card-tags"><span class="tag">mapa</span><span class="tag">profil</span><span class="tag">po locie</span></div>
+      <div class="card-title">14-slad (ślad sesji)</div>
+      <div class="card-desc">Ślad CAŁEGO biegu silnika — kołowanie, wszystkie starty i lądowania, zrzuty; trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy z przerwą na ziemi i log przeliczonych punktów ze stanem bramki jakości. Wejście miniaturą z ekranu sesji (10); wszystko liczy się lokalnie — ekran nie pobiera niczego z sieci</div>
+      <div class="card-tags"><span class="tag">mapa</span><span class="tag">profil</span><span class="tag">cała sesja</span></div>
     </div>
   </a>
   <a href="15-reczny-lot.html" class="card">

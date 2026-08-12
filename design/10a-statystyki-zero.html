@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10A Rozliczenie samolotu · bez lotów</title>
+<title>UZ Aero — 10A Sesja bez lotu</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
     font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
       linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
     background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
@@ -34,8 +34,8 @@
   .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
   .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
   .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
-  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 4px var(--amber-muted); animation:pulse 1800ms ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px var(--green-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--green-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
   .phone {
     width:393px; height:852px; border-radius:54px; background:var(--bg);
     border:10px solid #0D0E12;
@@ -52,7 +52,7 @@
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
   .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
   .nav-strip a:hover { color:var(--green); }
-  .nav-strip a.active { color:var(--amber); }
+  .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
   /* App internals */
@@ -70,6 +70,7 @@
     text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
   }
   .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
+  /* Okno korekty po ZDANIU samolotu (jedno na sesję) — 24 h samodzielnie, potem administrator */
   .correction-window {
     display:flex; align-items:flex-start; gap:9px;
     background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
@@ -85,66 +86,16 @@
   }
   .badge {
     font-family:var(--font-mono); font-size:10px; letter-spacing:1px;
-    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
     padding:4px 10px; border-radius:999px;
   }
+  .badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
 
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
-  /* Karty z `overflow:hidden` zapadają się w kolumnie flex zamiast wyjechać poza
-     ekran do przewinięcia — ten sam komentarz co w 01 i 10. */
+  /* Karty mają `overflow:hidden` (zaokrąglone rogi), co w kolumnie flex zeruje ich
+     minimalną wysokość — bez tego sekcje zapadają się do samych nagłówków. */
   .scroll > * { flex-shrink:0; }
-
-  /* Bohater ekranu — czas trzymania samolotu */
-  .session-hero {
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:14px; padding:16px 14px;
-    display:flex; flex-direction:column; align-items:center; gap:4px;
-    position:relative; overflow:hidden;
-  }
-  .session-hero::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:2px;
-    background:linear-gradient(90deg, transparent, var(--green), transparent);
-  }
-  .session-label {
-    font-family:var(--font-mono); font-size:8px; letter-spacing:2.5px;
-    text-transform:uppercase; color:var(--text-muted);
-  }
-  .session-time {
-    font-family:var(--font-display); font-size:52px; letter-spacing:3px;
-    color:var(--text-primary); line-height:1;
-  }
-  .session-range {
-    font-family:var(--font-mono); font-size:11px; color:var(--text-secondary);
-    letter-spacing:1px;
-  }
-
-  /* Crew cards */
-  .crew-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .crew-card {
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;
-  }
-  .crew-card.active { border-color:var(--green-border); background:var(--green-muted); }
-  .crew-role {
-    font-family:var(--font-mono); font-size:7px; letter-spacing:2px;
-    text-transform:uppercase; color:var(--text-muted);
-  }
-  .crew-id {
-    font-family:var(--font-display); font-size:16px; letter-spacing:1px;
-    color:var(--text-primary);
-  }
-  .crew-card.active .crew-id { color:var(--green); }
-  .crew-stat { display:flex; flex-direction:column; gap:2px; margin-top:2px; }
-  .crew-stat-row { display:flex; justify-content:space-between; align-items:baseline; }
-  .crew-stat-key { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
-  .crew-stat-val { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
-  .crew-tag {
-    font-family:var(--font-mono); font-size:7px; letter-spacing:1px;
-    text-transform:uppercase; color:var(--amber);
-    background:var(--amber-muted); border:1px solid var(--amber-border);
-    padding:2px 6px; border-radius:4px; align-self:flex-start; margin-top:2px;
-  }
 
   /* Section card */
   .section-card {
@@ -161,47 +112,177 @@
   .section-card-head::before {
     content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong);
   }
+  .section-card-head.amber::before { background:var(--amber); }
+  .section-card-head.blue::before { background:var(--blue); }
+  .section-card-head .spacer { flex:1; }
+  .head-note { font-size:8px; letter-spacing:1px; color:var(--text-muted); text-transform:none; }
 
-  /* Pusta lista lotów — komunikat zamiast wierszy, zero kreatywnej grafiki */
-  .empty-rows {
-    padding:20px 14px 18px; display:flex; flex-direction:column; align-items:center; gap:5px;
-    text-align:center;
+  /* ===== ŚLAD SESJI =====
+     Ślad rysuje CAŁY BIEG SILNIKA (issue #38 pkt 2): kołowanie jaśniejszą linią,
+     loty pełną, a każdy start i każde lądowanie ma na trasie swój znacznik.
+     Do issue #38 mapy tu nie było w ogóle — ślad mieszkał piętro niżej, na
+     szczegółach lotu, i pilot oglądał go dopiero po dwóch wejściach. */
+  .track-thumb {
+    display:block; text-decoration:none; position:relative;
+    background:#0F1216; border-bottom:1px solid var(--border);
   }
-  .empty-msg { font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--text-secondary); }
-  .empty-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .track-thumb > svg { display:block; width:100%; height:168px; }
+  .track-thumb:hover { background:#10151B; }
+  .thumb-cta {
+    position:absolute; right:8px; top:8px;
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--green); background:rgba(13,13,13,0.72);
+    border:1px solid var(--green-border); border-radius:999px; padding:4px 9px;
+  }
+  /* Legenda zastępuje podpisy przy znacznikach — cztery etykiety na jednym placu
+     zlewały się w plamę, a przy dziesięciu wyniesieniach dnia skokowego byłoby ich
+     dwadzieścia. Tłumaczy KSZTAŁT znaku raz, a nie przy każdym wystąpieniu. */
+  .track-legend {
+    position:absolute; left:8px; bottom:8px;
+    display:flex; flex-wrap:wrap; gap:4px 10px; max-width:280px;
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:0.8px;
+    color:var(--text-muted);
+  }
+  .tl-item { display:inline-flex; align-items:center; gap:4px; }
+  .tl-dot { width:6px; height:6px; border-radius:50%; }
+  .tl-dot.green { background:var(--green); }
+  .tl-dot.red { background:var(--red); }
+  .tl-dot.blue { background:transparent; border:1.4px solid var(--blue); }
+  .tl-dash { width:10px; height:0; border-top:1.4px dashed var(--text-muted); }
 
-  /* Fuel grid */
-  .fuel-grid-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
-  .fuel-cell {
-    background:var(--surface); padding:10px 12px;
-    display:flex; flex-direction:column; gap:3px;
+  /* ===== OŚ SESJI =====
+     Zamiast tabeli lotów (issue #38 pkt 7 i 8): uruchomienie → starty i lądowania
+     → wyłączenie, w jednej kolumnie czasu. Tabela była siatką pięciu kolumn, z których
+     dwie powtarzały to samo (czas lotu obok pary godzin), a jedna świeciła „AUTO"
+     przy każdym wierszu. Oś czasu mówi to samo krócej i ma miejsce na zrzuty. */
+  .axis { padding:4px 0 0; }
+  .axis-row {
+    display:grid; grid-template-columns:52px 14px 1fr auto;
+    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:38px;
   }
-  .fuel-cell-label {
-    font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px;
-    text-transform:uppercase; color:var(--text-muted);
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-time.dim { color:var(--text-secondary); }
+  /* Pion osi rysuje sam wiersz: kropka + kreska ciągnąca się do sąsiada. Osobny
+     element linii rozjeżdżałby się przy wierszach o różnej wysokości. */
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before {
+    content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong);
   }
-  .fuel-cell-val {
-    font-family:var(--font-display); font-size:24px; letter-spacing:1px;
-    color:var(--amber); line-height:1;
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row:last-child .axis-mark::before { bottom:50%; }
+  .axis-dot {
+    position:relative; align-self:center; width:9px; height:9px; border-radius:50%;
+    background:var(--border-strong); border:2px solid var(--surface);
+    box-shadow:0 0 0 2px var(--surface);
   }
-  .fuel-cell-val.zero { color:var(--text-muted); }
-  .fuel-cell-unit {
-    font-family:var(--font-mono); font-size:9px; color:var(--text-secondary);
+  .axis-dot.green { background:var(--green); }
+  .axis-dot.red { background:var(--red); }
+  .axis-dot.blue { background:var(--blue); }
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:none; }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
+  .axis-name.muted { color:var(--text-secondary); }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-right { display:flex; align-items:center; gap:6px; }
+  .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
+  /* Plakietka WYŁĄCZNIE dla wpisu ręcznego (issue #38 pkt 10). Stan domyślny —
+     zdarzenie z detekcji — nie rysuje nic; „AUTO" przy każdym wierszu uczyło oko
+     ignorować kolumnę, dokładnie jak plakietka „zsynchronizowano" przed issue #12. */
+  .axis-manual {
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:4px; padding:2px 5px; white-space:nowrap;
   }
-  .fuel-avg-row {
-    padding:10px 12px; border-top:1px solid var(--border);
+  .edit-btn {
+    background:none; border:1px solid var(--border-strong); border-radius:8px;
+    color:var(--text-secondary); cursor:pointer; padding:0; text-decoration:none;
+    min-width:34px; min-height:34px; justify-content:center;
+    display:inline-flex; align-items:center;
+  }
+  .edit-btn:hover { color:var(--text-primary); }
+  /* Stopka osi — JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
+     Wcześniej stał w bohaterze ekranu, w obu kartach załogi, w podpisie średniego
+     zużycia i w wierszu Δ motogodzin: pięć razy ta sama liczba. */
+  .axis-foot {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 12px; border-top:1px solid var(--border); background:var(--surface-raised);
+  }
+  .axis-foot-item { display:flex; flex-direction:column; gap:2px; }
+  .axis-foot-val { font-family:var(--font-display); font-size:20px; letter-spacing:1.5px; line-height:1; color:var(--text-primary); }
+  .axis-foot-val.green { color:var(--green); }
+  .axis-foot-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
+
+  /* ===== RACHUNEK (paliwo i motogodziny — JEDNA forma) =====
+     Issue #38 pkt 5: to są te same pytania („ile ubyło i czy tyle powinno"), więc
+     dostają ten sam układ — przesłanki, kreska, wynik, werdykt. Paliwo miało wcześniej
+     siatkę 2×2 wielkich kafli, motogodziny trzy wiersze tekstu; nic tego nie
+     uzasadniało poza kolejnością powstawania. */
+  .calc-row {
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    padding:8px 12px;
+  }
+  .calc-key { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.5px; color:var(--text-secondary); }
+  .calc-key .op { color:var(--text-muted); display:inline-block; width:10px; }
+  .calc-val { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); }
+  .calc-total {
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    padding:9px 12px; border-top:1px solid var(--border-strong); background:rgba(255,255,255,0.015);
+  }
+  .calc-total-key { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .calc-total-val { font-family:var(--font-display); font-size:26px; letter-spacing:1.5px; line-height:1; }
+  .calc-total-val.amber { color:var(--amber); }
+  .calc-total-val.green { color:var(--green); }
+  /* Werdykt: liczba pilota kontra to, czego model się spodziewał po TEJ sesji.
+     Pasmo pochodzi z rozrzutu obserwacji, nie z przedziału ufności — patrz
+     `packages/domain/src/consumption/expectation.ts`. */
+  .verdict {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:9px 12px; border-top:1px solid var(--border);
+  }
+  .verdict-band { display:flex; flex-direction:column; gap:2px; }
+  .verdict-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .verdict-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .verdict-tag {
+    font-family:var(--font-mono); font-size:9px; letter-spacing:1.2px;
+    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
+    border-radius:999px; padding:4px 10px; white-space:nowrap;
+  }
+  .verdict-tag.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  /* Skąd wzięło się pasmo — razem ze stanem świeżości (§4.8). Norma jest JEDYNĄ
+     daną z serwera na tym ekranie; reszta liczb to projekcja lokalnego strumienia. */
+  .calc-note {
+    font-family:var(--font-mono); font-size:8px; letter-spacing:0.4px; line-height:1.5;
+    color:var(--text-muted); padding:0 12px 10px;
+  }
+  .calc-note.cache { color:var(--amber); }
+
+  /* Miejsce werdyktu, gdy porównywać nie ma z czym: pusta ramka byłaby cichą kreską,
+     a zero udające normę — kłamstwem. Mówimy wprost, DLACZEGO nie orzekamy (§6 pkt 3). */
+  .verdict-na {
+    padding:9px 12px; border-top:1px solid var(--border);
+    font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; line-height:1.5;
+    color:var(--text-muted);
+  }
+
+  /* Kafelek zamiast śladu — ten sam wzorzec, co „bez zapisu GPS": powód zamiast pustki. */
+  .no-track {
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    padding:26px 18px; background:#0F1216; border-bottom:1px solid var(--border); text-align:center;
+  }
+  .no-track-title { font-family:var(--font-display); font-size:17px; letter-spacing:2px; color:var(--text-secondary); }
+  .no-track-text { font-family:var(--font-mono); font-size:8.5px; line-height:1.6; color:var(--text-muted); max-width:250px; }
+
+  /* ===== WIERSZE KLUCZ → WARTOŚĆ ===== */
+  .info-row {
+    padding:9px 12px; border-top:1px solid var(--border);
     display:flex; align-items:center; justify-content:space-between; gap:10px;
   }
-  .fuel-avg-label {
-    font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px;
-    text-transform:uppercase; color:var(--text-muted);
-  }
-  .fuel-avg-val {
-    font-family:var(--font-display); font-size:20px; letter-spacing:2px;
-    color:var(--amber); text-align:right;
-  }
-  .fuel-avg-val.na { color:var(--text-muted); }
-  .fuel-avg-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); }
+  .info-row:first-child { border-top:none; }
+  .info-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .info-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); text-align:right; }
+  .info-val.blue { color:var(--blue); }
+  .info-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; }
 
   /* Buttons */
   .btn-row { display:flex; flex-direction:column; gap:8px; }
@@ -226,26 +307,26 @@
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
   .vp-item:hover { border-color:var(--green-border); }
-  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
   .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
   .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
-  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-top:3px; white-space:nowrap; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
 </style>
 </head>
 <body>
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 10A</span>
-  <span class="slug">rozliczenie samolotu · bez lotów</span>
-  <span class="canvas-meta"><span class="pulse"></span>Wariant 10</span>
+  <span class="slug">sesja bez lotu · maszyna zajęta</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ekran 10A</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Rozliczenie samolotu bez lotów">
+<main class="phone">
   <div class="status-bar">
-    <span>11:32</span>
+    <span>10:31</span>
     <span class="status-right">
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
       <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
@@ -254,167 +335,164 @@
   </div>
 
   <div class="screen">
-    <!-- App Header — chip SYNC usunięty (online nie rysuje nic, issue #12) -->
     <div class="app-header">
       <a href="01-moj-dzien.html" class="back-btn" title="Wróć do Mój dzień">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Dzień
       </a>
       <div class="app-header-center">
-        <span class="screen-title">ROZLICZENIE</span>
-        <span class="header-subtitle">SP-ANK · 09:10 → 10:25 UTC</span>
+        <span class="screen-title">SESJA</span>
+        <span class="header-subtitle">SP-ANK · 06 SIE · SKOKI</span>
       </div>
       <div class="app-header-right">
-        <span class="badge">0 lotów</span>
+        <!-- Plakietka amber, bo „bez lotu" jest odchyleniem od normalnego dnia, a nie
+             zerem do przemilczenia. Sesja jest pełnoprawna: maszyna była zajęta i nikt
+             inny nie mógł jej wziąć. -->
+        <span class="badge amber">bez lotu</span>
       </div>
     </div>
 
-    <!-- Scroll content -->
     <div class="scroll">
 
-      <!-- Okno korekty (24 h) — bez lotu do poprawy zostają tylko odczyty -->
       <div class="correction-window">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="cw-text">Dane możesz poprawiać jeszcze przez <b>24 h</b> — do 04 SIE 10:25 UTC. Później korektę nanosi administrator. Bez lotu do poprawy zostają wyłącznie odczyty liczników — „Edytuj dane" wraca do zdania samolotu (09C).</span>
+        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> — do 07 SIE 10:25 UTC. Później korektę nanosi administrator.</span>
       </div>
 
-      <!-- Bohater ekranu: CZAS TRZYMANIA, nie czas służby.
-           Sesja bez lotu ma czas blokowy zero, więc gdyby wielką cyfrą stał blok,
-           ekran krzyczałby „0:00". Prawdziwa informacja brzmi: maszyna była zajęta
-           3,5 godziny i nikt inny nie mógł jej wziąć. Czas służby pilota mieszka
-           w „Mój dzień" — ten postój jest tylko jego fragmentem. -->
-      <div class="session-hero">
-        <div class="session-label">Samolot trzymany</div>
-        <div class="session-time">01:15</div>
-        <div class="session-range">przejęty 09:10 → zdany 10:25 UTC · bez lotu</div>
-      </div>
-
-      <!-- Crew cards — załoga z preflightu, uczciwe zera -->
-      <div class="crew-grid">
-        <div class="crew-card active">
-          <div class="crew-role">PIC · zalogowany (Ty)</div>
-          <div class="crew-id">TMK</div>
-          <div class="crew-stat">
-            <div class="crew-stat-row">
-              <span class="crew-stat-key">Block time</span>
-              <span class="crew-stat-val">00:00</span>
-            </div>
-            <div class="crew-stat-row">
-              <span class="crew-stat-key">St / Ld</span>
-              <span class="crew-stat-val">0 / 0</span>
-            </div>
-          </div>
-          <div class="crew-tag">Sesja bez lotu</div>
-        </div>
-        <div class="crew-card">
-          <div class="crew-role">Dual · drugi pilot</div>
-          <div class="crew-id">AKO</div>
-          <div class="crew-stat">
-            <div class="crew-stat-row">
-              <span class="crew-stat-key">Block time</span>
-              <span class="crew-stat-val">00:00</span>
-            </div>
-            <div class="crew-stat-row">
-              <span class="crew-stat-key">St / Ld</span>
-              <span class="crew-stat-val">0 / 0</span>
-            </div>
-          </div>
-          <div class="crew-tag">Sesja bez lotu</div>
-        </div>
-      </div>
-
-      <!-- Flight list — brak wierszy = komunikat wprost -->
+      <!-- ══ PRZEBIEG SESJI — DWA PUNKTY ═════════════════════════════════════
+           Silnik nie ruszył, więc oś ma dokładnie tyle, ile się wydarzyło:
+           przejęcie i zdanie. Rysowanie pustej ramki mapy albo osi z myślnikami
+           udawałoby, że czegoś brakuje — a tu niczego nie brakuje. -->
       <div class="section-card">
-        <div class="section-card-head">Lista lotów · czasy UTC</div>
-        <div class="empty-rows">
-          <span class="empty-msg">Żaden lot nie został zapisany</span>
-          <span class="empty-sub">0 startów · 0 lądowań · silnik nie był uruchamiany</span>
+        <div class="section-card-head">
+          Przebieg sesji
+          <span class="spacer"></span>
+          <span class="head-note">czasy UTC</span>
+        </div>
+
+        <div class="no-track">
+          <span class="no-track-title">SILNIK NIE PRACOWAŁ</span>
+          <span class="no-track-text">Nie ma czego rysować: maszyna nie ruszyła z miejsca. Powód zdania podałeś przy oddaniu samolotu — stoi niżej.</span>
+        </div>
+
+        <div class="axis">
+          <div class="axis-row">
+            <span class="axis-time dim">09:10</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 240 L · 2 815:12</span></span>
+            <span class="axis-right"></span>
+          </div>
+          <div class="axis-row">
+            <span class="axis-time dim">10:25</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Zdanie</span><span class="axis-sub">odczyt 240 L · 2 815:12</span></span>
+            <span class="axis-right"></span>
+          </div>
+        </div>
+
+        <!-- Zamiast bloku i czasu w powietrzu (oba zerowe) wielką liczbą stoi TRZYMANIE
+             maszyny: to jedyna wielkość, która w tej sesji naprawdę urosła. -->
+        <div class="axis-foot">
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">01:15</span>
+            <span class="axis-foot-key">Trzymany</span>
+          </div>
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">00:00</span>
+            <span class="axis-foot-key">Blok</span>
+          </div>
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">0</span>
+            <span class="axis-foot-key">Starty</span>
+          </div>
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">EPZG</span>
+            <span class="axis-foot-key">Lotnisko</span>
+          </div>
         </div>
       </div>
 
-      <!-- Fuel section — bilans zerowy, końcowe = przekazane -->
+      <!-- ══ PALIWO ══════════════════════════════════════════════════════════ -->
       <div class="section-card">
-        <div class="section-card-head" style="color:var(--amber);">Paliwo</div>
-        <div class="fuel-grid-2x2">
-          <div class="fuel-cell">
-            <div class="fuel-cell-label">Startowe</div>
-            <div class="fuel-cell-val">240</div>
-            <div class="fuel-cell-unit">litrów</div>
-          </div>
-          <div class="fuel-cell">
-            <div class="fuel-cell-label">Dolane</div>
-            <div class="fuel-cell-val zero">0</div>
-            <div class="fuel-cell-unit">litrów</div>
-          </div>
-          <div class="fuel-cell">
-            <div class="fuel-cell-label">Końcowe</div>
-            <div class="fuel-cell-val">240</div>
-            <div class="fuel-cell-unit">litrów</div>
-          </div>
-          <div class="fuel-cell">
-            <div class="fuel-cell-label">Zużyte</div>
-            <div class="fuel-cell-val zero">0</div>
-            <div class="fuel-cell-unit">litrów</div>
-          </div>
+        <div class="section-card-head amber">Paliwo</div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op"></span>Odczyt przy przejęciu</span>
+          <span class="calc-val">240 L</span>
         </div>
-        <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Średnie zużycie (na czas blokowy)</span>
-          <span class="fuel-avg-val na">— —</span>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">+</span>Dolane</span>
+          <span class="calc-val">0 L</span>
         </div>
-        <div class="fuel-avg-row" style="border-top:none;padding-top:0;">
-          <span class="fuel-avg-note">nie liczymy — czas blokowy 0:00 (dzielenie przez zero to nie statystyka)</span>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">−</span>Odczyt przy zdaniu</span>
+          <span class="calc-val">240 L</span>
         </div>
+        <div class="calc-total">
+          <span class="calc-total-key">Zużyte</span>
+          <span class="calc-total-val amber">0 L</span>
+        </div>
+        <div class="verdict-na">Nie porównujemy z normą — silnik nie pracował, a norma opisuje godzinę jego pracy.</div>
       </div>
 
-      <!-- Motogodziny — bez zmian, ale nadal ogniwo łańcucha -->
+      <!-- ══ MOTOGODZINY ═════════════════════════════════════════════════════
+           Odczyty są, mimo że licznik nie drgnął: przekazanie obowiązuje także bez
+           lotu, bo to ogniwo łańcucha MH następnego pilota. -->
       <div class="section-card">
-        <div class="section-card-head">Motogodziny · licznik w formacie hh:mm · łańcuch samolotu</div>
-        <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Przy przejęciu</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">2 815:12</span>
+        <div class="section-card-head">Motogodziny</div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op"></span>Licznik przy przejęciu</span>
+          <span class="calc-val">2 815:12</span>
         </div>
-        <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Przy zdaniu (przekazanie)</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">2 815:12</span>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">−</span>Licznik przy zdaniu</span>
+          <span class="calc-val">2 815:12</span>
         </div>
-        <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Δ sesji (= czas blokowy)</span>
-          <span class="fuel-avg-val" style="color:var(--text-secondary);">+0:00</span>
+        <div class="calc-total">
+          <span class="calc-total-key">Przyrost</span>
+          <span class="calc-total-val" style="color:var(--text-secondary);">+0:00</span>
         </div>
+        <div class="verdict-na">Nie porównujemy z normą — silnik nie pracował. Zgodność obu odczytów jest tu informacją, a nie brakiem danych.</div>
       </div>
 
-      <!-- Zrzuty — zero, ale z kontekstem operacji (rozliczenie musi widzieć odwołany dzień) -->
+      <!-- ══ ZRZUTY — ZERO Z KONTEKSTEM ══════════════════════════════════════
+           Sekcja zostaje, bo dzień BYŁ zadeklarowany jako skokowy: zero wyniesień
+           to odpowiedź na pytanie klienta, a nie cisza. -->
       <div class="section-card">
-        <div class="section-card-head" style="color:var(--blue);">Zrzuty · rozliczenie</div>
-        <div class="fuel-grid-2x2">
-          <div class="fuel-cell">
-            <div class="fuel-cell-label">Zrzutów</div>
-            <div class="fuel-cell-val zero">0</div>
-            <div class="fuel-cell-unit">wyniesień</div>
-          </div>
-          <div class="fuel-cell">
-            <div class="fuel-cell-label">Skoczków</div>
-            <div class="fuel-cell-val zero">0</div>
-            <div class="fuel-cell-unit">łącznie</div>
-          </div>
+        <div class="section-card-head blue">Zrzuty</div>
+        <div class="info-row">
+          <span class="info-key">Wyniesienia</span>
+          <span class="info-val">0 · brak skoczków</span>
         </div>
-        <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Operacja</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">SKOKI · 0 WYNIESIEŃ</span>
+        <div class="info-row">
+          <span class="info-key">Powód zdania</span>
+          <span>
+            <span class="info-val">Podstawa 300 ft — poniżej minimów</span>
+            <div class="info-note">z ekranu zdania bez lotu (09C)</div>
+          </span>
         </div>
-        <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Typy skoków</span>
-          <span class="fuel-avg-val na">—</span>
-        </div>
-        <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Klient</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">SKY CAMP · zlec. 2026/114</span>
+        <div class="info-row">
+          <span class="info-key">Klient</span>
+          <span class="info-val">SKY CAMP · zlec. 2026/114</span>
         </div>
       </div>
 
-      <!-- Action buttons — ołówków brak (nie ma wierszy), edycja wraca do odczytów w 09A -->
+      <!-- ══ ZAŁOGA ══════════════════════════════════════════════════════════ -->
+      <div class="section-card">
+        <div class="section-card-head">Załoga</div>
+        <div class="info-row">
+          <span class="info-key">PIC</span>
+          <span class="info-val">TMK · Tomasz Małkiewicz (Ty)</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Dual</span>
+          <span class="info-val">AKO · Anna Kowalska</span>
+        </div>
+      </div>
+
       <div class="btn-row">
-        <a href="09c-zdaj-bez-lotu.html" class="btn-secondary" title="Bez lotu jedyne dane do poprawy to odczyty liczników i powód">
+        <!-- Bez lotów jedyne dane do poprawy to odczyty liczników i powód zdania,
+             a te wpisuje się na 09C — nie ma po co wysyłać pilota do listy ręcznej. -->
+        <a href="09c-zdaj-bez-lotu.html" class="btn-secondary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
         </a>
@@ -433,22 +511,22 @@
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu — z lotami</span>
-      <span class="vp-when">Standard: tabela lotów z ołówkami korekty, bilans paliwa i MH, rozliczenie zrzutów (SP-AXA, 06 SIE — 2 loty).</span>
+      <span class="vp-name">Sesja — z lotami</span>
+      <span class="vp-when">Standard: ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania, rachunki paliwa i motogodzin na tle normy (SP-AXA, 06 SIE — 2 loty).</span>
     </span>
   </a>
   <a class="vp-item active" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu — bez lotów</span>
-      <span class="vp-when">Samolot zdany bez ani jednego lotu (pogoda, usterka): pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji. Odczyty liczników są, bo przekazanie obowiązuje też bez lotu. Wielką cyfrą stoi czas TRZYMANIA maszyny, nie czas blokowy — ten wynosi zero i nie ma o czym krzyczeć.</span>
+      <span class="vp-name">Sesja — bez lotu</span>
+      <span class="vp-when">Samolot zdany bez ani jednego lotu (pogoda, usterka): oś ma dwa punkty, w miejscu śladu stoi powód, a werdykty paliwa i MH MILCZĄ — norma opisuje godzinę pracy silnika, więc przy zerze nie ma z czym porównywać. Odczyty liczników są, bo przekazanie obowiązuje też bez lotu. Wielką liczbą stoi czas TRZYMANIA maszyny: to jedyna wielkość, która urosła.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu — po oknie (podgląd)</span>
+      <span class="vp-name">Sesja — po oknie (podgląd)</span>
       <span class="vp-when">Minęły 24 h od zdania: te same liczby bez ani jednego elementu zapisu (bez ołówków, bez „Edytuj dane"). Cel karty z grupy „Zamknięte" na 12.</span>
     </span>
   </a>
@@ -459,8 +537,8 @@
   <span>·</span>
   <a href="09c-zdaj-bez-lotu.html">← 09C Bez lotu</a>
   <span>·</span>
-  <a href="10-statystyki.html">10 Rozliczenie</a>
-  <a href="10a-statystyki-zero.html" class="active">10A Bez lotów</a>
+  <a href="10-statystyki.html">10 Sesja</a>
+  <a href="10a-statystyki-zero.html" class="active">10A Bez lotu</a>
   <a href="10b-rozliczenie-zamkniete.html">10B Podgląd</a>
   <span>·</span>
   <a href="12-historia.html">12 Poprzednie dni</a>

@@ -1,28 +1,32 @@
 /**
- * UZ Aero — 14 ŚLAD LOTU (mockupy `design/14-slad.html`, `14a`, `14b`).
+ * UZ Aero — 14 ŚLAD SESJI (mockupy `design/14-slad.html`, `14b`).
  *
- * Wejście MINIATURĄ ze szczegółów lotu (16) — od issue #25 tabela lotów na 10 prowadzi
- * do lotu, a nie prosto na mapę. Ekran pokazuje trzy rzeczy z mockupu w tej samej
+ * Wejście MINIATURĄ z ekranu sesji (10). Ekran pokazuje trzy rzeczy z mockupu w tej samej
  * kolejności — trasę, profil pionowy i log przeliczonych punktów.
+ *
+ * ══ CAŁY BIEG SILNIKA, NIE POJEDYNCZY LOT (issue #38) ══
+ * Zapis GPS powstaje w jednym ciągu, od uruchomienia do zatrzymania silnika. Do issue #38
+ * ekran wycinał z niego okno JEDNEGO lotu — gubiąc kołowanie i przerwy między
+ * wyniesieniami, czyli czas, który wchodzi wprost do normy zużycia. Dziś linia jest jedna,
+ * a starty, lądowania i zrzuty są na niej ZNACZNIKAMI. Profil pionowy pokazuje przez to
+ * kolejne wyniesienia obok siebie, z przerwą na ziemi między nimi.
  *
  * **Wszystko liczy się LOKALNIE**, z zapisu na telefonie i z rejestru na telefonie
  * (`FlightTrackQueries`) i ekran **nie potrzebuje sieci w ogóle** — mapa nie ma kafelków
  * (decyzja 2026-08-04), tylko siatkę współrzędnych z podziałką i lotniska z katalogu
  * wbudowanego w aplikację.
  *
- * Wariant 14B (brak śladu) jest po issue #25 stanem ZABEZPIECZAJĄCYM, nie zwykłym celem
- * drogi: powód mówi już kafelek na 16, a tamten kafelek nigdzie nie prowadzi. Ekran
- * zostaje, bo zapis może zniknąć (retencja 14 dni) między jednym a drugim otwarciem —
- * i wtedy musi podać POWÓD zamiast pustej mapy. Powody są dwa i znaczą co innego: lot
- * wpisany ręcznie nigdy śladu nie miał, a lot sprzed ponad 14 dni już go nie ma. W obu
- * przypadkach czasy są prawdziwe i zostają na ekranie — brakuje wyłącznie geometrii.
+ * Wariant 14B (brak śladu) podaje POWÓD zamiast pustej mapy. Powody są dwa i znaczą co
+ * innego: sesja wpisana ręcznie nigdy śladu nie miała, a sesja sprzed ponad 14 dni już go
+ * nie ma. W obu przypadkach czasy są prawdziwe i zostają na ekranie — brakuje wyłącznie
+ * geometrii.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import type { FlightTrackView } from '../../application';
-import { dateUtcDayMonth, formatLatLon, timeUtc, duration } from '../format';
+import type { SessionTrackView } from '../../application';
+import { dateUtcDayMonth, duration, formatLatLon, plural, timeUtc } from '../format';
 import {
   AppText,
   Banner,
@@ -48,7 +52,6 @@ const PROFILE_HEIGHT = 172;
 
 export interface TrackScreenParams {
   sessionUuid: string;
-  flightIndex: number;
 }
 
 export function TrackScreen({
@@ -65,11 +68,11 @@ export function TrackScreen({
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
 
-  const [view, setView] = useState<FlightTrackView | null>(null);
+  const [view, setView] = useState<SessionTrackView | null>(null);
   const [loaded, setLoaded] = useState(false);
   const skeleton = useSkeleton(!loaded);
 
-  const { sessionUuid, flightIndex } = route.params;
+  const { sessionUuid } = route.params;
 
   useEffect(() => {
     if (trackQueries == null) {
@@ -77,7 +80,7 @@ export function TrackScreen({
       return;
     }
     let alive = true;
-    void trackQueries.byFlight(sessionUuid, flightIndex).then((result) => {
+    void trackQueries.bySession(sessionUuid).then((result) => {
       if (!alive) return;
       setView(result);
       setLoaded(true);
@@ -85,35 +88,64 @@ export function TrackScreen({
     return () => {
       alive = false;
     };
-  }, [trackQueries, sessionUuid, flightIndex]);
+  }, [trackQueries, sessionUuid]);
 
   // Mapa i profil zajmują pełną szerokość karty (padding ekranu 14 + karty 12).
   const contentWidth = Math.max(200, width - 52);
 
+  /**
+   * Znaczniki: każdy start, każde lądowanie i każdy zrzut (issue #38 pkt 2).
+   *
+   * Podpis niesie numer, nie samą godzinę — przy trzech wyniesieniach nad tym samym
+   * placem „T/O 08:20" i „T/O 09:12" leżą kilka pikseli od siebie i bez numeru nie da
+   * się ich przypisać do wierszy osi czasu na ekranie 10.
+   *
+   * Znacznik bez pozycji (zapis nie sięga tej chwili) po prostu nie powstaje — punkt
+   * postawiony „gdzieś obok" kłamałby na mapie.
+   */
   const markers = useMemo<TrackMapMarker[]>(() => {
-    if (view == null || view.track.line.length === 0) return [];
-    const first = view.track.line[0]!;
-    const last = view.track.line[view.track.line.length - 1]!;
-    return [
-      { position: first, color: theme.colors.green, label: `T/O ${timeUtc(first.time)}`, ring: true },
-      { position: last, color: theme.colors.red, label: `LDG ${timeUtc(last.time)}` },
-    ];
+    if (view == null) return [];
+    return view.markers
+      .filter((marker) => marker.position != null)
+      .map((marker) => {
+        if (marker.kind === 'takeoff') {
+          return {
+            position: marker.position!,
+            color: theme.colors.green,
+            label: `T/O ${marker.index} · ${timeUtc(marker.at)}`,
+            ring: true,
+          };
+        }
+        if (marker.kind === 'landing') {
+          return {
+            position: marker.position!,
+            color: theme.colors.red,
+            label: `LDG ${marker.index} · ${timeUtc(marker.at)}`,
+          };
+        }
+        return {
+          position: marker.position!,
+          color: theme.colors.blue,
+          label: `ZRZUT ${marker.index}`,
+          ring: true,
+        };
+      });
   }, [view, theme]);
 
   const header = (
     <ScreenHeader
-      title="ŚLAD LOTU"
-      // Podtytuł 1:1 z mockupu 14: numer lotu · dzień i miesiąc · rejestracja.
-      // Bez „· UTC" (wzorzec nagłówków po issue #23) i bez godziny — T/O i LDG
-      // stoją na mapie przy znacznikach, a datę niesie kontekst dnia.
+      title="ŚLAD SESJI"
+      // Podtytuł 1:1 z mockupu 14: rejestracja · dzień i miesiąc · liczba lotów.
+      // Bez „· UTC" (wzorzec nagłówków po issue #23) i bez godzin — te stoją przy
+      // znacznikach na mapie i w nagłówku karty trasy.
       subtitle={
         view != null
-          ? `Lot ${view.flight.index} · ${dateUtcDayMonth(view.flight.takeoffAt)} · ${view.aircraftId ?? '—'}`
+          ? `${view.aircraftId ?? '—'} · ${dateUtcDayMonth(view.fromAt)} · ${flightsLabel(view.flights.length)}`
           : undefined
       }
       size="md"
       onBack={navigation.goBack}
-      backLabel="Lot"
+      backLabel="Sesja"
       right={
         <SyncChip
           status={synced ? 'synced' : 'offline'}
@@ -144,9 +176,10 @@ export function TrackScreen({
     return (
       <Screen scroll padded={false} header={header}>
         <View style={styles.content}>
-          <Card title="Nie ma takiego lotu">
+          <Card title="Nie ma takiej sesji">
             <AppText variant="body" tone="muted">
-              Ta sesja nie ma lotu o tym numerze. Wróć do rozliczenia i wybierz lot z tabeli.
+              Tej sesji nie ma w rejestrze na tym telefonie. Wróć do „Mój dzień" i otwórz
+              sesję z listy.
             </AppText>
           </Card>
         </View>
@@ -162,7 +195,7 @@ export function TrackScreen({
     );
   }
 
-  const { track, profile, flight } = view;
+  const { track, profile } = view;
 
   return (
     <Screen scroll padded={false} header={header}>
@@ -172,7 +205,8 @@ export function TrackScreen({
           title="Trasa"
           headerRight={
             <AppText variant="micro" tone="muted">
-              {timeUtc(flight.takeoffAt)} → {flight.landingAt != null ? timeUtc(flight.landingAt) : '—'} UTC
+              {/* Zakres = BIEG SILNIKA, nie pojedynczy lot: tyle trwał zapis. */}
+              {timeUtc(view.fromAt)} → {view.toAt != null ? timeUtc(view.toAt) : '—'} UTC
             </AppText>
           }
           flush
@@ -187,7 +221,12 @@ export function TrackScreen({
           <StatGrid
             columns={2}
             cells={[
-              { label: 'Czas lotu', value: duration(flight.durationMs), tone: 'green' },
+              {
+                label: 'W powietrzu',
+                value: duration(view.flightTimeMs),
+                unit: flightsLabel(view.flights.length),
+                tone: 'green',
+              },
               { label: 'Dystans', value: track.distanceNm.toFixed(1), unit: 'NM' },
               {
                 label: 'Max wysokość',
@@ -243,7 +282,7 @@ export function TrackScreen({
               { label: 'Stan', width: 58 },
             ]}
             rows={logRows(view)}
-            emptyText="Brak punktów w tym locie."
+            emptyText="Brak punktów w tej sesji."
           />
         </Card>
 
@@ -263,7 +302,7 @@ export function TrackScreen({
 }
 
 /** Wiersze logu: czas, pozycja, prędkość, wysokość i stan bramki jakości. */
-function logRows(view: FlightTrackView): DataTableRow[] {
+function logRows(view: SessionTrackView): DataTableRow[] {
   return view.log.map((point, index) => ({
     id: `${point.time}-${index}`,
     label: `punkt ${timeUtc(point.time)} UTC`,
@@ -301,37 +340,46 @@ function rejectionCell(rejected: string | null, accuracyM: number | null) {
  * Wariant 14B — nie ma czego rysować. Pokazujemy POWÓD i to, co mimo wszystko wiadomo:
  * czasy lotu są pełnoprawne, brakuje wyłącznie geometrii.
  */
-function MissingTrack({ view }: { view: FlightTrackView }) {
-  const { flight, missing } = view;
-  const manual = missing === 'manual';
+function MissingTrack({ view }: { view: SessionTrackView }) {
+  const manual = view.missing === 'manual';
+  const first = view.flights[0] ?? null;
+  const last = view.flights[view.flights.length - 1] ?? null;
 
   return (
     <View style={styles.content}>
       <Card title={manual ? 'Bez zapisu GPS' : 'Ślad niedostępny'}>
         <AppText variant="body" tone="muted" style={styles.missingText}>
           {manual
-            ? 'Ten lot został wpisany ręcznie, więc nie ma z czego narysować trasy. Czasy są prawdziwe — pochodzą z Twojego wpisu, nie z odbiornika.'
-            : 'Dla tego lotu nie ma zapisu GPS. Ślad to materiał roboczy z retencją 14 dni — starsze loty mają komplet czasów i statystyk, ale trasy już nie.'}
+            ? 'Ta sesja została wpisana ręcznie, więc nie ma z czego narysować trasy. Czasy są prawdziwe — pochodzą z Twojego wpisu, nie z odbiornika.'
+            : 'Dla tej sesji nie ma zapisu GPS. Ślad to materiał roboczy z retencją 14 dni — starsze sesje mają komplet czasów i statystyk, ale trasy już nie.'}
         </AppText>
       </Card>
 
-      <Card title="Co wiadomo o tym locie" flush>
+      <Card title="Co wiadomo o tej sesji" flush>
         <StatGrid
           columns={2}
           cells={[
-            { label: 'Takeoff', value: timeUtc(flight.takeoffAt) },
-            { label: 'Landing', value: flight.landingAt != null ? timeUtc(flight.landingAt) : '— —' },
-            { label: 'Czas lotu', value: duration(flight.durationMs), tone: 'green' },
+            { label: 'Uruchomienie', value: timeUtc(view.fromAt) },
+            { label: 'Wyłączenie', value: view.toAt != null ? timeUtc(view.toAt) : '— —' },
+            { label: 'W powietrzu', value: duration(view.flightTimeMs), tone: 'green' },
             {
-              label: 'Źródło',
-              value: manual ? 'RĘCZNIE' : 'AUTO',
-              tone: manual ? 'amber' : 'green',
+              label: 'Loty',
+              value: String(view.flights.length),
+              unit:
+                first != null && last != null
+                  ? `${timeUtc(first.takeoffAt)} → ${last.landingAt != null ? timeUtc(last.landingAt) : '—'}`
+                  : undefined,
             },
           ]}
         />
       </Card>
     </View>
   );
+}
+
+/** „2 loty" — trzy formy polskiej liczby mnogiej; ten sam napis, co plakietka na 10. */
+function flightsLabel(count: number): string {
+  return `${count} ${plural(count, 'lot', 'loty', 'lotów')}`;
 }
 
 const styles = StyleSheet.create({

@@ -52,15 +52,16 @@ Zdanie samolotu (model 2026-08-10 — sesja = jeden bieg silnika; ekrany 09 i 09
                             z 01 także [15] ręczny wpis CAŁEGO lotu po fakcie
 
 Odnogi pod 01 (nie etapy dnia):
-  10-statystyki  detale i korekty JEDNEJ sesji — wejście OŁÓWKIEM wiersza logu na 01
-                 albo kartą dnia w historii (10a — bez lotów); niczego się tu nie
-                 zatwierdza: zdanie samolotu już potwierdziło dane
-    → 16-lot     szczegóły JEDNEGO lotu — wejście NUMEREM lotu w tabeli na 10: czasy,
-                 miejsce, zrzuty tego wyniesienia i uproszczona miniatura śladu
-                 (16a — lot bez zapisu GPS: powód zamiast miniatury, bez linku dalej)
-      → 14-slad  pełny ślad pod miniaturą: trasa, profil pionowy, log punktów
-                 (14b — stan zabezpieczający, gdy zapis zniknął). Issue #25: z LIST
-                 wejścia w ślad nie ma — ślad opisuje LOT, nie sesję
+  10-statystyki  SESJA: ślad całego biegu silnika ze znacznikami startów i lądowań,
+                 oś czasu (przejęcie → uruchomienie → starty, zrzuty, lądowania →
+                 wyłączenie → zdanie), rachunki paliwa i motogodzin na tle normy
+                 fazowej. Wejście OŁÓWKIEM wiersza logu na 01 albo kartą sesji
+                 w historii (10a — bez lotu, 10b — po oknie korekty, tylko odczyt);
+                 niczego się tu nie zatwierdza: zdanie samolotu już potwierdziło dane
+    → 14-slad    pełny ślad pod miniaturą: trasa, profil pionowy z przerwą na ziemi,
+                 log punktów (14b — stan zabezpieczający, gdy zapis zniknął).
+                 Issue #38: ekran 16 usunięty — zapis GPS powstaje w JEDNYM ciągu,
+                 więc ślad opisuje SESJĘ, a loty są na nim znacznikami
   12-historia    poprzednie dni pilota (sesje spoza dzisiejszej doby), okno korekty 24 h
   13-ustawienia  motyw · PIN · konto · synchronizacja (kolejka, uwagi serwera,
                  awaryjny sync — dawny ekran 11) · diagnostyka GPS

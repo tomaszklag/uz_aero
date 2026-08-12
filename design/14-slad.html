@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 14 Ślad lotu</title>
+<title>UZ Aero — 14 Ślad sesji</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -200,8 +200,8 @@
 <body>
 
 <div class="canvas-label">
-  <div class="film-strip">14 · ŚLAD LOTU</div>
-  <div class="slug">app / historia / ślad</div>
+  <div class="film-strip">14 · ŚLAD SESJI</div>
+  <div class="slug">app / sesja / ślad</div>
   <div class="canvas-meta"><span class="pulse"></span>UZ AERO</div>
 </div>
 
@@ -217,15 +217,17 @@
   <div class="screen">
 
     <div class="app-header">
-      <!-- Powrót do SZCZEGÓŁÓW LOTU (16), nie do rozliczenia sesji: od issue #25
-           ślad otwiera się miniaturą z 16 i tam wraca. -->
-      <a href="16-lot.html" class="back-btn">
+      <!-- Powrót do SESJI (10). Do issue #38 ślad otwierał się ze szczegółów lotu (16)
+           i opisywał JEDEN lot — ale zapis GPS powstaje w jednym ciągu, od uruchomienia
+           do wyłączenia silnika, więc dzielenie go na loty było krojeniem nagrania na
+           kawałki po to, żeby pilot oglądał je po kolei. Ekran 16 został usunięty. -->
+      <a href="10-statystyki.html" class="back-btn">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5L4 6.5l4 4"/></svg>
-        Lot
+        Sesja
       </a>
       <div class="app-header-center">
-        <div class="screen-title">ŚLAD LOTU</div>
-        <div class="header-subtitle">Lot 3 · 06 SIE · SP-KLM</div>
+        <div class="screen-title">ŚLAD SESJI</div>
+        <div class="header-subtitle">SP-AXA · 06 SIE · 2 loty</div>
       </div>
       <div class="app-header-right">
       </div>
@@ -238,7 +240,8 @@
         <div class="section-card-head">
           Trasa
           <span class="spacer"></span>
-          <span class="head-note">11:28 → 12:15 UTC</span>
+          <!-- Zakres = BIEG SILNIKA, nie pojedynczy lot: tyle trwał zapis. -->
+          <span class="head-note">08:12 → 09:55 UTC</span>
         </div>
         <div class="map-wrap">
           <svg viewBox="0 0 365 300" preserveAspectRatio="xMidYMid slice">
@@ -267,43 +270,73 @@
             </g>
             <text x="163" y="243" class="axis-label" fill="#5A646E" font-size="8">EPZG · Zielona Góra-Babimost</text>
 
-            <!-- ŚLAD LOTU: start z pasa, spirala wznoszenia, zrzut, zejście, lądowanie.
-                 Kolor = zielony (główny akcent), grubość 2.5, zaokrąglone łączenia. -->
+            <!-- KOŁOWANIE — przerywana, szara. Zapis obejmuje CAŁY bieg silnika
+                 (issue #38), więc na trasie widać też drogę z płyty na pas i z powrotem;
+                 bez tego rysunek zaczynałby się w powietrzu. -->
+            <path d="M126 236 L152 218" fill="none" stroke="#5A646E" stroke-width="1.8"
+                  stroke-dasharray="4 4" stroke-linecap="round"/>
+            <path d="M156 214 L142 230 L168 236" fill="none" stroke="#5A646E" stroke-width="1.8"
+                  stroke-dasharray="4 4" stroke-linecap="round"/>
+            <path d="M150 216 L128 232" fill="none" stroke="#5A646E" stroke-width="1.8"
+                  stroke-dasharray="4 4" stroke-linecap="round"/>
+
+            <!-- LOT 1: start z pasa, spirala wznoszenia, zrzut, zejście, lądowanie. -->
             <path d="M152 218
                      C176 206, 196 196, 214 180
                      C236 160, 244 132, 226 112
                      C208 92, 172 92, 152 108
                      C130 126, 132 158, 154 172
                      C178 187, 214 178, 230 156
-                     C246 134, 240 104, 218 90
-                     C194 74, 156 78, 138 98
-                     C120 118, 124 148, 144 163"
+                     C246 134, 240 104, 218 90"
                   fill="none" stroke="var(--green)" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
-            <!-- odcinek zejścia po zrzucie (jaśniejszy — schodzenie) -->
-            <path d="M144 163 C160 176, 150 196, 156 214"
+            <!-- zejście po zrzucie (jaśniejsze — schodzenie) -->
+            <path d="M218 90 C194 74, 156 78, 138 98 C120 118, 124 148, 144 163 C160 176, 150 196, 156 214"
                   fill="none" stroke="var(--green)" stroke-width="2.5"
                   stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
 
-            <!-- punkt zrzutu -->
-            <circle cx="144" cy="163" r="5" fill="none" stroke="var(--blue)" stroke-width="1.8"/>
-            <circle cx="144" cy="163" r="1.8" fill="var(--blue)"/>
-            <text x="153" y="160" class="axis-label" fill="#3498DB" font-size="7.5">ZRZUT 12 800 ft</text>
+            <!-- LOT 2: drugie wyniesienie, inna spirala nad tym samym placem. -->
+            <path d="M150 216
+                     C128 200, 96 186, 82 160
+                     C68 134, 84 106, 112 102
+                     C140 98, 158 122, 148 146
+                     C138 168, 106 174, 88 158"
+                  fill="none" stroke="var(--green)" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+            <path d="M88 158 C74 142, 84 200, 128 232"
+                  fill="none" stroke="var(--green)" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
 
-            <!-- T/O -->
+            <!-- ZRZUTY -->
+            <circle cx="218" cy="90" r="5" fill="none" stroke="var(--blue)" stroke-width="1.8"/>
+            <circle cx="218" cy="90" r="1.8" fill="var(--blue)"/>
+            <text x="227" y="88" class="axis-label" fill="#3498DB" font-size="7.5">ZRZUT 1 · 12 800 ft</text>
+            <circle cx="88" cy="158" r="5" fill="none" stroke="var(--blue)" stroke-width="1.8"/>
+            <circle cx="88" cy="158" r="1.8" fill="var(--blue)"/>
+            <text x="20" y="152" class="axis-label" fill="#3498DB" font-size="7.5">ZRZUT 2 · 12 600 ft</text>
+
+            <!-- STARTY I LĄDOWANIA — wszystkie cztery, bo sesja miała dwa loty
+                 (issue #38 pkt 2). Podpisy z numerem, żeby dało się je przypisać
+                 do wierszy osi czasu na 10. -->
             <circle cx="152" cy="218" r="6" fill="var(--green)"/>
             <circle cx="152" cy="218" r="10" fill="none" stroke="var(--green)" stroke-width="1" opacity="0.45"/>
-            <text x="112" y="234" class="axis-label" fill="#2ECC71" font-size="8">T/O 11:28</text>
+            <text x="160" y="212" class="axis-label" fill="#2ECC71" font-size="8">T/O 1 · 08:20</text>
 
-            <!-- LDG -->
             <circle cx="156" cy="214" r="5.5" fill="var(--red)"/>
-            <text x="163" y="228" class="axis-label" fill="#E74C3C" font-size="8">LDG 12:15</text>
+            <text x="164" y="248" class="axis-label" fill="#E74C3C" font-size="8">LDG 1 · 09:01</text>
+
+            <circle cx="150" cy="216" r="6" fill="var(--green)"/>
+            <text x="36" y="248" class="axis-label" fill="#2ECC71" font-size="8">T/O 2 · 09:12</text>
+
+            <circle cx="128" cy="232" r="5.5" fill="var(--red)"/>
+            <text x="36" y="262" class="axis-label" fill="#E74C3C" font-size="8">LDG 2 · 09:47</text>
           </svg>
 
           <div class="map-legend">
-            <div class="legend-row"><span class="legend-dot" style="background:var(--green);"></span>Wznoszenie i przelot</div>
+            <div class="legend-row"><span class="legend-dot" style="background:var(--green);"></span>Start i wznoszenie</div>
             <div class="legend-row"><span class="legend-dot" style="background:var(--blue);"></span>Zrzut</div>
             <div class="legend-row"><span class="legend-dot" style="background:var(--red);"></span>Lądowanie</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#5A646E;"></span>Kołowanie</div>
           </div>
 
           <div class="map-scale">
@@ -315,10 +348,12 @@
         </div>
 
         <div class="metric-grid">
+          <!-- Sumy CAŁEJ sesji: dwa loty to jeden zapis, więc dystans i czas liczą się
+               przez oba. Rozbicie per lot stoi na osi czasu ekranu 10. -->
           <div class="metric-cell">
-            <span class="metric-val green">47</span>
-            <span class="metric-unit">min</span>
-            <span class="metric-label">Czas lotu</span>
+            <span class="metric-val green">01:16</span>
+            <span class="metric-unit">2 loty</span>
+            <span class="metric-label">W powietrzu</span>
           </div>
           <div class="metric-cell">
             <span class="metric-val">38.4</span>
@@ -364,40 +399,57 @@
             <text x="0" y="85"  class="axis-label">5 000</text>
             <text x="0" y="122" class="axis-label">1 000</text>
 
-            <!-- obszar pod krzywą -->
-            <path d="M40 119
-                     C64 116, 78 104, 96 88
-                     C116 70, 132 46, 158 26
-                     C176 13, 196 9, 214 12
-                     L214 119 Z"
+            <!-- DWA WYNIESIENIA, jeden wykres: profil rysuje się w osi CZASU SESJI,
+                 więc przerwa między lądowaniem a kolejnym startem (kołowanie, załadunek)
+                 jest jego częścią. To ona pokazuje, ile maszyna stała z pracującym
+                 silnikiem — a od issue #38 ta liczba wchodzi wprost do normy zużycia. -->
+
+            <!-- obszar pod krzywą: lot 1 -->
+            <path d="M40 119 C58 114, 70 100, 84 82 C98 62, 110 38, 130 24 L130 119 Z"
                   fill="url(#alt-fill)"/>
-            <path d="M214 12 C230 16, 244 34, 262 62 C280 90, 300 110, 322 119 L214 119 Z"
+            <path d="M130 24 C142 32, 152 54, 164 80 C174 100, 182 112, 192 119 L130 119 Z"
+                  fill="url(#alt-fill)" opacity="0.6"/>
+            <!-- obszar pod krzywą: lot 2 -->
+            <path d="M228 119 C244 114, 254 100, 266 82 C278 62, 288 40, 304 28 L304 119 Z"
+                  fill="url(#alt-fill)"/>
+            <path d="M304 28 C312 38, 318 58, 326 84 C330 100, 333 112, 336 119 L304 119 Z"
                   fill="url(#alt-fill)" opacity="0.6"/>
 
-            <!-- krzywa wysokości: wznoszenie w spirali, poziom przed zrzutem, zejście -->
-            <path d="M40 119
-                     C64 116, 78 104, 96 88
-                     C116 70, 132 46, 158 26
-                     C176 13, 196 9, 214 12"
+            <!-- krzywe wysokości -->
+            <path d="M40 119 C58 114, 70 100, 84 82 C98 62, 110 38, 130 24"
                   fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round"/>
-            <path d="M214 12 C230 16, 244 34, 262 62 C280 90, 300 110, 322 119"
+            <path d="M130 24 C142 32, 152 54, 164 80 C174 100, 182 112, 192 119"
+                  fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+            <path d="M228 119 C244 114, 254 100, 266 82 C278 62, 288 40, 304 28"
+                  fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M304 28 C312 38, 318 58, 326 84 C330 100, 333 112, 336 119"
                   fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
 
-            <!-- znacznik zrzutu -->
-            <line x1="214" y1="6" x2="214" y2="126" stroke="#3498DB" stroke-width="1" stroke-dasharray="3 3"/>
-            <circle cx="214" cy="12" r="3.5" fill="var(--blue)"/>
-            <text x="220" y="24" class="axis-label" fill="#3498DB">zrzut 11:58</text>
+            <!-- PRZERWA NA ZIEMI: silnik pracuje, samolot stoi. Kreska przy samej ziemi,
+                 szara — bo to nie jest lot, ale nie jest też dziurą w zapisie. -->
+            <line x1="192" y1="119" x2="228" y2="119" stroke="#5A646E" stroke-width="1.6" stroke-dasharray="4 4"/>
+            <text x="196" y="112" class="axis-label" fill="#5A646E">ziemia 11 min</text>
 
-            <!-- T/O i LDG -->
+            <!-- znaczniki zrzutów -->
+            <line x1="130" y1="18" x2="130" y2="126" stroke="#3498DB" stroke-width="1" stroke-dasharray="3 3"/>
+            <circle cx="130" cy="24" r="3.5" fill="var(--blue)"/>
+            <text x="136" y="16" class="axis-label" fill="#3498DB">zrzut 08:52</text>
+            <line x1="304" y1="22" x2="304" y2="126" stroke="#3498DB" stroke-width="1" stroke-dasharray="3 3"/>
+            <circle cx="304" cy="28" r="3.5" fill="var(--blue)"/>
+            <text x="268" y="20" class="axis-label" fill="#3498DB">zrzut 09:33</text>
+
+            <!-- starty i lądowania obu lotów -->
             <circle cx="40" cy="119" r="3.5" fill="var(--green)"/>
-            <circle cx="322" cy="119" r="3.5" fill="var(--red)"/>
+            <circle cx="192" cy="119" r="3.5" fill="var(--red)"/>
+            <circle cx="228" cy="119" r="3.5" fill="var(--green)"/>
+            <circle cx="336" cy="119" r="3.5" fill="var(--red)"/>
 
             <!-- oś czasu -->
             <line x1="34" y1="126" x2="336" y2="126" class="grid-line"/>
-            <text x="34"  y="140" class="axis-label">11:28</text>
-            <text x="130" y="140" class="axis-label">11:42</text>
-            <text x="215" y="140" class="axis-label">11:58</text>
-            <text x="305" y="140" class="axis-label">12:15</text>
+            <text x="34"  y="140" class="axis-label">08:20</text>
+            <text x="122" y="140" class="axis-label">08:52</text>
+            <text x="206" y="140" class="axis-label">09:12</text>
+            <text x="298" y="140" class="axis-label">09:47</text>
           </svg>
         </div>
         <div class="profile-foot">
@@ -426,7 +478,7 @@
           </thead>
           <tbody>
             <tr class="marker">
-              <td>11:28:04</td>
+              <td>08:20:04</td>
               <td class="pos dim">52.1387 15.7986</td>
               <td>38</td>
               <td>394</td>
@@ -434,7 +486,7 @@
               <td><span class="pill-mini evt">T/O</span></td>
             </tr>
             <tr>
-              <td>11:28:34</td>
+              <td>08:20:34</td>
               <td class="pos dim">52.1421 15.8054</td>
               <td>71</td>
               <td>1 180</td>
@@ -442,7 +494,7 @@
               <td><span class="pill-mini ok">OK</span></td>
             </tr>
             <tr>
-              <td>11:29:04</td>
+              <td>08:21:04</td>
               <td class="pos dim">52.1489 15.8130</td>
               <td>78</td>
               <td>1 940</td>
@@ -450,7 +502,7 @@
               <td><span class="pill-mini ok">OK</span></td>
             </tr>
             <tr class="rejected">
-              <td>11:29:34</td>
+              <td>08:21:34</td>
               <td class="pos">52.1502 15.8166</td>
               <td>77</td>
               <td>2 610</td>
@@ -458,7 +510,7 @@
               <td class="reason"><span class="pill-mini rej">± 68 m</span></td>
             </tr>
             <tr>
-              <td>11:30:04</td>
+              <td>08:22:04</td>
               <td class="pos dim">52.1547 15.8241</td>
               <td>81</td>
               <td>3 280</td>
@@ -466,7 +518,7 @@
               <td><span class="pill-mini ok">OK</span></td>
             </tr>
             <tr class="marker">
-              <td>11:58:12</td>
+              <td>08:52:12</td>
               <td class="pos dim">52.1361 15.7902</td>
               <td>74</td>
               <td>12 840</td>
@@ -474,7 +526,7 @@
               <td><span class="pill-mini evt">ZRZUT</span></td>
             </tr>
             <tr>
-              <td>11:58:42</td>
+              <td>08:52:42</td>
               <td class="pos dim">52.1338 15.7871</td>
               <td>96</td>
               <td>11 720</td>
@@ -482,7 +534,7 @@
               <td><span class="pill-mini ok">OK</span></td>
             </tr>
             <tr class="marker">
-              <td>12:15:31</td>
+              <td>09:01:31</td>
               <td class="pos dim">52.1390 15.7994</td>
               <td>31</td>
               <td>402</td>
@@ -519,8 +571,8 @@
   <a class="vp-item active" href="14-slad.html">
     <span class="vp-badge">14</span>
     <span class="vp-body">
-      <span class="vp-name">Ślad lotu — pełny</span>
-      <span class="vp-when">Standard: jest zapis GPS. Wejście miniaturą śladu ze szczegółów lotu (16) — z listy lotów skrótu nie ma (issue #25). Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy, log punktów ze stanem bramki jakości (scenariusz 22 CZE, lot 3 — zrzut z 12 800 ft). Ekran nie pobiera niczego z sieci.</span>
+      <span class="vp-name">Ślad sesji — pełny</span>
+      <span class="vp-when">Standard: jest zapis GPS. Wejście miniaturą śladu z ekranu sesji (10). Rysuje CAŁY bieg silnika — kołowanie, oba wyniesienia i wszystkie starty oraz lądowania — bo zapis powstaje w jednym ciągu i dzielenie go na loty było krojeniem nagrania na kawałki (issue #38). Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy z przerwą na ziemi, log punktów ze stanem bramki jakości. Ekran nie pobiera niczego z sieci.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -528,7 +580,7 @@
     <span class="vp-badge dim">14B</span>
     <span class="vp-body">
       <span class="vp-name">Brak śladu</span>
-      <span class="vp-when">Lot wpisany ręcznie (05F) albo zapis starszy niż 14 dni — nie ma czego rysować. Stan pusty tłumaczy powód zamiast pokazywać pustą mapę.</span>
+      <span class="vp-when">Sesja wpisana ręcznie (15 / 05F) albo zapis starszy niż 14 dni — nie ma czego rysować. Stan pusty tłumaczy powód zamiast pokazywać pustą mapę.</span>
     </span>
   </a>
 </aside>
@@ -536,7 +588,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="16-lot.html">← 16 Lot</a>
+  <a href="10-statystyki.html">← 10 Sesja</a>
   <span>·</span>
   <a href="14-slad.html" class="active">14 Ślad</a>
   <a href="14b-slad-brak.html">14B Brak</a>
