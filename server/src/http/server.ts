@@ -31,6 +31,7 @@ import type { AdminConsumptionQueries } from '../application/admin/queries/consu
 import type { AdminStatsQueries } from '../application/admin/queries/stats.ts';
 import type { AuthCommands } from '../application/common/commands/auth.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
+import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
 import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
 import type { ReferenceQueries } from '../application/mobile/queries/reference.ts';
 import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSuggestions.ts';
@@ -68,6 +69,12 @@ export interface ServerDeps {
   auth: AuthCommands;
   reference: ReferenceQueries;
   ingest: IngestCommands;
+  /**
+   * Odtworzenie rejestru telefonu (`GET /me/events`, §4.9, issue #32) — kierunek
+   * powrotny wysyłki outboxa. Telefon po czyszczeniu pamięci albo reinstalacji
+   * odbudowuje z tego własny strumień; ekrany dalej liczą się lokalnie.
+   */
+  myEvents: MyEventQueries;
   state: StateQueries;
   sheets: SheetQueries;
   traces: TraceSinkPort;
@@ -174,7 +181,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
 
   registerAuthRoutes(app, deps.auth);
   registerReferenceRoutes(app, deps.reference, deps.tokens);
-  registerEventsRoutes(app, deps.ingest, deps.tokens);
+  registerEventsRoutes(app, deps.ingest, deps.myEvents, deps.tokens);
   registerStateRoutes(app, deps.state, deps.tokens);
   registerSheetsRoutes(app, deps.sheets, deps.tokens);
   registerTracesRoutes(app, deps.traces, deps.tokens);

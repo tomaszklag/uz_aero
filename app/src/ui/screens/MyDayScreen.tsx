@@ -14,6 +14,12 @@
  * to dane sesji z §6 pkt 1, bez wariantu „z cache". Jedynym śladem sieci jest SyncChip
  * w nagłówku: online **nie rysuje nic** (issue #12), offline to pill z arkuszem
  * szczegółów pod tapnięciem (issue #23 pkt 5) — stemple syncu nie wiszą już na ekranie.
+ *
+ * Sieć zasila natomiast sam REJESTR (§4.9, issue #32): telefon po czyszczeniu pamięci
+ * albo reinstalacji odtwarza własne zdarzenia z serwera. Ekran nie dostaje od tego
+ * ANI JEDNEGO nowego elementu — jedyny ślad jest negatywny i dotyczy stanu PUSTEGO
+ * (`ready` niżej): „JESZCZE ŻADNEGO LOTU" pokazane pilotowi, który ma dziś trzy sesje,
+ * byłoby kłamstwem wyglądającym jak utrata danych. Doba z sesjami rysuje się od razu.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -69,6 +75,8 @@ export function MyDayScreen({
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
+  const streamRevision = useSessionStore((s) => s.streamRevision);
+  const streamHydrated = useSessionStore((s) => s.streamHydrated);
 
   // Tożsamość: kod pilota z profilu logowania, a gdy go jeszcze nie ma — identyfikator
   // z bieżącej sesji. NIGDZIE nie pytamy o kod (`CLAUDE.md`, sekcja „Pilot i samolot").
@@ -93,7 +101,9 @@ export function MyDayScreen({
     return () => {
       alive = false;
     };
-  }, [queries]);
+    // `streamRevision`: odtworzenie rejestru z serwera (§4.9) potrafi dopisać dzień
+    // wciąż będący w oknie korekty — plakietka ma go wtedy zobaczyć bez wychodzenia.
+  }, [queries, streamRevision]);
 
   // Stempel ostatniego potwierdzenia cache referencyjnego (§4.8) — od issue #23 nie
   // wisi na ekranie, tylko zasila wiersz w arkuszu szczegółów SyncChipa. Zależność od
@@ -111,6 +121,15 @@ export function MyDayScreen({
   }, [repo, lastSyncAt]);
 
   const empty = vm != null && vm.empty;
+  /**
+   * Czy dobie już wolno wierzyć. Doba z sesjami — zawsze; doba PUSTA dopiero po
+   * pierwszym uzgodnieniu rejestru z serwerem (§4.9, issue #32), bo telefon zaraz po
+   * czyszczeniu pamięci ma pusty rejestr, który za chwilę przestanie być pusty.
+   * To ta sama zasada, dla której `usePilotDay` oddaje `null` do pierwszego odczytu
+   * z bazy — i tak samo jak tam, offline nie każe czekać na nic: lokalny rejestr JEST
+   * wtedy najlepszą dostępną prawdą, a odtworzenie wraca natychmiast bez zmian.
+   */
+  const ready = vm != null && (!empty || streamHydrated);
 
   const totals: StatCell[] =
     vm == null
@@ -161,7 +180,7 @@ export function MyDayScreen({
             użytkownika po issue #23): nic nie mówił, a detale sesji mają jedno
             wejście — ołówek wiersza. Zdanie samolotu już POTWIERDZIŁO dane, więc
             wiersz prowadzi do oglądania i korekt, nie do zatwierdzania. */}
-        {vm != null && (
+        {ready && vm != null && (
           <Card title="Log dnia · czasy UTC" flush>
             {vm.sessions.length === 0 ? (
               <EmptySessions />
@@ -185,10 +204,10 @@ export function MyDayScreen({
         )}
 
         {/* ── akcje: przejęcie (jedyna główna akcja pustego dnia) i wpis ręczny ──
-            Cały blok czeka na wczytanie doby (`vm`), bo inaczej pierwsza klatka
+            Cały blok czeka na wczytanie doby (`ready`), bo inaczej pierwsza klatka
             pokazywałaby wielki zielony przycisk pustego dnia pilotowi, który ma
             za sobą trzy sesje — a potem podmieniałaby go pod palcem. */}
-        {vm != null &&
+        {ready &&
           (empty ? (
             <>
               <ActionButton

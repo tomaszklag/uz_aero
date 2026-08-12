@@ -44,11 +44,14 @@ export function HistoryScreen({
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
+  const streamRevision = useSessionStore((s) => s.streamRevision);
+  const streamHydrated = useSessionStore((s) => s.streamHydrated);
 
   const [days, setDays] = useState<HistoryDay[] | null>(null);
 
   // Świeże dane przy każdym wejściu; `outboxCount` w zależnościach odświeża tagi
-  // wysyłki, gdy pętla synca opróżni kolejkę, kiedy ekran jest otwarty.
+  // wysyłki, gdy pętla synca opróżni kolejkę, kiedy ekran jest otwarty, a
+  // `streamRevision` — całą listę, gdy odtworzenie z serwera dopisze dni (§4.9).
   useEffect(() => {
     if (queries == null) return;
     let alive = true;
@@ -58,7 +61,7 @@ export function HistoryScreen({
     return () => {
       alive = false;
     };
-  }, [queries, outboxCount]);
+  }, [queries, outboxCount, streamRevision]);
 
   const openDay = useCallback(
     async (sessionUuid: string) => {
@@ -69,7 +72,15 @@ export function HistoryScreen({
   );
 
   const groups = days != null ? buildHistory(days, Date.now()) : null;
-  const empty = groups != null && groups.editable.length === 0 && groups.closed.length === 0;
+  // Pustej historii wolno wierzyć dopiero po pierwszym uzgodnieniu rejestru z serwerem
+  // (§4.9, issue #32): telefon zaraz po czyszczeniu pamięci pokazałby „BRAK ZAMKNIĘTYCH
+  // DNI" komuś, kto ma za sobą sezon — a to jest dokładnie ten komunikat, który wygląda
+  // jak utrata danych. Historia NIEPUSTA nie czeka na nic: ona nigdy nie kłamie.
+  const empty =
+    groups != null &&
+    groups.editable.length === 0 &&
+    groups.closed.length === 0 &&
+    streamHydrated;
 
   return (
     <Screen

@@ -434,6 +434,8 @@ Każdy zalogowany pilot może otworzyć podgląd samolotu, którego nie claimuje
 - po potwierdzeniu zdarzenia lokalnie dostają `synced_at`; przycinanie lokalnej historii
   po N dniach od ostatniego zdarzenia doby (retencja do ustalenia, np. 30 dni) — dzień
   pilota nie ma „zamknięcia", od którego dałoby się liczyć (§3.6a)
+- **outbox ma drogę powrotną** (§4.9, issue #32): `GET /me/events` odbudowuje lokalny
+  rejestr z serwera po czyszczeniu pamięci, reinstalacji albo na nowym urządzeniu
 
 ### 4.4 Claim i przejęcie samolotu
 
@@ -497,6 +499,7 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 | GET | `/reference` | samoloty + konfiguracje + piloci + claim/przekazanie per samolot; ETag (flota **i** sesje) do cache |
 | GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH — wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie ze **zdania samolotu**, opcjonalny odczyt z `leg_close`, lub zdarzenia w trakcie sesji, np. tankowanie), `last_sync_at` |
 | POST | `/events` | paczka zdarzeń → `{accepted, duplicates, flags}` |
+| GET | `/me/events` | strona WŁASNYCH zdarzeń pilota (kursor keyset po `received_at`) → `{events, nextCursor, hasMore}`; odtworzenie rejestru na urządzeniu, które go straciło (§4.9) |
 | GET | `/sessions/:uuid/sync-status` | wysłane/łącznie, flagi sesji, status i link eksportu |
 | GET | `/me/task-suggestions` | ostatnio używane oznaczenia klientów (z operacją, na której padły) i notatki pilota — podpowiedzi do kroku 2 preflightu (issue #14) |
 
@@ -569,6 +572,59 @@ Dane z serwera mają dwie prędkości:
 Każdy rekord cache niesie `fetched_at`; preflight offline pokazuje adnotację
 "dane z cache · sync 21 JUN 17:30". W obu przypadkach odczyty fizycznych liczników
 pozostają ostatecznym źródłem prawdy — dane z serwera to podpowiedź.
+
+### 4.9 Odtworzenie rejestru na urządzeniu (issue #32, 2026-08-12)
+
+Do tej pory synchronizacja miała **jeden kierunek**: outbox wypychał zdarzenia na serwer
+i nic nigdy nie wracało. Konsekwencja wyszła w terenie — pilot wyczyścił pamięć aplikacji
+i stracił WSZYSTKO, chociaż jego dni leżały kompletne w bazie klubu. `GET /me/events`
+zamyka pętlę.
+
+- **co wraca:** wyłącznie zdarzenia, w których pilot jest **PIC-em** (§4.1 pkt 3 — jedyny
+  piszący sesji, więc tylko te telefon kiedykolwiek miał u siebie). Sesje, w których był
+  Dualem, do jego lokalnego rejestru NIE wchodzą: „Historia dni" pokazuje wszystko, co
+  leży w telefonie, więc dopisanie ich dałoby mu dzień, którego nie prowadził — z ołówkiem
+  korekty. Godziny Duala liczy serwer
+- **koperta** jest ta sama, co przy wysyłce (§5.1), bez `received_at` i `source_device`
+  (księgowość serwera). Pobrane zdarzenie da się odesłać przez `POST /events` i wróci
+  jako `duplicates` — jedna definicja zdarzenia w obie strony
+- **kursor keyset** po `(received_at, uuid)` rosnąco, nieprzezroczysty dla telefonu.
+  Wypełniony także na OSTATNIEJ stronie (`hasMore: false` mówi osobno, czy jest co
+  czytać) — inaczej telefon nie miałby czego zapamiętać po dojściu do końca i przy każdej
+  okazji ściągałby ogon rejestru od nowa. Kursor jest zapisany **per pilot**: po
+  zalogowaniu kolegi na tym samym telefonie odtwarzamy od początku jego rejestru
+- **zapis lokalny ze stemplem wysyłki** — zdarzenie przyszło Z serwera, więc serwer je
+  ma; bez stempla wpadłoby do outboxa i telefon odsyłałby serwerowi jego własne dane
+  w kółko. Dedup po `uuid` należy do magazynu, więc wpis czekający jeszcze w outboxie
+  zostaje nietknięty (o jego losie rozstrzyga wysyłka, nie odczyt)
+- **brama wieku 15 min** i pętla stron po ≤200 zdarzeń, z sufitem stron na przebieg;
+  przerwanie w połowie nie cofa niczego — kursor jest zapisywany po każdej stronie
+
+Dwie konsekwencje warte zapamiętania:
+
+- **kolejność wstawienia po odtworzeniu to kolejność PRZYJĘCIA przez serwer**, a nie
+  pierwotna kolejność zapisu na telefonie (zdarzenie utworzone offline wcześniej mogło
+  dojechać później). Projekcje to znoszą, bo porządek czasowy przywraca `projectSession`,
+  a odtworzony telefon dostaje dokładnie ten porządek, którym rejestr czyta SERWER
+  (`ORDER BY received_at, uuid`) — czyli wersję kanoniczną, nie gorszą
+- **sesja niezdana nie wraca jako „bieżąca"**: `current_session_uuid` jest lokalną
+  pamięcią urządzenia i po czyszczeniu go nie ma. Odtworzona sesja jest widoczna na 01
+  i w historii, a maszynę trzymaną w chwili awarii odbiera się normalną drogą przejęcia
+  (§4.4) — wznawianie kokpitu z rejestru sprzed tygodnia byłoby gorsze niż jego brak
+
+> **To nie jest odwrót od offline-first — to jego warunek.** Ekrany („Mój dzień",
+> „Historia dni", statystyki) dalej czytają WYŁĄCZNIE lokalny strumień i liczą projekcje
+> w telefonie (§4.1 pkt 1, §6 pkt 1: dane sesji nie mają wariantu „z cache"). Pobranie
+> nie zasila EKRANU, tylko REJESTR. Odwrotna decyzja — ekran pytający serwer — zabrałaby
+> pilotowi jego dzień dokładnie wtedy, gdy zabraknie zasięgu, czyli w powietrzu.
+>
+> Jedyny ślad w UI jest negatywny i **dotyczy wyłącznie stanu pustego**: dopóki pierwsze
+> odtworzenie nie wróci, 01 i 12 nie rysują „JESZCZE ŻADNEGO LOTU" ani „BRAK ZAMKNIĘTYCH
+> DNI". Doba z sesjami wyświetla się NATYCHMIAST z tego, co telefon ma lokalnie — ona
+> nigdy nie kłamie i nie ma powodu, żeby czekała na sieć. To ta sama zasada, dla której
+> `usePilotDay` zwraca `null` do pierwszego odczytu z bazy. Offline stan pusty pojawia
+> się normalnie: odtworzenie wraca wtedy od razu jako `skipped`, a lokalny rejestr JEST
+> najlepszą dostępną prawdą.
 
 ---
 

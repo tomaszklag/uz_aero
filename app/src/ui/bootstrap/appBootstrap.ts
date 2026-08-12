@@ -21,6 +21,7 @@ import { SecureCredentials } from '../../infrastructure/auth/secureCredentials';
 import { PinCrypto } from '../../infrastructure/auth/pinCrypto';
 import {
   AuthService,
+  EventRestore,
   FlightTrackQueries,
   ReferenceSync,
   SyncEngine,
@@ -114,6 +115,10 @@ export function useAppBootstrap(): BootstrapStatus {
             // Motyw pilota (decyzja 2026-07-29): ten sam format klucza czyta
             // ThemeProvider — jedno miejsce wie, jak wygląda rekord (ThemePrefsStore).
             new ThemePrefsSync(new ThemePrefsStore(AsyncStorage), server, auth),
+            // Droga POWROTNA outboxa (§4.9, issue #32): telefon po czyszczeniu pamięci
+            // albo reinstalacji odbudowuje własny rejestr z serwera. Ten sam `repo`,
+            // co wysyłka — pobrane zdarzenia są zwykłymi wierszami strumienia.
+            new EventRestore(repo, server, auth),
           );
 
         setStatus({ phase: 'ready', trace });

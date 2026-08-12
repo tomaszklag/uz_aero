@@ -1352,6 +1352,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `syncEngine.test.ts` | pętli wysyłki §4.3 i poświadczeń §3.0: duplikaty = dostarczone, offline ≠ auth_expired, jedna rotacja tokenu, `fetchStatus` dla ekranu 11 |
 | `syncStatus.test.ts` | prezentacji ekranu 11: odmiana liczebników, konwencja nazwy karty §4.7, licznik wysyłki z ogonem outboxa |
 | `referenceSync.test.ts` | odświeżania cache §4.8: nadpisanie seedu prawdą serwera, ETag/304 z podbiciem wieku, brama 15 min, offline nie psuje cache |
+| `eventRestore.test.ts` | odtworzenia rejestru §4.9 (issue #32): odbudowa strona po stronie, pobrane NIE wchodzi do outboxa, dedup chroni wpis czekający w kolejce, kursor per pilot, przerwanie w połowie nie cofa postępu |
 | `claimMode.test.ts` | trybu przejęcia §4.4: `takeover_online` tylko z odpowiedzią serwera, żywy poprzednik wygrywa z cache, „już wolny" gasi przejęcie |
 | `pinCrypto.test.ts` | własnego SHA-256 (wektory NIST + node:crypto dla UTF-8) i solonego skrótu PIN-u — rekord nigdy nie niesie PIN-u wprost |
 | `historyDays.test.ts` | ekranu 12: podział wg okna korekty, dzień otwarty poza historią, tag wysyłki z outboxa sesji, plakietka splasha, odliczanie |

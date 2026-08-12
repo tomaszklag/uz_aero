@@ -10,6 +10,14 @@
 
 import { DomainRuleError } from '../domain';
 import { EventsRepo } from '../application/eventsRepo';
+import type {
+  EventRestore,
+  EventRestoreOutcome,
+  ReferenceSync,
+  SyncEngine,
+  ThemePrefsSync,
+  TraceSync,
+} from '../application';
 import { SESSION_META_KEYS } from '../application/ports';
 import { InMemoryAdapter } from '../infrastructure/storage/inMemoryAdapter';
 import { FixedClock } from '../infrastructure/clock';
@@ -151,6 +159,80 @@ describe('useSessionStore', () => {
 
     await store().loadSession(SESSION);
     expect(await repo.getMeta(SESSION_META_KEYS.activeSessionUuid)).toBe(SESSION);
+  });
+
+  /**
+   * Odtworzenie rejestru (§4.9, issue #32) — store jest tu cienki i odpowiada
+   * dokładnie za dwie rzeczy: powiedzieć ekranom, KIEDY pustemu rejestrowi wolno
+   * wierzyć, i kazać im przeliczyć projekcje, gdy pobranie coś dopisało.
+   */
+  describe('restoreEvents', () => {
+    /** Warstwa synca podmieniona w całości — store'a interesuje tylko WYNIK. */
+    function attachRestore(...script: EventRestoreOutcome[]) {
+      const calls: number[] = [];
+      const restore = {
+        restoreIfStale: async (): Promise<EventRestoreOutcome> => {
+          calls.push(1);
+          return script.shift() ?? { kind: 'fresh' };
+        },
+      } as unknown as EventRestore;
+
+      useSessionStore
+        .getState()
+        .attachSync(
+          null as unknown as SyncEngine,
+          null as unknown as ReferenceSync,
+          null as unknown as TraceSync,
+          null as unknown as ThemePrefsSync,
+          restore,
+        );
+      return { calls };
+    }
+
+    it('podłączenie warstwy synca wstrzymuje wiarę w pusty rejestr do pierwszego pobrania', async () => {
+      const { store } = attach();
+      // Bez warstwy synca lokalny rejestr JEST całą prawdą — nie ma na co czekać.
+      expect(store().streamHydrated).toBe(true);
+
+      attachRestore({ kind: 'pulled', fetched: 0, inserted: 0, complete: true });
+      expect(store().streamHydrated).toBe(false);
+
+      await store().restoreEvents();
+      expect(store().streamHydrated).toBe(true);
+    });
+
+    it('offline też odblokowuje ekran — bez sieci lokalny rejestr jest całą prawdą', async () => {
+      const { store } = attach();
+      attachRestore({ kind: 'skipped' });
+
+      await store().restoreEvents();
+      expect(store().streamHydrated).toBe(true);
+    });
+
+    it('licznik zmian strumienia rośnie TYLKO po faktycznym dopisaniu zdarzeń', async () => {
+      // Pusta dosyłka zdarza się przy każdej okazji; przeliczanie po niej całego
+      // rejestru na otwartym ekranie byłoby pracą bez skutku.
+      const { store } = attach();
+      attachRestore(
+        { kind: 'pulled', fetched: 3, inserted: 0, complete: true },
+        { kind: 'pulled', fetched: 3, inserted: 2, complete: true },
+      );
+
+      await store().restoreEvents();
+      expect(store().streamRevision).toBe(0);
+
+      await store().restoreEvents();
+      expect(store().streamRevision).toBe(1);
+    });
+
+    it('wylogowanie cofa zgodę na pusty rejestr — na telefonie może usiąść kolega', async () => {
+      const { store } = attach();
+      attachRestore({ kind: 'skipped' });
+      await store().restoreEvents();
+
+      store().reset();
+      expect(store().streamHydrated).toBe(false);
+    });
   });
 
   it('loadSession zdanego samolotu usuwa osierocony active_session_uuid', async () => {
