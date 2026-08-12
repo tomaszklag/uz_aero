@@ -56,21 +56,15 @@ describe('przycisk główny — sekwencja idle → Taxi → Take off → Landing
     expect(view.primary).toBe('taxi');
   });
 
-  test('bez GPS każda etykieta dostaje „· ręcznie" i ton amber — to jedyna droga zapisu', () => {
-    expect(build({ gpsLost: true })).toMatchObject({
-      primaryLabel: 'Taxi · ręcznie',
-      primaryTone: 'amber',
-    });
-    expect(build({ gpsLost: true, taxiing: true })).toMatchObject({
-      primaryLabel: 'Take off · ręcznie',
-    });
-    expect(build({ gpsLost: true, inFlight: true })).toMatchObject({
-      primaryLabel: 'Landing · ręcznie',
-    });
-  });
-
-  test('z GPS ton jest neutralny', () => {
-    expect(build().primaryTone).toBeNull();
+  test('utrata GPS nie zmienia przycisku — ani nazwy, ani koloru', () => {
+    // Do 2026-08-12 bez fixa etykieta dostawała dopisek „· ręcznie", a przycisk ton
+    // amber. Żadne z dwojga nic nie rozróżniało: pilot sięga po ten przycisk zawsze
+    // z tego samego powodu (logger nie rozpoznał stanu) i zawsze zapisuje
+    // `method: 'manual'` — brak fixa i zła detekcja przy zdrowym odbiorniku znaczą
+    // dla niego to samo. Stan czujnika opisuje baner 05g i siatka parametrów.
+    expect(build({ gpsLost: true })).toEqual(build({ gpsLost: false }));
+    expect(build({ gpsLost: true, taxiing: true }).primaryLabel).toBe('Take off');
+    expect(build({ gpsLost: true, inFlight: true }).primaryLabel).toBe('Landing');
   });
 });
 

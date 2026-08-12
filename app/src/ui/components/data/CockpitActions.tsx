@@ -20,18 +20,20 @@ import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { Icon, type IconName } from '../foundation/Icon';
-import { toneColors, type Tone } from '../tone';
+import { toneColors } from '../tone';
 
 export interface CockpitActionsProps {
-  /** Akcja szeroka po lewej — zapis ręczny startu albo lądowania. */
+  /**
+   * Akcja szeroka po lewej — następne zdarzenie sekwencji (Taxi / Take off / Landing).
+   *
+   * Bez tonu (decyzja 2026-08-12): do 2026-08-12 przy utracie GPS przycisk awansował
+   * na AMBER, żeby powiedzieć „teraz zapisujesz sam". Kolor niczego nie rozróżniał —
+   * pilot sięga po ten przycisk zawsze z tego samego powodu (logger nie rozpoznał
+   * stanu), a czy zawinił brak fixa, czy zła detekcja przy zdrowym odbiorniku, nie
+   * zmienia ani czynności, ani zapisu. O czujniku mówi baner 05g i siatka parametrów.
+   */
   primaryLabel: string;
   primaryIcon?: IconName;
-  /**
-   * Ton akcji głównej. Domyślnie neutralna (podniesiona powierzchnia); mockup 05g
-   * awansuje ją na AMBER, gdy GPS zamilkł — ręczny zapis staje się wtedy JEDYNĄ
-   * drogą i przycisk ma o tym mówić kolorem, zanim pilot przeczyta baner.
-   */
-  primaryTone?: Tone;
   onPrimary: () => void;
   /**
    * Zrzut — istnieje tylko w powietrzu dnia skokowego, AKTYWNY tylko w Cruise
@@ -62,7 +64,6 @@ export interface CockpitActionsProps {
 export function CockpitActions({
   primaryLabel,
   primaryIcon = 'landing',
-  primaryTone,
   onPrimary,
   onDrop,
   dropDisabledReason = null,
@@ -74,7 +75,6 @@ export function CockpitActions({
   const { theme } = useTheme();
   const blue = toneColors(theme, 'blue');
   const red = toneColors(theme, 'red');
-  const primary = primaryTone != null ? toneColors(theme, primaryTone) : null;
 
   return (
     <View
@@ -93,21 +93,14 @@ export function CockpitActions({
           {
             borderRadius: theme.radius.btn,
             borderWidth: theme.borderWidth,
-            borderColor: primary?.border ?? theme.colors.borderStrong,
-            backgroundColor: primary?.muted ?? theme.colors.surfaceRaised,
+            borderColor: theme.colors.borderStrong,
+            backgroundColor: theme.colors.surfaceRaised,
             opacity: pressed ? 0.75 : 1,
           },
         ]}
       >
-        <Icon
-          name={primaryIcon}
-          size={20}
-          color={primary?.accent ?? theme.colors.textPrimary}
-        />
-        <AppText
-          variant="button"
-          style={[styles.primaryLabel, primary != null ? { color: primary.accent } : null]}
-        >
+        <Icon name={primaryIcon} size={20} color={theme.colors.textPrimary} />
+        <AppText variant="button" style={styles.primaryLabel}>
           {primaryLabel}
         </AppText>
       </Pressable>

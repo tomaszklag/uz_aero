@@ -39,8 +39,10 @@ export function gpsSignalState(
 /** Treść banera rozruchu — spokojna: nic się nie zepsuło, odbiornik szuka nieba. */
 export function gpsAcquiringText(): string {
   return (
+    // Nazwy przycisków jak w pasku akcji — skróty „T-O / LAND" zostały po czasach
+    // przed issue #19 (patrz `gpsLossText` niżej).
     'Odbiornik wyszukuje sygnał — autodetekcja uzbroi się z pierwszym fixem. ' +
-    'Do tego czasu start i lądowanie zapiszesz przyciskiem T-O / LAND.'
+    'Do tego czasu start i lądowanie zapiszesz przyciskiem Take off / Landing.'
   );
 }
 
@@ -70,8 +72,13 @@ export function gpsLossText(lastFixAt: number | null, now: number): string {
       ? `Ostatni fix ${timeUtc(lastFixAt)} UTC (${fixAge(lastFixAt, now)}).`
       : 'Ani jednego fixa od startu silnika.';
   return (
+    // Baner nazywa przyciski DOKŁADNIE tak, jak są podpisane w pasku akcji (mockup
+    // 05g): skróty „LAND / T-O" zostały po czasach przed issue #19. Od 2026-08-12 ta
+    // treść jest JEDYNĄ instrukcją ręcznego zapisu — z przycisku wyleciał dopisek
+    // „· ręcznie" (rozróżnienie bez różnicy), a z samego banera dwa przyciski akcji
+    // (dublowały pasek). Baner mówi, gdzie iść; iść trzeba na dół ekranu.
     `${intro} Startów i lądowań nie wykryjemy — zapisuj je ręcznie przyciskiem ` +
-    'LAND / T-O. Timery i log dnia liczą dalej z zegara.'
+    'Landing / Take off. Timery i log dnia liczą dalej z zegara.'
   );
 }
 
