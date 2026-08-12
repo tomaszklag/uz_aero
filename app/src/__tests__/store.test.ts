@@ -73,11 +73,40 @@ describe('useSessionStore', () => {
     await openDay(clock);
 
     clock.set(min(25));
-    await expect(store().takeoff('auto')).rejects.toBeInstanceOf(DomainRuleError);
+    await expect(store().takeoff('manual')).rejects.toBeInstanceOf(DomainRuleError);
 
     expect(store().lastError).toMatch(/Start bez pracującego silnika/);
     expect(store().projection.inFlight).toBe(false);
     expect(store().events).toHaveLength(2); // nic nie doszło
+  });
+
+  it('odrzucenie zdarzenia z AUTODETEKCJI nie idzie na ekran (issue #30)', async () => {
+    const { clock, store } = attach();
+    await openDay(clock);
+
+    clock.set(min(25));
+    // Ta sama reguła, ten sam wyjątek do wołającego — ale pilot nic nie nacisnął,
+    // więc czerwony baner „Nie zapisano" opisywałby pomyłkę MASZYNY jako jego stratę.
+    await expect(store().takeoff('auto')).rejects.toBeInstanceOf(DomainRuleError);
+
+    expect(store().lastError).toBeNull();
+    expect(store().events).toHaveLength(2); // nic nie doszło — cisza dotyczy tylko UI
+  });
+
+  it('cisza obejmuje WYŁĄCZNIE odmowę reguły — awaria zapisu zostaje widoczna', async () => {
+    const { repo, clock, store } = attach();
+    await openDay(clock);
+    clock.set(min(12));
+    await store().startEngine();
+
+    // Padnięty magazyn to nie spór automatu z rejestrem, tylko utrata danych.
+    jest
+      .spyOn(repo, 'appendStamped')
+      .mockRejectedValueOnce(new Error('SQLite: database is locked'));
+
+    clock.set(min(20));
+    await expect(store().takeoff('auto')).rejects.toThrow('database is locked');
+    expect(store().lastError).toMatch(/database is locked/);
   });
 
   it('miękka flaga ląduje w warnings, a zdarzenie zostaje zapisane', async () => {

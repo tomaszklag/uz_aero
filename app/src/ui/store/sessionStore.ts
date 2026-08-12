@@ -17,6 +17,7 @@
 import { create } from 'zustand';
 
 import {
+  DomainRuleError,
   emptySessionState,
   type CrewChangePayload,
   type DayClosePayload,
@@ -217,15 +218,28 @@ export const useSessionStore = create<SessionStore>((set, get) => {
    * Twarde odrzucenie (`DomainRuleError`) zapisujemy w `lastError` DLA UI i rzucamy dalej,
    * żeby wołający (np. modal potwierdzenia) mógł zareagować — cichy błąd jest zakazany
    * (§6 pkt 3: „nigdy cichy błąd").
+   *
+   * `fromDetector` = zapis z AUTODETEKCJI GPS, jedyny wyjątek od tej zasady (issue #30).
+   * „Nigdy cichy błąd" broni pilota przed martwym przyciskiem: nacisnął, nic się nie
+   * stało, nie wie dlaczego. Automat niczego nie naciska — gdy jego zdarzenie kłóci się
+   * z rejestrem, wygrywa rejestr, a czerwony baner „Nie zapisano" opisywałby wtedy
+   * pomyłkę MASZYNY językiem utraconego wpisu pilota. Wyjątek jest wąski z rozmysłem:
+   * dotyczy WYŁĄCZNIE odmowy reguły. Każda inna awaria zapisu (baza, magazyn) zostaje
+   * widoczna — cisza o nieudanym zapisie to utrata danych.
    */
-  async function run(action: () => Promise<CommandResult>): Promise<CommandResult> {
+  async function run(
+    action: () => Promise<CommandResult>,
+    opts: { fromDetector?: boolean } = {},
+  ): Promise<CommandResult> {
     try {
       const result = await action();
       await refresh();
       set({ warnings: result.warnings, lastError: null });
       return result;
     } catch (err) {
-      set({ lastError: err instanceof Error ? err.message : String(err) });
+      if (!(opts.fromDetector === true && err instanceof DomainRuleError)) {
+        set({ lastError: err instanceof Error ? err.message : String(err) });
+      }
       throw err;
     }
   }
@@ -294,16 +308,24 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       return run(() => requireCommands().stopEngine(requireContext(), payload));
     },
 
+    // Trzy zdarzenia, które umie zapisać AUTOMAT — i jedyne, w których `method` mówi,
+    // czy za zapisem stał palec pilota. Stąd `fromDetector`: patrz nagłówek `run`.
     taxi(method = 'manual', position = null, at) {
-      return run(() => requireCommands().taxi(requireContext(), method, position, at));
+      return run(() => requireCommands().taxi(requireContext(), method, position, at), {
+        fromDetector: method === 'auto',
+      });
     },
 
     takeoff(method = 'manual', position = null, at) {
-      return run(() => requireCommands().takeoff(requireContext(), method, position, at));
+      return run(() => requireCommands().takeoff(requireContext(), method, position, at), {
+        fromDetector: method === 'auto',
+      });
     },
 
     landing(method = 'manual', position = null, at) {
-      return run(() => requireCommands().landing(requireContext(), method, position, at));
+      return run(() => requireCommands().landing(requireContext(), method, position, at), {
+        fromDetector: method === 'auto',
+      });
     },
 
     refuel(payload) {

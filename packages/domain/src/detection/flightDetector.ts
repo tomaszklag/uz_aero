@@ -151,6 +151,38 @@ export function createDetectorState(
   };
 }
 
+/**
+ * Uzgadnia fazę automatu z REJESTREM zdarzeń (issue #30). Rejestr wygrywa.
+ *
+ * Automat i rejestr to dwa niezależne przekonania o tym samym samolocie: pierwsze
+ * pochodzi z GPS i żyje tylko tak długo, jak zamontowany kokpit, drugie — ze zdarzeń
+ * i przeżywa restart. Rozjeżdżają się przy każdym zapisie spoza automatu: wpisie
+ * ręcznym pilota (05f, przyciski Take off / Landing), „COFNIJ" w toaście (faza już się
+ * zmieniła, ale zdarzenie świadomie NIE powstało) i przy odrodzeniu detektora w locie.
+ *
+ * Rozjazd nie jest kosmetyczny, bo faza wybiera, CZEGO automat szuka (§8): po cofniętym
+ * fałszywym starcie automat stoi w `airborne` i wypatruje wyłącznie lądowania — prawdziwy
+ * start przegapiłby w całości, a z nim cały lot. Pierwszeństwo ma rejestr, bo to on niesie
+ * decyzje pilota i to on trafia do dokumentów.
+ *
+ * `cooldownUntil` zostaje **nietknięty** i to jest wybór, nie przeoczenie: „COFNIJ" znaczy
+ * „to nie był start", a warunek, który detekcję wywołał, zwykle jeszcze się trzyma —
+ * wyzerowana histereza wystawiłaby ten sam toast na następnym fixie.
+ */
+export function syncDetectorPhase(state: DetectorState, inFlight: boolean): DetectorState {
+  const phase: DetectorPhase = inFlight ? 'airborne' : 'ground';
+  if (state.phase === phase) return state;
+  return {
+    ...state,
+    phase,
+    // Kandydat zbierał się pod PORZUCONY warunek (np. start, choć jesteśmy już w locie).
+    candidateSince: null,
+    // Kołowanie należy do fazy naziemnej; po powrocie na ziemię zaczyna się od nowa,
+    // a duplikat wobec rejestru odsieje spoina (`ui/hooks/taxiWrite.ts`).
+    taxiing: false,
+  };
+}
+
 /** Wysokość nad lotniskiem; null gdy brakuje którejkolwiek składowej. */
 function heightAboveField(fix: GpsFix, state: DetectorState): number | null {
   if (fix.altitudeFt == null || state.fieldElevationFt == null) return null;
