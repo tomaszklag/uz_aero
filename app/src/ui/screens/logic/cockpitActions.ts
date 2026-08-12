@@ -16,6 +16,15 @@
  * i bez okna COFNIJ — taxi nie wyznacza żadnego czasu, pomyłka kosztuje jeden wiersz
  * w logu (ta sama zasada, którą autodetekcja stosuje od 2026-08-04).
  *
+ * PRZYCISK NIE MÓWI O STANIE ODBIORNIKA (decyzja 2026-08-12) — ani nazwą, ani kolorem.
+ * Przy utracie GPS nazywał się „Taxi · ręcznie" / „Landing · ręcznie" i awansował na
+ * AMBER; jedno i drugie miało ostrzegać, że autodetekcja stoi. Nie rozróżniało niczego:
+ * tap w ten przycisk JEST ręcznym zapisem zawsze (`method: 'manual'` jedzie w payloadzie
+ * niezależnie od sygnału), a pilot sięga po niego z tego samego powodu — logger nie
+ * rozpoznał stanu — i nie ma dla niego różnicy, czy powodem jest brak fixa, czy zła
+ * detekcja przy zdrowym odbiorniku. Stan czujnika opisuje baner 05g i komórki siatki
+ * („brak fixa"); pasek akcji mówi wyłącznie, JAKIE zdarzenie zapisuje.
+ *
  * ZRZUT (ta sama decyzja):
  *  • istnieje TYLKO w dniu skokowym (issue #19 — brak akcji, nie blokada) i TYLKO
  *    w powietrzu: na ziemi jego slot zajmuje ZAŁADUNEK (patrz niżej),
@@ -44,11 +53,10 @@ export type CockpitPrimary = 'taxi' | 'takeoff' | 'landing';
 
 export interface CockpitActionsView {
   primary: CockpitPrimary;
+  /** Sama nazwa zdarzenia — bez adnotacji o sposobie zapisu (patrz nagłówek). */
   primaryLabel: string;
   /** Podzbiór `IconName` — moduł jest czysty, więc nie importuje rejestru ikon. */
   primaryIcon: 'phase-taxi' | 'takeoff' | 'landing';
-  /** AMBER, gdy GPS zamilkł: ręczny zapis jest wtedy JEDYNĄ drogą (mockup 05g). */
-  primaryTone: 'amber' | null;
   /** `false` = przycisku zrzutu NIE MA (brak akcji, nie blokada — issue #19). */
   showDrop: boolean;
   /** Powód przygaszenia widocznego przycisku zrzutu; `null` = aktywny. */
@@ -90,12 +98,10 @@ export function buildCockpitActions(input: {
 
   return {
     primary,
-    // „· ręcznie" przy każdym stanie sekwencji: bez fixa autodetekcja nie zapisze
-    // ani kołowania, ani startu, ani lądowania — przycisk mówi to, zanim pilot
-    // doczyta baner 05g.
-    primaryLabel: input.gpsLost ? `${PRIMARY_LABEL[primary]} · ręcznie` : PRIMARY_LABEL[primary],
+    // Sama nazwa zdarzenia, w każdym stanie GPS-a — patrz nagłówek. Tonu przycisk
+    // nie ma w ogóle z tego samego powodu.
+    primaryLabel: PRIMARY_LABEL[primary],
     primaryIcon: PRIMARY_ICON[primary],
-    primaryTone: input.gpsLost ? 'amber' : null,
     showDrop,
     // Pozytywna wiedza, nie negacja Cruise: `phase !== 'cruise'` obejmowałoby też
     // idle/taxi, czyli lot, którego detektor nie widzi (start ręczny) — patrz nagłówek.

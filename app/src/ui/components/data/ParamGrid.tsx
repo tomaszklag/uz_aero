@@ -130,9 +130,11 @@ function Cell({ cell }: { cell: ParamCell }) {
       {cell.note != null && (
         <AppText
           variant="mono"
-          // Nota martwej komórki jest czerwona (alarm czujnika); żywej — muted
-          // (sam kontekst źródła). Dokładnie `.param-stale-note` z 05g.
-          style={[styles.note, { color: cell.stale ? theme.colors.red : theme.colors.textMuted }]}
+          // Nota martwej komórki jest AMBER, żywej — muted (sam kontekst źródła).
+          // Czerwień (do 2026-08-12) świeciła w siatce nad banerem tego samego stanu,
+          // który jest ostrzeżeniem — dwa kolory na jedną wiadomość „czujnik nie
+          // pracuje". Kolor stanu jest jeden; patrz `NoGpsBanner`.
+          style={[styles.note, { color: cell.stale ? theme.colors.amber : theme.colors.textMuted }]}
         >
           {cell.note}
         </AppText>

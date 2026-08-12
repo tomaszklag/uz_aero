@@ -1,51 +1,59 @@
 /**
- * UZ Aero — NoGpsBanner (`.no-gps` / `.no-gps-link` z mockupu 05g-cockpit-no-gps)
+ * UZ Aero — NoGpsBanner (`.no-gps` z mockupu 05g-cockpit-no-gps)
  *
  * Baner typu STATUS (przyrząd): nie zamyka się ręcznie, znika sam z pierwszym
- * świeżym fixem. Czerwień, bo w locie niezauważony brak fixa to niezapisane
- * lądowanie (ryzyko 🔴 z §8). Dwie akcje to dwie skale problemu: chwilowa dziura
- * → arkusz 05f (jedno zdarzenie), GPS milczy dłużej → lista ręczna 08.
+ * świeżym fixem.
  *
- * Ton `amber` (decyzja UX 2026-08-04, doprecyzowanie 05g): zimny rozruch odbiornika
- * po START ENGINE to nie awaria — czerwień w pierwszej sekundzie każdego cyklu
- * uczyłaby pilota ignorować czerwień. Amber = „szukam nieba", czerwień = „fixy
- * były i umilkły" albo „brak uprawnienia".
+ * ZAWSZE AMBER (decyzja 2026-08-12) — jeden stan, jeden kolor. Do 2026-08-12 baner
+ * miał dwa tony: amber przy rozruchu odbiornika i CZERWIEŃ przy utracie fixa oraz
+ * braku uprawnienia. Czerwień była wzięta z rejestru ryzyk (§8: niezauważony brak fixa
+ * = niezapisane lądowanie), a on stopniuje SKUTKI, nie banery. Dla pilota wszystkie
+ * trzy stany znaczą to samo — autodetekcja nie pracuje, zapisujesz sam z paska akcji —
+ * więc stopniowanie kolorem sugerowało różnicę, której nie ma w jego robocie. Zostaje
+ * ostrzeżenie: nic się nie zepsuło nieodwracalnie, ale trzeba wziąć sprawy w swoje ręce.
+ * (Rozszerzenie decyzji z 2026-08-04, która tym samym argumentem — czerwień w pierwszej
+ * sekundzie każdego cyklu uczy ignorować czerwień — zdjęła ją z rozruchu.)
+ *
+ * PRZYRZĄD, NIE PASEK AKCJI (decyzja 2026-08-12). Do 2026-08-12 baner niósł dwa
+ * przyciski — „Zapisz zdarzenie" (arkusz 05f) i „Lista ręczna" (ekran 08) — pomyślane
+ * jako dwie skale problemu. Na urządzeniu okazały się drugim miejscem, w którym pilot
+ * ZAPISUJE zdarzenia: „Zapisz zdarzenie" otwierało dokładnie ten sam arkusz, co przycisk
+ * główny paska akcji (Take off / Landing), tylko wyżej i mniejszą czcionką. Zapis mieszka
+ * w pasku akcji i nigdzie indziej — baner mówi, CO SIĘ STAŁO z czujnikiem, a co z tym
+ * zrobić, mówi jego treść. Odtwarzanie przegapionych lotów z ręki (08) należy do stanu
+ * PO biegu: kafelek „Lista ręczna" stoi na 04 dopiero po STOP ENGINE i tam jest jedynym
+ * wejściem (`groundActions` w `CockpitScreen`).
+ *
+ * Trzy stany różni więc TREŚĆ, nie kolor: „szukam nieba" (rozruch), „ostatni fix
+ * o 15:58" (utrata) i „nadaj uprawnienie w ustawieniach" (jedyny, którego fix sam
+ * nie naprawi) — to `gpsAcquiringText` / `gpsLossText` / `gpsPermissionText`.
  *
  * Degradacja CZUJNIKA to osobna oś od sieci — baner może wisieć obok zielonego
  * SyncChipa i to nie jest sprzeczność.
  */
 
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
 
 export interface NoGpsBannerProps {
   /** Nagłówek mono — domyślnie utrata sygnału (05g). */
   title?: string;
   /** Treść pod nagłówkiem — czas i wiek ostatniego fixa (`gpsLossText`). */
   text: string;
-  /** `red` = utrata/uprawnienia (05g), `amber` = rozruch odbiornika. */
-  tone?: 'red' | 'amber';
-  /** Chwilowa dziura: zapis jednego zdarzenia przez arkusz 05f. */
-  onManualEvent: () => void;
-  /** GPS milczy dłużej: przejście do pełnej listy ręcznej (08). */
-  onManualList: () => void;
 }
 
 export function NoGpsBanner({
   title = 'GPS: brak sygnału · autodetekcja wstrzymana',
   text,
-  tone = 'red',
-  onManualEvent,
-  onManualList,
 }: NoGpsBannerProps) {
   const { theme } = useTheme();
-  const accent = tone === 'amber' ? theme.colors.amber : theme.colors.red;
-  const border = tone === 'amber' ? theme.colors.amberBorder : theme.colors.redBorder;
-  const muted = tone === 'amber' ? theme.colors.amberMuted : theme.colors.redMuted;
+  // Bez wyboru tonu — patrz nagłówek: jeden stan, jeden kolor.
+  const accent = theme.colors.amber;
+  const border = theme.colors.amberBorder;
+  const muted = theme.colors.amberMuted;
 
   return (
     <View
@@ -73,52 +81,6 @@ export function NoGpsBanner({
       <AppText variant="body" tone="secondary" style={{ fontSize: 11, lineHeight: 16.5 }}>
         {text}
       </AppText>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <NoGpsLink label="Zapisz zdarzenie" icon="edit" accent={accent} border={border} muted={muted} onPress={onManualEvent} />
-        <NoGpsLink label="Lista ręczna" icon="manual-log" accent={accent} border={border} muted={muted} onPress={onManualList} />
-      </View>
     </View>
-  );
-}
-
-/** `.no-gps-link` — pigułkowe wejścia akcji ratunkowych na banerze. Celowo prywatny:
- *  to część odpowiedzialności banera, nie samodzielny wzorzec DS. */
-function NoGpsLink({
-  label,
-  icon,
-  accent,
-  border,
-  muted,
-  onPress,
-}: {
-  label: string;
-  icon: 'edit' | 'manual-log';
-  accent: string;
-  border: string;
-  muted: string;
-  onPress: () => void;
-}) {
-  const { theme } = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        minHeight: 44,
-        paddingHorizontal: 11,
-        borderRadius: theme.radius.sm,
-        borderWidth: theme.borderWidth,
-        borderColor: border,
-        backgroundColor: pressed ? muted : theme.colors.surface,
-      })}
-    >
-      <Icon name={icon} size={12} color={accent} />
-      <AppText variant="mono" style={{ fontSize: 10, color: accent, letterSpacing: 0.5 }}>
-        {label}
-      </AppText>
-    </Pressable>
   );
 }

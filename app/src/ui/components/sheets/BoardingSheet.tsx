@@ -6,6 +6,12 @@
  * zrzutu (05e), bo to ta sama lista opowiedziana chwilę wcześniej: skład zadeklarowany
  * tutaj otwiera arkusz zrzutu już WYPEŁNIONY i w locie zostaje samo potwierdzenie.
  *
+ * OTWARTY PONOWNIE pokazuje skład, który już czeka na zrzut (issue #28) — tak samo jak
+ * arkusz zrzutu i z tego samego stanu (`logic/boardingPrefill.ts`). Do 2026-08-12
+ * liczniki kasowały się przy KAŻDYM otwarciu, więc pilot, który zadeklarował skład przed
+ * uruchomieniem silnika, po uruchomieniu widział same zera: poprawienie deklaracji
+ * wymagało wpisania jej od nowa, z pamięci.
+ *
  * Skład jest OPCJONALNY — zapis bez liczb odnotowuje sam fakt załadunku (zero nigdy
  * nie udaje pomiaru: suma 0 zapisuje się jako „skład niepodany", nie „zero skoczków";
  * normalizacja w `SessionCommands.boarding`). Dlatego przycisk zapisu nie ma stanu
@@ -27,6 +33,7 @@ import { ActionButton } from '../data/ActionButton';
 import { CounterRow } from '../input/CounterRow';
 import { toneColors } from '../tone';
 import type { JumperCounts } from './DropSheet';
+import { jumpersKey } from './jumpersKey';
 
 export interface BoardingSheetProps {
   visible: boolean;
@@ -37,6 +44,14 @@ export interface BoardingSheetProps {
   flightNumber: number;
   /** Czas załadunku (sformatowany, UTC). */
   time: string;
+  /**
+   * Skład, który JUŻ czeka na zrzut (issue #28) — liczniki otwierają się z nim, a zapis
+   * zastępuje tamtą deklarację. `null` = nic nie czeka albo załadunek był bez liczb:
+   * liczniki startują od zera.
+   */
+  initialJumpers?: JumperCounts | null;
+  /** Czas czekającej deklaracji (sformatowany, UTC) — podpis prefillu; `null` gdy brak. */
+  declaredTime?: string | null;
   busy?: boolean;
   onConfirm: (jumpers: JumperCounts) => void;
   onCancel: () => void;
@@ -48,6 +63,8 @@ export function BoardingSheet({
   visible,
   flightNumber,
   time,
+  initialJumpers = null,
+  declaredTime = null,
   busy = false,
   onConfirm,
   onCancel,
@@ -58,10 +75,18 @@ export function BoardingSheet({
   const keyboardHeight = useKeyboardHeight();
   const [jumpers, setJumpers] = useState<JumperCounts>(EMPTY);
 
-  // Każde otwarcie zaczyna od zera — poprzedni skład już poleciał (albo właśnie leci).
+  // Każde otwarcie zaczyna od składu CZEKAJĄCEGO na zrzut, a bez niego od zera —
+  // ta sama reguła i ten sam stan co w arkuszu zrzutu (issue #28). Po zrzucie prefillu
+  // nie ma: projekcja skonsumowała załadunek, bo tamci skoczkowie już wyszli.
+  //
+  // W zależnościach stoi KLUCZ SKŁADU, nie identyczność obiektu: projekcja przelicza się
+  // po każdym zdarzeniu sesji (choćby po kołowaniu z autodetekcji), więc `initialJumpers`
+  // bywa nowym obiektem o tych samych liczbach — a effect zależny od identyczności
+  // kasowałby wtedy liczniki pod palcami pilota.
+  const prefillKey = jumpersKey(initialJumpers);
   useEffect(() => {
-    if (visible) setJumpers(EMPTY);
-  }, [visible]);
+    if (visible) setJumpers(initialJumpers ?? EMPTY);
+  }, [visible, prefillKey]);
 
   const total = jumpers.tandem + jumpers.aff + jumpers.solo;
   const set = (key: keyof JumperCounts) => (value: number) =>
@@ -142,11 +167,22 @@ export function BoardingSheet({
             </AppText>
           </View>
 
-          {/* Bez liczb też ma sens — mówimy to, zanim pilot zacznie szukać, czemu
+          {/* Dwa podpisy, bo arkusz opowiada dwie różne rzeczy. Z prefillem: skąd wzięły
+              się liczby, zanim pilot czegokolwiek dotknął, i co zrobi zapis (deklaracja
+              zostaje zastąpiona — liczy się skład faktycznie siedzący na pokładzie).
+              Bez prefillu: że bez liczb też ma sens — zanim pilot zacznie szukać, czemu
               wolno zapisać zero. */}
-          <AppText variant="mono" tone="muted" style={styles.note}>
-            Skład możesz pominąć — zapis i tak odnotuje załadunek w logu
-          </AppText>
+          {initialJumpers != null ? (
+            <AppText variant="mono" tone="muted" style={styles.note}>
+              {declaredTime != null
+                ? `Skład zadeklarowany ${declaredTime} UTC — zapis go zaktualizuje`
+                : 'Skład zadeklarowany wcześniej — zapis go zaktualizuje'}
+            </AppText>
+          ) : (
+            <AppText variant="mono" tone="muted" style={styles.note}>
+              Skład możesz pominąć — zapis i tak odnotuje załadunek w logu
+            </AppText>
+          )}
 
           <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
             <ActionButton

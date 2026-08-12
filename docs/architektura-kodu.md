@@ -155,7 +155,10 @@ zewnątrz" stanie się z adapterem Google.
 Backlog UX z audytów wdrożony w RN (2026-07-29, mockupy 2026-07-28): wariant 05g —
 utrata fixa GPS to degradacja CZUJNIKA, osobna oś od sieci (watchdog świeżości
 w `useFlightDetection` na `GPS_STALE_SEC` z domeny; baner-przyrząd z czasem ostatniego
-fixa, siatka „— —", LAND·RĘCZNIE amber; napisy w `screens/gpsLoss.ts`); ekran 13
+fixa, siatka „— —", LAND·RĘCZNIE amber; napisy w `screens/logic/gpsLoss.ts`
+— **z tego opisu nieaktualne jest sygnalizowanie stanu GPS w pasku akcji**: 2026-08-12
+przycisk stracił i dopisek „· ręcznie", i ton amber, a baner — oba przyciski i czerwień
+(patrz tabela komponentów: `NoGpsBanner`, `CockpitActions`)); ekran 13
 Ustawienia (motyw kartami, `PinChangeSheet` offline, wylogowanie z ochroną outboxa
 przez `authStore.logout`, diagnostyka GPS z żywą subskrypcją i pozycją DDM, stempel
 cache referencyjnego) — zębatki kokpitu prowadzą tu zamiast do StyleGuide; 08 — pełny
@@ -873,8 +876,8 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `CorrectionSheet` | arkusz korekty: czas ±1 min, wpływ na czasy, strefa „nie było" | 04c |
 | `LeaveCockpitSheet` | arkusz blokady wyjścia: co trzyma pilota w kokpicie + jedyne wyjście („ZDAJ SAMOLOT" → 09B). Wywołuje go `usePreventRemove` w kokpicie, więc łapie przycisk sprzętowy ORAZ gest cofania | 04d |
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
-| `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
-| `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
+| `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa, przypis **amber** jak baner — 2026-08-12) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
+| `NoGpsBanner` | baner-przyrząd braku fixa GPS (status): wiek fixa i co dalej. **Zawsze AMBER i bez przycisków** (2026-08-12) — trzy stany (rozruch / utrata / brak uprawnienia) różni TREŚĆ, bo dla pilota znaczą to samo; czerwień pochodziła z rejestru ryzyk §8, który stopniuje skutki, nie banery. „Zapisz zdarzenie" i „Lista ręczna" dublowały pasek akcji i kafelek z 04, a na przyrządzie czytały się jak drugi pasek | `.no-gps` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy — bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami (nieprzezroczyste — zakrywają kreskę), chipy, cel korekty ≥ 44 px. **Zieleń ma tylko wiersz `live`** — historia jest neutralna | `.day-log`, `.cycle-log` |
 | `ClaimStrip` | pasek sesji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile lotów — **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |

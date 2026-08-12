@@ -1692,3 +1692,50 @@ użytkownika po przeglądzie).
 > między jednym a drugim otwarciem.
 
 **Index** — karty 16 i 16A, opis wejścia w 14 przepisany („miniaturą ze szczegółów lotu").
+
+---
+
+## 2026-08-12 — Załadunek otwarty ponownie (issue #28) + „· ręcznie" z paska akcji
+
+**05i — arkusz otwarty PONOWNIE pokazuje skład, który już czeka na zrzut.**
+> Zgłoszenie z urządzenia: pilot zadeklarował skład przed uruchomieniem silnika, po
+> uruchomieniu wszedł w „Załadunek" jeszcze raz i zobaczył same zera. Arkusz kasował
+> liczniki przy każdym otwarciu, choć ten sam stan (`boarding` czekający na zrzut)
+> arkusz zrzutu 05e czyta jako prefill od issue #21. Teraz liczniki otwierają się
+> deklaracją, a podpis pod nimi mówi skąd i co zrobi zapis: „Skład zadeklarowany
+> 16:12 UTC — zapis go zaktualizuje". Załadunek BEZ liczb prefillem nie jest — zerowe
+> liczniki z takim podpisem ogłaszałyby deklarację pustego samolotu, a pilot
+> zadeklarował sam fakt wejścia skoczków na pokład.
+
+**05g — kokpit bez fixa wygląda jak kokpit z fixem; różnicę niesie WYŁĄCZNIE baner i siatka.**
+> Trzy sygnały mówiły to samo, każdy inaczej, i żaden nie rozróżniał niczego:
+> 1. **dopisek „· ręcznie"** na przycisku głównym („Landing · ręcznie" → **„Landing"**),
+> 2. **awans przycisku na amber** (→ neutralny, jak w 05/05A/05D),
+> 3. **hero fazy na amber** (`.phase-hero-name.warn` → `.air`, czyli kolor lotu).
+> Tap w przycisk główny JEST ręcznym zapisem zawsze, także przy zdrowym odbiorniku,
+> a pilot sięga po niego zawsze z tego samego powodu — logger nie rozpoznał stanu.
+> Czy zawinił brak fixa, czy zła detekcja przy pracującym GPS-ie, nie zmienia ani
+> czynności, ani zapisu. Stan czujnika opisuje baner (Typ A — przyrząd) i komórki
+> siatki („— —" + „brak fixa od 15:58"); pasek akcji mówi tylko, JAKIE zdarzenie
+> zapisuje, a hero — jaka jest faza (lot znany ze zdarzeń dostaje kolor lotu).
+
+**05g — stan „brak GPS" ma JEDEN kolor: amber. Czerwień znika z banera i z siatki.**
+> Ten sam stan świecił raz na żółto, raz na czerwono: amber przy rozruchu odbiornika,
+> czerwień przy utracie fixa i przy braku uprawnienia — a pod spodem, na obu wariantach,
+> czerwone przypisy „brak fixa od 15:58" w komórkach siatki. Czerwień pochodziła
+> z rejestru ryzyk (§8 klasyfikuje przegapione detekcje jako 🔴), ale rejestr stopniuje
+> SKUTKI, nie banery. Dla pilota wszystkie trzy stany znaczą jedno — autodetekcja nie
+> pracuje, zapisujesz sam z paska akcji — więc różni je TREŚĆ („szukam nieba" /
+> „ostatni fix 15:58" / „nadaj uprawnienie"), a nie kolor. Zostaje ostrzeżenie: nic
+> się nie zepsuło nieodwracalnie, ale trzeba wziąć sprawy w swoje ręce. Za banerem
+> poszły przypis siatki, przekreślona ikona GPS i akcenty canvasu (karta w index,
+> badge, nav-strip).
+
+**05g — baner traci oba przyciski („Zapisz zdarzenie", „Lista ręczna").**
+> Pomyślane jako dwie skale problemu, na urządzeniu czytane jako drugi pasek akcji nad
+> tym prawdziwym. „Zapisz zdarzenie" otwierało dokładnie ten sam arkusz 05F, co przycisk
+> główny na dole; „Lista ręczna" dublowała kafelek z 04, który i tak pojawia się dopiero
+> **po STOP ENGINE** — przegapione loty odtwarza się po biegu, nie w powietrzu. Baner
+> zostaje przyrządem: mówi, co się stało z czujnikiem, i wskazuje pasek akcji zdaniem,
+> nie własnym przyciskiem. Przy okazji treść banerów nazywa przyciski tak, jak są
+> podpisane na ekranie („T-O / LAND" → „Take off / Landing").

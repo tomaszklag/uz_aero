@@ -89,7 +89,9 @@
   .total-lbl { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--blue); opacity:0.85; }
   .total-val { font-family:var(--font-display); font-size:30px; letter-spacing:1px; color:var(--blue); line-height:1; }
 
-  /* Skład jest opcjonalny — mówimy to, zanim pilot zacznie szukać, czemu wolno zapisać zero. */
+  /* Skład jest opcjonalny — mówimy to, zanim pilot zacznie szukać, czemu wolno zapisać zero.
+     Ten sam slot niesie podpis prefillu, gdy arkusz otwiera się PONOWNIE (issue #28) —
+     patrz opis stanu w panelu wariantów pod telefonem. */
   .optional-note { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; }
 
   .sheet-actions { display:grid; grid-template-columns:1fr 2fr; gap:9px; }
@@ -245,6 +247,14 @@
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
+  <div class="vp-item">
+    <span class="vp-badge blue">05I</span>
+    <span class="vp-body">
+      <span class="vp-name">…otwarty PONOWNIE (skład już czeka)</span>
+      <span class="vp-when">Ten sam arkusz, gdy załadunek jest już zapisany, a zrzutu jeszcze nie było (np. skład wsiadł przed uruchomieniem silnika i pilot wraca poprawić liczby). Liczniki otwierają się ZADEKLAROWANYM składem — tym samym, którym otwiera się arkusz zrzutu — a w miejscu podpisu o opcjonalności stoi „Skład zadeklarowany 16:12 UTC — zapis go zaktualizuje". Załadunek bez liczb prefillem nie jest: zerowe liczniki z takim podpisem ogłaszałyby deklarację pustego samolotu. Do 2026-08-12 arkusz kasował liczniki przy każdym otwarciu i pokazywał same zera (issue #28).</span>
+    </span>
+    <span class="vp-tag">stan tego arkusza</span>
+  </div>
   <a class="vp-item" href="05e-zrzut.html">
     <span class="vp-badge blue">05E</span>
     <span class="vp-body">

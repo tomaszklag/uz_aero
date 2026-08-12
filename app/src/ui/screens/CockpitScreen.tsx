@@ -62,6 +62,7 @@ import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
+import { boardingPrefill } from './logic/boardingPrefill';
 import { buildCockpitActions } from './logic/cockpitActions';
 import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
 import { currentFlightNumber } from './logic/flightNumber';
@@ -327,6 +328,14 @@ export function CockpitScreen({
   );
 
   /**
+   * Skład CZEKAJĄCY na zrzut — jedno źródło dla obu arkuszy skokowych (issue #28):
+   * zrzut otwiera nim liczniki do potwierdzenia, a ponownie otwarty załadunek pokazuje
+   * to, co pilot już zadeklarował (zamiast kasować się do zera). Reguła i przypadek
+   * „załadunek bez liczb" mieszkają w `logic/boardingPrefill.ts`.
+   */
+  const pendingBoarding = boardingPrefill(projection.boarding);
+
+  /**
    * Arkusz załadunku (05i) — JEDEN dla obu trybów kokpitu, jak arkusz blokady wyjścia:
    * przed pierwszym uruchomieniem silnika załadunek wchodzi z siatki akcji naziemnych
    * (04a), między lotami — ze slotu paska akcji (issue #21 pkt 7). Skład jest
@@ -341,6 +350,8 @@ export function CockpitScreen({
       visible={boardingOpen}
       flightNumber={currentFlightNumber(projection.flights.length, inFlight)}
       time={timeUtc(boardingOpenedAt)}
+      initialJumpers={pendingBoarding.jumpers}
+      declaredTime={pendingBoarding.at != null ? timeUtc(pendingBoarding.at) : null}
       busy={busy}
       onConfirm={(jumpers) => {
         setBoardingOpen(false);
@@ -422,38 +433,37 @@ export function CockpitScreen({
           showsVerticalScrollIndicator={false}
         >
           {/* ── `.no-gps` (05g): baner typu STATUS — przyrząd, znika sam z powrotem fixa.
-               Trzy stany: rozruch (amber, spokojny), utrata (czerwony 05g), brak
-               uprawnienia (czerwony + instrukcja ustawień). ── */}
+               Trzy stany, JEDEN kolor (amber, decyzja 2026-08-12): rozruch odbiornika,
+               utrata fixa i brak uprawnienia różnią się TREŚCIĄ, bo dla pilota znaczą
+               to samo — autodetekcja nie pracuje, zapisujesz sam z paska akcji.
+
+               BEZ PRZYCISKÓW (decyzja 2026-08-12): zapis zdarzeń mieszka w pasku akcji
+               na dole i nigdzie indziej. „Zapisz zdarzenie" otwierało stąd ten sam
+               arkusz 05f, co przycisk główny paska, a „Lista ręczna" dublowała kafelek
+               z 04 — na przyrządzie wyglądało to jak drugi, konkurencyjny pasek akcji. ── */}
           {signal === 'acquiring' && (
             <NoGpsBanner
-              tone="amber"
               title="GPS: wyszukiwanie sygnału · autodetekcja uzbraja się"
               text={gpsAcquiringText()}
-              onManualEvent={() => setManualOpen(true)}
-              onManualList={() => navigation.navigate('ManualLog')}
             />
           )}
           {signal === 'permission' && (
             <NoGpsBanner
               title="GPS: brak uprawnienia · autodetekcja wyłączona"
               text={gpsPermissionText()}
-              onManualEvent={() => setManualOpen(true)}
-              onManualList={() => navigation.navigate('ManualLog')}
             />
           )}
-          {signal === 'lost' && (
-            <NoGpsBanner
-              text={gpsLossText(lastFixAt, now)}
-              onManualEvent={() => setManualOpen(true)}
-              onManualList={() => navigation.navigate('ManualLog')}
-            />
-          )}
+          {signal === 'lost' && <NoGpsBanner text={gpsLossText(lastFixAt, now)} />}
 
           <PhaseHero
             // Fazy z GPS nie znamy; „w locie" wiemy ZE ZDARZEŃ — projekcja nie potrzebuje fixa.
             phase={gpsLost && inFlight ? 'In Flight' : PHASE_LABEL[phase.phase]}
             icon={gpsLost && inFlight ? 'phase-cruise' : PHASE_ICON[phase.phase]}
-            tone={gpsLost ? 'amber' : PHASE_TONE[phase.phase]}
+            // Ton z FAZY, nie ze stanu odbiornika (decyzja 2026-08-12): brak fixa
+            // przemalowywał hero na amber, a to sygnał o czujniku doklejony do napisu
+            // o locie. Że fazy nie znamy, mówi linia `detail` niżej i baner wyżej.
+            // Lot znany ze zdarzeń dostaje ton lotu — tę samą decyzję, co nazwa i ikona.
+            tone={gpsLost && inFlight ? PHASE_TONE.cruise : PHASE_TONE[phase.phase]}
             // Linia kontekstu tylko przy utracie GPS (FAZA NIEZNANA · BEZ FIXA OD…).
             // Prędkość wznoszenia wyleciała (2026-08-04): rejestrator, nie przyrząd —
             // wariometr pilot ma na tablicy, a trend niesie sama nazwa fazy.
@@ -550,12 +560,12 @@ export function CockpitScreen({
         </ScrollView>
 
         <CockpitActions
-          // Etykieta, ikona, ton, obecność i przygaszenie zrzutu — wszystko z
+          // Etykieta, ikona, obecność i przygaszenie zrzutu — wszystko z
           // `logic/cockpitActions.ts`: sekwencja idle → Taxi → Take off → Landing,
-          // zrzut tylko w powietrzu dnia skokowego i aktywny w Cruise, „· ręcznie"
-          // + amber przy utracie GPS (05g), pełne nazwy zamiast skrótów (issue #19).
+          // zrzut tylko w powietrzu dnia skokowego i aktywny w Cruise, pełne nazwy
+          // zamiast skrótów (issue #19). Stanu GPS-a pasek nie sygnalizuje niczym
+          // (decyzja 2026-08-12) — od tego jest baner i siatka parametrów.
           primaryLabel={actions.primaryLabel}
-          primaryTone={actions.primaryTone ?? undefined}
           primaryIcon={actions.primaryIcon}
           onPrimary={() => {
             // Kołowanie zapisuje się OD RAZU — bez arkusza 05f i bez okna COFNIJ:
@@ -587,8 +597,8 @@ export function CockpitScreen({
           // nie zrobił tego za niego.
           altitudeFt={dropAltitudeFt}
           client={projection.client}
-          initialJumpers={projection.boarding?.jumpers ?? null}
-          boardingTime={projection.boarding != null ? timeUtc(projection.boarding.at) : null}
+          initialJumpers={pendingBoarding.jumpers}
+          boardingTime={pendingBoarding.at != null ? timeUtc(pendingBoarding.at) : null}
           busy={busy}
           onConfirm={(jumpers) => {
             setDropOpen(false);

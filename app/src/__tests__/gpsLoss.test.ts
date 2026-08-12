@@ -29,6 +29,9 @@ describe('gpsLoss — baner i adnotacje 05g', () => {
     const text = gpsLossText(T, T + 12 * 60_000);
     expect(text).toContain('Ostatni fix 15:58 UTC (12 min temu).');
     expect(text).toContain('zapisuj je ręcznie');
+    // Baner nazywa przyciski tak, jak są podpisane w pasku akcji — od 2026-08-12
+    // to on niesie całe ostrzeżenie, bo z przycisku znikł dopisek „· ręcznie".
+    expect(text).toContain('przyciskiem Landing / Take off');
     expect(text).toContain('Timery i log dnia liczą dalej z zegara.');
   });
 
@@ -65,7 +68,9 @@ describe('gpsSignalState — rozruch to nie awaria (decyzja UX 2026-08-04)', () 
 
   it('treści rozruchu i uprawnień mówią, co robić, bez języka awarii', () => {
     expect(gpsAcquiringText()).toContain('wyszukuje sygnał');
-    expect(gpsAcquiringText()).toContain('T-O / LAND');
+    // Przyciski nazywane tak, jak są podpisane w pasku akcji — skróty „T-O / LAND"
+    // odsyłały do napisów, których nie ma na ekranie od issue #19.
+    expect(gpsAcquiringText()).toContain('przyciskiem Take off / Landing');
     expect(gpsAcquiringText()).not.toMatch(/brak sygnału|awari/i);
     expect(gpsPermissionText()).toContain('uprawnienia lokalizacji');
     expect(gpsPermissionText()).toContain('ustawieniach systemu');

@@ -32,6 +32,7 @@ import { ActionButton } from '../data/ActionButton';
 import { CounterRow } from '../input/CounterRow';
 import { Icon } from '../foundation/Icon';
 import { toneColors } from '../tone';
+import { jumpersKey } from './jumpersKey';
 
 export interface JumperCounts {
   tandem: number;
@@ -91,11 +92,15 @@ export function DropSheet({
   const [jumpers, setJumpers] = useState<JumperCounts>(EMPTY);
 
   // Każde otwarcie zaczyna od składu z załadunku (a bez niego — od zera): arkusz nie
-  // pamięta poprzedniego wyniesienia, bo tamten skład już wyskoczył. `initialJumpers`
-  // w zależnościach domyka rzadki wyścig arkusz-otwarty-podczas-zapisu-załadunku.
+  // pamięta poprzedniego wyniesienia, bo tamten skład już wyskoczył. Skład
+  // w zależnościach domyka rzadki wyścig arkusz-otwarty-podczas-zapisu-załadunku —
+  // ale jako KLUCZ LICZB, nie identyczność obiektu (`jumpersKey`): projekcja wraca
+  // ze strumienia po każdym zdarzeniu, a przeładowanie prefillu przy niezmienionym
+  // składzie kasowałoby liczniki pod palcami pilota.
+  const prefillKey = jumpersKey(initialJumpers);
   useEffect(() => {
     if (visible) setJumpers(initialJumpers ?? EMPTY);
-  }, [visible, initialJumpers]);
+  }, [visible, prefillKey]);
 
   const total = jumpers.tandem + jumpers.aff + jumpers.solo;
   const set = (key: keyof JumperCounts) => (value: number) =>
