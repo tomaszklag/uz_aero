@@ -41,6 +41,10 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { MyDayScreen } from '../screens/MyDayScreen';
 import { ReleaseAircraftScreen } from '../screens/ReleaseAircraftScreen';
 import { StatsScreen } from '../screens/StatsScreen';
+import {
+  FlightDetailsScreen,
+  type FlightDetailsScreenParams,
+} from '../screens/FlightDetailsScreen';
 import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
 import { SyncScreen } from '../screens/SyncScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
@@ -66,7 +70,9 @@ export type RootStackParamList = {
   ReleaseAircraft: undefined;
   /** 10 — detale i korekty JEDNEJ sesji; wejście ołówkiem wiersza na 01 i z historii (12). */
   Stats: undefined;
-  /** 14 — ślad lotu: trasa, profil pionowy i log punktów. Wejście z tabeli lotów na 10. */
+  /** 16 — szczegóły JEDNEGO lotu: miniatura śladu, czasy, zrzuty. Wejście z tabeli lotów na 10. */
+  FlightDetails: FlightDetailsScreenParams;
+  /** 14 — ślad lotu: trasa, profil pionowy i log punktów. Wejście miniaturą z 16 (issue #25). */
   Track: TrackScreenParams;
   /** 11 — status synchronizacji; wejście z ustawień (13), sekcja „Synchronizacja". */
   Sync: undefined;
@@ -129,6 +135,7 @@ export function RootNavigator({
         <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
+        <Stack.Screen name="FlightDetails" component={FlightDetailsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />
         <Stack.Screen name="Sync" component={SyncScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />

@@ -199,8 +199,11 @@
     display:inline-flex; align-items:center;
   }
   .edit-btn:hover { border-color:var(--border-strong); color:var(--text-secondary); }
-  /* Numer lotu = wejście w ślad (13). Cel dotykowy 44 px bez dokładania drugiej
-     ikony do wąskiej tabeli — kropka pod cyfrą mówi, że to jest klikalne. */
+  /* Numer lotu = wejście w SZCZEGÓŁY LOTU (16), nie prosto w ślad (issue #25 pkt 2):
+     lista lotów pokazuje, KTÓRE loty były, a nie jest skrótem do map. Ślad jest
+     jednym z detali lotu i mieszka piętro niżej — 16 wchodzi w 14 miniaturą.
+     Cel dotykowy 44 px bez dokładania drugiej ikony do wąskiej tabeli — kreska
+     pod cyfrą mówi, że to jest klikalne. */
   .flight-btn {
     display:inline-flex; align-items:center; justify-content:center;
     min-width:44px; min-height:44px; text-decoration:none;
@@ -386,7 +389,7 @@
                2026-08-10): stare 10:26→11:01 wymagałoby drugiego uruchomienia. -->
           <tbody>
             <tr>
-              <td><a href="14-slad.html" class="flight-btn" title="Ślad lotu 1">1</a></td>
+              <td><a href="16-lot.html" class="flight-btn" title="Szczegóły lotu 1">1</a></td>
               <td>08:20</td>
               <td>09:01</td>
               <td>00:41</td>
@@ -394,7 +397,7 @@
               <td><a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lotu — zmień czas albo oznacz zdarzenie jako błędne"><svg width="15" height="15" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a></td>
             </tr>
             <tr>
-              <td><a href="14b-slad-brak.html" class="flight-btn no-track" title="Lot wpisany ręcznie — brak zapisu GPS">2</a></td>
+              <td><a href="16a-lot-bez-sladu.html" class="flight-btn no-track" title="Szczegóły lotu 2 — wpisany ręcznie, bez zapisu GPS">2</a></td>
               <td>09:12</td>
               <td>09:47</td>
               <td>00:35</td>
@@ -521,7 +524,7 @@
     <span class="vp-badge">10</span>
     <span class="vp-body">
       <span class="vp-name">Rozliczenie samolotu — z lotami</span>
-      <span class="vp-when">Detale JEDNEJ sesji, wywoływane ołówkiem wiersza w logu dnia (01) i kartą dnia w historii (12): tabela lotów z ołówkami korekty, bilans paliwa i MH, rozliczenie zrzutów. Zdanie samolotu już POTWIERDZIŁO dane — tu się je tylko ogląda i koryguje, niczego się nie zatwierdza ani nie wysyła. Opisuje oś SAMOLOTU — paliwo i MH nie sumują się po pilocie lecącym dwiema maszynami.</span>
+      <span class="vp-when">Detale JEDNEJ sesji, wywoływane ołówkiem wiersza w logu dnia (01) i kartą dnia w historii (12): tabela lotów (numer → szczegóły lotu 16, ołówek → korekta), bilans paliwa i MH, rozliczenie zrzutów. Zdanie samolotu już POTWIERDZIŁO dane — tu się je tylko ogląda i koryguje, niczego się nie zatwierdza ani nie wysyła. Opisuje oś SAMOLOTU — paliwo i MH nie sumują się po pilocie lecącym dwiema maszynami.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -542,7 +545,8 @@
   <a href="10-statystyki.html" class="active">10 Rozliczenie</a>
   <a href="10a-statystyki-zero.html">10A Bez lotów</a>
   <span>·</span>
-  <a href="14-slad.html">14 Ślad lotu</a>
+  <a href="16-lot.html">16 Lot →</a>
+  <a href="16a-lot-bez-sladu.html">16A Bez śladu</a>
   <span>·</span>
   <a href="11-eksport.html">11 Synchronizacja</a>
 </nav>

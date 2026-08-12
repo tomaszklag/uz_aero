@@ -217,9 +217,11 @@
   <div class="screen">
 
     <div class="app-header">
-      <a href="10-statystyki.html" class="back-btn">
+      <!-- Powrót do SZCZEGÓŁÓW LOTU (16), nie do rozliczenia sesji: od issue #25
+           ślad otwiera się miniaturą z 16 i tam wraca. -->
+      <a href="16-lot.html" class="back-btn">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5L4 6.5l4 4"/></svg>
-        Rozliczenie
+        Lot
       </a>
       <div class="app-header-center">
         <div class="screen-title">ŚLAD LOTU</div>
@@ -518,7 +520,7 @@
     <span class="vp-badge">14</span>
     <span class="vp-body">
       <span class="vp-name">Ślad lotu — pełny</span>
-      <span class="vp-when">Standard: jest zapis GPS. Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy, log punktów ze stanem bramki jakości (scenariusz 22 CZE, lot 3 — zrzut z 12 800 ft). Ekran nie pobiera niczego z sieci.</span>
+      <span class="vp-when">Standard: jest zapis GPS. Wejście miniaturą śladu ze szczegółów lotu (16) — z listy lotów skrótu nie ma (issue #25). Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy, log punktów ze stanem bramki jakości (scenariusz 22 CZE, lot 3 — zrzut z 12 800 ft). Ekran nie pobiera niczego z sieci.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -534,7 +536,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="10-statystyki.html">← 10 Rozliczenie</a>
+  <a href="16-lot.html">← 16 Lot</a>
   <span>·</span>
   <a href="14-slad.html" class="active">14 Ślad</a>
   <a href="14b-slad-brak.html">14B Brak</a>

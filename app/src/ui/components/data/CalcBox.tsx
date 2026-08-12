@@ -4,8 +4,8 @@
  * Tonowane pudełko z rozpisanym RACHUNKIEM: kilka wierszy „skąd to wiemy", linia,
  * wyróżniony wiersz wyniku i przypis mówiący, co z tym wynikiem zrobić.
  *
- * Dlaczego osobny komponent, a nie `SummaryGrid`: siatka podsumowania odpowiada na
- * pytanie „co zapiszę" (klucz nad wartością, dwie kolumny, wszystko równorzędne).
+ * Dlaczego osobny komponent, a nie `StatGrid`: siatka bilansowa odpowiada na
+ * pytanie „co zapiszę" (klucz nad wartością, komórki równorzędne).
  * Tutaj wiersze są **przesłankami**, a nie danymi do zapisu — jeden z nich jest
  * wnioskiem i musi się wyróżniać, a całość niesie zastrzeżenie („punkt kontrolny,
  * zweryfikuj z dokumentacją"). Wartości z CalcBox-a nie trafiają wprost do rejestru:

@@ -7,8 +7,8 @@
  * końcowe i musi mieć bilans dnia przed oczami przez cały czas — inaczej sprawdzenie
  * „czy te 6:39 się zgadza" wymagałoby przewijania w górę i z powrotem.
  *
- * Czym różni się od `SummaryGrid`: tam sześć pozycji w dwóch kolumnach, do czytania.
- * Tu cztery liczby w jednej linii, do zerkania.
+ * Czym różni się od `StatGrid`: tam komórki w dwóch kolumnach, z jednostką słowem —
+ * bilans do przepisania do dokumentów. Tu cztery liczby w jednej linii, do zerkania.
  */
 
 import React from 'react';

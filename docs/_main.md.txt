@@ -756,6 +756,10 @@ na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
 - **zdanie samolotu:** `09b-zdaj-samolot` (odczyt wymagany = zatwierdzenie logu sesji) ·
   `09c-zdaj-bez-lotu` (pogoda / usterka); ekrany `09`/`09a` usunięte z pivotem 2026-08-10
 - **rozliczenie samolotu:** `10-statystyki` (z lotami) · `10a-statystyki-zero` (bez lotów)
+- **szczegóły lotu (issue #25):** `16-lot` (jest zapis GPS — miniatura śladu prowadzi
+  w pełny ślad `14`) · `16a-lot-bez-sladu` (lot ręczny albo zapis starszy niż 14 dni —
+  kafelek z POWODEM, celowo bez linku: za nim nie ma już żadnych detali). Wariant `14b`
+  jest odtąd stanem ZABEZPIECZAJĄCYM pełnej mapy, nie zwykłym celem drogi
 
 **Motywy:** para ciemna — Night (domyślny), Amber/NVG; para jasna pod pełne słońce —
 Paper (ciepła biel), Solar (czysta biel), Sky (chłodny błękitno-szary).
@@ -807,6 +811,11 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 [01 Mój dzień]  kolejna sesja dopisuje się do listy dnia
     ├─ OŁÓWEK wiersza logu → [10 Detale sesji]  paliwo, MH, zrzuty, korekty — per
     │   sesja, nie per doba; niczego się nie zatwierdza (zdanie już potwierdziło dane)
+    │      └─ NUMER lotu w tabeli → [16 Szczegóły lotu]  czasy, miejsce, zrzuty tego
+    │          wyniesienia i UPROSZCZONA miniatura śladu
+    │             └─ miniatura → [14 Ślad lotu]  trasa, profil pionowy, log punktów
+    │          (issue #25: z listy lotów nie ma skrótu prosto na mapę — ślad opisuje
+    │          LOT, więc jest jego detalem, a nie własnością sesji)
     ├─ [13 Ustawienia] → [11 Synchronizacja]  status wysyłki / eksportu serwera
     │   (nie akcja eksportu; z 10 zniknął „ZATWIERDŹ → SYNC")
     └─ [12 Historia]  poprzednie dni, okno korekty 24 h

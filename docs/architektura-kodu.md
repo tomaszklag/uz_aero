@@ -760,8 +760,9 @@ root i nawigację. Ekran nie wie, skąd biorą się zależności.
 ### `screens/logic/` — logika wyniesiona z ekranu
 
 Kilkanaście czystych modułów (`statsDay`, `refuelMath`, `cockpitLog`, `historyDays`,
-`syncStatus`, `operations`, `cockpitFuel`…) liczących to, co ekran pokazuje: statystyki dnia,
-arytmetykę dolewki, log cyklu, listę dni, nazwy operacji i napis trasy. Bywa, że moduł
+`syncStatus`, `operations`, `cockpitFuel`, `flightDetails`…) liczących to, co ekran pokazuje:
+statystyki dnia, arytmetykę dolewki, log cyklu, listę dni, nazwy operacji, napis trasy
+i treść ekranu jednego lotu (16). Bywa, że moduł
 rozstrzyga nie wartość, a PODZIAŁ RÓL między elementami ekranu — `cockpitFuel.ts` mówi,
 czy litry niesie pasek paliwa, czy podpis kafelka „Tankowanie", żeby ta sama liczba nie
 stała na ekranie dwa razy ani nie zniknęła z niego całkiem. **Bez importów z Reacta** —
@@ -855,8 +856,6 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
 | `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c (godzin klamry służby nie zbiera — klamra usunięta, issue #23) |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
-| `SummaryHero` | karta „to zaraz zapiszesz": kod, wielki napis, tagi | `.summary-card` |
-| `SummaryGrid` | dwukolumnowa siatka klucz/wartość do podsumowań | `.summary-grid` |
 | `KeyValueRow` | wiersz klucz—wartość (kroje `micro`/`mono`, `valueTone`, `divider`) | `.diag-row` (13), `.row` „Dane dnia" (11a) |
 | `SettingsAction` | wiersz akcji ustawień: ikona, nazwa, podpis (przy blokadzie niesie powód), strzałka | `.action-item` (13) |
 | `SummaryStrip` | pasek bilansu dnia poza obszarem przewijania | `.summary-strip` |
@@ -873,7 +872,6 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `DropSheet`, `ManualEventSheet` | arkusze zrzutu i wpisu ręcznego nad kokpitem | 05e / 05f |
 | `CorrectionSheet` | arkusz korekty: czas ±1 min, wpływ na czasy, strefa „nie było" | 04c |
 | `LeaveCockpitSheet` | arkusz blokady wyjścia: co trzyma pilota w kokpicie + jedyne wyjście („ZDAJ SAMOLOT" → 09B). Wywołuje go `usePreventRemove` w kokpicie, więc łapie przycisk sprzętowy ORAZ gest cofania | 04d |
-| `Metric`, `MetricGrid` | komórka parametru i zawijana siatka | `.param-cell`, `.metric` |
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
 | `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
@@ -1342,6 +1340,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `flightPhase.test.ts` | fazy lotu i prędkości pionowej — patrz niżej |
 | `refuelMath.test.ts` | wyliczeń tankowania: zużycie L/h, limit dolewki, podziałka |
 | `statsDay.test.ts` | składania statystyk dnia: tabela lotów, zużycie, rozbicie skoczków |
+| `flightDetails.test.ts` | ekranu 16: kafle czasów lotu, metryki miniatury śladu i przynależność zrzutu do lotu liczona ze strumienia EFEKTYWNEGO (korekta przenosi zrzut do sąsiedniego lotu, unieważnienie usuwa go zupełnie) |
 | `cockpitPeek.test.ts` | podglądu cudzej sesji: świeżość migawki, treść ostrzeżeń |
 | `crewChange.test.ts` | atrybucji block time per pilot i blokad zmiany Duala |
 | `manualLog.test.ts` | grupowania logu w cykle silnikowe i wierszy oczekiwanych |

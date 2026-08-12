@@ -263,6 +263,10 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie: samolot, czasy, odczyty)
 01-moj-dzien → 12-historia; OŁÓWEK wiersza logu → 10-statystyki (detale i korekty
   TEJ sesji; „Rozliczenie" jako osobny przycisk nie istnieje)
+10-statystyki → NUMER lotu w tabeli → 16-lot (szczegóły JEDNEGO lotu: czasy, miejsce,
+  zrzuty tego wyniesienia, miniatura śladu) → miniatura → 14-slad (pełny ślad).
+  Wariant 16a = lot bez zapisu GPS; z LIST (01, tabela lotów na 10) nie ma skrótu
+  prosto na mapę (issue #25)
 11-eksport (status synchronizacji) → wejście z USTAWIEŃ (13), nie z 10 — przycisk
   „ZATWIERDŹ → SYNC" usunięty: zdanie samolotu już potwierdza dane
 ```
@@ -337,6 +341,22 @@ deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Konsekwencje:
 - łańcuch MH nie ma z dniem pilota nic wspólnego: to oś samolotu
 Pełny opis: `docs/_main.md.txt` §3.6, §3.6a — czytane RAZEM z sekcją „Sesja = jeden bieg
 silnika" wyżej.
+
+## Ślad należy do LOTU (issue #25, 2026-08-12)
+Ślad GPS opisuje jeden lot (start → lądowanie), więc nie da się go podwiesić pod listę:
+sesja z trzema lotami nie ma „swojego" śladu. Stąd jedna droga — **10 (rozliczenie
+sesji) → 16 (szczegóły lotu) → 14 (pełny ślad)**:
+- **z list wejść w ślad NIE MA**: numer wiersza na 01 jest samą liczbą porządkową,
+  a numer lotu w tabeli na 10 otwiera szczegóły lotu, nie mapę
+- **16 = szczegóły JEDNEGO lotu**: uproszczona miniatura trasy (sama linia i dwa końce —
+  bez siatki, podziałki, lotnisk i atrybucji, bo bez danych OSM nie ma czego podpisywać),
+  czasy lotu, miejsce, zrzuty TEGO wyniesienia i korekta czasów (ten sam cel, co ołówek
+  w tabeli na 10). Czasu blokowego, paliwa i MH tu NIE MA — to wielkości sesji
+- **16a = lot bez zapisu GPS** (wpis ręczny albo retencja 14 dni): w miejscu miniatury
+  kafelek z POWODEM i **bez linku** — za nim nie ma ani jednego detalu więcej. Wariant
+  `14b` zostaje jako stan zabezpieczający pełnej mapy, nie jako cel drogi
+- kod: `ui/screens/FlightDetailsScreen.tsx` + `logic/flightDetails.ts` +
+  `components/data/TrackThumbnail.tsx`; trasa `FlightDetails` w nawigacji
 
 ## Pilot i samolot — UX
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth — decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)

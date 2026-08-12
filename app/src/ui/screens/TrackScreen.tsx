@@ -1,19 +1,21 @@
 /**
  * UZ Aero — 14 ŚLAD LOTU (mockupy `design/14-slad.html`, `14a`, `14b`).
  *
- * Wejście z tabeli lotów ekranu 10: numer lotu jest przyciskiem. Ekran pokazuje trzy
- * rzeczy z mockupu w tej samej kolejności — trasę, profil pionowy i log przeliczonych
- * punktów.
+ * Wejście MINIATURĄ ze szczegółów lotu (16) — od issue #25 tabela lotów na 10 prowadzi
+ * do lotu, a nie prosto na mapę. Ekran pokazuje trzy rzeczy z mockupu w tej samej
+ * kolejności — trasę, profil pionowy i log przeliczonych punktów.
  *
  * **Wszystko liczy się LOKALNIE**, z zapisu na telefonie i z rejestru na telefonie
  * (`FlightTrackQueries`) i ekran **nie potrzebuje sieci w ogóle** — mapa nie ma kafelków
  * (decyzja 2026-08-04), tylko siatkę współrzędnych z podziałką i lotniska z katalogu
  * wbudowanego w aplikację.
  *
- * Wariant 14B (brak śladu) ma dwa powody i ekran je rozróżnia, bo znaczą co innego dla
- * pilota: lot wpisany ręcznie nigdy śladu nie miał, a lot sprzed ponad 14 dni już go
- * nie ma. W obu przypadkach czasy są prawdziwe i zostają na ekranie — brakuje wyłącznie
- * geometrii.
+ * Wariant 14B (brak śladu) jest po issue #25 stanem ZABEZPIECZAJĄCYM, nie zwykłym celem
+ * drogi: powód mówi już kafelek na 16, a tamten kafelek nigdzie nie prowadzi. Ekran
+ * zostaje, bo zapis może zniknąć (retencja 14 dni) między jednym a drugim otwarciem —
+ * i wtedy musi podać POWÓD zamiast pustej mapy. Powody są dwa i znaczą co innego: lot
+ * wpisany ręcznie nigdy śladu nie miał, a lot sprzed ponad 14 dni już go nie ma. W obu
+ * przypadkach czasy są prawdziwe i zostają na ekranie — brakuje wyłącznie geometrii.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -108,7 +110,7 @@ export function TrackScreen({
       }
       size="md"
       onBack={navigation.goBack}
-      backLabel="Statystyki"
+      backLabel="Lot"
       right={
         <SyncChip
           status={synced ? 'synced' : 'offline'}
@@ -129,7 +131,7 @@ export function TrackScreen({
         <View style={styles.content}>
           <Card title="Nie ma takiego lotu">
             <AppText variant="body" tone="muted">
-              Ten dzień nie ma lotu o tym numerze. Wróć do statystyk i wybierz lot z tabeli.
+              Ta sesja nie ma lotu o tym numerze. Wróć do rozliczenia i wybierz lot z tabeli.
             </AppText>
           </Card>
         </View>

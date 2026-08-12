@@ -101,15 +101,14 @@
   .legs { display:flex; flex-direction:column; }
   .leg-row { display:flex; align-items:center; gap:8px; padding:5px 6px 5px 0; border-bottom:1px solid var(--border); }
   .leg-row:last-child { border-bottom:none; }
-  /* Numer sesji = wejście w ślad; kreska pod cyfrą mówi, że jest klikalny (wzorzec z 10) */
+  /* Numer sesji = SAMA liczba porządkowa, nie link (issue #25 pkt 2). Prowadził
+     w ślad, a ślad jest własnością LOTU, nie sesji — sesja z trzema lotami nie ma
+     jednego śladu, więc skrót z listy musiał zgadywać, o który lot chodzi.
+     Droga jest dziś jedna: ołówek → rozliczenie (10) → lot (16) → ślad (14). */
   .leg-num {
     display:inline-flex; align-items:center; justify-content:center;
-    min-width:44px; min-height:44px; text-decoration:none; position:relative;
+    min-width:44px; min-height:44px;
     font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);
-  }
-  .leg-num::after {
-    content:''; position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
-    width:12px; height:1.5px; border-radius:1px; background:var(--green); opacity:0.5;
   }
   /* Czasy nad rejestracją: oś czasu jest treścią pierwszorzędną wiersza, maszyna
      tylko informacją (issue #23 pkt 3) — stąd hierarchia rozmiaru i koloru. */
@@ -224,13 +223,14 @@
            Sesje na liście są już ZATWIERDZONE — zdanie samolotu (09b) potwierdziło
            dane, więc po locie niczego się nie potwierdza ani nie wysyła ponownie.
            Ołówek wiersza prowadzi do DETALI TEJ SESJI (10): bilans paliwa i MH,
-           tabela lotów i tam korekty. Numer = ślad (14). -->
+           tabela lotów i tam korekty. Numer jest samą liczbą porządkową — wejścia
+           w ślad z listy NIE MA (issue #25 pkt 2), bo ślad opisuje LOT, a nie sesję. -->
       <div class="day-card">
         <div class="day-head">Log dnia · czasy UTC</div>
 
         <div class="legs">
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad sesji 1">1</a>
+            <span class="leg-num">1</span>
             <span class="leg-id">
               <span class="leg-times">08:12 → 09:05</span>
               <span class="leg-reg">SP-AXA</span>
@@ -245,7 +245,7 @@
             </a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad sesji 2">2</a>
+            <span class="leg-num">2</span>
             <span class="leg-id">
               <span class="leg-times">10:20 → 11:02</span>
               <span class="leg-reg">SP-AXA</span>
@@ -260,7 +260,7 @@
             </a>
           </div>
           <div class="leg-row">
-            <a href="14-slad.html" class="leg-num" title="Ślad sesji 3">3</a>
+            <span class="leg-num">3</span>
             <span class="leg-id">
               <span class="leg-times">13:40 → 15:10</span>
               <span class="leg-reg">SP-KLM</span>
