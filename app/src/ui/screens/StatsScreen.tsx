@@ -2,10 +2,10 @@
  * UZ Aero — 10 ROZLICZENIE SAMOLOTU.
  *
  * Odwzorowanie mockupu `design/10-statystyki.html`: okno korekty → czas blokowy sesji →
- * karty załogi → lista wzlotów → paliwo → motogodziny → zrzuty → para akcji.
+ * karty załogi → lista lotów → paliwo → motogodziny → zrzuty → para akcji.
  *
  * Rozlicza JEDNĄ SESJĘ SAMOLOTU (przejęcie → zdanie), a nie dzień pilota. Do 2026-08-06
- * były tym samym; po §3.6a nie są — służba należy do pilota, obejmuje kilka maszyn
+ * były tym samym; dziś dzień pilota to LISTA SESJI na różnych maszynach (issue #23)
  * i mieszka na „Mój dzień" (01). Dlatego bohaterem ekranu jest czas blokowy, a nie duty.
  *
  * Ekran jest **wyłącznie do odczytu**: nie emituje ani jednego zdarzenia. Wszystko, co
@@ -16,8 +16,9 @@
  *
  * Kolejność sekcji nie jest dowolna: najpierw to, co ma termin (okno korekty), potem to,
  * co pilot przepisuje do dokumentów (czas blokowy, załoga, loty), a dopiero na końcu
- * rozliczenia (paliwo, motogodziny, zrzuty). Akcje stoją pod wszystkim — „ZATWIERDŹ"
- * ma być decyzją po przeczytaniu, nie skrótem na górze ekranu.
+ * rozliczenia (paliwo, motogodziny, zrzuty). Akcje stoją pod wszystkim — a że zdanie
+ * samolotu już POTWIERDZIŁO dane (issue #23), primary to zwykły powrót do dnia,
+ * nie zatwierdzenie.
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -60,7 +61,6 @@ import {
   sessionSubtitle,
 } from './logic/statsDay';
 import { compareToNorm, normLabel, verdictLabel } from './logic/fuelNorm';
-import { legsLabel } from './logic/claimStrip';
 
 /** Kolumny listy lotów — `#` i `Typ` mają stałą szerokość, czasy dzielą resztę po równo. */
 const FLIGHT_COLUMNS = [
@@ -188,15 +188,17 @@ export function StatsScreen({
   const mhFormat = projection.mhFormat ?? 'decimal';
   const mhFormatLabel = mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny';
   /**
-   * Zakres SESJI: przejęcie → zdanie. Nie klamra służby (§3.6a) — ten ekran rozlicza
-   * jeden samolot, a służba należy do pilota i potrafi objąć kilka maszyn.
+   * Zakres SESJI: przejęcie → zdanie. Ten ekran rozlicza jeden samolot — dzień pilota
+   * to lista sesji na różnych maszynach (issue #23) i mieszka na 01, nie tutaj.
    * Sesja jeszcze trwa, dopóki `closedAt` jest puste; wtedy mówimy to wprost.
+   * Licznik na końcu liczy LOTY (mockup 10: „· 2 loty"; 10a: „· bez lotu").
    */
+  const flightCount = projection.flights.length;
   const sessionRange =
     projection.claimedAt != null
       ? `przejęty ${timeUtc(projection.claimedAt)} → ${
           projection.closedAt != null ? `zdany ${timeUtc(projection.closedAt)} UTC` : 'jeszcze w ręce'
-        } · ${legsLabel(projection.legs.length)}`
+        } · ${flightCount === 0 ? 'bez lotu' : flightsBadge(flightCount)}`
       : undefined;
 
   const fuelCells: StatCell[] = [
@@ -234,17 +236,18 @@ export function StatsScreen({
           title="ROZLICZENIE"
           size="md"
           // Powrót JEST i prowadzi na 01 (mockup 10: „‹ Dzień"). Ekran otwierał się kiedyś
-          // wyłącznie po zamknięciu dnia — dziś wchodzi się tu z „Mój dzień" linkiem przy
-          // KAŻDEJ maszynie doby, także w jej trakcie, więc droga powrotna musi istnieć.
+          // wyłącznie po zamknięciu dnia — dziś wchodzi się tu ołówkiem wiersza sesji
+          // na 01 i kartą dnia w historii (12), także w trakcie doby, więc droga
+          // powrotna musi istnieć.
           onBack={() => navigation.navigate('MyDay')}
           backLabel="Dzień"
           subtitle={sessionSubtitle(aircraft, projection.claimedAt, projection.closedAt)}
           right={
             <>
               <Tag
-                // Plakietka liczy WZLOTY, nie loty (mockup 10): jednostką sesji jest cykl
-                // silnika, a kołowanie techniczne bez startu też jest wzlotem.
-                label={legsLabel(projection.legs.length)}
+                // Plakietka liczy LOTY (mockup 10: „2 loty"; 10a: „0 lotów") — „wzlot"
+                // zlał się z sesją przy pivocie 2026-08-10 i wypadł ze słownika.
+                label={flightsBadge(flightCount)}
                 tone="green"
                 size="md"
                 style={{ borderRadius: theme.radius.pill }}
@@ -273,12 +276,17 @@ export function StatsScreen({
             icon="edit"
             onPress={() => navigation.navigate('ManualLog')}
           />
+          {/* Było „ZATWIERDŹ → SYNC" i przeżyło w kodzie dłużej niż w mockupie
+              (uwaga użytkownika po issue #23): zdanie samolotu już POTWIERDZIŁO dane,
+              więc po locie niczego się nie zatwierdza ani nie wysyła ponownie —
+              rozliczenie tylko opisuje sesję, a jedyne sensowne wyjście to powrót.
+              Status synchronizacji mieszka w Ustawieniach. */}
           <ActionButton
-            label="ZATWIERDŹ → SYNC"
+            label="WRÓĆ DO DNIA"
             tone="green"
             variant="solid"
             trailingIcon="next"
-            onPress={() => navigation.navigate('Sync')}
+            onPress={() => navigation.navigate('MyDay')}
           />
         </View>
       }
@@ -314,7 +322,7 @@ export function StatsScreen({
         {/* ── lista lotów ──────────────────────────────────────────────────── */}
         <Card title="Lista lotów · czasy UTC" flush>
           {/* Ołówek otwiera arkusz korekty (04c) dla lądowania lotu (id wiersza = uuid
-              zdarzenia — patrz `buildFlightRows`). Po zamknięciu dnia działa w oknie
+              zdarzenia — patrz `buildFlightRows`). Po zdaniu samolotu działa w oknie
               24 h; po oknie komendę odrzucą reguły, a powód trafi do banera. */}
           <DataTable
             columns={FLIGHT_COLUMNS}
@@ -328,7 +336,7 @@ export function StatsScreen({
         <Card title="Paliwo" flush>
           <StatGrid cells={fuelCells} />
           <ResultRow
-            label="Średnie zużycie (na block time)"
+            label="Średnie zużycie (na czas blokowy)"
             value={fuelPerHour(projection.fuel.consumedL, projection.blockTimeMs) ?? '— —'}
             tone="amber"
             style={styles.row}
@@ -337,7 +345,7 @@ export function StatsScreen({
               cicha kreska tam, gdzie pilot mógłby podejrzewać błąd aplikacji). */}
           {projection.blockTimeMs === 0 && (
             <AppText variant="mono" tone="muted" style={styles.avgNote}>
-              nie liczymy — block time 0:00 (dzielenie przez zero to nie statystyka)
+              nie liczymy — czas blokowy 0:00 (dzielenie przez zero to nie statystyka)
             </AppText>
           )}
 
@@ -366,24 +374,29 @@ export function StatsScreen({
         </Card>
 
         {/* ── motogodziny (§3.7: początek / koniec / delta) ─────────────────── */}
-        {/* Samolot stoi w podnagłówku ekranu — w tytule karty byłby drugi raz. */}
-        <Card title={`Motogodziny · licznik w formacie ${mhFormatLabel}`} flush>
+        {/* Samolot stoi w podnagłówku ekranu — w tytule karty byłby drugi raz.
+            „Łańcuch samolotu" w tytule 1:1 z mockupu 10: odczyty MH są ogniwem osi
+            MASZYNY (§4.5), nie wielkością dnia pilota. */}
+        <Card title={`Motogodziny · licznik w formacie ${mhFormatLabel} · łańcuch samolotu`} flush>
+          {/* Etykiety mówią o SESJI (mockup 10: „Przy przejęciu / Przy zdaniu / Δ sesji")
+              — „początek/koniec dnia" opisywał model, w którym dzień był sesją jednego
+              samolotu; dziś dnia się nie otwiera ani nie zamyka (issue #23). */}
           <ResultRow
-            label="Początek dnia"
+            label="Przy przejęciu"
             value={motoHours(projection.mh.start, mhFormat)}
             tone="neutral"
             style={styles.firstRow}
           />
           <ResultRow
-            label="Koniec dnia (przekazanie)"
+            label="Przy zdaniu (przekazanie)"
             value={motoHours(projection.mh.end, mhFormat)}
             tone="neutral"
             style={styles.row}
           />
-          {/* Δ MH = block time to inwariant §4.5 — dlatego stoją tu obok siebie
+          {/* Δ MH = czas blokowy to inwariant §4.5 — dlatego stoją tu obok siebie
               i dlatego różnica jest wyróżniona zielenią, a nie schowana w tekście. */}
           <ResultRow
-            label={`Δ dnia (= block time ${hhmm(projection.blockTimeMs)})`}
+            label={`Δ sesji (= czas blokowy ${hhmm(projection.blockTimeMs)})`}
             value={mhDelta}
             tone="green"
             style={styles.row}
@@ -429,7 +442,7 @@ export function StatsScreen({
 /**
  * `.correction-window` — niebieskie pudełko z terminem samodzielnej korekty.
  *
- * Trzy stany, bo trzy różne rzeczy trzeba powiedzieć: dzień jeszcze otwarty (termin
+ * Trzy stany, bo trzy różne rzeczy trzeba powiedzieć: sesja jeszcze niezdana (termin
  * dopiero zacznie biec), okno otwarte (konkretna data i godzina) i okno zamknięte
  * (dalsza droga prowadzi przez administratora). Nigdzie nie mówimy „nie da się" bez
  * powiedzenia, co zamiast tego.

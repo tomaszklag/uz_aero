@@ -275,12 +275,14 @@
   <div class="screen">
     <!-- App Header -->
     <div class="app-header">
-      <a href="10-statystyki.html" class="back-btn">
+      <a href="13-ustawienia.html" class="back-btn">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
-        Statystyki
+        Ustawienia
       </a>
       <span class="screen-title">SYNCHRONIZACJA</span>
-      <span class="chip online"><span class="dot"></span>Online</span>
+      <!-- Chipa Online NIE MA: online nie rysuje nic (issue #12); wejście z USTAWIEŃ (13)
+           — z rozliczenia (10) zniknął „ZATWIERDŹ → SYNC" i razem z nim tamta droga. -->
+      <span style="width:88px;"></span>
     </div>
 
     <!-- Scroll area -->
@@ -348,7 +350,7 @@
           </tbody>
         </table>
         <div class="preview-foot">
-          <div class="preview-foot-main">06 SIERPNIA 2026 · SP-AXA · 2 wzloty</div>
+          <div class="preview-foot-main">06 SIERPNIA 2026 · SP-AXA · 2 sesje · 6 lotów</div>
           <div class="preview-foot-fuel">Paliwo: 150 → 88 L · dolane +48 L · zużyte 110 L</div>
           <div class="preview-foot-fuel" style="color:var(--blue); margin-top:2px;">Zrzuty: 6 wyniesień · 22 skoczków (12 tandem / 6 AFF / 4 solo) · klient SKY CAMP 2026/114</div>
         </div>
@@ -370,7 +372,7 @@
           <div class="success-icon">✓</div>
           <div class="success-title">Serwer zaktualizował arkusz · 16:47 UTC</div>
         </div>
-        <div class="success-detail">2026-08-06_SP-AXA · 2 wzloty · 06 SIERPNIA 2026</div>
+        <div class="success-detail">2026-08-06_SP-AXA · 2 sesje · 06 SIERPNIA 2026</div>
         <a href="#" class="success-link">
           Otwórz arkusz
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8L8 2M4.5 2H8v3.5"/></svg>
@@ -446,7 +448,7 @@
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="10-statystyki.html">← 10 Rozliczenie</a>
+  <a href="13-ustawienia.html">← 13 Ustawienia</a>
   <span>·</span>
   <a href="11-eksport.html" class="active">11 Synchronizacja</a>
   <a href="11a-sync-offline.html">11A Offline</a>

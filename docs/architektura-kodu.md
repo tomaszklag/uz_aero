@@ -822,7 +822,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `ScreenHeader` | nagłówek **formularza**: tytuł, krok, powrót, wariant wyśrodkowany | `.app-header` |
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
 | `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` / `.form-card` (00a) |
-| `SyncChip` | **jedyny** globalny wskaźnik sieci; online nic nie rysuje, offline `OFFLINE · n` + stempel ostatniego synca (`syncStamp`) | reguła z `CLAUDE.md` |
+| `SyncChip` | **jedyny** globalny wskaźnik sieci; online nic nie rysuje, offline SAM pill `OFFLINE · n` — tapnięcie otwiera arkusz szczegółów (kolejka, ostatni sync z `syncStamp`, wiek danych referencyjnych; issue #23 pkt 5) | reguła z `CLAUDE.md` |
 | `SyncStatusBox` | przyrząd statusu wysyłki: plakietka, licznik, pasek postępu | `.google-box` (11) / `.sync-box` (11a) |
 | `QueueBox` | kolejka outboxa: aktywna (amber) albo przygaszona do 30% | `.queue-box` (11a) / `.offline-queue` (11) |
 | `ExportedBox` | pudełko „Serwer zaktualizował arkusz": link do karty, jawny błąd otwarcia (§6 pkt 3) | `.success-box` (11) |
@@ -879,7 +879,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `NoGpsBanner` | baner-przyrząd utraty fixa GPS (status, ryzyko 🔴 §8): wiek fixa + akcje ratunkowe 44 px | `.no-gps` / `.no-gps-link` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy — bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
 | `EventLog` | log dnia jako **oś cykli**: szyna z ikonami (nieprzezroczyste — zakrywają kreskę), chipy, cel korekty ≥ 44 px. **Zieleń ma tylko wiersz `live`** — historia jest neutralna | `.day-log`, `.cycle-log` |
-| `ClaimStrip` | pasek sesji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile wzlotów — **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
+| `ClaimStrip` | pasek sesji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile lotów — **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
 | `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie). **Na 04 stoi tylko przy znanej normie** — bez niej byłby samą liczbą, tą samą co podpis kafelka „Tankowanie" (`logic/cockpitFuel.ts`, 2026-08-10) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
 | `ActionButton` | akcja z **przytrzymaniem 2 s** i blokadą **z podanym powodem** | `.btn-primary`, `.start-engine`, `.start-btn` (01) |
@@ -1008,7 +1008,7 @@ buildu) — sięgamy po niego dopiero, gdy własna droga okaże się niewystarcz
 ### Stan UI vs rejestr zdarzeń
 
 > ⚠ **ETAP C — cały ten akapit opisuje ścieżkę, której już nie ma.** Ekran `03` został
-> usunięty, ścieżka to `02 → 02e → 02a`, a zdarzenia powstają przy „Przejmij i leć" na `02a`.
+> usunięty, ścieżka to `02 → 02e → 02a`, a zdarzenia powstają przy „ROZPOCZNIJ LOT" na `02a`.
 > Czas meldowania zniknął z przejęcia, więc `refreshDutyStart`, `dutyStartEdited` i cała
 > historia issue #12 dotyczą pola, które przestało istnieć — do usunięcia razem ze szkicem.
 > Sam mechanizm „szkic nie dotyka rejestru" pozostaje w mocy i jest nadal słuszny.
@@ -1099,15 +1099,17 @@ To najważniejsza decyzja w tej warstwie.
 Reguła kciuka: *niemożliwe → error; wymagające rozstrzygnięcia przez człowieka → warning*.
 
 **Punkt odniesienia łańcucha MH: `lastKnownMh(state)`, nie `state.mh.start`** (2026-08-07).
-Odkąd `leg_close` niesie odczyt, sesja ma więcej niż jedno wskazanie licznika i porównywanie
-wyłącznie ze stanem przy przejęciu przepuszczało wartość niższą od tej, którą pilot sam
-wpisał wzlot wcześniej — formalnie „wyższą niż na starcie", faktycznie cofnięty licznik.
+Reguła powstała, gdy `leg_close` niósł odczyt (2026-08-06→08-10): sesja miała więcej niż
+jedno wskazanie licznika i porównywanie wyłącznie ze stanem przy przejęciu przepuszczało
+wartość niższą od tej, którą pilot sam wpisał chwilę wcześniej — formalnie „wyższą niż na
+starcie", faktycznie cofnięty licznik. Zasada zostaje po pivocie (ostatni ZNANY odczyt,
+np. z ręcznego wpisu, zamiast stanu przy przejęciu).
 Ta sama funkcja jest **wołana przez ekran** (`releaseAircraft.mhRegressionWarning`), bo próg
 ostrzeżenia w arkuszu i próg odrzucenia w komendzie muszą być jedną liczbą: rozjazd wygląda
 dla pilota jak awaria aplikacji, nie jak jego literówka.
 
 **Miękkie, choć wymagane przez ekran: `NO_FLIGHT_WITHOUT_REASON`.** Zdanie samolotu bez
-ani jednego wzlotu i bez powodu (09C) jest flagą, nie odrzuceniem — twarda reguła kasowałaby
+ani jednego biegu silnika i bez powodu (09C) jest flagą, nie odrzuceniem — twarda reguła kasowałaby
 jedyny ślad po tym, że maszyna stała zajęta, czyli dokładnie tę informację, której szuka
 administrator. Wymóg mieszka w ekranie, gdzie kosztuje jedno tapnięcie pilota stojącego
 przy samolocie.
@@ -1585,7 +1587,7 @@ Naprawa jest jedną funkcją dla obu stron — `consumption/timeInPhase.ts`:
 - `blockSpans(state, events)` zbiera odcinki z OBU źródeł i nakłada korekty (wpis
   unieważniony `void` przestaje liczyć się do mianownika);
 - `spanTimeInWindow` **scala nakładki zamiast sumować długości**. Ręczny wpis potrafi
-  nachodzić na zarejestrowany cykl (pilot dopisał wzlot, który aplikacja też złapała),
+  nachodzić na zarejestrowany cykl (pilot dopisał lot, który aplikacja też złapała),
   a suma policzyłaby te minuty dwa razy — mianownik rośnie, L/h spada, i znowu nic tego
   nie widać. `state.blockTimeMs` sumuje bez scalania i **to zostaje**: tam liczba opisuje
   „ile czasu zaraportowano", tu miara opisuje „ile silnik pracował". Różnica jest

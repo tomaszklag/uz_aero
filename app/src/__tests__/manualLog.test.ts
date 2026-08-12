@@ -133,7 +133,6 @@ describe('grupowanie w cykle', () => {
     const events = [
       event('preflight_confirm', at(8, 0), {
         operation: 'skoki',
-        dutyStart: at(8, 0),
         reading: { fuelL: 150, mh: 1234.5 },
         mhFormat: 'hhmm',
       }),

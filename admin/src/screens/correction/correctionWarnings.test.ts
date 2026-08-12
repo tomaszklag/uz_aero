@@ -19,11 +19,12 @@ const sessionActive: RuleViolation = {
   message: 'Pilot nadal prowadzi tę sesję — może dopisać własne zdarzenia po synchronizacji.',
 };
 
+// Komunikat lustrzy dzisiejszą domenę (`sessionRules.ts`): okno jest JEDNO, per sesja,
+// liczone od zdania samolotu — kotwice per wzlot odeszły z pivotem 2026-08-10.
 const windowOpen: RuleViolation = {
   code: 'ADMIN_EDIT_PILOT_WINDOW_OPEN',
   severity: 'warning',
-  message: 'Pilot może jeszcze poprawić ten wzlot samodzielnie (okno 24 h wzlotu 2 trwa).',
-  details: { legIndex: 2 },
+  message: 'Pilot może jeszcze poprawić tę sesję samodzielnie (okno 24 h od zdania trwa).',
 };
 
 describe('brak kolizji nie rysuje NICZEGO', () => {
@@ -61,7 +62,7 @@ describe('kolizja jest OSTRZEŻENIEM, nie odmową', () => {
 
   it('dwie kolizje naraz są policzone i opisane OSOBNO', () => {
     // Prowadzą w różne strony: przy otwartej sesji pilot dopisze zdarzenia PO korekcie,
-    // przy otwartym oknie wzlotu poprawi to samo drugi raz, po swojemu. Sklejenie ich
+    // przy otwartym oknie sesji poprawi to samo drugi raz, po swojemu. Sklejenie ich
     // w jedno zdanie kazałoby administratorowi zgadywać, którą sytuację ma przed sobą.
     const banner = correctionWarningBanner([sessionActive, windowOpen])!;
 

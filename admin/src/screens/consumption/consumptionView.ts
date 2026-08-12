@@ -65,7 +65,9 @@ export function consumptionTiles(report: ConsumptionReportDto): TileView[] {
       label: 'Paliwo na lot',
       value: headline.litersPerFlight == null ? DASH : `≈${Math.round(headline.litersPerFlight)}`,
       unit: ' L',
-      note: `${thousands(summary.flights)} wzlotów w oknie. Dla dni skokowych czytaj: na wyniesienie.`,
+      // „Startów", jak w mockupie A10a — licznikiem jest lot (start → lądowanie);
+      // słowo „wzlot" wycofane ze słownika (pivot 2026-08-10).
+      note: `${thousands(summary.flights)} startów w oknie. Dla dni skokowych czytaj: na wyniesienie.`,
     },
     {
       key: 'mh',

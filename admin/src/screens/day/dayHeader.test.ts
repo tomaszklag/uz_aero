@@ -108,16 +108,16 @@ describe('dayBanner', () => {
     expect(banner.title).toContain('1 dzień 1 h temu');
   });
 
-  it('mówi, że okno korekty kotwiczy się we WZLOCIE, a nie w zdaniu samolotu', () => {
-    // Sprostowanie z etapu B3. Do etapu D baner obiecywał „przez dobę OD ZAMKNIĘCIA
-    // poprawia sam pilot" — czyli od `day_close`. Po §3.6a każdy wzlot ma własną dobę
-    // liczoną od `day_close` (zdanie = zatwierdzenie logu, 2026-08-10), więc dopiero ono
-    // uruchamia ani nie kończy żadnego okna.
+  it('mówi, że okno korekty liczy się od ZDANIA samolotu i jest jedno na sesję', () => {
+    // Model 2026-08-10 (zdanie = zatwierdzenie logu): okno jest JEDNO, per sesja,
+    // kotwiczone w `day_close`. Wcześniejsze kotwice per wzlot (etap B3) odeszły
+    // razem z `leg_close` — baner nie ma prawa ich obiecywać.
     const banner = dayBanner(session(), state(), NOW);
     expect(banner.body).toContain('`day_close`');
+    expect(banner.body).toContain('JEDNO na sesję');
     expect(banner.body).toContain('Administrator dopisuje zmianę zawsze');
     // Panel dalej nie trzyma kopii progu domeny.
-    expect(banner.body).toContain('nie odlicza tych okien za Ciebie');
+    expect(banner.body).toContain('nie odlicza tego okna za Ciebie');
   });
 
   it('nieczytelny stempel paczki mówi to wprost', () => {

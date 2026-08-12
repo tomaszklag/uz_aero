@@ -59,12 +59,10 @@
   .aircraft-code { color: var(--blue); font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
   .route-line { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
   .icao { color: var(--text-secondary); }
-  /* Kolumna, nie rząd: pod chipem OFFLINE stoi stempel ostatniego synca. */
-  .app-bar-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-  .sync-stamp {
-    font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
-    color: var(--text-muted);
-  }
+  /* SyncChip = SAM pill (issue #23 pkt 5) — stempla pod chipem NIE MA; wiek danych
+     TEGO ekranu niesie stopka banera niżej (`.ro-meta`), a szczegóły syncu (kolejka,
+     ostatni udany sync, wiek danych referencyjnych) otwiera tapnięcie pilla (wzorzec 01c). */
+  .app-bar-right { display: flex; align-items: center; }
   .sync-chip {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 9px; border-radius: 999px;
@@ -273,13 +271,13 @@
         </div>
       </div>
       <!-- Online chipa NIE MA (reguła z 2026-08-06): „zsynchronizowano" to stan domyślny.
-           Offline chip zostaje i niesie stempel ostatniej udanej synchronizacji. -->
+           Offline: SAM pill `OFFLINE · n` (issue #23 pkt 5) — szczegóły syncu pod
+           tapnięciem (wzorzec 01c), a wiek danych TEGO ekranu mówi stopka banera niżej. -->
       <div class="app-bar-right">
-        <div class="sync-chip only-cache" style="background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber);" title="Brak sieci — pokazujemy ostatni znany stan z cache">
+        <div class="sync-chip only-cache" style="background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber);" title="Brak sieci — ostatni znany stan z cache; tapnięcie otwiera arkusz szczegółów synchronizacji">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-          OFFLINE
+          OFFLINE · 2
         </div>
-        <div class="sync-stamp only-cache" title="Ostatnia udana synchronizacja z serwerem">Sync 21 CZE 17:30 UTC</div>
       </div>
     </div>
 
@@ -315,7 +313,7 @@
           </div>
           <div>
             <div class="strip-label">SP-FGK · KRZ od 07:10 UTC</div>
-            <div class="claim-val">1 wzlot</div>
+            <div class="claim-val">1 lot</div>
           </div>
         </div>
         <div class="claim-since">zajęty</div>
@@ -377,12 +375,12 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint only-live">Wrócisz do przejęcia z wybranym SP-FGK — zapisze się dopiero po potwierdzeniu odczytów</div>
+      <div class="takeover-hint only-live">Wrócisz do nowego lotu z wybranym SP-FGK — zapisze się dopiero po potwierdzeniu odczytów</div>
       <a href="02d-preflight-offline.html" class="takeover-btn only-cache">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 21H3v-5"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
         PRZEJMIJ SAMOLOT
       </a>
-      <div class="takeover-hint only-cache">Wrócisz do przejęcia z wybranym SP-FGK — zapisze się dopiero po potwierdzeniu odczytów</div>
+      <div class="takeover-hint only-cache">Wrócisz do nowego lotu z wybranym SP-FGK — zapisze się dopiero po potwierdzeniu odczytów</div>
 
       <!-- ACTIONS (disabled) -->
       <div class="action-grid">
@@ -478,7 +476,7 @@
   <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
   <a href="04d-wyjscie-z-kokpitu.html">04D Blokada wyjścia</a>
   <span>·</span>
-  <a href="02-preflight.html">02 Przejęcie</a>
+  <a href="02-preflight.html">02 Nowy lot</a>
   <span>·</span>
   <a href="01-moj-dzien.html">01 Mój dzień →</a>
 </nav>

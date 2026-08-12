@@ -45,7 +45,6 @@ function event<T extends Event['type']>(type: T, time: number, payload: unknown 
 const preflight = (time: number, fuelL: number, mh = 1234.5): Event =>
   event('preflight_confirm', time, {
     operation: 'skoki',
-    dutyStart: time,
     reading: { fuelL, mh },
   });
 

@@ -1,5 +1,5 @@
 /**
- * UZ Aero — 02E PREFLIGHT · krok 2/4: zadanie dnia.
+ * UZ Aero — 02E NOWY LOT · krok 2/3: zadanie dnia.
  *
  * Rodzaj operacji, trasa i oznaczenie klienta — czyli „co dziś robimy". Wydzielone
  * z kroku 1 (decyzja 2026-07-30), bo tamten stał się najdłuższym formularzem aplikacji
@@ -190,7 +190,7 @@ export function PreflightTaskScreen({
       scroll
       header={
         <ScreenHeader
-          title="PREFLIGHT"
+          title="NOWY LOT"
           subtitle={[aircraft.reg, aircraft.type].filter(Boolean).join(' · ')}
           step="2 / 3"
           onBack={navigation.goBack}

@@ -10,8 +10,9 @@
  *
  * Moduł odpowiada na cztery pytania, których widok nie ma prawa rozstrzygać sam:
  *
- *  1. **KTÓRY wariant** — sesja bez ani jednego wzlotu to 09C (silnik nie ruszył:
- *     nie ma czasów do potwierdzenia ani zużycia do rozliczenia), z wzlotami to 09B.
+ *  1. **KTÓRY wariant** — sesja, w której silnik ani razu nie ruszył, to 09C
+ *     (nie ma czasów do potwierdzenia ani zużycia do rozliczenia); z biegiem
+ *     silnika to 09B.
  *  2. **CO WPISAĆ NA START** — ostatni znany odczyt paliwomierza i licznika. To jest
  *     PODPOWIEDŹ, nie prawda: `null` znaczy „nie wiemy" i wtedy pilot musi zejść
  *     do licznika, bo bez odczytu nie ma przekazania.
@@ -108,7 +109,7 @@ export function buildRelease(state: SessionState, now: EpochMillis): ReleaseVm |
       heldAt: claimedAt != null ? timeUtc(claimedAt) : '—',
     },
     flightReview: flightReviewRows(state),
-    // 09C nie ma czasów wzlotu, więc jedyną miarą tej sesji jest to, JAK DŁUGO samolot
+    // 09C nie ma czasów (silnik nie ruszył), więc jedyną miarą tej sesji jest to, JAK DŁUGO samolot
     // był zajęty — administrator zobaczy w rejestrze, że stał zablokowany i dlaczego.
     heldLabel:
       claimedAt != null

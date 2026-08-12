@@ -17,7 +17,7 @@
  *     której skutek widać dopiero tydzień później, na fladze, która nie powstała.
  *
  *  2. **Samolotu z OTWARTĄ sesją nie wyłącza się ze służby.** Wyłączenie zabiera
- *     jednostkę z listy wyboru w aplikacji, ale pilot, który ma dziś otwarty dzień,
+ *     jednostkę z listy wyboru w aplikacji, ale pilot, który tę maszynę trzyma,
  *     już jej nie wybiera — on nią LATA. Zabranie mu samolotu ze słownika w połowie
  *     dnia zostawia go z sesją wskazującą jednostkę, której konfiguracji telefon nie
  *     odświeży poprawnie przy następnym starcie. Odmowa jest jawna i z powodem:
@@ -50,11 +50,11 @@ export function refuseCapacity(capacityL: number | null): FleetRefusal | null {
 
 /**
  * Wyłączenie ze służby. `openSessions` to liczba sesji tego samolotu BEZ `day_close`
- * — czyli dni, które w tej chwili trwają.
+ * — czyli sesji, które w tej chwili trwają.
  *
  * Reguła działa WYŁĄCZNIE w jedną stronę: przywrócenie do służby przy otwartej sesji
  * jest w porządku (to naprawa pomyłki), a zmiana pojemności czy formatu MH przy
- * otwartym dniu też — mockup `A07a` mówi o tym wprost: „Samolot z otwartą sesją
+ * otwartej sesji też — mockup `A07a` mówi o tym wprost: „Samolot z otwartą sesją
  * dokończy dzień na konfiguracji, którą pobrał rano".
  */
 export function refuseDisable(input: {

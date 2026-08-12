@@ -32,8 +32,9 @@ export interface ScreenHeaderProps {
   step?: string;
   /**
    * Rozmiar tytułu. `lg` (26 px) to domyślny nagłówek ekranu; `md` (20 px) stosujemy
-   * przy dłuższych tytułach w układzie wyśrodkowanym („POTWIERDŹ DANE" w mockupie 03),
-   * gdzie pełny rozmiar wchodziłby na przycisk wstecz i badge kroku.
+   * przy dłuższych tytułach w układzie wyśrodkowanym (np. „SYNCHRONIZACJA" na 11,
+   * „ROZLICZENIE" na 10), gdzie pełny rozmiar wchodziłby na przycisk wstecz i badge
+   * kroku.
    */
   size?: 'lg' | 'md';
   /**

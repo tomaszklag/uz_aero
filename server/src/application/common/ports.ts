@@ -354,7 +354,7 @@ export interface SessionsProjectionPort {
    *
    * Okno jest po `claim_time`, czyli po CHWILI PRZEJĘCIA, i granice są DOMKNIĘTE
    * (`utcDayRange`). Sesja rozpoczęta o 23:50 i zdana po północy należy do doby swojego
-   * przejęcia — ta sama reguła, co w projekcji służby.
+   * przejęcia — ta sama reguła, co w projekcji dnia pilota (`projectPilotDay`).
    *
    * Wynik jest UPORZĄDKOWANY chronologicznie: karta numeruje zmiany `S1`, `S2`…, więc
    * kolejność jest treścią, a nie przypadkiem planera.

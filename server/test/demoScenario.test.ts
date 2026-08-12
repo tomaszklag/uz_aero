@@ -17,10 +17,10 @@
  * byłaby ominięta, a to właśnie ona jest jedyną częścią seeda bez innego pokrycia.
  * Bazą zostaje PGlite, więc test nie potrzebuje ani Dockera, ani sieci poza pętlą zwrotną.
  *
- * ══ CO PRZYBYŁO PRZY PRZEBUDOWIE POD §3.6a (2026-08-07) ══
+ * ══ CO PRZYBYŁO PRZY PRZEBUDOWIE POD §3.6a (2026-08-07, zrewidowane pivotem 2026-08-10) ══
  * Trzy przypadki pilnują rzeczy, które w starym modelu nie istniały i które najłatwiej
- * zgubić po cichu: braku klamry służby w payloadach, obecności WSZYSTKICH czterech stylów
- * potwierdzania wzlotów (od nich zależy analityka, §3.6b) i tego, że zetknięcie sesji
+ * zgubić po cichu: braku klamry służby w payloadach, braku `leg_close` w strumieniu
+ * (sesję zatwierdza `day_close` z obowiązkowym odczytem) i tego, że zetknięcie sesji
  * co do minuty NIE jest nakładką grafiku.
  */
 
@@ -296,7 +296,7 @@ describe('scenariusz danych demo', () => {
    * stała zajęta półtorej godziny", a to jedyne, co administrator ma w takiej dobie
    * do przeczytania.
    */
-  it('ma sesje zdane bez wzlotu, każdą z powodem (09C)', async () => {
+  it('ma sesje zdane bez biegu silnika, każdą z powodem (09C)', async () => {
     const { rows } = await harness.db.query<{ session_uuid: string; reason: string }>(
       `SELECT e.session_uuid, e.payload ->> 'noFlightReason' AS reason
          FROM events e
@@ -310,7 +310,7 @@ describe('scenariusz danych demo', () => {
         "SELECT count(*)::text AS n FROM events WHERE session_uuid = $1 AND type = 'engine_start'",
         [row.session_uuid],
       );
-      expect(legs.rows[0]!.n, `sesja ${row.session_uuid} nie miała prawa mieć wzlotu`).toBe('0');
+      expect(legs.rows[0]!.n, `sesja ${row.session_uuid} nie miała prawa mieć biegu silnika`).toBe('0');
     }
   });
 

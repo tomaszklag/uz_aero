@@ -183,7 +183,7 @@ async function exportRevisions(db: Harness['db']) {
  *
  * `closed: false` zostawia samolot NIEZDANY — od 2026-08-07 to już nie odmowa, tylko
  * powód ostrzeżenia `ADMIN_EDIT_SESSION_ACTIVE`. `advanceMs` steruje drugą kolizją:
- * krótszy skok zostawia okno 24 h wzlotu otwarte (`ADMIN_EDIT_PILOT_WINDOW_OPEN`).
+ * krótszy skok zostawia okno 24 h sesji otwarte (`ADMIN_EDIT_PILOT_WINDOW_OPEN`).
  */
 async function flownDay(options: { closed?: boolean; advanceMs?: number } = {}) {
   const harness = await testHarness();
@@ -504,11 +504,12 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(await auditRows(db)).toHaveLength(1);
   });
 
-  it('sesja ZDANA, ale okno wzlotu jeszcze biegnie → ostrzeżenie o kolizji z pilotem', async () => {
+  it('sesja ZDANA, ale okno sesji jeszcze biegnie → ostrzeżenie o kolizji z pilotem', async () => {
     // Druga z dwóch kolizji, całkiem niezależna od pierwszej: samolot jest zdany
     // (`day_close` o 16:45), więc `ADMIN_EDIT_SESSION_ACTIVE` się nie należy — ale od
-    // wyłączenia silnika o 10:34 nie minęła doba, więc pilot może ten wzlot poprawić
-    // SAM na 04c. Obie strony pisałyby wtedy naraz i administrator ma o tym wiedzieć.
+    // ZDANIA nie minęła doba (okno 24 h liczy się od `day_close`, model 2026-08-10),
+    // więc pilot może tę sesję poprawić SAM na 04c. Obie strony pisałyby wtedy naraz
+    // i administrator ma o tym wiedzieć.
     const { app } = await flownDay({ advanceMs: 9 * HOUR_MS });
     const admin = await login(app, 'TMK');
 

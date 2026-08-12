@@ -29,7 +29,6 @@ Aplikacja UZ Aero zastępuje papierowy chronometraż używany przez pilotów pod
 
 - czasy blokowe (off-block / on-block) dla każdego pilota
 - czasy lotów (takeoff / landing)
-- duty time (od meldowania do zakończenia służby)
 - stany i rozchód paliwa (z walidacją pojemnością zbiorników)
 - motogodziny (MH) — odczyty licznika w formacie z konfiguracji samolotu
 - liczniki startów i lądowań
@@ -38,7 +37,7 @@ Aplikacja UZ Aero zastępuje papierowy chronometraż używany przez pilotów pod
 Dane trafiają automatycznie na serwer klubu, który scala sesje różnych pilotów, wykrywa
 niespójności i generuje arkusz dzienny w Google Sheets. **Pilot niczego nie eksportuje
 ręcznie** — jego jedynym obowiązkiem jest rzetelny odczyt liczników przy przejęciu
-i zdaniu samolotu oraz potwierdzenie wzlotu po locie.
+i zdaniu samolotu (zdanie zatwierdza log całej sesji).
 
 ### Decyzje architektoniczne (log)
 
@@ -131,7 +130,7 @@ Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do
 > Do 2026-08-06 ten ekran nazywał się „preflight briefing" i otwierał DZIEŃ SŁUŻBY.
 > Nie otwiera już niczego poza sesją samolotu: pytanie „od kiedy jesteś na służbie"
 > zniknęło stąd razem z resztą modelu dnia jako kontenera (log decyzji, 2026-08-06).
-> Przejęcie ma trwać kilka sekund — pilot bierze maszynę, nie zaczyna doby.
+> Rozpoczęcie lotu ma trwać kilka sekund — pilot idzie latać, nie otwiera doby.
 
 **Krok 1 — samolot i załoga:**
 
@@ -161,7 +160,7 @@ Logowanie (jednorazowe provisioning urządzenia) jest rozdzielone od wejścia do
 - offline / brak danych przekazania: pola puste z komunikatem "brak danych — wpisz z licznika";
   odczyt pilota staje się początkiem łańcucha (sekcja 4.5)
 
-Krok 3 kończy przejęcie: CTA **„Przejmij i leć"** emituje `session_claim` i `preflight_confirm`,
+Krok 3 kończy nowy lot: CTA **„ROZPOCZNIJ LOT"** emituje `session_claim` i `preflight_confirm`,
 po czym otwiera kokpit. Osobny ekran podsumowania (dawny `03-preflight-confirm`) został
 **usunięty** — powtarzał to, co pilot wpisał sekundę wcześniej, i był czwartym tapem w
 drodze do samolotu.
@@ -171,12 +170,14 @@ drodze do samolotu.
 Główny ekran pracy z JEDNYM samolotem (nie z dobą — patrz 3.6a). Dwa stany:
 
 **Stan: silnik wyłączony (ground)**
-- duży przycisk START ENGINE z potwierdzeniem
-- **pasek sesji samolotu**: „SP-AXA · Twój od 09:05 · 2 wzloty" + wyjście do `01 Mój dzień`.
-  Czasu służby w kokpicie NIE MA: to wielkość pilota, obejmuje też inne maszyny i sugerowała
-  tu, że dzień kończy się razem z tym samolotem
-- log zdarzeń tej sesji (cykle silnika, loty z separatorami "Lot N")
-- chip statusu synchronizacji: `SYNC` (wysłane wszystko) / `OFFLINE · n` (n zdarzeń w outboxie)
+- dwa stany ground (pivot 2026-08-10): PRZED uruchomieniem hero = START ENGINE,
+  PO zatrzymaniu hero = ZDAJ SAMOLOT (drugiego startu nie ma)
+- **kokpit jest stanem modalnym** — drogi na 01 nie ma; pasek sesji („SP-FGK · KRZ
+  od 07:10 · 2 loty") żyje wyłącznie na podglądzie CUDZEJ maszyny (04b). Czasu pracy
+  pilota w kokpicie NIE MA: dzień pilota to lista sesji (issue #23) i mieszka na 01
+- log zdarzeń tej sesji (jeden bieg silnika, loty z separatorami "Lot N")
+- wskaźnik łączności `SyncChip`: online nie rysuje NIC (issue #12), offline sam pill
+  `OFFLINE · n` — szczegóły synchronizacji pod tapnięciem (issue #23 pkt 5)
 - skróty: tankowanie, zmiana załogi, lista ręczna, zdaj samolot (zawsze dostępny)
 
 **Stan: silnik uruchomiony (running)**
@@ -187,7 +188,7 @@ Główny ekran pracy z JEDNYM samolotem (nie z dobą — patrz 3.6a). Dwa stany:
 - toast autodetekcji: "Wykryto: Takeoff ✓ [Cofnij] 5…" — brak reakcji = zapis; Cofnij anuluje
 - przyciski ręcznej korekty T/O / LDG / Taxi (zawsze widoczne, secondary style)
 - STOP ENGINE — jedyna akcja zawsze inicjowana ręcznie (prominentna, z potwierdzeniem);
-  prowadzi wprost do **zamknięcia wzlotu** (sekcja 3.6)
+  kończy SESJĘ: wraca do kokpitu ground z hero **ZDAJ SAMOLOT** (sekcja 3.6)
 - Zrzut (Drop) — przycisk ręczny, tylko przy operacji Skoki
 
 ### 3.3 Algorytm auto-detekcji startu i lądowania
@@ -255,7 +256,8 @@ usterka) — silnik nie ruszył, odczyty wypełnione wartościami z przejęcia, 
 to powód. Z listy dziennej można też dodać CAŁY lot ręcznie (15) — kompletną sesję
 z czasami i odczytami, dla lotów zapisanych poza telefonem.
 
-**Zdanie samolotu NIE kończy dnia pilota.** Kolejna maszyna wchodzi do tej samej służby.
+**Zdanie samolotu NIE kończy dnia pilota.** Kolejna maszyna dopisuje się do listy sesji
+tej samej doby (§3.6a).
 
 ### 3.6a Dzień pilota = lista sesji (klamra służby USUNIĘTA)
 
@@ -348,14 +350,14 @@ startów i lądowań. Klamry służby nie ma (issue #23).
 lotów per lot, paliwo (startowe / dolane / końcowe / zużyte / średnie L/h) na tle normy,
 MH (początek / koniec / delta), **zrzuty** (liczba wyniesień, skoczkowie w rozbiciu na typy,
 średnia wysokość, klient — strona przychodowa). Paliwo i MH są wielkościami samolotu,
-więc nie sumują się przez służbę pilota lecącego dwiema maszynami.
+więc nie sumują się po pilocie lecącym dwiema maszynami.
 
 Dane edytowalne w trakcie sesji oraz **przez 24 h od jej zdania** (decyzja 2026-07-23,
 kotwica = `day_close` — osobno dla każdej sesji, patrz §3.6a): pilot nanosi korektę
 samodzielnie, bez akceptacji administratora. Po upływie okna korektę wprowadza
 administrator. Korekta zawsze jest zdarzeniem append-only — nie kasuje oryginalnego odczytu.
 
-### 3.8 Ręczna lista wzlotów (fallback GPS)
+### 3.8 Ręczna lista lotów (fallback GPS)
 
 Prosta tabela do ręcznego wpisu gdy GPS niedostępny:
 
@@ -509,7 +511,7 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
 
 - konto serwisowe backendu ma uprawnienia do arkuszy klubu; **telefon nie dotyka Sheets**
 - **karta = DOBA SAMOLOTU** (nazwa: `YYYY-MM-DD_SP-XXX`), agregat wszystkich sesji tej
-  maszyny w tej dobie; wyzwalaczem jest **zdanie samolotu**, nie `day_close`
+  maszyny w tej dobie; wyzwalaczem jest **zdanie samolotu** (`day_close`)
 - spóźnione dane (sync po eksporcie) → serwer regeneruje arkusz i oznacza rewizję
   w `export_log`
 - **bramka flagi obejmuje wyłącznie sesje objęte flagą**, nie całą kartę: karta wychodzi
@@ -521,7 +523,7 @@ i przy wejściu na ekrany, które pokazują stan floty (preflight, read-only, ek
   decyzja 2026-08-07) — **nie `dutyStart`**. Meldunek jest od §3.6a opcjonalny i ekran 02 o niego
   nie pyta, więc oparta na nim bramka odrzucała każdą sesję z przebudowanego flow. Sesja
   przejęta o 23:50 i zdana po północy należy do doby swojego PRZEJĘCIA — ta sama reguła,
-  co przy przynależności wzlotu do doby w `projectDuty`
+  co przy przynależności sesji do doby pilota w `projectPilotDay`
 - **kształt karty**: nagłówek (samolot · doba · liczba zmian · czas blokowy doby) → tabela
   `Sesje doby` (PIC, Dual, operacja, przejęcie → zdanie, block, stan) → `Loty` → `Paliwo` →
   `Motogodziny` → `Zrzuty` (tylko przy operacji Skoki). Zmiany są etykietowane `S1`, `S2`…
@@ -593,7 +595,7 @@ Typy zdarzeń:
 | Typ | Payload (istotne pola) |
 |-----|------------------------|
 | `session_claim` | tryb przejęcia (wolny / przejęcie online / przejęcie offline) |
-| `preflight_confirm` | trasa, operacja, duty start, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14) |
+| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); `dutyStart` usunięty razem z klamrą służby (issue #23) |
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
 | `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
@@ -603,7 +605,7 @@ Typy zdarzeń:
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |
 | `day_close` | **zdanie samolotu**: końcowy FOB + MH (przekazanie) oraz `noFlightReason` dla sesji bez ani jednego biegu silnika (09C: `weather` / `malfunction` / `cancelled` / `other`). Brak powodu przy takiej sesji to **miękka** flaga `NO_FLIGHT_WITHOUT_REASON` — odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna stała zajęta. (`dutyEnd` usunięte 2026-08-11 razem z klamrą służby — issue #23) |
-| `event_correction` | `targetUuid` + akcja: `retime` (nowy czas) **lub** `void` („zdarzenia nie było") — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zamknięciu (decyzja 2026-07-23) |
+| `event_correction` | `targetUuid` + akcja: `retime` (nowy czas) **lub** `void` („zdarzenia nie było") — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zdaniu samolotu (decyzja 2026-07-23, kotwica per sesja od 2026-08-10) |
 
 > **Stan modelu (po pivocie 2026-08-10 i issue #23 z 2026-08-11).**
 >
@@ -746,7 +748,8 @@ na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
   `02f-preflight-lotnisko` (arkusz wyboru lotniska)
 - **przejęcie krok 3:** `02a-preflight` — przełącznik stanów świeżości przekazania
   (`live` / `cache` / `brak`) na canvasie; modale korekty `02b` / `02c`
-- **kokpit ground:** `04a` (świeżo przejęty samolot) · `04` (kolejne wzloty) ·
+- **kokpit ground:** `04a` (świeżo przejęty samolot, PRZED uruchomieniem) · `04`
+  (PO zatrzymaniu — hero ZDAJ SAMOLOT) ·
   `04b-cockpit-readonly` (podgląd cudzego samolotu — single-writer, akcje disabled z powodem)
 - **kokpit w locie:** `05a` (taxi) · `05b` (toast T/O) · `05` (in flight) · `05c`
   (toast LDG) · `05d` (taxi po LDG) · `05g` (brak GPS)
@@ -777,18 +780,18 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     ↓
 [01 Mój dzień]  EKRAN DOMOWY — płaski log SESJI dnia (wiersz = jeden bieg silnika
     │           z lotami w środku; rejestracja jako informacja wiersza), przekrojowo
-    │           po samolotach; stąd przejęcie, ręczny wpis lotu i okno korekty 24 h
+    │           po samolotach; stąd rozpoczęcie lotu, ręczny wpis lotu i okno korekty 24 h
     │           warianty: 01a (zero sesji) · 01c (offline + arkusz syncu)
     ├─→ [15 Lot ręczny]  CAŁA sesja po fakcie: samolot · czasy · odczyty WYMAGANE
-    ↓ Przejmij samolot
-[02 Przejęcie 1/3]  samolot (wolny / aktywny PIC / wyłączony) · Dual
+    ↓ Rozpocznij lot
+[02 Nowy lot 1/3]  samolot (wolny / aktywny PIC / wyłączony) · Dual
     │        └─ samolot zajęty → [modal Przejmij?] (wariant online / offline)
     │        └─ podgląd bez przejęcia → [04b tryb read-only + banner]
     ↓
-[02e Przejęcie 2/3]  zadanie: operacja · trasa · klient · notatka (arkusze 02f)
+[02e Nowy lot 2/3]  zadanie: operacja · trasa · klient · notatka (arkusze 02f)
     ↓
-[02a Przejęcie 3/3]  paliwo + MH od poprzednika · korekty przez modale (02b / 02c)
-    ↓ „Przejmij i leć"  (claim + odczyt; BEZ osobnego ekranu podsumowania)
+[02a Nowy lot 3/3]  paliwo + MH od poprzednika · korekty przez modale (02b / 02c)
+    ↓ „ROZPOCZNIJ LOT"  (claim + odczyt; BEZ osobnego ekranu podsumowania)
 [04a Cockpit — PRZED URUCHOMIENIEM]  tankowanie · zmiana załogi · zdanie bez lotu (09c)
     ↓ START ENGINE  (jedyny w sesji — sesja = jeden bieg silnika, 2026-08-10)
 [05a Taxi] → autodetekcja T/O → [05b Toast T/O] → [05 Running / fazy lotu]
@@ -802,14 +805,16 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     │               łańcucha MH, ZATWIERDZENIE logu) · 09c = zdanie bez lotu
     ↓
 [01 Mój dzień]  kolejna sesja dopisuje się do listy dnia
-    ├─ [10 Rozliczenie samolotu]  paliwo, MH, zrzuty — per sesja, nie per doba
-    ├─ [11 Synchronizacja]  status wysyłki / eksportu serwera (nie akcja eksportu)
+    ├─ OŁÓWEK wiersza logu → [10 Detale sesji]  paliwo, MH, zrzuty, korekty — per
+    │   sesja, nie per doba; niczego się nie zatwierdza (zdanie już potwierdziło dane)
+    ├─ [13 Ustawienia] → [11 Synchronizacja]  status wysyłki / eksportu serwera
+    │   (nie akcja eksportu; z 10 zniknął „ZATWIERDŹ → SYNC")
     └─ [12 Historia]  poprzednie dni, okno korekty 24 h
 ```
 
 Pętla, nie prosta. Dzień pilota nie ma „startu" ani „końca" jako kroków flow: zaczyna się
-pierwszą sesją, a domyka sam na ostatniej. Ekranem, do którego wszystko wraca, jest
-**01 Mój dzień** — nie kokpit i nie zakończenie dnia.
+pierwszą sesją i NICZYM się nie domyka (issue #23). Ekranem, do którego wszystko wraca,
+jest **01 Mój dzień** — nie kokpit i nie zakończenie dnia.
 
 **Kokpit jest stanem modalnym** (decyzja 2026-08-10). Dopóki pilot trzyma samolot, z 04/05
 nie prowadzi żadna droga na 01: akcje ground i 09 wracają do kokpitu, a na 01 wraca się
@@ -903,8 +908,8 @@ Zakres, role, mapowanie każdego ekranu na endpoint oraz lista braków serwera z
 | 4 | Sync end-to-end — outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | ✅ zakończona (wariant bazodanowy) — outbox → `/events` (SyncEngine §4.3), auth §3.0, flagi + `sync-status`, ekran 11, cache referencyjny (ETag/304), `takeover_online`; eksport 4.7 działa end-to-end: karty w tabeli `exported_sheets` (`GET /sheets/:tab`), `export_log` z rewizjami, bramka flagi overlap, `exportUrl` w sync-status. Adapter Google Sheets = opcjonalna podmiana portu, gdy będzie klucz konta serwisowego |
 | 5 | Testy z pilotami, korekty UX, kalibracja progów S/L | przed nami · szac. 2 tyg. |
 | 6 | Wdrożenie — Play Store internal track, deploy backendu, dokumentacja | przed nami · szac. 1 tyg. |
-| 7 | **Panel administracyjny (web)** — role w bazie i tokenie, endpointy `/admin/*`, cykl życia flagi (`resolved`), korekta po oknie 24 h, tabela audytu | ✅ wdrożone (backend + `admin/`, ekrany A01–A11). **Projekt UI opiera się na modelu sprzed 2026-08-06** — A02/A02a/A03/A08/A09 traktują dzień jako sesję samolotu; przepisanie w fazie 8 etap D |
-| **8** | **Przebudowa flow — służba przestaje być kontenerem na loty** (§3.6a, decyzja 2026-08-06) | 🔶 w toku: **etap A ✅** (design `design/` przebudowany + dokumentacja) · **etap B** `packages/domain` (`leg_close`, `CURRENT_SCHEMA_VERSION`→2, klamry duty opcjonalne, projekcja `duty.ts`) · **etap C** `app/` (ekrany 1:1 z nowych mockupów) · **etap D** serwer + panel (`claim_time`, okno korekty, jednostka arkusza, katalog flag) |
+| 7 | **Panel administracyjny (web)** — role w bazie i tokenie, endpointy `/admin/*`, cykl życia flagi (`resolved`), korekta po oknie 24 h, tabela audytu | ✅ wdrożone (backend + `admin/`, ekrany A01–A11); panel przepisany pod nowy model w fazie 8 etap D (✅ 2026-08-07/08) |
+| **8** | **Przebudowa flow** (§3.6a, decyzja 2026-08-06), potem **pivot „sesja = jeden bieg silnika"** (2026-08-10) i **issue #23** (2026-08-11: klamra służby usunięta) | ✅ domknięta w kodzie: etapy A–D (2026-08-06→08-08), pivot A'–E' i issue #23 — szczegóły etapów w `CLAUDE.md` i w tabeli decyzji §1; baza dev do przesiania seedem (decyzja użytkownika) |
 
 > **Faza 8 wyprzedza fazę 5.** Testy z pilotami na starym flow byłyby testami rzeczy, która
 > ma zniknąć — pilot oceniałby ceremonię otwierania i zamykania dnia służby, czyli dokładnie

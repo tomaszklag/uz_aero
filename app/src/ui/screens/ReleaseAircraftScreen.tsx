@@ -195,7 +195,7 @@ export function ReleaseAircraftScreen({
         <View style={styles.footer}>
           <ActionButton
             label={RELEASE_CTA}
-            // Bursztyn zamiast czerwieni przy zdaniu bez wzlotu: nic się nie zepsuło,
+            // Bursztyn zamiast czerwieni przy zdaniu bez lotu: nic się nie zepsuło,
             // dzień po prostu nie doszedł do skutku (mockup 09C).
             tone={withoutLeg ? 'amber' : 'red'}
             variant="solid"
@@ -406,7 +406,7 @@ function EmptySession({ heldLabel }: { heldLabel: string | null }) {
       <View style={styles.empty}>
         <Icon name="aircraft-off" size={32} color={theme.colors.borderStrong} />
         <AppText variant="display" tone="secondary" style={styles.emptyTitle}>
-          NIE BYŁO WZLOTU
+          NIE BYŁO LOTU
         </AppText>
         <AppText variant="body" tone="muted" style={styles.emptyDesc}>
           Silnik ani razu nie ruszył, więc nie ma czasów do potwierdzenia ani zużycia

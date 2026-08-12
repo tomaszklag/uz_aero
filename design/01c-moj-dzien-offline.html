@@ -92,11 +92,8 @@
     display:flex; align-items:center; gap:6px;
   }
   .day-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--green); }
-  .day-head-link {
-    margin-left:auto; display:inline-flex; align-items:center; gap:5px; min-height:28px; padding:0 2px;
-    font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase;
-    color:var(--text-muted); text-decoration:none;
-  }
+  /* Link „Rozliczenie →" USUNIĘTY (uwaga użytkownika po issue #23) — detale sesji
+     mają jedno wejście: ołówek wiersza. */
   .legs { display:flex; flex-direction:column; }
   .leg-row { display:flex; align-items:center; gap:8px; padding:5px 6px 5px 0; border-bottom:1px solid var(--border); }
   .leg-row:last-child { border-bottom:none; }
@@ -230,10 +227,7 @@
 
     <div class="scroll">
       <div class="day-card">
-        <div class="day-head">
-          Log dnia · czasy UTC
-          <a href="10-statystyki.html" class="day-head-link">Rozliczenie →</a>
-        </div>
+        <div class="day-head">Log dnia · czasy UTC</div>
         <div class="legs">
           <div class="leg-row">
             <a href="14-slad.html" class="leg-num" title="Ślad sesji 1">1</a>
@@ -246,7 +240,7 @@
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">0:53</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">0:41</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 1">
+            <a href="10-statystyki.html" class="edit-btn" title="Sesja 1 — szczegóły i korekty">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
@@ -261,7 +255,7 @@
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">0:42</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">0:35</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 2">
+            <a href="10-statystyki.html" class="edit-btn" title="Sesja 2 — szczegóły i korekty">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
@@ -276,7 +270,7 @@
               <span class="leg-metric"><span class="leg-metric-key">Blok</span><span class="leg-metric-val">1:30</span></span>
               <span class="leg-metric"><span class="leg-metric-key">Lot</span><span class="leg-metric-val">1:21</span></span>
             </span>
-            <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta sesji 3">
+            <a href="10-statystyki.html" class="edit-btn" title="Sesja 3 — szczegóły i korekty">
               <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
             </a>
           </div>
@@ -297,7 +291,7 @@
 
       <a href="02-preflight.html" class="btn-secondary">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        PRZEJMIJ SAMOLOT
+        ROZPOCZNIJ LOT
       </a>
       <a href="15-reczny-lot.html" class="btn-secondary">
         <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
@@ -337,7 +331,7 @@
           </div>
         </div>
 
-        <span class="sheet-note">Pełną kolejkę i historię wysyłki znajdziesz w „Rozliczenie → Status synchronizacji".</span>
+        <span class="sheet-note">Pełną kolejkę i historię wysyłki znajdziesz w „Ustawienia → Status synchronizacji".</span>
 
         <a href="01-moj-dzien.html" class="sheet-close">ZAMKNIJ</a>
       </div>
@@ -383,7 +377,7 @@
   <span>·</span>
   <a href="12-historia.html">12 Historia</a>
   <span>·</span>
-  <a href="02-preflight.html">02 Przejęcie →</a>
+  <a href="02-preflight.html">02 Nowy lot →</a>
 </nav>
 
 </body>

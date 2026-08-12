@@ -65,6 +65,7 @@ export function MyDayScreen({
 
   const repo = useSessionStore((s) => s.repo);
   const queries = useSessionStore((s) => s.queries);
+  const loadSession = useSessionStore((s) => s.loadSession);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
@@ -155,34 +156,29 @@ export function MyDayScreen({
       }
     >
       <View style={styles.content}>
-        {/* ── log dnia: płaska oś czasu sesji + sumy ─────────────────────────── */}
+        {/* ── log dnia: płaska oś czasu sesji + sumy ─────────────────────────
+            Nagłówek karty jest SAMYM napisem — link „Rozliczenie →" usunięty (uwaga
+            użytkownika po issue #23): nic nie mówił, a detale sesji mają jedno
+            wejście — ołówek wiersza. Zdanie samolotu już POTWIERDZIŁO dane, więc
+            wiersz prowadzi do oglądania i korekt, nie do zatwierdzania. */}
         {vm != null && (
-          <Card
-            title="Log dnia · czasy UTC"
-            flush
-            // „Rozliczenie" prowadzi do bilansu paliwa i MH (10), a ekran 10 opisuje
-            // SESJĘ ZE STORE'U — czyli ostatnią. Link mieszka w nagłówku karty, bo
-            // grupy per samolot już nie istnieją (issue #23 pkt 3).
-            headerRight={
-              vm.sessionCount > 0 ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Rozliczenie ostatniej sesji"
-                  onPress={() => navigation.navigate('Stats')}
-                  style={({ pressed }) => [styles.headLink, { opacity: pressed ? 0.6 : 1 }]}
-                >
-                  <AppText variant="mono" tone="muted" style={styles.headLinkLabel}>
-                    Rozliczenie
-                  </AppText>
-                  <Icon name="next" size={11} color={theme.colors.textMuted} />
-                </Pressable>
-              ) : undefined
-            }
-          >
+          <Card title="Log dnia · czasy UTC" flush>
             {vm.sessions.length === 0 ? (
               <EmptySessions />
             ) : (
-              vm.sessions.map((session) => <SessionRow key={session.index} session={session} />)
+              vm.sessions.map((session) => (
+                <SessionRow
+                  key={session.index}
+                  session={session}
+                  // Ołówek = detale TEJ sesji (10): ekran 10 opisuje sesję ze store'u,
+                  // więc najpierw ładujemy wskazany strumień — ta sama droga, którą
+                  // chodzi historia (12).
+                  onOpen={async () => {
+                    await loadSession(session.sessionUuid);
+                    navigation.navigate('Stats');
+                  }}
+                />
+              ))
             )}
             <StatGrid cells={totals} columns={2} />
           </Card>
@@ -196,7 +192,7 @@ export function MyDayScreen({
           (empty ? (
             <>
               <ActionButton
-                label="PRZEJMIJ SAMOLOT"
+                label="ROZPOCZNIJ LOT"
                 tone="green"
                 variant="solid"
                 icon="start"
@@ -213,7 +209,7 @@ export function MyDayScreen({
                   mockup 01 rysuje tu DOPISANIE kolejnej sesji do listy dnia, a strzałki
                   `maximize-2` znaczą przejęcie CUDZEJ maszyny (04B). */}
               <ActionButton
-                label="PRZEJMIJ SAMOLOT"
+                label="ROZPOCZNIJ LOT"
                 tone="neutral"
                 variant="secondary"
                 size="md"
@@ -264,9 +260,10 @@ export function MyDayScreen({
 /**
  * `.leg-row` — jedna SESJA na płaskiej osi czasu: numer w dobie, czasy silnika nad
  * rejestracją (issue #23 pkt 3: maszyna jest informacją wiersza, nie osią grupowania),
- * loty i czasy trwania.
+ * loty i czasy trwania. Ołówek (`.edit-btn` z mockupu) otwiera detale tej sesji —
+ * tam mieszkają korekty.
  */
-function SessionRow({ session }: { session: SessionRowVm }) {
+function SessionRow({ session, onOpen }: { session: SessionRowVm; onOpen: () => void }) {
   const { theme } = useTheme();
 
   return (
@@ -292,6 +289,20 @@ function SessionRow({ session }: { session: SessionRowVm }) {
         <LegMetric label="Blok" value={session.blockLabel} />
         <LegMetric label="Lot" value={session.flightLabel} />
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Sesja ${session.index} — szczegóły i korekty`}
+        onPress={onOpen}
+        style={({ pressed }) => [
+          styles.legEdit,
+          {
+            borderWidth: theme.borderWidth,
+            borderColor: pressed ? theme.colors.greenBorder : theme.colors.borderStrong,
+          },
+        ]}
+      >
+        <Icon name="edit" size={15} color={theme.colors.textSecondary} />
+      </Pressable>
     </View>
   );
 }
@@ -334,18 +345,15 @@ function EmptySessions() {
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
 
-  // ── nagłówek karty ─────────────────────────────────────────────────────────
-  // Cel dotykowy 44 px mimo drobnego napisu — link stoi w pasku nagłówka karty.
-  headLink: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 44, paddingHorizontal: 4 },
-  headLinkLabel: { fontSize: 8.5, letterSpacing: 1.5, textTransform: 'uppercase' },
-
   // ── wiersz sesji ───────────────────────────────────────────────────────────
-  legRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 12 },
+  legRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 6, paddingVertical: 5 },
   legNumber: { minWidth: 44, minHeight: 44, fontSize: 12, lineHeight: 44, textAlign: 'center' },
-  legId: { width: 112, gap: 2, paddingVertical: 5 },
+  legId: { width: 112, gap: 2 },
   legTimes: { fontSize: 12, lineHeight: 16, letterSpacing: 0.5 },
   legReg: { fontSize: 8.5, lineHeight: 12, letterSpacing: 1.5, fontFamily: fontFamily.monoBold },
   legMetrics: { flex: 1, flexDirection: 'row', gap: 12 },
+  // `.edit-btn` z mockupu: cel dotykowy 44 px, obrys jak pozostałe akcje drugorzędne.
+  legEdit: { minWidth: 44, minHeight: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   legMetric: { gap: 1 },
   legMetricKey: { fontSize: 7, lineHeight: 10, letterSpacing: 1.5, textTransform: 'uppercase' },
   legMetricValue: { fontSize: 11, lineHeight: 15 },

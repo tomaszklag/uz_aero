@@ -33,7 +33,7 @@ import type { TimelineTone } from '../../ui/components/TimelineRow';
 import { EVENT_META } from './eventTypes';
 
 /**
- * Powody zdania samolotu bez wzlotu (09C) po polsku.
+ * Powody zdania samolotu bez lotu (09C) po polsku.
  *
  * `Record` po unii domeny wymusza komplet: dopisanie piątego powodu w `@uzaero/domain`
  * wywali kompilację tutaj, zamiast pokazać administratorowi surowy identyfikator.

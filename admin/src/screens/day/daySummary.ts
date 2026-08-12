@@ -12,10 +12,11 @@
  * wysokości zrzutu do pełnych stóp. Oba są prezentacją liczb serwera, nie drugim ich
  * wyliczeniem.
  *
- * ══ KARTA OPISUJE SESJĘ SAMOLOTU, NIE SŁUŻBĘ PILOTA ══
- * Nie ma tu i nie może być czasu służby: po §3.6a klamra należy do PILOTA i potrafi
- * objąć kilka maszyn, więc na karcie jednej z nich byłaby pomyłką kategorii (patrz
- * `heldTile`). Jednostką jest odcinek PRZEJĘCIE → ZDANIE.
+ * ══ KARTA OPISUJE SESJĘ SAMOLOTU, NIE DZIEŃ PILOTA ══
+ * Nie ma tu i nie może być czasu służby: klamra służby nie istnieje w modelu w ogóle
+ * (issue #23 — dzień pilota to lista sesji), a na karcie jednej maszyny byłaby pomyłką
+ * kategorii także wcześniej (patrz `heldTile`). Jednostką jest odcinek
+ * PRZEJĘCIE → ZDANIE.
  *
  * ══ SAMOLOT NIEODDANY: „—" I KONIEC ══
  * Sesja bez `day_close` nie ma odczytów końcowych, więc nie ma zużycia paliwa, delty

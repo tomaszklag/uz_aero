@@ -153,14 +153,13 @@ function openDayTask(row: SessionListItemDto, nowMs: number, windowMs: number): 
     kind: 'open_day',
     tone: 'blue',
     // Po §3.6a sesja to PRZEJĘCIE → ZDANIE jednej maszyny, nie „dzień lotny": pilot
-    // potrafi w jednej służbie zdać jedną maszynę i wziąć drugą. Otwarta sesja znaczy
+    // potrafi w jednej dobie zdać jedną maszynę i wziąć drugą. Otwarta sesja znaczy
     // więc dokładnie tyle, że samolot nie wrócił do puli — i tak ma się nazywać.
     name: `Samolot nieoddany · ${row.reg ?? row.aircraftId}`,
-    // Mockup pisze tu „okno samodzielnej korekty pilota mija za 4 h". To nieprawda
-    // z DWÓCH powodów naraz: okno kotwiczy się w ZDANIU SAMOLOTU (`day_close`,
-    // etap B3), więc biegnie niezależnie od zdania maszyny, a zdanie samolotu jest
-    // opcjonalne i niczego nie odlicza. Doba jest tu MIARĄ tego, jak długo maszyna
-    // stoi zajęta, a nie odliczaniem.
+    // Mockup pisze tu „okno samodzielnej korekty pilota mija za 4 h". To nieprawda:
+    // okno rusza dopiero W CHWILI zdania samolotu (`day_close`, model 2026-08-10),
+    // a sesja bez `day_close` żadnego okna nie odlicza. Doba jest tu MIARĄ tego,
+    // jak długo maszyna stoi zajęta, a nie odliczaniem.
     meta: `Brak \`day_close\` — maszyna stoi zajęta dłużej niż dobę, więc nikt inny jej nie przejmie, a łańcuch motogodzin nie ma ogniwa zamykającego. Karta doby powstaje po zdaniu samolotu.`,
     age,
     old,

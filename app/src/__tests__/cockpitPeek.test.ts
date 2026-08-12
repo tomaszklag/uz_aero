@@ -11,7 +11,7 @@
  * migawki ani bez sieci, i że każdy stan ma niepustą stopkę o pochodzeniu danych (§4.8).
  *
  * Liczby scenariusza pochodzą z mockupu `design/04b-cockpit-readonly.html`:
- * meldunek 07:10, pobrano 09:41, ostatnia aktywność 09:38, 1 cykl 07:22 → 08:31, 1 T/O.
+ * przejęcie 07:10, pobrano 09:41, ostatnia aktywność 09:38, 1 cykl 07:22 → 08:31, 1 T/O.
  */
 
 import {
@@ -50,11 +50,10 @@ function event<T extends Event['type']>(type: T, time: number, payload: unknown 
   } as Event;
 }
 
-/** Dzień KRZ z mockupu: meldunek 07:10, jeden cykl 07:22 → 08:31 z jednym lotem. */
+/** Sesja KRZ z mockupu: przejęcie 07:10, jeden cykl 07:22 → 08:31 z jednym lotem. */
 const krzEvents: Event[] = [
   event('preflight_confirm', at(7, 10), {
     operation: 'skoki',
-    dutyStart: at(7, 10),
     reading: { fuelL: 176, mh: 4512 },
   }),
   event('engine_start', at(7, 22)),
@@ -218,7 +217,10 @@ describe('przejęcie samolotu z podglądu (issue #12)', () => {
   it('podpis pod przyciskiem mówi, że rejestru to jeszcze nie dotyka', () => {
     const hint = takeoverHint('SP-FGK');
     expect(hint).toContain('SP-FGK');
-    expect(hint).toContain('preflightu');
+    // „nowego lotu", nie „preflightu": flow nazywa się tak, jak przycisk na 01
+    // („ROZPOCZNIJ LOT", decyzja 2026-08-12) — słowo „przejęcie" zostało wyłącznie
+    // przy odbieraniu maszyny INNEMU pilotowi, czyli przy samym przycisku wyżej.
+    expect(hint).toContain('nowego lotu');
     expect(hint).toContain('po potwierdzeniu');
   });
 });

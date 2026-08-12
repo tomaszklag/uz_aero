@@ -46,7 +46,7 @@ export interface ConsumptionSummary {
   litersPerFlightHour: number | null;
   /** `Σ L / Σ h pracy silnika` — ta sama definicja, co „Śr. L/h" w statystykach zakresu. */
   litersPerBlockHour: number | null;
-  /** `Σ L / Σ wzlotów` — dla dni skokowych czyta się to jako „na wyniesienie". */
+  /** `Σ L / Σ lotów` — dla dni skokowych czyta się to jako „na wyniesienie". */
   litersPerFlight: number | null;
 
   /**

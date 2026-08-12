@@ -294,6 +294,24 @@
         <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> — konta zakłada administrator.</div>
       </div>
 
+      <!-- ══ SYNCHRONIZACJA — wejście do ekranu 11 (status, nie akcja) ══
+           Przeniesione z rozliczenia (10) po issue #23: tam wisiało na przycisku
+           „ZATWIERDŹ → SYNC", a zdanie samolotu już potwierdza dane — po locie
+           niczego się nie zatwierdza ani nie wysyła ponownie. -->
+      <div class="form-section">
+        <div class="form-section-title">Synchronizacja</div>
+        <a class="action-item" href="11-eksport.html">
+          <span class="action-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          </span>
+          <span class="action-body">
+            <span class="action-name">Status synchronizacji</span>
+            <span class="action-sub">kolejka wysyłki i eksport arkuszy — wysyłką zarządza outbox sam</span>
+          </span>
+          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
+        </a>
+      </div>
+
       <!-- ══ DIAGNOSTYKA GPS — czujnik lokalny, oś niezależna od sieci ══ -->
       <div class="form-section">
         <div class="form-section-title">Diagnostyka GPS</div>

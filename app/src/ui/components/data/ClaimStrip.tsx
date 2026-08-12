@@ -1,9 +1,9 @@
 /**
  * UZ Aero — ClaimStrip (`.claim-strip` z mockupu 04B).
  *
- * Pasek sesji CUDZEGO samolotu: ikona, czyja maszyna i od kiedy, licznik wzlotów, a po
+ * Pasek sesji CUDZEGO samolotu: ikona, czyja maszyna i od kiedy, licznik lotów, a po
  * prawej stan („zajęty"). Zastąpił `DutyStrip` — powód jest modelowy, nie wizualny: czas
- * służby należy do PILOTA i mieszka na 01, a kokpit opisuje SAMOLOT (§3.6a).
+ * pracy pilota jest wielkością PILOTA i mieszka na 01, a kokpit opisuje SAMOLOT (§3.6a).
  *
  * PRZYRZĄD, NIE NAWIGACJA (decyzja 2026-08-10). Do tej pory istniał też wariant klikalny
  * — w kokpicie WŁASNEJ maszyny prowadził na „Mój dzień" i był jedyną drogą powrotną.
@@ -23,14 +23,14 @@ import { toneColors } from '../tone';
 export interface ClaimStripProps {
   /** Górna linia: „SP-FGK · KRZ od 07:10 UTC". */
   label: string;
-  /** Dolna linia: „2 wzloty" albo „jeszcze żadnego wzlotu". */
-  legs: string;
+  /** Dolna linia: „2 loty" albo „jeszcze żadnego lotu". */
+  flights: string;
   /** Prawa strona: stan maszyny — „zajęty". */
   trailing: string;
   style?: ViewStyle;
 }
 
-export function ClaimStrip({ label, legs, trailing, style }: ClaimStripProps) {
+export function ClaimStrip({ label, flights, trailing, style }: ClaimStripProps) {
   const { theme } = useTheme();
   const blue = toneColors(theme, 'blue');
 
@@ -57,7 +57,7 @@ export function ClaimStrip({ label, legs, trailing, style }: ClaimStripProps) {
             {label}
           </AppText>
           <AppText variant="mono" style={styles.value}>
-            {legs}
+            {flights}
           </AppText>
         </View>
       </View>
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   strip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   // `flexShrink` MUSI stać także tutaj, nie tylko na `text`: dziecko nie skurczy się,
   // dopóki jego rodzic rośnie bez ograniczeń. Bez tego długa wartość („jeszcze żadnego
-  // wzlotu" przy 16 px i tracking 2) wypychała prawą kolumnę poza krawędź telefonu —
+  // lotu" przy 16 px i tracking 2) wypychała prawą kolumnę poza krawędź telefonu —
   // złapane na urządzeniu 2026-08-10.
   left: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
   // Etykieta bywa długa („SP-FGK · KRZ od 07:10 UTC") — musi mieć się gdzie skurczyć,

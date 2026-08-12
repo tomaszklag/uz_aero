@@ -317,7 +317,7 @@ export function CockpitScreen({
       visible={leaveOpen}
       aircraftId={projection.aircraftId ?? '—'}
       since={projection.claimedAt != null ? `${timeUtc(projection.claimedAt)} UTC` : null}
-      legCount={projection.legs.length}
+      flightCount={projection.flights.length}
       onStay={() => setLeaveOpen(false)}
       onRelease={() => {
         setLeaveOpen(false);

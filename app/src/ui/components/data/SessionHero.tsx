@@ -2,11 +2,11 @@
  * UZ Aero — SessionHero (`.duty-hero` z mockupu 10 „Rozliczenie samolotu")
  *
  * Wyśrodkowana karta z jedną liczbą podaną wielkim krojem: czas blokowy SESJI, pod nim
- * zakres, z którego powstał („przejęty 08:04 → zdany 11:20 UTC · 2 wzloty").
+ * zakres, z którego powstał („przejęty 08:04 → zdany 11:20 UTC · 2 loty").
  *
  * Bohaterem był tu czas służby, dopóki dzień pilota i sesja samolotu były tym samym.
- * Po §3.6a nie są: służba należy do PILOTA, obejmuje kilka maszyn i mieszka na 01, więc
- * na ekranie rozliczającym JEDEN samolot nie ma czego szukać. Zostaje wielkość, która
+ * Dziś nie są: dzień pilota to lista sesji na różnych maszynach (issue #23) i mieszka
+ * na 01, więc na ekranie rozliczającym JEDEN samolot nie ma czego szukać. Zostaje wielkość, która
  * naprawdę opisuje tę maszynę i którą przepisuje się do dokumentów — czas blokowy.
  * Zakres pod spodem pozwala sprawdzić, czy przejęcie i zdanie mają właściwe godziny.
  *

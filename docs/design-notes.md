@@ -17,16 +17,16 @@
                           jako informacja wiersza; warianty: 01a zero sesji,
                           01c offline + arkusz szczegółów synchronizacji)
 
-Przejęcie samolotu (trzy kroki, kilka sekund — nie otwiera doby):
+Nowy lot (trzy kroki, kilka sekund — nie otwiera doby):
   → 02-preflight          (krok 1/3 — samolot i Dual; wariant offline: 02d)
   → 02e-preflight-zadanie (krok 2/3 — operacja, trasa, klient, notatka; arkusz lotnisk: 02f)
-  → 02a-preflight         (krok 3/3 — paliwo i motogodziny; „Przejmij i leć")
+  → 02a-preflight         (krok 3/3 — paliwo i motogodziny; „ROZPOCZNIJ LOT")
     02b-preflight-paliwo    (modal: korekta paliwa — wizualizacja)
     02c-preflight-moto      (modal: korekta MH — wizualizacja)
-  → 04a-cockpit-ground    (świeżo przejęty samolot, zero wzlotów)
+  → 04a-cockpit-ground    (świeżo przejęty samolot, log pusty)
 
-Cockpit cycle (powtarzalny):
-  04a / 04-cockpit-ground   (silnik OFF — świeżo przejęty / kolejne wzloty)
+Cockpit cycle (jeden bieg silnika na sesję):
+  04a / 04-cockpit-ground   (silnik OFF — przed uruchomieniem / po zatrzymaniu: hero ZDAJ SAMOLOT)
   04b-cockpit-readonly      (podgląd cudzego samolotu — zajęty przez innego PIC)
     ↓ Start engine
   05a-cockpit-taxi          (silnik ON — kołowanie przed T/O)
@@ -37,8 +37,8 @@ Cockpit cycle (powtarzalny):
     ↓ autodetect LDG
   05c-cockpit-toast-ldg     (rollout · toast: Wykryto Landing)
     ↓ toast potwierdzony
-  05d-cockpit-taxi-post     (kołowanie po lądowaniu — wzlot N ukończony)
-    ↓ kolejny T/O → 05b  /  Stop engine → 09
+  05d-cockpit-taxi-post     (kołowanie po lądowaniu — lot N ukończony)
+    ↓ kolejny T/O → 05b  /  Stop engine → 04 (hero ZDAJ SAMOLOT)
 
   akcje ground: 04a (przed startem) → 06-tankowanie · 07-zmiana-zalogi;
                 04 (po zatrzymaniu) → 06-tankowanie · 08-lista-reczna
@@ -52,10 +52,12 @@ Zdanie samolotu (model 2026-08-10 — sesja = jeden bieg silnika; ekrany 09 i 09
                             z 01 także [15] ręczny wpis CAŁEGO lotu po fakcie
 
 Odnogi pod 01 (nie etapy dnia):
-  10-statystyki  rozliczenie SAMOLOTU (10a — bez lotów)
-  11-eksport     status synchronizacji (11a — offline)
+  10-statystyki  detale i korekty JEDNEJ sesji — wejście OŁÓWKIEM wiersza logu na 01
+                 albo kartą dnia w historii (10a — bez lotów); niczego się tu nie
+                 zatwierdza: zdanie samolotu już potwierdziło dane
+  11-eksport     status synchronizacji (11a — offline) — wejście z ustawień (13)
   12-historia    poprzednie dni pilota, okno korekty 24 h
-  13-ustawienia
+  13-ustawienia  motyw · PIN · konto · status synchronizacji · diagnostyka GPS
 ```
 
 ---
@@ -74,13 +76,13 @@ Odnogi pod 01 (nie etapy dnia):
 ### Stepper 3-krokowy (od 2026-08-06; wcześniej 4 kroki)
 - Krok 1 (02) — **czym i z kim**: samolot (z przejęciem po innym PIC), drugi pilot
 - Krok 2 (02E) — **co teraz robimy**: rodzaj operacji, trasa (ICAO), klient, notatka
-- Krok 3 (02A) — paliwo na pokładzie, motogodziny + CTA „Przejmij i leć"
+- Krok 3 (02A) — paliwo na pokładzie, motogodziny + CTA „ROZPOCZNIJ LOT"
 
 **Co zniknęło i dlaczego** (przebudowa flow, `_main.md.txt` §3.6a):
 - **czas meldowania z kroku 1** — pytanie „od kiedy jesteś na służbie" stało między pilotem
-  a samolotem. Służba nie jest kontenerem na loty, tylko klamrą wokół nich: powstaje sama
-  z pierwszego wzlotu, a pilot poprawia ją po fakcie na `01`. Przejęcie ma trwać kilka
-  sekund, nie otwierać doby
+  a samolotem, a mierzyło wielkość, której model już nie zna: klamra służby została
+  usunięta w całości (issue #23) — dzień pilota to lista sesji i nie ma godziny, którą
+  trzeba by deklarować. Rozpoczęcie lotu ma trwać kilka sekund, nie otwierać doby
 - **krok 4 (ekran 03, podsumowanie)** — powtarzał to, co pilot wpisał sekundę wcześniej,
   i był czwartym tapnięciem w drodze do samolotu. Odczyty z kroku 3 SĄ potwierdzeniem
 
@@ -148,7 +150,7 @@ Wzorzec obowiązuje KAŻDY ekran z SyncChipem, nie tylko 01.
 
 ### Wartości formularza — spójność danych
 Ekranu 03 nie ma (usunięty 2026-08-06), więc spójności pilnujemy między krokami 1–3
-a kokpitem, do którego prowadzi „Przejmij i leć":
+a kokpitem, do którego prowadzi „ROZPOCZNIJ LOT":
 - Samolot: SP-AXA (Cessna 182 · 2019)
 - Pilot: T. Małkiewicz
 - Paliwo: 150 L

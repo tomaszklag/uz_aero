@@ -375,9 +375,9 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       try {
         const repo = get().repo;
         if (repo != null && projection.sessionUuid != null) {
-          // Pytamy o ZDANIE samolotu, nie o klamrę służby. `dutyEnd` po §3.6a zostaje
-          // `null` także po `day_close`, więc ten warunek trzymał klucz usługi w tle
-          // wskazujący na sesję, której pilot już nie ma.
+          // Pytamy o ZDANIE samolotu (`closed`). Historyczny warunek `dutyEnd == null`
+          // trzymał klucz usługi w tle wskazujący na sesję, której pilot już nie ma —
+          // a samego `dutyEnd` nie ma dziś w modelu w ogóle (issue #23).
           if (!projection.closed) {
             await repo.setMeta(SESSION_META_KEYS.activeSessionUuid, projection.sessionUuid);
           } else {

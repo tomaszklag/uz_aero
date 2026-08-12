@@ -1,5 +1,5 @@
 /**
- * UZ Aero — 02 PRZEJĘCIE · krok 1/3: kto i czym.
+ * UZ Aero — 02 NOWY LOT · krok 1/3: kto i czym.
  *
  * Odwzorowanie mockupu `design/02-preflight.html` — kolejność i treść sekcji są stamtąd,
  * nie z improwizacji: pasek tożsamości → samolot → drugi pilot → DALEJ.
@@ -141,7 +141,7 @@ export function PreflightAircraftScreen({
         <ScreenHeader
           // Bez podtytułu (issue #12): „Kto, czym i od kiedy" opisywało formularz, który
           // pilot i tak ma przed oczami, a numer kroku mówi już wszystko o miejscu w flow.
-          title="PREFLIGHT"
+          title="NOWY LOT"
           step="1 / 3"
           right={
             <SyncChip

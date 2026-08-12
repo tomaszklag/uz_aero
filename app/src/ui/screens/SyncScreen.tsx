@@ -25,7 +25,7 @@
  * „NIE czyści już stosu: ten ekran przestał być końcem drogi"). Do 2026-08-08 wołał
  * `navigation.reset`, bo powstał w modelu, w którym dzień pilota domykało się jednym
  * ekranem i za plecami synchronizacji stała cała droga zamknięcia. Po §3.6a synchronizacja
- * jest STATUSEM, który pilot sprawdza w środku dnia — między jednym wzlotem a drugim —
+ * jest STATUSEM, który pilot sprawdza w środku dnia — między jedną sesją a drugą —
  * a skasowany stos zabierał mu wtedy drogę powrotną do kokpitu, w którym za chwilę
  * uruchamia silnik.
  */
@@ -127,9 +127,10 @@ export function SyncScreen({
   /**
    * Powrót na „Mój dzień" — zwykłe przejście, BEZ kasowania stosu.
    *
-   * Ekrany za plecami (kokpit, 09, 10) opisują stan nadal żywy: sesja się nie skończyła
-   * dlatego, że pilot zajrzał w status wysyłki. Pętla synca żyje poza nawigacją
-   * (`useSyncLoop` słucha AppState i pulsu), więc zejście z ekranu niczego nie przerywa.
+   * Ekrany za plecami (ustawienia, a pod nimi dzień albo kokpit) opisują stan nadal
+   * żywy: sesja się nie skończyła dlatego, że pilot zajrzał w status wysyłki. Pętla
+   * synca żyje poza nawigacją (`useSyncLoop` słucha AppState i pulsu), więc zejście
+   * z ekranu niczego nie przerywa.
    */
   const finishDay = useCallback((): void => {
     navigation.navigate('MyDay');
@@ -145,7 +146,9 @@ export function SyncScreen({
       title="SYNCHRONIZACJA"
       size="md"
       onBack={navigation.goBack}
-      backLabel="Statystyki"
+      // Jedyne wejście na ten ekran to Ustawienia → „Status synchronizacji" (issue #23:
+      // z rozliczenia 10 zniknął „ZATWIERDŹ → SYNC" i razem z nim tamta droga).
+      backLabel="Ustawienia"
       right={
         <SyncChip
           status={synced ? 'synced' : 'offline'}

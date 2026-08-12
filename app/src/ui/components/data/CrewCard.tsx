@@ -32,7 +32,7 @@ export interface CrewCardProps {
   /** Kod pilota („TMK"). */
   code: string;
   stats?: CrewStat[];
-  /** Przypis pod statystykami („Pełny dzień"). */
+  /** Przypis pod statystykami („Cała sesja"). */
   tag?: string | null;
   /** Karta zalogowanego pilota — zielona obramówka i zielony kod. */
   active?: boolean;

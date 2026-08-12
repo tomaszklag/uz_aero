@@ -862,7 +862,7 @@
         <div class="page-head">
           <div>
             <h1 class="page-title">ANALITYKA ZUŻYCIA · SP-ABC</h1>
-            <p class="page-sub">Skąd biorą się średnie tego samolotu: każdy odczyt paliwomierza (przejęcie, tankowanie przed/po, <b>opcjonalny odczyt przy zamknięciu wzlotu</b>, zdanie samolotu) tnie sesję na <b>interwały o znanym zużyciu</b>, a regresja rozdziela je między fazy. Odczyt przy wzlocie działa jak tankowanie bez dolewki: zamyka interwał i otwiera następny tą samą wartością — a wzlot BEZ odczytu nie tworzy granicy w ogóle, bo nie ma czego porównać. Motogodziny analogicznie — jedno równanie na każdą zamkniętą sesję. Każda liczba na tym ekranie klika się w dół: do interwału, dnia i zdarzeń źródłowych.</p>
+            <p class="page-sub">Skąd biorą się średnie tego samolotu: każdy odczyt paliwomierza (przejęcie, tankowanie przed/po, zdanie samolotu — odczyty przy przejęciu i zdaniu są OBOWIĄZKOWE od pivotu 2026-08-10) tnie sesję na <b>interwały o znanym zużyciu</b>, a regresja rozdziela je między fazy. Dolewka działa jak dwie granice: <code>refuel.beforeL</code> zamyka interwał, <code>refuel.afterL</code> otwiera następny — każda sesja jest więc domknięta odczytami z obu stron. Motogodziny analogicznie — jedno równanie na każdą zamkniętą sesję. Każda liczba na tym ekranie klika się w dół: do interwału, dnia i zdarzeń źródłowych.</p>
           </div>
           <div class="page-actions">
             <button class="btn primary">
@@ -1022,7 +1022,7 @@
                 </tr>
                 <tr class="clickable">
                   <td class="mono">29 JUL</td>
-                  <td class="mono dim">tankowanie 10:22 → wzlot 12:45</td>
+                  <td class="mono dim">tankowanie 10:22 → zdanie 12:45</td>
                   <td class="num cell-strong">81 L<span class="cell-sub">odczyt 178 → 97 L</span></td>
                   <td class="num">2:23</td>
                   <td class="num">0:29 / 0:40 / 0:50 / 0:24</td>
@@ -1069,7 +1069,7 @@
           </div>
 
           <div class="list-foot">
-            <span class="hint">Pokazano 6 z 96 interwałów okna. 26 min pracy silnika z 24 JUL nie tłumaczy 22 L — interwał jest wykluczony z regresji i czeka na wyjaśnienie przy sesji; „Reszta" to zużycie zmierzone minus przewidziane przez model. <b>Granica „wzlot"</b> to opcjonalny odczyt z <code>leg_close</code> (§3.6): pilot, który podaje odczyt po wzlocie, daje modelowi dodatkowy punkt podparcia — a dzień skokowy bez takich odczytów da JEDEN długi interwał na całą sesję i model odmówi rozdziału ziemia/lot (§3.6b).</span>
+            <span class="hint">Pokazano 6 z 96 interwałów okna. 26 min pracy silnika z 24 JUL nie tłumaczy 22 L — interwał jest wykluczony z regresji i czeka na wyjaśnienie przy sesji; „Reszta" to zużycie zmierzone minus przewidziane przez model. Granice interwałów to <b>przejęcie, tankowania i zdanie</b> — odczyty przy przejęciu i zdaniu są obowiązkowe (pivot 2026-08-10, §3.6b rozwiązane), więc sesja bez tankowań daje dokładnie JEDEN interwał; rozdział ziemia/lot wychodzi dopiero na maszynie o zróżnicowanym ruchu (§3.6b).</span>
             <button class="btn ghost sm">Pokaż kolejne 20</button>
           </div>
         </div>

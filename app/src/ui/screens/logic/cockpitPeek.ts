@@ -248,5 +248,5 @@ export function takeoverWarning(freshness: PeekFreshness, picCode: string | null
  */
 export function takeoverHint(reg: string | null): string {
   const what = reg ?? 'ten samolot';
-  return `Wrócisz do preflightu z wybranym ${what} — dzień zapisze się dopiero po potwierdzeniu danych`;
+  return `Wrócisz do nowego lotu z wybranym ${what} — zapisze się dopiero po potwierdzeniu odczytów`;
 }

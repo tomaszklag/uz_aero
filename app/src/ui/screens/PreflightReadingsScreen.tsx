@@ -1,9 +1,9 @@
 /**
- * UZ Aero — 02A PRZEJĘCIE · krok 3/3: paliwo i motogodziny.
+ * UZ Aero — 02A NOWY LOT · krok 3/3: paliwo i motogodziny.
  *
  * Odwzorowanie mockupu `design/02a-preflight.html` wraz z arkuszami korekty z 02b/02c.
  * Struktura stamtąd: [box „brak danych"] → sekcja PALIWO → sekcja MOTOGODZINY →
- * poświadczenie → PRZEJMIJ I LEĆ.
+ * poświadczenie → ROZPOCZNIJ LOT.
  *
  * Najważniejszy ekran przejęcia, bo tutaj powstaje **początek łańcucha MH** (§4.5) —
  * wartość, po której serwer porządkuje sesje samolotu.
@@ -118,7 +118,7 @@ export function PreflightReadingsScreen({
   );
 
   /**
-   * PRZEJMIJ I LEĆ — tu kończy się szkic, a zaczyna rejestr.
+   * ROZPOCZNIJ LOT — tu kończy się szkic, a zaczyna rejestr.
    *
    * Zapis zapadał do 2026-08-07 na osobnym ekranie podsumowania (dawny `03`). Ekran zniknął,
    * bo powtarzał to, co pilot wpisał sekundę wcześniej, i wydłużał drogę do kokpitu
@@ -167,9 +167,9 @@ export function PreflightReadingsScreen({
 
       // 2. Preflight — odczyty liczników stają się początkiem łańcucha MH (§4.5).
       //
-      //    `dutyStart` NIE jest wysyłany i to jest decyzja (§3.6a): służba jest klamrą
-      //    wokół wzlotów, więc godzina meldunku bierze się z pierwszego wzlotu doby,
-      //    a pilot poprawia ją po fakcie na ekranie 01.
+      //    `dutyStart` nie istnieje w payloadzie (§3.6a, domknięte issue #23): dzień
+      //    pilota to lista sesji — klamry służby i godziny meldunku nie ma w modelu
+      //    w ogóle, więc nie ma czego wysyłać.
       await confirmPreflight({
         operation: draft.operation,
         departureIcao: draft.departureIcao || null,
@@ -300,7 +300,7 @@ export function PreflightReadingsScreen({
       scroll
       header={
         <ScreenHeader
-          title="PREFLIGHT"
+          title="NOWY LOT"
           // Samolot RAZ, w nagłówku. Wcześniej rejestracja wracała w każdym podpisie
           // („z konfiguracji SP-ANK" pod paliwem, pod MH i w obu arkuszach) — a to jest
           // stała całego ekranu, nie właściwość pojedynczego odczytu. Zniknąć nie może:
@@ -321,7 +321,7 @@ export function PreflightReadingsScreen({
       // oś czasu przekazania (reguła z 2026-07-30).
       footer={
         <ActionButton
-          label="PRZEJMIJ I LEĆ"
+          label="ROZPOCZNIJ LOT"
           tone="green"
           variant="solid"
           busy={busy}

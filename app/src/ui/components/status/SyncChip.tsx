@@ -98,7 +98,7 @@ export function SyncChip({
         onCancel={() => setDetailsOpen(false)}
         footer={
           <AppText variant="mono" tone="muted" style={styles.note}>
-            Pełna kolejka i historia wysyłki: Rozliczenie → Status synchronizacji.
+            Pełna kolejka i historia wysyłki: Ustawienia → Status synchronizacji.
           </AppText>
         }
       >

@@ -20,7 +20,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import type { FlightTrackView } from '../../application';
-import { formatLatLon, timeUtc, duration } from '../format';
+import { dateUtcDayMonth, formatLatLon, timeUtc, duration } from '../format';
 import {
   AppText,
   Banner,
@@ -98,7 +98,14 @@ export function TrackScreen({
   const header = (
     <ScreenHeader
       title="ŚLAD LOTU"
-      subtitle={view != null ? `Lot ${view.flight.index} · ${timeUtc(view.flight.takeoffAt)} UTC` : undefined}
+      // Podtytuł 1:1 z mockupu 14: numer lotu · dzień i miesiąc · rejestracja.
+      // Bez „· UTC" (wzorzec nagłówków po issue #23) i bez godziny — T/O i LDG
+      // stoją na mapie przy znacznikach, a datę niesie kontekst dnia.
+      subtitle={
+        view != null
+          ? `Lot ${view.flight.index} · ${dateUtcDayMonth(view.flight.takeoffAt)} · ${view.aircraftId ?? '—'}`
+          : undefined
+      }
       size="md"
       onBack={navigation.goBack}
       backLabel="Statystyki"

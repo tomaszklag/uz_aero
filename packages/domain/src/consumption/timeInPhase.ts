@@ -18,7 +18,7 @@
  *
  * ══ ODCINKI SCALAMY, NIE SUMUJEMY ══
  * Czas pracy silnika to miara SUMY MNOGOŚCIOWEJ odcinków, nie suma ich długości.
- * Ręczny wpis potrafi nachodzić na zarejestrowany cykl (pilot dopisał wzlot, który
+ * Ręczny wpis potrafi nachodzić na zarejestrowany cykl (pilot dopisał lot, który
  * aplikacja też złapała), a wtedy dodanie długości policzyłoby te same minuty dwa razy:
  * mianownik rośnie, L/h spada, i znowu — nic tego nie widać. `projectSession` sumuje
  * oba źródła bez scalania (`blockTimeMs += …`), więc dla nakładających się wpisów

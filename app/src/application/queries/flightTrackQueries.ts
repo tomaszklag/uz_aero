@@ -38,6 +38,8 @@ export type MissingTrackReason =
 /** Ślad jednego lotu gotowy do narysowania. */
 export interface FlightTrackView {
   flight: Flight;
+  /** Rejestracja maszyny — podtytuł nagłówka (mockup 14: „Lot 3 · 06 SIE · SP-KLM"). */
+  aircraftId: string | null;
   /**
    * Kod ICAO z preflightu. Mapa rysuje to lotnisko ZAWSZE, także gdy wypada poza kadr —
    * pilot podał je ręcznie, więc jest odpowiedzią na pytanie „gdzie to było", a nie
@@ -68,7 +70,7 @@ export class FlightTrackQueries {
     if (flight == null) return null;
 
     if (flight.method === 'manual') {
-      return this.empty(flight, 'manual', state.departureIcao);
+      return this.empty(flight, 'manual', state.aircraftId, state.departureIcao);
     }
 
     // Lot otwarty (jeszcze w powietrzu) nie ma górnej granicy — bierzemy do teraz.
@@ -80,7 +82,7 @@ export class FlightTrackQueries {
     )) as unknown as RawTrackEntry[];
 
     if (entries.length === 0) {
-      return this.empty(flight, 'no-record', state.departureIcao);
+      return this.empty(flight, 'no-record', state.aircraftId, state.departureIcao);
     }
 
     const track = buildFlightTrack(entries, {
@@ -90,6 +92,7 @@ export class FlightTrackQueries {
 
     return {
       flight,
+      aircraftId: state.aircraftId,
       departureIcao: state.departureIcao,
       track,
       profile: buildFlightProfile(track.points),
@@ -104,10 +107,12 @@ export class FlightTrackQueries {
   private empty(
     flight: Flight,
     reason: MissingTrackReason,
+    aircraftId: string | null,
     departureIcao: string | null,
   ): FlightTrackView {
     return {
       flight,
+      aircraftId,
       departureIcao,
       track: emptyFlightTrack(),
       profile: emptyFlightProfile(),

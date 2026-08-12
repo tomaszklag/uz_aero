@@ -252,7 +252,7 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 ```
 00-login → 01-moj-dzien (EKRAN DOMOWY — płaski log sesji dnia; warianty: 01a pusty,
   01c offline + arkusz szczegółów synchronizacji)
-01-moj-dzien → 02-przejecie → 02e-zadanie → 02a-liczniki → „Przejmij i leć"
+01-moj-dzien → 02-samolot → 02e-zadanie → 02a-liczniki → „ROZPOCZNIJ LOT"
 → 04a-kokpit PRZED URUCHOMIENIEM (tankowanie / załadunek skoczków w dniu skokowym /
   zmiana załogi / zdanie bez lotu 09c)
 → START ENGINE → 05-cockpit-running (wiele startów i lądowań = LOTÓW w jednej sesji)
@@ -261,7 +261,10 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu sesji;
   wariant 09c: zdanie bez lotu) → 01-moj-dzien
 01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie: samolot, czasy, odczyty)
-01-moj-dzien → 10-statystyki (rozliczenie samolotu) / 11-eksport / 12-historia
+01-moj-dzien → 12-historia; OŁÓWEK wiersza logu → 10-statystyki (detale i korekty
+  TEJ sesji; „Rozliczenie" jako osobny przycisk nie istnieje)
+11-eksport (status synchronizacji) → wejście z USTAWIEŃ (13), nie z 10 — przycisk
+  „ZATWIERDŹ → SYNC" usunięty: zdanie samolotu już potwierdza dane
 ```
 **Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
 kroków flow: zaczyna się pierwszą sesją i NICZYM się nie domyka — „Zamknij dzień",
@@ -323,7 +326,11 @@ deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Konsekwencje:
 - z modelu znikły: `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła
   `DUTY_END_BEFORE_START`, projekcja klamry (`projectDuty` → **`projectPilotDay`**:
   lista sesji + sumy, `projections/pilotDay.ts`)
-- okno korekty jest JEDNO, per sesja: 24 h od ZDANIA samolotu; drzwiami jest historia (12)
+- **zdanie samolotu już POTWIERDZA dane** — po locie niczego się nie potwierdza ani nie
+  wysyła ponownie (decyzja biznesowa przy issue #23; z ekranu 10 zniknął „ZATWIERDŹ →
+  SYNC"). Detale sesji (10) otwiera ołówek wiersza na 01 — tam się ogląda i koryguje
+- okno korekty jest JEDNO, per sesja: 24 h od ZDANIA samolotu; drzwiami są ołówek
+  wiersza na 01 i historia (12)
 - **zdanie samolotu nie kończy dnia pilota** — kolejna maszyna dopisze się do listy sesji
 - odczyt liczników przy zdaniu (09b) pozostaje **OBOWIĄZKOWY** (przekazanie + ogniwo
   łańcucha MH); jednostką potwierdzenia pozostaje SESJA (pivot 2026-08-10)
@@ -333,7 +340,8 @@ silnika" wyżej.
 
 ## Pilot i samolot — UX
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth — decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
-- **Przejęcie samolotu ma trwać kilka sekund** — trzy kroki (samolot+Dual → zadanie → liczniki) i „Przejmij i leć" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
+- **Rozpoczęcie lotu ma trwać kilka sekund** — trzy kroki (samolot+Dual → zadanie → liczniki) i „ROZPOCZNIJ LOT" prowadzi wprost do kokpitu. Nie pytamy o czas meldowania i nie ma ekranu podsumowania (dawny `03` usunięty): powtarzał to, co pilot wpisał sekundę wcześniej
+- **Nazewnictwo wejścia w lot** (decyzja 2026-08-12): główny przycisk na 01 i CTA kroku 3 to **„ROZPOCZNIJ LOT"**, a nagłówek kroków brzmi **„NOWY LOT · n/3"**. Słowa **„przejmij / przejęcie" używamy WYŁĄCZNIE tam, gdzie maszynę odbiera się INNEMU pilotowi** (podgląd 04B, modal claimu, `session_claim` w rejestrze) — pilot startujący na wolnym samolocie niczego nie przejmuje, tylko zaczyna latać. Identyfikatory w kodzie (`claim`, `takeover`, `Preflight*`) zostają: to nazwy techniczne, nie napisy
 - Tożsamość pilota jest znana w całej sesji — NIE pytamy o kod pilota w formularzach
 - Samolot wybieramy z listy zarejestrowanych jednostek (dropdown/lista kart), NIE pole tekstowe
 - Rodzaj operacji — siatka kart z ikonami, NIE select. Nazwy dla pilota: Skoki / **Przelot** / Egzamin / Lot tech. / Inne (wartości w rejestrze zostają angielskie — `ferry` to identyfikator, nie napis)

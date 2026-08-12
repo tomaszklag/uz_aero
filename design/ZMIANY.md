@@ -1587,3 +1587,77 @@ projekcja klamry).
 > był szumem. Znacznik zostaje tam, gdzie mówi coś o TABELI czasów („Log dnia ·
 > czasy UTC", „Czasy · UTC", „Log SP-XXX · UTC") — zgodnie z regułą „logi i tabele
 > oznaczaj jawnie".
+
+**01/10 — detale sesji ołówkiem, bez „Rozliczenia" i bez zatwierdzania** (uwagi
+użytkownika po przeglądzie).
+> Link „Rozliczenie →" z nagłówka karty logu USUNIĘTY — nic nie mówił. Wejściem
+> w detale sesji jest OŁÓWEK wiersza (01/01C → 10); tam tabela lotów z korektami.
+> Ołówek przestał prowadzić do 04c (arkusz nad KOKPITEM otwierany z 01 wyglądał
+> jak popup bez kontekstu). Decyzja biznesowa: **zdanie samolotu już potwierdza
+> dane** — po locie niczego się nie potwierdza ani nie wysyła ponownie. W kodzie
+> ekranu 10 wciąż żył „ZATWIERDŹ → SYNC" (mockup usunął go wcześniej) — zastąpiony
+> przez „WRÓĆ DO DNIA" 1:1 z mockupem; „EDYTUJ DANE" w mockupie prowadzi teraz do
+> listy ręcznej (08), nie do 04c. Wejście do statusu synchronizacji (11) przeniosło
+> się do ustawień (13 — nowa sekcja „Synchronizacja"), żeby ekran nie osierociał;
+> arkusz SyncChipa podpowiada tę drogę.
+
+**Audyt domykający (resztki po issue #23 i pivocie) — mockupy.**
+> 10/10A: komplet resztek „wzlot" wymieciony (badge „2 loty" / „0 lotów", sekcja
+> „Lista lotów · czasy UTC", tytuły ołówków i śladów, warianty, nav-strip); baner
+> okna mówi „24 h po zdaniu samolotu", nie „po zamknięciu wzlotu"; czasy lotu 2
+> na 10 przesunięte (09:12→09:47), bo stare 10:26→11:01 wymagałyby DRUGIEGO
+> uruchomienia silnika — a sesja to jeden bieg; w 10A wiersze MH „Początek/Δ dnia"
+> → „Przy przejęciu / Δ sesji", a odwołanie do usuniętego 09A → 09C.
+> 02D i 04B: stempel „Sync HH:MM" pod pillem USUNIĘTY — SyncChip to sam pill
+> `OFFLINE · n`, szczegóły pod tapnięciem (wzorzec 01C); w 04B wiek danych ekranu
+> niesie stopka banera, w 02D pasek cache formularza.
+> 11/11A: wejście z USTAWIEŃ (13), nie z 10 (powrót + nav-strip); chip „Online"
+> z nagłówka 11 usunięty (online nie rysuje NIC — issue #12); stopki kart doby
+> „2/3 wzloty" → „2/3 sesje" (dawny wzlot = cykl, czyli dzisiejsza SESJA — liczenie
+> lotów kłóciłoby się z 6-wierszową tabelą obok); nota 11A „Dzień jest zamknięty…"
+> → „Sesje doby są zdane…" (dnia się nie zamyka).
+> 14/14B: podtytuł „Wzlot N" → „Lot N". 09C: „NIE BYŁO WZLOTU" → „NIE BYŁO LOTU"
+> (razem z aplikacją). 04D: „jeszcze żadnego wzlotu" → „…lotu". Index: sekcja
+> „Zamknięcie wzlotu i zdanie samolotu" → „Zdanie samolotu i rozliczenie", karta 12
+> bez martwego 01B (prowadzi do 10), karta 08 „lista lotów".
+> Panel: nota modelu w admin/index opisuje DWIE osie (sesja z lotami + dzień pilota
+> jako lista sesji), baner A02a i szuflada A02b mówią o JEDNYM oknie 24 h od zdania,
+> A10a/A10b opisują granice interwałów po pivocie (przejęcie / tankowania / zdanie;
+> „186 startów w oknie"); wiersze `leg_close` USUNIĘTE z rejestru A04 i z inwentarza
+> SZABLON (typ nie istnieje od pivotu — w ich miejscu komentarz-strażnik).
+> ZALEGŁOŚĆ zgłoszona do decyzji: przykładowy dzień A02a (DWA cykle silnika w jednej
+> sesji, wiersze `leg_close` na osi, kafel „Wzloty potwierdzone") nadal pokazuje model
+> sprzed pivotu — to przebudowa przykładowych danych, nie słownika, i wymaga osobnego
+> zadania.
+
+**A02a — przykładowy dzień przepisany na model po pivocie** (decyzja: „popraw").
+> Oś zdarzeń pokazywała TRZY cykle silnika w jednej sesji z wierszami `leg_close ·
+> wzlot N` i oknami korekty per wzlot. Teraz: JEDEN bieg 06:31:02 → 13:13:33
+> (blok 06:42), tankowanie i zmiana załogi PRZED uruchomieniem (po pivocie nie ma
+> przerwy w środku biegu), nauka o `CLOCK_DRIFT` przeniesiona na start lotu 8,
+> kafle przeliczone (blok 06:42, średnie 150 L/h, rozjazd Δ MH 1.0 h — obrotomierz
+> na ziemi), wiersz „Wzloty potwierdzone" usunięty z karty sesji, liczniki zdarzeń
+> 81/59. Komentarze-strażnicy w miejscach wyciętych struktur.
+
+**14 — podtytuł śladu 1:1 z mockupem** (decyzja: „obowiązują najnowsze ustalenia").
+> Aplikacja pokazywała „Lot 1 · 08:20 UTC"; mockup mówi „Lot 3 · 06 SIE · SP-KLM".
+> Ustępuje aplikacja: numer lotu · dzień i miesiąc (`dateUtcDayMonth`, nowy format
+> w @uzaero/format) · rejestracja (dołożona do `FlightTrackView`). Bez „· UTC"
+> w podtytule — zgodnie z wzorcem nagłówków.
+
+**10/10a — „czas blokowy" zamiast „block time"** (decyzja: „czas blokowy").
+> „Średnie zużycie (na block time)" i przypis „block time 0:00" przeszły na polski
+> w aplikacji i w 10A; wiersze MH na 10A dogoniły 10 („Przy przejęciu", „Δ sesji
+> (= czas blokowy)"), a tytuł karty MH w aplikacji i na 10A dostał sufiks
+> „· łańcuch samolotu" z mockupu 10.
+
+**„PRZEJMIJ SAMOLOT" → „ROZPOCZNIJ LOT"** (decyzja użytkownika 2026-08-12).
+> Słowo „przejmij" opisywało czynność, której pilot startujący na wolnej maszynie nie
+> wykonuje — nikomu jej nie odbiera, po prostu idzie latać. Główny przycisk na 01/01A/01C
+> i CTA kroku 3 (dawne „PRZEJMIJ I LEĆ") to teraz **ROZPOCZNIJ LOT**, a nagłówek kroków
+> **NOWY LOT** (zastąpił „PRZEJĘCIE" w mockupach i „PREFLIGHT" w aplikacji — rozjazd
+> design↔kod zamknięty przy okazji). Za nim poszły `<title>`, nav-stripy, karty index
+> i podpis pod przyciskiem na 04B („wrócisz do nowego lotu z wybranym SP-FGK").
+> **„Przejmij / przejęcie" zostaje TAM, GDZIE JEST PRAWDĄ**: przycisk i ostrzeżenie na
+> 04B, modal claimu i nazwa zdarzenia `session_claim` — tam maszynę odbiera się innemu
+> pilotowi. Identyfikatory w kodzie bez zmian: to nazwy techniczne, nie napisy.
