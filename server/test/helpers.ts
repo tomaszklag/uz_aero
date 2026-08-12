@@ -48,6 +48,7 @@ import { AuthCommands } from '../src/application/common/commands/auth.ts';
 import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
 import { DayExporter } from '../src/application/common/export/dayExporter.ts';
+import { MyEventQueries } from '../src/application/mobile/queries/myEvents.ts';
 import { ReferenceQueries } from '../src/application/mobile/queries/reference.ts';
 import { TaskSuggestionQueries } from '../src/application/mobile/queries/taskSuggestions.ts';
 import { SheetQueries } from '../src/application/common/queries/sheets.ts';
@@ -79,6 +80,7 @@ import { migrate } from '../src/infrastructure/pg/migrate.ts';
 import { PgPilotPrefsRepo } from '../src/infrastructure/pg/mobile/pilotPrefsRepo.ts';
 import { PgPilotsRepo } from '../src/infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from '../src/infrastructure/pg/common/refreshTokensRepo.ts';
+import { PgMyEventsRepo } from '../src/infrastructure/pg/mobile/myEventsRepo.ts';
 import { PgReferenceRepo } from '../src/infrastructure/pg/mobile/referenceRepo.ts';
 import { PgTaskSuggestionsRepo } from '../src/infrastructure/pg/mobile/taskSuggestionsRepo.ts';
 import { PgAircraftConfigRepo } from '../src/infrastructure/pg/common/aircraftConfigRepo.ts';
@@ -198,6 +200,10 @@ export async function testHarness(
     auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
     reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms),
     ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
+    // Odtworzenie rejestru telefonu (§4.9, issue #32) — prawdziwy adapter, więc test
+    // wysyła zdarzenia przez `POST /events` i odbiera je przez `GET /me/events`,
+    // czyli przechodzi dokładnie drogę telefonu po czyszczeniu pamięci.
+    myEvents: new MyEventQueries(db, new PgMyEventsRepo()),
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
     traces: new FsTraceSink(tracesDir),

@@ -16,6 +16,7 @@ import {
   type AuthTokens,
   type PushResult,
   type RemoteAircraftState,
+  type RemoteEventPage,
   type RemoteTaskSuggestions, RemoteThemePrefs,
   type ServerPort,
   type SessionSyncStatus,
@@ -87,6 +88,13 @@ class ScriptedServer implements ServerPort {
 
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
+
+  /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
+  pullEvents = async (): Promise<RemoteEventPage> => ({
+    events: [],
+    nextCursor: null,
+    hasMore: false,
+  });
 
   getTaskSuggestions = async (): Promise<RemoteTaskSuggestions> => {
     throw new Error('nieużywane w tych testach');

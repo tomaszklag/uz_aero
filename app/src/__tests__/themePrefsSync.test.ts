@@ -18,6 +18,7 @@ import {
   ServerUnreachableError,
   type AuthTokens,
   type PushResult,
+  type RemoteEventPage,
   type RemoteTaskSuggestions, RemoteThemePrefs,
   type ServerPort,
   type SessionSyncStatus,
@@ -63,6 +64,11 @@ class PrefsServer implements ServerPort {
 
   async getTaskSuggestions(): Promise<RemoteTaskSuggestions> {
     throw new Error('nieużywane w tych testach');
+  }
+
+  /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
+  async pullEvents(): Promise<RemoteEventPage> {
+    return { events: [], nextCursor: null, hasMore: false };
   }
 
   async getPrefs(token: string): Promise<RemoteThemePrefs> {

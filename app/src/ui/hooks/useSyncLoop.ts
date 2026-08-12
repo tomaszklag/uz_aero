@@ -26,6 +26,7 @@ export function useSyncLoop(): void {
   const engine = useSessionStore((s) => s.sync);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const syncNow = useSessionStore((s) => s.syncNow);
+  const restoreEvents = useSessionStore((s) => s.restoreEvents);
   const refreshReference = useSessionStore((s) => s.refreshReference);
   const uploadTraces = useSessionStore((s) => s.uploadTraces);
   const syncThemePrefs = useSessionStore((s) => s.syncThemePrefs);
@@ -45,6 +46,10 @@ export function useSyncLoop(): void {
         // claimy), potem cache referencyjny (brama wieku — zwykle darmowy powrót),
         // NA KOŃCU ślad kalibracyjny — jemu nigdzie się nie śpieszy.
         await syncNow();
+        // Odtworzenie rejestru (§4.9, issue #32) PO wysyłce, nie przed: telefon
+        // z niepustym outboxem najpierw oddaje to, co ma tylko on. Własna brama
+        // wieku, więc puls co 60 s nie zamienia się w odpytywanie.
+        await restoreEvents();
         await refreshReference();
         // Motyw pilota (decyzja 2026-07-29): push zaległej zmiany od razu, pull
         // z własną bramą wieku — puls co 60 s nie zamienia się w odpytywanie.
@@ -66,5 +71,14 @@ export function useSyncLoop(): void {
       clearInterval(timer);
       sub.remove();
     };
-  }, [engine, status, outboxCount, syncNow, refreshReference, syncThemePrefs, uploadTraces]);
+  }, [
+    engine,
+    status,
+    outboxCount,
+    syncNow,
+    restoreEvents,
+    refreshReference,
+    syncThemePrefs,
+    uploadTraces,
+  ]);
 }

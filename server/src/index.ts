@@ -36,6 +36,7 @@ import { AuthCommands } from './application/common/commands/auth.ts';
 import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
 import { DayExporter } from './application/common/export/dayExporter.ts';
+import { MyEventQueries } from './application/mobile/queries/myEvents.ts';
 import { ReferenceQueries } from './application/mobile/queries/reference.ts';
 import { TaskSuggestionQueries } from './application/mobile/queries/taskSuggestions.ts';
 import { SheetQueries } from './application/common/queries/sheets.ts';
@@ -68,6 +69,7 @@ import { migrate } from './infrastructure/pg/migrate.ts';
 import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
+import { PgMyEventsRepo } from './infrastructure/pg/mobile/myEventsRepo.ts';
 import { PgReferenceRepo } from './infrastructure/pg/mobile/referenceRepo.ts';
 import { PgTaskSuggestionsRepo } from './infrastructure/pg/mobile/taskSuggestionsRepo.ts';
 import { PgSheets } from './infrastructure/pg/common/sheetsRepo.ts';
@@ -158,6 +160,10 @@ const app = buildServer({
   auth: new AuthCommands(pilots, new PgRefreshTokens(db, clock), hasher, tokens, clock),
   reference: new ReferenceQueries(new PgReferenceRepo(db), db, sessions, consumptionNorms),
   ingest: new IngestCommands(db, events, sessions, flags, aircraftConfig, exporter, { events, norms: consumptionNorms, phases: phaseTimeline }, clock),
+  // Droga POWROTNA outboxa (§4.9, issue #32) — własny adapter obok `PgEventsStore`,
+  // bo to inne pytanie do tej samej tabeli: tamten czyta strumień JEDNEJ sesji przy
+  // ingescie, ten stronicuje rejestr JEDNEGO PILOTA przez wszystkie jego sesje.
+  myEvents: new MyEventQueries(db, new PgMyEventsRepo()),
   state: new StateQueries(db, events, sessions, flags, exportLog),
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),

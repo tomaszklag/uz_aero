@@ -40,6 +40,27 @@ export interface PushResult {
   flags: SessionFlag[];
 }
 
+/**
+ * Strona własnego rejestru z `GET /me/events` (§4.9, issue #32) — droga POWROTNA
+ * outboxa, czyli odtworzenie lokalnego strumienia na urządzeniu, które go straciło.
+ *
+ * `cursor` jest dla telefonu NIEPRZEZROCZYSTY: opisuje pozycję w porządku serwera
+ * i wraca w takiej postaci, w jakiej przyszedł. `nextCursor: null` znaczy „na teraz
+ * masz wszystko" — kursor zapamiętujemy i przy kolejnej okazji pytamy od niego,
+ * więc pełne pobranie zdarza się raz, a potem jedzie sama dosyłka.
+ */
+export interface RemoteEventPage {
+  /** Zdarzenia BEZ `syncedAt` — to pole jest księgowością telefonu, nie serwera. */
+  events: Omit<Event, 'syncedAt'>[];
+  /**
+   * Pozycja ZA ostatnim zdarzeniem strony — wypełniona także wtedy, gdy strona była
+   * ostatnia (`null` tylko dla strony pustej). To ją telefon zapamiętuje.
+   */
+  nextCursor: string | null;
+  /** Czy za tą stroną jest jeszcze co czytać — telefon pętli się, dopóki `true`. */
+  hasMore: boolean;
+}
+
 /** Migawka `GET /reference` — wejście do cache referencyjnego (§4.8). */
 export interface ReferenceData {
   aircraft: ReferenceAircraft[];
@@ -132,6 +153,15 @@ export interface ServerPort {
   login(login: string, password: string): Promise<AuthTokens>;
   refresh(refreshToken: string): Promise<AuthTokens>;
   pushEvents(token: string, events: Event[], sourceDevice: string | null): Promise<PushResult>;
+  /**
+   * Strona WŁASNYCH zdarzeń pilota (`GET /me/events`, §4.9) — kierunek powrotny
+   * `pushEvents`. Tożsamość bierze się z tokenu, więc port nie ma gdzie przyjąć
+   * cudzego `picId`: to jest odtworzenie własnego rejestru, nie czytnik cudzych dni.
+   */
+  pullEvents(
+    token: string,
+    params: { cursor?: string | null; limit?: number },
+  ): Promise<RemoteEventPage>;
   getReference(token: string, etag?: string | null): Promise<ReferenceFetch>;
   getAircraftState(token: string, aircraftId: string): Promise<RemoteAircraftState>;
   getSyncStatus(token: string, sessionUuid: string): Promise<SessionSyncStatus>;

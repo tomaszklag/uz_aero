@@ -37,6 +37,7 @@ import {
   type SessionState,
 } from '../../domain';
 import {
+  EventRestore,
   ReferenceSync,
   SESSION_META_KEYS,
   SessionCommands,
@@ -81,10 +82,31 @@ export interface SessionStore {
   outboxCount: number;
   /** true, gdy outbox pusty (SyncChip = SYNC). */
   synced: boolean;
+  /**
+   * Licznik zmian LOKALNEGO STRUMIENIA spoza bieżącej sesji — rośnie, gdy odtworzenie
+   * (§4.9) dopisze zdarzenia z serwera. Ekrany czytające cały rejestr („Mój dzień",
+   * „Historia dni") trzymają go w zależnościach efektu: bez tego pilot po czyszczeniu
+   * pamięci patrzyłby na pusty dzień, mając już dane w bazie, do czasu przejścia
+   * między ekranami. `projection.eventCount` tego nie łapie — opisuje JEDNĄ sesję.
+   */
+  streamRevision: number;
+  /**
+   * Czy lokalny strumień został już UZGODNIONY z serwerem w tym uruchomieniu.
+   *
+   * Odpowiada na jedno pytanie ekranu: „czy pustemu rejestrowi wolno wierzyć". Zanim
+   * pierwsze odtworzenie się zakończy, pusta doba może być artefaktem czyszczenia
+   * pamięci, a nie faktem — a „JESZCZE ŻADNEGO LOTU" pokazane pilotowi z trzema
+   * sesjami za sobą jest kłamstwem (to ta sama zasada, dla której `usePilotDay` zwraca
+   * `null` do pierwszego odczytu). `true` bez warstwy synca: bez serwera lokalny
+   * rejestr JEST całą prawdą i nie ma na co czekać.
+   */
+  streamHydrated: boolean;
   /** Silnik synca — podłączany w composition root; ekran 11 pyta go o stan serwera. */
   sync: SyncEngine | null;
   /** Odświeżanie cache referencyjnego (§4.8) — podłączane razem z silnikiem. */
   referenceSync: ReferenceSync | null;
+  /** Odtworzenie rejestru z serwera (§4.9, issue #32) — druga połowa outboxa. */
+  eventRestore: EventRestore | null;
   /** Wysyłka śladu kalibracyjnego (faza 5) — ostatni, niskopriorytetowy krok okazji. */
   traceSync: TraceSync | null;
   /** Uzgadnianie motywu pilota przez `/me/prefs` (decyzja 2026-07-29) — ThemeProvider słucha adopcji. */
@@ -115,6 +137,7 @@ export interface SessionStore {
     referenceSync: ReferenceSync,
     traceSync: TraceSync,
     themePrefs: ThemePrefsSync,
+    eventRestore: EventRestore,
   ): void;
 
   /** Rozpoczyna/przejmuje sesję: emituje `session_claim` i ustawia kontekst (§4.4). */
@@ -170,6 +193,13 @@ export interface SessionStore {
   syncNow(): Promise<void>;
   /** Odświeża cache referencyjny, jeśli przekroczył bramę wieku (§4.8). */
   refreshReference(): Promise<void>;
+  /**
+   * Dopisuje do lokalnego strumienia zdarzenia, które ma serwer, a nie ma telefon
+   * (§4.9, issue #32) — odtworzenie po czyszczeniu pamięci, reinstalacji albo na nowym
+   * urządzeniu. Po zapisie podbija `streamRevision`, żeby otwarte ekrany przeliczyły
+   * projekcje.
+   */
+  restoreEvents(): Promise<void>;
   /** Wysyła jedną paczkę śladu kalibracyjnego (faza 5) — cicho, bez wpływu na UI. */
   uploadTraces(): Promise<void>;
   /** Uzgadnia motyw zalogowanego pilota (push `dirty` od razu, pull za bramą wieku). */
@@ -254,8 +284,11 @@ export const useSessionStore = create<SessionStore>((set, get) => {
     projection: emptySessionState(),
     outboxCount: 0,
     synced: true,
+    streamRevision: 0,
+    streamHydrated: true,
     sync: null,
     referenceSync: null,
+    eventRestore: null,
     traceSync: null,
     themePrefs: null,
     lastSync: null,
@@ -276,8 +309,11 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       });
     },
 
-    attachSync(sync, referenceSync, traceSync, themePrefs) {
-      set({ sync, referenceSync, traceSync, themePrefs });
+    attachSync(sync, referenceSync, traceSync, themePrefs, eventRestore) {
+      // `streamHydrated: false` od chwili, w której ISTNIEJE z kim się uzgodnić:
+      // dopóki pierwsze odtworzenie nie wróci, pusty rejestr może być skutkiem
+      // czyszczenia pamięci, a nie faktem o dniu pilota.
+      set({ sync, referenceSync, traceSync, themePrefs, eventRestore, streamHydrated: false });
     },
 
     attachTrack(trackQueries) {
@@ -446,6 +482,31 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       await referenceSync.refreshIfStale();
     },
 
+    async restoreEvents() {
+      const { eventRestore } = get();
+      if (eventRestore == null) {
+        // Bez warstwy synca (testy, StyleGuide) lokalny rejestr jest całą prawdą —
+        // nie ma na co czekać i nie ma co odtwarzać.
+        set({ streamHydrated: true });
+        return;
+      }
+
+      try {
+        const outcome = await eventRestore.restoreIfStale();
+        // Podbijamy licznik TYLKO przy faktycznym dopisaniu wierszy: pusta dosyłka
+        // zdarza się przy każdej okazji i przeliczanie po niej całego rejestru
+        // na otwartym ekranie byłoby pracą bez skutku.
+        if (outcome.kind === 'pulled' && outcome.inserted > 0) {
+          set((state) => ({ streamRevision: state.streamRevision + 1 }));
+          await refresh();
+        }
+      } finally {
+        // Także po niepowodzeniu: offline nie jest stanem, w którym ekran ma czekać —
+        // wtedy lokalny rejestr jest najlepszą dostępną prawdą i trzeba go pokazać.
+        set({ streamHydrated: true });
+      }
+    },
+
     async uploadTraces() {
       const { traceSync } = get();
       if (traceSync == null) return;
@@ -469,6 +530,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
         projection: emptySessionState(),
         outboxCount: 0,
         synced: true,
+        // Wylogowanie znaczy, że na tym urządzeniu może zalogować się KTOŚ INNY —
+        // a jego rejestr trzeba dopiero uzgodnić z serwerem (kursor odtworzenia jest
+        // przypisany do pilota, `EventRestore`). Bez warstwy synca nie ma na co czekać.
+        streamHydrated: get().eventRestore == null,
         lastSync: null,
         lastSyncAt: null,
         serverFlags: [],

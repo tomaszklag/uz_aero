@@ -56,6 +56,8 @@ class TraceServer implements ServerPort {
   getTaskSuggestions = async () => {
     throw new Error('nieużywane');
   };
+  /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
+  pullEvents = async () => ({ events: [], nextCursor: null, hasMore: false });
   getPrefs = async () => {
     throw new Error('nieużywane');
   };

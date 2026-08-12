@@ -124,6 +124,34 @@ export class EventsRepo {
     return event;
   }
 
+  /**
+   * Wstawia zdarzenia POBRANE Z SERWERA (§4.9, issue #32) — odtworzenie rejestru na
+   * urządzeniu, które go straciło. Zwraca liczbę wierszy faktycznie NOWYCH.
+   *
+   * Dwie rzeczy odróżniają to od `appendStamped` i obie są istotne:
+   *
+   *  • **stempel `syncedAt` z góry** — zdarzenie przyszło Z serwera, więc serwer je ma.
+   *    Wstawione bez stempla wpadłoby do outboxa i telefon odesłałby własnemu serwerowi
+   *    jego własne dane, przy każdej okazji synchronizacji, do skutku.
+   *  • **zero reguł domenowych**, jak w całym repozytorium: odtwarzamy historię, która
+   *    powstała pod regułami z chwili zapisu, a nie kandydata do zapisu.
+   *
+   * Dedup po `uuid` robi magazyn (`insertEvent` → `false` przy duplikacie), więc
+   * pobranie zachodzące na to, co telefon już ma, jest bezpieczne i nic nie nadpisuje.
+   * Zdarzenie leżące lokalnie jako NIEWYSŁANE zostaje w outboxie — o jego losie
+   * rozstrzyga wysyłka (`duplicates` w odpowiedzi), a nie odczyt.
+   */
+  async appendFromServer(
+    events: readonly Omit<Event, 'syncedAt'>[],
+    syncedAt: EpochMillis = this.clock.now(),
+  ): Promise<number> {
+    let inserted = 0;
+    for (const event of events) {
+      if (await this.adapter.insertEvent({ ...event, syncedAt } as Event)) inserted += 1;
+    }
+    return inserted;
+  }
+
   // ── odczyt zdarzeń ────────────────────────────────────────────────────────────
 
   getEvent(uuid: string): Promise<Event | null> {

@@ -14,6 +14,7 @@ import type {
   AuthTokens,
   PushResult,
   ReferenceFetch,
+  RemoteEventPage,
   RemoteAircraftState,
   RemoteTaskSuggestions,
   RemoteThemePrefs,
@@ -43,6 +44,22 @@ export class HttpServerApi implements ServerPort {
       token,
       body: sourceDevice != null ? { events: wire, sourceDevice } : { events: wire },
     });
+  }
+
+  /**
+   * `GET /me/events` (§4.9) — strona własnego rejestru. Kursor jedzie w query stringu
+   * ZAKODOWANY (`encodeURIComponent`), bo jest base64url z serwera i nie mamy prawa
+   * zakładać, że każdy jego znak przetrwa sklejenie adresu.
+   */
+  pullEvents(
+    token: string,
+    params: { cursor?: string | null; limit?: number } = {},
+  ): Promise<RemoteEventPage> {
+    const query = new URLSearchParams();
+    if (params.cursor != null) query.set('cursor', params.cursor);
+    if (params.limit != null) query.set('limit', String(params.limit));
+    const suffix = query.toString();
+    return this.request('GET', `/me/events${suffix !== '' ? `?${suffix}` : ''}`, { token });
   }
 
   /**
