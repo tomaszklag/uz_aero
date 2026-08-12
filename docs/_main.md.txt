@@ -75,6 +75,7 @@ i zdaniu samolotu (zdanie zatwierdza log całej sesji).
 | 2026-08-07 | **Fakty strumienia dostają JAWNE znaczniki w projekcji** — `claimedAt` i `preflightAt`. Powód: `PREFLIGHT_REQUIRED` pytało o `state.dutyStart`, co było poprawne wyłącznie dopóty, dopóki godzina meldunku była obowiązkowa; po jej uopcjonalnieniu ta sama reguła zaczęła blokować silnik i zdanie samolotu pilotowi, który niczego nie pominął. Reguła ogólna: **pole opcjonalne nie jest znacznikiem tego, że zdarzenie zaszło**, a komplet zielonych testów tego nie wyłapie, gdy każdy helper wypełnia je „bo tak było zawsze". Przy okazji `claimedAt` znosi przechodzenie po surowych zdarzeniach w modelach widoku |
 | 2026-08-11 | **Klamra służby USUNIĘTA W CAŁOŚCI (issue #23)** — zamyka temat odłożony przy pivocie 2026-08-10. Do pilota w danej dobie przypisana jest **lista sesji i nic ponadto**: czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Z modelu znikają `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła `DUTY_END_BEFORE_START` i projekcja klamry (`projectDuty` → `projectPilotDay` — lista sesji z sumami); z designu ekran `01b` i sekcja „Służba" na 01. Log dnia jest PŁASKĄ osią czasu (rejestracja to informacja wiersza, nie oś grupowania), sumy doby to Blok i Loty. Przy okazji: nagłówek wg jednego wzorca (tytuł do lewej, ustawienia po prawej — pkt 7) i SyncChip jako sam pill z arkuszem szczegółów pod tapnięciem (pkt 5, wariant `01c`) |
 | 2026-08-08 | **Historia (ekran 12) listuje DOBĘ PILOTA, z przeglądaniem w głąb.** Rozstrzyga sprzeczność wykrytą audytem: mockup `12-historia.html` (etap A) obiecywał kartę doby pilota obejmującą kilka maszyn, a kod (decyzja C4) robił kartę na SESJĘ — obie zapisane, obie uzasadnione, wzajemnie się wykluczające. Wygrywa doba pilota, bo ekran odpowiada na pytanie „co dziś zrobiłem", a to pytanie zadaje CZŁOWIEK o swoją służbę, nie o maszynę. Sesja samolotu nie znika — staje się drugim poziomem: **doba pilota → sesja na konkretnym samolocie → wzloty i loty ze szczegółami**. Konsekwencja: karta doby czyta `projectDuty` (projekcja per pilot per doba UTC), a nie `projectSession`; `historyDays.ts` i zapytanie `historyDays()` wymagają przebudowy, bo dziś grupują po sesji. Kod ma dogonić mockup, nie odwrotnie |
+| 2026-08-12 | **Ekran 12 to SESJE spoza dzisiejszej doby — ODWRACA „historia listuje dobę pilota" z 2026-08-08** (issue #35). Tamta decyzja rozstrzygała sprzeczność mockup↔kod na korzyść karty-doby; dziś rozstrzygamy ją odwrotnie i to KOD miał rację. Powody: (1) pytanie „co dziś zrobiłem" ma już swój ekran — `01 Mój dzień` po issue #23 JEST listą sesji doby, więc karta-doba w historii powtarzałaby go drugi raz, tyle że innym kształtem; (2) celem kafelka jest rozliczenie (10), a ono opisuje JEDNĄ maszynę — paliwo i motogodziny dwóch samolotów nie sumują się w jedną liczbę, więc karta-doba nie miałaby czego otworzyć. Ekran nazywa się odtąd **„Poprzednie dni"** i NIE pokazuje sesji z doby bieżącej (te są na 01, z ołówkiem wiersza); doba sesji liczy się tą samą kotwicą co na 01 — uruchomieniem silnika. Metryki kafelka = metryki wiersza sesji z 01 (Loty · Blok · Lot). Sesja po oknie 24 h otwiera 10 w trybie PODGLĄDU (`design/10b`): bez ołówków, bez „Edytuj dane" — dotąd nie dało się jej otworzyć wcale |
 | 2026-07-31 | **Panel administratora — DECYZJA ODWRÓCONA** (odwraca 2026-07-24): powstaje jako **osobna aplikacja web**. Zakres v1 = pełny back-office (konta, flota, skrzynka flag, korekty po oknie 24 h, przegląd dni, rejestr zdarzeń, monitor eksportu, statystyki, audyt, progi), **dwie role** (`administrator` — wszystko; `szef wyszkolenia` — podgląd, statystyki, rozwiązywanie flag), stan floty **na żywo** oraz dane po fakcie. Powód: backend jest gotowy i wymaga obsługi, a §4.7 postawiło bramkę, której **nikt nie może otworzyć** — otwarta flaga `session_overlap` blokuje eksport karty dnia, a `status='resolved'` nie ustawia dziś żaden kod w `server/src`. Projekt UI: `design/admin/` (20 ekranów); zakres, mapowanie na endpointy i braki serwera: `design/admin/ANALIZA.md` |
 
 ---
@@ -372,7 +373,17 @@ Prosta tabela do ręcznego wpisu gdy GPS niedostępny:
 Plus sekcja paliwa i stanów. Wpisy trafiają do strumienia zdarzeń jak każde inne
 (`manual_log_entry`).
 
-### 3.9 Synchronizacja (ekran 11 — dawny "eksport")
+### 3.9 Synchronizacja (sekcja w Ustawieniach 13 — dawny ekran 11 „eksport")
+
+**Osobnego ekranu NIE MA od 2026-08-12.** Był trzecim widokiem tej samej sesji
+(„Podgląd arkusza" = tabela lotów z 10, „Dane dnia" = blok/paliwo/zrzuty z 10)
+i drugim wskaźnikiem sieci (status wysyłki i kolejka = arkusz pod SyncChipem,
+issue #23), a jego „SYNCHRONIZUJ TERAZ" przeczyło regule zapisanej w tym samym
+arkuszu: outbox wysyła się sam. Do Ustawień przeszły trzy wiersze i jeden przycisk:
+kolejka, ostatnia udana wysyłka, **uwagi serwera** i awaryjne ponaglenie. Uwagi
+mieszkają tam, a nie pod SyncChipem, bo chip pojawia się WYŁĄCZNIE offline — flaga
+wystawiona przez serwer po udanej wysyłce nie miałaby się gdzie pokazać.
+Punkty niżej opisują wymagania, które ta sekcja spełnia (historycznie: ekran 11).
 
 - widok statusu, nie akcja: "wysłano 47/47 zdarzeń", czas ostatniego synca,
   status eksportu serwera ("Serwer zaktualizował arkusz"), link do arkusza
@@ -1109,6 +1120,9 @@ day_close, po — read-only), paliwo i MH (start/koniec/delta), zrzuty przy skok
 Wszystko liczone jako projekcje ze zdarzeń (Zustand), nie z tabel agregujących.
 SyncStatusScreen (ekran 11): status wysyłki n/n, flagi sesji, status eksportu serwera
 i link do arkusza — wzorzec design/11-eksport.html. Bez akcji eksportu na telefonie.
+[ARCHIWUM 2026-08-12: ekran 11 i jego mockupy USUNIĘTE — okazał się trzecią kopią
+rozliczenia (10); zostały trzy wiersze i przycisk w Ustawieniach, patrz §3.9.
+Cały ten blok „AGENT n" opisuje model sprzed pivotu (duty, day_close) i jest historią.]
 ```
 
 ### AGENT 7 — Backend

@@ -116,6 +116,7 @@
   .diag-key { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); flex-shrink:0; }
   .diag-val { font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:0.5px; color:var(--text-primary); text-align:right; }
   .diag-val.green { color:var(--green); }
+  .diag-val.amber { color:var(--amber); }
   .diag-val small { font-size:9px; font-weight:400; color:var(--text-secondary); }
   .btn-refresh { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:44px; padding:12px; border-radius:12px; background:var(--surface-raised); color:var(--text-secondary); font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; border:1px solid var(--border-strong); cursor:pointer; }
   .btn-refresh:hover { background:var(--surface-hover); color:var(--text-primary); }
@@ -294,22 +295,37 @@
         <div class="section-note">Ponowne logowanie <b style="color:var(--amber)">wymaga internetu</b> — konta zakłada administrator.</div>
       </div>
 
-      <!-- ══ SYNCHRONIZACJA — wejście do ekranu 11 (status, nie akcja) ══
-           Przeniesione z rozliczenia (10) po issue #23: tam wisiało na przycisku
-           „ZATWIERDŹ → SYNC", a zdanie samolotu już potwierdza dane — po locie
-           niczego się nie zatwierdza ani nie wysyła ponownie. -->
+      <!-- ══ SYNCHRONIZACJA — STAN, nie osobny ekran ══
+           Ekran 11 USUNIĘTY (2026-08-12): był trzecim widokiem tej samej sesji
+           (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka
+           i ostatnia wysyłka = arkusz pod SyncChipem). Zostało to, czego nie ma
+           nigdzie indziej: uwagi serwera (§4.5) i awaryjne wymuszenie wysyłki.
+           Mieszka tutaj, bo Ustawienia są widoczne ZAWSZE — SyncChip pojawia się
+           wyłącznie offline, więc flaga wystawiona po udanej wysyłce nie miałaby
+           się gdzie pokazać. -->
       <div class="form-section">
         <div class="form-section-title">Synchronizacja</div>
-        <a class="action-item" href="11-eksport.html">
-          <span class="action-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          </span>
-          <span class="action-body">
-            <span class="action-name">Status synchronizacji</span>
-            <span class="action-sub">kolejka wysyłki i eksport arkuszy — wysyłką zarządza outbox sam</span>
-          </span>
-          <svg class="action-chevron" width="14" height="14" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.5 1.5L7 5l-3.5 3.5"/></svg>
-        </a>
+        <div>
+          <div class="diag-row">
+            <span class="diag-key">Kolejka wysyłki</span>
+            <span class="diag-val amber">3 zdarzenia czekają</span>
+          </div>
+          <div class="diag-row">
+            <span class="diag-key">Ostatnia udana wysyłka</span>
+            <span class="diag-val">09:41 UTC</span>
+          </div>
+          <!-- Uwagi serwera: wiersz stoi ZAWSZE, także z „brak uwag" — inaczej pilot
+               nie wie, czy serwer nic nie zgłasza, czy nic nie sprawdził. -->
+          <div class="diag-row">
+            <span class="diag-key">Uwagi serwera</span>
+            <span class="diag-val amber">1 · paliwo poza tolerancją</span>
+          </div>
+        </div>
+        <button class="btn-refresh">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Synchronizuj teraz
+        </button>
+        <div class="section-note">Wysyłką zarządza outbox <b>sam</b> — ten przycisk to awaryjne ponaglenie, nie krok procedury. Bez zasięgu jest wyłączony z podanym powodem.</div>
       </div>
 
       <!-- ══ DIAGNOSTYKA GPS — czujnik lokalny, oś niezależna od sieci ══ -->

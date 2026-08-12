@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10A Rozliczenie samolotu · bez lotów</title>
+<title>UZ Aero — 10B Rozliczenie po oknie korekty</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
     font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
       linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
     background-attachment: fixed;
     min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
@@ -52,7 +52,7 @@
   .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
   .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
   .nav-strip a:hover { color:var(--green); }
-  .nav-strip a.active { color:var(--amber); }
+  .nav-strip a.active { color:var(--green); }
   .nav-strip span { color:var(--border-strong); }
 
   /* App internals */
@@ -60,24 +60,26 @@
     display:flex; align-items:center; justify-content:space-between;
     padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
   }
-  /* `min-width:0` — bez tego długi podtytuł rozpycha kolumnę i wchodzi pod „Dzień" */
   .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; min-width:0; }
   .app-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
-  /* Powrót do „Mój dzień" — ten ekran jest odnogą osi pilota, nie etapem flow */
+  /* Powrót prowadzi do POPRZEDNICH DNI (12), bo stamtąd się tu wchodzi — sesja
+     zamknięta nie leży na osi „Mój dzień", tylko w historii. */
   .back-btn {
     display:inline-flex; align-items:center; gap:5px; min-height:34px;
     font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
     text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
   }
   .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
+  /* Okno korekty ZAMKNIĘTE — baner typu „status": nie da się go schować, bo to jedyne
+     miejsce, które tłumaczy brak ołówków w tabeli lotów. */
   .correction-window {
     display:flex; align-items:flex-start; gap:9px;
-    background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
+    background:var(--amber-muted); border:1px solid var(--amber-border);
     border-radius:12px; padding:11px 13px;
   }
-  .cw-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
+  .cw-icon { color:var(--amber); flex-shrink:0; margin-top:1px; }
   .cw-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .cw-text b { color:var(--blue); font-weight:600; }
+  .cw-text b { color:var(--amber); font-weight:600; }
   .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
   .header-subtitle {
     font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px;
@@ -85,17 +87,18 @@
   }
   .badge {
     font-family:var(--font-mono); font-size:10px; letter-spacing:1px;
-    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
     padding:4px 10px; border-radius:999px;
   }
+  /* Plakietka trybu — mówi wprost, w jakim stanie jest ekran. Bez niej „brak ołówka"
+     wygląda jak awaria, a nie jak reguła. */
+  .badge.readonly { color:var(--text-secondary); background:var(--surface-raised); border-color:var(--border-strong); }
 
   .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
   .scroll::-webkit-scrollbar { display:none; }
-  /* Karty z `overflow:hidden` zapadają się w kolumnie flex zamiast wyjechać poza
-     ekran do przewinięcia — ten sam komentarz co w 01 i 10. */
   .scroll > * { flex-shrink:0; }
 
-  /* Bohater ekranu — czas trzymania samolotu */
+  /* Bohater ekranu — czas blokowy sesji */
   .session-hero {
     background:var(--surface); border:1px solid var(--border);
     border-radius:14px; padding:16px 14px;
@@ -141,9 +144,13 @@
   .crew-stat-val { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
   .crew-tag {
     font-family:var(--font-mono); font-size:7px; letter-spacing:1px;
-    text-transform:uppercase; color:var(--amber);
-    background:var(--amber-muted); border:1px solid var(--amber-border);
+    text-transform:uppercase; color:var(--green);
+    background:rgba(46,204,113,0.08); border:1px solid var(--green-border);
     padding:2px 6px; border-radius:4px; align-self:flex-start; margin-top:2px;
+  }
+  .crew-empty {
+    font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
+    font-style:italic; margin-top:4px;
   }
 
   /* Section card */
@@ -162,13 +169,42 @@
     content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong);
   }
 
-  /* Pusta lista lotów — komunikat zamiast wierszy, zero kreatywnej grafiki */
-  .empty-rows {
-    padding:20px 14px 18px; display:flex; flex-direction:column; align-items:center; gap:5px;
-    text-align:center;
+  /* Flights table — BEZ kolumny ołówka (to jest cała różnica względem 10) */
+  .data-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); }
+  .data-table th {
+    font-size:7px; letter-spacing:1.5px; text-transform:uppercase;
+    color:var(--text-muted); padding:8px 8px; border-bottom:1px solid var(--border);
+    text-align:left;
   }
-  .empty-msg { font-family:var(--font-body); font-size:13px; font-weight:600; color:var(--text-secondary); }
-  .empty-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .data-table td {
+    font-size:11px; color:var(--text-primary); padding:9px 8px;
+    border-bottom:1px solid var(--border);
+  }
+  .data-table tr:last-child td { border-bottom:none; }
+  .data-table td.num { color:var(--text-muted); }
+  .data-table td.type-auto {
+    font-size:8px; letter-spacing:1px; color:var(--green);
+    background:var(--green-muted); border-radius:4px; padding:2px 5px;
+    white-space:nowrap;
+  }
+  .data-table td.type-manual {
+    font-size:8px; letter-spacing:1px; color:var(--amber);
+    background:var(--amber-muted); border-radius:4px; padding:2px 5px;
+    white-space:nowrap;
+  }
+  /* Numer lotu ZOSTAJE klikalny — szczegóły lotu (16) to oglądanie, nie edycja.
+     Zamknięte okno zabiera prawo do zmiany, a nie prawo do obejrzenia śladu. */
+  .flight-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:44px; min-height:44px; text-decoration:none;
+    color:var(--text-secondary); position:relative;
+  }
+  .flight-btn::after {
+    content:''; position:absolute; bottom:9px; left:50%; transform:translateX(-50%);
+    width:12px; height:1.5px; border-radius:1px; background:var(--green); opacity:0.5;
+  }
+  .flight-btn.no-track { color:var(--text-muted); }
+  .flight-btn.no-track::after { background:var(--border-strong); opacity:1; }
 
   /* Fuel grid */
   .fuel-grid-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
@@ -184,13 +220,12 @@
     font-family:var(--font-display); font-size:24px; letter-spacing:1px;
     color:var(--amber); line-height:1;
   }
-  .fuel-cell-val.zero { color:var(--text-muted); }
   .fuel-cell-unit {
     font-family:var(--font-mono); font-size:9px; color:var(--text-secondary);
   }
   .fuel-avg-row {
     padding:10px 12px; border-top:1px solid var(--border);
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    display:flex; align-items:center; justify-content:space-between;
   }
   .fuel-avg-label {
     font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px;
@@ -198,20 +233,11 @@
   }
   .fuel-avg-val {
     font-family:var(--font-display); font-size:20px; letter-spacing:2px;
-    color:var(--amber); text-align:right;
+    color:var(--amber);
   }
-  .fuel-avg-val.na { color:var(--text-muted); }
-  .fuel-avg-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); }
 
   /* Buttons */
   .btn-row { display:flex; flex-direction:column; gap:8px; }
-  .btn-secondary {
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; padding:13px; border-radius:12px;
-    background:var(--surface-raised); color:var(--text-secondary);
-    font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
-    border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
-  }
   .btn-primary {
     display:flex; align-items:center; justify-content:center; gap:10px;
     width:100%; padding:17px; border-radius:16px;
@@ -220,13 +246,15 @@
     border:none; text-decoration:none; cursor:pointer;
     box-shadow:0 0 24px rgba(46,204,113,0.3);
   }
+  .locked-note { display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--text-secondary); line-height:1.5; padding:0 2px; }
+  .locked-note svg { flex-shrink:0; margin-top:1px; color:var(--text-muted); }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
   .vp-item:hover { border-color:var(--green-border); }
-  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
   .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
   .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
@@ -238,14 +266,14 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10A</span>
-  <span class="slug">rozliczenie samolotu · bez lotów</span>
-  <span class="canvas-meta"><span class="pulse"></span>Wariant 10</span>
+  <span class="film-strip">UZ AERO — 10B</span>
+  <span class="slug">rozliczenie · po oknie korekty · podgląd</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 10B</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Rozliczenie samolotu bez lotów">
+<main class="phone">
   <div class="status-bar">
-    <span>11:32</span>
+    <span>9:41</span>
     <span class="status-right">
       <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
       <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
@@ -254,42 +282,47 @@
   </div>
 
   <div class="screen">
-    <!-- App Header — chip SYNC usunięty (online nie rysuje nic, issue #12) -->
+    <!-- App Header -->
     <div class="app-header">
-      <a href="01-moj-dzien.html" class="back-btn" title="Wróć do Mój dzień">
+      <a href="12-historia.html" class="back-btn" title="Wróć do Poprzednich dni">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Dzień
+        Dni
       </a>
       <div class="app-header-center">
         <span class="screen-title">ROZLICZENIE</span>
-        <span class="header-subtitle">SP-ANK · 09:10 → 10:25 UTC</span>
+        <!-- Bez daty: podtytuł jest jednolinijkowy tak samo jak w 10, a doba stoi
+             na karcie, z której się tu weszło. -->
+        <span class="header-subtitle">SP-AXA · 07:35 → 09:25 UTC</span>
       </div>
       <div class="app-header-right">
-        <span class="badge">0 lotów</span>
+        <span class="badge">1 lot</span>
+        <span class="badge readonly">Podgląd</span>
       </div>
     </div>
 
     <!-- Scroll content -->
     <div class="scroll">
 
-      <!-- Okno korekty (24 h) — bez lotu do poprawy zostają tylko odczyty -->
+      <!-- OKNO KOREKTY ZAMKNIĘTE.
+           To jedyna rzecz, którą ten wariant DODAJE; wszystko inne tylko znika.
+           Baner stoi tu z tego samego powodu, dla którego w 10 stoi jego niebieska
+           wersja: pilot ma wiedzieć, ile czasu mu zostało — a gdy nie zostało nic,
+           dokąd iść zamiast tego. „Nie da się" bez „więc co" jest ślepą ścianą (§6). -->
       <div class="correction-window">
-        <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="cw-text">Dane możesz poprawiać jeszcze przez <b>24 h</b> — do 04 SIE 10:25 UTC. Później korektę nanosi administrator. Bez lotu do poprawy zostają wyłącznie odczyty liczników — „Edytuj dane" wraca do zdania samolotu (09C).</span>
+        <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span class="cw-text">Minęły <b>24 godziny od zdania samolotu</b> — sesję możesz oglądać, ale nie zmieniać. Dalsze poprawki nanosi administrator; zostaną dopisane jako korekta, bez kasowania oryginalnego zapisu.</span>
       </div>
 
-      <!-- Bohater ekranu: CZAS TRZYMANIA, nie czas służby.
-           Sesja bez lotu ma czas blokowy zero, więc gdyby wielką cyfrą stał blok,
-           ekran krzyczałby „0:00". Prawdziwa informacja brzmi: maszyna była zajęta
-           3,5 godziny i nikt inny nie mógł jej wziąć. Czas służby pilota mieszka
-           w „Mój dzień" — ten postój jest tylko jego fragmentem. -->
+      <!-- Bohater ekranu bez zmian: rozliczenie po oknie pokazuje DOKŁADNIE te same
+           liczby, co przed nim. Podgląd nie jest uboższą wersją danych — jest tą samą
+           prawdą bez prawa zapisu. -->
       <div class="session-hero">
-        <div class="session-label">Samolot trzymany</div>
-        <div class="session-time">01:15</div>
-        <div class="session-range">przejęty 09:10 → zdany 10:25 UTC · bez lotu</div>
+        <div class="session-label">Czas blokowy sesji</div>
+        <div class="session-time">01:18</div>
+        <div class="session-range">przejęty 07:35 → zdany 09:25 UTC · 1 lot</div>
       </div>
 
-      <!-- Crew cards — załoga z preflightu, uczciwe zera -->
+      <!-- Crew cards -->
       <div class="crew-grid">
         <div class="crew-card active">
           <div class="crew-role">PIC · zalogowany (Ty)</div>
@@ -297,131 +330,148 @@
           <div class="crew-stat">
             <div class="crew-stat-row">
               <span class="crew-stat-key">Block time</span>
-              <span class="crew-stat-val">00:00</span>
+              <span class="crew-stat-val">01:18</span>
             </div>
             <div class="crew-stat-row">
               <span class="crew-stat-key">St / Ld</span>
-              <span class="crew-stat-val">0 / 0</span>
+              <span class="crew-stat-val">1 / 1</span>
             </div>
           </div>
-          <div class="crew-tag">Sesja bez lotu</div>
+          <div class="crew-tag">Cała sesja</div>
         </div>
         <div class="crew-card">
           <div class="crew-role">Dual · drugi pilot</div>
-          <div class="crew-id">AKO</div>
-          <div class="crew-stat">
-            <div class="crew-stat-row">
-              <span class="crew-stat-key">Block time</span>
-              <span class="crew-stat-val">00:00</span>
-            </div>
-            <div class="crew-stat-row">
-              <span class="crew-stat-key">St / Ld</span>
-              <span class="crew-stat-val">0 / 0</span>
-            </div>
-          </div>
-          <div class="crew-tag">Sesja bez lotu</div>
+          <div class="crew-id">—</div>
+          <div class="crew-empty">brak — sesja jednoosobowa</div>
         </div>
       </div>
 
-      <!-- Flight list — brak wierszy = komunikat wprost -->
+      <!-- Lista lotów BEZ OŁÓWKÓW.
+           Kolumny jest pięć zamiast sześciu — ostatnia (cel korekty 04c) po prostu
+           nie istnieje. Wyszarzony ołówek byłby gorszy: obiecywałby akcję, której
+           reguły i tak odrzucą (§6 pkt 3 — przycisk, który nic nie robi, wygląda
+           jak zawieszona aplikacja). -->
       <div class="section-card">
         <div class="section-card-head">Lista lotów · czasy UTC</div>
-        <div class="empty-rows">
-          <span class="empty-msg">Żaden lot nie został zapisany</span>
-          <span class="empty-sub">0 startów · 0 lądowań · silnik nie był uruchamiany</span>
-        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Takeoff</th>
+              <th>Landing</th>
+              <th>Lot</th>
+              <th>Typ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="16-lot.html" class="flight-btn" title="Szczegóły lotu 1">1</a></td>
+              <td>07:55</td>
+              <td>09:02</td>
+              <td>01:07</td>
+              <td><span class="type-auto">AUTO</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <!-- Fuel section — bilans zerowy, końcowe = przekazane -->
+      <!-- Fuel section -->
       <div class="section-card">
         <div class="section-card-head" style="color:var(--amber);">Paliwo</div>
         <div class="fuel-grid-2x2">
           <div class="fuel-cell">
             <div class="fuel-cell-label">Startowe</div>
-            <div class="fuel-cell-val">240</div>
+            <div class="fuel-cell-val">150</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Dolane</div>
-            <div class="fuel-cell-val zero">0</div>
+            <div class="fuel-cell-val">0</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Końcowe</div>
-            <div class="fuel-cell-val">240</div>
+            <div class="fuel-cell-val">128</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Zużyte</div>
-            <div class="fuel-cell-val zero">0</div>
+            <div class="fuel-cell-val">22</div>
             <div class="fuel-cell-unit">litrów</div>
           </div>
         </div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Średnie zużycie (na czas blokowy)</span>
-          <span class="fuel-avg-val na">— —</span>
+          <span class="fuel-avg-val">17 L/H</span>
         </div>
-        <div class="fuel-avg-row" style="border-top:none;padding-top:0;">
-          <span class="fuel-avg-note">nie liczymy — czas blokowy 0:00 (dzielenie przez zero to nie statystyka)</span>
+        <div class="fuel-avg-row">
+          <span>
+            <span class="fuel-avg-label">Na tle normy samolotu</span>
+            <div style="font-family:var(--font-mono);font-size:8.5px;letter-spacing:0.5px;color:var(--text-muted);margin-top:3px;">norma 15–17 L/h · 90 dni</div>
+          </span>
+          <span class="fuel-avg-val" style="color:var(--green);font-size:16px;letter-spacing:1px;">W NORMIE</span>
         </div>
       </div>
 
-      <!-- Motogodziny — bez zmian, ale nadal ogniwo łańcucha -->
+      <!-- Motogodziny — ogniwo łańcucha samolotu, ciąg dalszy sesji z 10 -->
       <div class="section-card">
         <div class="section-card-head">Motogodziny · licznik w formacie hh:mm · łańcuch samolotu</div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Przy przejęciu</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">2 815:12</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">1 236:05</span>
         </div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Przy zdaniu (przekazanie)</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">2 815:12</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">1 237:23</span>
         </div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Δ sesji (= czas blokowy)</span>
-          <span class="fuel-avg-val" style="color:var(--text-secondary);">+0:00</span>
+          <span class="fuel-avg-val" style="color:var(--green);">+1:18</span>
         </div>
       </div>
 
-      <!-- Zrzuty — zero, ale z kontekstem operacji (rozliczenie musi widzieć odwołany dzień) -->
+      <!-- Zrzuty — strona przychodowa SESJI (operacja Skoki) -->
       <div class="section-card">
-        <div class="section-card-head" style="color:var(--blue);">Zrzuty · rozliczenie</div>
+        <div class="section-card-head" style="color:var(--blue);">Zrzuty · rozliczenie sesji</div>
         <div class="fuel-grid-2x2">
           <div class="fuel-cell">
             <div class="fuel-cell-label">Zrzutów</div>
-            <div class="fuel-cell-val zero">0</div>
+            <div class="fuel-cell-val" style="color:var(--blue);">1</div>
             <div class="fuel-cell-unit">wyniesień</div>
           </div>
           <div class="fuel-cell">
             <div class="fuel-cell-label">Skoczków</div>
-            <div class="fuel-cell-val zero">0</div>
+            <div class="fuel-cell-val" style="color:var(--blue);">4</div>
             <div class="fuel-cell-unit">łącznie</div>
           </div>
         </div>
         <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Operacja</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">SKOKI · 0 WYNIESIEŃ</span>
+          <span class="fuel-avg-label">Typy skoków</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">2 TANDEM · 1 AFF · 1 SOLO</span>
         </div>
         <div class="fuel-avg-row">
-          <span class="fuel-avg-label">Typy skoków</span>
-          <span class="fuel-avg-val na">—</span>
+          <span class="fuel-avg-label">Średnia wysokość zrzutu</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">2 700 FT</span>
         </div>
         <div class="fuel-avg-row">
           <span class="fuel-avg-label">Klient</span>
-          <span class="fuel-avg-val" style="color:var(--text-primary);">SKY CAMP · zlec. 2026/114</span>
+          <span class="fuel-avg-val" style="color:var(--text-primary);">SKY CAMP · zlec. 2026/109</span>
         </div>
       </div>
 
-      <!-- Action buttons — ołówków brak (nie ma wierszy), edycja wraca do odczytów w 09A -->
+      <!-- Akcje: JEDNA.
+           „EDYTUJ DANE" (lista ręczna 08) znika razem z ołówkami — to ta sama
+           możliwość zapisu, tylko innymi drzwiami. Zostaje wyjście. -->
       <div class="btn-row">
-        <a href="09c-zdaj-bez-lotu.html" class="btn-secondary" title="Bez lotu jedyne dane do poprawy to odczyty liczników i powód">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
-          EDYTUJ DANE
-        </a>
-        <a href="01-moj-dzien.html" class="btn-primary">
-          WRÓĆ DO DNIA
+        <a href="12-historia.html" class="btn-primary">
+          WRÓĆ DO DNI
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 7h9M7 3l4 4-4 4"/></svg>
         </a>
+      </div>
+
+      <div class="locked-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Numery lotów są dalej klikalne — szczegóły lotu i ślad to oglądanie, nie zmiana. Korekta czasów jest tam wyłączona tak samo jak tutaj.</span>
       </div>
 
     </div>
@@ -433,37 +483,37 @@
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu — z lotami</span>
-      <span class="vp-when">Standard: tabela lotów z ołówkami korekty, bilans paliwa i MH, rozliczenie zrzutów (SP-AXA, 06 SIE — 2 loty).</span>
+      <span class="vp-name">Rozliczenie samolotu — w oknie korekty</span>
+      <span class="vp-when">Sesja zdana mniej niż 24 h temu (albo jeszcze trzymana): ołówki przy lotach, „Edytuj dane", niebieski baner z terminem. Wejście ołówkiem wiersza z „Mój dzień" (01) albo kartą z grupy „Możesz jeszcze poprawić" (12).</span>
     </span>
   </a>
-  <a class="vp-item active" href="10a-statystyki-zero.html">
+  <a class="vp-item" href="10a-statystyki-zero.html">
     <span class="vp-badge amber">10A</span>
     <span class="vp-body">
       <span class="vp-name">Rozliczenie samolotu — bez lotów</span>
-      <span class="vp-when">Samolot zdany bez ani jednego lotu (pogoda, usterka): pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb, zrzuty 0 z kontekstem operacji. Odczyty liczników są, bo przekazanie obowiązuje też bez lotu. Wielką cyfrą stoi czas TRZYMANIA maszyny, nie czas blokowy — ten wynosi zero i nie ma o czym krzyczeć.</span>
+      <span class="vp-when">Sesja zdana bez ani jednego lotu: pusta lista = komunikat wprost, średnie „— —" zamiast udawanych liczb.</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
+  <a class="vp-item active" href="10b-rozliczenie-zamkniete.html">
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
       <span class="vp-name">Rozliczenie samolotu — po oknie (podgląd)</span>
-      <span class="vp-when">Minęły 24 h od zdania: te same liczby bez ani jednego elementu zapisu (bez ołówków, bez „Edytuj dane"). Cel karty z grupy „Zamknięte" na 12.</span>
+      <span class="vp-when">Minęły 24 h od zdania samolotu. Te same liczby, zero elementów zapisu: bez ołówków w tabeli, bez „Edytuj dane", amber baner zamiast terminu. Cel karty z grupy „Zamknięte" na 12 (issue #35 pkt 2) — wcześniej takiej sesji nie dało się w ogóle otworzyć.</span>
     </span>
+    <span class="vp-tag">ten ekran</span>
   </a>
 </aside>
 
 <nav class="nav-strip">
   <a href="index.html">↩ Index</a>
   <span>·</span>
-  <a href="09c-zdaj-bez-lotu.html">← 09C Bez lotu</a>
+  <a href="12-historia.html">← 12 Poprzednie dni</a>
   <span>·</span>
   <a href="10-statystyki.html">10 Rozliczenie</a>
-  <a href="10a-statystyki-zero.html" class="active">10A Bez lotów</a>
-  <a href="10b-rozliczenie-zamkniete.html">10B Podgląd</a>
+  <a href="10a-statystyki-zero.html">10A Bez lotów</a>
+  <a href="10b-rozliczenie-zamkniete.html" class="active">10B Podgląd</a>
   <span>·</span>
-  <a href="12-historia.html">12 Poprzednie dni</a>
+  <a href="16-lot.html">16 Lot →</a>
 </nav>
 
 </body>

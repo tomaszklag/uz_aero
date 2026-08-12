@@ -57,8 +57,9 @@ Stan po M3 (app ↔ serwer): `ServerPort` + adapter fetch (`infrastructure/api/`
 niepustym outboxem), `SyncEngine` (§4.3: paczki ≤ 500, duplikaty = dostarczone, jedna
 rotacja tokenu, offline ≠ auth_expired) podpięty do store'u sesji (`attachSync` /
 `syncNow`), pętla okazji `useSyncLoop` (start, powrót z tła, przyrost outboxa, puls 60 s),
-ekran 00-login za bramką `AuthGate` i ekran 11 (synchronizacja) z flagami serwera
-w trzech stanach świeżości. Cache referencyjny zasila `ReferenceSync`
+ekran 00-login za bramką `AuthGate` i sekcja „Synchronizacja" w Ustawieniach (13) —
+kolejka, ostatnia wysyłka, uwagi serwera §4.5 i awaryjne ponaglenie; osobny ekran 11
+usunięty 2026-08-12 jako trzecia kopia rozliczenia. Cache referencyjny zasila `ReferenceSync`
 (`application/sync/referenceSync.ts`): `GET /reference` z ETagiem (304 = podbicie
 `fetchedAt`, treść bez transferu), brama wieku 15 min w pętli okazji, upsert — nie
 replace (flota i piloci są wyłączani, nie kasowani); seed został danymi pierwszego
@@ -188,14 +189,27 @@ spreadem). **Zaległości audytu UI domknięte 2026-07-29** — ostatnia pozycja
 (motyw per PILOT zamiast per telefon) wdrożona syncem `/me/prefs` (akapit wyżej
 przy M3); nota na 13 mówi nową prawdę: profil pilota, wędruje między urządzeniami.
 
-Ekran 12 (historia): `queries.historyDays()` grupuje CAŁY lokalny strumień po sesjach
-i projektuje każdą tym samym `projectSession` — karta historii i ekran 10 nie mogą
-się różnić liczbami. Podział na grupy robi okno korekty (czysta funkcja
-`screens/historyDays.ts`); dzień otwarty nie jest historią (ma kokpit przez
-`ResumeGate`). „OTWÓRZ I POPRAW" ładuje zamkniętą sesję do store'u i otwiera 10 —
-bezpieczne, bo historia jest osiągalna tylko ze splasha (bez otwartego dnia w tle).
-Tag „arkusz gotowy" dołączy do „Wysłane" razem z eksportem Sheets; plakietka
-`.history-badge` na 01 pokazuje najświeższy dzień w oknie.
+Ekran 12 („Poprzednie dni"): `queries.historyDays()` grupuje CAŁY lokalny strumień
+po sesjach i projektuje każdą tym samym `projectSession` — karta i ekran 10 nie mogą
+się różnić liczbami. Reszta jest czystą funkcją `screens/historyDays.ts`:
+- **doba bieżąca odpada** (issue #35) — te sesje mieszkają na 01 i tam prowadzi je
+  ołówek wiersza. Kotwicą doby jest URUCHOMIENIE silnika, awaryjnie przejęcie
+  (`sessionDay`) — ta sama reguła co w `projectPilotDay`, żeby sesja spod północy nie
+  wpadła w dziurę między ekranami ani nie pokazała się w obu naraz;
+- **podział na grupy robi okno korekty**; sesja TRZYMANA nie jest historią (ma kokpit
+  przez `ResumeGate`);
+- **obie grupy są klikalne** — „OTWÓRZ I POPRAW" i „ZOBACZ SZCZEGÓŁY" ładują sesję do
+  store'u i otwierają 10. Po oknie ekran 10 rysuje się w trybie podglądu
+  (`readOnly = !correctionWindow(...).open`): `onCorrect` bez wartości, więc kolumny
+  ołówka NIE MA, i bez „EDYTUJ DANE". Bezpieczne, bo z kokpitu nie ma tu drogi
+  (kokpit jest stanem modalnym), więc żadna trzymana maszyna nie zostaje w tle;
+- **plakietka wysyłki istnieje tylko przy zaległości** (`uploadSpec`) — „Wysłane" jest
+  stanem domyślnym i nie ma napisu, tak samo jak SyncChip online. Rozróżnienie
+  „oczekuje" / „w trakcie wysyłania" bierze się z wyniku OSTATNIEJ próby synca, bo
+  innego pojęcia „online" aplikacja nie ma.
+
+Plakietka `.history-badge` na 01 pokazuje najświeższą sesję w oknie — również z
+pominięciem doby bieżącej, inaczej obiecywałaby coś, czego pilot w 12 nie znajdzie.
 
 **Zaległości audytu serwera (2026-07-28) — świadomie odłożone, do zrobienia przed
 wdrożeniem (faza 6):** rate-limit na `/auth/*` (dziś brute-force ogranicza tylko koszt
@@ -830,9 +844,6 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `IdentityStrip` | kto jest zalogowany (awatar, nazwisko, rola) | `.pilot-strip` |
 | `Card` | karta; nagłówek `bar` (kokpit) albo `inline` (formularz) | `.day-log` / `.section` / `.form-card` (00a) |
 | `SyncChip` | **jedyny** globalny wskaźnik sieci; online nic nie rysuje, offline SAM pill `OFFLINE · n` — tapnięcie otwiera arkusz szczegółów (kolejka, ostatni sync z `syncStamp`, wiek danych referencyjnych; issue #23 pkt 5) | reguła z `CLAUDE.md` |
-| `SyncStatusBox` | przyrząd statusu wysyłki: plakietka, licznik, pasek postępu | `.google-box` (11) / `.sync-box` (11a) |
-| `QueueBox` | kolejka outboxa: aktywna (amber) albo przygaszona do 30% | `.queue-box` (11a) / `.offline-queue` (11) |
-| `ExportedBox` | pudełko „Serwer zaktualizował arkusz": link do karty, jawny błąd otwarcia (§6 pkt 3) | `.success-box` (11) |
 | `StatusChip` | chipy **stanu sesji** (GROUND, RUNNING, cache) | `.ground-chip` |
 | `Tag` | **przypisy** przy pozycji listy/nagłówku (8–11 px) | `.pic-lock-tag`, `.optional-tag`, `.step-badge` |
 | `Banner` | trzy typy: `status` / `warning` / `edu` (zamykalny → mini-`?`) | taksonomia z `design-notes.md` |
@@ -862,7 +873,7 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `GhostAction` | dyskretna akcja w stopce karty (kreskowana linia) | `.block-add` (08) |
 | `ReadingSheet` | arkusz korekty odczytu: duża wartość, odniesienia, ostrzeżenie | 02b / 02c (godzin klamry służby nie zbiera — klamra usunięta, issue #23) |
 | `Stepper` | wartość liczbowa przyciskami ±, cele 46 px | odczyty paliwa/MH, skoczkowie, czas |
-| `KeyValueRow` | wiersz klucz—wartość (kroje `micro`/`mono`, `valueTone`, `divider`) | `.diag-row` (13), `.row` „Dane dnia" (11a) |
+| `KeyValueRow` | wiersz klucz—wartość (kroje `micro`/`mono`, `valueTone`, `divider`) | `.diag-row` (13) |
 | `SettingsAction` | wiersz akcji ustawień: ikona, nazwa, podpis (przy blokadzie niesie powód), strzałka | `.action-item` (13) |
 | `SummaryStrip` | pasek bilansu dnia poza obszarem przewijania | `.summary-strip` |
 | `ResultRow` | stopka sekcji: opis + wyliczona wartość nad linią | `.result-row` (09) |
@@ -1398,7 +1409,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `eventRestore.test.ts` | odtworzenia rejestru §4.9 (issue #32): odbudowa strona po stronie, pobrane NIE wchodzi do outboxa, dedup chroni wpis czekający w kolejce, kursor per pilot, przerwanie w połowie nie cofa postępu |
 | `claimMode.test.ts` | trybu przejęcia §4.4: `takeover_online` tylko z odpowiedzią serwera, żywy poprzednik wygrywa z cache, „już wolny" gasi przejęcie |
 | `pinCrypto.test.ts` | własnego SHA-256 (wektory NIST + node:crypto dla UTF-8) i solonego skrótu PIN-u — rekord nigdy nie niesie PIN-u wprost |
-| `historyDays.test.ts` | ekranu 12: podział wg okna korekty, dzień otwarty poza historią, tag wysyłki z outboxa sesji, plakietka splasha, odliczanie |
+| `historyDays.test.ts` | ekranu 12: doba bieżąca poza listą (i sesja spod północy po stronie doby uruchomienia), podział wg okna korekty, sesja trzymana poza historią, plakietka wysyłki z outboxa sesji w dwóch odmianach, plakietka na 01, odliczanie |
 | `traceRecorder.test.ts` | śladu kalibracyjnego: zapis fixów/markerów, retencja po zegarze urządzenia, księgowość wysyłki (offline zostawia wpisy), limit paczki |
 | `gpsLoss.test.ts` | napisów 05g (wiek fixa, baner, „— —" z czasem) i formatu pozycji DDM z ekranu 13 (półkule, zera wiodące) |
 | `themePrefsSync.test.ts` | uzgadniania motywu pilota przez `/me/prefs`: LWW po stemplu decyzji w obie strony, `dirty` jak outbox, brama wieku pulla, offline = `skipped` |

@@ -141,6 +141,22 @@ export function StatsScreen({
    */
   const window24h = useMemo(() => correctionWindow(projection, Date.now()), [projection]);
 
+  /**
+   * Sesja po oknie 24 h = PODGLĄD (issue #35 pkt 2, mockup `design/10b`).
+   *
+   * Ekran zostaje ten sam co dla sesji świeżej — te same liczby, ta sama kolejność
+   * sekcji — ale znika z niego wszystko, co pisze: ołówki przy lotach i „Edytuj dane".
+   * Wyszarzony ołówek byłby gorszy od jego braku: obiecywałby akcję, którą reguły
+   * domeny i tak odrzucą (§6 pkt 3 — przycisk, który nic nie robi, wygląda jak
+   * zawieszona aplikacja). Powód stoi w banerze nad wszystkim.
+   *
+   * `window24h.open` jest prawdziwe także dla sesji jeszcze niezdanej — wtedy pilot
+   * poprawia bez limitu i ekran działa jak dotąd.
+   */
+  const readOnly = !window24h.open;
+  /** Po oknie wchodzi się tu wyłącznie z „Poprzednich dni" — tam też prowadzi wyjście. */
+  const backScreen = readOnly ? 'History' : 'MyDay';
+
   const crewChanged = useMemo(() => events.some((e) => e.type === 'crew_change'), [events]);
 
   const crewCards = useMemo(
@@ -242,12 +258,12 @@ export function StatsScreen({
         <ScreenHeader
           title="ROZLICZENIE"
           size="md"
-          // Powrót JEST i prowadzi na 01 (mockup 10: „‹ Dzień"). Ekran otwierał się kiedyś
-          // wyłącznie po zamknięciu dnia — dziś wchodzi się tu ołówkiem wiersza sesji
-          // na 01 i kartą dnia w historii (12), także w trakcie doby, więc droga
-          // powrotna musi istnieć.
-          onBack={() => navigation.navigate('MyDay')}
-          backLabel="Dzień"
+          // Powrót JEST i prowadzi tam, skąd się tu wchodzi (mockup 10: „‹ Dzień",
+          // 10b: „‹ Dni"). Ekran otwierał się kiedyś wyłącznie po zamknięciu dnia —
+          // dziś wchodzi się tu ołówkiem wiersza sesji na 01 i kartą sesji
+          // w „Poprzednich dniach" (12), więc droga powrotna musi istnieć.
+          onBack={() => navigation.navigate(backScreen)}
+          backLabel={readOnly ? 'Dni' : 'Dzień'}
           subtitle={sessionSubtitle(aircraft, projection.claimedAt, projection.closedAt)}
           right={
             <>
@@ -259,6 +275,16 @@ export function StatsScreen({
                 size="md"
                 style={{ borderRadius: theme.radius.pill }}
               />
+              {/* Tryb ekranu wprost (mockup 10b): bez tej plakietki brak ołówków
+                  wygląda jak awaria, a nie jak reguła. */}
+              {readOnly && (
+                <Tag
+                  label="Podgląd"
+                  tone="neutral"
+                  size="md"
+                  style={{ borderRadius: theme.radius.pill }}
+                />
+              )}
               <SyncChip
                 status={synced ? 'synced' : 'offline'}
                 outboxCount={outboxCount}
@@ -275,25 +301,29 @@ export function StatsScreen({
          korekty samych lotów. */
       footer={
         <View style={{ gap: theme.spacing.sm, paddingHorizontal: 14, paddingBottom: 14 }}>
-          <ActionButton
-            label="EDYTUJ DANE"
-            tone="neutral"
-            variant="secondary"
-            size="md"
-            icon="edit"
-            onPress={() => navigation.navigate('ManualLog')}
-          />
+          {/* Po oknie 24 h „EDYTUJ DANE" znika razem z ołówkami — to ta sama możliwość
+              zapisu, tylko innymi drzwiami (lista ręczna 08). Zostaje wyjście. */}
+          {!readOnly && (
+            <ActionButton
+              label="EDYTUJ DANE"
+              tone="neutral"
+              variant="secondary"
+              size="md"
+              icon="edit"
+              onPress={() => navigation.navigate('ManualLog')}
+            />
+          )}
           {/* Było „ZATWIERDŹ → SYNC" i przeżyło w kodzie dłużej niż w mockupie
               (uwaga użytkownika po issue #23): zdanie samolotu już POTWIERDZIŁO dane,
               więc po locie niczego się nie zatwierdza ani nie wysyła ponownie —
               rozliczenie tylko opisuje sesję, a jedyne sensowne wyjście to powrót.
               Status synchronizacji mieszka w Ustawieniach. */}
           <ActionButton
-            label="WRÓĆ DO DNIA"
+            label={readOnly ? 'WRÓĆ DO DNI' : 'WRÓĆ DO DNIA'}
             tone="green"
             variant="solid"
             trailingIcon="next"
-            onPress={() => navigation.navigate('MyDay')}
+            onPress={() => navigation.navigate(backScreen)}
           />
         </View>
       }
@@ -330,11 +360,13 @@ export function StatsScreen({
         <Card title="Lista lotów · czasy UTC" flush>
           {/* Ołówek otwiera arkusz korekty (04c) dla lądowania lotu (id wiersza = uuid
               zdarzenia — patrz `buildFlightRows`). Po zdaniu samolotu działa w oknie
-              24 h; po oknie komendę odrzucą reguły, a powód trafi do banera. */}
+              24 h; po oknie kolumny ołówka NIE MA W OGÓLE, bo komendę odrzuciłyby
+              reguły — powód stoi w banerze nad wszystkim. Numer lotu zostaje klikalny:
+              szczegóły lotu i ślad to oglądanie, nie zapis. */}
           <DataTable
             columns={FLIGHT_COLUMNS}
             rows={flightRows}
-            onCorrect={openCorrection}
+            onCorrect={readOnly ? undefined : openCorrection}
             emptyText="Żaden lot nie został zapisany."
           />
         </Card>

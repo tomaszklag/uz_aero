@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 12 Historia dni</title>
+<title>UZ Aero — 12 Poprzednie dni</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -51,7 +51,7 @@
 
   .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
 
-  /* karta dnia */
+  /* karta SESJI (nie doby — patrz komentarz przy pierwszej karcie) */
   .day-card {
     background:var(--surface); border:1px solid var(--border); border-radius:14px;
     padding:13px 14px; display:flex; flex-direction:column; gap:9px;
@@ -63,19 +63,30 @@
   .day-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
   .day-date { font-family:var(--font-display); font-size:21px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
+  /* Godziny biegu silnika — bez nich dwie sesje tej samej doby różnią się wyłącznie
+     rejestracją, a pilot latający dwa razy tą samą maszyną nie odróżniłby ich wcale. */
+  .day-times { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--text-muted); margin-top:-4px; }
   .day-stats { display:flex; gap:14px; flex-wrap:wrap; }
   .stat { display:flex; flex-direction:column; gap:2px; }
   .stat-k { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .stat-v { font-family:var(--font-mono); font-size:13px; font-weight:700; color:var(--text-secondary); }
-  .day-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid var(--border); padding-top:8px; }
-  .tag { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.2px; text-transform:uppercase; padding:4px 8px; border-radius:6px; white-space:nowrap; }
-  .tag.ok { color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); }
+  /* Stopka istnieje TYLKO wtedy, gdy ma co powiedzieć — pusty pas z kreską nad nim
+     wyglądałby jak brakująca treść. */
+  .day-foot { display:flex; align-items:center; flex-wrap:wrap; gap:8px; border-top:1px solid var(--border); padding-top:8px; }
+  .tag { font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.2px; text-transform:uppercase; padding:4px 8px; border-radius:6px; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; }
   .tag.win { color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); }
-  .tag.locked { color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); }
+  /* Wysyłka: plakietka pojawia się WYŁĄCZNIE, gdy coś czeka w kolejce. „Wysłane" nie
+     istnieje — to stan domyślny (ta sama reguła, co SyncChip online: issue #12). */
+  .tag.pending { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
   .foot-note { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); }
 
   .cta-correct { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-radius:11px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; }
   .cta-correct:hover { background:rgba(52,152,219,0.18); }
+  /* Podgląd sesji po oknie — ten sam kształt pasa, ton neutralny: to oglądanie,
+     nie akcja. Bez niego karta wyglądała na martwą i pilot nie miał jak sprawdzić,
+     co właściwie zapisał (issue #35 pkt 2). */
+  .cta-view { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-radius:11px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; }
+  .cta-view:hover { border-color:var(--text-muted); color:var(--text-primary); }
 
   .locked-note { display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--text-secondary); line-height:1.5; }
   .locked-note svg { flex-shrink:0; margin-top:1px; color:var(--text-muted); }
@@ -86,6 +97,7 @@
   .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
   .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
   .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
@@ -102,11 +114,11 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 12</span>
-  <span class="slug">historia dni · okno korekty</span>
+  <span class="slug">poprzednie dni · sesje zamknięte</span>
   <span class="canvas-meta"><span class="pulse"></span>Ekran 12</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Historia dni">
+<main class="phone" role="region" aria-label="Mockup — Poprzednie dni">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -122,7 +134,7 @@
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1.5L3 5l3.5 3.5"/></svg>
         Dzień
       </a>
-      <span class="screen-title">HISTORIA DNI</span>
+      <span class="screen-title">POPRZEDNIE DNI</span>
       <!-- Chip SYNC USUNIĘTY: online nie rysuje nic (reguła 2026-08-06, issue #12).
            Prawy slot zostaje pusty, żeby tytuł nie uciekł z osi. -->
       <span style="width:62px;"></span>
@@ -132,28 +144,64 @@
 
       <div class="group-lbl">Możesz jeszcze poprawić</div>
 
-      <!-- DZIEŃ W OKNIE KOREKTY.
-           Karta opisuje DZIEŃ PILOTA, więc może obejmować kilka maszyn — to jest cała
-           różnica względem starego modelu, w którym „dzień" był sesją jednego samolotu
-           i przesiadka rodziła dwa wpisy. Klik prowadzi do rozliczenia (10) —
-           widoku „dzień zamknięty" nie ma, bo dnia się nie zamyka (issue #23).
+      <!-- KARTA = SESJA, nie doba (decyzja przy issue #35).
+           Jedna sesja to jeden bieg silnika, więc doba z dwiema sesjami daje TU dwie
+           karty z tą samą datą — i o to chodzi: kafelek otwiera rozliczenie (10),
+           a rozliczenie opisuje JEDNĄ maszynę. Kafelek-doba nie miałby czego otworzyć,
+           bo paliwo i motogodziny dwóch maszyn nie sumują się w jedną liczbę.
 
-           UWAGA co do dat: ten ekran opisuje moment widziany z 01 (dziś 06 SIE, dzień
-           w toku), więc w oknie korekty stoi DZIEŃ POPRZEDNI — 05 SIE. -->
+           DZISIEJSZYCH SESJI TU NIE MA (issue #35 pkt 1) — stoją na „Mój dzień" (01)
+           i to tam prowadzi je ołówek wiersza. Ekran nazywa się „Poprzednie dni”
+           i pokazuje dokładnie to.
+
+           UWAGA co do dat: dziś jest 12 SIE 2026, więc najświeższe karty to 11 SIE. -->
       <a href="10-statystyki.html" class="day-card editable">
         <div class="day-top">
-          <span class="day-date">05 SIERPNIA 2026</span>
-          <span class="day-ac">SP-AXA · SP-KLM</span>
+          <span class="day-date">11 SIERPNIA 2026</span>
+          <span class="day-ac">SP-KLM</span>
         </div>
+        <div class="day-times">14:20 → 16:02 UTC</div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Sesje</span><span class="stat-v">3</span></span>
-          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">6:39</span></span>
-          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">5:41</span></span>
-          <span class="stat"><span class="stat-k">Skoczków</span><span class="stat-v">22</span></span>
+          <!-- Te same trzy wielkości i te same nazwy, co w wierszu sesji na „Mój dzień"
+               (issue #35 pkt 6): liczba lotów, czas blokowy, czas w powietrzu.
+               Skoczkowie wypadli — są w szczegółach lotu, a na kafelku zajmowali
+               miejsce wielkości, której pilot szuka naprawdę. -->
+          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">2</span></span>
+          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">1:42</span></span>
+          <span class="stat"><span class="stat-k">Lot</span><span class="stat-v">1:18</span></span>
         </div>
         <div class="day-foot">
-          <span class="tag win">Korekta do 06 SIE 16:45</span>
-          <span class="foot-note">zostało 23 h 04 min</span>
+          <span class="tag win">Korekta do 12 SIE 16:05</span>
+          <span class="foot-note">zostało 4 h 12 min</span>
+        </div>
+        <div class="cta-correct">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          OTWÓRZ I POPRAW
+        </div>
+      </a>
+
+      <!-- Druga sesja TEJ SAMEJ doby, inna maszyna — i z zaległością wysyłki.
+           Plakietka mówi, co się z zapisem dzieje: „oczekuje na przesłanie" (kolejka
+           czeka na sieć) albo „w trakcie wysyłania" (pętla synca właśnie pracuje).
+           Trzeciego napisu nie ma — sesja wysłana nie pokazuje NICZEGO, bo to stan
+           domyślny (issue #35 pkt 3). -->
+      <a href="10-statystyki.html" class="day-card editable">
+        <div class="day-top">
+          <span class="day-date">11 SIERPNIA 2026</span>
+          <span class="day-ac">SP-AXA</span>
+        </div>
+        <div class="day-times">08:12 → 10:34 UTC</div>
+        <div class="day-stats">
+          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">3</span></span>
+          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">2:22</span></span>
+          <span class="stat"><span class="stat-k">Lot</span><span class="stat-v">1:48</span></span>
+        </div>
+        <div class="day-foot">
+          <span class="tag pending">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Oczekuje na przesłanie · 8
+          </span>
+          <span class="tag win">Korekta do 12 SIE 10:36</span>
         </div>
         <div class="cta-correct">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -163,47 +211,54 @@
 
       <div class="group-lbl" style="margin-top:4px;">Zamknięte</div>
 
-      <!-- DNI PO OKNIE -->
-      <div class="day-card">
+      <!-- SESJE PO OKNIE 24 H.
+           Karta jest klikalna tak samo jak ta z okna korekty — prowadzi do TEGO SAMEGO
+           rozliczenia, tylko w wariancie bez edycji (10B): bez ołówków przy lotach
+           i bez „Edytuj dane". Tag „Okno minęło" USUNIĘTY (issue #35 pkt 4): mówił to
+           samo, co etykieta grupy nad kartami i przypis z kłódką pod nimi. -->
+      <a href="10b-rozliczenie-zamkniete.html" class="day-card">
         <div class="day-top">
-          <span class="day-date">04 SIERPNIA 2026</span>
+          <span class="day-date">09 SIERPNIA 2026</span>
           <span class="day-ac">SP-AXA</span>
         </div>
+        <div class="day-times">07:48 → 09:06 UTC</div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Sesje</span><span class="stat-v">2</span></span>
-          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">4:12</span></span>
-          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">3:28</span></span>
-          <span class="stat"><span class="stat-k">Skoczków</span><span class="stat-v">15</span></span>
+          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">1</span></span>
+          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">1:18</span></span>
+          <span class="stat"><span class="stat-k">Lot</span><span class="stat-v">1:07</span></span>
         </div>
-        <div class="day-foot">
-          <span class="tag ok">Wysłane · arkusz gotowy</span>
-          <span class="tag locked">Okno minęło</span>
+        <!-- Bez stopki: wszystko wysłane, okno minęło — nie ma o czym pisać. -->
+        <div class="cta-view">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          ZOBACZ SZCZEGÓŁY
         </div>
-      </div>
+      </a>
 
-      <!-- Dzień z JEDNĄ sesją — przypadek, który po przebudowie jest typowy:
-           pilot przyszedł, poleciał raz, oddał maszynę. W starym modelu wymagał
-           otwarcia i zamknięcia całej służby. -->
-      <div class="day-card">
+      <!-- Sesja zdana BEZ LOTU (09C) — pogoda, usterka, odwołane zadanie.
+           Silnik chodził 14 minut, w powietrze nikt nie poszedł: „Lot — —", nie zero.
+           Kafelek istnieje, bo maszyna była zajęta i to jest fakt do obejrzenia. -->
+      <a href="10b-rozliczenie-zamkniete.html" class="day-card">
         <div class="day-top">
-          <span class="day-date">02 SIERPNIA 2026</span>
+          <span class="day-date">07 SIERPNIA 2026</span>
           <span class="day-ac">SP-FGK</span>
         </div>
+        <div class="day-times">11:02 → 11:16 UTC</div>
         <div class="day-stats">
-          <span class="stat"><span class="stat-k">Sesje</span><span class="stat-v">1</span></span>
-          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">1:18</span></span>
-          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">1:07</span></span>
-          <span class="stat"><span class="stat-k">Operacja</span><span class="stat-v">Przelot</span></span>
+          <span class="stat"><span class="stat-k">Loty</span><span class="stat-v">0</span></span>
+          <span class="stat"><span class="stat-k">Blok</span><span class="stat-v">0:14</span></span>
+          <!-- „0:00", nie „— —": kafelek powtarza dokładnie to, co wiersz sesji na 01,
+               a tam czas lotu jest wyliczoną sumą i przy braku lotów wynosi zero. -->
+          <span class="stat"><span class="stat-k">Lot</span><span class="stat-v">0:00</span></span>
         </div>
-        <div class="day-foot">
-          <span class="tag ok">Wysłane · arkusz gotowy</span>
-          <span class="tag locked">Okno minęło</span>
+        <div class="cta-view">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          ZOBACZ SZCZEGÓŁY
         </div>
-      </div>
+      </a>
 
       <div class="locked-note">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Dni po oknie 24 h są zamknięte. Jeśli znalazłeś błąd — zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez kasowania oryginalnego zapisu.</span>
+        <span>Sesje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd — zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez kasowania oryginalnego zapisu.</span>
       </div>
 
     </div>
@@ -215,23 +270,30 @@
   <a class="vp-item active" href="12-historia.html">
     <span class="vp-badge">12</span>
     <span class="vp-body">
-      <span class="vp-name">Historia dni</span>
-      <span class="vp-when">Wejście z „Mój dzień". Karta opisuje DZIEŃ PILOTA, więc obejmuje wszystkie maszyny z tej doby (05 SIE: SP-AXA i SP-KLM) — w starym modelu przesiadka rodziła dwa osobne wpisy. Dzień w oknie 24 h jest wyróżniony i klikalny; bez tego ekranu obietnica „możesz poprawić przez 24 h" nie miała żadnych drzwi.</span>
+      <span class="vp-name">Poprzednie dni</span>
+      <span class="vp-when">Wejście z „Mój dzień". Kafelek = JEDNA SESJA (bieg silnika), więc doba z dwiema sesjami daje dwie karty — kafelek otwiera rozliczenie, a rozliczenie opisuje jedną maszynę. Dzisiejszych sesji tu nie ma: te stoją na 01. Sesja w oknie 24 h jest niebieska i prowadzi do korekty; sesja po oknie — do podglądu bez edycji.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="10-statystyki.html">
     <span class="vp-badge">10</span>
     <span class="vp-body">
-      <span class="vp-name">Rozliczenie samolotu</span>
-      <span class="vp-when">Bilans jednej maszyny (paliwo, MH, zrzuty) — tu prowadzi karta dnia z okna korekty.</span>
+      <span class="vp-name">Rozliczenie samolotu — w oknie korekty</span>
+      <span class="vp-when">Bilans jednej sesji (paliwo, MH, zrzuty) z ołówkami przy lotach — tu prowadzi karta z grupy „Możesz jeszcze poprawić".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
+    <span class="vp-badge amber">10B</span>
+    <span class="vp-body">
+      <span class="vp-name">Rozliczenie samolotu — po oknie (podgląd)</span>
+      <span class="vp-when">Ten sam ekran bez jednego elementu edycji: brak ołówków w tabeli lotów, brak „Edytuj dane". Cel karty z grupy „Zamknięte" (issue #35 pkt 2).</span>
     </span>
   </a>
   <a class="vp-item" href="04c-korekta-zdarzenia.html">
     <span class="vp-badge">04C</span>
     <span class="vp-body">
       <span class="vp-name">Korekta zdarzenia</span>
-      <span class="vp-when">Zmiana czasu albo oznaczenie zdarzenia jako błędnego. Append-only.</span>
+      <span class="vp-when">Zmiana czasu albo oznaczenie zdarzenia jako błędnego. Append-only. Osiągalna wyłącznie z sesji w oknie 24 h.</span>
     </span>
   </a>
 </aside>
@@ -240,8 +302,9 @@
   <a href="index.html">↩ Index</a>
   <span>·</span>
   <a href="01-moj-dzien.html">← 01 Mój dzień</a>
-  <a href="12-historia.html" class="active">12 Historia</a>
+  <a href="12-historia.html" class="active">12 Poprzednie dni</a>
   <a href="10-statystyki.html">10 Rozliczenie →</a>
+  <a href="10b-rozliczenie-zamkniete.html">10B Podgląd</a>
   <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
 </nav>
 

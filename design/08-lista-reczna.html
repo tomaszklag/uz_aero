@@ -321,7 +321,7 @@
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 08</span>
   <span class="slug">lista ręczna · manual log</span>
-  <span class="canvas-meta"><span class="pulse"></span>Screen 8 / 11</span>
+  <span class="canvas-meta"><span class="pulse"></span>Ekran 8</span>
 </header>
 
 <main class="phone">
@@ -367,14 +367,37 @@
 
       <!-- EVENT LOG -->
       <div>
-        <div class="section-label" style="margin-bottom:8px;">Log zdarzeń · 22 CZERWCA 2026</div>
+        <!-- Log SESJI, nie dnia: ekran opisuje jeden strumień jednej maszyny, a dzień
+             pilota to lista sesji (issue #23) i mieszka na 01. -->
+        <div class="section-label" style="margin-bottom:8px;">Log sesji · czasy UTC</div>
         <div class="log-wrap">
 
-          <!-- ══ CYKL 1 — zakończony, 2× T/O+LDG ══ -->
-          <div class="block-group">
+          <!-- ══ ZDARZENIE NAZIEMNE — Tankowanie PRZED uruchomieniem ══
+               Zdarzenia naziemne stoją POZA biegiem silnika: tankowanie przy pracującym
+               silniku odrzuca reguła domeny, więc zawsze zamyka albo poprzedza bieg. -->
+          <div class="ground-event">
+            <div class="ground-event-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+            </div>
+            <div class="event-label off-block" style="color:var(--amber)">Tankowanie</div>
+            <div class="event-meta">+48 L · 08:05</div>
+            <div class="ground-event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          </div>
+          <div class="cycle-connector"></div>
+
+          <!-- ══ BIEG SILNIKA — JEDEN NA SESJĘ (pivot 2026-08-10) ══
+               Do 2026-08-12 mockup pokazywał tu TRZY „cykle silnikowe" z licznikiem
+               „1 / 3" — układ z modelu, w którym dzień był kontenerem na wiele
+               uruchomień. Dziś sesja to dokładnie jeden bieg, a kolejny lot zaczyna się
+               NOWYM przejęciem, więc drugiej grupy nie da się wyprodukować poprawnym
+               zapisem. Grupa zostaje jako nagłówek biegu (a nie płaska lista), bo pilot
+               odtwarzający zdarzenia z pamięci myśli „od uruchomienia do zgaszenia" —
+               i to w tej klamrze widzi, czego brakuje. Wiele lotów w środku jest normą.
+
+               Bieg AKTYWNY: wiersze oczekiwane pokazują z góry, czego jeszcze nie ma. -->
+          <div class="block-group active">
             <div class="cycle-label">
-              <span>Cykl silnikowy</span>
-              <span class="badge">1 / 3</span>
+              <span>Bieg silnika · aktywny</span>
             </div>
             <div class="event-row">
               <div class="tl-col"><div class="event-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
@@ -389,6 +412,7 @@
               <div class="event-body">
                 <div class="event-time takeoff">08:25</div>
                 <div class="event-label takeoff">Takeoff</div>
+                <div class="event-meta">lot 1</div>
               </div>
               <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
             </div>
@@ -406,105 +430,7 @@
               <div class="event-body">
                 <div class="event-time takeoff">09:35</div>
                 <div class="event-label takeoff">Takeoff</div>
-              </div>
-              <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-            </div>
-            <div class="event-row">
-              <div class="tl-col"><div class="event-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg></div></div>
-              <div class="event-body">
-                <div class="event-time landing">10:22</div>
-                <div class="event-label landing">Landing</div>
-                <div class="event-meta">0:47 lotu</div>
-              </div>
-              <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-            </div>
-            <div class="event-row">
-              <div class="tl-col"><div class="event-icon stop"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div></div>
-              <div class="event-body">
-                <div class="event-time on-block">10:34</div>
-                <div class="event-label on-block">Stop engine</div>
-                <div class="event-meta">2:22 bloku</div>
-              </div>
-              <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-            </div>
-            <div class="uwagi-row"><span class="uwagi-key">Uwagi</span><span class="uwagi-val empty">—</span></div>
-          </div>
-
-          <!-- ══ ZDARZENIE NAZIEMNE — Tankowanie ══ -->
-          <div class="cycle-connector"></div>
-          <div class="ground-event">
-            <div class="ground-event-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
-            </div>
-            <div class="event-label off-block" style="color:var(--amber)">Tankowanie</div>
-            <div class="event-meta">+48 L · 10:48</div>
-            <div class="ground-event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-          </div>
-          <div class="cycle-connector"></div>
-
-          <!-- ══ CYKL 2 — zakończony, 1× T/O+LDG ══ -->
-          <div class="block-group">
-            <div class="cycle-label">
-              <span>Cykl silnikowy</span>
-              <span class="badge">2 / 3</span>
-            </div>
-            <div class="event-row">
-              <div class="tl-col"><div class="event-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-              <div class="event-body">
-                <div class="event-time off-block">11:15</div>
-                <div class="event-label off-block">Start engine</div>
-              </div>
-              <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-            </div>
-            <div class="event-row">
-              <div class="tl-col"><div class="event-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
-              <div class="event-body">
-                <div class="event-time takeoff">11:28</div>
-                <div class="event-label takeoff">Takeoff</div>
-              </div>
-              <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-            </div>
-            <div class="event-row">
-              <div class="tl-col"><div class="event-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg></div></div>
-              <div class="event-body">
-                <div class="event-time landing">12:15</div>
-                <div class="event-label landing">Landing</div>
-                <div class="event-meta">0:47 lotu</div>
-              </div>
-              <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-            </div>
-            <div class="event-row">
-              <div class="tl-col"><div class="event-icon stop"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div></div>
-              <div class="event-body">
-                <div class="event-time on-block">12:28</div>
-                <div class="event-label on-block">Stop engine</div>
-                <div class="event-meta">1:13 bloku</div>
-              </div>
-              <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-            </div>
-            <div class="uwagi-row"><span class="uwagi-key">Uwagi</span><span class="uwagi-val empty">—</span></div>
-          </div>
-
-          <!-- ══ CYKL 3 — aktywny, w locie ══ -->
-          <div class="cycle-connector"></div>
-          <div class="block-group active">
-            <div class="cycle-label">
-              <span>Cykl silnikowy · aktywny</span>
-              <span class="badge">3 / 3</span>
-            </div>
-            <div class="event-row">
-              <div class="tl-col"><div class="event-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-              <div class="event-body">
-                <div class="event-time off-block">13:10</div>
-                <div class="event-label off-block">Start engine</div>
-              </div>
-              <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
-            </div>
-            <div class="event-row">
-              <div class="tl-col"><div class="event-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
-              <div class="event-body">
-                <div class="event-time takeoff">13:24</div>
-                <div class="event-label takeoff">Takeoff</div>
+                <div class="event-meta">lot 2</div>
               </div>
               <div class="event-edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
             </div>
@@ -529,7 +455,6 @@
               Dodaj zdarzenie ręcznie
             </div>
           </div>
-
         </div><!-- /log-wrap -->
       </div>
 

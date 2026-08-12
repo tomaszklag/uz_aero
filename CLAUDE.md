@@ -261,14 +261,18 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu sesji;
   wariant 09c: zdanie bez lotu) → 01-moj-dzien
 01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie: samolot, czasy, odczyty)
-01-moj-dzien → 12-historia; OŁÓWEK wiersza logu → 10-statystyki (detale i korekty
-  TEJ sesji; „Rozliczenie" jako osobny przycisk nie istnieje)
+01-moj-dzien → 12-historia („Poprzednie dni" — sesje spoza dzisiejszej doby);
+  OŁÓWEK wiersza logu → 10-statystyki (detale i korekty TEJ sesji; „Rozliczenie"
+  jako osobny przycisk nie istnieje)
+12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
+  ekran w trybie PODGLĄDU: bez ołówków, bez „Edytuj dane")
 10-statystyki → NUMER lotu w tabeli → 16-lot (szczegóły JEDNEGO lotu: czasy, miejsce,
   zrzuty tego wyniesienia, miniatura śladu) → miniatura → 14-slad (pełny ślad).
   Wariant 16a = lot bez zapisu GPS; z LIST (01, tabela lotów na 10) nie ma skrótu
   prosto na mapę (issue #25)
-11-eksport (status synchronizacji) → wejście z USTAWIEŃ (13), nie z 10 — przycisk
-  „ZATWIERDŹ → SYNC" usunięty: zdanie samolotu już potwierdza dane
+EKRANU 11 NIE MA (usunięty 2026-08-12) — stan wysyłki, uwagi serwera i awaryjne
+  „Synchronizuj teraz" to SEKCJA w Ustawieniach (13); kolejkę i ostatnią wysyłkę
+  pokazuje też arkusz pod SyncChipem
 ```
 **Wszystko wraca do 01, nie do kokpitu.** Dzień pilota nie ma „startu" ani „końca" jako
 kroków flow: zaczyna się pierwszą sesją i NICZYM się nie domyka — „Zamknij dzień",
@@ -342,6 +346,28 @@ deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Konsekwencje:
 Pełny opis: `docs/_main.md.txt` §3.6, §3.6a — czytane RAZEM z sekcją „Sesja = jeden bieg
 silnika" wyżej.
 
+## Poprzednie dni = sesje spoza dzisiejszej doby (issue #35, 2026-08-12)
+Ekran 12 przestał być drugą listą tych samych lotów, co „Mój dzień":
+- **kafelek = SESJA, nie doba** — doba z dwiema sesjami daje dwie karty, rozróżnione
+  godzinami biegu silnika. Kafelek-doba nie miałby czego otworzyć: jego celem jest
+  rozliczenie (10), a ono opisuje JEDNĄ maszynę
+- **dzisiejszych sesji tam nie ma** — mieszkają na 01, gdzie prowadzi je ołówek wiersza.
+  Doba liczy się tak samo jak na 01 (kotwicą jest URUCHOMIENIE silnika, awaryjnie
+  przejęcie — `sessionDay` w `logic/historyDays.ts`), więc sesja spod północy nie wpada
+  w dziurę między ekranami. Plakietka wejścia na 01 pomija dziś z tego samego powodu
+- **metryki kafelka = metryki wiersza sesji z 01**: Loty · Blok · Lot. Skoczkowie zeszli
+  do szczegółów lotu, czas trzymania maszyny wypadł
+- **„Wysłane" i „Okno minęło" nie istnieją**. Pierwsze jest stanem domyślnym (reguła
+  SyncChipa z issue #12), więc zostaje sama plakietka zaległości w dwóch odmianach:
+  `queued` („Oczekuje na przesłanie · n") i `sending` („W trakcie wysyłania · n") —
+  rozstrzyga wynik OSTATNIEJ próby synca, bo innego pojęcia „online" aplikacja nie ma
+- **sesja po oknie 24 h otwiera się do PODGLĄDU** (`design/10b-rozliczenie-zamkniete.html`):
+  ten sam ekran 10 bez ani jednego elementu zapisu — `onCorrect` bez wartości (kolumny
+  ołówka NIE MA), bez „EDYTUJ DANE", amber baner zamiast terminu, plakietka „Podgląd”
+  w nagłówku, powrót do 12. Na 16 znika sam przycisk korekty czasów. Warunkiem jest
+  `!correctionWindow(...).open` — sesja jeszcze niezdana ma okno otwarte i działa jak
+  dotąd. Wyszarzony ołówek jest ZAKAZANY: obiecuje akcję, którą reguły odrzucą
+
 ## Ślad należy do LOTU (issue #25, 2026-08-12)
 Ślad GPS opisuje jeden lot (start → lądowanie), więc nie da się go podwiesić pod listę:
 sesja z trzema lotami nie ma „swojego" śladu. Stąd jedna droga — **10 (rozliczenie
@@ -373,7 +399,7 @@ sesji) → 16 (szczegóły lotu) → 14 (pełny ślad)**:
 Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 
 - **Brak sieci NIGDY nie blokuje pracy pilota** — sieć to okazja do synca, nie warunek. Jedyny świadomy wyjątek: utworzenie profilu (pierwsze logowanie / zapomniany PIN) wymaga sieci — tryb awaryjny bez tożsamości został rozważony i ODRZUCONY, nie proponuj go ponownie
-- Zapis = lokalne zdarzenie append-only (SQLite, UUID) → outbox wysyła automatycznie, gdy jest sieć; eksport do Sheets robi serwer (ekran 11 = status synchronizacji, nie akcja eksportu)
+- Zapis = lokalne zdarzenie append-only (SQLite, UUID) → outbox wysyła automatycznie, gdy jest sieć; eksport do Sheets robi serwer (**pilot niczego nie eksportuje ręcznie**). Osobnego ekranu statusu NIE MA od 2026-08-12 — był trzecim widokiem tej samej sesji (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka = arkusz SyncChipa). Została sekcja w Ustawieniach (13): kolejka, ostatnia udana wysyłka, **uwagi serwera** (§4.5 — jedyne ich miejsce w aplikacji, bo SyncChip pojawia się tylko offline) i awaryjne „Synchronizuj teraz"
 - **Outbox ma DRUGI kierunek** (issue #32, 2026-08-12): `GET /me/events` odbudowuje lokalny rejestr z serwera po czyszczeniu pamięci aplikacji, reinstalacji albo na nowym telefonie (`application/sync/eventRestore.ts`, kursor per pilot, zapis od razu ze stemplem wysyłki). **To NIE jest wyjątek od offline-first — to jego warunek**: pobranie zasila REJESTR, nie EKRAN. „Mój dzień", „Historia dni" i statystyki dalej liczą się WYŁĄCZNIE z lokalnego strumienia (§6 pkt 1), więc nie wolno kazać im pytać serwera. Jedyny ślad w UI jest negatywny — dopóki pierwsze odtworzenie nie wróci, ekran nie rysuje stanu pustego (`streamHydrated` w store sesji), bo „jeszcze żadnego lotu" pokazane pilotowi z trzema sesjami wygląda jak utrata danych. Pełny opis: `docs/_main.md.txt` §4.9
 - Komponenty dzielimy wg źródła danych:
   1. **dane sesji** (timery, log samolotu na `04`, lista sesji doby na `01`, liczniki, statystyki) — lokalne, zawsze świeże, zero wariantów offline

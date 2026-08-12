@@ -304,15 +304,21 @@ export function FlightDetailsScreen({
           </Card>
         )}
 
-        {/* ── korekta czasów: ten sam cel, co ołówek w tabeli na 10 ──────── */}
-        <ActionButton
-          label="POPRAW CZASY TEGO LOTU"
-          tone="neutral"
-          variant="secondary"
-          size="md"
-          icon="edit"
-          onPress={() => openCorrection(flight.landingUuid ?? flight.takeoffUuid)}
-        />
+        {/* ── korekta czasów: ten sam cel, co ołówek w tabeli na 10 ──────────
+            Po oknie 24 h przycisku NIE MA — tak samo, jak nie ma wtedy ołówków
+            w tabeli na 10 (issue #35 pkt 2). Podgląd lotu zostaje w komplecie:
+            czasy, miejsce, zrzuty i ślad to oglądanie, nie zapis. Przypis niżej
+            mówi w obu przypadkach, jaka jest reguła. */}
+        {window24h.open && (
+          <ActionButton
+            label="POPRAW CZASY TEGO LOTU"
+            tone="neutral"
+            variant="secondary"
+            size="md"
+            icon="edit"
+            onPress={() => openCorrection(flight.landingUuid ?? flight.takeoffUuid)}
+          />
+        )}
         <AppText variant="mono" tone="muted" style={styles.btnNote}>
           {correctionNote(window24h)}
         </AppText>

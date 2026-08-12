@@ -30,9 +30,6 @@ export * from './layout/IdentityStrip';
 
 // Statusy i komunikaty
 export * from './status/SyncChip';
-export * from './status/SyncStatusBox';
-export * from './status/QueueBox';
-export * from './status/ExportedBox';
 export * from './status/StatusChip';
 export * from './status/Tag';
 export * from './status/Banner';

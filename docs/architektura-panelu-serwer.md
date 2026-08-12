@@ -1363,7 +1363,7 @@ jest zajętą wartością do poprawienia przez człowieka, a tutaj jest awarią 
 znaczyło „sesja, której to karta"; dziś znaczy **członkostwo sesji w rewizji**, bo karta
 jest DOBĄ SAMOLOTU (§4.7). Rozważona i odrzucona była wersja normalizacyjnie czystsza —
 jeden wiersz na rewizję plus tabela członkostwa — i odpadła w jedynym miejscu, które się
-liczy: `GET /sessions/:uuid/sync-status` (ekran 11 telefonu) pyta o link PO SESJI, więc
+liczy: `GET /sessions/:uuid/sync-status` (dziś zaparkowany po stronie telefonu — patrz `SyncEngine.fetchStatus`) pyta o link PO SESJI, więc
 zmiana, która eksportu nie wyzwoliła, nie miałaby własnego wiersza i pilot zobaczyłby
 „jeszcze nie wyeksportowano" o danych, które są w arkuszu. Cena wybranego wariantu to
 dokładnie jedno zdanie: kolumna nazywa się „sesja", a znaczy „członkostwo".

@@ -1,7 +1,17 @@
 /**
  * UZ Aero — 13 USTAWIENIA (mockup `design/13-ustawienia.html`).
  *
- * Pięć sekcji: motyw → bezpieczeństwo (PIN) → konto → diagnostyka GPS → o aplikacji.
+ * Sześć sekcji: motyw → bezpieczeństwo (PIN) → konto → synchronizacja → diagnostyka
+ * GPS → o aplikacji.
+ *
+ * SEKCJA SYNCHRONIZACJI PRZEJĘŁA EKRAN 11 (2026-08-12). Tamten ekran był trzecim
+ * widokiem tej samej sesji (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem
+ * sieci (kolejka i ostatnia wysyłka = arkusz pod SyncChipem), a jego „SYNCHRONIZUJ
+ * TERAZ" przeczyło regule, którą sam arkusz zapisuje: outbox wysyła się sam. Zostały
+ * tu dwie rzeczy, których naprawdę nie ma nigdzie indziej — **uwagi serwera** (§4.5)
+ * i **awaryjne ponaglenie wysyłki**. Mieszkają w Ustawieniach, bo Ustawienia widać
+ * ZAWSZE: SyncChip pojawia się wyłącznie offline, więc flaga wystawiona przez serwer
+ * po udanej wysyłce nie miałaby się gdzie pokazać.
  * Wszystko, co tu można zrobić, DZIAŁA OFFLINE — jedyny wyjątek (ponowne logowanie po
  * wylogowaniu) jest opisany przy przycisku, a sam przycisk przy niepustym outboxie
  * stoi zablokowany Z POWODEM i amber-boxem (§3.0, wzorzec `.outbox-guard` z 00).
@@ -18,6 +28,7 @@ import Constants from 'expo-constants';
 import { GPS_STALE_SEC, type GpsFix } from '../../domain';
 import { REFERENCE_META_CHECKED_AT } from '../../application';
 import {
+  ActionButton,
   AppText,
   Banner,
   Card,
@@ -38,7 +49,7 @@ import { useAuthStore } from '../store/authStore';
 import { useGps, useTrace } from '../bootstrap/servicesContext';
 import { formatLatLon, timeUtc } from '../format';
 import { fixAge } from './logic/gpsLoss';
-import { eventsCount } from './logic/syncStatus';
+import { eventsCount, flagLabel, plural, serverNoticeLabel } from './logic/syncStatus';
 
 export function SettingsScreen({
   navigation,
@@ -53,6 +64,9 @@ export function SettingsScreen({
   const logout = useAuthStore((s) => s.logout);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
+  const lastSync = useSessionStore((s) => s.lastSync);
+  const serverFlags = useSessionStore((s) => s.serverFlags);
+  const syncNow = useSessionStore((s) => s.syncNow);
   const synced = useSessionStore((s) => s.synced);
   const projection = useSessionStore((s) => s.projection);
   const queries = useSessionStore((s) => s.queries);
@@ -61,6 +75,20 @@ export function SettingsScreen({
 
   const [pinSheet, setPinSheet] = useState(false);
   const [pinChanged, setPinChanged] = useState(false);
+
+  // ── synchronizacja: awaryjne ponaglenie wysyłki ───────────────────────────
+  const [syncing, setSyncing] = useState(false);
+  const runManualSync = useCallback(async (): Promise<void> => {
+    setSyncing(true);
+    try {
+      await syncNow();
+    } finally {
+      setSyncing(false);
+    }
+  }, [syncNow]);
+  // „Offline" znamy wyłącznie z wyniku OSTATNIEJ próby (§4.3) — innego pojęcia o sieci
+  // aplikacja nie ma i nie udaje, że ma.
+  const offline = lastSync?.kind === 'offline';
 
   // ── diagnostyka GPS: żywa subskrypcja na czas otwarcia ekranu ─────────────
   const [fix, setFix] = useState<GpsFix | null>(null);
@@ -206,17 +234,56 @@ export function SettingsScreen({
           <SectionNote text="Ponowne logowanie wymaga internetu — konta zakłada administrator." />
         </Card>
 
-        {/* ── synchronizacja (wejście do ekranu 11 — status, nie akcja) ──────
-            Przeniesione z rozliczenia (10) po issue #23: tam wisiało na przycisku
-            „ZATWIERDŹ → SYNC", a zdanie samolotu już potwierdza dane — po locie
-            niczego się nie zatwierdza ani nie wysyła ponownie. */}
+        {/* ── synchronizacja: STAN, nie osobny ekran ────────────────────────
+            Ekran 11 usunięty (2026-08-12) — patrz docblock modułu. Trzy wiersze
+            i jeden przycisk awaryjny; niczego tu nie ma o danych sesji, bo od tego
+            jest rozliczenie (10). */}
         <Card title="Synchronizacja" header="inline">
-          <SettingsAction
-            icon="sync"
-            name="Status synchronizacji"
-            sub="kolejka wysyłki i eksport arkuszy — wysyłką zarządza outbox sam"
-            onPress={() => navigation.navigate('Sync')}
+          <KeyValueRow
+            divider
+            label="Kolejka wysyłki"
+            value={outboxCount === 0 ? 'pusta' : `${eventsCount(outboxCount)} czeka`}
+            valueTone={outboxCount === 0 ? 'green' : 'amber'}
           />
+          <KeyValueRow
+            divider
+            label="Ostatnia udana wysyłka"
+            value={lastSyncAt != null ? `${timeUtc(lastSyncAt)} UTC` : 'jeszcze żadnej'}
+          />
+          {/* Wiersz stoi ZAWSZE, także z „brak uwag": inaczej pilot nie odróżni
+              „serwer nic nie zgłasza" od „serwer nic nie sprawdził" (§6 pkt 2 —
+              cisza nie może znaczyć dwóch rzeczy naraz). */}
+          <KeyValueRow
+            divider
+            label="Uwagi serwera"
+            value={serverNoticeLabel(serverFlags.length, lastSyncAt != null)}
+            valueTone={serverFlags.length > 0 ? 'amber' : 'green'}
+          />
+          {/* Jedna flaga potrafi objąć kilka sesji (§4.5), więc wiersz mówi ILE —
+              bez tego pilot nie wie, czy chodzi o dzisiejszy lot, czy o cały tydzień. */}
+          {serverFlags.map((flag) => (
+            <KeyValueRow
+              key={flag.type}
+              divider
+              label={flagLabel(flag.type)}
+              value={`${flag.sessionUuids.length} ${plural(flag.sessionUuids.length, 'sesja', 'sesje', 'sesji')}`}
+              valueTone="amber"
+            />
+          ))}
+          <ActionButton
+            label="SYNCHRONIZUJ TERAZ"
+            tone="neutral"
+            variant="secondary"
+            size="md"
+            icon="sync"
+            busy={syncing}
+            hint="Wysyłka działa sama w tle — to awaryjne ponaglenie"
+            disabledReason={
+              offline ? 'Brak połączenia — wysyłka ruszy sama, gdy wróci zasięg' : null
+            }
+            onPress={() => void runManualSync()}
+          />
+          <SectionNote text="Kolejka opróżnia się sama, gdy jest sieć — nie musisz jej pilnować. Uwagi serwera pochodzą z ostatniej wysyłki; rozwiązuje je administrator w panelu." />
         </Card>
 
         {/* ── diagnostyka GPS (czujnik — oś niezależna od sieci) ────────────── */}

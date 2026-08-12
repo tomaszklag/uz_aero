@@ -1,19 +1,23 @@
 /**
- * UZ Aero — 12 HISTORIA DNI (mockup `design/12-historia.html`).
+ * UZ Aero — 12 POPRZEDNIE DNI (mockup `design/12-historia.html`).
  *
  * Bez tego ekranu obietnica „możesz poprawić przez 24 h" nie miała drzwi (§ decyzja
- * 2026-07-23): dzień w oknie korekty stoi wyróżniony na górze i otwiera się w ekranie
- * 10, skąd ołówki prowadzą do korekty 04c. Dni po oknie są tylko do odczytu — poprawki
- * wprowadza administrator, o czym mówi przypis z kłódką (słowami mockupu).
+ * 2026-07-23): sesja w oknie korekty stoi wyróżniona na górze i otwiera się w ekranie
+ * 10, skąd ołówki prowadzą do korekty 04c. Sesje po oknie są do ODCZYTU — od issue #35
+ * też się otwierają, tyle że w wariancie bez elementów zapisu (`design/10b`): przedtem
+ * karta była martwa i pilot nie miał jak sprawdzić, co właściwie zapisał.
+ *
+ * Ekran pokazuje dni WCZEŚNIEJSZE (issue #35 pkt 1). Dzisiejsze sesje mieszkają na
+ * „Mój dzień" (01) i tam prowadzi je ołówek wiersza — druga lista tych samych lotów
+ * kazałaby pilotowi zgadywać, która jest prawdziwa.
  *
  * Wszystko liczy się z LOKALNEGO strumienia (`historyDays` grupuje zdarzenia po
  * sesjach i projektuje tym samym kodem co ekran 10) — historia działa w pełni offline;
- * jedyną „serwerową" informacją jest tag wysyłki, a i on liczy się z outboxa.
- * Tag „arkusz gotowy" z mockupu dołączy do „Wysłane" razem z eksportem Sheets (M4) —
- * dziś twierdzenie o gotowym arkuszu byłoby zmyśleniem.
+ * jedyną „serwerową" informacją jest plakietka wysyłki, a i ona liczy się z outboxa.
  *
- * „OTWÓRZ I POPRAW" ładuje zamkniętą sesję do store'u (`loadSession`) — bezpieczne,
- * bo historia jest osiągalna wyłącznie ze splasha, czyli bez otwartego dnia w tle.
+ * „OTWÓRZ I POPRAW" oraz „ZOBACZ SZCZEGÓŁY" ładują wskazaną sesję do store'u
+ * (`loadSession`) — bezpieczne, bo z kokpitu nie ma tu drogi (kokpit jest stanem
+ * modalnym), więc żadna trzymana maszyna nie zostaje w tle.
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -45,13 +49,14 @@ export function HistoryScreen({
   const loadSession = useSessionStore((s) => s.loadSession);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
+  const lastSync = useSessionStore((s) => s.lastSync);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const streamRevision = useSessionStore((s) => s.streamRevision);
   const streamHydrated = useSessionStore((s) => s.streamHydrated);
 
   const [days, setDays] = useState<HistoryDay[] | null>(null);
 
-  // Świeże dane przy każdym wejściu; `outboxCount` w zależnościach odświeża tagi
+  // Świeże dane przy każdym wejściu; `outboxCount` w zależnościach odświeża plakietki
   // wysyłki, gdy pętla synca opróżni kolejkę, kiedy ekran jest otwarty, a
   // `streamRevision` — całą listę, gdy odtworzenie z serwera dopisze dni (§4.9).
   useEffect(() => {
@@ -73,9 +78,17 @@ export function HistoryScreen({
     [loadSession, navigation],
   );
 
-  const groups = days != null ? buildHistory(days, Date.now()) : null;
+  /**
+   * Czy kolejka faktycznie jedzie. Aplikacja nie zna stanu „online" inaczej niż po
+   * wyniku ostatniej próby wysyłki (§4.3): przebieg zakończony `synced`/`idle` dosięgnął
+   * serwera, więc zaległe zdarzenia są w drodze. Cokolwiek innego — brak sieci, wygasły
+   * token, odrzucenie — znaczy „czeka", i tak to nazywamy.
+   */
+  const pushing = lastSync?.kind === 'synced' || lastSync?.kind === 'idle';
+
+  const groups = days != null ? buildHistory(days, Date.now(), pushing) : null;
   // Pustej historii wolno wierzyć dopiero po pierwszym uzgodnieniu rejestru z serwerem
-  // (§4.9, issue #32): telefon zaraz po czyszczeniu pamięci pokazałby „BRAK ZAMKNIĘTYCH
+  // (§4.9, issue #32): telefon zaraz po czyszczeniu pamięci pokazałby „BRAK POPRZEDNICH
   // DNI" komuś, kto ma za sobą sezon — a to jest dokładnie ten komunikat, który wygląda
   // jak utrata danych. Historia NIEPUSTA nie czeka na nic: ona nigdy nie kłamie.
   const empty =
@@ -100,10 +113,10 @@ export function HistoryScreen({
       padded={false}
       header={
         <ScreenHeader
-          title="HISTORIA DNI"
+          title="POPRZEDNIE DNI"
           size="md"
           onBack={navigation.goBack}
-          backLabel="Start"
+          backLabel="Dzień"
           right={
             <SyncChip
               status={synced ? 'synced' : 'offline'}
@@ -115,26 +128,28 @@ export function HistoryScreen({
       }
     >
       <View style={styles.content}>
-        {/* Dwie karty w geometrii `DayCard` — data nad statystykami nad stopką.
-            Stan pusty („BRAK ZAMKNIĘTYCH DNI") czeka na swoją kolej: wolno go napisać
-            dopiero, gdy wiadomo, że jest pusto (wzorzec `design/LOADERY.html` reguła 4). */}
+        {/* Dwie karty w geometrii `DayCard`: data, godziny, statystyki i pas akcji —
+            czyli część WSPÓLNA obu grup (wzorzec `design/LOADERY.html` reguła 2).
+            Stopki plamka nie obiecuje, bo karta zamknięta bez zaległości wysyłki jej
+            nie ma. Stan pusty czeka na swoją kolej: wolno go napisać dopiero, gdy
+            wiadomo, że jest pusto (reguła 4). */}
         {waiting && skeleton && (
-          <SkeletonRows rows={2} height={116} radius={theme.radius.btn} />
+          <SkeletonRows rows={2} height={156} radius={theme.radius.btn} />
         )}
 
         {empty && (
           <View style={styles.empty}>
             <AppText variant="display" style={styles.emptyTitle}>
-              BRAK ZAMKNIĘTYCH DNI
+              BRAK POPRZEDNICH DNI
             </AppText>
             <AppText variant="body" tone="muted" style={styles.emptyText}>
-              Historia wypełnia się po zatwierdzeniu pierwszego dnia lotnego. Wszystko
-              liczy się z zapisu na telefonie — również bez zasięgu.
+              Dzisiejsze sesje znajdziesz w „Mój dzień". Tutaj trafiają po zmianie doby —
+              wszystko liczone z zapisu na telefonie, również bez zasięgu.
             </AppText>
           </View>
         )}
 
-        {/* ── dni w oknie korekty ─────────────────────────────────────────── */}
+        {/* ── sesje w oknie korekty ───────────────────────────────────────── */}
         {groups != null && groups.editable.length > 0 && (
           <>
             <GroupLabel text="Możesz jeszcze poprawić" />
@@ -143,12 +158,15 @@ export function HistoryScreen({
                 key={day.sessionUuid}
                 date={day.date}
                 aircraft={day.aircraft}
+                times={day.times}
                 stats={day.stats}
                 editable
                 ctaLabel="OTWÓRZ I POPRAW"
+                ctaIcon="edit"
                 onPress={() => void openDay(day.sessionUuid)}
                 foot={
                   <>
+                    <UploadTag day={day} />
                     <Tag label={day.deadline} tone="blue" />
                     <AppText variant="mono" tone="muted" style={styles.footNote}>
                       {day.remaining}
@@ -160,7 +178,7 @@ export function HistoryScreen({
           </>
         )}
 
-        {/* ── dni po oknie ────────────────────────────────────────────────── */}
+        {/* ── sesje po oknie: podgląd bez edycji (10b) ─────────────────────── */}
         {groups != null && groups.closed.length > 0 && (
           <>
             <GroupLabel text="Zamknięte" style={styles.closedLabel} />
@@ -169,13 +187,17 @@ export function HistoryScreen({
                 key={day.sessionUuid}
                 date={day.date}
                 aircraft={day.aircraft}
+                times={day.times}
                 stats={day.stats}
-                foot={
-                  <>
-                    <SyncTag day={day} />
-                    <Tag label="Okno minęło" tone="neutral" />
-                  </>
-                }
+                // Oko, nie ołówek: po oknie 24 h ekran 10 otwiera się bez ołówków
+                // przy lotach i bez „Edytuj dane" — obiecywanie tu korekty byłoby
+                // obietnicą, której reguły i tak nie dotrzymają.
+                ctaLabel="ZOBACZ SZCZEGÓŁY"
+                ctaIcon="peek"
+                onPress={() => void openDay(day.sessionUuid)}
+                // Tag „Okno minęło" USUNIĘTY (issue #35 pkt 4): mówił to samo, co
+                // etykieta grupy nad kartami i przypis z kłódką pod nimi.
+                foot={day.upload != null ? <UploadTag day={day} /> : undefined}
               />
             ))}
 
@@ -183,9 +205,9 @@ export function HistoryScreen({
               {/* Kłódka, nie trójkąt — „zamknięte" to stan, nie ostrzeżenie (mockup 12). */}
               <Icon name="lock" size={14} color={theme.colors.textMuted} />
               <AppText variant="body" tone="secondary" style={styles.lockedText}>
-                Dni po oknie 24 h są zamknięte. Jeśli znalazłeś błąd — zgłoś go
-                administratorowi; poprawka zostanie dopisana jako korekta, bez kasowania
-                oryginalnego zapisu.
+                Sesje po oknie 24 h możesz oglądać, ale nie zmieniać. Jeśli znalazłeś błąd
+                — zgłoś go administratorowi; poprawka zostanie dopisana jako korekta, bez
+                kasowania oryginalnego zapisu.
               </AppText>
             </View>
           </>
@@ -204,9 +226,22 @@ function GroupLabel({ text, style }: { text: string; style?: object }) {
   );
 }
 
-/** Tag wysyłki dnia: zielone „Wysłane" albo amber z licznikiem kolejki. */
-function SyncTag({ day }: { day: DayCardSpec | EditableDaySpec }) {
-  return <Tag label={day.sync.label} tone={day.sync.pending ? 'amber' : 'green'} />;
+/**
+ * Plakietka wysyłki — TYLKO gdy coś czeka w kolejce (issue #35 pkt 3).
+ *
+ * „Wysłane" nie istnieje: to stan domyślny, a napis powtarzany przy prawie każdej
+ * karcie uczy oko pomijać stopkę — ta sama reguła, dla której SyncChip online nie
+ * rysuje nic (issue #12).
+ */
+function UploadTag({ day }: { day: DayCardSpec | EditableDaySpec }) {
+  if (day.upload == null) return null;
+  return (
+    <Tag
+      label={day.upload.label}
+      tone="amber"
+      icon={day.upload.state === 'sending' ? 'sync' : 'clock'}
+    />
+  );
 }
 
 const styles = StyleSheet.create({

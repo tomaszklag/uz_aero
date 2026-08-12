@@ -328,9 +328,8 @@
   <span class="flow-sep">→</span>
   <a href="10-statystyki.html" class="flow-step">10 Rozliczenie samolotu</a>
   <span class="flow-sep">·</span>
-  <a href="11-eksport.html" class="flow-step">11 Sync</a>
   <span class="flow-sep">·</span>
-  <a href="12-historia.html" class="flow-step">12 Historia</a>
+  <a href="12-historia.html" class="flow-step">12 Poprzednie dni</a>
 </div>
 
 <div class="section-title">Główny flow</div>
@@ -449,14 +448,6 @@
       <div class="card-title">02d-preflight-offline</div>
       <div class="card-desc">Preflight offline — chip OFFLINE, dane z cache z adnotacją wieku, claim "wg cache", modal przejęcia w wariancie offline (liczniki jako prawda)</div>
       <div class="card-tags"><span class="tag amber">offline</span><span class="tag">cache</span><span class="tag amber">przejęcie</span></div>
-    </div>
-  </a>
-  <a href="11a-sync-offline.html" class="card amber">
-    <div class="card-num">11A</div>
-    <div class="card-body">
-      <div class="card-title">11a-sync-offline</div>
-      <div class="card-desc">Synchronizacja bez sieci — licznik częściowy 35/47, ręczny sync disabled z powodem, flagi w stanie „nieznane" (online pokazywałyby „brak ✓", co offline byłoby nieprawdą)</div>
-      <div class="card-tags"><span class="tag amber">offline</span><span class="tag">outbox</span></div>
     </div>
   </a>
   <a href="02b-preflight-paliwo.html" class="card amber">
@@ -589,6 +580,14 @@
       <div class="card-tags"><span class="tag amber">stan zerowy</span><span class="tag">rozliczenie</span></div>
     </div>
   </a>
+  <a href="10b-rozliczenie-zamkniete.html" class="card amber">
+    <div class="card-num">10B</div>
+    <div class="card-body">
+      <div class="card-title">10b-rozliczenie-zamkniete</div>
+      <div class="card-desc">Rozliczenie sesji po oknie 24 h — te same liczby, zero elementów zapisu: bez ołówków przy lotach, bez „Edytuj dane", amber baner zamiast terminu korekty. Cel karty z grupy „Zamknięte" na 12: sesji po oknie nie dało się dotąd otworzyć w ogóle (issue #35 pkt 2)</div>
+      <div class="card-tags"><span class="tag amber">tylko odczyt</span><span class="tag">okno minęło</span></div>
+    </div>
+  </a>
   <a href="16a-lot-bez-sladu.html" class="card">
     <div class="card-num">16A</div>
     <div class="card-body">
@@ -683,9 +682,9 @@
   <a href="12-historia.html" class="card">
     <div class="card-num">12</div>
     <div class="card-body">
-      <div class="card-title">12-historia</div>
-      <div class="card-desc">Historia dni PILOTA — jedna karta obejmuje wszystkie maszyny z doby (05 SIE: SP-AXA i SP-KLM), bo przesiadka nie rodzi już drugiego dnia. Dzień w oknie korekty 24 h wyróżniony i klikalny, prowadzi do rozliczenia sesji (10); starsze po oknie — korekty przez administratora</div>
-      <div class="card-tags"><span class="tag">historia</span><span class="tag">okno 24 h</span></div>
+      <div class="card-title">12-historia (poprzednie dni)</div>
+      <div class="card-desc">Sesje z dni WCZEŚNIEJSZYCH — dzisiejsze stoją na „Mój dzień" i tam się je otwiera (issue #35). Kafelek = jedna sesja z metrykami wiersza z 01 (Loty · Blok · Lot); w oknie 24 h prowadzi do korekty (10), po oknie — do podglądu bez edycji (10B). Plakietka wysyłki pojawia się tylko wtedy, gdy coś czeka w kolejce</div>
+      <div class="card-tags"><span class="tag">historia</span><span class="tag">okno 24 h</span><span class="tag">podgląd</span></div>
     </div>
   </a>
   <a href="16-lot.html" class="card">
@@ -710,14 +709,6 @@
       <div class="card-title">15-reczny-lot</div>
       <div class="card-desc">Ręczny wpis CAŁEGO lotu z listy dziennej (model 2026-08-10) — samolot, czasy silnika i lotu, odczyty OBOWIĄZKOWE jak przy zdaniu. Dla lotów zapisanych poza telefonem: papier, rozładowana bateria. Tworzy kompletną sesję z oknem korekty 24 h</div>
       <div class="card-tags"><span class="tag">wpis po fakcie</span><span class="tag">pełna sesja</span></div>
-    </div>
-  </a>
-  <a href="11-eksport.html" class="card green">
-    <div class="card-num">11</div>
-    <div class="card-body">
-      <div class="card-title">11-eksport</div>
-      <div class="card-desc">Synchronizacja — status wysyłki na serwer, podgląd danych, eksport do Sheets robi serwer</div>
-      <div class="card-tags"><span class="tag green">sync</span><span class="tag">eksport serwera</span></div>
     </div>
   </a>
 </div>
