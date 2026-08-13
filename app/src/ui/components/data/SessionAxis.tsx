@@ -18,17 +18,18 @@
  * z kropkami przy pierwszej zmianie treści. Pierwszy i ostatni wiersz obcinają ją do
  * połowy, żeby oś zaczynała się i kończyła na kropce.
  *
- * Cel korekty ma 44 px (audyt dostępności): naprawa błędnej detekcji nie może być
- * trudniejsza niż jej popełnienie.
+ * ══ OŚ NICZEGO NIE URUCHAMIA (issue #40 pkt 1) ══
+ * Do issue #40 każdy wiersz kończył się ołówkiem korekty. Dwanaście identycznych celów
+ * w jednej kolumnie czytało się jak szum — a korekta ma jedne drzwi: „EDYTUJ DANE" pod
+ * ekranem, czyli lista ręczna (08). Komponent jest odtąd czysto opisowy: bez `Pressable`,
+ * bez plakietki „RĘCZNIE" (pkt 6) i bez wiedzy o oknie korekty.
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
-import { Tag } from '../status/Tag';
 import type { Tone } from '../tone';
 import { toneColors } from '../tone';
 
@@ -36,6 +37,7 @@ import { toneColors } from '../tone';
 export type SessionAxisKind =
   | 'claim'
   | 'engineStart'
+  | 'taxi'
   | 'takeoff'
   | 'drop'
   | 'landing'
@@ -48,12 +50,8 @@ export interface SessionAxisRow {
   time: string;
   name: string;
   sub?: string | null;
-  /** Czas lotu przy lądowaniu („00:41"). */
+  /** Czas lotu przy lądowaniu („00:41") albo kołowania do startu („00:04"). */
   duration?: string | null;
-  /** Wpis ręczny — jedyny stan z plakietką (issue #38 pkt 10). */
-  manual?: boolean;
-  /** Czy wiersz ma ołówek (poza oknem korekty kolumny NIE MA w ogóle). */
-  correctable?: boolean;
 }
 
 export interface SessionAxisFootItem {
@@ -65,8 +63,6 @@ export interface SessionAxisFootItem {
 export interface SessionAxisProps {
   rows: SessionAxisRow[];
   foot?: SessionAxisFootItem[];
-  /** Otwiera arkusz korekty (04c) dla zdarzenia o tym uuid. */
-  onCorrect?: (id: string) => void;
   emptyText?: string;
   style?: ViewStyle;
 }
@@ -78,6 +74,7 @@ export interface SessionAxisProps {
 const KIND_TONE: Record<SessionAxisKind, Tone> = {
   claim: 'neutral',
   engineStart: 'neutral',
+  taxi: 'neutral',
   takeoff: 'green',
   drop: 'blue',
   landing: 'red',
@@ -89,6 +86,7 @@ const KIND_TONE: Record<SessionAxisKind, Tone> = {
 const HOLLOW: Record<SessionAxisKind, boolean> = {
   claim: true,
   engineStart: false,
+  taxi: false,
   takeoff: false,
   drop: false,
   landing: false,
@@ -96,7 +94,7 @@ const HOLLOW: Record<SessionAxisKind, boolean> = {
   release: true,
 };
 
-export function SessionAxis({ rows, foot, onCorrect, emptyText, style }: SessionAxisProps) {
+export function SessionAxis({ rows, foot, emptyText, style }: SessionAxisProps) {
   const { theme } = useTheme();
 
   if (rows.length === 0) {
@@ -114,7 +112,7 @@ export function SessionAxis({ rows, foot, onCorrect, emptyText, style }: Session
       {rows.map((row, index) => {
         const c = toneColors(theme, KIND_TONE[row.kind]);
         const hollow = HOLLOW[row.kind];
-        const dimmed = row.kind === 'claim' || row.kind === 'release';
+        const dimmed = row.kind === 'claim' || row.kind === 'release' || row.kind === 'taxi';
 
         return (
           <View key={row.id} style={styles.row} accessibilityRole="text">
@@ -161,26 +159,17 @@ export function SessionAxis({ rows, foot, onCorrect, emptyText, style }: Session
 
             <View style={styles.right}>
               {row.duration != null && (
-                <AppText variant="mono" style={{ color: theme.colors.green, fontSize: 11 }}>
+                <AppText
+                  variant="mono"
+                  style={{
+                    // Zieleń zostaje przy czasach w POWIETRZU. Kołowanie mierzy
+                    // przygotowanie do startu, więc jeden kolor nie znaczy dwóch rzeczy.
+                    color: row.kind === 'taxi' ? theme.colors.textMuted : theme.colors.green,
+                    fontSize: 11,
+                  }}
+                >
                   {row.duration}
                 </AppText>
-              )}
-              {row.manual === true && <Tag label="RĘCZNIE" tone="amber" size="sm" />}
-              {onCorrect != null && row.correctable === true && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Korekta: ${row.name} ${row.time}`}
-                  onPress={() => onCorrect(row.id)}
-                  style={[
-                    styles.correct,
-                    {
-                      borderColor: theme.colors.borderStrong,
-                      borderRadius: theme.radius.sm,
-                    },
-                  ]}
-                >
-                  <Icon name="edit" size={14} color={theme.colors.textSecondary} />
-                </Pressable>
               )}
             </View>
           </View>
@@ -229,13 +218,6 @@ const styles = StyleSheet.create({
   name: { fontSize: 10, letterSpacing: 1.4 },
   sub: { fontSize: 8.5, letterSpacing: 0.5 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  correct: {
-    minWidth: 44,
-    minHeight: 44,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   foot: {
     flexDirection: 'row',
     justifyContent: 'space-between',

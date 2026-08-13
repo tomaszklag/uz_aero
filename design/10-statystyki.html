@@ -183,23 +183,20 @@
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
   .axis-name.muted { color:var(--text-secondary); }
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  /* Prawa kolumna niesie odtąd WYŁĄCZNIE czas trwania (issue #40 pkt 1 i 2).
+     Zniknęły z niej dwie rzeczy:
+      • OŁÓWEK przy każdym wierszu — dwanaście identycznych celów w jednej kolumnie
+        czytało się jak szum, a korekta ma jedne drzwi: „EDYTUJ DANE" na dole ekranu
+        (08). Jedno wejście zamiast dwunastu, i to takie, które prowadzi do listy,
+        w której widać kontekst poprawianego zdarzenia;
+      • plakietka RĘCZNIE — sposób POWSTANIA zapisu nie jest tu pytaniem pilota
+        (ta sama reguła, którą przy issue #38 wygasiła plakietkę „AUTO"). Metoda
+        zostaje w rejestrze i w panelu administratora, gdzie faktycznie coś zmienia. */
   .axis-right { display:flex; align-items:center; gap:6px; }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
-  /* Plakietka WYŁĄCZNIE dla wpisu ręcznego (issue #38 pkt 10). Stan domyślny —
-     zdarzenie z detekcji — nie rysuje nic; „AUTO" przy każdym wierszu uczyło oko
-     ignorować kolumnę, dokładnie jak plakietka „zsynchronizowano" przed issue #12. */
-  .axis-manual {
-    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px;
-    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
-    border-radius:4px; padding:2px 5px; white-space:nowrap;
-  }
-  .edit-btn {
-    background:none; border:1px solid var(--border-strong); border-radius:8px;
-    color:var(--text-secondary); cursor:pointer; padding:0; text-decoration:none;
-    min-width:34px; min-height:34px; justify-content:center;
-    display:inline-flex; align-items:center;
-  }
-  .edit-btn:hover { color:var(--text-primary); }
+  /* Kołowanie mierzy przygotowanie do startu, nie lot — zieleń zostaje przy czasach
+     w powietrzu, żeby jeden kolor nie znaczył dwóch rzeczy. */
+  .axis-dur.dim { color:var(--text-muted); }
   /* Stopka osi — JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
      Wcześniej stał w bohaterze ekranu, w obu kartach załogi, w podpisie średniego
      zużycia i w wierszu Δ motogodzin: pięć razy ta sama liczba. */
@@ -234,27 +231,30 @@
   .calc-total-val.green { color:var(--green); }
   /* Werdykt: liczba pilota kontra to, czego model się spodziewał po TEJ sesji.
      Pasmo pochodzi z rozrzutu obserwacji, nie z przedziału ufności — patrz
-     `packages/domain/src/consumption/expectation.ts`. */
+     `packages/domain/src/consumption/expectation.ts`.
+
+     ISSUE #40 pkt 7 i 8 — NA KARCIE ZOSTAJE SAMA PLAKIETKA. Pasmo („23 – 35 L")
+     i rozpisane działanie stały pod każdym rachunkiem na stałe: pilot, który chce
+     wiedzieć „czy dobrze", dostaje odpowiedź jednym słowem, a pilot, który pyta
+     „dlaczego tak", otwiera arkusz (`10c`). Cały wiersz jest celem dotknięcia —
+     plakietka ma 9 px czcionki i sama w sobie jest za małym celem. */
   .verdict {
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:9px 12px; border-top:1px solid var(--border);
+    min-height:44px; text-decoration:none; cursor:pointer;
   }
-  .verdict-band { display:flex; flex-direction:column; gap:2px; }
-  .verdict-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  .verdict-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .verdict:hover { background:rgba(255,255,255,0.02); }
   .verdict-tag {
     font-family:var(--font-mono); font-size:9px; letter-spacing:1.2px;
     color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
     border-radius:999px; padding:4px 10px; white-space:nowrap;
   }
   .verdict-tag.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
-  /* Skąd wzięło się pasmo — razem ze stanem świeżości (§4.8). Norma jest JEDYNĄ
-     daną z serwera na tym ekranie; reszta liczb to projekcja lokalnego strumienia. */
-  .calc-note {
-    font-family:var(--font-mono); font-size:8px; letter-spacing:0.4px; line-height:1.5;
-    color:var(--text-muted); padding:0 12px 10px;
-  }
-  .calc-note.cache { color:var(--amber); }
+  /* Znak „są szczegóły" — bez niego plakietka wygląda na sam napis i nikt jej nie
+     dotknie. Ikona, nie napis „szczegóły": słowo w tym wierszu przekrzykiwałoby
+     werdykt, który jest tu jedyną treścią. */
+  .verdict-more { color:var(--text-muted); display:inline-flex; align-items:center; }
+  .verdict:hover .verdict-more { color:var(--text-secondary); }
 
   /* ===== WIERSZE KLUCZ → WARTOŚĆ ===== */
   .info-row {
@@ -266,6 +266,22 @@
   .info-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); text-align:right; }
   .info-val.blue { color:var(--blue); }
   .info-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; }
+
+  /* ===== NOTATKI (issue #40 pkt 5) =====
+     Wolny tekst, który pilot zapisał przy zadaniu (02e) albo przy wpisie ręcznym
+     (08/15). Do tej pory nie miał na tym ekranie ANI JEDNEGO miejsca: notatkę
+     widział administrator w panelu, a jej autor już nie — więc po zdaniu samolotu
+     nie dało się sprawdzić, co się właściwie zapisało.
+     Kartę rysujemy TYLKO wtedy, gdy jest treść: „Notatki —" byłoby wierszem
+     o niczym, a nie brakiem informacji.
+     Body font, nie mono: to zdanie napisane przez człowieka, a nie odczyt. */
+  .note-block { padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
+  .note-block + .note-block { border-top:1px solid var(--border); }
+  .note-when {
+    font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--text-muted);
+  }
+  .note-text { font-size:12px; color:var(--text-secondary); line-height:1.55; }
 
   /* Buttons */
   .btn-row { display:flex; flex-direction:column; gap:8px; }
@@ -344,7 +360,9 @@
       <!-- Okno korekty (decyzja: 24 h samodzielnie) -->
       <div class="correction-window">
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> — do 07 SIE 11:20 UTC. Później korektę nanosi administrator. Stuknij ołówek przy zdarzeniu, żeby poprawić czas albo oznaczyć je jako błędne.</span>
+        <!-- Baner mówi, GDZIE się poprawia (issue #40 pkt 1): ołówków przy wierszach
+             już nie ma, więc zdanie o nich prowadziłoby donikąd. -->
+        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> — do 07 SIE 11:20 UTC. Później korektę nanosi administrator. Czasy zdarzeń poprawisz przyciskiem <b>EDYTUJ DANE</b> na dole ekranu.</span>
       </div>
 
       <!-- ══ PRZEBIEG SESJI: ŚLAD + OŚ CZASU ════════════════════════════════
@@ -448,27 +466,33 @@
             <span class="axis-time">08:12</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
             <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
-            <span class="axis-right">
-              <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta uruchomienia silnika"><svg width="14" height="14" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a>
-            </span>
+            <span class="axis-right"></span>
+          </div>
+
+          <!-- KOŁOWANIE (issue #40 pkt 4). Zdarzenie `taxi` zapada raz na lot i było
+               na tej osi jedyną dziurą: log kokpitu pokazywał je od zawsze („13:11 ·
+               Taxi · 0:13"), a rozliczenie tej samej sesji już nie. Czas trwania
+               liczy się DO STARTU i mówi, ile zajęło przygotowanie — dokładnie tak,
+               jak na 04/05. -->
+          <div class="axis-row">
+            <span class="axis-time dim">08:16</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+            <span class="axis-right"><span class="axis-dur dim">00:04</span></span>
           </div>
 
           <div class="axis-row">
             <span class="axis-time">08:20</span>
             <span class="axis-mark"><span class="axis-dot green"></span></span>
             <span class="axis-label"><span class="axis-name">Start</span><span class="axis-sub">lot 1</span></span>
-            <span class="axis-right">
-              <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta startu lotu 1"><svg width="14" height="14" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a>
-            </span>
+            <span class="axis-right"></span>
           </div>
 
           <div class="axis-row">
             <span class="axis-time dim">08:52</span>
             <span class="axis-mark"><span class="axis-dot blue"></span></span>
             <span class="axis-label"><span class="axis-name muted">Zrzut 1</span><span class="axis-sub">4 skoczków · 12 800 ft</span></span>
-            <span class="axis-right">
-              <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta zrzutu 1"><svg width="14" height="14" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a>
-            </span>
+            <span class="axis-right"></span>
           </div>
 
           <div class="axis-row">
@@ -477,27 +501,28 @@
             <span class="axis-label"><span class="axis-name">Lądowanie</span><span class="axis-sub">lot 1</span></span>
             <span class="axis-right">
               <span class="axis-dur">00:41</span>
-              <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lądowania lotu 1"><svg width="14" height="14" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a>
             </span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time dim">09:08</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+            <span class="axis-right"><span class="axis-dur dim">00:04</span></span>
           </div>
 
           <div class="axis-row">
             <span class="axis-time">09:12</span>
             <span class="axis-mark"><span class="axis-dot green"></span></span>
             <span class="axis-label"><span class="axis-name">Start</span><span class="axis-sub">lot 2</span></span>
-            <span class="axis-right">
-              <span class="axis-manual">RĘCZNIE</span>
-              <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta startu lotu 2"><svg width="14" height="14" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a>
-            </span>
+            <span class="axis-right"></span>
           </div>
 
           <div class="axis-row">
             <span class="axis-time dim">09:33</span>
             <span class="axis-mark"><span class="axis-dot blue"></span></span>
             <span class="axis-label"><span class="axis-name muted">Zrzut 2</span><span class="axis-sub">4 skoczków · 12 600 ft</span></span>
-            <span class="axis-right">
-              <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta zrzutu 2"><svg width="14" height="14" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a>
-            </span>
+            <span class="axis-right"></span>
           </div>
 
           <div class="axis-row">
@@ -506,7 +531,6 @@
             <span class="axis-label"><span class="axis-name">Lądowanie</span><span class="axis-sub">lot 2</span></span>
             <span class="axis-right">
               <span class="axis-dur">00:35</span>
-              <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta lądowania lotu 2"><svg width="14" height="14" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a>
             </span>
           </div>
 
@@ -514,9 +538,7 @@
             <span class="axis-time">09:55</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
             <span class="axis-label"><span class="axis-name">Wyłączenie</span></span>
-            <span class="axis-right">
-              <a href="04c-korekta-zdarzenia.html" class="edit-btn" title="Korekta zatrzymania silnika"><svg width="14" height="14" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/></svg></a>
-            </span>
+            <span class="axis-right"></span>
           </div>
 
           <div class="axis-row">
@@ -532,9 +554,12 @@
             <span class="axis-foot-val">01:43</span>
             <span class="axis-foot-key">Blok</span>
           </div>
+          <!-- „Czas lotu", nie „W powietrzu" (issue #40 pkt 3): dwa słowa łamały się
+               na telefonie na dwie linie i rozpychały stopkę. Nazwa jest przy okazji
+               ta sama, co w kokpicie (Flight Time) — jedna wielkość, jedno słowo. -->
           <div class="axis-foot-item">
             <span class="axis-foot-val green">01:16</span>
-            <span class="axis-foot-key">W powietrzu</span>
+            <span class="axis-foot-key">Czas lotu</span>
           </div>
           <div class="axis-foot-item">
             <span class="axis-foot-val">2</span>
@@ -567,20 +592,17 @@
           <span class="calc-total-val amber">27 L</span>
         </div>
         <!-- Werdykt liczy oczekiwanie dla TEJ mieszanki faz (issue #38 pkt 6):
-             2 h kołowania po 8 L/h i 1:16 lotu po 20 L/h, a nie „L/h sesji kontra
+             0:27 kołowania po 8 L/h i 1:16 lotu po 20 L/h, a nie „L/h sesji kontra
              pasmo blokowe". Sesja z długim postojem na ziemi wychodziła wcześniej
-             „poniżej normy" bez żadnego powodu poza proporcją faz. -->
-        <div class="verdict">
-          <span class="verdict-band">
-            <span class="verdict-key">Oczekiwane po tej sesji</span>
-            <span class="verdict-val">23 – 35 L</span>
-          </span>
+             „poniżej normy" bez żadnego powodu poza proporcją faz.
+             Pasmo, stawki i rozpisane działanie przeniosły się pod tapnięcie (10c) —
+             issue #40 pkt 7: karta odpowiada „czy dobrze", arkusz „dlaczego tak". -->
+        <a href="10c-norma-detale.html" class="verdict" title="Szczegóły normy paliwa">
           <span class="verdict-tag">✓ W NORMIE</span>
-        </div>
-        <!-- Pasmo jest szersze niż sam rozrzut modelu (±10% dałoby 26–32 L), bo zużycie
-             sesji jest RÓŻNICĄ dwóch odczytów paliwomierza — a każdy z nich ma błąd rzędu
-             trzech litrów. Podłoga pasma stoi w `consumption/policy.ts` i jest DO KALIBRACJI. -->
-        <div class="calc-note cache">1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h · norma z 90 dni · z cache · sync 05 SIE 17:30</div>
+          <span class="verdict-more">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+          </span>
+        </a>
       </div>
 
       <!-- ══ MOTOGODZINY — TEN SAM RACHUNEK ══════════════════════════════════
@@ -608,15 +630,16 @@
         <!-- Werdykt amber na tym samym ekranie, co zielony przy paliwie — celowo:
              obie wielkości mają WŁASNE pasmo i nic ich nie wiąże ze sobą. Ton ostrzega,
              ale niczego nie blokuje: licznik jest przyrządem fizycznym i to on ma rację
-             (`CLAUDE.md`: liczniki fizyczne > dane z serwera). -->
-        <div class="verdict">
-          <span class="verdict-band">
-            <span class="verdict-key">Oczekiwane po tej sesji</span>
-            <span class="verdict-val">+1:21 – +1:33</span>
-          </span>
+             (`CLAUDE.md`: liczniki fizyczne > dane z serwera).
+             Ta sama forma co przy paliwie (issue #40 pkt 8) — plakietka na karcie,
+             liczby w arkuszu. Przy odchyleniu arkusz jest tym ważniejszy: pilot chce
+             wtedy wiedzieć, o ile i wobec czego. -->
+        <a href="10c-norma-detale.html" class="verdict" title="Szczegóły normy motogodzin">
           <span class="verdict-tag amber">↑ POWYŻEJ NORMY</span>
-        </div>
-        <div class="calc-note">1:16 lotu × 1,00 + 0:27 ziemi × 0,40 MH/h · licznik obrotomierzowy · 12 sesji</div>
+          <span class="verdict-more">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+          </span>
+        </a>
       </div>
 
       <!-- ══ ZRZUTY — STRONA PRZYCHODOWA SESJI ═══════════════════════════════
@@ -661,7 +684,28 @@
         </div>
       </div>
 
+      <!-- ══ NOTATKI (issue #40 pkt 5) ═══════════════════════════════════════
+           Wszystko, co pilot NAPISAŁ o tej sesji: notatka z kroku „zadanie" (02e)
+           i uwagi dopisane do wpisów ręcznych (08, 15). Karta stoi na końcu, bo jest
+           komentarzem do liczb wyżej, a nie jedną z nich — ale stoi, bo do issue #40
+           tekst wpisany przez pilota nie wracał do niego NIGDZIE. -->
+      <div class="section-card">
+        <div class="section-card-head">Notatki</div>
+        <div class="note-block">
+          <span class="note-when">Zadanie · 08:04</span>
+          <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
+        </div>
+        <div class="note-block">
+          <span class="note-when">Wpis ręczny · 09:12</span>
+          <span class="note-text">Start lotu 2 dopisany z pamięci: telefon stracił fixa na pasie.</span>
+        </div>
+      </div>
+
       <!-- Action buttons -->
+      <!-- JEDYNE drzwi do korekty (issue #40 pkt 1). Lista ręczna (08) pokazuje te same
+           zdarzenia w klamrze biegu silnika i ma przy nich ołówki — czyli dokładnie
+           to, co stało na tej osi dwanaście razy, tylko w miejscu, gdzie poprawianie
+           jest zadaniem ekranu, a nie ozdobą podsumowania. -->
       <div class="btn-row">
         <a href="08-lista-reczna.html" class="btn-secondary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
@@ -700,7 +744,14 @@
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
       <span class="vp-name">Sesja — po oknie (podgląd)</span>
-      <span class="vp-when">Minęły 24 h od zdania samolotu: te same liczby, ale bez ani jednego elementu zapisu — znikają ołówki na osi czasu i „Edytuj dane", a niebieski termin zastępuje amber baner z kłódką. Wejście: karta z grupy „Zamknięte" na 12.</span>
+      <span class="vp-when">Minęły 24 h od zdania samolotu: te same liczby, ale bez ani jednego elementu zapisu — znika „Edytuj dane", a niebieski termin zastępuje amber baner z kłódką. Werdykty zostają klikalne: arkusz normy niczego nie zapisuje. Wejście: karta z grupy „Zamknięte" na 12.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10c-norma-detale.html">
+    <span class="vp-badge">10C</span>
+    <span class="vp-body">
+      <span class="vp-name">Sesja — arkusz normy</span>
+      <span class="vp-when">Po tapnięciu w plakietkę werdyktu przy paliwie albo motogodzinach: skąd wzięło się „w normie" — stawka w locie i na ziemi, średnia TEJ sesji, rozpisane działanie i pasmo, na koniec podstawa normy razem z jej wiekiem. Arkusz jest wyłącznie informacyjny; wychodzi się z niego „Zamknij".</span>
     </span>
   </a>
 </aside>
@@ -713,6 +764,7 @@
   <a href="10-statystyki.html" class="active">10 Sesja</a>
   <a href="10a-statystyki-zero.html">10A Bez lotów</a>
   <a href="10b-rozliczenie-zamkniete.html">10B Podgląd</a>
+  <a href="10c-norma-detale.html">10C Norma</a>
   <span>·</span>
   <a href="14-slad.html">14 Ślad →</a>
   <span>·</span>

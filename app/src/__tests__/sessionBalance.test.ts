@@ -1,5 +1,11 @@
 /**
- * UZ Aero — test RACHUNKÓW paliwa i motogodzin (ekran 10, issue #38 pkt 4, 5 i 6).
+ * UZ Aero — test RACHUNKÓW paliwa i motogodzin (ekran 10, issue #38 pkt 4, 5 i 6;
+ * issue #40 pkt 7 i 8).
+ *
+ * Od issue #40 karta pokazuje SAMĄ plakietkę werdyktu, a pasmo, stawki i rozpisane
+ * działanie mieszkają w arkuszu (`details`) — otwieranym przez tego, kto zapyta
+ * „dlaczego tak". Test pilnuje przede wszystkim tego, że arkusz istnieje dokładnie
+ * wtedy, co werdykt: plakietka bez szczegółów byłaby wyrokiem bez uzasadnienia.
  *
  * Trzy rzeczy są tu ważniejsze od arytmetyki:
  *  • **werdykt liczy się dla TEJ mieszanki faz**, a nie dla średniej z okna — sesja
@@ -12,10 +18,16 @@
  */
 
 import { fuelBalance, mhBalance } from '../ui/screens/logic/sessionBalance';
+import type { BalanceView } from '../ui/screens/logic/sessionBalance';
 import { emptySessionState } from '../domain';
 import type { ConsumptionNorm, SessionState } from '../domain';
 
 const HOUR = 3_600_000;
+
+/** Wartość wiersza arkusza normy — po etykiecie, bo o kolejność pyta osobny test. */
+function detail(view: BalanceView, label: string): string | undefined {
+  return view.details?.rows.find((row) => row.label === label)?.value;
+}
 
 /** Sesja z mockupu 10: blok 1:43, w powietrzu 1:16, 150 +48 −171 = 27 L, +1:35 MH. */
 function session(over: Partial<SessionState> = {}): SessionState {
@@ -84,10 +96,31 @@ describe('rachunek paliwa', () => {
     // zużyciu dwa odczyty paliwomierza są mniej dokładne niż sam model.
     const view = fuelBalance(session(), norm(), 2);
 
-    expect(view.verdict?.band).toBe('23 L – 35 L');
     expect(view.verdict?.label).toBe('✓ W NORMIE');
     expect(view.verdict?.tone).toBe('green');
-    expect(view.note).toContain('1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h');
+    expect(detail(view, 'Oczekiwane po tej sesji')).toBe('23 L – 35 L');
+    expect(view.details?.note).toContain('1:16 lotu × 20 L/h + 0:27 ziemi × 8 L/h ≈ 29 L');
+  });
+
+  it('arkusz normy zestawia stawki z rzeczywistą średnią TEJ sesji (issue #40 pkt 7)', () => {
+    const view = fuelBalance(session(), norm(), 2);
+
+    expect(view.details?.title).toBe('NORMA PALIWA');
+    expect(view.details?.summary).toContain('W normie — 27 L przy oczekiwanych 23 L – 35 L');
+    expect(detail(view, 'Zużyte w tej sesji')).toBe('27 L');
+    // 27 L na 1:43 pracy silnika ≈ 16 L/h — mniej niż stawka lotu, bo prawie pół
+    // godziny silnik pracował na ziemi. Po to ta liczba w arkuszu stoi.
+    expect(detail(view, 'Średnia tej sesji')).toBe('16 L/h');
+    expect(detail(view, 'Norma w locie')).toBe('20 L/h');
+    expect(detail(view, 'Norma na ziemi')).toBe('8 L/h');
+    expect(detail(view, 'Podstawa')).toBe('90 dni');
+  });
+
+  it('plakietka i arkusz istnieją albo znikają RAZEM', () => {
+    // Werdykt bez uzasadnienia byłby wyrokiem, którego nie da się sprawdzić.
+    expect(fuelBalance(session(), norm(), 2).details).not.toBeNull();
+    expect(fuelBalance(session(), null, 2).details).toBeNull();
+    expect(mhBalance(session(), norm({ mh: null })).details).toBeNull();
   });
 
   it('ta sama liczba litrów przy innej mieszance faz daje inny werdykt', () => {
@@ -103,8 +136,11 @@ describe('rachunek paliwa', () => {
     const view = fuelBalance(session(), norm({ airLPerH: null, groundLPerH: null }), 2);
 
     // 1:43 × 15 L/h ≈ 25,8 L, pasmo z centyli okna (12–18 L/h) rozepchane do podłogi.
-    expect(view.verdict?.band).toBe('20 L – 32 L');
-    expect(view.note).toContain('15 L/h na godzinę pracy silnika');
+    expect(detail(view, 'Oczekiwane po tej sesji')).toBe('20 L – 32 L');
+    expect(detail(view, 'Norma')).toBe('15 L/h pracy silnika');
+    // Arkusz mówi wprost, że model nie rozdzielił faz — to słabsza odpowiedź niż
+    // stawki fazowe i pilot ma prawo o tym wiedzieć.
+    expect(view.details?.summary).toContain('nie rozdzielił jeszcze faz');
   });
 
   it('silnik, który nie pracował, nie ma z czym porównywać — i mówi to wprost', () => {
@@ -156,9 +192,12 @@ describe('rachunek motogodzin', () => {
     // rozepchane do podziałki licznika (±0,1 h) daje 1:21 – 1:33.
     const view = mhBalance(session(), norm());
 
-    expect(view.verdict?.band).toBe('+1:21 – +1:33');
     expect(view.verdict?.label).toBe('↑ POWYŻEJ NORMY');
-    expect(view.note).toContain('licznik obrotomierzowy');
+    expect(detail(view, 'Oczekiwane po tej sesji')).toBe('+1:21 – +1:33');
+    expect(detail(view, 'Przelicznik w locie')).toBe('1,00 MH/h');
+    expect(detail(view, 'Przelicznik na ziemi')).toBe('0,40 MH/h');
+    expect(detail(view, 'Podstawa')).toBe('12 sesji · licznik obrotomierzowy');
+    expect(view.details?.title).toBe('NORMA MOTOGODZIN');
   });
 
   it('licznik godzinowy oczekuje przyrostu równego czasowi blokowemu', () => {
@@ -169,7 +208,7 @@ describe('rachunek motogodzin', () => {
     const view = mhBalance(session(), hobbs);
 
     expect(view.verdict?.label).toBe('↓ PONIŻEJ NORMY');
-    expect(view.note).toContain('licznik godzinowy');
+    expect(detail(view, 'Podstawa')).toContain('licznik godzinowy');
   });
 
   it('samolot bez przeliczników licznika nie dostaje zmyślonego pasma', () => {

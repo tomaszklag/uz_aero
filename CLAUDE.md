@@ -267,7 +267,9 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 01-moj-dzien → 12-historia („Poprzednie dni" — sesje spoza dzisiejszej doby);
   OŁÓWEK wiersza logu → 10-statystyki (ekran SESJI: detale i korekty TEJ sesji)
 12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
-  ekran w trybie PODGLĄDU: bez ołówków, bez „Edytuj dane")
+  ekran w trybie PODGLĄDU: bez „Edytuj dane")
+10-statystyki → „EDYTUJ DANE" → 08-lista-reczna (JEDYNE drzwi do korekty czasów —
+  issue #40; oś sesji ołówków nie ma) · PLAKIETKA WERDYKTU → 10c (arkusz normy)
 10-statystyki → MINIATURA ŚLADU → 14-slad (pełny ślad CAŁEJ sesji: kołowanie,
   wszystkie starty i lądowania, profil pionowy z przerwą na ziemi).
   EKRANU 16 NIE MA (usunięty 2026-08-12, issue #38) — szczegóły pojedynczego lotu
@@ -364,11 +366,12 @@ Ekran 12 przestał być drugą listą tych samych lotów, co „Mój dzień":
   `queued` („Oczekuje na przesłanie · n") i `sending` („W trakcie wysyłania · n") —
   rozstrzyga wynik OSTATNIEJ próby synca, bo innego pojęcia „online" aplikacja nie ma
 - **sesja po oknie 24 h otwiera się do PODGLĄDU** (`design/10b-rozliczenie-zamkniete.html`):
-  ten sam ekran 10 bez ani jednego elementu zapisu — `onCorrect` bez wartości (kolumny
-  ołówka NIE MA), bez „EDYTUJ DANE", amber baner zamiast terminu, plakietka „Podgląd”
-  w nagłówku, powrót do 12. Na 16 znika sam przycisk korekty czasów. Warunkiem jest
-  `!correctionWindow(...).open` — sesja jeszcze niezdana ma okno otwarte i działa jak
-  dotąd. Wyszarzony ołówek jest ZAKAZANY: obiecuje akcję, którą reguły odrzucą
+  ten sam ekran 10 bez ani jednego elementu zapisu — amber baner zamiast terminu,
+  plakietka „Podgląd” w nagłówku, powrót do 12. Od issue #40 różnica jest DOKŁADNIE
+  JEDNA: nie ma przycisku „EDYTUJ DANE" (ołówków przy wierszach nie ma już nigdzie, więc
+  przestały odróżniać tryby). Warunkiem jest `!correctionWindow(...).open` — sesja
+  jeszcze niezdana ma okno otwarte i działa jak dotąd. Wyszarzony przycisk jest
+  ZAKAZANY: obiecuje akcję, którą reguły odrzucą
 
 ## Ślad należy do SESJI (issue #38, 2026-08-12 — odwraca #25)
 Zapis GPS powstaje w JEDNYM ciągu: od uruchomienia do zatrzymania silnika. Sesja ma więc
@@ -387,8 +390,39 @@ odtąd dwuczłonowa: **10 (sesja) → 14 (pełny ślad)**.
 - **`14b` = brak zapisu** (wpis ręczny albo retencja 14 dni): stan pusty z POWODEM
 - **EKRAN 16 USUNIĘTY** razem z `16a`: jego treść wróciła tam, skąd przyszła — zrzuty
   na oś czasu sesji (jako zdarzenia w czasie, bo nimi są), czasy do wierszy osi, korekta
-  do ołówka wiersza. Kod: `FlightDetailsScreen.tsx`, `logic/flightDetails.ts` i trasa
-  `FlightDetails` skasowane; `TrackThumbnail` przeniesiony na ekran sesji
+  do ołówka wiersza (od issue #40 — do przycisku „EDYTUJ DANE"). Kod:
+  `FlightDetailsScreen.tsx`, `logic/flightDetails.ts` i trasa `FlightDetails` skasowane;
+  `TrackThumbnail` przeniesiony na ekran sesji
+
+## Log sesji: jedne drzwi do korekty, norma pod plakietką (issue #40, 2026-08-13)
+Osiem uwag z urządzenia do ekranu 10 (`design/10`, `10a`, `10b` + NOWY `10c`). Wspólny
+mianownik: **ekran ma odpowiadać, a nie oferować** — każdy powtórzony ołówek, plakietka
+i liczba, których pilot nie czyta, kosztują miejsce w kolumnie, w której coś naprawdę
+stoi.
+- **ołówek znika z KAŻDEGO wiersza osi** (pkt 1 i 2). Korekta ma odtąd jedne drzwi —
+  „EDYTUJ DANE" pod ekranem, czyli lista ręczna (08), gdzie poprawianie jest zadaniem
+  ekranu. Kilkanaście identycznych celów w jednej kolumnie czytało się jak szum, a prawa
+  kolumna wróciła do jedynej liczby, która coś w niej znaczy — czasu trwania. Baner okna
+  korekty mówi teraz, GDZIE się poprawia; `SessionAxis` nie zna już `onCorrect`
+- **kołowanie wchodzi na oś** (pkt 4): `taxi` było jedyną dziurą wobec logu kokpitu.
+  Czas liczy się DO STARTU (jak na 04/05), kołowanie bez startu po sobie czasu nie
+  dostaje, a jego liczba jest szara — zieleń zostaje przy czasach w powietrzu
+- **„Czas lotu" zamiast „W powietrzu"** (pkt 3) — dwa słowa łamały stopkę na dwie linie
+- **notatki mają wreszcie swoje miejsce** (pkt 5): karta na końcu ekranu zbiera notatkę
+  z zadania (02e) i uwagi wpisów ręcznych (08, 15) — `logic/sessionNotes.ts`. Do issue #40
+  ten tekst widział administrator w panelu, a jego autor NIGDZIE. Karty nie ma, gdy nie
+  ma treści: „Notatki —" byłoby wierszem o niczym
+- **plakietka „RĘCZNIE" znika z osi** (pkt 6): sposób powstania zapisu nie jest pytaniem
+  pilota — metoda zostaje w rejestrze i w panelu. Reguła z issue #38 („AUTO" nie świeci
+  przy każdym wierszu) dociągnięta do końca
+- **z rachunku zostaje SAMA plakietka werdyktu** (pkt 7 i 8), a pasmo, stawki normy,
+  średnia TEJ sesji i rozpisane działanie przenoszą się do arkusza pod tapnięciem
+  (`design/10c-norma-detale.html`, `BalanceDetails` w `logic/sessionBalance.ts`). Karta
+  odpowiada „czy dobrze", arkusz „dlaczego tak". **Wiek normy (§4.8) idzie tam razem
+  z liczbami** — adnotacja o cache'u przy samej plakietce nie miałaby czego kwalifikować.
+  Arkusz otwiera się także w podglądzie (10B): zamknięte okno korekty odbiera prawo do
+  zmiany danych, nie do ich zrozumienia. Celem dotknięcia jest CAŁY wiersz — plakietka
+  ma 9 px czcionki
 
 ## Norma zużycia liczy się PER SESJA, nie per godzina (issue #38, 2026-08-12)
 Werdykt „w normie" porównywał L/h sesji z pasmem blokowym samolotu — czyli z liczbą

@@ -1,12 +1,12 @@
 /**
- * UZ Aero — test OSI CZASU sesji (ekran 10, issue #38 pkt 7 i 8).
+ * UZ Aero — test OSI CZASU sesji (ekran 10, issue #38 pkt 7 i 8; issue #40 pkt 1, 3, 4, 6).
  *
- * Oś zastąpiła tabelę lotów i przejęła jej najważniejszą rolę: prowadzi do KOREKTY.
- * Wiersz bez poprawnego uuid wygląda dobrze i nie robi nic — dlatego test sprawdza
- * adresy zdarzeń tak samo uważnie jak kolejność.
+ * Oś zastąpiła tabelę lotów i opisuje CAŁY bieg silnika — od issue #40 razem
+ * z kołowaniem, bez kolumny ołówka i bez plakietki „RĘCZNIE".
  *
  * Scenariusz jest ten sam, co w mockupie 10: przejęcie 08:04, silnik 08:12 → 09:55,
- * dwa loty (08:20–09:01 i 09:12–09:47), dwa zrzuty, zdanie 11:20.
+ * dwa kołowania (08:16 i 09:08), dwa loty (08:20–09:01 i 09:12–09:47), dwa zrzuty,
+ * zdanie 11:20.
  */
 
 import { buildSessionAxis } from '../ui/screens/logic/sessionAxis';
@@ -53,6 +53,7 @@ function sessionEvents(): Event[] {
       mhFormat: 'hhmm',
     }),
     event('engine_start', at(8, 12), {}, 'engine-on'),
+    event('taxi', at(8, 16), { method: 'auto' }, 'taxi-1'),
     event('takeoff', at(8, 20), { method: 'auto' }, 'to-1'),
     event('drop', at(8, 52), {
       dropNumber: 1,
@@ -60,6 +61,7 @@ function sessionEvents(): Event[] {
       altitudeFt: 12_800,
     }, 'drop-1'),
     event('landing', at(9, 1), { method: 'auto' }, 'ldg-1'),
+    event('taxi', at(9, 8), { method: 'auto' }, 'taxi-2'),
     event('takeoff', at(9, 12), { method: 'manual' }, 'to-2'),
     event('drop', at(9, 33), {
       dropNumber: 2,
@@ -83,9 +85,11 @@ describe('oś sesji', () => {
     expect(rows.map((row) => `${row.time} ${row.kind}`)).toEqual([
       '08:04 claim',
       '08:12 engineStart',
+      '08:16 taxi',
       '08:20 takeoff',
       '08:52 drop',
       '09:01 landing',
+      '09:08 taxi',
       '09:12 takeoff',
       '09:33 drop',
       '09:47 landing',
@@ -94,25 +98,39 @@ describe('oś sesji', () => {
     ]);
   });
 
-  it('wiersz korekty celuje w uuid zdarzenia, a końce sesji ołówka nie mają', () => {
+  it('każdy wiersz zdarzenia niesie jego uuid', () => {
     const { rows } = axis();
     const byKind = (kind: string) => rows.filter((row) => row.kind === kind);
 
     expect(byKind('takeoff').map((row) => row.id)).toEqual(['to-1', 'to-2']);
     expect(byKind('landing').map((row) => row.id)).toEqual(['ldg-1', 'ldg-2']);
     expect(byKind('drop').map((row) => row.id)).toEqual(['drop-1', 'drop-2']);
+    expect(byKind('taxi').map((row) => row.id)).toEqual(['taxi-1', 'taxi-2']);
     expect(byKind('engineStart')[0]!.id).toBe('engine-on');
-
-    // Przejęcie i zdanie koryguje się ODCZYTAMI, nie czasem — ołówka przy nich nie ma.
-    expect(rows.find((row) => row.kind === 'claim')!.correctable).toBe(false);
-    expect(rows.find((row) => row.kind === 'release')!.correctable).toBe(false);
   });
 
-  it('plakietkę dostaje WYŁĄCZNIE wpis ręczny (issue #38 pkt 10)', () => {
+  it('oś nie niesie już ani ołówka, ani plakietki wpisu ręcznego (issue #40 pkt 1 i 6)', () => {
+    // Sposób powstania zapisu i prawo do korekty przestały być sprawą tego ekranu:
+    // korekta wychodzi przyciskiem „EDYTUJ DANE", a metoda zostaje w rejestrze.
+    // Wiersz `to-2` jest w scenariuszu wpisem RĘCZNYM — i wygląda jak każdy inny.
     const { rows } = axis();
-    const manual = rows.filter((row) => row.manual);
 
-    expect(manual.map((row) => row.id)).toEqual(['to-2', 'ldg-2']);
+    for (const row of rows) {
+      expect(row).not.toHaveProperty('manual');
+      expect(row).not.toHaveProperty('correctable');
+    }
+  });
+
+  it('kołowanie mierzy czas DO STARTU, a bez startu po sobie nie mierzy nic', () => {
+    expect(axis().rows.filter((row) => row.kind === 'taxi').map((row) => row.duration)).toEqual([
+      '00:04',
+      '00:04',
+    ]);
+
+    // Powrót na płytę po ostatnim lądowaniu: kołowanie jest, startu po nim nie ma.
+    // Doliczenie czasu do wyłączenia silnika opisywałoby postój, nie kołowanie.
+    const zPowrotem = [...sessionEvents(), event('taxi', at(9, 50), { method: 'auto' }, 'taxi-3')];
+    expect(axis(zPowrotem).rows.find((row) => row.id === 'taxi-3')!.duration).toBeNull();
   });
 
   it('czas lotu stoi przy lądowaniu, nie przy starcie', () => {
@@ -170,12 +188,14 @@ describe('oś sesji', () => {
 });
 
 describe('stopka osi', () => {
-  it('czas blokowy pada raz, obok czasu w powietrzu i liczby startów', () => {
+  it('czas blokowy pada raz, obok czasu lotu i liczby startów', () => {
     const { foot } = axis();
 
+    // „Czas lotu", nie „W powietrzu" (issue #40 pkt 3): tamto łamało się na telefonie
+    // na dwie linie i rozpychało stopkę.
     expect(foot.map((item) => `${item.key} ${item.value}`)).toEqual([
       'Blok 01:43',
-      'W powietrzu 01:16',
+      'Czas lotu 01:16',
       'Starty 2',
       'Lotnisko EPZG',
     ]);
