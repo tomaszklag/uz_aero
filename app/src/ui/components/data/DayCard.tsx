@@ -1,13 +1,21 @@
 /**
- * UZ Aero — DayCard (`.day-card` z mockupu 12)
+ * UZ Aero — DayCard (`.day-card` z mockupów 12 i 01)
  *
- * Karta SESJI w „Poprzednich dniach": data display + samolot, godziny biegu silnika,
- * rząd statystyk, opcjonalna stopka z tagami i pas akcji.
+ * Karta SESJI: nagłówek display + samolot, godziny biegu silnika, rząd statystyk,
+ * opcjonalna stopka z tagami i pas akcji.
+ *
+ * JEDEN KOMPONENT NA OBA EKRANY (issue #42, 2026-08-13): „Poprzednie dni" (12) i „Mój
+ * dzień" (01). Do 2026-08-13 ekran domowy rysował te same trzy wielkości własną tabelą
+ * `.leg-row` — dwa układy jednej rzeczy w aplikacji, która ma ich w sumie kilkanaście.
+ * Stąd `title` zamiast `date`: nagłówkiem jest data (12, kafelki z różnych dni) albo
+ * numer sesji w dobie (01, gdzie data stoi w nagłówku ekranu).
  *
  * Dwa warianty pasa: `editable` (sesja w oknie korekty) jest niebieski — kolor
  * informacyjny, bo korekta to opcja, a nie następny krok procedury; wariant neutralny
- * to PODGLĄD sesji po oknie (issue #35 pkt 2). Kartę bez pasa też wolno kliknąć, ale
- * pas mówi wprost, co się stanie — bez niego karta wygląda na martwą.
+ * to PODGLĄD sesji po oknie (issue #35 pkt 2) ORAZ cała lista na 01, gdzie wszystkie
+ * sesje są w oknie i błękit przy każdej przestałby cokolwiek znaczyć (ta sama reguła,
+ * dla której SyncChip online nie rysuje nic — issue #12). Kartę bez pasa też wolno
+ * kliknąć, ale pas mówi wprost, co się stanie — bez niego karta wygląda na martwą.
  */
 
 import React from 'react';
@@ -20,8 +28,8 @@ import { Icon, type IconName } from '../foundation/Icon';
 import { toneColors } from '../tone';
 
 export interface DayCardProps {
-  /** „22 CZERWCA 2026". */
-  date: string;
+  /** Nagłówek kafelka: „22 CZERWCA 2026" (12) albo „SESJA 1" (01). */
+  title: string;
   /** Znak samolotu („SP-AXA"). */
   aircraft: string;
   /** Godziny biegu silnika („08:12 → 10:34 UTC"); `null` = silnik nie ruszył. */
@@ -41,7 +49,7 @@ export interface DayCardProps {
 }
 
 export function DayCard({
-  date,
+  title,
   aircraft,
   times = null,
   stats,
@@ -79,8 +87,8 @@ export function DayCard({
       ]}
     >
       <View style={styles.top}>
-        <AppText variant="display" style={styles.date}>
-          {date}
+        <AppText variant="display" style={styles.title}>
+          {title}
         </AppText>
         <AppText variant="mono" style={[styles.aircraft, { color: theme.colors.green }]}>
           {aircraft}
@@ -136,12 +144,13 @@ export function DayCard({
             size={15}
             color={editable ? blue.accent : theme.colors.textSecondary}
           />
+          {/* `buttonSmall`, nie `display` z ręcznym rozmiarem: to token etykiety
+              przycisku (Bebas 16 / ls 2) — dokładnie ten, którym pisze `ActionButton`
+              w rozmiarze `md`, czyli przyciski pod listą na 01. Liczby są te same, co
+              wpisane wcześniej ręcznie; nazwa mówi, dlaczego akurat te (issue #42). */}
           <AppText
-            variant="display"
-            style={[
-              styles.ctaLabel,
-              { color: editable ? blue.accent : theme.colors.textSecondary },
-            ]}
+            variant="buttonSmall"
+            style={{ color: editable ? blue.accent : theme.colors.textSecondary }}
           >
             {ctaLabel}
           </AppText>
@@ -154,7 +163,7 @@ export function DayCard({
 const styles = StyleSheet.create({
   card: { paddingVertical: 13, paddingHorizontal: 14, gap: 9 },
   top: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
-  date: { fontSize: 21, lineHeight: 22, letterSpacing: 1.5 },
+  title: { fontSize: 21, lineHeight: 22, letterSpacing: 1.5 },
   aircraft: { fontSize: 11, letterSpacing: 1.5 },
   /** `.day-times` — dosunięte do daty ujemnym marginesem, tak jak w mockupie. */
   times: { fontSize: 10, lineHeight: 13, letterSpacing: 0.5, marginTop: -5 },
@@ -178,5 +187,4 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderRadius: 11,
   },
-  ctaLabel: { fontSize: 16, letterSpacing: 2 },
 });

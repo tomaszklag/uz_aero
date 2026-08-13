@@ -3,13 +3,15 @@
  *
  * Bez tego ekranu obietnica „możesz poprawić przez 24 h" nie miała drzwi (§ decyzja
  * 2026-07-23): sesja w oknie korekty stoi wyróżniona na górze i otwiera się w ekranie
- * 10, skąd ołówki prowadzą do korekty 04c. Sesje po oknie są do ODCZYTU — od issue #35
+ * 10, skąd „EDYTUJ DANE" prowadzi do listy ręcznej (08) i korekty 04c — od issue #40
+ * to JEDYNE drzwi zapisu. Sesje po oknie są do ODCZYTU — od issue #35
  * też się otwierają, tyle że w wariancie bez elementów zapisu (`design/10b`): przedtem
  * karta była martwa i pilot nie miał jak sprawdzić, co właściwie zapisał.
  *
  * Ekran pokazuje dni WCZEŚNIEJSZE (issue #35 pkt 1). Dzisiejsze sesje mieszkają na
- * „Mój dzień" (01) i tam prowadzi je ołówek wiersza — druga lista tych samych lotów
- * kazałaby pilotowi zgadywać, która jest prawdziwa.
+ * „Mój dzień" (01), na TAKICH SAMYCH kafelkach `DayCard` (issue #42) — druga lista tych
+ * samych lotów kazałaby pilotowi zgadywać, która jest prawdziwa, a dwa różne kształty
+ * tej samej sesji kazałyby mu zgadywać, czy „Blok" znaczy tam to samo, co tutaj.
  *
  * Wszystko liczy się z LOKALNEGO strumienia (`historyDays` grupuje zdarzenia po
  * sesjach i projektuje tym samym kodem co ekran 10) — historia działa w pełni offline;
@@ -27,6 +29,7 @@ import type { HistoryDay } from '../../application';
 import {
   AppText,
   DayCard,
+  GroupLabel,
   Icon,
   Screen,
   ScreenHeader,
@@ -156,7 +159,7 @@ export function HistoryScreen({
             {groups.editable.map((day) => (
               <DayCard
                 key={day.sessionUuid}
-                date={day.date}
+                title={day.title}
                 aircraft={day.aircraft}
                 times={day.times}
                 stats={day.stats}
@@ -185,7 +188,7 @@ export function HistoryScreen({
             {groups.closed.map((day) => (
               <DayCard
                 key={day.sessionUuid}
-                date={day.date}
+                title={day.title}
                 aircraft={day.aircraft}
                 times={day.times}
                 stats={day.stats}
@@ -217,15 +220,6 @@ export function HistoryScreen({
   );
 }
 
-/** `.group-lbl` — etykieta grupy nad kartami (mono, wersaliki — token `micro`). */
-function GroupLabel({ text, style }: { text: string; style?: object }) {
-  return (
-    <AppText variant="micro" tone="muted" style={[styles.groupLabel, style]}>
-      {text}
-    </AppText>
-  );
-}
-
 /**
  * Plakietka wysyłki — TYLKO gdy coś czeka w kolejce (issue #35 pkt 3).
  *
@@ -246,7 +240,6 @@ function UploadTag({ day }: { day: DayCardSpec | EditableDaySpec }) {
 
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 11 },
-  groupLabel: { paddingHorizontal: 2 },
   closedLabel: { marginTop: 4 },
   footNote: { fontSize: 9 },
   lockedNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingHorizontal: 2 },

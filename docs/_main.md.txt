@@ -867,8 +867,8 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
 [00 Login]  profil na telefonie → odblokowanie PIN-em (offline OK)
             brak profilu → login + hasło od administratora (wymaga sieci; offline: komunikat)
     ↓
-[01 Mój dzień]  EKRAN DOMOWY — płaski log SESJI dnia (wiersz = jeden bieg silnika
-    │           z lotami w środku; rejestracja jako informacja wiersza), przekrojowo
+[01 Mój dzień]  EKRAN DOMOWY — płaski log SESJI dnia (kafelek = jeden bieg silnika
+    │           z lotami w środku; rejestracja jako informacja kafelka), przekrojowo
     │           po samolotach; stąd rozpoczęcie lotu, ręczny wpis lotu i okno korekty 24 h
     │           warianty: 01a (zero sesji) · 01c (offline + arkusz syncu)
     ├─→ [15 Lot ręczny]  CAŁA sesja po fakcie: samolot · czasy · odczyty WYMAGANE
@@ -894,16 +894,24 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     │               łańcucha MH, ZATWIERDZENIE logu) · 09c = zdanie bez lotu
     ↓
 [01 Mój dzień]  kolejna sesja dopisuje się do listy dnia
-    ├─ OŁÓWEK wiersza logu → [10 Detale sesji]  paliwo, MH, zrzuty, korekty — per
-    │   sesja, nie per doba; niczego się nie zatwierdza (zdanie już potwierdziło dane)
-    │      └─ NUMER lotu w tabeli → [16 Szczegóły lotu]  czasy, miejsce, zrzuty tego
-    │          wyniesienia i UPROSZCZONA miniatura śladu
-    │             └─ miniatura → [14 Ślad lotu]  trasa, profil pionowy, log punktów
-    │          (issue #25: z listy lotów nie ma skrótu prosto na mapę — ślad opisuje
-    │          LOT, więc jest jego detalem, a nie własnością sesji)
-    ├─ [13 Ustawienia] → [11 Synchronizacja]  status wysyłki / eksportu serwera
-    │   (nie akcja eksportu; z 10 zniknął „ZATWIERDŹ → SYNC")
-    └─ [12 Historia]  poprzednie dni, okno korekty 24 h
+    ├─ KAFELEK sesji → [10 Detale sesji]  ślad biegu silnika + oś czasu, rachunek
+    │   paliwa i MH, zrzuty, notatki — per sesja, nie per doba; niczego się nie
+    │   zatwierdza (zdanie już potwierdziło dane). 10a = bez lotu · 10b = po oknie
+    │   korekty (podgląd bez zapisu)
+    │      ├─ MINIATURA ŚLADU → [14 Ślad]  CAŁY bieg silnika: kołowanie, wszystkie
+    │      │   starty i lądowania, profil pionowy z przerwą na ziemi (14b = brak zapisu)
+    │      ├─ „EDYTUJ DANE" → [08 Lista ręczna] → [04c Korekta zdarzenia]  JEDYNE
+    │      │   drzwi do korekty czasów (issue #40 — oś sesji ołówków nie ma)
+    │      └─ PLAKIETKA WERDYKTU → [10c Norma — szczegóły]  pasmo, stawki, rachunek
+    │   (issue #38 ODWRACA #25: zapis GPS powstaje w JEDNYM ciągu, więc ślad należy do
+    │   SESJI, a loty są jego odcinkami — ekran 16 „szczegóły lotu" USUNIĘTY, jego treść
+    │   wróciła na oś czasu sesji. Z list wejścia w ślad nadal NIE MA: jedyne prowadzi
+    │   przez miniaturę tutaj)
+    ├─ [13 Ustawienia]  w tym sekcja „Synchronizacja": kolejka, ostatnia udana wysyłka,
+    │   uwagi serwera, awaryjne ponaglenie (§3.9; ekran 11 USUNIĘTY 2026-08-12 — był
+    │   trzecim widokiem tej samej sesji i drugim wskaźnikiem sieci)
+    └─ [12 Poprzednie dni]  sesje spoza dzisiejszej doby, na TAKICH SAMYCH kafelkach
+        co na 01 (issue #42); w oknie 24 h → 10, po oknie → 10b
 ```
 
 Pętla, nie prosta. Dzień pilota nie ma „startu" ani „końca" jako kroków flow: zaczyna się

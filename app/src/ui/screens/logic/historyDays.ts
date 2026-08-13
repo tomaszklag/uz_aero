@@ -5,8 +5,9 @@
  * funkcjach, testowalnych bez React Native.
  *
  * CO EKRAN POKAZUJE (issue #35, 2026-08-12): sesje z dni WCZEŚNIEJSZYCH. Dzisiejsze
- * stoją na „Mój dzień" (01) i tam prowadzi je ołówek wiersza — powtórzone tutaj były
- * drugą listą tych samych lotów, a ekran nazywa się „Poprzednie dni". Doba liczy się
+ * stoją na „Mój dzień" (01), na takich samych kafelkach (issue #42, `sessionCard.ts`) —
+ * powtórzone tutaj były drugą listą tych samych lotów, a ekran nazywa się
+ * „Poprzednie dni". Doba liczy się
  * tak samo jak na 01: po URUCHOMIENIU silnika (`projectPilotDay`), więc sesja
  * rozpoczęta o 23:50 należy w całości do doby, w której wystartowała.
  *
@@ -22,7 +23,8 @@
 
 import { correctionWindow, utcDayStart, type SessionState } from '../../../domain';
 import type { HistoryDay } from '../../../application';
-import { dateUtcLong, duration, timeUtc } from '../../format';
+import { dateUtcLong } from '../../format';
+import { type SessionCardVm, sessionStats, sessionTimes } from './sessionCard';
 import { dateTimeUtcShort } from './statsDay';
 
 /**
@@ -39,19 +41,14 @@ export interface UploadSpec {
   state: 'queued' | 'sending';
 }
 
-/** Karta sesji (mockup `.day-card`). */
-export interface DayCardSpec {
-  sessionUuid: string;
-  /** „22 CZERWCA 2026". */
-  date: string;
-  aircraft: string;
-  /**
-   * Godziny biegu silnika („08:12 → 10:34 UTC"); `null`, gdy silnik nie ruszył ani razu.
-   * Bez nich dwie sesje tej samej doby na tej samej maszynie są nie do odróżnienia.
-   */
-  times: string | null;
-  /** Loty / Blok / Lot — te same trzy wielkości, co wiersz sesji na 01 (issue #35 pkt 6). */
-  stats: { k: string; v: string }[];
+/**
+ * Karta sesji (mockup `.day-card`) — kształt wspólny z „Mój dzień" (`sessionCard.ts`,
+ * issue #42), poszerzony o to, co istnieje wyłącznie w historii: stan wysyłki.
+ *
+ * Nagłówkiem kafelka jest tutaj DATA, bo lista biegnie przez wiele dni; na 01 w tym
+ * samym miejscu stoi numer sesji w dobie.
+ */
+export interface DayCardSpec extends SessionCardVm {
   /** Zaległość wysyłki albo `null` = wszystko poszło (nie rysujemy nic). */
   upload: UploadSpec | null;
 }
@@ -111,21 +108,16 @@ function cardSpec(day: HistoryDay, pushing: boolean): DayCardSpec {
   const leg = state.legs[0];
   return {
     sessionUuid: state.sessionUuid ?? '',
-    date: state.claimedAt != null ? dateUtcLong(state.claimedAt) : '—',
+    title: state.claimedAt != null ? dateUtcLong(state.claimedAt) : '—',
     aircraft: state.aircraftId ?? '—',
-    times:
-      leg != null
-        ? `${timeUtc(leg.startedAt)} → ${leg.stoppedAt != null ? timeUtc(leg.stoppedAt) : '—'} UTC`
-        : null,
-    // Loty / Blok / Lot — dokładnie to, co niesie wiersz sesji na „Mój dzień"
-    // (issue #35 pkt 6). „Sesja" (czas trzymania maszyny) i „Skoczków" wypadły:
-    // pierwsza była wielkością, o którą nikt nie pytał, druga mieszka w szczegółach
-    // lotu, do których ta karta prowadzi.
-    stats: [
-      { k: 'Loty', v: `${state.flights.length}` },
-      { k: 'Blok', v: duration(state.blockTimeMs) },
-      { k: 'Lot', v: duration(state.flightTimeMs) },
-    ],
+    // Godziny biegu silnika: bez nich dwie sesje tej samej doby na tej samej maszynie
+    // są nie do odróżnienia.
+    times: sessionTimes(leg?.startedAt ?? null, leg?.stoppedAt ?? null),
+    // Loty / Blok / Lot — dokładnie to, co niesie kafelek sesji na „Mój dzień"
+    // (issue #35 pkt 6; od issue #42 z tej samej funkcji). „Sesja" (czas trzymania
+    // maszyny) i „Skoczków" wypadły: pierwsza była wielkością, o którą nikt nie pytał,
+    // druga mieszka w szczegółach lotu, do których ta karta prowadzi.
+    stats: sessionStats(state.flights.length, state.blockTimeMs, state.flightTimeMs),
     upload: uploadSpec(pendingCount, pushing),
   };
 }
@@ -172,7 +164,7 @@ export function buildHistory(days: HistoryDay[], now: number, pushing = false): 
  *
  * Dzień dzisiejszy jest pominięty z tego samego powodu, dla którego nie ma go na liście
  * (issue #35 pkt 1): plakietka obiecuje coś, co pilot znajdzie po wejściu. Sesję z dziś
- * poprawia się ołówkiem wiersza tuż obok, na tym samym ekranie.
+ * poprawia się kafelkiem tuż obok, na tym samym ekranie.
  */
 export function editableBadge(days: HistoryDay[], now: number): string | null {
   const today = utcDayStart(now);

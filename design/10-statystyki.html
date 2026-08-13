@@ -303,14 +303,9 @@
     font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
     border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
   }
-  .btn-primary {
-    display:flex; align-items:center; justify-content:center; gap:10px;
-    width:100%; padding:17px; border-radius:16px;
-    background:var(--green); color:#0D0D0D;
-    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
-    border:none; text-decoration:none; cursor:pointer;
-    box-shadow:0 0 24px rgba(46,204,113,0.3);
-  }
+  /* `.btn-primary` USUNIĘTY razem z zielonym „WRÓĆ DO DNIA" (issue #42): ten ekran nie
+     ma akcji głównej — sesję potwierdziło zdanie samolotu, tu się ją ogląda i poprawia.
+     Styl zostawiony „na zapas" zaprasza do odtworzenia przycisku. */
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -719,21 +714,23 @@
         </div>
       </div>
 
-      <!-- Action buttons -->
-      <!-- JEDYNE drzwi do korekty (issue #40 pkt 1). Lista ręczna (08) pokazuje te same
+      <!-- Action buttons.
+           JEDYNE drzwi do korekty (issue #40 pkt 1). Lista ręczna (08) pokazuje te same
            zdarzenia w klamrze biegu silnika i ma przy nich ołówki — czyli dokładnie
            to, co stało na tej osi dwanaście razy, tylko w miejscu, gdzie poprawianie
-           jest zadaniem ekranu, a nie ozdobą podsumowania. -->
+           jest zadaniem ekranu, a nie ozdobą podsumowania.
+
+           Zielone „WRÓĆ DO DNIA" USUNIĘTE (issue #42, 2026-08-13): powrót stoi już
+           w nagłówku („‹ Dzień") i jest tam na każdym ekranie aplikacji. Drugi powrót
+           na dole — w dodatku w kolorze akcji głównej, na miejscu, w którym reszta
+           aplikacji stawia „dalej" — obiecywał czynność, której ten ekran nie ma:
+           sesję potwierdziło zdanie samolotu (09B), tutaj się ją ogląda.
+           Zostaje jedyna akcja, która naprawdę coś robi. -->
+
       <div class="btn-row">
         <a href="08-lista-reczna.html" class="btn-secondary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
-        </a>
-        <!-- Sesja jest już zamknięta zdaniem samolotu (09B), a ten ekran tylko ją
-             opisuje — jedyne sensowne wyjście to powrót. -->
-        <a href="01-moj-dzien.html" class="btn-primary">
-          WRÓĆ DO DNIA
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 7h9M7 3l4 4-4 4"/></svg>
         </a>
       </div>
 
@@ -747,7 +744,7 @@
     <span class="vp-badge">10</span>
     <span class="vp-body">
       <span class="vp-name">Sesja — z lotami</span>
-      <span class="vp-when">Detale JEDNEJ sesji, wywoływane ołówkiem wiersza w logu dnia (01) i kartą sesji w historii (12): ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od uruchomienia do wyłączenia, rachunek paliwa i motogodzin na tle normy, rozliczenie zrzutów. Zdanie samolotu już POTWIERDZIŁO dane — tu się je tylko ogląda i koryguje. Opisuje oś SAMOLOTU: paliwo i MH nie sumują się po pilocie lecącym dwiema maszynami.</span>
+      <span class="vp-when">Detale JEDNEJ sesji, wywoływane kafelkiem sesji w logu dnia (01) albo takim samym kafelkiem w historii (12): ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od uruchomienia do wyłączenia, rachunek paliwa i motogodzin na tle normy, rozliczenie zrzutów. Zdanie samolotu już POTWIERDZIŁO dane — tu się je tylko ogląda i koryguje. Opisuje oś SAMOLOTU: paliwo i MH nie sumują się po pilocie lecącym dwiema maszynami.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

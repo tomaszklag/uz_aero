@@ -192,24 +192,29 @@ przy M3); nota na 13 mówi nową prawdę: profil pilota, wędruje między urząd
 Ekran 12 („Poprzednie dni"): `queries.historyDays()` grupuje CAŁY lokalny strumień
 po sesjach i projektuje każdą tym samym `projectSession` — karta i ekran 10 nie mogą
 się różnić liczbami. Reszta jest czystą funkcją `screens/historyDays.ts`:
-- **doba bieżąca odpada** (issue #35) — te sesje mieszkają na 01 i tam prowadzi je
-  ołówek wiersza. Kotwicą doby jest URUCHOMIENIE silnika, awaryjnie przejęcie
+- **doba bieżąca odpada** (issue #35) — te sesje mieszkają na 01, na TAKICH SAMYCH
+  kafelkach (issue #42: `DayCard` + `screens/logic/sessionCard.ts`, jeden kształt na
+  oba ekrany; na 01 nagłówkiem jest numer sesji w dobie, bo data stoi w nagłówku
+  ekranu). Kotwicą doby jest URUCHOMIENIE silnika, awaryjnie przejęcie
   (`sessionDay`) — ta sama reguła co w `projectPilotDay`, żeby sesja spod północy nie
   wpadła w dziurę między ekranami ani nie pokazała się w obu naraz;
 - **podział na grupy robi okno korekty**; sesja TRZYMANA nie jest historią (ma kokpit
   przez `ResumeGate`);
 - **obie grupy są klikalne** — „OTWÓRZ I POPRAW" i „ZOBACZ SZCZEGÓŁY" ładują sesję do
   store'u i otwierają 10. Po oknie ekran 10 rysuje się w trybie podglądu
-  (`readOnly = !correctionWindow(...).open`): `onCorrect` bez wartości, więc kolumny
-  ołówka NIE MA, i bez „EDYTUJ DANE". Bezpieczne, bo z kokpitu nie ma tu drogi
-  (kokpit jest stanem modalnym), więc żadna trzymana maszyna nie zostaje w tle;
+  (`readOnly = !correctionWindow(...).open`): bez „EDYTUJ DANE", czyli bez jedynych
+  drzwi do korekty (issue #40 zabrał ołówki z osi), a od issue #42 bez całej stopki —
+  powrót mieszka w nagłówku. Bezpieczne, bo z kokpitu nie ma tu drogi (kokpit jest
+  stanem modalnym), więc żadna trzymana maszyna nie zostaje w tle;
 - **plakietka wysyłki istnieje tylko przy zaległości** (`uploadSpec`) — „Wysłane" jest
   stanem domyślnym i nie ma napisu, tak samo jak SyncChip online. Rozróżnienie
   „oczekuje" / „w trakcie wysyłania" bierze się z wyniku OSTATNIEJ próby synca, bo
   innego pojęcia „online" aplikacja nie ma.
 
-Plakietka `.history-badge` na 01 pokazuje najświeższą sesję w oknie — również z
-pominięciem doby bieżącej, inaczej obiecywałaby coś, czego pilot w 12 nie znajdzie.
+Plakietka okna korekty na 01 pokazuje najświeższą sesję w oknie — również z pominięciem
+doby bieżącej, inaczej obiecywałaby coś, czego pilot w 12 nie znajdzie. Od issue #42
+jedzie jako `badge` przycisku „POPRZEDNIE DNI" (`ActionButton`), a nie obok własnego
+linku: wejście w historię jest przyciskiem takim samym, jak dwa nad nim.
 
 **Zaległości audytu serwera (2026-07-28) — świadomie odłożone, do zrobienia przed
 wdrożeniem (faza 6):** rate-limit na `/auth/*` (dziś brute-force ogranicza tylko koszt

@@ -226,7 +226,7 @@ export function StatsScreen({
           title="SESJA"
           size="md"
           // Powrót JEST i prowadzi tam, skąd się tu wchodzi (mockup 10: „‹ Dzień",
-          // 10b: „‹ Dni"): ołówkiem wiersza sesji na 01 i kartą sesji w historii (12).
+          // 10b: „‹ Dni"): kafelkiem sesji na 01 i takim samym kafelkiem w historii (12).
           onBack={() => navigation.navigate(backScreen)}
           backLabel={readOnly ? 'Dni' : 'Dzień'}
           subtitle={subtitle(projection.aircraftId, projection.claimedAt, projection.operation)}
@@ -264,11 +264,22 @@ export function StatsScreen({
           }
         />
       }
+      /*
+       * Pas akcji ma DOKŁADNIE tyle przycisków, ile jest tu czynności do zrobienia.
+       *
+       * Zielone „WRÓĆ DO DNIA" zostało usunięte (issue #42, uwaga użytkownika): powrót
+       * stoi w nagłówku („‹ Dzień" / „‹ Dni") i jest tam na każdym ekranie aplikacji,
+       * a drugi powrót — w dodatku w kolorze akcji głównej, na miejscu, w którym reszta
+       * aplikacji stawia „dalej" — obiecywał czynność, której ten ekran nie ma: sesję
+       * potwierdziło zdanie samolotu (09B), tutaj się ją ogląda.
+       *
+       * W trybie podglądu (po oknie 24 h) nie zostaje nic, więc stopki nie ma wcale.
+       * „EDYTUJ DANE" znika tam razem z ołówkami — to ta sama możliwość zapisu, tylko
+       * innymi drzwiami (lista ręczna 08 / zdanie bez lotu 09C).
+       */
       footer={
-        <View style={{ gap: theme.spacing.sm, paddingHorizontal: 14, paddingBottom: 14 }}>
-          {/* Po oknie 24 h „EDYTUJ DANE" znika razem z ołówkami — to ta sama możliwość
-              zapisu, tylko innymi drzwiami (lista ręczna 08 / zdanie bez lotu 09C). */}
-          {!readOnly && (
+        readOnly ? undefined : (
+          <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
             <ActionButton
               label="EDYTUJ DANE"
               tone="neutral"
@@ -279,17 +290,8 @@ export function StatsScreen({
                 navigation.navigate(flightCount === 0 ? 'ReleaseAircraft' : 'ManualLog')
               }
             />
-          )}
-          {/* Zdanie samolotu już POTWIERDZIŁO dane (issue #23), więc po locie niczego się
-              nie zatwierdza ani nie wysyła ponownie — jedyne sensowne wyjście to powrót. */}
-          <ActionButton
-            label={readOnly ? 'WRÓĆ DO DNI' : 'WRÓĆ DO DNIA'}
-            tone="green"
-            variant="solid"
-            trailingIcon="next"
-            onPress={() => navigation.navigate(backScreen)}
-          />
-        </View>
+          </View>
+        )
       }
     >
       <View style={{ padding: 14, gap: theme.spacing.md }}>

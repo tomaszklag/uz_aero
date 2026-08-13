@@ -23,6 +23,7 @@ export * from './foundation/SkeletonRows';
 
 // Kontenery i nagłówki
 export * from './layout/Card';
+export * from './layout/GroupLabel';
 export * from './layout/SkeletonScreen';
 export * from './layout/AppBar';
 export * from './layout/ScreenHeader';

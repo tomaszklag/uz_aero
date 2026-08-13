@@ -1824,3 +1824,38 @@ użytkownika po przeglądzie).
 > data" → „Log sesji · czasy UTC". Klamra grupy zostaje (pilot odtwarzający zapis myśli
 > „od uruchomienia do zgaszenia"), a numer biegu stał się OSTRZEŻENIEM: w kodzie
 > plakietka „2 / 3" pojawia się wyłącznie przy strumieniu złamanym.
+
+---
+
+## 2026-08-13 — Jeden kafelek sesji, jeden przycisk (issue #42)
+
+**01 + 01A + 01C — log dnia to KAFELKI, te same co na „Poprzednich dniach".**
+> „Mój dzień" pokazywał sesję własną tabelą (`.leg-row`: numer, czasy nad rejestracją,
+> trójka mikro-metryk, ołówek), a ekran 12 kafelkiem (`.day-card`) — te same trzy
+> wielkości, dwa układy, dwa zestawy napisów. Pilot musiał sprawdzać, czy „Blok" znaczy
+> tam to samo, co tutaj. Teraz jest jeden komponent, a różnice są dwie i obie wymuszone
+> treścią: nagłówkiem kafelka jest NUMER SESJI w dobie (na 12 data — tu data stoi
+> w nagłówku ekranu i na każdym kafelku byłaby szumem), a stopka z plakietką wysyłki
+> i terminem korekty istnieje tylko w historii. Sumy doby (Blok / Loty) zeszły do
+> własnej karty pod listą — to jedyna wielkość, która nie należy do żadnej sesji.
+> Kafelki na 01 NIE są niebieskie, choć wszystkie dzisiejsze sesje są w oknie korekty:
+> na 12 błękit oddziela sesje w oknie od zamkniętych, a kolor przy każdej pozycji listy
+> niczego nie oddziela (ta sama reguła, co SyncChip online — issue #12).
+
+**01 + 01A + 01C + LOADERY — jeden krój przycisku na ekranie.**
+> „ROZPOCZNIJ LOT" i „DODAJ LOT RĘCZNIE" były pisane mono 11 px, „Poprzednie dni" —
+> osobnym linkiem w Archivo 12,5 px, a pas akcji kafelka display 16 px. Trzy kroje na
+> trzech przyciskach jednego ekranu. Wszystkie `.btn-secondary` idą teraz za tokenem
+> `button_small` (display 16 / ls 2), tym samym, którym pisze pas akcji kafelka i akcje
+> arkuszy; klasa `.history-link` zniknęła, a plakietka „05 SIE — można poprawić" wjechała
+> DO przycisku. Wielkość dalej różnicuje wagę akcji (01A: główna akcja pustego dnia
+> zostaje `.btn-primary` w display 22 px) — rodzina jest jedna.
+
+**10 + 10A + 10B — zielone „WRÓĆ DO DNIA" usunięte.**
+> Powrót stoi w nagłówku („‹ Dzień" / „‹ Dni") i jest tam na każdym ekranie aplikacji.
+> Drugi powrót na dole — w kolorze akcji głównej, na miejscu, w którym reszta aplikacji
+> stawia „dalej" — obiecywał czynność, której ten ekran nie ma: sesję potwierdziło
+> zdanie samolotu (09B), tutaj się ją ogląda. Na 10 i 10A zostaje samo „EDYTUJ DANE",
+> a 10B (podgląd po oknie 24 h) nie ma już ŻADNEGO pasa akcji — i tak ma być, bo nie da
+> się tam nic zapisać. Klasa `.btn-primary` skasowana z całej trójki, żeby nikt nie
+> odtworzył przycisku „bo styl już jest".

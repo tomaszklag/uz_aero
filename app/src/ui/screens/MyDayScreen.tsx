@@ -2,10 +2,21 @@
  * UZ Aero — 01 MÓJ DZIEŃ (mockupy `design/01-moj-dzien.html` + `01a` + `01c`).
  *
  * EKRAN DOMOWY po issue #23: do pilota w danej dobie przypisana jest LISTA SESJI
- * i nic ponadto. Log dnia jest płaską osią czasu (wiersz = jedna sesja, rejestracja
- * jako informacja wiersza — bez grupowania po maszynie), a sumy to Blok i Loty.
+ * i nic ponadto. Log dnia jest płaską osią czasu (kafelek = jedna sesja, rejestracja
+ * jako informacja kafelka — bez grupowania po maszynie), a sumy to Blok i Loty.
  * Klamry służby (meldunek / koniec / „Zamknij dzień") NIE MA — została usunięta razem
  * z modelem: dnia się nie otwiera ani nie zamyka, zaczyna się pierwszą sesją.
+ *
+ * ══ CO ZMIENIŁ ISSUE #42 (2026-08-13) ══
+ * Ekran przestał mieć własny sposób pokazywania sesji. Sesja jest KAFELKIEM `DayCard`
+ * — tym samym komponentem, co na „Poprzednich dniach" (12) — zamiast wiersza tabeli
+ * `.leg-row`, który niósł te same trzy wielkości w drugim układzie. Przyciski pod listą
+ * są jednym komponentem `ActionButton` w jednym kroju: „Poprzednie dni" były do tej pory
+ * własnym przyciskiem-linkiem pisanym Archivo, obok dwóch pisanych Bebas.
+ * Kafelki NIE są niebieskie (`editable`), choć wszystkie dzisiejsze sesje są w oknie
+ * korekty: na 12 błękit ODDZIELA sesje w oknie od zamkniętych, a kolor przy każdej
+ * pozycji listy niczego nie oddziela — to ta sama reguła, dla której SyncChip online
+ * nie rysuje nic (issue #12).
  *
  * Ekran NICZEGO NIE LICZY. Napisy i sumy przychodzą gotowe z `buildMyDay`
  * (`logic/myDay.ts`), a sama doba z `usePilotDay`.
@@ -23,32 +34,40 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { REFERENCE_META_CHECKED_AT } from '../../application';
 import {
   ActionButton,
   AppText,
   Card,
+  DayCard,
+  GroupLabel,
   Icon,
   Screen,
   ScreenHeader,
   Skeleton,
+  SkeletonRows,
   StatGrid,
   SyncChip,
-  Tag,
   type StatCell,
 } from '../components';
 import { useTheme } from '../theme';
-import { fontFamily } from '../theme/tokens';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 import { usePilotDay } from '../hooks/usePilotDay';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { utcDayStart } from '../../domain';
 import { dateUtcLong, plural } from '../format';
-import { buildMyDay, totalLabel, type SessionRowVm } from './logic/myDay';
+import { buildMyDay, totalLabel } from './logic/myDay';
 import { editableBadge } from './logic/historyDays';
+
+/**
+ * Wysokość kafelka sesji w stanie ładowania — `DayCard` z pasem akcji, ta sama liczba,
+ * co w historii (12). Kafelek jest w obu miejscach tym samym komponentem, więc i plamka
+ * trzymająca po nim miejsce ma jeden rozmiar.
+ */
+const CARD_HEIGHT = 156;
 
 /**
  * Tick raz na minutę. Sum „do teraz" już nie ma (klamra usunięta, issue #23), ale doba
@@ -186,31 +205,46 @@ export function MyDayScreen({
     >
       <View style={styles.content}>
         {/* ── log dnia: płaska oś czasu sesji + sumy ─────────────────────────
-            Nagłówek karty jest SAMYM napisem — link „Rozliczenie →" usunięty (uwaga
-            użytkownika po issue #23): nic nie mówił, a detale sesji mają jedno
-            wejście — ołówek wiersza. Zdanie samolotu już POTWIERDZIŁO dane, więc
-            wiersz prowadzi do oglądania i korekt, nie do zatwierdzania. */}
+            Etykieta grupy zamiast nagłówka karty (issue #42): kafelki są osobnymi
+            kartami, więc lista nie mieszka już w jednym pojemniku. Znacznik strefy
+            zszedł do kafelka („08:12 → 09:05 UTC"), gdzie stoi przy samej godzinie.
+            Kafelek prowadzi do detali TEJ sesji (10) — zdanie samolotu już
+            POTWIERDZIŁO dane, więc jest to oglądanie i korekta, nie zatwierdzanie. */}
         {ready && vm != null && (
-          <Card title="Log dnia · czasy UTC" flush>
+          <>
+            <GroupLabel text="Log dnia" />
             {vm.sessions.length === 0 ? (
-              <EmptySessions />
+              <Card flush>
+                <EmptySessions />
+              </Card>
             ) : (
               vm.sessions.map((session) => (
-                <SessionRow
-                  key={session.index}
-                  session={session}
-                  // Ołówek = detale TEJ sesji (10): ekran 10 opisuje sesję ze store'u,
-                  // więc najpierw ładujemy wskazany strumień — ta sama droga, którą
-                  // chodzi historia (12).
-                  onOpen={async () => {
-                    await loadSession(session.sessionUuid);
-                    navigation.navigate('Stats');
+                <DayCard
+                  key={session.sessionUuid}
+                  title={session.title}
+                  aircraft={session.aircraft}
+                  times={session.times}
+                  stats={session.stats}
+                  // Ten sam napis i ta sama ikona, co na karcie w oknie korekty na 12
+                  // — bo to ta sama akcja i to samo miejsce docelowe.
+                  ctaLabel="OTWÓRZ I POPRAW"
+                  ctaIcon="edit"
+                  // Ekran 10 opisuje sesję ze store'u, więc najpierw ładujemy wskazany
+                  // strumień — ta sama droga, którą chodzi historia (12).
+                  onPress={() => {
+                    void loadSession(session.sessionUuid).then(() =>
+                      navigation.navigate('Stats'),
+                    );
                   }}
                 />
               ))
             )}
-            <StatGrid cells={totals} columns={2} />
-          </Card>
+            {/* Sumy doby: jedyna wielkość, która NIE należy do pojedynczej sesji —
+                stąd własna karta pod listą, a nie stopka któregoś z kafelków. */}
+            <Card flush>
+              <StatGrid cells={totals} columns={2} />
+            </Card>
+          </>
         )}
 
         {/* ── akcje: przejęcie (jedyna główna akcja pustego dnia) i wpis ręczny ──
@@ -265,94 +299,25 @@ export function MyDayScreen({
             reguła 2: skeleton obiecuje część wspólną, nie zgaduje wariantu). */}
         {!ready && skeleton && <MyDaySkeleton />}
 
-        {/* ── okno korekty 24 h ma mieć drzwi (12) ─────────────────────────── */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Poprzednie dni"
+        {/* ── okno korekty 24 h ma mieć drzwi (12) ───────────────────────────
+            Trzeci przycisk tego samego komponentu i kroju, co dwa wyżej (issue #42):
+            do 2026-08-13 było to wejście własnym „linkiem" pisanym Archivo, więc na
+            jednym ekranie stały obok siebie trzy różne kroje przycisków. Plakietka
+            niesie to, co przedtem świeciło przy linku — dzień wciąż do poprawienia. */}
+        <ActionButton
+          label="POPRZEDNIE DNI"
+          tone="neutral"
+          variant="secondary"
+          size="md"
+          icon="clock"
+          badge={historyBadge}
           onPress={() => navigation.navigate('History')}
-          style={({ pressed }) => [
-            styles.historyLink,
-            {
-              borderWidth: theme.borderWidth,
-              borderColor: pressed ? theme.colors.greenBorder : theme.colors.border,
-            },
-          ]}
-        >
-          <Icon name="clock" size={14} color={theme.colors.textSecondary} />
-          <AppText variant="body" tone="secondary" style={styles.historyLabel}>
-            Poprzednie dni
-          </AppText>
-          {historyBadge != null && <Tag label={historyBadge} tone="blue" />}
-        </Pressable>
+        />
 
         {/* Stopka „Dane referencyjne · sync" USUNIĘTA (issue #23 pkt 5) — stempel
             mieszka w arkuszu szczegółów SyncChipa. */}
       </View>
     </Screen>
-  );
-}
-
-/**
- * `.leg-row` — jedna SESJA na płaskiej osi czasu: numer w dobie, czasy silnika nad
- * rejestracją (issue #23 pkt 3: maszyna jest informacją wiersza, nie osią grupowania),
- * loty i czasy trwania. Ołówek (`.edit-btn` z mockupu) otwiera detale tej sesji —
- * tam mieszkają korekty.
- */
-function SessionRow({ session, onOpen }: { session: SessionRowVm; onOpen: () => void }) {
-  const { theme } = useTheme();
-
-  return (
-    <View
-      style={[
-        styles.legRow,
-        { borderBottomWidth: theme.borderWidth, borderBottomColor: theme.colors.border },
-      ]}
-    >
-      <AppText variant="mono" tone="secondary" style={styles.legNumber}>
-        {session.index}
-      </AppText>
-      <View style={styles.legId}>
-        <AppText variant="mono" style={styles.legTimes}>
-          {session.times}
-        </AppText>
-        <AppText variant="mono" tone="muted" style={styles.legReg}>
-          {session.aircraftId}
-        </AppText>
-      </View>
-      <View style={styles.legMetrics}>
-        <LegMetric label="Loty" value={session.flightsLabel} />
-        <LegMetric label="Blok" value={session.blockLabel} />
-        <LegMetric label="Lot" value={session.flightLabel} />
-      </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Sesja ${session.index} — szczegóły i korekty`}
-        onPress={onOpen}
-        style={({ pressed }) => [
-          styles.legEdit,
-          {
-            borderWidth: theme.borderWidth,
-            borderColor: pressed ? theme.colors.greenBorder : theme.colors.borderStrong,
-          },
-        ]}
-      >
-        <Icon name="edit" size={15} color={theme.colors.textSecondary} />
-      </Pressable>
-    </View>
-  );
-}
-
-/** `.leg-metric` — mikro-para „klucz nad wartością" wewnątrz wiersza sesji. */
-function LegMetric({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.legMetric}>
-      <AppText variant="mono" tone="muted" style={styles.legMetricKey}>
-        {label}
-      </AppText>
-      <AppText variant="mono" tone="secondary" style={styles.legMetricValue}>
-        {value}
-      </AppText>
-    </View>
   );
 }
 
@@ -380,51 +345,25 @@ function EmptySessions() {
 /**
  * Stan ŁADOWANIA logu dnia (issue #33, `design/LOADERY.html`).
  *
- * Geometria jest przepisana z `SessionRow` i `StatGrid` co do piksela — o to w tym
- * wzorcu chodzi: gdy doba dojdzie, plamki podmieniają się na liczby, a nic nie
- * przeskakuje pod palcem trzymanym już nad ołówkiem wiersza.
+ * Geometria jest przepisana z `DayCard` i `StatGrid` co do piksela — o to w tym wzorcu
+ * chodzi: gdy doba dojdzie, plamki podmieniają się na kafelki, a nic nie przeskakuje
+ * pod palcem trzymanym już nad kartą.
  *
- * Trzy wiersze, bo tyle mieści się bez przewijania. Liczba mówi o KSZTAŁCIE listy,
- * nie o jej długości — tej nikt jeszcze nie zna.
+ * DWIE plamki-kafelki, tak jak w historii (12), bo to ta sama lista tych samych kart.
+ * Liczba mówi o KSZTAŁCIE listy, nie o jej długości — tej nikt jeszcze nie zna.
+ * Etykieta grupy jest napisem stałym i NIE czeka (wzorzec, reguła 3: co znamy lokalnie,
+ * rysujemy od razu).
  */
 function MyDaySkeleton() {
   const { theme } = useTheme();
 
   return (
     <View accessible accessibilityLabel="Ładowanie" style={styles.skeletonBlock}>
-      <Card title="Log dnia · czasy UTC" flush>
-        {[0, 1, 2].map((row) => (
-          <View
-            key={row}
-            style={[
-              styles.legRow,
-              { borderBottomWidth: theme.borderWidth, borderBottomColor: theme.colors.border },
-            ]}
-          >
-            <View style={styles.skeletonNumber}>
-              <Skeleton width={14} height={12} />
-            </View>
-            <View style={[styles.legId, styles.skeletonId]}>
-              <Skeleton width={96} height={12} />
-              <Skeleton width={54} height={9} />
-            </View>
-            <View style={styles.legMetrics}>
-              <SkeletonMetric value={18} />
-              <SkeletonMetric value={30} />
-              <SkeletonMetric value={30} />
-            </View>
-            {/* Ołówek ma obrys i cel dotykowy, ale pusty środek: skeleton nie jest
-                interaktywny (wzorzec, reguła 6) — nie ma jeszcze dokąd prowadzić. */}
-            <View
-              style={[
-                styles.legEdit,
-                { borderWidth: theme.borderWidth, borderColor: theme.colors.border },
-              ]}
-            />
-          </View>
-        ))}
+      <GroupLabel text="Log dnia" />
+      <SkeletonRows rows={2} height={CARD_HEIGHT} radius={theme.radius.btn} gap={12} />
 
-        {/* Sumy doby w geometrii `StatGrid`: tło prześwieca przez 1-pikselowe odstępy. */}
+      {/* Sumy doby w geometrii `StatGrid`: tło prześwieca przez 1-pikselowe odstępy. */}
+      <Card flush>
         <View style={[styles.skeletonTotals, { backgroundColor: theme.colors.border }]}>
           {[0, 1].map((cell) => (
             <View
@@ -446,40 +385,12 @@ function MyDaySkeleton() {
   );
 }
 
-/** `.leg-metric` w stanie ładowania: etykieta nad wartością, ta sama para wysokości. */
-function SkeletonMetric({ value }: { value: number }) {
-  return (
-    <View style={styles.skeletonMetric}>
-      <Skeleton width={26} height={7} />
-      <Skeleton width={value} height={11} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 12 },
 
-  // ── wiersz sesji ───────────────────────────────────────────────────────────
-  legRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 6, paddingVertical: 5 },
-  legNumber: { minWidth: 44, minHeight: 44, fontSize: 12, lineHeight: 44, textAlign: 'center' },
-  legId: { width: 112, gap: 2 },
-  legTimes: { fontSize: 12, lineHeight: 16, letterSpacing: 0.5 },
-  legReg: { fontSize: 8.5, lineHeight: 12, letterSpacing: 1.5, fontFamily: fontFamily.monoBold },
-  legMetrics: { flex: 1, flexDirection: 'row', gap: 12 },
-  // `.edit-btn` z mockupu: cel dotykowy 44 px, obrys jak pozostałe akcje drugorzędne.
-  legEdit: { minWidth: 44, minHeight: 44, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  legMetric: { gap: 1 },
-  legMetricKey: { fontSize: 7, lineHeight: 10, letterSpacing: 1.5, textTransform: 'uppercase' },
-  legMetricValue: { fontSize: 11, lineHeight: 15 },
-
   // ── stan ładowania ─────────────────────────────────────────────────────────
-  // Odstęp taki sam jak `content.gap`: skeleton zajmuje miejsce karty ORAZ przycisku.
+  // Odstęp taki sam jak `content.gap`: skeleton zajmuje miejsce listy ORAZ przycisku.
   skeletonBlock: { gap: 12 },
-  skeletonNumber: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  // Plamki potrzebują odrobinę więcej luzu niż wiersze tekstu, które zastępują —
-  // linia ma światło wewnątrz swojej wysokości, prostokąt nie ma go wcale.
-  skeletonId: { gap: 4 },
-  skeletonMetric: { gap: 3 },
   skeletonTotals: { flexDirection: 'row', flexWrap: 'wrap', gap: 1 },
   skeletonTotalCell: { flexGrow: 1, flexBasis: '45%', gap: 3, paddingHorizontal: 12, paddingVertical: 10 },
 
@@ -491,15 +402,4 @@ const styles = StyleSheet.create({
   // ── stopka ekranu ──────────────────────────────────────────────────────────
   // `.btn-note`: przypis pod przyciskiem, dosunięty do niego ujemnym marginesem.
   btnNote: { fontSize: 8.5, lineHeight: 13, letterSpacing: 0.5, textAlign: 'center', marginTop: -4 },
-  historyLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 9,
-    minHeight: 46,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-  },
-  historyLabel: { fontSize: 12.5, fontFamily: fontFamily.bodySemiBold },
 });

@@ -5,10 +5,13 @@
  * `design/01-moj-dzien.html`: SP-AXA (2 sesje) → SP-KLM (1 sesja), sumy 3:05 / 2:37.
  * Tu sprawdzamy WARSTWĘ NAPISÓW: czy ekran dostanie to, co pilot ma przeczytać.
  *
- * Najważniejsza własność pilnowana niżej: **lista jest PŁASKĄ osią czasu** — wiersz
+ * Najważniejsza własność pilnowana niżej: **lista jest PŁASKĄ osią czasu** — kafelek
  * niesie rejestrację jako informację (issue #23 pkt 3), a nie żyje w grupie per maszyna.
  * Klamra służby (BracketVm, `closeDayBlocker`, suma „Służba") żyła w tym module do
  * 2026-08-11 i została usunięta razem z modelem.
+ *
+ * Od issue #42 (2026-08-13) sesja jest KAFELKIEM — tym samym, co na „Poprzednich
+ * dniach" (12) — więc model widoku oddaje `SessionCardVm`, nie własny wiersz tabeli.
  */
 
 import { buildMyDay, totalLabel } from '../ui/screens/logic/myDay';
@@ -81,28 +84,46 @@ beforeEach(() => {
 describe('buildMyDay — scenariusz mockupu 01', () => {
   const vm = () => buildMyDay(dayOf(axa(), klm()));
 
-  it('lista jest płaską osią czasu z rejestracją w wierszu — bez grupowania', () => {
-    const rows = vm().sessions;
+  it('lista jest płaską osią czasu z rejestracją na kafelku — bez grupowania', () => {
+    const cards = vm().sessions;
 
-    expect(rows.map((r) => r.index)).toEqual([1, 2, 3]);
-    expect(rows.map((r) => r.aircraftId)).toEqual(['SP-AXA', 'SP-AXA', 'SP-KLM']);
+    expect(cards.map((c) => c.title)).toEqual(['SESJA 1', 'SESJA 2', 'SESJA 3']);
+    expect(cards.map((c) => c.aircraft)).toEqual(['SP-AXA', 'SP-AXA', 'SP-KLM']);
   });
 
-  it('wiersz sesji niesie czasy, liczbę lotów i oba czasy trwania', () => {
-    const row = vm().sessions[0]!;
+  it('kafelek sesji niesie czasy, liczbę lotów i oba czasy trwania', () => {
+    const card = vm().sessions[0]!;
 
-    expect(row.times).toBe('08:12 → 09:05');
-    expect(row.flightsLabel).toBe('1');
-    expect(row.blockLabel).toBe('0:53');
-    expect(row.flightLabel).toBe('0:41');
+    expect(card.times).toBe('08:12 → 09:05 UTC');
+    expect(card.stats).toEqual([
+      { k: 'Loty', v: '1' },
+      { k: 'Blok', v: '0:53' },
+      { k: 'Lot', v: '0:41' },
+    ]);
   });
 
   it('otwarty bieg pokazuje „→ …" zamiast udawać zakończony', () => {
     const open = session({ aircraftId: 'SP-KLM', legs: [leg('13:40', null)] });
 
-    const rows = buildMyDay(dayOf(open)).sessions;
+    const cards = buildMyDay(dayOf(open)).sessions;
 
-    expect(rows[0]!.times).toBe('13:40 → …');
+    expect(cards[0]!.times).toBe('13:40 → … UTC');
+  });
+
+  /**
+   * Issue #42: „Mój dzień" i „Poprzednie dni" mają pokazywać sesję TAK SAMO.
+   * Test pilnuje umowy od strony modelu widoku — kafelek 01 wypełnia komplet pól
+   * `SessionCardVm`, więc `DayCard` dostaje z obu ekranów to samo. Gdyby ktoś dołożył
+   * tu własne pole „bo na 01 wygodniej", rozjazd zacznie się dokładnie tak, jak
+   * poprzednio: od jednej różnicy, o której nikt nie pamięta.
+   */
+  it('kafelek ma kształt wspólny z „Poprzednimi dniami" — nic ponadto', () => {
+    const card = vm().sessions[0]!;
+
+    expect(Object.keys(card).sort()).toEqual(
+      ['aircraft', 'sessionUuid', 'stats', 'times', 'title'].sort(),
+    );
+    expect(card.stats.map((s) => s.k)).toEqual(['Loty', 'Blok', 'Lot']);
   });
 
   it('sumy zgadzają się z mockupem: Blok i Loty, bez sumy „Służba"', () => {
