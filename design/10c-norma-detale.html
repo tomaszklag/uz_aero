@@ -155,10 +155,14 @@
      → wyłączenie, w jednej kolumnie czasu. Tabela była siatką pięciu kolumn, z których
      dwie powtarzały to samo (czas lotu obok pary godzin), a jedna świeciła „AUTO"
      przy każdym wierszu. Oś czasu mówi to samo krócej i ma miejsce na zrzuty. */
-  .axis { padding:4px 0 0; }
+  /* Oba końce osi oddychają: PRZEJĘCIE nie klei się do śladu ani do linii nagłówka,
+     a ZDANIE nie styka się ze stopką sum (czytałoby się jak jej pierwszy wiersz). */
+  .axis { padding:12px 0; }
+  /* Wiersz niski (28 px) — patrz komentarz na 10: oś nie ma celów dotknięcia, więc nie
+     musi trzymać rytmu 44 px, a numer lotu po prawej zdejmuje drugą linię. */
   .axis-row {
     display:grid; grid-template-columns:52px 14px 1fr auto;
-    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:38px;
+    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px;
   }
   .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
   .axis-time.dim { color:var(--text-secondary); }
@@ -192,11 +196,10 @@
       • plakietka RĘCZNIE — sposób POWSTANIA zapisu nie jest tu pytaniem pilota
         (ta sama reguła, którą przy issue #38 wygasiła plakietkę „AUTO"). Metoda
         zostaje w rejestrze i w panelu administratora, gdzie faktycznie coś zmienia. */
-  .axis-right { display:flex; align-items:center; gap:6px; }
+  /* Prawa krawędź: numer lotu przy starcie ALBO czas trwania — patrz komentarz na 10. */
+  .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
-  /* Kołowanie mierzy przygotowanie do startu, nie lot — zieleń zostaje przy czasach
-     w powietrzu, żeby jeden kolor nie znaczył dwóch rzeczy. */
-  .axis-dur.dim { color:var(--text-muted); }
   /* Stopka osi — JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
      Wcześniej stał w bohaterze ekranu, w obu kartach załogi, w podpisie średniego
      zużycia i w wierszu Δ motogodzin: pięć razy ta sama liczba. */
@@ -386,9 +389,8 @@
         <span class="screen-title">SESJA</span>
         <span class="header-subtitle">SP-AXA · 06 SIE · SKOKI</span>
       </div>
-      <div class="app-header-right">
-        <span class="badge">2 loty</span>
-      </div>
+      <!-- Bez plakietki z liczbą lotów (issue #40) — patrz komentarz na 10. -->
+      <div class="app-header-right"></div>
     </div>
 
     <!-- Scroll content -->
@@ -506,23 +508,22 @@
             <span class="axis-right"></span>
           </div>
 
-          <!-- KOŁOWANIE (issue #40 pkt 4). Zdarzenie `taxi` zapada raz na lot i było
-               na tej osi jedyną dziurą: log kokpitu pokazywał je od zawsze („13:11 ·
-               Taxi · 0:13"), a rozliczenie tej samej sesji już nie. Czas trwania
-               liczy się DO STARTU i mówi, ile zajęło przygotowanie — dokładnie tak,
-               jak na 04/05. -->
+          <!-- KOŁOWANIE (issue #40 pkt 4) — sama godzina, bez czasu trwania.
+               Patrz komentarz na 10. -->
           <div class="axis-row">
             <span class="axis-time dim">08:16</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
             <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
-            <span class="axis-right"><span class="axis-dur dim">00:04</span></span>
+            <span class="axis-right"></span>
           </div>
 
           <div class="axis-row">
             <span class="axis-time">08:20</span>
             <span class="axis-mark"><span class="axis-dot green"></span></span>
-            <span class="axis-label"><span class="axis-name">Start</span><span class="axis-sub">lot 1</span></span>
-            <span class="axis-right"></span>
+            <span class="axis-label"><span class="axis-name">Start</span></span>
+            <span class="axis-right">
+              <span class="axis-flight">lot 1</span>
+            </span>
           </div>
 
           <div class="axis-row">
@@ -535,7 +536,7 @@
           <div class="axis-row">
             <span class="axis-time">09:01</span>
             <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span><span class="axis-sub">lot 1</span></span>
+            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
             <span class="axis-right">
               <span class="axis-dur">00:41</span>
             </span>
@@ -545,14 +546,16 @@
             <span class="axis-time dim">09:08</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
             <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
-            <span class="axis-right"><span class="axis-dur dim">00:04</span></span>
+            <span class="axis-right"></span>
           </div>
 
           <div class="axis-row">
             <span class="axis-time">09:12</span>
             <span class="axis-mark"><span class="axis-dot green"></span></span>
-            <span class="axis-label"><span class="axis-name">Start</span><span class="axis-sub">lot 2</span></span>
-            <span class="axis-right"></span>
+            <span class="axis-label"><span class="axis-name">Start</span></span>
+            <span class="axis-right">
+              <span class="axis-flight">lot 2</span>
+            </span>
           </div>
 
           <div class="axis-row">
@@ -565,7 +568,7 @@
           <div class="axis-row">
             <span class="axis-time">09:47</span>
             <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span><span class="axis-sub">lot 2</span></span>
+            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
             <span class="axis-right">
               <span class="axis-dur">00:35</span>
             </span>

@@ -61,7 +61,7 @@ import { correctionWindow, isJumpOperation } from '../../domain';
 import type { SessionTrackView } from '../../application';
 import { dateUtcDayMonth } from '../format';
 import { TrackThumbnail } from '../components/data/TrackThumbnail';
-import { dateTimeUtcShort, flightsBadge, jumperBreakdown } from './logic/statsDay';
+import { dateTimeUtcShort, jumperBreakdown } from './logic/statsDay';
 import { buildSessionAxis } from './logic/sessionAxis';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
 import { sessionNotes } from './logic/sessionNotes';
@@ -232,14 +232,21 @@ export function StatsScreen({
           subtitle={subtitle(projection.aircraftId, projection.claimedAt, projection.operation)}
           right={
             <>
-              <Tag
-                label={flightCount === 0 ? 'bez lotu' : flightsBadge(flightCount)}
-                tone={flightCount === 0 ? 'amber' : 'green'}
-                size="md"
-                style={{ borderRadius: theme.radius.pill }}
-              />
-              {/* Tryb ekranu wprost (mockup 10b): bez tej plakietki brak ołówków
-                  wygląda jak awaria, a nie jak reguła. */}
+              {/* Liczba lotów NIE MA tu plakietki (issue #40): stopka osi mówi
+                  „STARTY 2" trzy centymetry niżej, a plakietka świecąca przy każdej
+                  normalnej sesji uczy oko pomijać róg nagłówka — ta sama reguła, którą
+                  issue #12 wygasił zielony SyncChip. Zostaje sam stan ODCHYLONY:
+                  sesja, w której silnik pracował, a maszyna nie wzbiła się w powietrze. */}
+              {flightCount === 0 && (
+                <Tag
+                  label="bez lotu"
+                  tone="amber"
+                  size="md"
+                  style={{ borderRadius: theme.radius.pill }}
+                />
+              )}
+              {/* Tryb ekranu wprost (mockup 10b): bez tej plakietki brak przycisku
+                  „EDYTUJ DANE" wygląda jak awaria, a nie jak reguła. */}
               {readOnly && (
                 <Tag
                   label="Podgląd"

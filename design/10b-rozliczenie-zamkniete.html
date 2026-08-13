@@ -164,10 +164,14 @@
      → wyłączenie, w jednej kolumnie czasu. Tabela była siatką pięciu kolumn, z których
      dwie powtarzały to samo (czas lotu obok pary godzin), a jedna świeciła „AUTO"
      przy każdym wierszu. Oś czasu mówi to samo krócej i ma miejsce na zrzuty. */
-  .axis { padding:4px 0 0; }
+  /* Oba końce osi oddychają: PRZEJĘCIE nie klei się do śladu ani do linii nagłówka,
+     a ZDANIE nie styka się ze stopką sum (czytałoby się jak jej pierwszy wiersz). */
+  .axis { padding:12px 0; }
+  /* Wiersz niski (28 px) — patrz komentarz na 10: oś nie ma celów dotknięcia, więc nie
+     musi trzymać rytmu 44 px, a numer lotu po prawej zdejmuje drugą linię. */
   .axis-row {
     display:grid; grid-template-columns:52px 14px 1fr auto;
-    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:38px;
+    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px;
   }
   .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
   .axis-time.dim { color:var(--text-secondary); }
@@ -195,9 +199,10 @@
   /* Prawa kolumna niesie sam czas trwania — plakietka RĘCZNIE wypadła z osi razem
      z ołówkami (issue #40 pkt 1 i 6). Po oknie korekty ten ekran i tak nie miał
      ołówków; od issue #40 wygląda tak SAM ZE SIEBIE, a nie przez tryb podglądu. */
-  .axis-right { display:flex; align-items:center; gap:6px; }
+  /* Prawa krawędź: numer lotu przy starcie ALBO czas trwania — patrz komentarz na 10. */
+  .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
-  .axis-dur.dim { color:var(--text-muted); }
   /* Stopka osi — JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
      Wcześniej stał w bohaterze ekranu, w obu kartach załogi, w podpisie średniego
      zużycia i w wierszu Δ motogodzin: pięć razy ta sama liczba. */
@@ -433,20 +438,22 @@
             <span class="axis-time dim">13:47</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
             <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
-            <span class="axis-right"><span class="axis-dur dim">00:05</span></span>
+            <span class="axis-right"></span>
           </div>
 
           <div class="axis-row">
             <span class="axis-time">13:52</span>
             <span class="axis-mark"><span class="axis-dot green"></span></span>
-            <span class="axis-label"><span class="axis-name">Start</span><span class="axis-sub">lot 1 · EPZG</span></span>
-            <span class="axis-right"></span>
+            <span class="axis-label"><span class="axis-name">Start</span></span>
+            <span class="axis-right">
+              <span class="axis-flight">lot 1 · EPZG</span>
+            </span>
           </div>
 
           <div class="axis-row">
             <span class="axis-time">15:03</span>
             <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span><span class="axis-sub">lot 1 · EPPO</span></span>
+            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
             <span class="axis-right">
               <span class="axis-dur">01:11</span>
             </span>

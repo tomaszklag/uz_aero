@@ -121,16 +121,14 @@ describe('oś sesji', () => {
     }
   });
 
-  it('kołowanie mierzy czas DO STARTU, a bez startu po sobie nie mierzy nic', () => {
-    expect(axis().rows.filter((row) => row.kind === 'taxi').map((row) => row.duration)).toEqual([
-      '00:04',
-      '00:04',
-    ]);
+  it('kołowanie niesie samą godzinę — czasu trwania nie liczymy', () => {
+    // „Ile trwało kołowanie" jest ciekawostką w rozliczeniu sesji: do bloku i tak
+    // wchodzi cały bieg silnika. Czas zostaje w kokpicie, gdzie pilot patrzy na zegar
+    // w trakcie przygotowania do startu.
+    const taxi = axis().rows.filter((row) => row.kind === 'taxi');
 
-    // Powrót na płytę po ostatnim lądowaniu: kołowanie jest, startu po nim nie ma.
-    // Doliczenie czasu do wyłączenia silnika opisywałoby postój, nie kołowanie.
-    const zPowrotem = [...sessionEvents(), event('taxi', at(9, 50), { method: 'auto' }, 'taxi-3')];
-    expect(axis(zPowrotem).rows.find((row) => row.id === 'taxi-3')!.duration).toBeNull();
+    expect(taxi.map((row) => row.time)).toEqual(['08:16', '09:08']);
+    expect(taxi.every((row) => row.duration == null && row.sub == null)).toBe(true);
   });
 
   it('czas lotu stoi przy lądowaniu, nie przy starcie', () => {
@@ -143,6 +141,25 @@ describe('oś sesji', () => {
     expect(rows.filter((row) => row.kind === 'takeoff').every((row) => row.duration == null)).toBe(
       true,
     );
+  });
+
+  it('numer lotu idzie w prawą kolumnę i pada RAZ — przy starcie', () => {
+    // Druga linia w połowie wierszy kosztowała wysokość, którą sesja skokowa zamienia
+    // w przewijanie. Przy lądowaniu numeru nie ma: prawą kolumnę zajmuje tam czas lotu,
+    // czyli liczba, po którą pilot sięga, a para start → lądowanie czyta się w pionie.
+    // Podpis pod nazwą zostaje tam, gdzie jest OPISEM: odczyty na końcach osi i zrzut.
+    const { rows } = axis();
+    const flights = rows.filter((row) => row.kind === 'takeoff' || row.kind === 'landing');
+
+    expect(flights.map((row) => `${row.kind} ${row.flight ?? '—'}`)).toEqual([
+      'takeoff lot 1',
+      'landing —',
+      'takeoff lot 2',
+      'landing —',
+    ]);
+    expect(flights.every((row) => row.sub == null)).toBe(true);
+    expect(rows.find((row) => row.id === 'drop-1')!.flight).toBeNull();
+    expect(rows.find((row) => row.kind === 'claim')!.flight).toBeNull();
   });
 
   it('końce osi niosą odczyty, do których odwołują się rachunki niżej', () => {

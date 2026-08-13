@@ -156,10 +156,14 @@
      → wyłączenie, w jednej kolumnie czasu. Tabela była siatką pięciu kolumn, z których
      dwie powtarzały to samo (czas lotu obok pary godzin), a jedna świeciła „AUTO"
      przy każdym wierszu. Oś czasu mówi to samo krócej i ma miejsce na zrzuty. */
-  .axis { padding:4px 0 0; }
+  /* Oba końce osi oddychają: PRZEJĘCIE nie klei się do śladu ani do linii nagłówka,
+     a ZDANIE nie styka się ze stopką sum (czytałoby się jak jej pierwszy wiersz). */
+  .axis { padding:12px 0; }
+  /* Wiersz niski (28 px) — patrz komentarz na 10: oś nie ma celów dotknięcia, więc nie
+     musi trzymać rytmu 44 px. */
   .axis-row {
     display:grid; grid-template-columns:52px 14px 1fr auto;
-    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:38px;
+    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px;
   }
   .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
   .axis-time.dim { color:var(--text-secondary); }
@@ -186,7 +190,6 @@
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-right { display:flex; align-items:center; gap:6px; }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
-  .axis-dur.dim { color:var(--text-muted); }
   /* Stopka osi — JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
      Wcześniej stał w bohaterze ekranu, w obu kartach załogi, w podpisie średniego
      zużycia i w wierszu Δ motogodzin: pięć razy ta sama liczba. */

@@ -10,7 +10,9 @@
  * ══ CO ZMIENIŁ ISSUE #40 ══
  *  • **kołowanie wchodzi na oś** (pkt 4). `taxi` było jedyną dziurą tego zestawienia:
  *    log kokpitu (04, 05) pokazuje je od zawsze, a rozliczenie tej samej sesji już nie.
- *    Czas trwania liczy się DO STARTU — tak samo jak tam.
+ *    Wiersz niesie samą GODZINĘ — czas trwania kołowania zostaje w kokpicie, gdzie
+ *    pilot patrzy na zegar w trakcie przygotowania; w rozliczeniu jest ciekawostką,
+ *    bo do bloku i tak wchodzi cały bieg silnika.
  *  • **znika kolumna ołówka** (pkt 1). Korekta ma odtąd jedne drzwi: „EDYTUJ DANE" pod
  *    ekranem, czyli listę ręczną (08), gdzie poprawianie jest zadaniem ekranu, a nie
  *    ozdobą podsumowania. Dwanaście identycznych celów w jednej kolumnie czytało się
@@ -58,12 +60,18 @@ export interface AxisRow {
   time: string;
   /** „Start", „Lądowanie", „Zrzut 2". */
   name: string;
-  /** Druga linia: „lot 1", „4 skoczków · 12 800 ft", „odczyt 150 L · 1 234:30". */
+  /** Druga linia: „4 skoczków · 12 800 ft", „odczyt 150 L · 1 234:30". */
   sub: string | null;
   /**
-   * Czas trwania: lotu przy lądowaniu („00:41") i kołowania do startu („00:04");
-   * `null` wszędzie indziej. Ton rozstrzyga `kind` — zieleń zostaje przy powietrzu.
+   * Numer lotu przy STARCIE („lot 1") — po prawej, nie pod nazwą i nie przy lądowaniu.
+   *
+   * Jest przypisem do zdarzenia, a nie jego opisem: mówi, który lot się tu zaczyna.
+   * Pod nazwą kosztował drugą linię w połowie wierszy osi — czyli całą wysokość, którą
+   * sesja skokowa zamienia w przewijanie. Przy lądowaniu go nie ma, bo prawą kolumnę
+   * zajmuje tam czas lotu, a para start → lądowanie i tak czyta się w pionie.
    */
+  flight: string | null;
+  /** Czas lotu przy lądowaniu („00:41"); `null` wszędzie indziej. */
   duration: string | null;
 }
 
@@ -125,13 +133,10 @@ export function buildSessionAxis(
       time: timeUtc(projection.claimedAt),
       name: 'Przejęcie',
       sub: readingLine(projection.fuel.startL, projection.mh.start, mhFormat),
+      flight: null,
       duration: null,
     });
   }
-
-  // Starty potrzebne do zmierzenia kołowania — z projekcji, bo to ona rozstrzyga,
-  // który `takeoff` jest lotem (korekty `void` już z niej wypadły).
-  const takeoffs = projection.flights.map((flight) => flight.takeoffAt).sort((a, b) => a - b);
 
   for (const event of effective) {
     if (event.type === 'engine_start' || event.type === 'engine_stop') {
@@ -142,6 +147,7 @@ export function buildSessionAxis(
         time: timeUtc(at(event)),
         name: event.type === 'engine_start' ? 'Uruchomienie' : 'Wyłączenie',
         sub: null,
+        flight: null,
         duration: null,
       });
     }
@@ -154,7 +160,12 @@ export function buildSessionAxis(
         time: timeUtc(at(event)),
         name: 'Kołowanie',
         sub: null,
-        duration: taxiDuration(at(event), takeoffs),
+        flight: null,
+        // Bez czasu trwania: godzina rozpoczęcia mówi wszystko, co z kołowania wynika
+        // dla rozliczenia sesji, a „ile trwało" jest ciekawostką, nie daną — do bloku
+        // wchodzi i tak cały bieg silnika. W kokpicie (04, 05) czas zostaje, bo tam
+        // pilot patrzy na zegar w trakcie przygotowania.
+        duration: null,
       });
     }
 
@@ -167,6 +178,7 @@ export function buildSessionAxis(
         time: timeUtc(at(drop)),
         name: `Zrzut ${drop.payload.dropNumber}`,
         sub: dropLine(drop.payload.jumpers, drop.payload.altitudeFt),
+        flight: null,
         duration: null,
       });
     }
@@ -179,7 +191,8 @@ export function buildSessionAxis(
       at: flight.takeoffAt,
       time: timeUtc(flight.takeoffAt),
       name: 'Start',
-      sub: `lot ${flight.index}`,
+      sub: null,
+      flight: `lot ${flight.index}`,
       duration: null,
     });
 
@@ -192,7 +205,11 @@ export function buildSessionAxis(
         at: flight.landingAt,
         time: timeUtc(flight.landingAt),
         name: 'Lądowanie',
-        sub: `lot ${flight.index}`,
+        sub: null,
+        // Numer lotu pada RAZ, przy starcie: para start → lądowanie czyta się w pionie,
+        // a przy lądowaniu prawą kolumnę zajmuje czas lotu — czyli liczba, po którą
+        // pilot tu sięga. Powtórzony numer walczyłby z nią o to samo miejsce.
+        flight: null,
         duration: hhmm(flight.durationMs),
       });
     }
@@ -206,6 +223,7 @@ export function buildSessionAxis(
       time: timeUtc(projection.closedAt),
       name: 'Zdanie',
       sub: readingLine(projection.fuel.endL, projection.mh.end, mhFormat),
+      flight: null,
       duration: null,
     });
   }
@@ -258,19 +276,6 @@ function buildFoot(projection: SessionState, now: number): AxisFootItem[] {
   }
 
   return items;
-}
-
-/**
- * Ile trwało kołowanie: od zdarzenia `taxi` do NAJBLIŻSZEGO startu po nim (mockup 10,
- * ta sama reguła co w logu kokpitu — „13:11 · Taxi · 0:13" przed „13:24 · Takeoff").
- *
- * Kołowanie bez startu po sobie — powrót na płytę po ostatnim lądowaniu albo próba
- * zakończona rezygnacją — czasu NIE DOSTAJE: nie ma zdarzenia, które by je domykało,
- * a doliczanie go do wyłączenia silnika opisywałoby postój, nie kołowanie.
- */
-function taxiDuration(taxiAt: number, takeoffs: readonly number[]): string | null {
-  const next = takeoffs.find((takeoffAt) => takeoffAt > taxiAt);
-  return next == null ? null : hhmm(next - taxiAt);
 }
 
 /** Ile maszyna była zajęta: przejęcie → zdanie, a przy sesji trwającej — do teraz. */

@@ -405,9 +405,22 @@ stoi.
   kolumna wróciła do jedynej liczby, która coś w niej znaczy — czasu trwania. Baner okna
   korekty mówi teraz, GDZIE się poprawia; `SessionAxis` nie zna już `onCorrect`
 - **kołowanie wchodzi na oś** (pkt 4): `taxi` było jedyną dziurą wobec logu kokpitu.
-  Czas liczy się DO STARTU (jak na 04/05), kołowanie bez startu po sobie czasu nie
-  dostaje, a jego liczba jest szara — zieleń zostaje przy czasach w powietrzu
+  Wiersz niesie SAMĄ GODZINĘ — „ile trwało kołowanie" jest w rozliczeniu ciekawostką
+  (do bloku i tak wchodzi cały bieg silnika), więc zegar przygotowania zostaje
+  w kokpicie, gdzie pilot patrzy na niego w trakcie
 - **„Czas lotu" zamiast „W powietrzu"** (pkt 3) — dwa słowa łamały stopkę na dwie linie
+- **oś jest KOMPAKTOWA** (uwagi z przeglądu): wiersz 28 px zamiast 40 — brak celów
+  dotknięcia zdejmuje rytm 44 px, a warunkiem są jawne `lineHeight` (wariant `mono`
+  niesie domyślnie 18 px, więc jedna linia zajmowała tyle, co dwie). Numer lotu zszedł
+  z drugiej linii na PRAWĄ krawędź i pada RAZ, przy starcie: przy lądowaniu prawą
+  kolumnę zajmuje czas lotu, a para start → lądowanie czyta się w pionie. Prawa krawędź
+  niesie odtąd dokładnie jedną rzecz na wiersz, więc nic nie rezerwuje miejsca na to,
+  czego w wierszu nie ma. Oba końce osi mają oddech (12 px): PRZEJĘCIE nie klei się do
+  śladu, ZDANIE nie czyta się jak pierwszy wiersz stopki z sumami
+- **nagłówek bez plakietki z liczbą lotów**: stopka osi mówi „STARTY 2" trzy centymetry
+  niżej, a plakietka świecąca przy każdej normalnej sesji uczy oko pomijać róg nagłówka
+  (reguła SyncChipa z issue #12). Zostaje sam stan ODCHYLONY — amber „bez lotu" na 10A
+  i „Podgląd" na 10B
 - **notatki mają wreszcie swoje miejsce** (pkt 5): karta na końcu ekranu zbiera notatkę
   z zadania (02e) i uwagi wpisów ręcznych (08, 15) — `logic/sessionNotes.ts`. Do issue #40
   ten tekst widział administrator w panelu, a jego autor NIGDZIE. Karty nie ma, gdy nie
