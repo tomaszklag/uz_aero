@@ -53,11 +53,14 @@ Zdanie samolotu (model 2026-08-10 — sesja = jeden bieg silnika; ekrany 09 i 09
 
 Odnogi pod 01 (nie etapy dnia):
   10-statystyki  SESJA: ślad całego biegu silnika ze znacznikami startów i lądowań,
-                 oś czasu (przejęcie → uruchomienie → starty, zrzuty, lądowania →
-                 wyłączenie → zdanie), rachunki paliwa i motogodzin na tle normy
-                 fazowej. Wejście OŁÓWKIEM wiersza logu na 01 albo kartą sesji
-                 w historii (10a — bez lotu, 10b — po oknie korekty, tylko odczyt);
-                 niczego się tu nie zatwierdza: zdanie samolotu już potwierdziło dane
+                 oś czasu (przejęcie → uruchomienie → kołowanie, starty, zrzuty,
+                 lądowania → wyłączenie → zdanie), rachunki paliwa i motogodzin
+                 zakończone PLAKIETKĄ werdyktu, notatki pilota. Wejście OŁÓWKIEM
+                 wiersza logu na 01 albo kartą sesji w historii (10a — bez lotu,
+                 10b — po oknie korekty, tylko odczyt, 10c — arkusz normy pod
+                 plakietką); niczego się tu nie zatwierdza: zdanie samolotu już
+                 potwierdziło dane, a czasy poprawia się przyciskiem EDYTUJ DANE
+                 (issue #40 — ołówka przy wierszach osi NIE MA)
     → 14-slad    pełny ślad pod miniaturą: trasa, profil pionowy z przerwą na ziemi,
                  log punktów (14b — stan zabezpieczający, gdy zapis zniknął).
                  Issue #38: ekran 16 usunięty — zapis GPS powstaje w JEDNYM ciągu,

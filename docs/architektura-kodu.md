@@ -1397,8 +1397,9 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `flightPhase.test.ts` | fazy lotu i prędkości pionowej — patrz niżej |
 | `refuelMath.test.ts` | wyliczeń tankowania: zużycie L/h, limit dolewki, podziałka |
 | `statsDay.test.ts` | odmian wspólnych ekranowi sesji: liczebnik lotów, rozbicie skoczków |
-| `sessionAxis.test.ts` | osi czasu sesji (10): kolejność zdarzeń, adresy korekty, plakietka tylko dla wpisu ręcznego, stopka (blok / w powietrzu / starty), sesja bez pracy silnika |
-| `sessionBalance.test.ts` | rachunków paliwa i MH: oczekiwanie liczone z PROPORCJI faz tej sesji, podłoga pasma z błędu odczytu, powód zamiast kreski, gdy nie ma z czym porównywać |
+| `sessionAxis.test.ts` | osi czasu sesji (10): kolejność zdarzeń, adresy uuid, kołowanie z samą godziną, numer lotu przy STARCIE i po prawej, brak ołówka i plakietki wpisu ręcznego (issue #40), stopka (blok / czas lotu / starty), sesja bez pracy silnika |
+| `sessionBalance.test.ts` | rachunków paliwa i MH: oczekiwanie liczone z PROPORCJI faz tej sesji, podłoga pasma z błędu odczytu, arkusz normy istniejący dokładnie razem z werdyktem, powód zamiast kreski, gdy nie ma z czym porównywać |
+| `sessionNotes.test.ts` | notatek sesji (10): notatka z zadania i uwagi wpisów ręcznych w jednej liście chronologicznej, pusty tekst nie udaje notatki |
 | `cockpitPeek.test.ts` | podglądu cudzej sesji: świeżość migawki, treść ostrzeżeń |
 | `crewChange.test.ts` | atrybucji block time per pilot i blokad zmiany Duala |
 | `manualLog.test.ts` | grupowania logu w cykle silnikowe i wierszy oczekiwanych |

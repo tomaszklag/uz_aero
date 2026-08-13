@@ -1,5 +1,5 @@
 /**
- * UZ Aero — 10 SESJA (mockupy `design/10-statystyki.html`, `10a`, `10b`).
+ * UZ Aero — 10 SESJA (mockupy `design/10-statystyki.html`, `10a`, `10b`, `10c`).
  *
  * Opisuje JEDNĄ SESJĘ SAMOLOTU (przejęcie → zdanie), a nie dzień pilota: dzień pilota to
  * LISTA SESJI na różnych maszynach (issue #23) i mieszka na „Mój dzień" (01).
@@ -16,6 +16,19 @@
  *    mieszanki faz → werdykt. Motogodziny mają odtąd własną normę
  *  • **plakietka „AUTO" znikła** — detekcja jest stanem domyślnym, więc oznaczamy
  *    wyłącznie wpis ręczny (ta sama reguła, co SyncChip po issue #12)
+ *
+ * ══ CO ZMIENIŁ ISSUE #40 (uwagi z urządzenia) ══
+ *  • **kołowanie wchodzi na oś** (pkt 4) — było jedyną dziurą tego zestawienia wobec
+ *    logu kokpitu
+ *  • **korekta ma JEDNE drzwi** (pkt 1): „EDYTUJ DANE" pod ekranem. Ołówek przy każdym
+ *    z kilkunastu wierszy dawał kilkanaście identycznych celów i zabierał prawą kolumnę
+ *    jedynej liczbie, która coś w niej znaczy — czasowi trwania (pkt 2)
+ *  • **plakietka „RĘCZNIE" znikła** (pkt 6): sposób powstania zapisu nie jest pytaniem
+ *    pilota. Reguła z issue #38 dociągnięta do końca
+ *  • **„Czas lotu" zamiast „W powietrzu"** (pkt 3) — dwa słowa łamały stopkę na telefonie
+ *  • **notatki pilota mają wreszcie swoje miejsce** (pkt 5)
+ *  • **z rachunków zostaje SAMA plakietka werdyktu** (pkt 7 i 8); pasmo, stawki normy
+ *    i rozpisane działanie otwiera tapnięcie w nią (`design/10c-norma-detale.html`)
  *
  * Ekran jest **wyłącznie do odczytu**: nie emituje ani jednego zdarzenia. Wszystko, co
  * pokazuje, jest projekcją ze strumienia lokalnego (§5.2) — JEDYNYM wyjątkiem jest norma
@@ -43,15 +56,15 @@ import {
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAircraft } from '../hooks/useAircraft';
-import { useEventCorrection } from '../hooks/useEventCorrection';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { correctionWindow, isJumpOperation } from '../../domain';
 import type { SessionTrackView } from '../../application';
 import { dateUtcDayMonth } from '../format';
 import { TrackThumbnail } from '../components/data/TrackThumbnail';
-import { dateTimeUtcShort, flightsBadge, jumperBreakdown } from './logic/statsDay';
+import { dateTimeUtcShort, jumperBreakdown } from './logic/statsDay';
 import { buildSessionAxis } from './logic/sessionAxis';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
+import { sessionNotes } from './logic/sessionNotes';
 import { operationTag } from './logic/operations';
 
 /** Wysokość miniatury śladu — proporcje z mockupu 10 przy szerokości telefonu. */
@@ -72,7 +85,6 @@ export function StatsScreen({
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
   const currentPilotId = useCurrentPilot((s) => s.id);
-  const { openCorrection, correctionSheet } = useEventCorrection();
 
   // Norma zużycia z cache'u referencyjnego — jedyna dana z serwera na tym ekranie.
   // Reszta liczb jest projekcją lokalnych zdarzeń, więc zawsze świeża (§5.2).
@@ -138,9 +150,12 @@ export function StatsScreen({
    * Sesja po oknie 24 h = PODGLĄD (issue #35 pkt 2, mockup `design/10b`).
    *
    * Ekran zostaje ten sam — te same liczby, ta sama kolejność sekcji — ale znika z niego
-   * wszystko, co pisze: ołówki na osi czasu i „Edytuj dane". Wyszarzony ołówek byłby
-   * gorszy od jego braku: obiecywałby akcję, którą reguły domeny i tak odrzucą
-   * (§6 pkt 3). Powód stoi w banerze nad wszystkim.
+   * wszystko, co pisze. Od issue #40 jest to dokładnie JEDNA rzecz: przycisk „EDYTUJ
+   * DANE". Wyszarzony przycisk byłby gorszy od jego braku — obiecywałby akcję, którą
+   * reguły domeny i tak odrzucą (§6 pkt 3). Powód stoi w banerze nad wszystkim.
+   *
+   * Werdykty zostają KLIKALNE także tutaj: arkusz normy niczego nie zapisuje, a zamknięte
+   * okno odbiera prawo do zmiany danych, nie do ich zrozumienia.
    */
   const readOnly = !window24h.open;
   /** Po oknie wchodzi się tu wyłącznie z „Poprzednich dni" — tam też prowadzi wyjście. */
@@ -154,6 +169,21 @@ export function StatsScreen({
   const refuelCount = useMemo(
     () => events.filter((event) => event.type === 'refuel').length,
     [events],
+  );
+
+  const notes = useMemo(() => sessionNotes(projection, events), [projection, events]);
+
+  /**
+   * Wiek normy — jedyna dana z serwera na tym ekranie, więc jedyna z adnotacją świeżości
+   * (§4.8). Od issue #40 stoi W ARKUSZU normy, przy liczbach, których dotyczy: na karcie
+   * została sama plakietka werdyktu, a adnotacja o cache'u bez liczb obok nie ma czego
+   * kwalifikować. Stan `live` nie rysuje nic, więc online arkusz zostaje bez niej.
+   */
+  const normFreshness = (
+    <FreshnessNote
+      state={synced ? 'live' : 'cache'}
+      syncedAt={aircraftRef == null ? null : dateTimeUtcShort(aircraftRef.fetchedAt)}
+    />
   );
 
   const fuel = useMemo(
@@ -202,14 +232,21 @@ export function StatsScreen({
           subtitle={subtitle(projection.aircraftId, projection.claimedAt, projection.operation)}
           right={
             <>
-              <Tag
-                label={flightCount === 0 ? 'bez lotu' : flightsBadge(flightCount)}
-                tone={flightCount === 0 ? 'amber' : 'green'}
-                size="md"
-                style={{ borderRadius: theme.radius.pill }}
-              />
-              {/* Tryb ekranu wprost (mockup 10b): bez tej plakietki brak ołówków
-                  wygląda jak awaria, a nie jak reguła. */}
+              {/* Liczba lotów NIE MA tu plakietki (issue #40): stopka osi mówi
+                  „STARTY 2" trzy centymetry niżej, a plakietka świecąca przy każdej
+                  normalnej sesji uczy oko pomijać róg nagłówka — ta sama reguła, którą
+                  issue #12 wygasił zielony SyncChip. Zostaje sam stan ODCHYLONY:
+                  sesja, w której silnik pracował, a maszyna nie wzbiła się w powietrze. */}
+              {flightCount === 0 && (
+                <Tag
+                  label="bez lotu"
+                  tone="amber"
+                  size="md"
+                  style={{ borderRadius: theme.radius.pill }}
+                />
+              )}
+              {/* Tryb ekranu wprost (mockup 10b): bez tej plakietki brak przycisku
+                  „EDYTUJ DANE" wygląda jak awaria, a nie jak reguła. */}
               {readOnly && (
                 <Tag
                   label="Podgląd"
@@ -301,15 +338,20 @@ export function StatsScreen({
             </View>
           )}
 
+          {/* Oś jest CZYSTO OPISOWA (issue #40 pkt 1): korekta wychodzi jednymi drzwiami,
+              przyciskiem „EDYTUJ DANE" pod ekranem. Ołówek przy każdym z kilkunastu
+              wierszy dawał kilkanaście identycznych celów i zabierał miejsce jedynej
+              liczbie, która w tej kolumnie coś znaczy — czasowi trwania. */}
           <SessionAxis
             rows={axis.rows}
             foot={axis.foot}
-            onCorrect={readOnly ? undefined : openCorrection}
             emptyText="Ta sesja nie ma jeszcze ani jednego zdarzenia."
           />
         </Card>
 
-        {/* ── paliwo ───────────────────────────────────────────────────────── */}
+        {/* ── paliwo ───────────────────────────────────────────────────────
+            Na karcie: rachunek, wynik i plakietka werdyktu. Pasmo, stawki normy
+            i rozpisane działanie otwiera tapnięcie w plakietkę (issue #40 pkt 7). */}
         <BalanceCard
           title="Paliwo"
           rows={fuel.rows}
@@ -317,20 +359,10 @@ export function StatsScreen({
           totalValue={fuel.totalValue}
           totalTone={fuel.totalTone}
           verdict={fuel.verdict}
-          note={fuel.note}
-          noteTone={synced ? 'neutral' : 'amber'}
+          details={fuel.details}
+          freshness={normFreshness}
           naNote={fuel.naNote}
         />
-        {/* Wiek normy — jedyna dana z serwera na tym ekranie, więc jedyna z adnotacją
-            świeżości (§4.8). Koniec dnia bywa offline, a norma sprzed tygodnia dalej
-            jest dobrym punktem odniesienia — pod warunkiem, że pilot o tym wie. */}
-        {fuel.verdict != null && (
-          <FreshnessNote
-            state={synced ? 'live' : 'cache'}
-            syncedAt={aircraftRef == null ? null : dateTimeUtcShort(aircraftRef.fetchedAt)}
-            style={styles.freshness}
-          />
-        )}
 
         {/* ── motogodziny ──────────────────────────────────────────────────── */}
         <BalanceCard
@@ -340,7 +372,8 @@ export function StatsScreen({
           totalValue={mh.totalValue}
           totalTone={mh.totalTone}
           verdict={mh.verdict}
-          note={mh.note}
+          details={mh.details}
+          freshness={normFreshness}
           naNote={mh.naNote}
         />
 
@@ -402,9 +435,35 @@ export function StatsScreen({
             style={styles.row}
           />
         </Card>
-      </View>
 
-      {correctionSheet}
+        {/* ── notatki ───────────────────────────────────────────────────────
+            Wszystko, co pilot NAPISAŁ o tej sesji: notatka z kroku „zadanie" (02e)
+            i uwagi wpisów ręcznych (08, 15). Do issue #40 ten tekst nie wracał do
+            autora nigdzie — widział go tylko administrator w panelu.
+            Karta stoi na końcu, bo jest komentarzem do liczb wyżej, i pojawia się
+            WYŁĄCZNIE wtedy, gdy jest treść: „Notatki —" byłoby wierszem o niczym. */}
+        {notes.length > 0 && (
+          <Card title="Notatki" flush>
+            {notes.map((note, index) => (
+              <View
+                key={note.id}
+                style={[
+                  styles.note,
+                  index > 0 ? { borderTopWidth: 1, borderTopColor: theme.colors.border } : null,
+                ]}
+              >
+                <AppText variant="micro" tone="muted">
+                  {note.when.toUpperCase()}
+                </AppText>
+                {/* Body font, nie mono: to zdanie napisane przez człowieka, a nie odczyt. */}
+                <AppText variant="body" tone="secondary" style={styles.noteText}>
+                  {note.text}
+                </AppText>
+              </View>
+            ))}
+          </Card>
+        )}
+      </View>
     </Screen>
   );
 }
@@ -475,9 +534,11 @@ function CorrectionWindowBanner({
   open: boolean;
   closesAt: number | null;
 }) {
+  // Baner mówi, GDZIE się poprawia (issue #40 pkt 1) — ołówków przy wierszach osi już
+  // nie ma, więc zdanie o nich prowadziłoby donikąd.
   const tail =
-    'Później korektę nanosi administrator. Stuknij ołówek przy zdarzeniu, żeby poprawić ' +
-    'czas albo oznaczyć je jako błędne.';
+    'Później korektę nanosi administrator. Czasy zdarzeń poprawisz przyciskiem ' +
+    '„EDYTUJ DANE" na dole ekranu.';
 
   if (!confirmed) {
     return (
@@ -535,5 +596,6 @@ const styles = StyleSheet.create({
   },
   noTrackTitle: { fontSize: 17, letterSpacing: 2 },
   noTrackText: { fontSize: 8.5, lineHeight: 14, textAlign: 'center', maxWidth: 250 },
-  freshness: { paddingHorizontal: 4, marginTop: -6 },
+  note: { paddingHorizontal: 12, paddingVertical: 10, gap: 4 },
+  noteText: { fontSize: 12, lineHeight: 18 },
 });

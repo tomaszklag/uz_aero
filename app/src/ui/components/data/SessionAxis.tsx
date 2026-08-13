@@ -18,17 +18,28 @@
  * z kropkami przy pierwszej zmianie treści. Pierwszy i ostatni wiersz obcinają ją do
  * połowy, żeby oś zaczynała się i kończyła na kropce.
  *
- * Cel korekty ma 44 px (audyt dostępności): naprawa błędnej detekcji nie może być
- * trudniejsza niż jej popełnienie.
+ * ══ OŚ NICZEGO NIE URUCHAMIA (issue #40 pkt 1) ══
+ * Do issue #40 każdy wiersz kończył się ołówkiem korekty. Dwanaście identycznych celów
+ * w jednej kolumnie czytało się jak szum — a korekta ma jedne drzwi: „EDYTUJ DANE" pod
+ * ekranem, czyli lista ręczna (08). Komponent jest odtąd czysto opisowy: bez `Pressable`,
+ * bez plakietki „RĘCZNIE" (pkt 6) i bez wiedzy o oknie korekty.
+ *
+ * ══ WIERSZ JEST KOMPAKTOWY, BO MOŻE BYĆ ══
+ * Brak celów dotknięcia zdejmuje z osi rytm 44 px, a numer lotu przeniesiony na PRAWĄ
+ * stronę zdejmuje drugą linię z połowy wierszy. Zostaje 28 px na wiersz i cała sesja
+ * skokowa na jednym ekranie. Warunkiem są jawne `lineHeight`: wariant `mono` niesie
+ * domyślnie 18 px, więc jednolinijkowy wiersz zajmował tyle, co dwulinijkowy.
+ *
+ * Prawa krawędź niesie DOKŁADNIE JEDNĄ rzecz na wiersz — numer lotu przy starcie albo
+ * czas trwania przy lądowaniu i kołowaniu — więc wszystko dosuwa się do prawej i stoi
+ * w jednej linii pionowej, bez rezerwowania miejsca na to, czego w wierszu nie ma.
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
-import { Icon } from '../foundation/Icon';
-import { Tag } from '../status/Tag';
 import type { Tone } from '../tone';
 import { toneColors } from '../tone';
 
@@ -36,6 +47,7 @@ import { toneColors } from '../tone';
 export type SessionAxisKind =
   | 'claim'
   | 'engineStart'
+  | 'taxi'
   | 'takeoff'
   | 'drop'
   | 'landing'
@@ -47,13 +59,12 @@ export interface SessionAxisRow {
   kind: SessionAxisKind;
   time: string;
   name: string;
+  /** Druga linia — TYLKO tam, gdzie treść jest opisem: odczyty, skład zrzutu. */
   sub?: string | null;
-  /** Czas lotu przy lądowaniu („00:41"). */
+  /** Numer lotu („lot 1") — po PRAWEJ, przed czasem trwania. */
+  flight?: string | null;
+  /** Czas lotu przy lądowaniu („00:41") — jedyna liczba tej kolumny, stąd zieleń. */
   duration?: string | null;
-  /** Wpis ręczny — jedyny stan z plakietką (issue #38 pkt 10). */
-  manual?: boolean;
-  /** Czy wiersz ma ołówek (poza oknem korekty kolumny NIE MA w ogóle). */
-  correctable?: boolean;
 }
 
 export interface SessionAxisFootItem {
@@ -65,8 +76,6 @@ export interface SessionAxisFootItem {
 export interface SessionAxisProps {
   rows: SessionAxisRow[];
   foot?: SessionAxisFootItem[];
-  /** Otwiera arkusz korekty (04c) dla zdarzenia o tym uuid. */
-  onCorrect?: (id: string) => void;
   emptyText?: string;
   style?: ViewStyle;
 }
@@ -78,6 +87,7 @@ export interface SessionAxisProps {
 const KIND_TONE: Record<SessionAxisKind, Tone> = {
   claim: 'neutral',
   engineStart: 'neutral',
+  taxi: 'neutral',
   takeoff: 'green',
   drop: 'blue',
   landing: 'red',
@@ -89,6 +99,7 @@ const KIND_TONE: Record<SessionAxisKind, Tone> = {
 const HOLLOW: Record<SessionAxisKind, boolean> = {
   claim: true,
   engineStart: false,
+  taxi: false,
   takeoff: false,
   drop: false,
   landing: false,
@@ -96,7 +107,7 @@ const HOLLOW: Record<SessionAxisKind, boolean> = {
   release: true,
 };
 
-export function SessionAxis({ rows, foot, onCorrect, emptyText, style }: SessionAxisProps) {
+export function SessionAxis({ rows, foot, emptyText, style }: SessionAxisProps) {
   const { theme } = useTheme();
 
   if (rows.length === 0) {
@@ -114,10 +125,22 @@ export function SessionAxis({ rows, foot, onCorrect, emptyText, style }: Session
       {rows.map((row, index) => {
         const c = toneColors(theme, KIND_TONE[row.kind]);
         const hollow = HOLLOW[row.kind];
-        const dimmed = row.kind === 'claim' || row.kind === 'release';
+        const dimmed = row.kind === 'claim' || row.kind === 'release' || row.kind === 'taxi';
+
+        const first = index === 0;
+        const last = index === rows.length - 1;
 
         return (
-          <View key={row.id} style={styles.row} accessibilityRole="text">
+          <View
+            key={row.id}
+            // Oba końce osi oddychają: górny, żeby PRZEJĘCIE nie kleiło się do śladu
+            // (albo do linii nagłówka karty), dolny, żeby ZDANIE nie czytało się jak
+            // pierwszy wiersz stopki z sumami. Kreska osi zaczyna się i kończy na
+            // kropce niezależnie od tego — jest dzieckiem wiersza, więc padding jej
+            // nie wydłuża.
+            style={[styles.row, first ? styles.firstRow : null, last ? styles.lastRow : null]}
+            accessibilityRole="text"
+          >
             <AppText
               variant="mono"
               tone={dimmed ? 'secondary' : 'primary'}
@@ -133,7 +156,7 @@ export function SessionAxis({ rows, foot, onCorrect, emptyText, style }: Session
                   {
                     backgroundColor: theme.colors.borderStrong,
                     top: index === 0 ? '50%' : 0,
-                    bottom: index === rows.length - 1 ? '50%' : 0,
+                    bottom: last ? '50%' : 0,
                   },
                 ]}
               />
@@ -159,30 +182,23 @@ export function SessionAxis({ rows, foot, onCorrect, emptyText, style }: Session
               )}
             </View>
 
-            <View style={styles.right}>
-              {row.duration != null && (
-                <AppText variant="mono" style={{ color: theme.colors.green, fontSize: 11 }}>
-                  {row.duration}
-                </AppText>
-              )}
-              {row.manual === true && <Tag label="RĘCZNIE" tone="amber" size="sm" />}
-              {onCorrect != null && row.correctable === true && (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Korekta: ${row.name} ${row.time}`}
-                  onPress={() => onCorrect(row.id)}
-                  style={[
-                    styles.correct,
-                    {
-                      borderColor: theme.colors.borderStrong,
-                      borderRadius: theme.radius.sm,
-                    },
-                  ]}
-                >
-                  <Icon name="edit" size={14} color={theme.colors.textSecondary} />
-                </Pressable>
-              )}
-            </View>
+            {/* Prawa krawędź niesie DOKŁADNIE JEDNĄ rzecz na wiersz: numer lotu przy
+                starcie albo czas lotu przy lądowaniu. Dlatego nic tu nie trzeba
+                rezerwować — wszystko dosuwa się do prawej i stoi w jednej linii
+                pionowej przez całą oś. */}
+            {row.flight != null && (
+              <AppText variant="mono" tone="muted" style={styles.flight}>
+                {row.flight}
+              </AppText>
+            )}
+            {row.duration != null && (
+              <AppText
+                variant="mono"
+                style={{ color: theme.colors.green, fontSize: 11, lineHeight: 14 }}
+              >
+                {row.duration}
+              </AppText>
+            )}
           </View>
         );
       })}
@@ -220,22 +236,26 @@ export function SessionAxis({ rows, foot, onCorrect, emptyText, style }: Session
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 10, paddingRight: 8, minHeight: 40 },
-  time: { width: 46, fontSize: 11 },
+  /**
+   * Wiersz jest NISKI (28 px zamiast 40) i to jest możliwe dopiero od issue #40: oś
+   * nie ma już celów dotknięcia, więc nie musi trzymać rytmu 44 px. Wysokość biorą
+   * jawne `lineHeight` — wariant `mono` niesie domyślnie 18 px, przez co pojedyncza
+   * linia zajmowała tyle, co dwie. Sesja skokowa (kilkanaście wierszy) mieści się
+   * dzięki temu na ekranie zamiast wymuszać przewijanie.
+   */
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 10, paddingRight: 8, minHeight: 28 },
+  // Padding, nie margines: kreska osi jest dzieckiem wiersza i ma się zaczynać oraz
+  // kończyć na kropce, a nie ciągnąć przez wolne miejsce nad nią i pod nią.
+  firstRow: { paddingTop: 12 },
+  lastRow: { paddingBottom: 12 },
+  time: { width: 46, fontSize: 11, lineHeight: 14 },
   rail: { width: 14, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   railLine: { position: 'absolute', width: 1 },
   dot: { width: 9, height: 9, borderRadius: 5, borderWidth: 2 },
   label: { flex: 1, minWidth: 0, gap: 1 },
-  name: { fontSize: 10, letterSpacing: 1.4 },
-  sub: { fontSize: 8.5, letterSpacing: 0.5 },
-  right: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  correct: {
-    minWidth: 44,
-    minHeight: 44,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  name: { fontSize: 10, letterSpacing: 1.4, lineHeight: 13 },
+  sub: { fontSize: 8.5, letterSpacing: 0.5, lineHeight: 11 },
+  flight: { fontSize: 8.5, letterSpacing: 0.5, lineHeight: 11 },
   foot: {
     flexDirection: 'row',
     justifyContent: 'space-between',

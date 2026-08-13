@@ -837,7 +837,9 @@ na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
 - **zdanie samolotu:** `09b-zdaj-samolot` (odczyt wymagany = zatwierdzenie logu sesji) ·
   `09c-zdaj-bez-lotu` (pogoda / usterka); ekrany `09`/`09a` usunięte z pivotem 2026-08-10
 - **sesja:** `10-statystyki` (z lotami) · `10a-statystyki-zero` (bez lotu) ·
-  `10b-rozliczenie-zamkniete` (po oknie korekty — podgląd bez elementów zapisu)
+  `10b-rozliczenie-zamkniete` (po oknie korekty — podgląd bez elementów zapisu) ·
+  `10c-norma-detale` (arkusz normy pod plakietką werdyktu — issue #40: na karcie zostaje
+  sama plakietka, pasmo i stawki otwiera ten, kto pyta „dlaczego tak")
 - **ślad (issue #38):** `14-slad` opisuje CAŁY bieg silnika — kołowanie, wszystkie starty
   i lądowania, profil pionowy z przerwą na ziemi; wejście miniaturą z `10`. Ekrany `16`
   i `16a` USUNIĘTE: zapis GPS powstaje w jednym ciągu, więc krojenie go na loty dokładało

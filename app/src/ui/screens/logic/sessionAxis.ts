@@ -7,11 +7,25 @@
  * o co pilot pytał — kiedy silnik ruszył i kiedy stanął. Oś czasu odpowiada wprost:
  * przejęcie → uruchomienie → starty, zrzuty i lądowania → wyłączenie → zdanie.
  *
+ * ══ CO ZMIENIŁ ISSUE #40 ══
+ *  • **kołowanie wchodzi na oś** (pkt 4). `taxi` było jedyną dziurą tego zestawienia:
+ *    log kokpitu (04, 05) pokazuje je od zawsze, a rozliczenie tej samej sesji już nie.
+ *    Wiersz niesie samą GODZINĘ — czas trwania kołowania zostaje w kokpicie, gdzie
+ *    pilot patrzy na zegar w trakcie przygotowania; w rozliczeniu jest ciekawostką,
+ *    bo do bloku i tak wchodzi cały bieg silnika.
+ *  • **znika kolumna ołówka** (pkt 1). Korekta ma odtąd jedne drzwi: „EDYTUJ DANE" pod
+ *    ekranem, czyli listę ręczną (08), gdzie poprawianie jest zadaniem ekranu, a nie
+ *    ozdobą podsumowania. Dwanaście identycznych celów w jednej kolumnie czytało się
+ *    jak szum i odbierało miejsce jedynej liczbie, która w tej kolumnie coś znaczy.
+ *  • **znika plakietka „RĘCZNIE"** (pkt 6). Sposób POWSTANIA zapisu nie jest pytaniem
+ *    pilota — metoda zostaje w rejestrze i w panelu administratora. To ta sama reguła,
+ *    którą issue #38 wygasił plakietkę „AUTO", tylko dociągnięta do końca.
+ *
  * ══ DLACZEGO ZE STRUMIENIA, A NIE Z SAMEJ PROJEKCJI ══
- * Bo wiersz osi ma prowadzić do KOREKTY, a korekta celuje w konkretne zdarzenie po uuid.
- * Projekcja niesie uuid startów i lądowań (`Flight`), ale nie zna adresu uruchomienia
- * silnika ani zrzutu — te bierzemy ze strumienia EFEKTYWNEGO (po korektach 04c), czyli
- * dokładnie tego, który projekcja policzyła.
+ * Bo projekcja nie zna wszystkich punktów osi: niesie loty (`Flight`), ale uruchomienia
+ * silnika, kołowania ani zrzutu nie opisuje. Te bierzemy ze strumienia EFEKTYWNEGO
+ * (po korektach 04c), czyli dokładnie tego, który projekcja policzyła — inaczej oś
+ * pokazywałaby czasy sprzed poprawki obok czasów po niej.
  *
  * Kolejność ustala CZAS, nie typ zdarzenia: sesja z wpisem ręcznym potrafi mieć lądowanie
  * zapisane po zatrzymaniu silnika, a oś ma pokazać, jak było, nie jak być powinno.
@@ -27,6 +41,7 @@ import { hhmm, litres, motoHours, thousands, timeUtc } from '../../format';
 export type AxisKind =
   | 'claim'
   | 'engineStart'
+  | 'taxi'
   | 'takeoff'
   | 'drop'
   | 'landing'
@@ -35,7 +50,7 @@ export type AxisKind =
 
 /** Jeden wiersz osi. */
 export interface AxisRow {
-  /** Klucz listy; dla wierszy korygowalnych = uuid zdarzenia (cel arkusza 04c). */
+  /** Klucz listy — uuid zdarzenia tam, gdzie takie jest. */
   id: string;
   kind: AxisKind;
   /** Stempel do sortowania. Po napisie „08:20" sortować się NIE DA: sesja spod północy
@@ -45,14 +60,19 @@ export interface AxisRow {
   time: string;
   /** „Start", „Lądowanie", „Zrzut 2". */
   name: string;
-  /** Druga linia: „lot 1", „4 skoczków · 12 800 ft", „odczyt 150 L · 1 234:30". */
+  /** Druga linia: „4 skoczków · 12 800 ft", „odczyt 150 L · 1 234:30". */
   sub: string | null;
+  /**
+   * Numer lotu przy STARCIE („lot 1") — po prawej, nie pod nazwą i nie przy lądowaniu.
+   *
+   * Jest przypisem do zdarzenia, a nie jego opisem: mówi, który lot się tu zaczyna.
+   * Pod nazwą kosztował drugą linię w połowie wierszy osi — czyli całą wysokość, którą
+   * sesja skokowa zamienia w przewijanie. Przy lądowaniu go nie ma, bo prawą kolumnę
+   * zajmuje tam czas lotu, a para start → lądowanie i tak czyta się w pionie.
+   */
+  flight: string | null;
   /** Czas lotu przy lądowaniu („00:41"); `null` wszędzie indziej. */
   duration: string | null;
-  /** Wpis ręczny — jedyny stan, który dostaje plakietkę (issue #38 pkt 10). */
-  manual: boolean;
-  /** Czy wiersz ma ołówek: przejęcie i zdanie korygujemy odczytami, nie czasem. */
-  correctable: boolean;
 }
 
 /** Kafelek stopki osi. */
@@ -80,11 +100,12 @@ const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
 const RANK: Record<AxisKind, number> = {
   claim: 0,
   engineStart: 1,
-  takeoff: 2,
-  drop: 3,
-  landing: 4,
-  engineStop: 5,
-  release: 6,
+  taxi: 2,
+  takeoff: 3,
+  drop: 4,
+  landing: 5,
+  engineStop: 6,
+  release: 7,
 };
 
 /**
@@ -112,9 +133,8 @@ export function buildSessionAxis(
       time: timeUtc(projection.claimedAt),
       name: 'Przejęcie',
       sub: readingLine(projection.fuel.startL, projection.mh.start, mhFormat),
+      flight: null,
       duration: null,
-      manual: false,
-      correctable: false,
     });
   }
 
@@ -127,9 +147,25 @@ export function buildSessionAxis(
         time: timeUtc(at(event)),
         name: event.type === 'engine_start' ? 'Uruchomienie' : 'Wyłączenie',
         sub: null,
+        flight: null,
         duration: null,
-        manual: false,
-        correctable: true,
+      });
+    }
+
+    if (event.type === 'taxi') {
+      rows.push({
+        id: event.uuid,
+        kind: 'taxi',
+        at: at(event),
+        time: timeUtc(at(event)),
+        name: 'Kołowanie',
+        sub: null,
+        flight: null,
+        // Bez czasu trwania: godzina rozpoczęcia mówi wszystko, co z kołowania wynika
+        // dla rozliczenia sesji, a „ile trwało" jest ciekawostką, nie daną — do bloku
+        // wchodzi i tak cały bieg silnika. W kokpicie (04, 05) czas zostaje, bo tam
+        // pilot patrzy na zegar w trakcie przygotowania.
+        duration: null,
       });
     }
 
@@ -142,25 +178,22 @@ export function buildSessionAxis(
         time: timeUtc(at(drop)),
         name: `Zrzut ${drop.payload.dropNumber}`,
         sub: dropLine(drop.payload.jumpers, drop.payload.altitudeFt),
+        flight: null,
         duration: null,
-        manual: false,
-        correctable: true,
       });
     }
   }
 
   for (const flight of projection.flights) {
-    const manual = flight.method === 'manual';
     rows.push({
       id: flight.takeoffUuid,
       kind: 'takeoff',
       at: flight.takeoffAt,
       time: timeUtc(flight.takeoffAt),
       name: 'Start',
-      sub: `lot ${flight.index}`,
+      sub: null,
+      flight: `lot ${flight.index}`,
       duration: null,
-      manual,
-      correctable: true,
     });
 
     // Lot w powietrzu nie ma wiersza lądowania — i to jest informacja, nie brak danych.
@@ -172,10 +205,12 @@ export function buildSessionAxis(
         at: flight.landingAt,
         time: timeUtc(flight.landingAt),
         name: 'Lądowanie',
-        sub: `lot ${flight.index}`,
+        sub: null,
+        // Numer lotu pada RAZ, przy starcie: para start → lądowanie czyta się w pionie,
+        // a przy lądowaniu prawą kolumnę zajmuje czas lotu — czyli liczba, po którą
+        // pilot tu sięga. Powtórzony numer walczyłby z nią o to samo miejsce.
+        flight: null,
         duration: hhmm(flight.durationMs),
-        manual,
-        correctable: true,
       });
     }
   }
@@ -188,9 +223,8 @@ export function buildSessionAxis(
       time: timeUtc(projection.closedAt),
       name: 'Zdanie',
       sub: readingLine(projection.fuel.endL, projection.mh.end, mhFormat),
+      flight: null,
       duration: null,
-      manual: false,
-      correctable: false,
     });
   }
 
@@ -213,7 +247,9 @@ function buildFoot(projection: SessionState, now: number): AxisFootItem[] {
 
   if (projection.blockTimeMs > 0) {
     items.push({ key: 'Blok', value: hhmm(projection.blockTimeMs), accent: false });
-    items.push({ key: 'W powietrzu', value: hhmm(projection.flightTimeMs), accent: true });
+    // „Czas lotu", nie „W powietrzu" (issue #40 pkt 3): dwa słowa łamały się na telefonie
+    // na dwie linie i rozpychały stopkę. Przy okazji to ta sama nazwa, co w kokpicie.
+    items.push({ key: 'Czas lotu', value: hhmm(projection.flightTimeMs), accent: true });
   } else {
     const held = heldMs(projection, now);
     items.push({

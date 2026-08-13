@@ -16,14 +16,25 @@
  * Gdy nie ma z czym porównać (silnik nie pracował, brak odczytu, samolot bez normy),
  * karta pisze o tym zdaniem. Pusty pasek albo kreska wyglądałyby jak awaria aplikacji
  * (§6 pkt 3), a przy liczbach z licznika to najgorsze możliwe wrażenie.
+ *
+ * ══ SZCZEGÓŁY NORMY POD TAPNIĘCIEM (issue #40 pkt 7 i 8) ══
+ * Do issue #40 pod każdym rachunkiem stało pasmo („Oczekiwane po tej sesji: 23 – 35 L")
+ * i rozpisane działanie drobnym monospace'em. Przy normalnej sesji nie mówiły nic ponad
+ * to, co mówi jedno słowo „w normie". Zostaje więc sama plakietka, a liczby przenoszą się
+ * do arkusza (`design/10c-norma-detale.html`) — dla tego, kto zapyta „dlaczego tak".
+ * Celem dotknięcia jest CAŁY wiersz: plakietka ma dziewięciopunktową czcionkę i sama
+ * w sobie byłaby celem poniżej progu dostępności.
  */
 
-import React from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
 import { Card } from '../layout/Card';
+import { Banner } from '../status/Banner';
+import { Sheet } from '../sheets/Sheet';
 import { Tag } from '../status/Tag';
 import { toneColors, type Tone } from '../tone';
 
@@ -36,10 +47,19 @@ export interface BalanceCardRow {
 }
 
 export interface BalanceCardVerdict {
-  /** Pasmo, z którego wynika werdykt („26 – 32 L"). */
-  band: string;
   label: string;
   tone: Tone;
+}
+
+/** Treść arkusza normy — otwieranego plakietką werdyktu. */
+export interface BalanceCardDetails {
+  /** „NORMA PALIWA". */
+  title: string;
+  /** Zdanie streszczające werdykt, nad wierszami. */
+  summary: string;
+  rows: { label: string; value: string }[];
+  /** „Jak to liczymy: …" — pod wierszami, drobnym monospace. */
+  note: string;
 }
 
 export interface BalanceCardProps {
@@ -49,10 +69,14 @@ export interface BalanceCardProps {
   totalValue: string;
   totalTone?: Tone;
   verdict?: BalanceCardVerdict | null;
-  /** Skąd wzięło się pasmo — drobny monospace pod werdyktem. */
-  note?: string | null;
-  /** Ton przypisu: `amber` sygnalizuje daną z cache (§4.8). */
-  noteTone?: Tone;
+  /** Szczegóły normy pod plakietką; bez nich plakietka jest sama i nie reaguje. */
+  details?: BalanceCardDetails | null;
+  /**
+   * Adnotacja wieku normy (§4.8) — pokazywana W ARKUSZU, przy liczbach, których dotyczy.
+   * Ekran podaje gotowy `FreshnessNote`, bo tylko on wie, kiedy cache się odświeżył.
+   * Stan `live` nie rysuje nic, więc online arkusz zostaje bez adnotacji.
+   */
+  freshness?: React.ReactNode;
   /** Dlaczego werdyktu nie ma; wyklucza się z `verdict`. */
   naNote?: string | null;
   style?: ViewStyle;
@@ -65,13 +89,14 @@ export function BalanceCard({
   totalValue,
   totalTone = 'amber',
   verdict,
-  note,
-  noteTone = 'neutral',
+  details,
+  freshness,
   naNote,
   style,
 }: BalanceCardProps) {
   const { theme } = useTheme();
   const total = toneColors(theme, totalTone);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   return (
     <Card title={title} flush style={style}>
@@ -109,17 +134,27 @@ export function BalanceCard({
       </View>
 
       {verdict != null && (
-        <View style={[styles.verdict, { borderTopColor: theme.colors.border }]}>
-          <View style={styles.verdictBand}>
-            <AppText variant="mono" tone="muted" style={styles.verdictKey}>
-              OCZEKIWANE PO TEJ SESJI
-            </AppText>
-            <AppText variant="mono" style={styles.verdictValue}>
-              {verdict.band}
-            </AppText>
-          </View>
+        <Pressable
+          accessibilityRole={details != null ? 'button' : undefined}
+          accessibilityLabel={
+            details != null ? `${verdict.label} — szczegóły normy` : verdict.label
+          }
+          disabled={details == null}
+          onPress={() => setDetailsOpen(true)}
+          style={({ pressed }) => [
+            styles.verdict,
+            { borderTopColor: theme.colors.border },
+            pressed ? { backgroundColor: theme.colors.surfaceHover } : null,
+          ]}
+        >
           <Tag label={verdict.label} tone={verdict.tone} size="md" />
-        </View>
+          {/* Znak „są szczegóły" — bez niego plakietka wygląda na sam napis i nikt jej
+              nie dotknie. Ikona, nie napis: słowo w tym wierszu przekrzykiwałoby werdykt,
+              który jest tu jedyną treścią. */}
+          {details != null && (
+            <Icon name="info" size={14} color={theme.colors.textMuted} />
+          )}
+        </Pressable>
       )}
 
       {naNote != null && (
@@ -130,14 +165,27 @@ export function BalanceCard({
         </View>
       )}
 
-      {note != null && (
-        <AppText
-          variant="mono"
-          tone={noteTone === 'amber' ? 'amber' : 'muted'}
-          style={styles.note}
+      {details != null && (
+        <Sheet
+          visible={detailsOpen}
+          title={details.title}
+          rows={details.rows}
+          cancelLabel="ZAMKNIJ"
+          onCancel={() => setDetailsOpen(false)}
+          footer={
+            <AppText variant="mono" tone="muted" style={styles.sheetNote}>
+              {details.note}
+            </AppText>
+          }
         >
-          {note}
-        </AppText>
+          <Banner
+            kind="status"
+            tone={verdict?.tone ?? 'neutral'}
+            icon={verdict?.tone === 'green' ? 'check' : 'warning'}
+            text={details.summary}
+          />
+          {freshness}
+        </Sheet>
       )}
     </Card>
   );
@@ -174,11 +222,10 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 9,
+    // Cały wiersz jest celem dotknięcia (audyt dostępności): plakietka ma 9 px czcionki.
+    minHeight: 44,
     borderTopWidth: 1,
   },
-  verdictBand: { gap: 2, flex: 1, minWidth: 0 },
-  verdictKey: { fontSize: 8, letterSpacing: 1.5 },
-  verdictValue: { fontSize: 11 },
   naNote: { fontSize: 9, letterSpacing: 0.5, lineHeight: 14 },
-  note: { fontSize: 8, letterSpacing: 0.4, lineHeight: 12, paddingHorizontal: 12, paddingBottom: 10 },
+  sheetNote: { fontSize: 9, letterSpacing: 0.4, lineHeight: 14 },
 });

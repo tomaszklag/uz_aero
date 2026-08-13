@@ -156,10 +156,14 @@
      → wyłączenie, w jednej kolumnie czasu. Tabela była siatką pięciu kolumn, z których
      dwie powtarzały to samo (czas lotu obok pary godzin), a jedna świeciła „AUTO"
      przy każdym wierszu. Oś czasu mówi to samo krócej i ma miejsce na zrzuty. */
-  .axis { padding:4px 0 0; }
+  /* Oba końce osi oddychają: PRZEJĘCIE nie klei się do śladu ani do linii nagłówka,
+     a ZDANIE nie styka się ze stopką sum (czytałoby się jak jej pierwszy wiersz). */
+  .axis { padding:12px 0; }
+  /* Wiersz niski (28 px) — patrz komentarz na 10: oś nie ma celów dotknięcia, więc nie
+     musi trzymać rytmu 44 px. */
   .axis-row {
     display:grid; grid-template-columns:52px 14px 1fr auto;
-    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:38px;
+    align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px;
   }
   .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
   .axis-time.dim { color:var(--text-secondary); }
@@ -186,21 +190,6 @@
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   .axis-right { display:flex; align-items:center; gap:6px; }
   .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
-  /* Plakietka WYŁĄCZNIE dla wpisu ręcznego (issue #38 pkt 10). Stan domyślny —
-     zdarzenie z detekcji — nie rysuje nic; „AUTO" przy każdym wierszu uczyło oko
-     ignorować kolumnę, dokładnie jak plakietka „zsynchronizowano" przed issue #12. */
-  .axis-manual {
-    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px;
-    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
-    border-radius:4px; padding:2px 5px; white-space:nowrap;
-  }
-  .edit-btn {
-    background:none; border:1px solid var(--border-strong); border-radius:8px;
-    color:var(--text-secondary); cursor:pointer; padding:0; text-decoration:none;
-    min-width:34px; min-height:34px; justify-content:center;
-    display:inline-flex; align-items:center;
-  }
-  .edit-btn:hover { color:var(--text-primary); }
   /* Stopka osi — JEDYNE miejsce, w którym pada czas blokowy (issue #38 pkt 9).
      Wcześniej stał w bohaterze ekranu, w obu kartach załogi, w podpisie średniego
      zużycia i w wierszu Δ motogodzin: pięć razy ta sama liczba. */
@@ -233,29 +222,9 @@
   .calc-total-val { font-family:var(--font-display); font-size:26px; letter-spacing:1.5px; line-height:1; }
   .calc-total-val.amber { color:var(--amber); }
   .calc-total-val.green { color:var(--green); }
-  /* Werdykt: liczba pilota kontra to, czego model się spodziewał po TEJ sesji.
-     Pasmo pochodzi z rozrzutu obserwacji, nie z przedziału ufności — patrz
-     `packages/domain/src/consumption/expectation.ts`. */
-  .verdict {
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:9px 12px; border-top:1px solid var(--border);
-  }
-  .verdict-band { display:flex; flex-direction:column; gap:2px; }
-  .verdict-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  .verdict-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
-  .verdict-tag {
-    font-family:var(--font-mono); font-size:9px; letter-spacing:1.2px;
-    color:var(--green); background:var(--green-muted); border:1px solid var(--green-border);
-    border-radius:999px; padding:4px 10px; white-space:nowrap;
-  }
-  .verdict-tag.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
-  /* Skąd wzięło się pasmo — razem ze stanem świeżości (§4.8). Norma jest JEDYNĄ
-     daną z serwera na tym ekranie; reszta liczb to projekcja lokalnego strumienia. */
-  .calc-note {
-    font-family:var(--font-mono); font-size:8px; letter-spacing:0.4px; line-height:1.5;
-    color:var(--text-muted); padding:0 12px 10px;
-  }
-  .calc-note.cache { color:var(--amber); }
+  /* Werdyktu (plakietki z arkuszem normy pod tapnięciem — issue #40 pkt 7 i 8) ten
+     wariant NIE MA: silnik nie pracował, więc nie ma z czym porównywać. Zostaje samo
+     zdanie o powodzie, niżej. */
 
   /* Miejsce werdyktu, gdy porównywać nie ma z czym: pusta ramka byłaby cichą kreską,
      a zero udające normę — kłamstwem. Mówimy wprost, DLACZEGO nie orzekamy (§6 pkt 3). */
@@ -283,6 +252,17 @@
   .info-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); text-align:right; }
   .info-val.blue { color:var(--blue); }
   .info-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; }
+
+  /* ===== NOTATKI (issue #40 pkt 5) — patrz komentarz na 10 =====
+     Sesja bez lotu ma je tym bardziej: powód zdania mówi CO, notatka bywa jedynym
+     miejscem, w którym stoi SZCZEGÓŁ (numer usterki, ustalenie z mechanikiem). */
+  .note-block { padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
+  .note-block + .note-block { border-top:1px solid var(--border); }
+  .note-when {
+    font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px;
+    text-transform:uppercase; color:var(--text-muted);
+  }
+  .note-text { font-size:12px; color:var(--text-secondary); line-height:1.55; }
 
   /* Buttons */
   .btn-row { display:flex; flex-direction:column; gap:8px; }
@@ -489,6 +469,15 @@
         </div>
       </div>
 
+      <!-- ══ NOTATKI (issue #40 pkt 5) ═══════════════════════════════════════ -->
+      <div class="section-card">
+        <div class="section-card-head">Notatki</div>
+        <div class="note-block">
+          <span class="note-when">Zadanie · 09:10</span>
+          <span class="note-text">Skoki dla SKY CAMP — grupa tandemów zamówiona na 10:00.</span>
+        </div>
+      </div>
+
       <div class="btn-row">
         <!-- Bez lotów jedyne dane do poprawy to odczyty liczników i powód zdania,
              a te wpisuje się na 09C — nie ma po co wysyłać pilota do listy ręcznej. -->
@@ -512,7 +501,7 @@
     <span class="vp-badge">10</span>
     <span class="vp-body">
       <span class="vp-name">Sesja — z lotami</span>
-      <span class="vp-when">Standard: ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania, rachunki paliwa i motogodzin na tle normy (SP-AXA, 06 SIE — 2 loty).</span>
+      <span class="vp-when">Standard: ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania (z kołowaniem), rachunki paliwa i motogodzin z plakietką werdyktu (SP-AXA, 06 SIE — 2 loty).</span>
     </span>
   </a>
   <a class="vp-item active" href="10a-statystyki-zero.html">
@@ -527,7 +516,14 @@
     <span class="vp-badge amber">10B</span>
     <span class="vp-body">
       <span class="vp-name">Sesja — po oknie (podgląd)</span>
-      <span class="vp-when">Minęły 24 h od zdania: te same liczby bez ani jednego elementu zapisu (bez ołówków, bez „Edytuj dane"). Cel karty z grupy „Zamknięte" na 12.</span>
+      <span class="vp-when">Minęły 24 h od zdania: te same liczby bez ani jednego elementu zapisu (bez „Edytuj dane"). Cel karty z grupy „Zamknięte" na 12.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10c-norma-detale.html">
+    <span class="vp-badge">10C</span>
+    <span class="vp-body">
+      <span class="vp-name">Sesja — arkusz normy</span>
+      <span class="vp-when">Szczegóły pod plakietką werdyktu. Tu niedostępny: bez pracy silnika nie ma werdyktu, więc nie ma czego otwierać.</span>
     </span>
   </a>
 </aside>
@@ -540,6 +536,7 @@
   <a href="10-statystyki.html">10 Sesja</a>
   <a href="10a-statystyki-zero.html" class="active">10A Bez lotu</a>
   <a href="10b-rozliczenie-zamkniete.html">10B Podgląd</a>
+  <a href="10c-norma-detale.html">10C Norma</a>
   <span>·</span>
   <a href="12-historia.html">12 Poprzednie dni</a>
 </nav>
