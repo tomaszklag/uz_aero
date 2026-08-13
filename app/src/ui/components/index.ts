@@ -89,6 +89,8 @@ export * from './data/CalcBox';
 export * from './data/SessionHero';
 export * from './data/CrewCard';
 export * from './data/DataTable';
+export * from './data/SessionAxis';
+export * from './data/BalanceCard';
 export * from './data/KeyValueRow';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach
 // lotu (16) i profil pionowy.

@@ -41,10 +41,6 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { MyDayScreen } from '../screens/MyDayScreen';
 import { ReleaseAircraftScreen } from '../screens/ReleaseAircraftScreen';
 import { StatsScreen } from '../screens/StatsScreen';
-import {
-  FlightDetailsScreen,
-  type FlightDetailsScreenParams,
-} from '../screens/FlightDetailsScreen';
 import { TrackScreen, type TrackScreenParams } from '../screens/TrackScreen';
 import { StyleGuideScreen } from '../screens/StyleGuideScreen';
 
@@ -69,9 +65,11 @@ export type RootStackParamList = {
   ReleaseAircraft: undefined;
   /** 10 — detale i korekty JEDNEJ sesji; wejście ołówkiem wiersza na 01 i z historii (12). */
   Stats: undefined;
-  /** 16 — szczegóły JEDNEGO lotu: miniatura śladu, czasy, zrzuty. Wejście z tabeli lotów na 10. */
-  FlightDetails: FlightDetailsScreenParams;
-  /** 14 — ślad lotu: trasa, profil pionowy i log punktów. Wejście miniaturą z 16 (issue #25). */
+  /**
+   * 14 — ślad CAŁEJ sesji: trasa, profil pionowy i log punktów. Wejście miniaturą z 10.
+   * Ekran 16 (szczegóły jednego lotu) usunięty przy issue #38 — zapis GPS powstaje
+   * w jednym ciągu, więc krojenie go na loty dokładało ekran, który nic nie dodawał.
+   */
   Track: TrackScreenParams;
   /** 11 — status synchronizacji; wejście z ustawień (13), sekcja „Synchronizacja". */
   Sync: undefined;
@@ -134,7 +132,6 @@ export function RootNavigator({
         <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />
-        <Stack.Screen name="FlightDetails" component={FlightDetailsScreen} />
         <Stack.Screen name="Track" component={TrackScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="StyleGuide" component={StyleGuideScreen} />

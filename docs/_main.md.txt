@@ -347,11 +347,25 @@ Dwa poziomy, bo dwie różne osie (3.6a):
 (rejestracja jako informacja wiersza), sumy czasu blokowego / czasu lotu, liczba
 startów i lądowań. Klamry służby nie ma (issue #23).
 
-**Rozliczenie samolotu (10) — oś maszyny:** czas blokowy per pilot (PIC / Dual), czasy
-lotów per lot, paliwo (startowe / dolane / końcowe / zużyte / średnie L/h) na tle normy,
-MH (początek / koniec / delta), **zrzuty** (liczba wyniesień, skoczkowie w rozbiciu na typy,
-średnia wysokość, klient — strona przychodowa). Paliwo i MH są wielkościami samolotu,
-więc nie sumują się po pilocie lecącym dwiema maszynami.
+**Sesja (10) — oś maszyny** (przebudowa issue #38, 2026-08-12; ekran nazywał się
+„Rozliczenie" w modelu, w którym stał na ścieżce zamykania dnia i sam był bramką
+„ZATWIERDŹ → SYNC" — bramka zniknęła przy issue #23, nazwa została):
+- **ślad CAŁEGO biegu silnika** ze znacznikami wszystkich startów i lądowań, wprost na
+  ekranie; miniatura otwiera pełny ślad (14). Ekran 16 (szczegóły jednego lotu) usunięty
+- **oś czasu zamiast tabeli lotów**: przejęcie (z odczytami) → uruchomienie → starty,
+  zrzuty i lądowania → wyłączenie → zdanie (z odczytami). Stopka: blok, czas w powietrzu,
+  liczba startów, lotnisko. Czas blokowy pada na tym ekranie DOKŁADNIE RAZ
+- **paliwo i motogodziny w JEDNEJ formie** — rachunek (odczyt → dolewki → odczyt = wynik),
+  a pod nim oczekiwanie policzone dla TEJ mieszanki faz i werdykt w normie / powyżej /
+  poniżej (§3.6b, `consumption/expectation.ts`). Motogodziny mają odtąd własną normę:
+  przyrost licznika NIE równa się czasowi blokowemu i nie ma prawa się równać
+- **zrzuty**: pojedyncze wyniesienia na osi czasu, suma (skoczkowie w rozbiciu na typy,
+  średnia wysokość, klient) w osobnej karcie — strona przychodowa
+- **plakietka „AUTO" nie istnieje**: detekcja jest stanem domyślnym, więc oznaczamy
+  wyłącznie wpis RĘCZNY (ta sama reguła, co SyncChip po issue #12)
+
+Paliwo i MH są wielkościami samolotu, więc nie sumują się po pilocie lecącym dwiema
+maszynami.
 
 Dane edytowalne w trakcie sesji oraz **przez 24 h od jej zdania** (decyzja 2026-07-23,
 kotwica = `day_close` — osobno dla każdej sesji, patrz §3.6a): pilot nanosi korektę
@@ -822,11 +836,13 @@ na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
   (toast LDG) · `05d` (taxi po LDG) · `05g` (brak GPS)
 - **zdanie samolotu:** `09b-zdaj-samolot` (odczyt wymagany = zatwierdzenie logu sesji) ·
   `09c-zdaj-bez-lotu` (pogoda / usterka); ekrany `09`/`09a` usunięte z pivotem 2026-08-10
-- **rozliczenie samolotu:** `10-statystyki` (z lotami) · `10a-statystyki-zero` (bez lotów)
-- **szczegóły lotu (issue #25):** `16-lot` (jest zapis GPS — miniatura śladu prowadzi
-  w pełny ślad `14`) · `16a-lot-bez-sladu` (lot ręczny albo zapis starszy niż 14 dni —
-  kafelek z POWODEM, celowo bez linku: za nim nie ma już żadnych detali). Wariant `14b`
-  jest odtąd stanem ZABEZPIECZAJĄCYM pełnej mapy, nie zwykłym celem drogi
+- **sesja:** `10-statystyki` (z lotami) · `10a-statystyki-zero` (bez lotu) ·
+  `10b-rozliczenie-zamkniete` (po oknie korekty — podgląd bez elementów zapisu)
+- **ślad (issue #38):** `14-slad` opisuje CAŁY bieg silnika — kołowanie, wszystkie starty
+  i lądowania, profil pionowy z przerwą na ziemi; wejście miniaturą z `10`. Ekrany `16`
+  i `16a` USUNIĘTE: zapis GPS powstaje w jednym ciągu, więc krojenie go na loty dokładało
+  ekran, który dublował to, co widać piętro wyżej. `14b` zostaje stanem zabezpieczającym
+  (zapis wygasł albo sesja wpisana ręcznie)
 
 **Motywy:** para ciemna — Night (domyślny), Amber/NVG; para jasna pod pełne słońce —
 Paper (ciepła biel), Solar (czysta biel), Sky (chłodny błękitno-szary).

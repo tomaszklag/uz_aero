@@ -1,24 +1,25 @@
 /**
- * UZ Aero — 10 ROZLICZENIE SAMOLOTU.
+ * UZ Aero — 10 SESJA (mockupy `design/10-statystyki.html`, `10a`, `10b`).
  *
- * Odwzorowanie mockupu `design/10-statystyki.html`: okno korekty → czas blokowy sesji →
- * karty załogi → lista lotów → paliwo → motogodziny → zrzuty → para akcji.
+ * Opisuje JEDNĄ SESJĘ SAMOLOTU (przejęcie → zdanie), a nie dzień pilota: dzień pilota to
+ * LISTA SESJI na różnych maszynach (issue #23) i mieszka na „Mój dzień" (01).
  *
- * Rozlicza JEDNĄ SESJĘ SAMOLOTU (przejęcie → zdanie), a nie dzień pilota. Do 2026-08-06
- * były tym samym; dziś dzień pilota to LISTA SESJI na różnych maszynach (issue #23)
- * i mieszka na „Mój dzień" (01). Dlatego bohaterem ekranu jest czas blokowy, a nie duty.
+ * ══ CO ZMIENIŁ ISSUE #38 ══
+ * Ekran nazywał się „Rozliczenie" i był zbudowany z pięciu sekcji, które trzy razy
+ * powtarzały czas blokowy, a raz twierdziły nieprawdę („Δ sesji = czas blokowy"). Dziś:
+ *  • **ślad całego biegu silnika stoi WPROST tutaj**, ze znacznikami startów i lądowań;
+ *    ekran 16 (szczegóły jednego lotu) został usunięty, bo dublował to, co widać piętro
+ *    wyżej — jego treść wróciła na oś czasu
+ *  • **oś czasu zamiast tabeli lotów**: przejęcie → uruchomienie → starty, zrzuty
+ *    i lądowania → wyłączenie → zdanie. Czas blokowy pada dokładnie RAZ, w stopce osi
+ *  • **paliwo i motogodziny w jednej formie**: rachunek → wynik → oczekiwanie dla TEJ
+ *    mieszanki faz → werdykt. Motogodziny mają odtąd własną normę
+ *  • **plakietka „AUTO" znikła** — detekcja jest stanem domyślnym, więc oznaczamy
+ *    wyłącznie wpis ręczny (ta sama reguła, co SyncChip po issue #12)
  *
  * Ekran jest **wyłącznie do odczytu**: nie emituje ani jednego zdarzenia. Wszystko, co
- * pokazuje, jest projekcją ze strumienia lokalnego (§5.2), więc te same liczby wychodzą
- * na telefonie bez zasięgu i po synchronizacji — dlatego nie ma tu ani jednego wariantu
- * „dane z cache". SyncChip w nagłówku mówi wyłącznie o tym, ile zdarzeń czeka w outboksie,
- * a nie o wiarygodności statystyk.
- *
- * Kolejność sekcji nie jest dowolna: najpierw to, co ma termin (okno korekty), potem to,
- * co pilot przepisuje do dokumentów (czas blokowy, załoga, loty), a dopiero na końcu
- * rozliczenia (paliwo, motogodziny, zrzuty). Akcje stoją pod wszystkim — a że zdanie
- * samolotu już POTWIERDZIŁO dane (issue #23), primary to zwykły powrót do dnia,
- * nie zatwierdzenie.
+ * pokazuje, jest projekcją ze strumienia lokalnego (§5.2) — JEDYNYM wyjątkiem jest norma
+ * zużycia, która przychodzi z serwera i dlatego ma stan świeżości (§4.8).
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -27,49 +28,34 @@ import { StyleSheet, View } from 'react-native';
 import {
   ActionButton,
   AppText,
+  BalanceCard,
   Banner,
   Card,
-  CrewCard,
-  CrewGrid,
-  DataTable,
-  SessionHero,
   FreshnessNote,
   ResultRow,
   Screen,
   ScreenHeader,
-  StatGrid,
+  SessionAxis,
+  Skeleton,
   SyncChip,
   Tag,
-  type DataTableRow,
-  type StatCell,
-  type Tone,
 } from '../components';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useAircraft } from '../hooks/useAircraft';
 import { useEventCorrection } from '../hooks/useEventCorrection';
-import { correctionWindow } from '../../domain';
-import { motoHours, timeUtc } from '../format';
-import {
-  buildCrewCards,
-  buildFlightRows,
-  dateTimeUtcShort,
-  flightsBadge,
-  fuelPerHour,
-  hhmm,
-  jumperBreakdown,
-  sessionSubtitle,
-} from './logic/statsDay';
-import { compareToNorm, normLabel, verdictLabel } from './logic/fuelNorm';
+import { useSkeleton } from '../hooks/useSkeleton';
+import { correctionWindow, isJumpOperation } from '../../domain';
+import type { SessionTrackView } from '../../application';
+import { dateUtcDayMonth } from '../format';
+import { TrackThumbnail } from '../components/data/TrackThumbnail';
+import { dateTimeUtcShort, flightsBadge, jumperBreakdown } from './logic/statsDay';
+import { buildSessionAxis } from './logic/sessionAxis';
+import { fuelBalance, mhBalance } from './logic/sessionBalance';
+import { operationTag } from './logic/operations';
 
-/** Kolumny listy lotów — `#` i `Typ` mają stałą szerokość, czasy dzielą resztę po równo. */
-const FLIGHT_COLUMNS = [
-  { label: '#', width: 20 },
-  { label: 'Takeoff' },
-  { label: 'Landing' },
-  { label: 'Czas' },
-  { label: 'Typ', width: 66 },
-];
+/** Wysokość miniatury śladu — proporcje z mockupu 10 przy szerokości telefonu. */
+const THUMB_HEIGHT = 168;
 
 export function StatsScreen({
   navigation,
@@ -81,6 +67,7 @@ export function StatsScreen({
   const projection = useSessionStore((s) => s.projection);
   const events = useSessionStore((s) => s.events);
   const queries = useSessionStore((s) => s.queries);
+  const trackQueries = useSessionStore((s) => s.trackQueries);
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
@@ -91,17 +78,8 @@ export function StatsScreen({
   // Reszta liczb jest projekcją lokalnych zdarzeń, więc zawsze świeża (§5.2).
   const aircraftRef = useAircraft(projection.aircraftId);
   const norm = aircraftRef?.consumption ?? null;
-  const verdict = compareToNorm(
-    projection.fuel.consumedL != null && projection.blockTimeMs > 0
-      ? projection.fuel.consumedL / (projection.blockTimeMs / 3_600_000)
-      : null,
-    norm,
-  );
-  const normVerdict = verdictLabel(verdict);
-  const normTone: Tone = verdict === 'w-normie' ? 'green' : 'amber';
 
   // Karty załogi pokazują KOD pilota (TMK/AKO) — tak jak mockup i jak dokumenty.
-  // Kody mieszkają w cache referencyjnym; do czasu odczytu pokazujemy identyfikator.
   const [codes, setCodes] = useState<Record<string, string>>({});
   useEffect(() => {
     if (queries == null) return;
@@ -120,20 +98,35 @@ export function StatsScreen({
   const codeOf = useCallback((id: string) => codes[id] ?? id, [codes]);
 
   /**
-   * Wejście w SZCZEGÓŁY LOTU (16) — numer lotu w tabeli jest celem dotykowym.
-   *
-   * Do issue #25 numer prowadził wprost w ślad (14) i to była pomyłka kategorii: ślad
-   * opisuje LOT, a lista pokazuje loty sesji, więc tabela udawała nawigację po mapach.
-   * Dziś numer otwiera lot, a ślad jest jednym z jego detali — miniaturą na 16.
+   * Ślad sesji — jedyny odczyt tego ekranu, który idzie do OSOBNEGO magazynu (setki
+   * punktów), więc jako jedyny dostaje plamkę skeletonu (issue #33). Reszta liczy się
+   * z rejestru w pamięci i jest na ekranie od pierwszej klatki.
    */
-  const openFlight = useCallback(
-    (flightIndex: number) => {
-      const sessionUuid = projection.sessionUuid;
-      if (sessionUuid == null) return;
-      navigation.navigate('FlightDetails', { sessionUuid, flightIndex });
-    },
-    [navigation, projection.sessionUuid],
-  );
+  const sessionUuid = projection.sessionUuid;
+  const [track, setTrack] = useState<SessionTrackView | null>(null);
+  const [trackLoaded, setTrackLoaded] = useState(false);
+  const trackSkeleton = useSkeleton(!trackLoaded);
+
+  useEffect(() => {
+    if (trackQueries == null || sessionUuid == null) {
+      setTrackLoaded(true);
+      return;
+    }
+    let alive = true;
+    void trackQueries.bySession(sessionUuid).then((result) => {
+      if (!alive) return;
+      setTrack(result);
+      setTrackLoaded(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [trackQueries, sessionUuid]);
+
+  const openTrack = useCallback(() => {
+    if (sessionUuid == null) return;
+    navigation.navigate('Track', { sessionUuid });
+  }, [navigation, sessionUuid]);
 
   /**
    * Okno korekty (§decyzja 2026-07-23). Termin jest wartością BEZWZGLĘDNĄ, więc nie
@@ -144,50 +137,30 @@ export function StatsScreen({
   /**
    * Sesja po oknie 24 h = PODGLĄD (issue #35 pkt 2, mockup `design/10b`).
    *
-   * Ekran zostaje ten sam co dla sesji świeżej — te same liczby, ta sama kolejność
-   * sekcji — ale znika z niego wszystko, co pisze: ołówki przy lotach i „Edytuj dane".
-   * Wyszarzony ołówek byłby gorszy od jego braku: obiecywałby akcję, którą reguły
-   * domeny i tak odrzucą (§6 pkt 3 — przycisk, który nic nie robi, wygląda jak
-   * zawieszona aplikacja). Powód stoi w banerze nad wszystkim.
-   *
-   * `window24h.open` jest prawdziwe także dla sesji jeszcze niezdanej — wtedy pilot
-   * poprawia bez limitu i ekran działa jak dotąd.
+   * Ekran zostaje ten sam — te same liczby, ta sama kolejność sekcji — ale znika z niego
+   * wszystko, co pisze: ołówki na osi czasu i „Edytuj dane". Wyszarzony ołówek byłby
+   * gorszy od jego braku: obiecywałby akcję, którą reguły domeny i tak odrzucą
+   * (§6 pkt 3). Powód stoi w banerze nad wszystkim.
    */
   const readOnly = !window24h.open;
   /** Po oknie wchodzi się tu wyłącznie z „Poprzednich dni" — tam też prowadzi wyjście. */
   const backScreen = readOnly ? 'History' : 'MyDay';
 
-  const crewChanged = useMemo(() => events.some((e) => e.type === 'crew_change'), [events]);
-
-  const crewCards = useMemo(
-    () => buildCrewCards(projection, currentPilotId, codeOf, crewChanged),
-    [codeOf, crewChanged, currentPilotId, projection],
+  const axis = useMemo(
+    () => buildSessionAxis(projection, events, Date.now()),
+    [projection, events],
   );
 
-  const flightRows = useMemo<DataTableRow[]>(
-    () =>
-      buildFlightRows(projection.flights).map((row) => ({
-        id: row.id,
-        label: row.label,
-        cells: [
-          // Numer lotu otwiera SZCZEGÓŁY LOTU (16) — wejście z mockupu 10. Lot ręczny
-          // też jest klikalny: ekran 16 tłumaczy wtedy, DLACZEGO trasy nie ma
-          // (wariant 16A), a martwy numer kazałby pilotowi zgadywać, czy to brak
-          // danych, czy awaria.
-          {
-            text: row.no,
-            muted: true,
-            pressLabel: `Szczegóły lotu ${row.no}`,
-            onPress: () => openFlight(Number(row.no)),
-          },
-          { text: row.takeoff },
-          { text: row.landing },
-          { text: row.time },
-          { text: row.methodLabel, chip: row.method === 'auto' ? 'green' : 'amber' },
-        ],
-      })),
-    [projection.flights, openFlight],
+  const refuelCount = useMemo(
+    () => events.filter((event) => event.type === 'refuel').length,
+    [events],
   );
+
+  const fuel = useMemo(
+    () => fuelBalance(projection, norm, refuelCount),
+    [projection, norm, refuelCount],
+  );
+  const mh = useMemo(() => mhBalance(projection, norm), [projection, norm]);
 
   // Dzień bez sesji nie ma czego podsumowywać — pokazujemy to wprost, zamiast
   // rysować siatkę myślników.
@@ -196,59 +169,23 @@ export function StatsScreen({
       <Screen>
         <View style={{ flex: 1, justifyContent: 'center', gap: theme.spacing.md }}>
           <AppText variant="display" style={{ textAlign: 'center' }}>
-            BRAK DANYCH DNIA
+            BRAK DANYCH SESJI
           </AppText>
           <AppText variant="body" tone="muted" style={{ textAlign: 'center' }}>
-            Statystyki liczą się ze zdarzeń dnia lotnego. Zacznij od preflightu, a wrócą tu
-            same — również bez zasięgu.
+            Ten ekran opisuje jeden bieg silnika. Zacznij lot, a wszystko wróci tu samo —
+            również bez zasięgu.
           </AppText>
         </View>
       </Screen>
     );
   }
 
-  const aircraft = projection.aircraftId ?? '—';
-  const mhFormat = projection.mhFormat ?? 'decimal';
-  const mhFormatLabel = mhFormat === 'hhmm' ? 'hh:mm' : 'dziesiętny';
-  /**
-   * Zakres SESJI: przejęcie → zdanie. Ten ekran rozlicza jeden samolot — dzień pilota
-   * to lista sesji na różnych maszynach (issue #23) i mieszka na 01, nie tutaj.
-   * Sesja jeszcze trwa, dopóki `closedAt` jest puste; wtedy mówimy to wprost.
-   * Licznik na końcu liczy LOTY (mockup 10: „· 2 loty"; 10a: „· bez lotu").
-   */
   const flightCount = projection.flights.length;
-  const sessionRange =
-    projection.claimedAt != null
-      ? `przejęty ${timeUtc(projection.claimedAt)} → ${
-          projection.closedAt != null ? `zdany ${timeUtc(projection.closedAt)} UTC` : 'jeszcze w ręce'
-        } · ${flightCount === 0 ? 'bez lotu' : flightsBadge(flightCount)}`
-      : undefined;
-
-  const fuelCells: StatCell[] = [
-    { label: 'Startowe', value: amount(projection.fuel.startL), unit: 'litrów', tone: 'amber' },
-    { label: 'Dolane', value: amount(projection.fuel.addedL), unit: 'litrów', tone: 'amber' },
-    { label: 'Końcowe', value: amount(projection.fuel.endL), unit: 'litrów', tone: 'amber' },
-    { label: 'Zużyte', value: amount(projection.fuel.consumedL), unit: 'litrów', tone: 'amber' },
-  ];
-
-  const dropCells: StatCell[] = [
-    { label: 'Zrzutów', value: `${projection.drops.count}`, unit: 'wyniesień', tone: 'blue' },
-    {
-      label: 'Skoczków',
-      value: `${projection.drops.totalJumpers}`,
-      unit: 'łącznie',
-      tone: 'blue',
-    },
-  ];
-
-  // Sekcja rozliczeniowa operacji Skoki. Pokazujemy ją także przy zerze zrzutów, gdy
-  // dzień był zadeklarowany jako skoki — brak wyniesień jest wtedy informacją, nie ciszą.
-  const showDrops = projection.drops.count > 0 || projection.operation === 'skoki';
-
-  const mhDelta =
-    projection.mh.deltaH == null
-      ? '—'
-      : `${projection.mh.deltaH >= 0 ? '+' : '−'}${motoHours(Math.abs(projection.mh.deltaH), mhFormat)}`;
+  // Sekcję zrzutów pokazujemy także przy zerze, gdy dzień był zadeklarowany jako skokowy —
+  // brak wyniesień jest wtedy informacją dla klienta, nie ciszą.
+  const showDrops =
+    projection.drops.count > 0 ||
+    (projection.operation != null && isJumpOperation(projection.operation));
 
   return (
     <Screen
@@ -256,22 +193,18 @@ export function StatsScreen({
       padded={false}
       header={
         <ScreenHeader
-          title="ROZLICZENIE"
+          title="SESJA"
           size="md"
           // Powrót JEST i prowadzi tam, skąd się tu wchodzi (mockup 10: „‹ Dzień",
-          // 10b: „‹ Dni"). Ekran otwierał się kiedyś wyłącznie po zamknięciu dnia —
-          // dziś wchodzi się tu ołówkiem wiersza sesji na 01 i kartą sesji
-          // w „Poprzednich dniach" (12), więc droga powrotna musi istnieć.
+          // 10b: „‹ Dni"): ołówkiem wiersza sesji na 01 i kartą sesji w historii (12).
           onBack={() => navigation.navigate(backScreen)}
           backLabel={readOnly ? 'Dni' : 'Dzień'}
-          subtitle={sessionSubtitle(aircraft, projection.claimedAt, projection.closedAt)}
+          subtitle={subtitle(projection.aircraftId, projection.claimedAt, projection.operation)}
           right={
             <>
               <Tag
-                // Plakietka liczy LOTY (mockup 10: „2 loty"; 10a: „0 lotów") — „wzlot"
-                // zlał się z sesją przy pivocie 2026-08-10 i wypadł ze słownika.
-                label={flightsBadge(flightCount)}
-                tone="green"
+                label={flightCount === 0 ? 'bez lotu' : flightsBadge(flightCount)}
+                tone={flightCount === 0 ? 'amber' : 'green'}
                 size="md"
                 style={{ borderRadius: theme.radius.pill }}
               />
@@ -294,15 +227,10 @@ export function StatsScreen({
           }
         />
       }
-      /* Para akcji na końcu treści; przy krótkim dniu (mało lotów) dosuwa się do dołu.
-         Ekran ma własny padding, więc stopka też nakłada go sama.
-         Mockup linkuje 04c — a 04c jest arkuszem NAD logiem, nie ekranem. Pełny log dnia
-         z ołówkami (i dopisaniem brakującego lotu) to lista ręczna; tabela wyżej pokrywa
-         korekty samych lotów. */
       footer={
         <View style={{ gap: theme.spacing.sm, paddingHorizontal: 14, paddingBottom: 14 }}>
           {/* Po oknie 24 h „EDYTUJ DANE" znika razem z ołówkami — to ta sama możliwość
-              zapisu, tylko innymi drzwiami (lista ręczna 08). Zostaje wyjście. */}
+              zapisu, tylko innymi drzwiami (lista ręczna 08 / zdanie bez lotu 09C). */}
           {!readOnly && (
             <ActionButton
               label="EDYTUJ DANE"
@@ -310,14 +238,13 @@ export function StatsScreen({
               variant="secondary"
               size="md"
               icon="edit"
-              onPress={() => navigation.navigate('ManualLog')}
+              onPress={() =>
+                navigation.navigate(flightCount === 0 ? 'ReleaseAircraft' : 'ManualLog')
+              }
             />
           )}
-          {/* Było „ZATWIERDŹ → SYNC" i przeżyło w kodzie dłużej niż w mockupie
-              (uwaga użytkownika po issue #23): zdanie samolotu już POTWIERDZIŁO dane,
-              więc po locie niczego się nie zatwierdza ani nie wysyła ponownie —
-              rozliczenie tylko opisuje sesję, a jedyne sensowne wyjście to powrót.
-              Status synchronizacji mieszka w Ustawieniach. */}
+          {/* Zdanie samolotu już POTWIERDZIŁO dane (issue #23), więc po locie niczego się
+              nie zatwierdza ani nie wysyła ponownie — jedyne sensowne wyjście to powrót. */}
           <ActionButton
             label={readOnly ? 'WRÓĆ DO DNI' : 'WRÓĆ DO DNIA'}
             tone="green"
@@ -338,114 +265,96 @@ export function StatsScreen({
           closesAt={window24h.closesAt}
         />
 
-        {/* ── czas blokowy sesji ───────────────────────────────────────────── */}
-        <SessionHero value={hhmm(projection.blockTimeMs)} range={sessionRange} />
-
-        {/* ── załoga ───────────────────────────────────────────────────────── */}
-        <CrewGrid>
-          {crewCards.map((card) => (
-            <CrewCard
-              key={card.id}
-              role={card.role}
-              code={card.code}
-              stats={card.stats}
-              tag={card.tag}
-              active={card.active}
-              emptyText={card.emptyText}
+        {/* ── przebieg sesji: ślad + oś czasu ───────────────────────────────
+            Mapa i oś stoją w JEDNEJ karcie, bo opisują to samo: znacznik na trasie
+            i wiersz osi to ten sam start albo to samo lądowanie. */}
+        <Card
+          title="Przebieg sesji"
+          headerRight={
+            <AppText variant="micro" tone="muted">
+              czasy UTC
+            </AppText>
+          }
+          flush
+        >
+          {!trackLoaded && trackSkeleton && (
+            <View accessible accessibilityLabel="Ładowanie śladu" style={styles.thumbFrame}>
+              <Skeleton height={THUMB_HEIGHT} radius={0} />
+            </View>
+          )}
+          {trackLoaded && track != null && track.missing == null && (
+            <TrackThumbnail
+              line={track.track.line}
+              markers={track.markers}
+              height={THUMB_HEIGHT}
+              onPress={openTrack}
             />
-          ))}
-        </CrewGrid>
+          )}
+          {trackLoaded && (track == null || track.missing != null) && (
+            <View style={[styles.noTrack, { borderBottomColor: theme.colors.border }]}>
+              <AppText variant="display" tone="secondary" style={styles.noTrackTitle}>
+                {noTrackTitle(track)}
+              </AppText>
+              <AppText variant="mono" tone="muted" style={styles.noTrackText}>
+                {noTrackText(track)}
+              </AppText>
+            </View>
+          )}
 
-        {/* ── lista lotów ──────────────────────────────────────────────────── */}
-        <Card title="Lista lotów · czasy UTC" flush>
-          {/* Ołówek otwiera arkusz korekty (04c) dla lądowania lotu (id wiersza = uuid
-              zdarzenia — patrz `buildFlightRows`). Po zdaniu samolotu działa w oknie
-              24 h; po oknie kolumny ołówka NIE MA W OGÓLE, bo komendę odrzuciłyby
-              reguły — powód stoi w banerze nad wszystkim. Numer lotu zostaje klikalny:
-              szczegóły lotu i ślad to oglądanie, nie zapis. */}
-          <DataTable
-            columns={FLIGHT_COLUMNS}
-            rows={flightRows}
+          <SessionAxis
+            rows={axis.rows}
+            foot={axis.foot}
             onCorrect={readOnly ? undefined : openCorrection}
-            emptyText="Żaden lot nie został zapisany."
+            emptyText="Ta sesja nie ma jeszcze ani jednego zdarzenia."
           />
         </Card>
 
         {/* ── paliwo ───────────────────────────────────────────────────────── */}
-        <Card title="Paliwo" flush>
-          <StatGrid cells={fuelCells} />
-          <ResultRow
-            label="Średnie zużycie (na czas blokowy)"
-            value={fuelPerHour(projection.fuel.consumedL, projection.blockTimeMs) ?? '— —'}
-            tone="amber"
-            style={styles.row}
+        <BalanceCard
+          title="Paliwo"
+          rows={fuel.rows}
+          totalLabel={fuel.totalLabel}
+          totalValue={fuel.totalValue}
+          totalTone={fuel.totalTone}
+          verdict={fuel.verdict}
+          note={fuel.note}
+          noteTone={synced ? 'neutral' : 'amber'}
+          naNote={fuel.naNote}
+        />
+        {/* Wiek normy — jedyna dana z serwera na tym ekranie, więc jedyna z adnotacją
+            świeżości (§4.8). Koniec dnia bywa offline, a norma sprzed tygodnia dalej
+            jest dobrym punktem odniesienia — pod warunkiem, że pilot o tym wie. */}
+        {fuel.verdict != null && (
+          <FreshnessNote
+            state={synced ? 'live' : 'cache'}
+            syncedAt={aircraftRef == null ? null : dateTimeUtcShort(aircraftRef.fetchedAt)}
+            style={styles.freshness}
           />
-          {/* 10a: zero nie jest średnią — mówimy, DLACZEGO nie liczymy (§6: nigdy
-              cicha kreska tam, gdzie pilot mógłby podejrzewać błąd aplikacji). */}
-          {projection.blockTimeMs === 0 && (
-            <AppText variant="mono" tone="muted" style={styles.avgNote}>
-              nie liczymy — czas blokowy 0:00 (dzielenie przez zero to nie statystyka)
-            </AppText>
-          )}
+        )}
 
-          {/* Na tle normy samolotu — PIERWSZA dana z serwera na tym ekranie, więc
-              jedyna, która ma tu stan świeżości. Koniec dnia bywa offline, a norma
-              policzona tydzień temu dalej jest dobrym punktem odniesienia — pod
-              warunkiem, że pilot wie, że jest sprzed tygodnia (§4.8). */}
-          {normVerdict != null && (
-            <>
-              <ResultRow
-                label="Na tle normy samolotu"
-                value={normVerdict}
-                tone={normTone}
-                style={styles.row}
-              />
-              <FreshnessNote
-                state={synced ? 'live' : 'cache'}
-                syncedAt={aircraftRef == null ? null : dateTimeUtcShort(aircraftRef.fetchedAt)}
-                style={styles.avgNote}
-              />
-              <AppText variant="mono" tone="muted" style={styles.avgNote}>
-                {normLabel(norm)}
-              </AppText>
-            </>
-          )}
-        </Card>
+        {/* ── motogodziny ──────────────────────────────────────────────────── */}
+        <BalanceCard
+          title="Motogodziny"
+          rows={mh.rows}
+          totalLabel={mh.totalLabel}
+          totalValue={mh.totalValue}
+          totalTone={mh.totalTone}
+          verdict={mh.verdict}
+          note={mh.note}
+          naNote={mh.naNote}
+        />
 
-        {/* ── motogodziny (§3.7: początek / koniec / delta) ─────────────────── */}
-        {/* Samolot stoi w podnagłówku ekranu — w tytule karty byłby drugi raz.
-            „Łańcuch samolotu" w tytule 1:1 z mockupu 10: odczyty MH są ogniwem osi
-            MASZYNY (§4.5), nie wielkością dnia pilota. */}
-        <Card title={`Motogodziny · licznik w formacie ${mhFormatLabel} · łańcuch samolotu`} flush>
-          {/* Etykiety mówią o SESJI (mockup 10: „Przy przejęciu / Przy zdaniu / Δ sesji")
-              — „początek/koniec dnia" opisywał model, w którym dzień był sesją jednego
-              samolotu; dziś dnia się nie otwiera ani nie zamyka (issue #23). */}
-          <ResultRow
-            label="Przy przejęciu"
-            value={motoHours(projection.mh.start, mhFormat)}
-            tone="neutral"
-            style={styles.firstRow}
-          />
-          <ResultRow
-            label="Przy zdaniu (przekazanie)"
-            value={motoHours(projection.mh.end, mhFormat)}
-            tone="neutral"
-            style={styles.row}
-          />
-          {/* Δ MH = czas blokowy to inwariant §4.5 — dlatego stoją tu obok siebie
-              i dlatego różnica jest wyróżniona zielenią, a nie schowana w tekście. */}
-          <ResultRow
-            label={`Δ sesji (= czas blokowy ${hhmm(projection.blockTimeMs)})`}
-            value={mhDelta}
-            tone="green"
-            style={styles.row}
-          />
-        </Card>
-
-        {/* ── zrzuty: strona przychodowa dnia ──────────────────────────────── */}
+        {/* ── zrzuty: strona przychodowa sesji ──────────────────────────────
+            Pojedyncze wyniesienia stoją na osi czasu wyżej; tutaj zostaje suma,
+            bo to ona idzie do rozliczenia z klientem. */}
         {showDrops && (
-          <Card title="Zrzuty · rozliczenie" flush>
-            <StatGrid cells={dropCells} />
+          <Card title="Zrzuty" flush>
+            <ResultRow
+              label="Wyniesienia"
+              value={`${projection.drops.count} · ${projection.drops.totalJumpers} skoczków`}
+              tone="blue"
+              style={styles.firstRow}
+            />
             <ResultRow
               label="Typy skoków"
               value={jumperBreakdown(projection.drops.jumpers)}
@@ -453,7 +362,7 @@ export function StatsScreen({
               style={styles.row}
             />
             <ResultRow
-              label="Średnia wysokość zrzutu"
+              label="Średnia wysokość"
               value={
                 projection.drops.avgAltitudeFt != null
                   ? `${Math.round(projection.drops.avgAltitudeFt)} FT`
@@ -471,6 +380,28 @@ export function StatsScreen({
           </Card>
         )}
 
+        {/* ── załoga ───────────────────────────────────────────────────────
+            Jeden wiersz na osobę zamiast dwóch kafli (issue #38 pkt 9): obie karty
+            niosły ten sam czas blokowy, a Dual dodatkowo „0 / 0" startów — liczbę,
+            która nic nie znaczy poza tym, że rejestr ma jednego autora. */}
+        <Card title="Załoga" flush>
+          <ResultRow
+            label="PIC"
+            value={crewLabel(projection.picId, currentPilotId, codeOf)}
+            tone="neutral"
+            style={styles.firstRow}
+          />
+          <ResultRow
+            label="Dual"
+            value={
+              projection.dualId != null
+                ? crewLabel(projection.dualId, currentPilotId, codeOf)
+                : 'brak — sesja jednoosobowa'
+            }
+            tone="neutral"
+            style={styles.row}
+          />
+        </Card>
       </View>
 
       {correctionSheet}
@@ -479,7 +410,55 @@ export function StatsScreen({
 }
 
 /**
- * `.correction-window` — niebieskie pudełko z terminem samodzielnej korekty.
+ * Podtytuł: „SP-AXA · 06 SIE · SKOKI" (mockup 10).
+ *
+ * Godzin tu nie ma — przejęcie i zdanie stoją na osi czasu razem z odczytami, a trzeci
+ * napis w nagłówku walczyłby z nimi o tę samą linię.
+ */
+function subtitle(
+  aircraftId: string | null,
+  claimedAt: number | null,
+  operation: Parameters<typeof operationTag>[0] | null,
+): string {
+  return [
+    aircraftId,
+    claimedAt != null ? dateUtcDayMonth(claimedAt) : null,
+    operation != null ? operationTag(operation) : null,
+  ]
+    .filter((part): part is string => part != null && part !== '')
+    .join(' · ');
+}
+
+/** „TMK · zalogowany (Ty)" — kod pilota z cache'u referencyjnego. */
+function crewLabel(
+  pilotId: string | null,
+  currentPilotId: string | null,
+  codeOf: (id: string) => string,
+): string {
+  if (pilotId == null) return '—';
+  return pilotId === currentPilotId ? `${codeOf(pilotId)} (Ty)` : codeOf(pilotId);
+}
+
+/** Nagłówek kafelka „bez śladu" — dwa różne powody znaczą dla pilota co innego. */
+function noTrackTitle(track: SessionTrackView | null): string {
+  return track?.missing === 'manual' ? 'BEZ ZAPISU GPS' : 'ŚLAD NIEDOSTĘPNY';
+}
+
+function noTrackText(track: SessionTrackView | null): string {
+  if (track?.missing === 'manual') {
+    return (
+      'Ta sesja została wpisana ręcznie, więc nie ma z czego narysować trasy. ' +
+      'Czasy poniżej są pełnoprawne — pochodzą z Twojego wpisu, nie z odbiornika.'
+    );
+  }
+  return (
+    'Nie ma zapisu GPS dla tej sesji. Ślad to materiał roboczy z retencją 14 dni — ' +
+    'starsze sesje mają komplet czasów i liczb, ale trasy już nie.'
+  );
+}
+
+/**
+ * `.correction-window` — pudełko z terminem samodzielnej korekty.
  *
  * Trzy stany, bo trzy różne rzeczy trzeba powiedzieć: sesja jeszcze niezdana (termin
  * dopiero zacznie biec), okno otwarte (konkretna data i godzina) i okno zamknięte
@@ -497,8 +476,8 @@ function CorrectionWindowBanner({
   closesAt: number | null;
 }) {
   const tail =
-    'Później korektę nanosi administrator. Stuknij ołówek przy locie, żeby poprawić czas ' +
-    'albo oznaczyć zdarzenie jako błędne.';
+    'Później korektę nanosi administrator. Stuknij ołówek przy zdarzeniu, żeby poprawić ' +
+    'czas albo oznaczyć je jako błędne.';
 
   if (!confirmed) {
     return (
@@ -535,17 +514,9 @@ function CorrectionWindowBanner({
   );
 }
 
-/** Litry bez jednostki (jednostka stoi pod wartością w komórce `StatGrid`). */
-function amount(value: number | null): string {
-  return value == null ? '—' : `${Math.round(value)}`;
-}
-
 /**
  * `ResultRow` jest projektowany do wnętrza karty z paddingiem; tu karty są `flush`,
- * bo siatki dociągają się do krawędzi — wcięcie wiersza dokładamy stylem.
- *
- * Baza stoi poza `StyleSheet.create`, bo wpis `firstRow` wyrasta z niej spreadem —
- * wewnątrz arkusza wpisy nie widzą się nawzajem.
+ * bo oś i rachunki dociągają się do krawędzi — wcięcie wiersza dokładamy stylem.
  */
 const row = { paddingHorizontal: 12, marginTop: 0 };
 
@@ -553,11 +524,16 @@ const styles = StyleSheet.create({
   row,
   /** Pierwszy wiersz sekcji styka się z linią nagłówka karty — własnej nie potrzebuje. */
   firstRow: { ...row, borderTopWidth: 0 },
-  /** Przypis pod średnią (10a) — mono 9, w świetle karty. */
-  avgNote: {
-    fontSize: 9,
-    letterSpacing: 0.5,
-    paddingHorizontal: 12,
-    paddingBottom: 10,
+  thumbFrame: { overflow: 'hidden' },
+  noTrack: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 26,
+    paddingHorizontal: 18,
+    borderBottomWidth: 1,
   },
+  noTrackTitle: { fontSize: 17, letterSpacing: 2 },
+  noTrackText: { fontSize: 8.5, lineHeight: 14, textAlign: 'center', maxWidth: 250 },
+  freshness: { paddingHorizontal: 4, marginTop: -6 },
 });

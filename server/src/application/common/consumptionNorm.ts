@@ -20,9 +20,11 @@ import {
   buildFuelIntervals,
   consumptionSummary,
   fitConsumptionModel,
+  fitMhModel,
   type ConsumptionNorm,
   type Event,
   type FuelInterval,
+  type MhEquation,
 } from '@uzaero/domain';
 
 import type {
@@ -74,15 +76,26 @@ export async function recomputeConsumptionNorm(
   const streams = await ports.events.sessionStreams(db, sessionUuids);
 
   const intervals: FuelInterval[] = [];
+  // Równania licznika — jedno na ZDANĄ sesję (`MhEquation`). Do issue #38 były tu
+  // wyrzucane: `buildFuelIntervals` zwracało je razem z interwałami, a norma brała same
+  // interwały. Telefon nie miał więc czym odpowiedzieć na „czy licznik pokazał tyle,
+  // ile powinien" i ekran 10 zastępował odpowiedź twierdzeniem, że ΔMH = czas blokowy.
+  const equations: MhEquation[] = [];
   for (const [sessionUuid, stream] of streams) {
     if (stream.length === 0) continue;
     const phaseTimeline = ports.phases == null ? undefined : await ports.phases.read(sessionUuid);
-    intervals.push(...buildFuelIntervals(stream as Event[], { phaseTimeline }).intervals);
+    const session = buildFuelIntervals(stream as Event[], { phaseTimeline });
+    intervals.push(...session.intervals);
+    if (session.mh != null) equations.push(session.mh);
   }
 
+  // Kolejność ma znaczenie: metryki zbiorcze liczą się na interwałach PRZED oznaczeniem
+  // odstających, a pasmo rozrzutu (w `buildConsumptionNorm`) — już po nim.
+  const summary = consumptionSummary(intervals);
+  const model = fitConsumptionModel(intervals);
+
   const norm = buildConsumptionNorm(
-    consumptionSummary(intervals),
-    fitConsumptionModel(intervals),
+    { summary, model, intervals, mh: fitMhModel(equations) },
     NORM_WINDOW_DAYS,
     now.getTime(),
   );

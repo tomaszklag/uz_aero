@@ -20,6 +20,7 @@
 
 import type { EpochMillis } from '../time';
 import { isUsableInterval, type FuelInterval } from './interval';
+import { percentile } from './percentile';
 import { HOUR_MS } from './policy';
 
 /** Punkt trendu — jeden miesiąc kalendarzowy UTC. */
@@ -166,23 +167,4 @@ function monthKey(at: EpochMillis): string {
   const date = new Date(at);
   const month = date.getUTCMonth() + 1;
   return `${date.getUTCFullYear()}-${month < 10 ? '0' : ''}${month}`;
-}
-
-/**
- * Centyl z interpolacją liniową między sąsiednimi obserwacjami (metoda domyślna
- * w większości narzędzi statystycznych). Przy jednej obserwacji zwraca ją samą —
- * pasmo jest wtedy punktem i taka jest prawda o tych danych.
- */
-function percentile(values: readonly number[], fraction: number): number | null {
-  if (values.length === 0) return null;
-
-  const sorted = [...values].sort((a, b) => a - b);
-  if (sorted.length === 1) return sorted[0]!;
-
-  const position = fraction * (sorted.length - 1);
-  const lower = Math.floor(position);
-  const upper = Math.ceil(position);
-  if (lower === upper) return sorted[lower]!;
-
-  return sorted[lower]! + (position - lower) * (sorted[upper]! - sorted[lower]!);
 }

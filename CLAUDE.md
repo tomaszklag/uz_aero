@@ -21,6 +21,9 @@ kod ekranów importuje po staremu.
 Fazy z `docs/_main.md.txt` §10: 1–4 ✅ **wobec modelu sprzed 2026-08-06** (ekrany 00–12 komplet; sync end-to-end z eksportem §4.7 na kartach W BAZIE — `exported_sheets` + `GET /sheets/:tab`; adapter Google Sheets = opcjonalna przyszła podmiana portu `SheetsPort`, gdy będzie klucz) · **faza 8 = przebudowa flow, WYPRZEDZA fazę 5** (patrz niżej) · potem: 5 testy z pilotami, 6 wdrożenie + backlog audytu.
 Faza 7 **panel administracyjny (web)** — projekt UI zamknięty (`design/admin/`: 23 ekrany, `SZABLON.html`, `ANALIZA.md`), a backend i klient web **są wdrożone**: role, `/admin/*`, cykl życia flagi, audyt oraz `admin/` (React+Vite, ekrany A01–A11 z modułami czystymi 1:1 z testami).
 **Analityka zużycia** (2026-08-05) — wdrożona end-to-end: domena `packages/domain/src/consumption/` (interwały paliwowe odczyt→odczyt, NNLS per faza, przelicznik MH z automatycznym rozpoznaniem obrotomierz/Hobbs, oś faz pionowych ze śladu), `GET /admin/api/fleet/:id/consumption` + ekran A10a/A10b w panelu, norma zużycia w aplikacji pilota (migracja serwera 19 + SQLite 4, ekrany 04/06/10). Reguła czytania strumienia poza listami: `docs/architektura-panelu-serwer.md` §7.7; przepis „nowa metryka analityki": `docs/architektura-kodu.md` §7.
+**Rozszerzona przy issue #38 (2026-08-12)**: norma telefonu niesie parę stawek fazowych
+(ziemia + powietrze) i przeliczniki MH, a `consumption/expectation.ts` liczy z nich
+oczekiwanie dla KONKRETNEJ sesji — patrz sekcja „Norma zużycia liczy się PER SESJA" niżej.
 **Progi analityki są DO KALIBRACJI** (`consumption/policy.ts`) — służy do tego `server/scripts/consumptionReplay.ts`, który puszcza realną historię przez ten sam kod, co serwer. Pierwszy przebieg (2026-08-05) znalazł pięć wad, każda ma test regresyjny; nie strojimy tych progów w dyskusji.
 **PIVOT MODELU 2026-08-10 — SESJA = JEDEN BIEG SILNIKA** (sekcja „Sesja = jeden bieg
 silnika" niżej). Story użytkownika częściowo odwraca przebudowę z 2026-08-06: `leg_close`
@@ -262,14 +265,13 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
   wariant 09c: zdanie bez lotu) → 01-moj-dzien
 01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie: samolot, czasy, odczyty)
 01-moj-dzien → 12-historia („Poprzednie dni" — sesje spoza dzisiejszej doby);
-  OŁÓWEK wiersza logu → 10-statystyki (detale i korekty TEJ sesji; „Rozliczenie"
-  jako osobny przycisk nie istnieje)
+  OŁÓWEK wiersza logu → 10-statystyki (ekran SESJI: detale i korekty TEJ sesji)
 12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
   ekran w trybie PODGLĄDU: bez ołówków, bez „Edytuj dane")
-10-statystyki → NUMER lotu w tabeli → 16-lot (szczegóły JEDNEGO lotu: czasy, miejsce,
-  zrzuty tego wyniesienia, miniatura śladu) → miniatura → 14-slad (pełny ślad).
-  Wariant 16a = lot bez zapisu GPS; z LIST (01, tabela lotów na 10) nie ma skrótu
-  prosto na mapę (issue #25)
+10-statystyki → MINIATURA ŚLADU → 14-slad (pełny ślad CAŁEJ sesji: kołowanie,
+  wszystkie starty i lądowania, profil pionowy z przerwą na ziemi).
+  EKRANU 16 NIE MA (usunięty 2026-08-12, issue #38) — szczegóły pojedynczego lotu
+  wróciły na oś czasu sesji, bo dublowały ekran wyżej
 EKRANU 11 NIE MA (usunięty 2026-08-12) — stan wysyłki, uwagi serwera i awaryjne
   „Synchronizuj teraz" to SEKCJA w Ustawieniach (13); kolejkę i ostatnią wysyłkę
   pokazuje też arkusz pod SyncChipem
@@ -368,21 +370,49 @@ Ekran 12 przestał być drugą listą tych samych lotów, co „Mój dzień":
   `!correctionWindow(...).open` — sesja jeszcze niezdana ma okno otwarte i działa jak
   dotąd. Wyszarzony ołówek jest ZAKAZANY: obiecuje akcję, którą reguły odrzucą
 
-## Ślad należy do LOTU (issue #25, 2026-08-12)
-Ślad GPS opisuje jeden lot (start → lądowanie), więc nie da się go podwiesić pod listę:
-sesja z trzema lotami nie ma „swojego" śladu. Stąd jedna droga — **10 (rozliczenie
-sesji) → 16 (szczegóły lotu) → 14 (pełny ślad)**:
-- **z list wejść w ślad NIE MA**: numer wiersza na 01 jest samą liczbą porządkową,
-  a numer lotu w tabeli na 10 otwiera szczegóły lotu, nie mapę
-- **16 = szczegóły JEDNEGO lotu**: uproszczona miniatura trasy (sama linia i dwa końce —
-  bez siatki, podziałki, lotnisk i atrybucji, bo bez danych OSM nie ma czego podpisywać),
-  czasy lotu, miejsce, zrzuty TEGO wyniesienia i korekta czasów (ten sam cel, co ołówek
-  w tabeli na 10). Czasu blokowego, paliwa i MH tu NIE MA — to wielkości sesji
-- **16a = lot bez zapisu GPS** (wpis ręczny albo retencja 14 dni): w miejscu miniatury
-  kafelek z POWODEM i **bez linku** — za nim nie ma ani jednego detalu więcej. Wariant
-  `14b` zostaje jako stan zabezpieczający pełnej mapy, nie jako cel drogi
-- kod: `ui/screens/FlightDetailsScreen.tsx` + `logic/flightDetails.ts` +
-  `components/data/TrackThumbnail.tsx`; trasa `FlightDetails` w nawigacji
+## Ślad należy do SESJI (issue #38, 2026-08-12 — odwraca #25)
+Zapis GPS powstaje w JEDNYM ciągu: od uruchomienia do zatrzymania silnika. Sesja ma więc
+swój ślad, a loty są jego ODCINKAMI — zdanie z issue #25 („sesja z trzema lotami nie ma
+swojego śladu") było fałszywe technicznie i kosztowało jeden ekran pośredni. Droga jest
+odtąd dwuczłonowa: **10 (sesja) → 14 (pełny ślad)**.
+- **miniatura śladu stoi WPROST na 10**, razem z osią czasu — znacznik na trasie i wiersz
+  osi to ten sam start albo to samo lądowanie, więc rozdzielone na dwa ekrany kazały
+  pilotowi zestawiać je z pamięci
+- **14 rysuje CAŁY bieg silnika**: kołowanie przerywaną szarą, loty pełną zieloną,
+  wszystkie starty i lądowania jako znaczniki, profil pionowy z PRZERWĄ NA ZIEMI między
+  wyniesieniami (ta przerwa nie jest dziurą w zapisie — to czas, który od issue #38
+  wchodzi wprost do normy zużycia)
+- **z list wejść w ślad nadal NIE MA** (to z #25 zostaje): numer wiersza na 01 jest samą
+  liczbą porządkową. Wejście jest jedno — miniatura na ekranie sesji
+- **`14b` = brak zapisu** (wpis ręczny albo retencja 14 dni): stan pusty z POWODEM
+- **EKRAN 16 USUNIĘTY** razem z `16a`: jego treść wróciła tam, skąd przyszła — zrzuty
+  na oś czasu sesji (jako zdarzenia w czasie, bo nimi są), czasy do wierszy osi, korekta
+  do ołówka wiersza. Kod: `FlightDetailsScreen.tsx`, `logic/flightDetails.ts` i trasa
+  `FlightDetails` skasowane; `TrackThumbnail` przeniesiony na ekran sesji
+
+## Norma zużycia liczy się PER SESJA, nie per godzina (issue #38, 2026-08-12)
+Werdykt „w normie" porównywał L/h sesji z pasmem blokowym samolotu — czyli z liczbą
+policzoną na średniej mieszance faz z 90 dni. Sesja z długim kołowaniem wychodziła przez
+to „poniżej normy" bez żadnego powodu poza proporcją ziemi do powietrza, a motogodziny
+nie miały normy w ogóle: ekran twierdził, że ΔMH RÓWNA SIĘ czasowi blokowemu, czemu
+`consumption/mhModel.ts` wprost zaprzecza (obrotomierz na ziemi przyrasta wolniej niż zegar).
+- **jedno równanie dla obu wielkości**: `oczekiwane = k_lot · t_lot + k_ziemia · t_ziemia`
+  (`consumption/expectation.ts`). Paliwo i motogodziny dostają dzięki temu tę samą formę
+  prezentacji na ekranie — rachunek, wynik, pasmo, werdykt — a nie dwie przypadkowo różne
+- **pasmo z ROZRZUTU OBSERWACJI, nie z przedziału ufności** (`consumption/ratio.ts`):
+  centyle 10/90 ilorazu fakt/model, liczone TĄ SAMĄ formułą, którą policzy telefon.
+  Reguła przeniesiona wprost z `summary.ts` — przy stu równaniach przedział ufności jest
+  wąski i werdykt zapalałby się na normalnej zmienności między lotami
+- **podłoga pasma z podziałki przyrządu** (`policy.ts`: 6 L, 0,1 MH): przy danych
+  wewnętrznie spójnych rozrzut schodzi do zera i bez podłogi werdykt orzekałby o różnicy
+  mniejszej niż to, co paliwomierz i licznik w ogóle umieją pokazać. **DO KALIBRACJI**
+  razem z resztą progów — `server/scripts/consumptionReplay.ts`
+- **norma telefonu niesie parę stawek, nie cały model**: model czterofazowy skleja się do
+  „ziemia + powietrze" ŚREDNIĄ WAŻONĄ udziałem faz w oknie. Do issue #38 stawką lotu był
+  sam `cruise` — najniższa z trzech — więc dla dnia skokowego (prawie samo wznoszenie
+  i zniżanie) norma zaniżała zużycie, a razem z nim rezerwę paliwa w kokpicie
+- `null` znaczy „nie ma czego pokazać" i ekran wtedy MILCZY: brak przeliczników MH nie
+  unieważnia normy paliwa i odwrotnie (inne wejście, inny próg publikacji)
 
 ## Pilot i samolot — UX
 - Pierwsze logowanie: login + hasło na `00-login.html` (konta zakłada administrator w bazie, BEZ samodzielnej rejestracji i BEZ Google OAuth — decyzja odwrócona 2026-07-22; wymaga sieci); codzienny powrót = odblokowanie PIN-em (działa offline)
