@@ -19,6 +19,7 @@ import { Animated, Pressable, StyleSheet, View, type ViewStyle } from 'react-nat
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { Icon, type IconName } from '../foundation/Icon';
+import { Tag } from '../status/Tag';
 import { toneColors, type Tone } from '../tone';
 
 /**
@@ -68,6 +69,17 @@ export interface ActionButtonProps {
   icon?: IconName;
   /** Ikona za etykietą (np. strzałka „dalej"). */
   trailingIcon?: IconName;
+  /**
+   * Plakietka za etykietą — krótki napis o tym, co czeka PO drugiej stronie
+   * przycisku („05 SIE — można poprawić" na wejściu w historię, 01).
+   *
+   * Istnieje, bo bez niej ekran robił z takiego wejścia własny „przycisk-link"
+   * o innym kroju i innej wysokości (issue #42). Plakietka jest INFORMACJĄ, nie
+   * stanem przycisku: `null` znaczy „nie ma o czym mówić" i wtedy nie ma jej wcale.
+   */
+  badge?: string | null;
+  /** Ton plakietki — domyślnie niebieski, czyli „informacja", nie ostrzeżenie. */
+  badgeTone?: Tone;
   /** Czas przytrzymania (ms). 0 = zwykłe tapnięcie. */
   holdMs?: number;
   /** Blokada — wymaga podania powodu; powód jest pokazywany pod przyciskiem. */
@@ -86,6 +98,8 @@ export function ActionButton({
   hint,
   icon,
   trailingIcon,
+  badge = null,
+  badgeTone = 'blue',
   holdMs = 0,
   disabledReason = null,
   busy = false,
@@ -235,6 +249,9 @@ export function ActionButton({
                 {trailingIcon != null && (
                   <Icon name={trailingIcon} size={size === 'md' ? 16 : 18} color={contentColor} />
                 )}
+                {/* Plakietka na końcu rzędu — przycisk zostaje przyciskiem, a napis
+                    o tym, co go czeka, nie wymaga własnego kształtu obok. */}
+                {badge != null && <Tag label={badge} tone={badgeTone} />}
               </View>
 
               {hint != null && (

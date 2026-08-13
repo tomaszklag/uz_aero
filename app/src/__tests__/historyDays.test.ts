@@ -2,7 +2,7 @@
  * UZ Aero — testy „Poprzednich dni" (ekran 12: `queries.historyDays` + `screens/historyDays`).
  *
  * Sedno po issue #35: ekran pokazuje sesje z dni WCZEŚNIEJSZYCH (dzisiejsze mieszkają
- * na 01), kafelek niesie te same trzy wielkości co wiersz sesji na „Mój dzień"
+ * na 01), kafelek niesie te same trzy wielkości co kafelek sesji na „Mój dzień"
  * (Loty / Blok / Lot), a plakietka wysyłki istnieje wyłącznie wtedy, gdy coś czeka
  * w kolejce. Podział na grupy robi okno korekty (24 h od zdania samolotu), sesja
  * TRZYMANA nie jest historią, a liczby na karcie liczy ten sam `projectSession`,
@@ -91,12 +91,14 @@ describe('poprzednie dni (ekran 12)', () => {
     expect(groups.closed).toHaveLength(0);
     expect(groups.editable).toHaveLength(1);
     const day = groups.editable[0]!;
-    expect(day.date).toBe('22 CZERWCA 2026');
+    // Nagłówkiem kafelka historii jest DATA (na 01 — numer sesji w dobie, issue #42).
+    expect(day.title).toBe('22 CZERWCA 2026');
     expect(day.aircraft).toBe('SP-AXA');
     // Godziny BIEGU SILNIKA, nie przejęcia — bez nich dwie sesje tej samej doby na tej
     // samej maszynie byłyby nie do odróżnienia.
     expect(day.times).toBe('08:12 → 10:34 UTC');
-    // Te same trzy wielkości i te same nazwy, co wiersz sesji na 01 (issue #35 pkt 6).
+    // Te same trzy wielkości i te same nazwy, co kafelek sesji na 01 (issue #35 pkt 6;
+    // od issue #42 dosłownie z tej samej funkcji `sessionStats`).
     // „Sesja" (czas trzymania maszyny) i „Skoczków" wypadły z kafelka.
     expect(day.stats).toEqual([
       { k: 'Loty', v: '1' },
@@ -201,7 +203,7 @@ describe('poprzednie dni (ekran 12)', () => {
     const { repo, queries } = harness();
     await writeDay(repo, 'sess-1', at(8, 0));
 
-    // Tego samego dnia plakietka milczy: sesję poprawia się ołówkiem wiersza tuż obok,
+    // Tego samego dnia plakietka milczy: sesję poprawia się kafelkiem tuż obok,
     // a plakietka obiecywałaby coś, czego pilot w historii nie znajdzie.
     expect(editableBadge(await queries.historyDays(), at(20, 0))).toBeNull();
 

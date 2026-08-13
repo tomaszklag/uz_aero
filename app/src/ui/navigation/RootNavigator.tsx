@@ -63,7 +63,7 @@ export type RootStackParamList = {
   ManualFlight: undefined;
   /** 09B/09C — zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
-  /** 10 — detale i korekty JEDNEJ sesji; wejście ołówkiem wiersza na 01 i z historii (12). */
+  /** 10 — detale i korekty JEDNEJ sesji; wejście kafelkiem sesji na 01 i w historii (12). */
   Stats: undefined;
   /**
    * 14 — ślad CAŁEJ sesji: trasa, profil pionowy i log punktów. Wejście miniaturą z 10.

@@ -74,14 +74,13 @@
   .scroll::-webkit-scrollbar { display:none; }
   .scroll > * { flex-shrink:0; }
 
-  /* ===== Log dnia — stan pusty ===== */
-  .day-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  .day-head {
-    padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
-    font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted);
-    display:flex; align-items:center; gap:6px;
-  }
-  .day-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--green); }
+  /* ===== Log dnia — stan pusty =====
+     Od issue #42 log dnia to LISTA KAFELKÓW sesji (ten sam komponent, co na 12),
+     więc pusty dzień jest po prostu listą bez kafelków: etykieta grupy, karta ze
+     stanem pustym i sumy. Nagłówka `.day-head` nie ma — zastąpiła go etykieta
+     `.group-lbl`, ta sama, co nad kartami na „Poprzednich dniach". */
+  .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+  .empty-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
 
   /* Stan pusty listy — mówi wprost, zamiast udawać tabelę bez wierszy */
   .empty-legs {
@@ -93,7 +92,8 @@
 
   /* Sumy doby: Blok i Loty — „— —" zamiast zer: brak sesji to niewiedza, nie wynik
      (wzorzec z 10A). Kafla „Służba" nie ma (issue #23 pkt 2). */
-  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border-top:1px solid var(--border); }
+  .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-muted); }
@@ -109,21 +109,17 @@
     box-shadow:0 0 24px rgba(46,204,113,0.3);
   }
   .btn-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; margin-top:-4px; line-height:1.5; }
+  /* Jeden krój na wszystkie przyciski ekranu (issue #42): display, jak `.btn-primary`
+     wyżej — wielkość różnicuje wagę akcji, rodzina jest jedna. Osobna klasa
+     `.history-link` (Archivo 12,5 px) została usunięta: to był przycisk udający link. */
   .btn-secondary {
     display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; min-height:46px; padding:13px; border-radius:12px;
+    width:100%; min-height:48px; padding:13px; border-radius:12px;
     background:var(--surface-raised); color:var(--text-secondary);
-    font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
     border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
   }
   .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
-  .history-link {
-    display:flex; align-items:center; justify-content:center; gap:9px;
-    min-height:46px; padding:10px 18px; border-radius:12px;
-    border:1px solid var(--border); background:transparent; color:var(--text-secondary);
-    font-size:12.5px; font-weight:600; text-decoration:none;
-  }
-  .history-link:hover { border-color:var(--green-border); color:var(--green); }
   .history-badge {
     font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase;
     color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border);
@@ -187,10 +183,12 @@
       </a>
       <div class="btn-note">Odczytasz paliwo i motogodziny, potwierdzisz zadanie —<br>i lecisz. Loty zapiszą się same.</div>
 
-      <!-- Pusty log dnia: pokazany, ale bez wartości — nie udajemy zer -->
-      <div class="day-card">
-        <div class="day-head">Log dnia · czasy UTC</div>
+      <!-- Pusty log dnia: pokazany, ale bez wartości — nie udajemy zer.
+           Ta sama etykieta grupy i te same sumy, co na 01 — brakuje wyłącznie
+           kafelków sesji, bo nie ma jeszcze ani jednej. -->
+      <div class="group-lbl">Log dnia</div>
 
+      <div class="empty-card">
         <div class="empty-legs">
           <svg class="empty-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/>
@@ -198,7 +196,9 @@
           <span class="empty-title">JESZCZE ŻADNEGO LOTU</span>
           <span class="empty-desc">Sesje pojawią się tu same, gdy przejmiesz samolot i uruchomisz silnik. Nic nie trzeba otwierać.</span>
         </div>
+      </div>
 
+      <div class="totals-card">
         <div class="totals">
           <div class="total-cell">
             <span class="total-key">Blok</span>
@@ -213,9 +213,9 @@
         </div>
       </div>
 
-      <a href="12-historia.html" class="history-link">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        Poprzednie dni
+      <a href="12-historia.html" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        POPRZEDNIE DNI
         <span class="history-badge">05 SIE — można poprawić</span>
       </a>
 

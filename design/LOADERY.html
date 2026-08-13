@@ -89,45 +89,36 @@
   @keyframes skel { 0%,100% { opacity:1; } 50% { opacity:0.45; } }
 
   /* ===== Log dnia w stanie ładowania =====
-     Geometria 1:1 z `01-moj-dzien.html` — karta, wiersze i sumy mają te same wysokości
-     co wersja z danymi, więc gdy doba dojdzie, NIC się nie przesuwa. */
-  .day-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  .day-head {
-    padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
-    font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted);
-    display:flex; align-items:center; gap:6px;
-  }
-  .day-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--green); }
+     Geometria 1:1 z `01-moj-dzien.html` — kafelki i sumy mają te same wysokości
+     co wersja z danymi, więc gdy doba dojdzie, NIC się nie przesuwa.
 
-  .legs { display:flex; flex-direction:column; }
-  .leg-row { display:flex; align-items:center; gap:8px; padding:5px 6px 5px 0; border-bottom:1px solid var(--border); }
-  .leg-row:last-child { border-bottom:none; }
-  .leg-num { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; }
-  .leg-id { display:flex; flex-direction:column; gap:4px; width:112px; flex-shrink:0; }
-  .leg-metrics { flex:1; display:flex; gap:12px; }
-  .leg-metric { display:flex; flex-direction:column; gap:3px; }
-  /* Ołówek wiersza: pełny obrys, pusty środek. Cel dotykowy istnieje, ale jeszcze
-     nie ma dokąd prowadzić — skeleton nie jest klikalny (reguła 6). */
-  .edit-slot { border:1px solid var(--border); border-radius:8px; min-width:44px; min-height:44px; flex-shrink:0; }
+     Od issue #42 sesja jest KAFELKIEM (tym samym, co na 12), więc plamką jest CAŁY
+     kafelek, nie jego wnętrze: nagłówek, rejestracja, godziny, trójka metryk i pas
+     akcji przychodzą razem, jednym odczytem — rozbicie ich na osobne plamki udawałoby,
+     że dojdą po kolei. Wysokość 156 px to ten sam kafelek, co w historii. */
+  .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
+  .card-slot { width:100%; height:156px; border-radius:14px; background:var(--surface-hover); animation:skel 1400ms ease-in-out infinite; }
 
-  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border-top:1px solid var(--border); }
+  .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:6px; }
 
   /* Blok akcji: JEDEN przycisk, bo tylko tyle wiadomo na pewno (reguła 2).
      Doba pusta dostanie zielone „ROZPOCZNIJ LOT" z przypisem, doba z sesjami — dwa
      przyciski drugorzędne. Skeleton obiecuje część wspólną, nie zgaduje wariantu. */
-  .btn-slot { width:100%; min-height:46px; border-radius:12px; background:var(--surface-hover); animation:skel 1400ms ease-in-out infinite; }
+  .btn-slot { width:100%; min-height:48px; border-radius:12px; background:var(--surface-hover); animation:skel 1400ms ease-in-out infinite; }
 
-  /* Wejście w historię rysuje się NORMALNIE — jest statycznym linkiem, nie danymi.
+  /* Wejście w historię rysuje się NORMALNIE — jest statycznym przyciskiem, nie danymi.
      Plakietki okna korekty (async, opcjonalna) skeleton NIE rezerwuje: może nigdy
      nie przyjść, a wtedy trzymalibyśmy miejsce na nic (reguła 2). */
-  .history-link {
-    display:flex; align-items:center; justify-content:center; gap:9px;
-    min-height:46px; padding:10px 18px; border-radius:12px;
-    border:1px solid var(--border); background:transparent; color:var(--text-secondary);
-    font-size:12.5px; font-weight:600; text-decoration:none;
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:48px; padding:13px; border-radius:12px;
+    background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none;
   }
-  .history-link:hover { border-color:var(--green-border); color:var(--green); }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--green); }
 
   /* ===== Panel wzorca na canvasie ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -183,55 +174,16 @@
 
     <div class="scroll">
 
-      <!-- Karta i jej nagłówek są STAŁE — „Log dnia · czasy UTC" nie jest daną.
-           Skeletonem są trzy wiersze sesji i dwie sumy: dokładnie te miejsca,
-           w których za chwilę pojawią się liczby. Trzy wiersze, bo tyle mieści się
-           bez przewijania — skeleton pokazuje KSZTAŁT listy, nie jej długość. -->
-      <div class="day-card">
-        <div class="day-head">Log dnia · czasy UTC</div>
+      <!-- Etykieta grupy jest STAŁA — „Log dnia" nie jest daną, więc rysuje się od razu.
+           Skeletonem są dwa kafelki sesji i dwie sumy: dokładnie te miejsca, w których
+           za chwilę pojawią się liczby. Dwa kafelki, bo tyle mieści się bez przewijania
+           — skeleton pokazuje KSZTAŁT listy, nie jej długość. -->
+      <div class="group-lbl">Log dnia</div>
 
-        <div class="legs">
-          <div class="leg-row">
-            <span class="leg-num"><span class="skel" style="width:14px;height:12px;"></span></span>
-            <span class="leg-id">
-              <span class="skel" style="width:96px;height:12px;"></span>
-              <span class="skel" style="width:54px;height:9px;"></span>
-            </span>
-            <span class="leg-metrics">
-              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:18px;height:11px;"></span></span>
-              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
-              <span class="leg-metric"><span class="skel" style="width:22px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
-            </span>
-            <span class="edit-slot"></span>
-          </div>
-          <div class="leg-row">
-            <span class="leg-num"><span class="skel" style="width:14px;height:12px;"></span></span>
-            <span class="leg-id">
-              <span class="skel" style="width:96px;height:12px;"></span>
-              <span class="skel" style="width:54px;height:9px;"></span>
-            </span>
-            <span class="leg-metrics">
-              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:18px;height:11px;"></span></span>
-              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
-              <span class="leg-metric"><span class="skel" style="width:22px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
-            </span>
-            <span class="edit-slot"></span>
-          </div>
-          <div class="leg-row">
-            <span class="leg-num"><span class="skel" style="width:14px;height:12px;"></span></span>
-            <span class="leg-id">
-              <span class="skel" style="width:96px;height:12px;"></span>
-              <span class="skel" style="width:54px;height:9px;"></span>
-            </span>
-            <span class="leg-metrics">
-              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:18px;height:11px;"></span></span>
-              <span class="leg-metric"><span class="skel" style="width:26px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
-              <span class="leg-metric"><span class="skel" style="width:22px;height:7px;"></span><span class="skel" style="width:30px;height:11px;"></span></span>
-            </span>
-            <span class="edit-slot"></span>
-          </div>
-        </div>
+      <div class="card-slot"></div>
+      <div class="card-slot"></div>
 
+      <div class="totals-card">
         <div class="totals">
           <div class="total-cell">
             <span class="skel" style="width:28px;height:7px;"></span>
@@ -250,9 +202,9 @@
       <div class="btn-slot"></div>
 
       <!-- Statyczne wejście w historię rysuje się od razu, bez plakietki -->
-      <a href="12-historia.html" class="history-link">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-        Poprzednie dni
+      <a href="12-historia.html" class="btn-secondary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        POPRZEDNIE DNI
       </a>
 
     </div>
@@ -266,8 +218,9 @@
     <div class="inv-row"><span class="inv-key">mono · 11–12 px</span><span class="skel" style="width:96px;height:12px;"></span></div>
     <div class="inv-row"><span class="inv-key">display · 22 px</span><span class="skel" style="width:62px;height:22px;"></span></div>
     <div class="inv-row"><span class="inv-key">wiersz listy</span><span class="skel" style="height:44px;border-radius:8px;"></span></div>
-    <div class="inv-row"><span class="inv-key">przycisk · 46 px</span><span class="skel" style="height:46px;border-radius:12px;"></span></div>
+    <div class="inv-row"><span class="inv-key">przycisk · 48 px</span><span class="skel" style="height:48px;border-radius:12px;"></span></div>
     <div class="inv-row"><span class="inv-key">karta · 96 px</span><span class="skel" style="height:96px;border-radius:14px;"></span></div>
+    <div class="inv-row"><span class="inv-key">kafelek sesji · 156 px</span><span class="skel" style="height:156px;border-radius:14px;"></span></div>
   </div>
 </aside>
 
@@ -318,7 +271,7 @@
     <span class="vp-badge red">6</span>
     <span class="vp-body">
       <span class="vp-name">Skeleton nie jest interaktywny</span>
-      <span class="vp-when">Pod plamką nie ma przycisku do trafienia — ołówek wiersza ma obrys i cel dotykowy, ale nie prowadzi jeszcze nigdzie. Czytnik ekranu dostaje jeden komunikat „Ładowanie" na blok, a nie listę pustych elementów.</span>
+      <span class="vp-when">Pod plamką nie ma przycisku do trafienia — kafelek sesji ma swój rozmiar i swoje miejsce, ale nie prowadzi jeszcze nigdzie. Czytnik ekranu dostaje jeden komunikat „Ładowanie" na blok, a nie listę pustych elementów.</span>
     </span>
   </div>
 
@@ -337,7 +290,7 @@
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Mój dzień — log sesji doby</span>
-      <span class="vp-when">Stan pokazany na tym arkuszu: wiersze sesji, sumy i blok akcji. Do czasu odtworzenia rejestru (§4.9) skeleton stoi także zamiast stanu pustego 01A.</span>
+      <span class="vp-when">Stan pokazany na tym arkuszu: kafelki sesji, sumy i blok akcji. Kafelek jest tym samym komponentem, co w historii (issue #42), więc i plamka po nim ma jeden rozmiar. Do czasu odtworzenia rejestru (§4.9) skeleton stoi także zamiast stanu pustego 01A.</span>
     </span>
   </a>
   <a class="vp-item" href="12-historia.html">

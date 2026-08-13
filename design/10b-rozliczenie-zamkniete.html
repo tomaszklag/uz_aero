@@ -292,23 +292,10 @@
   }
   .note-text { font-size:12px; color:var(--text-secondary); line-height:1.55; }
 
-  /* Buttons */
-  .btn-row { display:flex; flex-direction:column; gap:8px; }
-  .btn-secondary {
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    width:100%; padding:13px; border-radius:12px;
-    background:var(--surface-raised); color:var(--text-secondary);
-    font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
-    border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
-  }
-  .btn-primary {
-    display:flex; align-items:center; justify-content:center; gap:10px;
-    width:100%; padding:17px; border-radius:16px;
-    background:var(--green); color:#0D0D0D;
-    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
-    border:none; text-decoration:none; cursor:pointer;
-    box-shadow:0 0 24px rgba(46,204,113,0.3);
-  }
+  /* Buttons — BRAK. Podgląd sesji po oknie korekty nie ma ani jednej akcji zapisu,
+     a powrót mieszka w nagłówku (issue #42, 2026-08-13). Klasy `.btn-row`,
+     `.btn-secondary` i `.btn-primary` zostały usunięte razem z pasem akcji, żeby
+     nikt nie odtworzył go „bo styl już jest". */
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -574,13 +561,11 @@
 
       <!-- „EDYTUJ DANE" znika — po oknie korekty nie ma czego edytować, a droga przez
            listę ręczną (08) prowadziłaby do ekranu, który i tak odmówi zapisu.
-           Zostaje samo wyjście. -->
-      <div class="btn-row">
-        <a href="12-historia.html" class="btn-primary">
-          WRÓĆ DO DNI
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 7h9M7 3l4 4-4 4"/></svg>
-        </a>
-      </div>
+           Zielone „WRÓĆ DO DNI" też znika (issue #42, 2026-08-13): powrót stoi
+           w nagłówku („‹ Dni"), a przycisk akcji głównej, który wyłącznie wychodzi
+           z ekranu, obiecuje czynność, której nie ma. Ekran w trybie podglądu nie ma
+           zatem ŻADNEGO pasa akcji na dole — i tak ma być: nie da się tu nic zapisać. -->
+
 
     </div>
   </div>

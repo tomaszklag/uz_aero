@@ -273,14 +273,7 @@
     font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px;
     border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
   }
-  .btn-primary {
-    display:flex; align-items:center; justify-content:center; gap:10px;
-    width:100%; padding:17px; border-radius:16px;
-    background:var(--green); color:#0D0D0D;
-    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
-    border:none; text-decoration:none; cursor:pointer;
-    box-shadow:0 0 24px rgba(46,204,113,0.3);
-  }
+  /* `.btn-primary` USUNIĘTY razem z zielonym „WRÓĆ DO DNIA" (issue #42) — patrz 10. */
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -485,10 +478,8 @@
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
         </a>
-        <a href="01-moj-dzien.html" class="btn-primary">
-          WRÓĆ DO DNIA
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 7h9M7 3l4 4-4 4"/></svg>
-        </a>
+        <!-- Zielone „WRÓĆ DO DNIA" USUNIĘTE (issue #42): powrót jest w nagłówku
+             („‹ Dzień") i wystarczy jeden. -->
       </div>
 
     </div>

@@ -265,7 +265,7 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
   wariant 09c: zdanie bez lotu) → 01-moj-dzien
 01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie: samolot, czasy, odczyty)
 01-moj-dzien → 12-historia („Poprzednie dni" — sesje spoza dzisiejszej doby);
-  OŁÓWEK wiersza logu → 10-statystyki (ekran SESJI: detale i korekty TEJ sesji)
+  KAFELEK sesji → 10-statystyki (ekran SESJI: detale i korekty TEJ sesji)
 12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
   ekran w trybie PODGLĄDU: bez „Edytuj dane")
 10-statystyki → „EDYTUJ DANE" → 08-lista-reczna (JEDYNE drzwi do korekty czasów —
@@ -332,7 +332,7 @@ i nic ponadto.** Klamra służby („loty zapisywane, służba deklarowana", 202
 przeżyła pięć dni — czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał
 deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Konsekwencje:
 - dzień należy do **pilota** i obejmuje sesje na różnych maszynach — na 01 jako PŁASKA
-  oś czasu (rejestracja to informacja wiersza, NIE oś grupowania); sumy doby: Blok i Loty
+  oś czasu (rejestracja to informacja kafelka, NIE oś grupowania); sumy doby: Blok i Loty
 - dnia **nie otwiera się ani nie zamyka** — zaczyna się pierwszą sesją; „Zamknij dzień",
   ekran `01b` i edu-baner o klamrze nie istnieją
 - z modelu znikły: `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła
@@ -340,9 +340,9 @@ deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Konsekwencje:
   lista sesji + sumy, `projections/pilotDay.ts`)
 - **zdanie samolotu już POTWIERDZA dane** — po locie niczego się nie potwierdza ani nie
   wysyła ponownie (decyzja biznesowa przy issue #23; z ekranu 10 zniknął „ZATWIERDŹ →
-  SYNC"). Detale sesji (10) otwiera ołówek wiersza na 01 — tam się ogląda i koryguje
-- okno korekty jest JEDNO, per sesja: 24 h od ZDANIA samolotu; drzwiami są ołówek
-  wiersza na 01 i historia (12)
+  SYNC"). Detale sesji (10) otwiera KAFELEK sesji na 01 — tam się ogląda i koryguje
+- okno korekty jest JEDNO, per sesja: 24 h od ZDANIA samolotu; drzwiami są kafelek
+  sesji na 01 i historia (12)
 - **zdanie samolotu nie kończy dnia pilota** — kolejna maszyna dopisze się do listy sesji
 - odczyt liczników przy zdaniu (09b) pozostaje **OBOWIĄZKOWY** (przekazanie + ogniwo
   łańcucha MH); jednostką potwierdzenia pozostaje SESJA (pivot 2026-08-10)
@@ -355,11 +355,11 @@ Ekran 12 przestał być drugą listą tych samych lotów, co „Mój dzień":
 - **kafelek = SESJA, nie doba** — doba z dwiema sesjami daje dwie karty, rozróżnione
   godzinami biegu silnika. Kafelek-doba nie miałby czego otworzyć: jego celem jest
   rozliczenie (10), a ono opisuje JEDNĄ maszynę
-- **dzisiejszych sesji tam nie ma** — mieszkają na 01, gdzie prowadzi je ołówek wiersza.
-  Doba liczy się tak samo jak na 01 (kotwicą jest URUCHOMIENIE silnika, awaryjnie
-  przejęcie — `sessionDay` w `logic/historyDays.ts`), więc sesja spod północy nie wpada
-  w dziurę między ekranami. Plakietka wejścia na 01 pomija dziś z tego samego powodu
-- **metryki kafelka = metryki wiersza sesji z 01**: Loty · Blok · Lot. Skoczkowie zeszli
+- **dzisiejszych sesji tam nie ma** — mieszkają na 01, na TAKICH SAMYCH kafelkach
+  (issue #42). Doba liczy się tak samo jak na 01 (kotwicą jest URUCHOMIENIE silnika,
+  awaryjnie przejęcie — `sessionDay` w `logic/historyDays.ts`), więc sesja spod północy
+  nie wpada w dziurę między ekranami. Plakietka wejścia na 01 pomija dziś z tego samego powodu
+- **metryki kafelka = metryki kafelka sesji z 01**: Loty · Blok · Lot. Skoczkowie zeszli
   do szczegółów lotu, czas trzymania maszyny wypadł
 - **„Wysłane" i „Okno minęło" nie istnieją**. Pierwsze jest stanem domyślnym (reguła
   SyncChipa z issue #12), więc zostaje sama plakietka zaległości w dwóch odmianach:
@@ -385,8 +385,8 @@ odtąd dwuczłonowa: **10 (sesja) → 14 (pełny ślad)**.
   wszystkie starty i lądowania jako znaczniki, profil pionowy z PRZERWĄ NA ZIEMI między
   wyniesieniami (ta przerwa nie jest dziurą w zapisie — to czas, który od issue #38
   wchodzi wprost do normy zużycia)
-- **z list wejść w ślad nadal NIE MA** (to z #25 zostaje): numer wiersza na 01 jest samą
-  liczbą porządkową. Wejście jest jedno — miniatura na ekranie sesji
+- **z list wejść w ślad nadal NIE MA** (to z #25 zostaje): numer sesji na kafelku 01 jest
+  samą liczbą porządkową. Wejście jest jedno — miniatura na ekranie sesji
 - **`14b` = brak zapisu** (wpis ręczny albo retencja 14 dni): stan pusty z POWODEM
 - **EKRAN 16 USUNIĘTY** razem z `16a`: jego treść wróciła tam, skąd przyszła — zrzuty
   na oś czasu sesji (jako zdarzenia w czasie, bo nimi są), czasy do wierszy osi, korekta
@@ -436,6 +436,30 @@ stoi.
   Arkusz otwiera się także w podglądzie (10B): zamknięte okno korekty odbiera prawo do
   zmiany danych, nie do ich zrozumienia. Celem dotknięcia jest CAŁY wiersz — plakietka
   ma 9 px czcionki
+
+## Jeden kafelek sesji i jeden przycisk (issue #42, 2026-08-13)
+Zasada: **jedna rzecz ma w aplikacji JEDEN kształt.** „Mój dzień" (01) i „Poprzednie
+dni" (12) pokazywały tę samą sesję na dwa sposoby — 01 własną tabelą `.leg-row`, 12
+kafelkiem `.day-card` — a na 01 stały obok siebie trzy przyciski w trzech krojach.
+- **kafelek sesji = `DayCard` na OBU ekranach**; kształt (nagłówek, rejestracja, godziny
+  biegu silnika, trójka Loty · Blok · Lot) liczy `screens/logic/sessionCard.ts`, wspólny
+  dla `myDay.ts` i `historyDays.ts`. Dokładając pole „bo na jednym ekranie wygodniej",
+  zaczynasz rozjazd od nowa — pilnuje tego test kształtu w `myDay.test.ts`
+- **różnice są DWIE i obie wymuszone treścią**: (1) nagłówkiem kafelka jest data (12)
+  albo numer sesji w dobie (01 — data stoi w nagłówku ekranu, więc na kafelku byłaby
+  szumem); (2) stopka z plakietką wysyłki i terminem korekty istnieje tylko w historii
+- **na 01 kafelki NIE są niebieskie**, choć wszystkie dzisiejsze sesje są w oknie korekty:
+  na 12 błękit ODDZIELA sesje w oknie od zamkniętych, a kolor przy każdej pozycji listy
+  niczego nie oddziela (reguła SyncChipa z issue #12)
+- **przycisk to zawsze `ActionButton`** — „Poprzednie dni" były przyciskiem-linkiem
+  pisanym Archivo obok dwóch pisanych Bebas. Plakietka okna korekty wjechała do przycisku
+  (`badge`), zamiast wymuszać własny kształt obok. Wielkość dalej różnicuje wagę akcji,
+  rodzina jest jedna: `button` (Bebas 22) / `button_small` (Bebas 16) z pakietu tokenów.
+  Mockupowe `.btn-secondary` na 01/01a/01c/LOADERY poszły za tym samym tokenem
+- **powrót jest JEDEN — w nagłówku**: zielone „WRÓĆ DO DNIA" na dole ekranu 10 (i „WRÓĆ
+  DO DNI" na 10b) usunięte. Przycisk akcji głównej, który wyłącznie wychodzi z ekranu,
+  obiecuje czynność, której nie ma; w trybie podglądu (10b) nie zostaje żaden pas akcji
+  i tak ma być
 
 ## Norma zużycia liczy się PER SESJA, nie per godzina (issue #38, 2026-08-12)
 Werdykt „w normie" porównywał L/h sesji z pasmem blokowym samolotu — czyli z liczbą
