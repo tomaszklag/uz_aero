@@ -5,9 +5,10 @@
  * pisały wcześniej dwa arkusze osobno i każdy trochę inaczej („zmiana o +2 min względem
  * 09:01" kontra „Zmiana o +2 min względem odczytu GPS (09:01)").
  *
- * Podpis stoi TAKŻE przy zerowej zmianie i to jest celowe: pilot, który dwa razy tapnął
- * w przeciwne strony, musi widzieć, że wrócił do wartości pierwotnej — brak podpisu
- * wyglądałby tak samo jak jego brak przed pierwszym tapnięciem.
+ * PRZY ZEROWEJ ZMIANIE PODPISU NIE MA (uwaga z urządzenia, 2026-08-14): „bez zmiany
+ * względem wpisu (09:01)" mówiło o stanie, który pilot widzi w kontrolce nad nim —
+ * godzina jest ta sama, którą arkusz otworzył. Miejsce na podpis kontrolka REZERWUJE
+ * (`minHeight` w `TimeStepper`), więc pojawienie się zdania nie przesuwa niczego niżej.
  */
 
 /** Znak przy liczbie minut — minus TYPOGRAFICZNY, ten sam co na przyciskach steppera. */
@@ -16,7 +17,7 @@ function signed(minutes: number): string {
 }
 
 /**
- * „Zmiana o +2 min względem odczytu GPS (09:01)".
+ * „Zmiana o +2 min względem odczytu GPS (09:01)"; `null` = nic się nie zmieniło.
  *
  * @param value bieżąca wartość kontrolki (ms).
  * @param originalTime wartość sprzed edycji (ms) — punkt odniesienia.
@@ -29,11 +30,10 @@ export function timeShiftHint(
   originalTime: number,
   format: (t: number) => string,
   origin?: string,
-): string {
-  const from = origin == null ? format(originalTime) : `${origin} (${format(originalTime)})`;
+): string | null {
   const minutes = Math.round((value - originalTime) / 60_000);
+  if (minutes === 0) return null;
 
-  return minutes === 0
-    ? `Bez zmiany względem ${from}`
-    : `Zmiana o ${signed(minutes)} min względem ${from}`;
+  const from = origin == null ? format(originalTime) : `${origin} (${format(originalTime)})`;
+  return `Zmiana o ${signed(minutes)} min względem ${from}`;
 }

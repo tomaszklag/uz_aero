@@ -22,6 +22,7 @@ import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
 import { HistoryLink } from '../data/HistoryLink';
+import { IconAction } from '../data/IconAction';
 import { CounterRow } from '../input/CounterRow';
 import { ReasonField } from '../input/ReasonField';
 import { TimeStepper } from '../input/TimeStepper';
@@ -110,18 +111,16 @@ export function DropCorrectionSheet({
       confirmLabel="ZAPISZ KOREKTĘ"
       onConfirm={changed ? confirm : undefined}
       onCancel={onCancel}
-      /* Bez przypisu pod przyciskiem — jak w arkuszu czasu (2026-08-14): „wiersz zostaje
-         w rejestrze" opisywało budowę append-only, a nie skutek, o który pilot pyta.
-         Sam napis „TEGO ZRZUTU NIE BYŁO" mówi wszystko przed tapnięciem. */
-      destructive={
-        <ActionButton
-          label="TEGO ZRZUTU NIE BYŁO"
+      /* Unieważnienie jest KOSZEM w nagłówku, nie czerwonym przyciskiem pod akcjami
+         (uwaga z urządzenia, 2026-08-14): pełnowymiarowy przycisk krzyczał jak akcja
+         główna, choć intencją wchodzącego w korektę jest poprawka, nie kasowanie. */
+      headerAction={
+        <IconAction
+          name="trash"
           tone="red"
-          variant="secondary"
-          size="md"
-          busy={busy}
-          icon="warning"
+          accessibilityLabel="Tego zrzutu nie było"
           onPress={() => onVoid(reason.trim() === '' ? null : reason.trim())}
+          disabled={busy}
         />
       }
     >
@@ -137,7 +136,6 @@ export function DropCorrectionSheet({
         originalTime={originalTime}
         min={originalTime - MAX_SHIFT_MIN * 60_000}
         max={Math.min(originalTime + MAX_SHIFT_MIN * 60_000, maxTime)}
-        tone="blue"
       />
 
       {altitude != null && (

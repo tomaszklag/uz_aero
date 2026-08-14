@@ -87,9 +87,12 @@
      dobija do góry telefonu i czyta się jak nowy ekran (SHEET_TOP_GAP = 56 dp). */
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:11px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
-  .modal-title-row { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
-  .modal-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .modal-title-row { display:flex; align-items:center; gap:10px; margin-right:-8px; }
+  /* Kosz w linii tytułu: dostępny, nie eksponowany. */
+  .icon-void { width:36px; height:36px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; color:var(--red); text-decoration:none; }
+  .icon-void:hover { background:var(--red-muted); }
+  .target-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .modal-title { flex:1; font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
 
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:5px; }
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:9px 11px; }
@@ -138,9 +141,6 @@
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:13px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-save { display:flex; align-items:center; justify-content:center; padding:13px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.25); }
-  .destructive-sep { height:1px; background:var(--border); margin:2px 0 0; }
-  .btn-void { display:flex; align-items:center; justify-content:center; gap:8px; padding:11px; border-radius:14px; border:1px solid var(--red-border); background:transparent; color:var(--red); font-family:var(--font-display); font-size:15px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
-  .btn-void:hover { background:var(--red-muted); }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -229,10 +229,16 @@
     <div class="modal-overlay">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
+        <!-- KOSZ W LINII TYTUŁU, nie czerwony przycisk pod akcjami (uwaga z urządzenia,
+             2026-08-14): pełnowymiarowy przycisk krzyczał jak akcja główna arkusza,
+             choć intencją wchodzącego w korektę jest poprawka, nie kasowanie. -->
         <div class="modal-title-row">
           <div class="modal-title">KOREKTA ZRZUTU</div>
-          <span class="modal-sub">Zrzut 2 · lot 2</span>
+          <a href="10d-edycja.html" class="icon-void" title="Tego zrzutu nie było">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </a>
         </div>
+        <div class="target-label">Zrzut 2 · lot 2</div>
 
         <div>
           <div class="field-label">Czas zrzutu (UTC)</div>
@@ -305,13 +311,6 @@
           <a href="10d-edycja.html" class="btn-save">Zapisz korektę</a>
         </div>
 
-        <!-- Bez przypisu pod przyciskiem (2026-08-14): „wiersz zostaje w rejestrze"
-             opisywało budowę append-only, a nie skutek, o który pilot pyta. -->
-        <div class="destructive-sep"></div>
-        <a href="10d-edycja.html" class="btn-void">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          TEGO ZRZUTU NIE BYŁO
-        </a>
       </div>
     </div>
   </div>

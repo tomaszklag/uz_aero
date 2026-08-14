@@ -85,6 +85,11 @@ const REGISTRY = {
   // nie zegar: `clock` znaczy w tej aplikacji TERMIN (okno korekty, godzina zdarzenia),
   // a tu chodzi o przeszłe wersje tej samej danej.
   history: f('rotate-ccw'),
+  // Unieważnienie zdarzenia („tego lądowania nie było", issue #43). KOSZ, nie ostrzeżenie:
+  // to jedyna akcja arkusza korekty, która coś ODEJMUJE z logu, i jedyna, przy której
+  // ikona wystarcza za napis — a wielki czerwony przycisk krzyczał jak akcja główna,
+  // choć intencją wchodzącego jest poprawka, nie kasowanie (uwaga z urządzenia).
+  trash: f('trash-2'),
 
   // akcje kokpitu
   start: f('play'),

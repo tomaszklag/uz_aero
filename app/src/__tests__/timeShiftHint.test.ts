@@ -18,10 +18,13 @@ describe('podpis przesunięcia czasu', () => {
     expect(timeShiftHint(at(8, 58), at(9, 1), timeUtc)).toBe('Zmiana o −3 min względem 09:01');
   });
 
-  it('przy zerowej zmianie NIE MILCZY', () => {
-    // Pilot, który tapnął dwa razy w przeciwne strony, musi widzieć, że wrócił do
-    // wartości pierwotnej — brak podpisu wygląda tak samo jak stan sprzed edycji.
-    expect(timeShiftHint(at(9, 1), at(9, 1), timeUtc)).toBe('Bez zmiany względem 09:01');
+  it('przy zerowej zmianie MILCZY', () => {
+    // Uwaga z urządzenia (2026-08-14): „bez zmiany względem wpisu (09:01)" mówiło
+    // o stanie, który widać w kontrolce nad podpisem — godzina jest ta sama, którą
+    // arkusz otworzył. Miejsce na podpis rezerwuje `TimeStepper`, więc jego pojawienie
+    // się niczego nie przesuwa.
+    expect(timeShiftHint(at(9, 1), at(9, 1), timeUtc)).toBeNull();
+    expect(timeShiftHint(at(9, 1), at(9, 1), timeUtc, 'wpisu')).toBeNull();
   });
 
   it('nazywa źródło wartości pierwotnej, gdy jest znane', () => {

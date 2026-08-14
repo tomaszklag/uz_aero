@@ -310,19 +310,12 @@ export function StatsScreen({
           subtitle={subtitle(projection.aircraftId, projection.claimedAt, projection.operation)}
           right={
             <>
-              {/* Liczba lotów NIE MA tu plakietki (issue #40): stopka osi mówi
-                  „STARTY 2" trzy centymetry niżej, a plakietka świecąca przy każdej
-                  normalnej sesji uczy oko pomijać róg nagłówka — ta sama reguła, którą
-                  issue #12 wygasił zielony SyncChip. Zostaje sam stan ODCHYLONY:
-                  sesja, w której silnik pracował, a maszyna nie wzbiła się w powietrze. */}
-              {flightCount === 0 && (
-                <Tag
-                  label="bez lotu"
-                  tone="amber"
-                  size="md"
-                  style={{ borderRadius: theme.radius.pill }}
-                />
-              )}
+              {/* Liczby lotów w nagłówku NIE MA (issue #40): stopka osi mówi „STARTY 2"
+                  trzy centymetry niżej. Nie ma tu też plakietki „bez lotu" (uwaga
+                  z urządzenia, 2026-08-14) — sesja bez startu opisuje się sama: oś nie
+                  ma ani jednego lotu, stopka pokazuje zero, a przy zdaniu bez lotu stoi
+                  jego POWÓD. Plakietka powtarzała to czwarty raz, w rogu, w którym reszta
+                  ekranu trzyma stan TRYBU. */}
               {/* Tryb ekranu wprost (mockup 10b): bez tej plakietki brak przycisku
                   „EDYTUJ DANE" wygląda jak awaria, a nie jak reguła. */}
               {readOnly && (
@@ -383,16 +376,14 @@ export function StatsScreen({
            * ta sama reguła, przez którą wyleciał przypis „odczytu nie da się unieważnić"
            * z arkuszy korekty.
            */
-          <View style={{ paddingHorizontal: 14, paddingBottom: 14, flexDirection: 'row', gap: 8 }}>
-            <ActionButton
-              label="DODAJ WPIS"
-              tone="neutral"
-              variant="secondary"
-              size="md"
-              icon="add"
-              onPress={edit.openAdd}
-              style={{ flex: 1 }}
-            />
+          /*
+           * Sam wyjście z trybu. „DODAJ WPIS" przeniosło się STĄD na koniec osi sesji
+           * (uwaga z urządzenia, 2026-08-14): dopisywany fakt ma trafić w konkretne
+           * miejsce przebiegu, a przycisk na dnie ekranu leżał o pół ekranu od listy,
+           * do której dokłada wiersz. Jako ostatnia pozycja osi stoi tam, gdzie
+           * dopisanie się skończy.
+           */
+          <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
             <ActionButton
               label="ZAKOŃCZ EDYCJĘ"
               tone="green"
@@ -400,7 +391,6 @@ export function StatsScreen({
               size="md"
               icon="check"
               onPress={() => setEditingRequested(false)}
-              style={{ flex: 1 }}
             />
           </View>
         ) : (
@@ -493,6 +483,30 @@ export function StatsScreen({
                (który ją niesie) tam nie ma. */
             onHistory={edit.openRowHistory}
           />
+
+          {/*
+            „DODAJ WPIS" jako OSTATNIA POZYCJA OSI, nie przycisk na dnie ekranu (uwaga
+            z urządzenia, 2026-08-14). Dopisywany fakt trafia do tej listy i zwykle na
+            jej koniec, więc wejście stoi tam, gdzie skończy się jego skutek — a nie
+            o pół ekranu niżej, za rachunkami paliwa i motogodzin.
+          */}
+          {editing && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Dodaj wpis do przebiegu sesji"
+              onPress={edit.openAdd}
+              style={({ pressed }) => [
+                styles.axisAdd,
+                { borderTopColor: theme.colors.border },
+                pressed ? { backgroundColor: theme.colors.surfaceHover } : null,
+              ]}
+            >
+              <Icon name="add" size={13} color={theme.colors.textMuted} />
+              <AppText variant="mono" tone="muted" style={styles.axisAddLabel}>
+                DODAJ WPIS
+              </AppText>
+            </Pressable>
+          )}
         </Card>
 
         {/* ── paliwo ───────────────────────────────────────────────────────
@@ -861,11 +875,15 @@ function CorrectionWindowBanner({
   open: boolean;
   closesAt: number | null;
 }) {
-  // Baner mówi, GDZIE się poprawia (issue #40 pkt 1) — ołówków przy wierszach osi już
-  // nie ma, więc zdanie o nich prowadziłoby donikąd.
-  const tail =
-    'Później korektę nanosi administrator. Czasy zdarzeń poprawisz przyciskiem ' +
-    '„EDYTUJ DANE" na dole ekranu.';
+  /*
+   * Baner mówi, KTO poprawia po oknie — i tyle (uwaga z urządzenia, 2026-08-14).
+   * Zdanie „czasy zdarzeń poprawisz przyciskiem »EDYTUJ DANE« na dole ekranu"
+   * przestało być prawdą dwa razy: przycisk nie prowadzi już na listę ręczną, tylko
+   * przełącza tryb, a poprawia się w nim nie same czasy, lecz także odczyty, skład
+   * zrzutu, notatkę i drugiego pilota. Instrukcja obsługi przycisku, który stoi
+   * na tym samym ekranie i nazywa się „EDYTUJ DANE", i tak była zbędna.
+   */
+  const tail = 'Później korektę nanosi administrator.';
 
   if (!confirmed) {
     return (
@@ -936,6 +954,17 @@ const styles = StyleSheet.create({
   },
   crewLabel: { fontSize: 8, letterSpacing: 1.5 },
   crewValue: { flex: 1, fontSize: 11, textAlign: 'right' },
+  // Wiersz dopisania na końcu osi: 44 px celu dotknięcia i kreska oddzielająca go od
+  // stopki z sumami — inaczej czytałby się jak kolejne zdarzenie sesji.
+  axisAdd: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 44,
+    borderTopWidth: 1,
+  },
+  axisAddLabel: { fontSize: 10, letterSpacing: 1.5 },
   noteBody: { flex: 1, gap: 4 },
   noteHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   noteText: { fontSize: 12, lineHeight: 18 },

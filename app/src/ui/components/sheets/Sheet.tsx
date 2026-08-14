@@ -79,13 +79,14 @@ export interface SheetProps {
    */
   footer?: React.ReactNode;
   /**
-   * Strefa destrukcyjna POD rzędem akcji (issue #43, arkusz `10g`).
+   * Akcja w linii TYTUŁU, po prawej — dziś wyłącznie kosz (unieważnienie zdarzenia).
    *
-   * Osobne miejsce, a nie kolejny przycisk w rzędzie: „tego zrzutu nie było" to inna
-   * decyzja niż poprawka wartości i nie może być o jeden nieuważny kciuk od „Zapisz".
-   * Ta sama zasada, którą `CorrectionSheet` realizuje separatorem i konturem czerwieni.
+   * Od 2026-08-14 to jest miejsce akcji destrukcyjnej: pełnowymiarowy czerwony przycisk
+   * pod rzędem akcji miał być „daleko od Zapisz", a wychodził na najgłośniejszy element
+   * arkusza — choć intencją wchodzącego w korektę jest poprawka, nie kasowanie
+   * (uwaga z urządzenia). Ikona jest dostępna, nie eksponowana.
    */
-  destructive?: React.ReactNode;
+  headerAction?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -101,7 +102,7 @@ export function Sheet({
   cancelLabel = 'ANULUJ',
   onCancel,
   footer,
-  destructive,
+  headerAction,
   children,
 }: SheetProps) {
   const { theme } = useTheme();
@@ -141,19 +142,17 @@ export function Sheet({
             )}
           </View>
 
-          {destructive != null && (
-            <>
-              <View style={[styles.separator, { backgroundColor: theme.colors.border }]} />
-              {destructive}
-            </>
-          )}
         </>
       }
     >
-      {/* `.modal-title` — mniejszy niż tytuł ekranu: arkusz jest wstawką, nie ekranem. */}
-      <AppText variant="display" style={styles.title}>
-        {title}
-      </AppText>
+      {/* `.modal-title` — mniejszy niż tytuł ekranu: arkusz jest wstawką, nie ekranem.
+          Akcja destrukcyjna (kosz) stoi w tej samej linii, po prawej — patrz `headerAction`. */}
+      <View style={styles.titleRow}>
+        <AppText variant="display" style={styles.title}>
+          {title}
+        </AppText>
+        {headerAction}
+      </View>
 
       {/* Treść własna arkusza idzie zaraz pod tytułem — w mockupach 02b/02c to pole
           edycji, a wiersze odniesienia stoją POD nim jako kontekst dla wpisywanej
@@ -179,8 +178,8 @@ export function Sheet({
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 22, lineHeight: 24, letterSpacing: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginRight: -8 },
+  title: { flex: 1, fontSize: 22, lineHeight: 24, letterSpacing: 2 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   rowLabel: { fontSize: 10, letterSpacing: 0.5 },
-  separator: { height: 1, marginTop: 3, marginBottom: 1 },
 });

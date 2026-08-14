@@ -101,6 +101,7 @@ export * from './data/CrewCard';
 export * from './data/DataTable';
 export * from './data/SessionAxis';
 export * from './data/HistoryLink';
+export * from './data/IconAction';
 export * from './data/BalanceCard';
 export * from './data/KeyValueRow';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach

@@ -93,14 +93,14 @@
      dobija do góry telefonu i czyta się jak nowy ekran (SHEET_TOP_GAP = 56 dp). */
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
-  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+  .modal-title-row { display:flex; align-items:center; gap:10px; margin-right:-8px; }
+  /* Kosz w linii tytułu: dostępny, nie eksponowany. */
+  .icon-void { width:36px; height:36px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; color:var(--red); text-decoration:none; }
+  .icon-void:hover { background:var(--red-muted); }
+  /* Cel korekty jednym wierszem — bez ramki, ikony i plakietki. */
+  .target-label { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); flex:1; }
 
-  .evt-card { display:flex; align-items:center; gap:11px; background:var(--surface); border:1px solid var(--blue-border); border-radius:14px; padding:12px 14px; }
-  .evt-icon { width:34px; height:34px; border-radius:10px; flex-shrink:0; background:var(--blue-muted); border:1px solid var(--blue-border); display:flex; align-items:center; justify-content:center; color:var(--blue); }
-  .evt-body { display:flex; flex-direction:column; gap:3px; flex:1; }
-  .evt-name { font-size:14px; font-weight:700; color:var(--text-primary); }
-  .evt-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
-  .evt-badge { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:5px; padding:3px 7px; flex-shrink:0; }
 
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:5px; }
   /* Czas krokami ±1 min, nie polem tekstowym — wzorzec 05f, wygrał audyt rękawic.
@@ -146,9 +146,6 @@
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-save { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.25); }
 
-  .destructive-sep { height:1px; background:var(--border); margin:3px 0 1px; }
-  .btn-void { display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:14px; border:1px solid var(--red-border); background:transparent; color:var(--red); font-family:var(--font-display); font-size:15px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
-  .btn-void:hover { background:var(--red-muted); }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -244,18 +241,25 @@
              (zgłoszenie z urządzenia, 2026-08-14): tłumaczyły budowę rejestru komuś,
              kto o nią nie pytał. Ta sama reguła zdjęła przypis spod pasa edycji (10D)
              i podpowiedzi „litry z paliwomierza" (10F). -->
-        <div class="modal-title">KOREKTA ZDARZENIA</div>
-
-        <div class="evt-card">
-          <div class="evt-icon">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg>
-          </div>
-          <div class="evt-body">
-            <span class="evt-name">Lądowanie · Lot 1</span>
-            <span class="evt-meta">zapisano 08:58 UTC</span>
-          </div>
-          <span class="evt-badge">auto · GPS</span>
+        <!-- KOSZ W LINII TYTUŁU, nie czerwony przycisk pod akcjami (uwaga z urządzenia,
+             2026-08-14). Separator miał odsunąć unieważnienie od „Zapisz", a skutek był
+             odwrotny: pełnowymiarowy przycisk w czerwieni krzyczał jak akcja główna
+             arkusza. Intencją wchodzącego w korektę jest POPRAWKA — kasowanie to rzadki
+             wyjątek, który ma być dostępny, nie eksponowany. -->
+        <div class="modal-title-row">
+          <div class="modal-title">KOREKTA ZDARZENIA</div>
+          <a href="10d-edycja.html" class="icon-void" title="Tego lądowania nie było">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </a>
         </div>
+
+        <!-- CEL KOREKTY jednym wierszem, jak w arkuszu zrzutu i notatki (uwaga
+             z urządzenia). Stała tu karta w kolorowej ramce, z ikoną typu zdarzenia
+             i plakietką metody — trzy ozdoby wokół jednej informacji, z których ramka
+             i ikona niosły ton arkusza, a nie stan danych, a plakietka „auto · GPS"
+             powtarzała wiersz „Metoda wykrycia" dwa centymetry niżej. Godzina odpadła
+             razem z nimi: stoi w kontrolce, którą się ją zmienia. -->
+        <div class="target-label">Lądowanie · Lot 1</div>
 
         <div>
           <div class="field-label">Czas zdarzenia (UTC)</div>
@@ -264,6 +268,8 @@
             <span class="time-val">09:01</span>
             <button class="step-btn">+1 min</button>
           </div>
+          <!-- Podpis TYLKO przy zmianie; miejsce na niego jest zarezerwowane, więc
+               pierwsze tapnięcie w ±1 min nie przesuwa reszty arkusza. -->
           <div class="time-delta">Zmiana o +3 min względem odczytu GPS (08:58)</div>
         </div>
 
@@ -290,21 +296,12 @@
           <svg class="history-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
 
+        <!-- „Zapisz" bez podpisu o odmowie: przy zerowej zmianie jest po prostu
+             nieaktywny, a powód widać w kontrolce wyżej (uwaga z urządzenia). -->
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
           <a href="10d-edycja.html" class="btn-save">Zapisz korektę</a>
         </div>
-
-        <!-- Strefa destrukcyjna — oddzielona i w konturze czerwieni: to inna decyzja
-             niż poprawka czasu i nie może być o jeden nieuważny kciuk od „Zapisz".
-             BEZ PRZYPISU pod przyciskiem (2026-08-14): „oznacza zdarzenie jako błędne
-             (nie usuwa go z rejestru)" opisywało budowę rejestru, a nie skutek — a sam
-             napis „TEGO LĄDOWANIA NIE BYŁO" mówi wszystko przed tapnięciem. -->
-        <div class="destructive-sep"></div>
-        <a href="10d-edycja.html" class="btn-void">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          TEGO LĄDOWANIA NIE BYŁO
-        </a>
       </div>
     </div>
   </div>

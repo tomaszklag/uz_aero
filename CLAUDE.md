@@ -247,6 +247,12 @@ go nie nazwał). Odtąd jest **`components/input/TimeStepper.tsx`** i ona ustala
   palec i tak ląduje na niej sam
 - **przycisk kroku rośnie z napisem**: 46 dp to MINIMUM celu dotykowego, nie sztywna
   szerokość — przy `width: 46` napis „+1 min" łamał się na dwie linie
+- **JEDEN wygląd, bez parametru tonu**: kontrolka jest neutralna wszędzie. Bursztyn
+  w korekcie odczytu, błękit w zrzucie i zieleń w korekcie czasu niosły ton ARKUSZA,
+  a nie stan wartości — ta sama czynność ma wyglądać tak samo
+- **podpis „o ile przesunięto" pojawia się TYLKO przy zmianie**, a miejsce na niego jest
+  zarezerwowane: „bez zmiany względem wpisu (09:01)" opisywało stan widoczny w kontrolce
+  nad nim, a wskakiwanie i znikanie zdania przesuwało resztę arkusza
 - arkusz podaje wyłącznie to, co go RÓŻNI: etykietę, granice, ton i ewentualną stopkę
   (czas lokalny w 05f). Nowy krok, nowa nazwa kroku ani własna para przycisków ± nie
   wchodzą do arkusza — wchodzą do `TimeStepper`
@@ -621,6 +627,20 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   rejestru komuś, kto o nią nie pytał — a napis na przycisku („TEGO LĄDOWANIA NIE BYŁO")
   mówi już wszystko, co trzeba wiedzieć przed tapnięciem. Podpowiedź pod polem pojawia
   się WYŁĄCZNIE po zmianie i mówi, co było
+- **arkusz korekty nie krzyczy** (uwagi z urządzenia, 2026-08-14). Trzy rzeczy naraz:
+  (1) **unieważnienie jest KOSZEM w linii tytułu** (`IconAction` + `Sheet.headerAction`),
+  nie pełnowymiarowym czerwonym przyciskiem pod akcjami — separator miał go odsunąć od
+  „Zapisz", a robił z niego najgłośniejszy element arkusza, choć intencją wchodzącego
+  jest POPRAWKA, nie kasowanie; (2) **cel korekty to jeden wiersz mono**, bez kolorowej
+  ramki, ikony typu i plakietki metody (ta dublowała wiersz „Metoda wykrycia"); (3) **przy
+  zerowej zmianie „Zapisz" jest po prostu nieaktywny** — `ActionButton.disabled` bez
+  powodu, bo powód widać w kontrolce wyżej. To NIE jest odwołanie reguły §6 pkt 3:
+  `disabledReason` zostaje dla blokad, których z ekranu nie widać
+- **plakietki „bez lotu" w nagłówku sesji NIE MA**: oś bez ani jednego lotu, zerowa
+  stopka i powód zdania mówią to trzy razy; róg nagłówka trzyma stan TRYBU (edycja,
+  podgląd), a nie kolejny opis danych
+- **„DODAJ WPIS" jest OSTATNIM WIERSZEM OSI**, nie przyciskiem na dnie ekranu: dopisywany
+  fakt trafia do przebiegu sesji, więc wejście stoi tam, gdzie skończy się jego skutek
 - **licznik motogodzin wpisuje się z klawiatury NUMERYCZNEJ** (uwaga z urządzenia,
   2026-08-14). Format hh:mm wymuszał dotąd pełną QWERTY, bo dwukropka nie ma na
   numerycznej — a QWERTY zajmuje pół ekranu i podsuwa podpowiedzi słownikowe pod liczbę

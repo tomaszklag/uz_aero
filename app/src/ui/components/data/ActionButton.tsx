@@ -84,6 +84,19 @@ export interface ActionButtonProps {
   holdMs?: number;
   /** Blokada — wymaga podania powodu; powód jest pokazywany pod przyciskiem. */
   disabledReason?: string | null;
+  /**
+   * Blokada BEZ powodu — dla stanów, które widać (uwaga z urządzenia, 2026-08-14).
+   *
+   * Reguła „nigdy blokada bez powodu" (§6 pkt 3) powstała przeciw wyszarzonym
+   * przyciskom, po których nie wiadomo, czego brakuje. Nie każdy taki stan jest jednak
+   * zagadką: w arkuszu korekty otwartym na wartości pierwotnej „ZAPISZ" jest nieaktywny,
+   * bo NIC SIĘ JESZCZE NIE ZMIENIŁO — a to widać w kontrolce nad nim. Zdanie „zmień czas
+   * albo użyj akcji poniżej" opisywało tam oczywistość.
+   *
+   * Nowego użycia nie dokładaj bez tego rachunku: jeśli powodu blokady nie widać
+   * z ekranu, właściwym polem jest `disabledReason`.
+   */
+  disabled?: boolean;
   /** Zajętość (trwa zapis) — blokuje bez komunikatu o błędzie. */
   busy?: boolean;
   style?: ViewStyle;
@@ -102,12 +115,13 @@ export function ActionButton({
   badgeTone = 'blue',
   holdMs = 0,
   disabledReason = null,
+  disabled: disabledProp = false,
   busy = false,
   style,
 }: ActionButtonProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
-  const disabled = disabledReason != null || busy;
+  const disabled = disabledReason != null || disabledProp || busy;
 
   const [holding, setHolding] = useState(false);
   const progress = useRef(new Animated.Value(0)).current;

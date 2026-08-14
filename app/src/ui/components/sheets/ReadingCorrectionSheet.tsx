@@ -198,7 +198,6 @@ export function ReadingCorrectionSheet({
           originalTime={time.value}
           min={time.min}
           max={time.max}
-          tone="amber"
         />
       )}
 

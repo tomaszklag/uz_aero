@@ -175,6 +175,9 @@
     border-radius:4px; padding:1px 5px; text-decoration:none;
   }
 
+  /* Wiersz dopisania na końcu osi — 44 px celu dotknięcia, kreska nad nim. */
+  .axis-add { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-top:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--text-muted); text-decoration:none; }
+  .axis-add:hover { color:var(--text-secondary); background:var(--surface-hover); }
   .axis-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--border); background:var(--surface-raised); }
   .axis-foot-item { display:flex; flex-direction:column; gap:2px; }
   .axis-foot-val { font-family:var(--font-display); font-size:20px; letter-spacing:1.5px; line-height:1; color:var(--text-primary); }
@@ -478,6 +481,15 @@
           </a>
         </div>
 
+        <!-- DOPISANIE FAKTU jako OSTATNIA POZYCJA OSI (uwaga z urządzenia, 2026-08-14).
+             Wcześniej stało w pasie akcji na dnie ekranu — o pół ekranu od listy, do
+             której dokłada wiersz. Kreska nad wierszem oddziela je od stopki z sumami,
+             żeby nie czytało się jak kolejne zdarzenie sesji. -->
+        <a href="10h-dodaj-wpis.html" class="axis-add">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          DODAJ WPIS
+        </a>
+
         <div class="axis-foot">
           <div class="axis-foot-item">
             <span class="axis-foot-val">01:43</span>
@@ -609,11 +621,11 @@
            wewnętrzną budowę rejestru komuś, kto o nią nie pytał, i tłumaczyło brak
            przycisku, którego nikt nie szuka. Ta sama reguła, przez którą wyleciał
            przypis „odczytu nie da się unieważnić" z arkuszy korekty. -->
+      <!-- „DODAJ WPIS" stał TU, obok „ZAKOŃCZ EDYCJĘ", i przeniósł się na KONIEC OSI
+           (uwaga z urządzenia, 2026-08-14): dopisywany fakt trafia do przebiegu sesji
+           i zwykle na jego koniec, więc wejście ma stać tam, gdzie skończy się jego
+           skutek — a nie o pół ekranu niżej, za rachunkami paliwa i motogodzin. -->
       <div class="btn-row">
-        <a href="10h-dodaj-wpis.html" class="btn-secondary">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          DODAJ WPIS
-        </a>
         <a href="10-statystyki.html" class="btn-done">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           ZAKOŃCZ EDYCJĘ
@@ -637,7 +649,7 @@
     <span class="vp-badge amber">10D</span>
     <span class="vp-body">
       <span class="vp-name">Sesja — tryb edycji</span>
-      <span class="vp-when">Po „EDYTUJ DANE" na 10 (albo z kokpitu po zatrzymaniu silnika, kafelkiem „Popraw dane sesji"): każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na dole „DODAJ WPIS". Wejście istnieje wyłącznie w oknie korekty — po 24 h od zdania ekran jest podglądem (10B).</span>
+      <span class="vp-when">Po „EDYTUJ DANE" na 10 (albo z kokpitu po zatrzymaniu silnika, kafelkiem „Popraw dane sesji"): każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na końcu osi dochodzi wiersz „DODAJ WPIS". Wejście istnieje wyłącznie w oknie korekty — po 24 h od zdania ekran jest podglądem (10B).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

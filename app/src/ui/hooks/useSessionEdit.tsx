@@ -538,7 +538,6 @@ export function useSessionEdit(
         <CorrectionSheet
           visible
           eventLabel={target?.label ?? ''}
-          eventIcon={iconFor(timeTarget.type)}
           originalTime={originalTime}
           methodBadge={methodBadgeFor(timeTarget)}
           refsFor={refsFor}
@@ -744,17 +743,6 @@ const EMPTY_JUMPERS: JumperCounts = { tandem: 0, aff: 0, solo: 0 };
 const READING_FIELDS: readonly CorrectionField[] = ['time', 'fuelL', 'mh'];
 const NOTE_FIELDS: readonly CorrectionField[] = ['notes'];
 const DUAL_FIELDS: readonly CorrectionField[] = ['dualId'];
-
-const iconFor = (type: EventType): 'takeoff' | 'refuel' | 'drop' | 'boarding' | 'landing' =>
-  type === 'takeoff'
-    ? 'takeoff'
-    : type === 'refuel'
-      ? 'refuel'
-      : type === 'drop'
-        ? 'drop'
-        : type === 'boarding'
-          ? 'boarding'
-          : 'landing';
 
 /** Wartość historii → napis. Każde pole ma własną jednostkę, więc formatuje się osobno. */
 function formatValue(
