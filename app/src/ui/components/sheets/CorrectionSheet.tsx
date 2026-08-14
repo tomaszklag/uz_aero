@@ -1,30 +1,30 @@
 /**
  * UZ Aero — CorrectionSheet (mockup `design/10e` „Korekta zdarzenia"; wcześniej 04c)
  *
- * Arkusz korekty w trybie edycji sesji: karta korygowanego zdarzenia, czas z krokiem
- * minutowym, wiersze odniesienia (metoda wykrycia, wpływ na czasy), opcjonalny powód,
- * wejście w historię zmian, wyjaśnienie modelu append-only i — pod separatorem — akcja
- * destrukcyjna „TEGO … NIE BYŁO".
+ * Arkusz korekty w trybie edycji sesji: karta korygowanego zdarzenia, czas, wiersze
+ * odniesienia (metoda wykrycia, wpływ na czasy), opcjonalny powód, wejście w historię
+ * zmian i — pod separatorem — akcja destrukcyjna „TEGO … NIE BYŁO".
  *
- * Dwie decyzje wprost z architektury:
- *  • Korekta NICZEGO nie kasuje — zapisuje osobne zdarzenie, oryginał zostaje. Baner
- *    pouczający mówi to pilotowi raz (potem zwija się do „Jak to działa?" przy tytule).
- *  • Unieważnienie stoi POD separatorem i w konturze czerwieni: to inna decyzja niż
- *    poprawka czasu i nie może być o jeden nieuważny kciuk od „Zapisz".
+ * Unieważnienie stoi POD separatorem i w konturze czerwieni: to inna decyzja niż
+ * poprawka czasu i nie może być o jeden nieuważny kciuk od „Zapisz".
  *
- * Czas edytujemy krokami ±1 min (wzorzec z 05f), nie polem tekstowym z mockupu —
- * ta sama czynność ma w aplikacji jedną formę, a stepper wygrał tam audyt rękawic.
+ * ══ CZEGO TU ŚWIADOMIE NIE MA ══
+ * Wyjaśnień, jak działa rejestr (zgłoszenie z urządzenia, 2026-08-14). Baner „korekta
+ * nie kasuje historii — zapisujemy osobne zdarzenie korygujące…" i przypis „oznacza
+ * zdarzenie jako błędne (nie usuwa go z rejestru)" opisywały wewnętrzną budowę
+ * append-only komuś, kto o nią nie pytał. Ta sama reguła zdjęła wcześniej przypis spod
+ * pasa edycji i podpowiedzi „litry z paliwomierza": arkusz odpowiada na pytanie ZADANE.
+ *
+ * Czas ustawia wspólny `TimeStepper` — jedna czynność ma w aplikacji jeden kształt.
  */
 
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
-import { useEduBanner } from '../../store/eduBanners';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
 import { HistoryLink } from '../data/HistoryLink';
-import { Banner } from '../status/Banner';
 import { Icon, type IconName } from '../foundation/Icon';
 import { ReasonField } from '../input/ReasonField';
 import { TimeStepper } from '../input/TimeStepper';
@@ -53,7 +53,6 @@ export interface CorrectionSheetProps {
   maxTime: number;
   /** Napis akcji destrukcyjnej („TEGO LĄDOWANIA NIE BYŁO"). */
   voidLabel: string;
-  voidHint: string;
   busy?: boolean;
   /** Ile poprawek ma już to zdarzenie — wejście w historię zmian (issue #43). */
   historyCount?: number;
@@ -77,7 +76,6 @@ export function CorrectionSheet({
   formatTime,
   maxTime,
   voidLabel,
-  voidHint,
   busy = false,
   historyCount = 0,
   onOpenHistory,
@@ -90,7 +88,6 @@ export function CorrectionSheet({
 
   const [offsetMin, setOffsetMin] = useState(0);
   const [reason, setReason] = useState('');
-  const [eduDismissed, setEduDismissed] = useEduBanner('correction-append');
 
   // Każde otwarcie startuje od czasu pierwotnego — arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
@@ -138,7 +135,11 @@ export function CorrectionSheet({
             />
           </View>
 
-          {/* Strefa destrukcyjna — oddzielona, w konturze czerwieni (`.btn-void`). */}
+          {/* Strefa destrukcyjna — oddzielona, w konturze czerwieni (`.btn-void`).
+              Bez przypisu pod przyciskiem: „oznacza zdarzenie jako błędne (nie usuwa
+              go z rejestru)" opisywało wewnętrzną budowę rejestru komuś, kto o nią nie
+              pytał, a sam napis „TEGO LĄDOWANIA NIE BYŁO" mówi wszystko, co pilot
+              musi wiedzieć przed tapnięciem. */}
           <View style={[styles.separator, { backgroundColor: theme.colors.border }]} />
           <ActionButton
             label={voidLabel}
@@ -149,40 +150,17 @@ export function CorrectionSheet({
             icon="warning"
             onPress={() => onVoid(trimmedReason())}
           />
-          <AppText variant="mono" tone="muted" style={styles.voidHint}>
-            {voidHint}
-          </AppText>
         </>
       }
     >
-      {/* Tytuł + zwinięte „Jak to działa?" (mockup: `.help-reopen` przy tytule). */}
-      <View style={styles.titleRow}>
-        <AppText variant="display" style={styles.title}>
-          KOREKTA ZDARZENIA
-        </AppText>
-        {eduDismissed && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Pokaż wyjaśnienie, jak działa korekta"
-            onPress={() => setEduDismissed(false)}
-            hitSlop={8}
-            style={[
-              styles.helpChip,
-              {
-                borderRadius: theme.radius.pill,
-                borderWidth: theme.borderWidth,
-                borderColor: blue.border,
-                backgroundColor: blue.muted,
-              },
-            ]}
-          >
-            <Icon name="info" size={11} color={blue.accent} />
-            <AppText variant="mono" style={[styles.helpLabel, { color: blue.accent }]}>
-              Jak to działa?
-            </AppText>
-          </Pressable>
-        )}
-      </View>
+      {/* Sam tytuł. Baner „korekta nie kasuje historii — zapisujemy osobne zdarzenie
+          korygujące…" USUNIĘTY (zgłoszenie z urządzenia, 2026-08-14) razem z chipem
+          „Jak to działa?", którym się zwijał: tłumaczył budowę rejestru komuś, kto
+          o nią nie pytał. To ta sama reguła, która zdjęła przypis spod pasa edycji
+          i podpowiedzi „litry z paliwomierza" — arkusz odpowiada na pytanie zadane. */}
+      <AppText variant="display" style={styles.title}>
+        KOREKTA ZDARZENIA
+      </AppText>
 
       {/* Karta korygowanego zdarzenia (`.evt-card`). */}
       <View
@@ -241,37 +219,16 @@ export function CorrectionSheet({
       {onOpenHistory != null && (
         <HistoryLink count={historyCount} onPress={onOpenHistory} />
       )}
-
-      <Banner
-        kind="edu"
-        tone="blue"
-        icon="info"
-        text={
-          'Korekta nie kasuje historii — zapisujemy osobne zdarzenie korygujące, oryginalny ' +
-          'odczyt zostaje w rejestrze. Serwer scali obie wersje i pokaże poprawkę w arkuszu.'
-        }
-        collapsedLabel="Jak to działa?"
-        dismissed={eduDismissed}
-        // Mini-chip renderujemy przy tytule, nie w miejscu banera — stąd pusty render
-        // po zwinięciu: dwa „Jak to działa?" na jednym arkuszu by się dublowały.
-        onDismiss={setEduDismissed}
-        style={eduDismissed ? styles.hidden : undefined}
-      />
     </SheetSurface>
   );
 }
 
 const styles = StyleSheet.create({
-  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { fontSize: 22, lineHeight: 24, letterSpacing: 2 },
-  helpChip: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 32, paddingHorizontal: 11 },
-  helpLabel: { fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
   eventCard: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 14, paddingVertical: 12 },
   eventBody: { flex: 1, gap: 2 },
   eventMeta: { fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' },
   refRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingHorizontal: 2 },
   refText: { fontSize: 10, letterSpacing: 0.5 },
   separator: { height: 1, marginTop: 3, marginBottom: 1 },
-  voidHint: { fontSize: 8.5, letterSpacing: 0.8, lineHeight: 14, textAlign: 'center' },
-  hidden: { display: 'none' },
 });

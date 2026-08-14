@@ -110,21 +110,19 @@ export function DropCorrectionSheet({
       confirmLabel="ZAPISZ KOREKTĘ"
       onConfirm={changed ? confirm : undefined}
       onCancel={onCancel}
+      /* Bez przypisu pod przyciskiem — jak w arkuszu czasu (2026-08-14): „wiersz zostaje
+         w rejestrze" opisywało budowę append-only, a nie skutek, o który pilot pyta.
+         Sam napis „TEGO ZRZUTU NIE BYŁO" mówi wszystko przed tapnięciem. */
       destructive={
-        <>
-          <ActionButton
-            label="TEGO ZRZUTU NIE BYŁO"
-            tone="red"
-            variant="secondary"
-            size="md"
-            busy={busy}
-            icon="warning"
-            onPress={() => onVoid(reason.trim() === '' ? null : reason.trim())}
-          />
-          <AppText variant="mono" tone="muted" style={styles.voidHint}>
-            Wyniesienie wypada z rozliczenia i z sumy sesji · wiersz zostaje w rejestrze
-          </AppText>
-        </>
+        <ActionButton
+          label="TEGO ZRZUTU NIE BYŁO"
+          tone="red"
+          variant="secondary"
+          size="md"
+          busy={busy}
+          icon="warning"
+          onPress={() => onVoid(reason.trim() === '' ? null : reason.trim())}
+        />
       }
     >
       <AppText variant="mono" tone="muted" style={styles.target}>
@@ -222,5 +220,4 @@ const styles = StyleSheet.create({
   altTag: { fontSize: 8, letterSpacing: 1.2 },
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   totalLabel: { fontSize: 10, letterSpacing: 1.5 },
-  voidHint: { fontSize: 8.5, letterSpacing: 0.8, lineHeight: 14, textAlign: 'center' },
 });

@@ -31,11 +31,16 @@ import { toneColors, type Tone } from '../tone';
 /**
  * Klawiatura per tryb wpisu. `number-pad` dla godziny: same cyfry, bez paska podpowiedzi
  * i bez znaków, których w „HH:MM" i tak nie użyjemy — dwukropek dokłada maska.
+ *
+ * Trybu `text` (pełna QWERTY) JUŻ NIE MA. Istniał dla licznika w formacie hh:mm, bo
+ * dwukropka nie ma na klawiaturze numerycznej — ale pełna klawiatura zajmuje pół ekranu
+ * i podsuwa podpowiedzi słownikowe pod liczbę z tarczy. Dziś separator dokłada maska
+ * (`maskMotoHoursInput`), więc wystarcza `decimal-pad` (zgłoszenie z urządzenia,
+ * 2026-08-14).
  */
 const KEYBOARD_TYPE = {
   decimal: 'decimal-pad',
   time: 'number-pad',
-  text: 'default',
 } as const;
 
 export interface ReadingSheetProps {
@@ -53,11 +58,17 @@ export interface ReadingSheetProps {
   /** Ostrzeżenie zależne od wpisanej wartości; `null` = brak zastrzeżeń. */
   warningFor?: (value: number) => string | null;
   /**
-   * Klawiatura: `decimal` dla litrów i MH dziesiętnych, `time` dla godzin „HH:MM"
-   * (cyfry + maska, patrz `maskTimeUtcInput`), `text` dla licznika w formacie hh:mm,
-   * gdzie liczba cyfr godzin jest dowolna i dwukropek stawia pilot.
+   * Klawiatura: `decimal` dla litrów i motogodzin (w OBU formatach licznika),
+   * `time` dla godzin „HH:MM" (cyfry + `maskTimeUtcInput`).
    */
-  keyboard?: 'decimal' | 'text' | 'time';
+  keyboard?: 'decimal' | 'time';
+  /**
+   * Maska w trakcie pisania — np. `maskMotoHoursInput`, która przyjmuje kropkę,
+   * przecinek i dwukropek jako TEN SAM separator i zamienia go na właściwy dla formatu
+   * licznika. Dzięki niej pole obsługuje się klawiaturą numeryczną, choć zapis hh:mm
+   * wymaga znaku, którego na niej nie ma.
+   */
+  mask?: (text: string) => string;
   onConfirm: (value: number) => void;
   onCancel: () => void;
 }
@@ -72,6 +83,7 @@ export function ReadingSheet({
   parse,
   warningFor,
   keyboard = 'decimal',
+  mask,
   onConfirm,
   onCancel,
 }: ReadingSheetProps) {
@@ -105,14 +117,16 @@ export function ReadingSheet({
 
   const change = useCallback(
     (raw: string) => {
-      const masked = keyboard === 'time';
-      const next = masked ? maskTimeUtcInput(raw) : raw;
+      // Maska własna wygrywa; `time` niesie swoją, bo dwukropek godziny stawia arkusz.
+      const apply = mask ?? (keyboard === 'time' ? maskTimeUtcInput : null);
+      const next = apply ? apply(raw) : raw;
       setText(next);
-      // Zaznaczenie z otwarcia jest już zużyte: albo kursor na koniec (maska), albo
+      // Zaznaczenie z otwarcia jest już zużyte: albo kursor na koniec (maska przestawia
+      // znaki, więc natywna pozycja przestaje odpowiadać temu, co widać), albo
       // z powrotem w ręce pola.
-      setSelection(masked ? { start: next.length, end: next.length } : undefined);
+      setSelection(apply ? { start: next.length, end: next.length } : undefined);
     },
-    [keyboard],
+    [keyboard, mask],
   );
 
   const parsed = parse(text);

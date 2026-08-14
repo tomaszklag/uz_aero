@@ -94,10 +94,6 @@
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
-  .modal-title-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .help-reopen { display:none; align-items:center; gap:5px; padding:6px 11px; min-height:32px; border-radius:999px; border:1px solid var(--blue-border); background:var(--blue-muted); color:var(--blue); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
-  .append-dismiss { position:absolute; top:7px; right:7px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); border-radius:8px; cursor:pointer; background:none; border:none; }
-  .append-dismiss:hover { color:var(--text-secondary); background:rgba(255,255,255,0.05); }
 
   .evt-card { display:flex; align-items:center; gap:11px; background:var(--surface); border:1px solid var(--blue-border); border-radius:14px; padding:12px 14px; }
   .evt-icon { width:34px; height:34px; border-radius:10px; flex-shrink:0; background:var(--blue-muted); border:1px solid var(--blue-border); display:flex; align-items:center; justify-content:center; color:var(--blue); }
@@ -143,10 +139,6 @@
   .history-count { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:999px; padding:2px 8px; }
   .history-chev { color:var(--text-muted); }
 
-  .append-box { position:relative; display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 40px 11px 13px; }
-  .append-box svg { flex-shrink:0; margin-top:1px; color:var(--blue); }
-  .append-text { font-family:var(--font-body); font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .append-text b { color:var(--blue); font-weight:600; }
 
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
@@ -155,7 +147,6 @@
   .destructive-sep { height:1px; background:var(--border); margin:3px 0 1px; }
   .btn-void { display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:14px; border:1px solid var(--red-border); background:transparent; color:var(--red); font-family:var(--font-display); font-size:15px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-void:hover { background:var(--red-muted); }
-  .void-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); text-align:center; line-height:1.6; }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -182,7 +173,7 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 10E</span>
-  <span class="slug">korekta zdarzenia · append-only</span>
+  <span class="slug">korekta zdarzenia · czas albo unieważnienie</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
@@ -246,13 +237,12 @@
     <div class="modal-overlay">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
-        <div class="modal-title-row">
-          <div class="modal-title">KOREKTA ZDARZENIA</div>
-          <button class="help-reopen" id="helpReopen" onclick="showInfo()" title="Pokaż wyjaśnienie, jak działa korekta">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            Jak to działa?
-          </button>
-        </div>
+        <!-- SAM TYTUŁ. Baner „korekta nie kasuje historii — zapisujemy osobne zdarzenie
+             korygujące…" i chip „Jak to działa?", którym się zwijał, USUNIĘTE
+             (zgłoszenie z urządzenia, 2026-08-14): tłumaczyły budowę rejestru komuś,
+             kto o nią nie pytał. Ta sama reguła zdjęła przypis spod pasa edycji (10D)
+             i podpowiedzi „litry z paliwomierza" (10F). -->
+        <div class="modal-title">KOREKTA ZDARZENIA</div>
 
         <div class="evt-card">
           <div class="evt-icon">
@@ -298,27 +288,21 @@
           <svg class="history-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
 
-        <div class="append-box" id="appendInfo">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span class="append-text">Korekta <b>nie kasuje historii</b> — zapisujemy osobne zdarzenie korygujące, oryginalny odczyt GPS zostaje w rejestrze. Serwer scali obie wersje i pokaże poprawkę w arkuszu.</span>
-          <button class="append-dismiss" onclick="dismissInfo()" title="Rozumiem — schowaj wyjaśnienie">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
-
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
           <a href="10d-edycja.html" class="btn-save">Zapisz korektę</a>
         </div>
 
         <!-- Strefa destrukcyjna — oddzielona i w konturze czerwieni: to inna decyzja
-             niż poprawka czasu i nie może być o jeden nieuważny kciuk od „Zapisz". -->
+             niż poprawka czasu i nie może być o jeden nieuważny kciuk od „Zapisz".
+             BEZ PRZYPISU pod przyciskiem (2026-08-14): „oznacza zdarzenie jako błędne
+             (nie usuwa go z rejestru)" opisywało budowę rejestru, a nie skutek — a sam
+             napis „TEGO LĄDOWANIA NIE BYŁO" mówi wszystko przed tapnięciem. -->
         <div class="destructive-sep"></div>
         <a href="10d-edycja.html" class="btn-void">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           TEGO LĄDOWANIA NIE BYŁO
         </a>
-        <div class="void-hint">Oznacza zdarzenie jako błędne (nie usuwa go z rejestru) · użyj, gdy autodetekcja zaliczyła przelot nad lotniskiem jako lądowanie</div>
       </div>
     </div>
   </div>
@@ -378,16 +362,6 @@
   <span>·</span>
   <a href="10-statystyki.html">10 Sesja</a>
 </nav>
-
-<script>
-  // Wzorzec „baner pouczający" (Typ C): pomocny za pierwszym razem, potem szum.
-  // W aplikacji stan „schowany" zapisujemy NA STAŁE per pilot — baner nie wraca
-  // rozwinięty co sesję, a (?) przy tytule jest rzadką furtką, nie obowiązkiem.
-  const _info = document.getElementById('appendInfo');
-  const _help = document.getElementById('helpReopen');
-  function dismissInfo() { _info.style.display = 'none'; _help.style.display = 'inline-flex'; }
-  function showInfo()    { _info.style.display = 'flex';  _help.style.display = 'none'; }
-</script>
 
 </body>
 </html>

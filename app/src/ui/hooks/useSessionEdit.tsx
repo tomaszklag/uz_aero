@@ -50,6 +50,7 @@ import {
   litres,
   motoHours,
   parseLitres,
+  maskMotoHoursInput,
   parseMotoHours,
   thousands,
   timeUtc,
@@ -544,10 +545,6 @@ export function useSessionEdit(
           formatTime={timeUtc}
           maxTime={Date.now()}
           voidLabel={voidLabelFor(timeTarget.type)}
-          voidHint={
-            'Oznacza zdarzenie jako błędne (nie usuwa go z rejestru) · użyj, gdy autodetekcja ' +
-            'zaliczyła przelot nad lotniskiem jako lądowanie'
-          }
           busy={busy}
           historyCount={historyCountOf(timeTarget.uuid)}
           onOpenHistory={() =>
@@ -572,6 +569,7 @@ export function useSessionEdit(
           mhText={motoHours(reading.mh, mhFormat)}
           parseFuel={parseLitres}
           parseMh={parseMotoHours}
+          maskMh={(text) => maskMotoHoursInput(text, mhFormat)}
           rows={readingRows}
           warning={
             readingTarget.type === 'day_close'

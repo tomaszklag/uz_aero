@@ -78,6 +78,13 @@ export interface ReadingCorrectionSheetProps {
   parseFuel: (text: string) => number | null;
   /** Tekst → motogodziny dziesiętne; `null` = wpis niepoprawny (obsługuje też „hh:mm"). */
   parseMh: (text: string) => number | null;
+  /**
+   * Maska licznika w trakcie pisania (`maskMotoHoursInput`): kropka, przecinek
+   * i dwukropek znaczą TO SAMO, a znak właściwy dla formatu stawia maska. Dzięki temu
+   * pole chodzi na klawiaturze numerycznej, mimo że zapis hh:mm wymaga dwukropka,
+   * którego na niej nie ma.
+   */
+  maskMh?: (text: string) => string;
   /** Wiersze odniesienia: pojemność zbiorników, wpływ na zużycie, format licznika. */
   rows?: SheetRow[];
   /** Ostrzeżenie o skutku — łańcuch MH, przekazanie następnemu pilotowi. */
@@ -97,6 +104,7 @@ export function ReadingCorrectionSheet({
   mhText,
   parseFuel,
   parseMh,
+  maskMh,
   rows,
   warning,
   historyCount = 0,
@@ -219,8 +227,11 @@ export function ReadingCorrectionSheet({
         <TextField
           label="Motogodziny"
           value={mh}
-          onChangeText={setMh}
-          keyboardType="numbers-and-punctuation"
+          onChangeText={(text) => setMh(maskMh ? maskMh(text) : text)}
+          /* Klawiatura NUMERYCZNA także przy liczniku hh:mm — dwukropka na niej nie ma,
+             ale stawia go maska (zgłoszenie z urządzenia). Pełna QWERTY zajmowała pół
+             ekranu i podsuwała podpowiedzi słownikowe pod liczbę z tarczy. */
+          keyboardType="decimal-pad"
           hint={mhChanged ? `było ${mhText}` : undefined}
           style={styles.cell}
         />

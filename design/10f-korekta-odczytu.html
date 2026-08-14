@@ -292,9 +292,13 @@
               </span>
               <span class="reading-was">było 150 L</span>
             </div>
+            <!-- Licznik chodzi na klawiaturze NUMERYCZNEJ (`inputmode="decimal"`), także
+                 w formacie hh:mm: dwukropka na niej nie ma, ale stawia go maska, która
+                 przyjmuje kropkę, przecinek i dwukropek jako TEN SAM separator
+                 (`maskMotoHoursInput`, zgłoszenie z urządzenia 2026-08-14). -->
             <div class="reading-field">
               <span class="reading-val">
-                <input class="reading-input" type="text" value="1 234:30" inputmode="numeric" aria-label="Motogodziny" />
+                <input class="reading-input" type="text" value="1 234:30" inputmode="decimal" aria-label="Motogodziny" />
               </span>
             </div>
           </div>

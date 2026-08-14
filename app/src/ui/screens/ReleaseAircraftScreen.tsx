@@ -54,6 +54,7 @@ import {
   litres,
   motoHours,
   parseLitres,
+  maskMotoHoursInput,
   parseMotoHours,
 } from '../format';
 import {
@@ -370,7 +371,7 @@ export function ReleaseAircraftScreen({
         title="Odczyt końcowy motogodzin"
         unit="MH"
         tone="neutral"
-        keyboard={vm.mhFormat === 'hhmm' ? 'text' : 'decimal'}
+        mask={(t) => maskMotoHoursInput(t, vm.mhFormat)}
         initialText={reading.mh != null ? motoHours(reading.mh, vm.mhFormat) : ''}
         rows={[
           {

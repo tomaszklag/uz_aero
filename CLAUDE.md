@@ -604,9 +604,20 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   unieważnić" opisywał przycisk, którego nikt nie szuka. Tak samo wyleciały podpowiedzi
   „litry z paliwomierza" i „wskazanie licznika" (nazywały pole, które nazywa się tak samo
   dwa centymetry wyżej), zdanie „korekty zapisują się od razu — rejestr jest append-only"
-  spod pasa edycji oraz przypis „ta lista jest kompletna z definicji" pod historią zmian.
-  Wszystkie opisywały wewnętrzną budowę rejestru komuś, kto o nią nie pytał. Podpowiedź
-  pod polem pojawia się WYŁĄCZNIE po zmianie i mówi, co było
+  spod pasa edycji, przypis „ta lista jest kompletna z definicji" pod historią zmian,
+  baner „korekta nie kasuje historii…" z arkusza 10E razem z chipem „Jak to działa?"
+  oraz przypisy pod akcjami destrukcyjnymi („oznacza zdarzenie jako błędne (nie usuwa
+  go z rejestru)", „wiersz zostaje w rejestrze"). Wszystkie opisywały wewnętrzną budowę
+  rejestru komuś, kto o nią nie pytał — a napis na przycisku („TEGO LĄDOWANIA NIE BYŁO")
+  mówi już wszystko, co trzeba wiedzieć przed tapnięciem. Podpowiedź pod polem pojawia
+  się WYŁĄCZNIE po zmianie i mówi, co było
+- **licznik motogodzin wpisuje się z klawiatury NUMERYCZNEJ** (uwaga z urządzenia,
+  2026-08-14). Format hh:mm wymuszał dotąd pełną QWERTY, bo dwukropka nie ma na
+  numerycznej — a QWERTY zajmuje pół ekranu i podsuwa podpowiedzi słownikowe pod liczbę
+  z tarczy. Separator stawia odtąd MASKA (`maskMotoHoursInput` w `@uzaero/format`):
+  kropka, przecinek i dwukropek znaczą TO SAMO, maska zamienia je na znak właściwy dla
+  formatu licznika i pilnuje, żeby był dokładnie jeden. Tryb `text` w `ReadingSheet`
+  został usunięty — nie ma go do czego przywracać
 - **kotwica historii to sama para „kiedy → co"**: podpis o źródle zapisu („autodetekcja ·
   GPS", „zapis sesji") zniknął razem z plakietkami „AUTO"/„RĘCZNIE" z osi (issue #40) —
   prowenienecja nie jest pytaniem pilota, tylko rejestru i panelu

@@ -139,7 +139,6 @@
   .destructive-sep { height:1px; background:var(--border); margin:2px 0 0; }
   .btn-void { display:flex; align-items:center; justify-content:center; gap:8px; padding:11px; border-radius:14px; border:1px solid var(--red-border); background:transparent; color:var(--red); font-family:var(--font-display); font-size:15px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
   .btn-void:hover { background:var(--red-muted); }
-  .void-hint { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.8px; color:var(--text-muted); text-align:center; line-height:1.6; }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -304,12 +303,13 @@
           <a href="10d-edycja.html" class="btn-save">Zapisz korektę</a>
         </div>
 
+        <!-- Bez przypisu pod przyciskiem (2026-08-14): „wiersz zostaje w rejestrze"
+             opisywało budowę append-only, a nie skutek, o który pilot pyta. -->
         <div class="destructive-sep"></div>
         <a href="10d-edycja.html" class="btn-void">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           TEGO ZRZUTU NIE BYŁO
         </a>
-        <div class="void-hint">Wyniesienie wypada z rozliczenia i z sumy sesji · wiersz zostaje w rejestrze przekreślony</div>
       </div>
     </div>
   </div>
