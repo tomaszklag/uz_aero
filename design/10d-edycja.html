@@ -142,7 +142,11 @@
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
   .axis-dot.blue { background:var(--blue); }
-  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:none; }
+  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+     ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
+     (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
+     pustych punktów osi. */
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
   .axis-dot.warn { background:var(--amber); }
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }

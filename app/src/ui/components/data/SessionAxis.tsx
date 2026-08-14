@@ -184,21 +184,39 @@ export function SessionAxis({ rows, foot, emptyText, onCorrect, style }: Session
                   },
                 ]}
               />
-              <View
-                style={[
-                  styles.dot,
-                  hollow
-                    ? { borderWidth: 1.5, borderColor: theme.colors.textMuted }
-                    : { backgroundColor: warned ? theme.colors.amber : c.accent },
-                  {
-                    borderColor: hollow
-                      ? warned
-                        ? theme.colors.amber
-                        : theme.colors.textMuted
-                      : theme.colors.surface,
-                  },
-                ]}
-              />
+              {/*
+                Kropka ZAWSZE przecina kreskę osi, także pusta w środku.
+
+                Wypełniona robi to sama: jej 2 px obramowania jest w kolorze karty, więc
+                linia urywa się kawałek PRZED nią. Pusta nie miała ani tej otoczki, ani
+                wypełnienia — kreska wchodziła jej do środka i wychodziła drugą stroną,
+                co przy PRZEJĘCIU i ZDANIU (jedyne puste punkty osi) wyglądało jak
+                przekłuta obrączka. Stąd dwie warstwy: zewnętrzny krążek w kolorze karty
+                ucina linię, wewnętrzny rysuje sam obrys.
+              */}
+              {hollow ? (
+                <View style={[styles.dotHalo, { backgroundColor: theme.colors.surface }]}>
+                  <View
+                    style={[
+                      styles.dotRing,
+                      {
+                        borderColor: warned ? theme.colors.amber : theme.colors.textMuted,
+                        backgroundColor: theme.colors.surface,
+                      },
+                    ]}
+                  />
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor: warned ? theme.colors.amber : c.accent,
+                      borderColor: theme.colors.surface,
+                    },
+                  ]}
+                />
+              )}
             </View>
 
             <View style={styles.label}>
@@ -341,6 +359,13 @@ const styles = StyleSheet.create({
   rail: { width: 14, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   railLine: { position: 'absolute', width: 1 },
   dot: { width: 9, height: 9, borderRadius: 5, borderWidth: 2 },
+  /**
+   * Otoczka pustej kropki — te same 2 px, którymi wypełniona ucina kreskę osi
+   * (9 + 2 × 2 = 13). Rysowana kolorem karty, więc jest niewidoczna i robi jedno:
+   * odsuwa linię od obrysu.
+   */
+  dotHalo: { width: 13, height: 13, borderRadius: 7, alignItems: 'center', justifyContent: 'center' },
+  dotRing: { width: 9, height: 9, borderRadius: 5, borderWidth: 1.5 },
   label: { flex: 1, minWidth: 0, gap: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 10, letterSpacing: 1.4, lineHeight: 13 },
