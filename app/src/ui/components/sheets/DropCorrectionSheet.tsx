@@ -24,7 +24,7 @@ import { ActionButton } from '../data/ActionButton';
 import { HistoryLink } from '../data/HistoryLink';
 import { CounterRow } from '../input/CounterRow';
 import { ReasonField } from '../input/ReasonField';
-import { Stepper } from '../input/Stepper';
+import { TimeStepper } from '../input/TimeStepper';
 import { Field } from '../input/Field';
 import { Sheet } from './Sheet';
 
@@ -131,22 +131,16 @@ export function DropCorrectionSheet({
         {title.toUpperCase()}
       </AppText>
 
-      <Field label="Czas zrzutu (UTC)">
-        <Stepper
-          value={time}
-          onChange={setTime}
-          step={60_000}
-          min={originalTime - MAX_SHIFT_MIN * 60_000}
-          max={Math.min(originalTime + MAX_SHIFT_MIN * 60_000, maxTime)}
-          format={formatTime}
-          hint={
-            timeChanged
-              ? `zmiana o ${signed(Math.round((time - originalTime) / 60_000))} min względem ${formatTime(originalTime)}`
-              : undefined
-          }
-          tone="blue"
-        />
-      </Field>
+      <TimeStepper
+        label="Czas zrzutu (UTC)"
+        value={time}
+        onChange={setTime}
+        format={formatTime}
+        originalTime={originalTime}
+        min={originalTime - MAX_SHIFT_MIN * 60_000}
+        max={Math.min(originalTime + MAX_SHIFT_MIN * 60_000, maxTime)}
+        tone="blue"
+      />
 
       {altitude != null && (
         <View style={styles.altRow}>
@@ -221,7 +215,6 @@ function sameJumpers(a: JumperCounts | null, b: JumperCounts | null): boolean {
   return a.tandem === b.tandem && a.aff === b.aff && a.solo === b.solo;
 }
 
-const signed = (n: number): string => (n > 0 ? `+${n}` : String(n));
 
 const styles = StyleSheet.create({
   target: { fontSize: 9, letterSpacing: 1.5 },

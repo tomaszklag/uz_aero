@@ -25,7 +25,7 @@ import type { IconName } from '../foundation/Icon';
 import { Banner } from '../status/Banner';
 import { OptionGrid } from '../input/OptionGrid';
 import { ReasonField } from '../input/ReasonField';
-import { Stepper } from '../input/Stepper';
+import { TimeStepper } from '../input/TimeStepper';
 import { Field, TextField } from '../input/Field';
 import { Sheet, type SheetRow } from './Sheet';
 
@@ -124,16 +124,11 @@ export function AddEventSheet({
         />
       </Field>
 
-      <Field label="Czas zdarzenia (UTC)">
-        <Stepper
-          value={time}
-          onChange={setTime}
-          step={60_000}
-          bigStep={600_000}
-          max={maxTime}
-          format={formatTime}
-        />
-      </Field>
+      {/* Bez `originalTime`: dopisywany fakt nie ma godziny sprzed edycji, więc nie ma
+          względem czego mierzyć przesunięcia. Rząd ±10 min istniał tu, dopóki przyciski
+          były jedyną drogą do godziny — od chwili, gdy da się ją WPISAĆ, jest gorszą
+          wersją klawiatury i zabiera wysokość arkusza. */}
+      <TimeStepper value={time} onChange={setTime} format={formatTime} max={maxTime} />
 
       {isRefuel && (
         <>

@@ -27,8 +27,8 @@ import { Icon } from '../foundation/Icon';
 import { HistoryLink } from '../data/HistoryLink';
 import { Banner } from '../status/Banner';
 import { ReasonField } from '../input/ReasonField';
-import { Field, TextField } from '../input/Field';
-import { Stepper } from '../input/Stepper';
+import { TextField } from '../input/Field';
+import { TimeStepper } from '../input/TimeStepper';
 import { toneColors } from '../tone';
 import { Sheet, type SheetRow } from './Sheet';
 
@@ -183,18 +183,15 @@ export function ReadingCorrectionSheet({
           ten sam kształt. Ostrzeżenie pod spodem mówi, co pociągnie za sobą godzina
           wykraczająca poza uruchomienie silnika. */}
       {time != null && (
-        <Field label="Czas zdarzenia (UTC)">
-          <Stepper
-            value={at}
-            onChange={setAt}
-            step={60_000}
-            bigStep={600_000}
-            min={time.min}
-            max={time.max}
-            format={time.format}
-            tone="amber"
-          />
-        </Field>
+        <TimeStepper
+          value={at}
+          onChange={setAt}
+          format={time.format}
+          originalTime={time.value}
+          min={time.min}
+          max={time.max}
+          tone="amber"
+        />
       )}
 
       {timeNote != null && (

@@ -95,7 +95,8 @@
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:9px 11px; }
   .min-btn { width:62px; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
   .min-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
-  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); }
+  /* Godzina do WPISANIA z klawiatury — patrz komentarz w 10E. */
+  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); border-bottom:1px dashed var(--border-strong); padding-bottom:2px; cursor:text; }
   .time-delta { font-family:var(--font-mono); font-size:9px; color:var(--amber); letter-spacing:0.5px; margin-top:5px; }
 
   /* WYSOKOŚĆ — odczyt, nie pole (CLAUDE.md: dane z pomiaru mają pierwszeństwo).

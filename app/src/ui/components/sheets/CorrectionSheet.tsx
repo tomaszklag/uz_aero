@@ -27,6 +27,7 @@ import { HistoryLink } from '../data/HistoryLink';
 import { Banner } from '../status/Banner';
 import { Icon, type IconName } from '../foundation/Icon';
 import { ReasonField } from '../input/ReasonField';
+import { TimeStepper } from '../input/TimeStepper';
 import { Tag } from '../status/Tag';
 import { SheetSurface } from './SheetSurface';
 import { toneColors } from '../tone';
@@ -86,7 +87,6 @@ export function CorrectionSheet({
 }: CorrectionSheetProps) {
   const { theme } = useTheme();
   const blue = toneColors(theme, 'blue');
-  const green = toneColors(theme, 'green');
 
   const [offsetMin, setOffsetMin] = useState(0);
   const [reason, setReason] = useState('');
@@ -206,53 +206,19 @@ export function CorrectionSheet({
         {methodBadge != null && <Tag label={methodBadge} tone="blue" />}
       </View>
 
-      {/* Czas zdarzenia — kroki minutowe, wzorzec z 05f. */}
-      <View style={{ gap: 5 }}>
-        <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
-          Czas zdarzenia (UTC)
-        </AppText>
-        <View
-          style={[
-            styles.timeRow,
-            {
-              borderRadius: theme.radius.btn,
-              borderWidth: theme.borderWidth,
-              borderColor: green.border,
-              backgroundColor: theme.colors.surface,
-            },
-          ]}
-        >
-          <MinuteButton
-            label="−1 min"
-            disabled={offsetMin <= -MAX_SHIFT_MIN}
-            onPress={() => setOffsetMin((o) => o - 1)}
-          />
-          <AppText
-            variant="mono"
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              fontFamily: theme.fontFamily.monoBold,
-              fontSize: 30,
-              lineHeight: 34,
-              letterSpacing: 2,
-              color: theme.colors.textPrimary,
-            }}
-          >
-            {formatTime(newTime)}
-          </AppText>
-          <MinuteButton
-            label="+1 min"
-            disabled={offsetMin >= MAX_SHIFT_MIN || newTime + 60_000 > maxTime}
-            onPress={() => setOffsetMin((o) => o + 1)}
-          />
-        </View>
-        <AppText variant="mono" tone="amber" style={styles.delta}>
-          {offsetMin === 0
-            ? `Bez zmiany względem ${source} (${formatTime(originalTime)})`
-            : `Zmiana o ${offsetMin > 0 ? '+' : '−'}${Math.abs(offsetMin)} min względem ${source} (${formatTime(originalTime)})`}
-        </AppText>
-      </View>
+      {/* Czas zdarzenia — WSPÓLNA kontrolka, nie własna para przycisków. Do issue #43
+          arkusz miał tu prywatny `MinuteButton`: krok minutowy działał, ale godziny nie
+          dało się wpisać z klawiatury, bo kontrolka nie umiała nic poza ±1. */}
+      <TimeStepper
+        value={newTime}
+        onChange={(next) => setOffsetMin(Math.round((next - originalTime) / 60_000))}
+        format={formatTime}
+        originalTime={originalTime}
+        origin={source}
+        min={originalTime - MAX_SHIFT_MIN * 60_000}
+        max={Math.min(originalTime + MAX_SHIFT_MIN * 60_000, maxTime)}
+        tone="green"
+      />
 
       {/* Wiersze odniesienia — w tym wpływ na czasy, przeliczany na bieżąco. */}
       {refsFor(newTime).map((ref) => (
@@ -295,45 +261,6 @@ export function CorrectionSheet({
   );
 }
 
-function MinuteButton({
-  label,
-  disabled,
-  onPress,
-}: {
-  label: string;
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const { theme } = useTheme();
-  const green = toneColors(theme, 'green');
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.minuteButton,
-        {
-          // Wzorzec stepperów z 05f niesie promień 13 (`.step-btn`) — znormalizowany
-          // do kanonu `radius.btn`; dryf 13/14 ubity celowo, wzorem `colors.overlay`.
-          borderRadius: theme.radius.btn,
-          borderWidth: theme.borderWidth,
-          borderColor: pressed ? green.border : theme.colors.borderStrong,
-          backgroundColor: pressed ? green.muted : theme.colors.surfaceRaised,
-          opacity: disabled ? 0.35 : 1,
-        },
-      ]}
-    >
-      <AppText variant="mono" style={{ fontSize: 13, color: theme.colors.textPrimary }}>
-        {label}
-      </AppText>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { fontSize: 22, lineHeight: 24, letterSpacing: 2 },
@@ -342,11 +269,6 @@ const styles = StyleSheet.create({
   eventCard: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingHorizontal: 14, paddingVertical: 12 },
   eventBody: { flex: 1, gap: 2 },
   eventMeta: { fontSize: 9, letterSpacing: 1, textTransform: 'uppercase' },
-  fieldLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
-  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 13 },
-  // 46 px — próg rękawic, wspólny z 05e/05f.
-  minuteButton: { width: 66, height: 46, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  delta: { fontSize: 9, letterSpacing: 0.5, marginTop: 5, minHeight: 13 },
   refRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, paddingHorizontal: 2 },
   refText: { fontSize: 10, letterSpacing: 0.5 },
   separator: { height: 1, marginTop: 3, marginBottom: 1 },

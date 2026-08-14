@@ -230,6 +230,22 @@ tam mieszkają tokeny, rama, kanoniczny sidebar i inwentarz komponentów back-of
 dokładamy do szablonu, nie do pojedynczego ekranu.
 Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo — inne urządzenie, ten sam produkt.
 
+### Czas zdarzenia — JEDNA kontrolka (2026-08-14)
+Ustawienie godziny zdarza się w pięciu arkuszach (korekta czasu 10e, odczytu 10f, zrzutu
+10g, dopisanie wpisu 10h, wpis ręczny z kokpitu 05f) i do issue #43 każdy składał ją sam.
+Efekt po pięciu kopiach: jedna nie pozwalała wpisać godziny, druga miała zbędny rząd
+±10 min, trzecia pisała na przycisku **„+60000"** (krok jest w milisekundach, tylko nikt
+go nie nazwał). Odtąd jest **`components/input/TimeStepper.tsx`** i ona ustala:
+- **krok to MINUTA i tylko ona** — dalszy skok wpisuje się, a nie odklikuje
+- **godzinę da się WPISAĆ z klawiatury** (tapnięcie w wartość; przerywana kreska pod nią
+  jest jedynym znakiem afordancji). Maska stawia dwukropek, a dzień bierze się
+  z poprawianego zdarzenia — `timeStepperEdit`, nie „dzisiaj"
+- **podpis mówi, o ile przesunięto** względem wartości pierwotnej (`timeShiftHint`),
+  także przy zmianie zerowej: pilot, który wrócił do punktu wyjścia, musi to widzieć
+- arkusz podaje wyłącznie to, co go RÓŻNI: etykietę, granice, ton i ewentualną stopkę
+  (czas lokalny w 05f). Nowy krok, nowa nazwa kroku ani własna para przycisków ± nie
+  wchodzą do arkusza — wchodzą do `TimeStepper`
+
 ### Wzorzec formularzy
 - Pola input: `background: var(--surface-raised)`, `border-radius: 12px`, focus = `var(--green-border)`
 - Dropdowny jako lista kart do wyboru (nie natywny `<select>`) — widoczne opcje, zaznaczona = zielona obramówka

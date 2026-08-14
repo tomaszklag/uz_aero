@@ -112,7 +112,12 @@
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:10px 12px; }
   .step-btn { width:66px; height:46px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:13px; cursor:pointer; }
   .step-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
-  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:30px; font-weight:700; letter-spacing:2px; color:var(--text-primary); }
+  /* Godzina jest CELEM DOTKNIĘCIA: tapnięcie otwiera klawiaturę numeryczną i pozwala
+     wpisać ją wprost (dwukropek stawia maska). Przyciski ±1 min zostają do poprawki
+     o krok — godzina odległa o czterdzieści minut to czterdzieści dotknięć. Przerywana
+     kreska pod spodem jest jedynym znakiem, że pole da się wpisać; ramki nie dostaje,
+     bo nie jest formularzem, tylko wartością stepera. */
+  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:30px; font-weight:700; letter-spacing:2px; color:var(--text-primary); border-bottom:1px dashed var(--border-strong); padding-bottom:2px; cursor:text; }
   .time-delta { font-family:var(--font-mono); font-size:9px; color:var(--amber); letter-spacing:0.5px; margin-top:5px; }
 
   .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }

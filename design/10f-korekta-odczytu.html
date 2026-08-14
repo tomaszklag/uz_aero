@@ -149,7 +149,9 @@
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:9px 11px; }
   .min-btn { width:62px; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
   .min-btn:hover { border-color:var(--amber-border); background:var(--amber-muted); }
-  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); }
+  /* Godzina do WPISANIA z klawiatury — patrz komentarz w 10E. Kroków ±10 min tu nie ma
+     i mieć nie będzie: korekta przejęcia to poprawka o minuty, a dalszy skok wpisuje się. */
+  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); border-bottom:1px dashed var(--border-strong); padding-bottom:2px; cursor:text; }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }

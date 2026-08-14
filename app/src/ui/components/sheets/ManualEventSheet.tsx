@@ -28,6 +28,7 @@ import { ActionButton } from '../data/ActionButton';
 import { Banner } from '../status/Banner';
 import { Icon, type IconName } from '../foundation/Icon';
 import { InlineNote } from '../status/InlineNote';
+import { TimeStepper } from '../input/TimeStepper';
 import { SheetSurface } from './SheetSurface';
 import { toneColors } from '../tone';
 
@@ -132,65 +133,34 @@ export function ManualEventSheet({
         cofnąć, jeśli orientujesz się po fakcie.
       </AppText>
 
-      {/* Czas — kroki minutowe, cel 46 px (rękawice). */}
-      <View
-        style={[
-          styles.timeBlock,
-          {
-            borderRadius: theme.radius.btn,
-            borderWidth: theme.borderWidth,
-            borderColor: amber.border,
-            backgroundColor: theme.colors.surface,
-          },
-        ]}
-      >
-        <AppText variant="mono" tone="muted" style={styles.timeLabel}>
-          Czas zdarzenia (UTC)
-        </AppText>
-
-        <View style={styles.timeRow}>
-          <MinuteButton
-            label="−1 min"
-            onPress={() => setOffsetMin((o) => Math.max(-MAX_BACK_MIN, o - 1))}
-            disabled={offsetMin <= -MAX_BACK_MIN}
-          />
-          <AppText
-            variant="mono"
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              fontFamily: theme.fontFamily.monoBold,
-              fontSize: 32,
-              lineHeight: 36,
-              letterSpacing: 2,
-              color: theme.colors.textPrimary,
-            }}
-          >
-            {formatTime(at)}
-          </AppText>
-          <MinuteButton
-            label="+1 min"
-            onPress={() => setOffsetMin((o) => Math.min(0, o + 1))}
-            // W przyszłość nie da się zapisać zdarzenia, które jeszcze nie zaszło.
-            disabled={offsetMin >= 0}
-          />
-        </View>
-
-        {/* Czas lokalny drobnym drukiem POD zegarem (issue #19). Rejestr jedzie
-            w UTC i tak zostaje — ale pilot patrzy na zegarek na ręce, a ten pokazuje
-            LT. Bez tej linii przeliczał w głowie, żeby sprawdzić, czy „08:14" to
-            rzeczywiście chwila, którą pamięta. Drugorzędna wartość, drugorzędny
-            stopień pisma (`CLAUDE.md`: LT tylko jako wartość drugorzędna). */}
-        <AppText variant="mono" tone="muted" style={styles.local}>
-          {formatLocalTime(at)} LT
-        </AppText>
-
-        <AppText variant="mono" style={[styles.delta, { color: amber.accent }]}>
-          {minutesAgo === 0
-            ? 'teraz'
-            : `${minutesAgo} min temu — tyle trwało, zanim zauważyłeś`}
-        </AppText>
-      </View>
+      {/* Czas — WSPÓLNA kontrolka (`TimeStepper`), nie własna para przycisków.
+          Ten arkusz miał do issue #43 prywatny `MinuteButton`, przez co jako jedyny
+          nie pozwalał WPISAĆ godziny z klawiatury — a jest miejscem, w którym pilot
+          orientuje się po fakcie i cofa czas najdalej. */}
+      <TimeStepper
+        value={at}
+        onChange={(next) => setOffsetMin(Math.round((next - now) / 60_000))}
+        format={formatTime}
+        min={now - MAX_BACK_MIN * 60_000}
+        // W przyszłość nie da się zapisać zdarzenia, które jeszcze nie zaszło.
+        max={now}
+        footer={
+          <>
+            {/* Czas lokalny drobnym drukiem POD zegarem (issue #19). Rejestr jedzie
+                w UTC i tak zostaje — ale pilot patrzy na zegarek na ręce, a ten pokazuje
+                LT. Bez tej linii przeliczał w głowie, czy „08:14" to rzeczywiście chwila,
+                którą pamięta (`CLAUDE.md`: LT tylko jako wartość drugorzędna). */}
+            <AppText variant="mono" tone="muted" style={styles.local}>
+              {formatLocalTime(at)} LT
+            </AppText>
+            <AppText variant="mono" style={[styles.delta, { color: amber.accent }]}>
+              {minutesAgo === 0
+                ? 'teraz'
+                : `${minutesAgo} min temu — tyle trwało, zanim zauważyłeś`}
+            </AppText>
+          </>
+        }
+      />
 
       <Banner
         kind="edu"
@@ -209,45 +179,6 @@ export function ManualEventSheet({
   );
 }
 
-function MinuteButton({
-  label,
-  onPress,
-  disabled,
-}: {
-  label: string;
-  onPress: () => void;
-  disabled: boolean;
-}) {
-  const { theme } = useTheme();
-  const amber = toneColors(theme, 'amber');
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.minuteButton,
-        {
-          // Mockup 05f daje `.step-btn` promień 13 — znormalizowany do kanonu
-          // `radius.btn`; dryf 13/14 ubity celowo, wzorem `colors.overlay`.
-          borderRadius: theme.radius.btn,
-          borderWidth: theme.borderWidth,
-          borderColor: pressed ? amber.border : theme.colors.borderStrong,
-          backgroundColor: pressed ? amber.muted : theme.colors.surfaceRaised,
-          opacity: disabled ? 0.35 : 1,
-        },
-      ]}
-    >
-      <AppText variant="mono" style={{ fontSize: 13, color: theme.colors.textPrimary }}>
-        {label}
-      </AppText>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   title: { fontSize: 23, lineHeight: 25, letterSpacing: 2 },
   lead: { fontSize: 12, lineHeight: 18 },
@@ -262,11 +193,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   typeLabel: { fontSize: 19, lineHeight: 21, letterSpacing: 2 },
-  timeBlock: { gap: 9, paddingHorizontal: 14, paddingVertical: 12 },
-  timeLabel: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
-  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  // 46 px — ten sam próg dla rękawic co w `CounterRow` i `Stepper`.
-  minuteButton: { width: 66, height: 46, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   local: { fontSize: 11, letterSpacing: 1, textAlign: 'center' },
   delta: { fontSize: 10, letterSpacing: 0.5, textAlign: 'center', minHeight: 14 },
 });
