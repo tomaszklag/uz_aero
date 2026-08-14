@@ -57,6 +57,7 @@ import {
 import { correctionImpact, methodBadgeFor, voidLabelFor } from '../screens/logic/correction';
 import type { AxisRow } from '../screens/logic/sessionAxis';
 import { claimRetimePlan } from '../screens/logic/claimRetime';
+import { fieldLabel, needsFieldLabels } from '../screens/logic/correctionHistoryRows';
 import {
   addableTypes,
   editTargetFor,
@@ -411,6 +412,9 @@ export function useSessionEdit(
     [options, whoCode],
   );
 
+  /** Podpisy pól — tylko przy liście mieszanej; uzasadnienie w `correctionHistoryRows`. */
+  const labelled = useMemo(() => needsFieldLabels(historyEntries), [historyEntries]);
+
   const historyItems = useMemo(
     (): CorrectionHistoryItem[] =>
       // Najnowsza NA GÓRZE: domena zwraca chronologicznie (tak wychodzi ze składania
@@ -420,7 +424,7 @@ export function useSessionEdit(
         when: `${dateTimeUtcShort(entry.at)} UTC`,
         who: whoOf(entry.byPilotId),
         byAdmin: entry.byAdmin,
-        field: entry.field == null ? null : FIELD_LABEL[entry.field],
+        field: entry.field != null && labelled ? fieldLabel(entry.field) : null,
         from: formatValue(entry.field, entry.from, mhFormat, whoCode),
         to: formatValue(entry.field, entry.to, mhFormat, whoCode),
         verdict:
@@ -432,7 +436,7 @@ export function useSessionEdit(
         verdictTone: entry.kind === 'void' ? 'red' : 'green',
         reason: entry.reason,
       })),
-    [historyEntries, mhFormat, whoCode, whoOf],
+    [historyEntries, labelled, mhFormat, whoCode, whoOf],
   );
 
   const historyOrigin = useMemo(() => {
@@ -732,16 +736,6 @@ const EMPTY_JUMPERS: JumperCounts = { tandem: 0, aff: 0, solo: 0 };
 const READING_FIELDS: readonly CorrectionField[] = ['time', 'fuelL', 'mh'];
 const NOTE_FIELDS: readonly CorrectionField[] = ['notes'];
 const DUAL_FIELDS: readonly CorrectionField[] = ['dualId'];
-
-/** Nazwy pól w historii — po polsku, bo czyta je pilot. */
-const FIELD_LABEL: Record<string, string> = {
-  time: 'czas',
-  fuelL: 'paliwo',
-  mh: 'motogodziny',
-  jumpers: 'skoczkowie',
-  notes: 'notatka',
-  dualId: 'drugi pilot',
-};
 
 const iconFor = (type: EventType): 'takeoff' | 'refuel' | 'drop' | 'boarding' | 'landing' =>
   type === 'takeoff'

@@ -564,6 +564,12 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   (`READING_FIELDS`/`NOTE_FIELDS`/`DUAL_FIELDS`). Arkusz notatki jest jedynym bez pola
   „powód": przy odczycie powód tłumaczy liczbę, której nikt inny nie wyjaśni, a przy
   notatce wyjaśnieniem jest sam nowy tekst
+- **w historii zmian nazwa pola ODRÓŻNIA, a nie opisuje** (uwaga z urządzenia,
+  2026-08-14): plakietka („czas", „notatka") pojawia się przy wierszach WYŁĄCZNIE wtedy,
+  gdy lista miesza różne pola. Historia notatki ma same notatki, a lądowania — same
+  czasy, więc podpis powtarzał nagłówek arkusza przy każdym wpisie i zabierał miejsce
+  parze „było → jest". Rozstrzyga FAKTYCZNA zawartość listy, nie zakres, w jakim ją
+  otwarto (`needsFieldLabels` w `logic/correctionHistoryRows.ts`)
 - **arkusz nie tłumaczy braków**: przypis „odczytu nie da się unieważnić" opisywał
   przycisk, którego nikt nie szuka. Tak samo wyleciały podpowiedzi „litry z paliwomierza"
   i „wskazanie licznika" — nazywały pole, które nazywa się tak samo dwa centymetry wyżej.

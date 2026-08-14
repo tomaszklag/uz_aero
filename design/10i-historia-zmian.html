@@ -92,6 +92,9 @@
   .hist-from { color:var(--text-muted); text-decoration:line-through; }
   .hist-arrow { color:var(--text-muted); }
   .hist-to { color:var(--text-primary); font-weight:700; }
+  /* Plakietka wiersza. Nosi ją zawsze KOTWICA („zapis pierwotny"), bo ona jedna nie
+     jest zmianą i musi się przedstawić; nazwę POLA („paliwo", „czas") dostają wiersze
+     tylko wtedy, gdy lista miesza różne pola — patrz komentarz przy liście niżej. */
   .hist-field { font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:2px 6px; }
   /* Autor: rola ma znaczenie, bo korekta administratora znaczy co innego niż własna —
      pilot ma prawo wiedzieć, że ktoś ruszył jego log po zamknięciu okna. */
@@ -180,6 +183,16 @@
           <span class="modal-sub">Lądowanie · lot 1</span>
         </div>
 
+        <!-- PLAKIETKI Z NAZWĄ POLA TU NIE MA i to jest reguła, nie oszczędność miejsca
+             (uwaga z urządzenia, 2026-08-14). Nazwa pola nie mówi, CZEGO dotyczy zmiana —
+             to wiadomo z nagłówka („Lądowanie · lot 1") i z samych wartości — tylko
+             ODRÓŻNIA wiersze od siebie. Tu wszystkie są o czasie, więc „czas" przy każdym
+             wpisie powtarzało nagłówek i zabierało miejsce parze „było → jest".
+
+             Podpis wraca, gdy lista MIESZA pola: historia odczytu przejęcia potrafi
+             nieść czas, paliwo i licznik naraz, a wtedy „150 → 148" i „1234,5 → 1234,6"
+             różnią się wyłącznie rzędem wielkości. Decyduje faktyczna zawartość listy,
+             nie to, co mogłoby się w niej znaleźć. -->
         <div class="hist">
           <!-- Najnowsza zmiana — administratora. Rola stoi przy nazwisku, bo korekta
                spoza własnego telefonu znaczy dla pilota co innego niż własna. -->
@@ -188,7 +201,6 @@
             <div class="hist-body">
               <span class="hist-when">07 SIE · 12:05 UTC</span>
               <span class="hist-change">
-                <span class="hist-field">czas</span>
                 <span class="hist-from">09:01</span>
                 <span class="hist-arrow">→</span>
                 <span class="hist-to">09:00</span>
@@ -203,7 +215,6 @@
             <div class="hist-body">
               <span class="hist-when">06 SIE · 11:42 UTC</span>
               <span class="hist-change">
-                <span class="hist-field">czas</span>
                 <span class="hist-from">08:58</span>
                 <span class="hist-arrow">→</span>
                 <span class="hist-to">09:01</span>
