@@ -80,7 +80,7 @@ import { dateTimeUtcShort, jumperBreakdown } from './logic/statsDay';
 import { buildSessionAxis } from './logic/sessionAxis';
 import { withIssues } from './logic/sessionEdit';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
-import { noteTargetUuid, sessionNotes } from './logic/sessionNotes';
+import { missingSessionNote, noteTargetUuid, sessionNotes } from './logic/sessionNotes';
 import { operationTag } from './logic/operations';
 
 /** Wysokość miniatury śladu — proporcje z mockupu 10 przy szerokości telefonu. */
@@ -233,6 +233,12 @@ export function StatsScreen({
   const notes = useMemo(() => sessionNotes(projection, events), [projection, events]);
   /** Gdzie wpisać notatkę, której jeszcze nie ma — patrz `noteTargetUuid`. */
   const noteTarget = useMemo(() => noteTargetUuid(events), [events]);
+  /**
+   * Dopisanie notatki ma sens TYLKO przy jej braku: notatka sesji jest jedna, więc
+   * przy istniejącej „dodanie" znaczyłoby nadpisanie. Reguła mieszka w logice, żeby
+   * miała test — ten warunek już raz był w JSX i już raz był zły.
+   */
+  const canAddNote = editing && noteTarget != null && missingSessionNote(notes);
 
   /**
    * Wiek normy — jedyna dana z serwera na tym ekranie, więc jedyna z adnotacją świeżości
@@ -597,23 +603,27 @@ export function StatsScreen({
             Wszystko, co pilot NAPISAŁ o tej sesji: notatka z kroku „zadanie" (02e)
             i uwagi wpisów ręcznych (08, 15). Do issue #40 ten tekst nie wracał do
             autora nigdzie — widział go tylko administrator w panelu.
-            Karta stoi na końcu, bo jest komentarzem do liczb wyżej, i pojawia się
-            WYŁĄCZNIE wtedy, gdy jest treść: „Notatki —" byłoby wierszem o niczym. */}
-        {/*
-          W trybie ODCZYTU karta istnieje tylko z treścią (issue #40: „Notatki —" byłoby
-          wierszem o niczym). W trybie EDYCJI istnieje ZAWSZE — bo inaczej sesja bez
-          notatki nie miałaby jak jej dostać, a to jedyne wejście w jej dopisanie.
-        */}
-        {(notes.length > 0 || (editing && noteTarget != null)) && (
+            Karta stoi na końcu, bo jest komentarzem do liczb wyżej.
+
+            W trybie ODCZYTU istnieje tylko z treścią (issue #40: „Notatki —" byłoby
+            wierszem o niczym). W trybie EDYCJI dochodzi drugie wejście — dopisanie
+            notatki sesji, której jeszcze nie ma: bez niego affordancja gasłaby
+            dokładnie w stanie, w którym jest potrzebna. */}
+        {(notes.length > 0 || canAddNote) && (
           <Card title="Notatki" flush>
             {notes.map((note, index) => {
               const border =
                 index > 0 ? { borderTopWidth: 1, borderTopColor: theme.colors.border } : null;
               const body = (
                 <>
-                  <AppText variant="micro" tone="muted">
-                    {note.when.toUpperCase()}
-                  </AppText>
+                  {/* Podpis TYLKO tam, gdzie coś rozróżnia — czyli przy uwagach wpisów
+                      ręcznych. Notatka sesji jest jedna i nie ma jej od czego odróżnić;
+                      stempel „Zadanie · 08:04" mówił o godzinie preflightu, nie o niej. */}
+                  {note.when != null && (
+                    <AppText variant="micro" tone="muted">
+                      {note.when.toUpperCase()}
+                    </AppText>
+                  )}
                   {/* Body font, nie mono: to zdanie napisane przez człowieka, a nie odczyt. */}
                   <AppText variant="body" tone="secondary" style={styles.noteText}>
                     {note.text}
@@ -637,7 +647,9 @@ export function StatsScreen({
                 <Pressable
                   key={note.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`Popraw notatkę: ${note.when}`}
+                  accessibilityLabel={
+                    note.when == null ? 'Popraw notatkę sesji' : `Popraw notatkę: ${note.when}`
+                  }
                   onPress={() => edit.openNote(note.targetUuid!, note.text)}
                   style={({ pressed }) => [
                     styles.note,
@@ -654,9 +666,13 @@ export function StatsScreen({
 
             {/* Dopisanie notatki — plus, nie ołówek: ołówek obiecuje poprawianie
                 istniejącej wartości, a tu jeszcze niczego nie ma (ta sama zasada, co
-                w katalogu ikon). Wiersz stoi POD listą, więc przy sesji z notatkami
-                jest dopiskiem, a przy pustej — jedyną treścią karty. */}
-            {editing && noteTarget != null && (
+                w katalogu ikon).
+
+                Wiersz istnieje WYŁĄCZNIE wtedy, gdy notatki sesji jeszcze nie ma.
+                Jest ona jedna — jedno pole w payloadzie preflightu — więc obok
+                istniejącej obiecywałby drugą, a naprawdę nadpisałby pierwszą. Gdy
+                notatka jest, jedyną czynnością zostaje jej poprawienie (ołówek wyżej). */}
+            {canAddNote && (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Dodaj notatkę do sesji"

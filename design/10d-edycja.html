@@ -552,26 +552,30 @@
            Jedyna dana sesji pisana ZDANIEM — i pierwsza, w której literówkę widać
            gołym okiem. W trybie edycji cały wiersz jest celem dotknięcia i otwiera
            TEN SAM arkusz, w którym notatka powstała (02e): to ta sama czynność, więc
-           nie ma powodu, żeby wyglądała inaczej. Pusty tekst KASUJE notatkę. -->
+           nie ma powodu, żeby wyglądała inaczej. Pusty tekst KASUJE notatkę.
+
+           BEZ STEMPLA: notatka sesji jest DOKŁADNIE JEDNA (jedno pole w payloadzie
+           preflightu), więc „ZADANIE · 08:04" nie odróżniało jej od niczego — mówiło
+           o godzinie potwierdzenia zadania, a po pierwszej poprawce treści wprost
+           kłamało. Stempel zostaje przy uwagach wpisów ręcznych, bo tych bywa wiele.
+
+           I Z TEGO SAMEGO POWODU nie ma tu wiersza „Dodaj notatkę do sesji": obok
+           istniejącej obiecywałby drugą, a naprawdę nadpisałby pierwszą. Wiersz
+           dopisania pokazuje sesja, która notatki NIE MA — patrz komentarz niżej. -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
         <a href="02e-preflight-zadanie.html" class="note-row">
           <span class="note-body">
-            <span class="note-when">ZADANIE · 08:04</span>
             <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
           </span>
           <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted);flex-shrink:0;"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
         </a>
-        <!-- DOPISANIE notatki — plus, nie ołówek: ołówek obiecuje poprawianie
-             istniejącej wartości, a tu jeszcze niczego nie ma.
-             Ten wiersz jest powodem, dla którego karta „Notatki" istnieje w trybie
-             EDYCJI nawet pusta (w odczycie nadal nie — issue #40). Bez niego sesja
-             bez notatki nie miała jak notatki dostać: wejście znikało w stanie,
-             w którym jest potrzebne. -->
-        <a href="02e-preflight-zadanie.html" class="note-row">
-          <span class="note-add">Dodaj notatkę do sesji</span>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="color:var(--text-muted);flex-shrink:0;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </a>
+        <!-- SESJA BEZ NOTATKI dostaje w tym miejscu JEDEN wiersz zamiast powyższego:
+             „Dodaj notatkę do sesji" z PLUSEM (ołówek obiecuje poprawianie istniejącej
+             wartości, a tu jeszcze niczego nie ma). Ten wiersz jest powodem, dla
+             którego karta „Notatki" istnieje w trybie EDYCJI także pusta — w odczycie
+             nadal nie (issue #40). Bez niego sesja bez notatki nie miała jak notatki
+             dostać: wejście znikało w stanie, w którym jest potrzebne. -->
       </div>
 
       <!-- ══ PAS AKCJI ═══════════════════════════════════════════════════════ -->

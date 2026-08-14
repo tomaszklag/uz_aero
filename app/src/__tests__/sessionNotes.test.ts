@@ -10,7 +10,11 @@
  * wtedy i tylko wtedy, gdy lista nie jest pusta).
  */
 
-import { noteTargetUuid, sessionNotes } from '../ui/screens/logic/sessionNotes';
+import {
+  missingSessionNote,
+  noteTargetUuid,
+  sessionNotes,
+} from '../ui/screens/logic/sessionNotes';
 import { projectSession } from '../domain';
 import type { Event, EventOf, EventType } from '../domain';
 
@@ -73,10 +77,25 @@ function notes(events: Event[] = sessionEvents()) {
 
 describe('notatki sesji', () => {
   it('zbiera notatkę z zadania i uwagi wpisu ręcznego w jednej liście', () => {
-    expect(notes().map((note) => `${note.when} — ${note.text}`)).toEqual([
-      'Zadanie · 08:06 — Drugi zbiornik nie trzyma wskazania.',
+    expect(notes().map((note) => `${note.when ?? '—'} — ${note.text}`)).toEqual([
+      '— — Drugi zbiornik nie trzyma wskazania.',
       'Wpis ręczny · 09:12 — Start dopisany z pamięci — brak fixa.',
     ]);
+  });
+
+  it('notatka sesji NIE MA stempla — miałby opisywać godzinę preflightu, nie ją', () => {
+    // Zgłoszenie z urządzenia (2026-08-14): przy notatce świeciło „Zadanie · 08:06",
+    // czyli czas POTWIERDZENIA zadania. Notatka sesji jest jedna, więc stempel niczego
+    // nie rozróżniał, a po pierwszej poprawce treści zaczynał wprost kłamać.
+    const sesyjna = notes().find((note) => note.kind === 'session');
+
+    expect(sesyjna?.when).toBeNull();
+  });
+
+  it('uwaga wpisu ręcznego stempel MA — jest ich wiele i trzeba je rozróżnić', () => {
+    const wpis = notes().find((note) => note.kind === 'entry');
+
+    expect(wpis?.when).toBe('Wpis ręczny · 09:12');
   });
 
   it('notatka niesie uuid zdarzenia jako klucz listy', () => {
@@ -132,5 +151,23 @@ describe('cel dopisania notatki', () => {
   it('sesja bez preflightu nie ma czego adresować — ołówka wtedy nie ma', () => {
     const bezPreflightu = sessionEvents().filter((e) => e.type !== 'preflight_confirm');
     expect(noteTargetUuid(bezPreflightu)).toBeNull();
+  });
+
+  it('dopisanie jest możliwe TYLKO przy braku notatki sesji', () => {
+    // Druga połowa tego samego zgłoszenia: przy istniejącej notatce wiersz „Dodaj
+    // notatkę do sesji" obiecywał drugą, a naprawdę nadpisałby pierwszą — notatka
+    // sesji to JEDNO pole w payloadzie preflightu.
+    expect(missingSessionNote(notes())).toBe(false);
+    expect(missingSessionNote(notes(sessionEvents({ taskNote: null })))).toBe(true);
+  });
+
+  it('uwagi wpisów ręcznych nie zamykają drogi do notatki sesji', () => {
+    // To dwa różne byty: uwaga należy do SWOJEGO wpisu i jest ich tyle, ile wpisów.
+    // Gdyby liczyła się jak notatka sesji, sesja z wpisem ręcznym nie miałaby jak
+    // dostać notatki własnej.
+    const tylkoWpis = notes(sessionEvents({ taskNote: null }));
+
+    expect(tylkoWpis).toHaveLength(1);
+    expect(missingSessionNote(tylkoWpis)).toBe(true);
   });
 });

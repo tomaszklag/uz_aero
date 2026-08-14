@@ -531,11 +531,19 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   (`PillButton` jest zielony i czytał się jak CTA ekranu)
 - **WEJŚCIE NIE MOŻE ZNIKAĆ RAZEM Z RZECZĄ, KTÓREJ DOTYCZY** — reguła wyciągnięta
   z dwóch zgłoszeń naraz (2026-08-14). Karta „Notatki" w trybie ODCZYTU nadal istnieje
-  tylko z treścią (issue #40), ale w trybie EDYCJI istnieje ZAWSZE, z wierszem „Dodaj
-  notatkę do sesji" — inaczej sesja bez notatki nie miałaby jak notatki dostać. Ten sam
-  błąd co znikające „DODAJ LOT RĘCZNIE" przy pustym dniu (issue #42 wyżej): affordancja
-  gasła dokładnie w stanie, w którym jest potrzebna. Dopisanie ma PLUS, nie ołówek —
-  ołówek obiecuje poprawianie istniejącej wartości
+  tylko z treścią (issue #40), ale w trybie EDYCJI dochodzi drugie wejście — wiersz
+  „Dodaj notatkę do sesji" — inaczej sesja bez notatki nie miałaby jak notatki dostać.
+  Ten sam błąd co znikające „DODAJ LOT RĘCZNIE" przy pustym dniu (issue #42 wyżej):
+  affordancja gasła dokładnie w stanie, w którym jest potrzebna. Dopisanie ma PLUS,
+  nie ołówek — ołówek obiecuje poprawianie istniejącej wartości
+- **notatka sesji jest DOKŁADNIE JEDNA i stąd dwie reguły** (uwaga z urządzenia,
+  2026-08-14). Niesie ją jedno pole payloadu `preflight_confirm`, więc: (1) wiersz
+  dopisania istnieje WYŁĄCZNIE przy jej braku — obok istniejącej obiecywałby drugą,
+  a naprawdę nadpisałby pierwszą (`missingSessionNote` w `logic/sessionNotes.ts`,
+  z testem: warunek w JSX już raz był i już raz był zły); (2) nie ma STEMPLA, bo nie
+  ma jej od czego odróżnić, a „Zadanie · 08:04" mówiło o godzinie potwierdzenia
+  zadania i po pierwszej poprawce treści zaczynało kłamać. Podpis zostaje przy
+  uwagach wpisów ręcznych (`kind: 'entry'`) — tych bywa wiele
 - **arkusz nie tłumaczy braków**: przypis „odczytu nie da się unieważnić" opisywał
   przycisk, którego nikt nie szuka. Tak samo wyleciały podpowiedzi „litry z paliwomierza"
   i „wskazanie licznika" — nazywały pole, które nazywa się tak samo dwa centymetry wyżej.

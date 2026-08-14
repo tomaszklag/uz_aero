@@ -26,8 +26,20 @@ import { timeUtc } from '../../format';
 export interface SessionNote {
   /** Klucz listy — uuid zdarzenia albo `preflight` dla notatki z zadania. */
   id: string;
-  /** Podpis wiersza: „Zadanie · 08:04", „Wpis ręczny · 09:12". */
-  when: string;
+  /**
+   * `session` — notatka CAŁEJ sesji (payload preflightu). Jest DOKŁADNIE JEDNA, więc
+   * kiedy istnieje, da się ją tylko poprawić — nie dopisać drugiej.
+   * `entry` — uwaga przypięta do konkretnego wpisu ręcznego; tych bywa wiele.
+   */
+  kind: 'session' | 'entry';
+  /**
+   * Podpis wiersza — „Wpis ręczny · 09:12", czyli DO CZEGO ta uwaga należy.
+   *
+   * `null` dla notatki sesji: nie ma jej od czego odróżnić (jest jedna), a stempel
+   * „Zadanie · 08:04" mówił o godzinie potwierdzenia PREFLIGHTU, nie o notatce —
+   * i po pierwszej poprawce zaczynał wprost kłamać, bo tekst zmieniał się bez niego.
+   */
+  when: string | null;
   text: string;
   /**
    * UUID zdarzenia NIOSĄCEGO tekst — adres korekty `amend` (issue #43).
@@ -60,6 +72,20 @@ export function noteTargetUuid(events: readonly Event[]): string | null {
 }
 
 /**
+ * Czy sesji wolno DOPISAĆ notatkę — czyli czy jeszcze żadnej nie ma.
+ *
+ * Notatka sesji jest jedna (jedno pole w payloadzie preflightu), więc gdy istnieje,
+ * jedyną sensowną czynnością jest jej POPRAWIENIE. Wiersz „Dodaj notatkę do sesji"
+ * obok istniejącej notatki obiecywał drugą, a naprawdę nadpisałby pierwszą.
+ *
+ * Uwagi wpisów ręcznych (`kind: 'entry'`) nie mają z tym nic wspólnego: należą do
+ * swoich wpisów i jest ich tyle, ile wpisów.
+ */
+export function missingSessionNote(notes: readonly SessionNote[]): boolean {
+  return !notes.some((note) => note.kind === 'session');
+}
+
+/**
  * Zbiera notatki sesji w porządku chronologicznym.
  *
  * Notatka z preflightu bierze czas z projekcji (`preflightAt`), a nie ze strumienia:
@@ -82,9 +108,11 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
       at: when ?? Number.NEGATIVE_INFINITY,
       note: {
         id: 'preflight',
-        when: stamp('Zadanie', when),
+        kind: 'session',
+        // Bez stempla — patrz docblock pola `when`.
+        when: null,
         text: fromTask,
-        targetUuid: events.find((e) => e.type === 'preflight_confirm')?.uuid ?? null,
+        targetUuid: noteTargetUuid(events),
       },
     });
   }
@@ -97,6 +125,7 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
       at: at(event),
       note: {
         id: event.uuid,
+        kind: 'entry',
         when: stamp('Wpis ręczny', at(event)),
         text,
         targetUuid: event.uuid,
