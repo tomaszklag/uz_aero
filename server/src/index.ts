@@ -233,6 +233,9 @@ const app = buildServer({
     sessions,
     aircraftConfig,
     exporter,
+    // Flagi łańcucha (§4.5) — od issue #43 korekta `amend` potrafi ruszyć ich wejście,
+    // więc komenda musi umieć je otworzyć tak samo jak ingest.
+    flags,
     clock,
     randomUUID,
   ),

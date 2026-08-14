@@ -31,6 +31,26 @@ const gpsPosition = z
 
 const reading = z.object({ fuelL: finite, mh: finite });
 
+/** Skład skoczków — ten sam kształt przy zrzucie, załadunku i korekcie `amend`. */
+const jumpers = z.object({
+  tandem: z.number().int().nonnegative(),
+  aff: z.number().int().nonnegative(),
+  solo: z.number().int().nonnegative(),
+});
+
+/**
+ * Powód korekty (issue #43) — OPCJONALNY przy każdej akcji. Limit jak przy notatce
+ * z preflightu: to przypis do liczby, nie załącznik.
+ */
+const correctionReason = z.string().max(500).nullable().optional();
+
+/**
+ * Kto naniósł poprawkę. Telefon pola nie wysyła (brak = `pilot`); `admin` stempluje
+ * panel, bo nagłówek zdarzenia niesie `picId` PIC-a sesji także wtedy, gdy pisał
+ * administrator (single-writer §4.4).
+ */
+const correctionSource = z.enum(['pilot', 'admin']).optional();
+
 const method = z.enum(['auto', 'manual']);
 
 export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
@@ -48,6 +68,9 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     // ze starego telefonu z tym polem nadal przejdzie; projekcja je ignoruje.
     reading,
     corrections: z.array(z.record(z.unknown())).optional(),
+    // Dual przypisany CAŁEJ sesji (issue #43) — pole opcjonalne, bo telefony sprzed
+    // tej zmiany go nie wysyłają, a wtedy obowiązuje nagłówek zdarzeń.
+    dualId: z.string().max(50).nullable().optional(),
     client: z.string().max(200).nullable().optional(),
     // Notatka do dnia (issue #14) — wolny tekst, wielolinijkowy. Limit 2000 znaków,
     // bo to NOTATKA, a nie załącznik: mieści akapit o okolicznościach dnia i nie
@@ -134,9 +157,49 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     noFlightReason: z.enum(['weather', 'malfunction', 'cancelled', 'other']).nullable().optional(),
   }),
 
+  /**
+   * `event_correction` — TRZY akcje od issue #43.
+   *
+   * `amend` niesie WARTOŚĆ zamiast czasu (odczyt paliwa i MH przy przejęciu/zdaniu,
+   * skład zrzutu). Nie sprawdzamy tu, czy pole pasuje do typu celu — to semantyka,
+   * którą rozstrzyga domena (`CORRECTION_FIELD_NOT_ALLOWED`), a serwer po §4.5 nie
+   * odrzuca danych z terenu za sens, tylko za strukturę. Pilnujemy jednak, żeby
+   * liczby były LICZBAMI: `NaN` w `fuelL` zatruwa `sessions` na stałe.
+   *
+   * Bez tego schematu telefon dostaje `400 bad_payload` i cała edycja nie ma jak się
+   * zsynchronizować — dokładnie ten błąd zatrzymał etap C przy przebudowie flow.
+   */
   event_correction: z.discriminatedUnion('action', [
-    z.object({ targetUuid: z.string().min(1).max(100), action: z.literal('retime'), newTime: epochMs }),
-    z.object({ targetUuid: z.string().min(1).max(100), action: z.literal('void') }),
+    z.object({
+      targetUuid: z.string().min(1).max(100),
+      action: z.literal('retime'),
+      newTime: epochMs,
+      reason: correctionReason,
+      source: correctionSource,
+    }),
+    z.object({
+      targetUuid: z.string().min(1).max(100),
+      action: z.literal('void'),
+      reason: correctionReason,
+      source: correctionSource,
+    }),
+    z.object({
+      targetUuid: z.string().min(1).max(100),
+      action: z.literal('amend'),
+      fields: z.object({
+        fuelL: finite.optional(),
+        mh: finite.optional(),
+        jumpers: jumpers.nullable().optional(),
+        // Ten sam limit, co przy notatce z preflightu — poprawka nie może przemycić
+        // dłuższego tekstu niż oryginał (`notes` w `preflight_confirm`).
+        notes: z.string().max(2000).nullable().optional(),
+        // Dual CAŁEJ sesji (issue #43); `null` = sesja jednoosobowa. Limit jak przy
+        // `pilotInId` w `crew_change` — to ten sam identyfikator pilota.
+        dualId: z.string().max(50).nullable().optional(),
+      }),
+      reason: correctionReason,
+      source: correctionSource,
+    }),
   ]),
 };
 

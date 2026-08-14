@@ -81,6 +81,10 @@ const REGISTRY = {
   offline: f('wifi-off'),
   clock: f('clock'),
   fuel: f('droplet'),
+  // Historia zmian zdarzenia (issue #43, arkusz 10I) — strzałka cofająca się w czasie,
+  // nie zegar: `clock` znaczy w tej aplikacji TERMIN (okno korekty, godzina zdarzenia),
+  // a tu chodzi o przeszłe wersje tej samej danej.
+  history: f('rotate-ccw'),
 
   // akcje kokpitu
   start: f('play'),

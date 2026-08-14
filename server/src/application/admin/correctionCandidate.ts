@@ -63,7 +63,12 @@ export function correctionCandidate(
     type: 'event_correction',
     deviceTime: now,
     gpsTime: now,
-    payload: correction,
+    // `source: 'admin'` (issue #43) — DRUGI, celowo zduplikowany ślad autorstwa.
+    // `events.source_device` mówi to samo, ale zostaje na serwerze: `GET /me/events`
+    // go nie oddaje, a `Event` w domenie nie ma takiego pola. Bez znacznika w payloadzie
+    // historia zmian na telefonie pokazywałaby decyzję administratora pod nazwiskiem
+    // pilota — bo nagłówek korekty MUSI nieść `picId` sesji (single-writer §4.4).
+    payload: { ...correction, source: 'admin' },
     schemaVersion: CURRENT_SCHEMA_VERSION,
     // Pole klienckie (księgowość outboxa telefonu) — na serwerze bez znaczenia.
     syncedAt: null,

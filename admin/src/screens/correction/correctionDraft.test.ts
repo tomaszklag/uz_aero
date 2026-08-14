@@ -14,6 +14,8 @@ import type { TimelineEntryDto } from '../../api/dto';
 import {
   ACTION_OPTIONS,
   REASON_MAX_LENGTH,
+  amendFieldsFor,
+  amendState,
   correctionDraft,
   initialTimeText,
   reasonState,
@@ -172,7 +174,54 @@ describe('szkic korekty', () => {
 });
 
 describe('lista akcji', () => {
-  it('ma DOKŁADNIE dwie pozycje — tyle, ile zna domena', () => {
-    expect(ACTION_OPTIONS.map((option) => option.id)).toEqual(['retime', 'void']);
+  it('ma DOKŁADNIE trzy pozycje — tyle, ile zna domena', () => {
+    expect(ACTION_OPTIONS.map((option) => option.id)).toEqual(['retime', 'void', 'amend']);
+  });
+});
+
+/**
+ * `amend` (issue #43) — korekta WARTOŚCI. Panel musi umieć poprawić odczyt paliwa
+ * i motogodzin, bo po zamknięciu okna 24 h jest jedynym, kto może: baner na ekranie
+ * pilota obiecuje właśnie to („dalsze poprawki wprowadza administrator").
+ */
+describe('korekta wartości', () => {
+  const time = timeFieldState('2026-07-30 13:01:33', at(13, 13, 33));
+
+  it('puste pola znaczą „bez zmiany", więc szkic nie powstaje', () => {
+    const state = amendState('', '');
+    expect(state.fields).toBeNull();
+    expect(correctionDraft('amend', 'cel-1', time, state)).toBeNull();
+  });
+
+  it('jedno pole wystarczy — drugiej liczby nie trzeba przepisywać', () => {
+    const state = amendState('168', '');
+    expect(state.fields).toEqual({ fuelL: 168 });
+    expect(correctionDraft('amend', 'cel-1', time, state)).toEqual({
+      targetUuid: 'cel-1',
+      action: 'amend',
+      fields: { fuelL: 168 },
+    });
+  });
+
+  it('przecinek dziesiętny jest wpisem legalnym — klawiatura bywa polska', () => {
+    expect(amendState('', '3907,8').fields).toEqual({ mh: 3907.8 });
+  });
+
+  it('śmieci w polu blokują zapis z podanym powodem', () => {
+    const state = amendState('sto litrów', '');
+    expect(state.invalid).toBe(true);
+    expect(state.message).toContain('Nieczytelna');
+    expect(correctionDraft('amend', 'cel-1', time, state)).toBeNull();
+  });
+
+  it('biała lista pól jest lustrem domeny — czego nie ma, tego formularz nie pokaże', () => {
+    expect(amendFieldsFor('day_close')).toEqual(['fuelL', 'mh']);
+    // Preflight niesie ODCZYT i NOTATKĘ z kroku „zadanie" (02e) — obie do poprawienia.
+    expect(amendFieldsFor('preflight_confirm')).toEqual(['fuelL', 'mh', 'notes']);
+    expect(amendFieldsFor('drop')).toEqual(['jumpers']);
+    expect(amendFieldsFor('manual_log_entry')).toEqual(['notes']);
+    // Zdarzenie bez wartości do poprawienia — zostaje `retime`.
+    expect(amendFieldsFor('engine_stop')).toEqual([]);
+    expect(amendFieldsFor('landing')).toEqual([]);
   });
 });

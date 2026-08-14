@@ -472,9 +472,14 @@
       </div>
 
       <div class="btn-row">
-        <!-- Bez lotów jedyne dane do poprawy to odczyty liczników i powód zdania,
-             a te wpisuje się na 09C — nie ma po co wysyłać pilota do listy ręcznej. -->
-        <a href="09c-zdaj-bez-lotu.html" class="btn-secondary">
+        <!-- Od issue #43 przycisk prowadzi TU SAMO co przy sesji z lotami: w tryb
+             edycji tego ekranu (10D). Do tej pory odsyłał na 09C, bo bez lotów jedyne,
+             co dało się poprawić, to odczyty — a te wpisywało się przy zdaniu. Teraz
+             odczyty poprawia się na osi (10F), więc drugie drzwi przestały być potrzebne
+             i korekta ma jeden kształt niezależnie od tego, czy maszyna wzbiła się
+             w powietrze. Powód zdania bez lotu zostaje przy 09C — to deklaracja
+             składana w chwili oddania maszyny, nie odczyt do sprostowania. -->
+        <a href="10d-edycja.html" class="btn-secondary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
         </a>
@@ -515,6 +520,13 @@
     <span class="vp-body">
       <span class="vp-name">Sesja — arkusz normy</span>
       <span class="vp-when">Szczegóły pod plakietką werdyktu. Tu niedostępny: bez pracy silnika nie ma werdyktu, więc nie ma czego otwierać.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10d-edycja.html">
+    <span class="vp-badge amber">10D</span>
+    <span class="vp-body">
+      <span class="vp-name">Sesja — tryb edycji</span>
+      <span class="vp-when">Po „EDYTUJ DANE" — także tutaj: oś bez lotów ma przejęcie, klamrę silnika i zdanie, a każdy z tych wierszy da się poprawić. Odczyty paliwa i MH otwiera arkusz 10F.</span>
     </span>
   </a>
 </aside>

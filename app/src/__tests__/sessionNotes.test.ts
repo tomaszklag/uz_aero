@@ -10,7 +10,7 @@
  * wtedy i tylko wtedy, gdy lista nie jest pusta).
  */
 
-import { sessionNotes } from '../ui/screens/logic/sessionNotes';
+import { noteTargetUuid, sessionNotes } from '../ui/screens/logic/sessionNotes';
 import { projectSession } from '../domain';
 import type { Event, EventOf, EventType } from '../domain';
 
@@ -101,5 +101,36 @@ describe('notatki sesji', () => {
     );
 
     expect(notes(wczesny).map((note) => note.id)).toEqual(['manual-1', 'preflight']);
+  });
+});
+
+/**
+ * DOPISANIE notatki (zgłoszenie z urządzenia, 2026-08-14).
+ *
+ * Karta „Notatki" pojawia się w trybie ODCZYTU tylko z treścią (issue #40) — i to
+ * zostaje. Ale w trybie EDYCJI ta sama reguła odbierała jedyne wejście: sesja bez
+ * notatki nie miała karty, więc nie miała jak notatki dostać. Adres celu musi więc
+ * istnieć NIEZALEŻNIE od tego, czy notatka już jest.
+ */
+describe('cel dopisania notatki', () => {
+  it('istnieje także wtedy, gdy notatek nie ma ANI JEDNEJ', () => {
+    const puste = sessionEvents({ taskNote: null, manualNote: null });
+    expect(notes(puste)).toHaveLength(0);
+
+    const target = noteTargetUuid(puste);
+    expect(target).not.toBeNull();
+    expect(puste.find((e) => e.uuid === target)?.type).toBe('preflight_confirm');
+  });
+
+  it('jest tym samym zdarzeniem, które niesie notatkę z zadania', () => {
+    const events = sessionEvents();
+    const fromTask = notes(events).find((n) => n.id === 'preflight');
+
+    expect(fromTask?.targetUuid).toBe(noteTargetUuid(events));
+  });
+
+  it('sesja bez preflightu nie ma czego adresować — ołówka wtedy nie ma', () => {
+    const bezPreflightu = sessionEvents().filter((e) => e.type !== 'preflight_confirm');
+    expect(noteTargetUuid(bezPreflightu)).toBeNull();
   });
 });

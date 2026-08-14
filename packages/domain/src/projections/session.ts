@@ -297,6 +297,15 @@ export function projectSession(events: Event[]): SessionState {
   // Sort jest stabilny (ES2019+), więc zdarzenia równoczesne zachowują kolejność zapisu.
   const ordered = [...effective].sort((a, b) => eventTime(a) - eventTime(b));
 
+  /**
+   * Dual ZADEKLAROWANY w preflightcie (`preflight_confirm.dualId`, issue #43).
+   *
+   * Opakowany w obiekt, bo `null` jest tu WARTOŚCIĄ („sesja jednoosobowa"), a nie
+   * brakiem deklaracji — te dwa stany znaczą co innego i muszą dać się odróżnić.
+   * `undefined` (brak obiektu) = nikt nie deklarował, więc obowiązuje nagłówek.
+   */
+  let declaredDual: { value: string | null } | undefined;
+
   for (const event of ordered) {
     const t = eventTime(event);
     state.eventCount += 1;
@@ -325,6 +334,8 @@ export function projectSession(events: Event[]): SessionState {
         state.fuel.startL = p.reading.fuelL;
         state.fuel.lastReadingL = p.reading.fuelL;
         state.mh.start = p.reading.mh;
+        // Dual ZADEKLAROWANY dla całej sesji (issue #43) — patrz `declaredDualId` niżej.
+        if ('dualId' in p) declaredDual = { value: p.dualId ?? null };
         break;
       }
 
@@ -505,6 +516,21 @@ export function projectSession(events: Event[]): SessionState {
     state.drops.altitudeFixCount > 0
       ? state.drops.altitudeSumFt / state.drops.altitudeFixCount
       : null;
+
+  /**
+   * DEKLARACJA ZAŁOGI WYGRYWA Z NAGŁÓWKIEM (issue #43).
+   *
+   * W pętli `state.dualId` bierze się z nagłówka OSTATNIEGO zdarzenia — i tak zostaje
+   * dla każdej sesji, w której nikt załogi nie poprawiał. Gdy jednak preflight niesie
+   * `dualId`, to on opisuje CAŁĄ sesję: nagłówki zdarzeń zapisanych przed korektą nadal
+   * noszą starą osobę i nigdy nie przestaną (rejestr jest append-only), więc bez tego
+   * pierwszeństwa poprawka nie miałaby jak zadziałać wstecz.
+   *
+   * Zmiany załogi W TRAKCIE to osobna sprawa (`crew_change`) i jej to nie dotyczy:
+   * tamta rozgrywa się w nagłówkach kolejnych zdarzeń, a deklaracji nikt wtedy nie
+   * zapisuje.
+   */
+  if (declaredDual !== undefined) state.dualId = declaredDual.value;
 
   return state;
 }

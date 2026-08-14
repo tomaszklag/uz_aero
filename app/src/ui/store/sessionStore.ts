@@ -162,7 +162,8 @@ export interface SessionStore {
     position?: GpsPosition | null,
     at?: EpochMillis,
   ): Promise<CommandResult>;
-  refuel(payload: RefuelPayload): Promise<CommandResult>;
+  /** `at` = czas rzeczywisty, gdy tankowanie dopisujemy po fakcie (issue #43). */
+  refuel(payload: RefuelPayload, at?: EpochMillis): Promise<CommandResult>;
   /** Korekta zdarzenia (04c) — zmiana czasu albo unieważnienie, zapis append-only. */
   correctEvent(payload: EventCorrectionPayload): Promise<CommandResult>;
   drop(input: DropInput): Promise<CommandResult>;
@@ -364,8 +365,8 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       });
     },
 
-    refuel(payload) {
-      return run(() => requireCommands().refuel(requireContext(), payload));
+    refuel(payload, at) {
+      return run(() => requireCommands().refuel(requireContext(), payload, at));
     },
 
     correctEvent(payload) {

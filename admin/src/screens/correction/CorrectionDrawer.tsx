@@ -46,8 +46,11 @@ import {
 } from '../../ui/components';
 import { roleLabel } from '../../ui/shell/whoLabels';
 import { targetHref } from '../audit/auditFilters';
+import { correctionActionsFor } from '../events/eventCatalog';
 import {
   ACTION_OPTIONS,
+  amendFieldsFor,
+  amendState,
   REASON_MAX_LENGTH,
   correctionDraft,
   initialTimeText,
@@ -134,9 +137,20 @@ function CorrectionForm({
   pilot,
   onClose,
 }: CorrectionDrawerProps & { entry: TimelineEntryDto }) {
-  const [action, setAction] = useState<CorrectionActionId>('retime');
+  /**
+   * Akcje dozwolone dla TEGO typu celu (issue #43). Zdanie samolotu ma wyłącznie
+   * `amend`, więc `retime` nie może być stanem początkowym — formularz otwierałby się
+   * na operacji, którą domena odrzuci.
+   */
+  const allowedActions = correctionActionsFor(entry.event.type);
+  const [action, setAction] = useState<CorrectionActionId>(allowedActions[0] ?? 'retime');
   const [timeText, setTimeText] = useState(() => initialTimeText(entry));
   const [reason, setReason] = useState('');
+  // Pola `amend` (issue #43). Puste znaczy „nie ruszaj tej wartości" — administrator
+  // poprawia zwykle jedną liczbę i nie ma przepisywać drugiej tylko dlatego, że
+  // formularz ją pokazuje.
+  const [fuelText, setFuelText] = useState('');
+  const [mhText, setMhText] = useState('');
 
   // Podgląd pytamy o czas USTALONY, a nie o każdy naciśnięty klawisz: poprawianie
   // „13:13:33" na „13:01:33" przechodzi po drodze przez kilka zapisów czytelnych dla
@@ -151,7 +165,15 @@ function CorrectionForm({
 
   const reference = referenceTime(entry);
   const time = timeFieldState(timeText, reference);
-  const draft = correctionDraft(action, targetUuid, timeFieldState(settledTime, reference));
+  const amend = amendState(fuelText, mhText);
+  const draft = correctionDraft(
+    action,
+    targetUuid,
+    timeFieldState(settledTime, reference),
+    amend,
+  );
+  /** Pola, które `amend` w ogóle może zmienić w TYM zdarzeniu (lustro białej listy). */
+  const amendable = amendFieldsFor(entry.event.type);
   const preview = useCorrectionPreview(sessionUuid, draft);
   const save = useCorrection();
 
@@ -290,9 +312,17 @@ function CorrectionForm({
           htmlFor>` musiałby wskazywać jedno pole, którego tu nie ma. Klasy zostają
           te same, więc wygląd jest identyczny z mockupem. */}
       <div className="field">
-        <span className="label">Akcja — dokładnie dwie, obie dopisują zdarzenie</span>
+        {/* Pokazujemy WYŁĄCZNIE akcje mające sens dla tego typu: karta „retime" przy
+            zdaniu samolotu obiecywałaby operację, którą reguła odrzuci
+            (`CORRECTION_TARGET_NOT_ALLOWED`), a wyszarzona byłaby jeszcze gorsza —
+            zapraszałaby do zgadywania, dlaczego nie działa. */}
+        <span className="label">
+          {allowedActions.length === 1
+            ? 'Akcja — dla tego zdarzenia dozwolona jest jedna'
+            : `Akcja — ${allowedActions.length === 3 ? 'dokładnie trzy' : 'dwie'}, każda dopisuje zdarzenie`}
+        </span>
         <OptionList ariaLabel="Akcja korekty">
-          {ACTION_OPTIONS.map((option) => (
+          {ACTION_OPTIONS.filter((option) => allowedActions.includes(option.id)).map((option) => (
             <OptionButton
               key={option.id}
               name={option.name}
@@ -305,7 +335,7 @@ function CorrectionForm({
         </OptionList>
       </div>
 
-      {isVoid ? null : (
+      {action !== 'retime' ? null : (
         <Field
           htmlFor="korekta-czas"
           label="Nowy czas zdarzenia (UTC)"
@@ -321,6 +351,60 @@ function CorrectionForm({
             onChange={(event) => setTimeText(event.target.value)}
           />
         </Field>
+      )}
+
+      {/* Pola `amend` (issue #43) — pokazujemy WYŁĄCZNIE te, które biała lista domeny
+          dopuszcza dla tego typu celu. Formularz z polem, którego reguła i tak odrzuci,
+          obiecuje zmianę niemożliwą do wykonania. */}
+      {action !== 'amend' ? null : amendable.length === 0 ? (
+        <Banner tone="warn">
+          <b>
+            <code>amend</code> nie ma tu czego zmienić.
+          </b>{' '}
+          Wartości poprawia się w odczytach przy przejęciu i zdaniu samolotu
+          (<code>preflight_confirm</code>, <code>day_close</code>) oraz w składzie zrzutu.
+          Godzinę tego zdarzenia zmienia <code>retime</code>.
+        </Banner>
+      ) : (
+        <>
+          {amendable.includes('fuelL') && (
+            <Field htmlFor="korekta-paliwo" label="Nowy odczyt paliwa (L)" hint={amend.message}>
+              <TextInput
+                id="korekta-paliwo"
+                mono
+                value={fuelText}
+                invalid={amend.invalid}
+                disabled={done || save.isPending}
+                placeholder="bez zmiany"
+                onChange={(event) => setFuelText(event.target.value)}
+              />
+            </Field>
+          )}
+          {amendable.includes('mh') && (
+            <Field
+              htmlFor="korekta-mh"
+              label="Nowy odczyt motogodzin"
+              hint="Godziny dziesiętne, tak jak trzyma je rejestr (3907.8). Puste pole zostawia wartość bez zmian."
+            >
+              <TextInput
+                id="korekta-mh"
+                mono
+                value={mhText}
+                invalid={amend.invalid}
+                disabled={done || save.isPending}
+                placeholder="bez zmiany"
+                onChange={(event) => setMhText(event.target.value)}
+              />
+            </Field>
+          )}
+          {amendable.includes('jumpers') && (
+            <Banner tone="status">
+              Skład zrzutu poprawia <b>pilot</b> w trybie edycji sesji (ekran 10G aplikacji).
+              Panel zmienia tu odczyty paliwa i motogodzin — liczby, których pilot po zamknięciu
+              okna 24 h nie ruszy już sam.
+            </Banner>
+          )}
+        </>
       )}
 
       {!isVoid ? null : (

@@ -44,6 +44,22 @@ const correctionBase = z.object({
  * byłaby pierwszym miejscem, w którym podgląd zaczyna opisywać inną operację niż ta,
  * którą panel za chwilę wyśle.
  */
+/** Pola dopuszczone przez `amend` (issue #43); białą listę per typ celu egzekwuje domena. */
+const amendFields = z.object({
+  fuelL: z.number().finite().optional(),
+  mh: z.number().finite().optional(),
+  jumpers: z
+    .object({
+      tandem: z.number().int().nonnegative(),
+      aff: z.number().int().nonnegative(),
+      solo: z.number().int().nonnegative(),
+    })
+    .nullable()
+    .optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  dualId: z.string().max(50).nullable().optional(),
+});
+
 const correctionShape = z.discriminatedUnion('action', [
   z.object({
     targetUuid: z.string().min(1).max(100),
@@ -51,25 +67,43 @@ const correctionShape = z.discriminatedUnion('action', [
     newTime: z.number().int().nonnegative(),
   }),
   z.object({ targetUuid: z.string().min(1).max(100), action: z.literal('void') }),
+  z.object({
+    targetUuid: z.string().min(1).max(100),
+    action: z.literal('amend'),
+    fields: amendFields,
+  }),
 ]);
 
-/** Dokładnie dwie akcje — te same, które zna domena i pokazuje mockup. */
+/** Trzy akcje — te same, które zna domena i pokazuje mockup (`amend` od issue #43). */
 const correctionBody = z.discriminatedUnion('action', [
   correctionBase.extend({
     action: z.literal('retime'),
     newTime: z.number().int().nonnegative(),
   }),
   correctionBase.extend({ action: z.literal('void') }),
+  correctionBase.extend({ action: z.literal('amend'), fields: amendFields }),
 ]);
 
-/** Kształt zoda → payload domenowy. Jedno miejsce dla obu tras. */
-function payloadOf(data: z.infer<typeof correctionShape>): EventCorrectionPayload {
-  // Składamy JAWNIE zamiast rozsypywać resztę pól: `reason` NIE MA prawa trafić do
-  // rejestru, a `...rest` na unii to konstrukcja, w której następne pole formularza
-  // wchodzi tam samo, po cichu.
-  return data.action === 'retime'
-    ? { targetUuid: data.targetUuid, action: 'retime', newTime: data.newTime }
-    : { targetUuid: data.targetUuid, action: 'void' };
+/**
+ * Kształt zoda → payload domenowy. Jedno miejsce dla obu tras.
+ *
+ * `reason` wchodzi do payloadu od issue #43 — i jest to ODWRÓCENIE wcześniejszej reguły
+ * („powód należy wyłącznie do audytu"). Powód tej zmiany: pilot widzi teraz historię
+ * zmian swojego logu (`design/10i`) razem z korektami administratora, które wracają na
+ * telefon (§4.9). Uzasadnienie wyłącznie w audycie znaczyłoby, że na ekranie pilota
+ * cudza poprawka stoi jako „bez powodu" — mimo że powód istnieje i jest wymagany.
+ * Kopia w audycie zostaje: tam odpowiada na pytanie „kto i dlaczego", tu na „dlaczego".
+ */
+function payloadOf(
+  data: z.infer<typeof correctionShape>,
+  reason?: string,
+): EventCorrectionPayload {
+  // Składamy JAWNIE zamiast rozsypywać resztę pól: `...rest` na unii to konstrukcja,
+  // w której następne pole formularza wchodzi do rejestru samo, po cichu.
+  const base = { targetUuid: data.targetUuid, ...(reason != null ? { reason } : {}) };
+  if (data.action === 'retime') return { ...base, action: 'retime', newTime: data.newTime };
+  if (data.action === 'amend') return { ...base, action: 'amend', fields: data.fields };
+  return { ...base, action: 'void' };
 }
 
 const resultToWire = (result: CorrectionResult) => ({
@@ -148,7 +182,7 @@ export function registerAdminCorrectionRoutes(
       const data = body.data;
       const outcome = await corrections.correct(actor, {
         sessionUuid: params.data.uuid,
-        correction: payloadOf(data),
+        correction: payloadOf(data, data.reason),
         reason: data.reason,
       });
 

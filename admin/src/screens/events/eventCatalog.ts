@@ -20,7 +20,7 @@
  */
 
 import type { PillTone } from '../../ui/components/Pill';
-import { EVENT_META } from '../day/eventTypes';
+import { EVENT_META, type CorrectionActionId } from '../day/eventTypes';
 
 /**
  * Wszystkie typy katalogu, w kolejności deklaracji `EVENT_META` — czyli w kolejności
@@ -59,14 +59,25 @@ export function eventTypeView(type: string): EventTypeView {
 }
 
 /**
- * Czy zdarzenie tego typu podlega korekcie administratora (`A02b`).
+ * Czy zdarzenie tego typu podlega KTÓREJKOLWIEK korekcie administratora (`A02b`).
  *
- * LUSTRO reguły domeny `CORRECTION_TARGET_NOT_ALLOWED`, mieszkające w `EVENT_META` —
- * i panel jej NIE egzekwuje: serwer sprawdza to przy każdym żądaniu, także przy
- * podglądzie. Kopia jest po to, żeby nie zapraszać człowieka w formularz, który i tak
- * odbije. Typ spoza katalogu nie jest korygowalny, bo domena go nie zna.
+ * LUSTRO reguł domeny (`CORRECTION_TARGET_NOT_ALLOWED`, `CORRECTION_FIELD_NOT_ALLOWED`)
+ * mieszkające w `EVENT_META` — i panel ich NIE egzekwuje: serwer sprawdza to przy każdym
+ * żądaniu, także przy podglądzie. Kopia jest po to, żeby nie zapraszać człowieka
+ * w formularz, który i tak odbije. Typ spoza katalogu nie jest korygowalny, bo domena
+ * go nie zna.
+ *
+ * Od issue #43 „podlega korekcie" znaczy „ma choć jedną dozwoloną akcję": zdanie
+ * samolotu ma wyłącznie `amend`, ale to wystarczy, żeby wejście istniało — po zamknięciu
+ * okna pilota administrator jest jedynym, kto poprawi jego odczyty.
  */
 export function isCorrectable(type: string): boolean {
   if (!isKnownEventType(type)) return false;
-  return EVENT_META[type as keyof typeof EVENT_META].correctable;
+  return correctionActionsFor(type).length > 0;
+}
+
+/** Akcje dozwolone dla typu — pusta lista dla typów spoza katalogu domeny. */
+export function correctionActionsFor(type: string): readonly CorrectionActionId[] {
+  if (!isKnownEventType(type)) return [];
+  return EVENT_META[type as keyof typeof EVENT_META].corrections;
 }

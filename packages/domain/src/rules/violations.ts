@@ -48,6 +48,12 @@ export type ViolationCode =
   | 'ALREADY_IN_FLIGHT'
   | 'ALREADY_TAXIING'
   | 'NOT_IN_FLIGHT'
+  // ── niespójności zapisanego logu (issue #43, `rules/consistency.ts`) ────────
+  // Opisują STRUMIEŃ, nie kandydata do zapisu, więc występują wyłącznie miękko:
+  // lot bez lądowania jest faktem, który się wydarzył, a nie zapisem do odrzucenia.
+  | 'FLIGHT_WITHOUT_LANDING'
+  | 'ZERO_LENGTH_FLIGHT'
+  | 'EVENT_OUTSIDE_RUN'
   // ── paliwo ─────────────────────────────────────────────────────────────────
   | 'FUEL_NEGATIVE'
   | 'FUEL_ARITHMETIC'
@@ -79,10 +85,12 @@ export type ViolationCode =
   | 'DAY_ALREADY_CLOSED'
   // (DUTY_END_BEFORE_START usunięte 2026-08-11 razem z klamrą służby, issue #23)
   | 'NO_FLIGHT_WITHOUT_REASON'
-  // ── korekta zdarzenia (04c) ────────────────────────────────────────────────
+  // ── korekta zdarzenia (tryb edycji sesji, 10e–10g) ─────────────────────────
   | 'CORRECTION_TARGET_NOT_FOUND'
   | 'CORRECTION_TARGET_NOT_ALLOWED'
   | 'CORRECTION_TIME_IN_FUTURE'
+  /** `amend` wskazał pole, którego ten typ zdarzenia nie ma (issue #43 — biała lista). */
+  | 'CORRECTION_FIELD_NOT_ALLOWED'
   // ── korekta administracyjna: OSTRZEŻENIA, nigdy blokada (decyzja 2026-08-07) ──
   | 'ADMIN_EDIT_SESSION_ACTIVE'
   | 'ADMIN_EDIT_PILOT_WINDOW_OPEN'

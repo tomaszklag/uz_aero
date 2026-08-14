@@ -18,11 +18,17 @@
  * z kropkami przy pierwszej zmianie treści. Pierwszy i ostatni wiersz obcinają ją do
  * połowy, żeby oś zaczynała się i kończyła na kropce.
  *
- * ══ OŚ NICZEGO NIE URUCHAMIA (issue #40 pkt 1) ══
+ * ══ W TRYBIE ODCZYTU OŚ NICZEGO NIE URUCHAMIA (issue #40 pkt 1) ══
  * Do issue #40 każdy wiersz kończył się ołówkiem korekty. Dwanaście identycznych celów
  * w jednej kolumnie czytało się jak szum — a korekta ma jedne drzwi: „EDYTUJ DANE" pod
- * ekranem, czyli lista ręczna (08). Komponent jest odtąd czysto opisowy: bez `Pressable`,
- * bez plakietki „RĘCZNIE" (pkt 6) i bez wiedzy o oknie korekty.
+ * ekranem. Bez `onCorrect` komponent jest więc czysto opisowy: bez `Pressable`, bez
+ * plakietki „RĘCZNIE" (pkt 6) i bez wiedzy o oknie korekty.
+ *
+ * ══ …ALE W TRYBIE EDYCJI JEST PRZYCISKIEM (issue #43) ══
+ * Podany `onCorrect` zamienia każdy KORYGOWALNY wiersz w cel dotknięcia: ołówek w stałej
+ * kolumnie po prawej i wysokość 44 px. To nie jest cofnięcie decyzji z #40, tylko jej
+ * druga połowa — tam wiersz NIE BYŁ przyciskiem i rytm 44 px marnował kolumnę, tutaj
+ * jest, więc cel poniżej progu rękawic byłby wadą.
  *
  * ══ WIERSZ JEST KOMPAKTOWY, BO MOŻE BYĆ ══
  * Brak celów dotknięcia zdejmuje z osi rytm 44 px, a numer lotu przeniesiony na PRAWĄ
@@ -36,10 +42,12 @@
  */
 
 import React from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { Icon } from '../foundation/Icon';
+import { Tag } from '../status/Tag';
 import type { Tone } from '../tone';
 import { toneColors } from '../tone';
 
@@ -65,6 +73,23 @@ export interface SessionAxisRow {
   flight?: string | null;
   /** Czas lotu przy lądowaniu („00:41") — jedyna liczba tej kolumny, stąd zieleń. */
   duration?: string | null;
+  /**
+   * Wiersz był poprawiany — plakietka „popr." przy nazwie (issue #43).
+   *
+   * Widoczna TAKŻE w trybie odczytu: to fakt o danych, nie akcja. Liczba obok nie jest
+   * tą, którą zapisał przyrząd, i pilot ma prawo to widzieć, nie wchodząc w edycję.
+   */
+  corrected?: boolean;
+  /**
+   * Wiersz ma NIESPÓJNOŚĆ — kropka i podpis w tonie amber (issue #43).
+   * Baner nad osią wymienia je wszystkie; ten znacznik mówi, którego wiersza dotyczą.
+   */
+  warned?: boolean;
+  /**
+   * Czy wiersz da się poprawić. Domyślnie tak — wyjątkiem jest wiersz bez zdarzenia
+   * w rejestrze (np. przejęcie sesji odtworzonej bez `preflight_confirm`).
+   */
+  editable?: boolean;
 }
 
 export interface SessionAxisFootItem {
@@ -77,6 +102,11 @@ export interface SessionAxisProps {
   rows: SessionAxisRow[];
   foot?: SessionAxisFootItem[];
   emptyText?: string;
+  /**
+   * Tryb edycji (issue #43): wiersz staje się przyciskiem z ołówkiem. Pominięty — oś
+   * jest czysto opisowa i nie ma ani jednego celu dotknięcia (issue #40 pkt 1).
+   */
+  onCorrect?: (rowId: string) => void;
   style?: ViewStyle;
 }
 
@@ -107,8 +137,9 @@ const HOLLOW: Record<SessionAxisKind, boolean> = {
   release: true,
 };
 
-export function SessionAxis({ rows, foot, emptyText, style }: SessionAxisProps) {
+export function SessionAxis({ rows, foot, emptyText, onCorrect, style }: SessionAxisProps) {
   const { theme } = useTheme();
+  const editing = onCorrect != null;
 
   if (rows.length === 0) {
     return (
@@ -129,18 +160,11 @@ export function SessionAxis({ rows, foot, emptyText, style }: SessionAxisProps) 
 
         const first = index === 0;
         const last = index === rows.length - 1;
+        const warned = row.warned === true;
+        const editable = editing && row.editable !== false;
 
-        return (
-          <View
-            key={row.id}
-            // Oba końce osi oddychają: górny, żeby PRZEJĘCIE nie kleiło się do śladu
-            // (albo do linii nagłówka karty), dolny, żeby ZDANIE nie czytało się jak
-            // pierwszy wiersz stopki z sumami. Kreska osi zaczyna się i kończy na
-            // kropce niezależnie od tego — jest dzieckiem wiersza, więc padding jej
-            // nie wydłuża.
-            style={[styles.row, first ? styles.firstRow : null, last ? styles.lastRow : null]}
-            accessibilityRole="text"
-          >
+        const content = (
+          <>
             <AppText
               variant="mono"
               tone={dimmed ? 'secondary' : 'primary'}
@@ -165,18 +189,37 @@ export function SessionAxis({ rows, foot, emptyText, style }: SessionAxisProps) 
                   styles.dot,
                   hollow
                     ? { borderWidth: 1.5, borderColor: theme.colors.textMuted }
-                    : { backgroundColor: c.accent },
-                  { borderColor: hollow ? theme.colors.textMuted : theme.colors.surface },
+                    : { backgroundColor: warned ? theme.colors.amber : c.accent },
+                  {
+                    borderColor: hollow
+                      ? warned
+                        ? theme.colors.amber
+                        : theme.colors.textMuted
+                      : theme.colors.surface,
+                  },
                 ]}
               />
             </View>
 
             <View style={styles.label}>
-              <AppText variant="mono" tone={dimmed ? 'secondary' : 'primary'} style={styles.name}>
-                {row.name.toUpperCase()}
-              </AppText>
+              <View style={styles.nameRow}>
+                <AppText
+                  variant="mono"
+                  tone={dimmed ? 'secondary' : 'primary'}
+                  style={styles.name}
+                >
+                  {row.name.toUpperCase()}
+                </AppText>
+                {/* „popr." zostaje przy NAZWIE, nie w prawej kolumnie: prawa niesie
+                    liczbę (czas trwania), a plakietka odbierałaby jej miejsce. */}
+                {row.corrected === true && <Tag label="popr." tone="amber" size="sm" />}
+              </View>
               {row.sub != null && (
-                <AppText variant="mono" tone="muted" style={styles.sub}>
+                <AppText
+                  variant="mono"
+                  tone={warned ? 'amber' : 'muted'}
+                  style={styles.sub}
+                >
                   {row.sub}
                 </AppText>
               )}
@@ -199,7 +242,51 @@ export function SessionAxis({ rows, foot, emptyText, style }: SessionAxisProps) 
                 {row.duration}
               </AppText>
             )}
-          </View>
+
+            {/* Ołówek jest KOLUMNĄ, nie ozdobą wiersza — stoi w tym samym pionie przez
+                całą oś, więc kciuk wie, gdzie celować, zanim przeczyta wiersz. Wiersz
+                nieedytowalny zostawia ją PUSTĄ zamiast przesuwać treść w prawo. */}
+            {editing && (
+              <View style={styles.pen}>
+                {editable && <Icon name="edit" size={13} color={theme.colors.textMuted} />}
+              </View>
+            )}
+          </>
+        );
+
+        // Oba końce osi oddychają: górny, żeby PRZEJĘCIE nie kleiło się do śladu
+        // (albo do linii nagłówka karty), dolny, żeby ZDANIE nie czytało się jak
+        // pierwszy wiersz stopki z sumami. Kreska osi zaczyna się i kończy na
+        // kropce niezależnie od tego — jest dzieckiem wiersza, więc padding jej
+        // nie wydłuża.
+        const rowStyle = [
+          styles.row,
+          editing ? styles.rowEditing : null,
+          first ? styles.firstRow : null,
+          last ? styles.lastRow : null,
+        ];
+
+        if (!editable) {
+          return (
+            <View key={row.id} style={rowStyle} accessibilityRole="text">
+              {content}
+            </View>
+          );
+        }
+
+        return (
+          <Pressable
+            key={row.id}
+            accessibilityRole="button"
+            accessibilityLabel={`Popraw: ${row.name} ${row.time}`}
+            onPress={() => onCorrect?.(row.id)}
+            style={({ pressed }) => [
+              ...rowStyle,
+              pressed ? { backgroundColor: theme.colors.surfaceHover } : null,
+            ]}
+          >
+            {content}
+          </Pressable>
         );
       })}
 
@@ -244,6 +331,8 @@ const styles = StyleSheet.create({
    * dzięki temu na ekranie zamiast wymuszać przewijanie.
    */
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 10, paddingRight: 8, minHeight: 28 },
+  /** 44 px = próg rękawic. Obowiązuje TYLKO w edycji, gdzie wiersz jest przyciskiem. */
+  rowEditing: { minHeight: 44 },
   // Padding, nie margines: kreska osi jest dzieckiem wiersza i ma się zaczynać oraz
   // kończyć na kropce, a nie ciągnąć przez wolne miejsce nad nią i pod nią.
   firstRow: { paddingTop: 12 },
@@ -253,7 +342,9 @@ const styles = StyleSheet.create({
   railLine: { position: 'absolute', width: 1 },
   dot: { width: 9, height: 9, borderRadius: 5, borderWidth: 2 },
   label: { flex: 1, minWidth: 0, gap: 1 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 10, letterSpacing: 1.4, lineHeight: 13 },
+  pen: { width: 18, alignItems: 'center', justifyContent: 'center' },
   sub: { fontSize: 8.5, letterSpacing: 0.5, lineHeight: 11 },
   flight: { fontSize: 8.5, letterSpacing: 0.5, lineHeight: 11 },
   foot: {

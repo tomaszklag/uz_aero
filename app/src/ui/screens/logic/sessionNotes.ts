@@ -29,10 +29,35 @@ export interface SessionNote {
   /** Podpis wiersza: „Zadanie · 08:04", „Wpis ręczny · 09:12". */
   when: string;
   text: string;
+  /**
+   * UUID zdarzenia NIOSĄCEGO tekst — adres korekty `amend` (issue #43).
+   *
+   * Nie zawsze równy `id`: notatka z zadania ma klucz `preflight`, bo jej treść
+   * i czas bierzemy z PROJEKCJI (żyje także wtedy, gdy zdarzenia nie ma w podanym
+   * wycinku strumienia), a poprawia się payload `preflight_confirm`.
+   * `null` = nie ma czego adresować, więc ołówka przy wierszu nie ma.
+   */
+  targetUuid: string | null;
 }
 
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
 const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
+
+/**
+ * Gdzie WPISAĆ notatkę, której jeszcze nie ma (issue #43, zgłoszenie z urządzenia).
+ *
+ * Karta „Notatki" pojawia się w trybie odczytu tylko wtedy, gdy jest treść (issue #40:
+ * „Notatki —" byłoby wierszem o niczym) — i to zostaje. Ale w trybie EDYCJI ta sama
+ * reguła odbierała jedyne wejście: sesja bez notatki nie miała karty, więc nie miała jak
+ * notatki dostać. Wejście znikało w stanie, w którym jest potrzebne.
+ *
+ * Adresem jest `preflight_confirm`: to jego payload niesie notatkę sesji, a `amend`
+ * poprawia ją tak samo, jak odczyt paliwa obok. `null` = sesja bez preflightu w strumieniu,
+ * czyli nie ma czego adresować i ołówka nie ma.
+ */
+export function noteTargetUuid(events: readonly Event[]): string | null {
+  return events.find((e) => e.type === 'preflight_confirm')?.uuid ?? null;
+}
 
 /**
  * Zbiera notatki sesji w porządku chronologicznym.
@@ -55,7 +80,12 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
       // Notatka z zadania bez stempla w projekcji trafia na sam początek: opisuje CAŁĄ
       // sesję, więc jest jej wstępem, a nie wpisem o nieznanej godzinie.
       at: when ?? Number.NEGATIVE_INFINITY,
-      note: { id: 'preflight', when: stamp('Zadanie', when), text: fromTask },
+      note: {
+        id: 'preflight',
+        when: stamp('Zadanie', when),
+        text: fromTask,
+        targetUuid: events.find((e) => e.type === 'preflight_confirm')?.uuid ?? null,
+      },
     });
   }
 
@@ -65,7 +95,12 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
     if (text == null) continue;
     dated.push({
       at: at(event),
-      note: { id: event.uuid, when: stamp('Wpis ręczny', at(event)), text },
+      note: {
+        id: event.uuid,
+        when: stamp('Wpis ręczny', at(event)),
+        text,
+        targetUuid: event.uuid,
+      },
     });
   }
 

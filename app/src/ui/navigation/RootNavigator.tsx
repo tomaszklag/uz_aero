@@ -33,7 +33,6 @@ import {
   type CockpitReadonlyParams,
 } from '../screens/CockpitReadonlyScreen';
 import { CrewChangeScreen } from '../screens/CrewChangeScreen';
-import { ManualLogScreen } from '../screens/ManualLogScreen';
 import { ManualFlightScreen } from '../screens/ManualFlightScreen';
 import { RefuelScreen } from '../screens/RefuelScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
@@ -58,13 +57,23 @@ export type RootStackParamList = {
   CockpitReadonly: CockpitReadonlyParams;
   Refuel: undefined;
   CrewChange: undefined;
-  ManualLog: undefined;
+  /*
+   * `ManualLog` (ekran 08, lista ręczna) USUNIĘTY 2026-08-13 przy issue #43: był drugim
+   * widokiem tej samej sesji, z własną osią i własnym słownikiem. Poprawianie jest odtąd
+   * TRYBEM ekranu `Stats` — stąd jego parametry `edit` i `from`.
+   */
   /** 15 — ręczny wpis CAŁEGO lotu z 01: kompletna sesja po fakcie (model 2026-08-10). */
   ManualFlight: undefined;
   /** 09B/09C — zdanie samolotu = zatwierdzenie logu sesji. NIE kończy dnia pilota. */
   ReleaseAircraft: undefined;
-  /** 10 — detale i korekty JEDNEJ sesji; wejście kafelkiem sesji na 01 i w historii (12). */
-  Stats: undefined;
+  /**
+   * 10 — detale i korekty JEDNEJ sesji; wejście kafelkiem sesji na 01 i w historii (12).
+   *
+   * `edit` włącza od razu TRYB EDYCJI (issue #43) — używa go kokpit po zatrzymaniu
+   * silnika, a `from` mówi, dokąd wraca nagłówek: kokpit jest stanem modalnym, więc
+   * wejście stamtąd musi wracać do kokpitu, nie na „Mój dzień".
+   */
+  Stats: { edit?: boolean; from?: string } | undefined;
   /**
    * 14 — ślad CAŁEJ sesji: trasa, profil pionowy i log punktów. Wejście miniaturą z 10.
    * Ekran 16 (szczegóły jednego lotu) usunięty przy issue #38 — zapis GPS powstaje
@@ -128,7 +137,6 @@ export function RootNavigator({
         <Stack.Screen name="CockpitReadonly" component={CockpitReadonlyScreen} />
         <Stack.Screen name="Refuel" component={RefuelScreen} />
         <Stack.Screen name="CrewChange" component={CrewChangeScreen} />
-        <Stack.Screen name="ManualLog" component={ManualLogScreen} />
         <Stack.Screen name="ManualFlight" component={ManualFlightScreen} />
         <Stack.Screen name="ReleaseAircraft" component={ReleaseAircraftScreen} />
         <Stack.Screen name="Stats" component={StatsScreen} />

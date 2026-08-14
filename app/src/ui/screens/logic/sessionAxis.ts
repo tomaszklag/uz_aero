@@ -33,7 +33,7 @@
  * sensowny porządek jest przyczynowy: nie ma startu przed uruchomieniem silnika.
  */
 
-import { applyCorrections } from '../../../domain';
+import { applyCorrections, correctionHistory } from '../../../domain';
 import type { Event, EventOf, MhFormat, SessionState } from '../../../domain';
 import { hhmm, litres, motoHours, thousands, timeUtc } from '../../format';
 
@@ -73,6 +73,23 @@ export interface AxisRow {
   flight: string | null;
   /** Czas lotu przy lądowaniu („00:41"); `null` wszędzie indziej. */
   duration: string | null;
+  /**
+   * UUID zdarzenia, które ten wiersz opisuje — ADRES KOREKTY (issue #43).
+   *
+   * Nie zawsze równy `id`: końce osi mają identyfikatory własne (`claim`, `release`),
+   * bo pochodzą z PROJEKCJI, a nie z pojedynczego zdarzenia. Poprawia się w nich odczyty,
+   * czyli payload `preflight_confirm` i `day_close` — i to ich uuid tu stoi.
+   * `null` = wiersza nie da się poprawić (nie ma czego adresować).
+   */
+  targetUuid: string | null;
+  /** Czy zdarzenie było już poprawiane — plakietka „popr." (widoczna też w odczycie). */
+  corrected: boolean;
+  /**
+   * Wiersz ma wykrytą niespójność (issue #43). Dokłada go `withIssues` z `sessionEdit.ts`,
+   * a nie ten builder: niespójności liczy domena na całej sesji i są wiedzą O SESJI,
+   * nie cechą pojedynczego zdarzenia.
+   */
+  warned?: boolean;
 }
 
 /** Kafelek stopki osi. */
@@ -91,6 +108,24 @@ export interface SessionAxis {
 
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
 const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
+
+/**
+ * Zdarzenia, które ktoś poprawiał — po nich oś stawia plakietkę „popr." (issue #43).
+ *
+ * Pytamy `correctionHistory`, a nie samych payloadów korekt, bo liczy się to, co
+ * FAKTYCZNIE zmieniło dane: korekta nieczytelna (obcy kształt payloadu w bazie) nie
+ * zmienia niczego, więc plakietka przy niej kłamałaby o stanie zapisu.
+ */
+function correctedUuids(events: readonly Event[]): Set<string> {
+  const out = new Set<string>();
+  for (const event of events) {
+    if (event.type !== 'event_correction') continue;
+    const target = (event.payload as { targetUuid?: unknown })?.targetUuid;
+    if (typeof target !== 'string' || out.has(target)) continue;
+    if (correctionHistory(events, target).length > 0) out.add(target);
+  }
+  return out;
+}
 
 /**
  * Porządek przyczynowy przy identycznych stemplach czasu. Nie jest to kosmetyka:
@@ -122,10 +157,17 @@ export function buildSessionAxis(
 ): SessionAxis {
   const effective = applyCorrections(events);
   const mhFormat: MhFormat = projection.mhFormat ?? 'decimal';
+  const corrected = correctedUuids(events);
+  const uuidOf = (type: Event['type']): string | null =>
+    events.find((e) => e.type === type)?.uuid ?? null;
 
   const rows: AxisRow[] = [];
 
   if (projection.claimedAt != null) {
+    // Adresem korekty przejęcia jest `preflight_confirm` — to ON niesie odczyt startowy.
+    // Samego `session_claim` poprawić się nie da (jest tożsamością sesji), a i nie ma
+    // w nim czego zmieniać: mode przejęcia nie jest liczbą do sprostowania.
+    const target = uuidOf('preflight_confirm');
     rows.push({
       id: 'claim',
       kind: 'claim',
@@ -135,6 +177,8 @@ export function buildSessionAxis(
       sub: readingLine(projection.fuel.startL, projection.mh.start, mhFormat),
       flight: null,
       duration: null,
+      targetUuid: target,
+      corrected: target != null && corrected.has(target),
     });
   }
 
@@ -149,6 +193,8 @@ export function buildSessionAxis(
         sub: null,
         flight: null,
         duration: null,
+        targetUuid: event.uuid,
+        corrected: corrected.has(event.uuid),
       });
     }
 
@@ -166,6 +212,8 @@ export function buildSessionAxis(
         // wchodzi i tak cały bieg silnika. W kokpicie (04, 05) czas zostaje, bo tam
         // pilot patrzy na zegar w trakcie przygotowania.
         duration: null,
+        targetUuid: event.uuid,
+        corrected: corrected.has(event.uuid),
       });
     }
 
@@ -180,6 +228,8 @@ export function buildSessionAxis(
         sub: dropLine(drop.payload.jumpers, drop.payload.altitudeFt),
         flight: null,
         duration: null,
+        targetUuid: drop.uuid,
+        corrected: corrected.has(drop.uuid),
       });
     }
   }
@@ -194,6 +244,8 @@ export function buildSessionAxis(
       sub: null,
       flight: `lot ${flight.index}`,
       duration: null,
+      targetUuid: flight.takeoffUuid,
+      corrected: corrected.has(flight.takeoffUuid),
     });
 
     // Lot w powietrzu nie ma wiersza lądowania — i to jest informacja, nie brak danych.
@@ -211,11 +263,15 @@ export function buildSessionAxis(
         // pilot tu sięga. Powtórzony numer walczyłby z nią o to samo miejsce.
         flight: null,
         duration: hhmm(flight.durationMs),
+        targetUuid: flight.landingUuid,
+        corrected: corrected.has(flight.landingUuid),
       });
     }
   }
 
   if (projection.closedAt != null) {
+    // Adresem korekty zdania jest `day_close` — to ON niesie odczyt końcowy.
+    const target = uuidOf('day_close');
     rows.push({
       id: 'release',
       kind: 'release',
@@ -225,6 +281,8 @@ export function buildSessionAxis(
       sub: readingLine(projection.fuel.endL, projection.mh.end, mhFormat),
       flight: null,
       duration: null,
+      targetUuid: target,
+      corrected: target != null && corrected.has(target),
     });
   }
 

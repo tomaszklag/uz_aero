@@ -183,6 +183,58 @@ describe('POST /events', () => {
     expect(Number(rows[0]!.n)).toBe(0); // cała paczka odrzucona przed zapisem
   });
 
+  /**
+   * Korekta `amend` z telefonu (issue #43) — tryb edycji sesji wysyła ją tą samą trasą,
+   * co każde inne zdarzenie. Bez schematu na serwerze cała edycja odbijałaby się od
+   * `400 bad_payload`: dokładnie ten błąd zatrzymał etap C przy przebudowie flow, więc
+   * ta ścieżka ma własny test.
+   */
+  it('korekta wartości (amend) przechodzi ingest i ląduje w rejestrze', async () => {
+    const { app, db } = await testHarness();
+    const token = await login(app);
+
+    const base = day('sess-1');
+    const dayClose = base.find((e) => e.type === 'day_close')!;
+    const amend = event('event_correction', at(17, 0), {
+      targetUuid: dayClose.uuid,
+      action: 'amend',
+      fields: { fuelL: 96 },
+      reason: 'Pomyłka przy przepisywaniu z tarczy.',
+    });
+
+    const res = await post(app, token, [...base, amend]);
+    expect(res.statusCode).toBe(200);
+
+    const { rows } = await db.query<{ payload: Record<string, unknown> }>(
+      "SELECT payload FROM events WHERE type = 'event_correction'",
+    );
+    expect(rows[0]!.payload).toMatchObject({ action: 'amend', fields: { fuelL: 96 } });
+
+    // Projekcja liczy dzień z POPRAWIONYM odczytem — inaczej korekta byłaby wpisem
+    // do rejestru i niczym więcej.
+    const { rows: sessions } = await db.query<{ fuel_end_l: string | number | null }>(
+      "SELECT fuel_end_l FROM sessions WHERE session_uuid = 'sess-1'",
+    );
+    expect(Number(sessions[0]!.fuel_end_l)).toBe(96);
+  });
+
+  it('amend z NaN w wartości nie przechodzi — to ta sama trucizna, co w odczycie', async () => {
+    const { app } = await testHarness();
+    const token = await login(app);
+
+    const base = day('sess-1');
+    const dayClose = base.find((e) => e.type === 'day_close')!;
+    const broken = event('event_correction', at(17, 0), {
+      targetUuid: dayClose.uuid,
+      action: 'amend',
+      fields: { fuelL: 'sto' },
+    });
+
+    const res = await post(app, token, [...base, broken]);
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error).toBe('bad_payload');
+  });
+
   it('NaN w liczbach payloadu nie przechodzi — Postgres by je przyjął', async () => {
     const { app } = await testHarness();
     const token = await login(app);

@@ -1,9 +1,10 @@
 /**
- * UZ Aero — CorrectionSheet (mockup 04c „Korekta zdarzenia")
+ * UZ Aero — CorrectionSheet (mockup `design/10e` „Korekta zdarzenia"; wcześniej 04c)
  *
- * Arkusz korekty nad logiem dnia: karta korygowanego zdarzenia, czas z krokiem
- * minutowym, wiersze odniesienia (metoda wykrycia, wpływ na czasy), wyjaśnienie modelu
- * append-only i — pod separatorem — akcja destrukcyjna „TEGO … NIE BYŁO".
+ * Arkusz korekty w trybie edycji sesji: karta korygowanego zdarzenia, czas z krokiem
+ * minutowym, wiersze odniesienia (metoda wykrycia, wpływ na czasy), opcjonalny powód,
+ * wejście w historię zmian, wyjaśnienie modelu append-only i — pod separatorem — akcja
+ * destrukcyjna „TEGO … NIE BYŁO".
  *
  * Dwie decyzje wprost z architektury:
  *  • Korekta NICZEGO nie kasuje — zapisuje osobne zdarzenie, oryginał zostaje. Baner
@@ -24,8 +25,10 @@ import { sheetBottomPad } from '../../hooks/keyboardGeometry';
 import { useEduBanner } from '../../store/eduBanners';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
+import { HistoryLink } from '../data/HistoryLink';
 import { Banner } from '../status/Banner';
 import { Icon, type IconName } from '../foundation/Icon';
+import { ReasonField } from '../input/ReasonField';
 import { Tag } from '../status/Tag';
 import { toneColors } from '../tone';
 
@@ -52,8 +55,12 @@ export interface CorrectionSheetProps {
   voidLabel: string;
   voidHint: string;
   busy?: boolean;
-  onSave: (newTime: number) => void;
-  onVoid: () => void;
+  /** Ile poprawek ma już to zdarzenie — wejście w historię zmian (issue #43). */
+  historyCount?: number;
+  onOpenHistory?: () => void;
+  /** Powód jest OPCJONALNY — patrz `ReasonField`. */
+  onSave: (newTime: number, reason: string | null) => void;
+  onVoid: (reason: string | null) => void;
   onCancel: () => void;
 }
 
@@ -72,6 +79,8 @@ export function CorrectionSheet({
   voidLabel,
   voidHint,
   busy = false,
+  historyCount = 0,
+  onOpenHistory,
   onSave,
   onVoid,
   onCancel,
@@ -82,12 +91,19 @@ export function CorrectionSheet({
   const green = toneColors(theme, 'green');
 
   const [offsetMin, setOffsetMin] = useState(0);
+  const [reason, setReason] = useState('');
   const [eduDismissed, setEduDismissed] = useEduBanner('correction-append');
 
   // Każde otwarcie startuje od czasu pierwotnego — arkusz nie pamięta porzuconej edycji.
   useEffect(() => {
-    if (visible) setOffsetMin(0);
+    if (visible) {
+      setOffsetMin(0);
+      setReason('');
+    }
   }, [visible, originalTime]);
+
+  /** Pusty powód to BRAK powodu, nie pusty napis — historia zmian ma go nie pokazywać. */
+  const trimmedReason = (): string | null => (reason.trim() === '' ? null : reason.trim());
 
   const newTime = originalTime + offsetMin * 60_000;
   const source = methodBadge != null && methodBadge.startsWith('auto') ? 'odczytu GPS' : 'wpisu';
@@ -231,6 +247,16 @@ export function CorrectionSheet({
             </View>
           ))}
 
+          <ReasonField
+            value={reason}
+            onChangeText={setReason}
+            placeholder="np. GPS wykrył lądowanie za późno"
+          />
+
+          {onOpenHistory != null && (
+            <HistoryLink count={historyCount} onPress={onOpenHistory} />
+          )}
+
           <Banner
             kind="edu"
             tone="blue"
@@ -263,7 +289,7 @@ export function CorrectionSheet({
               size="md"
               busy={busy}
               disabledReason={offsetMin === 0 ? 'Zmień czas albo użyj akcji poniżej' : null}
-              onPress={() => onSave(newTime)}
+              onPress={() => onSave(newTime, trimmedReason())}
               style={{ flex: 2 }}
             />
           </View>
@@ -277,7 +303,7 @@ export function CorrectionSheet({
             size="md"
             busy={busy}
             icon="warning"
-            onPress={onVoid}
+            onPress={() => onVoid(trimmedReason())}
           />
           <AppText variant="mono" tone="muted" style={styles.voidHint}>
             {voidHint}

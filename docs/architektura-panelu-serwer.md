@@ -1590,12 +1590,12 @@ niczego, co da się pokazać).
    (b) w v1 zostawiamy niezmienność wymuszaną wyłącznie testem architektury i brakiem
    metod w adapterze. *Rekomendacja: (a), ale nie blokuje przekroju 0* — kod i tak nie ma
    ścieżki zapisu innej niż `append`.
-3. **Czy korekta administratora wraca na telefon pilota.** Dziś sync jest
-   jednokierunkowy: pilot otworzy ekran 12 i zobaczy swoje stare liczby. v1 mówi to
-   wprost banerem na A02b, ale to jest łata na proces, nie na system. Tani domykacz:
-   `GET /sessions/:uuid/events?since=<received_at>` + dociąganie cudzych korekt
-   w `SyncEngine`. *To jest decyzja o kontrakcie §4.6, nie funkcja panelu* — i od niej
-   zależy, czy baner na A02b jest stały, czy tymczasowy.
+3. ~~**Czy korekta administratora wraca na telefon pilota.**~~ **ROZSTRZYGNIĘTE
+   2026-08-12 (issue #32).** Sync jedzie w dwie strony: `GET /me/events` odbudowuje
+   rejestr na telefonie (§4.9), a korekta administratora niesie `pic_id` pilota, więc
+   wchodzi do jego strumienia przy najbliższym odtworzeniu. Baner „to nie wróci do
+   pilota" na A02b był tymczasowy i zniknął; od issue #43 stoi tam zdanie odwrotne,
+   razem z informacją, że pilot zobaczy autora i powód w historii zmian (10I).
 4. **Kolejność wobec faz 5–6.** §10 zostawia to otwarte. Argument za panelem PRZED
    testami z pilotami: przez cały okres testów naprawianie danych SQL-em na produkcji,
    bez śladu kto co zmienił. Argument przeciw: panel to ~10 przekrojów, czyli

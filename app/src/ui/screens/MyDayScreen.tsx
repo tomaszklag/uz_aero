@@ -59,7 +59,7 @@ import { usePilotDay } from '../hooks/usePilotDay';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { utcDayStart } from '../../domain';
 import { dateUtcLong, plural } from '../format';
-import { buildMyDay, totalLabel } from './logic/myDay';
+import { buildMyDay, myDayActions, totalLabel } from './logic/myDay';
 import { editableBadge } from './logic/historyDays';
 
 /**
@@ -251,47 +251,41 @@ export function MyDayScreen({
             Cały blok czeka na wczytanie doby (`ready`), bo inaczej pierwsza klatka
             pokazywałaby wielki zielony przycisk pustego dnia pilotowi, który ma
             za sobą trzy sesje — a potem podmieniałaby go pod palcem. */}
+        {/*
+          Skład pasa akcji liczy `myDayActions` — patrz jego docblock. Krótko: OBA
+          wejścia istnieją zawsze, zmienia się tylko waga „ROZPOCZNIJ LOT". Do
+          2026-08-14 pusty dzień miał wyłącznie zielony przycisk, więc pilot bez ani
+          jednej sesji nie miał jak wpisać lotu odbytego bez telefonu — a to dokładnie
+          ta sytuacja, dla której wpis ręczny istnieje (§3.8).
+
+          Plus, nie strzałki `takeover` (zgłoszenie z urządzenia przy issue #23):
+          mockup 01 rysuje tu DOPISANIE kolejnej sesji, a `maximize-2` znaczy przejęcie
+          CUDZEJ maszyny (04B).
+        */}
         {ready &&
-          (empty ? (
-            <>
-              <ActionButton
-                label="ROZPOCZNIJ LOT"
-                tone="green"
-                variant="solid"
-                icon="start"
-                onPress={() => navigation.navigate('PreflightAircraft')}
-              />
-              <AppText variant="mono" tone="muted" style={styles.btnNote}>
-                Odczytasz paliwo i motogodziny, potwierdzisz zadanie —{'\n'}i lecisz. Loty zapiszą
-                się same.
-              </AppText>
-            </>
-          ) : (
-            <>
-              {/* Plus, nie strzałki `takeover` (zgłoszenie z urządzenia przy issue #23):
-                  mockup 01 rysuje tu DOPISANIE kolejnej sesji do listy dnia, a strzałki
-                  `maximize-2` znaczą przejęcie CUDZEJ maszyny (04B). */}
-              <ActionButton
-                label="ROZPOCZNIJ LOT"
-                tone="neutral"
-                variant="secondary"
-                size="md"
-                icon="add"
-                onPress={() => navigation.navigate('PreflightAircraft')}
-              />
-              {/* Ręczny wpis CAŁEGO lotu (mockup 15, story pkt 7): telefon został
-                  w kurtce, bateria padła, lot spisany na papierze. Tworzy kompletną
-                  sesję z oknem korekty 24 h. */}
-              <ActionButton
-                label="DODAJ LOT RĘCZNIE"
-                tone="neutral"
-                variant="secondary"
-                size="md"
-                icon="edit"
-                onPress={() => navigation.navigate('ManualFlight')}
-              />
-            </>
+          myDayActions(empty).map((action) => (
+            <ActionButton
+              key={action.id}
+              label={action.label}
+              tone={action.primary ? 'green' : 'neutral'}
+              variant={action.primary ? 'solid' : 'secondary'}
+              size={action.primary ? undefined : 'md'}
+              icon={action.id === 'manual' ? 'edit' : action.primary ? 'start' : 'add'}
+              onPress={() =>
+                navigation.navigate(action.id === 'manual' ? 'ManualFlight' : 'PreflightAircraft')
+              }
+            />
           ))}
+
+        {/* Przypis należy do PUSTEGO dnia: tłumaczy, czym jest zielony przycisk komuś,
+            kto jeszcze nic dziś nie zrobił. Przy dniu z sesjami byłby powtórzeniem
+            wiedzy, którą pilot ma już z własnej listy. */}
+        {ready && empty && (
+          <AppText variant="mono" tone="muted" style={styles.btnNote}>
+            Odczytasz paliwo i motogodziny, potwierdzisz zadanie —{'\n'}i lecisz. Loty zapiszą
+            się same.
+          </AppText>
+        )}
 
         {/* Ta sama przestrzeń w stanie ładowania: karta logu i JEDEN blok akcji.
             Jeden, bo tyle wiadomo na pewno — pusty dzień dostanie zielone „ROZPOCZNIJ

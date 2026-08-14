@@ -72,6 +72,14 @@ export interface SheetProps {
    * od dołu: lista rośnie i kurczy się NAD nim, a pole zostaje tam, gdzie pilot je zostawił.
    */
   footer?: React.ReactNode;
+  /**
+   * Strefa destrukcyjna POD rzędem akcji (issue #43, arkusz `10g`).
+   *
+   * Osobne miejsce, a nie kolejny przycisk w rzędzie: „tego zrzutu nie było" to inna
+   * decyzja niż poprawka wartości i nie może być o jeden nieuważny kciuk od „Zapisz".
+   * Ta sama zasada, którą `CorrectionSheet` realizuje separatorem i konturem czerwieni.
+   */
+  destructive?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -87,6 +95,7 @@ export function Sheet({
   cancelLabel = 'ANULUJ',
   onCancel,
   footer,
+  destructive,
   children,
 }: SheetProps) {
   const { theme } = useTheme();
@@ -199,6 +208,13 @@ export function Sheet({
               />
             )}
           </View>
+
+          {destructive != null && (
+            <>
+              <View style={[styles.separator, { backgroundColor: theme.colors.border }]} />
+              {destructive}
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -214,4 +230,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, lineHeight: 24, letterSpacing: 2 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   rowLabel: { fontSize: 10, letterSpacing: 0.5 },
+  separator: { height: 1, marginTop: 3, marginBottom: 1 },
 });

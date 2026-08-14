@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 10F Korekta odczytu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.05) 0%, transparent 60%), linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 4px var(--amber-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* TŁO: 10D */
+  .app-header { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; min-width:0; }
+  .back-btn { display:inline-flex; align-items:center; gap:5px; min-height:34px; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border); }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .mode-badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); padding:4px 10px; border-radius:999px; }
+  .scroll { flex:1; overflow:hidden; padding:14px; display:flex; flex-direction:column; gap:12px; }
+  .scroll > * { flex-shrink:0; }
+  .section-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .section-card-head { padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border); font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
+  .section-card-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
+  .axis { padding:6px 0; }
+  .axis-row { display:grid; grid-template-columns:52px 14px 1fr auto 26px; align-items:center; gap:8px; padding:0 8px 0 10px; min-height:44px; }
+  .axis-row.target { background:var(--amber-muted); box-shadow:inset 2px 0 0 var(--amber); }
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-time.dim { color:var(--text-secondary); }
+  .axis-time.amber { color:var(--amber); }
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row:last-child .axis-mark::before { bottom:50%; }
+  .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:none; }
+  .axis-dot.hollow.amber { border-color:var(--amber); }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
+  .axis-name.muted { color:var(--text-secondary); }
+  .axis-name.amber { color:var(--amber); }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-pen { display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+
+  /* ===== ARKUSZ ===== */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-strong); }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+
+  .evt-card { display:flex; align-items:center; gap:11px; background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:12px 14px; }
+  .evt-icon { width:34px; height:34px; border-radius:10px; flex-shrink:0; background:var(--amber-muted); border:1px solid var(--amber-border); display:flex; align-items:center; justify-content:center; color:var(--amber); }
+  .evt-body { display:flex; flex-direction:column; gap:3px; flex:1; }
+  .evt-name { font-size:14px; font-weight:700; color:var(--text-primary); }
+  .evt-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+
+  /* ===== DWA POLA ODCZYTU =====
+     Paliwo i licznik stoją OBOK SIEBIE, bo spisuje się je jednym spojrzeniem na tablicę
+     i poprawia zwykle razem (pilot wraca do maszyny i przepisuje oba). Rozdzielone na
+     dwa arkusze kazałyby przechodzić tę samą drogę dwa razy.
+     Wartość jest POLEM WPISU, nie stepperem: przeskok o 30 litrów krokami po jednym
+     to trzydzieści dotknięć, a odczyt przepisuje się z tarczy w całości. */
+  .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:5px; }
+  .reading-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+  .reading-field { background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:11px 13px; display:flex; flex-direction:column; gap:3px; }
+  .reading-val { display:flex; align-items:baseline; gap:6px; }
+  .reading-input { width:100%; background:none; border:none; outline:none; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
+  .reading-unit { font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); flex-shrink:0; }
+  .reading-was { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--amber); }
+  .reading-was.same { color:var(--text-muted); }
+
+  .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
+  .modal-ref-val { color:var(--text-secondary); }
+
+  /* Ostrzeżenie warunkowe (Typ B): znika samo, gdy wartości wracają w zakres —
+     nie ma „×", bo zamknięcie niczego by nie naprawiło. Mówi o SKUTKU, nie o błędzie:
+     odczyt przy zdaniu jest ogniwem łańcucha motogodzin i punktem startowym
+     następnej sesji tej maszyny. */
+  .warn-box { display:flex; align-items:flex-start; gap:9px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:11px 13px; }
+  .warn-box svg { flex-shrink:0; margin-top:1px; color:var(--amber); }
+  .warn-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .warn-text b { color:var(--amber); font-weight:600; }
+
+  .reason-box { display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--border-strong); border-radius:12px; padding:11px 13px; }
+  .reason-box svg { color:var(--text-muted); flex-shrink:0; }
+  .reason-input { flex:1; background:none; border:none; outline:none; color:var(--text-primary); font-family:var(--font-body); font-size:12px; }
+  .reason-input::placeholder { color:var(--text-muted); }
+
+  .history-link { display:flex; align-items:center; gap:9px; padding:11px 13px; border-radius:12px; border:1px solid var(--border); background:var(--surface); text-decoration:none; }
+  .history-link:hover { border-color:var(--blue-border); }
+  .history-link svg.lead { color:var(--text-muted); flex-shrink:0; }
+  .history-text { flex:1; font-size:12px; color:var(--text-secondary); }
+  .history-count { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:999px; padding:2px 8px; }
+  .history-chev { color:var(--text-muted); }
+
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
+  .btn-save { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; box-shadow:0 0 20px rgba(46,204,113,0.25); }
+  /* BRAK strefy destrukcyjnej — i to jest decyzja, nie przeoczenie. Wyjaśniamy ją
+     wprost, bo w arkuszu obok („10E") ten przycisk jest, a milczące pominięcie
+     wyglądałoby na niedokończony ekran. */
+  /* Stepper godziny — ten sam kształt co w arkuszu czasu (10E): cele 44 px, wartość
+     mono pośrodku. Ta sama czynność musi wyglądać tak samo. */
+  .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:9px 11px; }
+  .min-btn { width:62px; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
+  .min-btn:hover { border-color:var(--amber-border); background:var(--amber-muted); }
+  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); }
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-top:3px; white-space:nowrap; }
+
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--amber); }
+  .nav-strip span { color:var(--border-strong); }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 10F</span>
+  <span class="slug">korekta odczytu · paliwo i motogodziny</span>
+  <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Korekta odczytu przy zdaniu samolotu">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <a href="10d-edycja.html" class="back-btn">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Dzień
+      </a>
+      <div class="app-header-center">
+        <span class="screen-title">SESJA</span>
+        <span class="header-subtitle">SP-AXA · 06 SIE · SKOKI</span>
+      </div>
+      <span class="mode-badge">
+        <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+        EDYCJA
+      </span>
+    </div>
+
+    <div class="scroll">
+      <div class="section-card">
+        <div class="section-card-head">Przebieg sesji</div>
+        <div class="axis">
+          <!-- Podświetlony wiersz to CEL arkusza: przejęcie. Tło i arkusz muszą mówić
+               o tym samym zdarzeniu — inaczej pilot poprawia jedno, a patrzy na drugie. -->
+          <div class="axis-row target">
+            <span class="axis-time amber">08:04</span>
+            <span class="axis-mark"><span class="axis-dot hollow amber"></span></span>
+            <span class="axis-label">
+              <span class="axis-name amber">Przejęcie · korygowane</span>
+              <span class="axis-sub">odczyt 150 L · 1 234:30</span>
+            </span>
+            <span></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg></span>
+          </div>
+          <div class="axis-row">
+            <span class="axis-time">08:12</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+            <span></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ARKUSZ KOREKTY ODCZYTU ══════════════════════════════════════════ -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <div class="modal-title">KOREKTA ODCZYTU</div>
+
+        <!-- Karta celu: NAZWA ZDARZENIA pełnym stopniem, godzina pod spodem. Mono 9 px
+             wersalikami czytało się jak przypis, a to jest odpowiedź na pierwsze pytanie
+             otwierającego arkusz — co ja właściwie poprawiam. -->
+        <div class="evt-card">
+          <div class="evt-icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18"/><path d="M3 12h10"/><path d="M17 8h2a2 2 0 0 1 2 2v8a1 1 0 0 1-2 0v-5h-2"/></svg>
+          </div>
+          <div class="evt-body">
+            <span class="evt-name">Przejęcie samolotu</span>
+            <span class="evt-meta">zapisano 08:04 UTC</span>
+          </div>
+        </div>
+
+        <!-- ══ GODZINA PRZEJĘCIA (uwaga z urządzenia) ═══════════════════════
+             Zwykły fakt („wziąłem samolot o 9:00, nie o 8:04") i pilot musi umieć go
+             sprostować. Stepper, nie pole tekstowe — ta sama czynność co korekta czasu
+             na osi (10E), więc ten sam kształt.
+
+             ZDANIE SAMOLOTU tego pola NIE MA i to jest decyzja: od `day_close` liczy się
+             24-godzinne okno korekty, więc przesuwanie go własną poprawką pozwalałoby
+             pilotowi przedłużyć sobie termin — regułę, która ma go ograniczać. -->
+        <div>
+          <div class="field-label">Godzina przejęcia (UTC)</div>
+          <div class="time-stepper">
+            <button class="min-btn">−1 min</button>
+            <span class="time-val">09:00</span>
+            <button class="min-btn">+1 min</button>
+          </div>
+        </div>
+
+        <!-- Kaskada: przejęcie wypadło ZA uruchomieniem silnika, więc cały bieg jedzie
+             za nim. Ostrzeżenie pada PRZED zapisem i mówi dokładnie, co się stanie —
+             `logic/claimRetime.ts` liczy tę samą treść, którą potem wykonuje. -->
+        <div class="warn-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="warn-text"><b>Przesuniemy cały bieg silnika.</b> Przejęcie wypada po uruchomieniu, więc wszystkie zdarzenia pojadą o <b>48 min</b>: uruchomienie stanie się 09:00, a starty, lądowania i zrzuty za nim. Czasy trwania zostają — przesuwamy, nie skracamy. Zdanie samolotu bez zmian.</span>
+        </div>
+
+        <div>
+          <div class="field-label">Odczyt liczników</div>
+          <!-- Podpowiedź pod polem TYLKO po zmianie („było 150 L"). Napisy w rodzaju
+               „litry z paliwomierza" opisywały pole, które i tak nazywa się „Paliwo",
+               i zajmowały linię pod każdym z dwóch pól przez cały czas. -->
+          <div class="reading-grid">
+            <div class="reading-field">
+              <span class="reading-val">
+                <input class="reading-input" type="text" value="148" inputmode="decimal" aria-label="Paliwo w litrach" />
+                <span class="reading-unit">L</span>
+              </span>
+              <span class="reading-was">było 150 L</span>
+            </div>
+            <div class="reading-field">
+              <span class="reading-val">
+                <input class="reading-input" type="text" value="1 234:30" inputmode="numeric" aria-label="Motogodziny" />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-ref">
+          <span>Pojemność zbiorników</span>
+          <span class="modal-ref-val">212 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Wpływ na zużycie sesji</span>
+          <span class="modal-ref-val">27 L → 25 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Format licznika</span>
+          <span class="modal-ref-val">hh:mm · obrotomierz</span>
+        </div>
+
+        <div class="reason-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) — np. pomyłka przy przepisywaniu z tarczy" />
+        </div>
+
+        <a href="10i-historia-zmian.html" class="history-link">
+          <svg class="lead" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 8v4l3 2"/></svg>
+          <span class="history-text">Historia zmian</span>
+          <span class="history-count">1</span>
+          <svg class="history-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+
+        <div class="modal-actions">
+          <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
+          <a href="10d-edycja.html" class="btn-save">Zapisz korektę</a>
+        </div>
+
+        <!-- Przypis „odczytu nie da się unieważnić" USUNIĘTY (uwaga z przeglądu):
+             tłumaczył BRAK przycisku, którego nikt nie szuka. Arkusz odpowiada na
+             pytanie zadane, a nie uprzedza pytania, które nie padło. -->
+      </div>
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
+  <a class="vp-item" href="10e-korekta-zdarzenia.html">
+    <span class="vp-badge blue">10E</span>
+    <span class="vp-body">
+      <span class="vp-name">Korekta zdarzenia (czas)</span>
+      <span class="vp-when">Uruchomienie, kołowanie, start, lądowanie, wyłączenie silnika: czas albo unieważnienie.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="10f-korekta-odczytu.html">
+    <span class="vp-badge amber">10F</span>
+    <span class="vp-body">
+      <span class="vp-name">Korekta odczytu</span>
+      <span class="vp-when">Ołówek przy PRZEJĘCIU albo ZDANIU: paliwo i motogodziny w jednym arkuszu, bo spisuje się je jednym spojrzeniem na tablicę. Przy PRZEJĘCIU dochodzi godzina — a jeśli wypadnie po uruchomieniu silnika, cały bieg przesuwa się za nią (ostrzeżenie mówi o ile i co się stanie). ZDANIE godziny nie ma: od niego liczy się okno 24 h, więc przesuwanie go własną poprawką przedłużałoby sobie termin. Unieważnienia nie ma po żadnej stronie.</span>
+    </span>
+    <span class="vp-tag">ten arkusz</span>
+  </a>
+  <a class="vp-item" href="10g-korekta-zrzutu.html">
+    <span class="vp-badge amber">10G</span>
+    <span class="vp-body">
+      <span class="vp-name">Korekta zrzutu</span>
+      <span class="vp-when">Czas i skład wyniesienia.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10h-dodaj-wpis.html">
+    <span class="vp-badge amber">10H</span>
+    <span class="vp-body">
+      <span class="vp-name">Dodaj wpis</span>
+      <span class="vp-when">Zdarzenie, którego w logu nie ma w ogóle.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10i-historia-zmian.html">
+    <span class="vp-badge blue">10I</span>
+    <span class="vp-body">
+      <span class="vp-name">Historia zmian</span>
+      <span class="vp-when">Kto, kiedy i z czego na co zmienił — razem z zapisem pierwotnym.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="10d-edycja.html">← 10D Edycja</a>
+  <a href="10e-korekta-zdarzenia.html">10E Zdarzenie</a>
+  <a href="10f-korekta-odczytu.html" class="active">10F Odczyt</a>
+  <a href="10g-korekta-zrzutu.html">10G Zrzut</a>
+  <a href="10h-dodaj-wpis.html">10H Dodaj</a>
+  <a href="10i-historia-zmian.html">10I Historia</a>
+  <a href="10j-korekta-zalogi.html">10J Załoga</a>
+  <span>·</span>
+  <a href="10-statystyki.html">10 Sesja</a>
+</nav>
+
+</body>
+</html>
