@@ -364,34 +364,33 @@ export function StatsScreen({
            * „ZAKOŃCZ EDYCJĘ" nie jest zielonym przyciskiem pełnym, bo NICZEGO nie
            * zapisuje: każda korekta zapisuje się w chwili potwierdzenia arkusza
            * (append-only). Przycisk w kolorze akcji głównej obiecywałby zatwierdzenie,
-           * którego nie ma — a pilot, który go nie dotknie, myślałby, że stracił
-           * poprawki. Dlatego pod pasem stoi zdanie mówiące to wprost.
+           * którego nie ma.
+           *
+           * Pod pasem stało kiedyś zdanie tłumaczące to wprost („korekty zapisują się
+           * od razu…") i zostało USUNIĘTE: opisywało wewnętrzną budowę rejestru komuś,
+           * kto o nią nie pytał, i tłumaczyło brak przycisku, którego nikt nie szukał —
+           * ta sama reguła, przez którą wyleciał przypis „odczytu nie da się unieważnić"
+           * z arkuszy korekty.
            */
-          <View style={{ paddingHorizontal: 14, paddingBottom: 14, gap: 8 }}>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <ActionButton
-                label="DODAJ WPIS"
-                tone="neutral"
-                variant="secondary"
-                size="md"
-                icon="add"
-                onPress={edit.openAdd}
-                style={{ flex: 1 }}
-              />
-              <ActionButton
-                label="ZAKOŃCZ EDYCJĘ"
-                tone="green"
-                variant="secondary"
-                size="md"
-                icon="check"
-                onPress={() => setEditingRequested(false)}
-                style={{ flex: 1 }}
-              />
-            </View>
-            <AppText variant="mono" tone="muted" style={styles.editNote}>
-              Korekty zapisują się od razu — rejestr jest append-only, więc nie ma czego
-              zatwierdzać na końcu.
-            </AppText>
+          <View style={{ paddingHorizontal: 14, paddingBottom: 14, flexDirection: 'row', gap: 8 }}>
+            <ActionButton
+              label="DODAJ WPIS"
+              tone="neutral"
+              variant="secondary"
+              size="md"
+              icon="add"
+              onPress={edit.openAdd}
+              style={{ flex: 1 }}
+            />
+            <ActionButton
+              label="ZAKOŃCZ EDYCJĘ"
+              tone="green"
+              variant="secondary"
+              size="md"
+              icon="check"
+              onPress={() => setEditingRequested(false)}
+              style={{ flex: 1 }}
+            />
           </View>
         ) : (
           <View style={{ paddingHorizontal: 14, paddingBottom: 14 }}>
@@ -853,5 +852,4 @@ const styles = StyleSheet.create({
   noteBody: { flex: 1, gap: 4 },
   noteText: { fontSize: 12, lineHeight: 18 },
   noteAdd: { flex: 1, fontSize: 12 },
-  editNote: { fontSize: 8.5, letterSpacing: 0.8, lineHeight: 14, textAlign: 'center' },
 });

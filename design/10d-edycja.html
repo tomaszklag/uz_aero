@@ -234,7 +234,6 @@
      niczego. Każda korekta zapisuje się w chwili potwierdzenia arkusza (append-only),
      więc przycisk w kolorze akcji głównej obiecywałby zatwierdzenie, którego nie ma —
      i pilot, który go nie dotknie, myślałby, że stracił poprawki. */
-  .hint-under { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; line-height:1.6; padding:0 4px; }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -578,7 +577,14 @@
              dostać: wejście znikało w stanie, w którym jest potrzebne. -->
       </div>
 
-      <!-- ══ PAS AKCJI ═══════════════════════════════════════════════════════ -->
+      <!-- ══ PAS AKCJI ═══════════════════════════════════════════════════════
+           „ZAKOŃCZ EDYCJĘ" niczego nie zapisuje — każda korekta zapisuje się
+           w chwili potwierdzenia arkusza — więc nie jest przyciskiem pełnym.
+           Pod pasem stało kiedyś zdanie tłumaczące to wprost („korekty zapisują się
+           od razu — rejestr jest append-only…") i zostało USUNIĘTE: opisywało
+           wewnętrzną budowę rejestru komuś, kto o nią nie pytał, i tłumaczyło brak
+           przycisku, którego nikt nie szuka. Ta sama reguła, przez którą wyleciał
+           przypis „odczytu nie da się unieważnić" z arkuszy korekty. -->
       <div class="btn-row">
         <a href="10h-dodaj-wpis.html" class="btn-secondary">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -589,7 +595,6 @@
           ZAKOŃCZ EDYCJĘ
         </a>
       </div>
-      <div class="hint-under">Korekty zapisują się od razu — rejestr jest append-only, więc nie ma czego zatwierdzać na końcu.</div>
 
     </div>
   </div>
