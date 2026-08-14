@@ -179,7 +179,8 @@ Główny ekran pracy z JEDNYM samolotem (nie z dobą — patrz 3.6a). Dwa stany:
 - log zdarzeń tej sesji (jeden bieg silnika, loty z separatorami "Lot N")
 - wskaźnik łączności `SyncChip`: online nie rysuje NIC (issue #12), offline sam pill
   `OFFLINE · n` — szczegóły synchronizacji pod tapnięciem (issue #23 pkt 5)
-- skróty: tankowanie, zmiana załogi, lista ręczna, zdaj samolot (zawsze dostępny)
+- skróty: tankowanie, zmiana załogi, popraw dane sesji (tryb edycji 10d), zdaj samolot
+  (zawsze dostępny)
 
 **Stan: silnik uruchomiony (running)**
 - **phase hero** — aktualna faza lotu dużą czcionką (Engine Idle → Taxi → Takeoff → Climb
@@ -239,8 +240,8 @@ jest **sesja** — od uruchomienia do zatrzymania silnika, z dowolną liczbą LO
 kokpit (04) pokazuje hero „ZDAJ SAMOLOT", a kolejny lot to NOWE przejęcie.
 
 Osobnego „zamknięcia wzlotu" (dawny ekran 09, `leg_close`) już nie ma — jego przegląd
-czasów z detekcji przeszedł na 09b, a poprawki robi się korektą w logu kokpitu (04c)
-przed zdaniem. Nie ma też trybu „Potwierdzę później" ani pasków „do potwierdzenia" na 01:
+czasów z detekcji przeszedł na 09b, a poprawki robi się w trybie edycji sesji (10d,
+issue #43), dostępnym z kokpitu także przed zdaniem. Nie ma też trybu „Potwierdzę później" ani pasków „do potwierdzenia" na 01:
 na listę dnia trafiają wyłącznie sesje zatwierdzone.
 
 > Dlaczego wymóg odczytu przestał być problemem dnia skokowego: seria z gorącym
@@ -372,20 +373,51 @@ kotwica = `day_close` — osobno dla każdej sesji, patrz §3.6a): pilot nanosi 
 samodzielnie, bez akceptacji administratora. Po upływie okna korektę wprowadza
 administrator. Korekta zawsze jest zdarzeniem append-only — nie kasuje oryginalnego odczytu.
 
-### 3.8 Ręczna lista lotów (fallback GPS)
+### 3.8 Edycja danych sesji (tryb ekranu 10 — issue #43, 2026-08-13)
 
-Prosta tabela do ręcznego wpisu gdy GPS niedostępny:
+**Osobnego ekranu „lista ręczna" (08) NIE MA od 2026-08-13.** Był drugim widokiem tej
+samej sesji — inna oś, inny słownik, jedyna możliwa korekta: czas albo unieważnienie.
+Poprawianie jest odtąd **stanem ekranu sesji** (`design/10d`): ten sam ślad, ta sama oś
+czasu i te same rachunki, plus ołówek przy każdym wierszu i pas akcji z „DODAJ WPIS".
 
-| Kolumna | Opis |
-|---------|------|
-| Off block | czas (podpowiada zegar, edytowalny) |
-| Takeoff | czas |
-| Landing | czas |
-| On block | czas |
-| Uwagi | tekst |
+Wejścia są dwa i oba prowadzą w to samo miejsce: „EDYTUJ DANE" na ekranie sesji (10)
+oraz kafelek „Popraw dane sesji" w kokpicie po zatrzymaniu silnika — ten drugi wraca
+DO KOKPITU, bo kokpit jest stanem modalnym, a log trzeba dać się naprawić PRZED zdaniem
+samolotu (zdanie go zatwierdza).
 
-Plus sekcja paliwa i stanów. Wpisy trafiają do strumienia zdarzeń jak każde inne
-(`manual_log_entry`).
+Co da się poprawić (arkusze `design/10e`–`10h`):
+
+| Cel | Arkusz | Co zmienia | Zdarzenie |
+|-----|--------|------------|-----------|
+| uruchomienie, kołowanie, start, lądowanie | 10e | czas albo „tego nie było" | `event_correction` · `retime` / `void` |
+| przejęcie, zdanie | 10f | odczyt paliwa i motogodzin; przy PRZEJĘCIU także godzina | `event_correction` · `amend` (+ `retime` na `session_claim`) |
+| zrzut | 10g | czas oraz skład (tandem / AFF / solo) | `event_correction` · `retime` / `amend` / `void` |
+| brakujący fakt | 10h | dopisanie zdarzenia (start, lądowanie, kołowanie, zrzut, załadunek, tankowanie) z metodą `manual` | zdarzenie właściwego typu |
+| notatka sesji | arkusz z 02e | treść notatki; pusty tekst ją KASUJE | `event_correction` · `amend` (`notes`) |
+| drugi pilot | 10j | Dual CAŁEJ sesji — poprawka działa wstecz | `event_correction` · `amend` (`dualId`) |
+
+Każdy arkusz niesie **opcjonalny powód** (trafia do historii zmian i do panelu) oraz
+wejście w **historię zmian** (`design/10i`): „było → jest", kto, kiedy, z jakim powodem,
+a na dole zapis pierwotny. Lista jest kompletna z definicji — rejestr jest append-only —
+i pokazuje także korekty administratora, bo od issue #32 wracają na telefon (§4.9).
+Wiersz raz poprawiony nosi znacznik **„popr."** również w trybie odczytu.
+
+**Godzina przejęcia i kaskada.** Przejęcie otwiera sesję, więc nie może wypaść PO
+uruchomieniu silnika — maszyna nie ruszyła, zanim ktoś ją wziął. Poprawka w tył jest
+zwykłą korektą; w przód, za uruchomienie, przesuwa CAŁY bieg o tyle, żeby uruchomienie
+wypadło dokładnie w nowej godzinie przejęcia (czasy trwania bez zmian). Arkusz zapowiada
+to przed zapisem. `day_close` zostaje na miejscu — od niego liczy się okno 24 h, więc
+przesuwanie go własną poprawką przedłużałoby sobie termin; z tego samego powodu ZDANIE
+samolotu nie ma w arkuszu pola godziny. Plan liczy `ui/screens/logic/claimRetime.ts`
+i on też odmawia, gdy przesunięty bieg wyszedłby poza zdanie maszyny.
+
+W trybie edycji ekran pokazuje **wykryte niespójności logu** (`rules/consistency.ts`):
+lot bez lądowania, lądowanie przed startem, zdarzenie poza klamrą biegu silnika, zrzut
+na ziemi, cofnięty licznik, paliwo ponad pojemność. Sprawdzenie idzie po CAŁYM strumieniu
+efektywnym, inaczej niż `checkAppend` pytający o pojedynczego kandydata do zapisu.
+
+Wpisy ręczne trafiają do strumienia jak każde inne (`manual_log_entry` dla całego lotu
+z ekranu 15; pojedyncze fakty — jako zdarzenia własnego typu z metodą `manual`).
 
 ### 3.9 Synchronizacja (sekcja w Ustawieniach 13 — dawny ekran 11 „eksport")
 
@@ -676,7 +708,7 @@ Typy zdarzeń:
 | Typ | Payload (istotne pola) |
 |-----|------------------------|
 | `session_claim` | tryb przejęcia (wolny / przejęcie online / przejęcie offline) |
-| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); `dutyStart` usunięty razem z klamrą służby (issue #23) |
+| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); od issue #43 także `dualId` — DRUGI PILOT CAŁEJ SESJI, który wygrywa z nagłówkiem zdarzeń (bez tego pola załogi nie dałoby się poprawić: nagłówek opisuje chwilę zapisu i jest append-only); `dutyStart` usunięty razem z klamrą służby (issue #23) |
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
 | `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
@@ -686,7 +718,7 @@ Typy zdarzeń:
 | `crew_change` | rola (PIC / Dual), pilot out / in |
 | `manual_log_entry` | off block / T/O / LDG / on block, uwagi |
 | `day_close` | **zdanie samolotu**: końcowy FOB + MH (przekazanie) oraz `noFlightReason` dla sesji bez ani jednego biegu silnika (09C: `weather` / `malfunction` / `cancelled` / `other`). Brak powodu przy takiej sesji to **miękka** flaga `NO_FLIGHT_WITHOUT_REASON` — odrzucenie zdarzenia skasowałoby jedyny ślad po tym, że maszyna stała zajęta. (`dutyEnd` usunięte 2026-08-11 razem z klamrą służby — issue #23) |
-| `event_correction` | `targetUuid` + akcja: `retime` (nowy czas) **lub** `void` („zdarzenia nie było") — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zdaniu samolotu (decyzja 2026-07-23, kotwica per sesja od 2026-08-10) |
+| `event_correction` | `targetUuid` + opcjonalny `reason` + akcja: `retime` (nowy czas) · `void` („zdarzenia nie było") · `amend` (nowa WARTOŚĆ w payloadzie celu — issue #43) — append-only: oryginał zostaje, projekcja nakłada korekty przed liczeniem (ostatnia wygrywa); samodzielna korekta pilota do 24 h po zdaniu samolotu (decyzja 2026-07-23, kotwica per sesja od 2026-08-10). Biała lista pól `amend` zależy od typu celu: `fuelL`/`mh`/`notes`/`dualId` dla `preflight_confirm`, `fuelL`/`mh` dla `day_close`, `jumpers` dla `drop`, `notes` dla `manual_log_entry` — poza nią `CORRECTION_FIELD_NOT_ALLOWED`. Na `preflight_confirm` i `day_close` dozwolony jest WYŁĄCZNIE `amend`; `retime`/`void` odrzuca `CORRECTION_TARGET_NOT_ALLOWED`, bo unieważnienie zdania rozbiłoby sesję w pół. `session_claim` przyjmuje wyłącznie `retime` (godzina przejęcia to zwykły fakt; `void` zabrałby sesji właściciela) — a przesunięcie jej ZA uruchomienie silnika pociąga cały bieg, patrz §3.8 |
 
 > **Stan modelu (po pivocie 2026-08-10 i issue #23 z 2026-08-11).**
 >
@@ -780,7 +812,7 @@ TRYB GROUND (silnik wyłączony)
 ├── pełne formularze
 ├── standardowe rozmiary elementów
 ├── dostęp do historii i edycji
-└── akcje: tankowanie, zmiana załogi, lista ręczna, zdaj samolot
+└── akcje: tankowanie, zmiana załogi, popraw dane sesji, zdaj samolot
 
 TRYB COCKPIT (silnik uruchomiony / w locie)
 ├── phase hero — faza lotu dużą czcionką
@@ -900,8 +932,11 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     │   korekty (podgląd bez zapisu)
     │      ├─ MINIATURA ŚLADU → [14 Ślad]  CAŁY bieg silnika: kołowanie, wszystkie
     │      │   starty i lądowania, profil pionowy z przerwą na ziemi (14b = brak zapisu)
-    │      ├─ „EDYTUJ DANE" → [08 Lista ręczna] → [04c Korekta zdarzenia]  JEDYNE
-    │      │   drzwi do korekty czasów (issue #40 — oś sesji ołówków nie ma)
+    │      ├─ „EDYTUJ DANE" → [10d TRYB EDYCJI tego samego ekranu]  JEDYNE drzwi do
+    │      │   korekty (issue #40 — oś w trybie odczytu ołówków nie ma; issue #43 —
+    │      │   ołówek wraca dopiero w trybie edycji). Arkusze: 10e czas zdarzenia ·
+    │      │   10f paliwo i MH przy przejęciu/zdaniu · 10g zrzut · 10h dodaj wpis ·
+    │      │   10i historia zmian (także w podglądzie 10b)
     │      └─ PLAKIETKA WERDYKTU → [10c Norma — szczegóły]  pasmo, stawki, rachunek
     │   (issue #38 ODWRACA #25: zapis GPS powstaje w JEDNYM ciągu, więc ślad należy do
     │   SESJI, a loty są jego odcinkami — ekran 16 „szczegóły lotu" USUNIĘTY, jego treść
@@ -1006,7 +1041,7 @@ Zakres, role, mapowanie każdego ekranu na endpoint oraz lista braków serwera z
 | 0 | Design UX/UI — mockupy HTML wszystkich ekranów, design tokens | ✅ zakończona; **przebudowana 2026-08-06** (faza 8) — mockupy w `design/` zatwierdzone jako specyfikacja |
 | 1 | Fundament aplikacji — RN + Expo, nawigacja, schemat zdarzeń w SQLite, GPS hook | ✅ zakończona — architektura kodu: `docs/architektura-kodu.md` |
 | 2 | Fundament backendu — API (kontrakt 4.6), Postgres, auth login+hasło→JWT (decyzja 2026-07-22), dedup | ✅ zakończona — `server/` (clean architecture + uproszczony CQRS, wspólna domena `packages/domain`); po audycie bezpieczeństwa (2026-07-28); zaległości audytu: `docs/architektura-kodu.md` §0 |
-| 3 | Ekrany aplikacji — preflight, cockpit, akcje ground, statystyki | ✅ zakończona — komplet ekranów 00 (PIN)–12 (z 04b/04c i arkuszami 05e/05f); mockupy wdrożone 1:1 **wobec designu sprzed 2026-08-06** — po przebudowie flow (faza 8) ekrany wymagają przepisania |
+| 3 | Ekrany aplikacji — preflight, cockpit, akcje ground, statystyki | ✅ zakończona — komplet ekranów 00 (PIN)–12 (z 04b i arkuszami 05e/05f); mockupy wdrożone 1:1 **wobec designu sprzed 2026-08-06** — po przebudowie flow (faza 8) ekrany wymagają przepisania. Ekrany 08 i 04c skasowane przy issue #43: korekta jest TRYBEM ekranu 10 (arkusze 10e–10i) |
 | 4 | Sync end-to-end — outbox, cache referencyjny, claimy, scalanie + flagi, eksport Sheets | ✅ zakończona (wariant bazodanowy) — outbox → `/events` (SyncEngine §4.3), auth §3.0, flagi + `sync-status`, ekran 11, cache referencyjny (ETag/304), `takeover_online`; eksport 4.7 działa end-to-end: karty w tabeli `exported_sheets` (`GET /sheets/:tab`), `export_log` z rewizjami, bramka flagi overlap, `exportUrl` w sync-status. Adapter Google Sheets = opcjonalna podmiana portu, gdy będzie klucz konta serwisowego |
 | 5 | Testy z pilotami, korekty UX, kalibracja progów S/L | przed nami · szac. 2 tyg. |
 | 6 | Wdrożenie — Play Store internal track, deploy backendu, dokumentacja | przed nami · szac. 1 tyg. |

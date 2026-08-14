@@ -53,6 +53,7 @@ import {
   litres,
   motoHours,
   parseLitres,
+  maskMotoHoursInput,
   parseMotoHours,
   timeLocal,
   timeUtc,
@@ -466,7 +467,7 @@ export function PreflightReadingsScreen({
         unit="MH"
         tone="neutral"
         initialText={motoHours(draft.mh, mhFormat)}
-        keyboard={mhFormat === 'hhmm' ? 'text' : 'decimal'}
+        mask={(t) => maskMotoHoursInput(t, mhFormat)}
         rows={[
           {
             label: 'Przekazane przez poprzednika',

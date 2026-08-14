@@ -51,6 +51,7 @@ import {
   correctionViolations,
   correctionWarnings,
 } from '../correctionCandidate.ts';
+import { chainFlags, type ChainLink } from '../../../domain/mhChain.ts';
 import { adminSourceDevice } from '../sourceDevice.ts';
 import { sessionRowFrom } from '../../common/mappers/sessionRow.ts';
 import type { DayExporter, ExportOutcome } from '../../common/export/dayExporter.ts';
@@ -58,6 +59,7 @@ import type {
   AircraftConfigPort,
   Clock,
   EventsStorePort,
+  FlagsPort,
   SessionsProjectionPort,
 } from '../../common/ports.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
@@ -126,6 +128,18 @@ class RuleRejection extends Error {
   }
 }
 
+/**
+ * Czy korekta rusza ODCZYTY, czyli wejście flag łańcucha MH i paliwa (§4.5).
+ *
+ * Pytamy o POLA, nie o typ celu: `amend` składu zrzutu nie zmienia ani jednego ogniwa
+ * łańcucha, więc przeliczanie po nim byłoby pracą bez skutku (i myliłoby czytającego
+ * ten kod co do tego, czego flagi dotyczą).
+ */
+function touchesReadings(correction: EventCorrectionPayload): boolean {
+  if (correction.action !== 'amend') return false;
+  return correction.fields.fuelL !== undefined || correction.fields.mh !== undefined;
+}
+
 /** Skutek transakcji: dopisane zdarzenie + stan dnia policzony po jego nałożeniu. */
 interface Applied {
   candidate: Event;
@@ -142,6 +156,12 @@ export class AdminCorrectionCommands {
     /** Pojemność zbiorników → `AircraftLimits` dla reguł; czytana W TEJ transakcji. */
     private readonly aircraft: AircraftConfigPort,
     private readonly exporter: DayExporter,
+    /**
+     * Flagi łańcucha MH i paliwa (§4.5) — przeliczane po korekcie, która ruszyła ODCZYTY.
+     * Port doszedł przy issue #43 razem z akcją `amend`: do niej korekta nie miała jak
+     * zmienić wejścia tych flag, więc ich nieprzeliczanie było poprawne.
+     */
+    private readonly flags: FlagsPort,
     private readonly clock: Clock,
     /**
      * Generator uuid korekty. FUNKCJA w konstruktorze, nie port: nie ma tu adaptera
@@ -196,10 +216,40 @@ export class AdminCorrectionCommands {
         const state = projectSession(after);
         await this.sessions.upsert(tx, sessionRowFrom(input.sessionUuid, after));
 
-        // Flag łańcucha MH i paliwa NIE przeliczamy: ich wejściem są odczyty
-        // z `preflight_confirm` i `day_close`, a te są niekorygowalne
-        // (`CORRECTION_TARGET_NOT_ALLOWED`). Otwarta flaga `clock_drift` też zostaje —
-        // A02b mówi to wprost: „zamyka ją człowiek na A03".
+        /*
+         * FLAGI ŁAŃCUCHA PRZELICZAMY — ale tylko po korekcie, która ruszyła ODCZYTY.
+         *
+         * Do issue #43 nie przeliczaliśmy ich nigdy i było to poprawne: wejściem flag
+         * `mh_chain` i `fuel_mismatch` są odczyty z `preflight_confirm` i `day_close`,
+         * a tych dwóch zdarzeń nie dało się korygować w ogóle. Akcja `amend` to
+         * założenie unieważniła — administrator poprawiający licznik mógłby odtąd
+         * zostawić otwartą flagę opisującą liczbę, której już nie ma (albo, gorzej,
+         * zamknąć oczy na tę, którą właśnie stworzył).
+         *
+         * Liczymy z CAŁEJ historii samolotu, tym samym `chainFlags`, co ingest:
+         * anomalia łańcucha z definicji dotyczy PARY sesji, więc jedna poprawiona
+         * nie wystarcza. `ensureOpen` jest idempotentne — powtórka nie mnoży flag.
+         *
+         * Flagi ISTNIEJĄCEJ nie zamykamy: to decyzja człowieka na A03 (tak samo jak
+         * przy `clock_drift`, o czym A02b mówi wprost). Przeliczenie ma OTWIERAĆ to,
+         * co powstało, a nie sprzątać cudze rozstrzygnięcia.
+         */
+        if (touchesReadings(input.correction)) {
+          const aircraftId = candidate.aircraftId;
+          const links: ChainLink[] = (await this.sessions.listByAircraft(tx, aircraftId)).map(
+            (s) => ({
+              sessionUuid: s.sessionUuid,
+              mhStart: s.mhStart,
+              mhEnd: s.mhEnd,
+              fuelStartL: s.fuelStartL,
+              fuelEndL: s.fuelEndL,
+              closed: s.status === 'closed',
+            }),
+          );
+          for (const flag of chainFlags(links, limits.capacityL)) {
+            await this.flags.ensureOpen(tx, { ...flag, aircraftId });
+          }
+        }
         return {
           result: { candidate, state, warnings },
           audit: {

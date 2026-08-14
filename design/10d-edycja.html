@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 10D Sesja · tryb edycji</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(243,156,18,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .canvas-meta .pulse { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 0 4px var(--amber-muted); animation:pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow:0 0 0 8px transparent; opacity:0.6; } }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--amber); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* App internals */
+  .app-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:8px 14px; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .app-header-center { display:flex; flex-direction:column; align-items:center; gap:1px; flex:1; min-width:0; }
+  .app-header-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .back-btn {
+    display:inline-flex; align-items:center; gap:5px; min-height:34px;
+    font-family:var(--font-mono); font-size:11px; color:var(--text-muted);
+    text-decoration:none; padding:5px 8px; border-radius:6px; border:1px solid var(--border);
+  }
+  .back-btn:hover { color:var(--text-secondary); border-color:var(--border-strong); }
+  .screen-title { font-family:var(--font-display); font-size:20px; letter-spacing:2px; color:var(--text-primary); }
+  .header-subtitle { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  /* Plakietka trybu — JEDYNY sposób, w jaki ekran mówi „teraz piszesz". Amber, bo to
+     stan odchylony od normalnego (odczyt), a nie sukces. Tryb podglądu (10B) ma tu
+     „Podgląd", tryb odczytu (10) nie ma nic — plakietka świecąca zawsze niczego nie mówi. */
+  .mode-badge {
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:var(--font-mono); font-size:10px; letter-spacing:1px;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    padding:4px 10px; border-radius:999px;
+  }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+  .scroll > * { flex-shrink:0; }
+
+  /* ===== BANER NIESPÓJNOŚCI (issue #43) =====
+     Typ „ostrzeżenie warunkowe": znika sam, gdy log przestaje być sprzeczny — nie ma
+     przycisku zamknięcia, bo zamknięcie nie naprawia danych. Wykrywa go domena na
+     CAŁYM strumieniu (`rules/consistency.ts`), a nie przy zapisie pojedynczego
+     zdarzenia: „lot bez lądowania" jest zdaniem o sesji, nie o wpisie. */
+  .issues { background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; overflow:hidden; }
+  .issues-head { display:flex; align-items:center; gap:8px; padding:10px 12px; }
+  .issues-icon { color:var(--amber); flex-shrink:0; }
+  .issues-title { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); }
+  .issue-row { display:flex; gap:9px; padding:8px 12px 8px 13px; border-top:1px solid rgba(243,156,18,0.18); }
+  .issue-dot { width:5px; height:5px; border-radius:50%; background:var(--amber); flex-shrink:0; margin-top:6px; }
+  .issue-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .issue-text b { color:var(--text-primary); font-weight:600; }
+
+  /* Okno korekty — status, nigdy zamykalny */
+  .correction-window { display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 13px; }
+  .cw-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
+  .cw-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
+  .cw-text b { color:var(--blue); font-weight:600; }
+
+  /* Section card */
+  .section-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+  .section-card-head {
+    padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border);
+    font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted);
+    display:flex; align-items:center; gap:6px;
+  }
+  .section-card-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
+  .section-card-head.amber::before { background:var(--amber); }
+  .section-card-head.blue::before { background:var(--blue); }
+  .section-card-head .spacer { flex:1; }
+  .head-note { font-size:8px; letter-spacing:1px; color:var(--text-muted); text-transform:none; }
+
+  /* ===== OŚ SESJI W TRYBIE EDYCJI =====
+     Wiersz wraca do 44 px (w trybie odczytu ma 28 — issue #40). To nie jest cofnięcie
+     tamtej decyzji, tylko jej druga połowa: tam wiersz NIE BYŁ celem dotknięcia i rytm
+     44 px był marnowaniem kolumny, tutaj CAŁY wiersz jest przyciskiem otwierającym
+     arkusz korekty. Cel poniżej progu rękawic byłby tu wadą, nie oszczędnością. */
+  .axis { padding:6px 0; }
+  .axis-row {
+    display:grid; grid-template-columns:52px 14px 1fr auto 26px;
+    align-items:center; gap:8px; padding:0 8px 0 10px; min-height:44px;
+    text-decoration:none; cursor:pointer;
+  }
+  .axis-row:hover { background:rgba(255,255,255,0.02); }
+  /* Wiersz bez korekty (uruchomienie/wyłączenie silnika) też jest edytowalny: czas
+     zapadnięcia bywa przesunięty tak samo jak każdy inny. Nieedytowalne są wyłącznie
+     wiersze, których korekta nie ma czego zmienić — na tej osi nie ma takich. */
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-time.dim { color:var(--text-secondary); }
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row:last-child .axis-mark::before { bottom:50%; }
+  .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
+  .axis-dot.green { background:var(--green); }
+  .axis-dot.red { background:var(--red); }
+  .axis-dot.blue { background:var(--blue); }
+  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+     ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
+     (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
+     pustych punktów osi. */
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
+  .axis-dot.warn { background:var(--amber); }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+  .axis-name.muted { color:var(--text-secondary); }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
+  /* Ołówek jest KOLUMNĄ, nie ozdobą wiersza: stoi w tym samym pionie przez całą oś,
+     więc kciuk wie, gdzie celować, zanim przeczyta wiersz. W trybie odczytu tej
+     kolumny nie ma w ogóle (issue #40 pkt 1) — pojawia się razem z trybem edycji. */
+  .axis-pen { display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+  .axis-row:hover .axis-pen { color:var(--green); }
+  /* Znacznik „poprawione" — widoczny TAKŻE w trybie odczytu (10). To fakt o jakości
+     danych, nie akcja: administrator i pilot mają widzieć, że liczba pod spodem nie
+     jest tą, którą zapisał przyrząd.
+
+     JEST CELEM DOTKNIĘCIA W OBU TRYBACH i prowadzi do historii zmian (10I) —
+     „co właściwie zmieniono" jest naturalnym następnym pytaniem, a w trybie odczytu
+     plakietka jest jedyną drogą do odpowiedzi (arkusza korekty tam nie ma).
+     Napisu NIE powiększamy: „popr." jest przypisem do nazwy, a nie przyciskiem,
+     i wiersz osi w odczycie ma 28 px (issue #40). Obszar reakcji rozciąga `hitSlop`. */
+  .tag-corrected {
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:4px; padding:1px 5px; text-decoration:none;
+  }
+
+  /* Wiersz dopisania na końcu osi — 44 px celu dotknięcia, kreska nad nim. */
+  .axis-add { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-top:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--text-muted); text-decoration:none; }
+  .axis-add:hover { color:var(--text-secondary); background:var(--surface-hover); }
+  .axis-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--border); background:var(--surface-raised); }
+  .axis-foot-item { display:flex; flex-direction:column; gap:2px; }
+  .axis-foot-val { font-family:var(--font-display); font-size:20px; letter-spacing:1.5px; line-height:1; color:var(--text-primary); }
+  .axis-foot-val.green { color:var(--green); }
+  .axis-foot-val.amber { color:var(--amber); }
+  .axis-foot-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
+
+  /* Rachunki — w trybie edycji BEZ ołówków. Odczyt paliwa i licznika poprawia się
+     na osi, przy przejęciu i zdaniu, bo tam ten odczyt powstał. Ołówek przy wierszu
+     rachunku prowadziłby do tego samego arkusza z drugiego miejsca, a rachunek jest
+     wynikiem, nie zapisem — nie ma czego w nim poprawiać. */
+  .calc-row { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:8px 12px; }
+  .calc-key { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.5px; color:var(--text-secondary); }
+  .calc-key .op { color:var(--text-muted); display:inline-block; width:10px; }
+  .calc-val { font-family:var(--font-mono); font-size:12px; color:var(--text-primary); }
+  .calc-total { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:9px 12px; border-top:1px solid var(--border-strong); background:rgba(255,255,255,0.015); }
+  .calc-total-key { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .calc-total-val { font-family:var(--font-display); font-size:26px; letter-spacing:1.5px; line-height:1; }
+  .calc-total-val.amber { color:var(--amber); }
+  .calc-foot-note {
+    font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted);
+    padding:8px 12px; border-top:1px solid var(--border); line-height:1.6;
+  }
+
+  /* Wiersze klucz → wartość (załoga) */
+  .info-row { padding:9px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .info-row:first-of-type { border-top:none; }
+  .info-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .info-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); text-align:right; }
+  /* Ołówek przy WIERSZU — ten sam kształt, co na osi i przy notatce. Wypełniona
+     pigułka w nagłówku karty (pierwsza wersja) czytała się jak akcja główna ekranu,
+     a otwarcie korekty jest jednym z kilku ołówków. */
+  .info-row.editable { min-height:44px; text-decoration:none; }
+  .info-row.editable:hover { background:rgba(255,255,255,0.02); }
+  .row-pen { width:18px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); flex-shrink:0; }
+
+  /* Notatka jako cel dotknięcia (44 px) */
+  .note-row { display:flex; align-items:center; gap:10px; min-height:44px; padding:10px 12px; text-decoration:none; }
+  .note-row:hover { background:rgba(255,255,255,0.02); }
+  .note-body { display:flex; flex-direction:column; gap:4px; flex:1; }
+  /* Górny wiersz notatki — stempel (tylko przy uwagach wpisów ręcznych) i „popr.".
+     Nie istnieje, gdy nie ma czego nieść: notatka świeżo napisana zaczyna się tekstem. */
+  .note-head { display:flex; align-items:center; gap:6px; }
+  .note-when { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
+  .note-text { font-size:12px; color:var(--text-secondary); line-height:1.55; }
+  .note-row + .note-row { border-top:1px solid var(--border); }
+  .note-add { flex:1; font-size:12px; color:var(--text-muted); }
+
+  /* Pas akcji */
+  .btn-row { display:flex; gap:8px; }
+  .btn-secondary {
+    display:flex; align-items:center; justify-content:center; gap:8px; flex:1;
+    padding:13px; border-radius:12px; background:var(--surface-raised); color:var(--text-secondary);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--border-strong); text-decoration:none; cursor:pointer;
+  }
+  .btn-secondary:hover { border-color:var(--green-border); color:var(--text-primary); }
+  .btn-done {
+    display:flex; align-items:center; justify-content:center; gap:8px; flex:1;
+    padding:13px; border-radius:12px; background:var(--surface-raised); color:var(--green);
+    font-family:var(--font-display); font-size:16px; letter-spacing:2px;
+    border:1px solid var(--green-border); text-decoration:none; cursor:pointer;
+  }
+  /* Dlaczego „ZAKOŃCZ EDYCJĘ" nie jest zielonym przyciskiem pełnym: nie zapisuje
+     niczego. Każda korekta zapisuje się w chwili potwierdzenia arkusza (append-only),
+     więc przycisk w kolorze akcji głównej obiecywałby zatwierdzenie, którego nie ma —
+     i pilot, który go nie dotknie, myślałby, że stracił poprawki. */
+
+  /* ===== VARIANTS PANEL ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 10D</span>
+  <span class="slug">sesja · tryb edycji</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 10</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Sesja w trybie edycji">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <!-- APP HEADER — ten sam co na 10, plus plakietka trybu.
+         Powrót zostaje „‹ Dzień": tryb edycji nie jest osobnym ekranem i nie ma
+         własnego stosu nawigacji. Wyjście z trybu stoi na dole, przy akcjach. -->
+    <div class="app-header">
+      <a href="01-moj-dzien.html" class="back-btn" title="Wróć do Mój dzień">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Dzień
+      </a>
+      <div class="app-header-center">
+        <span class="screen-title">SESJA</span>
+        <span class="header-subtitle">SP-AXA · 06 SIE · SKOKI</span>
+      </div>
+      <div class="app-header-right">
+        <span class="mode-badge">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+          EDYCJA
+        </span>
+      </div>
+    </div>
+
+    <div class="scroll">
+
+      <!-- ══ NIESPÓJNOŚCI ════════════════════════════════════════════════════
+           Stoją NAD terminem korekty, bo wymagają czynności, a termin jest tylko
+           informacją. Każdy wiersz nazywa fakt i mówi, czym się go naprawia —
+           „nieścisłość" bez wskazania narzędzia jest zarzutem, nie pomocą. -->
+      <div class="issues">
+        <div class="issues-head">
+          <svg class="issues-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="issues-title">2 niespójności w logu</span>
+        </div>
+        <div class="issue-row">
+          <span class="issue-dot"></span>
+          <span class="issue-text"><b>Lot 2 nie ma lądowania.</b> Silnik stanął o 09:55, a ostatni start był o 09:12 — dopisz lądowanie przyciskiem <b>DODAJ WPIS</b>.</span>
+        </div>
+        <div class="issue-row">
+          <span class="issue-dot"></span>
+          <span class="issue-text"><b>Zrzut 2 zapisany na ziemi.</b> Wyniesienie o 09:05 wypada między lądowaniem lotu 1 (09:01) a startem lotu 2 (09:12) — popraw czas albo unieważnij zrzut.</span>
+        </div>
+      </div>
+
+      <!-- Termin samodzielnej korekty (status — nie do zamknięcia) -->
+      <div class="correction-window">
+        <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+        <span class="cw-text">Poprawiasz samodzielnie do <b>07 SIE 11:20 UTC</b> — 24 h od zdania samolotu. Później korektę nanosi administrator.</span>
+      </div>
+
+      <!-- ══ PRZEBIEG SESJI ═══════════════════════════════════════════════════
+           Miniatura śladu ZOSTAJE także w trybie edycji, choć nie da się jej
+           poprawić: to jedyny obraz, na którym widać, że wiersz osi opisuje lot,
+           którego kształt się zgadza (albo nie). Bez niej pilot poprawiałby czasy
+           w oderwaniu od tego, co maszyna faktycznie zrobiła. -->
+      <div class="section-card">
+        <div class="section-card-head">
+          Przebieg sesji
+          <span class="spacer"></span>
+          <span class="head-note">dotknij wiersza, aby poprawić</span>
+        </div>
+
+        <div class="axis">
+          <!-- PRZEJĘCIE — ołówek prowadzi do arkusza ODCZYTU (10F), nie do korekty
+               czasu: przy przejęciu poprawia się paliwo i licznik. Czasu przejęcia
+               nie ruszamy — wyznacza go `session_claim`, czyli moment, w którym
+               maszyna została komuś odebrana; to fakt o dwóch pilotach, nie o jednym. -->
+          <a class="axis-row" href="10f-korekta-odczytu.html">
+            <span class="axis-time dim">08:04</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label">
+              <span class="axis-name muted">Przejęcie</span>
+              <span class="axis-sub">odczyt 150 L · 1 234:30</span>
+            </span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time">08:12</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time dim">08:16</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time">08:20</span>
+            <span class="axis-mark"><span class="axis-dot green"></span></span>
+            <span class="axis-label"><span class="axis-name">Start</span></span>
+            <span class="axis-right"><span class="axis-flight">lot 1</span></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <!-- Zrzut prowadzi do WŁASNEGO arkusza (10G): tam obok czasu stoi skład,
+               bo „ilu wyskoczyło" jest przy zrzucie pytaniem równie częstym, co „o której". -->
+          <a class="axis-row" href="10g-korekta-zrzutu.html">
+            <span class="axis-time dim">08:52</span>
+            <span class="axis-mark"><span class="axis-dot blue"></span></span>
+            <span class="axis-label">
+              <span class="axis-name muted">Zrzut 1</span>
+              <span class="axis-sub">4 skoczków · 12 800 ft</span>
+            </span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <!-- Wiersz JUŻ POPRAWIONY: znacznik „popr." stoi przy nazwie, a nie w prawej
+               kolumnie, bo prawa niesie liczbę (czas trwania). Ta sama plakietka jest
+               na 10 w trybie odczytu — poprawka nie chowa się razem z ołówkiem. -->
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time">09:01</span>
+            <span class="axis-mark"><span class="axis-dot red"></span></span>
+            <span class="axis-label">
+              <span class="axis-name">Lądowanie <span class="tag-corrected">popr.</span></span>
+              <span class="axis-sub">było 08:58 · poprawione przez Ciebie</span>
+            </span>
+            <span class="axis-right"><span class="axis-dur">00:41</span></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <!-- Wiersz Z NIESPÓJNOŚCIĄ: kropka amber i podpis mówiący, co jest nie tak.
+               Baner na górze wymienia to samo — powtórzenie jest celowe: baner mówi
+               „są dwa problemy", wiersz mówi „ten". Bez podpisu przy wierszu pilot
+               czytałby baner i szukał, którego zdarzenia dotyczy. -->
+          <a class="axis-row" href="10g-korekta-zrzutu.html">
+            <span class="axis-time dim">09:05</span>
+            <span class="axis-mark"><span class="axis-dot warn"></span></span>
+            <span class="axis-label">
+              <span class="axis-name muted">Zrzut 2</span>
+              <span class="axis-sub" style="color:var(--amber);">na ziemi — sprawdź czas</span>
+            </span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time dim">09:08</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time">09:12</span>
+            <span class="axis-mark"><span class="axis-dot green"></span></span>
+            <span class="axis-label"><span class="axis-name">Start</span></span>
+            <span class="axis-right"><span class="axis-flight">lot 2</span></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time">09:55</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Wyłączenie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <!-- ZDANIE — arkusz odczytu (10F). Tu korekta rusza łańcuch MH następnej
+               sesji tej maszyny, więc arkusz mówi o tym wprost. -->
+          <a class="axis-row" href="10f-korekta-odczytu.html">
+            <span class="axis-time dim">11:20</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label">
+              <span class="axis-name muted">Zdanie</span>
+              <span class="axis-sub">odczyt 171 L · 1 236:05</span>
+            </span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+        </div>
+
+        <!-- DOPISANIE FAKTU jako OSTATNIA POZYCJA OSI (uwaga z urządzenia, 2026-08-14).
+             Wcześniej stało w pasie akcji na dnie ekranu — o pół ekranu od listy, do
+             której dokłada wiersz. Kreska nad wierszem oddziela je od stopki z sumami,
+             żeby nie czytało się jak kolejne zdarzenie sesji. -->
+        <a href="10h-dodaj-wpis.html" class="axis-add">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          DODAJ WPIS
+        </a>
+
+        <div class="axis-foot">
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">01:43</span>
+            <span class="axis-foot-key">Blok</span>
+          </div>
+          <!-- Czas lotu w amber, bo lot 2 nie ma lądowania: suma jest NIEPEŁNA i ekran
+               nie ma prawa podać jej tak samo pewnie jak reszty. Kolor mówi „to jeszcze
+               nie koniec", a nie „błąd" — liczba jest prawdziwa dla tego, co zapisano. -->
+          <div class="axis-foot-item">
+            <span class="axis-foot-val amber">00:41</span>
+            <span class="axis-foot-key">Czas lotu</span>
+          </div>
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">2</span>
+            <span class="axis-foot-key">Starty</span>
+          </div>
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">EPZG</span>
+            <span class="axis-foot-key">Lotnisko</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PALIWO ══════════════════════════════════════════════════════════
+           Rachunek zostaje w trybie edycji, bo poprawiając odczyt pilot patrzy na
+           skutek: zmiana „odczytu przy zdaniu" wprost przesuwa liczbę „zużyte".
+           Werdykt normy jest tu wyciszony (bez plakietki): dopóki log ma
+           niespójności, orzekanie „w normie" byłoby orzekaniem o niepełnych danych. -->
+      <div class="section-card">
+        <div class="section-card-head amber">Paliwo</div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op"></span>Odczyt przy przejęciu</span>
+          <span class="calc-val">150 L</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">+</span>Dolane · 2 tankowania</span>
+          <span class="calc-val">48 L</span>
+        </div>
+        <div class="calc-row">
+          <span class="calc-key"><span class="op">−</span>Odczyt przy zdaniu</span>
+          <span class="calc-val">171 L</span>
+        </div>
+        <div class="calc-total">
+          <span class="calc-total-key">Zużyte</span>
+          <span class="calc-total-val amber">27 L</span>
+        </div>
+        <div class="calc-foot-note">Odczyty poprawisz na osi wyżej — przy przejęciu i przy zdaniu. Werdykt normy wraca, gdy log przestanie być sprzeczny.</div>
+      </div>
+
+      <!-- ══ ZAŁOGA ══════════════════════════════════════════════════════════
+           Ołówek stoi w NAGŁÓWKU karty, nie przy wierszu „Dual": PIC-a nie da się
+           zmienić (to przelogowanie, nie korekta — `PIC_CHANGE_NOT_ALLOWED`), więc
+           edytowalny wiersz jest tu jeden, a dwa ołówki obok siebie sugerowałyby,
+           że oba są celami.
+
+           Poprawka Duala działa WSTECZ na całą sesję: czas blokowy w całości przypisuje
+           się wskazanej osobie. Zmiana załogi W TRAKCIE to inna rzecz (`crew_change`,
+           ekran 07) i arkusz mówi o tym wprost.
+
+           Poprawiony Dual nosi „popr." tak samo jak wiersz osi — jest faktem o danych,
+           nie o prawie zapisu, więc plakietka zostaje widoczna także w trybie ODCZYTU,
+           gdzie jest jedynym wejściem w historię tej zmiany (10I). -->
+      <div class="section-card">
+        <div class="section-card-head">Załoga</div>
+        <!-- PIC ołówka NIE MA i to jest precyzja, nie niedoróbka: jego zmiana to
+             przelogowanie, nie korekta (`PIC_CHANGE_NOT_ALLOWED`). Pusta kolumna
+             ołówka czyta się tak samo jak na osi — brak celu widać od razu. -->
+        <div class="info-row">
+          <span class="info-key">PIC</span>
+          <span class="info-val">TMK · Tomasz Małkiewicz (Ty)</span>
+          <span class="row-pen"></span>
+        </div>
+        <a href="10j-korekta-zalogi.html" class="info-row editable">
+          <span class="info-key">Dual</span>
+          <!-- Plakietka jest OSOBNYM celem dotknięcia: prowadzi do historii (10I),
+               a nie do korekty. W mockupie zostaje `span`, bo cały wiersz jest tu
+               linkiem do arkusza korekty, a link w linku nie istnieje w HTML —
+               w aplikacji to zagnieżdżony `Pressable` z `hitSlop`. Klikalną wersję
+               widać na 10 (odczyt), gdzie wiersz linkiem nie jest. -->
+          <span class="tag-corrected">popr.</span>
+          <span class="info-val">AKO · Anna Kowalska</span>
+          <span class="row-pen">
+            <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+          </span>
+        </a>
+      </div>
+
+      <!-- ══ NOTATKI ═════════════════════════════════════════════════════════
+           Jedyna dana sesji pisana ZDANIEM — i pierwsza, w której literówkę widać
+           gołym okiem. W trybie edycji cały wiersz jest celem dotknięcia i otwiera
+           TEN SAM arkusz, w którym notatka powstała (02e): to ta sama czynność, więc
+           nie ma powodu, żeby wyglądała inaczej. Pusty tekst KASUJE notatkę.
+
+           BEZ STEMPLA: notatka sesji jest DOKŁADNIE JEDNA (jedno pole w payloadzie
+           preflightu), więc „ZADANIE · 08:04" nie odróżniało jej od niczego — mówiło
+           o godzinie potwierdzenia zadania, a po pierwszej poprawce treści wprost
+           kłamało. Stempel zostaje przy uwagach wpisów ręcznych, bo tych bywa wiele.
+
+           I Z TEGO SAMEGO POWODU nie ma tu wiersza „Dodaj notatkę do sesji": obok
+           istniejącej obiecywałby drugą, a naprawdę nadpisałby pierwszą. Wiersz
+           dopisania pokazuje sesja, która notatki NIE MA — patrz komentarz niżej.
+
+           PLAKIETKA „POPR." — ta sama co przy wierszach osi i z tego samego powodu:
+           tekst, który ktoś zmienił, nie jest tym, który pilot wpisał, więc znacznik
+           zostaje widoczny TAKŻE w trybie odczytu (10). Sam nie mówi, co się zmieniło —
+           od tego jest historia zmian, wiersz w arkuszu notatki (10I). -->
+      <div class="section-card">
+        <div class="section-card-head">Notatki</div>
+        <a href="10k-korekta-notatki.html" class="note-row">
+          <span class="note-body">
+            <span class="note-head"><span class="tag-corrected">popr.</span></span>
+            <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
+          </span>
+          <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted);flex-shrink:0;"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+        </a>
+        <!-- SESJA BEZ NOTATKI dostaje w tym miejscu JEDEN wiersz zamiast powyższego:
+             „Dodaj notatkę do sesji" z PLUSEM (ołówek obiecuje poprawianie istniejącej
+             wartości, a tu jeszcze niczego nie ma). Ten wiersz jest powodem, dla
+             którego karta „Notatki" istnieje w trybie EDYCJI także pusta — w odczycie
+             nadal nie (issue #40). Bez niego sesja bez notatki nie miała jak notatki
+             dostać: wejście znikało w stanie, w którym jest potrzebne. -->
+      </div>
+
+      <!-- ══ PAS AKCJI ═══════════════════════════════════════════════════════
+           „ZAKOŃCZ EDYCJĘ" niczego nie zapisuje — każda korekta zapisuje się
+           w chwili potwierdzenia arkusza — więc nie jest przyciskiem pełnym.
+           Pod pasem stało kiedyś zdanie tłumaczące to wprost („korekty zapisują się
+           od razu — rejestr jest append-only…") i zostało USUNIĘTE: opisywało
+           wewnętrzną budowę rejestru komuś, kto o nią nie pytał, i tłumaczyło brak
+           przycisku, którego nikt nie szuka. Ta sama reguła, przez którą wyleciał
+           przypis „odczytu nie da się unieważnić" z arkuszy korekty. -->
+      <!-- „DODAJ WPIS" stał TU, obok „ZAKOŃCZ EDYCJĘ", i przeniósł się na KONIEC OSI
+           (uwaga z urządzenia, 2026-08-14): dopisywany fakt trafia do przebiegu sesji
+           i zwykle na jego koniec, więc wejście ma stać tam, gdzie skończy się jego
+           skutek — a nie o pół ekranu niżej, za rachunkami paliwa i motogodzin. -->
+      <div class="btn-row">
+        <a href="10-statystyki.html" class="btn-done">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          ZAKOŃCZ EDYCJĘ
+        </a>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
+  <a class="vp-item" href="10-statystyki.html">
+    <span class="vp-badge">10</span>
+    <span class="vp-body">
+      <span class="vp-name">Sesja — odczyt</span>
+      <span class="vp-when">Stan domyślny: oś czysto opisowa, wiersz 28 px, bez ołówków. Znacznik „popr." zostaje — mówi o danych, nie o możliwości zapisu — i tam JEST celem dotknięcia: otwiera historię zmian (10I), bo bez arkusza korekty nie ma innej drogi do pytania „co właściwie zmieniono".</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="10d-edycja.html">
+    <span class="vp-badge amber">10D</span>
+    <span class="vp-body">
+      <span class="vp-name">Sesja — tryb edycji</span>
+      <span class="vp-when">Po „EDYTUJ DANE" na 10 (albo z kokpitu po zatrzymaniu silnika, kafelkiem „Popraw dane sesji"): każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na końcu osi dochodzi wiersz „DODAJ WPIS". Wejście istnieje wyłącznie w oknie korekty — po 24 h od zdania ekran jest podglądem (10B).</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="10e-korekta-zdarzenia.html">
+    <span class="vp-badge amber">10E</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz — korekta zdarzenia</span>
+      <span class="vp-when">Ołówek przy starcie, lądowaniu, kołowaniu, uruchomieniu i wyłączeniu silnika: czas zdarzenia, powód, historia zmian i „tego zdarzenia nie było".</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10f-korekta-odczytu.html">
+    <span class="vp-badge amber">10F</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz — korekta odczytu</span>
+      <span class="vp-when">Ołówek przy przejęciu i zdaniu: paliwo i motogodziny. Bez czasu i bez unieważnienia — sesja bez odczytu przy zdaniu nie ma jak przekazać maszyny dalej.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10g-korekta-zrzutu.html">
+    <span class="vp-badge amber">10G</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz — korekta zrzutu</span>
+      <span class="vp-when">Ołówek przy wyniesieniu: czas i skład (tandem / AFF / solo). Wysokość zostaje odczytem z GPS — jej się nie wpisuje.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10h-dodaj-wpis.html">
+    <span class="vp-badge amber">10H</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz — dodaj wpis</span>
+      <span class="vp-when">Zdarzenie, którego autodetekcja nie zapisała: start, lądowanie, kołowanie, zrzut, załadunek albo tankowanie. Klamry silnika tu nie ma — uruchomienie i wyłączenie zapisuje przycisk w kokpicie.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10j-korekta-zalogi.html">
+    <span class="vp-badge amber">10J</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz — korekta załogi</span>
+      <span class="vp-when">Ołówek w nagłówku karty „Załoga": drugi pilot CAŁEJ sesji. Poprawka działa wstecz i przepisuje czas blokowy na wskazaną osobę; PIC-a nie da się zmienić (to przelogowanie, nie korekta). Zmianę załogi w TRAKCIE zapisuje kokpit (07).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10k-korekta-notatki.html">
+    <span class="vp-badge amber">10K</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz — korekta notatki</span>
+      <span class="vp-when">Wiersz karty „Notatki". Ten sam arkusz, w którym notatka powstała (02e), plus wejście w historię zmian; pusty tekst ją kasuje. Poprawiona notatka nosi „popr." także w trybie odczytu.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10i-historia-zmian.html">
+    <span class="vp-badge blue">10I</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz — historia zmian</span>
+      <span class="vp-when">Spod każdego arkusza korekty: co, kiedy i przez kogo zostało zmienione, razem z pierwotnym zapisem. Rejestr jest append-only, więc lista jest kompletna z definicji.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="10b-rozliczenie-zamkniete.html">
+    <span class="vp-badge amber">10B</span>
+    <span class="vp-body">
+      <span class="vp-name">Sesja — po oknie (podgląd)</span>
+      <span class="vp-when">Minęły 24 h od zdania: „EDYTUJ DANE" nie ma, więc i tryb edycji jest nieosiągalny. Dalsze poprawki wprowadza administrator.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="10-statystyki.html">← 10 Sesja</a>
+  <a href="10d-edycja.html" class="active">10D Edycja</a>
+  <a href="10e-korekta-zdarzenia.html">10E Zdarzenie</a>
+  <a href="10f-korekta-odczytu.html">10F Odczyt</a>
+  <a href="10g-korekta-zrzutu.html">10G Zrzut</a>
+  <a href="10h-dodaj-wpis.html">10H Dodaj</a>
+  <a href="10i-historia-zmian.html">10I Historia</a>
+  <a href="10j-korekta-zalogi.html">10J Załoga</a>
+  <a href="10k-korekta-notatki.html">10K Notatka</a>
+  <span>·</span>
+  <a href="14-slad.html">14 Ślad →</a>
+</nav>
+
+</body>
+</html>

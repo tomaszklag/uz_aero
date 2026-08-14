@@ -261,6 +261,7 @@ export async function testHarness(
       sessions,
       aircraftConfig,
       exporter,
+      flags,
       clock,
       randomUUID,
     ),

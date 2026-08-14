@@ -27,7 +27,7 @@
  * historii, a nie przejściem stanu „tu i teraz". Dlatego nie podlega gwardiom silnika.
  */
 
-import type { Event, EventType } from '../events';
+import type { CorrectionFields, Event, EventType } from '../events';
 import type { ReferenceAircraft } from '../reference';
 import type { EpochMillis } from '../time';
 import { eventTime, type SessionState } from '../projections';
@@ -598,20 +598,45 @@ function checkByType(
         break;
       }
 
-      // Korygowalne są FAKTY OPERACYJNE (starty, lądowania, cykle, tankowania…).
-      // Zdarzenia cyklu życia sesji mają własne ścieżki: claim to tożsamość dnia,
-      // preflight i day_close niosą odczyty łańcucha MH (§4.5) — „przesunięcie czasu"
-      // niczego by w nich nie poprawiało, a unieważnienie rozbiłoby sesję w pół.
+      // Sama korekta pozostaje NIETYKALNA: poprawia się fakt, nie poprawkę — kolejna
+      // korekta tego samego celu po prostu zastępuje poprzednią.
+      if (targetType === 'event_correction') {
+        v.push(
+          error(
+            'CORRECTION_TARGET_NOT_ALLOWED',
+            'Korekty się nie poprawia — dopisz kolejną korektę tego samego zdarzenia.',
+          ),
+        );
+      }
+
+      // `session_claim` przyjmuje WYŁĄCZNIE `retime` (uwaga z urządzenia, issue #43).
+      // Godzina przejęcia jest zwykłym faktem — „wziąłem samolot o 9:00, nie o 8:04" —
+      // i pilot musi umieć ją sprostować. Nietykalna zostaje sama ISTOTA claimu:
+      // `void` zabrałby sesji właściciela (§4.4), a `amend` nie ma tam czego zmienić
+      // (tryb przejęcia opisuje, jak maszyna została wzięta, a nie liczbę do poprawy).
+      if (targetType === 'session_claim' && p.action !== 'retime') {
+        v.push(
+          error(
+            'CORRECTION_TARGET_NOT_ALLOWED',
+            'Przejęcia nie da się unieważnić — sesja zostałaby bez właściciela. Poprawić można jego godzinę.',
+          ),
+        );
+      }
+
+      // `preflight_confirm` i `day_close` przestały być całkiem niekorygowalne (issue #43),
+      // ale WYŁĄCZNIE przez `amend`: pilot musi umieć poprawić odczyt paliwa i licznika,
+      // bo to jego jedyny zapis stanu maszyny. Czasu tych dwóch chwil się nie zmienia
+      // (wyznacza je przejęcie i zdanie maszyny, czyli fakt o dwóch pilotach), a
+      // unieważnienie rozbiłoby sesję w pół — zostawiłoby ją bez początku albo bez końca
+      // łańcucha MH (§4.5).
       if (
-        targetType === 'session_claim' ||
-        targetType === 'preflight_confirm' ||
-        targetType === 'day_close' ||
-        targetType === 'event_correction'
+        (targetType === 'preflight_confirm' || targetType === 'day_close') &&
+        p.action !== 'amend'
       ) {
         v.push(
           error(
             'CORRECTION_TARGET_NOT_ALLOWED',
-            'To zdarzenie nie podlega korekcie — poprawki dotyczą zdarzeń operacyjnych (starty, lądowania, cykle, tankowania).',
+            'Przejęcia i zdania samolotu nie da się przesunąć w czasie ani unieważnić — poprawić można odczyt paliwa i motogodzin.',
           ),
         );
       }
@@ -620,6 +645,10 @@ function checkByType(
       // zegar telefonu w chwili zapisu poprawki — bardziej aktualnego „teraz" nie mamy.
       if (p.action === 'retime' && p.newTime > candidate.deviceTime) {
         v.push(error('CORRECTION_TIME_IN_FUTURE', 'Poprawiony czas nie może być z przyszłości.'));
+      }
+
+      if (p.action === 'amend' && targetType != null) {
+        v.push(...checkAmendFields(p.fields, targetType, limits, state.sessionPicId));
       }
       break;
     }
@@ -766,6 +795,98 @@ export interface KnownMh {
  */
 export function lastKnownMh(state: SessionState): KnownMh | null {
   return state.mh.start != null ? { value: state.mh.start, since: 'przy przejęciu' } : null;
+}
+
+/**
+ * Pola dopuszczone przez `amend` dla danego typu celu (issue #43) — BIAŁA LISTA.
+ *
+ * Reguła jest tu, a nie w `applyCorrections`, bo to jest decyzja o WEJŚCIU: nakładanie
+ * musi umieć przeżyć wiersz, którego nie rozumie (baza nie ma `CHECK`-a na payloadzie),
+ * ale zapis nie ma prawa go wpuścić. Bez tej listy telefon mógłby wysłać „skoczkowie
+ * przy wyłączeniu silnika" — payload przeszedłby walidację kształtu, po czym po cichu
+ * nic by nie zrobił, bo `amend` nie miałby czego w nim zmienić.
+ */
+const AMEND_ALLOWED: Partial<Record<EventType, readonly (keyof CorrectionFields)[]>> = {
+  // Notatka z kroku „zadanie" (02e) i skład załogi należą do preflightu: tam pilot
+  // napisał jedno i zadeklarował drugie.
+  preflight_confirm: ['fuelL', 'mh', 'notes', 'dualId'],
+  day_close: ['fuelL', 'mh'],
+  drop: ['jumpers'],
+  manual_log_entry: ['notes'],
+};
+
+/** Nazwy pól dla komunikatu — pilot nie zna nazw z payloadu. */
+const AMEND_FIELD_LABEL: Record<keyof CorrectionFields, string> = {
+  fuelL: 'paliwo',
+  mh: 'motogodziny',
+  jumpers: 'skład zrzutu',
+  notes: 'notatka',
+  dualId: 'drugi pilot',
+};
+
+/**
+ * Wartości korekty `amend` — te same progi, co przy pierwszym zapisie.
+ *
+ * Poprawka nie jest furtką omijającą reguły: 300 litrów w zbiorniku na 212 jest tak samo
+ * niemożliwe wpisane przy zdaniu, jak dopisane dzień później. Dlatego sięgamy po te same
+ * funkcje (`checkFuelReading`), a nie po ich kopię.
+ */
+function checkAmendFields(
+  fields: CorrectionFields,
+  targetType: EventType,
+  limits: AircraftLimits,
+  /** PIC sesji — do reguły `DUAL_IS_PIC` przy korekcie załogi (issue #43). */
+  sessionPicId: string | null,
+): RuleViolation[] {
+  const v: RuleViolation[] = [];
+  const allowed = AMEND_ALLOWED[targetType] ?? [];
+  // `jumpers: null` i `notes: null` są WARTOŚCIAMI (skład niepodany, notatka skasowana),
+  // więc obecność pola liczymy po kluczu, nie po `!== undefined`.
+  const present = (Object.keys(fields) as (keyof CorrectionFields)[]).filter(
+    (key) =>
+      fields[key] !== undefined || key === 'jumpers' || key === 'notes' || key === 'dualId',
+  );
+
+  if (present.length === 0) {
+    v.push(
+      error('CORRECTION_FIELD_NOT_ALLOWED', 'Korekta wartości nie wskazuje żadnego pola.'),
+    );
+  }
+
+  for (const key of present) {
+    if (!allowed.includes(key)) {
+      v.push(
+        error(
+          'CORRECTION_FIELD_NOT_ALLOWED',
+          `Pole „${AMEND_FIELD_LABEL[key]}" nie należy do tego zdarzenia.`,
+          { field: key, targetType },
+        ),
+      );
+    }
+  }
+
+  if (fields.fuelL != null) v.push(...checkFuelReading(fields.fuelL, limits, 'Odczyt paliwa'));
+  if (fields.mh != null && fields.mh < 0) {
+    v.push(error('MH_NEGATIVE', 'Odczyt motogodzin nie może być ujemny.', { mh: fields.mh }));
+  }
+  if (fields.jumpers != null) {
+    const { tandem, aff, solo } = fields.jumpers;
+    if (tandem < 0 || aff < 0 || solo < 0) {
+      v.push(
+        error('DROP_NEGATIVE_JUMPERS', 'Liczba skoczków nie może być ujemna.', {
+          tandem,
+          aff,
+          solo,
+        }),
+      );
+    }
+  }
+  // Ta sama reguła, co przy `crew_change`: jedna osoba nie leci sama ze sobą w dwóch
+  // rolach, a czas blokowy policzony dwa razy temu samemu pilotowi jest nalotem z niczego.
+  if (fields.dualId != null && fields.dualId === sessionPicId) {
+    v.push(error('DUAL_IS_PIC', 'Dual nie może być tą samą osobą co PIC.'));
+  }
+  return v;
 }
 
 /** Odczyt paliwomierza: nieujemny i mieszczący się w zbiornikach (§3.4). */

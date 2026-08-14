@@ -474,14 +474,6 @@
       <div class="card-tags"><span class="tag">read-only</span><span class="tag">single-writer</span></div>
     </div>
   </a>
-  <a href="04c-korekta-zdarzenia.html" class="card">
-    <div class="card-num">04C</div>
-    <div class="card-body">
-      <div class="card-title">04c-korekta-zdarzenia</div>
-      <div class="card-desc">Korekta błędu autodetekcji — zmiana czasu lub oznaczenie „tego lądowania nie było". Append-only: nie kasuje historii, zapisuje zdarzenie korygujące</div>
-      <div class="card-tags"><span class="tag">korekta</span><span class="tag">append-only</span></div>
-    </div>
-  </a>
   <a href="04d-wyjscie-z-kokpitu.html" class="card">
     <div class="card-num">04D</div>
     <div class="card-body">
@@ -596,6 +588,70 @@
       <div class="card-tags"><span class="tag">arkusz</span><span class="tag">norma</span><span class="tag">tylko odczyt</span></div>
     </div>
   </a>
+  <a href="10d-edycja.html" class="card amber">
+    <div class="card-num">10D</div>
+    <div class="card-body">
+      <div class="card-title">10d-edycja (tryb edycji sesji)</div>
+      <div class="card-desc">Ekran sesji po „EDYTUJ DANE" (issue #43) — wiersz osi rośnie do 44 px i dostaje ołówek, na górze wchodzą wykryte niespójności logu, na dole „DODAJ WPIS". Zastąpił listę ręczną (08) i arkusz 04C: korekta ma jedne drzwi i jeden kształt. Wejście także z kokpitu po STOP ENGINE — kafelkiem „Popraw dane sesji", z powrotem do kokpitu</div>
+      <div class="card-tags"><span class="tag amber">tryb edycji</span><span class="tag">niespójności</span><span class="tag">okno 24 h</span></div>
+    </div>
+  </a>
+  <a href="10e-korekta-zdarzenia.html" class="card">
+    <div class="card-num">10E</div>
+    <div class="card-body">
+      <div class="card-title">10e-korekta-zdarzenia</div>
+      <div class="card-desc">Arkusz korekty zdarzenia czasowego (uruchomienie, kołowanie, start, lądowanie, wyłączenie) — czas krokami ±1 min, wpływ na czas lotu liczony podwójną projekcją, opcjonalny powód, wejście w historię zmian i strefa destrukcyjna „tego lądowania nie było". Następca 04C</div>
+      <div class="card-tags"><span class="tag">korekta</span><span class="tag">append-only</span></div>
+    </div>
+  </a>
+  <a href="10f-korekta-odczytu.html" class="card amber">
+    <div class="card-num">10F</div>
+    <div class="card-body">
+      <div class="card-title">10f-korekta-odczytu</div>
+      <div class="card-desc">Arkusz korekty paliwa i motogodzin przy PRZEJĘCIU albo ZDANIU — dwa pola obok siebie (spisuje się je jednym spojrzeniem na tablicę), wpływ na zużycie sesji, ostrzeżenie o łańcuchu MH i przekazaniu następnemu pilotowi. Bez zmiany czasu i bez unieważnienia</div>
+      <div class="card-tags"><span class="tag amber">odczyt</span><span class="tag">łańcuch MH</span></div>
+    </div>
+  </a>
+  <a href="10g-korekta-zrzutu.html" class="card">
+    <div class="card-num">10G</div>
+    <div class="card-body">
+      <div class="card-title">10g-korekta-zrzutu</div>
+      <div class="card-desc">Arkusz korekty wyniesienia — czas plus skład (tandem / AFF / solo) w jednym miejscu, bo przy zrzucie „o której" i „ilu wyskoczyło" mylą się tak samo często. Wysokość zostaje odczytem z GPS (średnia z 15 s), skład pozostaje opcjonalny</div>
+      <div class="card-tags"><span class="tag">zrzut</span><span class="tag">skład</span></div>
+    </div>
+  </a>
+  <a href="10h-dodaj-wpis.html" class="card">
+    <div class="card-num">10H</div>
+    <div class="card-body">
+      <div class="card-title">10h-dodaj-wpis</div>
+      <div class="card-desc">Dopisanie zdarzenia, którego w logu nie ma — siatka sześciu typów (start, lądowanie, kołowanie, zrzut, załadunek, tankowanie), czas krokami ±1 min i wiersze odniesienia zależne od typu. Klamry silnika na liście NIE MA: sesja ma jeden bieg, a jej czasy poprawia się ołówkiem</div>
+      <div class="card-tags"><span class="tag">wpis ręczny</span><span class="tag">fallback GPS</span></div>
+    </div>
+  </a>
+  <a href="10j-korekta-zalogi.html" class="card amber">
+    <div class="card-num">10J</div>
+    <div class="card-body">
+      <div class="card-title">10j-korekta-zalogi</div>
+      <div class="card-desc">Poprawka drugiego pilota CAŁEJ sesji — lista kart z cache'u referencyjnego (bez PIC-a, bo `DUAL_IS_PIC`), opcja „bez Duala", powód i historia zmian. Działa wstecz: czas blokowy przypisuje się wskazanej osobie. Zmiana załogi w TRAKCIE to inne zdarzenie i inny ekran (07)</div>
+      <div class="card-tags"><span class="tag amber">załoga</span><span class="tag">cała sesja</span></div>
+    </div>
+  </a>
+  <a href="10k-korekta-notatki.html" class="card amber">
+    <div class="card-num">10K</div>
+    <div class="card-body">
+      <div class="card-title">10k-korekta-notatki</div>
+      <div class="card-desc">Poprawka notatki — TEN SAM arkusz, w którym notatka powstała (02e), plus jedno: wiersz historii zmian. Pusty tekst kasuje notatkę. Powodu tu nie ma, bo wyjaśnieniem jest sam nowy tekst; poprawiona notatka dostaje na ekranie sesji plakietkę „popr.", widoczną także w trybie odczytu</div>
+      <div class="card-tags"><span class="tag amber">notatka</span><span class="tag">historia zmian</span></div>
+    </div>
+  </a>
+  <a href="10i-historia-zmian.html" class="card">
+    <div class="card-num">10I</div>
+    <div class="card-body">
+      <div class="card-title">10i-historia-zmian</div>
+      <div class="card-desc">Historia poprawek pola albo zdarzenia — „było → jest", kto (pilot czy administrator), kiedy i z jakim powodem, a na dole zapis pierwotny. Lista jest kompletna z definicji, bo rejestr jest append-only; sam odczyt, także w trybie podglądu (10B)</div>
+      <div class="card-tags"><span class="tag">historia</span><span class="tag">append-only</span><span class="tag">tylko odczyt</span></div>
+    </div>
+  </a>
   <a href="14b-slad-brak.html" class="card">
     <div class="card-num">14B</div>
     <div class="card-body">
@@ -641,14 +697,6 @@
       <div class="card-tags"><span class="tag">załoga</span><span class="tag green">PIC / Dual</span></div>
     </div>
   </a>
-  <a href="08-lista-reczna.html" class="card">
-    <div class="card-num">08</div>
-    <div class="card-body">
-      <div class="card-title">08-lista-reczna</div>
-      <div class="card-desc">Ręczna lista lotów (fallback GPS) — rejestr dnia z kolumną „Uwagi" + interaktywny arkusz „Nowy wpis ręczny" (§3.8: 4 czasy ze stepperami ±1 min, uwagi, chip RĘCZNIE)</div>
-      <div class="card-tags"><span class="tag">fallback GPS</span><span class="tag">tabela</span><span class="tag amber">wpis ręczny</span></div>
-    </div>
-  </a>
   <a href="13-ustawienia.html" class="card">
     <div class="card-num">13</div>
     <div class="card-body">
@@ -675,7 +723,7 @@
     <div class="card-num">10</div>
     <div class="card-body">
       <div class="card-title">10-statystyki (sesja)</div>
-      <div class="card-desc">Detale JEDNEJ sesji (oś SAMOLOTU, nie doby) — ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania (uruchomienie, kołowanie, starty, zrzuty, lądowania, wyłączenie), rachunek paliwa i motogodzin zakończony plakietką werdyktu (szczegóły normy pod tapnięciem — 10C), zrzuty i notatki pilota. Wywoływane kafelkiem sesji w logu dnia (01) i takim samym kafelkiem w historii (12). Korekta czasów ma JEDNE drzwi: „EDYTUJ DANE" pod ekranem, a nie ołówek przy każdym wierszu</div>
+      <div class="card-desc">Detale JEDNEJ sesji (oś SAMOLOTU, nie doby) — ślad całego biegu silnika ze znacznikami startów i lądowań, oś czasu od przejęcia do zdania (uruchomienie, kołowanie, starty, zrzuty, lądowania, wyłączenie), rachunek paliwa i motogodzin zakończony plakietką werdyktu (szczegóły normy pod tapnięciem — 10C), zrzuty i notatki pilota. Wywoływane kafelkiem sesji w logu dnia (01) i takim samym kafelkiem w historii (12). Korekta ma JEDNE drzwi: „EDYTUJ DANE" pod ekranem przełącza ten sam ekran w tryb edycji (10D) — czasy zdarzeń, odczyty paliwa i MH, skład zrzutu i brakujące wpisy</div>
       <div class="card-tags"><span class="tag">sesja</span><span class="tag">oś samolotu</span><span class="tag">norma</span></div>
     </div>
   </a>

@@ -252,13 +252,18 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
       targetUuid: UUID.engineStop,
       action: 'retime',
       newTime: at(10, 22),
+      // ODWRÓCENIE reguły z 2026-07: powód wchodzi do rejestru od issue #43, bo tę samą
+      // historię zmian czyta PILOT na telefonie (`design/10i`) i korekty administratora
+      // do niego wracają (§4.9). Uzasadnienie wyłącznie w audycie znaczyłoby, że na jego
+      // ekranie cudza poprawka stoi jako „bez powodu", choć powód jest i jest wymagany.
+      reason: 'Zegar telefonu spieszył 12 min; godzinę potwierdza książka samolotu.',
+      source: 'admin',
     });
     // Tożsamość w rejestrze to PIC SESJI — inaczej `WRITER_MISMATCH`, i słusznie.
-    // Że zrobił to administrator, mówi `source_device` i dziennik audytu.
+    // Kto to zrobił, mówią TRZY rzeczy: `source_device`, dziennik audytu i — od issue
+    // #43 — `payload.source`, jedyna z nich widoczna dla telefonu.
     expect(correction.pic_id).toBe(PIC);
     expect(correction.source_device).toBe('admin:TMK');
-    // Powód korekty NIE wchodzi do rejestru — rejestr opisuje lot, nie motywację.
-    expect(JSON.stringify(correction.payload)).not.toContain('Zegar telefonu');
 
     // ── projekcja: liczby dnia faktycznie się zmieniły ────────────────────────
     expect(await sessionRow(db)).toEqual({
@@ -326,9 +331,14 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     // Wiersz oryginału ZOSTAJE — „cofnięcie" pomyłki samo jest udokumentowane.
     const rows = await eventRows(db);
     expect(rows.find((r) => r.uuid === UUID.landing)).toBeDefined();
+    // Payload niesie od issue #43 dwa pola więcej: POWÓD (czyta go pilot w historii
+    // zmian, nie tylko audyt) i ŹRÓDŁO (nagłówek nosi `picId` pilota, więc bez tego
+    // znacznika telefon nie odróżniłby korekty administratora od własnej).
     expect(rows.find((r) => r.type === 'event_correction')!.payload).toEqual({
       targetUuid: UUID.landing,
       action: 'void',
+      reason: 'Przelot nad pasem zaliczony jako lądowanie — potwierdzone z pilotem.',
+      source: 'admin',
     });
 
     expect(await sessionRow(db)).toMatchObject({ flightMs: 0, blockMs: BLOCK_MS });
@@ -447,7 +457,7 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
     expect(await auditRows(db)).toEqual([]);
   });
 
-  it('cel niekorygowalny (day_close) → 422 — odczyty łańcucha MH zostają nienaruszalne', async () => {
+  it('zdania samolotu nie da się unieważnić → 422; sesja nie zostaje bez końca łańcucha MH', async () => {
     const { app, db } = await flownDay();
     const admin = await login(app, 'TMK');
 
@@ -458,6 +468,143 @@ describe('korekta administratora po oknie 24 h (A02b)', () => {
 
     expect(res.statusCode).toBe(422);
     expect(res.json().violations).toMatchObject([{ code: 'CORRECTION_TARGET_NOT_ALLOWED' }]);
+    expect(await eventRows(db)).toHaveLength(7);
+  });
+
+  /**
+   * `amend` (issue #43) — jedyna korekta dopuszczona na odczytach. Po zamknięciu okna
+   * 24 h administrator jest JEDYNYM, kto może poprawić paliwo albo licznik, a baner
+   * na ekranie pilota obiecuje właśnie to („dalsze poprawki wprowadza administrator").
+   */
+  it('amend: poprawia odczyt przy zdaniu, przelicza dzień i stempluje autorstwo', async () => {
+    const { app, db } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await correct(app, SESSION, {
+      token: admin,
+      body: {
+        targetUuid: UUID.dayClose,
+        action: 'amend',
+        fields: { fuelL: 96 },
+        reason: 'Pilot przepisał 88 zamiast 96 — zdjęcie tarczy w załączniku sprawy.',
+      },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ action: 'amend', targetUuid: UUID.dayClose });
+    // Stan dnia PO korekcie liczy serwer i oddaje w odpowiedzi — panel nie liczy sam.
+    expect(res.json().state.fuel).toMatchObject({ endL: 96, consumedL: 150 - 96 });
+    // Karta arkusza składa się od nowa: poprawka odczytu zmienia liczby doby samolotu,
+    // więc rewizja musi pójść w górę tak samo jak po `retime` (§4.7).
+    expect(res.json().reexport).toMatchObject({ exported: true, revision: 2 });
+
+    const rows = await eventRows(db);
+    const correction = rows.find((r) => r.type === 'event_correction')!;
+    // Nagłówek nosi PIC-a SESJI (single-writer §4.4), więc autorstwo administratora
+    // musi stać w payloadzie — inaczej historia zmian na telefonie przypisze jego
+    // decyzję pilotowi.
+    expect(correction.pic_id).toBe(PIC);
+    expect(correction.payload).toMatchObject({
+      action: 'amend',
+      fields: { fuelL: 96 },
+      source: 'admin',
+    });
+    // Powód jedzie i do payloadu (czyta go pilot w historii), i do audytu.
+    expect(String(correction.payload.reason)).toContain('88 zamiast 96');
+  });
+
+  /**
+   * REGRESJA (znaleziona w przeglądzie spójności, issue #43): do tej zmiany komenda
+   * korekty świadomie NIE przeliczała flag łańcucha — „ich wejściem są odczyty
+   * z `preflight_confirm` i `day_close`, a te są niekorygowalne". `amend` unieważnił
+   * to założenie, więc administrator mógłby poprawić licznik i zostawić system bez
+   * flagi opisującej dziurę, którą właśnie stworzył.
+   */
+  it('amend odczytu MH otwiera flagę łańcucha — przeliczamy je po korekcie', async () => {
+    const { app, db } = await flownDay();
+    const pic = await login(app, PIC);
+
+    // Anomalia łańcucha dotyczy PARY sesji, więc jedna nie wystarcza: dokładamy drugą
+    // sesję tej maszyny, która podejmuje licznik dokładnie tam, gdzie skończyła
+    // pierwsza (1236.87). Tak wygląda poprawny łańcuch — i to on ma się zepsuć.
+    const NEXT = 'sess-2';
+    const nextDay = DAY + 24 * HOUR_MS;
+    const nextEvents = [
+      { uuid: 'next-claim', type: 'session_claim', time: nextDay + 8 * HOUR_MS, payload: { mode: 'free' } },
+      {
+        uuid: 'next-preflight',
+        type: 'preflight_confirm',
+        time: nextDay + 8 * HOUR_MS,
+        payload: {
+          operation: 'skoki',
+          departureIcao: 'EPKK',
+          arrivalIcao: null,
+          reading: { fuelL: 88, mh: 1236.87 },
+          client: null,
+          mhFormat: 'hhmm',
+        },
+      },
+      { uuid: 'next-engine-start', type: 'engine_start', time: nextDay + 9 * HOUR_MS, payload: {} },
+      { uuid: 'next-engine-stop', type: 'engine_stop', time: nextDay + 10 * HOUR_MS, payload: {} },
+      {
+        uuid: 'next-day-close',
+        type: 'day_close',
+        time: nextDay + 11 * HOUR_MS,
+        payload: { finalReading: { fuelL: 60, mh: 1237.9 } },
+      },
+    ].map((e) => ({ ...event(e.uuid, e.type, e.time, e.payload), sessionUuid: NEXT }));
+
+    const seeded = await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: { authorization: `Bearer ${pic}` },
+      payload: { events: nextEvents, sourceDevice: DEVICE },
+    });
+    expect(seeded.statusCode).toBe(200);
+
+    // Łańcuch jest spójny: koniec pierwszej sesji = początek drugiej.
+    const before = await db.query<{ type: string }>(
+      "SELECT type FROM flags WHERE aircraft_id = 'SP-AXA'",
+    );
+    expect(before.rows.map((r) => r.type)).not.toContain('mh_gap');
+
+    // Administrator poprawia licznik przy zdaniu PIERWSZEJ sesji — między ogniwami
+    // robi się prawie siedem godzin dziury.
+    const admin = await login(app, 'TMK');
+    const res = await correct(app, SESSION, {
+      token: admin,
+      body: {
+        targetUuid: UUID.dayClose,
+        action: 'amend',
+        fields: { mh: 1230.0 },
+        reason: 'Odczyt przepisany z niewłaściwej tarczy — poprawiam na wskazanie z książki.',
+      },
+    });
+    expect(res.statusCode).toBe(200);
+
+    const after = await db.query<{ type: string; status: string }>(
+      "SELECT type, status FROM flags WHERE aircraft_id = 'SP-AXA'",
+    );
+    expect(after.rows.map((r) => r.type)).toContain('mh_gap');
+    expect(after.rows.find((r) => r.type === 'mh_gap')?.status).toBe('open');
+  });
+
+  it('amend polem spoza białej listy celu → 422, bez zapisu', async () => {
+    const { app, db } = await flownDay();
+    const admin = await login(app, 'TMK');
+
+    const res = await correct(app, SESSION, {
+      token: admin,
+      body: {
+        targetUuid: UUID.landing,
+        action: 'amend',
+        fields: { fuelL: 96 },
+        reason: 'Próba wpisania paliwa do lądowania.',
+      },
+    });
+
+    expect(res.statusCode).toBe(422);
+    expect(res.json().violations).toMatchObject([{ code: 'CORRECTION_FIELD_NOT_ALLOWED' }]);
     expect(await eventRows(db)).toHaveLength(7);
   });
 

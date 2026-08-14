@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { TimelineEntryDto } from '../../api/dto';
 import { timelineRows, timelineSummary } from './dayTimeline';
+import { EVENT_META } from './eventTypes';
 
 const DAY = Date.UTC(2026, 6, 30);
 const at = (h: number, m: number, s = 0): number => DAY + ((h * 60 + m) * 60 + s) * 1000;
@@ -311,21 +312,37 @@ describe('timelineRows — payload w opisie', () => {
 describe('timelineRows — wejście w korektę (A02b)', () => {
   it('typy niekorygowalne są oznaczone — lista jest lustrem reguły domeny', () => {
     // `CORRECTION_TARGET_NOT_ALLOWED` w `packages/domain/src/rules/sessionRules.ts`:
-    // claim to tożsamość dnia, preflight i `day_close` niosą odczyty łańcucha MH,
-    // a korekty się nie poprawia — poprawia się fakt.
+    // claim to tożsamość sesji, a korekty się nie poprawia — poprawia się fakt.
     const entries = [
       entry(event({ type: 'session_claim', payload: { mode: 'free', previousPicId: null } })),
-      entry(event({ type: 'day_close', payload: { finalReading: { fuelL: 1, mh: 1 } } })),
       entry(event({ type: 'event_correction', payload: { targetUuid: 'x', action: 'void' } })),
       entry(takeoff(at(8, 0), 'lot')),
     ];
 
-    expect(timelineRows(entries).map((row) => row.correctable)).toEqual([
-      false,
-      false,
-      false,
-      true,
-    ]);
+    expect(timelineRows(entries).map((row) => row.correctable)).toEqual([false, false, true]);
+  });
+
+  it('ZDANIE SAMOLOTU jest korygowalne od issue #43 — ale wyłącznie przez `amend`', () => {
+    // Wcześniej `day_close` miał flagę `correctable: false` i to była PEŁNA prawda:
+    // obie ówczesne akcje dotyczyły faktu zajścia zdarzenia. Odkąd `amend` poprawia
+    // WARTOŚĆ, binarna flaga odbierała administratorowi jedyne wejście w poprawkę
+    // odczytów po zamknięciu okna pilota — a to on ma je wtedy nanieść.
+    const entries = [
+      entry(event({ type: 'day_close', payload: { finalReading: { fuelL: 1, mh: 1 } } })),
+      entry(
+        event({
+          type: 'preflight_confirm',
+          payload: { operation: 'skoki', reading: { fuelL: 1, mh: 1 } },
+        }),
+      ),
+    ];
+
+    expect(timelineRows(entries).map((row) => row.correctable)).toEqual([true, true]);
+    expect(EVENT_META.day_close.corrections).toEqual(['amend']);
+    expect(EVENT_META.preflight_confirm.corrections).toEqual(['amend']);
+    // Fakty operacyjne zostają przy czasie i unieważnieniu; zrzut ma jedno i drugie.
+    expect(EVENT_META.landing.corrections).toEqual(['retime', 'void']);
+    expect(EVENT_META.drop.corrections).toEqual(['retime', 'void', 'amend']);
   });
 
   it('zdarzenie UNIEWAŻNIONE zostaje korygowalne — retime przywraca je do życia', () => {

@@ -182,7 +182,11 @@
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
   .axis-dot.blue { background:var(--blue); }
-  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:none; }
+  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+     ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
+     (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
+     pustych punktów osi. */
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
   .axis-name.muted { color:var(--text-secondary); }
@@ -314,7 +318,9 @@
      zamknięciem. Norma jest daną z SERWERA (§4.8), więc jej wiek stoi w wierszu
      „Podstawa": to jedyna liczba na ekranie sesji, która może być nieświeża. */
   .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
-  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--border-strong); }
+  /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
+     dobija do góry telefonu i czyta się jak nowy ekran (SHEET_TOP_GAP = 56 dp). */
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
   .sheet-title { font-family:var(--font-display); font-size:21px; letter-spacing:2px; }
   .sheet-status {
     display:flex; align-items:center; gap:9px; padding:11px 13px; border-radius:12px;
@@ -731,8 +737,8 @@
            tekst wpisany przez pilota nie wracał do niego NIGDZIE. -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
+        <!-- Bez stempla — patrz komentarz w 10: notatka sesji jest jedna. -->
         <div class="note-block">
-          <span class="note-when">Zadanie · 08:04</span>
           <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
         </div>
         <div class="note-block">
@@ -742,12 +748,11 @@
       </div>
 
       <!-- Action buttons -->
-      <!-- JEDYNE drzwi do korekty (issue #40 pkt 1). Lista ręczna (08) pokazuje te same
-           zdarzenia w klamrze biegu silnika i ma przy nich ołówki — czyli dokładnie
-           to, co stało na tej osi dwanaście razy, tylko w miejscu, gdzie poprawianie
-           jest zadaniem ekranu, a nie ozdobą podsumowania. -->
+      <!-- JEDYNE drzwi do korekty (issue #40 pkt 1). Od issue #43 nie prowadzą już na
+           osobny ekran (08 skasowany), tylko przełączają TEN ekran w tryb edycji (10D):
+           ta sama oś, te same liczby, plus ołówek przy każdym wierszu. -->
       <div class="btn-row">
-        <a href="08-lista-reczna.html" class="btn-secondary">
+        <a href="10d-edycja.html" class="btn-secondary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
         </a>

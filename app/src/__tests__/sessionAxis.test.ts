@@ -276,6 +276,63 @@ describe('stopka osi', () => {
   });
 });
 
+/**
+ * Plakietka „popr." (issue #43) — jedyny ślad edycji widoczny także w trybie ODCZYTU.
+ * To fakt o danych, nie akcja: liczba obok nie jest tą, którą zapisał przyrząd.
+ */
+describe('znacznik poprawki', () => {
+  const correction = (targetUuid: string, payload: object, uuid = 'c-1'): Event =>
+    ({
+      uuid,
+      type: 'event_correction',
+      sessionUuid: 's-1',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      deviceTime: at(11, 40),
+      gpsTime: at(11, 40),
+      schemaVersion: 1,
+      syncedAt: null,
+      payload: { targetUuid, ...payload },
+    }) as Event;
+
+  it('domyślnie żaden wiersz nie jest oznaczony', () => {
+    expect(axis().rows.every((row) => row.corrected === false)).toBe(true);
+  });
+
+  it('poprawione zdarzenie dostaje znacznik, sąsiedzi nie', () => {
+    const events = [
+      ...sessionEvents(),
+      correction('ldg-1', { action: 'retime', newTime: at(9, 3) }),
+    ];
+    const rows = axis(events).rows;
+
+    expect(rows.find((r) => r.id === 'ldg-1')?.corrected).toBe(true);
+    expect(rows.find((r) => r.id === 'ldg-2')?.corrected).toBe(false);
+  });
+
+  it('poprawka ODCZYTU oznacza wiersz zdania, choć jego id pochodzi z projekcji', () => {
+    const close = sessionEvents().find((e) => e.type === 'day_close')!;
+    const events = [
+      ...sessionEvents(),
+      correction(close.uuid, { action: 'amend', fields: { fuelL: 168 } }),
+    ];
+    const release = axis(events).rows.find((r) => r.kind === 'release')!;
+
+    expect(release.corrected).toBe(true);
+    expect(release.targetUuid).toBe(close.uuid);
+  });
+
+  it('korekta NIECZYTELNA nie kłamie o stanie zapisu', () => {
+    const events = [
+      ...sessionEvents(),
+      // Payload, którego domena nie rozumie — nic nie zmienił, więc nie ma o czym mówić.
+      correction('ldg-1', { action: 'unknown-action', newTime: at(9, 3) }),
+    ];
+    expect(axis(events).rows.find((r) => r.id === 'ldg-1')?.corrected).toBe(false);
+  });
+});
+
 /** Strażnik typu: projekcja musi mieć wszystko, czego oś potrzebuje. */
 export type _AxisNeeds = Pick<
   SessionState,

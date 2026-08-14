@@ -33,6 +33,7 @@ export * from './layout/IdentityStrip';
 export * from './status/SyncChip';
 export * from './status/StatusChip';
 export * from './status/Tag';
+export * from './status/CorrectedTag';
 export * from './status/Banner';
 export * from './status/InlineNote';
 export * from './status/FreshnessNote';
@@ -57,6 +58,7 @@ export * from './input/ProfileChip';
 export * from './input/Field';
 export * from './input/Stepper';
 export * from './input/CounterRow';
+export * from './input/ReasonField';
 
 // Odczyty z liczników
 export * from './readouts/Readout';
@@ -74,6 +76,13 @@ export * from './sheets/BoardingSheet';
 export * from './sheets/ManualEventSheet';
 export * from './sheets/ManualEntrySheet';
 export * from './sheets/CorrectionSheet';
+// Tryb edycji sesji (issue #43): odczyty przy przejęciu i zdaniu, skład zrzutu,
+// dopisanie brakującego faktu i historia zmian pola.
+export * from './sheets/ReadingCorrectionSheet';
+export * from './sheets/DropCorrectionSheet';
+export * from './sheets/CrewCorrectionSheet';
+export * from './sheets/AddEventSheet';
+export * from './sheets/CorrectionHistorySheet';
 export * from './sheets/AirfieldSheet';
 export * from './sheets/TextEntrySheet';
 export * from './sheets/LeaveCockpitSheet';
@@ -91,6 +100,8 @@ export * from './data/SessionHero';
 export * from './data/CrewCard';
 export * from './data/DataTable';
 export * from './data/SessionAxis';
+export * from './data/HistoryLink';
+export * from './data/IconAction';
 export * from './data/BalanceCard';
 export * from './data/KeyValueRow';
 // Ślad lotu: łamana rysowana layoutem, pełna mapa (14), miniatura na szczegółach

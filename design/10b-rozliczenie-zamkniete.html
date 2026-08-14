@@ -191,10 +191,21 @@
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
   .axis-dot.blue { background:var(--blue); }
-  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:none; }
+  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+     ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
+     (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
+     pustych punktów osi. */
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
   .axis-name.muted { color:var(--text-secondary); }
+  /* Znacznik „poprawione" i JEDYNY cel dotknięcia tego ekranu: otwiera historię zmian
+     (10I). Podgląd nie ma ani jednego elementu zapisu — a historia zapisem nie jest. */
+  .tag-corrected {
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:4px; padding:1px 5px; text-decoration:none;
+  }
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   /* Prawa kolumna niesie sam czas trwania — plakietka RĘCZNIE wypadła z osi razem
      z ołówkami (issue #40 pkt 1 i 6). Po oknie korekty ten ekran i tak nie miał
@@ -437,10 +448,18 @@
             </span>
           </div>
 
+          <!-- Wiersz PO KOREKCIE również w PODGLĄDZIE, i plakietka jest tu tak samo
+               klikalna jak w odczycie (10): zamknięte okno odbiera prawo do ZMIANY
+               danych, nie do ich zrozumienia. Historia zmian (10I) niczego nie zapisuje,
+               więc nie ma powodu, żeby po oknie znikała — a poprawki administratora
+               wracają na telefon (§4.9), więc to jedyne miejsce, w którym pilot je zobaczy. -->
           <div class="axis-row">
             <span class="axis-time">15:03</span>
             <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+            <span class="axis-label">
+              <span class="axis-name">Lądowanie <a href="10i-historia-zmian.html" class="tag-corrected">popr.</a></span>
+              <span class="axis-sub">było 15:07 · poprawione przez administratora</span>
+            </span>
             <span class="axis-right">
               <span class="axis-dur">01:11</span>
             </span>
@@ -553,8 +572,8 @@
            tłumaczy liczby wyżej, a podgląd odbiera prawo do zmiany, nie do czytania. -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
+        <!-- Bez stempla — patrz komentarz w 10: notatka sesji jest jedna. -->
         <div class="note-block">
-          <span class="note-when">Zadanie · 13:40</span>
           <span class="note-text">Przebazowanie do Poznania na przegląd — powrót innym pilotem.</span>
         </div>
       </div>
@@ -602,6 +621,13 @@
       <span class="vp-when">Po tapnięciu w plakietkę werdyktu: stawki normy, średnia tej sesji, rozpisane działanie i pasmo. Otwiera się także w podglądzie.</span>
     </span>
   </a>
+  <a class="vp-item" href="10d-edycja.html">
+    <span class="vp-badge amber">10D</span>
+    <span class="vp-body">
+      <span class="vp-name">Sesja — tryb edycji</span>
+      <span class="vp-when">Stan, w który TEN ekran przechodzi w oknie 24 h. Po oknie jest nieosiągalny: nie ma przycisku, który by go włączył, a wyszarzony byłby obietnicą akcji, którą reguły i tak odrzucą. Znaczniki „popr." przy poprawionych wierszach zostają widoczne, bo mówią o danych, nie o prawie zapisu — a historia zmian (10I) otwiera się także tutaj.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -613,6 +639,7 @@
   <a href="10a-statystyki-zero.html">10A Bez lotu</a>
   <a href="10b-rozliczenie-zamkniete.html" class="active">10B Podgląd</a>
   <a href="10c-norma-detale.html">10C Norma</a>
+  <a href="10i-historia-zmian.html">10I Historia zmian</a>
   <span>·</span>
   <a href="14-slad.html">14 Ślad →</a>
 </nav>

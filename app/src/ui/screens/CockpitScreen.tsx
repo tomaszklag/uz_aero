@@ -127,7 +127,7 @@ const PHASE_ICON: Record<FlightPhase, IconName> = {
 export function CockpitScreen({
   navigation,
 }: {
-  navigation: { navigate: (screen: string) => void };
+  navigation: { navigate: (screen: string, params?: object) => void };
 }) {
   const { theme } = useTheme();
   const gps = useGps();
@@ -679,13 +679,18 @@ export function CockpitScreen({
     ? [
         refuelAction,
         {
-          id: 'manual',
-          icon: 'manual-log',
-          label: 'Lista ręczna',
+          // POPRAW DANE SESJI (issue #43) — następca „Listy ręcznej" (ekran 08 usunięty).
+          // Prowadzi do TRYBU EDYCJI ekranu sesji i wraca TU, do kokpitu: bez tego
+          // wejścia pilot po STOP ENGINE nie miałby jak naprawić brakującego lądowania
+          // PRZED zdaniem samolotu, a zdanie zatwierdza log. Modalności kokpitu to nie
+          // łamie — maszyna zostaje w jego rękach, zmienia się tylko ekran.
+          id: 'edit-session',
+          icon: 'edit',
+          label: 'Popraw dane sesji',
           // Odmiana z `flightsBadge` — „1 lotów" na żywym kokpicie wyglądało jak
-          // literówka w przyrządzie. Ta sama funkcja liczy badge na 10 i 11.
-          sub: `Fallback GPS · ${flightsBadge(projection.flights.length)}`,
-          onPress: () => navigation.navigate('ManualLog'),
+          // literówka w przyrządzie. Ta sama funkcja liczy badge na 10.
+          sub: `Czasy i odczyty · ${flightsBadge(projection.flights.length)}`,
+          onPress: () => navigation.navigate('Stats', { edit: true, from: 'Cockpit' }),
         },
       ]
     : [

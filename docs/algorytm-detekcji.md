@@ -113,7 +113,7 @@ na jedno i drugie. Podstawienie elewacji z mapy dałoby fałszywy start na posto
 i lądowanie, które nigdy nie zapada.
 
 Gdy **nie było ani jednego fixa na postoju**, elewacja zostaje `null` i automat dalej
-świadomie milczy przy lądowaniu: pilot ma wpis ręczny (05f) i korektę (04c), a zmyślone
+świadomie milczy przy lądowaniu: pilot ma wpis ręczny (05f) i korektę (10e), a zmyślone
 lądowanie kosztuje więcej niż jego brak.
 
 Weryfikacja na nagraniach (`server/traces/`, 6 sesji, w tym pełny lot z 6671 fixami):

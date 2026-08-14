@@ -14,7 +14,7 @@
  * dniach" (12) — więc model widoku oddaje `SessionCardVm`, nie własny wiersz tabeli.
  */
 
-import { buildMyDay, totalLabel } from '../ui/screens/logic/myDay';
+import { buildMyDay, myDayActions, totalLabel } from '../ui/screens/logic/myDay';
 import { projectPilotDay, emptySessionState } from '../domain';
 import type { SessionState, Leg, Flight } from '../domain';
 
@@ -155,5 +155,40 @@ describe('buildMyDay — dzień pusty (wariant 01A)', () => {
 
     expect(vm.empty).toBe(false);
     expect(vm.sessionCount).toBe(2);
+  });
+});
+
+/**
+ * PAS AKCJI (zgłoszenie z urządzenia, 2026-08-14).
+ *
+ * Pierwsza wersja miała dziurę, której nie wyłapał żaden test, bo warunek siedział
+ * w JSX: pusty dzień dostawał WYŁĄCZNIE „ROZPOCZNIJ LOT". Pilot, który przyleciał bez
+ * telefonu i nie ma dziś ani jednej sesji, nie miał więc jak wpisać lotu — a to jest
+ * dokładnie sytuacja, dla której wpis ręczny istnieje (§3.8).
+ */
+describe('myDayActions — co da się zrobić z poziomu 01', () => {
+  it('pusty dzień MA wpis ręczny — to wtedy jest najbardziej potrzebny', () => {
+    expect(myDayActions(true).map((a) => a.id)).toEqual(['start', 'manual']);
+  });
+
+  it('dzień z sesjami ma te same dwa wejścia', () => {
+    expect(myDayActions(false).map((a) => a.id)).toEqual(['start', 'manual']);
+  });
+
+  it('zmienia się WAGA, nie obecność: akcja główna tylko w pustym dniu', () => {
+    expect(myDayActions(true).map((a) => a.primary)).toEqual([true, false]);
+    expect(myDayActions(false).map((a) => a.primary)).toEqual([false, false]);
+  });
+
+  it('akcji głównych jest najwyżej JEDNA — dwie zielone nie mówią, od czego zacząć', () => {
+    for (const empty of [true, false]) {
+      expect(myDayActions(empty).filter((a) => a.primary)).toHaveLength(1 - Number(!empty));
+    }
+  });
+
+  it('wpis ręczny NIGDY nie jest akcją główną — to droga awaryjna, nie codzienna', () => {
+    for (const empty of [true, false]) {
+      expect(myDayActions(empty).find((a) => a.id === 'manual')?.primary).toBe(false);
+    }
   });
 });

@@ -282,9 +282,12 @@ i wycena: `design/admin/ANALIZA.md`.
 - **Rate-limit na `/auth/*` awansuje** z listy wyżej: panel wystawia formularz logowania
   w przeglądarce.
 
-Dwie sprawy z tej analizy są **decyzją produktową, nie robotą do wykonania**: (1) korekta
-administratora **nie wraca na telefon pilota** — sync jest jednokierunkowy, §4.6 nie ma
-endpointu zwracającego zdarzenia do aplikacji, więc pilot zobaczy stare liczby na ekranie 12;
+Dwie sprawy z tej analizy były **decyzją produktową, nie robotą do wykonania**: (1) ~~korekta
+administratora nie wraca na telefon pilota — sync jest jednokierunkowy~~ — **NIEAKTUALNE
+od issue #32 (2026-08-12)**: `GET /me/events` odbudowuje rejestr na telefonie (§4.9),
+a korekta niesie `pic_id` pilota, więc wchodzi do jego strumienia. Od issue #43 widzi ją
+też w historii zmian zdarzenia razem z nazwiskiem i powodem (`payload.source`,
+`payload.reason`);
 (2) ~~§4.5 obiecuje 6 typów flag, `domain/mhChain.ts` produkuje 3~~ — **ZROBIONE
 2026-07-31.** Katalog liczy pięć pozycji (`session_overlap` zastąpił `DOUBLE_CLAIM`
 i `TIME_OVERLAP`) i serwer produkuje wszystkie:
@@ -479,7 +482,7 @@ administrator nie miał czym jej wprowadzić.
   422 w repo; wcześniej nie było endpointu, który odrzucałby poprawnie zbudowane żądanie
   regułą domenową.
   > ⚠ **ETAP D (2026-08-07): `400 day_open` USUNIĘTE.** Brzmiało „dzień otwarty = pilot
-  > poprawia sam na 04c". Po §3.6a zdanie samolotu jest OPCJONALNE, więc brak `day_close`
+  > poprawia sam w trybie edycji sesji". Po §3.6a zdanie samolotu jest OPCJONALNE, więc brak `day_close`
   > przestał znaczyć „dzień trwa" i bramka odmawiałaby korekty przede wszystkim tam, gdzie
   > jest potrzebna. Administrator nie jest NIGDY blokowany; kolizja z pilotem jedzie jako
   > `warnings` (`ADMIN_EDIT_SESSION_ACTIVE`, `ADMIN_EDIT_PILOT_WINDOW_OPEN`) w ciele
@@ -892,7 +895,12 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `StatGrid` | siatka 2×2 statystyk (etykieta / wartość / jednostka) | `.fuel-grid-2x2` |
 | `CounterRow` | licznik sztuk z przyciskami 46 px | `.type-row` (05e) |
 | `DropSheet`, `ManualEventSheet` | arkusze zrzutu i wpisu ręcznego nad kokpitem | 05e / 05f |
-| `CorrectionSheet` | arkusz korekty: czas ±1 min, wpływ na czasy, strefa „nie było" | 04c |
+| `CorrectionSheet` | arkusz korekty CZASU: ±1 min, wpływ na czasy, powód, historia zmian, strefa „nie było" | 10e |
+| `ReadingCorrectionSheet` | arkusz korekty ODCZYTU (paliwo + MH przy przejęciu/zdaniu). Bez czasu i bez unieważnienia — sesja bez liczb przy zdaniu nie przekaże maszyny dalej | 10f |
+| `DropCorrectionSheet` | arkusz korekty ZRZUTU: czas i skład razem; wysokość zostaje odczytem z GPS | 10g |
+| `AddEventSheet` | dopisanie brakującego faktu: siatka typów (bez klamry silnika), czas, uwaga | 10h |
+| `CorrectionHistorySheet` | „było → jest", kto, kiedy, powód + zapis pierwotny. Sam odczyt, także w podglądzie (10b) | 10i |
+| `HistoryLink`, `ReasonField` | wiersz wejścia w historię i pole powodu — wspólne dla trzech arkuszy korekty | 10e–10g |
 | `LeaveCockpitSheet` | arkusz blokady wyjścia: co trzyma pilota w kokpicie + jedyne wyjście („ZDAJ SAMOLOT" → 09B). Wywołuje go `usePreventRemove` w kokpicie, więc łapie przycisk sprzętowy ORAZ gest cofania | 04d |
 | `PhaseHero` | plakietka + faza lotu 54 px + prędkość pionowa | `.phase-hero` |
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa, przypis **amber** jak baner — 2026-08-12) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
@@ -1108,10 +1116,10 @@ Dla wołających nic się nie zmienia — barrel `ui/theme/index.ts` wystawia je
 więc `import { useTheme } from '../../theme'` działa jak dotąd (i jest jedyną poprawną
 formą: 82 pliki tak robią, a omijanie barrela to druga konwencja bez powodu).
 
-Jeden świadomy wyjątek: `ui/hooks/useEventCorrection.tsx` zwraca gotowy element
-(`correctionSheet`), więc musi być `.tsx`, choć komponentu nie eksportuje. Kontekstu
-nie tworzy, więc jedynym skutkiem jest propagacja odświeżenia do trzech ekranów,
-które go wołają.
+Jeden świadomy wyjątek: `ui/hooks/useSessionEdit.tsx` zwraca gotowe elementy (`sheets`),
+więc musi być `.tsx`, choć komponentu nie eksportuje. Kontekstu nie tworzy, więc jedynym
+skutkiem jest propagacja odświeżenia do ekranu, który go woła. (Poprzednik —
+`useEventCorrection.tsx` — zniknął razem z ekranem 08 przy issue #43.)
 
 Ta sama reguła po stronie panelu: `docs/architektura-panelu-frontend.md` §2.3.
 
@@ -1371,7 +1379,7 @@ między jego dwiema niewiadomymi znamy z góry — patrz docblok `trustworthy` w
 
 **Fazy pionowe cache'ujemy przy śladzie, nie w bazie.** `consumption/phaseTimeline.ts`
 zależy wyłącznie od nagrania, więc `<sesja>.phases.json` obok `<sesja>.ndjson` unieważnia
-się rozmiarem pliku źródłowego i wersją formatu — a korekta czasu startu (04c) go NIE
+się rozmiarem pliku źródłowego i wersją formatu — a korekta czasu startu (10e) go NIE
 unieważnia, bo okno lotu nie wchodzi do tego rachunku. Podbij `TIMELINE_VERSION`
 w `server/src/infrastructure/traces/fsPhaseTimeline.ts` przy każdej zmianie progów fazy.
 
@@ -1407,8 +1415,12 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `sessionNotes.test.ts` | notatek sesji (10): notatka z zadania i uwagi wpisów ręcznych w jednej liście chronologicznej, pusty tekst nie udaje notatki |
 | `cockpitPeek.test.ts` | podglądu cudzej sesji: świeżość migawki, treść ostrzeżeń |
 | `crewChange.test.ts` | atrybucji block time per pilot i blokad zmiany Duala |
-| `manualLog.test.ts` | grupowania logu w cykle silnikowe i wierszy oczekiwanych |
-| `corrections.test.ts` | nakładania korekt 04c (retime/void, „ostatnia wygrywa") i ich reguł |
+| `corrections.test.ts` | nakładania korekt (retime/void, „ostatnia wygrywa") i ich reguł |
+| `correctionAmend.test.ts` | korekty WARTOŚCI (issue #43): odczyty i skład zrzutu w projekcji, niezależność czasu od wartości, białej listy pól, regresji na analitykę zużycia |
+| `correctionHistory.test.ts` | historii „było → jest": łańcuch od zapisu pierwotnego, unieważnienie i powrót, wpisy nieczytelne |
+| `sessionConsistency.test.ts` | niespójności logu (issue #43): wyłącznie miękko, ze strumienia PO korektach, z adresem zdarzenia |
+| `sessionEdit.test.ts` | trybu edycji: adres korekty na osi, wybór arkusza, przypięcie niespójności do wiersza, co wolno dopisać |
+| `claimRetime.test.ts` | przesunięcia godziny przejęcia: kiedy sama korekta, kiedy KASKADA całego biegu (czasy trwania bez zmian, `day_close` nietknięty), a kiedy odmowa z powodem |
 | `correctionUi.test.ts` | zapowiedzi skutku korekty — „Wpływ na czas lotu" liczy ta sama projekcja |
 | `syncEngine.test.ts` | pętli wysyłki §4.3 i poświadczeń §3.0: duplikaty = dostarczone, offline ≠ auth_expired, jedna rotacja tokenu, `fetchStatus` dla ekranu 11 |
 | `syncStatus.test.ts` | prezentacji ekranu 11: odmiana liczebników, konwencja nazwy karty §4.7, licznik wysyłki z ogonem outboxa |
@@ -1425,18 +1437,43 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `backgroundFixRouting.test.ts` | routingu paczek z taska tła: żywy sink > zapis headless > kosz — fix bez sesji nie wchodzi do śladu |
 | `backgroundModePolicy.test.ts` | usługi pierwszoplanowej GPS: adopcja bez restartu po headless, `retry-later` przy próbie startu z tła, sprzątanie osieroconej usługi |
 
-**Korekta (04c) to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
+**Korekta to jedyne miejsce, gdzie prawda projekcji odkleja się od surowego
 rejestru** — i cały jej model mieszka w `domain/projections/corrections.ts`:
-`applyCorrections` zamienia strumień surowy na EFEKTYWNY (czasy po poprawce, bez zdarzeń
-unieważnionych, bez samych `event_correction`), a przechodzą przez nią WSZYSCY konsumenci
-(projekcja, log dnia, statystyki), więc „starych" czasów nie widać nigdzie poza rejestrem,
+`applyCorrections` zamienia strumień surowy na EFEKTYWNY (czasy i wartości po poprawce,
+bez zdarzeń unieważnionych, bez samych `event_correction`), a przechodzą przez nią WSZYSCY
+konsumenci (projekcja, log dnia, statystyki, analityka zużycia, panel, eksport arkusza),
+więc „starych" czasów nie widać nigdzie poza rejestrem,
 który celowo pamięta wszystko. Gdy cel ma kilka korekt, wygrywa ostatnia — `retime` po
 `void` przywraca zdarzenie do życia. Wiersz „Wpływ na czas lotu: 0:53 → 0:56" w arkuszu
 liczy się PODWÓJNĄ PROJEKCJĄ (przed/po kandydacie) — obietnica i skutek to jeden kod,
 nie dwa równoległe wyliczenia. Walidację celu robią reguły przez `state.eventIndex`
-(uuid → typ, z surowego strumienia): cel musi istnieć, zdarzenia cyklu życia sesji
-(claim/preflight/day_close) nie podlegają korekcie, czas z przyszłości odpada, a po
-`day_close` obowiązuje okno 24 h (`CORRECTION_EVENT_TYPES`).
+(uuid → typ, z surowego strumienia): cel musi istnieć, `session_claim` i sama korekta
+nie podlegają poprawce, czas z przyszłości odpada, a po `day_close` obowiązuje okno 24 h
+(`CORRECTION_EVENT_TYPES`).
+
+**Trzecia akcja: `amend` (issue #43).** Poprawia WARTOŚĆ zamiast czasu — odczyt paliwa
+i motogodzin przy przejęciu (`preflight_confirm.reading`) i zdaniu
+(`day_close.finalReading`), skład zrzutu, notatkę sesji (`notes`) oraz DRUGIEGO PILOTA
+(`preflight_confirm.dualId`). To ostatnie pole powstało razem z akcją: Dual żył wyłącznie
+w NAGŁÓWKU zdarzeń, a nagłówek opisuje chwilę zapisu i jest append-only, więc poprawka
+musiałaby przepisać go we wszystkich zdarzeniach sesji. Deklaracja z preflightu wygrywa
+w `projectSession` z nagłówkiem — i tylko dzięki temu korekta działa WSTECZ. Te dwa pierwsze typy przestały być całkiem
+niekorygowalne, ale wyłącznie tą drogą: `retime`/`void` na nich nadal odrzuca
+`CORRECTION_TARGET_NOT_ALLOWED`, bo unieważnienie zostawiłoby sesję bez początku albo
+bez końca łańcucha MH. Białą listę pól per typ celu trzyma `AMEND_ALLOWED`
+w `rules/sessionRules.ts` (`CORRECTION_FIELD_NOT_ALLOWED`), a wartości przechodzą przez
+te same progi, co przy pierwszym zapisie — korekta nie jest furtką omijającą reguły.
+Składanie jest PER WYMIAR: czas i wartości są niezależne, więc `retime` po `amend` nie
+cofa poprawionej liczby (a w obrębie wartości „ostatnia wygrywa" liczy się per pole).
+
+**Przepis: nowa akcja korekty.** (1) wariant w `EventCorrectionPayload`; (2) odczyt
+w `readCorrection` i nałożenie w `applyCorrections` — nieznany kształt POMIJAMY, nigdy
+nie zgadujemy; (3) reguła w `case 'event_correction'` w `sessionRules.ts` + kod
+w `violations.ts`; (4) wpis w `correctionHistory` (co to zmieniło „było → jest");
+(5) zod w `http/routes/mobile/eventPayloads.ts` ORAZ `http/routes/admin/corrections.ts`
+— pierwsze wpuszcza telefon, drugie panel; (6) opis w `admin/src/screens/day/dayTimeline.ts`
+i pozycja w `ACTION_OPTIONS`. Pominięcie punktu (5) daje `400 bad_payload` na całej
+paczce telefonu — to nie jest teoria, tak wywrócił się etap C przebudowy flow.
 
 **`crewChange.test.ts` pilnuje atrybucji czasu per pilot.** Dual wchodzący w połowie dnia
 dostaje block time WYŁĄCZNIE z cykli po swoim wejściu (cykl trwający w chwili wejścia —
@@ -1627,7 +1664,7 @@ tabeli jako nowy `kind` — bez zmiany serwera (koperta `/traces` celowo luźna)
 
 **`projections.test.ts` to kontrakt z designem, nie zwykły test.** Odwzorowuje kanoniczną oś dnia 22 JUNE z `docs/design-notes.md` — te same liczby, które pokazują mockupy 04/09/10/11: block **6:39** (2:22 + 1:13 + 3:04), 6 lotów, paliwo **150 +48 −110 = 88 L**, MH **1234:30 → 1241:09**, oraz inwariant **Δ MH = block time**. Zmiana tych liczb w teście bez zmiany designu (i odwrotnie) to rozjazd, nie poprawka.
 
-Ten test już raz się opłacił: wykrył, że projekcja iterowała zdarzenia w kolejności **wstawienia**, a nie chronologicznej — co psułoby wyliczenia po użyciu ekranu wpisu ręcznego (05f zapisuje zdarzenie z **cofniętym** czasem) i po korekcie czasu (04c).
+Ten test już raz się opłacił: wykrył, że projekcja iterowała zdarzenia w kolejności **wstawienia**, a nie chronologicznej — co psułoby wyliczenia po użyciu ekranu wpisu ręcznego (05f zapisuje zdarzenie z **cofniętym** czasem) i po korekcie czasu (10e).
 
 ### 8.3 Czas pracy silnika liczony z dwóch źródeł (2026-08-05)
 
@@ -1636,7 +1673,7 @@ bo jej **objawem był brak objawu**.
 
 `projectSession` obsługuje czas blokowy DWIEMA drogami. Para `engine_start`/`engine_stop`
 tworzy wpis w `state.legs` (do etapu B2a tablica nazywała się `engineRuns`);
-`manual_log_entry` (fallback GPS, ekran 08) dokłada odcinek off-block→on-block **wprost
+`manual_log_entry` (wpis ręczny §3.8, ekran 15) dokłada odcinek off-block→on-block **wprost
 do `blockTimeMs`, bez wpisu w `legs`**. Jest to sensowne — wpis ręczny nie opisuje cyklu
 silnika, tylko zaraportowany czas — ale każdy, kto liczy czas pracy silnika z samych
 `legs`, dostanie w dniu z wpisem ręcznym mianownik za mały.

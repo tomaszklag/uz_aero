@@ -230,10 +230,56 @@ tam mieszkają tokeny, rama, kanoniczny sidebar i inwentarz komponentów back-of
 dokładamy do szablonu, nie do pojedynczego ekranu.
 Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo — inne urządzenie, ten sam produkt.
 
+### Czas zdarzenia — JEDNA kontrolka (2026-08-14)
+Ustawienie godziny zdarza się w pięciu arkuszach (korekta czasu 10e, odczytu 10f, zrzutu
+10g, dopisanie wpisu 10h, wpis ręczny z kokpitu 05f) i do issue #43 każdy składał ją sam.
+Efekt po pięciu kopiach: jedna nie pozwalała wpisać godziny, druga miała zbędny rząd
+±10 min, trzecia pisała na przycisku **„+60000"** (krok jest w milisekundach, tylko nikt
+go nie nazwał). Odtąd jest **`components/input/TimeStepper.tsx`** i ona ustala:
+- **krok to MINUTA i tylko ona** — dalszy skok wpisuje się, a nie odklikuje
+- **godzinę da się WPISAĆ z klawiatury** (tapnięcie w wartość; przerywana kreska pod nią
+  jest jedynym znakiem afordancji). Maska stawia dwukropek, a dzień bierze się
+  z poprawianego zdarzenia — `timeStepperEdit`, nie „dzisiaj"
+- **podpis mówi, o ile przesunięto** względem wartości pierwotnej (`timeShiftHint`),
+  także przy zmianie zerowej: pilot, który wrócił do punktu wyjścia, musi to widzieć
+- **bez podkreślenia pod wartością** — przerywana kreska „zapraszająca do wpisu"
+  wyglądała jak usterka rysowania; godzina jest największym elementem kontrolki, więc
+  palec i tak ląduje na niej sam
+- **przycisk kroku rośnie z napisem**: 46 dp to MINIMUM celu dotykowego, nie sztywna
+  szerokość — przy `width: 46` napis „+1 min" łamał się na dwie linie
+- **JEDEN wygląd, bez parametru tonu**: kontrolka jest neutralna wszędzie. Bursztyn
+  w korekcie odczytu, błękit w zrzucie i zieleń w korekcie czasu niosły ton ARKUSZA,
+  a nie stan wartości — ta sama czynność ma wyglądać tak samo
+- **podpis „o ile przesunięto" pojawia się TYLKO przy zmianie**, a miejsce na niego jest
+  zarezerwowane: „bez zmiany względem wpisu (09:01)" opisywało stan widoczny w kontrolce
+  nad nim, a wskakiwanie i znikanie zdania przesuwało resztę arkusza
+- arkusz podaje wyłącznie to, co go RÓŻNI: etykietę, granice, ton i ewentualną stopkę
+  (czas lokalny w 05f). Nowy krok, nowa nazwa kroku ani własna para przycisków ± nie
+  wchodzą do arkusza — wchodzą do `TimeStepper`
+
 ### Wzorzec formularzy
 - Pola input: `background: var(--surface-raised)`, `border-radius: 12px`, focus = `var(--green-border)`
+- **Placeholder ma własny token `--text-placeholder`** (o stopień słabszy niż `--text-muted`,
+  uwaga z urządzenia 2026-08-14). To instrukcja, nie treść: w `textMuted` konkurowała wagą
+  z wpisaną wartością obok i puste pole wyglądało jak wypełnione. Stopnia pisma nie
+  różnicujemy — `placeholder` dziedziczy go z pola i inaczej się nie da, więc cała
+  różnica siedzi w kontraście. Po dołożeniu koloru do palet: `npm run tokens:css` w `admin/`
 - Dropdowny jako lista kart do wyboru (nie natywny `<select>`) — widoczne opcje, zaznaczona = zielona obramówka
 - Operacje/typy jako siatka kart z ikonami
+
+### Arkusz (popup) — jedna rama dla wszystkich (2026-08-14)
+Arkusz wysuwany od dołu jest **wstawką NAD ekranem i musi to być widać**: nad nim zostaje
+pas przyciemnionego tła (`SHEET_TOP_GAP` = 56 dp ponad bezpiecznym obszarem), a treść
+przewija się WEWNĄTRZ arkusza — skraca się to, co pilot doczyta przewinięciem, nie rząd
+akcji. Arkusz bez sufitu dobijał do samej góry telefonu i czytał się jak nowy ekran.
+- w kodzie rama to **`components/sheets/SheetSurface.tsx`** (Modal + tło + panel + sufit
+  + obszar przewijania + `pinned` na akcje). Nowy arkusz zaczyna się od niej — nie od
+  kopii `Modal`+`Pressable`+`View`, bo właśnie te kopie gubiły sufit
+- geometria (`sheetMaxHeight`, `sheetBottomPad`, `SHEET_TOP_GAP`) mieszka w
+  `ui/hooks/keyboardGeometry.ts` i ma testy: to jedyna część arkusza sprawdzalna bez
+  urządzenia, a psuła się już czterokrotnie
+- w mockupach ta sama reguła to `max-height: calc(100% - 56px)` + `overflow-y:auto`
+  na `.modal-sheet`
 
 ### Nawigacja i warianty mockupów (obowiązuje każdy nowy/zmieniany ekran)
 - Każdy plik: nav-strip z linkami do sąsiadów + karta w `index.html` (warianty literowe → sekcja "Warianty i stany")
@@ -268,8 +314,14 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
   KAFELEK sesji → 10-statystyki (ekran SESJI: detale i korekty TEJ sesji)
 12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
   ekran w trybie PODGLĄDU: bez „Edytuj dane")
-10-statystyki → „EDYTUJ DANE" → 08-lista-reczna (JEDYNE drzwi do korekty czasów —
-  issue #40; oś sesji ołówków nie ma) · PLAKIETKA WERDYKTU → 10c (arkusz normy)
+10-statystyki → „EDYTUJ DANE" → 10d (TRYB EDYCJI tego samego ekranu — issue #43;
+  ołówek przy każdym wierszu osi, arkusze: 10e czas zdarzenia · 10f paliwo i MH przy
+  przejęciu/zdaniu · 10g zrzut · 10h dodaj wpis · 10i historia zmian)
+  · PLAKIETKA WERDYKTU → 10c (arkusz normy)
+04-kokpit PO ZATRZYMANIU → kafelek „Popraw dane sesji" → 10d → powrót do KOKPITU
+  (jedyne wejście w edycję sprzed zdania samolotu; kokpit jest modalny)
+EKRANÓW 08 I 04C NIE MA (usunięte 2026-08-13, issue #43) — lista ręczna była drugim
+  widokiem tej samej sesji, a arkusz korekty żyje dalej jako 10e
 10-statystyki → MINIATURA ŚLADU → 14-slad (pełny ślad CAŁEJ sesji: kołowanie,
   wszystkie starty i lądowania, profil pionowy z przerwą na ziemi).
   EKRANU 16 NIE MA (usunięty 2026-08-12, issue #38) — szczegóły pojedynczego lotu
@@ -400,10 +452,12 @@ mianownik: **ekran ma odpowiadać, a nie oferować** — każdy powtórzony oł�
 i liczba, których pilot nie czyta, kosztują miejsce w kolumnie, w której coś naprawdę
 stoi.
 - **ołówek znika z KAŻDEGO wiersza osi** (pkt 1 i 2). Korekta ma odtąd jedne drzwi —
-  „EDYTUJ DANE" pod ekranem, czyli lista ręczna (08), gdzie poprawianie jest zadaniem
-  ekranu. Kilkanaście identycznych celów w jednej kolumnie czytało się jak szum, a prawa
-  kolumna wróciła do jedynej liczby, która coś w niej znaczy — czasu trwania. Baner okna
-  korekty mówi teraz, GDZIE się poprawia; `SessionAxis` nie zna już `onCorrect`
+  „EDYTUJ DANE" pod ekranem. Kilkanaście identycznych celów w jednej kolumnie czytało się
+  jak szum, a prawa kolumna wróciła do jedynej liczby, która coś w niej znaczy — czasu
+  trwania. Baner okna korekty mówi teraz, GDZIE się poprawia.
+  **Uściślenie z issue #43**: przycisk nie prowadzi już na listę ręczną (08 skasowana),
+  tylko przełącza TEN ekran w tryb edycji (10d) — i dopiero tam wiersz odzyskuje ołówek
+  razem z rytmem 44 px. Reguła zostaje w mocy: w trybie ODCZYTU oś ołówków nie ma
 - **kołowanie wchodzi na oś** (pkt 4): `taxi` było jedyną dziurą wobec logu kokpitu.
   Wiersz niesie SAMĄ GODZINĘ — „ile trwało kołowanie" jest w rozliczeniu ciekawostką
   (do bloku i tak wchodzi cały bieg silnika), więc zegar przygotowania zostaje
@@ -460,6 +514,145 @@ kafelkiem `.day-card` — a na 01 stały obok siebie trzy przyciski w trzech kro
   DO DNI" na 10b) usunięte. Przycisk akcji głównej, który wyłącznie wychodzi z ekranu,
   obiecuje czynność, której nie ma; w trybie podglądu (10b) nie zostaje żaden pas akcji
   i tak ma być
+- **„DODAJ LOT RĘCZNIE" jest na 01 ZAWSZE**, także przy pustym dniu (zgłoszenie
+  z urządzenia, 2026-08-14). Do tej pory pusty dzień miał wyłącznie zielone „ROZPOCZNIJ
+  LOT", więc pilot bez ani jednej sesji nie miał jak wpisać lotu odbytego bez telefonu —
+  a to jest dokładnie sytuacja, dla której wpis ręczny istnieje (§3.8). Zmienia się WAGA
+  przycisku, nie jego obecność; decyzję trzyma `myDayActions` w `logic/myDay.ts`, żeby
+  dało się ją przetestować (warunek w JSX przeżył tę dziurę bez jednego czerwonego testu)
+
+## Edycja danych sesji = TRYB ekranu 10, nie osobny ekran (issue #43, 2026-08-13)
+„EDYTUJ DANE" prowadziło na ekran 08 (lista ręczna) — drugi widok tej samej sesji, z inną
+osią, innym słownikiem i jedyną możliwą korektą: czas albo unieważnienie. Poprawić odczyt
+paliwa, licznik motogodzin ani składu zrzutu nie dało się w ogóle, a o tym, że dana była
+kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
+- **korekta jest STANEM ekranu 10, nie miejscem** (`design/10d`): ten sam ślad, ta sama
+  oś, te same rachunki — plus ołówek przy każdym wierszu i pas akcji z „DODAJ WPIS".
+  Wiersz wraca w trybie edycji do **44 px**: to nie jest cofnięcie issue #40 (tam wiersz
+  NIE BYŁ celem dotknięcia, więc rytm 44 px marnował kolumnę), tylko jego druga połowa
+- **cztery arkusze zamiast jednego**, bo cztery różne pytania: `10e` czas zdarzenia
+  (+ „tego nie było"), `10f` paliwo i MH przy przejęciu/zdaniu, `10g` zrzut (czas
+  + skład), `10h` dopisanie brakującego faktu. Piąty, `10i`, jest wyłącznie do czytania:
+  historia zmian pola albo zdarzenia
+- **`amend` — TRZECIA akcja korekty** obok `retime` i `void`: poprawia WARTOŚĆ w payloadzie
+  (`fuelL`, `mh`, `jumpers`, `notes`, `dualId`), nie czas. Biała lista pól jest wąska i zależy od typu celu;
+  `preflight_confirm` i `day_close` przestały być całkiem niekorygowalne, ale wyłącznie
+  przez `amend` — `retime`/`void` na nich nadal odrzuca `CORRECTION_TARGET_NOT_ALLOWED`,
+  bo unieważnienie zdania rozbiłoby sesję w pół. `refuel` `amend`-a NIE dostaje: niesie
+  spójną trójkę before/added/after, więc poprawia się przez unieważnienie i dopisanie
+- **historia zmian jest w strumieniu z definicji** — rejestr jest append-only, więc
+  `correctionHistory` tylko go czyta. Widać w niej także korekty administratora, bo od
+  issue #32 wracają na telefon (`GET /me/events`, §4.9). Znacznik **„popr."** przy wierszu
+  zostaje widoczny w trybie ODCZYTU: to fakt o danych, nie akcja
+- **niespójności wykrywa domena na CAŁYM strumieniu** (`rules/consistency.ts`), inaczej
+  niż `checkAppend`, który pyta o kandydata do zapisu: „lot bez lądowania" jest zdaniem
+  o sesji, nie o wpisie. Baner w trybie edycji nazywa fakt i mówi, czym się go naprawia
+- **ekran 08 i arkusz 04C SKASOWANE**. Kokpit po zatrzymaniu silnika dostaje kafelek
+  „Popraw dane sesji" → 10d z powrotem DO KOKPITU: bez niego pilot nie miałby jak naprawić
+  brakującego lądowania przed zdaniem samolotu, a zdanie zatwierdza log. To nie łamie
+  modalności kokpitu — maszyna zostaje w jego rękach
+- **powód korekty jest OPCJONALNY** (jedno pole w każdym arkuszu): wymagany byłby tarciem
+  w polu, a bez niego administrator patrzący na zmieniony odczyt nie ma jak się dowiedzieć
+  dlaczego. Wchodzi do historii zmian i do panelu
+- **NOTATKA i DRUGI PILOT też są korygowalne** (uwagi z urządzenia, 2026-08-14). Notatka
+  otwiera TEN SAM arkusz, w którym powstała (02e) — pusty tekst ją kasuje. Dual wymagał
+  zmiany MODELU: żył wyłącznie w nagłówku zdarzeń (`Event.dualId`), a nagłówka nie da się
+  poprawić bez łamania append-only, więc `preflight_confirm` dostał pole `dualId` i to ono
+  wygrywa w projekcji. Poprawka działa WSTECZ na całą sesję („wpisałem złego drugiego
+  pilota"); zmiana załogi W TRAKCIE to nadal `crew_change` i ekran 07 — inne pytanie,
+  inne zdarzenie. PIC-a nie da się zmienić w ogóle (`PIC_CHANGE_NOT_ALLOWED`)
+- **GODZINA PRZEJĘCIA jest korygowalna, a jej korekta potrafi PRZESUNĄĆ CAŁY BIEG**
+  (uwaga z urządzenia). `session_claim` przyjmuje odtąd `retime` (i wyłącznie jego —
+  `void` zabrałby sesji właściciela). Przesunięcie w tył jest zwykłą poprawką; w przód,
+  ZA uruchomienie silnika, pociąga wszystkie zdarzenia biegu o tyle, żeby uruchomienie
+  wypadło dokładnie w nowej godzinie przejęcia — czasy trwania zostają, bo przesuwamy,
+  nie skracamy. Ekran zapowiada to ZANIM pilot zapisze (`logic/claimRetime.ts` liczy
+  plan, `useSessionEdit` go wykonuje jako N korekt). Kaskada NIE RUSZA `day_close`: od
+  niego liczy się okno 24 h, więc przesuwanie go własną poprawką przedłużałoby sobie
+  termin. Bieg, który po przesunięciu wyszedłby poza zdanie samolotu, jest odmawiany
+  z powodem — zamiast produkować sesję z silnikiem pracującym po oddaniu maszyny.
+  **Zdanie samolotu godziny NIE MA** i to jest ta sama reguła widziana z drugiej strony
+- **ołówek nigdy nie jest akcją główną**: otwarcie korekty wygląda tak samo przy wierszu
+  osi, przy notatce i przy Dualu — ikona w stałej kolumnie, nigdy wypełniona pigułka
+  (`PillButton` jest zielony i czytał się jak CTA ekranu)
+- **WEJŚCIE NIE MOŻE ZNIKAĆ RAZEM Z RZECZĄ, KTÓREJ DOTYCZY** — reguła wyciągnięta
+  z dwóch zgłoszeń naraz (2026-08-14). Karta „Notatki" w trybie ODCZYTU nadal istnieje
+  tylko z treścią (issue #40), ale w trybie EDYCJI dochodzi drugie wejście — wiersz
+  „Dodaj notatkę do sesji" — inaczej sesja bez notatki nie miałaby jak notatki dostać.
+  Ten sam błąd co znikające „DODAJ LOT RĘCZNIE" przy pustym dniu (issue #42 wyżej):
+  affordancja gasła dokładnie w stanie, w którym jest potrzebna. Dopisanie ma PLUS,
+  nie ołówek — ołówek obiecuje poprawianie istniejącej wartości
+- **notatka sesji jest DOKŁADNIE JEDNA i stąd dwie reguły** (uwaga z urządzenia,
+  2026-08-14). Niesie ją jedno pole payloadu `preflight_confirm`, więc: (1) wiersz
+  dopisania istnieje WYŁĄCZNIE przy jej braku — obok istniejącej obiecywałby drugą,
+  a naprawdę nadpisałby pierwszą (`missingSessionNote` w `logic/sessionNotes.ts`,
+  z testem: warunek w JSX już raz był i już raz był zły); (2) nie ma STEMPLA, bo nie
+  ma jej od czego odróżnić, a „Zadanie · 08:04" mówiło o godzinie potwierdzenia
+  zadania i po pierwszej poprawce treści zaczynało kłamać. Podpis zostaje przy
+  uwagach wpisów ręcznych (`kind: 'entry'`) — tych bywa wiele
+- **plakietka „popr." jest WSZĘDZIE i jest KLIKALNA** (uwagi z urządzenia, 2026-08-14).
+  Nosi ją każda poprawiona wartość — wiersz osi, notatka i drugi pilot — bo wszystkie
+  są tym samym: liczbą albo zdaniem, które nie jest tym, co zapisał przyrząd albo pilot.
+  Widać ją w OBU trybach i w podglądzie po oknie (10B), a tapnięcie otwiera historię
+  zmian (10I). W trybie odczytu to **jedyne** wejście w historię i jedyny cel dotknięcia
+  osi — nie łamie reguły „bez ołówków" z issue #40, bo ołówek obiecuje zapis, a historia
+  jest wyłącznie do czytania. Napisu nie powiększamy (7,5 px, przypis do nazwy): obszar
+  reakcji rozciąga `hitSlop`, więc wiersz zostaje przy 28 px. Jeden komponent na całość —
+  `components/status/CorrectedTag.tsx`; licznik zapalający plakietkę i licznik przy
+  wejściu w historię to ta sama funkcja (`logic/fieldChanges.ts`), więc nie mają jak
+  powiedzieć czegoś innego
+- **poprawiona notatka niesie „popr." i własną historię** (uwaga z urządzenia,
+  2026-08-14). Historię otwiera też wiersz w arkuszu notatki (`design/10k` — ten sam
+  arkusz co 02e plus to jedno wejście). **Historia jest ZAWĘŻONA do pola**:
+  `preflight_confirm` niesie paliwo, licznik, notatkę i Duala w jednym payloadzie,
+  a każde z nich ma własny arkusz i własne pytanie — bez zawężenia poprawka paliwa
+  zapalałaby plakietkę i licznik przy notatce oraz przy Dualu. Zakresy trzyma `useSessionEdit`
+  (`READING_FIELDS`/`NOTE_FIELDS`/`DUAL_FIELDS`). Arkusz notatki jest jedynym bez pola
+  „powód": przy odczycie powód tłumaczy liczbę, której nikt inny nie wyjaśni, a przy
+  notatce wyjaśnieniem jest sam nowy tekst
+- **w historii zmian nazwa pola ODRÓŻNIA, a nie opisuje** (uwaga z urządzenia,
+  2026-08-14): plakietka („czas", „notatka") pojawia się przy wierszach WYŁĄCZNIE wtedy,
+  gdy lista miesza różne pola. Historia notatki ma same notatki, a lądowania — same
+  czasy, więc podpis powtarzał nagłówek arkusza przy każdym wpisie i zabierał miejsce
+  parze „było → jest". Rozstrzyga FAKTYCZNA zawartość listy, nie zakres, w jakim ją
+  otwarto (`needsFieldLabels` w `logic/correctionHistoryRows.ts`)
+- **arkusz nie tłumaczy braków ani samego siebie**: przypis „odczytu nie da się
+  unieważnić" opisywał przycisk, którego nikt nie szuka. Tak samo wyleciały podpowiedzi
+  „litry z paliwomierza" i „wskazanie licznika" (nazywały pole, które nazywa się tak samo
+  dwa centymetry wyżej), zdanie „korekty zapisują się od razu — rejestr jest append-only"
+  spod pasa edycji, przypis „ta lista jest kompletna z definicji" pod historią zmian,
+  baner „korekta nie kasuje historii…" z arkusza 10E razem z chipem „Jak to działa?"
+  oraz przypisy pod akcjami destrukcyjnymi („oznacza zdarzenie jako błędne (nie usuwa
+  go z rejestru)", „wiersz zostaje w rejestrze"). Wszystkie opisywały wewnętrzną budowę
+  rejestru komuś, kto o nią nie pytał — a napis na przycisku („TEGO LĄDOWANIA NIE BYŁO")
+  mówi już wszystko, co trzeba wiedzieć przed tapnięciem. Podpowiedź pod polem pojawia
+  się WYŁĄCZNIE po zmianie i mówi, co było
+- **arkusz korekty nie krzyczy** (uwagi z urządzenia, 2026-08-14). Trzy rzeczy naraz:
+  (1) **unieważnienie jest KOSZEM w linii tytułu** (`IconAction` + `Sheet.headerAction`),
+  nie pełnowymiarowym czerwonym przyciskiem pod akcjami — separator miał go odsunąć od
+  „Zapisz", a robił z niego najgłośniejszy element arkusza, choć intencją wchodzącego
+  jest POPRAWKA, nie kasowanie; (2) **cel korekty to jeden wiersz mono**, bez kolorowej
+  ramki, ikony typu i plakietki metody (ta dublowała wiersz „Metoda wykrycia"); (3) **przy
+  zerowej zmianie „Zapisz" jest po prostu nieaktywny** — `ActionButton.disabled` bez
+  powodu, bo powód widać w kontrolce wyżej. To NIE jest odwołanie reguły §6 pkt 3:
+  `disabledReason` zostaje dla blokad, których z ekranu nie widać
+- **plakietki „bez lotu" w nagłówku sesji NIE MA**: oś bez ani jednego lotu, zerowa
+  stopka i powód zdania mówią to trzy razy; róg nagłówka trzyma stan TRYBU (edycja,
+  podgląd), a nie kolejny opis danych
+- **„DODAJ WPIS" jest OSTATNIM WIERSZEM OSI**, nie przyciskiem na dnie ekranu: dopisywany
+  fakt trafia do przebiegu sesji, więc wejście stoi tam, gdzie skończy się jego skutek
+- **licznik motogodzin wpisuje się z klawiatury NUMERYCZNEJ** (uwaga z urządzenia,
+  2026-08-14). Format hh:mm wymuszał dotąd pełną QWERTY, bo dwukropka nie ma na
+  numerycznej — a QWERTY zajmuje pół ekranu i podsuwa podpowiedzi słownikowe pod liczbę
+  z tarczy. Separator stawia odtąd MASKA (`maskMotoHoursInput` w `@uzaero/format`):
+  kropka, przecinek i dwukropek znaczą TO SAMO, maska zamienia je na znak właściwy dla
+  formatu licznika i pilnuje, żeby był dokładnie jeden. Tryb `text` w `ReadingSheet`
+  został usunięty — nie ma go do czego przywracać
+- **kotwica historii to sama para „kiedy → co"**: podpis o źródle zapisu („autodetekcja ·
+  GPS", „zapis sesji") zniknął razem z plakietkami „AUTO"/„RĘCZNIE" z osi (issue #40) —
+  prowenienecja nie jest pytaniem pilota, tylko rejestru i panelu
+- **wiersz „Historia zmian" istnieje TYLKO wtedy, gdy jest historia**: zerowy licznik to
+  szum, nie informacja — ta sama reguła, którą issue #40 wyrzuciło „Notatki —"
 
 ## Norma zużycia liczy się PER SESJA, nie per godzina (issue #38, 2026-08-12)
 Werdykt „w normie" porównywał L/h sesji z pasmem blokowym samolotu — czyli z liczbą

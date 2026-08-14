@@ -184,10 +184,28 @@
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
   .axis-dot.blue { background:var(--blue); }
-  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:none; }
+  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
+     ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
+     (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
+     pustych punktów osi. */
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
-  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
   .axis-name.muted { color:var(--text-secondary); }
+  /* Znacznik „poprawione" (issue #43) — jedyny ślad edycji, który zostaje w trybie
+     ODCZYTU. To fakt o danych, nie akcja: liczba obok nie jest tą, którą zapisał
+     przyrząd, i pilot ma prawo to widzieć bez wchodzenia w tryb edycji.
+
+     SAMA PLAKIETKA JEST KLIKALNA (uwaga z urządzenia) i prowadzi do historii zmian
+     (10I) — jedyny cel dotknięcia osi w trybie odczytu. Nie łamie to reguły „bez
+     ołówków" (issue #40 pkt 1): ołówek obiecuje zapis, a historia jest wyłącznie do
+     czytania. Znacznik bez wejścia stawiał pytanie, na które ekran nie odpowiadał.
+     Napisu nie powiększamy — obszar reakcji rozciąga `hitSlop`, wiersz zostaje 28 px. */
+  .tag-corrected {
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:4px; padding:1px 5px; text-decoration:none;
+  }
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   /* Prawa kolumna niesie odtąd WYŁĄCZNIE czas trwania (issue #40 pkt 1 i 2).
      Zniknęły z niej dwie rzeczy:
@@ -288,6 +306,9 @@
      Body font, nie mono: to zdanie napisane przez człowieka, a nie odczyt. */
   .note-block { padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
   .note-block + .note-block { border-top:1px solid var(--border); }
+  /* Górny wiersz notatki — stempel (tylko przy uwagach wpisów ręcznych) i „popr.".
+     Nie istnieje, gdy nie ma czego nieść. */
+  .note-head { display:flex; align-items:center; gap:6px; }
   .note-when {
     font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px;
     text-transform:uppercase; color:var(--text-muted);
@@ -370,7 +391,7 @@
         <svg class="cw-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
         <!-- Baner mówi, GDZIE się poprawia (issue #40 pkt 1): ołówków przy wierszach
              już nie ma, więc zdanie o nich prowadziłoby donikąd. -->
-        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> — do 07 SIE 11:20 UTC. Później korektę nanosi administrator. Czasy zdarzeń poprawisz przyciskiem <b>EDYTUJ DANE</b> na dole ekranu.</span>
+        <span class="cw-text">Dane możesz poprawiać teraz i jeszcze przez <b>24 h po zdaniu samolotu</b> — do 07 SIE 11:20 UTC. Później korektę nanosi administrator.</span>
       </div>
 
       <!-- ══ PRZEBIEG SESJI: ŚLAD + OŚ CZASU ════════════════════════════════
@@ -506,10 +527,22 @@
             <span class="axis-right"></span>
           </div>
 
+          <!-- Wiersz PO KOREKCIE: plakietka „popr." przy nazwie, podpis mówi, co było
+               i kto zmienił. Prawa kolumna zostaje przy czasie trwania — plakietka nie
+               ma prawa jej zabrać (issue #40 pkt 2).
+
+               PLAKIETKA JEST KLIKALNA I TU: otwiera pełne „było → jest" (10I). To
+               jedyny cel dotknięcia całej osi w trybie odczytu i jedyny wyjątek od
+               reguły „oś jest czysto opisowa" — bo historia niczego nie zapisuje,
+               a bez tego wejścia znacznik stawia pytanie, na które nie ma odpowiedzi.
+               Wiersz zostaje przy 28 px: obszar reakcji rozciąga `hitSlop`, nie rytm. -->
           <div class="axis-row">
             <span class="axis-time">09:01</span>
             <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+            <span class="axis-label">
+              <span class="axis-name">Lądowanie <a href="10i-historia-zmian.html" class="tag-corrected">popr.</a></span>
+              <span class="axis-sub">było 08:58 · poprawione przez Ciebie</span>
+            </span>
             <span class="axis-right">
               <span class="axis-dur">00:41</span>
             </span>
@@ -701,11 +734,22 @@
            Wszystko, co pilot NAPISAŁ o tej sesji: notatka z kroku „zadanie" (02e)
            i uwagi dopisane do wpisów ręcznych (08, 15). Karta stoi na końcu, bo jest
            komentarzem do liczb wyżej, a nie jedną z nich — ale stoi, bo do issue #40
-           tekst wpisany przez pilota nie wracał do niego NIGDZIE. -->
+           tekst wpisany przez pilota nie wracał do niego NIGDZIE.
+
+           Notatka SESJI idzie bez stempla (zgłoszenie z urządzenia, 2026-08-14):
+           jest dokładnie jedna, więc „Zadanie · 08:04" nie odróżniało jej od niczego —
+           opisywało godzinę potwierdzenia zadania, a po pierwszej poprawce treści
+           wprost kłamało. Podpis zostaje przy uwagach wpisów ręcznych, bo tych bywa
+           wiele i trzeba wiedzieć, do którego wpisu należą.
+
+           Plakietka „popr." stoi tu tak samo jak przy wierszach osi: tekst poprawiony
+           nie jest tekstem wpisanym, a to fakt o danych, nie akcja — więc widać go
+           także w trybie ODCZYTU. Co dokładnie się zmieniło, mówi historia zmian (10I),
+           dostępna z arkusza notatki w trybie edycji. -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
         <div class="note-block">
-          <span class="note-when">Zadanie · 08:04</span>
+          <span class="note-head"><a href="10i-historia-zmian.html" class="tag-corrected">popr.</a></span>
           <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
         </div>
         <div class="note-block">
@@ -715,10 +759,12 @@
       </div>
 
       <!-- Action buttons.
-           JEDYNE drzwi do korekty (issue #40 pkt 1). Lista ręczna (08) pokazuje te same
-           zdarzenia w klamrze biegu silnika i ma przy nich ołówki — czyli dokładnie
-           to, co stało na tej osi dwanaście razy, tylko w miejscu, gdzie poprawianie
-           jest zadaniem ekranu, a nie ozdobą podsumowania.
+           JEDYNE drzwi do korekty (issue #40 pkt 1). Od issue #43 nie prowadzą na osobny
+           ekran — przełączają TEN ekran w TRYB EDYCJI (10D). Lista ręczna (08) została
+           skasowana: była drugim widokiem tej samej sesji, z własną osią, własnym
+           słownikiem i jedyną możliwą korektą (czas albo unieważnienie). Tryb edycji
+           poprawia wszystko tam, gdzie pilot to widzi — łącznie z odczytami paliwa i MH
+           przy przejęciu i zdaniu oraz składem zrzutu.
 
            Zielone „WRÓĆ DO DNIA" USUNIĘTE (issue #42, 2026-08-13): powrót stoi już
            w nagłówku („‹ Dzień") i jest tam na każdym ekranie aplikacji. Drugi powrót
@@ -728,7 +774,7 @@
            Zostaje jedyna akcja, która naprawdę coś robi. -->
 
       <div class="btn-row">
-        <a href="08-lista-reczna.html" class="btn-secondary">
+        <a href="10d-edycja.html" class="btn-secondary">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
           EDYTUJ DANE
         </a>
@@ -769,6 +815,13 @@
       <span class="vp-when">Po tapnięciu w plakietkę werdyktu przy paliwie albo motogodzinach: skąd wzięło się „w normie" — stawka w locie i na ziemi, średnia TEJ sesji, rozpisane działanie i pasmo, na koniec podstawa normy razem z jej wiekiem. Arkusz jest wyłącznie informacyjny; wychodzi się z niego „Zamknij".</span>
     </span>
   </a>
+  <a class="vp-item" href="10d-edycja.html">
+    <span class="vp-badge amber">10D</span>
+    <span class="vp-body">
+      <span class="vp-name">Sesja — tryb edycji</span>
+      <span class="vp-when">Po „EDYTUJ DANE" (issue #43): ten sam ekran, ale każdy wiersz osi staje się celem 44 px z ołówkiem, na górze wchodzą wykryte niespójności, a na końcu osi dochodzi wiersz „DODAJ WPIS". Arkusze korekty: 10E (czas zdarzenia), 10F (paliwo i MH przy przejęciu/zdaniu), 10G (zrzut), 10H (nowy wpis), 10I (historia zmian). Dostępny tylko w oknie 24 h — po nim ekran jest podglądem (10B).</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -780,6 +833,7 @@
   <a href="10a-statystyki-zero.html">10A Bez lotów</a>
   <a href="10b-rozliczenie-zamkniete.html">10B Podgląd</a>
   <a href="10c-norma-detale.html">10C Norma</a>
+  <a href="10d-edycja.html">10D Edycja</a>
   <span>·</span>
   <a href="14-slad.html">14 Ślad →</a>
   <span>·</span>

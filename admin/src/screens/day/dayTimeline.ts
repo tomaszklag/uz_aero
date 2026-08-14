@@ -24,7 +24,7 @@
  * mylniejsza niż brak informacji. Czas po korekcie stoi w opisie, obok powodu.
  */
 
-import type { Event, NoFlightReason } from '@uzaero/domain';
+import type { CorrectionFields, Event, NoFlightReason } from '@uzaero/domain';
 import { formatLatLon, litres, motoHours, plural, timeUtcSeconds } from '@uzaero/format';
 
 import type { TimelineEntryDto } from '../../api/dto';
@@ -59,11 +59,12 @@ export interface TimelineRowView {
   meta: string[];
   voided: boolean;
   /**
-   * Czy z tego wiersza wolno wejść w korektę (`A02b`). Zależy WYŁĄCZNIE od typu
-   * zdarzenia (`EVENT_META.correctable`), nie od jego stanu: ponowna korekta zdarzenia
-   * już unieważnionego jest legalna — „ostatnia wygrywa", a `retime` po `void` wraca
-   * zdarzenie do życia. Ukrycie przejścia przy przekreślonym wierszu odebrałoby
-   * administratorowi jedyną drogę wycofania cudzej pomyłki.
+   * Czy z tego wiersza wolno wejść w korektę (`A02b`) — czyli czy typ ma choć jedną
+   * dozwoloną akcję (`EVENT_META.corrections`). Zależy WYŁĄCZNIE od typu zdarzenia,
+   * nie od jego stanu: ponowna korekta zdarzenia już unieważnionego jest legalna —
+   * „ostatnia wygrywa", a `retime` po `void` wraca zdarzenie do życia. Ukrycie przejścia
+   * przy przekreślonym wierszu odebrałoby administratorowi jedyną drogę wycofania
+   * cudzej pomyłki.
    */
   correctable: boolean;
   /**
@@ -107,6 +108,30 @@ function position(pos: { lat: number; lon: number; accuracyM?: number; groundSpe
  * zostawi go z pustym opisem, a nie wywali — dlatego kompletności katalogu pilnuje
  * `EVENT_META` (`Record<EventType, …>`), a nie ten `switch`.
  */
+/**
+ * Pola korekty `amend` → jedna linia opisu („paliwo 168 L · MH 3907.8").
+ *
+ * Wypisujemy WYŁĄCZNIE pola obecne w payloadzie: brak pola znaczy „tej wartości nikt
+ * nie ruszał", a nie „zero". Skład zrzutu podajemy sumą, bo w wierszu osi liczy się
+ * wielkość zmiany, nie rozbicie — rozbicie stoi przy samym zrzucie.
+ */
+function amendSummary(fields: CorrectionFields): string {
+  const parts: string[] = [];
+  if (fields.fuelL != null) parts.push(`paliwo ${fields.fuelL} L`);
+  if (fields.mh != null) parts.push(`MH ${fields.mh}`);
+  if ('jumpers' in fields) {
+    const j = fields.jumpers;
+    parts.push(j == null ? 'skład niepodany' : `${j.tandem + j.aff + j.solo} skoczków`);
+  }
+  if ('notes' in fields) {
+    parts.push(fields.notes == null ? 'notatka skasowana' : `notatka: ${fields.notes}`);
+  }
+  if ('dualId' in fields) {
+    parts.push(fields.dualId == null ? 'bez Duala' : `Dual: ${fields.dualId}`);
+  }
+  return parts.length > 0 ? parts.join(' · ') : 'brak rozpoznanych pól';
+}
+
 function describe(event: Event): string[] {
   switch (event.type) {
     case 'session_claim': {
@@ -239,16 +264,26 @@ function describe(event: Event): string[] {
 
     case 'event_correction': {
       const p = event.payload;
-      const head = `action: ${p.action} · targetUuid: ${p.targetUuid}`;
-      const detail =
-        p.action === 'retime'
-          ? `nowy czas zdarzenia: ${timeUtcSeconds(p.newTime)} UTC`
-          : 'zdarzenia NIE BYŁO — wyłączone z projekcji, zostaje w rejestrze';
-      return [
-        head,
-        detail,
+      const lines = [`action: ${p.action} · targetUuid: ${p.targetUuid}`];
+
+      if (p.action === 'retime') {
+        lines.push(`nowy czas zdarzenia: ${timeUtcSeconds(p.newTime)} UTC`);
+      } else if (p.action === 'amend') {
+        // `amend` (issue #43) zmienia WARTOŚĆ, nie czas — więc wypisujemy dokładnie te
+        // pola, które przyszły. Lista pól jest tu treścią: bez niej wiersz mówiłby
+        // „coś poprawiono" i kazał otwierać rejestr, żeby dowiedzieć się co.
+        lines.push(`nowe wartości: ${amendSummary(p.fields)}`);
+      } else {
+        lines.push('zdarzenia NIE BYŁO — wyłączone z projekcji, zostaje w rejestrze');
+      }
+
+      // Powód wchodzi do payloadu od issue #43 (wcześniej żył wyłącznie w audycie),
+      // bo tę samą historię zmian czyta pilot na telefonie.
+      if (p.reason != null && p.reason !== '') lines.push(`powód: ${p.reason}`);
+      lines.push(
         'korekta jest zdarzeniem jak każde inne — dopisuje się do rejestru, niczego nie nadpisuje',
-      ];
+      );
+      return lines;
     }
   }
 }
@@ -286,7 +321,7 @@ export function timelineRows(entries: readonly TimelineEntryDto[]): TimelineRowV
       badgeTone: entry.voided ? 'red' : meta.badgeTone,
       meta: [...notes, ...describe(entry.event)],
       voided: entry.voided,
-      correctable: meta.correctable,
+      correctable: meta.corrections.length > 0,
       // Ślad w dzienniku zostaje WYŁĄCZNIE po korekcie administratora — patrz docblock
       // pola. `voided` mówi o skutku, nie o tym, kto go wywołał.
       audited: entry.adminCorrected,

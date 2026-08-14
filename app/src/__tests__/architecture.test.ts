@@ -229,11 +229,12 @@ describe('granice warstw', () => {
     // od swoich providerów. Lustro reguły panelu: `admin/test/architecture.test.ts`
     // i `docs/architektura-panelu-frontend.md` §2.3.
     const EXCEPTIONS = new Set([
-      // Hook zwracający GOTOWY element (`correctionSheet`), więc plik musi być `.tsx`,
-      // choć komponentu nie eksportuje. Kontekstu nie tworzy, więc jedynym skutkiem
-      // jest propagacja odświeżenia do trzech ekranów, które go wołają — bez utraty
-      // tożsamości czegokolwiek. Świadomie zostawione.
-      'ui/hooks/useEventCorrection.tsx',
+      // Hook zwracający GOTOWE elementy (`sheets`), więc plik musi być `.tsx`, choć
+      // komponentu nie eksportuje. Kontekstu nie tworzy, więc jedynym skutkiem jest
+      // propagacja odświeżenia do ekranu, który go woła — bez utraty tożsamości
+      // czegokolwiek. Świadomie zostawione (poprzednik: `useEventCorrection.tsx`,
+      // skasowany razem z ekranem 08 przy issue #43).
+      'ui/hooks/useSessionEdit.tsx',
     ]);
 
     const exportsOf = (file: string): { kind: string; name: string }[] =>

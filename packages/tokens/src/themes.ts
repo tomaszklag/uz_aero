@@ -25,6 +25,18 @@ export interface ThemeColors {
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
+  /**
+   * Podpowiedź w pustym polu (`placeholder`) — o stopień SŁABSZA niż `textMuted`.
+   *
+   * Osobny token, bo to nie jest treść, tylko instrukcja, którą pilot przeczyta raz
+   * i która ma zniknąć z oka po pierwszym znaku (uwaga z urządzenia, 2026-08-14:
+   * „placeholdery powinny być bardziej subtelne"). W `textMuted` konkurowały wagą
+   * z wpisaną wartością obok — a puste pole wyglądało jak wypełnione.
+   *
+   * Rozmiaru nie różnicujemy: `placeholder` dziedziczy stopień pisma pola i inaczej
+   * się nie da, więc cała różnica siedzi w kontraście.
+   */
+  textPlaceholder: string;
   green: string;
   greenHover: string;
   greenMuted: string;
@@ -70,6 +82,7 @@ export const nightColors: ThemeColors = {
   textPrimary: '#E8E8E8',
   textSecondary: '#888888',
   textMuted: '#7A7A7A',
+  textPlaceholder: '#565656',
   green: '#2ECC71',
   greenHover: '#3DDC82',
   greenMuted: 'rgba(46,204,113,0.12)',
@@ -110,6 +123,7 @@ export const paperColors: ThemeColors = {
   textPrimary: '#241C10',
   textSecondary: '#544A3A',
   textMuted: '#6E6250',
+  textPlaceholder: '#8E8474',
   green: '#1E7A40',
   greenMuted: 'rgba(30,122,64,0.12)',
   greenBorder: 'rgba(30,122,64,0.38)',
@@ -142,6 +156,7 @@ export const solarColors: ThemeColors = {
   textPrimary: '#000000',
   textSecondary: '#2E2E2E',
   textMuted: '#666666',
+  textPlaceholder: '#8A8A8A',
   green: '#007030',
   greenMuted: 'rgba(0,112,48,0.10)',
   greenBorder: 'rgba(0,112,48,0.40)',
@@ -174,6 +189,7 @@ export const skyColors: ThemeColors = {
   textPrimary: '#0F1E2C',
   textSecondary: '#334454',
   textMuted: '#556579',
+  textPlaceholder: '#7B8998',
   green: '#14784A',
   greenMuted: 'rgba(20,120,74,0.12)',
   greenBorder: 'rgba(20,120,74,0.40)',
@@ -207,6 +223,7 @@ export const amberColors: ThemeColors = {
   textPrimary: '#FFB020',
   textSecondary: '#D09030',
   textMuted: '#A87020',
+  textPlaceholder: '#7A5218',
   amber: '#FF7800',
   amberMuted: 'rgba(255,120,0,0.12)',
   amberBorder: 'rgba(255,120,0,0.32)',

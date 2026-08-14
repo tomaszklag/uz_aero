@@ -189,6 +189,42 @@ export function parseMotoHours(text: string): number | null {
   return Number(cleaned);
 }
 
+/**
+ * Wpis motogodzin w trakcie pisania → zapis kanoniczny dla formatu licznika.
+ *
+ * ══ DOWOLNY SEPARATOR ZNACZY „SEPARATOR" ══
+ * Pilot przepisuje liczbę z tarczy i sięga po ten znak, który ma pod palcem: klawiatura
+ * numeryczna Androida daje przecinek albo kropkę, a licznika hh:mm i tak nie da się na
+ * niej wpisać, bo dwukropka na niej nie ma. Maska przyjmuje więc `.`, `,` i `:` jako
+ * JEDNO i to samo — i zamienia na znak właściwy dla formatu (`:` przy hh:mm, `.` przy
+ * godzinach dziesiętnych). Dzięki temu pole obsługuje się klawiaturą numeryczną
+ * (`decimal-pad`), a nie pełną QWERTY, która zajmuje pół ekranu i podsuwa podpowiedzi
+ * słownikowe (zgłoszenie z urządzenia, 2026-08-14).
+ *
+ * Separator jest DOKŁADNIE JEDEN — drugi i każdy następny znika, zamiast produkować
+ * „1234:30:15". Wpis krótszy albo urwany („1234:") zostaje bez zmian: to normalny stan
+ * w połowie pisania, a o tym, czy wartość ma sens, orzeka `parseMotoHours`.
+ */
+export function maskMotoHoursInput(text: string, format: 'decimal' | 'hhmm' | null): string {
+  const separator = format === 'hhmm' ? ':' : '.';
+  let out = '';
+  let used = false;
+
+  for (const ch of text) {
+    if (ch >= '0' && ch <= '9') {
+      out += ch;
+      continue;
+    }
+    // Pierwszy separator — jakikolwiek by nie był — staje się TYM separatorem.
+    // Wiodący („,5") odrzucamy: liczba zaczyna się od części całkowitej.
+    if ((ch === '.' || ch === ',' || ch === ':') && !used && out.length > 0) {
+      out += separator;
+      used = true;
+    }
+  }
+  return out;
+}
+
 /** Wpis litrów → liczba. `null` gdy wpis nie jest liczbą (blokuje zapis). */
 export function parseLitres(text: string): number | null {
   const cleaned = text.trim().replace(/\s/g, '').replace(',', '.');

@@ -92,11 +92,20 @@ export interface DropInput {
   altitudeFt?: number | null;
   dropNumber?: number;
   position?: GpsPosition | null;
+  /**
+   * Kiedy zdarzenie NAPRAWDĘ zaszło, jeśli różni się od chwili zapisu (§5.1) — tak samo
+   * jak przy starcie i lądowaniu. Potrzebne od issue #43: zdarzenia dopisywane po fakcie
+   * w trybie edycji sesji muszą wylądować na osi tam, gdzie się wydarzyły, a nie tam,
+   * gdzie pilot je sobie przypomniał.
+   */
+  at?: EpochMillis;
 }
 
 /** Wejście `boarding` (załadunek, issue #21 pkt 7) — te same liczniki co zrzut. */
 export interface BoardingInput {
   jumpers: JumperCounts;
+  /** Czas rzeczywisty zdarzenia — patrz `DropInput.at`. */
+  at?: EpochMillis;
 }
 
 /**
@@ -210,8 +219,12 @@ export class SessionCommands {
 
   // ── akcje ground i rozliczenie ──────────────────────────────────────────────
 
-  refuel(ctx: SessionContext, payload: RefuelPayload): Promise<CommandResult> {
-    return this.execute(ctx, 'refuel', () => ({ payload }));
+  /** `at` — tankowanie dopisane po fakcie (issue #43); domyślnie chwila zapisu. */
+  refuel(ctx: SessionContext, payload: RefuelPayload, at?: EpochMillis): Promise<CommandResult> {
+    return this.execute(ctx, 'refuel', () => ({
+      payload,
+      ...(at !== undefined ? { gpsTime: at } : {}),
+    }));
   }
 
   /**
@@ -233,6 +246,7 @@ export class SessionCommands {
         client: state.client,
         position: input.position ?? null,
       },
+      ...(input.at !== undefined ? { gpsTime: input.at } : {}),
     }));
   }
 
@@ -240,6 +254,7 @@ export class SessionCommands {
   boarding(ctx: SessionContext, input: BoardingInput): Promise<CommandResult> {
     return this.execute(ctx, 'boarding', () => ({
       payload: { jumpers: declaredJumpers(input.jumpers) },
+      ...(input.at !== undefined ? { gpsTime: input.at } : {}),
     }));
   }
 

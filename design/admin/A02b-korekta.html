@@ -420,7 +420,7 @@
     <span class="vp-badge amber">A02B</span>
     <span class="vp-body">
       <span class="vp-name">Korekta administratora</span>
-      <span class="vp-when"><b>Zawsze dostępna</b> — bramka <code>400 day_open</code> została usunięta 2026-08-07: administrator nie jest nigdy blokowany. Gdy pilot ma jeszcze otwarte okno sesji albo trzyma sesję, panel pokazuje <b>ostrzeżenie</b> nad formularzem i zostawia decyzję człowiekowi. Pilot poprawia sam na ekranie <a href="../04c-korekta-zdarzenia.html" style="color:var(--green);">04C</a> aplikacji przez 24 h od zdania samolotu. Dwie akcje, obie dopisują zdarzenie: <code>retime</code> i <code>void</code>.</span>
+      <span class="vp-when"><b>Zawsze dostępna</b> — bramka <code>400 day_open</code> została usunięta 2026-08-07: administrator nie jest nigdy blokowany. Gdy pilot ma jeszcze otwarte okno sesji albo trzyma sesję, panel pokazuje <b>ostrzeżenie</b> nad formularzem i zostawia decyzję człowiekowi. Pilot poprawia sam w trybie edycji sesji (<a href="../10d-edycja.html" style="color:var(--green);">10D</a>) przez 24 h od zdania samolotu. Trzy akcje, każda dopisuje zdarzenie: <code>retime</code>, <code>void</code> i <code>amend</code> (issue #43 — wartość zamiast czasu).</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -622,7 +622,7 @@
             <span><b>Ta korekta wchodzi w kolizję z pilotem.</b> <span style="color:var(--text-muted);font-size:11px;">(ta sama szuflada otwarta 31 JUL <b>12:40</b> UTC, czyli przed wygaśnięciem okna sesji)</span>
               <span style="display:block;padding-top:7px;line-height:1.65;">
                 <code style="color:var(--amber);">ADMIN_EDIT_PILOT_WINDOW_OPEN</code> — „Pilot może jeszcze poprawić tę sesję samodzielnie (okno 24 h od zdania trwa)".<br />
-                <span style="color:var(--text-secondary);">Co z tego wyniknie: pilot może poprawić tę samą sesję sam, na ekranie 04C. Twoja korekta do niego NIE wróci (synchronizacja jest jednokierunkowa), więc rozważ, czy nie wystarczy telefon do niego.</span>
+                <span style="color:var(--text-secondary);">Co z tego wyniknie: pilot może poprawić tę samą sesję sam, w trybie edycji (10D) — i obie poprawki wylądują w jednym strumieniu, gdzie wygrywa PÓŹNIEJSZA. Twoja wróci na jego telefon przy najbliższym odtworzeniu rejestru (§4.9), z Twoim nazwiskiem w historii zmian.</span>
               </span>
               <span style="display:block;padding-top:7px;line-height:1.65;">
                 <code style="color:var(--amber);">ADMIN_EDIT_SESSION_ACTIVE</code> — drugi możliwy kod, gdy samolot nie został jeszcze zdany: „Pilot nadal prowadzi tę sesję — może dopisać własne zdarzenia po synchronizacji".<br />
@@ -650,7 +650,7 @@
           </div>
 
           <div class="field">
-            <span class="label">Akcja — dokładnie dwie, obie dopisują zdarzenie</span>
+            <span class="label">Akcja — dokładnie trzy, każda dopisuje zdarzenie</span>
             <div class="opt-list">
               <label class="opt selected" id="optRetime" onclick="setAction('retime')">
                 <span class="opt-body">
@@ -666,6 +666,20 @@
                 </span>
                 <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
               </label>
+              <!-- amend (issue #43) — TRZECIA akcja, dołożona wtedy, gdy pilot dostał
+                   w aplikacji korektę odczytów. Bez niej administrator po wygaśnięciu
+                   okna 24 h nie miałby czym poprawić paliwa ani licznika, a to właśnie
+                   jego obiecuje pilotowi baner „dalsze poprawki wprowadza administrator".
+                   Biała lista pól jest WĄSKA i zależy od typu celu: `fuelL`/`mh` przy
+                   `preflight_confirm` i `day_close`, `jumpers` przy `drop`. Poza nią
+                   `amend` nie ma czego zmienić — czasy poprawia `retime`. -->
+              <label class="opt" id="optAmend" onclick="setAction('amend')">
+                <span class="opt-body">
+                  <span class="opt-name">amend — zdarzenie zaszło, ale niesie złą wartość</span>
+                  <span class="opt-desc">payload: { action: 'amend', targetUuid, fields } · odczyt paliwa i MH przy przejęciu/zdaniu, skład zrzutu. Czasu nie rusza</span>
+                </span>
+                <span class="opt-check"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+              </label>
             </div>
           </div>
 
@@ -673,6 +687,16 @@
             <span class="label">Nowy czas zdarzenia (UTC)</span>
             <input class="input mono" value="2026-07-30 13:01:33" />
             <span class="hint">Zmiana o <b>−12 min 00 s</b> względem zapisanego odczytu (13:13:33). Wartość wchodzi w <code>gps_time</code> zdarzenia — <code>device_time</code> zostaje nietknięty jako ślad chwili pierwotnego zapisu.</span>
+          </div>
+
+          <!-- Pola `amend` — pokazujemy WYŁĄCZNIE te, które biała lista dopuszcza dla
+               typu celu. Formularz z polem „skoczkowie" przy `engine_stop` obiecywałby
+               zmianę, którą domena i tak odrzuci (CORRECTION_FIELD_NOT_ALLOWED). -->
+          <div class="field" data-act="amend" data-disp="flex" style="display:none;">
+            <span class="label">Nowe wartości — pola dopuszczone dla <code>day_close</code></span>
+            <input class="input mono" value="fuelL: 168" />
+            <input class="input mono" value="mh: 3907.8" style="margin-top:8px;" />
+            <span class="hint">Zmiana wchodzi w <b>payload</b> zdarzenia, nie w jego czas; oryginalne wartości zostają w rejestrze jak przy każdej innej korekcie. Odczyt przy zdaniu jest ogniwem łańcucha MH i punktem startowym następnej sesji tej maszyny — po zapisie serwer przelicza zużycie sesji i analitykę.</span>
           </div>
 
           <div class="banner warn" data-act="void" data-disp="flex" style="display:none;">
@@ -720,7 +744,7 @@
 
           <div class="banner warn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <span><b>Ta korekta nie wróci na telefon Anny Wrzosek.</b> Synchronizacja jest dziś jednokierunkowa — kontrakt API (§4.6) nie ma endpointu, który oddawałby zdarzenia do aplikacji. Poprawiasz rejestr na serwerze i arkusz; telefon pilotki zostanie ze <b>swoją, starą wersją</b> i po wejściu na ekran 12 (Historia dni) dalej pokaże blok 05:53. Rozjazd utrzyma się do czasu, aż powstanie pobieranie zdarzeń. Jeśli różnica ma dla pilota znaczenie — powiedz mu o niej poza aplikacją.</span>
+            <span><b>Ta korekta wróci na telefon Anny Wrzosek.</b> Od issue #32 rejestr jedzie w dwie strony (<code>GET /me/events</code>, §4.9): korekta niesie <code>pic_id</code> pilotki, więc wejdzie do jej strumienia przy najbliższym odtworzeniu — razem z Twoim nazwiskiem i powodem w <b>historii zmian</b> zdarzenia (ekran 10I). Pilotka zobaczy blok 05:41 i plakietkę „popr." przy poprawionym wierszu. Odtworzenie zasila REJESTR, nie ekran: dopóki telefon nie odpyta serwera, pokazuje własną, starszą wersję.</span>
           </div>
 
           <div class="card" style="padding:14px 16px;">
@@ -739,6 +763,7 @@
           <a class="btn ghost" href="A02a-dzien.html">Anuluj</a>
           <button class="btn primary" data-act="retime">Dopisz korektę <code>retime</code></button>
           <button class="btn danger" data-act="void" style="display:none;">Dopisz korektę <code>void</code></button>
+          <button class="btn primary" data-act="amend" style="display:none;">Dopisz korektę <code>amend</code></button>
         </div>
 
       </div>
@@ -758,16 +783,17 @@
   <a href="A09-audyt.html">A09 Audyt</a>
   <a href="A05-eksporty.html">A05 Eksporty</a>
   <span>·</span>
-  <a href="../04c-korekta-zdarzenia.html">Ekran 04C pilota (okno 24 h od zdania samolotu)</a>
+  <a href="../10d-edycja.html">Ekran 10D pilota (tryb edycji, okno 24 h od zdania samolotu)</a>
   <span>·</span>
   <a href="SZABLON.html">Szablon</a>
 </nav>
 
 <script>
-  // Dwie akcje korekty — i tylko dwie. Przełącznik pokazuje, że wybór `void` zmienia
-  // NIE tylko payload, ale i wpływ na liczby dnia: unieważniony `engine_stop` zostawia
-  // cykl silnika otwarty, więc znika z bloku w całości. To jest powód, dla którego
-  // podgląd wpływu stoi w tym formularzu, a nie w dokumentacji.
+  // Trzy akcje korekty — i tylko trzy (`amend` doszedł przy issue #43). Przełącznik
+  // pokazuje, że wybór zmienia NIE tylko payload, ale i wpływ na liczby dnia:
+  // unieważniony `engine_stop` zostawia cykl silnika otwarty, więc znika z bloku
+  // w całości. To jest powód, dla którego podgląd wpływu stoi w tym formularzu,
+  // a nie w dokumentacji.
   function setAction(action) {
     document.querySelectorAll('[data-act]').forEach(function (el) {
       var show = el.getAttribute('data-act') === action;
@@ -775,6 +801,7 @@
     });
     document.getElementById('optRetime').classList.toggle('selected', action === 'retime');
     document.getElementById('optVoid').classList.toggle('selected', action === 'void');
+    document.getElementById('optAmend').classList.toggle('selected', action === 'amend');
   }
   setAction('retime');
 

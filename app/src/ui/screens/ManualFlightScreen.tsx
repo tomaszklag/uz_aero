@@ -46,6 +46,7 @@ import {
   litres,
   motoHours,
   parseLitres,
+  maskMotoHoursInput,
   parseMotoHours,
   timeUtc,
 } from '../format';
@@ -310,7 +311,7 @@ export function ManualFlightScreen({
         title="Motogodziny po locie"
         unit="MH"
         tone="neutral"
-        keyboard={mhFormat === 'hhmm' ? 'text' : 'decimal'}
+        mask={(t) => maskMotoHoursInput(t, mhFormat)}
         initialText={mh != null ? motoHours(mh, mhFormat) : ''}
         rows={
           handover != null ? [{ label: 'Poprzednio', value: motoHours(handover.mh, mhFormat) }] : []

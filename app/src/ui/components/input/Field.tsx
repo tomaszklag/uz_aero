@@ -75,7 +75,7 @@ export function TextField({ label, tag, hint, mono = false, style, ...input }: T
   return (
     <Field label={label} tag={tag} hint={hint} style={style}>
       <TextInput
-        placeholderTextColor={theme.colors.textMuted}
+        placeholderTextColor={theme.colors.textPlaceholder}
         selectionColor={green.accent}
         {...input}
         onFocus={(e) => {

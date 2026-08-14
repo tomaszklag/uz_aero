@@ -41,7 +41,7 @@ Cockpit cycle (jeden bieg silnika na sesję):
     ↓ kolejny T/O → 05b  /  Stop engine → 04 (hero ZDAJ SAMOLOT)
 
   akcje ground: 04a (przed startem) → 06-tankowanie · 07-zmiana-zalogi;
-                04 (po zatrzymaniu) → 06-tankowanie · 08-lista-reczna
+                04 (po zatrzymaniu) → 06-tankowanie · 10d-edycja (tryb edycji sesji, powrót do kokpitu)
 
 Zdanie samolotu (model 2026-08-10 — sesja = jeden bieg silnika; ekrany 09 i 09a USUNIĘTE):
   STOP ENGINE → 04 (hero ZDAJ SAMOLOT — drugiego startu nie ma) ↓
@@ -287,7 +287,7 @@ wolno go zamknąć:
   Baner nie wraca rozwinięty co sesję; `(?)` to rzadka furtka, nie powtarzalny obowiązek.
   Dzień 1 uczy pełnymi banerami, dzień 3 to czysty ekran z dyskretnymi `(?)`.
 - Klasy: `.edu-dismiss` (× na banerze), `.edu-mini` (chip `(?)`); funkcje `eduCollapse(id)` /
-  `eduExpand(id)`. Wdrożone: 04c, 05f, 07, 09.
+  `eduExpand(id)`. Wdrożone: 10e, 05f, 07, 09.
 - Wyjątek: instrukcje **rzadkich** akcji (np. 3-kroki przekazania) zostają — przy rzadkim
   użyciu pilot i tak zapomina, więc coaching wciąż pomaga.
 

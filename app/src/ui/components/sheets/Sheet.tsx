@@ -25,18 +25,24 @@
  *      dolny skraj POTWIERDŹ;
  *   3. wysokość arkusza ograniczona do miejsca NAD klawiaturą, przy czym skraca się
  *      przewijana treść, nie rząd akcji — przyciski zostają widoczne zawsze.
+ *
+ * GÓRNA KRAWĘDŹ (zgłoszenie z urządzenia, 2026-08-14 — arkusz korekty zdarzenia). Arkusz
+ * z dużą treścią dobijał do samej góry telefonu i przestawał wyglądać jak wstawka NAD
+ * ekranem: bez pasa przyciemnionego tła czytał się jak nowy ekran, a jedyną poszlaką
+ * został uchwyt, którego nikt nie szuka. Sufit zostawia więc `SHEET_TOP_GAP` ponad
+ * bezpiecznym obszarem — reguła jest w `sheetMaxHeight`, wspólna dla WSZYSTKICH arkuszy,
+ * bo to własność komponentu, nie pojedynczego ekranu.
  */
 
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
-import { sheetBottomPad } from '../../hooks/keyboardGeometry';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
 import { Banner } from '../status/Banner';
+import { SheetSurface } from './SheetSurface';
 import type { Tone } from '../tone';
 
 export interface SheetRow {
@@ -72,6 +78,15 @@ export interface SheetProps {
    * od dołu: lista rośnie i kurczy się NAD nim, a pole zostaje tam, gdzie pilot je zostawił.
    */
   footer?: React.ReactNode;
+  /**
+   * Akcja w linii TYTUŁU, po prawej — dziś wyłącznie kosz (unieważnienie zdarzenia).
+   *
+   * Od 2026-08-14 to jest miejsce akcji destrukcyjnej: pełnowymiarowy czerwony przycisk
+   * pod rzędem akcji miał być „daleko od Zapisz", a wychodził na najgłośniejszy element
+   * arkusza — choć intencją wchodzącego w korektę jest poprawka, nie kasowanie
+   * (uwaga z urządzenia). Ikona jest dostępna, nie eksponowana.
+   */
+  headerAction?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -87,95 +102,22 @@ export function Sheet({
   cancelLabel = 'ANULUJ',
   onCancel,
   footer,
+  headerAction,
   children,
 }: SheetProps) {
   const { theme } = useTheme();
   const keyboardHeight = useKeyboardHeight();
-  const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
-  const typing = keyboardHeight > 0;
-
-  /**
-   * Sufit wysokości arkusza: miejsce nad klawiaturą, minus pasek statusu (arkusz nie ma
-   * prawa go zasłonić) i odrobina powietrza, żeby było widać, że pod nim jest ekran.
-   * Dolna granica trzyma sens układu, gdyby pomiary przyszły niespójne.
-   */
-  const maxHeight = Math.max(
-    240,
-    windowHeight - keyboardHeight - insets.top - theme.spacing.xxl,
-  );
-
-  // Zapas pod rzędem akcji — reguła wspólna dla wszystkich arkuszy (`sheetBottomPad`).
-  const bottomPad = sheetBottomPad(
-    theme.spacing.xxxl,
-    insets.bottom,
-    keyboardHeight,
-    theme.spacing.lg,
-  );
 
   return (
-    <Modal
+    <SheetSurface
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-      statusBarTranslucent
-    >
-      {/* Tapnięcie w tło = anuluj. Potwierdzenie wymaga celowego tapnięcia w przycisk. */}
-      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
-
-      {/* Klawiatura podnosi arkusz zamiast go zasłaniać — patrz `useKeyboardHeight`. */}
-      <View style={[styles.bottom, { paddingBottom: keyboardHeight }]}>
-        <View
-          style={{
-            maxHeight,
-            gap: theme.spacing.md,
-            padding: theme.spacing.lg,
-            paddingBottom: bottomPad,
-            borderTopLeftRadius: theme.radius.xl,
-            borderTopRightRadius: theme.radius.xl,
-            borderTopWidth: theme.borderWidthStrong,
-            borderTopColor: theme.colors.borderStrong,
-            backgroundColor: theme.colors.surfaceRaised,
-          }}
-        >
-          <View style={[styles.handle, { backgroundColor: theme.colors.borderStrong }]} />
-
-          {/* Treść przewijana, akcje poza nią: gdy miejsca nad klawiaturą jest mało,
-              skraca się to, co pilot może doczytać przewinięciem, a nie to, czym arkusz
-              się zamyka. `flexShrink` bez `flexGrow` — krótka treść nie rozciąga arkusza. */}
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={{ gap: theme.spacing.md }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {/* `.modal-title` — mniejszy niż tytuł ekranu: arkusz jest wstawką, nie ekranem. */}
-            <AppText variant="display" style={styles.title}>
-              {title}
-            </AppText>
-
-            {/* Treść własna arkusza idzie zaraz pod tytułem — w mockupach 02b/02c to pole
-                edycji, a wiersze odniesienia stoją POD nim jako kontekst dla wpisywanej
-                wartości. */}
-            {children}
-
-            {rows.map((row) => (
-              <View key={row.label} style={styles.row}>
-                <AppText variant="mono" tone="muted" style={styles.rowLabel}>
-                  {row.label}
-                </AppText>
-                <AppText variant="mono" tone="secondary" style={styles.rowLabel}>
-                  {row.value}
-                </AppText>
-              </View>
-            ))}
-
-            {warning != null && (
-              <Banner kind="status" tone={warningTone} title="Zanim potwierdzisz" text={warning} />
-            )}
-          </ScrollView>
-
+      onCancel={onCancel}
+      keyboardHeight={keyboardHeight}
+      designPad={theme.spacing.xxxl}
+      /* Treść przewijana, akcje poza nią: gdy miejsca jest mało, skraca się to, co pilot
+         może doczytać przewinięciem, a nie to, czym arkusz się zamyka. */
+      pinned={
+        <>
           {footer}
 
           <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
@@ -199,19 +141,45 @@ export function Sheet({
               />
             )}
           </View>
-        </View>
+
+        </>
+      }
+    >
+      {/* `.modal-title` — mniejszy niż tytuł ekranu: arkusz jest wstawką, nie ekranem.
+          Akcja destrukcyjna (kosz) stoi w tej samej linii, po prawej — patrz `headerAction`. */}
+      <View style={styles.titleRow}>
+        <AppText variant="display" style={styles.title}>
+          {title}
+        </AppText>
+        {headerAction}
       </View>
-    </Modal>
+
+      {/* Treść własna arkusza idzie zaraz pod tytułem — w mockupach 02b/02c to pole
+          edycji, a wiersze odniesienia stoją POD nim jako kontekst dla wpisywanej
+          wartości. */}
+      {children}
+
+      {rows.map((row) => (
+        <View key={row.label} style={styles.row}>
+          <AppText variant="mono" tone="muted" style={styles.rowLabel}>
+            {row.label}
+          </AppText>
+          <AppText variant="mono" tone="secondary" style={styles.rowLabel}>
+            {row.value}
+          </AppText>
+        </View>
+      ))}
+
+      {warning != null && (
+        <Banner kind="status" tone={warningTone} title="Zanim potwierdzisz" text={warning} />
+      )}
+    </SheetSurface>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject },
-  bottom: { flex: 1, justifyContent: 'flex-end' },
-  // Bez `flexGrow`: arkusz ma być tak wysoki jak treść, dopóki mieści się w suficie.
-  scroll: { flexGrow: 0, flexShrink: 1 },
-  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
-  title: { fontSize: 22, lineHeight: 24, letterSpacing: 2 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginRight: -8 },
+  title: { flex: 1, fontSize: 22, lineHeight: 24, letterSpacing: 2 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   rowLabel: { fontSize: 10, letterSpacing: 0.5 },
 });

@@ -142,6 +142,23 @@ export interface PreflightConfirmPayload {
   reading: FuelMhReading;
   /** Log korekt podpowiedzi (append-only, nie nadpisuje `reading`). */
   corrections?: PreflightCorrection[];
+  /**
+   * Dual PRZYPISANY CAŁEJ SESJI — pole dodane przy issue #43 (zgłoszenie z urządzenia).
+   *
+   * Do tej pory drugi pilot żył wyłącznie w NAGŁÓWKU zdarzeń (`Event.dualId`), a to
+   * czyni go nieporawialnym: nagłówek opisuje chwilę zapisu, więc „poprawka" musiałaby
+   * przepisać go we wszystkich zdarzeniach sesji — czyli złamać append-only. Tu leży
+   * FAKT o składzie załogi i to on wygrywa w projekcji, gdy jest obecny.
+   *
+   * `undefined` (brak pola) = „nikt tego nie deklarował", więc obowiązuje nagłówek —
+   * tak wygląda każda sesja sprzed tej zmiany i każda, w której nikt nie poprawiał
+   * załogi. `null` = „w tej sesji NIE BYŁO Duala", i jest to deklaracja, nie brak.
+   *
+   * Nie myl tego z `crew_change`: tamto opisuje zmianę W TRAKCIE („od 11:00 leciał
+   * kto inny") i dzieli sesję na odcinki. To pole odpowiada na inne pytanie —
+   * „kto leciał TĄ sesją" — i działa wstecz na całość.
+   */
+  dualId?: string | null;
   /** Klient (operacja Skoki) — wiąże dzień z odbiorcą; dziedziczony przez `drop`. */
   client?: string | null;
   /**
@@ -192,22 +209,83 @@ export interface TaxiPayload {
 }
 
 /**
- * `event_correction` — poprawka istniejącego zdarzenia (ekran 04c).
+ * Pola, które umie poprawić akcja `amend` (issue #43).
+ *
+ * BIAŁA LISTA, nie „dowolny fragment payloadu": korekta musi być czytelna dla wszystkich
+ * konsumentów strumienia (projekcja, analityka zużycia, arkusz, panel), a każde pole,
+ * które tu wpuszczamy, staje się częścią kontraktu. Dopuszczalność zależy od TYPU CELU
+ * i pilnuje tego reguła `CORRECTION_FIELD_NOT_ALLOWED`:
+ *  • `fuelL` / `mh` — `preflight_confirm.reading` i `day_close.finalReading`,
+ *  • `jumpers`      — `drop.jumpers`.
+ *
+ * `refuel` świadomie NIE MA `amend`: niesie spójną trójkę before/added/after, więc
+ * poprawka jednej liczby rozjechałaby arytmetykę pilnowaną przez `FUEL_ARITHMETIC`.
+ * Błędne tankowanie unieważnia się (`void`) i dopisuje na nowo.
+ */
+export interface CorrectionFields {
+  /** Nowy odczyt paliwomierza (litry). */
+  fuelL?: number;
+  /** Nowy odczyt licznika motogodzin (godziny dziesiętne). */
+  mh?: number;
+  /** Nowy skład zrzutu; `null` = „skład niepodany" (nie zero), jak w `DropPayload`. */
+  jumpers?: JumperCounts | null;
+  /**
+   * Nowy Dual CAŁEJ sesji (`preflight_confirm.dualId`); `null` = sesja jednoosobowa.
+   *
+   * Poprawka działa WSTECZ na całą sesję — czas blokowy w całości przypisuje się
+   * wskazanej osobie. Zmianę załogi W TRAKCIE opisuje `crew_change`, nie to pole.
+   */
+  dualId?: string | null;
+  /**
+   * Nowa treść notatki (`preflight_confirm.notes`, `manual_log_entry.notes`);
+   * `null` = notatkę skasowano.
+   *
+   * Notatka jest jedyną daną sesji pisaną ZDANIEM, a nie liczbą — i pierwszą, w której
+   * literówkę widać gołym okiem. Do issue #43 nie dało się jej poprawić w ogóle: tekst
+   * z kroku „zadanie" (02e) wracał do autora dopiero na ekranie sesji, i to wyłącznie
+   * do czytania.
+   */
+  notes?: string | null;
+}
+
+/**
+ * `event_correction` — poprawka istniejącego zdarzenia (tryb edycji sesji, `design/10e`–`10g`).
  *
  * Rejestr jest append-only, więc korekta NIE edytuje celu: dopisujemy osobne zdarzenie,
  * a oryginalny odczyt zostaje. Projekcja nakłada korekty przed liczeniem (ostatnia
  * wygrywa), serwer scali obie wersje i pokaże poprawkę w arkuszu.
  *
- * Dwie akcje — dokładnie te z mockupu:
+ * Trzy akcje:
  *  • `retime` — zdarzenie zaszło, ale o innej godzinie (GPS wykrył za późno);
- *  • `void`   — zdarzenia NIE BYŁO (przelot nad pasem zaliczony jako lądowanie).
+ *  • `void`   — zdarzenia NIE BYŁO (przelot nad pasem zaliczony jako lądowanie);
+ *  • `amend`  — zdarzenie zaszło i o właściwej godzinie, ale niesie złą WARTOŚĆ
+ *               (issue #43: odczyt paliwa i MH przy przejęciu/zdaniu, skład zrzutu).
  *
  * `void` nie usuwa wiersza z rejestru — wyłącza go z projekcji. Dzięki temu „cofnięcie"
  * pomyłki samo jest udokumentowane, a serwer widzi pełną historię decyzji.
+ *
+ * `reason` jest OPCJONALNY przy każdej akcji (issue #43): wymagany byłby tarciem w polu
+ * — pilot poprawia literówkę w minucie, nie pisze uzasadnienia do protokołu — ale gdy
+ * jest, administrator patrzący na zmieniony odczyt nie musi dzwonić i pytać. Trafia do
+ * historii zmian (`correctionHistory`) i do osi zdarzeń w panelu.
+ *
+ * `source` mówi, KTO naniósł poprawkę — i jest jedynym sposobem, żeby to w ogóle
+ * wiedzieć. Nagłówek zdarzenia niesie `picId` PIC-a sesji także wtedy, gdy korektę
+ * zapisał administrator w panelu (single-writer §4.4: do jednej sesji pisze jedna
+ * tożsamość, inaczej serwer odrzuciłby zapis jako `WRITER_MISMATCH`). Bez tego pola
+ * historia zmian na telefonie pokazywałaby cudzą decyzję pod nazwiskiem pilota.
+ * Brak pola = `pilot` — telefon nie musi go wysyłać przy własnych poprawkach.
  */
-export type EventCorrectionPayload = { targetUuid: string } & (
+export type CorrectionSource = 'pilot' | 'admin';
+
+export type EventCorrectionPayload = {
+  targetUuid: string;
+  reason?: string | null;
+  source?: CorrectionSource;
+} & (
   | { action: 'retime'; newTime: EpochMillis }
   | { action: 'void' }
+  | { action: 'amend'; fields: CorrectionFields }
 );
 
 /** `takeoff` — metoda (auto/manual) + pozycja. */

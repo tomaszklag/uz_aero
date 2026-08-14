@@ -31,7 +31,7 @@ export interface ActionOption {
 }
 
 /**
- * Dokładnie DWIE akcje — te same, które zna domena (`EventCorrectionPayload`) i które
+ * Dokładnie TRZY akcje — te same, które zna domena (`EventCorrectionPayload`) i które
  * pokazuje mockup. Lista kart, nigdy natywny `<select>` (`CLAUDE.md`).
  */
 export const ACTION_OPTIONS: ActionOption[] = [
@@ -45,7 +45,90 @@ export const ACTION_OPTIONS: ActionOption[] = [
     name: 'void — zdarzenia nie było',
     desc: "payload: { action: 'void', targetUuid } · zdarzenie wypada z wyliczeń, wiersz zostaje w rejestrze przekreślony",
   },
+  {
+    id: 'amend',
+    name: 'amend — zdarzenie zaszło, ale niesie złą wartość',
+    desc: "payload: { action: 'amend', targetUuid, fields } · odczyt paliwa i MH przy przejęciu/zdaniu, skład zrzutu. Czasu nie rusza",
+  },
 ];
+
+/**
+ * Pola `amend` dopuszczone dla danego typu celu — LUSTRO białej listy z domeny
+ * (`AMEND_ALLOWED` w `rules/sessionRules.ts`).
+ *
+ * Panel powtarza ją nie po to, żeby walidować (od tego jest domena i robi to przy
+ * zapisie), tylko po to, żeby nie POKAZYWAĆ pola, którego reguła i tak odrzuci:
+ * formularz z polem „skoczkowie" przy `engine_stop` obiecuje zmianę, która skończy się
+ * `CORRECTION_FIELD_NOT_ALLOWED`. Rozjazd tej listy z domeną kosztuje jeden odrzucony
+ * zapis z czytelnym powodem, a nie cichy błąd — dlatego kopia jest tu dopuszczalna.
+ */
+export const AMEND_FIELDS: Record<string, readonly AmendFieldId[]> = {
+  preflight_confirm: ['fuelL', 'mh', 'notes'],
+  day_close: ['fuelL', 'mh'],
+  drop: ['jumpers'],
+  manual_log_entry: ['notes'],
+};
+
+export type AmendFieldId = 'fuelL' | 'mh' | 'jumpers' | 'notes';
+
+/** Czy `amend` ma dla tego typu celu cokolwiek do zmienienia. */
+export function amendFieldsFor(type: string): readonly AmendFieldId[] {
+  return AMEND_FIELDS[type] ?? [];
+}
+
+export interface AmendState {
+  /** Pola gotowe do wysłania; `null` = nic czytelnego nie wpisano. */
+  fields: { fuelL?: number; mh?: number; jumpers?: null } | null;
+  /** Zawsze widoczny tekst pod polami — powód odmowy albo opis skutku. */
+  message: string;
+  invalid: boolean;
+}
+
+/**
+ * Stan pól wartości.
+ *
+ * Puste pole znaczy „nie ruszaj tej wartości", a nie „wpisz zero" — administrator
+ * poprawia zwykle JEDNĄ liczbę i nie ma przepisywać drugiej tylko dlatego, że formularz
+ * ją pokazuje. Wpis nieczytelny (litery w litrach) blokuje zapis z podanym powodem.
+ */
+export function amendState(fuelText: string, mhText: string): AmendState {
+  const fuel = numberOrNull(fuelText);
+  const mh = numberOrNull(mhText);
+
+  if (fuel === 'invalid' || mh === 'invalid') {
+    return {
+      fields: null,
+      message: 'Nieczytelna wartość — podaj liczbę, na przykład 168 albo 3907.8.',
+      invalid: true,
+    };
+  }
+  if (fuel == null && mh == null) {
+    return {
+      fields: null,
+      message: 'Wpisz nową wartość paliwa albo motogodzin. Puste pole zostawia liczbę bez zmian.',
+      invalid: false,
+    };
+  }
+
+  const fields: { fuelL?: number; mh?: number } = {};
+  if (fuel != null) fields.fuelL = fuel;
+  if (mh != null) fields.mh = mh;
+  return {
+    fields,
+    message:
+      'Zmiana wchodzi w PAYLOAD zdarzenia; oryginalne wartości zostają w rejestrze. ' +
+      'Odczyt przy zdaniu jest ogniwem łańcucha MH — serwer przeliczy zużycie sesji.',
+    invalid: false,
+  };
+}
+
+/** `''` → `null` (bez zmiany), liczba → wartość, śmieci → `'invalid'`. */
+function numberOrNull(text: string): number | null | 'invalid' {
+  const trimmed = text.trim().replace(',', '.');
+  if (trimmed === '') return null;
+  const value = Number(trimmed);
+  return Number.isFinite(value) ? value : 'invalid';
+}
 
 /**
  * Czas ODNIESIENIA korekty — ten, którym projekcja liczy dzień DZIŚ.
@@ -174,8 +257,12 @@ export function correctionDraft(
   action: CorrectionActionId,
   targetUuid: string,
   time: TimeFieldState,
+  amend?: AmendState,
 ): CorrectionDraftDto | null {
   if (targetUuid === '') return null;
   if (action === 'void') return { targetUuid, action: 'void' };
+  if (action === 'amend') {
+    return amend?.fields == null ? null : { targetUuid, action: 'amend', fields: amend.fields };
+  }
   return time.value == null ? null : { targetUuid, action: 'retime', newTime: time.value };
 }

@@ -12,15 +12,14 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import type { ManualLogEntryPayload } from '../../../domain';
 import { useTheme } from '../../theme';
-import { sheetBottomPad } from '../../hooks/keyboardGeometry';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
+import { SheetSurface } from './SheetSurface';
 import { toneColors } from '../tone';
 
 /** Kolejność i etykiety §3.8 — dokładnie jak kolumny rejestru. */
@@ -56,7 +55,6 @@ export function ManualEntrySheet({
   onCancel,
 }: ManualEntrySheetProps) {
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
   const keyboardHeight = useKeyboardHeight();
   const amber = toneColors(theme, 'amber');
 
@@ -94,89 +92,51 @@ export function ManualEntrySheet({
   }, [notes, now, offsets, onConfirm]);
 
   return (
-    <Modal
+    <SheetSurface
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-      statusBarTranslucent
+      onCancel={onCancel}
+      gap={12}
+      keyboardHeight={keyboardHeight}
+      /* Zapas z mockupu jako podłoga; nad paskiem nawigacji rama ustąpi więcej. */
+      designPad={theme.spacing.xxl}
+      accentColor={amber.border}
+      pinned={
+        <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
+          <ActionButton
+            label="ANULUJ"
+            tone="neutral"
+            variant="secondary"
+            size="md"
+            onPress={onCancel}
+            style={{ flex: 1 }}
+          />
+          <ActionButton
+            label="ZAPISZ WPIS"
+            tone="amber"
+            variant="solid"
+            size="md"
+            busy={busy}
+            onPress={confirm}
+            style={{ flex: 2 }}
+          />
+        </View>
+      }
     >
-      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
+      <AppText variant="display" style={[styles.title, { color: amber.accent }]}>
+        NOWY WPIS RĘCZNY
+      </AppText>
+      <AppText variant="body" tone="secondary" style={styles.lead}>
+        Cały przebieg z pamięci — cztery czasy rejestru (§3.8, UTC). Wpis będzie
+        oznaczony jako ręczny.
+      </AppText>
 
-      <View style={styles.bottom}>
-        <View
-          style={{
-            gap: 12,
-            paddingHorizontal: theme.spacing.lg,
-            paddingTop: theme.spacing.lg,
-            // Zapas z mockupu jako podłoga; nad paskiem nawigacji arkusz ustępuje więcej
-            // (`sheetBottomPad`), inaczej pasek ucina dolny skraj akcji.
-            paddingBottom: sheetBottomPad(
-              theme.spacing.xxl,
-              insets.bottom,
-              keyboardHeight,
-              theme.spacing.lg,
-            ),
-            borderTopLeftRadius: theme.radius.xl,
-            borderTopRightRadius: theme.radius.xl,
-            borderTopWidth: theme.borderWidthStrong,
-            borderTopColor: amber.border,
-            backgroundColor: theme.colors.surfaceRaised,
-          }}
-        >
-          <View style={[styles.handle, { backgroundColor: theme.colors.borderStrong }]} />
-
-          <AppText variant="display" style={[styles.title, { color: amber.accent }]}>
-            NOWY WPIS RĘCZNY
-          </AppText>
-          <AppText variant="body" tone="secondary" style={styles.lead}>
-            Cały przebieg z pamięci — cztery czasy rejestru (§3.8, UTC). Wpis będzie
-            oznaczony jako ręczny.
-          </AppText>
-
-          {FIELDS.map((field) => {
-            const at = now + offsets[field.key] * 60_000;
-            return (
-              <View
-                key={field.key}
-                style={[
-                  styles.timeRow,
-                  {
-                    borderRadius: theme.radius.md,
-                    borderWidth: theme.borderWidth,
-                    borderColor: theme.colors.border,
-                    backgroundColor: theme.colors.surface,
-                  },
-                ]}
-              >
-                <AppText variant="mono" tone="muted" style={styles.timeLabel}>
-                  {field.label}
-                </AppText>
-                <HoldButton
-                  label="−"
-                  accessibilityLabel={`${field.label} — minuta wstecz`}
-                  onStep={() => bump(field.key, -1)}
-                />
-                <AppText
-                  variant="mono"
-                  style={[styles.timeValue, { color: theme.colors.textPrimary }]}
-                >
-                  {formatTime(at)}
-                </AppText>
-                <HoldButton
-                  label="+"
-                  accessibilityLabel={`${field.label} — minuta naprzód`}
-                  onStep={() => bump(field.key, +1)}
-                  disabled={offsets[field.key] >= 0}
-                />
-              </View>
-            );
-          })}
-
-          {/* Uwagi (§3.8) — trafiają do stopki grupy w rejestrze i do arkusza. */}
+      {FIELDS.map((field) => {
+        const at = now + offsets[field.key] * 60_000;
+        return (
           <View
+            key={field.key}
             style={[
-              styles.notesBox,
+              styles.timeRow,
               {
                 borderRadius: theme.radius.md,
                 borderWidth: theme.borderWidth,
@@ -186,44 +146,59 @@ export function ManualEntrySheet({
             ]}
           >
             <AppText variant="mono" tone="muted" style={styles.timeLabel}>
-              Uwagi (opcjonalne)
+              {field.label}
             </AppText>
-            <TextInput
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="np. GPS bez fixa od startu — czasy ze stopera"
-              placeholderTextColor={theme.colors.textMuted}
-              // Rodzina z tokenów wprost — surowy TextInput wziąłby font systemowy.
-              style={[
-                styles.notesInput,
-                { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.body },
-              ]}
-              maxLength={1000}
+            <HoldButton
+              label="−"
+              accessibilityLabel={`${field.label} — minuta wstecz`}
+              onStep={() => bump(field.key, -1)}
+            />
+            <AppText
+              variant="mono"
+              style={[styles.timeValue, { color: theme.colors.textPrimary }]}
+            >
+              {formatTime(at)}
+            </AppText>
+            <HoldButton
+              label="+"
+              accessibilityLabel={`${field.label} — minuta naprzód`}
+              onStep={() => bump(field.key, +1)}
+              disabled={offsets[field.key] >= 0}
             />
           </View>
+        );
+      })}
 
-          <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
-            <ActionButton
-              label="ANULUJ"
-              tone="neutral"
-              variant="secondary"
-              size="md"
-              onPress={onCancel}
-              style={{ flex: 1 }}
-            />
-            <ActionButton
-              label="ZAPISZ WPIS"
-              tone="amber"
-              variant="solid"
-              size="md"
-              busy={busy}
-              onPress={confirm}
-              style={{ flex: 2 }}
-            />
-          </View>
-        </View>
+      {/* Uwagi (§3.8) — trafiają do stopki grupy w rejestrze i do arkusza. */}
+      <View
+        style={[
+          styles.notesBox,
+          {
+            borderRadius: theme.radius.md,
+            borderWidth: theme.borderWidth,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
+          },
+        ]}
+      >
+        <AppText variant="mono" tone="muted" style={styles.timeLabel}>
+          Uwagi (opcjonalne)
+        </AppText>
+        <TextInput
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="np. GPS bez fixa od startu — czasy ze stopera"
+          placeholderTextColor={theme.colors.textPlaceholder}
+          // Rodzina z tokenów wprost — surowy TextInput wziąłby font systemowy.
+          style={[
+            styles.notesInput,
+            { color: theme.colors.textPrimary, fontFamily: theme.fontFamily.body },
+          ]}
+          maxLength={1000}
+        />
       </View>
-    </Modal>
+
+    </SheetSurface>
   );
 }
 
@@ -279,9 +254,6 @@ function HoldButton({
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1 },
-  bottom: { justifyContent: 'flex-end' },
-  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
   title: { fontSize: 23, letterSpacing: 2 },
   lead: { fontSize: 12, lineHeight: 17 },
   timeRow: {

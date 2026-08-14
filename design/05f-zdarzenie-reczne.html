@@ -63,7 +63,9 @@
 
   /* ===== SHEET ===== */
   .sheet-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.74); display:flex; flex-direction:column; justify-content:flex-end; }
-  .sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:16px 16px 26px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--amber-border); }
+  /* Sufit arkusza: pas tła nad nim ma być WIDOCZNY, inaczej arkusz z dużą treścią
+     dobija do góry telefonu i czyta się jak nowy ekran (SHEET_TOP_GAP = 56 dp). */
+  .sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:16px 16px 26px; display:flex; flex-direction:column; gap:13px; border-top:1px solid var(--amber-border);  max-height:calc(100% - 56px); overflow-y:auto; }
   .sheet-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .sheet-title { font-family:var(--font-display); font-size:23px; letter-spacing:2px; color:var(--amber); }
   .sheet-lead { font-size:12px; color:var(--text-secondary); line-height:1.55; }
@@ -78,9 +80,13 @@
   .time-block { background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:9px; }
   .time-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .time-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .step-btn { width:46px; height:46px; border-radius:13px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); cursor:pointer; font-family:var(--font-mono); font-size:13px; line-height:1; user-select:none; text-align:center; }
+  .step-btn { min-width:46px; padding:0 10px; white-space:nowrap; height:46px; border-radius:13px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); cursor:pointer; font-family:var(--font-mono); font-size:13px; line-height:1; user-select:none; text-align:center; }
   .step-btn:active { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
-  .time-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; text-align:center; }
+  /* Godzina jest CELEM DOTKNIĘCIA — tapnięcie otwiera klawiaturę numeryczną i pozwala
+     wpisać ją wprost (dwukropek stawia maska). Przyciski ±1 min zostają do poprawki
+     o krok. Ta sama kontrolka stoi w arkuszach korekty (10E–10H) — jeden komponent
+     `TimeStepper`, nie pięć kopii. */
+  .time-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; text-align:center; cursor:text; }
   /* Czas lokalny drobnym drukiem POD zegarem (issue #19) — drugorzędna wartość,
      drugorzędny stopień pisma. Rejestr jedzie w UTC i tak zostaje. */
   .time-local { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); text-align:center; }
@@ -231,18 +237,18 @@
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
-  <a class="vp-item" href="04c-korekta-zdarzenia.html">
-    <span class="vp-badge">04C</span>
+  <a class="vp-item" href="10e-korekta-zdarzenia.html">
+    <span class="vp-badge">10E</span>
     <span class="vp-body">
-      <span class="vp-name">Korekta istniejącego wpisu (na ziemi)</span>
-      <span class="vp-when">GPS <b>zapisał zdarzenie, którego nie było</b>, albo o złym czasie. Otwierane ołówkiem z logu (04, 10). Append-only — nie kasuje historii.</span>
+      <span class="vp-name">Korekta istniejącego wpisu (po biegu)</span>
+      <span class="vp-when">GPS <b>zapisał zdarzenie, którego nie było</b>, albo o złym czasie. Otwierane ołówkiem w trybie edycji sesji (10D). Append-only — nie kasuje historii.</span>
     </span>
   </a>
-  <a class="vp-item" href="08-lista-reczna.html">
-    <span class="vp-badge">08</span>
+  <a class="vp-item" href="10h-dodaj-wpis.html">
+    <span class="vp-badge">10H</span>
     <span class="vp-body">
-      <span class="vp-name">Lista ręczna (fallback GPS)</span>
-      <span class="vp-when">GPS milczy dłużej — cały lot albo dzień wpisywany z ręki.</span>
+      <span class="vp-name">Dopisanie zdarzenia po biegu</span>
+      <span class="vp-when">Ten arkusz (05F) zapisuje zdarzenie <b>w trakcie lotu</b>, gdy GPS milczy. Czego nie udało się złapać na bieżąco, dopisuje się po zatrzymaniu silnika — w trybie edycji sesji.</span>
     </span>
   </a>
   <a class="vp-item" href="05g-cockpit-no-gps.html">
@@ -260,8 +266,8 @@
   <a href="05-cockpit-running.html">← 05 In Flight</a>
   <a href="05f-zdarzenie-reczne.html" class="active">05F Zdarzenie ręczne</a>
   <a href="05g-cockpit-no-gps.html">05G No GPS</a>
-  <a href="04c-korekta-zdarzenia.html">04C Korekta</a>
-  <a href="08-lista-reczna.html">08 Lista ręczna</a>
+  <a href="10d-edycja.html">10D Edycja sesji</a>
+  <a href="10d-edycja.html">10D Edycja sesji</a>
 </nav>
 
 <script>

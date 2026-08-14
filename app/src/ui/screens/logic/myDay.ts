@@ -70,3 +70,32 @@ export function buildMyDay(day: PilotDay): MyDayVm {
 export function totalLabel(value: string | null): string {
   return value ?? DASH;
 }
+
+/** Przycisk pasa akcji ekranu 01 — decyzja o TREŚCI, nie o wyglądzie. */
+export interface MyDayAction {
+  id: 'start' | 'manual';
+  label: string;
+  /** Akcja główna dnia (zielona, pełna) — najwyżej JEDNA na ekranie. */
+  primary: boolean;
+}
+
+/**
+ * Co da się zrobić z poziomu „Mój dzień".
+ *
+ * ══ DLACZEGO TO JEST REGUŁA, A NIE `empty ? A : B` W JSX ══
+ * Bo pierwsza wersja tego warunku miała dziurę i nikt jej nie zauważył: pusty dzień
+ * dostawał WYŁĄCZNIE „ROZPOCZNIJ LOT", więc pilot, który przyleciał bez telefonu
+ * (padła bateria, aparat został w kurtce) i nie ma dziś ANI JEDNEJ sesji, nie miał jak
+ * wpisać lotu — a to jest dokładnie ta sytuacja, w której wpis ręczny powstał (§3.8,
+ * mockup 15). Wejście znikało w stanie, w którym jest najbardziej potrzebne.
+ *
+ * Zmienia się WAGA przycisku, nie jego obecność: przy pustym dniu „ROZPOCZNIJ LOT" jest
+ * akcją główną (zielone, pełne), przy dniu z sesjami oba są drugorzędne — bo wtedy
+ * dopisanie kolejnej sesji nie jest niczym wyjątkowym.
+ */
+export function myDayActions(empty: boolean): MyDayAction[] {
+  return [
+    { id: 'start', label: 'ROZPOCZNIJ LOT', primary: empty },
+    { id: 'manual', label: 'DODAJ LOT RĘCZNIE', primary: false },
+  ];
+}
