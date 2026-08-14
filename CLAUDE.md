@@ -235,6 +235,20 @@ Tokeny, czcionki i wszystkie reguły niżej obowiązują tak samo — inne urzą
 - Dropdowny jako lista kart do wyboru (nie natywny `<select>`) — widoczne opcje, zaznaczona = zielona obramówka
 - Operacje/typy jako siatka kart z ikonami
 
+### Arkusz (popup) — jedna rama dla wszystkich (2026-08-14)
+Arkusz wysuwany od dołu jest **wstawką NAD ekranem i musi to być widać**: nad nim zostaje
+pas przyciemnionego tła (`SHEET_TOP_GAP` = 56 dp ponad bezpiecznym obszarem), a treść
+przewija się WEWNĄTRZ arkusza — skraca się to, co pilot doczyta przewinięciem, nie rząd
+akcji. Arkusz bez sufitu dobijał do samej góry telefonu i czytał się jak nowy ekran.
+- w kodzie rama to **`components/sheets/SheetSurface.tsx`** (Modal + tło + panel + sufit
+  + obszar przewijania + `pinned` na akcje). Nowy arkusz zaczyna się od niej — nie od
+  kopii `Modal`+`Pressable`+`View`, bo właśnie te kopie gubiły sufit
+- geometria (`sheetMaxHeight`, `sheetBottomPad`, `SHEET_TOP_GAP`) mieszka w
+  `ui/hooks/keyboardGeometry.ts` i ma testy: to jedyna część arkusza sprawdzalna bez
+  urządzenia, a psuła się już czterokrotnie
+- w mockupach ta sama reguła to `max-height: calc(100% - 56px)` + `overflow-y:auto`
+  na `.modal-sheet`
+
 ### Nawigacja i warianty mockupów (obowiązuje każdy nowy/zmieniany ekran)
 - Każdy plik: nav-strip z linkami do sąsiadów + karta w `index.html` (warianty literowe → sekcja "Warianty i stany")
 - Ekran mający warianty → **panel „Warianty tego ekranu" na canvasie pod telefonem**: linki do całej rodziny + opis KIEDY dany wariant się wyświetla; bieżący ekran z tagiem „ten ekran"; badge amber dla stanów offline/warning. Wzorzec: `00-login.html`, `02-preflight.html`

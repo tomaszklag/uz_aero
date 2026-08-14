@@ -12,9 +12,11 @@
 
 import {
   KEYBOARD_CLEARANCE,
+  SHEET_TOP_GAP,
   keyboardBottomOffset,
   scrollDeltaForInput,
   sheetBottomPad,
+  sheetMaxHeight,
 } from '../ui/hooks/keyboardGeometry';
 
 /** Dolna krawędź widocznej listy = góra klawiatury (lista jest już skrócona). */
@@ -125,5 +127,39 @@ describe('sheetBottomPad', () => {
   it('każdy arkusz wnosi własny zapas z mockupu — reguła go nie normalizuje', () => {
     expect(sheetBottomPad(26, 0, 0, GAP)).toBe(26);
     expect(sheetBottomPad(30, 0, 0, GAP)).toBe(30);
+  });
+});
+
+/**
+ * SUFIT ARKUSZA (zgłoszenie z urządzenia, 2026-08-14 — arkusz korekty zdarzenia).
+ *
+ * Arkusz z dużą treścią dobijał do samej góry telefonu i przestawał wyglądać jak wstawka
+ * NAD ekranem. Reguła jest wspólna dla wszystkich arkuszy (`SheetSurface`), więc mieszka
+ * tu razem z resztą geometrii — i tu jest sprawdzalna bez urządzenia.
+ */
+describe('sheetMaxHeight', () => {
+  it('zostawia pas tła nad arkuszem, żeby było widać ekran pod spodem', () => {
+    // Telefon ze zgłoszenia, pasek statusu 47 dp, klawiatura zwinięta.
+    expect(sheetMaxHeight(WINDOW, 0, 47)).toBe(WINDOW - 47 - SHEET_TOP_GAP);
+  });
+
+  it('klawiatura zabiera arkuszowi miejsce od dołu, a nie od góry', () => {
+    // Sufit spada dokładnie o wysokość klawiatury: pas nad arkuszem zostaje ten sam,
+    // bo to on odróżnia arkusz od ekranu.
+    const bezKlawiatury = sheetMaxHeight(WINDOW, 0, 47);
+
+    expect(sheetMaxHeight(WINDOW, 310, 47)).toBe(bezKlawiatury - 310);
+  });
+
+  it('nie schodzi poniżej 240 dp, choćby pomiary przyszły niespójne', () => {
+    // Arkusz bez miejsca na rząd akcji jest gorszy niż arkusz zachodzący na pasek
+    // statusu — a klawiatura mierzona w złym układzie współrzędnych potrafi „zjeść"
+    // całe okno (patrz `keyboardBottomOffset`).
+    expect(sheetMaxHeight(WINDOW, 900, 47)).toBe(240);
+  });
+
+  it('pas nad arkuszem jest WIDOCZNY, nie symboliczny', () => {
+    // Poprzednie 24 dp znikało pod paskiem statusu narysowanym na arkuszu.
+    expect(SHEET_TOP_GAP).toBeGreaterThanOrEqual(48);
   });
 });

@@ -90,6 +90,40 @@ export function sheetBottomPad(
 }
 
 /**
+ * Ile EKRANU musi zostać widoczne nad arkuszem (dp, ponad bezpiecznym obszarem).
+ *
+ * Arkusz jest wstawką NAD ekranem, a nie kolejnym ekranem — i to musi być widać, zanim
+ * pilot przeczyta choć jedno słowo. Bez wyraźnego pasa przyciemnionego tła arkusz z dużą
+ * treścią (korekta zdarzenia z wierszami odniesienia, historia zmian) dobijał do górnej
+ * krawędzi i wyglądał jak nowy ekran — z uchwytem, którego nikt nie szuka, jako jedyną
+ * poszlaką.
+ *
+ * 56 dp, bo poprzednie 24 dp znikało: na telefonie z paskiem statusu narysowanym na
+ * arkuszu (`statusBarTranslucent`) różnica między „arkusz do góry" a „arkusz prawie
+ * do góry" była niewidoczna. Przy 56 dp widać pas tła i kawałek ekranu pod spodem.
+ */
+export const SHEET_TOP_GAP = 56;
+
+/**
+ * Sufit wysokości arkusza wysuwanego od dołu.
+ *
+ * Odejmujemy trzy rzeczy i każda ma inny powód: klawiaturę (arkusz ma stać NAD nią,
+ * nie pod), górny bezpieczny obszar (paska statusu i wcięcia aparatu nie wolno zasłonić)
+ * oraz `SHEET_TOP_GAP` (żeby było widać, że pod spodem jest ekran).
+ *
+ * Podłoga 240 dp trzyma sens układu, gdyby pomiary przyszły niespójne — arkusz bez
+ * miejsca na rząd akcji jest gorszy niż arkusz zachodzący na pasek statusu.
+ */
+export function sheetMaxHeight(
+  windowHeight: number,
+  keyboardHeight: number,
+  insetTop: number,
+  topGap: number = SHEET_TOP_GAP,
+): number {
+  return Math.max(240, windowHeight - keyboardHeight - insetTop - topGap);
+}
+
+/**
  * O ile jeszcze przewinąć listę, żeby CAŁE pole stało nad klawiaturą.
  *
  * Oba argumenty to dolne krawędzie w układzie OKNA, wprost z `measureInWindow`:

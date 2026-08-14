@@ -17,11 +17,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
-import { sheetBottomPad } from '../../hooks/keyboardGeometry';
 import { useEduBanner } from '../../store/eduBanners';
 import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
@@ -30,6 +28,7 @@ import { Banner } from '../status/Banner';
 import { Icon, type IconName } from '../foundation/Icon';
 import { ReasonField } from '../input/ReasonField';
 import { Tag } from '../status/Tag';
+import { SheetSurface } from './SheetSurface';
 import { toneColors } from '../tone';
 
 export interface CorrectionRef {
@@ -86,7 +85,6 @@ export function CorrectionSheet({
   onCancel,
 }: CorrectionSheetProps) {
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
   const blue = toneColors(theme, 'blue');
   const green = toneColors(theme, 'green');
 
@@ -109,170 +107,16 @@ export function CorrectionSheet({
   const source = methodBadge != null && methodBadge.startsWith('auto') ? 'odczytu GPS' : 'wpisu';
 
   return (
-    <Modal
+    <SheetSurface
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-      statusBarTranslucent
-    >
-      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
-
-      <View style={styles.bottom}>
-        <View
-          style={{
-            gap: 13,
-            paddingHorizontal: theme.spacing.lg + 2,
-            paddingTop: theme.spacing.lg + 2,
-            // 30 dp z mockupu jako podłoga; na pasku nawigacji arkusz musi ustąpić więcej,
-            // inaczej pasek ucina dolny skraj akcji (`sheetBottomPad`).
-            paddingBottom: sheetBottomPad(30, insets.bottom, 0, theme.spacing.lg),
-            borderTopLeftRadius: theme.radius.xl,
-            borderTopRightRadius: theme.radius.xl,
-            borderTopWidth: theme.borderWidth,
-            borderTopColor: theme.colors.borderStrong,
-            backgroundColor: theme.colors.surfaceRaised,
-          }}
-        >
-          <View style={[styles.handle, { backgroundColor: theme.colors.borderStrong }]} />
-
-          {/* Tytuł + zwinięte „Jak to działa?" (mockup: `.help-reopen` przy tytule). */}
-          <View style={styles.titleRow}>
-            <AppText variant="display" style={styles.title}>
-              KOREKTA ZDARZENIA
-            </AppText>
-            {eduDismissed && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Pokaż wyjaśnienie, jak działa korekta"
-                onPress={() => setEduDismissed(false)}
-                hitSlop={8}
-                style={[
-                  styles.helpChip,
-                  {
-                    borderRadius: theme.radius.pill,
-                    borderWidth: theme.borderWidth,
-                    borderColor: blue.border,
-                    backgroundColor: blue.muted,
-                  },
-                ]}
-              >
-                <Icon name="info" size={11} color={blue.accent} />
-                <AppText variant="mono" style={[styles.helpLabel, { color: blue.accent }]}>
-                  Jak to działa?
-                </AppText>
-              </Pressable>
-            )}
-          </View>
-
-          {/* Karta korygowanego zdarzenia (`.evt-card`). */}
-          <View
-            style={[
-              styles.eventCard,
-              {
-                borderRadius: theme.radius.btn,
-                borderWidth: theme.borderWidth,
-                borderColor: blue.border,
-                backgroundColor: theme.colors.surface,
-              },
-            ]}
-          >
-            <Icon name={eventIcon} size={18} color={blue.accent} />
-            <View style={styles.eventBody}>
-              <AppText variant="label">{eventLabel}</AppText>
-              <AppText variant="mono" tone="muted" style={styles.eventMeta}>
-                {`zapisano ${formatTime(originalTime)} UTC`}
-              </AppText>
-            </View>
-            {methodBadge != null && <Tag label={methodBadge} tone="blue" />}
-          </View>
-
-          {/* Czas zdarzenia — kroki minutowe, wzorzec z 05f. */}
-          <View style={{ gap: 5 }}>
-            <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
-              Czas zdarzenia (UTC)
-            </AppText>
-            <View
-              style={[
-                styles.timeRow,
-                {
-                  borderRadius: theme.radius.btn,
-                  borderWidth: theme.borderWidth,
-                  borderColor: green.border,
-                  backgroundColor: theme.colors.surface,
-                },
-              ]}
-            >
-              <MinuteButton
-                label="−1 min"
-                disabled={offsetMin <= -MAX_SHIFT_MIN}
-                onPress={() => setOffsetMin((o) => o - 1)}
-              />
-              <AppText
-                variant="mono"
-                style={{
-                  flex: 1,
-                  textAlign: 'center',
-                  fontFamily: theme.fontFamily.monoBold,
-                  fontSize: 30,
-                  lineHeight: 34,
-                  letterSpacing: 2,
-                  color: theme.colors.textPrimary,
-                }}
-              >
-                {formatTime(newTime)}
-              </AppText>
-              <MinuteButton
-                label="+1 min"
-                disabled={offsetMin >= MAX_SHIFT_MIN || newTime + 60_000 > maxTime}
-                onPress={() => setOffsetMin((o) => o + 1)}
-              />
-            </View>
-            <AppText variant="mono" tone="amber" style={styles.delta}>
-              {offsetMin === 0
-                ? `Bez zmiany względem ${source} (${formatTime(originalTime)})`
-                : `Zmiana o ${offsetMin > 0 ? '+' : '−'}${Math.abs(offsetMin)} min względem ${source} (${formatTime(originalTime)})`}
-            </AppText>
-          </View>
-
-          {/* Wiersze odniesienia — w tym wpływ na czasy, przeliczany na bieżąco. */}
-          {refsFor(newTime).map((ref) => (
-            <View key={ref.label} style={styles.refRow}>
-              <AppText variant="mono" tone="muted" style={styles.refText}>
-                {ref.label}
-              </AppText>
-              <AppText variant="mono" tone="secondary" style={styles.refText}>
-                {ref.value}
-              </AppText>
-            </View>
-          ))}
-
-          <ReasonField
-            value={reason}
-            onChangeText={setReason}
-            placeholder="np. GPS wykrył lądowanie za późno"
-          />
-
-          {onOpenHistory != null && (
-            <HistoryLink count={historyCount} onPress={onOpenHistory} />
-          )}
-
-          <Banner
-            kind="edu"
-            tone="blue"
-            icon="info"
-            text={
-              'Korekta nie kasuje historii — zapisujemy osobne zdarzenie korygujące, oryginalny ' +
-              'odczyt zostaje w rejestrze. Serwer scali obie wersje i pokaże poprawkę w arkuszu.'
-            }
-            collapsedLabel="Jak to działa?"
-            dismissed={eduDismissed}
-            // Mini-chip renderujemy przy tytule, nie w miejscu banera — stąd pusty render
-            // po zwinięciu: dwa „Jak to działa?" na jednym arkuszu by się dublowały.
-            onDismiss={setEduDismissed}
-            style={eduDismissed ? styles.hidden : undefined}
-          />
-
+      onCancel={onCancel}
+      gap={13}
+      paddingHorizontal={theme.spacing.lg + 2}
+      paddingTop={theme.spacing.lg + 2}
+      /* 30 dp z mockupu jako podłoga; nad paskiem nawigacji rama ustąpi więcej. */
+      designPad={30}
+      pinned={
+        <>
           <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
             <ActionButton
               label="ANULUJ"
@@ -308,9 +152,146 @@ export function CorrectionSheet({
           <AppText variant="mono" tone="muted" style={styles.voidHint}>
             {voidHint}
           </AppText>
-        </View>
+        </>
+      }
+    >
+      {/* Tytuł + zwinięte „Jak to działa?" (mockup: `.help-reopen` przy tytule). */}
+      <View style={styles.titleRow}>
+        <AppText variant="display" style={styles.title}>
+          KOREKTA ZDARZENIA
+        </AppText>
+        {eduDismissed && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Pokaż wyjaśnienie, jak działa korekta"
+            onPress={() => setEduDismissed(false)}
+            hitSlop={8}
+            style={[
+              styles.helpChip,
+              {
+                borderRadius: theme.radius.pill,
+                borderWidth: theme.borderWidth,
+                borderColor: blue.border,
+                backgroundColor: blue.muted,
+              },
+            ]}
+          >
+            <Icon name="info" size={11} color={blue.accent} />
+            <AppText variant="mono" style={[styles.helpLabel, { color: blue.accent }]}>
+              Jak to działa?
+            </AppText>
+          </Pressable>
+        )}
       </View>
-    </Modal>
+
+      {/* Karta korygowanego zdarzenia (`.evt-card`). */}
+      <View
+        style={[
+          styles.eventCard,
+          {
+            borderRadius: theme.radius.btn,
+            borderWidth: theme.borderWidth,
+            borderColor: blue.border,
+            backgroundColor: theme.colors.surface,
+          },
+        ]}
+      >
+        <Icon name={eventIcon} size={18} color={blue.accent} />
+        <View style={styles.eventBody}>
+          <AppText variant="label">{eventLabel}</AppText>
+          <AppText variant="mono" tone="muted" style={styles.eventMeta}>
+            {`zapisano ${formatTime(originalTime)} UTC`}
+          </AppText>
+        </View>
+        {methodBadge != null && <Tag label={methodBadge} tone="blue" />}
+      </View>
+
+      {/* Czas zdarzenia — kroki minutowe, wzorzec z 05f. */}
+      <View style={{ gap: 5 }}>
+        <AppText variant="mono" tone="muted" style={styles.fieldLabel}>
+          Czas zdarzenia (UTC)
+        </AppText>
+        <View
+          style={[
+            styles.timeRow,
+            {
+              borderRadius: theme.radius.btn,
+              borderWidth: theme.borderWidth,
+              borderColor: green.border,
+              backgroundColor: theme.colors.surface,
+            },
+          ]}
+        >
+          <MinuteButton
+            label="−1 min"
+            disabled={offsetMin <= -MAX_SHIFT_MIN}
+            onPress={() => setOffsetMin((o) => o - 1)}
+          />
+          <AppText
+            variant="mono"
+            style={{
+              flex: 1,
+              textAlign: 'center',
+              fontFamily: theme.fontFamily.monoBold,
+              fontSize: 30,
+              lineHeight: 34,
+              letterSpacing: 2,
+              color: theme.colors.textPrimary,
+            }}
+          >
+            {formatTime(newTime)}
+          </AppText>
+          <MinuteButton
+            label="+1 min"
+            disabled={offsetMin >= MAX_SHIFT_MIN || newTime + 60_000 > maxTime}
+            onPress={() => setOffsetMin((o) => o + 1)}
+          />
+        </View>
+        <AppText variant="mono" tone="amber" style={styles.delta}>
+          {offsetMin === 0
+            ? `Bez zmiany względem ${source} (${formatTime(originalTime)})`
+            : `Zmiana o ${offsetMin > 0 ? '+' : '−'}${Math.abs(offsetMin)} min względem ${source} (${formatTime(originalTime)})`}
+        </AppText>
+      </View>
+
+      {/* Wiersze odniesienia — w tym wpływ na czasy, przeliczany na bieżąco. */}
+      {refsFor(newTime).map((ref) => (
+        <View key={ref.label} style={styles.refRow}>
+          <AppText variant="mono" tone="muted" style={styles.refText}>
+            {ref.label}
+          </AppText>
+          <AppText variant="mono" tone="secondary" style={styles.refText}>
+            {ref.value}
+          </AppText>
+        </View>
+      ))}
+
+      <ReasonField
+        value={reason}
+        onChangeText={setReason}
+        placeholder="np. GPS wykrył lądowanie za późno"
+      />
+
+      {onOpenHistory != null && (
+        <HistoryLink count={historyCount} onPress={onOpenHistory} />
+      )}
+
+      <Banner
+        kind="edu"
+        tone="blue"
+        icon="info"
+        text={
+          'Korekta nie kasuje historii — zapisujemy osobne zdarzenie korygujące, oryginalny ' +
+          'odczyt zostaje w rejestrze. Serwer scali obie wersje i pokaże poprawkę w arkuszu.'
+        }
+        collapsedLabel="Jak to działa?"
+        dismissed={eduDismissed}
+        // Mini-chip renderujemy przy tytule, nie w miejscu banera — stąd pusty render
+        // po zwinięciu: dwa „Jak to działa?" na jednym arkuszu by się dublowały.
+        onDismiss={setEduDismissed}
+        style={eduDismissed ? styles.hidden : undefined}
+      />
+    </SheetSurface>
   );
 }
 
@@ -354,9 +335,6 @@ function MinuteButton({
 }
 
 const styles = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject },
-  bottom: { flex: 1, justifyContent: 'flex-end' },
-  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center' },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   title: { fontSize: 22, lineHeight: 24, letterSpacing: 2 },
   helpChip: { flexDirection: 'row', alignItems: 'center', gap: 5, minHeight: 32, paddingHorizontal: 11 },

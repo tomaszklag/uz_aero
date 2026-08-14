@@ -11,15 +11,14 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../../theme';
-import { sheetBottomPad } from '../../hooks/keyboardGeometry';
 import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
 import { Numpad } from '../input/Numpad';
 import { PinDots } from '../input/PinDots';
+import { SheetSurface } from './SheetSurface';
 
 const PIN_LENGTH = 4;
 /** Chwila na zobaczenie kompletu kropek, zanim arkusz przejdzie do następnego kroku. */
@@ -52,7 +51,6 @@ export function PinChangeSheet({
   onCancel,
 }: PinChangeSheetProps) {
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
 
   const [step, setStep] = useState<Step>('current');
   const [entry, setEntry] = useState('');
@@ -141,67 +139,44 @@ export function PinChangeSheet({
   }, [busy, error]);
 
   return (
-    <Modal
+    <SheetSurface
       visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-      statusBarTranslucent
+      onCancel={onCancel}
+      align="center"
+      /* 26 dp z mockupu jako podłoga; nad paskiem nawigacji rama ustąpi więcej.
+         PIN wpisuje się własnym numpadem, nie klawiaturą systemu. */
+      designPad={26}
+      pinned={
+        <Pressable accessibilityRole="button" onPress={onCancel} style={styles.cancel}>
+          <AppText variant="mono" tone="secondary" style={styles.cancelLabel}>
+            ANULUJ
+          </AppText>
+        </Pressable>
+      }
     >
-      <Pressable style={[styles.overlay, { backgroundColor: theme.colors.overlay }]} onPress={onCancel} accessibilityLabel="Zamknij" />
+      <AppText variant="display" style={styles.title}>
+        ZMIEŃ PIN
+      </AppText>
 
-      <View style={styles.bottom}>
-        <View
-          style={{
-            alignItems: 'center',
-            gap: theme.spacing.md,
-            padding: theme.spacing.lg,
-            // 26 dp z mockupu jako podłoga; nad paskiem nawigacji arkusz ustępuje więcej
-            // (`sheetBottomPad`). PIN wpisuje się własnym numpadem, nie klawiaturą systemu.
-            paddingBottom: sheetBottomPad(26, insets.bottom, 0, theme.spacing.lg),
-            borderTopLeftRadius: theme.radius.xl,
-            borderTopRightRadius: theme.radius.xl,
-            borderTopWidth: theme.borderWidthStrong,
-            borderTopColor: theme.colors.borderStrong,
-            backgroundColor: theme.colors.surfaceRaised,
-          }}
-        >
-          <View style={[styles.handle, { backgroundColor: theme.colors.borderStrong }]} />
+      <AppText variant="mono" tone="muted" style={styles.step}>
+        {STEP_LABEL[step]}
+      </AppText>
+      <PinDots filled={entry.length} length={PIN_LENGTH} error={error > 0} />
 
-          <AppText variant="display" style={styles.title}>
-            ZMIEŃ PIN
-          </AppText>
+      <Numpad onDigit={onDigit} onBackspace={onBackspace} disabled={busy && error === 0} />
 
-          <AppText variant="mono" tone="muted" style={styles.step}>
-            {STEP_LABEL[step]}
-          </AppText>
-          <PinDots filled={entry.length} length={PIN_LENGTH} error={error > 0} />
-
-          <Numpad onDigit={onDigit} onBackspace={onBackspace} disabled={busy && error === 0} />
-
-          {/* `.sheet-offline-note` — zmiana PIN-u nie dotyka sieci, mówimy to wprost. */}
-          <View style={styles.noteRow}>
-            <Icon name="check" size={10} color={theme.colors.green} />
-            <AppText variant="mono" style={[styles.note, { color: theme.colors.green }]}>
-              Działa w 100% offline
-            </AppText>
-          </View>
-
-          <Pressable accessibilityRole="button" onPress={onCancel} style={styles.cancel}>
-            <AppText variant="mono" tone="secondary" style={styles.cancelLabel}>
-              ANULUJ
-            </AppText>
-          </Pressable>
-        </View>
+      {/* `.sheet-offline-note` — zmiana PIN-u nie dotyka sieci, mówimy to wprost. */}
+      <View style={styles.noteRow}>
+        <Icon name="check" size={10} color={theme.colors.green} />
+        <AppText variant="mono" style={[styles.note, { color: theme.colors.green }]}>
+          Działa w 100% offline
+        </AppText>
       </View>
-    </Modal>
+    </SheetSurface>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1 },
-  bottom: { justifyContent: 'flex-end' },
-  handle: { width: 36, height: 4, borderRadius: 2 },
   title: { fontSize: 23, letterSpacing: 2, alignSelf: 'flex-start' },
   step: { fontSize: 9, letterSpacing: 2.5, textTransform: 'uppercase' },
   noteRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
