@@ -584,10 +584,16 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   czasy, więc podpis powtarzał nagłówek arkusza przy każdym wpisie i zabierał miejsce
   parze „było → jest". Rozstrzyga FAKTYCZNA zawartość listy, nie zakres, w jakim ją
   otwarto (`needsFieldLabels` w `logic/correctionHistoryRows.ts`)
-- **arkusz nie tłumaczy braków**: przypis „odczytu nie da się unieważnić" opisywał
-  przycisk, którego nikt nie szuka. Tak samo wyleciały podpowiedzi „litry z paliwomierza"
-  i „wskazanie licznika" — nazywały pole, które nazywa się tak samo dwa centymetry wyżej.
-  Podpowiedź pod polem pojawia się WYŁĄCZNIE po zmianie i mówi, co było
+- **arkusz nie tłumaczy braków ani samego siebie**: przypis „odczytu nie da się
+  unieważnić" opisywał przycisk, którego nikt nie szuka. Tak samo wyleciały podpowiedzi
+  „litry z paliwomierza" i „wskazanie licznika" (nazywały pole, które nazywa się tak samo
+  dwa centymetry wyżej), zdanie „korekty zapisują się od razu — rejestr jest append-only"
+  spod pasa edycji oraz przypis „ta lista jest kompletna z definicji" pod historią zmian.
+  Wszystkie opisywały wewnętrzną budowę rejestru komuś, kto o nią nie pytał. Podpowiedź
+  pod polem pojawia się WYŁĄCZNIE po zmianie i mówi, co było
+- **kotwica historii to sama para „kiedy → co"**: podpis o źródle zapisu („autodetekcja ·
+  GPS", „zapis sesji") zniknął razem z plakietkami „AUTO"/„RĘCZNIE" z osi (issue #40) —
+  prowenienecja nie jest pytaniem pilota, tylko rejestru i panelu
 - **wiersz „Historia zmian" istnieje TYLKO wtedy, gdy jest historia**: zerowy licznik to
   szum, nie informacja — ta sama reguła, którą issue #40 wyrzuciło „Notatki —"
 

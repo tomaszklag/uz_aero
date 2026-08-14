@@ -50,8 +50,8 @@ export interface CorrectionHistorySheetProps {
   title: string;
   /** Wpisy — najnowszy PIERWSZY (ekran dostaje je już odwrócone). */
   items: CorrectionHistoryItem[];
-  /** Zapis pierwotny jako kotwica pod listą. */
-  origin: { when: string; value: string; source: string } | null;
+  /** Zapis pierwotny jako kotwica pod listą — kiedy i co, bez podpisu o źródle. */
+  origin: { when: string; value: string } | null;
   onClose: () => void;
 }
 
@@ -134,6 +134,10 @@ export function CorrectionHistorySheet({
         </View>
       ))}
 
+      {/* KOTWICA: co niosło zdarzenie, zanim ktokolwiek je poprawił. Sama para
+          „kiedy → co", bez podpisu o źródle („autodetekcja · GPS", „zapis sesji"):
+          prowenienecja nie jest pytaniem pilota — ta sama reguła, przez którą issue #40
+          zdjęło plakietki „AUTO" i „RĘCZNIE" z osi sesji. */}
       {origin != null && (
         <View style={[styles.item, { borderTopColor: theme.colors.border }]}>
           <AppText variant="mono" tone="muted" style={styles.when}>
@@ -145,16 +149,8 @@ export function CorrectionHistorySheet({
               {origin.value}
             </AppText>
           </View>
-          <AppText variant="mono" tone="secondary" style={styles.who}>
-            {origin.source}
-          </AppText>
         </View>
       )}
-
-      <AppText variant="mono" tone="muted" style={styles.footNote}>
-        Ta lista jest kompletna z definicji — rejestr jest append-only, więc żadna
-        poprawka z niego nie znika. Ten sam ślad widzi administrator w panelu.
-      </AppText>
     </Sheet>
   );
 }
@@ -172,5 +168,4 @@ const styles = StyleSheet.create({
   who: { fontSize: 9, letterSpacing: 0.5 },
   reason: { fontSize: 11, lineHeight: 16, fontStyle: 'italic' },
   noReason: { fontSize: 9, letterSpacing: 0.5 },
-  footNote: { fontSize: 8.5, letterSpacing: 0.8, lineHeight: 14 },
 });

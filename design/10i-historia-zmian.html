@@ -113,10 +113,6 @@
   .hist-verdict { font-family:var(--font-mono); font-size:11px; letter-spacing:0.5px; color:var(--green); }
   .hist-verdict.void { color:var(--red); }
 
-  .append-box { display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 13px; }
-  .append-box svg { flex-shrink:0; margin-top:1px; color:var(--blue); }
-  .append-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .append-text b { color:var(--blue); font-weight:600; }
 
   .btn-close { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; cursor:pointer; }
 
@@ -253,7 +249,15 @@
           </div>
 
           <!-- KOTWICA: zapis pierwotny. Kropka pusta, bo to nie korekta, tylko fakt
-               z terenu — i to on jest punktem odniesienia dla wszystkich strzałek wyżej. -->
+               z terenu — i to on jest punktem odniesienia dla wszystkich strzałek wyżej.
+
+               BEZ PODPISU O ŹRÓDLE („autodetekcja · GPS", „zapis sesji") i bez przypisu
+               o append-only pod listą (zgłoszenie z urządzenia, 2026-08-14). Pierwsze
+               było prowenienecją, o którą pilot nie pyta — ta sama reguła, przez którą
+               issue #40 zdjęło plakietki „AUTO" i „RĘCZNIE" z osi. Drugie opisywało
+               wewnętrzną budowę rejestru komuś, kto o nią nie pytał: ta sama reguła,
+               przez którą wyleciał przypis „korekty zapisują się od razu" z trybu edycji.
+               Zostaje sama para „kiedy → co", czyli to, po co ten arkusz się otwiera. -->
           <div class="hist-item">
             <span class="hist-rail"><span class="hist-dot origin"></span></span>
             <div class="hist-body">
@@ -262,14 +266,8 @@
                 <span class="hist-field">zapis pierwotny</span>
                 <span class="hist-to">08:58</span>
               </span>
-              <span class="hist-who">autodetekcja · GPS</span>
             </div>
           </div>
-        </div>
-
-        <div class="append-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span class="append-text">Ta lista jest <b>kompletna z definicji</b> — rejestr jest append-only, więc żadna poprawka z niego nie znika i nie da się jej ukryć. Ten sam ślad widzi administrator w panelu.</span>
         </div>
 
         <a href="10e-korekta-zdarzenia.html" class="btn-close">Zamknij</a>

@@ -442,11 +442,9 @@ export function useSessionEdit(
   const historyOrigin = useMemo(() => {
     if (historySource == null) return null;
     const at = historySource.gpsTime ?? historySource.deviceTime;
-    const method = methodBadgeFor(historySource);
     return {
       when: `${dateTimeUtcShort(at)} UTC`,
       value: originalValueOf(historySource, mhFormat, history?.only, whoCode),
-      source: method === 'ręcznie' ? 'wpis ręczny pilota' : method === null ? 'zapis sesji' : 'autodetekcja · GPS',
     };
   }, [history?.only, historySource, mhFormat, whoCode]);
 
