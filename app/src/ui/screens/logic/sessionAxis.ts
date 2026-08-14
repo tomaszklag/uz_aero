@@ -21,6 +21,15 @@
  *    pilota — metoda zostaje w rejestrze i w panelu administratora. To ta sama reguła,
  *    którą issue #38 wygasił plakietkę „AUTO", tylko dociągnięta do końca.
  *
+ * ══ CO ZMIENIŁ ISSUE #44 ══
+ * Ten builder obsługuje odtąd TAKŻE log kokpitu (04, 05) — przez `buildCockpitAxis`
+ * z `cockpitLog.ts`, który dokłada do jego wyniku wiersz „na żywo" i znaczniki outboxa.
+ * Kokpit miał wcześniej własny builder i własny komponent, więc ta sama sesja miała dwa
+ * słowniki („Start engine" kontra „Uruchomienie"), dwa zestawy kolorów i dwa miejsca na
+ * te same liczby. Przy okazji weszły tu ZDARZENIA NAZIEMNE (tankowanie, załadunek,
+ * zmiana załogi): kokpit pokazywał je od zawsze, a rozliczenie nie — mimo że rachunek
+ * paliwa odwołuje się do tankowań, a arkusz 10H pozwala je dopisać.
+ *
  * ══ DLACZEGO ZE STRUMIENIA, A NIE Z SAMEJ PROJEKCJI ══
  * Bo projekcja nie zna wszystkich punktów osi: niesie loty (`Flight`), ale uruchomienia
  * silnika, kołowania ani zrzutu nie opisuje. Te bierzemy ze strumienia EFEKTYWNEGO
@@ -37,7 +46,15 @@ import { applyCorrections, correctionHistory } from '../../../domain';
 import type { Event, EventOf, MhFormat, SessionState } from '../../../domain';
 import { hhmm, litres, motoHours, thousands, timeUtc } from '../../format';
 
-/** Rodzaj punktu na osi — steruje kolorem kropki i tonem napisu. */
+/**
+ * Rodzaj punktu na osi — steruje kolorem kropki i tonem napisu.
+ *
+ * Zdarzenia naziemne weszły tu przy issue #44, razem z logiem kokpitu. Do tej pory
+ * oś ich nie znała i był to BŁĄD, a nie decyzja: rachunek paliwa na tym samym ekranie
+ * mówił „dolane · 2 tankowania", a oś nie pokazywała ani jednego — mimo że arkusz
+ * dopisania (10H) pozwala tankowanie i załadunek dodać. Wpis dopisany ręcznie znikał
+ * więc bez śladu.
+ */
 export type AxisKind =
   | 'claim'
   | 'engineStart'
@@ -46,7 +63,12 @@ export type AxisKind =
   | 'drop'
   | 'landing'
   | 'engineStop'
-  | 'release';
+  | 'release'
+  | 'refuel'
+  | 'boarding'
+  | 'crew'
+  /** Stan TRWAJĄCY — dokłada go kokpit (`cockpitLog.ts`), nie ten builder. */
+  | 'live';
 
 /** Jeden wiersz osi. */
 export interface AxisRow {
@@ -90,10 +112,18 @@ export interface AxisRow {
    * nie cechą pojedynczego zdarzenia.
    */
   warned?: boolean;
+  /** Zdarzenie czeka w outboxie — znacznik ↑ (dokłada kokpit, patrz `cockpitLog.ts`). */
+  pending?: boolean;
 }
 
 /** Kafelek stopki osi. */
 export interface AxisFootItem {
+  /**
+   * Co to za wielkość — po tym, a nie po napisie, wybiera się kafelki na inny ekran
+   * (kokpit pomija `route`, bo trasa stoi w jego pasku górnym). Filtr po `key` łamałby
+   * się przy pierwszej zmianie napisu, a ten napis raz brzmi „Trasa", a raz „Lotnisko".
+   */
+  id: 'block' | 'flightTime' | 'takeoffs' | 'route' | 'held';
   key: string;
   value: string;
   /** Wyróżnienie zielenią — jeden kafelek na stopkę, żeby akcent coś znaczył. */
@@ -134,6 +164,12 @@ function correctedUuids(events: readonly Event[]): Set<string> {
  */
 const RANK: Record<AxisKind, number> = {
   claim: 0,
+  // Tankowanie i załadunek dzieją się PRZY ZATRZYMANYM śmigle, więc przy równym stemplu
+  // stoją przed uruchomieniem i po wyłączeniu — inaczej „Tankowanie" wpadałoby w środek
+  // biegu silnika tylko dlatego, że zegar pokazał tę samą minutę.
+  refuel: 0.5,
+  boarding: 0.6,
+  crew: 0.7,
   engineStart: 1,
   taxi: 2,
   takeoff: 3,
@@ -141,6 +177,8 @@ const RANK: Record<AxisKind, number> = {
   landing: 5,
   engineStop: 6,
   release: 7,
+  // Stan trwający jest zawsze na końcu — dokłada go kokpit już po posortowaniu.
+  live: 8,
 };
 
 /**
@@ -232,6 +270,62 @@ export function buildSessionAxis(
         corrected: corrected.has(drop.uuid),
       });
     }
+
+    // ── ZDARZENIA NAZIEMNE (issue #44) ────────────────────────────────────────
+    // Dzieją się MIĘDZY pracą silnika, ale w tym samym czasie co reszta, więc wchodzą
+    // na tę samą oś. Do issue #44 log kokpitu rysował je pełnoszerokim pasem amber,
+    // a oś rozliczenia nie rysowała ich wcale.
+    if (event.type === 'refuel') {
+      const refuel = event as EventOf<'refuel'>;
+      rows.push({
+        id: refuel.uuid,
+        kind: 'refuel',
+        at: at(refuel),
+        time: timeUtc(at(refuel)),
+        name: 'Tankowanie',
+        // Dolewka i stan PO niej: pierwsza liczba mówi, ile poszło z dystrybutora,
+        // druga — z czym samolot został. Stanu przed nie ma, bo to poprzedni odczyt,
+        // który stoi wyżej na tej samej osi.
+        sub: `+${Math.round(refuel.payload.addedL)} L → ${litres(refuel.payload.afterL)}`,
+        flight: null,
+        duration: null,
+        targetUuid: refuel.uuid,
+        corrected: corrected.has(refuel.uuid),
+      });
+    }
+
+    if (event.type === 'boarding') {
+      const boarding = event as EventOf<'boarding'>;
+      rows.push({
+        id: boarding.uuid,
+        kind: 'boarding',
+        at: at(boarding),
+        time: timeUtc(at(boarding)),
+        name: 'Załadunek',
+        // Skład jest od issue #21 opcjonalny — bez deklaracji zostaje sam fakt.
+        sub: jumpersLine(boarding.payload.jumpers),
+        flight: null,
+        duration: null,
+        targetUuid: boarding.uuid,
+        corrected: corrected.has(boarding.uuid),
+      });
+    }
+
+    if (event.type === 'crew_change') {
+      const crew = event as EventOf<'crew_change'>;
+      rows.push({
+        id: crew.uuid,
+        kind: 'crew',
+        at: at(crew),
+        time: timeUtc(at(crew)),
+        name: 'Zmiana załogi',
+        sub: crewLine(crew.payload),
+        flight: null,
+        duration: null,
+        targetUuid: crew.uuid,
+        corrected: corrected.has(crew.uuid),
+      });
+    }
   }
 
   for (const flight of projection.flights) {
@@ -304,21 +398,28 @@ function buildFoot(projection: SessionState, now: number): AxisFootItem[] {
   const items: AxisFootItem[] = [];
 
   if (projection.blockTimeMs > 0) {
-    items.push({ key: 'Blok', value: hhmm(projection.blockTimeMs), accent: false });
+    items.push({ id: 'block', key: 'Blok', value: hhmm(projection.blockTimeMs), accent: false });
     // „Czas lotu", nie „W powietrzu" (issue #40 pkt 3): dwa słowa łamały się na telefonie
     // na dwie linie i rozpychały stopkę. Przy okazji to ta sama nazwa, co w kokpicie.
-    items.push({ key: 'Czas lotu', value: hhmm(projection.flightTimeMs), accent: true });
+    items.push({
+      id: 'flightTime',
+      key: 'Czas lotu',
+      value: hhmm(projection.flightTimeMs),
+      accent: true,
+    });
   } else {
     const held = heldMs(projection, now);
     items.push({
+      id: 'held',
       key: 'Trzymany',
       value: held == null ? '—' : hhmm(held),
       accent: false,
     });
-    items.push({ key: 'Blok', value: hhmm(0), accent: false });
+    items.push({ id: 'block', key: 'Blok', value: hhmm(0), accent: false });
   }
 
   items.push({
+    id: 'takeoffs',
     key: projection.takeoffCount === 1 ? 'Start' : 'Starty',
     value: String(projection.takeoffCount),
     accent: false,
@@ -330,7 +431,12 @@ function buildFoot(projection: SessionState, now: number): AxisFootItem[] {
       projection.arrivalIcao != null && projection.arrivalIcao !== projection.departureIcao
         ? `${projection.departureIcao}→${projection.arrivalIcao}`
         : projection.departureIcao;
-    items.push({ key: route.includes('→') ? 'Trasa' : 'Lotnisko', value: route, accent: false });
+    items.push({
+      id: 'route',
+      key: route.includes('→') ? 'Trasa' : 'Lotnisko',
+      value: route,
+      accent: false,
+    });
   }
 
   return items;
@@ -366,13 +472,29 @@ function dropLine(
   altitudeFt: EventOf<'drop'>['payload']['altitudeFt'],
 ): string | null {
   const parts: string[] = [];
-  if (jumpers != null) {
-    parts.push(`${jumpers.tandem + jumpers.aff + jumpers.solo} skoczków`);
-  }
+  const composition = jumpersLine(jumpers);
+  if (composition != null) parts.push(composition);
   // `thousands` z pakietu formatów, nie `toLocaleString`: ten drugi wstawia SPACJĘ
   // NIEROZDZIELAJĄCĄ i ta sama wysokość wyglądałaby inaczej niż na 05 i 14.
   if (altitudeFt != null) parts.push(`${thousands(altitudeFt)} ft`);
   return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+/** „4 skoczków" albo `null` — skład bywa niezadeklarowany i to nie jest zero (issue #21). */
+function jumpersLine(jumpers: EventOf<'drop'>['payload']['jumpers']): string | null {
+  if (jumpers == null) return null;
+  return `${jumpers.tandem + jumpers.aff + jumpers.solo} skoczków`;
+}
+
+/**
+ * Podpis zmiany załogi: „PIC: KRZ → TMK", „DUAL: — → ADM".
+ *
+ * Myślnik po którejś stronie znaczy, że fotela wtedy nie było zajętego (dodanie albo
+ * zdjęcie Duala) — nie że pilota nie znamy.
+ */
+function crewLine(payload: EventOf<'crew_change'>['payload']): string {
+  const role = payload.role === 'pic' ? 'PIC' : 'DUAL';
+  return `${role}: ${payload.pilotOutId ?? '—'} → ${payload.pilotInId ?? '—'}`;
 }
 
 /** Czas rośnie w dół; przy remisie decyduje porządek przyczynowy. */

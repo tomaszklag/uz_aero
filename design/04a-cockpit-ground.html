@@ -97,10 +97,30 @@
   .session-log { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
   .session-log-header { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface-raised); }
   .session-log-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
-  .session-log-link { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:4px; }
-  .session-log-empty { display:flex; flex-direction:column; align-items:center; gap:8px; padding:28px 16px; }
-  .session-log-empty-icon { color:var(--border-strong); }
-  .session-log-empty-text { font-family:var(--font-mono); font-size:10px; letter-spacing:1px; color:var(--text-muted); text-align:center; line-height:1.6; }
+
+  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04 i na 10; pełny komentarz przy
+     nim stoi w 04. Tu oś ma jeden wiersz i to nie jest stan pusty: sesja zaczyna się
+     PRZEJĘCIEM, więc log od pierwszej sekundy ma co pokazać — godzinę i odczyt, który
+     pilot spisał na 02a.
+
+     `.session-log-empty` (kubek z kluczem i „Brak wpisów") USUNIĘTY: mówił „nic tu nie
+     ma" o sesji, która właśnie powstała, i był trzecią deklaracją braku na tym ekranie
+     obok usuniętego paska sesji. */
+  .axis { padding:12px 0; }
+  .axis-row { display:grid; grid-template-columns:52px 14px 1fr auto; align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px; }
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-time.dim { color:var(--text-secondary); }
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row:last-child .axis-mark::before { bottom:50%; }
+  .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+  .axis-name.muted { color:var(--text-secondary); }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
 
   .action-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .action-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; text-decoration:none; color:var(--text-primary); cursor:pointer; position:relative; overflow:hidden; }
@@ -216,17 +236,21 @@
         </div>
       </div>
 
-      <!-- LOG SAMOLOTU — empty state -->
+      <!-- LOG SESJI ZARAZ PO PRZEJĘCIU (issue #44)
+           Stan pusty („Brak wpisów · Uruchom silnik…") ZNIKŁ, bo przestał być prawdą:
+           oś zaczyna się PRZEJĘCIEM, a ono właśnie się wydarzyło. Wiersz niesie godzinę
+           i odczyt spisany na 02a — czyli dokładnie to, co pilot zaraz porówna z tarczą.
+           Stopki sum nie ma: silnik nie pracował, więc nie ma czego sumować. -->
       <div class="session-log">
         <div class="session-log-header">
           <span class="session-log-title">Log sesji · SP-AXA · UTC</span>
         </div>
-        <div class="session-log-empty">
-          <div class="session-log-empty-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/></svg>
-          </div>
-          <div class="session-log-empty-text">
-            Brak wpisów<br>Uruchom silnik aby rozpocząć pierwszy lot
+        <div class="axis">
+          <div class="axis-row">
+            <span class="axis-time dim">09:11</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 150 L · 1 236:52</span></span>
+            <span class="axis-right"></span>
           </div>
         </div>
       </div>

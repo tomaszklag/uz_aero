@@ -15,7 +15,7 @@
  * swoim ostrzeżeniem; ostrzeżenie stoi teraz nad przyciskiem niżej.
  *
  * Stąd twarda zasada tego ekranu: **zero akcji zapisu**. Nie ma START ENGINE, nie ma
- * ołówków korekty w logu (`EventLog` dostaje wiersze BEZ `onCorrect`), nie ma arkuszy.
+ * ołówków korekty w logu (`SessionAxis` dostaje wiersze BEZ `onCorrect`), nie ma arkuszy.
  * „PRZEJMIJ SAMOLOT" też nie pisze do rejestru: wypełnia szkic preflightu (stan UI) i wraca
  * na krok 1 — `session_claim` powstaje dopiero przy potwierdzeniu na ekranie 3.
  *
@@ -36,8 +36,8 @@ import {
   Banner,
   Card,
   ClaimStrip,
-  EventLog,
   Screen,
+  SessionAxis,
   StatusChip,
   SyncChip,
   type ActionCardSpec,
@@ -50,7 +50,7 @@ import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { usePreflightDraft } from '../store/preflightDraft';
 import { litres } from '../format';
-import { buildLogRows } from './logic/cockpitLog';
+import { buildPeekAxis } from './logic/cockpitLog';
 import {
   peekBanner,
   peekFreshness,
@@ -123,18 +123,17 @@ export function CockpitReadonlyScreen({
     [snapshot],
   );
 
-  const mhFormat = projection?.mhFormat ?? aircraft?.mhFormat ?? 'decimal';
+  const mhFormat = projection?.mhFormat ?? aircraft?.mhFormat ?? null;
 
   const logRows = useMemo(() => {
     if (snapshot == null || projection == null) return [];
-    // Outbox opisuje TEN telefon. Cudze zdarzenia przyszły z serwera, więc znacznik
-    // „czeka na wysyłkę" byłby tu informacją o cudzej kolejce, której nie znamy.
-    // Oś jest PŁASKA (model 2026-08-10): cudza sesja też ma najwyżej jeden bieg,
-    // więc harmonijka cykli nie ma czego zwijać.
-    return buildLogRows(snapshot.events, projection, mhFormat).map((row) => ({
-      ...row,
-      pending: false,
-    }));
+    // Ta sama oś, co we własnym kokpicie i w rozliczeniu (issue #44) — bez wiersza
+    // „na żywo" i bez znaczników outboxa; uzasadnienie przy `buildPeekAxis`.
+    //
+    // Format motogodzin dokładamy do projekcji, bo migawka bywa BEZ preflightu (sesja
+    // odtworzona z serwera), a wtedy zna go tylko cache referencyjny samolotu. Licznik
+    // pokazany w złym formacie to liczba, której pilot nie porówna z tarczą.
+    return buildPeekAxis(snapshot.events, { ...projection, mhFormat }, Date.now());
   }, [snapshot, projection, mhFormat]);
 
   if (aircraftId == null) {
@@ -280,10 +279,11 @@ export function CockpitReadonlyScreen({
           />
         )}
 
-        {/* ── log jego dnia (`.day-log`) — BEZ kolumny korekty; cykle domyślnie
-            zwinięte: podgląd to rzut oka na cudzy dzień, nie praca na nim ───── */}
+        {/* ── log cudzej sesji — ta sama oś, co we własnym kokpicie (issue #44), bez
+            ołówków: podgląd niczego nie zapisuje. Ale też niczego nie upraszcza —
+            to na podstawie tego logu zapada decyzja o przejęciu maszyny. ───── */}
         <Card title={peekLogTitle(aircraft?.reg ?? aircraftId, picCode, projection)} flush>
-          <EventLog
+          <SessionAxis
             rows={logRows}
             emptyText={
               snapshot == null

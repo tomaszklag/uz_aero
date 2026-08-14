@@ -136,95 +136,39 @@
   .param-value.amber { color: var(--amber); }
   .param-cell.amber-bg { background: rgba(243,156,18,0.04); }
 
-  /* ===== CYCLE EVENT LOG ===== */
-  .cycle-log {
-    flex: 1; overflow-y: auto; scrollbar-width: none;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-  }
-  .cycle-log::-webkit-scrollbar { display: none; }
-  .cycle-log-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 6px 12px; border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; background: var(--surface-raised); z-index: 2;
-  }
-  .cycle-log-title {
-    font-family: var(--font-mono); font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
-  }
-  .cycle-log-count {
-    font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px;
-    color: var(--text-muted); background: var(--surface); border: 1px solid var(--border);
-    border-radius: 4px; padding: 1px 6px;
-  }
-  .log-row {
-    display: flex; align-items: center; gap: 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .log-row:last-child { border-bottom: none; }
-  .log-tl {
-    width: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-    align-self: stretch; position: relative;
-  }
-  .log-tl::before {
-    content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
-    width: 1px; background: var(--border); transform: translateX(-50%);
-  }
-  .log-row:first-child .log-tl::before { top: 50%; }
-  .log-row:last-child  .log-tl::before { bottom: 50%; }
-
-  .log-icon {
-    width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; z-index: 1; position: relative;
-    display: flex; align-items: center; justify-content: center;
-    border: 1px solid var(--border);
-  }
-  /* Start engine neutralny (issue #19) — zieleń w logu należy wyłącznie do wiersza
-     „na żywo". Tła nieprzezroczyste, żeby plakietka ZAKRYWAŁA kreskę szyny: tony designu
-     są półprzezroczyste, więc kreska prześwitywała przez środek ikony w każdym motywie. */
-  .log-icon.start { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
-  .log-icon.stop  { background: linear-gradient(var(--red-muted), var(--red-muted)), var(--surface); border-color: var(--red-border); color: var(--red); }
-  .log-dot-sm {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--border-strong); z-index: 1; position: relative; flex-shrink: 0;
-  }
-  .log-icon.live  { background: var(--green); border-color: var(--green); animation: pulse 1.5s ease-in-out infinite; width: 10px; height: 10px; border-radius: 50%; border: none; }
-  .log-icon.zrzut { background: linear-gradient(var(--blue-muted), var(--blue-muted)), var(--surface); border-color: rgba(52,152,219,0.3); color: var(--blue); }
-
-  .log-body {
-    flex: 1; display: flex; align-items: center; gap: 8px;
-    padding: 8px 10px 8px 2px;
-  }
-  .log-t {
-    font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
-    width: 46px; flex-shrink: 0; color: var(--text-primary);
-  }
-  .log-t.stop  { color: var(--red);   }
-  .log-t.live  { color: var(--green); font-size: 11px; letter-spacing: 0.5px; width: 64px; }
-  .log-lbl {
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-    flex: 1; color: var(--text-secondary);
-  }
-  .log-lbl.stop  { color: var(--red);   }
-  .log-lbl.live  { color: var(--green); }
-  .log-dur {
-    font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
-    padding-right: 10px; white-space: nowrap;
-  }
-  .log-chip { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
-  .log-chip-mh { color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); }
-  .log-chip-fuel { color: var(--amber); background: var(--amber-muted); border: 1px solid var(--amber-border); }
-  .flight-sep {
-    display: flex; align-items: center; gap: 8px;
-    padding: 5px 12px;
-    background: var(--surface-raised);
-    border-bottom: 1px solid var(--border-strong);
-  }
-  .flight-sep::before, .flight-sep::after {
-    content: ''; flex: 1; height: 1px; background: var(--border-strong);
-  }
-  .flight-sep-label {
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--text-secondary); white-space: nowrap;
-  }
+  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+     w 04. W locie oś kończy się wierszem „na żywo": zielona kropka, bez godziny po
+     lewej (to nie jest zdarzenie rejestru), licznik po prawej — tam, gdzie ta oś trzyma
+     wszystkie czasy trwania. */
+  .session-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
+  .session-log::-webkit-scrollbar { display:none; }
+  .session-log-header { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface-raised); z-index:2; }
+  .session-log-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .session-log-count { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:1px 6px; }
+  .axis { padding:12px 0; }
+  .axis-row { display:grid; grid-template-columns:52px 14px 1fr auto; align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px; }
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-time.dim { color:var(--text-secondary); }
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row:last-child .axis-mark::before { bottom:50%; }
+  .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
+  .axis-dot.green { background:var(--green); }
+  .axis-dot.red { background:var(--red); }
+  .axis-dot.blue { background:var(--blue); }
+  .axis-dot.amber { background:var(--amber); }
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
+  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) — stąd puls tylko tutaj. */
+  .axis-dot.live { background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+  .axis-name.muted { color:var(--text-secondary); }
+  .axis-name.live { color:var(--green); }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
 
   /* ===== BOTTOM ACTION ROW — next event primary, Zrzut middle, STOP right ===== */
   .action-row {
@@ -330,7 +274,6 @@
   .phone[data-theme="paper"] .param-cell.amber-bg { background: rgba(158,92,0,0.07); }
   .phone[data-theme="paper"] .phase-hero-name.active { text-shadow: none; }
   .phone[data-theme="paper"] .phase-hero-name.air    { text-shadow: none; }
-  .phone[data-theme="paper"] .log-icon.zrzut { background: linear-gradient(rgba(32,92,144,0.10), rgba(32,92,144,0.10)), var(--surface); border-color: rgba(32,92,144,0.32); }
   .phone[data-theme="paper"] .zrzut-btn { background: rgba(32,92,144,0.08); border-color: rgba(32,92,144,0.28); }
 
   /* ═══════════════════════════════════════════════
@@ -354,7 +297,6 @@
   .phone[data-theme="sky"] .param-cell.amber-bg { background: rgba(160,94,0,0.07); }
   .phone[data-theme="sky"] .phase-hero-name.active { text-shadow: none; }
   .phone[data-theme="sky"] .phase-hero-name.air    { text-shadow: none; }
-  .phone[data-theme="sky"] .log-icon.zrzut { background: linear-gradient(rgba(22,82,142,0.10), rgba(22,82,142,0.10)), var(--surface); border-color: rgba(22,82,142,0.36); }
   .phone[data-theme="sky"] .zrzut-btn { background: rgba(22,82,142,0.08); border-color: rgba(22,82,142,0.30); }
 
   /* ═══════════════════════════════════════════════
@@ -378,7 +320,6 @@
   .phone[data-theme="solar"] .param-cell.amber-bg { background: rgba(154,80,0,0.07); }
   .phone[data-theme="solar"] .phase-hero-name.active { text-shadow: none; }
   .phone[data-theme="solar"] .phase-hero-name.air    { text-shadow: none; }
-  .phone[data-theme="solar"] .log-icon.zrzut { background: linear-gradient(rgba(0,72,144,0.10), rgba(0,72,144,0.10)), var(--surface); border-color: rgba(0,72,144,0.35); }
   .phone[data-theme="solar"] .zrzut-btn { background: rgba(0,72,144,0.08); border-color: rgba(0,72,144,0.28); }
 
   /* ═══════════════════════════════════════════════
@@ -396,7 +337,6 @@
     --blue-muted: rgba(96,160,240,0.10); --hairline: rgba(255,176,32,0.04);
   }
   .phone[data-theme="amber"] .phase-hero::after { background: linear-gradient(90deg, transparent, rgba(255,176,32,0.15), transparent); }
-  .phone[data-theme="amber"] .log-icon.zrzut { background: linear-gradient(rgba(96,160,240,0.12), rgba(96,160,240,0.12)), var(--surface); border-color: rgba(96,160,240,0.30); }
   .phone[data-theme="amber"] .zrzut-btn { background: rgba(96,160,240,0.10); border-color: rgba(96,160,240,0.28); }
 </style>
 </head>
@@ -511,69 +451,118 @@
       </div>
     </div>
 
-
-    <!-- CYCLE EVENT LOG -->
-    <div class="cycle-log">
-      <div class="cycle-log-header">
-        <span class="cycle-log-title">Cykl bieżący · 3 T/O · 2 LDG</span>
-        <span class="cycle-log-count">LOT #3</span>
+    <!-- LOG SESJI — ta sama oś, co na 04, 05 i 10 (issue #44). Ten plik jest przeglądem
+         PALET: oś celowo używa wyłącznie zmiennych motywu, więc każdy motyw dostaje ją
+         bez ani jednej reguły własnej. Kropki biorą kolor z `--green`/`--red`/`--blue`,
+         a nie z półprzezroczystych teł, które przy jasnych paletach trzeba było
+         nadpisywać osobno. -->
+    <div class="session-log">
+      <div class="session-log-header">
+        <span class="session-log-title">Log sesji · UTC</span>
+        <span class="session-log-count">LOT #3</span>
       </div>
 
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-        <div class="log-body"><div class="log-t">13:10</div><div class="log-lbl">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
-      </div>
+      <div class="axis">
+        <div class="axis-row">
+          <span class="axis-time dim">12:58</span>
+          <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 141 L · 1 238:05</span></span>
+          <span class="axis-right"></span>
+        </div>
 
-      <div class="flight-sep"><span class="flight-sep-label">Lot 1</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">13:11</div><div class="log-lbl">Taxi</div><div class="log-dur">0:13</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">13:24</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">13:48</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 2 450 ft</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:08</div><div class="log-lbl">Landing</div><span class="log-chip log-chip-mh">~123 L</span><span class="log-chip log-chip-mh">24 L/h</span><div class="log-dur">0:44</div></div>
-      </div>
-      <div class="flight-sep"><span class="flight-sep-label">Lot 2</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:08</div><div class="log-lbl">Taxi</div><div class="log-dur">0:13</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:21</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">14:42</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">3 skoczków · 1 800 ft</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:03</div><div class="log-lbl">Landing</div><span class="log-chip log-chip-mh">~105 L</span><span class="log-chip log-chip-mh">26 L/h</span><div class="log-dur">0:42</div></div>
-      </div>
-      <div class="flight-sep"><span class="flight-sep-label">Lot 3</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:03</div><div class="log-lbl">Taxi</div><div class="log-dur">0:14</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:17</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">15:45</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 3 200 ft</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon live"></div></div>
-        <div class="log-body"><div class="log-t live">00:53:14</div><div class="log-lbl live">In flight…</div></div>
+        <div class="axis-row">
+          <span class="axis-time">13:10</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+          <span class="axis-right"></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time dim">13:11</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+          <span class="axis-right"></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time">13:24</span>
+          <span class="axis-mark"><span class="axis-dot green"></span></span>
+          <span class="axis-label"><span class="axis-name">Start</span></span>
+          <span class="axis-right"><span class="axis-flight">lot 1</span></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time dim">13:48</span>
+          <span class="axis-mark"><span class="axis-dot blue"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Zrzut 1</span><span class="axis-sub">4 skoczków · 2 450 ft</span></span>
+          <span class="axis-right"></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time">14:08</span>
+          <span class="axis-mark"><span class="axis-dot red"></span></span>
+          <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+          <span class="axis-right"><span class="axis-dur">00:44</span></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time dim">14:08</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+          <span class="axis-right"></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time">14:21</span>
+          <span class="axis-mark"><span class="axis-dot green"></span></span>
+          <span class="axis-label"><span class="axis-name">Start</span></span>
+          <span class="axis-right"><span class="axis-flight">lot 2</span></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time dim">14:42</span>
+          <span class="axis-mark"><span class="axis-dot blue"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Zrzut 2</span><span class="axis-sub">3 skoczków · 1 800 ft</span></span>
+          <span class="axis-right"></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time">15:03</span>
+          <span class="axis-mark"><span class="axis-dot red"></span></span>
+          <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+          <span class="axis-right"><span class="axis-dur">00:42</span></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time dim">15:03</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+          <span class="axis-right"></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time">15:17</span>
+          <span class="axis-mark"><span class="axis-dot green"></span></span>
+          <span class="axis-label"><span class="axis-name">Start</span></span>
+          <span class="axis-right"><span class="axis-flight">lot 3</span></span>
+        </div>
+
+        <div class="axis-row">
+          <span class="axis-time dim">15:45</span>
+          <span class="axis-mark"><span class="axis-dot blue"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Zrzut 3</span><span class="axis-sub">4 skoczków · 3 200 ft</span></span>
+          <span class="axis-right"></span>
+        </div>
+
+        <!-- WIERSZ „NA ŻYWO" — bez godziny po lewej, bo nie jest zdarzeniem rejestru;
+             licznik biegnie po PRAWEJ, tam gdzie oś trzyma czasy trwania. Do issue #44
+             ta sama informacja stała w kolumnie czasu i rozpychała ją do 64 px. -->
+        <div class="axis-row">
+          <span class="axis-time"></span>
+          <span class="axis-mark"><span class="axis-dot live"></span></span>
+          <span class="axis-label"><span class="axis-name live">W locie…</span></span>
+          <span class="axis-right"><span class="axis-dur">00:53:14</span></span>
+        </div>
       </div>
     </div>
 

@@ -74,37 +74,40 @@
   .param-value.amber { color:var(--amber); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  .cycle-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
-  .cycle-log::-webkit-scrollbar { display:none; }
-  .cycle-log-header { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface-raised); z-index:2; }
-  .cycle-log-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
-  .log-row { display:flex; align-items:center; border-bottom:1px solid var(--border); }
-  .log-row:last-child { border-bottom:none; }
-  .log-tl { width:32px; flex-shrink:0; display:flex; align-items:center; justify-content:center; align-self:stretch; position:relative; }
-  .log-tl::before { content:''; position:absolute; left:50%; top:0; bottom:0; width:1px; background:var(--border); transform:translateX(-50%); }
-  .log-row:first-child .log-tl::before { top:50%; }
-  .log-row:last-child .log-tl::before { bottom:50%; }
-  .log-icon { width:22px; height:22px; border-radius:6px; flex-shrink:0; z-index:1; position:relative; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); }
-  /* Start engine neutralny (issue #19) — zieleń w logu należy wyłącznie do teraźniejszości.
-     Tła nieprzezroczyste, żeby plakietka ZAKRYWAŁA kreskę szyny (tony designu są
-     półprzezroczyste, więc kreska prześwitywała przez środek ikony). */
-  .log-icon.start { background:var(--surface-raised); border-color:var(--border); color:var(--text-secondary); }
-  .log-icon.zrzut { background:linear-gradient(var(--blue-muted), var(--blue-muted)), var(--surface); border-color:rgba(52,152,219,0.3); color:var(--blue); }
-  .log-dot-sm { width:6px; height:6px; border-radius:50%; background:var(--border-strong); z-index:1; position:relative; flex-shrink:0; }
-  .log-dot-pending { width:8px; height:8px; border-radius:50%; border:1.5px dashed var(--green-border); z-index:1; position:relative; flex-shrink:0; background:transparent; }
-  .log-body { flex:1; display:flex; align-items:center; gap:8px; padding:8px 10px 8px 2px; }
-  .log-t { font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:1.5px; width:46px; flex-shrink:0; color:var(--text-primary); }
-  .log-t.pending { color:var(--green); opacity:0.6; }
-  .log-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; flex:1; color:var(--text-secondary); }
-  .log-lbl.pending { color:var(--green); opacity:0.7; }
-  .log-dur { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); padding-right:10px; white-space:nowrap; }
-  .log-badge { font-family:var(--font-mono); font-size:8px; padding:2px 6px; border-radius:4px; background:var(--green-muted); border:1px solid var(--green-border); color:var(--green); white-space:nowrap; }
-  .log-chip { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:4px; white-space:nowrap; }
-  .log-chip-mh { color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); }
-  .log-chip-fuel { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
-  .flight-sep { display:flex; align-items:center; gap:8px; padding:4px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border); }
-  .flight-sep::before, .flight-sep::after { content:''; flex:1; height:1px; background:var(--border); }
-  .flight-sep-label { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); white-space:nowrap; }
+  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+     w 04. Stan własny tego ekranu: zdarzenie WŁAŚCIE WYKRYTE, czekające w oknie COFNIJ
+     — kropka kreskowana i plakietka przy nazwie (jak na 05B). */
+  .session-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
+  .session-log::-webkit-scrollbar { display:none; }
+  .session-log-header { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface-raised); z-index:2; }
+  .session-log-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .session-log-count { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:1px 6px; }
+  .axis { padding:12px 0; }
+  .axis-row { display:grid; grid-template-columns:52px 14px 1fr auto; align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px; }
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-time.dim { color:var(--text-secondary); }
+  .axis-time.await { color:var(--green); opacity:0.6; }
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row:last-child .axis-mark::before { bottom:50%; }
+  .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
+  .axis-dot.green { background:var(--green); }
+  .axis-dot.red { background:var(--red); }
+  .axis-dot.blue { background:var(--blue); }
+  .axis-dot.amber { background:var(--amber); }
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
+  .axis-dot.await { background:transparent; border:1.5px dashed var(--green-border); box-shadow:0 0 0 2px var(--surface); }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+  .axis-name.muted { color:var(--text-secondary); }
+  .axis-name.await { color:var(--green); opacity:0.7; }
+  .axis-badge { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; padding:1px 5px; border-radius:4px; background:var(--green-muted); border:1px solid var(--green-border); color:var(--green); white-space:nowrap; }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
+  .axis-dur.await { opacity:0.6; }
 
   /* AUTODETECT TOAST */
   .action-row { display:grid; grid-template-columns:1fr auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
@@ -282,75 +285,101 @@
       <div class="param-cell">
         <div class="param-label">Flight Time</div>
         <div style="display:flex;align-items:baseline;gap:6px;"><div class="param-value" style="color:var(--text-secondary)">02:19</div></div>
+    <!-- Karta logu pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE
+         (issue #19) — tu jest ich pełna sesja. Oś jest ta sama, co na 04 i na 10
+         (issue #44); ostatni wiersz czeka w oknie COFNIJ. -->
+    <div class="session-log">
+      <div class="session-log-header">
+        <span class="session-log-title">Log sesji · UTC</span>
+        <span class="session-log-count">LOT #3</span>
       </div>
-    </div>
-
-    <!-- Karta „Cykl bieżący" pokazuje się dopiero, gdy w cyklu jest zdarzenie inne niż
-         uruchomienie silnika i wiersz „na żywo" (issue #19) — tu jest ich pełen cykl. -->
-    <div class="cycle-log">
-      <div class="cycle-log-header">
-        <span class="cycle-log-title">Cykl bieżący · 3 T/O · 2 LDG</span>
-        <span class="cycle-log-title" style="color:var(--text-secondary)">LOT #3</span>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-        <div class="log-body"><div class="log-t">13:10</div><div class="log-lbl">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
-      </div>
-      <div class="flight-sep"><span class="flight-sep-label">Lot 1</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">13:11</div><div class="log-lbl">Taxi</div><div class="log-dur">0:13</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">13:24</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">13:48</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 2 450 ft</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:08</div><div class="log-lbl">Landing</div><span class="log-chip log-chip-mh">~123 L</span><span class="log-chip log-chip-mh">24 L/h</span><div class="log-dur">0:44</div></div>
-      </div>
-      <div class="flight-sep"><span class="flight-sep-label">Lot 2</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:08</div><div class="log-lbl">Taxi</div><div class="log-dur">0:13</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">14:21</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">14:42</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">3 skoczków · 1 800 ft</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:03</div><div class="log-lbl">Landing</div><span class="log-chip log-chip-mh">~105 L</span><span class="log-chip log-chip-mh">26 L/h</span><div class="log-dur">0:42</div></div>
-      </div>
-      <div class="flight-sep"><span class="flight-sep-label">Lot 3</span></div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:03</div><div class="log-lbl">Taxi</div><div class="log-dur">0:14</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-dot-sm"></div></div>
-        <div class="log-body"><div class="log-t">15:17</div><div class="log-lbl">Takeoff</div></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon zrzut"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div></div>
-        <div class="log-body"><div class="log-t" style="color:var(--blue)">15:45</div><div class="log-lbl">Zrzut</div><span class="log-chip" style="color:var(--blue);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);">4 skoczków · 3 200 ft</span></div>
-      </div>
-      <div class="log-row" style="background:rgba(46,204,113,0.04);">
-        <div class="log-tl"><div class="log-dot-pending"></div></div>
-        <div class="log-body">
-          <div class="log-t pending">16:10</div>
-          <div class="log-lbl pending">Landing</div>
-          <span class="log-chip log-chip-mh">~90 L</span>
-          <div class="log-dur" style="color:var(--green);opacity:0.6;">0:53</div>
-          <div class="log-badge">Oczekuje…</div>
+      <div class="axis">
+        <div class="axis-row">
+          <span class="axis-time dim">12:58</span>
+          <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 141 L · 1 238:05</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time">13:10</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time dim">13:11</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time">13:24</span>
+          <span class="axis-mark"><span class="axis-dot green"></span></span>
+          <span class="axis-label"><span class="axis-name">Start</span></span>
+          <span class="axis-right"><span class="axis-flight">lot 1</span></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time dim">13:48</span>
+          <span class="axis-mark"><span class="axis-dot blue"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Zrzut 1</span><span class="axis-sub">4 skoczków · 2 450 ft</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time">14:08</span>
+          <span class="axis-mark"><span class="axis-dot red"></span></span>
+          <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+          <span class="axis-right"><span class="axis-dur">00:44</span></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time dim">14:08</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time">14:21</span>
+          <span class="axis-mark"><span class="axis-dot green"></span></span>
+          <span class="axis-label"><span class="axis-name">Start</span></span>
+          <span class="axis-right"><span class="axis-flight">lot 2</span></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time dim">14:42</span>
+          <span class="axis-mark"><span class="axis-dot blue"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Zrzut 2</span><span class="axis-sub">3 skoczków · 1 800 ft</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time">15:03</span>
+          <span class="axis-mark"><span class="axis-dot red"></span></span>
+          <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+          <span class="axis-right"><span class="axis-dur">00:42</span></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time dim">15:03</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time">15:17</span>
+          <span class="axis-mark"><span class="axis-dot green"></span></span>
+          <span class="axis-label"><span class="axis-name">Start</span></span>
+          <span class="axis-right"><span class="axis-flight">lot 3</span></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time dim">15:45</span>
+          <span class="axis-mark"><span class="axis-dot blue"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Zrzut 3</span><span class="axis-sub">4 skoczków · 3 200 ft</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <!-- LĄDOWANIE W OKNIE COFNIJ — wykryte, jeszcze nieostateczne (toast odlicza).
+             Czas lotu stoi już po prawej, ale przygaszony: gdy pilot cofnie detekcję,
+             zniknie razem z wierszem. -->
+        <div class="axis-row" style="background:rgba(46,204,113,0.04);">
+          <span class="axis-time await">16:10</span>
+          <span class="axis-mark"><span class="axis-dot await"></span></span>
+          <span class="axis-label"><span class="axis-name await">Lądowanie <span class="axis-badge">Oczekuje…</span></span></span>
+          <span class="axis-right"><span class="axis-dur await">00:53</span></span>
         </div>
       </div>
     </div>

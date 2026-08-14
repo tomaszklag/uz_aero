@@ -41,12 +41,12 @@ import {
   DropSheet,
   FuelStrip,
   LeaveCockpitSheet,
-  EventLog,
   ManualEventSheet,
   NoGpsBanner,
   ParamGrid,
   PhaseHero,
   Screen,
+  SessionAxis,
   StatusChip,
   SyncChip,
   Tag,
@@ -65,7 +65,7 @@ import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format
 import { boardingPrefill } from './logic/boardingPrefill';
 import { buildCockpitActions } from './logic/cockpitActions';
 import { cockpitFlightTimeMs } from './logic/cockpitFlightTime';
-import { buildCycleRows, buildLogRows } from './logic/cockpitLog';
+import { buildCockpitAxis } from './logic/cockpitLog';
 import { currentFlightNumber } from './logic/flightNumber';
 import { fuelTone } from './logic/fuelNorm';
 import { buildCockpitFuel } from './logic/cockpitFuel';
@@ -251,8 +251,13 @@ export function CockpitScreen({
 
   if (!context) return <NoSession onStart={() => navigation.navigate('PreflightAircraft')} />;
 
+  /**
+   * LOG SESJI — ta sama oś, co w rozliczeniu (issue #44), plus wiersz „na żywo"
+   * i znaczniki outboxa. Format motogodzin bierze z projekcji sam builder, więc ekran
+   * nie przekazuje go już osobno.
+   */
+  const axis = buildCockpitAxis(events, projection, now);
 
-  const mhFormat = projection.mhFormat ?? 'decimal';
   /**
    * Czas lotu SESJI: loty zamknięte (wszystko jedno, czy z GPS, czy dopisane ręcznie)
    * plus lot otwarty na żywo. Reguła ma test i mieszka w `logic/cockpitFlightTime.ts` —
@@ -372,21 +377,9 @@ export function CockpitScreen({
   );
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TRYB LOT (mockup 05) — układ stały, przewija się tylko log cyklu.
+  // TRYB LOT (mockup 05) — układ stały, przewija się tylko log sesji.
   // ─────────────────────────────────────────────────────────────────────────
   if (engineOn) {
-    const cycleRows = buildCycleRows(events, projection, mhFormat, now);
-    const landings = cycleRows.filter((r) => r.kind === 'landing').length;
-    const takeoffs = cycleRows.filter((r) => r.kind === 'takeoff').length;
-    /**
-     * Czy w tym cyklu JEST JUŻ CO POKAZYWAĆ (issue #19).
-     *
-     * Zaraz po START ENGINE log cyklu składa się z samego uruchomienia silnika i wiersza
-     * „na żywo" — a nagłówek ogłaszał wtedy „Cykl bieżący · 0 T/O · 0 LDG" i plakietkę
-     * „Lot #1", czyli trzy liczby o niczym. Karta pojawia się więc dopiero, gdy system
-     * wykryje pierwsze zdarzenie lotu: kołowanie, start, lądowanie albo zrzut.
-     */
-    const cycleHasEvents = cycleRows.some((r) => r.kind !== 'live' && r.kind !== 'start');
     // Degradacja CZUJNIKA (mockup 05g) — osobna oś od sieci: SyncChip może świecić
     // zielono, a autodetekcja stoi. Baner-przyrząd + ręczny zapis jako jedyna droga.
     // `gpsLost` steruje degradacją danych (siatka, faza, etykiety ręczne) — brak
@@ -542,13 +535,19 @@ export function CockpitScreen({
             </View>
           )}
 
-          {/* Log bieżącego cyklu — jedyny element bez własnej wysokości: rośnie z liczbą
-              zdarzeń, a przy krótkim logu rozpycha się do paska akcji (`flexGrow`), więc
+          {/* Log sesji — jedyny element bez własnej wysokości: rośnie z liczbą zdarzeń,
+              a przy krótkim logu rozpycha się do paska akcji (`flexGrow`), więc
               pełnoekranowa wstęga z mockupu zostaje. `flexShrink: 0` pilnuje, żeby się
-              nie ścisnął, gdy sekcje wyżej zabiorą całą wysokość. */}
-          {cycleHasEvents && (
+              nie ścisnął, gdy sekcje wyżej zabiorą całą wysokość.
+
+              Karta pojawia się dopiero, gdy w sesji zaszło coś OPERACYJNEGO (issue #19,
+              `axis.hasEvents`): oś złożona z przejęcia, uruchomienia i wiersza „na żywo"
+              powtarzałaby to, co ekran mówi wyżej. Nagłówek bez liczb T/O i LDG
+              (issue #44) — mówi je sama oś, a słowo „cykl" odeszło razem z modelem
+              wielu cykli. */}
+          {axis.hasEvents && (
             <Card
-              title={`Cykl bieżący · ${takeoffs} T/O · ${landings} LDG`}
+              title="Log sesji · UTC"
               // Helper, nie wzór w JSX — inline'owe `+ (inFlight ? 1 : 0)` dawało
               // „Lot #2" w pierwszym locie (issue #21 pkt 1, `logic/flightNumber.ts`).
               headerRight={
@@ -564,7 +563,10 @@ export function CockpitScreen({
               }}
               contentStyle={{ flexGrow: 1 }}
             >
-              <EventLog rows={cycleRows} emptyText="Cykl dopiero się zaczął." />
+              {/* Bez `onCorrect`: w kokpicie oś jest wyłącznie potwierdzeniem zapisu.
+                  Poprawianie ma jedne drzwi — kafelek „Popraw dane sesji" po
+                  zatrzymaniu silnika (issue #43). */}
+              <SessionAxis rows={axis.rows} />
             </Card>
           )}
         </ScrollView>
@@ -652,10 +654,6 @@ export function CockpitScreen({
   //     przegapionych zdarzeń przed zatwierdzeniem logu.
   // ─────────────────────────────────────────────────────────────────────────
   const sessionEnded = projection.legs.some((l) => l.stoppedAt != null);
-
-  // Płaska oś JEDNEJ sesji (mockup 04) — harmonijka „CYKL n" odeszła razem z modelem
-  // wielu cykli. Tankowanie przed startem i po zatrzymaniu to zwykłe wpisy tej osi.
-  const sessionLogRows = buildLogRows(events, projection, mhFormat);
 
   /**
    * Akcje naziemne (`.action-grid`) — skład zależy od STANU sesji, nie od jednej listy:
@@ -806,16 +804,22 @@ export function CockpitScreen({
         {messages}
 
         <Card
-          // Log SESJI, nie dnia (mockup 04): jedna płaska oś od przejęcia do teraz,
-          // z liczbą LOTÓW w nagłówku — historia dnia mieszka na 01 i w rozliczeniu.
-          title={`Log sesji · UTC · ${flightsBadge(projection.flights.length)}`}
+          // Log SESJI, nie dnia (mockup 04): jedna płaska oś od przejęcia do teraz —
+          // historia dnia mieszka na 01 i w rozliczeniu. Liczby lotów w tytule NIE MA
+          // (issue #44): mówi ją stopka osi, a jedna liczba dwa razy na tej samej
+          // karcie uczy oko pomijać nagłówek.
+          title="Log sesji · UTC"
           flush
         >
-          {/* Log jest w kokpicie WYŁĄCZNIE potwierdzeniem zapisu — bez ołówków
-              (korekta = świadoma operacja w Liście ręcznej 08 i statystykach 10; tam
-              mieszka arkusz 04c). */}
-          <EventLog
-            rows={sessionLogRows}
+          {/* Ta sama oś, co na ekranie sesji (10) — bez ołówków, bo w kokpicie log jest
+              WYŁĄCZNIE potwierdzeniem zapisu; poprawianie ma jedne drzwi, kafelek
+              „Popraw dane sesji" niżej (issue #43).
+
+              Stopka sum pojawia się dopiero po zatrzymaniu silnika (`axis.foot` jest
+              wtedy niepusta) — dopóki silnik pracuje, nie ma czego sumować. */}
+          <SessionAxis
+            rows={axis.rows}
+            foot={axis.foot}
             emptyText="Brak wpisów — uruchom silnik, aby rozpocząć pierwszy lot."
           />
         </Card>

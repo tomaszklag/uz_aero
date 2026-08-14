@@ -154,7 +154,24 @@
     position: relative; z-index: 1;
   }
 
-  /* ===== LOG SESJI ===== */
+  /* ===== LOG SESJI = OŚ SESJI (issue #44) =====
+     Kokpit i rozliczenie (10) rysują odtąd TEN SAM log: ten sam inwentarz klas, te same
+     reguły. Do issue #44 były to dwa komponenty — kokpit miał szynę z ikonami
+     w plakietkach, chipy licznika i paliwa oraz pełnoszerokie pasy tankowania, a ekran
+     sesji jedną kolumnę czasu z kropkami. Ta sama sesja czytała się więc dwa razy
+     inaczej, choć to jedna oś czasu: raz oglądana w trakcie, raz po wszystkim.
+
+     Co odeszło razem ze starym stylem:
+      • CHIPY (MH, paliwo, skoczkowie) → podpis wiersza `.axis-sub`. Odczyt początkowy
+        wraca tam, gdzie powstał — do wiersza PRZEJĘCIE, zamiast wisieć przy
+        uruchomieniu silnika, które go nie wykonało;
+      • PASY „Lot 1 / Lot 2" → numer lotu przy STARCIE, po prawej (issue #40);
+      • IKONY W PLAKIETKACH → kropki: kolor niesie znaczenie, kształt niósł ozdobę;
+      • pełnoszerokie pasy TANKOWANIA → zwykły wiersz w tonie amber. Zdarzenie naziemne
+        dzieje się w tym samym czasie co reszta i nie ma powodu wychodzić poza kolumnę;
+      • czas trwania KOŁOWANIA (materializował się dopiero przy starcie, więc nigdy nie
+        pomógł temu, kto kołuje) i podpis „blok 1:13" przy wyłączeniu — sumy sesji
+        mieszkają w stopce osi, tam gdzie na 10. */
   .session-log {
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
   }
@@ -166,89 +183,65 @@
   .session-log-title {
     font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted);
   }
-  .session-log-link {
-    font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-    color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 4px;
-  }
-  .session-log-link:hover { color: var(--green); }
 
-  /* Akordeon cykli (2026-08-04) USUNIĘTY 2026-08-10 razem z modelem wielu cykli:
-     sesja = jeden bieg silnika, więc log jest płaską osią bez zwijania. */
-
-  /* compact log row */
-  .log-cycle {
-    display: flex; align-items: center; gap: 0;
-    border-bottom: 1px solid var(--border);
+  /* Oba końce osi oddychają: PRZEJĘCIE nie klei się do linii nagłówka, a ostatni wiersz
+     nie czyta się jak pierwszy wiersz stopki z sumami. */
+  .axis { padding: 12px 0; }
+  /* WIERSZ JEST NISKI (28 px): oś kokpitu nie ma ani jednego celu dotknięcia — korekta
+     wychodzi kafelkiem „Popraw dane sesji" (issue #43) — więc nie musi trzymać rytmu
+     44 px. Cała sesja skokowa mieści się dzięki temu bez przewijania. */
+  .axis-row {
+    display: grid; grid-template-columns: 52px 14px 1fr auto;
+    align-items: center; gap: 8px; padding: 0 12px 0 10px; min-height: 28px;
   }
-  .log-cycle:last-child { border-bottom: none; }
-  .log-cycle-tl {
-    width: 36px; flex-shrink: 0; display: flex; flex-direction: column;
-    align-items: center; align-self: stretch; position: relative;
+  .axis-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-primary); }
+  .axis-time.dim { color: var(--text-secondary); }
+  /* Pion osi rysuje sam wiersz: kropka + kreska ciągnąca się do sąsiada. Osobny element
+     linii rozjeżdżałby się przy wierszach o różnej wysokości. */
+  .axis-mark { position: relative; align-self: stretch; display: flex; justify-content: center; }
+  .axis-mark::before {
+    content: ''; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border-strong);
   }
-  .log-cycle-tl::before {
-    content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
-    width: 1px; background: var(--border); transform: translateX(-50%);
+  .axis-row:first-child .axis-mark::before { top: 50%; }
+  .axis-row:last-child .axis-mark::before { bottom: 50%; }
+  .axis-dot {
+    position: relative; align-self: center; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--border-strong); border: 2px solid var(--surface);
+    box-shadow: 0 0 0 2px var(--surface);
   }
-  .log-cycle:first-child .log-cycle-tl::before { top: 50%; }
-  .log-cycle:last-child  .log-cycle-tl::before { bottom: 50%; }
-  /* Plakietka zdarzenia ZAKRYWA kreskę szyny (issue #19). Tony designu są
-     półprzezroczyste (`rgba(...,0.12)`), więc podane wprost przepuszczały pionową kreskę
-     osi przez środek ikony — wyglądało to jak rysa na przyrządzie. Stąd dwie warstwy:
-     krycie powierzchni karty pod spodem, barwa tonu na wierzchu. Wyjątkiem jest wiersz
-     OCZEKIWANY (`.pending`) — tam zdarzenia jeszcze nie ma i prześwit jest celowy. */
-  .log-icon {
-    width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; z-index: 1; position: relative;
-    display: flex; align-items: center; justify-content: center; border: 1px solid var(--border);
+  .axis-dot.green { background: var(--green); }
+  .axis-dot.red { background: var(--red); }
+  .axis-dot.blue { background: var(--blue); }
+  /* Tankowanie i zmiana załogi — zdarzenia POZA pracą silnika. Amber jest w systemie
+     kolorem paliwa, więc niesie tu znaczenie, a nie wyróżnienie. */
+  .axis-dot.amber { background: var(--amber); }
+  /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi ma
+     urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną. */
+  .axis-dot.hollow { background: var(--surface); border: 1.5px solid var(--text-muted); box-shadow: 0 0 0 2px var(--surface); }
+  .axis-label { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .axis-name { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+  .axis-name.muted { color: var(--text-secondary); }
+  .axis-sub { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.5px; color: var(--text-muted); }
+  /* Znacznik outboxa — JEDYNE miejsce, w którym stan wysyłki schodzi do pojedynczego
+     zdarzenia; SyncChip mówi o kolejce jako całości. */
+  .axis-pending { font-family: var(--font-mono); font-size: 9px; color: var(--amber); }
+  /* Prawa krawędź niesie DOKŁADNIE JEDNĄ rzecz na wiersz: numer lotu przy starcie albo
+     czas trwania przy lądowaniu. Dlatego nic nie trzeba rezerwować — wszystko dosuwa się
+     do prawej i stoi w jednej linii pionowej przez całą oś. */
+  .axis-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .axis-flight { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.5px; color: var(--text-muted); }
+  .axis-dur { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
+  /* Stopka osi — sumy sesji, ta sama co na 10. W kokpicie pojawia się dopiero wtedy,
+     gdy jest co sumować (silnik przestał pracować): „BLOK 00:00" przy pracującym
+     silniku byłoby liczbą o niczym. Trasy stopka NIE powtarza — stoi w pasku górnym. */
+  .axis-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 12px; border-top: 1px solid var(--border); background: var(--surface-raised);
   }
-  /* Uruchomienie silnika bez zieleni (issue #19): to zdarzenie historyczne jak Takeoff
-     i Landing, a nie stan wymagający uwagi. Zieleń w logu należy wyłącznie do wiersza
-     „na żywo" — w logu dnia (silnik OFF) takiego wiersza nie ma w ogóle. */
-  .log-icon.start   { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
-  .log-icon.stop    { background: linear-gradient(var(--red-muted), var(--red-muted)), var(--surface); border-color: var(--red-border); color: var(--red); }
-  .log-icon.evt     { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
-  .log-icon.pending { background: transparent; border-color: var(--border-strong); border-style: dashed; color: var(--text-muted); }
-
-  .log-cycle-body {
-    flex: 1; display: flex; align-items: center; gap: 8px;
-    padding: 8px 10px 8px 4px;
-  }
-  .log-time {
-    font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 1px;
-    width: 44px; flex-shrink: 0;
-  }
-  /* Bez wariantu `.green` (issue #19) — zieleń w logu należy wyłącznie do teraźniejszości,
-     a log samolotu opisuje wyłącznie zdarzenia zamknięte. */
-  .log-time.red    { color: var(--red); }
-  .log-time.neutral { color: var(--text-primary); }
-  .log-time.muted  { color: var(--text-muted); font-size: 11px; }
-  .log-evt-label {
-    font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px;
-    text-transform: uppercase; flex: 1;
-  }
-  .log-evt-label.red    { color: var(--red); }
-  .log-evt-label.neutral { color: var(--text-secondary); }
-  .log-evt-label.muted  { color: var(--text-muted); }
-  .log-meta {
-    font-family: var(--font-mono); font-size: 9px; color: var(--text-muted);
-    letter-spacing: 0.3px; white-space: nowrap;
-  }
-  /* Bez celu korekty w logu dnia (2026-08-04): kokpit tylko rejestruje.
-     Korekta to świadoma operacja w Liście ręcznej (08) i statystykach (10). */
-  .log-chip { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
-  .log-chip-mh { color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); }
-  .log-chip-fuel { color: var(--amber); background: var(--amber-muted); border: 1px solid var(--amber-border); }
-
-  /* ground event in log */
-  .log-ground {
-    display: flex; align-items: center; gap: 8px;
-    padding: 7px 10px 7px 36px;
-    background: var(--amber-muted); border-bottom: 1px solid var(--amber-border);
-  }
-  .log-ground-label {
-    font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--amber); flex: 1;
-  }
-  .log-ground-meta { font-family: var(--font-mono); font-size: 9px; color: var(--amber); opacity: 0.7; }
+  .axis-foot-item { display: flex; flex-direction: column; gap: 2px; }
+  .axis-foot-val { font-family: var(--font-display); font-size: 20px; letter-spacing: 1.5px; line-height: 1; color: var(--text-primary); }
+  .axis-foot-val.green { color: var(--green); }
+  .axis-foot-key { font-family: var(--font-mono); font-size: 7px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); }
 
   /* ===== ACTION GRID ===== */
   .action-grid {
@@ -380,8 +373,8 @@
               wychodzi wyłącznie przez „Zdaj samolot" (09B). Dopóki maszyna jest w jego
               rękach, jego ekranem jest kokpit;
            2. „SP-AXA · Twój od 08:04 · 2 wzloty" — maszynę i trasę mówi pasek górny,
-              a liczbę cykli nagłówek logu dnia niżej. Przed pierwszym uruchomieniem
-              silnika (04A) zostawał z tego wielki napis „jeszcze żadnego wzlotu".
+              a przebieg sesji log niżej. Przed pierwszym uruchomieniem silnika (04A)
+              zostawał z tego wielki napis „jeszcze żadnego wzlotu".
 
            Sam pasek żyje dalej w 04B: tam opisuje CUDZĄ maszynę przed decyzją
            o przejęciu i nie prowadzi nigdzie dalej. -->
@@ -418,7 +411,13 @@
            już czego harmonijkować: log to płaska oś zdarzeń od przejęcia do teraz,
            a historia dnia mieszka na 01 i w rozliczeniu (10). Słowo „cykl" wycofane
            razem z modelem — w sesji liczą się LOTY (start → lądowanie).
-           Odczyty przy zdaniu dopiszą się na koniec tej samej osi (09b). -->
+           Odczyty przy zdaniu dopiszą się na koniec tej samej osi (09b).
+
+           OD ISSUE #44 TO DOKŁADNIE TA SAMA OŚ, CO NA 10 — jeden inwentarz klas i jedne
+           reguły. Kokpit i rozliczenie pokazują tę samą sesję i nie ma powodu, żeby raz
+           wyglądała jak szyna z ikonami, a raz jak kolumna czasu z kropkami. Różnice są
+           dwie i obie wymuszone stanem: kokpit nie ma jeszcze wiersza ZDANIE (samolot
+           wciąż jest w rękach pilota), a w locie (05) oś kończy się wierszem „na żywo". -->
       <div class="session-log">
         <div class="session-log-header">
           <!-- Link „Szczegóły" USUNIĘTY razem z ekranem 08 (issue #43): prowadził do
@@ -426,63 +425,111 @@
                kafelek „Popraw dane sesji" w pasku akcji niżej. Dwa wejścia do tej samej
                czynności na jednym ekranie to ta sama wada, którą kokpit zdjął z siebie
                przy banerze GPS (decyzja 2026-08-12). -->
-          <span class="session-log-title">Log sesji · SP-AXA · UTC · 2 loty</span>
+          <!-- Liczba lotów zeszła z nagłówka do stopki osi (issue #44): stopka mówi
+               „STARTY 2" trzy centymetry niżej, a jedna liczba w dwóch miejscach jednej
+               karty to ta sama wada, którą issue #40 zdjęło z nagłówka ekranu 10. -->
+          <span class="session-log-title">Log sesji · SP-AXA · UTC</span>
         </div>
 
-        <!-- Tankowanie PRZED uruchomieniem — wpis tej sesji jak każdy inny -->
-        <div class="log-ground">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h3m0 0V3h6v3m0 0h3a2 2 0 0 1 2 2v14M9 6h6"/></svg>
-          <div class="log-ground-label">Tankowanie</div>
-          <div class="log-ground-meta">+48 L → 160 L · 11:10</div>
+        <div class="axis">
+          <!-- PRZEJĘCIE — wiersz, którego log kokpitu do issue #44 nie miał. Odczyt
+               początkowy wisiał wtedy jako chipy przy „Start engine", czyli przy
+               zdarzeniu, które go nie wykonało; tu stoi tam, gdzie powstał, i tak samo
+               jak na 10. -->
+          <div class="axis-row">
+            <span class="axis-time dim">10:58</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 112 L · 1 236:52</span></span>
+            <span class="axis-right"></span>
+          </div>
+
+          <!-- Tankowanie PRZED uruchomieniem — wpis tej sesji jak każdy inny. Do issue #44
+               wychodziło pełnoszerokim pasem na tle amber; zdarzenie naziemne dzieje się
+               w tym samym czasie co reszta i nie ma powodu wychodzić poza kolumnę. -->
+          <div class="axis-row">
+            <span class="axis-time dim">11:10</span>
+            <span class="axis-mark"><span class="axis-dot amber"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Tankowanie</span><span class="axis-sub">+48 L → 160 L</span></span>
+            <span class="axis-right"></span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time">11:15</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+            <span class="axis-right"></span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time dim">11:26</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+            <span class="axis-right"></span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time">11:28</span>
+            <span class="axis-mark"><span class="axis-dot green"></span></span>
+            <span class="axis-label"><span class="axis-name">Start</span></span>
+            <span class="axis-right"><span class="axis-flight">lot 1</span></span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time">11:50</span>
+            <span class="axis-mark"><span class="axis-dot red"></span></span>
+            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+            <span class="axis-right"><span class="axis-dur">00:22</span></span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time">11:58</span>
+            <span class="axis-mark"><span class="axis-dot green"></span></span>
+            <span class="axis-label"><span class="axis-name">Start</span></span>
+            <span class="axis-right"><span class="axis-flight">lot 2</span></span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time">12:15</span>
+            <span class="axis-mark"><span class="axis-dot red"></span></span>
+            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+            <span class="axis-right"><span class="axis-dur">00:17</span></span>
+          </div>
+
+          <!-- WYŁĄCZENIE bez odczytów: paliwo i MH pilot poda przy ZDANIU (09b) i dopiero
+               tam staną się wpisami logu. Podpis „blok 1:13" zszedł do stopki (issue #44)
+               — czas blokowy jest sumą sesji, a nie opisem tego jednego zdarzenia. -->
+          <div class="axis-row">
+            <span class="axis-time">12:28</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Wyłączenie</span></span>
+            <span class="axis-right"></span>
+          </div>
+
+          <!-- Tankowanie PO zatrzymaniu — wolno dolać przed zdaniem (decyzja 2026-08-10);
+               dolewka jest wpisem sesji, a odczyt końcowy na 09b i tak ją zweryfikuje.
+               Strzałka ↑ = zdarzenie czeka w outboxie; to jedyne miejsce, w którym stan
+               wysyłki schodzi do pojedynczego wpisu. -->
+          <div class="axis-row">
+            <span class="axis-time dim">12:35</span>
+            <span class="axis-mark"><span class="axis-dot amber"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Tankowanie <span class="axis-pending" title="Czeka na wysyłkę">↑</span></span><span class="axis-sub">+60 L → 190 L</span></span>
+            <span class="axis-right"></span>
+          </div>
         </div>
 
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          <div class="log-cycle-body"><div class="log-time neutral">11:15</div><div class="log-evt-label neutral">Start engine</div><span class="log-chip log-chip-mh">MH 1 236:52</span><span class="log-chip log-chip-fuel">160 L</span></div>
-        </div>
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
-          <div class="log-cycle-body">
-            <div class="log-time neutral">11:28</div>
-            <div class="log-evt-label neutral">Takeoff</div>
+        <div class="axis-foot">
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">01:13</span>
+            <span class="axis-foot-key">Blok</span>
           </div>
-        </div>
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg></div></div>
-          <div class="log-cycle-body">
-            <div class="log-time neutral">11:50</div>
-            <div class="log-evt-label neutral">Landing</div>
-            <div class="log-meta">0:22</div>
+          <div class="axis-foot-item">
+            <span class="axis-foot-val green">00:39</span>
+            <span class="axis-foot-key">Czas lotu</span>
           </div>
-        </div>
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
-          <div class="log-cycle-body">
-            <div class="log-time neutral">11:58</div>
-            <div class="log-evt-label neutral">Takeoff</div>
+          <div class="axis-foot-item">
+            <span class="axis-foot-val">2</span>
+            <span class="axis-foot-key">Starty</span>
           </div>
-        </div>
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg></div></div>
-          <div class="log-cycle-body">
-            <div class="log-time neutral">12:15</div>
-            <div class="log-evt-label neutral">Landing</div>
-            <div class="log-meta">0:17</div>
-          </div>
-        </div>
-        <!-- STOP bez chipów odczytu: paliwo i MH pilot poda przy ZDANIU (09b) —
-             i dopiero tam staną się wpisami logu. Blok liczy się z czasów silnika. -->
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon stop"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div></div>
-          <div class="log-cycle-body"><div class="log-time red">12:28</div><div class="log-evt-label red">Stop engine</div><div class="log-meta">blok 1:13</div></div>
-        </div>
-
-        <!-- Tankowanie PO zatrzymaniu — wolno dolać przed zdaniem (decyzja 2026-08-10);
-             dolewka jest wpisem sesji, a odczyt końcowy na 09b i tak ją zweryfikuje -->
-        <div class="log-ground">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V8a2 2 0 0 1 2-2h3m0 0V3h6v3m0 0h3a2 2 0 0 1 2 2v14M9 6h6"/></svg>
-          <div class="log-ground-label">Tankowanie</div>
-          <div class="log-ground-meta">+30 L · 12:35</div>
         </div>
       </div>
 

@@ -142,6 +142,11 @@
   .axis-dot.green { background:var(--green); }
   .axis-dot.red { background:var(--red); }
   .axis-dot.blue { background:var(--blue); }
+  /* Tankowanie i zmiana załogi — zdarzenia POZA pracą silnika (issue #44). Amber jest
+     w systemie kolorem paliwa, więc niesie tu znaczenie, a nie wyróżnienie. Do issue #44
+     tych wierszy na osi NIE BYŁO: rachunek niżej mówił „dolane · 2 tankowania", a oś
+     milczała o tym, kiedy się wydarzyły — mimo że arkusz 10H pozwala je dopisać. */
+  .axis-dot.amber { background:var(--amber); }
   /* Otoczka 2 px w kolorze karty — ta sama, którą ma kropka wypełniona: kreska osi
      ma urywać się PRZED obrysem, a nie wchodzić do środka i wychodzić drugą stroną
      (zgłoszenie z urządzenia, 2026-08-14). Dotyczy PRZEJĘCIA i ZDANIA, jedynych
@@ -357,6 +362,23 @@
             </span>
           </a>
 
+          <!-- TANKOWANIE (issue #44) — ołówek prowadzi do arkusza CZASU (10E), bo tak
+               właśnie poprawia się dolewkę: przez unieważnienie i dopisanie na nowo.
+               `amend` tankowanie NIE MA — payload niesie spójną trójkę przed/dolane/po
+               i zmiana jednej liczby rozjeżdżałaby pozostałe dwie. -->
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time dim">08:08</span>
+            <span class="axis-mark"><span class="axis-dot amber"></span></span>
+            <span class="axis-label">
+              <span class="axis-name muted">Tankowanie</span>
+              <span class="axis-sub">+20 L → 170 L</span>
+            </span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
           <a class="axis-row" href="10e-korekta-zdarzenia.html">
             <span class="axis-time">08:12</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
@@ -459,6 +481,19 @@
             <span class="axis-time">09:55</span>
             <span class="axis-mark"><span class="axis-dot"></span></span>
             <span class="axis-label"><span class="axis-name">Wyłączenie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen">
+              <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
+            </span>
+          </a>
+
+          <a class="axis-row" href="10e-korekta-zdarzenia.html">
+            <span class="axis-time dim">10:40</span>
+            <span class="axis-mark"><span class="axis-dot amber"></span></span>
+            <span class="axis-label">
+              <span class="axis-name muted">Tankowanie</span>
+              <span class="axis-sub">+28 L → 171 L</span>
+            </span>
             <span class="axis-right"></span>
             <span class="axis-pen">
               <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
