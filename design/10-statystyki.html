@@ -194,12 +194,17 @@
   .axis-name.muted { color:var(--text-secondary); }
   /* Znacznik „poprawione" (issue #43) — jedyny ślad edycji, który zostaje w trybie
      ODCZYTU. To fakt o danych, nie akcja: liczba obok nie jest tą, którą zapisał
-     przyrząd, i pilot ma prawo to widzieć bez wchodzenia w tryb edycji. Ołówka przy
-     wierszu nadal nie ma (issue #40 pkt 1) — znacznik nie jest celem dotknięcia. */
+     przyrząd, i pilot ma prawo to widzieć bez wchodzenia w tryb edycji.
+
+     SAMA PLAKIETKA JEST KLIKALNA (uwaga z urządzenia) i prowadzi do historii zmian
+     (10I) — jedyny cel dotknięcia osi w trybie odczytu. Nie łamie to reguły „bez
+     ołówków" (issue #40 pkt 1): ołówek obiecuje zapis, a historia jest wyłącznie do
+     czytania. Znacznik bez wejścia stawiał pytanie, na które ekran nie odpowiadał.
+     Napisu nie powiększamy — obszar reakcji rozciąga `hitSlop`, wiersz zostaje 28 px. */
   .tag-corrected {
     font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
     color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
-    border-radius:4px; padding:1px 5px;
+    border-radius:4px; padding:1px 5px; text-decoration:none;
   }
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   /* Prawa kolumna niesie odtąd WYŁĄCZNIE czas trwania (issue #40 pkt 1 i 2).
@@ -524,13 +529,18 @@
 
           <!-- Wiersz PO KOREKCIE: plakietka „popr." przy nazwie, podpis mówi, co było
                i kto zmienił. Prawa kolumna zostaje przy czasie trwania — plakietka nie
-               ma prawa jej zabrać (issue #40 pkt 2). Pełne „było → jest" otwiera się
-               dopiero w trybie edycji, arkuszem historii (10I). -->
+               ma prawa jej zabrać (issue #40 pkt 2).
+
+               PLAKIETKA JEST KLIKALNA I TU: otwiera pełne „było → jest" (10I). To
+               jedyny cel dotknięcia całej osi w trybie odczytu i jedyny wyjątek od
+               reguły „oś jest czysto opisowa" — bo historia niczego nie zapisuje,
+               a bez tego wejścia znacznik stawia pytanie, na które nie ma odpowiedzi.
+               Wiersz zostaje przy 28 px: obszar reakcji rozciąga `hitSlop`, nie rytm. -->
           <div class="axis-row">
             <span class="axis-time">09:01</span>
             <span class="axis-mark"><span class="axis-dot red"></span></span>
             <span class="axis-label">
-              <span class="axis-name">Lądowanie <span class="tag-corrected">popr.</span></span>
+              <span class="axis-name">Lądowanie <a href="10i-historia-zmian.html" class="tag-corrected">popr.</a></span>
               <span class="axis-sub">było 08:58 · poprawione przez Ciebie</span>
             </span>
             <span class="axis-right">
@@ -739,7 +749,7 @@
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
         <div class="note-block">
-          <span class="note-head"><span class="tag-corrected">popr.</span></span>
+          <span class="note-head"><a href="10i-historia-zmian.html" class="tag-corrected">popr.</a></span>
           <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
         </div>
         <div class="note-block">

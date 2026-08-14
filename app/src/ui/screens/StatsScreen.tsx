@@ -52,6 +52,7 @@ import {
   BalanceCard,
   Banner,
   Card,
+  CorrectedTag,
   FreshnessNote,
   Icon,
   ResultRow,
@@ -78,7 +79,8 @@ import { dateUtcDayMonth } from '../format';
 import { TrackThumbnail } from '../components/data/TrackThumbnail';
 import { dateTimeUtcShort, jumperBreakdown } from './logic/statsDay';
 import { buildSessionAxis } from './logic/sessionAxis';
-import { withIssues } from './logic/sessionEdit';
+import { preflightUuid, withIssues } from './logic/sessionEdit';
+import { fieldChanges } from './logic/fieldChanges';
 import { fuelBalance, mhBalance } from './logic/sessionBalance';
 import { missingSessionNote, noteTargetUuid, sessionNotes } from './logic/sessionNotes';
 import { operationTag } from './logic/operations';
@@ -239,6 +241,15 @@ export function StatsScreen({
    * miała test — ten warunek już raz był w JSX i już raz był zły.
    */
   const canAddNote = editing && noteTarget != null && missingSessionNote(notes);
+  /**
+   * Ile razy poprawiano DRUGIEGO PILOTA (issue #43, uwaga z urządzenia). Dual mieszka
+   * w payloadzie `preflight_confirm` — tam, gdzie notatka i odczyty — więc licznik
+   * musi pytać o samo pole; inaczej korekta paliwa zapalałaby „popr." przy załodze.
+   */
+  const dualChanges = useMemo(
+    () => fieldChanges(events, preflightUuid(events), ['dualId']),
+    [events],
+  );
 
   /**
    * Wiek normy — jedyna dana z serwera na tym ekranie, więc jedyna z adnotacją świeżości
@@ -477,6 +488,10 @@ export function StatsScreen({
             foot={axis.foot}
             emptyText="Ta sesja nie ma jeszcze ani jednego zdarzenia."
             onCorrect={editing ? edit.openRow : undefined}
+            /* Historia otwiera się z plakietki „popr." w OBU trybach — patrz
+               `CorrectedTag`. W odczycie to jedyne wejście, bo arkusza korekty
+               (który ją niesie) tam nie ma. */
+            onHistory={edit.openRowHistory}
           />
         </Card>
 
@@ -563,39 +578,24 @@ export function StatsScreen({
             tone="neutral"
             style={styles.firstRow}
           />
-          {editing ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Popraw drugiego pilota"
-              onPress={edit.openCrew}
-              style={({ pressed }) => [
-                styles.crewRow,
-                { borderTopColor: theme.colors.border },
-                pressed ? { backgroundColor: theme.colors.surfaceHover } : null,
-              ]}
-            >
-              <AppText variant="mono" tone="muted" style={styles.crewLabel}>
-                DUAL
-              </AppText>
-              <AppText variant="mono" tone="primary" style={styles.crewValue}>
-                {projection.dualId != null
-                  ? crewLabel(projection.dualId, currentPilotId, codeOf)
-                  : 'brak — sesja jednoosobowa'}
-              </AppText>
-              <Icon name="edit" size={13} color={theme.colors.textMuted} />
-            </Pressable>
-          ) : (
-            <ResultRow
-              label="Dual"
-              value={
-                projection.dualId != null
-                  ? crewLabel(projection.dualId, currentPilotId, codeOf)
-                  : 'brak — sesja jednoosobowa'
-              }
-              tone="neutral"
-              style={styles.row}
-            />
-          )}
+          {/*
+            Wiersz „Dual" ma odtąd JEDEN kształt w obu trybach, bo w obu może nieść
+            plakietkę „popr." (uwaga z urządzenia, 2026-08-14): poprawiony drugi pilot
+            jest faktem o danych tak samo jak poprawiony czas lądowania, a w trybie
+            odczytu plakietka jest jedyną drogą do historii tej zmiany. Różnicą trybu
+            zostaje sam ołówek i to, czy wiersz otwiera arkusz korekty.
+          */}
+          <CrewRow
+            editing={editing}
+            corrected={dualChanges > 0}
+            value={
+              projection.dualId != null
+                ? crewLabel(projection.dualId, currentPilotId, codeOf)
+                : 'brak — sesja jednoosobowa'
+            }
+            onCorrect={edit.openCrew}
+            onHistory={edit.openCrewHistory}
+          />
         </Card>
 
         {/* ── notatki ───────────────────────────────────────────────────────
@@ -630,7 +630,17 @@ export function StatsScreen({
                           {note.when.toUpperCase()}
                         </AppText>
                       )}
-                      {note.changes > 0 && <Tag label="popr." tone="amber" size="sm" />}
+                      {note.changes > 0 && note.targetUuid != null && (
+                        <CorrectedTag
+                          accessibilityContext="notatka"
+                          onPress={() =>
+                            edit.openNoteHistory(
+                              note.targetUuid!,
+                              note.kind === 'session' ? 'Notatka sesji' : 'Uwaga wpisu ręcznego',
+                            )
+                          }
+                        />
+                      )}
                     </View>
                   )}
                   {/* Body font, nie mono: to zdanie napisane przez człowieka, a nie odczyt. */}
@@ -752,6 +762,67 @@ function crewLabel(
 ): string {
   if (pilotId == null) return '—';
   return pilotId === currentPilotId ? `${codeOf(pilotId)} (Ty)` : codeOf(pilotId);
+}
+
+/**
+ * Wiersz „Dual" karty załogi.
+ *
+ * Osobny komponent, bo jeden wiersz musi obsłużyć dwa tryby i dwa niezależne cele
+ * dotknięcia: cały wiersz otwiera korektę (tylko w edycji), a plakietka „popr." —
+ * historię zmian (w OBU trybach). Napisane wprost w JSX ekranu było trzema zagnieżdżonymi
+ * warunkami wokół tej samej treści.
+ *
+ * PIC takiego wiersza nie ma i to jest precyzja, nie niedoróbka: jego zmiana to
+ * przelogowanie, nie korekta (`PIC_CHANGE_NOT_ALLOWED`).
+ */
+function CrewRow({
+  editing,
+  corrected,
+  value,
+  onCorrect,
+  onHistory,
+}: {
+  editing: boolean;
+  corrected: boolean;
+  value: string;
+  onCorrect: () => void;
+  onHistory: () => void;
+}) {
+  const { theme } = useTheme();
+
+  const content = (
+    <>
+      <AppText variant="mono" tone="muted" style={styles.crewLabel}>
+        DUAL
+      </AppText>
+      {corrected && <CorrectedTag accessibilityContext="drugi pilot" onPress={onHistory} />}
+      <AppText variant="mono" tone="primary" style={styles.crewValue}>
+        {value}
+      </AppText>
+      {editing && <Icon name="edit" size={13} color={theme.colors.textMuted} />}
+    </>
+  );
+
+  if (!editing) {
+    return (
+      <View style={[styles.crewRow, { borderTopColor: theme.colors.border }]}>{content}</View>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Popraw drugiego pilota"
+      onPress={onCorrect}
+      style={({ pressed }) => [
+        styles.crewRow,
+        { borderTopColor: theme.colors.border },
+        pressed ? { backgroundColor: theme.colors.surfaceHover } : null,
+      ]}
+    >
+      {content}
+    </Pressable>
+  );
 }
 
 /** Nagłówek kafelka „bez śladu" — dwa różne powody znaczą dla pilota co innego. */

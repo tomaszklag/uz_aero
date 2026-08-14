@@ -57,7 +57,12 @@ import {
 import { correctionImpact, methodBadgeFor, voidLabelFor } from '../screens/logic/correction';
 import type { AxisRow } from '../screens/logic/sessionAxis';
 import { claimRetimePlan } from '../screens/logic/claimRetime';
-import { addableTypes, editTargetFor, type EditTarget } from '../screens/logic/sessionEdit';
+import {
+  addableTypes,
+  editTargetFor,
+  preflightUuid,
+  type EditTarget,
+} from '../screens/logic/sessionEdit';
 
 /** Ikony typów w arkuszu „Dodaj wpis" — słownik ekranu, nie rejestru. */
 const ADD_ICON = {
@@ -88,6 +93,18 @@ export interface SessionEditApi {
    * bo nie jest zdarzeniem w czasie, tylko faktem o CAŁEJ sesji.
    */
   openCrew: () => void;
+  /**
+   * Historia zmian BEZ przechodzenia przez arkusz korekty (issue #43, uwaga
+   * z urządzenia) — pod plakietkę „popr.".
+   *
+   * Istnieje, bo znacznik poprawki widać w OBU trybach, a arkusz korekty, który niesie
+   * wejście w historię, tylko w edycji. W trybie odczytu (i w podglądzie po oknie 24 h)
+   * plakietka jest jedyną drogą do pytania „to co właściwie zmieniono": zamknięte okno
+   * odbiera prawo do zmiany danych, nie do ich zrozumienia.
+   */
+  openRowHistory: (rowId: string) => void;
+  openNoteHistory: (targetUuid: string, label: string) => void;
+  openCrewHistory: () => void;
   /** Arkusze do wyrenderowania na końcu ekranu (`null`, gdy wszystkie zamknięte). */
   sheets: React.ReactNode;
 }
@@ -148,6 +165,33 @@ export function useSessionEdit(
   const openAdd = useCallback(() => setAdding(true), []);
   const close = useCallback(() => setTarget(null), []);
 
+  /**
+   * Historia wiersza osi. Zakres bierze się z ARKUSZA, którym ten wiersz się poprawia:
+   * przejęcie i zdanie mają arkusz odczytu, więc pytanie brzmi o paliwo, licznik i czas —
+   * notatka i Dual siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają własne
+   * plakietki. Reszta wierszy ma jeden wymiar, więc zakresu nie potrzebuje.
+   */
+  const openRowHistory = useCallback(
+    (rowId: string) => {
+      const row = rows.find((r) => r.id === rowId);
+      if (row == null) return;
+      const found = editTargetFor(row, events);
+      if (found == null) return;
+      setHistory({
+        uuid: found.event.uuid,
+        title: found.label,
+        only: found.sheet === 'reading' ? READING_FIELDS : undefined,
+      });
+    },
+    [events, rows],
+  );
+
+  const openNoteHistory = useCallback(
+    (targetUuid: string, label: string) =>
+      setHistory({ uuid: targetUuid, title: label, only: NOTE_FIELDS }),
+    [],
+  );
+
   const [note, setNote] = useState<{ uuid: string; text: string; label: string } | null>(null);
   const openNote = useCallback(
     (targetUuid: string, text: string, label = 'Notatka sesji') =>
@@ -162,10 +206,12 @@ export function useSessionEdit(
    * Adres korekty załogi: `preflight_confirm`. Dual jest tam FAKTEM o całej sesji —
    * w nagłówkach zdarzeń zostaje tożsamość z chwili zapisu i zostać musi (append-only).
    */
-  const preflightUuid = useMemo(
-    () => events.find((e) => e.type === 'preflight_confirm')?.uuid ?? null,
-    [events],
-  );
+  const preflight = useMemo(() => preflightUuid(events), [events]);
+
+  const openCrewHistory = useCallback(() => {
+    if (preflight == null) return;
+    setHistory({ uuid: preflight, title: 'Drugi pilot', only: DUAL_FIELDS });
+  }, [preflight]);
 
   /** Lista wyboru bez PIC-a tej sesji — `DUAL_IS_PIC` i tak by go odrzucił. */
   const crewOptions = useMemo(
@@ -617,11 +663,7 @@ export function useSessionEdit(
         /* Historia SAMEJ notatki: `preflight_confirm` niesie obok niej paliwo, licznik
            i Duala, a pilot otwierający ten arkusz pyta o tekst, nie o odczyty. */
         historyCount={historyCountOf(note?.uuid, NOTE_FIELDS)}
-        onOpenHistory={
-          note == null
-            ? undefined
-            : () => setHistory({ uuid: note.uuid, title: note.label, only: NOTE_FIELDS })
-        }
+        onOpenHistory={note == null ? undefined : () => openNoteHistory(note.uuid, note.label)}
         onConfirm={(text) => {
           const uuid = note?.uuid;
           setNote(null);
@@ -636,19 +678,17 @@ export function useSessionEdit(
         onCancel={() => setNote(null)}
       />
 
-      {preflightUuid != null && (
+      {preflight != null && (
         <CrewCorrectionSheet
           visible={crewOpen}
           dualId={projection.dualId}
           options={crewOptions}
-          historyCount={historyCountOf(preflightUuid, DUAL_FIELDS)}
-          onOpenHistory={() =>
-            setHistory({ uuid: preflightUuid, title: 'Drugi pilot', only: DUAL_FIELDS })
-          }
+          historyCount={historyCountOf(preflight, DUAL_FIELDS)}
+          onOpenHistory={openCrewHistory}
           onSave={(dualId, reason) => {
             setCrewOpen(false);
             void save({
-              targetUuid: preflightUuid,
+              targetUuid: preflight,
               action: 'amend',
               fields: { dualId },
               reason,
@@ -668,7 +708,16 @@ export function useSessionEdit(
     </>
   );
 
-  return { openRow, openAdd, openNote, openCrew, sheets };
+  return {
+    openRow,
+    openAdd,
+    openNote,
+    openCrew,
+    openRowHistory,
+    openNoteHistory,
+    openCrewHistory,
+    sheets,
+  };
 }
 
 const EMPTY_JUMPERS: JumperCounts = { tandem: 0, aff: 0, solo: 0 };

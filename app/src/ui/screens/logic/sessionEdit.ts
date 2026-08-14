@@ -20,6 +20,20 @@ import type { Event, EventType, OperationType, RuleViolation } from '../../../do
 import { isJumpOperation } from '../../../domain';
 import type { AxisRow } from './sessionAxis';
 
+/**
+ * Adres faktów o CAŁEJ sesji — notatki i drugiego pilota (issue #43).
+ *
+ * Oba mieszkają w payloadzie `preflight_confirm`, bo nie są zdarzeniami w czasie: nie
+ * stoją na osi i nie mają własnej godziny. Dual musiał tam trafić, bo w nagłówkach
+ * zdarzeń zostaje tożsamość z chwili zapisu, a nagłówka nie da się poprawić bez łamania
+ * append-only.
+ *
+ * `null` = sesja bez preflightu w strumieniu, czyli nie ma czego adresować.
+ */
+export function preflightUuid(events: readonly Event[]): string | null {
+  return events.find((e) => e.type === 'preflight_confirm')?.uuid ?? null;
+}
+
 /** Który arkusz korekty otworzyć dla danego celu. */
 export type EditSheet = 'time' | 'reading' | 'drop';
 

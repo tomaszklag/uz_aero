@@ -199,6 +199,13 @@
   .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
   .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
   .axis-name.muted { color:var(--text-secondary); }
+  /* Znacznik „poprawione" i JEDYNY cel dotknięcia tego ekranu: otwiera historię zmian
+     (10I). Podgląd nie ma ani jednego elementu zapisu — a historia zapisem nie jest. */
+  .tag-corrected {
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:4px; padding:1px 5px; text-decoration:none;
+  }
   .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
   /* Prawa kolumna niesie sam czas trwania — plakietka RĘCZNIE wypadła z osi razem
      z ołówkami (issue #40 pkt 1 i 6). Po oknie korekty ten ekran i tak nie miał
@@ -441,10 +448,18 @@
             </span>
           </div>
 
+          <!-- Wiersz PO KOREKCIE również w PODGLĄDZIE, i plakietka jest tu tak samo
+               klikalna jak w odczycie (10): zamknięte okno odbiera prawo do ZMIANY
+               danych, nie do ich zrozumienia. Historia zmian (10I) niczego nie zapisuje,
+               więc nie ma powodu, żeby po oknie znikała — a poprawki administratora
+               wracają na telefon (§4.9), więc to jedyne miejsce, w którym pilot je zobaczy. -->
           <div class="axis-row">
             <span class="axis-time">15:03</span>
             <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+            <span class="axis-label">
+              <span class="axis-name">Lądowanie <a href="10i-historia-zmian.html" class="tag-corrected">popr.</a></span>
+              <span class="axis-sub">było 15:07 · poprawione przez administratora</span>
+            </span>
             <span class="axis-right">
               <span class="axis-dur">01:11</span>
             </span>

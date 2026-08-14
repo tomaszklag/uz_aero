@@ -33,6 +33,7 @@ export * from './layout/IdentityStrip';
 export * from './status/SyncChip';
 export * from './status/StatusChip';
 export * from './status/Tag';
+export * from './status/CorrectedTag';
 export * from './status/Banner';
 export * from './status/InlineNote';
 export * from './status/FreshnessNote';

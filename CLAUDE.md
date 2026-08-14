@@ -544,15 +544,23 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   ma jej od czego odróżnić, a „Zadanie · 08:04" mówiło o godzinie potwierdzenia
   zadania i po pierwszej poprawce treści zaczynało kłamać. Podpis zostaje przy
   uwagach wpisów ręcznych (`kind: 'entry'`) — tych bywa wiele
+- **plakietka „popr." jest WSZĘDZIE i jest KLIKALNA** (uwagi z urządzenia, 2026-08-14).
+  Nosi ją każda poprawiona wartość — wiersz osi, notatka i drugi pilot — bo wszystkie
+  są tym samym: liczbą albo zdaniem, które nie jest tym, co zapisał przyrząd albo pilot.
+  Widać ją w OBU trybach i w podglądzie po oknie (10B), a tapnięcie otwiera historię
+  zmian (10I). W trybie odczytu to **jedyne** wejście w historię i jedyny cel dotknięcia
+  osi — nie łamie reguły „bez ołówków" z issue #40, bo ołówek obiecuje zapis, a historia
+  jest wyłącznie do czytania. Napisu nie powiększamy (7,5 px, przypis do nazwy): obszar
+  reakcji rozciąga `hitSlop`, więc wiersz zostaje przy 28 px. Jeden komponent na całość —
+  `components/status/CorrectedTag.tsx`; licznik zapalający plakietkę i licznik przy
+  wejściu w historię to ta sama funkcja (`logic/fieldChanges.ts`), więc nie mają jak
+  powiedzieć czegoś innego
 - **poprawiona notatka niesie „popr." i własną historię** (uwaga z urządzenia,
-  2026-08-14). Plakietka jest ta sama co przy wierszach osi i z tego samego powodu:
-  tekst poprawiony nie jest tekstem wpisanym, więc widać ją TAKŻE w trybie odczytu.
-  Historię otwiera wiersz w arkuszu notatki (`design/10k` — ten sam arkusz co 02e plus
-  to jedno wejście). **Historia jest ZAWĘŻONA do pola**: `preflight_confirm` niesie
-  paliwo, licznik, notatkę i Duala w jednym payloadzie, a każde z nich ma własny arkusz
-  i własne pytanie — bez zawężenia poprawka paliwa zapalałaby licznik przy notatce.
-  Liczy to `noteChanges` w `logic/sessionNotes.ts` (jedno źródło dla plakietki
-  i dla licznika w arkuszu), a zakresy trzyma `useSessionEdit`
+  2026-08-14). Historię otwiera też wiersz w arkuszu notatki (`design/10k` — ten sam
+  arkusz co 02e plus to jedno wejście). **Historia jest ZAWĘŻONA do pola**:
+  `preflight_confirm` niesie paliwo, licznik, notatkę i Duala w jednym payloadzie,
+  a każde z nich ma własny arkusz i własne pytanie — bez zawężenia poprawka paliwa
+  zapalałaby plakietkę i licznik przy notatce oraz przy Dualu. Zakresy trzyma `useSessionEdit`
   (`READING_FIELDS`/`NOTE_FIELDS`/`DUAL_FIELDS`). Arkusz notatki jest jedynym bez pola
   „powód": przy odczycie powód tłumaczy liczbę, której nikt inny nie wyjaśni, a przy
   notatce wyjaśnieniem jest sam nowy tekst

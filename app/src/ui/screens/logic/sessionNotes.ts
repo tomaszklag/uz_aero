@@ -18,9 +18,11 @@
  * notatki nie jest brakiem DANYCH, tylko normalnym stanem większości sesji.
  */
 
-import { applyCorrections, correctionHistory } from '../../../domain';
+import { applyCorrections } from '../../../domain';
 import type { Event, SessionState } from '../../../domain';
 import { timeUtc } from '../../format';
+import { fieldChanges } from './fieldChanges';
+import { preflightUuid } from './sessionEdit';
 
 /** Jedna notatka: skąd pochodzi, o której powstała i co mówi. */
 export interface SessionNote {
@@ -82,7 +84,7 @@ const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
  * czyli nie ma czego adresować i ołówka nie ma.
  */
 export function noteTargetUuid(events: readonly Event[]): string | null {
-  return events.find((e) => e.type === 'preflight_confirm')?.uuid ?? null;
+  return preflightUuid(events);
 }
 
 /**
@@ -102,14 +104,13 @@ export function missingSessionNote(notes: readonly SessionNote[]): boolean {
 /**
  * Ile poprawek dotknęło TREŚCI notatki — patrz `SessionNote.changes`.
  *
- * Historia zmian jest w strumieniu z definicji (rejestr jest append-only), więc nie
- * prowadzimy jej osobno: `correctionHistory` czyta ją z tych samych zdarzeń, z których
- * liczy się reszta ekranu. Filtr po polu jest tu istotą rzeczy — bez niego notatka
- * świeciłaby „popr." po korekcie paliwa, bo obie wartości niesie ten sam preflight.
+ * Nazwana obudowa na `fieldChanges`, bo notatka pyta o to w trzech miejscach (plakietka,
+ * arkusz, karta) i wszystkie mają dostać tę samą liczbę. Filtr po polu jest tu istotą
+ * rzeczy — bez niego notatka świeciłaby „popr." po korekcie paliwa, bo obie wartości
+ * niesie ten sam preflight.
  */
 export function noteChanges(events: readonly Event[], targetUuid: string | null): number {
-  if (targetUuid == null) return 0;
-  return correctionHistory(events, targetUuid).filter((entry) => entry.field === 'notes').length;
+  return fieldChanges(events, targetUuid, ['notes']);
 }
 
 /**

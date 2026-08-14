@@ -162,12 +162,17 @@
   .axis-row:hover .axis-pen { color:var(--green); }
   /* Znacznik „poprawione" — widoczny TAKŻE w trybie odczytu (10). To fakt o jakości
      danych, nie akcja: administrator i pilot mają widzieć, że liczba pod spodem nie
-     jest tą, którą zapisał przyrząd. Sam znacznik nie mówi CO się zmieniło — od tego
-     jest historia zmian (10I) pod arkuszem korekty. */
+     jest tą, którą zapisał przyrząd.
+
+     JEST CELEM DOTKNIĘCIA W OBU TRYBACH i prowadzi do historii zmian (10I) —
+     „co właściwie zmieniono" jest naturalnym następnym pytaniem, a w trybie odczytu
+     plakietka jest jedyną drogą do odpowiedzi (arkusza korekty tam nie ma).
+     Napisu NIE powiększamy: „popr." jest przypisem do nazwy, a nie przyciskiem,
+     i wiersz osi w odczycie ma 28 px (issue #40). Obszar reakcji rozciąga `hitSlop`. */
   .tag-corrected {
     font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
     color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
-    border-radius:4px; padding:1px 5px;
+    border-radius:4px; padding:1px 5px; text-decoration:none;
   }
 
   .axis-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--border); background:var(--surface-raised); }
@@ -530,7 +535,11 @@
 
            Poprawka Duala działa WSTECZ na całą sesję: czas blokowy w całości przypisuje
            się wskazanej osobie. Zmiana załogi W TRAKCIE to inna rzecz (`crew_change`,
-           ekran 07) i arkusz mówi o tym wprost. -->
+           ekran 07) i arkusz mówi o tym wprost.
+
+           Poprawiony Dual nosi „popr." tak samo jak wiersz osi — jest faktem o danych,
+           nie o prawie zapisu, więc plakietka zostaje widoczna także w trybie ODCZYTU,
+           gdzie jest jedynym wejściem w historię tej zmiany (10I). -->
       <div class="section-card">
         <div class="section-card-head">Załoga</div>
         <!-- PIC ołówka NIE MA i to jest precyzja, nie niedoróbka: jego zmiana to
@@ -543,6 +552,12 @@
         </div>
         <a href="10j-korekta-zalogi.html" class="info-row editable">
           <span class="info-key">Dual</span>
+          <!-- Plakietka jest OSOBNYM celem dotknięcia: prowadzi do historii (10I),
+               a nie do korekty. W mockupie zostaje `span`, bo cały wiersz jest tu
+               linkiem do arkusza korekty, a link w linku nie istnieje w HTML —
+               w aplikacji to zagnieżdżony `Pressable` z `hitSlop`. Klikalną wersję
+               widać na 10 (odczyt), gdzie wiersz linkiem nie jest. -->
+          <span class="tag-corrected">popr.</span>
           <span class="info-val">AKO · Anna Kowalska</span>
           <span class="row-pen">
             <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
@@ -615,7 +630,7 @@
     <span class="vp-badge">10</span>
     <span class="vp-body">
       <span class="vp-name">Sesja — odczyt</span>
-      <span class="vp-when">Stan domyślny: oś czysto opisowa, wiersz 28 px, bez ołówków. Znacznik „popr." przy poprawionych wierszach zostaje — mówi o danych, nie o możliwości zapisu.</span>
+      <span class="vp-when">Stan domyślny: oś czysto opisowa, wiersz 28 px, bez ołówków. Znacznik „popr." zostaje — mówi o danych, nie o możliwości zapisu — i tam JEST celem dotknięcia: otwiera historię zmian (10I), bo bez arkusza korekty nie ma innej drogi do pytania „co właściwie zmieniono".</span>
     </span>
   </a>
   <a class="vp-item active" href="10d-edycja.html">

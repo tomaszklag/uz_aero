@@ -47,7 +47,7 @@ import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
-import { Tag } from '../status/Tag';
+import { CorrectedTag } from '../status/CorrectedTag';
 import type { Tone } from '../tone';
 import { toneColors } from '../tone';
 
@@ -107,6 +107,13 @@ export interface SessionAxisProps {
    * jest czysto opisowa i nie ma ani jednego celu dotknięcia (issue #40 pkt 1).
    */
   onCorrect?: (rowId: string) => void;
+  /**
+   * Tapnięcie plakietki „popr." (issue #43, uwaga z urządzenia). Działa w OBU trybach:
+   * znacznik poprawki mówi, że liczba obok nie jest tą, którą zapisał przyrząd, a
+   * naturalnym następnym pytaniem jest „to co w niej zmieniono". W trybie odczytu jest
+   * to jedyne wejście w historię — arkusza korekty, który ją niesie, tam nie ma.
+   */
+  onHistory?: (rowId: string) => void;
   style?: ViewStyle;
 }
 
@@ -137,7 +144,14 @@ const HOLLOW: Record<SessionAxisKind, boolean> = {
   release: true,
 };
 
-export function SessionAxis({ rows, foot, emptyText, onCorrect, style }: SessionAxisProps) {
+export function SessionAxis({
+  rows,
+  foot,
+  emptyText,
+  onCorrect,
+  onHistory,
+  style,
+}: SessionAxisProps) {
   const { theme } = useTheme();
   const editing = onCorrect != null;
 
@@ -229,8 +243,19 @@ export function SessionAxis({ rows, foot, emptyText, onCorrect, style }: Session
                   {row.name.toUpperCase()}
                 </AppText>
                 {/* „popr." zostaje przy NAZWIE, nie w prawej kolumnie: prawa niesie
-                    liczbę (czas trwania), a plakietka odbierałaby jej miejsce. */}
-                {row.corrected === true && <Tag label="popr." tone="amber" size="sm" />}
+                    liczbę (czas trwania), a plakietka odbierałaby jej miejsce.
+
+                    Sama plakietka ma 7,5 px i celem dotknięcia być nie może — od tego
+                    jest `hitSlop`, który rozciąga jej obszar do rozmiaru kciuka, nie
+                    ruszając rytmu wiersza (28 px w odczycie, issue #40). Wiersza NIE
+                    robimy przyciskiem: w odczycie oś nie ma ani jednego celu i to
+                    zostaje w mocy — tapnąć da się znacznik, nie zdarzenie. */}
+                {row.corrected === true && (
+                  <CorrectedTag
+                    accessibilityContext={`${row.name} ${row.time}`}
+                    onPress={onHistory == null ? undefined : () => onHistory(row.id)}
+                  />
+                )}
               </View>
               {row.sub != null && (
                 <AppText
