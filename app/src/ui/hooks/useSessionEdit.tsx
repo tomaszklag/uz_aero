@@ -562,7 +562,19 @@ export function useSessionEdit(
         <ReadingCorrectionSheet
           visible
           title={target?.label ?? ''}
-          subtitle={`zapisano ${timeUtc(readingTarget.gpsTime ?? readingTarget.deviceTime)} UTC`}
+          /*
+           * Podpis z godziną TYLKO wtedy, gdy arkusz nie ma pola czasu (uwaga
+           * z urządzenia, 2026-08-14). Przy przejęciu ta sama godzina stoi dwa
+           * centymetry niżej — w kontrolce, którą się ją zmienia — więc na karcie celu
+           * była powtórzeniem. Przy zdaniu pola czasu nie ma (`day_close` nie przyjmuje
+           * `retime`), a wtedy podpis jest jedynym miejscem, w którym pilot widzi,
+           * czego dotyczy poprawka.
+           */
+          subtitle={
+            claimTimeField != null
+              ? null
+              : `zapisano ${timeUtc(readingTarget.gpsTime ?? readingTarget.deviceTime)} UTC`
+          }
           /* Pole czasu WYŁĄCZNIE przy przejęciu — uzasadnienie w propsach arkusza. */
           time={claimTimeField}
           fuelText={String(Math.round(reading.fuelL))}

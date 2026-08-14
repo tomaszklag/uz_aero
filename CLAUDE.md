@@ -242,12 +242,22 @@ go nie nazwał). Odtąd jest **`components/input/TimeStepper.tsx`** i ona ustala
   z poprawianego zdarzenia — `timeStepperEdit`, nie „dzisiaj"
 - **podpis mówi, o ile przesunięto** względem wartości pierwotnej (`timeShiftHint`),
   także przy zmianie zerowej: pilot, który wrócił do punktu wyjścia, musi to widzieć
+- **bez podkreślenia pod wartością** — przerywana kreska „zapraszająca do wpisu"
+  wyglądała jak usterka rysowania; godzina jest największym elementem kontrolki, więc
+  palec i tak ląduje na niej sam
+- **przycisk kroku rośnie z napisem**: 46 dp to MINIMUM celu dotykowego, nie sztywna
+  szerokość — przy `width: 46` napis „+1 min" łamał się na dwie linie
 - arkusz podaje wyłącznie to, co go RÓŻNI: etykietę, granice, ton i ewentualną stopkę
   (czas lokalny w 05f). Nowy krok, nowa nazwa kroku ani własna para przycisków ± nie
   wchodzą do arkusza — wchodzą do `TimeStepper`
 
 ### Wzorzec formularzy
 - Pola input: `background: var(--surface-raised)`, `border-radius: 12px`, focus = `var(--green-border)`
+- **Placeholder ma własny token `--text-placeholder`** (o stopień słabszy niż `--text-muted`,
+  uwaga z urządzenia 2026-08-14). To instrukcja, nie treść: w `textMuted` konkurowała wagą
+  z wpisaną wartością obok i puste pole wyglądało jak wypełnione. Stopnia pisma nie
+  różnicujemy — `placeholder` dziedziczy go z pola i inaczej się nie da, więc cała
+  różnica siedzi w kontraście. Po dołożeniu koloru do palet: `npm run tokens:css` w `admin/`
 - Dropdowny jako lista kart do wyboru (nie natywny `<select>`) — widoczne opcje, zaznaczona = zielona obramówka
 - Operacje/typy jako siatka kart z ikonami
 

@@ -157,7 +157,7 @@ export function AirfieldSheet({
             autoCapitalize="characters"
             autoCorrect={false}
             placeholder="Kod ICAO albo nazwa…"
-            placeholderTextColor={theme.colors.textMuted}
+            placeholderTextColor={theme.colors.textPlaceholder}
             selectionColor={theme.colors.selection}
             cursorColor={theme.colors.textPrimary}
             accessibilityLabel={title}

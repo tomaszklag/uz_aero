@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #565656;
     --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
@@ -129,7 +129,9 @@
   .reason-box { display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--border-strong); border-radius:12px; padding:11px 13px; }
   .reason-box svg { color:var(--text-muted); flex-shrink:0; }
   .reason-input { flex:1; background:none; border:none; outline:none; color:var(--text-primary); font-family:var(--font-body); font-size:12px; }
-  .reason-input::placeholder { color:var(--text-muted); }
+  /* Podpowiedź w pustym polu jest o stopień słabsza niż podpis: to instrukcja,
+     nie treść, i ma zejść z oka po pierwszym znaku (uwaga z urządzenia). */
+  .reason-input::placeholder { color:var(--text-placeholder); }
 
   .history-link { display:flex; align-items:center; gap:9px; padding:11px 13px; border-radius:12px; border:1px solid var(--border); background:var(--surface); text-decoration:none; }
   .history-link:hover { border-color:var(--blue-border); }
@@ -147,11 +149,11 @@
   /* Stepper godziny — ten sam kształt co w arkuszu czasu (10E): cele 44 px, wartość
      mono pośrodku. Ta sama czynność musi wyglądać tak samo. */
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:9px 11px; }
-  .min-btn { width:62px; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
+  .min-btn { min-width:62px; padding:0 10px; white-space:nowrap; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
   .min-btn:hover { border-color:var(--amber-border); background:var(--amber-muted); }
   /* Godzina do WPISANIA z klawiatury — patrz komentarz w 10E. Kroków ±10 min tu nie ma
      i mieć nie będzie: korekta przejęcia to poprawka o minuty, a dalszy skok wpisuje się. */
-  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); border-bottom:1px dashed var(--border-strong); padding-bottom:2px; cursor:text; }
+  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:26px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -241,16 +243,20 @@
         <div class="modal-handle"></div>
         <div class="modal-title">KOREKTA ODCZYTU</div>
 
-        <!-- Karta celu: NAZWA ZDARZENIA pełnym stopniem, godzina pod spodem. Mono 9 px
-             wersalikami czytało się jak przypis, a to jest odpowiedź na pierwsze pytanie
-             otwierającego arkusz — co ja właściwie poprawiam. -->
+        <!-- Karta celu: NAZWA ZDARZENIA pełnym stopniem — odpowiedź na pierwsze pytanie
+             otwierającego arkusz, czyli „co ja właściwie poprawiam".
+
+             BEZ GODZINY pod spodem (zgłoszenie z urządzenia, 2026-08-14): ta sama
+             godzina stoi dwa centymetry niżej, w kontrolce, którą się ją zmienia.
+             Podpis „zapisano 08:04 UTC" ZOSTAJE w arkuszu ZDANIA samolotu — tam pola
+             czasu nie ma (`day_close` nie przyjmuje `retime`), więc jest jedynym
+             miejscem, w którym widać, czego dotyczy poprawka. -->
         <div class="evt-card">
           <div class="evt-icon">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V4a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v18"/><path d="M3 12h10"/><path d="M17 8h2a2 2 0 0 1 2 2v8a1 1 0 0 1-2 0v-5h-2"/></svg>
           </div>
           <div class="evt-body">
             <span class="evt-name">Przejęcie samolotu</span>
-            <span class="evt-meta">zapisano 08:04 UTC</span>
           </div>
         </div>
 

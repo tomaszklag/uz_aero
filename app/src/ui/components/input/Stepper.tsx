@@ -143,7 +143,10 @@ export function Stepper({
           },
         ]}
       >
-        <AppText variant="mono" tone={disabled ? 'muted' : 'primary'}>
+        {/* Jedna linia ZAWSZE: „+1 min" łamało się na dwie, bo przycisk miał sztywne
+            46 px szerokości — próg rękawic policzony dla samego „+". Odtąd 46 px jest
+            MINIMUM, a szerokość rośnie z napisem (uwaga z urządzenia, 2026-08-14). */}
+        <AppText variant="mono" tone={disabled ? 'muted' : 'primary'} numberOfLines={1}>
           {label}
         </AppText>
       </Pressable>
@@ -197,20 +200,11 @@ export function Stepper({
             }
             disabled={edit == null}
             onPress={() => setDraft(edit?.toText(value) ?? null)}
-            /* Przerywana kreska pod wartością to JEDYNY znak, że da się ją wpisać.
-               Ramki nie dostaje: to nadal wartość stepera, a nie pole formularza —
-               pełne pole obok dwóch przycisków ± czytałoby się jak trzecia kontrolka. */
-            style={[
-              styles.value,
-              edit != null
-                ? {
-                    borderBottomWidth: 1,
-                    borderBottomColor: theme.colors.borderStrong,
-                    borderStyle: 'dashed',
-                    paddingBottom: 2,
-                  }
-                : null,
-            ]}
+            /* BEZ podkreślenia (uwaga z urządzenia, 2026-08-14). Przerywana kreska pod
+               godziną wyglądała jak usterka rysowania, a nie jak zaproszenie do wpisu —
+               wartość steppera i tak jest największym elementem kontrolki, więc palec
+               ląduje na niej sam. */
+            style={styles.value}
           >
             <AppText variant="param" style={{ color: c.accent }}>
               {format ? format(value) : String(value)}
@@ -245,8 +239,16 @@ export function Stepper({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
-  // 46 px — próg celu dotykowego dla rękawic (audyt ergonomii).
-  btn: { width: 46, height: 46, alignItems: 'center', justifyContent: 'center' },
+  // 46 px — próg celu dotykowego dla rękawic (audyt ergonomii). MINIMUM, nie sztywna
+  // szerokość: przycisk z napisem („1 min") musi się w jednej linii zmieścić.
+  btn: {
+    minWidth: 46,
+    height: 46,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
   value: { flex: 1, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 },
   // Pole wpisu ma STAĆ W MIEJSCU wartości: ta sama wysokość i to samo wyśrodkowanie,
   // żeby wejście w edycję nie przesuwało układu arkusza o kilka pikseli.

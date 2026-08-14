@@ -139,7 +139,7 @@ export function TextEntrySheet({
           multiline={multiline}
           maxLength={maxLength}
           placeholder={placeholder}
-          placeholderTextColor={theme.colors.textMuted}
+          placeholderTextColor={theme.colors.textPlaceholder}
           selectionColor={theme.colors.selection}
           cursorColor={theme.colors.textPrimary}
           accessibilityLabel={title}

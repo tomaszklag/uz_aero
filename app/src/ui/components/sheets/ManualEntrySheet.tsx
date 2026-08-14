@@ -188,7 +188,7 @@ export function ManualEntrySheet({
           value={notes}
           onChangeText={setNotes}
           placeholder="np. GPS bez fixa od startu — czasy ze stopera"
-          placeholderTextColor={theme.colors.textMuted}
+          placeholderTextColor={theme.colors.textPlaceholder}
           // Rodzina z tokenów wprost — surowy TextInput wziąłby font systemowy.
           style={[
             styles.notesInput,

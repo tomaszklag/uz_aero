@@ -80,13 +80,13 @@
   .time-block { background:var(--surface); border:1px solid var(--amber-border); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:9px; }
   .time-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .time-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .step-btn { width:46px; height:46px; border-radius:13px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); cursor:pointer; font-family:var(--font-mono); font-size:13px; line-height:1; user-select:none; text-align:center; }
+  .step-btn { min-width:46px; padding:0 10px; white-space:nowrap; height:46px; border-radius:13px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); cursor:pointer; font-family:var(--font-mono); font-size:13px; line-height:1; user-select:none; text-align:center; }
   .step-btn:active { background:var(--amber-muted); border-color:var(--amber-border); color:var(--amber); }
   /* Godzina jest CELEM DOTKNIĘCIA — tapnięcie otwiera klawiaturę numeryczną i pozwala
      wpisać ją wprost (dwukropek stawia maska). Przyciski ±1 min zostają do poprawki
      o krok. Ta sama kontrolka stoi w arkuszach korekty (10E–10H) — jeden komponent
      `TimeStepper`, nie pięć kopii. */
-  .time-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; text-align:center; border-bottom:1px dashed var(--border-strong); padding-bottom:2px; cursor:text; }
+  .time-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; text-align:center; cursor:text; }
   /* Czas lokalny drobnym drukiem POD zegarem (issue #19) — drugorzędna wartość,
      drugorzędny stopień pisma. Rejestr jedzie w UTC i tak zostaje. */
   .time-local { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); text-align:center; }

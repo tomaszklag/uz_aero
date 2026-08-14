@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A;
     --border: #252525; --border-strong: #333333;
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #565656;
     --green: #2ECC71; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
@@ -96,12 +96,12 @@
   .type-note { font-family:var(--font-mono); font-size:8px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.6; }
 
   .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:9px 11px; }
-  .min-btn { width:62px; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
+  .min-btn { min-width:62px; padding:0 10px; white-space:nowrap; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:12px; cursor:pointer; }
   .min-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
   /* Godzina do WPISANIA z klawiatury — patrz komentarz w 10E. Krok jest JEDEN (minuta)
      także tutaj: dopisywany fakt bywa odległy o kwadranse, ale od tego jest wpis
      z klawiatury, a nie drugi rząd przycisków. */
-  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:28px; font-weight:700; letter-spacing:2px; color:var(--text-primary); border-bottom:1px dashed var(--border-strong); padding-bottom:2px; cursor:text; }
+  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:28px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
 
   .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
   .modal-ref-val { color:var(--text-secondary); }
@@ -109,7 +109,9 @@
   .reason-box { display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--border-strong); border-radius:12px; padding:11px 13px; }
   .reason-box svg { color:var(--text-muted); flex-shrink:0; }
   .reason-input { flex:1; background:none; border:none; outline:none; color:var(--text-primary); font-family:var(--font-body); font-size:12px; }
-  .reason-input::placeholder { color:var(--text-muted); }
+  /* Podpowiedź w pustym polu jest o stopień słabsza niż podpis: to instrukcja,
+     nie treść, i ma zejść z oka po pierwszym znaku (uwaga z urządzenia). */
+  .reason-input::placeholder { color:var(--text-placeholder); }
 
   /* Informacja o metodzie — wpis dostanie w rejestrze znacznik `manual`. Pilotowi
      mówimy to RAZ, tutaj, a nie plakietką przy każdym wierszu osi (issue #40 pkt 6):
