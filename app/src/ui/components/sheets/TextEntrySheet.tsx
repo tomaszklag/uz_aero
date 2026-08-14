@@ -42,6 +42,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { HistoryLink } from '../data/HistoryLink';
 import { Sheet } from './Sheet';
 import { EMPTY_SEARCH, searchSuggestions, type SuggestionSearchState } from './suggestionSearch';
 
@@ -66,6 +67,13 @@ export interface TextEntrySheetProps {
    */
   suggestions: readonly TextSuggestion[] | null | undefined;
   suggestionsLabel?: string;
+  /**
+   * Ile razy ten tekst był już poprawiany (issue #43). Zero — a taki jest domyślnie —
+   * nie rysuje niczego, więc arkusz w roli „napisz notatkę" (02e) o historii nie wie.
+   * Wejście pojawia się dopiero tam, gdzie tekst ma przeszłość: w trybie edycji sesji.
+   */
+  historyCount?: number;
+  onOpenHistory?: () => void;
   /** Pusty tekst = wyczyszczenie pola (wołający dostaje `''`). */
   onConfirm: (text: string) => void;
   onCancel: () => void;
@@ -80,6 +88,8 @@ export function TextEntrySheet({
   maxLength = 200,
   suggestions,
   suggestionsLabel = 'Ostatnio używane',
+  historyCount = 0,
+  onOpenHistory,
   onConfirm,
   onCancel,
 }: TextEntrySheetProps) {
@@ -153,6 +163,11 @@ export function TextEntrySheet({
         />
       }
     >
+      {/* Historia PRZED podpowiedziami: „co tu już zmieniano" jest pytaniem o TEN tekst,
+          a lista ostatnio używanych — o cudze wpisy. Wiersz znika sam przy zerze
+          (`HistoryLink`), więc arkusz w roli pisania notatki zostaje bez zmian. */}
+      {onOpenHistory != null && <HistoryLink count={historyCount} onPress={onOpenHistory} />}
+
       {/* CZTERY POWODY PUSTEJ LISTY I CZTERY RÓŻNE ODPOWIEDZI. Milczący arkusz wyglądał jak
           niedziałające pobieranie — a „jeszcze pytamy", „brak sieci", „klub nie ma jeszcze
           historii" i „wpis do niczego nie pasuje" to cztery zupełnie różne sytuacje.

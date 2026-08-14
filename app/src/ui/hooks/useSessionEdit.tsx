@@ -19,6 +19,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import {
   applyCorrections,
   correctionHistory,
+  type CorrectionField,
   type CorrectionFields,
   type CorrectionHistoryEntry,
   type CorrectionValue,
@@ -77,8 +78,11 @@ export interface SessionEditApi {
    * Pod ołówek przy notatce (issue #43). Notatka nie stoi na osi — ma własną kartę
    * na końcu ekranu — więc ma własne wejście; arkusz jest ten sam co przy jej
    * pisaniu (02e), bo to ta sama czynność.
+   *
+   * `label` nazywa TEN tekst („Notatka sesji", „Uwaga wpisu ręcznego") i wchodzi
+   * zarówno w nagłówek arkusza, jak i w nagłówek historii zmian.
    */
-  openNote: (targetUuid: string, text: string) => void;
+  openNote: (targetUuid: string, text: string, label?: string) => void;
   /**
    * Pod ołówek przy karcie „Załoga" (issue #43). Dual — jak notatka — nie stoi na osi,
    * bo nie jest zdarzeniem w czasie, tylko faktem o CAŁEJ sesji.
@@ -117,7 +121,19 @@ export function useSessionEdit(
 
   const [target, setTarget] = useState<EditTarget | null>(null);
   const [adding, setAdding] = useState(false);
-  const [historyUuid, setHistoryUuid] = useState<string | null>(null);
+  /**
+   * Otwarta historia zmian. Nie sam uuid, bo zdarzenie potrafi nieść KILKA korygowalnych
+   * rzeczy naraz: `preflight_confirm` to paliwo, licznik, notatka i Dual w jednym.
+   * Historia otwarta z arkusza notatki musi mówić o notatce — lista wszystkich poprawek
+   * preflightu byłaby odpowiedzią na pytanie, którego pilot nie zadał.
+   *
+   * `only == null` = pełna historia zdarzenia (arkusz czasu, zrzutu — tam cel ma jeden wymiar).
+   */
+  const [history, setHistory] = useState<{
+    uuid: string;
+    title: string;
+    only?: readonly CorrectionField[];
+  } | null>(null);
   const [busy, setBusy] = useState(false);
 
   const openRow = useCallback(
@@ -132,9 +148,10 @@ export function useSessionEdit(
   const openAdd = useCallback(() => setAdding(true), []);
   const close = useCallback(() => setTarget(null), []);
 
-  const [note, setNote] = useState<{ uuid: string; text: string } | null>(null);
+  const [note, setNote] = useState<{ uuid: string; text: string; label: string } | null>(null);
   const openNote = useCallback(
-    (targetUuid: string, text: string) => setNote({ uuid: targetUuid, text }),
+    (targetUuid: string, text: string, label = 'Notatka sesji') =>
+      setNote({ uuid: targetUuid, text, label }),
     [],
   );
 
@@ -307,29 +324,45 @@ export function useSessionEdit(
 
   // ── historia zmian (10I) ────────────────────────────────────────────────────
 
+  /**
+   * Zawężenie historii do wybranych pól. Wpisy o samym FAKCIE (`void`, `unvoid`) mają
+   * `field: null` i w widoku zawężonym nie mają czego opisywać — a zawęża się wyłącznie
+   * historię pól `preflight_confirm`, którego unieważnić i tak nie wolno.
+   */
+  const scoped = useCallback(
+    (entries: CorrectionHistoryEntry[], only?: readonly CorrectionField[]) =>
+      only == null ? entries : entries.filter((e) => e.field != null && only.includes(e.field)),
+    [],
+  );
+
   const historyEntries = useMemo(
-    () => (historyUuid == null ? [] : correctionHistory(events, historyUuid)),
-    [events, historyUuid],
+    () => (history == null ? [] : scoped(correctionHistory(events, history.uuid), history.only)),
+    [events, history, scoped],
   );
 
   const historyCountOf = useCallback(
-    (uuid: string | undefined): number =>
-      uuid == null ? 0 : correctionHistory(events, uuid).length,
-    [events],
+    (uuid: string | undefined, only?: readonly CorrectionField[]): number =>
+      uuid == null ? 0 : scoped(correctionHistory(events, uuid), only).length,
+    [events, scoped],
   );
 
   const historySource = useMemo(() => {
-    if (historyUuid == null) return null;
-    const source = events.find((e) => e.uuid === historyUuid);
-    return source ?? null;
-  }, [events, historyUuid]);
+    if (history == null) return null;
+    return events.find((e) => e.uuid === history.uuid) ?? null;
+  }, [events, history]);
+
+  /** Sam kod pilota — bez „(Ty)". Wartość pola „drugi pilot" jest DANĄ, nie autorem. */
+  const whoCode = useCallback(
+    (pilotId: string): string => options.codeOf?.(pilotId) ?? pilotId,
+    [options],
+  );
 
   const whoOf = useCallback(
     (pilotId: string): string => {
-      const code = options.codeOf?.(pilotId) ?? pilotId;
+      const code = whoCode(pilotId);
       return pilotId === options.currentPilotId ? `${code} (Ty)` : code;
     },
-    [options],
+    [options, whoCode],
   );
 
   const historyItems = useMemo(
@@ -342,8 +375,8 @@ export function useSessionEdit(
         who: whoOf(entry.byPilotId),
         byAdmin: entry.byAdmin,
         field: entry.field == null ? null : FIELD_LABEL[entry.field],
-        from: formatValue(entry.field, entry.from, mhFormat),
-        to: formatValue(entry.field, entry.to, mhFormat),
+        from: formatValue(entry.field, entry.from, mhFormat, whoCode),
+        to: formatValue(entry.field, entry.to, mhFormat, whoCode),
         verdict:
           entry.kind === 'void'
             ? 'unieważnione — „tego nie było"'
@@ -353,7 +386,7 @@ export function useSessionEdit(
         verdictTone: entry.kind === 'void' ? 'red' : 'green',
         reason: entry.reason,
       })),
-    [historyEntries, mhFormat, whoOf],
+    [historyEntries, mhFormat, whoCode, whoOf],
   );
 
   const historyOrigin = useMemo(() => {
@@ -362,10 +395,10 @@ export function useSessionEdit(
     const method = methodBadgeFor(historySource);
     return {
       when: `${dateTimeUtcShort(at)} UTC`,
-      value: originalValueOf(historySource, mhFormat),
+      value: originalValueOf(historySource, mhFormat, history?.only, whoCode),
       source: method === 'ręcznie' ? 'wpis ręczny pilota' : method === null ? 'zapis sesji' : 'autodetekcja · GPS',
     };
-  }, [historySource, mhFormat]);
+  }, [history?.only, historySource, mhFormat, whoCode]);
 
   // ── dopisanie wpisu (10H) ───────────────────────────────────────────────────
 
@@ -469,7 +502,9 @@ export function useSessionEdit(
           }
           busy={busy}
           historyCount={historyCountOf(timeTarget.uuid)}
-          onOpenHistory={() => setHistoryUuid(timeTarget.uuid)}
+          onOpenHistory={() =>
+            setHistory({ uuid: timeTarget.uuid, title: target?.label ?? '' })
+          }
           onSave={(newTime, reason) =>
             void save({ targetUuid: timeTarget.uuid, action: 'retime', newTime, reason })
           }
@@ -495,8 +530,16 @@ export function useSessionEdit(
               ? 'Ten odczyt jest przekazaniem maszyny: od niego zaczyna się następna sesja tego samolotu i to on domyka łańcuch motogodzin.'
               : 'Ten odczyt otwiera łańcuch motogodzin sesji — zmiana przeliczy zużycie i porównanie z normą.'
           }
-          historyCount={historyCountOf(readingTarget.uuid)}
-          onOpenHistory={() => setHistoryUuid(readingTarget.uuid)}
+          /* Odczyt to paliwo, licznik i — przy przejęciu — godzina. Notatka i Dual
+             siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają własne arkusze. */
+          historyCount={historyCountOf(readingTarget.uuid, READING_FIELDS)}
+          onOpenHistory={() =>
+            setHistory({
+              uuid: readingTarget.uuid,
+              title: target?.label ?? '',
+              only: READING_FIELDS,
+            })
+          }
           onSave={({ newTime, ...fields }, reason) => {
             const uuid = readingTarget.uuid;
             if (Object.keys(fields).length > 0) {
@@ -525,7 +568,9 @@ export function useSessionEdit(
           maxTime={Date.now()}
           busy={busy}
           historyCount={historyCountOf(dropCurrent.uuid)}
-          onOpenHistory={() => setHistoryUuid(dropCurrent.uuid)}
+          onOpenHistory={() =>
+            setHistory({ uuid: dropCurrent.uuid, title: target?.label ?? '' })
+          }
           onSave={(correction, reason) => {
             const uuid = dropCurrent.uuid;
             if (correction.newTime != null) {
@@ -563,12 +608,20 @@ export function useSessionEdit(
           (`notes: null`), bo „usuń" i „wyczyść pole" to dla pilota jedno. */}
       <TextEntrySheet
         visible={note != null}
-        title="NOTATKA SESJI"
+        title={(note?.label ?? 'Notatka sesji').toUpperCase()}
         initialText={note?.text ?? ''}
         placeholder="np. drugi zbiornik nie trzyma wskazania"
         multiline
         maxLength={2000}
         suggestions={null}
+        /* Historia SAMEJ notatki: `preflight_confirm` niesie obok niej paliwo, licznik
+           i Duala, a pilot otwierający ten arkusz pyta o tekst, nie o odczyty. */
+        historyCount={historyCountOf(note?.uuid, NOTE_FIELDS)}
+        onOpenHistory={
+          note == null
+            ? undefined
+            : () => setHistory({ uuid: note.uuid, title: note.label, only: NOTE_FIELDS })
+        }
         onConfirm={(text) => {
           const uuid = note?.uuid;
           setNote(null);
@@ -588,8 +641,10 @@ export function useSessionEdit(
           visible={crewOpen}
           dualId={projection.dualId}
           options={crewOptions}
-          historyCount={historyCountOf(preflightUuid)}
-          onOpenHistory={() => setHistoryUuid(preflightUuid)}
+          historyCount={historyCountOf(preflightUuid, DUAL_FIELDS)}
+          onOpenHistory={() =>
+            setHistory({ uuid: preflightUuid, title: 'Drugi pilot', only: DUAL_FIELDS })
+          }
           onSave={(dualId, reason) => {
             setCrewOpen(false);
             void save({
@@ -604,11 +659,11 @@ export function useSessionEdit(
       )}
 
       <CorrectionHistorySheet
-        visible={historyUuid != null}
-        title={target?.label ?? ''}
+        visible={history != null}
+        title={history?.title ?? ''}
         items={historyItems}
         origin={historyOrigin}
-        onClose={() => setHistoryUuid(null)}
+        onClose={() => setHistory(null)}
       />
     </>
   );
@@ -618,12 +673,25 @@ export function useSessionEdit(
 
 const EMPTY_JUMPERS: JumperCounts = { tandem: 0, aff: 0, solo: 0 };
 
+/**
+ * Zakresy historii dla arkuszy zdarzenia WIELOWYMIAROWEGO.
+ *
+ * `preflight_confirm` niesie cztery korygowalne rzeczy naraz i każda ma własny arkusz,
+ * więc każdy pyta o swoją. Bez tego zawężenia poprawka paliwa zapalałaby licznik historii
+ * przy notatce — i odwrotnie.
+ */
+const READING_FIELDS: readonly CorrectionField[] = ['time', 'fuelL', 'mh'];
+const NOTE_FIELDS: readonly CorrectionField[] = ['notes'];
+const DUAL_FIELDS: readonly CorrectionField[] = ['dualId'];
+
 /** Nazwy pól w historii — po polsku, bo czyta je pilot. */
 const FIELD_LABEL: Record<string, string> = {
   time: 'czas',
   fuelL: 'paliwo',
   mh: 'motogodziny',
   jumpers: 'skoczkowie',
+  notes: 'notatka',
+  dualId: 'drugi pilot',
 };
 
 const iconFor = (type: EventType): 'takeoff' | 'refuel' | 'drop' | 'boarding' | 'landing' =>
@@ -642,11 +710,23 @@ function formatValue(
   field: CorrectionHistoryEntry['field'],
   value: CorrectionValue,
   mhFormat: MhFormat,
+  codeOf: (pilotId: string) => string,
 ): string | null {
-  if (value == null || field == null) return null;
+  if (field == null) return null;
+  // `null` przy notatce i Dualu jest WARTOŚCIĄ („skasowano", „sam pilot"), a nie brakiem
+  // danych — i musi się przeczytać jako zmiana, inaczej wiersz historii milczy o tym,
+  // co się właśnie stało. Przy liczbach `null` znaczy „nie było czego zastąpić".
+  if (value == null) {
+    if (field === 'notes') return 'bez notatki';
+    if (field === 'dualId') return 'bez drugiego pilota';
+    return null;
+  }
   if (field === 'time') return typeof value === 'number' ? timeUtc(value) : null;
   if (field === 'fuelL') return typeof value === 'number' ? litres(value) : null;
   if (field === 'mh') return typeof value === 'number' ? motoHours(value, mhFormat) : null;
+  // Drugi pilot jest identyfikatorem, a pilot czyta KOD (AKO) — surowe uuid w historii
+  // nie mówiłoby nic nikomu.
+  if (field === 'dualId') return typeof value === 'string' ? codeOf(value) : null;
   // Notatkę pokazujemy w cudzysłowie i w całości: to zdanie, a nie odczyt, więc
   // skrócenie go do „…" odebrałoby historii jedyną treść, o którą tu chodzi.
   if (field === 'notes') return typeof value === 'string' ? `„${value}"` : null;
@@ -654,8 +734,33 @@ function formatValue(
   return `${value.tandem + value.aff + value.solo} skoczków`;
 }
 
-/** Kotwica historii: co niosło zdarzenie, zanim ktokolwiek je poprawił. */
-function originalValueOf(event: Event, mhFormat: MhFormat): string {
+/**
+ * Kotwica historii: co niosło zdarzenie, zanim ktokolwiek je poprawił.
+ *
+ * Zawężona historia dostaje zawężoną kotwicę — w historii notatki „150 L · 1234,5 MH"
+ * byłoby odpowiedzią na inne pytanie.
+ */
+function originalValueOf(
+  event: Event,
+  mhFormat: MhFormat,
+  only: readonly CorrectionField[] | undefined,
+  codeOf: (pilotId: string) => string,
+): string {
+  if (only?.length === 1) {
+    const field = only[0];
+    if (field === 'notes' || field === 'dualId') {
+      const value =
+        field === 'notes'
+          ? (event.type === 'preflight_confirm' || event.type === 'manual_log_entry'
+              ? (event.payload.notes ?? null)
+              : null)
+          : event.type === 'preflight_confirm'
+            ? (event.payload.dualId !== undefined ? event.payload.dualId : event.dualId)
+            : null;
+      const text = formatValue(field, value, mhFormat, codeOf);
+      return text ?? '—';
+    }
+  }
   if (event.type === 'preflight_confirm') {
     return `${litres(event.payload.reading.fuelL)} · ${motoHours(event.payload.reading.mh, mhFormat)}`;
   }

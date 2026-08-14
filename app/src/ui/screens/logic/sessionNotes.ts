@@ -18,7 +18,7 @@
  * notatki nie jest brakiem DANYCH, tylko normalnym stanem większości sesji.
  */
 
-import { applyCorrections } from '../../../domain';
+import { applyCorrections, correctionHistory } from '../../../domain';
 import type { Event, SessionState } from '../../../domain';
 import { timeUtc } from '../../format';
 
@@ -50,6 +50,20 @@ export interface SessionNote {
    * `null` = nie ma czego adresować, więc ołówka przy wierszu nie ma.
    */
   targetUuid: string | null;
+  /**
+   * Ile razy TREŚĆ tej notatki była poprawiana (issue #43, uwaga z urządzenia).
+   *
+   * Zero = notatka jest taka, jak ją napisano. Powyżej zera wiersz dostaje plakietkę
+   * „popr." — widoczną TAKŻE w trybie odczytu, dokładnie jak przy wierszach osi: to
+   * fakt o danych, a nie akcja. Tekst, który ktoś zmienił, nie jest tym, który pilot
+   * wpisał, i ma prawo to widzieć bez wchodzenia w edycję.
+   *
+   * Liczymy WYŁĄCZNIE pole `notes`: `preflight_confirm` niesie obok niej paliwo, licznik
+   * i Duala, a poprawka odczytu nie jest poprawką notatki. Ta sama liczba zasila licznik
+   * przy „Historii zmian" w arkuszu — jedno źródło, więc plakietka i arkusz nie mają
+   * jak powiedzieć czegoś innego.
+   */
+  changes: number;
 }
 
 /** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
@@ -86,6 +100,19 @@ export function missingSessionNote(notes: readonly SessionNote[]): boolean {
 }
 
 /**
+ * Ile poprawek dotknęło TREŚCI notatki — patrz `SessionNote.changes`.
+ *
+ * Historia zmian jest w strumieniu z definicji (rejestr jest append-only), więc nie
+ * prowadzimy jej osobno: `correctionHistory` czyta ją z tych samych zdarzeń, z których
+ * liczy się reszta ekranu. Filtr po polu jest tu istotą rzeczy — bez niego notatka
+ * świeciłaby „popr." po korekcie paliwa, bo obie wartości niesie ten sam preflight.
+ */
+export function noteChanges(events: readonly Event[], targetUuid: string | null): number {
+  if (targetUuid == null) return 0;
+  return correctionHistory(events, targetUuid).filter((entry) => entry.field === 'notes').length;
+}
+
+/**
  * Zbiera notatki sesji w porządku chronologicznym.
  *
  * Notatka z preflightu bierze czas z projekcji (`preflightAt`), a nie ze strumienia:
@@ -102,6 +129,7 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
   const fromTask = trim(projection.notes);
   if (fromTask != null) {
     const when = projection.preflightAt ?? projection.claimedAt;
+    const target = noteTargetUuid(events);
     dated.push({
       // Notatka z zadania bez stempla w projekcji trafia na sam początek: opisuje CAŁĄ
       // sesję, więc jest jej wstępem, a nie wpisem o nieznanej godzinie.
@@ -112,7 +140,8 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
         // Bez stempla — patrz docblock pola `when`.
         when: null,
         text: fromTask,
-        targetUuid: noteTargetUuid(events),
+        targetUuid: target,
+        changes: noteChanges(events, target),
       },
     });
   }
@@ -129,6 +158,7 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
         when: stamp('Wpis ręczny', at(event)),
         text,
         targetUuid: event.uuid,
+        changes: noteChanges(events, event.uuid),
       },
     });
   }
@@ -136,7 +166,7 @@ export function sessionNotes(projection: SessionState, events: Event[]): Session
   return dated.sort((a, b) => a.at - b.at).map((entry) => entry.note);
 }
 
-/** „Zadanie · 08:04"; bez czasu (sesja bez preflightu w strumieniu) zostaje sam podpis. */
+/** „Wpis ręczny · 09:12"; bez czasu zostaje sam podpis. Notatka sesji stempla nie ma. */
 function stamp(label: string, when: number | null): string {
   return when == null ? label : `${label} · ${timeUtc(when)}`;
 }

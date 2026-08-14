@@ -544,6 +544,18 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   ma jej od czego odróżnić, a „Zadanie · 08:04" mówiło o godzinie potwierdzenia
   zadania i po pierwszej poprawce treści zaczynało kłamać. Podpis zostaje przy
   uwagach wpisów ręcznych (`kind: 'entry'`) — tych bywa wiele
+- **poprawiona notatka niesie „popr." i własną historię** (uwaga z urządzenia,
+  2026-08-14). Plakietka jest ta sama co przy wierszach osi i z tego samego powodu:
+  tekst poprawiony nie jest tekstem wpisanym, więc widać ją TAKŻE w trybie odczytu.
+  Historię otwiera wiersz w arkuszu notatki (`design/10k` — ten sam arkusz co 02e plus
+  to jedno wejście). **Historia jest ZAWĘŻONA do pola**: `preflight_confirm` niesie
+  paliwo, licznik, notatkę i Duala w jednym payloadzie, a każde z nich ma własny arkusz
+  i własne pytanie — bez zawężenia poprawka paliwa zapalałaby licznik przy notatce.
+  Liczy to `noteChanges` w `logic/sessionNotes.ts` (jedno źródło dla plakietki
+  i dla licznika w arkuszu), a zakresy trzyma `useSessionEdit`
+  (`READING_FIELDS`/`NOTE_FIELDS`/`DUAL_FIELDS`). Arkusz notatki jest jedynym bez pola
+  „powód": przy odczycie powód tłumaczy liczbę, której nikt inny nie wyjaśni, a przy
+  notatce wyjaśnieniem jest sam nowy tekst
 - **arkusz nie tłumaczy braków**: przypis „odczytu nie da się unieważnić" opisywał
   przycisk, którego nikt nie szuka. Tak samo wyleciały podpowiedzi „litry z paliwomierza"
   i „wskazanie licznika" — nazywały pole, które nazywa się tak samo dwa centymetry wyżej.

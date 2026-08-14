@@ -615,13 +615,23 @@ export function StatsScreen({
                 index > 0 ? { borderTopWidth: 1, borderTopColor: theme.colors.border } : null;
               const body = (
                 <>
-                  {/* Podpis TYLKO tam, gdzie coś rozróżnia — czyli przy uwagach wpisów
-                      ręcznych. Notatka sesji jest jedna i nie ma jej od czego odróżnić;
-                      stempel „Zadanie · 08:04" mówił o godzinie preflightu, nie o niej. */}
-                  {note.when != null && (
-                    <AppText variant="micro" tone="muted">
-                      {note.when.toUpperCase()}
-                    </AppText>
+                  {/* Górny wiersz istnieje tylko wtedy, gdy ma co nieść.
+                      Podpis — TYLKO tam, gdzie coś rozróżnia, czyli przy uwagach wpisów
+                      ręcznych: notatka sesji jest jedna, a stempel „Zadanie · 08:04"
+                      mówił o godzinie preflightu, nie o niej.
+                      „popr." — plakietka poprawionej treści, ta sama co przy wierszach
+                      osi i z tego samego powodu: widoczna TAKŻE w trybie odczytu, bo to
+                      fakt o danych, a nie akcja. Tekst, który ktoś zmienił, nie jest
+                      tym, który pilot wpisał. */}
+                  {(note.when != null || note.changes > 0) && (
+                    <View style={styles.noteHead}>
+                      {note.when != null && (
+                        <AppText variant="micro" tone="muted">
+                          {note.when.toUpperCase()}
+                        </AppText>
+                      )}
+                      {note.changes > 0 && <Tag label="popr." tone="amber" size="sm" />}
+                    </View>
                   )}
                   {/* Body font, nie mono: to zdanie napisane przez człowieka, a nie odczyt. */}
                   <AppText variant="body" tone="secondary" style={styles.noteText}>
@@ -649,7 +659,13 @@ export function StatsScreen({
                   accessibilityLabel={
                     note.when == null ? 'Popraw notatkę sesji' : `Popraw notatkę: ${note.when}`
                   }
-                  onPress={() => edit.openNote(note.targetUuid!, note.text)}
+                  onPress={() =>
+                    edit.openNote(
+                      note.targetUuid!,
+                      note.text,
+                      note.kind === 'session' ? 'Notatka sesji' : 'Uwaga wpisu ręcznego',
+                    )
+                  }
                   style={({ pressed }) => [
                     styles.note,
                     styles.noteEditable,
@@ -850,6 +866,7 @@ const styles = StyleSheet.create({
   crewLabel: { fontSize: 8, letterSpacing: 1.5 },
   crewValue: { flex: 1, fontSize: 11, textAlign: 'right' },
   noteBody: { flex: 1, gap: 4 },
+  noteHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   noteText: { fontSize: 12, lineHeight: 18 },
   noteAdd: { flex: 1, fontSize: 12 },
 });

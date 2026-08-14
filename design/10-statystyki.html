@@ -301,6 +301,9 @@
      Body font, nie mono: to zdanie napisane przez człowieka, a nie odczyt. */
   .note-block { padding:10px 12px; display:flex; flex-direction:column; gap:4px; }
   .note-block + .note-block { border-top:1px solid var(--border); }
+  /* Górny wiersz notatki — stempel (tylko przy uwagach wpisów ręcznych) i „popr.".
+     Nie istnieje, gdy nie ma czego nieść. */
+  .note-head { display:flex; align-items:center; gap:6px; }
   .note-when {
     font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px;
     text-transform:uppercase; color:var(--text-muted);
@@ -727,10 +730,16 @@
            jest dokładnie jedna, więc „Zadanie · 08:04" nie odróżniało jej od niczego —
            opisywało godzinę potwierdzenia zadania, a po pierwszej poprawce treści
            wprost kłamało. Podpis zostaje przy uwagach wpisów ręcznych, bo tych bywa
-           wiele i trzeba wiedzieć, do którego wpisu należą. -->
+           wiele i trzeba wiedzieć, do którego wpisu należą.
+
+           Plakietka „popr." stoi tu tak samo jak przy wierszach osi: tekst poprawiony
+           nie jest tekstem wpisanym, a to fakt o danych, nie akcja — więc widać go
+           także w trybie ODCZYTU. Co dokładnie się zmieniło, mówi historia zmian (10I),
+           dostępna z arkusza notatki w trybie edycji. -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
         <div class="note-block">
+          <span class="note-head"><span class="tag-corrected">popr.</span></span>
           <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
         </div>
         <div class="note-block">

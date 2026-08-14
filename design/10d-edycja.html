@@ -210,6 +210,9 @@
   .note-row { display:flex; align-items:center; gap:10px; min-height:44px; padding:10px 12px; text-decoration:none; }
   .note-row:hover { background:rgba(255,255,255,0.02); }
   .note-body { display:flex; flex-direction:column; gap:4px; flex:1; }
+  /* Górny wiersz notatki — stempel (tylko przy uwagach wpisów ręcznych) i „popr.".
+     Nie istnieje, gdy nie ma czego nieść: notatka świeżo napisana zaczyna się tekstem. */
+  .note-head { display:flex; align-items:center; gap:6px; }
   .note-when { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .note-text { font-size:12px; color:var(--text-secondary); line-height:1.55; }
   .note-row + .note-row { border-top:1px solid var(--border); }
@@ -560,11 +563,17 @@
 
            I Z TEGO SAMEGO POWODU nie ma tu wiersza „Dodaj notatkę do sesji": obok
            istniejącej obiecywałby drugą, a naprawdę nadpisałby pierwszą. Wiersz
-           dopisania pokazuje sesja, która notatki NIE MA — patrz komentarz niżej. -->
+           dopisania pokazuje sesja, która notatki NIE MA — patrz komentarz niżej.
+
+           PLAKIETKA „POPR." — ta sama co przy wierszach osi i z tego samego powodu:
+           tekst, który ktoś zmienił, nie jest tym, który pilot wpisał, więc znacznik
+           zostaje widoczny TAKŻE w trybie odczytu (10). Sam nie mówi, co się zmieniło —
+           od tego jest historia zmian, wiersz w arkuszu notatki (10I). -->
       <div class="section-card">
         <div class="section-card-head">Notatki</div>
-        <a href="02e-preflight-zadanie.html" class="note-row">
+        <a href="10k-korekta-notatki.html" class="note-row">
           <span class="note-body">
+            <span class="note-head"><span class="tag-corrected">popr.</span></span>
             <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
           </span>
           <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted);flex-shrink:0;"><path d="M1.5 7.5l1.5-0.5 4.5-4.5a1 1 0 0 0-1.5-1.5L1.5 6l-.5 1.5z"/><path d="M8 1.5l2.5 2.5"/></svg>
@@ -652,6 +661,13 @@
       <span class="vp-when">Ołówek w nagłówku karty „Załoga": drugi pilot CAŁEJ sesji. Poprawka działa wstecz i przepisuje czas blokowy na wskazaną osobę; PIC-a nie da się zmienić (to przelogowanie, nie korekta). Zmianę załogi w TRAKCIE zapisuje kokpit (07).</span>
     </span>
   </a>
+  <a class="vp-item" href="10k-korekta-notatki.html">
+    <span class="vp-badge amber">10K</span>
+    <span class="vp-body">
+      <span class="vp-name">Arkusz — korekta notatki</span>
+      <span class="vp-when">Wiersz karty „Notatki". Ten sam arkusz, w którym notatka powstała (02e), plus wejście w historię zmian; pusty tekst ją kasuje. Poprawiona notatka nosi „popr." także w trybie odczytu.</span>
+    </span>
+  </a>
   <a class="vp-item" href="10i-historia-zmian.html">
     <span class="vp-badge blue">10I</span>
     <span class="vp-body">
@@ -679,6 +695,7 @@
   <a href="10h-dodaj-wpis.html">10H Dodaj</a>
   <a href="10i-historia-zmian.html">10I Historia</a>
   <a href="10j-korekta-zalogi.html">10J Załoga</a>
+  <a href="10k-korekta-notatki.html">10K Notatka</a>
   <span>·</span>
   <a href="14-slad.html">14 Ślad →</a>
 </nav>

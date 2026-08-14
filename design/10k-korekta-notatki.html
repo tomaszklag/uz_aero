@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 10J Korekta załogi</title>
+<title>UZ Aero — 10K Korekta notatki</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -60,40 +60,34 @@
   .section-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
   .section-card-head { padding:8px 12px; background:var(--surface-raised); border-bottom:1px solid var(--border); font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
   .section-card-head::before { content:''; width:3px; height:10px; border-radius:2px; background:var(--border-strong); }
-  .info-row { padding:9px 12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  .info-row:first-of-type { border-top:none; }
-  .info-key { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
-  .info-val { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); text-align:right; }
+  .note-row { display:flex; align-items:center; gap:10px; min-height:44px; padding:10px 12px; text-decoration:none; }
+  .note-body { display:flex; flex-direction:column; gap:4px; flex:1; }
+  .note-head { display:flex; align-items:center; gap:6px; }
+  .note-text { font-size:12px; color:var(--text-secondary); line-height:1.55; }
+  .tag-corrected {
+    font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border);
+    border-radius:4px; padding:1px 5px;
+  }
 
   /* ===== ARKUSZ ===== */
   .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
   .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:18px 18px 30px; display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-strong); }
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
-  .modal-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
 
-  /* Lista kart wyboru — nigdy natywny `<select>` (CLAUDE.md). Cele 56 px: wybór
-     robi się w rękawicach, a pozycji jest tyle, ile pilotów w klubie. */
-  .pick { display:flex; align-items:center; gap:11px; min-height:56px; padding:10px 13px; border-radius:13px; border:1px solid var(--border); background:var(--surface); text-decoration:none; }
-  .pick + .pick { margin-top:7px; }
-  .pick.selected { border-color:var(--green-border); background:var(--green-muted); }
-  .pick-avatar { width:34px; height:34px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:1px; color:var(--text-secondary); }
-  .pick.selected .pick-avatar { border-color:var(--green-border); color:var(--green); }
-  .pick-body { flex:1; display:flex; flex-direction:column; gap:2px; }
-  .pick-name { font-size:14px; font-weight:600; color:var(--text-primary); }
-  .pick-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
-  .pick-check { width:20px; height:20px; border-radius:50%; border:1.5px solid var(--border-strong); flex-shrink:0; }
-  .pick.selected .pick-check { border-color:var(--green); background:var(--green); }
-
-  .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
-  .reason-box { display:flex; align-items:center; gap:9px; background:var(--surface); border:1px solid var(--border-strong); border-radius:12px; padding:11px 13px; }
-  .reason-box svg { color:var(--text-muted); flex-shrink:0; }
-  .reason-input { flex:1; background:none; border:none; outline:none; color:var(--text-primary); font-family:var(--font-body); font-size:12px; }
-  .reason-input::placeholder { color:var(--text-muted); }
-
-  .history-link { display:flex; align-items:center; gap:9px; padding:10px 13px; border-radius:12px; border:1px solid var(--border); background:var(--surface); text-decoration:none; }
+  .history-link { display:flex; align-items:center; gap:9px; min-height:44px; padding:10px 13px; border-radius:12px; border:1px solid var(--border); background:var(--surface); text-decoration:none; }
   .history-text { flex:1; font-size:12px; color:var(--text-secondary); }
-  .history-count { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:999px; padding:2px 8px; }
+  .history-count { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--blue); background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:999px; padding:2px 8px; align-self:center; }
+
+  /* POLE WPISU NA DOLE — arkusz rośnie w górę, a klawiatura stoi pod nim. Pole nad
+     listą przeskakiwałoby przy każdej literze (zgłoszenie z urządzenia, issue #14). */
+  .text-field {
+    background:var(--surface); border:1px solid var(--border-strong); border-radius:12px;
+    padding:12px 14px; min-height:108px; font-size:15px; line-height:1.4; color:var(--text-primary);
+  }
+  .caret { display:inline-block; width:1.5px; height:16px; background:var(--green); vertical-align:-3px; margin-left:1px; animation:blink 1100ms step-end infinite; }
+  @keyframes blink { 50% { opacity:0; } }
 
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .btn-cancel { display:flex; align-items:center; justify-content:center; padding:14px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:16px; letter-spacing:2px; text-decoration:none; }
@@ -124,12 +118,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 10J</span>
-  <span class="slug">korekta załogi · dual całej sesji</span>
+  <span class="film-strip">UZ AERO — 10K</span>
+  <span class="slug">korekta notatki · ten sam arkusz co 02e</span>
   <span class="canvas-meta"><span class="pulse"></span>Arkusz 10D</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Korekta drugiego pilota">
+<main class="phone" role="region" aria-label="Mockup — Korekta notatki sesji">
   <div class="status-bar">
     <span>9:41</span>
     <span class="status-right">
@@ -157,84 +151,56 @@
 
     <div class="scroll">
       <div class="section-card">
-        <div class="section-card-head">Załoga</div>
-        <div class="info-row">
-          <span class="info-key">PIC</span>
-          <span class="info-val">TMK · Tomasz Małkiewicz (Ty)</span>
-        </div>
-        <div class="info-row">
-          <span class="info-key">Dual</span>
-          <span class="info-val">AKO · Anna Kowalska</span>
+        <div class="section-card-head">Notatki</div>
+        <div class="note-row">
+          <span class="note-body">
+            <span class="note-head"><span class="tag-corrected">popr.</span></span>
+            <span class="note-text">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.</span>
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- ══ ARKUSZ KOREKTY ZAŁOGI ═══════════════════════════════════════════ -->
+    <!-- ══ ARKUSZ NOTATKI ══════════════════════════════════════════════════
+         TEN SAM arkusz, w którym notatka powstała (02e) — to ta sama czynność, więc
+         nie ma powodu, żeby wyglądała inaczej. Różnica jest DOKŁADNIE JEDNA: wiersz
+         historii zmian, którego przy pisaniu nowej notatki nie ma czego pokazać. -->
     <div class="modal-overlay">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
-        <!-- Nagłówek NIE powtarza „cała sesja": zakres poprawki jest treścią przypisu
-             pod listą, gdzie stoi razem z powodem („czas blokowy przypisze się…")
-             i z tym, czego arkusz NIE robi. Napisany dwa razy — raz jako etykieta bez
-             wyjaśnienia, raz jako zdanie — pierwszy raz nie mówi nic. -->
-        <div class="modal-title">KOREKTA ZAŁOGI</div>
+        <!-- Nagłówek nazywa TEN tekst. Uwaga wpisu ręcznego otwiera ten sam arkusz
+             pod nazwą „UWAGA WPISU RĘCZNEGO": to inny tekst w innym zdarzeniu, więc
+             i historia zmian jest jego własna. -->
+        <div class="modal-title">NOTATKA SESJI</div>
 
-        <!-- PIC-a na liście NIE MA: jedna osoba nie leci sama ze sobą w dwóch rolach
-             (`DUAL_IS_PIC`), a opcja, którą reguła i tak odrzuci, jest gorsza niż jej
-             brak. Lista pochodzi z cache'u referencyjnego, więc działa offline (§4.8). -->
-        <div>
-          <div class="field-label">Kto leciał jako drugi pilot</div>
-          <a href="10d-edycja.html" class="pick">
-            <span class="pick-avatar">—</span>
-            <span class="pick-body">
-              <span class="pick-name">Bez Duala</span>
-              <span class="pick-note">sesja jednoosobowa</span>
-            </span>
-            <span class="pick-check"></span>
-          </a>
-          <a href="10d-edycja.html" class="pick selected">
-            <span class="pick-avatar">AKO</span>
-            <span class="pick-body">
-              <span class="pick-name">Anna Kowalska</span>
-              <span class="pick-note">zapisana w tej sesji</span>
-            </span>
-            <span class="pick-check"></span>
-          </a>
-          <a href="10d-edycja.html" class="pick">
-            <span class="pick-avatar">KRZ</span>
-            <span class="pick-body">
-              <span class="pick-name">Krzysztof Zawada</span>
-            </span>
-            <span class="pick-check"></span>
-          </a>
-          <a href="10d-edycja.html" class="pick">
-            <span class="pick-avatar">MWO</span>
-            <span class="pick-body">
-              <span class="pick-name">Marta Wolska</span>
-            </span>
-            <span class="pick-check"></span>
-          </a>
-        </div>
+        <!-- HISTORIA PRZED POLEM: „co tu już zmieniano" jest pytaniem o TEN tekst,
+             a lista podpowiedzi (02e) — o cudze wpisy.
+             Wiersz istnieje WYŁĄCZNIE z historią: zerowy licznik to szum, nie
+             informacja (ta sama zasada, którą issue #40 wyrzuciło „Notatki —").
+             Licznik liczy poprawki SAMEJ notatki — `preflight_confirm` niesie obok
+             niej paliwo, licznik motogodzin i Duala, a każde z nich ma własny arkusz
+             i własne pytanie. -->
+        <a href="10i-historia-zmian.html" class="history-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+          <span class="history-text">Historia zmian</span>
+          <span class="history-count">2</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
 
-        <div class="reason-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <input class="reason-input" type="text" placeholder="Powód (opcjonalnie) — np. w kabinie siedział kto inny" />
-        </div>
-
-        <!-- WIERSZA HISTORII TU NIE MA i to jest reguła, nie przeoczenie: przy
-             zdarzeniu, którego nikt nie poprawiał, „Historia zmian · brak" jest wierszem
-             o niczym (ta sama zasada, którą issue #40 wyrzuciło „Notatki —"). Wiersz
-             pojawia się dopiero z pierwszą poprawką — patrz 10E, gdzie licznik mówi „2". -->
+        <!-- POWODU TU NIE MA i to jest decyzja, nie przeoczenie: przy odczycie powód
+             tłumaczy liczbę, której nikt inny nie umie wyjaśnić, a przy notatce
+             wyjaśnieniem jest sam NOWY TEKST. Drugie pole na zdanie obok pola na
+             zdanie kazałoby pilotowi wybierać, w którym z nich napisać to samo. -->
+        <div class="text-field">Drugi zbiornik nie trzyma wskazania — tankować z jednej strony.<span class="caret"></span></div>
 
         <div class="modal-actions">
           <a href="10d-edycja.html" class="btn-cancel">Anuluj</a>
-          <a href="10d-edycja.html" class="btn-save">Zapisz korektę</a>
+          <a href="10d-edycja.html" class="btn-save">Zapisz</a>
         </div>
 
         <div class="note">
-          Poprawka obejmuje CAŁĄ sesję — czas blokowy przypisze się wskazanej osobie od
-          przejęcia do zdania. Jeśli drugi pilot zmienił się W TRAKCIE, to nie jest to
-          miejsce: taką zmianę zapisuje się w kokpicie (07), przed uruchomieniem silnika.
+          Pusty tekst KASUJE notatkę — „usuń" i „wyczyść pole" to dla pilota jedno.
+          Ślad po skasowanej zostaje w historii zmian, bo rejestru nie da się cofnąć.
         </div>
       </div>
     </div>
@@ -243,40 +209,33 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Arkusze trybu edycji — kiedy który?</div>
-  <a class="vp-item active" href="10j-korekta-zalogi.html">
-    <span class="vp-badge">10J</span>
+  <a class="vp-item active" href="10k-korekta-notatki.html">
+    <span class="vp-badge">10K</span>
     <span class="vp-body">
-      <span class="vp-name">Korekta załogi (Dual)</span>
-      <span class="vp-when">Ołówek w nagłówku karty „Załoga": „wpisałem złego drugiego pilota". Poprawka działa WSTECZ na całą sesję i przepisuje jej czas blokowy na wskazaną osobę. PIC-a nie ma na liście (`DUAL_IS_PIC`) ani do zmiany (`PIC_CHANGE_NOT_ALLOWED` — to przelogowanie, nie korekta). Technicznie: `amend` pola `dualId` w `preflight_confirm`, bo w nagłówkach zdarzeń zostaje tożsamość z chwili zapisu.</span>
+      <span class="vp-name">Korekta notatki</span>
+      <span class="vp-when">Wiersz karty „Notatki" w trybie edycji. Ten sam arkusz co przy pisaniu (02e) plus wejście w historię zmian. Technicznie: `amend` pola `notes` — w `preflight_confirm` dla notatki sesji, w `manual_log_entry` dla uwagi wpisu ręcznego.</span>
     </span>
     <span class="vp-tag">ten arkusz</span>
   </a>
-  <a class="vp-item" href="07-zmiana-zalogi.html">
-    <span class="vp-badge">07</span>
+  <a class="vp-item" href="02e-preflight-zadanie.html">
+    <span class="vp-badge">02E</span>
     <span class="vp-body">
-      <span class="vp-name">Zmiana załogi w trakcie</span>
-      <span class="vp-when">Inna sprawa i inne zdarzenie (`crew_change`): drugi pilot faktycznie się zmienił, więc sesja dzieli się na odcinki i każdy dostaje swój kawałek bloku. Wejście z kokpitu, przed uruchomieniem silnika.</span>
+      <span class="vp-name">Notatka przy zadaniu</span>
+      <span class="vp-when">Miejsce, w którym notatka POWSTAJE — bez wiersza historii, bo świeży tekst nie ma przeszłości. Tam arkusz podpowiada ostatnio używane wartości.</span>
     </span>
   </a>
-  <a class="vp-item" href="10e-korekta-zdarzenia.html">
-    <span class="vp-badge blue">10E</span>
+  <a class="vp-item" href="10j-korekta-zalogi.html">
+    <span class="vp-badge">10J</span>
     <span class="vp-body">
-      <span class="vp-name">Korekta zdarzenia (czas)</span>
-      <span class="vp-when">Start, lądowanie, kołowanie, klamra silnika.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="10f-korekta-odczytu.html">
-    <span class="vp-badge amber">10F</span>
-    <span class="vp-body">
-      <span class="vp-name">Korekta odczytu</span>
-      <span class="vp-when">Paliwo i motogodziny przy przejęciu albo zdaniu.</span>
+      <span class="vp-name">Korekta załogi (Dual)</span>
+      <span class="vp-when">Drugi fakt o CAŁEJ sesji, który nie stoi na osi czasu. Też siedzi w `preflight_confirm` i też ma własną, zawężoną historię.</span>
     </span>
   </a>
   <a class="vp-item" href="10i-historia-zmian.html">
     <span class="vp-badge blue">10I</span>
     <span class="vp-body">
       <span class="vp-name">Historia zmian</span>
-      <span class="vp-when">Także dla załogi: „Dual AKO → KRZ", kto i kiedy.</span>
+      <span class="vp-when">Otwiera się z wiersza wyżej: „było → jest" dla samej treści, kto i kiedy. Widać w niej także poprawki administratora (§4.9).</span>
     </span>
   </a>
 </aside>
@@ -290,10 +249,10 @@
   <a href="10g-korekta-zrzutu.html">10G Zrzut</a>
   <a href="10h-dodaj-wpis.html">10H Dodaj</a>
   <a href="10i-historia-zmian.html">10I Historia</a>
-  <a href="10j-korekta-zalogi.html" class="active">10J Załoga</a>
-  <a href="10k-korekta-notatki.html">10K Notatka</a>
+  <a href="10j-korekta-zalogi.html">10J Załoga</a>
+  <a href="10k-korekta-notatki.html" class="active">10K Notatka</a>
   <span>·</span>
-  <a href="07-zmiana-zalogi.html">07 Zmiana załogi</a>
+  <a href="02e-preflight-zadanie.html">02E Zadanie</a>
 </nav>
 
 </body>
