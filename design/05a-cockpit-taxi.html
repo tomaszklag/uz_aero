@@ -75,29 +75,39 @@
   .param-value.amber { color:var(--amber); }
   .param-unit { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
 
-  .cycle-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
-  .cycle-log::-webkit-scrollbar { display:none; }
-  .cycle-log-header { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface-raised); z-index:2; }
-  .cycle-log-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
-  .log-row { display:flex; align-items:center; border-bottom:1px solid var(--border); }
-  .log-row:last-child { border-bottom:none; }
-  .log-tl { width:32px; flex-shrink:0; display:flex; align-items:center; justify-content:center; align-self:stretch; position:relative; }
-  .log-tl::before { content:''; position:absolute; left:50%; top:0; bottom:0; width:1px; background:var(--border); transform:translateX(-50%); }
-  .log-row:first-child .log-tl::before { top:50%; }
-  .log-row:last-child .log-tl::before { bottom:50%; }
-  .log-icon { width:22px; height:22px; border-radius:6px; flex-shrink:0; z-index:1; position:relative; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); }
-  /* Start engine neutralny (issue #19) — zieleń w logu należy wyłącznie do wiersza
-     „na żywo". Tło nieprzezroczyste, żeby plakietka ZAKRYWAŁA kreskę szyny. */
-  .log-icon.start { background:var(--surface-raised); border-color:var(--border); color:var(--text-secondary); }
-  .log-icon.live { background:var(--green); border-color:var(--green); animation:pulse 1.5s ease-in-out infinite; width:10px; height:10px; border-radius:50%; border:none; }
-  .log-body { flex:1; display:flex; align-items:center; gap:8px; padding:8px 10px 8px 2px; }
-  .log-t { font-family:var(--font-mono); font-size:13px; font-weight:700; letter-spacing:1.5px; width:46px; flex-shrink:0; color:var(--text-primary); }
-  .log-t.live { color:var(--green); font-size:11px; letter-spacing:0.5px; width:64px; }
-  .log-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; flex:1; color:var(--text-secondary); }
-  .log-lbl.live { color:var(--green); }
-  .log-chip { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; padding:2px 7px; border-radius:4px; white-space:nowrap; }
-  .log-chip-mh { color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); }
-  .log-chip-fuel { color:var(--amber); background:var(--amber-muted); border:1px solid var(--amber-border); }
+  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+     w 04. W locie oś kończy się wierszem „na żywo": zielona kropka, bez godziny po
+     lewej (to nie jest zdarzenie rejestru), licznik po prawej — tam, gdzie ta oś trzyma
+     wszystkie czasy trwania. */
+  .session-log { flex:1; overflow-y:auto; scrollbar-width:none; background:var(--surface); border-bottom:1px solid var(--border); }
+  .session-log::-webkit-scrollbar { display:none; }
+  .session-log-header { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface-raised); z-index:2; }
+  .session-log-title { font-family:var(--font-mono); font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .session-log-count { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:1px 6px; }
+  .axis { padding:12px 0; }
+  .axis-row { display:grid; grid-template-columns:52px 14px 1fr auto; align-items:center; gap:8px; padding:0 12px 0 10px; min-height:28px; }
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-time.dim { color:var(--text-secondary); }
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row:last-child .axis-mark::before { bottom:50%; }
+  .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
+  .axis-dot.green { background:var(--green); }
+  .axis-dot.red { background:var(--red); }
+  .axis-dot.blue { background:var(--blue); }
+  .axis-dot.amber { background:var(--amber); }
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
+  /* ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19) — stąd puls tylko tutaj. */
+  .axis-dot.live { background:var(--green); animation:pulse 1.5s ease-in-out infinite; }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); display:flex; align-items:center; gap:6px; }
+  .axis-name.muted { color:var(--text-secondary); }
+  .axis-name.live { color:var(--green); }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-right { display:flex; align-items:center; justify-content:flex-end; gap:8px; }
+  .axis-flight { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-dur { font-family:var(--font-mono); font-size:11px; color:var(--green); }
 
   /* ACTION ROW — next logbook event primary, ZAŁADUNEK middle (slot pary zrzut/załadunek), STOP right */
   .action-row { display:grid; grid-template-columns:1fr auto auto; gap:10px; padding:12px 14px; background:var(--bg); flex-shrink:0; align-items:stretch; }
@@ -226,24 +236,41 @@
       </div>
     </div>
 
-    <!-- KARTA CYKLU JEST TU, BO KOŁOWANIE JUŻ SIĘ WYDARZYŁO (issue #19).
-         Reguła: karta „Cykl bieżący" pokazuje się dopiero, gdy w cyklu jest zdarzenie
-         inne niż uruchomienie silnika i wiersz „na żywo" — kołowanie, start, lądowanie
-         albo zrzut. Ten ekran jest granicznym przypadkiem: liczniki w nagłówku stoją na
-         zerach, ale system wykrył już kołowanie, więc oś czasu ma co pokazać. W chwili
-         MIĘDZY start engine a wykryciem kołowania tej karty nie ma w ogóle — nagłówek
-         „0 T/O · 0 LDG" nad jednym wierszem to trzy liczby o niczym. -->
-    <div class="cycle-log">
-      <div class="cycle-log-header">
-        <span class="cycle-log-title">Cykl bieżący · 0 T/O · 0 LDG</span>
+    <!-- KARTA LOGU JEST TU, BO KOŁOWANIE JUŻ SIĘ WYDARZYŁO (issue #19).
+         Reguła: karta pokazuje się dopiero, gdy w sesji jest zdarzenie OPERACYJNE —
+         kołowanie, start, lądowanie albo zrzut. W chwili MIĘDZY start engine a wykryciem
+         kołowania tej karty nie ma w ogóle: oś złożona z przejęcia, uruchomienia
+         i wiersza „na żywo" powtarzałaby to, co ekran mówi wyżej. -->
+    <div class="session-log">
+      <div class="session-log-header">
+        <span class="session-log-title">Log sesji · UTC</span>
       </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-        <div class="log-body"><div class="log-t">13:10</div><div class="log-lbl">Start engine</div><span class="log-chip log-chip-mh">MH 1 238:05</span><span class="log-chip log-chip-fuel">141 L</span></div>
-      </div>
-      <div class="log-row">
-        <div class="log-tl"><div class="log-icon live"></div></div>
-        <div class="log-body"><div class="log-t">13:11</div><div class="log-lbl live">Taxi</div><div class="log-dur" style="color:var(--green);opacity:0.7">00:03:41</div></div>
+      <div class="axis">
+        <div class="axis-row">
+          <span class="axis-time dim">12:58</span>
+          <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 141 L · 1 238:05</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time">13:10</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <div class="axis-row">
+          <span class="axis-time dim">13:11</span>
+          <span class="axis-mark"><span class="axis-dot"></span></span>
+          <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+          <span class="axis-right"></span>
+        </div>
+        <!-- Na ziemi licznik biegnie od URUCHOMIENIA silnika (w powietrzu — od startu). -->
+        <div class="axis-row">
+          <span class="axis-time"></span>
+          <span class="axis-mark"><span class="axis-dot live"></span></span>
+          <span class="axis-label"><span class="axis-name live">Silnik pracuje…</span></span>
+          <span class="axis-right"><span class="axis-dur">00:04:41</span></span>
+        </div>
       </div>
     </div>
 

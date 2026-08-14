@@ -10,7 +10,7 @@
  * po ekranie i błąd trzeba by czytać, zamiast go zobaczyć.
  *
  * Dwie rzeczy nie są ozdobnikiem:
- *  • **Cel korekty ≥ 44 px** — ten sam próg co w `EventLog`. GPS klasy konsumenckiej
+ *  • **Cel korekty ≥ 44 px** — ten sam próg co w `SessionAxis` w trybie edycji. GPS klasy konsumenckiej
  *    gwarantuje fałszywe detekcje (§8), więc naprawa błędu nie może być trudniejsza niż
  *    jego popełnienie. To wniosek z audytu, nie preferencja.
  *  • **Powód blokady jako widoczny tekst** — gdy korekta jest niedostępna, ołówki gasną,

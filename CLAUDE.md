@@ -654,6 +654,44 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
 - **wiersz „Historia zmian" istnieje TYLKO wtedy, gdy jest historia**: zerowy licznik to
   szum, nie informacja — ta sama reguła, którą issue #40 wyrzuciło „Notatki —"
 
+## Log zdarzeń jest JEDEN — kokpit rysuje oś sesji (issue #44, 2026-08-14)
+Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny
+`EventLog` w kokpicie (04, 05, 04B). Ta sama sesja czytała się przez to dwa razy inaczej,
+choć oba widoki opisują JEDEN bieg silnika — raz oglądany w trakcie, raz po wszystkim.
+Zostaje oś: `components/data/SessionAxis.tsx` + builder `logic/sessionAxis.ts`.
+- **`EventLog` SKASOWANY** razem z całym swoim inwentarzem: szyną ikon w plakietkach,
+  chipami licznika i paliwa, pełnoszerokimi pasami tankowania i separatorami „Lot n".
+  Kokpit buduje wiersze przez **`buildCockpitAxis`** (`logic/cockpitLog.ts`), które woła
+  ten sam `buildSessionAxis`, co ekran 10
+- **role dokłada wywołujący, nie przełącznik trybu**: kokpit podaje wiersz `live`
+  i znaczniki outboxa, rozliczenie — stopkę sum i (w edycji) `onCorrect`. To obecność
+  albo brak danych, nie flaga „tryb kokpitu"
+- **odczyt startowy wraca do PRZEJĘCIA**: wisiał jako chipy przy „Start engine", czyli
+  przy zdarzeniu, które go nie wykonało — bo log kokpitu nie miał wiersza przejęcia
+  w ogóle. Kokpit ma go odtąd tak samo jak 10, razem z podpisem „odczyt 112 L · 1 236:30"
+- **słownik jest jeden i polski**: „Uruchomienie", „Kołowanie", „Start", „Lądowanie",
+  „Wyłączenie" — zamiast „Start engine", „Taxi", „Takeoff", „Landing", „Stop engine".
+  Angielskie nazwy zostają tam, gdzie opisują FAZĘ lotu (hero 05), nie zapis w rejestrze
+- **wiersz „na żywo" nie ma godziny**: nie jest zdarzeniem rejestru, tylko czasem
+  TRWANIA, a te w tej osi stoją po prawej (tam, gdzie czas lotu przy lądowaniu).
+  W powietrzu liczy od startu, na ziemi od uruchomienia silnika
+- **znika czas kołowania i podpis „blok 1:13"**: pierwszy materializował się dopiero przy
+  starcie, więc nigdy nie pomógł temu, kto kołuje; drugi jest sumą SESJI i mieszka
+  w stopce osi. Stopka w kokpicie pojawia się dopiero po zatrzymaniu silnika (jest co
+  sumować) i **nie powtarza trasy** — ta stoi w pasku górnym
+- **liczba lotów schodzi z nagłówka karty**: mówi ją stopka trzy centymetry niżej.
+  Nagłówek w locie przestał też liczyć „3 T/O · 2 LDG", a słowo „cykl" zniknęło
+  z ostatniego miejsca, w którym przetrwało pivot 2026-08-10
+- **zdarzenia naziemne wchodzą na oś WSZĘDZIE** (tankowanie, załadunek, zmiana załogi).
+  Na 10 ich nie było i to był błąd, nie decyzja: rachunek paliwa mówił „dolane ·
+  2 tankowania", a oś milczała o tym, kiedy — mimo że arkusz 10H pozwala tankowanie
+  DOPISAĆ, a dopisany wpis znikał bez śladu. Tankowanie niesie „+48 L → 171 L" (dolewka
+  i stan po niej; stan przed to poprzedni odczyt, który stoi wyżej na tej samej osi)
+- **`manual_log_entry` na oś NIE wchodzi**: niesie dziś samą uwagę i mieszka w karcie
+  „Notatki" (issue #40 pkt 5); na osi byłby zdarzeniem bez przebiegu
+- przy równym stemplu tankowanie i załadunek stoją PRZED uruchomieniem silnika i PO jego
+  wyłączeniu (`RANK` w `sessionAxis.ts`) — dolewa się przy zatrzymanym śmigle
+
 ## Norma zużycia liczy się PER SESJA, nie per godzina (issue #38, 2026-08-12)
 Werdykt „w normie" porównywał L/h sesji z pasmem blokowym samolotu — czyli z liczbą
 policzoną na średniej mieszance faz z 90 dni. Sesja z długim kołowaniem wychodziła przez

@@ -1859,3 +1859,43 @@ użytkownika po przeglądzie).
 > a 10B (podgląd po oknie 24 h) nie ma już ŻADNEGO pasa akcji — i tak ma być, bo nie da
 > się tam nic zapisać. Klasa `.btn-primary` skasowana z całej trójki, żeby nikt nie
 > odtworzył przycisku „bo styl już jest".
+
+---
+
+## 2026-08-14 — Jeden log zdarzeń (issue #44)
+
+**04 + 04A + 04B + 05 + 05A–05D + 05G + 05-themes — kokpit rysuje OŚ SESJI, tę samą co 10.**
+> Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (kolumna czasu,
+> kropki na pionowej kresce, polskie nazwy, numer lotu po prawej) i log kokpitu (szyna
+> ikon w plakietkach, chipy licznika i paliwa, pełnoszerokie pasy tankowania, separatory
+> „Lot 1 / Lot 2", angielskie „Start engine / Takeoff / Landing"). Jeden bieg silnika
+> czytał się przez to dwa razy inaczej — raz w trakcie, raz po wszystkim — i to samo
+> lądowanie miało dwa różne kolory. Zostaje oś; `.day-log`, `.cycle-log`, `.log-*`
+> i `.flight-sep` skasowane ze wszystkich mockupów kokpitu.
+
+**04 + 04A + 04B + 05* — odczyt startowy wraca do wiersza PRZEJĘCIE.**
+> Wisiał jako chipy „MH 1 236:52" i „160 L" przy „Start engine", czyli przy zdarzeniu,
+> które go nie wykonało — bo log kokpitu nie miał wiersza przejęcia w ogóle. Skutek
+> uboczny na 04A: stan pusty („Brak wpisów · Uruchom silnik…") zniknął, bo przestał być
+> prawdą — sesja zaczyna się przejęciem i ono już się wydarzyło.
+
+**05 + 05A–05D + 05G — wiersz „na żywo" bez godziny w lewej kolumnie.**
+> Nie jest zdarzeniem rejestru, tylko czasem TRWANIA — a te w tej osi stoją po prawej,
+> tam gdzie czas lotu przy lądowaniu. Przy okazji przestał rozpychać kolumnę czasu do
+> 64 px pod „00:53:14". Zieleń zostaje przy nim (i tylko przy nim) jako jedyny stan
+> teraźniejszy, razem z pulsem kropki.
+
+**04 + 04B — sumy zeszły z nagłówka i z wiersza wyłączenia do STOPKI osi.**
+> „Log sesji · 2 loty" w tytule i „blok 1:13" przy wyłączeniu mówiły o CAŁEJ sesji
+> w miejscach opisujących jedno zdarzenie i jeden nagłówek. Stopka (Blok · Czas lotu ·
+> Starty) jest ta sama, co na 10, i pojawia się dopiero po zatrzymaniu silnika — pod
+> pracującym silnikiem „BLOK 00:00" nie jest odpowiedzią na żadne pytanie. Trasy stopka
+> nie powtarza: stoi w pasku górnym kokpitu. Nagłówek w locie stracił „3 T/O · 2 LDG"
+> i słowo „cykl" — ostatnie miejsce, w którym przetrwało pivot 2026-08-10.
+
+**10 + 10D — tankowanie wchodzi na oś sesji.**
+> Rachunek paliwa mówił „dolane · 2 tankowania", a oś nie pokazywała ANI JEDNEGO: pilot
+> widział liczbę, której nie umiał umiejscowić w czasie. Gorzej — arkusz 10H pozwala
+> tankowanie DOPISAĆ, a dopisany wpis znikał bez śladu. Wiersz niesie dolewkę i stan po
+> niej („+20 L → 170 L"); w trybie edycji ołówek prowadzi do arkusza CZASU (10E), bo
+> dolewkę poprawia się przez unieważnienie i dopisanie, nie przez `amend`.

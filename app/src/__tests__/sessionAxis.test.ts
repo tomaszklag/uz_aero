@@ -204,6 +204,97 @@ describe('oś sesji', () => {
   });
 });
 
+/**
+ * ZDARZENIA NAZIEMNE (issue #44) — tankowanie, załadunek i zmiana załogi.
+ *
+ * Oś ich nie znała, a to był błąd, nie decyzja: rachunek paliwa na tym samym ekranie
+ * mówi „dolane · 2 tankowania", arkusz 10H pozwala tankowanie DOPISAĆ, a wpis znikał
+ * bez śladu. Log kokpitu pokazywał je od zawsze — pełnoszerokim pasem, bo miał własny
+ * komponent; teraz komponent jest jeden.
+ */
+describe('zdarzenia naziemne', () => {
+  it('tankowanie wchodzi na oś z dolewką i stanem po niej', () => {
+    const zTankowaniem = [
+      ...sessionEvents(),
+      event('refuel', at(10, 40), { beforeL: 123, addedL: 48, afterL: 171 }, 'refuel-1'),
+    ];
+    const row = axis(zTankowaniem).rows.find((r) => r.id === 'refuel-1')!;
+
+    expect(row.kind).toBe('refuel');
+    expect(row.time).toBe('10:40');
+    expect(row.name).toBe('Tankowanie');
+    // Stanu PRZED nie ma: to poprzedni odczyt, który stoi wyżej na tej samej osi.
+    expect(row.sub).toBe('+48 L → 171 L');
+    expect(row.targetUuid).toBe('refuel-1');
+  });
+
+  it('tankowanie po zdaniu ustawia się na końcu, przed niczym', () => {
+    // Sortuje CZAS, nie typ — dolewka po zamknięciu sesji nie ma prawa wskoczyć
+    // między loty tylko dlatego, że jest zdarzeniem naziemnym.
+    const zTankowaniem = [
+      ...sessionEvents(),
+      event('refuel', at(8, 8), { beforeL: 130, addedL: 20, afterL: 150 }, 'refuel-przed'),
+      event('refuel', at(10, 40), { beforeL: 123, addedL: 48, afterL: 171 }, 'refuel-po'),
+    ];
+    const kinds = axis(zTankowaniem).rows.map((r) => `${r.time} ${r.kind}`);
+
+    expect(kinds[0]).toBe('08:04 claim');
+    expect(kinds[1]).toBe('08:08 refuel');
+    expect(kinds[2]).toBe('08:12 engineStart');
+    expect(kinds[kinds.length - 2]).toBe('10:40 refuel');
+    expect(kinds[kinds.length - 1]).toBe('11:20 release');
+  });
+
+  it('tankowanie co do minuty razem z uruchomieniem stoi PRZED nim', () => {
+    // Przy równym stemplu decyduje porządek przyczynowy: dolewa się przy zatrzymanym
+    // śmigle, więc „Tankowanie" nie ma prawa wpaść w środek biegu silnika.
+    const rowneCzasy = [
+      ...sessionEvents(),
+      event('refuel', at(8, 12), { beforeL: 130, addedL: 20, afterL: 150 }, 'refuel-rowno'),
+    ];
+    const kinds = axis(rowneCzasy).rows.map((r) => r.kind);
+
+    expect(kinds.indexOf('refuel')).toBeLessThan(kinds.indexOf('engineStart'));
+  });
+
+  it('załadunek niesie skład, a bez deklaracji — sam fakt', () => {
+    const zZaladunkiem = [
+      ...sessionEvents(),
+      event('boarding', at(8, 14), { jumpers: { tandem: 2, aff: 1, solo: 1 } }, 'boarding-1'),
+      event('boarding', at(9, 5), { jumpers: null }, 'boarding-2'),
+    ];
+    const rows = axis(zZaladunkiem).rows;
+
+    expect(rows.find((r) => r.id === 'boarding-1')!.sub).toBe('4 skoczków');
+    // `null` to „nie podano", a nie zero — wiersz mówi tyle, ile wiemy (issue #21).
+    expect(rows.find((r) => r.id === 'boarding-2')!.sub).toBeNull();
+  });
+
+  it('zmiana załogi mówi, kto kogo zmienił', () => {
+    const zZaloga = [
+      ...sessionEvents(),
+      event('crew_change', at(9, 5), { role: 'dual', pilotOutId: null, pilotInId: 'AKO' }, 'crew-1'),
+    ];
+    const row = axis(zZaloga).rows.find((r) => r.id === 'crew-1')!;
+
+    expect(row.kind).toBe('crew');
+    expect(row.name).toBe('Zmiana załogi');
+    // Myślnik = fotela nie było zajętego (dołączenie Duala), a nie „nie wiemy kto".
+    expect(row.sub).toBe('DUAL: — → AKO');
+  });
+
+  it('uwaga bez czasów (wpis ręczny z samą notatką) nie jest punktem osi', () => {
+    // `manual_log_entry` niesie dziś sam tekst i mieszka w karcie „Notatki" (issue #40
+    // pkt 5). Na osi byłby zdarzeniem bez przebiegu — czymś, co się nie wydarzyło.
+    const zNotatka = [
+      ...sessionEvents(),
+      event('manual_log_entry', at(10, 0), { notes: 'Drugi zbiornik nie trzyma wskazania' }),
+    ];
+
+    expect(axis(zNotatka).rows.map((r) => r.kind)).toEqual(axis().rows.map((r) => r.kind));
+  });
+});
+
 describe('stopka osi', () => {
   it('czas blokowy pada raz, obok czasu lotu i liczby startów', () => {
     const { foot } = axis();
@@ -236,7 +327,7 @@ describe('stopka osi', () => {
     ];
     const { foot, rows } = axis(bezLotu);
 
-    expect(foot[0]).toEqual({ key: 'Trzymany', value: '01:15', accent: false });
+    expect(foot[0]).toEqual({ id: 'held', key: 'Trzymany', value: '01:15', accent: false });
     expect(foot[1]!.value).toBe('00:00');
     expect(rows.map((row) => row.kind)).toEqual(['claim', 'release']);
   });
@@ -272,7 +363,12 @@ describe('stopka osi', () => {
     );
     const { foot } = axis(przelot);
 
-    expect(foot[foot.length - 1]).toEqual({ key: 'Trasa', value: 'EPZG→EPPO', accent: false });
+    expect(foot[foot.length - 1]).toEqual({
+      id: 'route',
+      key: 'Trasa',
+      value: 'EPZG→EPPO',
+      accent: false,
+    });
   });
 });
 

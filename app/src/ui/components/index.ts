@@ -117,7 +117,9 @@ export * from './data/StatGrid';
 export * from './data/ParamGrid';
 export * from './data/PhaseHero';
 export * from './data/CockpitActions';
-export * from './data/EventLog';
+// `EventLog` (log kokpitu z szyną ikon, chipami i pasami tankowania) USUNIĘTY
+// przy issue #44: kokpit i rozliczenie rysują tę samą sesję, więc rysuje ją jeden
+// komponent — `SessionAxis` wyżej.
 export * from './data/ClaimStrip';
 export * from './data/FuelStrip';
 export * from './data/ActionGrid';

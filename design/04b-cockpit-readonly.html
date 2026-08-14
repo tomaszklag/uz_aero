@@ -137,43 +137,36 @@
   .session-log { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
   .session-log-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: 1px solid var(--border); background: var(--surface-raised); }
   .session-log-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
-  /* Akordeon cykli jak na 04 — w podglądzie WSZYSTKIE cykle domyślnie zwinięte:
-     to szybki rzut oka na cudzy dzień, nie praca na nim (2026-08-04). */
-  .cycle-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
-  .cycle-head:hover { background: var(--surface-hover); }
-  .cycle-head .chev { color: var(--text-muted); flex-shrink: 0; transition: transform .15s ease; }
-  .cycle-head.open .chev { transform: rotate(90deg); color: var(--green); }
-  .cycle-head.open { background: rgba(46,204,113,0.05); }
-  .cycle-no { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-primary); }
-  .cycle-range { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px; color: var(--text-secondary); }
-  .cycle-sum { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); letter-spacing: 0.5px; margin-left: auto; white-space: nowrap; }
-  .cycle-body.folded { display: none; }
-  .log-cycle { display: flex; align-items: center; gap: 0; border-bottom: 1px solid var(--border); }
-  .log-cycle:last-child { border-bottom: none; }
-  .log-cycle-tl { width: 36px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; align-self: stretch; position: relative; }
-  .log-cycle-tl::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--border); transform: translateX(-50%); }
-  .log-cycle:first-child .log-cycle-tl::before { top: 50%; }
-  .log-cycle:last-child  .log-cycle-tl::before { bottom: 50%; }
-  /* Plakietka ZAKRYWA kreskę szyny (issue #19): tony designu są półprzezroczyste, więc
-     kreska osi prześwitywała przez środek ikony. Stąd krycie powierzchni pod barwą tonu. */
-  .log-icon { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; z-index: 1; position: relative; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
-  /* Start engine neutralny jak Takeoff i Landing (issue #19) — zieleń zostaje wierszom
-     „na żywo", a podgląd cudzego dnia to sama historia. */
-  .log-icon.start { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
-  .log-icon.stop  { background: linear-gradient(var(--red-muted), var(--red-muted)), var(--surface); border-color: var(--red-border); color: var(--red); }
-  .log-icon.evt   { background: var(--surface-raised); border-color: var(--border); color: var(--text-secondary); }
-  .log-cycle-body { flex: 1; display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 4px; }
-  .log-time { font-family: var(--font-mono); font-size: 13px; font-weight: 700; letter-spacing: 1px; width: 44px; flex-shrink: 0; }
-  .log-time.red { color: var(--red); }
-  .log-time.neutral { color: var(--text-primary); }
-  .log-evt-label { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; flex: 1; }
-  .log-evt-label.red { color: var(--red); }
-  .log-evt-label.neutral { color: var(--text-secondary); }
-  .log-meta { font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); letter-spacing: 0.3px; white-space: nowrap; }
-  .log-chip { font-family: var(--font-mono); font-size: 8px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
-  .log-chip-mh { color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border); }
-  .log-chip-fuel { color: var(--amber); background: var(--amber-muted); border: 1px solid var(--amber-border); }
-  /* read-only: BEZ kolumny edycji (.log-edit) — podgląd nie edytuje logu */
+  /* OŚ SESJI (issue #44) — ten sam inwentarz, co na 04, 05 i 10; pełny komentarz stoi
+     w 04. Cudza sesja czyta się dokładnie tak samo jak własna: podgląd niczego nie
+     upraszcza, bo pilot ma na jej podstawie zdecydować, czy przejmuje maszynę.
+     Akordeon cykli odszedł razem z modelem wielu cykli (2026-08-10) — sesja ma jeden
+     bieg silnika, więc nie ma czego zwijać. */
+  .axis { padding: 12px 0; }
+  .axis-row { display: grid; grid-template-columns: 52px 14px 1fr auto; align-items: center; gap: 8px; padding: 0 12px 0 10px; min-height: 28px; }
+  .axis-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-primary); }
+  .axis-time.dim { color: var(--text-secondary); }
+  .axis-mark { position: relative; align-self: stretch; display: flex; justify-content: center; }
+  .axis-mark::before { content: ''; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top: 50%; }
+  .axis-row:last-child .axis-mark::before { bottom: 50%; }
+  .axis-dot { position: relative; align-self: center; width: 9px; height: 9px; border-radius: 50%; background: var(--border-strong); border: 2px solid var(--surface); box-shadow: 0 0 0 2px var(--surface); }
+  .axis-dot.green { background: var(--green); }
+  .axis-dot.red { background: var(--red); }
+  .axis-dot.blue { background: var(--blue); }
+  .axis-dot.amber { background: var(--amber); }
+  .axis-dot.hollow { background: var(--surface); border: 1.5px solid var(--text-muted); box-shadow: 0 0 0 2px var(--surface); }
+  .axis-label { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .axis-name { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+  .axis-name.muted { color: var(--text-secondary); }
+  .axis-sub { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.5px; color: var(--text-muted); }
+  .axis-right { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .axis-flight { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.5px; color: var(--text-muted); }
+  .axis-dur { font-family: var(--font-mono); font-size: 11px; color: var(--green); }
+  /* Znacznika outboxa (`.axis-pending`) tu NIE MA: kolejka wysyłki opisuje TEN telefon,
+     a cudze zdarzenia przyszły z serwera — strzałka mówiłaby o kolejce, której nie znamy.
+     Stopki sum też nie ma: sesja trwa, więc nie ma czego sumować. */
+  /* read-only: BEZ kolumny edycji — podgląd nie edytuje logu */
 
   /* ===== ACTION GRID (disabled w podglądzie) ===== */
   .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -319,43 +312,59 @@
         <div class="claim-since">zajęty</div>
       </div>
 
-      <!-- DAY LOG (KRZ) -->
+      <!-- LOG CUDZEJ SESJI (KRZ) — ta sama oś, co we własnym kokpicie i w rozliczeniu
+           (issue #44). Podgląd nie ma prawa upraszczać: to na podstawie tego logu pilot
+           decyduje, czy przejmuje maszynę.
+           Sumy sesji mówi PASEK wyżej („1 lot"), więc oś ich nie powtarza stopką. -->
       <div class="session-log">
         <div class="session-log-header">
-          <span class="session-log-title">Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O</span>
+          <span class="session-log-title">Log SP-FGK · KRZ · UTC</span>
         </div>
 
-        <!-- W podglądzie cykle domyślnie zwinięte -->
-        <div class="cycle-head" onclick="cycleToggle(this)">
-          <svg class="chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          <span class="cycle-no">CYKL 1</span>
-          <span class="cycle-range">07:22–08:31</span>
-          <span class="cycle-sum">1 T/O · blok 1:09</span>
-        </div>
-        <div class="cycle-body folded">
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon start"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          <div class="log-cycle-body"><div class="log-time neutral">07:22</div><div class="log-evt-label neutral">Start engine</div><span class="log-chip log-chip-mh">MH 4 512:00</span><span class="log-chip log-chip-fuel">176 L</span></div>
-        </div>
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg></div></div>
-          <div class="log-cycle-body">
-            <div class="log-time neutral">07:35</div>
-            <div class="log-evt-label neutral">Takeoff</div>
+        <div class="axis">
+          <div class="axis-row">
+            <span class="axis-time dim">07:10</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Przejęcie</span><span class="axis-sub">odczyt 176 L · 4 512:00</span></span>
+            <span class="axis-right"></span>
           </div>
-        </div>
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon evt"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="18 13 12 19 6 13"/></svg></div></div>
-          <div class="log-cycle-body">
-            <div class="log-time neutral">08:20</div>
-            <div class="log-evt-label neutral">Landing</div>
-            <div class="log-meta">0:45</div>
+
+          <div class="axis-row">
+            <span class="axis-time">07:22</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+            <span class="axis-right"></span>
           </div>
-        </div>
-        <div class="log-cycle">
-          <div class="log-cycle-tl"><div class="log-icon stop"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div></div>
-          <div class="log-cycle-body"><div class="log-time red">08:31</div><div class="log-evt-label red">Stop engine</div><div class="log-meta">blok 1:09</div><span class="log-chip log-chip-mh">MH 4 513:12</span><span class="log-chip log-chip-fuel">156 L</span></div>
-        </div>
+
+          <div class="axis-row">
+            <span class="axis-time dim">07:31</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name muted">Kołowanie</span></span>
+            <span class="axis-right"></span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time">07:35</span>
+            <span class="axis-mark"><span class="axis-dot green"></span></span>
+            <span class="axis-label"><span class="axis-name">Start</span></span>
+            <span class="axis-right"><span class="axis-flight">lot 1</span></span>
+          </div>
+
+          <div class="axis-row">
+            <span class="axis-time">08:20</span>
+            <span class="axis-mark"><span class="axis-dot red"></span></span>
+            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
+            <span class="axis-right"><span class="axis-dur">00:45</span></span>
+          </div>
+
+          <!-- Wyłączenie BEZ odczytów: KRZ poda paliwo i licznik dopiero przy zdaniu (09b),
+               a do tego czasu maszyna jest w jego rękach i nikt nie zna tych liczb. -->
+          <div class="axis-row">
+            <span class="axis-time">08:31</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Wyłączenie</span></span>
+            <span class="axis-right"></span>
+          </div>
         </div>
       </div>
 
@@ -494,11 +503,8 @@
     document.querySelectorAll('.ss-btn').forEach(b => b.classList.toggle('active', b.dataset.state === s));
     document.getElementById('ss-desc').textContent = ssDesc[s];
   }
-  // Akordeon cykli — nagłówek przełącza widoczność swojego .cycle-body.
-  function cycleToggle(head) {
-    head.classList.toggle('open');
-    head.nextElementSibling.classList.toggle('folded');
-  }
+  // Akordeon cykli USUNIĘTY (issue #44) razem z ostatnim śladem modelu wielu cykli:
+  // oś sesji jest płaska, bo sesja to jeden bieg silnika.
 </script>
 
 </body>

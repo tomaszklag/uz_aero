@@ -162,21 +162,23 @@ export function peekBanner(input: PeekBannerInput): PeekBannerModel {
   };
 }
 
-/** „1 cykl" / „3 cykle" / „6 cykli" — polska liczba mnoga w nagłówku logu. */
-export function cyclesLabel(count: number): string {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-  if (count === 1) return '1 cykl';
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} cykle`;
-  return `${count} cykli`;
-}
+/*
+ * `cyclesLabel` („1 cykl" / „3 cykle" / „6 cykli") USUNIĘTE przy issue #44 razem
+ * z liczbą cykli w nagłówku logu. Słowo „cykl" wypadło ze słownika przy pivocie
+ * 2026-08-10 (sesja = jeden bieg silnika), a tu przetrwało w napisie widocznym dla
+ * pilota — na przekór modelowi, w którym ta liczba zawsze wynosi jeden.
+ */
 
 /**
- * Nagłówek karty logu: „Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O" (mockup 04b).
+ * Nagłówek karty logu: „Log SP-FGK · KRZ · UTC" (mockup 04b).
  *
  * Samolot stoi PRZED pilotem, bo to log jednej MASZYNY. Do 2026-08-08 stało tu „Log dnia
  * KRZ", czyli obietnica przekroju przez cały dzień poprzednika — a po §3.6a jego dzień
  * może objąć kilka samolotów i ten ekran o pozostałych nic nie wie.
+ *
+ * Liczb w nagłówku NIE MA (issue #44): starty policzy oko na samej osi, a liczba cykli
+ * była pozostałością po modelu wielu biegów silnika. Zostaje stan „brak danych" — bo
+ * on mówi o czymś, czego na osi nie widać: że migawki po prostu nie mamy.
  */
 export function peekLogTitle(
   aircraftId: string | null,
@@ -186,7 +188,7 @@ export function peekLogTitle(
   const machine = aircraftId ?? 'samolotu';
   const who = picCode ?? 'prowadzącego';
   if (state == null) return `Log ${machine} · ${who} · UTC · brak danych`;
-  return `Log ${machine} · ${who} · UTC · ${cyclesLabel(state.legs.length)} · ${state.takeoffCount} T/O`;
+  return `Log ${machine} · ${who} · UTC`;
 }
 
 export interface PeekStatus {
