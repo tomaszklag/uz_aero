@@ -1,16 +1,21 @@
 /**
- * UZ Aero — SessionAxis (`.axis` z mockupu `10-statystyki.html`).
+ * UZ Aero — SessionAxis (`.axis` z mockupów `10-statystyki.html`, `04` i `05`).
  *
  * Oś czasu jednej sesji: przejęcie → uruchomienie → starty, zrzuty i lądowania →
  * wyłączenie → zdanie, w jednej kolumnie, z pionową kreską łączącą punkty.
  *
- * ══ CZYM RÓŻNI SIĘ OD `EventLog` (04, 05) ══
- * Log kokpitu jest POTWIERDZENIEM ZAPISU w czasie rzeczywistym: ma szynę cykli, chipy
- * z licznikiem i paliwem, znacznik outboxa, ton `live` dla stanu trwającego. Ta oś opisuje
- * sesję ZAMKNIĘTĄ i odpowiada na jedno pytanie — co i o której. Stąd inny inwentarz:
- * bez chipów, bez szyny, za to z podpisem odczytów przy końcach i czasem lotu przy
- * lądowaniu. Wspólny komponent musiałby obsłużyć obie role przełącznikami, a wtedy
- * przestałby pilnować którejkolwiek.
+ * ══ JEDEN LOG NA CAŁĄ APLIKACJĘ (issue #44) ══
+ * Do issue #44 istniał obok tego komponentu `EventLog` — log kokpitu z szyną ikon
+ * w plakietkach, chipami licznika i paliwa oraz pełnoszerokimi pasami tankowania.
+ * Nagłówek tego pliku bronił wtedy podziału: „log kokpitu jest potwierdzeniem zapisu,
+ * a oś opisuje sesję zamkniętą, wspólny komponent musiałby obsłużyć obie role
+ * przełącznikami". Próba na urządzeniu pokazała, że to rozróżnienie kosztuje więcej,
+ * niż daje: TA SAMA sesja czytała się dwa razy inaczej — inne nazwy zdarzeń, inne kolory
+ * tego samego lądowania, inne miejsce na te same liczby. Komponent jest więc jeden,
+ * a role rozstrzyga to, co wywołujący ma do pokazania:
+ *  • kokpit dokłada wiersz `live` i znacznik outboxa (`pending`), bo opisuje TERAZ;
+ *  • rozliczenie dokłada stopkę sum i (w edycji) ołówki, bo opisuje CAŁOŚĆ.
+ * Żadne z tego nie jest przełącznikiem trybu — to obecność albo brak danych.
  *
  * ══ KRESKA RYSUJE SIĘ Z WIERSZY ══
  * Pion osi to `::before` każdego wiersza, a nie jedna linia w tle: wiersze mają różną
@@ -51,7 +56,14 @@ import { CorrectedTag } from '../status/CorrectedTag';
 import type { Tone } from '../tone';
 import { toneColors } from '../tone';
 
-/** Rodzaj punktu — steruje kolorem kropki i tonem napisu. */
+/**
+ * Rodzaj punktu — steruje kolorem kropki i tonem napisu.
+ *
+ * Zdarzenia naziemne (`refuel`, `boarding`, `crew`) i wiersz `live` weszły tu razem
+ * z logiem kokpitu (issue #44). Pierwsze trzy trafiają też na oś rozliczenia: rachunek
+ * paliwa na 10 mówił „dolane · 2 tankowania", a oś nie pokazywała ani jednego — mimo że
+ * arkusz dopisania (10H) pozwala tankowanie dodać.
+ */
 export type SessionAxisKind =
   | 'claim'
   | 'engineStart'
@@ -60,7 +72,12 @@ export type SessionAxisKind =
   | 'drop'
   | 'landing'
   | 'engineStop'
-  | 'release';
+  | 'release'
+  | 'refuel'
+  | 'boarding'
+  | 'crew'
+  /** Stan TRWAJĄCY, nie zdarzenie rejestru: „Silnik pracuje…", „W locie…" (kokpit). */
+  | 'live';
 
 export interface SessionAxisRow {
   id: string;
@@ -90,6 +107,13 @@ export interface SessionAxisRow {
    * w rejestrze (np. przejęcie sesji odtworzonej bez `preflight_confirm`).
    */
   editable?: boolean;
+  /**
+   * Zdarzenie czeka w outboxie (issue #44, wcześniej `EventLog`). Strzałka przy nazwie —
+   * jedyne miejsce, w którym stan wysyłki schodzi do POJEDYNCZEGO zdarzenia; SyncChip
+   * mówi o kolejce jako całości. Znacznik stawia wyłącznie kokpit: podgląd cudzej sesji
+   * (04B) dostaje zdarzenia z serwera, więc opisywałby kolejkę, której nie zna.
+   */
+  pending?: boolean;
 }
 
 export interface SessionAxisFootItem {
@@ -97,6 +121,62 @@ export interface SessionAxisFootItem {
   value: string;
   accent?: boolean;
 }
+
+/**
+ * Kolor kropki. Przejęcie i zdanie są PUSTE (obrys, nie wypełnienie), bo nie są pracą
+ * silnika — a nie szare-wypełnione, bo wtedy zlewałyby się z uruchomieniem.
+ *
+ * Tankowanie jest AMBER, bo amber jest w tym systemie kolorem paliwa — to znaczenie,
+ * nie wyróżnienie. Zmiana załogi zostaje neutralna: nie dotyczy ani paliwa, ani lotu.
+ * ZIELEŃ NALEŻY WYŁĄCZNIE DO TERAŹNIEJSZOŚCI (issue #19), stąd `live` i `takeoff`:
+ * pierwsze to stan trwający, drugie — jedyny punkt, od którego cokolwiek jeszcze biegnie.
+ */
+const KIND_TONE: Record<SessionAxisKind, Tone> = {
+  claim: 'neutral',
+  engineStart: 'neutral',
+  taxi: 'neutral',
+  takeoff: 'green',
+  drop: 'blue',
+  landing: 'red',
+  engineStop: 'neutral',
+  release: 'neutral',
+  refuel: 'amber',
+  boarding: 'blue',
+  crew: 'neutral',
+  live: 'green',
+};
+
+/** Które punkty rysujemy obrysem — końce sesji, czyli to, co nie jest pracą silnika. */
+const HOLLOW: Record<SessionAxisKind, boolean> = {
+  claim: true,
+  engineStart: false,
+  taxi: false,
+  takeoff: false,
+  drop: false,
+  landing: false,
+  engineStop: false,
+  release: true,
+  refuel: false,
+  boarding: false,
+  crew: false,
+  live: false,
+};
+
+/** Wiersze rysowane napisem drugoplanowym — tło sesji, a nie jej oś zdarzeń lotu. */
+const DIMMED: Record<SessionAxisKind, boolean> = {
+  claim: true,
+  engineStart: false,
+  taxi: true,
+  takeoff: false,
+  drop: false,
+  landing: false,
+  engineStop: false,
+  release: true,
+  refuel: true,
+  boarding: true,
+  crew: true,
+  live: false,
+};
 
 export interface SessionAxisProps {
   rows: SessionAxisRow[];
@@ -116,33 +196,6 @@ export interface SessionAxisProps {
   onHistory?: (rowId: string) => void;
   style?: ViewStyle;
 }
-
-/**
- * Kolor kropki. Przejęcie i zdanie są PUSTE (obrys, nie wypełnienie), bo nie są pracą
- * silnika — a nie szare-wypełnione, bo wtedy zlewałyby się z uruchomieniem.
- */
-const KIND_TONE: Record<SessionAxisKind, Tone> = {
-  claim: 'neutral',
-  engineStart: 'neutral',
-  taxi: 'neutral',
-  takeoff: 'green',
-  drop: 'blue',
-  landing: 'red',
-  engineStop: 'neutral',
-  release: 'neutral',
-};
-
-/** Które punkty rysujemy obrysem — końce sesji, czyli to, co nie jest pracą silnika. */
-const HOLLOW: Record<SessionAxisKind, boolean> = {
-  claim: true,
-  engineStart: false,
-  taxi: false,
-  takeoff: false,
-  drop: false,
-  landing: false,
-  engineStop: false,
-  release: true,
-};
 
 export function SessionAxis({
   rows,
@@ -170,12 +223,14 @@ export function SessionAxis({
       {rows.map((row, index) => {
         const c = toneColors(theme, KIND_TONE[row.kind]);
         const hollow = HOLLOW[row.kind];
-        const dimmed = row.kind === 'claim' || row.kind === 'release' || row.kind === 'taxi';
+        const dimmed = DIMMED[row.kind];
+        const live = row.kind === 'live';
 
         const first = index === 0;
         const last = index === rows.length - 1;
         const warned = row.warned === true;
-        const editable = editing && row.editable !== false;
+        // Wiersza „na żywo" nie da się poprawić — nie ma go w rejestrze.
+        const editable = editing && row.editable !== false && !live;
 
         const content = (
           <>
@@ -238,10 +293,22 @@ export function SessionAxis({
                 <AppText
                   variant="mono"
                   tone={dimmed ? 'secondary' : 'primary'}
-                  style={styles.name}
+                  style={[styles.name, live ? { color: c.accent } : null]}
                 >
                   {row.name.toUpperCase()}
                 </AppText>
+                {/* Strzałka outboxa przy NAZWIE, obok „popr." — obie mówią o wpisie,
+                    a nie o czasie trwania, więc obie zostają po lewej stronie wiersza. */}
+                {row.pending === true && (
+                  <AppText
+                    variant="mono"
+                    tone="amber"
+                    accessibilityLabel="Czeka na wysyłkę"
+                    style={styles.pending}
+                  >
+                    ↑
+                  </AppText>
+                )}
                 {/* „popr." zostaje przy NAZWIE, nie w prawej kolumnie: prawa niesie
                     liczbę (czas trwania), a plakietka odbierałaby jej miejsce.
 
@@ -394,6 +461,7 @@ const styles = StyleSheet.create({
   label: { flex: 1, minWidth: 0, gap: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 10, letterSpacing: 1.4, lineHeight: 13 },
+  pending: { fontSize: 10, lineHeight: 13 },
   pen: { width: 18, alignItems: 'center', justifyContent: 'center' },
   sub: { fontSize: 8.5, letterSpacing: 0.5, lineHeight: 11 },
   flight: { fontSize: 8.5, letterSpacing: 0.5, lineHeight: 11 },

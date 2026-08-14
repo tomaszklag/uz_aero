@@ -15,8 +15,7 @@
  */
 
 import {
-  LIVE_MAX_AGE_MS,
-  cyclesLabel,
+  LIVE_MAX_AGE_MS,
   peekBanner,
   peekFreshness,
   peekLogTitle,
@@ -142,22 +141,16 @@ describe('nagłówek logu', () => {
   // Mockup 04b mówi „Log SP-FGK · KRZ · …", a nie „Log dnia KRZ · …", i to nie jest
   // kosmetyka: podgląd opisuje SESJĘ JEDNEJ MASZYNY, a dzień KRZ-a po §3.6a może objąć
   // kilka samolotów. „Log dnia KRZ" obiecywał przekrój, którego ten ekran nie pokazuje.
-  it('odwzorowuje mockup 04b: „Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O"', () => {
-    expect(peekLogTitle('SP-FGK', 'KRZ', krzState)).toBe('Log SP-FGK · KRZ · UTC · 1 cykl · 1 T/O');
+  it('odwzorowuje mockup 04b: „Log SP-FGK · KRZ · UTC"', () => {
+    // Bez liczb (issue #44): starty widać na samej osi, a „1 cykl" był pozostałością
+    // po modelu wielu biegów silnika — po pivocie 2026-08-10 ta liczba zawsze wynosi 1.
+    expect(peekLogTitle('SP-FGK', 'KRZ', krzState)).toBe('Log SP-FGK · KRZ · UTC');
   });
 
   it('bez migawki nie udaje pustej sesji', () => {
+    // Jedyny stan, który nagłówek nadal niesie — bo osi wtedy nie ma czym zapełnić,
+    // a puste miejsce po logu czyta się jak „pilot nic nie zrobił".
     expect(peekLogTitle('SP-FGK', 'KRZ', null)).toBe('Log SP-FGK · KRZ · UTC · brak danych');
-  });
-
-  it.each([
-    [1, '1 cykl'],
-    [3, '3 cykle'],
-    [6, '6 cykli'],
-    [12, '12 cykli'],
-    [22, '22 cykle'],
-  ])('%i → %s', (n, label) => {
-    expect(cyclesLabel(n as number)).toBe(label);
   });
 });
 

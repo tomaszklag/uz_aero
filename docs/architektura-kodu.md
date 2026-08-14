@@ -906,7 +906,8 @@ niemal w całości. Import bezpośredni z sekcji jest dopuszczalny, ale nie jest
 | `ParamGrid` | sztywna siatka 2×2 parametrów GPS; `stale` (— — po utracie fixa, przypis **amber** jak baner — 2026-08-12) i `note` (skąd wartość) | `.param-grid`, `.param-stale-note` (05g) |
 | `NoGpsBanner` | baner-przyrząd braku fixa GPS (status): wiek fixa i co dalej. **Zawsze AMBER i bez przycisków** (2026-08-12) — trzy stany (rozruch / utrata / brak uprawnienia) różni TREŚĆ, bo dla pilota znaczą to samo; czerwień pochodziła z rejestru ryzyk §8, który stopniuje skutki, nie banery. „Zapisz zdarzenie" i „Lista ręczna" dublowały pasek akcji i kafelek z 04, a na przyrządzie czytały się jak drugi pasek | `.no-gps` (05g) |
 | `CockpitActions` | dolny pasek: zapis ręczny, zrzut (tylko dzień skokowy — bez `onDrop` przycisku NIE MA), STOP z powodem blokady | `.action-row` |
-| `EventLog` | log dnia jako **oś cykli**: szyna z ikonami (nieprzezroczyste — zakrywają kreskę), chipy, cel korekty ≥ 44 px. **Zieleń ma tylko wiersz `live`** — historia jest neutralna | `.day-log`, `.cycle-log` |
+| `SessionAxis` | **JEDYNY log zdarzeń w aplikacji** (issue #44): kolumna czasu, kropki na pionowej kresce, podpis pod nazwą, jedna rzecz w prawej krawędzi. Rysuje sesję i w kokpicie (04, 05), i w podglądzie (04B), i w rozliczeniu (10). Role dokłada wywołujący, nie przełącznik trybu: kokpit podaje wiersz `live` i znaczniki outboxa (`pending`), rozliczenie stopkę sum i — w edycji — `onCorrect` (wtedy wiersz rośnie do 44 px). **Zieleń ma tylko `live` i start** — historia jest neutralna | `.axis` (04, 05, 10) |
+| ~~`EventLog`~~ | USUNIĘTY przy issue #44. Był drugim logiem tej samej sesji: szyna z ikonami w plakietkach, chipy licznika i paliwa, pełnoszerokie pasy tankowania, separatory „Lot n". Ta sama sesja czytała się przez to dwa razy inaczej — inne nazwy zdarzeń, inne kolory tego samego lądowania, inne miejsce na te same liczby | — |
 | `ClaimStrip` | pasek sesji CUDZEGO samolotu (04B): czyja maszyna, od kiedy, ile lotów — **przyrząd, nie nawigacja**. Zastąpił `DutyStrip` w etapie C5 (czasu służby w kokpicie NIE MA, §3.2), a 2026-08-10 stracił wariant klikalny razem z paskiem we WŁASNYM kokpicie: z 04/05 nie prowadzi żadna droga na 01 (`CLAUDE.md`, „Kokpit jest stanem modalnym") | `.claim-strip` (04B) |
 | `FuelStrip` | odczyt paliwa + szacunek wystarczalności; ton z `fuelTone` (amber godzinę przed rezerwą, czerwony na rezerwie). **Na 04 stoi tylko przy znanej normie** — bez niej byłby samą liczbą, tą samą co podpis kafelka „Tankowanie" (`logic/cockpitFuel.ts`, 2026-08-10) | `.fuel-strip` (04) |
 | `ActionGrid` | siatka 2×2 akcji naziemnych z podpisem stanu | `.action-grid` |
@@ -1406,7 +1407,7 @@ Interfejs do `application/ports/`, implementacja do `infrastructure/`. Domena i 
 | `imu.test.ts` | matematyki czujników inercyjnych: pułapka „3 %", niezmienniczość względem ułożenia telefonu, zamrożenie filtra grawitacji z budżetem, agregaty okna, tor barometryczny |
 | `sqliteSchema.test.ts` | DDL na prawdziwym silniku SQLite — patrz niżej |
 | `format.test.ts` | formatowania i **parsowania** odczytów w obie strony |
-| `cockpitLog.test.ts` | budowania wierszy logu dnia, w tym wyliczenia łańcucha MH |
+| `cockpitLog.test.ts` | tego, co kokpit dokłada do wspólnej osi sesji: wiersz „na żywo", znaczniki outboxa, stopka sum po zatrzymaniu silnika, bramka karty logu |
 | `flightPhase.test.ts` | fazy lotu i prędkości pionowej — patrz niżej |
 | `refuelMath.test.ts` | wyliczeń tankowania: zużycie L/h, limit dolewki, podziałka |
 | `statsDay.test.ts` | odmian wspólnych ekranowi sesji: liczebnik lotów, rozbicie skoczków |

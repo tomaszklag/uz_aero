@@ -1,248 +1,131 @@
 /**
- * UZ Aero — zdarzenia dnia → wiersze logu (mockup 04 `.day-log`).
+ * UZ Aero — LOG KOKPITU (mockupy 04, 04B, 05) jako oś sesji.
  *
- * Osobny moduł, bo to jedyna nietrywialna logika prezentacji w kokpicie i jedyna,
- * którą da się przetestować bez React Native.
+ * ══ CO SIĘ TU STAŁO PRZY ISSUE #44 ══
+ * Ten moduł budował wcześniej `EventLogRow[]` — własny kształt wiersza dla własnego
+ * komponentu kokpitu: szyna z ikonami w plakietkach, chipy licznika i paliwa przy
+ * uruchomieniu silnika, pełnoszerokie pasy tankowania, separatory „Lot 1 / Lot 2".
+ * Rozliczenie tej samej sesji (10) rysowało tymczasem oś: kolumnę czasu z kropkami,
+ * polskie nazwy zdarzeń i numer lotu przy starcie. Pilot dostawał więc dwa widoki
+ * jednej rzeczy i musiał uczyć się obu.
  *
- * Co jest tu wyliczane, a czego świadomie NIE ma:
- *  • **Chip MH** przy starcie/stopie silnika liczymy z łańcucha (§4.5): odczyt początkowy
- *    plus zsumowany czas bloku. Inwariant „Δ MH = block time" jest sprawdzany w
- *    `projections.test.ts`, więc to wyliczenie, a nie zgadywanie.
- *  • **Chip paliwa** pokazujemy WYŁĄCZNIE tam, gdzie paliwo faktycznie się zmieniło:
- *    przy odczycie początkowym i przy tankowaniu. Mockup ma go przy każdym cyklu, ale
- *    my nie mamy pomiaru zużycia w locie — dopisanie tam liczby byłoby zmyślaniem
- *    danych, a `CLAUDE.md` stawia licznik fizyczny ponad szacunkami.
+ * Odtąd kształt jest jeden (`buildSessionAxis`), a kokpit dokłada do niego dokładnie to,
+ * czego rozliczenie mieć nie może, bo opisuje TERAZ:
+ *  • **wiersz „na żywo"** — licznik od startu (w powietrzu) albo od uruchomienia silnika;
+ *  • **znacznik outboxa** przy wpisach, które czekają na wysyłkę.
+ *
+ * Znikły przy tym trzy rzeczy i każda z własnego powodu:
+ *  • **chipy MH i paliwa przy „Start engine"** — te liczby są odczytem PRZEJĘCIA, więc
+ *    stoją teraz w wierszu przejęcia, tam gdzie na 10. Przy uruchomieniu silnika wisiały
+ *    tylko dlatego, że kokpit nie miał wiersza przejęcia w ogóle;
+ *  • **czas trwania kołowania** — materializował się dopiero przy starcie, więc nigdy
+ *    nie pomógł temu, kto właśnie kołuje, a w rozliczeniu jest ciekawostką (do bloku
+ *    wchodzi cały bieg silnika);
+ *  • **podpis „blok 1:13" przy wyłączeniu** — czas blokowy jest sumą SESJI, nie opisem
+ *    tego jednego zdarzenia; mieszka w stopce osi, którą kokpit pokazuje po zatrzymaniu
+ *    silnika.
  */
 
-import { applyCorrections } from '../../../domain';
-import type { Event, EventOf, MhFormat, SessionState } from '../../../domain';
-import type { EventLogRow, LogChip, LogKind } from '../../components';
-import { duration, durationLong, litres, motoHours, timeUtc } from '../../format';
+import type { Event, SessionState } from '../../../domain';
+import { durationLong } from '../../format';
+import { buildSessionAxis, type AxisFootItem, type AxisRow } from './sessionAxis';
 
-const LABEL: Record<string, string> = {
-  session_claim: 'Przejęcie samolotu',
-  engine_start: 'Start engine',
-  engine_stop: 'Stop engine',
-  taxi: 'Taxi',
-  takeoff: 'Takeoff',
-  landing: 'Landing',
-  drop: 'Zrzut',
-  boarding: 'Załadunek',
-  refuel: 'Tankowanie',
-  crew_change: 'Zmiana załogi',
-  manual_log_entry: 'Wpis ręczny',
-  day_close: 'Zamknięcie dnia',
-};
-
-const KIND: Record<string, LogKind> = {
-  engine_start: 'start',
-  engine_stop: 'stop',
-  taxi: 'taxi',
-  takeoff: 'takeoff',
-  landing: 'landing',
-  refuel: 'ground',
-  crew_change: 'ground',
-  manual_log_entry: 'ground',
-  boarding: 'boarding',
-};
-
-/** Czas zdarzenia: GPS ma pierwszeństwo przed zegarem telefonu (§5.1, dwa zegary). */
-const at = (e: Event): number => e.gpsTime ?? e.deviceTime;
-
-/**
- * Chip zrzutu: liczba skoczków i wysokość — tak jak w mockupie 05. Skład jest od
- * issue #21 opcjonalny: bez deklaracji chip niesie samą wysokość, a bez niej nie ma
- * chipa wcale — „0 skoczków · — ft" wyglądałoby jak zepsuty zapis, nie jak decyzja.
- */
-function dropChips(payload: EventOf<'drop'>['payload']): LogChip[] {
-  const parts: string[] = [];
-  if (payload.jumpers != null) {
-    parts.push(`${payload.jumpers.tandem + payload.jumpers.aff + payload.jumpers.solo} skoczków`);
-  }
-  if (payload.altitudeFt != null) parts.push(`${Math.round(payload.altitudeFt)} ft`);
-  return parts.length > 0 ? [{ label: parts.join(' · '), tone: 'blue' }] : [];
+/** Oś kokpitu: wiersze z wierszem „na żywo" na końcu plus stopka sum, gdy jest co sumować. */
+export interface CockpitAxis {
+  rows: AxisRow[];
+  /**
+   * Sumy sesji — puste, dopóki silnik nie przestał pracować. „BLOK 00:00" pod pracującym
+   * silnikiem nie jest odpowiedzią na żadne pytanie, a czas lotu w locie stoi już
+   * w siatce przyrządów (05).
+   */
+  foot: AxisFootItem[];
+  /**
+   * Czy w sesji zaszło cokolwiek OPERACYJNEGO (kołowanie, start, lądowanie, zrzut,
+   * tankowanie, załadunek, zmiana załogi). Karta logu w locie pojawia się dopiero wtedy
+   * (issue #19): oś złożona z przejęcia, uruchomienia i wiersza „na żywo" powtarzałaby
+   * to, co ekran mówi wyżej.
+   */
+  hasEvents: boolean;
 }
 
-/**
- * Buduje wiersze logu w porządku **chronologicznym** (najstarsze u góry, jak w mockupie —
- * oś czasu czyta się z góry na dół, a szyna cyklu wymaga sąsiedztwa start → stop).
- */
-export function buildLogRows(
-  events: Event[],
-  projection: SessionState,
-  mhFormat: MhFormat,
-): EventLogRow[] {
-  // Log pokazuje strumień EFEKTYWNY (po korektach 04c) — te same czasy, które liczy
-  // projekcja. Surowe czasy istnieją tylko w rejestrze; pokazywanie ich obok
-  // poprawionych myliłoby, a serwer i tak dostaje pełną historię.
-  const ordered = applyCorrections(events).sort((a, b) => at(a) - at(b));
-  const rows: EventLogRow[] = [];
-
-  let mhCursor = projection.mh.start;
-  let openStart: number | null = null;
-  let openTakeoff: number | null = null;
-  let fuelShown = false;
-  /** Indeks wiersza kołowania czekającego na czas trwania (dopisywany przy starcie). */
-  let openTaxi: number | null = null;
-  /** Czasy kołowań pod indeksem wiersza — potrzebne do policzenia różnicy przy starcie. */
-  const taxiTimes: Record<number, number> = {};
-
-  for (const event of ordered) {
-    // Zdarzenia organizacyjne nie są przebiegiem dnia — nie zaśmiecamy nimi osi czasu.
-    // Preflight też zostaje poza logiem: odczyty początkowe ustala się wyłącznie
-    // stepperami 02a i potwierdzeniem 03, a wiersz dawałby im ołówek korekty 04c.
-    // Jego MH i paliwo niesie pierwszy `engine_start` (mockup 04); świeży dzień
-    // zaczyna od pustej osi (04a).
-    if (event.type === 'session_claim' || event.type === 'preflight_confirm') continue;
-
-    const time = timeUtc(at(event));
-    const base = {
-      id: event.uuid,
-      time,
-      label: LABEL[event.type] ?? event.type,
-      kind: KIND[event.type] ?? ('event' as LogKind),
-      pending: event.syncedAt == null,
-    };
-
-    switch (event.type) {
-      case 'engine_start': {
-        openStart = at(event);
-        const chips: EventLogRow['chips'] = [];
-        if (mhCursor != null) chips.push({ label: `MH ${motoHours(mhCursor, mhFormat)}` });
-        if (!fuelShown && projection.fuel.startL != null) {
-          chips.push({ label: litres(projection.fuel.startL), tone: 'amber' });
-          fuelShown = true;
-        }
-        rows.push({ ...base, chips });
-        break;
-      }
-
-      case 'engine_stop': {
-        const blockMs = openStart != null ? at(event) - openStart : null;
-        openStart = null;
-        // STOP bez chipów odczytu (mockup 04, model 2026-08-10): paliwo i MH pilot
-        // poda przy ZDANIU — chip z łańcucha byłby przewidywaniem stojącym o wiersz
-        // od miejsca, w którym za chwilę stanie prawdziwy odczyt.
-        rows.push({
-          ...base,
-          meta: blockMs != null ? `blok ${duration(blockMs)}` : undefined,
-        });
-        break;
-      }
-
-      case 'taxi': {
-        openTaxi = rows.length; // zapamiętujemy wiersz, żeby dopisać mu czas po starcie
-        taxiTimes[openTaxi] = at(event);
-        rows.push(base);
-        break;
-      }
-
-      case 'takeoff': {
-        openTakeoff = at(event);
-        // Kołowanie trwa DO startu (mockup: „13:11 · Taxi · 0:13" i „13:24 · Takeoff").
-        // Czasu nie da się podać w chwili kołowania — dopisujemy go, gdy lot rusza.
-        if (openTaxi != null) {
-          const taxiRow = rows[openTaxi]!;
-          const taxiAt = taxiTimes[openTaxi];
-          if (taxiAt != null) taxiRow.meta = duration(at(event) - taxiAt);
-          openTaxi = null;
-        }
-        rows.push(base);
-        break;
-      }
-
-      case 'landing': {
-        const flightMs = openTakeoff != null ? at(event) - openTakeoff : null;
-        openTakeoff = null;
-        rows.push({ ...base, meta: flightMs != null ? duration(flightMs) : undefined });
-        break;
-      }
-
-      case 'refuel': {
-        // Mockup 04 trzyma w etykiecie samo „Tankowanie", a liczby po prawej:
-        // „+48 L · 10:48". Doklejanie stanu do etykiety rozpychało wiersz i dublowało
-        // informację, którą i tak niesie następny `engine_start`.
-        rows.push({ ...base, meta: `+${Math.round(event.payload.addedL)} L` });
-        break;
-      }
-
-      case 'drop': {
-        rows.push({ ...base, kind: 'drop', chips: dropChips(event.payload) });
-        break;
-      }
-
-      case 'boarding': {
-        // Skład na chipie tylko, gdy go zadeklarowano — załadunek bez liczb to czysty
-        // znacznik faktu i wiersz z samą etykietą mówi dokładnie tyle, ile wiemy.
-        const j = event.payload.jumpers;
-        rows.push({
-          ...base,
-          chips: j != null ? [{ label: `${j.tandem + j.aff + j.solo} skoczków`, tone: 'blue' }] : [],
-        });
-        break;
-      }
-
-      default:
-        rows.push(base);
-    }
-  }
-
-  return rows;
-}
-
-/*
- * `buildDaySections` (harmonijka „CYKL n" z mockupu 04 sprzed pivotu) usunięte
- * 2026-08-10 razem z komponentem `DayLog`: sesja = jeden bieg silnika, więc log
- * kokpitu to płaska oś `buildLogRows` — nie ma czego zwijać.
- */
+/** Wiersze, które nie są jeszcze przebiegiem sesji — po nich karta logu się nie zapala. */
+const QUIET: ReadonlySet<AxisRow['kind']> = new Set(['claim', 'engineStart', 'live']);
 
 /**
- * Log **bieżącego cyklu** (mockup 05 `.cycle-log`): zdarzenia od ostatniego `engine_start`,
- * podzielone separatorami na kolejne loty, zakończone wierszem „na żywo".
+ * Buduje oś kokpitu z lokalnego strumienia sesji.
  *
- * Dlaczego osobno od logu dnia: w powietrzu interesuje wyłącznie ten cykl, a podział na
- * loty jest tu konieczny — przy sześciu wyniesieniach w jednym cyklu bez separatorów nie
- * widać, do którego lotu należy zrzut i które lądowanie go zamyka.
+ * @param events strumień sesji (surowy — korekty nakłada `buildSessionAxis`).
+ * @param projection stan sesji policzony z tego samego strumienia.
+ * @param now „teraz" z tykającego zegara — do licznika „na żywo" i czasu trzymania.
  */
-export function buildCycleRows(
+export function buildCockpitAxis(
   events: Event[],
   projection: SessionState,
-  mhFormat: MhFormat,
   now: number,
-): EventLogRow[] {
-  const ordered = [...events].sort((a, b) => at(a) - at(b));
+): CockpitAxis {
+  const axis = buildSessionAxis(projection, events, now);
+  const rows = withPending(axis.rows, events);
 
-  // Cykl zaczyna się od ostatniego uruchomienia silnika, które nie zostało zamknięte.
-  let cycleStart = -1;
-  for (let i = ordered.length - 1; i >= 0; i -= 1) {
-    if (ordered[i]!.type === 'engine_start') {
-      cycleStart = i;
-      break;
-    }
-  }
-  if (cycleStart < 0) return [];
+  const live = liveRow(projection, now);
+  if (live != null) rows.push(live);
 
-  const rows = buildLogRows(ordered.slice(cycleStart), projection, mhFormat);
+  return {
+    rows,
+    // Trasy stopka NIE powtarza — stoi w pasku górnym kokpitu (reguła stanu modalnego:
+    // ekran nie mówi dwa razy tego samego).
+    foot: projection.blockTimeMs > 0 ? axis.foot.filter((item) => item.id !== 'route') : [],
+    hasEvents: rows.some((row) => !QUIET.has(row.kind)),
+  };
+}
 
-  // Separator przed każdym startem — pierwszy lot cyklu też go dostaje.
-  let flightNo = 0;
-  for (const row of rows) {
-    if (row.kind === 'takeoff') {
-      flightNo += 1;
-      row.section = `Lot ${flightNo}`;
-    }
-  }
+/**
+ * Oś CUDZEJ sesji (podgląd 04B) — bez wiersza „na żywo" i bez znaczników outboxa.
+ *
+ * Outbox opisuje TEN telefon; cudze zdarzenia przyszły z serwera, więc strzałka mówiłaby
+ * o kolejce, której nie znamy. Wiersza „na żywo" nie ma z podobnego powodu: migawka jest
+ * z chwili ostatniego syncu, a zielony licznik sugerowałby, że patrzymy na żywo.
+ * Sumy niesie pasek sesji nad logiem, więc stopki też nie ma.
+ */
+export function buildPeekAxis(events: Event[], projection: SessionState, now: number): AxisRow[] {
+  return buildSessionAxis(projection, events, now).rows;
+}
 
-  // Wiersz „na żywo": licznik od startu, gdy w powietrzu, albo od uruchomienia silnika.
+/**
+ * Znacznik „czeka na wysyłkę" przy wierszu.
+ *
+ * Adresem jest `targetUuid`, a nie `id`: końce osi (przejęcie, zdanie) mają identyfikatory
+ * własne, bo pochodzą z projekcji, a nie z pojedynczego zdarzenia — ale niesie je konkretny
+ * wpis rejestru i to jego stan wysyłki opisujemy.
+ */
+function withPending(rows: AxisRow[], events: readonly Event[]): AxisRow[] {
+  const unsent = new Set(events.filter((e) => e.syncedAt == null).map((e) => e.uuid));
+  if (unsent.size === 0) return [...rows];
+  return rows.map((row) =>
+    row.targetUuid != null && unsent.has(row.targetUuid) ? { ...row, pending: true } : row,
+  );
+}
+
+/**
+ * Wiersz „na żywo": zielona kropka, nazwa stanu i licznik.
+ *
+ * Nie ma godziny w kolumnie czasu, bo nie jest zdarzeniem rejestru — jest czasem TRWANIA,
+ * a te w tej osi stoją po prawej (tam, gdzie czas lotu przy lądowaniu). W powietrzu liczy
+ * od startu, na ziemi od uruchomienia silnika.
+ */
+function liveRow(projection: SessionState, now: number): AxisRow | null {
   const since = projection.openTakeoffAt ?? projection.openEngineStartAt;
-  if (since != null) {
-    rows.push({
-      id: 'live',
-      kind: 'live',
-      time: durationLong(now - since),
-      label: projection.inFlight ? 'In flight…' : 'Silnik pracuje…',
-    });
-  }
+  if (since == null) return null;
 
-  return rows;
+  return {
+    id: 'live',
+    kind: 'live',
+    at: now,
+    time: '',
+    name: projection.inFlight ? 'W locie…' : 'Silnik pracuje…',
+    sub: null,
+    flight: null,
+    duration: durationLong(Math.max(0, now - since)),
+    targetUuid: null,
+    corrected: false,
+  };
 }
