@@ -31,7 +31,24 @@ import { TrackPolyline, type Point2D } from './TrackPolyline';
 
 /** Miejsce na etykiety osi — pod wykresem czas, po lewej wysokość. */
 const AXIS_LEFT = 42;
-const AXIS_BOTTOM = 20;
+
+/**
+ * Dolny pas wykresu, rozpisany na składniki — bo mieszka w nim więcej niż jedna rzecz
+ * i sumowanie „na oko" już raz kosztowało ucięte podpisy.
+ *
+ * Od dołu ku górze: margines, podziałka czasu (podpis + pasek), odstęp, do dwóch rzędów
+ * godzin przy znacznikach, odstęp od linii ziemi.
+ */
+const LABEL_TOP_GAP = 5;
+const LABEL_ROW_H = 9;
+const LABEL_ROWS = 2;
+const SCALE_GAP = 8;
+/** Podpis (~9) + odstęp (2) + pasek (4). */
+const SCALE_H = 15;
+const SCALE_BOTTOM = 4;
+
+const AXIS_BOTTOM =
+  LABEL_TOP_GAP + LABEL_ROWS * LABEL_ROW_H + SCALE_GAP + SCALE_H + SCALE_BOTTOM;
 
 /**
  * Oddech na obu końcach osi czasu (px).
@@ -45,7 +62,6 @@ const PLOT_PAD_X = 16;
 
 /** Szerokość podpisu „08:20" w `micro` — do rozsuwania rzędów. */
 const TIME_LABEL_W = 36;
-const LABEL_ROW_H = 9;
 
 /**
  * Znacznik na profilu. Kolor i podpis dobiera EKRAN — komponent nie zna rodzajów
@@ -395,9 +411,9 @@ const styles = StyleSheet.create({
   curveTime: { position: 'absolute', textAlign: 'right' },
   curveNote: { position: 'absolute' },
   groundTime: { position: 'absolute', width: TIME_LABEL_W, textAlign: 'center' },
-  // Lewy górny róg pola: krzywa zaczyna się nisko (elewacja pola), więc tam jest pusto
-  // przez cały bieg silnika — inaczej niż w prawym, gdzie przy geście staje odczyt.
-  timeScale: { position: 'absolute', left: 4, top: 6, gap: 2 },
+  // LEWY DOLNY róg — tam, gdzie podziałka odległości na mapie. Dwa wykresy jednego
+  // ekranu mają swoje skale w tym samym miejscu, więc oko szuka ich raz.
+  timeScale: { position: 'absolute', left: 4, bottom: SCALE_BOTTOM, gap: 2 },
   timeScaleBar: { height: 4, borderWidth: 1, borderTopWidth: 0 },
   cursor: { position: 'absolute', top: 8, width: 1, opacity: 0.5 },
   cursorDot: { position: 'absolute', width: 6, height: 6, borderRadius: 3 },

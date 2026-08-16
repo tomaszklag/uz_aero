@@ -126,12 +126,12 @@
   .metric-label { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
 
   /* ===== PROFIL PIONOWY ===== */
-  .profile-wrap { position:relative; height:172px; padding:10px 10px 4px; }
+  .profile-wrap { position:relative; height:204px; padding:10px 10px 4px; }
   .profile-wrap svg { display:block; width:100%; height:100%; overflow:visible; }
   /* Podziałka CZASU — wskaźnik przybliżenia profilu, dokładnie jak podziałka
      odległości na mapie: po zoomie czyta „2 min" zamiast „15 min". Bez niej
      między dwoma znacznikami nie ma ani jednej liczby o czasie. */
-  .profile-scale { position:absolute; left:46px; top:16px; display:flex; flex-direction:column; gap:2px; }
+  .profile-scale { position:absolute; left:46px; bottom:8px; display:flex; flex-direction:column; gap:2px; }
   .profile-scale-bar { width:52px; height:4px; border:1px solid var(--text-secondary); border-top:none; }
   .profile-scale-label { font-family:var(--font-mono); font-size:7px; color:var(--text-secondary); letter-spacing:1px; }
   .axis-label { font-family:var(--font-mono); font-size:7px; fill:var(--text-muted); letter-spacing:0.5px; }
@@ -400,7 +400,7 @@
             <span class="profile-scale-label">15 min</span>
             <span class="profile-scale-bar"></span>
           </div>
-          <svg viewBox="0 0 340 150" preserveAspectRatio="none">
+          <svg viewBox="0 0 340 180" preserveAspectRatio="none">
             <defs>
               <linearGradient id="alt-fill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="#2ECC71" stop-opacity="0.30"/>

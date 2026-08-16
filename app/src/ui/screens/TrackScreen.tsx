@@ -52,9 +52,16 @@ import { useSkeleton } from '../hooks/useSkeleton';
 import { mapMarkers, profileMarkers } from './logic/trackMarkers';
 import { trackStatsView, type PhaseBarSegment } from './logic/trackStatsRows';
 
-/** Wysokość mapy i profilu — proporcje z mockupu 14 przy szerokości telefonu. */
+/**
+ * Wysokość mapy i profilu — proporcje z mockupu 14 przy szerokości telefonu.
+ *
+ * Profil urósł ze 172 px przy przeglądzie: pod linią ziemi mieszczą się teraz dwa rzędy
+ * godzin przy znacznikach ORAZ podziałka czasu w lewym dolnym rogu (tam, gdzie mapa ma
+ * swoją). Rozpis dolnego pasa jest w `VerticalProfile` — `AXIS_BOTTOM` liczy się
+ * ze składników, żeby nikt nie musiał go sumować na oko.
+ */
 const MAP_HEIGHT = 300;
-const PROFILE_HEIGHT = 172;
+const PROFILE_HEIGHT = 204;
 
 export interface TrackScreenParams {
   sessionUuid: string;
