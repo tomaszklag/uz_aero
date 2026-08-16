@@ -38,7 +38,6 @@ import {
   AppText,
   Banner,
   Card,
-  DataTable,
   Screen,
   ScreenHeader,
   Skeleton,
@@ -46,7 +45,6 @@ import {
   SyncChip,
   TrackMap,
   VerticalProfile,
-  type DataTableRow,
 } from '../components';
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
@@ -115,7 +113,16 @@ export function TrackScreen({
     () => (view == null ? [] : profileMarkers(view.markers, palette)),
     [view, palette],
   );
-  const stats = useMemo(() => (view == null ? null : trackStatsView(view.stats)), [view]);
+  const stats = useMemo(
+    () =>
+      view == null
+        ? null
+        : trackStatsView(view.stats, {
+            climbFtPerMin: view.profile.averageClimbFtPerMin,
+            descentFtPerMin: view.profile.averageDescentFtPerMin,
+          }),
+    [view],
+  );
 
   const moveCursor = useCallback((at: number | null) => setCursorAt(at), []);
 
@@ -244,18 +251,9 @@ export function TrackScreen({
               background={theme.colors.overlay}
             />
           </View>
-          {profile.averageClimbFtPerMin != null && (
-            <View style={styles.profileFoot}>
-              <AppText variant="micro" tone="muted">
-                Wznoszenie śr. {Math.round(profile.averageClimbFtPerMin)} ft/min
-              </AppText>
-              {profile.averageDescentFtPerMin != null && (
-                <AppText variant="micro" tone="muted">
-                  Zejście śr. {Math.round(profile.averageDescentFtPerMin)} ft/min
-                </AppText>
-              )}
-            </View>
-          )}
+          {/* Średnie wznoszenie i zejście stały tu jako podpis wykresu — od przeglądu
+              issue #47 są w „Statystykach lotu", obok maksimów tych samych wielkości.
+              To liczby o CAŁYM locie, a nie objaśnienie rysunku. */}
         </Card>
 
         {/* ── statystyki lotu (issue #47 pkt 3) ──────────────────────────── */}
@@ -302,7 +300,7 @@ export function TrackScreen({
 
             {stats.speed != null && (
               <StatBlock title="Prędkość i pion">
-                <StatGrid columns={4} cells={stats.speed} />
+                <StatGrid columns={3} cells={stats.speed} />
               </StatBlock>
             )}
 
@@ -325,40 +323,16 @@ export function TrackScreen({
           </Card>
         )}
 
-        {/* ── log punktów ────────────────────────────────────────────────── */}
-        <Card
-          title="Log punktów · UTC"
-          headerRight={
-            <AppText variant="micro" tone="muted">
-              {view.log.length} z {track.totalCount}
-            </AppText>
-          }
-          flush
-        >
-          <DataTable
-            columns={[
-              { label: 'Czas', width: 62 },
-              { label: 'Pozycja' },
-              { label: 'GS', width: 34 },
-              { label: 'Wys.', width: 52 },
-              { label: 'Stan', width: 58 },
-            ]}
-            rows={logRows(view)}
-            emptyText="Brak punktów w tej sesji."
-          />
-        </Card>
+        {/* LOGU PUNKTÓW NIE MA (przegląd issue #47). Tabela surowych fixów ze stanem
+            bramki jakości jest materiałem do STROJENIA PROGÓW, a nie odpowiedzią na
+            żadne pytanie pilota — i tam została: w panelu (A02c) oraz w nagraniu, które
+            czyta `server/scripts/replay.ts`. Liczba punktów przyjętych i odrzuconych
+            zostaje w podsumowaniu, bo ona jedna mówi coś o jakości TEGO zapisu.
 
-        {/* Baner STATUSU, nie pouczający: opisuje właściwość ekranu (co skąd pochodzi),
-            a nie jednorazową wskazówkę — więc nie jest zamykalny (§ banery, typ 1). */}
-        <Banner
-          kind="status"
-          tone="blue"
-          text={
-            'Ślad pobiera się z serwera — telefon nagrywa go w locie, oddaje przy pierwszej ' +
-            'okazji i nie trzyma kopii. Mapa nie pobiera kafelków: siatka i lotniska są ' +
-            'z katalogu w aplikacji. Wysokość jest z GPS, nie ciśnieniowa.'
-          }
-        />
+            Nie ma też banera „Ślad pobiera się z serwera…": to była informacja o BUDOWIE
+            aplikacji, opowiedziana komuś, kto o nią nie pytał (ta sama reguła, którą
+            issue #43 wyrzuciło przypisy o append-only). Brak zasięgu i tak mówi
+            wszystko, co trzeba, wprost na ekranie 14C. */}
       </View>
     </Screen>
   );
@@ -523,41 +497,6 @@ function feet(value: number): string {
   return `${Math.round(value).toLocaleString('pl-PL')} ft`;
 }
 
-/** Wiersze logu: czas, pozycja, prędkość, wysokość i stan bramki jakości. */
-function logRows(view: SessionTrackView): DataTableRow[] {
-  return view.log.map((point, index) => ({
-    id: `${point.time}-${index}`,
-    label: `punkt ${timeUtc(point.time)} UTC`,
-    cells: [
-      { text: timeUtc(point.time) },
-      {
-        text: point.rejected === 'no-position' ? '— —' : formatLatLon(point.lat, point.lon),
-        muted: true,
-      },
-      { text: point.groundSpeedKt != null ? String(Math.round(point.groundSpeedKt)) : '—' },
-      {
-        text:
-          point.altitudeFt != null ? Math.round(point.altitudeFt).toLocaleString('pl-PL') : '—',
-      },
-      rejectionCell(point.rejected, point.accuracyM),
-    ],
-  }));
-}
-
-/**
- * Komórka stanu: „OK" albo powód odrzucenia. Powód jest treścią, nie ozdobą —
- * po to istnieje ten log (mockup 14, przypis pod tabelą).
- */
-function rejectionCell(rejected: string | null, accuracyM: number | null) {
-  if (rejected == null) return { text: 'OK', chip: 'green' as const };
-  if (rejected === 'accuracy') {
-    return { text: accuracyM != null ? `± ${Math.round(accuracyM)} m` : 'dokładność', chip: 'amber' as const };
-  }
-  if (rejected === 'jump') return { text: 'skok', chip: 'amber' as const };
-  if (rejected === 'speed') return { text: 'prędkość', chip: 'amber' as const };
-  return { text: 'brak poz.', chip: 'amber' as const };
-}
-
 /**
  * Warianty 14B i 14C — nie ma czego rysować. Pokazujemy POWÓD i to, co mimo wszystko
  * wiadomo: czasy sesji są pełnoprawne, bo liczą się z lokalnego rejestru. Brakuje
@@ -658,7 +597,6 @@ function flightsLabel(count: number): string {
 
 const styles = StyleSheet.create({
   content: { padding: 14, gap: 11 },
-  profileFoot: { flexDirection: 'row', justifyContent: 'space-between', padding: 12, paddingTop: 6 },
   missingText: { lineHeight: 19 },
   statBlock: { borderTopWidth: 1 },
   statBlockFirst: { borderTopWidth: 0 },

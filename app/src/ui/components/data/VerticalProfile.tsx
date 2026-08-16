@@ -33,7 +33,7 @@ const AXIS_LEFT = 42;
 const AXIS_BOTTOM = 20;
 
 /** Szerokość podpisu „08:20" w `micro` — do rozsuwania rzędów. */
-const TIME_LABEL_W = 30;
+const TIME_LABEL_W = 36;
 const LABEL_ROW_H = 9;
 
 /**
@@ -133,23 +133,16 @@ export function VerticalProfile({
     };
   }, [profile, width, height]);
 
-  // Rzędy podpisów przy ziemi liczymy dla WSZYSTKICH naraz, bo kolizja jest sprawą
-  // między nimi, a nie cechą pojedynczego znacznika.
-  const groundRows = useMemo(() => {
-    if (plot == null) return [];
-    const ground = markers.filter((m) => m.onCurve !== true);
-    return assignLabelRows(
-      ground.map((m) => plot.toPoint(m.at, 0).x),
-      ground.map(() => TIME_LABEL_W),
-    );
-  }, [markers, plot]);
-
   /**
-   * Na profilu osią jest CZAS, więc kursor to zwykłe przeliczenie X na chwilę —
-   * inaczej niż na mapie, gdzie trzeba szukać najbliższego wierzchołka trasy.
+   * Gest siedzi na POLU WYKRESU, nie na całym komponencie: dzięki temu współrzędne
+   * dotknięcia są od razu w układzie pola (bez `AXIS_LEFT`), a przybliżenie ma ten sam
+   * mianownik, co przycinanie. Zoom jest wyłącznie POZIOMY — rozciąga czas, bo to on
+   * rozdziela zdarzenia leżące na sobie; wysokość jest już dobrana do zakresu lotu.
    */
   const gesture = useChartGesture({
-    size: { width, height },
+    size: { width: plot?.plotW ?? width, height },
+    zoomable: true,
+    zoomAxis: 'x',
     onScrub: useCallback(
       (point: Point2D | null) => {
         if (onCursorChange == null) return;
@@ -157,13 +150,39 @@ export function VerticalProfile({
           onCursorChange(null);
           return;
         }
-        const ratio = (point.x - AXIS_LEFT) / plot.plotW;
-        const clamped = Math.min(1, Math.max(0, ratio));
-        onCursorChange(plot.t0 + clamped * (plot.t1 - plot.t0));
+        // Z ekranu → przez kadr → na oś czasu.
+        const base = (point.x - viewportRef.current.offsetX) / viewportRef.current.scale;
+        const ratio = Math.min(1, Math.max(0, base / plot.plotW));
+        onCursorChange(plot.t0 + ratio * (plot.t1 - plot.t0));
       },
       [onCursorChange, plot],
     ),
   });
+
+  const viewportRef = React.useRef(gesture.viewport);
+  viewportRef.current = gesture.viewport;
+
+  /** Chwila → X w polu wykresu, już po przybliżeniu. */
+  const timeX = useCallback(
+    (at: number): number => {
+      if (plot == null) return 0;
+      const base = ((at - plot.t0) / Math.max(1, plot.t1 - plot.t0)) * plot.plotW;
+      return base * gesture.viewport.scale + gesture.viewport.offsetX;
+    },
+    [plot, gesture.viewport],
+  );
+
+  // Rzędy podpisów przy ziemi liczymy dla WSZYSTKICH naraz, bo kolizja jest sprawą
+  // między nimi, a nie cechą pojedynczego znacznika. Przy przybliżeniu znaczniki się
+  // rozjeżdżają, więc rzędów ubywa samo z siebie.
+  const groundRows = useMemo(() => {
+    if (plot == null) return [];
+    const ground = markers.filter((m) => m.onCurve !== true);
+    return assignLabelRows(
+      ground.map((m) => timeX(m.at)),
+      ground.map(() => TIME_LABEL_W),
+    );
+  }, [markers, plot, timeX]);
 
   if (plot == null) {
     return (
@@ -179,8 +198,17 @@ export function VerticalProfile({
   const gridSteps = [0, 1, 2, 3];
   let groundIndex = -1;
 
+  const { scale, offsetX } = gesture.viewport;
+  /** Punkt krzywej w układzie POLA WYKRESU (bez `AXIS_LEFT`), po przybliżeniu. */
+  const curvePoints: Point2D[] = plot.points.map((point) => ({
+    x: (point.x - AXIS_LEFT) * scale + offsetX,
+    y: point.y,
+  }));
+
   return (
-    <View style={{ width, height }} {...gesture.panHandlers}>
+    <View style={{ width, height }}>
+      {/* Siatka i podpisy wysokości stoją POZA polem wykresu: oś pionowa się nie
+          przybliża, więc nie ma powodu, żeby jechała razem z trasą. */}
       {gridSteps.map((i) => {
         const ratio = i / (gridSteps.length - 1);
         const y = 8 + plot.plotH * ratio;
@@ -200,101 +228,124 @@ export function VerticalProfile({
         );
       })}
 
-      <TrackPolyline points={plot.points} color={theme.colors.green} width={2} />
+      {/* POLE WYKRESU: wszystko, co jedzie z czasem, siedzi w przyciętym pudełku —
+          przy przybliżeniu trasa i podpisy wyjeżdżają poza kadr zamiast wchodzić
+          na podpisy wysokości po lewej. */}
+      <View
+        style={[styles.plotBox, { left: AXIS_LEFT, width: plot.plotW, height }]}
+        {...gesture.panHandlers}
+      >
+        <TrackPolyline points={curvePoints} color={theme.colors.green} width={2} />
 
-      {markers.map((marker, index) => {
-        const x = plot.toPoint(marker.at, 0).x;
+        {markers.map((marker, index) => {
+          const x = timeX(marker.at);
 
-        if (marker.onCurve === true) {
-          const y = plot.toPoint(marker.at, plot.altitudeAt(marker.at)).y;
+          if (marker.onCurve === true) {
+            const y = plot.toPoint(marker.at, plot.altitudeAt(marker.at)).y;
+            return (
+              <View key={`${marker.at}-${index}`} pointerEvents="none">
+                {/* Kreska prowadząca do osi — bez niej nie widać, kiedy to było. */}
+                <View
+                  style={[
+                    styles.guide,
+                    {
+                      left: x,
+                      top: y,
+                      height: Math.max(0, plot.baseline + 7 - y),
+                      backgroundColor: marker.color,
+                    },
+                  ]}
+                />
+                <View
+                  style={[styles.dot, { left: x - 3.5, top: y - 3.5, backgroundColor: marker.color }]}
+                />
+                <AppText
+                  variant="micro"
+                  numberOfLines={1}
+                  style={[
+                    styles.curveTime,
+                    { right: plot.plotW - x + 5, top: y - 12, color: marker.color },
+                  ]}
+                >
+                  {timeUtc(marker.at)}
+                </AppText>
+                {marker.note != null && (
+                  <AppText
+                    variant="micro"
+                    numberOfLines={1}
+                    style={[styles.curveNote, { left: x + 6, top: y - 12, color: marker.color }]}
+                  >
+                    {marker.note}
+                  </AppText>
+                )}
+              </View>
+            );
+          }
+
+          groundIndex += 1;
+          const row = groundRows[groundIndex] ?? 0;
           return (
             <View key={`${marker.at}-${index}`} pointerEvents="none">
-              {/* Kreska prowadząca do osi — bez niej nie widać, kiedy to było. */}
               <View
                 style={[
-                  styles.guide,
-                  { left: x, top: y, height: Math.max(0, plot.baseline + 7 - y), backgroundColor: marker.color },
+                  styles.dot,
+                  { left: x - 3.5, top: plot.baseline - 3.5, backgroundColor: marker.color },
                 ]}
               />
-              <View
-                style={[styles.dot, { left: x - 3.5, top: y - 3.5, backgroundColor: marker.color }]}
-              />
+              {/* `numberOfLines` jest tu WARUNKIEM POPRAWNOŚCI, nie ozdobą: pudełko ma
+                  stałą szerokość, więc godzina odrobinę szersza od niego łamała się na
+                  dwie linie i oś czasu robiła się dwurzędowa (zgłoszenie z przeglądu). */}
               <AppText
                 variant="micro"
-                style={[styles.curveTime, { right: width - x + 5, top: y - 12, color: marker.color }]}
+                numberOfLines={1}
+                style={[
+                  styles.groundTime,
+                  {
+                    left: x - TIME_LABEL_W / 2,
+                    top: plot.baseline + 5 + row * LABEL_ROW_H,
+                    color: marker.color,
+                  },
+                ]}
               >
                 {timeUtc(marker.at)}
               </AppText>
-              {marker.note != null && (
-                <AppText
-                  variant="micro"
-                  style={[styles.curveNote, { left: x + 6, top: y - 12, color: marker.color }]}
-                >
-                  {marker.note}
-                </AppText>
-              )}
             </View>
           );
-        }
+        })}
 
-        groundIndex += 1;
-        const row = groundRows[groundIndex] ?? 0;
-        return (
-          <View key={`${marker.at}-${index}`} pointerEvents="none">
+        {/* Kursor sprzężony z mapą — biały, bo nie jest zdarzeniem rejestru. */}
+        {cursorAt != null && (
+          <View pointerEvents="none">
             <View
               style={[
-                styles.dot,
-                { left: x - 3.5, top: plot.baseline - 3.5, backgroundColor: marker.color },
-              ]}
-            />
-            <AppText
-              variant="micro"
-              style={[
-                styles.groundTime,
+                styles.cursor,
                 {
-                  left: x - TIME_LABEL_W / 2,
-                  top: plot.baseline + 5 + row * LABEL_ROW_H,
-                  color: marker.color,
+                  left: timeX(cursorAt),
+                  height: plot.plotH,
+                  backgroundColor: theme.colors.textPrimary,
                 },
               ]}
-            >
-              {timeUtc(marker.at)}
-            </AppText>
+            />
+            <View
+              style={[
+                styles.cursorDot,
+                {
+                  left: timeX(cursorAt) - 3,
+                  top: plot.toPoint(cursorAt, plot.altitudeAt(cursorAt)).y - 3,
+                  backgroundColor: theme.colors.textPrimary,
+                },
+              ]}
+            />
           </View>
-        );
-      })}
-
-      {/* Kursor sprzężony z mapą — biały, bo nie jest zdarzeniem rejestru. */}
-      {cursorAt != null && (
-        <View pointerEvents="none">
-          <View
-            style={[
-              styles.cursor,
-              {
-                left: plot.toPoint(cursorAt, 0).x,
-                height: plot.plotH,
-                backgroundColor: theme.colors.textPrimary,
-              },
-            ]}
-          />
-          <View
-            style={[
-              styles.cursorDot,
-              {
-                left: plot.toPoint(cursorAt, 0).x - 3,
-                top: plot.toPoint(cursorAt, plot.altitudeAt(cursorAt)).y - 3,
-                backgroundColor: theme.colors.textPrimary,
-              },
-            ]}
-          />
-        </View>
-      )}
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center' },
+  plotBox: { position: 'absolute', top: 0, overflow: 'hidden' },
   gridLine: { position: 'absolute', height: 1 },
   axisLabel: { position: 'absolute', left: 0, width: AXIS_LEFT - 6, textAlign: 'right' },
   dot: { position: 'absolute', width: 7, height: 7, borderRadius: 3.5 },

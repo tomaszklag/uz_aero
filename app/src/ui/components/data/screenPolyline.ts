@@ -68,3 +68,48 @@ export function screenPath(
   out.push(points[points.length - 1]!);
   return out;
 }
+
+/**
+ * Kąt załamania, powyżej którego wierzchołek dostaje ZAŚLEPKĘ (radiany, ~20°).
+ *
+ * Łamana z obróconych prostokątów styka się w punkcie osi, a nie całą krawędzią: przy
+ * ostrym zakręcie po zewnętrznej stronie zostaje klinowaty wycinek, a Android dokłada
+ * do tego zaokrąglanie pozycji do pełnych pikseli. Efekt widać dokładnie tam, gdzie
+ * trasa się przełamuje — linia wygląda, jakby się urywała i zaczynała od nowa.
+ *
+ * Zaślepka to kropka o średnicy grubości kreski, postawiona na wierzchołku. Stawiamy ją
+ * WYŁĄCZNIE przy realnym załamaniu, bo przy prostej byłaby setką widoków bez powodu.
+ */
+export const JOINT_MIN_ANGLE_RAD = 0.35;
+
+/**
+ * Wierzchołki wymagające zaślepki — te, na których kierunek zmienia się na tyle,
+ * że styk dwóch prostokątów zostawia szczerbę.
+ */
+export function polylineJoints(
+  path: readonly Point2D[],
+  minAngleRad: number = JOINT_MIN_ANGLE_RAD,
+): Point2D[] {
+  if (path.length < 3) return [];
+
+  const joints: Point2D[] = [];
+
+  for (let i = 1; i < path.length - 1; i++) {
+    const previous = path[i - 1]!;
+    const current = path[i]!;
+    const next = path[i + 1]!;
+
+    const inAngle = Math.atan2(current.y - previous.y, current.x - previous.x);
+    const outAngle = Math.atan2(next.y - current.y, next.x - current.x);
+
+    // Różnicę sprowadzamy do <−π, π>, żeby przejście przez 180° nie udawało zakrętu
+    // o pełny obrót.
+    let delta = outAngle - inAngle;
+    while (delta > Math.PI) delta -= 2 * Math.PI;
+    while (delta < -Math.PI) delta += 2 * Math.PI;
+
+    if (Math.abs(delta) >= minAngleRad) joints.push(current);
+  }
+
+  return joints;
+}

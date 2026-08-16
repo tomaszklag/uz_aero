@@ -40,8 +40,15 @@ export interface ChartGestureOptions {
   size: ViewportSize;
   /** Dotknięcie w układzie EKRANU wykresu; `null` = palec zszedł. */
   onScrub: (point: Point2D | null) => void;
-  /** Mapa: tak. Profil: nie — tam osią jest czas i przybliżenie nie ma czego dodać. */
   zoomable?: boolean;
+  /**
+   * Oś przybliżenia. Mapa ma dwie (`both`), profil JEDNĄ (`x`): jego pionem jest
+   * wysokość dobrana do zakresu lotu, więc rozciąganie jej niczego nie odsłania —
+   * a rozciągnięcie CZASU owszem, bo to ono rozdziela zdarzenia leżące na sobie.
+   * Przy `x` krotność bierze się z rozjazdu palców w POZIOMIE: rozsunięcie ich
+   * w pionie nie jest gestem o czasie i nie ma prawa nic zmienić.
+   */
+  zoomAxis?: 'both' | 'x';
 }
 
 export interface ChartGesture {
@@ -55,6 +62,7 @@ export function useChartGesture({
   size,
   onScrub,
   zoomable = false,
+  zoomAxis = 'both',
 }: ChartGestureOptions): ChartGesture {
   const [viewport, setViewport] = useState<MapViewport>(IDENTITY_VIEWPORT);
 
@@ -102,8 +110,12 @@ export function useChartGesture({
             const b = touchPoint(event, 1);
             if (a == null || b == null) return;
 
-            const distance = Math.hypot(b.x - a.x, b.y - a.y);
-            const focus = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+            const distance =
+              zoomAxis === 'x' ? Math.abs(b.x - a.x) : Math.hypot(b.x - a.x, b.y - a.y);
+            const focus = {
+              x: (a.x + b.x) / 2,
+              y: zoomAxis === 'x' ? 0 : (a.y + b.y) / 2,
+            };
             const previous = pinchDistance.current;
             pinchDistance.current = distance;
 
@@ -121,9 +133,16 @@ export function useChartGesture({
               const from = lastTouch.current;
               // Przesunięcie ogniska między klatkami to PRZESUNIĘCIE kadru — dzięki
               // temu jeden gest robi obie rzeczy, tak jak w każdej mapie.
-              return from == null
-                ? zoomed
-                : panViewport(zoomed, focus.x - from.x, focus.y - from.y, sizeRef.current);
+              const moved =
+                from == null
+                  ? zoomed
+                  : panViewport(
+                      zoomed,
+                      focus.x - from.x,
+                      zoomAxis === 'x' ? 0 : focus.y - from.y,
+                      sizeRef.current,
+                    );
+              return zoomAxis === 'x' ? { ...moved, offsetY: 0 } : moved;
             });
 
             lastTouch.current = focus;

@@ -694,14 +694,15 @@ Kierunek jest odtąd odwrócony: telefon **nagrywa → oddaje (`POST /traces`) �
 a ekran śladu pobiera gotową geometrię z `GET /me/sessions/:uuid/track`.
 
 - **co wraca:** WYŁĄCZNIE geometria i liczby z niej policzone — linia po uproszczeniu
-  RDP, profil pionowy, próbka logu i statystyki lotu. Rejestracji maszyny, listy lotów
-  ani czasów w kopercie NIE MA
+  RDP, profil pionowy i statystyki lotu. Rejestracji maszyny, listy lotów ani czasów
+  w kopercie NIE MA. Logu punktów też nie: tabela surowych fixów ze stanem bramki
+  jakości jest materiałem do strojenia progów i została w panelu (A02c) oraz
+  w nagraniu czytanym przez `replay.ts` (przegląd 2026-08-15)
 - **co zostaje lokalne:** wszystko powyższe. Czasy startów, loty, czas w powietrzu i bieg
   silnika liczą się dalej z lokalnego rejestru — dlatego wariant bez zasięgu (`14c`)
   pokazuje komplet czasów i mówi wprost, że brakuje mu wyłącznie rysunku
 - **kompresja (pkt 6 zgłoszenia):** RDP w metrach na linii, RDP w stopach na profilu,
-  próbka logu co 30 s plus komplet odrzuconych, współrzędne do 5 miejsc (~1 m). Nagranie
-  o kilku MB schodzi do kilkudziesięciu kB. Statystyki liczą się PRZED upraszczaniem,
+  współrzędne do 5 miejsc (~1 m). Nagranie o kilku MB schodzi do kilkudziesięciu kB. Statystyki liczą się PRZED upraszczaniem,
   z kompletu punktów — inaczej „max wznoszenie" zależałoby od tolerancji rysowania
 - **okno bierze się z REJESTRU, nie ze śladu** (jak w panelu): po korekcie czasu startu
   ślad zmienia się sam przy następnym otwarciu

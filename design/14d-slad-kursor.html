@@ -114,16 +114,10 @@
   }
   .legend-row { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:8px; color:var(--text-secondary); letter-spacing:0.5px; }
   .legend-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-  /* Atrybucja: pasy lotnisk aeroklubowych pochodzą z OpenStreetMap (licencja ODbL),
-     więc podpis jest wymogiem licencji, a nie ozdobą — stąd przy samych danych.
-     Nazwa klasy ta sama, co kanoniczna w panelu (`design/admin/SZABLON.html`). */
-  .map-attrib {
-    position:absolute; right:8px; bottom:6px; font-family:var(--font-mono); font-size:7px;
-    letter-spacing:0.5px; color:var(--text-muted);
-  }
 
   /* ===== KAFLE METRYK ===== */
   .metric-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1px; background:var(--border); }
+  .metric-grid.three { grid-template-columns:1fr 1fr 1fr; }
   .metric-cell { background:var(--surface); padding:9px 8px; display:flex; flex-direction:column; gap:2px; align-items:center; }
   .metric-val { font-family:var(--font-display); font-size:21px; letter-spacing:1px; line-height:1; color:var(--text-primary); }
   .metric-val.green { color:var(--green); }
@@ -137,10 +131,6 @@
   .axis-label { font-family:var(--font-mono); font-size:7px; fill:var(--text-muted); letter-spacing:0.5px; }
   .grid-line { stroke:var(--border); stroke-width:1; }
   .grid-line.dashed { stroke-dasharray:2 3; }
-  .profile-foot {
-    display:flex; justify-content:space-between; padding:6px 12px 9px;
-    font-family:var(--font-mono); font-size:8px; color:var(--text-muted); letter-spacing:1px;
-  }
 
   /* ===== STATYSTYKI (issue #47 pkt 3) ===== */
   /* Trzy bloki w JEDNEJ karcie, bo odpowiadają na jedno pytanie („jak leciałem"),
@@ -185,44 +175,8 @@
   .profile-wrap .chart-readout { right:14px; top:14px; }
 
   /* ===== LOG PUNKTÓW ===== */
-  .log-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); }
-  .log-table th {
-    font-size:7px; letter-spacing:1.3px; text-transform:uppercase;
-    color:var(--text-muted); padding:7px 7px; border-bottom:1px solid var(--border);
-    text-align:left; white-space:nowrap;
-  }
-  .log-table td {
-    font-size:10px; color:var(--text-primary); padding:7px 7px;
-    border-bottom:1px solid var(--border); white-space:nowrap;
-  }
-  .log-table tr:last-child td { border-bottom:none; }
-  .log-table td.dim { color:var(--text-muted); }
-  .log-table tr.rejected td { color:var(--text-muted); }
-  .log-table tr.rejected td.reason { color:var(--amber); }
-  .log-table tr.marker td { background:rgba(46,204,113,0.05); }
-  .pos { font-size:9px; letter-spacing:-0.2px; }
-  .pill-mini {
-    font-size:7px; letter-spacing:1px; padding:2px 5px; border-radius:4px;
-    text-transform:uppercase; white-space:nowrap;
-  }
-  .pill-mini.ok { color:var(--green); background:var(--green-muted); }
-  .pill-mini.rej { color:var(--amber); background:var(--amber-muted); }
-  .pill-mini.evt { color:var(--blue); background:var(--blue-muted); }
-  .log-foot {
-    padding:9px 12px; border-top:1px solid var(--border);
-    font-size:10px; color:var(--text-secondary); line-height:1.5;
-  }
-  .log-foot b { color:var(--text-primary); font-weight:600; }
 
   /* Pouczenie o źródle danych */
-  .note-banner {
-    display:flex; align-items:flex-start; gap:9px;
-    background:var(--blue-muted); border:1px solid rgba(52,152,219,0.28);
-    border-radius:12px; padding:11px 13px;
-  }
-  .note-icon { color:var(--blue); flex-shrink:0; margin-top:1px; }
-  .note-text { font-size:11px; color:var(--text-secondary); line-height:1.55; }
-  .note-text b { color:var(--blue); font-weight:600; }
 
   /* ===== VARIANTS PANEL ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -419,7 +373,8 @@
             <span class="map-scale-bar"></span>
           </div>
 
-          <div class="map-attrib">lotniska: OurAirports · © OpenStreetMap</div>
+          <!-- ŹRÓDŁA KATALOGU NIE STOJĄ NA MAPIE (2026-08-15): atrybucja ODbL
+               przeniesiona do docs/dane-lotnisk.md §3.2. -->
         </div>
 
         <!-- POD MAPĄ NIE MA NIC (issue #47, przegląd): liczby zeszły do karty
@@ -530,10 +485,6 @@
             <span class="ro-dim">+840 ft/min</span>
           </div>
         </div>
-        <div class="profile-foot">
-          <span>Wznoszenie śr. 640 ft/min</span>
-          <span>Zejście śr. −1 180 ft/min</span>
-        </div>
       </div>
 
       <!-- ══ STATYSTYKI (issue #47 pkt 3) ══════════════════════════════════ -->
@@ -577,16 +528,11 @@
 
         <div class="stat-block">
           <div class="stat-block-head">Prędkość i pion</div>
-          <div class="metric-grid">
+          <div class="metric-grid three">
             <div class="metric-cell">
               <span class="metric-val">118</span>
               <span class="metric-unit">kt</span>
               <span class="metric-label">Max GS</span>
-            </div>
-            <div class="metric-cell">
-              <span class="metric-val">84</span>
-              <span class="metric-unit">kt</span>
-              <span class="metric-label">Śr. w locie</span>
             </div>
             <div class="metric-cell">
               <span class="metric-val green">+1 240</span>
@@ -597,6 +543,21 @@
               <span class="metric-val">−2 050</span>
               <span class="metric-unit">ft/min</span>
               <span class="metric-label">Max opad.</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-val">84</span>
+              <span class="metric-unit">kt</span>
+              <span class="metric-label">Śr. GS</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-val">+640</span>
+              <span class="metric-unit">ft/min</span>
+              <span class="metric-label">Śr. wzn.</span>
+            </div>
+            <div class="metric-cell">
+              <span class="metric-val">−1 180</span>
+              <span class="metric-unit">ft/min</span>
+              <span class="metric-label">Śr. zejście</span>
             </div>
           </div>
         </div>
@@ -676,117 +637,15 @@
         </div>
       </div>
 
-      <!-- ══ LOG PRZELICZONYCH PUNKTÓW ═════════════════════════════════════ -->
-      <div class="section-card">
-        <div class="section-card-head">
-          Log punktów · UTC
-          <span class="spacer"></span>
-          <span class="head-note">co 30 s · 1 412 z 1 508</span>
-        </div>
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th>Czas</th>
-              <th>Pozycja</th>
-              <th>GS</th>
-              <th>Wys.</th>
-              <th>±</th>
-              <th>Stan</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="marker">
-              <td>08:20:04</td>
-              <td class="pos dim">52.1387 15.7986</td>
-              <td>38</td>
-              <td>394</td>
-              <td class="dim">4</td>
-              <td><span class="pill-mini evt">T/O</span></td>
-            </tr>
-            <tr>
-              <td>08:20:34</td>
-              <td class="pos dim">52.1421 15.8054</td>
-              <td>71</td>
-              <td>1 180</td>
-              <td class="dim">4</td>
-              <td><span class="pill-mini ok">OK</span></td>
-            </tr>
-            <tr>
-              <td>08:21:04</td>
-              <td class="pos dim">52.1489 15.8130</td>
-              <td>78</td>
-              <td>1 940</td>
-              <td class="dim">5</td>
-              <td><span class="pill-mini ok">OK</span></td>
-            </tr>
-            <tr class="rejected">
-              <td>08:21:34</td>
-              <td class="pos">52.1502 15.8166</td>
-              <td>77</td>
-              <td>2 610</td>
-              <td>68</td>
-              <td class="reason"><span class="pill-mini rej">± 68 m</span></td>
-            </tr>
-            <tr>
-              <td>08:22:04</td>
-              <td class="pos dim">52.1547 15.8241</td>
-              <td>81</td>
-              <td>3 280</td>
-              <td class="dim">5</td>
-              <td><span class="pill-mini ok">OK</span></td>
-            </tr>
-            <tr class="marker">
-              <td>08:52:12</td>
-              <td class="pos dim">52.1361 15.7902</td>
-              <td>74</td>
-              <td>12 840</td>
-              <td class="dim">6</td>
-              <td><span class="pill-mini evt">ZRZUT</span></td>
-            </tr>
-            <tr>
-              <td>08:52:42</td>
-              <td class="pos dim">52.1338 15.7871</td>
-              <td>96</td>
-              <td>11 720</td>
-              <td class="dim">6</td>
-              <td><span class="pill-mini ok">OK</span></td>
-            </tr>
-            <tr class="marker">
-              <td>09:01:31</td>
-              <td class="pos dim">52.1390 15.7994</td>
-              <td>31</td>
-              <td>402</td>
-              <td class="dim">4</td>
-              <td><span class="pill-mini evt">LDG</span></td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="log-foot">
-          <b>96 punktów odrzuconych</b> przez bramkę jakości — najczęściej dokładność
-          gorsza niż 50 m przy wznoszeniu w spirali. Odrzucone nie wchodzą do dystansu
-          ani do profilu, ale zostają w zapisie: to materiał do strojenia progów.
-        </div>
-      </div>
+      <!-- LOGU PUNKTÓW NIE MA (przegląd issue #47): tabela surowych fixów ze stanem
+           bramki jakości jest materiałem do STROJENIA PROGÓW, a nie odpowiedzią na
+           pytanie pilota — została w panelu (A02c) i w nagraniu czytanym przez
+           server/scripts/replay.ts. Liczbę punktów przyjętych i odrzuconych niesie
+           podsumowanie w statystykach. -->
 
-      <div class="note-banner">
-        <svg class="note-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="7" cy="7" r="6"/><path d="M7 6.5v4M7 4h.01"/>
-        </svg>
-        <!-- ŹRÓDŁO DANYCH ZMIENIONE (issue #47 pkt 4–6): ślad przychodzi z serwera.
-             Telefon nadal go NAGRYWA i wysyła, ale po potwierdzonej wysyłce kasuje swoją
-             kopię — nagranie doby to dziesiątki tysięcy wierszy i nie ma powodu, żeby
-             leżały w pamięci telefonu drugi raz. Skutek uboczny jest korzystny: ślad
-             przestał znikać po 14 dniach (to była retencja TELEFONU, nie decyzja o
-             wartości danych) i wraca po reinstalacji oraz na nowym telefonie.
-             Koszt jest jeden i trzeba go nazwać wprost: do obejrzenia trasy trzeba
-             mieć zasięg (14C). -->
-        <div class="note-text">
-          <b>Ślad pobiera się z serwera</b> — telefon nagrywa go w locie, oddaje przy
-          pierwszej okazji i nie trzyma kopii, więc do obejrzenia trasy potrzebny jest
-          zasięg. Lotniska i siatka są z katalogu w aplikacji, wysokość z GPS (nie
-          ciśnieniowa). Dla sesji wpisanych ręcznie ślad nie powstaje wcale (14B).
-        </div>
-      </div>
+      <!-- Banera „Ślad pobiera się z serwera…" NIE MA: to była informacja o BUDOWIE
+           aplikacji, opowiedziana komuś, kto o nią nie pytał. Brak zasięgu mówi
+           wszystko, co trzeba, wprost na ekranie 14C. -->
 
     </div>
   </div>

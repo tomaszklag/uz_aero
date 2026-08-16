@@ -8,7 +8,11 @@
  * i pytamy o jedną rzecz: czy z punktów da się zbudować LINIĘ.
  */
 
-import { screenPath, MIN_SCREEN_STEP_PX } from '../ui/components/data/screenPolyline';
+import {
+  polylineJoints,
+  screenPath,
+  MIN_SCREEN_STEP_PX,
+} from '../ui/components/data/screenPolyline';
 import type { Point2D } from '../ui/components/data/TrackPolyline';
 
 /** Ile odcinków narysowałaby STARA implementacja (pomijanie < 0,5 px). */
@@ -77,6 +81,31 @@ describe('łamana w przestrzeni ekranu', () => {
     ];
 
     expect(screenPath(points)).toEqual(points);
+  });
+
+  it('zaślepki stają WYŁĄCZNIE na załamaniach, nie na prostej', () => {
+    // Prosta ukośna: nic do zaślepiania, mimo stu wierzchołków.
+    const straight: Point2D[] = [];
+    for (let i = 0; i < 100; i++) straight.push({ x: i * 2, y: i * 2 });
+    expect(polylineJoints(straight)).toEqual([]);
+
+    // Zakręt o 90° — jeden wierzchołek, jedna zaślepka.
+    const corner: Point2D[] = [
+      { x: 0, y: 0 },
+      { x: 50, y: 0 },
+      { x: 50, y: 50 },
+    ];
+    expect(polylineJoints(corner)).toEqual([{ x: 50, y: 0 }]);
+  });
+
+  it('zawrót o 180° liczy się jako załamanie, nie jako pełny obrót', () => {
+    const hairpin: Point2D[] = [
+      { x: 0, y: 0 },
+      { x: 40, y: 0 },
+      { x: 0, y: 0.5 },
+    ];
+
+    expect(polylineJoints(hairpin)).toHaveLength(1);
   });
 
   it('dwa punkty i mniej przechodzą bez zmian', () => {

@@ -15,19 +15,25 @@
  *  • **linia** — RDP w metrach (`simplifyTrack`): zostają wierzchołki, które ZMIENIAJĄ
  *    kształt, a prosta między nimi znika,
  *  • **profil** — RDP w stopach (`simplifyProfile`): to samo w osi wysokości,
- *  • **log** — próbka co 30 s plus komplet odrzuconych (`sampleTrackLog`),
  *  • **liczby** — przycięte do rozdzielczości, w jakiej cokolwiek znaczą: 5 miejsc po
  *    przecinku to ~1 m w Polsce, a dziesiąte części stopy na wysokości GPS opisują
  *    wyłącznie szum odbiornika.
  * Statystyki liczą się PRZED upraszczaniem, z kompletu punktów — inaczej „max
  * wznoszenie" zależałoby od tolerancji rysowania.
+ *
+ * ══ CZEGO TU NIE MA: LOGU PUNKTÓW ══
+ * Tabela surowych fixów ze stanem bramki jakości była największą częścią tej koperty
+ * (~300 wierszy na sesję) i zniknęła z ekranu przy przeglądzie issue #47: to materiał
+ * do STROJENIA PROGÓW, a nie odpowiedź na pytanie pilota. Została tam, gdzie służy —
+ * w panelu (`admin/queries/flightTrack.ts`, własny kontrakt) i w nagraniu czytanym
+ * przez `server/scripts/replay.ts`. Liczby `totalCount`/`usableCount` zostają, bo one
+ * jedne mówią coś o jakości TEGO zapisu.
  */
 
 import type { EpochMillis } from '../time';
 import { buildFlightTrack, type BuildTrackOptions, type TrackVertex } from './flightTrack';
-import type { RawTrackEntry, TrackPoint } from './point';
+import type { RawTrackEntry } from './point';
 import { buildFlightProfile, type FlightProfile, type ProfileSample } from './profile';
-import { DEFAULT_LOG_SAMPLE_MS, sampleTrackLog } from './sample';
 import { DEFAULT_PROFILE_TOLERANCE_FT, simplifyProfile } from './simplifyProfile';
 import { buildTrackStats, emptyTrackStats, type TrackStats, type TrackStatsInput } from './stats';
 
@@ -41,8 +47,6 @@ export interface SessionTrackPayload {
   line: TrackVertex[];
   /** Profil pionowy: liczby z KOMPLETU odczytów, próbki uproszczone do rysowania. */
   profile: FlightProfile;
-  /** Log punktów: co 30 s plus wszystkie odrzucone, z powodem odrzucenia. */
-  log: TrackPoint[];
   distanceNm: number;
   maxAltitudeFt: number | null;
   /** Pierwszy i ostatni PRZYJĘTY punkt nagrania (nie: okno biegu silnika). */
@@ -57,8 +61,6 @@ export interface SessionTrackPayload {
 export interface BuildSessionTrackOptions extends BuildTrackOptions {
   /** Tolerancja upraszczania profilu (stopy). */
   profileToleranceFt?: number;
-  /** Krok próbkowania logu (ms). */
-  logEveryMs?: number;
 }
 
 /** Pusty ślad — sesja bez nagrania. Kształt ten sam, żeby odbiorca nie miał wariantu. */
@@ -67,7 +69,6 @@ export function emptySessionTrackPayload(sessionUuid: string): SessionTrackPaylo
     sessionUuid,
     line: [],
     profile: buildFlightProfile([]),
-    log: [],
     distanceNm: 0,
     maxAltitudeFt: null,
     startedAt: null,
@@ -111,7 +112,6 @@ export function buildSessionTrackPayload(
         options.profileToleranceFt ?? DEFAULT_PROFILE_TOLERANCE_FT,
       ).map(roundSample),
     },
-    log: sampleTrackLog(track.points, options.logEveryMs ?? DEFAULT_LOG_SAMPLE_MS).map(roundPoint),
     distanceNm: round(track.distanceNm, 2),
     maxAltitudeFt: track.maxAltitudeFt == null ? null : Math.round(track.maxAltitudeFt),
     startedAt: track.startedAt,
@@ -135,18 +135,6 @@ function roundVertex(vertex: TrackVertex): TrackVertex {
 
 function roundSample(sample: ProfileSample): ProfileSample {
   return { time: sample.time, altitudeFt: Math.round(sample.altitudeFt) };
-}
-
-function roundPoint(point: TrackPoint): TrackPoint {
-  return {
-    ...point,
-    lat: round(point.lat, POSITION_DECIMALS),
-    lon: round(point.lon, POSITION_DECIMALS),
-    altitudeFt: point.altitudeFt == null ? null : Math.round(point.altitudeFt),
-    groundSpeedKt: point.groundSpeedKt == null ? null : round(point.groundSpeedKt, 1),
-    trackDeg: point.trackDeg == null ? null : Math.round(point.trackDeg),
-    accuracyM: point.accuracyM == null ? null : round(point.accuracyM, 1),
-  };
 }
 
 /** Liczby podpisu profilu — stopy całkowite, prędkości pionowe do jednego miejsca. */

@@ -22,7 +22,7 @@
 import React from 'react';
 import { View, type ViewStyle } from 'react-native';
 
-import { screenPath } from './screenPolyline';
+import { polylineJoints, screenPath } from './screenPolyline';
 
 export interface Point2D {
   x: number;
@@ -79,9 +79,27 @@ export function TrackPolyline({
     );
   }
 
+  // Zaślepki załamań: bez nich w każdym ostrym zakręcie widać szczerbę i linia czyta
+  // się jak przerwana (zgłoszenie z przeglądu). Szczegóły: `screenPolyline.ts`.
+  const joints = polylineJoints(path).map((joint, i) => (
+    <View
+      key={`j${i}`}
+      style={{
+        position: 'absolute',
+        left: joint.x - width / 2,
+        top: joint.y - width / 2,
+        width,
+        height: width,
+        borderRadius: width / 2,
+        backgroundColor: color,
+      }}
+    />
+  ));
+
   return (
     <View pointerEvents="none" style={[{ position: 'absolute', inset: 0, opacity }, style]}>
       {segments}
+      {joints}
     </View>
   );
 }

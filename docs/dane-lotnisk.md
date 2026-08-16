@@ -69,9 +69,19 @@ Zapytanie do Overpass o `aeroway=runway` w granicach Polski zwraca ~820 wayów i
 
 Licencja to ODbL 1.0. Obowiązki, które z niej bierzemy na siebie:
 
-- **Atrybucja.** „lotniska: OurAirports · © OpenStreetMap" stoi przy mapie śladu —
-  w aplikacji (`app/src/ui/components/data/TrackMap.tsx`) i w panelu
-  (`admin/src/ui/components/TrackMap.tsx`), a także w obu mockupach.
+- **Atrybucja.** Napis ZDJĘTY Z MAPY 2026-08-15 (decyzja przy przeglądzie issue #47:
+  wisiał w rogu przy każdym otwarciu i mówił o pochodzeniu danych komuś, kto ogląda
+  swój lot). Od tej pory miejscem atrybucji jest **ten dokument** — sekcja niżej —
+  i nic w interfejsie pilota jej nie powtarza. ODbL wymaga, żeby odbiorca bazy
+  pochodnej mógł się dowiedzieć o źródle; nie stawia warunku, że ma to być róg ekranu.
+  **Przywrócenie napisu na mapę wymaga rozmowy**: to była zamiana miejsca, nie
+  przeoczenie, i tak samo nie jest przeoczeniem jego brak w panelu.
+
+  > **Źródła katalogu lotnisk UZ Aero:** dane lotnisk pochodzą z **OurAirports**
+  > (domena publiczna) oraz z **OpenStreetMap** — © współtwórcy OpenStreetMap,
+  > udostępnione na licencji **ODbL 1.0** (<https://opendatacommons.org/licenses/odbl/>).
+  > Plik `packages/domain/src/airfields.ts` jest bazą pochodną i podlega ODbL.
+
 - **Share-alike.** `packages/domain/src/airfields.ts` jest bazą pochodną od OSM, więc
   **jest udostępniony na ODbL**. Dotyczy to pliku z danymi, nie kodu aplikacji — ODbL
   obejmuje bazę, nie program, który z niej korzysta.

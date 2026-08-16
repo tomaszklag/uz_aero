@@ -241,13 +241,12 @@ export function TrackMap({
         </View>
       )}
 
-      {/* ── atrybucja źródeł katalogu ────────────────────────────────────── */}
-      {/* Pasy lotnisk aeroklubowych pochodzą z OpenStreetMap (ODbL), a ta licencja
-          wymaga podpisu przy publicznym użyciu danych. Stąd stała adnotacja przy
-          samej mapie, a nie w odległym „o aplikacji". */}
-      <AppText variant="micro" tone="muted" style={styles.attribution}>
-        lotniska: OurAirports · © OpenStreetMap
-      </AppText>
+      {/* ŹRÓDŁA KATALOGU NIE STOJĄ NA MAPIE (decyzja 2026-08-15). Podpis „lotniska:
+          OurAirports · © OpenStreetMap" wisiał w rogu przy każdym otwarciu i mówił
+          o pochodzeniu danych komuś, kto ogląda swój lot. Atrybucja została przeniesiona
+          do dokumentacji (`docs/dane-lotnisk.md` §3.3) — obowiązek ODbL zostaje
+          spełniony tam, gdzie ktokolwiek go szuka. Nie przywracaj jej na mapę bez
+          rozmowy: to była świadoma zamiana miejsca, nie przeoczenie. */}
 
       {/* ── podziałka: bez kafelków jedyne odniesienie odległości ────────── */}
       {bar != null && (
@@ -378,5 +377,4 @@ const styles = StyleSheet.create({
   airfieldLabel: { position: 'absolute', letterSpacing: 1 },
   scale: { position: 'absolute', left: 8, bottom: 6, gap: 2 },
   scaleBar: { height: 4, borderWidth: 1, borderTopWidth: 0 },
-  attribution: { position: 'absolute', right: 8, bottom: 6 },
 });

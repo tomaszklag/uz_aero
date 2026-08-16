@@ -31,7 +31,6 @@ import {
   type FlightProfile,
   type FlightTrack,
   type Flight,
-  type TrackPoint,
   type TrackStats,
   type TrackVertex,
 } from '../../domain';
@@ -91,8 +90,6 @@ export interface SessionTrackView {
   markers: SessionTrackMarker[];
   track: FlightTrack;
   profile: FlightProfile;
-  /** Log do tabeli: próbka co 30 s plus wszystkie odrzucone. */
-  log: TrackPoint[];
   /** Statystyki lotu (issue #47 pkt 3) — każdy blok gaśnie osobno. */
   stats: TrackStats;
   /** Null = trasa jest. Wartość = nie ma czego rysować i to jest powód. */
@@ -193,7 +190,6 @@ export class FlightTrackQueries {
       markers: buildMarkers(state, events, payload.line, payload.profile),
       track,
       profile: payload.profile,
-      log: payload.log,
       stats: payload.stats,
       missing: null,
       pendingFixes: 0,
@@ -224,7 +220,6 @@ export class FlightTrackQueries {
       markers: [],
       track: emptyFlightTrack(),
       profile: emptyFlightProfile(),
-      log: [],
       stats: emptyTrackStats(),
       missing: reason,
       pendingFixes,

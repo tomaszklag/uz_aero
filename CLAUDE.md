@@ -710,9 +710,16 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   w kolejce NA TYM telefonie), `offline` (jest, brakuje drogi). „Brak śladu" pokazany
   komuś, kto ma tylko wyłączone dane, jest kłamstwem o jego locie
 - **kompresja to RDP + zaokrąglenia** (`track/payload.ts`): linia w metrach, profil
-  w stopach, log co 30 s plus komplet odrzuconych, współrzędne do 5 miejsc. Statystyki
-  liczą się PRZED upraszczaniem — inaczej „max wznoszenie" zależałoby od tolerancji
-  rysowania
+  w stopach, współrzędne do 5 miejsc. Statystyki liczą się PRZED upraszczaniem —
+  inaczej „max wznoszenie" zależałoby od tolerancji rysowania
+- **LOGU PUNKTÓW NIE MA** ani na ekranie, ani w kopercie (przegląd 2026-08-15): tabela
+  surowych fixów ze stanem bramki jakości jest materiałem do STROJENIA PROGÓW, a nie
+  odpowiedzią na pytanie pilota — została w panelu (A02c) i w nagraniu czytanym przez
+  `replay.ts`. Ekran nie ma też banera o pochodzeniu danych ani podpowiedzi o gestach:
+  jedno i drugie opowiadało o BUDOWIE aplikacji komuś, kto ogląda swój lot
+- **atrybucji źródeł katalogu nie ma na mapie** (2026-08-15) — obowiązek ODbL spełnia
+  `docs/dane-lotnisk.md` §3.2. To zamiana miejsca, nie przeoczenie: przywrócenie napisu
+  na mapę wymaga rozmowy
 - **linię rysuje się w przestrzeni EKRANU** (`screenPolyline.ts`): odcinek podpikselowy
   scala się z następnym, a nie znika. Stary kod pomijał go i zostawiał DZIURĘ — dlatego
   gęsty zapis rysował się jako zbiór kropek zamiast trasy (zgłoszenie pkt 1). Nie
@@ -728,7 +735,13 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
 - **gesty bez modułu natywnego** (`PanResponder`): jeden palec = kursor sprzężony między
   wykresami, dwa palce = zoom i przesunięcie mapy, dwuklik = powrót do całości. Kadr
   przelicza WSPÓŁRZĘDNE, nie skaluje widoku — inaczej podpisy rosłyby razem z trasą.
-  Matematyka kadru siedzi w `logic/mapViewport.ts` i ma testy
+  Matematyka kadru siedzi w `logic/mapViewport.ts` i ma testy. **Profil przybliża się
+  TYLKO W POZIOMIE** (`zoomAxis: 'x'`): jego pionem jest wysokość dobrana do zakresu
+  lotu, więc rozciąganie jej niczego nie odsłania — a rozciągnięcie czasu owszem, bo to
+  ono rozdziela zdarzenia leżące na sobie
+- **kolejność ekranu: mapa → profil → statystyki**. Metryki spod mapy zeszły do karty
+  statystyk (razem ze średnim wznoszeniem i zejściem spod profilu), żeby oba wykresy
+  przylegały do siebie — kursor je sprzęga, więc pilot patrzy na nie na przemian
 
 ## Norma zużycia liczy się PER SESJA, nie per godzina (issue #38, 2026-08-12)
 Werdykt „w normie" porównywał L/h sesji z pasmem blokowym samolotu — czyli z liczbą

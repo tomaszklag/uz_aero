@@ -38,32 +38,47 @@ export interface TrackStatsView {
  * karty z kreskami. Brak prędkości nie unieważnia czasów faz i odwrotnie: to trzy różne
  * pytania do tego samego nagrania (reguła z issue #38).
  */
-export function trackStatsView(stats: TrackStats): TrackStatsView {
+/**
+ * @param averages średnie prędkości pionowe z profilu. Stały pod wykresem do przeglądu
+ *   issue #47 — zeszły do statystyk, bo są liczbą o CAŁYM locie, a nie podpisem rysunku.
+ */
+export function trackStatsView(
+  stats: TrackStats,
+  averages: { climbFtPerMin: number | null; descentFtPerMin: number | null } = {
+    climbFtPerMin: null,
+    descentFtPerMin: null,
+  },
+): TrackStatsView {
   return {
-    speed: speedCells(stats),
+    speed: speedCells(stats, averages),
     phases: phaseBar(stats),
     level: levelCells(stats),
   };
 }
 
-function speedCells(stats: TrackStats): StatCell[] | null {
+/**
+ * Sześć komórek w dwóch rzędach po trzy: MAKSIMA nad ŚREDNIMI, w tej samej kolejności
+ * wielkości. Rząd jest wtedy zdaniem („najwięcej: tyle, przeciętnie: tyle") i nie trzeba
+ * szukać pary po etykietach.
+ */
+function speedCells(
+  stats: TrackStats,
+  averages: { climbFtPerMin: number | null; descentFtPerMin: number | null },
+): StatCell[] | null {
   const speed = stats.speed;
   if (speed == null) return null;
 
   return [
     { label: 'Max GS', value: Math.round(speed.maxGroundSpeedKt).toString(), unit: 'kt' },
+    { label: 'Max wzn.', value: fpm(speed.maxClimbFtPerMin), unit: 'ft/min', tone: 'green' },
+    { label: 'Max opad.', value: fpm(speed.maxDescentFtPerMin), unit: 'ft/min' },
     {
-      label: 'Śr. w locie',
+      label: 'Śr. GS',
       value: speed.averageInFlightKt == null ? '— —' : Math.round(speed.averageInFlightKt).toString(),
       unit: 'kt',
     },
-    {
-      label: 'Max wzn.',
-      value: fpm(speed.maxClimbFtPerMin),
-      unit: 'ft/min',
-      tone: 'green',
-    },
-    { label: 'Max opad.', value: fpm(speed.maxDescentFtPerMin), unit: 'ft/min' },
+    { label: 'Śr. wzn.', value: fpm(averages.climbFtPerMin), unit: 'ft/min' },
+    { label: 'Śr. zejście', value: fpm(averages.descentFtPerMin), unit: 'ft/min' },
   ];
 }
 
