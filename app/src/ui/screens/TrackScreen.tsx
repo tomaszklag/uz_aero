@@ -85,6 +85,12 @@ export function TrackScreen({
   const [view, setView] = useState<SessionTrackView | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [cursorAt, setCursorAt] = useState<number | null>(null);
+  /**
+   * Okno czasu widoczne na profilu po przybliżeniu; `null` = profil pokazuje całość.
+   * Mapa PODŚWIETLA odpowiadający fragment trasy zamiast na niego przeskakiwać —
+   * uzasadnienie przy `TrackMapProps.highlight`.
+   */
+  const [profileWindow, setProfileWindow] = useState<{ from: number; to: number } | null>(null);
   const skeleton = useSkeleton(!loaded);
 
   const { sessionUuid } = route.params;
@@ -230,7 +236,7 @@ export function TrackScreen({
               height={MAP_HEIGHT}
               departureIcao={view.departureIcao}
               cursorAt={cursorAt}
-              onCursorChange={moveCursor}
+              highlight={profileWindow}
             />
             {/* Odczyt stoi w STAŁYM rogu, a nie przy palcu: chip wędrujący pod palcem
                 zasłania to, co pilot właśnie ogląda (mockup 14D). */}
@@ -260,6 +266,7 @@ export function TrackScreen({
               cursorAt={cursorAt}
               onCursorChange={moveCursor}
               distanceNmAt={distanceAt}
+              onWindowChange={setProfileWindow}
             />
             <CursorReadout
               at={cursorAt}

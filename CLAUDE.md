@@ -738,8 +738,19 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   z pionem, czasy faz (pasek proporcji, suma = bieg silnika), trzymanie wysokości
   w locie poziomym. Prędkość pionowa liczy się TĄ SAMĄ regresją, co faza w kokpicie
   (`verticalSpeedSeries`) — druga definicja „wznoszenia" rozjechałaby się po cichu
-- **gesty bez modułu natywnego** (`PanResponder`): jeden palec = kursor sprzężony między
-  wykresami, dwa palce = zoom i przesunięcie mapy, dwuklik = powrót do całości. Kadr
+- **kursor prowadzi się WYŁĄCZNIE na profilu**, mapa go tylko pokazuje (przegląd
+  2026-08-15). Kursor jest pytaniem o CHWILĘ, a mapa nie ma osi czasu: dotknięcie trasy
+  trzeba było przekładać na najbliższy wierzchołek, co nad polem skoków wskazywało
+  dowolny z pięciu przelotów. Skutek uboczny jest korzystny — jeden palec zostaje
+  ekranowi na przewijanie, a mapa ma na nie 300 px wysokości
+- **przybliżony profil PODŚWIETLA fragment trasy na mapie, nie przestawia jej kadru.**
+  Sprzężenie zoomu byłoby jednostronne: profil → mapa jest jednoznaczny, mapa → profil
+  nie (ten sam obszar to kilka przelotów). Podświetlenie odpowiada „ten kawałek oglądasz"
+  bez uciekania mapy spod palca. Fragment jest zawsze JEDEN, bo linia jest uporządkowana
+  czasem (`highlightRuns.ts` — pierwsza wersja zbierała listę i test pokazał, że nie ma
+  jak zajść przypadek, dla którego ją napisano)
+- **gesty bez modułu natywnego** (`PanResponder`): jeden palec = kursor NA PROFILU,
+  dwa palce = zoom i przesunięcie, dwuklik = powrót do całości. Kadr
   przelicza WSPÓŁRZĘDNE, nie skaluje widoku — inaczej podpisy rosłyby razem z trasą.
   Matematyka kadru siedzi w `logic/mapViewport.ts` i ma testy. **Profil przybliża się
   TYLKO W POZIOMIE** (`zoomAxis: 'x'`): jego pionem jest wysokość dobrana do zakresu

@@ -100,6 +100,15 @@ export interface VerticalProfileProps {
    * podaje sam czas; z nią dokłada dystans dla odcinka, który obejmuje (patrz niżej).
    */
   distanceNmAt?: (at: number) => number | null;
+  /**
+   * Widoczne okno czasu po przybliżeniu; `null` = widać całość.
+   *
+   * Ekran przekazuje je mapie, która PODŚWIETLA odpowiadający fragment trasy zamiast
+   * przeskakiwać na niego kadrem (decyzja z przeglądu). Przeskok byłby wygodny tylko
+   * w jedną stronę: droga z mapy na profil jest wieloznaczna, bo nad tym samym placem
+   * samolot bywa pięć razy w jednej sesji.
+   */
+  onWindowChange?: (window: { from: number; to: number } | null) => void;
 }
 
 export function VerticalProfile({
@@ -110,6 +119,7 @@ export function VerticalProfile({
   cursorAt = null,
   onCursorChange,
   distanceNmAt,
+  onWindowChange,
 }: VerticalProfileProps) {
   const { theme } = useTheme();
 
@@ -201,6 +211,27 @@ export function VerticalProfile({
 
   const viewportRef = React.useRef(gesture.viewport);
   viewportRef.current = gesture.viewport;
+
+  /**
+   * Widoczne okno czasu → w górę, do ekranu (a stamtąd na mapę jako podświetlenie).
+   * Przy pełnym kadrze zgłaszamy `null`: „widać całość" to brak zaznaczenia, a nie
+   * zaznaczenie wszystkiego.
+   */
+  const { scale: zoomScale, offsetX: zoomOffset } = gesture.viewport;
+  React.useEffect(() => {
+    if (onWindowChange == null) return;
+    if (plot == null || zoomScale <= 1.001) {
+      onWindowChange(null);
+      return;
+    }
+
+    const from = timeAtX(0, plot, { scale: zoomScale, offsetX: zoomOffset });
+    const to = timeAtX(plot.plotW, plot, { scale: zoomScale, offsetX: zoomOffset });
+    onWindowChange({
+      from: Math.max(plot.t0, Math.min(from, to)),
+      to: Math.min(plot.t1, Math.max(from, to)),
+    });
+  }, [onWindowChange, plot, zoomScale, zoomOffset]);
 
   /** Chwila → X w polu wykresu, już po przybliżeniu. */
   const timeX = useCallback(

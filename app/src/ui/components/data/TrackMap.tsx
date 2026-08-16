@@ -32,6 +32,7 @@ import { applyViewport, unapplyViewport } from '../../screens/logic/mapViewport'
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { formatNm } from './distanceScaleBar';
+import { highlightRange } from './highlightRuns';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
 /** Odstęp linii siatki (px) — gęściej robi się szum pod śladem. */
@@ -54,8 +55,16 @@ export interface TrackMapProps {
   departureIcao?: string | null;
   /** Chwila pod palcem — kursor sprzężony z profilem (issue #47 pkt 7). */
   cursorAt?: number | null;
-  /** Palec na mapie wskazał chwilę (albo zszedł: `null`). */
-  onCursorChange?: (at: number | null) => void;
+  /**
+   * Okno czasu widoczne na PROFILU; `null` = profil pokazuje całość.
+   *
+   * Mapa PODŚWIETLA odpowiadający fragment trasy, zamiast na niego przeskakiwać
+   * (decyzja z przeglądu). Przeskok byłby wygodny tylko w jedną stronę — droga z mapy
+   * na profil jest wieloznaczna, bo nad tym samym placem samolot bywa pięć razy
+   * w jednej sesji, a podświetlenie pokazuje wtedy uczciwie WSZYSTKIE przeloty
+   * mieszczące się w oknie. Przy okazji mapa nie ucieka spod palca.
+   */
+  highlight?: { from: number; to: number } | null;
 }
 
 export function TrackMap({
@@ -65,7 +74,7 @@ export function TrackMap({
   height,
   departureIcao = null,
   cursorAt = null,
-  onCursorChange,
+  highlight = null,
 }: TrackMapProps) {
   const { theme } = useTheme();
 
@@ -90,50 +99,39 @@ export function TrackMap({
   );
 
   /**
-   * Palec na mapie → CHWILA, nie miejsce.
+   * MAPA NIE PROWADZI KURSORA (decyzja z przeglądu). Kursor jest pytaniem o CHWILĘ,
+   * a mapa nie ma osi czasu: dotknięcie trasy trzeba było przekładać na najbliższy
+   * wierzchołek, co nad polem skoków wskazywało dowolny z pięciu przelotów. Wskazuje
+   * się więc na profilu, a mapa kursor tylko POKAZUJE.
    *
-   * Mapa nie ma osi czasu, więc kursor stawia się na najbliższym WIERZCHOŁKU trasy
-   * i to jego czas idzie na profil. Szukamy w układzie 1:1 (po zdjęciu przybliżenia),
-   * bo tam odległości nie zależą od tego, jak mocno pilot przybliżył.
+   * Skutek uboczny jest korzystny: jeden palec zostaje ekranowi. Mapa zajmuje 300 px
+   * wysokości i gdyby łapała każde przeciągnięcie, przewinięcie strony palcem po
+   * trasie byłoby niemożliwe.
    */
   const gesture = useChartGesture({
     size: { width, height },
     zoomable: true,
-    onScrub: useCallback(
-      (point: Point2D | null) => {
-        if (onCursorChange == null) return;
-        if (point == null || basePoints.length === 0) {
-          onCursorChange(null);
-          return;
-        }
-
-        const inBase = unapplyViewport(point, viewportRef.current);
-        let bestIndex = 0;
-        let bestDistance = Number.POSITIVE_INFINITY;
-        for (let i = 0; i < basePoints.length; i++) {
-          const dx = basePoints[i]!.x - inBase.x;
-          const dy = basePoints[i]!.y - inBase.y;
-          const distance = dx * dx + dy * dy;
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            bestIndex = i;
-          }
-        }
-        onCursorChange(line[bestIndex]?.time ?? null);
-      },
-      [basePoints, line, onCursorChange],
-    ),
+    scrub: false,
+    onScrub: useCallback(() => {}, []),
   });
-
-  // Kadr czytany w trakcie gestu, więc przez ref: `onScrub` powstaje raz na zmianę
-  // punktów, a przybliżenie zmienia się w każdej klatce szczypty.
-  const viewportRef = React.useRef(gesture.viewport);
-  viewportRef.current = gesture.viewport;
 
   const screenPoints = useMemo(
     () => basePoints.map((p) => applyViewport(p, gesture.viewport)),
     [basePoints, gesture.viewport],
   );
+
+  /**
+   * Fragment trasy mieszczący się w oknie profilu — JEDEN, bo linia jest uporządkowana
+   * czasem, a okno jest przedziałem czasu (uzasadnienie: `highlightRuns.ts`).
+   */
+  const highlighted = useMemo<Point2D[]>(() => {
+    if (highlight == null || screenPoints.length === 0) return [];
+    const range = highlightRange(
+      line.map((vertex) => vertex.time),
+      highlight,
+    );
+    return range == null ? [] : screenPoints.slice(range[0], range[1] + 1);
+  }, [highlight, line, screenPoints]);
 
   const project = useCallback(
     (position: LatLon): Point2D =>
@@ -187,7 +185,20 @@ export function TrackMap({
           />
         ))}
 
-      <TrackPolyline points={screenPoints} color={theme.colors.green} width={2.5} />
+      {/* ── trasa: przygaszona całość + PODŚWIETLONY fragment z profilu ──── */}
+      {/* Bez okna z profilu rysujemy jedną linię w pełnej mocy. Z oknem: cała trasa
+          gaśnie, a jej fragment zostaje jasny — dzięki temu widać, GDZIE się patrzy,
+          nie tracąc z oczu reszty lotu. Fragmentów bywa kilka i tak ma być: nad polem
+          skoków samolot przechodzi tędy raz na wyniesienie. */}
+      <TrackPolyline
+        points={screenPoints}
+        color={theme.colors.green}
+        width={2.5}
+        opacity={highlight != null ? 0.22 : 1}
+      />
+      {highlighted.length > 1 && (
+        <TrackPolyline points={highlighted} color={theme.colors.green} width={2.5} />
+      )}
 
       {/* ── znaczniki startu i lądowania ─────────────────────────────────── */}
       {frame != null &&

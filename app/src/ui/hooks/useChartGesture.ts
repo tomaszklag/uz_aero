@@ -40,6 +40,13 @@ export interface ChartGestureOptions {
   size: ViewportSize;
   /** Dotknięcie w układzie EKRANU wykresu; `null` = palec zszedł. */
   onScrub: (point: Point2D | null) => void;
+  /**
+   * Czy JEDEN palec prowadzi kursor. Profil: tak — ma oś czasu, więc dotknięcie wskazuje
+   * chwilę. Mapa: NIE (decyzja z przeglądu) — kursor przychodzi na nią z profilu, a jeden
+   * palec zostaje ekranowi na przewijanie. Mapa zajmuje 300 px wysokości i gdyby łapała
+   * każde przeciągnięcie, przewinięcie strony palcem po trasie byłoby niemożliwe.
+   */
+  scrub?: boolean;
   zoomable?: boolean;
   /**
    * Oś przybliżenia. Mapa ma dwie (`both`), profil JEDNĄ (`x`): jego pionem jest
@@ -61,6 +68,7 @@ export interface ChartGesture {
 export function useChartGesture({
   size,
   onScrub,
+  scrub = true,
   zoomable = false,
   zoomAxis = 'both',
 }: ChartGestureOptions): ChartGesture {
@@ -78,28 +86,41 @@ export function useChartGesture({
   const responder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        // Wykres jest wewnątrz ekranu przewijanego w pionie: bez tego przeciągnięcie
-        // po nim przewijałoby stronę zamiast prowadzić kursor.
+        /**
+         * Dwuklik OBSERWUJEMY, nie przejmując gestu (`return false`): dzięki temu wraca
+         * on do całości także na mapie, która jednym palcem nie robi nic i oddaje go
+         * przewijaniu ekranu.
+         */
+        onStartShouldSetPanResponderCapture: (event) => {
+          const point = touchPoint(event, 0);
+          if (point == null) return false;
+
+          if (zoomable && isDoubleTap(point, lastTapAt.current, lastTapAtPoint.current)) {
+            setViewport(IDENTITY_VIEWPORT);
+            lastTapAt.current = 0;
+            lastTapAtPoint.current = null;
+            return false;
+          }
+
+          lastTapAt.current = Date.now();
+          lastTapAtPoint.current = point;
+          return false;
+        },
+
+        onStartShouldSetPanResponder: () => scrub,
+        // Bez kursora przejmujemy dopiero DWA palce — jeden zostaje ekranowi.
+        onMoveShouldSetPanResponder: (event) => scrub || event.nativeEvent.touches.length >= 2,
+        // Wykres jest wewnątrz ekranu przewijanego w pionie: gdy już prowadzi kursor,
+        // nie oddaje gestu przewijaniu w połowie ruchu.
         onPanResponderTerminationRequest: () => false,
 
         onPanResponderGrant: (event) => {
           const point = touchPoint(event, 0);
           if (point == null) return;
 
-          if (zoomable && isDoubleTap(point, lastTapAt.current, lastTapAtPoint.current)) {
-            setViewport(IDENTITY_VIEWPORT);
-            lastTapAt.current = 0;
-            lastTapAtPoint.current = null;
-            return;
-          }
-
-          lastTapAt.current = Date.now();
-          lastTapAtPoint.current = point;
           lastTouch.current = point;
           pinchDistance.current = null;
-          onScrub(point);
+          if (scrub) onScrub(point);
         },
 
         onPanResponderMove: (event) => {
@@ -153,7 +174,7 @@ export function useChartGesture({
           if (point == null) return;
           pinchDistance.current = null;
           lastTouch.current = point;
-          onScrub(point);
+          if (scrub) onScrub(point);
         },
 
         onPanResponderRelease: () => {
@@ -167,7 +188,7 @@ export function useChartGesture({
           onScrub(null);
         },
       }),
-    [onScrub, zoomable],
+    [onScrub, scrub, zoomable, zoomAxis],
   );
 
   return {
