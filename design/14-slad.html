@@ -129,17 +129,18 @@
   .metric-label { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
 
   /* ===== PROFIL PIONOWY ===== */
-  .profile-wrap { position:relative; height:204px; padding:10px 10px 4px; }
+  .profile-wrap { position:relative; height:204px; padding:10px 10px 4px; background:#0F1216; }
   .profile-wrap svg { display:block; width:100%; height:100%; overflow:visible; }
   /* Podziałka CZASU — wskaźnik przybliżenia profilu, dokładnie jak podziałka
      odległości na mapie: po zoomie czyta „2 min" zamiast „15 min". Bez niej
      między dwoma znacznikami nie ma ani jednej liczby o czasie. */
-  .profile-scale { position:absolute; left:46px; bottom:8px; display:flex; flex-direction:column; gap:2px; }
+  .profile-scale { position:absolute; left:8px; bottom:6px; display:flex; flex-direction:column; gap:2px; }
   .profile-scale-bar { width:52px; height:4px; border:1px solid var(--text-secondary); border-top:none; }
   .profile-scale-label { font-family:var(--font-mono); font-size:7px; color:var(--text-secondary); letter-spacing:1px; }
   .axis-label { font-family:var(--font-mono); font-size:7px; fill:var(--text-muted); letter-spacing:0.5px; }
   .grid-line { stroke:var(--border); stroke-width:1; }
   .grid-line.dashed { stroke-dasharray:2 3; }
+  .grid-line.vertical { stroke:var(--border); opacity:0.7; }
 
   /* ===== STATYSTYKI (issue #47 pkt 3) ===== */
   /* Trzy bloki w JEDNEJ karcie, bo odpowiadają na jedno pytanie („jak leciałem"),
@@ -364,7 +365,7 @@
         </div>
         <div class="profile-wrap">
           <div class="profile-scale">
-            <span class="profile-scale-label">15 min</span>
+            <span class="profile-scale-label">15 min · 12.4 NM</span>
             <span class="profile-scale-bar"></span>
           </div>
           <svg viewBox="0 0 340 180" preserveAspectRatio="none">
@@ -380,6 +381,16 @@
             <line x1="34" y1="45"  x2="336" y2="45"  class="grid-line dashed"/>
             <line x1="34" y1="82"  x2="336" y2="82"  class="grid-line dashed"/>
             <line x1="34" y1="119" x2="336" y2="119" class="grid-line"/>
+
+            <!-- SIATKA PIONOWA co jeden krok podziałki: jedna kratka = to, co mówi
+                 pasek na dole („15 min"). Dzięki temu siatka jest odczytem, a nie
+                 tłem — garb o dwóch kratkach trwał pół godziny. -->
+            <line x1="78"  y1="8" x2="78"  y2="126" class="grid-line vertical"/>
+            <line x1="122" y1="8" x2="122" y2="126" class="grid-line vertical"/>
+            <line x1="166" y1="8" x2="166" y2="126" class="grid-line vertical"/>
+            <line x1="210" y1="8" x2="210" y2="126" class="grid-line vertical"/>
+            <line x1="254" y1="8" x2="254" y2="126" class="grid-line vertical"/>
+            <line x1="298" y1="8" x2="298" y2="126" class="grid-line vertical"/>
             <text x="0" y="11"  class="axis-label">13 000</text>
             <text x="0" y="48"  class="axis-label">9 000</text>
             <text x="0" y="85"  class="axis-label">5 000</text>

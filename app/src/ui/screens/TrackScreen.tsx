@@ -49,6 +49,7 @@ import {
 import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useSkeleton } from '../hooks/useSkeleton';
+import { buildDistanceLookup } from './logic/trackDistance';
 import { mapMarkers, profileMarkers } from './logic/trackMarkers';
 import { trackStatsView, type PhaseBarSegment } from './logic/trackStatsRows';
 
@@ -132,6 +133,15 @@ export function TrackScreen({
   );
 
   const moveCursor = useCallback((at: number | null) => setCursorAt(at), []);
+
+  /**
+   * Droga narastająco — z geometrii śladu, żeby podziałka profilu mogła podać dystans
+   * obok czasu. Liczona RAZ na sesję: odczyt woła się przy każdej klatce gestu.
+   */
+  const distanceAt = useMemo(
+    () => buildDistanceLookup(view?.track.line ?? []),
+    [view],
+  );
 
   const header = (
     <ScreenHeader
@@ -249,6 +259,7 @@ export function TrackScreen({
               markers={onProfile}
               cursorAt={cursorAt}
               onCursorChange={moveCursor}
+              distanceNmAt={distanceAt}
             />
             <CursorReadout
               at={cursorAt}

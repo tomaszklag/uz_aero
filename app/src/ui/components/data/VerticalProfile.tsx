@@ -45,7 +45,9 @@ const LABEL_ROWS = 2;
 const SCALE_GAP = 8;
 /** Podpis (~9) + odstęp (2) + pasek (4). */
 const SCALE_H = 15;
-const SCALE_BOTTOM = 4;
+/** Te same wartości, co podziałka mapy (`TrackMap.styles.scale`) — ten sam róg ekranu. */
+const SCALE_LEFT = 8;
+const SCALE_BOTTOM = 6;
 
 const AXIS_BOTTOM =
   LABEL_TOP_GAP + LABEL_ROWS * LABEL_ROW_H + SCALE_GAP + SCALE_H + SCALE_BOTTOM;
@@ -92,6 +94,11 @@ export interface VerticalProfileProps {
   cursorAt?: number | null;
   /** Palec na profilu wskazał chwilę (albo zszedł: `null`). */
   onCursorChange?: (at: number | null) => void;
+  /**
+   * Droga narastająco (NM) w danej chwili — z geometrii śladu. Bez niej podziałka
+   * podaje sam czas; z nią dokłada dystans dla odcinka, który obejmuje (patrz niżej).
+   */
+  distanceNmAt?: (at: number) => number | null;
 }
 
 export function VerticalProfile({
@@ -101,6 +108,7 @@ export function VerticalProfile({
   markers = [],
   cursorAt = null,
   onCursorChange,
+  distanceNmAt,
 }: VerticalProfileProps) {
   const { theme } = useTheme();
 
@@ -218,7 +226,7 @@ export function VerticalProfile({
 
   if (plot == null) {
     return (
-      <View style={[styles.empty, { width, height }]}>
+      <View style={[styles.empty, { width, height, backgroundColor: theme.colors.bgTint }]}>
         <AppText variant="body" tone="muted">
           Brak odczytów wysokości w tym locie.
         </AppText>
@@ -241,6 +249,43 @@ export function VerticalProfile({
     (plot.t1 - plot.t0) / (plot.spanW * scale),
     Math.min(70, plot.spanW * 0.3),
   );
+
+  /**
+   * SIATKA PIONOWA co jeden krok podziałki — czyli jedna kratka = to, co mówi pasek.
+   * Dzięki temu siatka nie jest tłem dla ozdoby, tylko odczytem: „ten garb ma dwie
+   * kratki, czyli pół godziny". Linie jadą razem z wykresem (są w przyciętym polu),
+   * bo opisują CZAS, a nie ramkę.
+   */
+  const timeGrid: Array<{ at: number; x: number }> = [];
+  if (timeScale != null) {
+    const step = timeScale.ms;
+    // Zaczynamy od okrągłej wielokrotności kroku — linie padają na pełne kwadranse
+    // i minuty, a nie na przypadkową godzinę początku nagrania.
+    for (let at = Math.ceil(plot.t0 / step) * step; at <= plot.t1; at += step) {
+      const x = timeX(at);
+      if (x >= -1 && x <= plot.plotW + 1) timeGrid.push({ at, x });
+    }
+  }
+
+  /**
+   * Droga dla ODCINKA, który obejmuje pasek — nie „NM na piksel".
+   *
+   * Na osi czasu dystans nie jest proporcjonalny (pięć minut wznoszenia to inna droga
+   * niż pięć minut przelotu, a pięć minut postoju to zero), więc jedyną uczciwą
+   * odpowiedzią jest droga między DWIEMA KONKRETNYMI chwilami: początkiem paska tam,
+   * gdzie stoi, i końcem o krok dalej. Liczba zmienia się przy przesuwaniu wykresu
+   * i tak ma być — w innym miejscu lotu samolot leciał inaczej.
+   */
+  const scaleDistanceNm = (() => {
+    if (timeScale == null || distanceNmAt == null) return null;
+    // Odcinek liczymy od LEWEJ KRAWĘDZI pola wykresu (pasek stoi pod podpisami
+    // wysokości, czyli poza wykresem — jego własne `x` nie leży nad danymi).
+    const from = timeAtX(0, plot, gesture.viewport);
+    const to = timeAtX(timeScale.pixels, plot, gesture.viewport);
+    const a = distanceNmAt(from);
+    const b = distanceNmAt(to);
+    return a == null || b == null ? null : Math.abs(b - a);
+  })();
   /** Punkt krzywej w układzie POLA WYKRESU (bez `AXIS_LEFT`), po przybliżeniu. */
   const curvePoints: Point2D[] = plot.points.map((point) => ({
     x: (point.x - AXIS_LEFT) * scale + offsetX,
@@ -248,7 +293,9 @@ export function VerticalProfile({
   }));
 
   return (
-    <View style={{ width, height }}>
+    // Tło TAKIE SAMO, co pod mapą (`bgTint`): oba wykresy są polem pomiarowym, a nie
+    // treścią karty, i mają się od niej odcinać tak samo.
+    <View style={{ width, height, backgroundColor: theme.colors.bgTint }}>
       {/* Siatka i podpisy wysokości stoją POZA polem wykresu: oś pionowa się nie
           przybliża, więc nie ma powodu, żeby jechała razem z trasą. */}
       {gridSteps.map((i) => {
@@ -277,6 +324,20 @@ export function VerticalProfile({
         style={[styles.plotBox, { left: AXIS_LEFT, width: plot.plotW, height }]}
         {...gesture.panHandlers}
       >
+        {/* Siatka pionowa co JEDEN KROK PODZIAŁKI — jedna kratka to dokładnie tyle,
+            ile mówi pasek na dole. Dzięki temu siatka jest odczytem („ten garb ma dwie
+            kratki, czyli pół godziny"), a nie tłem. Jedzie razem z wykresem, bo opisuje
+            czas, a nie ramkę — tak samo jak siatka współrzędnych na mapie opisuje teren. */}
+        {timeGrid.map((line) => (
+          <View
+            key={line.at}
+            style={[
+              styles.timeGridLine,
+              { left: line.x, height: plot.baseline - 8, backgroundColor: theme.colors.border },
+            ]}
+          />
+        ))}
+
         <TrackPolyline points={curvePoints} color={theme.colors.green} width={2} />
 
         {markers.map((marker, index) => {
@@ -355,22 +416,6 @@ export function VerticalProfile({
           );
         })}
 
-        {/* Podziałka czasu w rogu — jedyna liczba o czasie, która nie zależy od tego,
-            czy w kadrze jest akurat jakiś znacznik. */}
-        {timeScale != null && (
-          <View pointerEvents="none" style={styles.timeScale}>
-            <AppText variant="micro" tone="secondary">
-              {timeScale.label}
-            </AppText>
-            <View
-              style={[
-                styles.timeScaleBar,
-                { width: timeScale.pixels, borderColor: theme.colors.textSecondary },
-              ]}
-            />
-          </View>
-        )}
-
         {/* Kursor sprzężony z mapą — biały, bo nie jest zdarzeniem rejestru. */}
         {cursorAt != null && (
           <View pointerEvents="none">
@@ -397,8 +442,39 @@ export function VerticalProfile({
           </View>
         )}
       </View>
+
+      {/* PODZIAŁKA — poza polem wykresu, w tym samym rogu i o tych samych odstępach,
+          co podziałka odległości na mapie (`TrackMap.styles.scale`). Dwa wykresy
+          jednego ekranu trzymają skale w jednym miejscu, więc oko szuka ich raz.
+          Dystans dotyczy ODCINKA obejmowanego przez pasek, a nie „NM na piksel" —
+          na osi czasu proporcji między czasem a drogą po prostu nie ma. */}
+      {timeScale != null && (
+        <View pointerEvents="none" style={styles.timeScale}>
+          <AppText variant="micro" tone="secondary">
+            {timeScale.label}
+            {scaleDistanceNm != null && ` · ${scaleDistanceNm.toFixed(1)} NM`}
+          </AppText>
+          <View
+            style={[
+              styles.timeScaleBar,
+              { width: timeScale.pixels, borderColor: theme.colors.textSecondary },
+            ]}
+          />
+        </View>
+      )}
     </View>
   );
+}
+
+/** X w polu wykresu → chwila. Odwrotność `timeX`; używa jej odczyt drogi dla paska. */
+function timeAtX(
+  x: number,
+  plot: { t0: number; t1: number; spanW: number },
+  viewport: { scale: number; offsetX: number },
+): number {
+  const base = (x - viewport.offsetX) / viewport.scale;
+  const ratio = (base - PLOT_PAD_X) / plot.spanW;
+  return plot.t0 + ratio * (plot.t1 - plot.t0);
 }
 
 const styles = StyleSheet.create({
@@ -411,9 +487,9 @@ const styles = StyleSheet.create({
   curveTime: { position: 'absolute', textAlign: 'right' },
   curveNote: { position: 'absolute' },
   groundTime: { position: 'absolute', width: TIME_LABEL_W, textAlign: 'center' },
-  // LEWY DOLNY róg — tam, gdzie podziałka odległości na mapie. Dwa wykresy jednego
-  // ekranu mają swoje skale w tym samym miejscu, więc oko szuka ich raz.
-  timeScale: { position: 'absolute', left: 4, bottom: SCALE_BOTTOM, gap: 2 },
+  timeGridLine: { position: 'absolute', top: 8, width: 1 },
+  // LEWY DOLNY róg — te same `left`/`bottom`, co podziałka mapy.
+  timeScale: { position: 'absolute', left: SCALE_LEFT, bottom: SCALE_BOTTOM, gap: 2 },
   timeScaleBar: { height: 4, borderWidth: 1, borderTopWidth: 0 },
   cursor: { position: 'absolute', top: 8, width: 1, opacity: 0.5 },
   cursorDot: { position: 'absolute', width: 6, height: 6, borderRadius: 3 },

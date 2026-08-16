@@ -747,9 +747,19 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   ono rozdziela zdarzenia leżące na sobie
 - **każdy wykres ma PODZIAŁKĘ i to ona jest wskaźnikiem przybliżenia**: mapa odległości
   („500 m" zamiast „2 km"), profil czasu („2 min" zamiast „15 min", `timeScaleBar.ts`).
-  Nie plakietka „×2,4" — pilota interesuje odległość i czas, nie krotność. Profil nie
+  Nie plakietka „×2,4" — pilota interesuje odległość i czas, nie krotność. Obie stoją
+  w LEWYM DOLNYM rogu swojej karty, z tymi samymi odstępami (8/6 px): dwa wykresy
+  jednego ekranu trzymają skale w jednym miejscu, więc oko szuka ich raz. Profil nie
   dostaje za to osi z regularnymi znacznikami czasu: wpadłyby w rząd godzin przy startach
   i lądowaniach, a dwa rzędy liczb pod wykresem to błąd, który przegląd już raz wyrzucił
+- **siatka pionowa profilu = JEDEN KROK PODZIAŁKI**, więc kratka jest odczytem („garb
+  o dwóch kratkach trwał pół godziny"), a nie tłem. Jedzie razem z wykresem, bo opisuje
+  czas — tak jak siatka współrzędnych mapy opisuje teren
+- **dystans przy podziałce profilu dotyczy KONKRETNEGO ODCINKA**, nie „NM na piksel"
+  (`logic/trackDistance.ts`). Na osi czasu proporcji między czasem a drogą NIE MA: pięć
+  minut wznoszenia to inna droga niż pięć minut przelotu, a pięć minut postoju to zero.
+  Dlatego liczba zmienia się przy przesuwaniu wykresu i to jest poprawne — opisuje to
+  miejsce lotu, a nie średnią z całej sesji
 - **kolejność ekranu: mapa → profil → statystyki**. Metryki spod mapy zeszły do karty
   statystyk (razem ze średnim wznoszeniem i zejściem spod profilu), żeby oba wykresy
   przylegały do siebie — kursor je sprzęga, więc pilot patrzy na nie na przemian
