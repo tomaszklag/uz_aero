@@ -23,6 +23,7 @@ import type {
   ReferenceAircraft,
   ReferencePilot,
   SessionFlag,
+  SessionTrackPayload,
 } from '../../domain';
 
 /** Para tokenów + tożsamość — wynik logowania i odświeżenia (§3.0). */
@@ -170,6 +171,14 @@ export interface ServerPort {
    * obok outboxa zdarzeń; serwer odkłada NDJSON per sesja do analizy progów.
    */
   pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }>;
+  /**
+   * Ślad sesji do narysowania (`GET /me/sessions/:uuid/track`, issue #47) — kierunek
+   * POWROTNY `pushTraces`. Telefon oddaje surowe fixy i kasuje swoją kopię, więc ekran
+   * 14 pobiera stąd gotową geometrię: linię i profil po uproszczeniu, próbkę logu
+   * i statystyki. Tożsamość bierze się z tokenu — cudza sesja jest nie do odróżnienia
+   * od nieistniejącej (404).
+   */
+  getSessionTrack(token: string, sessionUuid: string): Promise<SessionTrackPayload>;
   /** Podpowiedzi do formularza zadania (`GET /me/task-suggestions`) — wyłącznie online. */
   getTaskSuggestions(token: string): Promise<RemoteTaskSuggestions>;
   /** Preferencje pilota Z TOKENU (`GET /me/prefs`). */

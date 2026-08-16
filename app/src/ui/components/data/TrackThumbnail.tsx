@@ -28,9 +28,14 @@ import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
-/** Znacznik do narysowania — ten sam zestaw rodzajów, co na pełnej mapie. */
+/**
+ * Znacznik do narysowania — ten sam zestaw rodzajów, co na pełnej mapie.
+ *
+ * `peak` przyjmujemy w typie, ale NIE rysujemy (patrz `dots`): miniatura nie ma miejsca
+ * na podpisy, a maksimum bez liczby jest kropką, która niczego nie mówi.
+ */
 export interface TrackThumbnailMarker {
-  kind: 'takeoff' | 'landing' | 'drop';
+  kind: 'takeoff' | 'landing' | 'drop' | 'peak';
   position: TrackVertex | null;
 }
 
@@ -75,7 +80,7 @@ export function TrackThumbnail({ line, height, width, markers, onPress }: TrackT
   const dots = useMemo(() => {
     if (view == null || markers == null) return [];
     return markers
-      .filter((marker) => marker.position != null)
+      .filter((marker) => marker.position != null && marker.kind !== 'peak')
       .map((marker, index) => ({
         key: `${marker.kind}-${index}`,
         kind: marker.kind,

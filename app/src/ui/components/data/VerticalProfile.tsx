@@ -1,38 +1,80 @@
 /**
- * UZ Aero — profil pionowy lotu (mockup `14-slad.html`, sekcja „Profil pionowy").
+ * UZ Aero — profil pionowy sesji (mockup `14-slad.html`, sekcja „Profil pionowy").
  *
  * Wykres wysokości w czasie, rysowany tą samą techniką co ślad na mapie: łamana
  * z obróconych `<View>` (patrz `TrackPolyline`). Zero zależności natywnych.
  *
- * Profil jest w PEŁNI lokalny — liczy się z zapisu na telefonie, więc nie ma wariantu
- * offline: rysuje się identycznie z zasięgiem i bez. To odróżnia go od mapy, której
- * tło bywa niedostępne.
- *
  * Skala pionowa zaczyna się od DNA lotu, nie od zera: lot ze zrzutem odbywa się między
  * elewacją pola a 13 000 ft i rozciąganie osi do poziomu morza spłaszczyłoby cały
  * przebieg w pasek przy górnej krawędzi.
+ *
+ * ══ ZNACZNIKI NA OBU WYKRESACH (issue #47 pkt 2) ══
+ * Do issue #47 profil pokazywał sam szczyt, a mapa starty, lądowania i zrzuty — więc
+ * dwa rysunki tej samej sesji podpisywały co innego i nie dało się przełożyć zdarzenia
+ * z jednego na drugi. Odtąd oba niosą ten sam komplet, z CZASEM przy każdym znaczniku.
+ * Podpisem jest sama godzina: rodzaj niesie kolor (ten sam, co w legendzie mapy), bo
+ * pełne nazwy przy czterech znacznikach nie mieszczą się w szerokości telefonu —
+ * sprawdzone na geometrii mockupu, nie na oko.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { timeUtc } from '../../format';
 import type { FlightProfile } from '../../../domain';
+import { useChartGesture } from '../../hooks/useChartGesture';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { assignLabelRows } from './profileLabelRows';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
 /** Miejsce na etykiety osi — pod wykresem czas, po lewej wysokość. */
 const AXIS_LEFT = 42;
 const AXIS_BOTTOM = 20;
 
+/** Szerokość podpisu „08:20" w `micro` — do rozsuwania rzędów. */
+const TIME_LABEL_W = 30;
+const LABEL_ROW_H = 9;
+
+/**
+ * Znacznik na profilu. Kolor i podpis dobiera EKRAN — komponent nie zna rodzajów
+ * zdarzeń, tak samo jak `TrackMap` (`TrackMapMarker`).
+ */
+export interface VerticalProfileMarker {
+  at: number;
+  color: string;
+  /**
+   * Znacznik siedzi NA KRZYWEJ (zrzut, szczyt) zamiast przy ziemi (start, lądowanie).
+   * Ten na krzywej dostaje pionową kreskę prowadzącą do osi — bez niej nie da się
+   * odczytać, w którym miejscu osi czasu wypadł.
+   */
+  onCurve?: boolean;
+  /** Podpis dodatkowy przy znaczniku na krzywej — dziś wyłącznie „MAX 12 840 ft". */
+  note?: string | null;
+}
+
 export interface VerticalProfileProps {
   profile: FlightProfile;
   width: number;
   height: number;
+  markers?: readonly VerticalProfileMarker[];
+  /**
+   * Chwila pod palcem (issue #47 pkt 7) — kursor sprzężony z mapą. `null` = brak gestu.
+   * Kursorem na profilu jest CHWILA, więc rysuje się pionową kreską przez cały wykres.
+   */
+  cursorAt?: number | null;
+  /** Palec na profilu wskazał chwilę (albo zszedł: `null`). */
+  onCursorChange?: (at: number | null) => void;
 }
 
-export function VerticalProfile({ profile, width, height }: VerticalProfileProps) {
+export function VerticalProfile({
+  profile,
+  width,
+  height,
+  markers = [],
+  cursorAt = null,
+  onCursorChange,
+}: VerticalProfileProps) {
   const { theme } = useTheme();
 
   const plot = useMemo(() => {
@@ -59,17 +101,69 @@ export function VerticalProfile({ profile, width, height }: VerticalProfileProps
       y: 8 + plotH - ((altitudeFt - lowAlt) / spanAlt) * plotH,
     });
 
+    /** Wysokość w dowolnej chwili — interpolacja liniowa między próbkami. */
+    const altitudeAt = (time: number): number => {
+      if (time <= samples[0]!.time) return samples[0]!.altitudeFt;
+      const last = samples[samples.length - 1]!;
+      if (time >= last.time) return last.altitudeFt;
+
+      for (let i = 1; i < samples.length; i++) {
+        const a = samples[i - 1]!;
+        const b = samples[i]!;
+        if (time <= b.time) {
+          const span = b.time - a.time;
+          if (span <= 0) return b.altitudeFt;
+          return a.altitudeFt + ((b.altitudeFt - a.altitudeFt) * (time - a.time)) / span;
+        }
+      }
+      return last.altitudeFt;
+    };
+
     return {
       points: samples.map((s) => toPoint(s.time, s.altitudeFt)),
       toPoint,
+      altitudeAt,
       t0,
       t1,
       lowAlt,
       highAlt: maxAlt + pad,
       plotH,
       plotW,
+      baseline: 8 + plotH,
     };
   }, [profile, width, height]);
+
+  // Rzędy podpisów przy ziemi liczymy dla WSZYSTKICH naraz, bo kolizja jest sprawą
+  // między nimi, a nie cechą pojedynczego znacznika.
+  const groundRows = useMemo(() => {
+    if (plot == null) return [];
+    const ground = markers.filter((m) => m.onCurve !== true);
+    return assignLabelRows(
+      ground.map((m) => plot.toPoint(m.at, 0).x),
+      ground.map(() => TIME_LABEL_W),
+    );
+  }, [markers, plot]);
+
+  /**
+   * Na profilu osią jest CZAS, więc kursor to zwykłe przeliczenie X na chwilę —
+   * inaczej niż na mapie, gdzie trzeba szukać najbliższego wierzchołka trasy.
+   */
+  const gesture = useChartGesture({
+    size: { width, height },
+    onScrub: useCallback(
+      (point: Point2D | null) => {
+        if (onCursorChange == null) return;
+        if (point == null || plot == null) {
+          onCursorChange(null);
+          return;
+        }
+        const ratio = (point.x - AXIS_LEFT) / plot.plotW;
+        const clamped = Math.min(1, Math.max(0, ratio));
+        onCursorChange(plot.t0 + clamped * (plot.t1 - plot.t0));
+      },
+      [onCursorChange, plot],
+    ),
+  });
 
   if (plot == null) {
     return (
@@ -83,9 +177,10 @@ export function VerticalProfile({ profile, width, height }: VerticalProfileProps
 
   // Cztery poziomy siatki — tyle mieści się czytelnie na wysokości telefonu.
   const gridSteps = [0, 1, 2, 3];
+  let groundIndex = -1;
 
   return (
-    <View style={{ width, height }}>
+    <View style={{ width, height }} {...gesture.panHandlers}>
       {gridSteps.map((i) => {
         const ratio = i / (gridSteps.length - 1);
         const y = 8 + plot.plotH * ratio;
@@ -107,40 +202,93 @@ export function VerticalProfile({ profile, width, height }: VerticalProfileProps
 
       <TrackPolyline points={plot.points} color={theme.colors.green} width={2} />
 
-      {/* Szczyt — przy skokach to wysokość zrzutu i najczęściej czytana liczba ekranu. */}
-      {profile.peakAt != null && profile.peakAltitudeFt != null && (
-        <PeakMarker
-          point={plot.toPoint(profile.peakAt, profile.peakAltitudeFt)}
-          color={theme.colors.blue}
-          label={`${Math.round(profile.peakAltitudeFt).toLocaleString('pl-PL')} ft · ${timeUtc(profile.peakAt)}`}
-        />
+      {markers.map((marker, index) => {
+        const x = plot.toPoint(marker.at, 0).x;
+
+        if (marker.onCurve === true) {
+          const y = plot.toPoint(marker.at, plot.altitudeAt(marker.at)).y;
+          return (
+            <View key={`${marker.at}-${index}`} pointerEvents="none">
+              {/* Kreska prowadząca do osi — bez niej nie widać, kiedy to było. */}
+              <View
+                style={[
+                  styles.guide,
+                  { left: x, top: y, height: Math.max(0, plot.baseline + 7 - y), backgroundColor: marker.color },
+                ]}
+              />
+              <View
+                style={[styles.dot, { left: x - 3.5, top: y - 3.5, backgroundColor: marker.color }]}
+              />
+              <AppText
+                variant="micro"
+                style={[styles.curveTime, { right: width - x + 5, top: y - 12, color: marker.color }]}
+              >
+                {timeUtc(marker.at)}
+              </AppText>
+              {marker.note != null && (
+                <AppText
+                  variant="micro"
+                  style={[styles.curveNote, { left: x + 6, top: y - 12, color: marker.color }]}
+                >
+                  {marker.note}
+                </AppText>
+              )}
+            </View>
+          );
+        }
+
+        groundIndex += 1;
+        const row = groundRows[groundIndex] ?? 0;
+        return (
+          <View key={`${marker.at}-${index}`} pointerEvents="none">
+            <View
+              style={[
+                styles.dot,
+                { left: x - 3.5, top: plot.baseline - 3.5, backgroundColor: marker.color },
+              ]}
+            />
+            <AppText
+              variant="micro"
+              style={[
+                styles.groundTime,
+                {
+                  left: x - TIME_LABEL_W / 2,
+                  top: plot.baseline + 5 + row * LABEL_ROW_H,
+                  color: marker.color,
+                },
+              ]}
+            >
+              {timeUtc(marker.at)}
+            </AppText>
+          </View>
+        );
+      })}
+
+      {/* Kursor sprzężony z mapą — biały, bo nie jest zdarzeniem rejestru. */}
+      {cursorAt != null && (
+        <View pointerEvents="none">
+          <View
+            style={[
+              styles.cursor,
+              {
+                left: plot.toPoint(cursorAt, 0).x,
+                height: plot.plotH,
+                backgroundColor: theme.colors.textPrimary,
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.cursorDot,
+              {
+                left: plot.toPoint(cursorAt, 0).x - 3,
+                top: plot.toPoint(cursorAt, plot.altitudeAt(cursorAt)).y - 3,
+                backgroundColor: theme.colors.textPrimary,
+              },
+            ]}
+          />
+        </View>
       )}
-
-      <AppText variant="micro" tone="muted" style={[styles.timeLabel, { left: AXIS_LEFT }]}>
-        {timeUtc(plot.t0)}
-      </AppText>
-      <AppText variant="micro" tone="muted" style={[styles.timeLabel, { right: 4 }]}>
-        {timeUtc(plot.t1)}
-      </AppText>
-    </View>
-  );
-}
-
-function PeakMarker({ point, color, label }: { point: Point2D; color: string; label: string }) {
-  return (
-    <View pointerEvents="none">
-      <View style={[styles.peakDot, { left: point.x - 4, top: point.y - 4, backgroundColor: color }]} />
-      <AppText
-        variant="micro"
-        style={[
-          styles.peakLabel,
-          // Etykieta ucieka w lewo, gdy szczyt wypadł przy prawej krawędzi.
-          point.x > 180 ? { right: 4 } : { left: point.x + 8 },
-          { top: point.y + 6, color },
-        ]}
-      >
-        {label}
-      </AppText>
     </View>
   );
 }
@@ -149,7 +297,11 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center' },
   gridLine: { position: 'absolute', height: 1 },
   axisLabel: { position: 'absolute', left: 0, width: AXIS_LEFT - 6, textAlign: 'right' },
-  timeLabel: { position: 'absolute', bottom: 2 },
-  peakDot: { position: 'absolute', width: 8, height: 8, borderRadius: 4 },
-  peakLabel: { position: 'absolute' },
+  dot: { position: 'absolute', width: 7, height: 7, borderRadius: 3.5 },
+  guide: { position: 'absolute', width: 1, opacity: 0.45 },
+  curveTime: { position: 'absolute', textAlign: 'right' },
+  curveNote: { position: 'absolute' },
+  groundTime: { position: 'absolute', width: TIME_LABEL_W, textAlign: 'center' },
+  cursor: { position: 'absolute', top: 8, width: 1, opacity: 0.5 },
+  cursorDot: { position: 'absolute', width: 6, height: 6, borderRadius: 3 },
 });

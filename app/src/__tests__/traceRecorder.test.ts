@@ -39,6 +39,10 @@ class TraceServer implements ServerPort {
     return { accepted: entries.length };
   }
 
+  getSessionTrack = async (): Promise<never> => {
+    throw new Error('ta atrapa nie obsługuje śladu sesji');
+  };
+
   login = async (): Promise<AuthTokens> => ({ token: 'jwt-1', refreshToken: 'r1', pilot: PILOT });
   refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT });
   pushEvents = async () => ({ accepted: 0, duplicates: 0, flags: [] });

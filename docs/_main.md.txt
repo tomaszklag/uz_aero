@@ -683,6 +683,40 @@ Dwie konsekwencje warte zapamiętania:
 > się normalnie: odtworzenie wraca wtedy od razu jako `skipped`, a lokalny rejestr JEST
 > najlepszą dostępną prawdą.
 
+### 4.10 Ślad GPS wraca z serwera (issue #47, 2026-08-14)
+
+Zapis GPS przestał mieszkać na telefonie. Do tej pory nagranie leżało w `gps_trace`
+przez **14 dni** i stamtąd rysował się ekran 14 — a po tym czasie znikało razem z trasą,
+mimo że jego kopia leżała kompletna na serwerze. Retencja była limitem **pamięci
+urządzenia** (dzień lotny to ~30 tys. wierszy), nie decyzją o wartości danych.
+
+Kierunek jest odtąd odwrócony: telefon **nagrywa → oddaje (`POST /traces`) → kasuje**,
+a ekran śladu pobiera gotową geometrię z `GET /me/sessions/:uuid/track`.
+
+- **co wraca:** WYŁĄCZNIE geometria i liczby z niej policzone — linia po uproszczeniu
+  RDP, profil pionowy, próbka logu i statystyki lotu. Rejestracji maszyny, listy lotów
+  ani czasów w kopercie NIE MA
+- **co zostaje lokalne:** wszystko powyższe. Czasy startów, loty, czas w powietrzu i bieg
+  silnika liczą się dalej z lokalnego rejestru — dlatego wariant bez zasięgu (`14c`)
+  pokazuje komplet czasów i mówi wprost, że brakuje mu wyłącznie rysunku
+- **kompresja (pkt 6 zgłoszenia):** RDP w metrach na linii, RDP w stopach na profilu,
+  próbka logu co 30 s plus komplet odrzuconych, współrzędne do 5 miejsc (~1 m). Nagranie
+  o kilku MB schodzi do kilkudziesięciu kB. Statystyki liczą się PRZED upraszczaniem,
+  z kompletu punktów — inaczej „max wznoszenie" zależałoby od tolerancji rysowania
+- **okno bierze się z REJESTRU, nie ze śladu** (jak w panelu): po korekcie czasu startu
+  ślad zmienia się sam przy następnym otwarciu
+- **uprawnienie:** PIC sesji. Cudza sesja dostaje 404, nie 403 — potwierdzenie „istnieje,
+  ale nie twoja" byłoby odpowiedzią na pytanie, którego pytający nie ma prawa zadać
+- **retencja na telefonie** zostaje jako SUFIT dla wpisów, których nie udało się wysłać
+  (telefon tygodniami bez zasięgu). Normalną drogą jest kasowanie po potwierdzeniu
+
+> **To jest świadomy wyjątek od offline-first i jedyny taki w aplikacji.** Ekran 14 bez
+> zasięgu nie narysuje trasy — ani dzisiejszej, ani żadnej innej. Decyzja użytkownika
+> (2026-08-14) po przedstawieniu wariantu „lokalnie + API w zapasie": ślad jest materiałem
+> do OGLĄDANIA po locie, a nie przyrządem w locie, więc jego cena za trwałość i za pamięć
+> telefonu jest do przyjęcia. Reguła §6 pkt 1 pozostaje nietknięta: DANE SESJI (czasy,
+> loty, rozliczenie) nadal nie mają wariantu „z cache" i nie pytają serwera o nic.
+
 ---
 
 ## 5. Model danych
@@ -872,11 +906,14 @@ na canvasie panel „Warianty tego ekranu" z opisem, KIEDY się wyświetla):
   `10b-rozliczenie-zamkniete` (po oknie korekty — podgląd bez elementów zapisu) ·
   `10c-norma-detale` (arkusz normy pod plakietką werdyktu — issue #40: na karcie zostaje
   sama plakietka, pasmo i stawki otwiera ten, kto pyta „dlaczego tak")
-- **ślad (issue #38):** `14-slad` opisuje CAŁY bieg silnika — kołowanie, wszystkie starty
-  i lądowania, profil pionowy z przerwą na ziemi; wejście miniaturą z `10`. Ekrany `16`
-  i `16a` USUNIĘTE: zapis GPS powstaje w jednym ciągu, więc krojenie go na loty dokładało
-  ekran, który dublował to, co widać piętro wyżej. `14b` zostaje stanem zabezpieczającym
-  (zapis wygasł albo sesja wpisana ręcznie)
+- **ślad (issue #38, #47):** `14-slad` opisuje CAŁY bieg silnika — kołowanie, wszystkie
+  starty i lądowania, profil pionowy z przerwą na ziemi, statystyki lotu; wejście
+  miniaturą z `10`. Ekrany `16` i `16a` USUNIĘTE: zapis GPS powstaje w jednym ciągu, więc
+  krojenie go na loty dokładało ekran, który dublował to, co widać piętro wyżej.
+  Znaczniki (start, zrzut, maksimum, lądowanie) stoją na OBU wykresach i każdy niesie
+  czas — mapa z nazwą, profil samą godziną, bo tam rodzaj niesie kolor. `14b` = trasy nie
+  ma i nie będzie (wpis ręczny albo nagranie, które nie dotarło), `14c` = ślad jest na
+  serwerze, brakuje zasięgu, `14d` = stan w trakcie gestu (kursor sprzężony, zoom)
 
 **Motywy:** para ciemna — Night (domyślny), Amber/NVG; para jasna pod pełne słońce —
 Paper (ciepła biel), Solar (czysta biel), Sky (chłodny błękitno-szary).

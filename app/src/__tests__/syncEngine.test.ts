@@ -88,6 +88,9 @@ class ScriptedServer implements ServerPort {
 
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
+  getSessionTrack = async (): Promise<never> => {
+    throw new Error('ta atrapa nie obsługuje śladu sesji');
+  };
 
   /** Droga powrotna (§4.9) ma własne testy — `eventRestore.test.ts`. */
   pullEvents = async (): Promise<RemoteEventPage> => ({

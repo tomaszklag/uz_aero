@@ -100,6 +100,9 @@ class PrefsServer implements ServerPort {
   pushTraces = async () => {
     throw new Error('nieużywane w tych testach');
   };
+  getSessionTrack = async (): Promise<never> => {
+    throw new Error('nieużywane w tych testach');
+  };
   getReference = async () => ({ data: null, etag: null });
   getAircraftState = async () => ({
     aircraftId: 'SP-AXA',

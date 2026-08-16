@@ -89,6 +89,9 @@ class PullServer implements ServerPort {
   refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT });
   pushEvents = async (): Promise<PushResult> => ({ accepted: 0, duplicates: 0, flags: [] });
   pushTraces = async (_t: string, entries: unknown[]) => ({ accepted: entries.length });
+  getSessionTrack = async (): Promise<never> => {
+    throw new Error('ta atrapa nie obsługuje śladu sesji');
+  };
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
   getAircraftState = async () => ({
     aircraftId: 'SP-AXA',

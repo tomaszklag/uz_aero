@@ -1644,8 +1644,8 @@ postoju — jedno odniesienie na cały dzień lotny byłoby błędem rzędu 135 
 Migracja 3 schematu **usuwa i odtwarza** `gps_trace` zamiast robić `ALTER TABLE ADD COLUMN`.
 Powód: SQLite nie zna `ADD COLUMN IF NOT EXISTS`, więc `ALTER` odebrałby migracjom
 idempotencję, której pilnuje `sqliteSchema.test.ts`. `gps_trace` to jedyna tabela, której
-wolno zniknąć — materiał roboczy z 14-dniową retencją, poza outboxem, nigdy źródło prawdy.
-Gdyby to była `events`, rozmowa byłaby zupełnie inna.
+wolno zniknąć — materiał roboczy poza outboxem, nigdy źródło prawdy (od issue #47 kasowany
+zaraz po potwierdzonej wysyłce). Gdyby to była `events`, rozmowa byłaby zupełnie inna.
 
 **Rejestrator śladu kalibracyjnego (faza 5, zawsze włączony — decyzja 2026-07-29).**
 Kalibracja progów bez danych z realnych lotów to zgadywanie — więc telefon nagrywa:
@@ -1653,11 +1653,18 @@ SUROWE fixy sprzed kwarantanny (śmieci to najcenniejszy materiał do progów br
 + markery detektora (`detection` = toast pokazany, `undo` = COFNIJ pilota — czyli
 fałszywa detekcja oznaczona przez człowieka, której rejestr zdarzeń nie widzi).
 Tor CAŁKOWICIE osobny od rejestru: tabela `gps_trace` (migracja 2 SQLite aplikacji, poza
-outboxem, własna księgowość `uploaded_at`), retencja `TRACE_RETENTION_DAYS = 14`
-przy starcie, wysyłka `TraceSync` jako OSTATNI krok pętli okazji (jedna paczka
-≤ 2000/okazję — ślad nie konkuruje o łącze z rejestrem dnia) na `POST /traces`;
-serwer (`FsTraceSink`) odkłada NDJSON per sesja w `TRACES_DIR` z dopisanym
-`pilotId` z JWT. Analiza: `server/scripts/replay.ts` — ten sam `runDetector`
+outboxem, własna księgowość `uploaded_at`), wysyłka `TraceSync` jako OSTATNI krok pętli
+okazji (jedna paczka ≤ 2000/okazję — ślad nie konkuruje o łącze z rejestrem dnia) na
+`POST /traces`; serwer (`FsTraceSink`) odkłada NDJSON per sesja w `TRACES_DIR`
+z dopisanym `pilotId` z JWT.
+
+**Od issue #47 nagranie jest PRZESYŁKĄ, nie zbiorem.** Potwierdzone wiersze kasuje
+`purgeUploadedTrace()` zaraz po `markTraceUploaded` (dwa kroki, nie jeden: przerwanie
+procesu między nimi zostawia wiersze oznaczone, które sprzątnie najbliższy przebieg —
+kasowanie w tej samej operacji nie miałoby jak się cofnąć, gdyby zapis potwierdzenia
+padł). `TRACE_RETENTION_DAYS = 14` zostaje jako SUFIT dla wpisów, których nie udało się
+wysłać (telefon tygodniami bez zasięgu), a nie jako normalna droga życia zapisu.
+Ekran śladu czyta odtąd `GET /me/sessions/:uuid/track` — patrz `_main.md.txt` §4.10. Analiza: `server/scripts/replay.ts` — ten sam `runDetector`
 na nagranym śladzie, z nadpisywalnymi progami i zderzeniem detekcji replayu
 z markerami lotu; najlepsze nagrania staną się złotymi śladami-testami. Wiersz
 „Rejestrator śladu" w diagnostyce na 13. Barometr dopisze się do tej samej

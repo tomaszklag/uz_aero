@@ -96,7 +96,23 @@ export interface TracePort {
     toTime: EpochMillis,
   ): Promise<TraceEntry[]>;
   markTraceUploaded(ids: number[], uploadedAt: EpochMillis): Promise<void>;
-  /** Retencja: kasuje wpisy z `deviceTime` starszym niż próg. Zwraca liczbę usuniętych. */
+  /**
+   * Kasuje wpisy POTWIERDZONE przez serwer (issue #47) — normalna droga życia nagrania.
+   *
+   * Osobny krok po `markTraceUploaded`, a nie kasowanie w jego miejsce: przerwanie
+   * procesu między jednym a drugim zostawia wtedy wiersze OZNACZONE, które sprzątnie
+   * najbliższy przebieg. Skasowanie w tej samej operacji, w której potwierdzamy wysyłkę,
+   * nie miałoby jak się cofnąć, gdyby zapis potwierdzenia padł.
+   */
+  purgeUploadedTrace(): Promise<number>;
+  /**
+   * Sufit bezpieczeństwa dla wpisów, które NIGDY nie poszły (`TRACE_RETENTION_DAYS`).
+   *
+   * Do issue #47 to była główna reguła życia śladu — dziś nagranie znika zaraz po
+   * wysyłce, więc tu dojeżdża tylko to, czego wysłać się nie udało: telefon miesiącami
+   * bez zasięgu, konto wylogowane, serwer nieosiągalny. Bez tego sufitu taka pamięć
+   * rosłaby bez końca.
+   */
   purgeTraceOlderThan(threshold: EpochMillis): Promise<number>;
   traceStats(): Promise<TraceStats>;
 }

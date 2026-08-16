@@ -124,6 +124,12 @@ export class InMemoryAdapter implements StoragePort, TracePort {
     for (const e of this.trace) if (set.has(e.id)) e.uploadedAt = uploadedAt;
   }
 
+  async purgeUploadedTrace(): Promise<number> {
+    const before = this.trace.length;
+    this.trace = this.trace.filter((e) => e.uploadedAt == null);
+    return before - this.trace.length;
+  }
+
   async purgeTraceOlderThan(threshold: EpochMillis): Promise<number> {
     const before = this.trace.length;
     this.trace = this.trace.filter((e) => e.deviceTime >= threshold);

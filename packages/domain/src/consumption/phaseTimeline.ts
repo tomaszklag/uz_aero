@@ -60,11 +60,39 @@ const FEET_PER_MINUTE = 60;
  * ten sam stan domyślny, co w kokpicie, i z tego samego powodu: brak wiedzy o zmianie
  * wysokości nie jest dowodem na wznoszenie.
  */
-export function buildPhaseTimeline(points: readonly TrackPoint[]): PhaseSegment[] {
-  const usable = points
+/** Prędkość pionowa w jednym punkcie nagrania; `null` = nie ma z czego jej policzyć. */
+export interface VerticalSpeedSample {
+  time: EpochMillis;
+  /** Stopy na minutę; dodatnia = wznoszenie. */
+  fpm: number | null;
+}
+
+/**
+ * Prędkość pionowa PUNKT PO PUNKCIE — wspólne wejście osi faz i statystyk śladu.
+ *
+ * Wydzielone przy issue #47: ekran śladu podaje „max wznoszenie" i „max opadanie",
+ * a policzone własną pętlą byłyby DRUGĄ definicją wznoszenia w tym samym pakiecie.
+ * Rozjazd wyszedłby dopiero w rozmowie o konkretnym locie („oś mówi przelot, a obok
+ * pisze +400 ft/min") i nie miałby jak zostać zauważony wcześniej.
+ *
+ * Punkty odrzucone przez bramkę jakości i bez wysokości odpadają tutaj, raz.
+ */
+export function verticalSpeedSeries(points: readonly TrackPoint[]): VerticalSpeedSample[] {
+  const usable = usableAltitudePoints(points);
+  return usable.map((point, i) => ({ time: point.time, fpm: verticalSpeedAt(usable, i) }));
+}
+
+function usableAltitudePoints(
+  points: readonly TrackPoint[],
+): (TrackPoint & { altitudeFt: number })[] {
+  return points
     .filter(isUsablePoint)
     .filter((point): point is TrackPoint & { altitudeFt: number } => point.altitudeFt != null)
     .sort((a, b) => a.time - b.time);
+}
+
+export function buildPhaseTimeline(points: readonly TrackPoint[]): PhaseSegment[] {
+  const usable = usableAltitudePoints(points);
 
   if (usable.length < 2) return [];
 
@@ -74,7 +102,7 @@ export function buildPhaseTimeline(points: readonly TrackPoint[]): PhaseSegment[
 
   for (let i = 0; i < usable.length; i++) {
     const point = usable[i]!;
-    const phase = phaseAt(usable, i);
+    const phase = phaseOf(verticalSpeedAt(usable, i));
 
     if (openPhase == null) {
       openPhase = phase;
@@ -151,7 +179,10 @@ export function phaseTimesInWindow(
  * Okno centrowane daje też fazy przesunięte we WŁAŚCIWE miejsce: zmiana wykryta wstecz
  * jest z definicji spóźniona o pół okna, a przy budowaniu osi nie ma powodu tego znosić.
  */
-function phaseAt(points: readonly (TrackPoint & { altitudeFt: number })[], i: number): VerticalPhase {
+function verticalSpeedAt(
+  points: readonly (TrackPoint & { altitudeFt: number })[],
+  i: number,
+): number | null {
   const center = points[i]!.time;
   const half = (VS_WINDOW_SEC * SECOND_MS) / 2;
 
@@ -164,13 +195,18 @@ function phaseAt(points: readonly (TrackPoint & { altitudeFt: number })[], i: nu
 
   // `VS_MIN_SPAN_SEC` nie jest tu progiem: oś powstaje po fakcie, więc okno okrojone
   // na krańcach nagrania to fragment, o którym wiemy mniej, a nie sytuacja do
-  // przemilczenia. Gdy regresja nie ma z czego liczyć, wynikiem jest `cruise` — ten sam
-  // stan domyślny, co w kokpicie, i z tego samego powodu: brak wiedzy o zmianie
-  // wysokości nie jest dowodem na wznoszenie.
+  // przemilczenia.
   const slope = slopePerSecond(window, 0);
-  if (slope == null) return 'cruise';
+  return slope == null ? null : slope * FEET_PER_MINUTE;
+}
 
-  const fpm = slope * FEET_PER_MINUTE;
+/**
+ * Faza z prędkości pionowej. Brak wyniku regresji daje `cruise` — ten sam stan domyślny,
+ * co w kokpicie, i z tego samego powodu: brak wiedzy o zmianie wysokości nie jest
+ * dowodem na wznoszenie.
+ */
+function phaseOf(fpm: number | null): VerticalPhase {
+  if (fpm == null) return 'cruise';
   if (fpm >= VS_THRESHOLD_FPM) return 'climb';
   if (fpm <= -VS_THRESHOLD_FPM) return 'descent';
   return 'cruise';

@@ -14,7 +14,7 @@
  * krąg ma dwa kilometry, czy dwadzieścia.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import {
@@ -27,6 +27,8 @@ import {
   type LatLon,
   type TrackVertex,
 } from '../../../domain';
+import { useChartGesture } from '../../hooks/useChartGesture';
+import { applyViewport, unapplyViewport } from '../../screens/logic/mapViewport';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
@@ -49,6 +51,10 @@ export interface TrackMapProps {
   height: number;
   /** ICAO z preflightu — to lotnisko pokazujemy zawsze, także spoza kadru. */
   departureIcao?: string | null;
+  /** Chwila pod palcem — kursor sprzężony z profilem (issue #47 pkt 7). */
+  cursorAt?: number | null;
+  /** Palec na mapie wskazał chwilę (albo zszedł: `null`). */
+  onCursorChange?: (at: number | null) => void;
 }
 
 export function TrackMap({
@@ -57,6 +63,8 @@ export function TrackMap({
   width,
   height,
   departureIcao = null,
+  cursorAt = null,
+  onCursorChange,
 }: TrackMapProps) {
   const { theme } = useTheme();
 
@@ -74,19 +82,95 @@ export function TrackMap({
     [frame, departureIcao],
   );
 
-  const screenPoints: Point2D[] = useMemo(
+  /** Punkty trasy w kadrze 1:1 — do nich odnosi się przybliżenie i szukanie kursora. */
+  const basePoints: Point2D[] = useMemo(
     () => (frame == null ? [] : line.map((p) => toScreen(p, frame.view))),
     [line, frame],
   );
 
-  const bar = useMemo(
-    () =>
-      frame == null ? null : scaleBar(frame.view, line[0]?.lat ?? 52, Math.min(90, width * 0.3)),
-    [frame, line, width],
+  /**
+   * Palec na mapie → CHWILA, nie miejsce.
+   *
+   * Mapa nie ma osi czasu, więc kursor stawia się na najbliższym WIERZCHOŁKU trasy
+   * i to jego czas idzie na profil. Szukamy w układzie 1:1 (po zdjęciu przybliżenia),
+   * bo tam odległości nie zależą od tego, jak mocno pilot przybliżył.
+   */
+  const gesture = useChartGesture({
+    size: { width, height },
+    zoomable: true,
+    onScrub: useCallback(
+      (point: Point2D | null) => {
+        if (onCursorChange == null) return;
+        if (point == null || basePoints.length === 0) {
+          onCursorChange(null);
+          return;
+        }
+
+        const inBase = unapplyViewport(point, viewportRef.current);
+        let bestIndex = 0;
+        let bestDistance = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < basePoints.length; i++) {
+          const dx = basePoints[i]!.x - inBase.x;
+          const dy = basePoints[i]!.y - inBase.y;
+          const distance = dx * dx + dy * dy;
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestIndex = i;
+          }
+        }
+        onCursorChange(line[bestIndex]?.time ?? null);
+      },
+      [basePoints, line, onCursorChange],
+    ),
+  });
+
+  // Kadr czytany w trakcie gestu, więc przez ref: `onScrub` powstaje raz na zmianę
+  // punktów, a przybliżenie zmienia się w każdej klatce szczypty.
+  const viewportRef = React.useRef(gesture.viewport);
+  viewportRef.current = gesture.viewport;
+
+  const screenPoints = useMemo(
+    () => basePoints.map((p) => applyViewport(p, gesture.viewport)),
+    [basePoints, gesture.viewport],
   );
 
+  const project = useCallback(
+    (position: LatLon): Point2D =>
+      frame == null
+        ? { x: 0, y: 0 }
+        : applyViewport(toScreen(position, frame.view), gesture.viewport),
+    [frame, gesture.viewport],
+  );
+
+  const bar = useMemo(() => {
+    if (frame == null) return null;
+    // Podziałka jest WSKAŹNIKIEM PRZYBLIŻENIA (mockup 14D): przy ×2,4 czyta „500 m"
+    // zamiast „2 km". Liczymy ją więc na kadrze 1:1 dla proporcjonalnie krótszego
+    // odcinka, a wynik rozciągamy z powrotem — dzięki temu liczba zostaje okrągła.
+    const maxPx = Math.min(90, width * 0.3) / gesture.viewport.scale;
+    const base = scaleBar(frame.view, line[0]?.lat ?? 52, maxPx);
+    return { meters: base.meters, pixels: base.pixels * gesture.viewport.scale };
+  }, [frame, line, width, gesture.viewport.scale]);
+
+  const cursorPoint = useMemo(() => {
+    if (cursorAt == null || frame == null || line.length === 0) return null;
+    let best: TrackVertex | null = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (const vertex of line) {
+      const distance = Math.abs(vertex.time - cursorAt);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = vertex;
+      }
+    }
+    return best == null ? null : project(best);
+  }, [cursorAt, frame, line, project]);
+
   return (
-    <View style={[styles.frame, { width, height, backgroundColor: theme.colors.bgTint }]}>
+    <View
+      style={[styles.frame, { width, height, backgroundColor: theme.colors.bgTint }]}
+      {...gesture.panHandlers}
+    >
       <CoordinateGrid width={width} height={height} color={theme.colors.border} />
 
       {/* ── lotniska: pas i podpis, POD śladem ──────────────────────────── */}
@@ -95,7 +179,7 @@ export function TrackMap({
           <AirfieldMark
             key={airfield.icao}
             airfield={airfield}
-            point={toScreen(airfield, frame.view)}
+            point={project(airfield)}
             metersPerPixel={bar != null && bar.pixels > 0 ? bar.meters / bar.pixels : null}
             surface={theme.colors.borderStrong}
             labelColor={theme.colors.textMuted}
@@ -107,7 +191,7 @@ export function TrackMap({
       {/* ── znaczniki startu i lądowania ─────────────────────────────────── */}
       {frame != null &&
         markers.map((marker) => {
-          const p = toScreen(marker.position, frame.view);
+          const p = project(marker.position);
           return (
             <View key={marker.label} pointerEvents="none">
               {marker.ring === true && (
@@ -127,6 +211,35 @@ export function TrackMap({
             </View>
           );
         })}
+
+      {/* ── kursor sprzężony z profilem (issue #47 pkt 7) ─────────────────── */}
+      {/* Biały, bo nie jest zdarzeniem rejestru: zieleń, czerwień i błękit są zajęte
+          przez starty, lądowania i zrzuty, a wzięcie któregokolwiek kazałoby czytać
+          kursor jako coś, co się wydarzyło. */}
+      {cursorPoint != null && (
+        <View pointerEvents="none">
+          <View
+            style={[
+              styles.cursorRing,
+              {
+                left: cursorPoint.x - 9,
+                top: cursorPoint.y - 9,
+                borderColor: theme.colors.textPrimary,
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.cursorDot,
+              {
+                left: cursorPoint.x - 3.5,
+                top: cursorPoint.y - 3.5,
+                backgroundColor: theme.colors.textPrimary,
+              },
+            ]}
+          />
+        </View>
+      )}
 
       {/* ── atrybucja źródeł katalogu ────────────────────────────────────── */}
       {/* Pasy lotnisk aeroklubowych pochodzą z OpenStreetMap (ODbL), a ta licencja
@@ -259,6 +372,8 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   markerLabel: { position: 'absolute' },
+  cursorRing: { position: 'absolute', width: 18, height: 18, borderRadius: 9, borderWidth: 1, opacity: 0.55 },
+  cursorDot: { position: 'absolute', width: 7, height: 7, borderRadius: 3.5 },
   airfieldDot: { position: 'absolute', width: 6, height: 6, borderRadius: 1 },
   airfieldLabel: { position: 'absolute', letterSpacing: 1 },
   scale: { position: 'absolute', left: 8, bottom: 6, gap: 2 },

@@ -39,6 +39,12 @@ export class TraceSync {
       batch.map((e) => e.id),
       Date.now(),
     );
+    // Potwierdzone nagranie znika z telefonu (issue #47): od tej chwili jedyną jego
+    // kopią jest serwer i to stamtąd pobiera je ekran 14. Dzień lotny to dziesiątki
+    // tysięcy wierszy — trzymanie ich drugi raz kosztowałoby pamięć urządzenia
+    // dokładnie po nic. Kasujemy WSZYSTKO potwierdzone, nie tylko tę paczkę: sprząta
+    // to także wiersze oznaczone tuż przed ubiciem procesu w poprzednim przebiegu.
+    await this.store.purgeUploadedTrace();
     return batch.length;
   }
 }

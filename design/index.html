@@ -656,8 +656,8 @@
     <div class="card-num">14B</div>
     <div class="card-body">
       <div class="card-title">14b-slad-brak</div>
-      <div class="card-desc">Brak śladu na pełnym ekranie mapy — stan ZABEZPIECZAJĄCY po issue #25 (powód mówi już 16A, a tamten kafelek nie prowadzi dalej). Podaje powód i czasy, które mimo wszystko są, gdy zapis zniknie między jednym a drugim otwarciem</div>
-      <div class="card-tags"><span class="tag">stan pusty</span><span class="tag">retencja</span></div>
+      <div class="card-desc">Trasy nie ma i nie będzie: sesja wpisana ręcznie albo nagranie, które nigdy nie powstało lub nie dotarło na serwer. Podaje POWÓD i czasy, które mimo wszystko są. Retencja zniknęła z powodów przy issue #47 — ślad trzyma serwer, a limit 14 dni był limitem pamięci telefonu</div>
+      <div class="card-tags"><span class="tag">stan pusty</span><span class="tag">powód</span></div>
     </div>
   </a>
   <a href="05-themes.html" class="card">
@@ -739,8 +739,24 @@
     <div class="card-num">14</div>
     <div class="card-body">
       <div class="card-title">14-slad (ślad sesji)</div>
-      <div class="card-desc">Ślad CAŁEGO biegu silnika — kołowanie, wszystkie starty i lądowania, zrzuty; trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy z przerwą na ziemi i log przeliczonych punktów ze stanem bramki jakości. Wejście miniaturą z ekranu sesji (10); wszystko liczy się lokalnie — ekran nie pobiera niczego z sieci</div>
-      <div class="card-tags"><span class="tag">mapa</span><span class="tag">profil</span><span class="tag">cała sesja</span></div>
+      <div class="card-desc">Ślad CAŁEGO biegu silnika — kołowanie, wszystkie starty i lądowania, zrzuty; trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy ze znacznikami i czasami, statystyki lotu (prędkość i pion, czasy faz, trzymanie wysokości) oraz log punktów ze stanem bramki jakości. Wejście miniaturą z ekranu sesji (10). Od issue #47 ślad przychodzi z SERWERA — telefon nagrywa go i oddaje, po czym kasuje kopię</div>
+      <div class="card-tags"><span class="tag">mapa</span><span class="tag">profil</span><span class="tag">statystyki</span><span class="tag">z serwera</span></div>
+    </div>
+  </a>
+  <a href="14c-slad-offline.html" class="card">
+    <div class="card-num">14C</div>
+    <div class="card-body">
+      <div class="card-title">14c-slad-offline</div>
+      <div class="card-desc">Ślad JEST na serwerze, tylko telefon nie ma jak go pobrać — jedyny stan w aplikacji, w którym ekran potrzebuje sieci (issue #47). Mówi to wprost, pokazuje czasy sesji z lokalnego rejestru i nieaktywne „POBIERZ ŚLAD" z podanym powodem. Nie mylić z 14B: tam trasy nie ma i nie będzie</div>
+      <div class="card-tags"><span class="tag">offline</span><span class="tag">stan pusty</span><span class="tag">wymaga sieci</span></div>
+    </div>
+  </a>
+  <a href="14d-slad-kursor.html" class="card">
+    <div class="card-num">14D</div>
+    <div class="card-body">
+      <div class="card-title">14d-slad-kursor</div>
+      <div class="card-desc">Stan W TRAKCIE gestu, nie osobny ekran: palec na jednym wykresie stawia kursor na obu (biały — nie jest zdarzeniem rejestru), a odczyt staje w stałym rogu każdego z nich. Mapa przybliżona dwoma palcami; wskaźnikiem przybliżenia jest podziałka, dwuklik wraca do całego śladu (issue #47 pkt 7 i 8)</div>
+      <div class="card-tags"><span class="tag">gesty</span><span class="tag">zoom</span><span class="tag">sprzężenie</span></div>
     </div>
   </a>
   <a href="15-reczny-lot.html" class="card">

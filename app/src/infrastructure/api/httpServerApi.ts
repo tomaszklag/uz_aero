@@ -22,7 +22,7 @@ import type {
   SessionSyncStatus,
 } from '../../application/ports';
 import { ServerRejectedError, ServerUnreachableError } from '../../application/ports';
-import type { Event } from '../../domain';
+import type { Event, SessionTrackPayload } from '../../domain';
 
 const TIMEOUT_MS = 8_000;
 
@@ -88,6 +88,10 @@ export class HttpServerApi implements ServerPort {
 
   pushTraces(token: string, entries: unknown[]): Promise<{ accepted: number }> {
     return this.request('POST', '/traces', { token, body: { entries } });
+  }
+
+  getSessionTrack(token: string, sessionUuid: string): Promise<SessionTrackPayload> {
+    return this.request('GET', `/me/sessions/${encodeURIComponent(sessionUuid)}/track`, { token });
   }
 
   getTaskSuggestions(token: string): Promise<RemoteTaskSuggestions> {
