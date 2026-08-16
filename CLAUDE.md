@@ -745,6 +745,11 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
   TYLKO W POZIOMIE** (`zoomAxis: 'x'`): jego pionem jest wysokość dobrana do zakresu
   lotu, więc rozciąganie jej niczego nie odsłania — a rozciągnięcie czasu owszem, bo to
   ono rozdziela zdarzenia leżące na sobie
+- **każdy wykres ma PODZIAŁKĘ i to ona jest wskaźnikiem przybliżenia**: mapa odległości
+  („500 m" zamiast „2 km"), profil czasu („2 min" zamiast „15 min", `timeScaleBar.ts`).
+  Nie plakietka „×2,4" — pilota interesuje odległość i czas, nie krotność. Profil nie
+  dostaje za to osi z regularnymi znacznikami czasu: wpadłyby w rząd godzin przy startach
+  i lądowaniach, a dwa rzędy liczb pod wykresem to błąd, który przegląd już raz wyrzucił
 - **kolejność ekranu: mapa → profil → statystyki**. Metryki spod mapy zeszły do karty
   statystyk (razem ze średnim wznoszeniem i zejściem spod profilu), żeby oba wykresy
   przylegały do siebie — kursor je sprzęga, więc pilot patrzy na nie na przemian

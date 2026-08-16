@@ -26,6 +26,7 @@ import { useChartGesture } from '../../hooks/useChartGesture';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { assignLabelRows } from './profileLabelRows';
+import { timeScaleBar } from './timeScaleBar';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
 /** Miejsce na etykiety osi — pod wykresem czas, po lewej wysokość. */
@@ -214,6 +215,16 @@ export function VerticalProfile({
   let groundIndex = -1;
 
   const { scale, offsetX } = gesture.viewport;
+
+  /**
+   * Podziałka czasu — wskaźnik przybliżenia profilu, dokładnie jak podziałka odległości
+   * na mapie: przy przybliżeniu czyta „2 min" zamiast „15 min". Bez niej po zoomie
+   * między dwoma znacznikami nie było ani jednej liczby o czasie.
+   */
+  const timeScale = timeScaleBar(
+    (plot.t1 - plot.t0) / (plot.spanW * scale),
+    Math.min(70, plot.spanW * 0.3),
+  );
   /** Punkt krzywej w układzie POLA WYKRESU (bez `AXIS_LEFT`), po przybliżeniu. */
   const curvePoints: Point2D[] = plot.points.map((point) => ({
     x: (point.x - AXIS_LEFT) * scale + offsetX,
@@ -328,6 +339,22 @@ export function VerticalProfile({
           );
         })}
 
+        {/* Podziałka czasu w rogu — jedyna liczba o czasie, która nie zależy od tego,
+            czy w kadrze jest akurat jakiś znacznik. */}
+        {timeScale != null && (
+          <View pointerEvents="none" style={styles.timeScale}>
+            <AppText variant="micro" tone="secondary">
+              {timeScale.label}
+            </AppText>
+            <View
+              style={[
+                styles.timeScaleBar,
+                { width: timeScale.pixels, borderColor: theme.colors.textSecondary },
+              ]}
+            />
+          </View>
+        )}
+
         {/* Kursor sprzężony z mapą — biały, bo nie jest zdarzeniem rejestru. */}
         {cursorAt != null && (
           <View pointerEvents="none">
@@ -368,6 +395,10 @@ const styles = StyleSheet.create({
   curveTime: { position: 'absolute', textAlign: 'right' },
   curveNote: { position: 'absolute' },
   groundTime: { position: 'absolute', width: TIME_LABEL_W, textAlign: 'center' },
+  // Lewy górny róg pola: krzywa zaczyna się nisko (elewacja pola), więc tam jest pusto
+  // przez cały bieg silnika — inaczej niż w prawym, gdzie przy geście staje odczyt.
+  timeScale: { position: 'absolute', left: 4, top: 6, gap: 2 },
+  timeScaleBar: { height: 4, borderWidth: 1, borderTopWidth: 0 },
   cursor: { position: 'absolute', top: 8, width: 1, opacity: 0.5 },
   cursorDot: { position: 'absolute', width: 6, height: 6, borderRadius: 3 },
 });
