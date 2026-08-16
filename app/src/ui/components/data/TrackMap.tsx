@@ -31,6 +31,7 @@ import { useChartGesture } from '../../hooks/useChartGesture';
 import { applyViewport, unapplyViewport } from '../../screens/logic/mapViewport';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { formatNm } from './distanceScaleBar';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
 /** Odstęp linii siatki (px) — gęściej robi się szum pod śladem. */
@@ -149,7 +150,7 @@ export function TrackMap({
     // odcinka, a wynik rozciągamy z powrotem — dzięki temu liczba zostaje okrągła.
     const maxPx = Math.min(90, width * 0.3) / gesture.viewport.scale;
     const base = scaleBar(frame.view, line[0]?.lat ?? 52, maxPx);
-    return { meters: base.meters, pixels: base.pixels * gesture.viewport.scale };
+    return { nm: base.nm, meters: base.meters, pixels: base.pixels * gesture.viewport.scale };
   }, [frame, line, width, gesture.viewport.scale]);
 
   const cursorPoint = useMemo(() => {
@@ -252,7 +253,7 @@ export function TrackMap({
       {bar != null && (
         <View style={styles.scale}>
           <AppText variant="micro" tone="secondary">
-            {bar.meters >= 1000 ? `${bar.meters / 1000} km` : `${bar.meters} m`}
+            {formatNm(bar.nm)} NM
           </AppText>
           <View
             style={[

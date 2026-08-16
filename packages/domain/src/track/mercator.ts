@@ -177,27 +177,40 @@ export function tilesFor(view: MapView): TileRef[] {
   return tiles;
 }
 
+/** Mila morska w metrach — jednostka odległości W CAŁEJ APLIKACJI. */
+const METERS_PER_NM = 1852;
+
 /**
- * Długość podziałki skali: ile pikseli odpowiada „ładnej" liczbie metrów.
+ * Długość podziałki skali: ile pikseli odpowiada „ładnej" liczbie MIL MORSKICH.
  *
  * Szukamy największej wartości z ciągu 1-2-5, która mieści się w `maxPx` — tak działają
- * podziałki na wszystkich mapach i dzięki temu pod kreską stoi „2 km", a nie „1,87 km".
+ * podziałki na wszystkich mapach i dzięki temu pod kreską stoi „2 NM", a nie „1,87 NM".
+ *
+ * ══ DLACZEGO NM, A NIE METRY (2026-08-15) ══
+ * Podziałka liczyła kiedyś w metrach i kilometrach, a wszystko inne w tym produkcie —
+ * dystans sesji, statystyki, profil — w milach morskich. Na jednym ekranie stały przez
+ * to dwie jednostki tej samej wielkości i pilot musiał je w głowie przeliczać, żeby
+ * zestawić podziałkę z liczbą pod mapą.
+ *
+ * `meters` zostaje w wyniku, bo służy do czegoś INNEGO niż podpis: przelicza długość
+ * pasa startowego (`runway.lengthM`) na piksele. To geometria, nie jednostka dla oka.
  */
 export function scaleBar(
   view: MapView,
   latitude: number,
   maxPx = 90,
-): { meters: number; pixels: number } {
+): { nm: number; meters: number; pixels: number } {
   const metersPerPixel =
     (156543.03392 * Math.cos((clampLat(latitude) * Math.PI) / 180)) / 2 ** view.zoom;
-  const maxMeters = metersPerPixel * maxPx;
+  const maxNm = (metersPerPixel * maxPx) / METERS_PER_NM;
 
-  const pow = 10 ** Math.floor(Math.log10(maxMeters));
+  const pow = 10 ** Math.floor(Math.log10(maxNm));
   const candidates = [pow, pow * 2, pow * 5];
-  let meters = pow;
+  let nm = pow;
   for (const c of candidates) {
-    if (c <= maxMeters) meters = c;
+    if (c <= maxNm) nm = c;
   }
 
-  return { meters, pixels: meters / metersPerPixel };
+  const meters = nm * METERS_PER_NM;
+  return { nm, meters, pixels: meters / metersPerPixel };
 }

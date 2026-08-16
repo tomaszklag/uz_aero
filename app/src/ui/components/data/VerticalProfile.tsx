@@ -26,6 +26,7 @@ import { useChartGesture } from '../../hooks/useChartGesture';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { assignLabelRows } from './profileLabelRows';
+import { distanceScaleBar } from './distanceScaleBar';
 import { timeScaleBar } from './timeScaleBar';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
@@ -276,16 +277,14 @@ export function VerticalProfile({
    * gdzie stoi, i końcem o krok dalej. Liczba zmienia się przy przesuwaniu wykresu
    * i tak ma być — w innym miejscu lotu samolot leciał inaczej.
    */
-  const scaleDistanceNm = (() => {
-    if (timeScale == null || distanceNmAt == null) return null;
-    // Odcinek liczymy od LEWEJ KRAWĘDZI pola wykresu (pasek stoi pod podpisami
-    // wysokości, czyli poza wykresem — jego własne `x` nie leży nad danymi).
-    const from = timeAtX(0, plot, gesture.viewport);
-    const to = timeAtX(timeScale.pixels, plot, gesture.viewport);
-    const a = distanceNmAt(from);
-    const b = distanceNmAt(to);
-    return a == null || b == null ? null : Math.abs(b - a);
-  })();
+  const distanceScale =
+    distanceNmAt == null
+      ? null
+      : distanceScaleBar(
+          (x) => distanceNmAt(timeAtX(x, plot, gesture.viewport)),
+          plot.plotW,
+          Math.min(70, plot.spanW * 0.3),
+        );
   /** Punkt krzywej w układzie POLA WYKRESU (bez `AXIS_LEFT`), po przybliżeniu. */
   const curvePoints: Point2D[] = plot.points.map((point) => ({
     x: (point.x - AXIS_LEFT) * scale + offsetX,
@@ -448,16 +447,15 @@ export function VerticalProfile({
           jednego ekranu trzymają skale w jednym miejscu, więc oko szuka ich raz.
           Dystans dotyczy ODCINKA obejmowanego przez pasek, a nie „NM na piksel" —
           na osi czasu proporcji między czasem a drogą po prostu nie ma. */}
-      {timeScale != null && (
+      {distanceScale != null && (
         <View pointerEvents="none" style={styles.timeScale}>
           <AppText variant="micro" tone="secondary">
-            {timeScale.label}
-            {scaleDistanceNm != null && ` · ${scaleDistanceNm.toFixed(1)} NM`}
+            {distanceScale.label}
           </AppText>
           <View
             style={[
               styles.timeScaleBar,
-              { width: timeScale.pixels, borderColor: theme.colors.textSecondary },
+              { width: distanceScale.pixels, borderColor: theme.colors.textSecondary },
             ]}
           />
         </View>
