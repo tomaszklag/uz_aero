@@ -32,6 +32,16 @@ import { TrackPolyline, type Point2D } from './TrackPolyline';
 const AXIS_LEFT = 42;
 const AXIS_BOTTOM = 20;
 
+/**
+ * Oddech na obu końcach osi czasu (px).
+ *
+ * Bez niego krzywa zaczynała się DOKŁADNIE na krawędzi pola i tak samo kończyła, a
+ * podpis pierwszego i ostatniego znacznika — wyśrodkowany na swoim punkcie — wychodził
+ * połową poza przycięte pole i był ucinany. Uruchomienie i wyłączenie silnika to dwie
+ * najważniejsze godziny tego wykresu i akurat one traciły po pół napisu.
+ */
+const PLOT_PAD_X = 16;
+
 /** Szerokość podpisu „08:20" w `micro` — do rozsuwania rzędów. */
 const TIME_LABEL_W = 36;
 const LABEL_ROW_H = 9;
@@ -96,8 +106,11 @@ export function VerticalProfile({
     const lowAlt = minAlt - pad;
     const spanAlt = Math.max(1, maxAlt + pad - lowAlt);
 
+    /** Szerokość NA KRZYWĄ — pole minus oddech z obu stron. */
+    const spanW = Math.max(1, plotW - 2 * PLOT_PAD_X);
+
     const toPoint = (time: number, altitudeFt: number): Point2D => ({
-      x: AXIS_LEFT + ((time - t0) / spanMs) * plotW,
+      x: AXIS_LEFT + PLOT_PAD_X + ((time - t0) / spanMs) * spanW,
       y: 8 + plotH - ((altitudeFt - lowAlt) / spanAlt) * plotH,
     });
 
@@ -129,6 +142,7 @@ export function VerticalProfile({
       highAlt: maxAlt + pad,
       plotH,
       plotW,
+      spanW,
       baseline: 8 + plotH,
     };
   }, [profile, width, height]);
@@ -150,9 +164,9 @@ export function VerticalProfile({
           onCursorChange(null);
           return;
         }
-        // Z ekranu → przez kadr → na oś czasu.
+        // Z ekranu → przez kadr → przez oddech na krańcach → na oś czasu.
         const base = (point.x - viewportRef.current.offsetX) / viewportRef.current.scale;
-        const ratio = Math.min(1, Math.max(0, base / plot.plotW));
+        const ratio = Math.min(1, Math.max(0, (base - PLOT_PAD_X) / plot.spanW));
         onCursorChange(plot.t0 + ratio * (plot.t1 - plot.t0));
       },
       [onCursorChange, plot],
@@ -166,7 +180,8 @@ export function VerticalProfile({
   const timeX = useCallback(
     (at: number): number => {
       if (plot == null) return 0;
-      const base = ((at - plot.t0) / Math.max(1, plot.t1 - plot.t0)) * plot.plotW;
+      const base =
+        PLOT_PAD_X + ((at - plot.t0) / Math.max(1, plot.t1 - plot.t0)) * plot.spanW;
       return base * gesture.viewport.scale + gesture.viewport.offsetX;
     },
     [plot, gesture.viewport],
