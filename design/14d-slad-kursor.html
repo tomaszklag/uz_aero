@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 14 Ślad sesji</title>
+<title>UZ Aero — 14D Ślad: kursor i przybliżenie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -114,9 +114,6 @@
   }
   .legend-row { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:8px; color:var(--text-secondary); letter-spacing:0.5px; }
   .legend-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-  /* Atrybucji źródeł katalogu NA MAPIE NIE MA (2026-08-15): wisiała w rogu przy każdym
-     otwarciu i mówiła o pochodzeniu danych komuś, kto ogląda swój lot. Obowiązek ODbL
-     spełnia `docs/dane-lotnisk.md` §3.2. */
 
   /* ===== KAFLE METRYK ===== */
   .metric-grid { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:1px; background:var(--border); }
@@ -168,10 +165,21 @@
   .phase-name { flex:1; letter-spacing:0.5px; }
   .phase-time { color:var(--text-primary); }
 
-  /* Podpowiedzi o gestach NIE MA i to jest decyzja (issue #47, przegląd): baner
-     „dwa palce przybliżają mapę…" stał nad profilem przez jeden przegląd i wyleciał.
-     Szczypta i przeciągnięcie to gesty, których nikt nie musi się uczyć z aplikacji
-     lotniczej, a zdanie o nich zajmowało wiersz nad wykresem przy KAŻDYM otwarciu. */
+  /* ===== KURSOR SPRZĘŻONY (issue #47 pkt 7) ===== */
+  /* Odczyt stoi w STAŁYM rogu wykresu, a nie przy palcu: chip wędrujący pod palcem
+     zasłania to, co pilot właśnie ogląda, i skacze przy każdym drgnieniu ręki.
+     Godzina powtarza się na obu wykresach z premedytacją — to ona jest ogniwem
+     między nimi i po niej poznaje się, że pokazują tę samą chwilę. */
+  .chart-readout {
+    position:absolute; right:8px; top:8px; display:flex; gap:8px; align-items:baseline;
+    background:rgba(13,13,13,0.86); border:1px solid var(--border-strong);
+    border-radius:8px; padding:4px 9px;
+    font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.5px; color:var(--text-primary);
+  }
+  .chart-readout .ro-time { color:var(--blue); }
+  .chart-readout .ro-dim { color:var(--text-muted); }
+  /* Profil ma padding 10 px, więc jego odczyt siada o tyle niżej niż mapy */
+  .profile-wrap .chart-readout { right:14px; top:14px; }
 
   /* ===== LOG PUNKTÓW ===== */
 
@@ -195,8 +203,8 @@
 <body>
 
 <div class="canvas-label">
-  <div class="film-strip">14 · ŚLAD SESJI</div>
-  <div class="slug">app / sesja / ślad</div>
+  <div class="film-strip">14D · KURSOR I ZOOM</div>
+  <div class="slug">app / sesja / ślad — w trakcie gestu</div>
   <div class="canvas-meta"><span class="pulse"></span>UZ AERO</div>
 </div>
 
@@ -239,7 +247,12 @@
           <span class="head-note">08:12 → 09:55 UTC</span>
         </div>
         <div class="map-wrap">
-          <svg viewBox="0 0 365 300" preserveAspectRatio="xMidYMid slice">
+          <!-- MAPA PRZYBLIŻONA DWOMA PALCAMI (issue #47 pkt 8). W mockupie zoom robi
+               węższy `viewBox` — w aplikacji to samo robi przeliczenie kadru, więc
+               podpisy NIE rosną razem z geometrią (tu skorygowane `font-size`).
+               Wskaźnikiem przybliżenia jest PODZIAŁKA, nie osobna plakietka: przy
+               ×2,4 czyta „500 m" zamiast „2 km" i to jest cała potrzebna informacja. -->
+          <svg viewBox="140 58 152 125" preserveAspectRatio="xMidYMid slice">
             <!-- TŁO: siatka współrzędnych, BEZ kafelków (decyzja 2026-08-04).
                  Ekran przestał zależeć od sieci w jakimkolwiek stopniu, a przy okazji
                  zniknął problem dostawcy kafelków, jego klucza i regulaminu. -->
@@ -314,7 +327,10 @@
                  zachodzące na siebie, więc REGUŁA jest taka: maksimum bliższe niż 2 min
                  od innego znacznika dopisuje się do JEGO podpisu jako „MAX", a osobnym
                  znacznikiem staje się dopiero wtedy, gdy wypadło samo (przelot, egzamin). -->
-            <text x="227" y="88" class="axis-label" fill="#3498DB" font-size="7.5">ZRZUT 1 · 08:52 · MAX</text>
+            <!-- Podpis w rozmiarze EKRANOWYM, nie skalowanym razem z mapą. Rozmiar idzie
+                 stylem, bo atrybut `font-size` przegrywa z `font-size` z klasy CSS —
+                 dlatego w mockupach `.axis-label` rządzi niepodzielnie. -->
+            <text x="222" y="87" class="axis-label" fill="#3498DB" style="font-size:2.9px">ZRZUT 1 · 08:52 · MAX</text>
             <circle cx="88" cy="158" r="5" fill="none" stroke="var(--blue)" stroke-width="1.8"/>
             <circle cx="88" cy="158" r="1.8" fill="var(--blue)"/>
             <text x="26" y="152" class="axis-label" fill="#3498DB" font-size="7.5">ZRZUT 2 · 09:33</text>
@@ -334,7 +350,20 @@
 
             <circle cx="128" cy="232" r="5.5" fill="var(--red)"/>
             <text x="36" y="262" class="axis-label" fill="#E74C3C" font-size="8">LDG 2 · 09:47</text>
+
+            <!-- KURSOR: ta sama chwila, co pionowa kreska na profilu niżej. Biały,
+                 bo nie jest zdarzeniem rejestru — zieleń, czerwień i błękit są zajęte
+                 przez starty, lądowania i zrzuty i wzięcie któregokolwiek z nich
+                 kazałoby czytać kursor jako coś, co się wydarzyło. -->
+            <circle cx="238" cy="140" r="5" fill="none" stroke="#E8E8E8" stroke-width="0.8" opacity="0.55"/>
+            <circle cx="238" cy="140" r="2.2" fill="#E8E8E8"/>
           </svg>
+
+          <div class="chart-readout">
+            <span class="ro-time">08:31</span>
+            <span>82 kt</span>
+            <span class="ro-dim">52.1604 15.8422</span>
+          </div>
 
           <div class="map-legend">
             <div class="legend-row"><span class="legend-dot" style="background:var(--green);"></span>Start i wznoszenie</div>
@@ -344,16 +373,20 @@
           </div>
 
           <div class="map-scale">
-            <span class="map-scale-label">1 NM</span>
+            <!-- PODZIAŁKA JEST WSKAŹNIKIEM ZOOMU: przy przybliżeniu ×2,4 czyta „500 m"
+                 zamiast „2 km". Osobna plakietka „×2,4" mówiłaby to samo liczbą, której
+                 pilot nie potrzebuje — interesuje go odległość, nie krotność. -->
+            <span class="map-scale-label">0.2 NM</span>
             <span class="map-scale-bar"></span>
           </div>
 
+          <!-- ŹRÓDŁA KATALOGU NIE STOJĄ NA MAPIE (2026-08-15): atrybucja ODbL
+               przeniesiona do docs/dane-lotnisk.md §3.2. -->
         </div>
 
-        <!-- POD MAPĄ NIE MA NIC. Liczby zeszły do karty „Statystyki lotu", żeby profil
-             stał BEZPOŚREDNIO pod trasą: kursor sprzęga oba wykresy, więc pilot patrzy
-             na nie na przemian, a rząd metryk między nimi kazał za każdym razem
-             przeskoczyć wzrokiem przez cztery liczby, których w tej chwili nie czyta. -->
+        <!-- POD MAPĄ NIE MA NIC (issue #47, przegląd): liczby zeszły do karty
+             „Statystyki lotu", żeby profil przylegał do trasy — kursor sprzęga oba
+             wykresy, więc pilot patrzy na nie na przemian. -->
       </div>
 
       <!-- ══ PROFIL PIONOWY ════════════════════════════════════════════════ -->
@@ -458,11 +491,21 @@
             <text x="192" y="138" class="axis-label" fill="#E74C3C" text-anchor="middle">09:01</text>
             <text x="228" y="138" class="axis-label" fill="#2ECC71" text-anchor="middle">09:12</text>
             <text x="336" y="138" class="axis-label" fill="#E74C3C" text-anchor="end">09:47</text>
+
+            <!-- KURSOR: pełna pionowa kreska przez cały wykres — na profilu czas jest
+                 osią, więc kursorem jest CHWILA, a nie punkt. Na mapie ta sama chwila
+                 to jedno miejsce i tam kursor jest kółkiem (wyżej). -->
+            <line x1="90" y1="8" x2="90" y2="126" stroke="#E8E8E8" stroke-width="0.8" opacity="0.45"/>
+            <circle cx="90" cy="72" r="3.6" fill="none" stroke="#E8E8E8" stroke-width="1" opacity="0.6"/>
+            <circle cx="90" cy="72" r="1.8" fill="#E8E8E8"/>
           </svg>
+
+          <div class="chart-readout">
+            <span class="ro-time">08:31</span>
+            <span>6 100 ft</span>
+            <span class="ro-dim">+840 ft/min</span>
+          </div>
         </div>
-        <!-- Średnie wznoszenie i zejście stały tu jako podpis wykresu — zeszły do
-             „Statystyk lotu", obok maksimów tych samych wielkości. To liczby o CAŁYM
-             locie, a nie objaśnienie rysunku. -->
       </div>
 
       <!-- ══ STATYSTYKI (issue #47 pkt 3) ══════════════════════════════════ -->
@@ -477,8 +520,7 @@
         </div>
 
         <!-- Sumy CAŁEJ sesji: dwa loty to jeden zapis, więc dystans i czas liczą się
-             przez oba. Rozbicie per lot stoi na osi czasu ekranu 10. Stały tu do
-             issue #47 pod mapą — zeszły niżej, żeby profil przylegał do trasy. -->
+             przez oba. Rozbicie per lot stoi na osi czasu ekranu 10. -->
         <div class="stat-block">
           <div class="stat-block-head">Podsumowanie</div>
           <div class="metric-grid three">
@@ -500,10 +542,6 @@
           </div>
         </div>
 
-        <!-- SZEŚĆ komórek w dwóch rzędach po trzy: MAKSIMA nad ŚREDNIMI, w tej samej
-             kolejności wielkości. Rząd jest wtedy zdaniem („najwięcej tyle, przeciętnie
-             tyle") i nie trzeba szukać pary po etykietach. Średnie wznoszenie i zejście
-             przyszły tu spod wykresu profilu (przegląd issue #47). -->
         <div class="stat-block">
           <div class="stat-block-head">Prędkość i pion</div>
           <div class="metric-grid three">
@@ -593,7 +631,7 @@
           <div class="stat-block-head">
             Trzymanie wysokości
             <span class="spacer"></span>
-            <span class="sub">lot poziomy · 8 min</span>
+            <span class="sub">tylko przelot · 8 min</span>
           </div>
           <div class="metric-grid" style="grid-template-columns:1fr 1fr 1fr;">
             <div class="metric-cell">
@@ -625,20 +663,18 @@
            aplikacji, opowiedziana komuś, kto o nią nie pytał. Brak zasięgu mówi
            wszystko, co trzeba, wprost na ekranie 14C. -->
 
-
     </div>
   </div>
 </main>
 
 <aside class="variants-panel">
   <div class="vp-title">Warianty tego ekranu — kiedy który?</div>
-  <a class="vp-item active" href="14-slad.html">
+  <a class="vp-item" href="14-slad.html">
     <span class="vp-badge">14</span>
     <span class="vp-body">
       <span class="vp-name">Ślad sesji — pełny</span>
-      <span class="vp-when">Standard: serwer ma ślad tej sesji. Wejście miniaturą śladu z ekranu sesji (10). Rysuje CAŁY bieg silnika — kołowanie, oba wyniesienia i wszystkie starty oraz lądowania — bo zapis powstaje w jednym ciągu i dzielenie go na loty było krojeniem nagrania na kawałki (issue #38). Trasa na siatce współrzędnych z pasami lotnisk z katalogu, profil pionowy ze znacznikami i czasami, statystyki lotu, log punktów ze stanem bramki jakości.</span>
+      <span class="vp-when">Stan spoczynku: cały bieg silnika w kadrze, bez kursora. Ten sam ekran bez palca na wykresie.</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="14c-slad-offline.html">
     <span class="vp-badge amber">14C</span>
@@ -647,12 +683,13 @@
       <span class="vp-when">Ślad jest na serwerze, ale telefon nie ma jak go pobrać. Jedyny stan, w którym ekran 14 potrzebuje sieci — i dlatego mówi to wprost, zamiast udawać, że śladu nie ma. Czasy i liczby sesji zostają, bo liczą się z rejestru na telefonie.</span>
     </span>
   </a>
-  <a class="vp-item" href="14d-slad-kursor.html">
+  <a class="vp-item active" href="14d-slad-kursor.html">
     <span class="vp-badge">14D</span>
     <span class="vp-body">
       <span class="vp-name">Kursor i przybliżenie</span>
-      <span class="vp-when">Stan W TRAKCIE gestu: palec na jednym wykresie stawia kursor na obu, a mapa jest przybliżona dwoma palcami. Nie jest osobnym ekranem — pokazuje, co widać w czasie przeciągania (issue #47 pkt 7 i 8).</span>
+      <span class="vp-when">Stan W TRAKCIE gestu, nie osobny ekran (issue #47 pkt 7 i 8). Palec na jednym wykresie stawia kursor na OBU — biały, bo nie jest zdarzeniem rejestru — a odczyt staje w stałym rogu każdego z nich zamiast wędrować pod palcem. Mapa jest przybliżona dwoma palcami; wskaźnikiem przybliżenia jest podziałka („500 m" zamiast „2 km"), dwuklik wraca do całego śladu.</span>
     </span>
+    <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="14b-slad-brak.html">
     <span class="vp-badge dim">14B</span>
@@ -668,10 +705,10 @@
   <span>·</span>
   <a href="10-statystyki.html">← 10 Sesja</a>
   <span>·</span>
-  <a href="14-slad.html" class="active">14 Ślad</a>
+  <a href="14-slad.html">14 Ślad</a>
   <a href="14b-slad-brak.html">14B Brak</a>
   <a href="14c-slad-offline.html">14C Bez zasięgu</a>
-  <a href="14d-slad-kursor.html">14D Kursor</a>
+  <a href="14d-slad-kursor.html" class="active">14D Kursor</a>
   <span>·</span>
   <a href="12-historia.html">12 Poprzednie dni →</a>
 </nav>

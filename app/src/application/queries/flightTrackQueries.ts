@@ -1,63 +1,74 @@
 /**
  * UZ Aero — ZAPYTANIE o ŚLAD SESJI (ekran 14, miniatura na 10).
  *
- * Osobna klasa obok `SessionQueries`, bo ma inną zależność: potrzebuje `TracePort`,
- * czyli tabeli, która świadomie stoi OBOK rejestru (własna retencja, własna wysyłka,
- * nigdy przez outbox). Doklejenie tego do zapytań sesji zrobiłoby z nich klasę, która
- * czyta dwa magazyny o zupełnie różnych gwarancjach.
- *
  * ══ ŚLAD OPISUJE SESJĘ, NIE LOT (issue #38) ══
- * Do issue #38 ta klasa wycinała z zapisu okno JEDNEGO lotu, bo ekran 16 pokazywał jeden
- * lot. Zapis powstaje jednak w jednym ciągu — od uruchomienia do zatrzymania silnika —
- * więc krojenie go na loty gubiło kołowanie i przerwy między wyniesieniami, czyli
- * dokładnie ten czas, który od issue #38 wchodzi wprost do normy zużycia. Loty zostały
- * ZNACZNIKAMI na wspólnej linii.
+ * Zapis GPS powstaje w jednym ciągu — od uruchomienia do zatrzymania silnika — więc
+ * krojenie go na loty gubiło kołowanie i przerwy między wyniesieniami, czyli dokładnie
+ * ten czas, który wchodzi wprost do normy zużycia. Loty są ZNACZNIKAMI na wspólnej linii.
  *
- * Ślad liczy się CAŁKOWICIE lokalnie — z zapisu na telefonie i z rejestru na telefonie.
- * Ekran 14 działa więc bez sieci w pełnym zakresie: linia, profil i log są kompletne.
- * Mapa rysuje siatkę współrzędnych i lotniska z katalogu wbudowanego w aplikację,
- * bez kafelków (decyzja 2026-08-04).
+ * ══ GEOMETRIA Z SERWERA, RESZTA Z REJESTRU (issue #47) ══
+ * Do issue #47 wszystko liczyło się z zapisu na telefonie, a nagranie znikało po 14 dniach
+ * — bo tyle wytrzymywała pamięć urządzenia, nie dlatego, że traciło wartość. Odtąd telefon
+ * nagranie ODDAJE i kasuje, a ekran pobiera gotową geometrię (`SessionTrackSource`).
+ *
+ * Podział jest ostry i to on trzyma offline-first przy życiu:
+ *  • **z sieci** — linia, profil, log punktów, statystyki (`SessionTrackPayload`),
+ *  • **z lokalnego rejestru** — rejestracja maszyny, lotnisko, okno biegu silnika, lista
+ *    lotów, czas w powietrzu i CZASY wszystkich znaczników (§6 pkt 1).
+ * Dlatego wariant bez zasięgu (14C) nadal pokazuje komplet czasów: brakuje mu rysunku,
+ * nie wiedzy. I dlatego znaczniki są tu, a nie w kopercie serwera — ich czasy pochodzą
+ * z rejestru PO korektach, a pozycję dobiera się do nich z pobranej linii.
  */
 
 import {
   applyCorrections,
-  buildFlightProfile,
-  buildFlightTrack,
   emptyFlightProfile,
   emptyFlightTrack,
+  emptySessionTrackPayload,
+  emptyTrackStats,
   projectSession,
-  sampleTrackLog,
   type EventOf,
   type FlightProfile,
   type FlightTrack,
   type Flight,
-  type RawTrackEntry,
-  type TrackPoint,
+  type TrackStats,
   type TrackVertex,
 } from '../../domain';
 import type { EventsRepo } from '../eventsRepo';
 import type { TracePort } from '../ports';
+import type { SessionTrackSource } from '../sync/sessionTrackFetch';
 
-/** Powód, dla którego sesja nie ma trasy — ekran tłumaczy go wprost (wariant 14B). */
+/** Powód, dla którego sesja nie ma trasy — ekran tłumaczy go wprost (14B / 14C). */
 export type MissingTrackReason =
   /** Sesja wpisana ręcznie: GPS nie pracował albo detekcja jej nie złapała. */
   | 'manual'
-  /** Zapis wygasł (retencja 14 dni) albo nigdy nie dotarł. */
-  | 'no-record';
+  /** Serwer nagrania nie ma i sam z siebie mieć nie będzie (14B). */
+  | 'no-record'
+  /** Nagranie CZEKA W KOLEJCE na tym telefonie — pójdzie przy najbliższej okazji. */
+  | 'pending-upload'
+  /** Ślad jest na serwerze, brakuje drogi do niego (14C — jedyny stan wymagający sieci). */
+  | 'offline';
 
 /**
- * Punkt na trasie, który coś znaczy: start, lądowanie albo zrzut.
+ * Punkt na trasie, który coś znaczy: start, lądowanie, zrzut albo szczyt.
  *
  * `position: null` znaczy „zapis nie sięga tej chwili" — trasa bywa dziurawa (utrata
  * fixa w hangarze, wyczerpana bateria), a znacznik postawiony w najbliższym punkcie
  * kilometry dalej kłamałby na mapie. Brak znacznika jest uczciwszy niż zły znacznik.
  */
 export interface SessionTrackMarker {
-  kind: 'takeoff' | 'landing' | 'drop';
-  /** Numer lotu (start/lądowanie) albo numer zrzutu — ten sam, co na osi czasu ekranu 10. */
+  kind: 'takeoff' | 'landing' | 'drop' | 'peak';
+  /** Numer lotu (start/lądowanie) albo numer zrzutu; szczyt numeru nie ma (0). */
   index: number;
   at: number;
   position: TrackVertex | null;
+  /** Wysokość — niesie ją WYŁĄCZNIE szczyt, bo tylko on jest o niej (issue #47 pkt 2). */
+  altitudeFt?: number | null;
+  /**
+   * Maksimum wypadło w tej samej chwili co ten znacznik, więc dopisuje się do JEGO
+   * podpisu zamiast stawiać drugi punkt w tym samym miejscu (mockup 14, reguła 2 min).
+   */
+  alsoPeak?: boolean;
 }
 
 /** Ślad całej sesji gotowy do narysowania. */
@@ -79,10 +90,12 @@ export interface SessionTrackView {
   markers: SessionTrackMarker[];
   track: FlightTrack;
   profile: FlightProfile;
-  /** Log do tabeli: próbka co 30 s plus wszystkie odrzucone. */
-  log: TrackPoint[];
+  /** Statystyki lotu (issue #47 pkt 3) — każdy blok gaśnie osobno. */
+  stats: TrackStats;
   /** Null = trasa jest. Wartość = nie ma czego rysować i to jest powód. */
   missing: MissingTrackReason | null;
+  /** Ile punktów nagrania czeka na wysyłkę z tego telefonu (dla `pending-upload`). */
+  pendingFixes: number;
 }
 
 /**
@@ -94,10 +107,20 @@ export interface SessionTrackView {
  */
 const MARKER_TOLERANCE_MS = 120_000;
 
+/**
+ * Jak blisko innego znacznika maksimum przestaje być osobnym punktem (2 min).
+ *
+ * W dniu skokowym szczyt wypada w chwili zrzutu prawie zawsze. Dwa znaczniki na jednym
+ * punkcie to dwa podpisy zachodzące na siebie, więc bliskie maksimum dopisuje się do
+ * sąsiada jako „MAX", a osobnym punktem zostaje dopiero wtedy, gdy wypadło samo.
+ */
+const PEAK_MERGE_MS = 120_000;
+
 export class FlightTrackQueries {
   constructor(
     private readonly repo: EventsRepo,
     private readonly trace: TracePort,
+    private readonly source: SessionTrackSource,
   ) {}
 
   /**
@@ -113,27 +136,49 @@ export class FlightTrackQueries {
     // Sesja bez pracy silnika (09C) nie ma czego rysować i nie jest to awaria zapisu:
     // maszyna stała. Ekran mówi to jednym zdaniem zamiast pustej mapy.
     if (leg == null) {
-      return this.empty(state, 'no-record', null, null);
+      return this.empty(state, 'no-record', null, null, 0);
     }
 
     const fromAt = leg.startedAt;
     const toAt = leg.stoppedAt;
-    const entries = (await this.trace.readTraceFixes(
-      sessionUuid,
-      fromAt,
-      toAt ?? Date.now(),
-    )) as unknown as RawTrackEntry[];
 
-    // Sesja złożona z samych wpisów ręcznych NIGDY śladu nie miała; sesja z detekcją,
-    // której zapis nie dotarł albo wygasł — miała. Dwa różne zdania dla pilota.
-    const manualOnly =
-      state.flights.length > 0 && state.flights.every((flight) => flight.method === 'manual');
+    const outcome = await this.source.fetch(sessionUuid);
 
-    if (entries.length === 0) {
-      return this.empty(state, manualOnly ? 'manual' : 'no-record', fromAt, toAt);
+    if (outcome.kind === 'unreachable') {
+      return this.empty(state, 'offline', fromAt, toAt, await this.pending(sessionUuid, fromAt, toAt));
     }
 
-    const track = buildFlightTrack(entries, { takeoffAt: fromAt, landingAt: toAt });
+    const payload =
+      outcome.kind === 'track' ? outcome.payload : emptySessionTrackPayload(sessionUuid);
+
+    if (payload.usableCount === 0) {
+      // Sesja złożona z samych wpisów ręcznych NIGDY śladu nie miała; sesja z detekcją,
+      // której nagranie jeszcze nie doleciało — miała i doleci. Trzy różne zdania.
+      const manualOnly =
+        state.flights.length > 0 && state.flights.every((flight) => flight.method === 'manual');
+      const pending = await this.pending(sessionUuid, fromAt, toAt);
+
+      const reason: MissingTrackReason = manualOnly
+        ? 'manual'
+        : pending > 0
+          ? 'pending-upload'
+          : 'no-record';
+
+      return this.empty(state, reason, fromAt, toAt, pending);
+    }
+
+    const track: FlightTrack = {
+      // Punktów SUROWYCH telefon już nie ma i nie potrzebuje: log przychodzi gotowy,
+      // a wszystko, co liczyło się z pełnej listy, policzył serwer.
+      points: [],
+      line: payload.line,
+      distanceNm: payload.distanceNm,
+      maxAltitudeFt: payload.maxAltitudeFt,
+      startedAt: payload.startedAt,
+      endedAt: payload.endedAt,
+      totalCount: payload.totalCount,
+      usableCount: payload.usableCount,
+    };
 
     return {
       aircraftId: state.aircraftId,
@@ -142,15 +187,20 @@ export class FlightTrackQueries {
       toAt,
       flights: state.flights,
       flightTimeMs: state.flightTimeMs,
-      markers: buildMarkers(state, events, track.line),
+      markers: buildMarkers(state, events, payload.line, payload.profile),
       track,
-      profile: buildFlightProfile(track.points),
-      log: sampleTrackLog(track.points),
-      // Zapis mógł istnieć, ale w całości polec na bramce jakości (lot w strefie
-      // zakłóceń). Dla ekranu to ten sam stan pusty co brak zapisu — z tą różnicą,
-      // że log pokazuje odrzucone wiersze i widać, CO się stało.
-      missing: track.usableCount === 0 ? 'no-record' : null,
+      profile: payload.profile,
+      stats: payload.stats,
+      missing: null,
+      pendingFixes: 0,
     };
+  }
+
+  /** Ile wierszy nagrania tej sesji leży jeszcze na telefonie (czyli nie poszło). */
+  private async pending(sessionUuid: string, fromAt: number, toAt: number | null): Promise<number> {
+    // Po issue #47 wysłane wiersze są kasowane, więc cokolwiek zostało — czeka.
+    const rows = await this.trace.readTraceFixes(sessionUuid, fromAt, toAt ?? Date.now());
+    return rows.length;
   }
 
   private empty(
@@ -158,6 +208,7 @@ export class FlightTrackQueries {
     reason: MissingTrackReason,
     fromAt: number | null,
     toAt: number | null,
+    pendingFixes: number,
   ): SessionTrackView {
     return {
       aircraftId: state.aircraftId,
@@ -169,22 +220,26 @@ export class FlightTrackQueries {
       markers: [],
       track: emptyFlightTrack(),
       profile: emptyFlightProfile(),
-      log: [],
+      stats: emptyTrackStats(),
       missing: reason,
+      pendingFixes,
     };
   }
 }
 
 /**
- * Znaczniki: każdy start, każde lądowanie i każdy zrzut sesji.
+ * Znaczniki: każdy start, każde lądowanie, każdy zrzut i SZCZYT lotu (issue #47 pkt 2).
  *
- * Zrzuty czytamy ze strumienia EFEKTYWNEGO (po korektach 04c) — dokładnie tego, który
- * policzyła projekcja: zrzut unieważniony nie zaszedł i nie ma prawa stać na mapie.
+ * Czasy startów i lądowań pochodzą z projekcji, a zrzuty ze strumienia EFEKTYWNEGO
+ * (po korektach) — zrzut unieważniony nie zaszedł i nie ma prawa stać na mapie.
+ * Szczyt jest jedynym znacznikiem liczonym z NAGRANIA, bo tylko ono wie, kiedy
+ * samolot był najwyżej.
  */
 function buildMarkers(
   state: ReturnType<typeof projectSession>,
   events: Parameters<typeof applyCorrections>[0],
   line: readonly TrackVertex[],
+  profile: FlightProfile,
 ): SessionTrackMarker[] {
   const markers: SessionTrackMarker[] = [];
 
@@ -217,7 +272,38 @@ function buildMarkers(
     });
   }
 
-  return markers.sort((a, b) => a.at - b.at);
+  markers.sort((a, b) => a.at - b.at);
+  return withPeak(markers, line, profile);
+}
+
+/**
+ * Dokłada szczyt: osobnym znacznikiem, gdy wypadł sam, a dopiskiem do sąsiada, gdy
+ * wypadł razem z nim. Bez tej reguły dzień skokowy rysowałby „ZRZUT 1" i „MAX" jedno
+ * na drugim, bo w skokach szczyt JEST zrzutem.
+ */
+function withPeak(
+  markers: SessionTrackMarker[],
+  line: readonly TrackVertex[],
+  profile: FlightProfile,
+): SessionTrackMarker[] {
+  if (profile.peakAt == null || profile.peakAltitudeFt == null) return markers;
+
+  const neighbour = markers.find((marker) => Math.abs(marker.at - profile.peakAt!) <= PEAK_MERGE_MS);
+  if (neighbour != null) {
+    neighbour.alsoPeak = true;
+    neighbour.altitudeFt = profile.peakAltitudeFt;
+    return markers;
+  }
+
+  const peak: SessionTrackMarker = {
+    kind: 'peak',
+    index: 0,
+    at: profile.peakAt,
+    position: vertexAt(line, profile.peakAt),
+    altitudeFt: profile.peakAltitudeFt,
+  };
+
+  return [...markers, peak].sort((a, b) => a.at - b.at);
 }
 
 /** Punkt trasy najbliższy danej chwili; `null`, gdy zapis tej chwili nie obejmuje. */

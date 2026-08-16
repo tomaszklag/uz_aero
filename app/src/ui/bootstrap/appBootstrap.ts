@@ -23,6 +23,7 @@ import {
   AuthService,
   EventRestore,
   FlightTrackQueries,
+  HttpSessionTrackSource,
   ReferenceSync,
   SyncEngine,
   ThemePrefsSync,
@@ -101,10 +102,16 @@ export function useAppBootstrap(): BootstrapStatus {
         const trace = new TraceRecorder(storage, defaultClock);
         void trace.purgeExpired().catch(() => {});
 
-        // Odczyt śladu dla ekranu 14 — ten sam magazyn, przeciwny kierunek. Podłączany
-        // osobno od `attachRepo`, bo łączy rejestr (repo) ze śladem (storage), czyli
-        // dwa magazyny o różnych gwarancjach.
-        useSessionStore.getState().attachTrack(new FlightTrackQueries(repo, storage));
+        // Odczyt śladu dla ekranu 14. Od issue #47 składa się z TRZECH źródeł o różnych
+        // gwarancjach i to jest cała jego trudność: rejestr z telefonu (czasy, loty),
+        // geometria z serwera (`HttpSessionTrackSource`) i lokalny magazyn nagrania —
+        // ten ostatni WYŁĄCZNIE po to, żeby odróżnić „nagranie jeszcze nie poszło"
+        // od „serwer go nie ma".
+        useSessionStore
+          .getState()
+          .attachTrack(
+            new FlightTrackQueries(repo, storage, new HttpSessionTrackSource(server, auth)),
+          );
 
         useSessionStore
           .getState()

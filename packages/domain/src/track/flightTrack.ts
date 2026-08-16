@@ -30,6 +30,15 @@ export interface FlightWindow {
 export interface TrackVertex extends LatLon {
   time: EpochMillis;
   altitudeFt: number | null;
+  /**
+   * Prędkość względem ziemi (kt) w tym punkcie.
+   *
+   * Doszła przy issue #47 razem z kursorem sprzężonym: po kompresji telefon nie ma już
+   * surowych fixów, więc odczyt „co się działo o 08:31" musi mieć z czego powstać.
+   * Koszt to kilka bajtów na wierzchołek uproszczonej linii — nieporównywalnie mniej
+   * niż wysyłanie w tym celu pełnego nagrania.
+   */
+  groundSpeedKt: number | null;
 }
 
 /** Gotowy ślad lotu — wszystko, czego potrzebuje ekran mapy i log punktów. */
@@ -164,6 +173,7 @@ export function buildFlightTrack(
     lon: p.lon,
     time: p.time,
     altitudeFt: p.altitudeFt,
+    groundSpeedKt: p.groundSpeedKt,
   }));
 
   return {

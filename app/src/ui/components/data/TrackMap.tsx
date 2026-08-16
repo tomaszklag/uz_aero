@@ -14,7 +14,7 @@
  * krąg ma dwa kilometry, czy dwadzieścia.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import {
@@ -27,8 +27,12 @@ import {
   type LatLon,
   type TrackVertex,
 } from '../../../domain';
+import { useChartGesture } from '../../hooks/useChartGesture';
+import { applyViewport, unapplyViewport } from '../../screens/logic/mapViewport';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
+import { formatNm } from './distanceScaleBar';
+import { highlightRange } from './highlightRuns';
 import { TrackPolyline, type Point2D } from './TrackPolyline';
 
 /** Odstęp linii siatki (px) — gęściej robi się szum pod śladem. */
@@ -49,6 +53,18 @@ export interface TrackMapProps {
   height: number;
   /** ICAO z preflightu — to lotnisko pokazujemy zawsze, także spoza kadru. */
   departureIcao?: string | null;
+  /** Chwila pod palcem — kursor sprzężony z profilem (issue #47 pkt 7). */
+  cursorAt?: number | null;
+  /**
+   * Okno czasu widoczne na PROFILU; `null` = profil pokazuje całość.
+   *
+   * Mapa PODŚWIETLA odpowiadający fragment trasy, zamiast na niego przeskakiwać
+   * (decyzja z przeglądu). Przeskok byłby wygodny tylko w jedną stronę — droga z mapy
+   * na profil jest wieloznaczna, bo nad tym samym placem samolot bywa pięć razy
+   * w jednej sesji, a podświetlenie pokazuje wtedy uczciwie WSZYSTKIE przeloty
+   * mieszczące się w oknie. Przy okazji mapa nie ucieka spod palca.
+   */
+  highlight?: { from: number; to: number } | null;
 }
 
 export function TrackMap({
@@ -57,6 +73,8 @@ export function TrackMap({
   width,
   height,
   departureIcao = null,
+  cursorAt = null,
+  highlight = null,
 }: TrackMapProps) {
   const { theme } = useTheme();
 
@@ -74,19 +92,84 @@ export function TrackMap({
     [frame, departureIcao],
   );
 
-  const screenPoints: Point2D[] = useMemo(
+  /** Punkty trasy w kadrze 1:1 — do nich odnosi się przybliżenie i szukanie kursora. */
+  const basePoints: Point2D[] = useMemo(
     () => (frame == null ? [] : line.map((p) => toScreen(p, frame.view))),
     [line, frame],
   );
 
-  const bar = useMemo(
-    () =>
-      frame == null ? null : scaleBar(frame.view, line[0]?.lat ?? 52, Math.min(90, width * 0.3)),
-    [frame, line, width],
+  /**
+   * MAPA NIE PROWADZI KURSORA (decyzja z przeglądu). Kursor jest pytaniem o CHWILĘ,
+   * a mapa nie ma osi czasu: dotknięcie trasy trzeba było przekładać na najbliższy
+   * wierzchołek, co nad polem skoków wskazywało dowolny z pięciu przelotów. Wskazuje
+   * się więc na profilu, a mapa kursor tylko POKAZUJE.
+   *
+   * Skutek uboczny jest korzystny: jeden palec zostaje ekranowi. Mapa zajmuje 300 px
+   * wysokości i gdyby łapała każde przeciągnięcie, przewinięcie strony palcem po
+   * trasie byłoby niemożliwe.
+   */
+  const gesture = useChartGesture({
+    size: { width, height },
+    zoomable: true,
+    scrub: false,
+    onScrub: useCallback(() => {}, []),
+  });
+
+  const screenPoints = useMemo(
+    () => basePoints.map((p) => applyViewport(p, gesture.viewport)),
+    [basePoints, gesture.viewport],
   );
 
+  /**
+   * Fragment trasy mieszczący się w oknie profilu — JEDEN, bo linia jest uporządkowana
+   * czasem, a okno jest przedziałem czasu (uzasadnienie: `highlightRuns.ts`).
+   */
+  const highlighted = useMemo<Point2D[]>(() => {
+    if (highlight == null || screenPoints.length === 0) return [];
+    const range = highlightRange(
+      line.map((vertex) => vertex.time),
+      highlight,
+    );
+    return range == null ? [] : screenPoints.slice(range[0], range[1] + 1);
+  }, [highlight, line, screenPoints]);
+
+  const project = useCallback(
+    (position: LatLon): Point2D =>
+      frame == null
+        ? { x: 0, y: 0 }
+        : applyViewport(toScreen(position, frame.view), gesture.viewport),
+    [frame, gesture.viewport],
+  );
+
+  const bar = useMemo(() => {
+    if (frame == null) return null;
+    // Podziałka jest WSKAŹNIKIEM PRZYBLIŻENIA (mockup 14D): przy ×2,4 czyta „500 m"
+    // zamiast „2 km". Liczymy ją więc na kadrze 1:1 dla proporcjonalnie krótszego
+    // odcinka, a wynik rozciągamy z powrotem — dzięki temu liczba zostaje okrągła.
+    const maxPx = Math.min(90, width * 0.3) / gesture.viewport.scale;
+    const base = scaleBar(frame.view, line[0]?.lat ?? 52, maxPx);
+    return { nm: base.nm, meters: base.meters, pixels: base.pixels * gesture.viewport.scale };
+  }, [frame, line, width, gesture.viewport.scale]);
+
+  const cursorPoint = useMemo(() => {
+    if (cursorAt == null || frame == null || line.length === 0) return null;
+    let best: TrackVertex | null = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (const vertex of line) {
+      const distance = Math.abs(vertex.time - cursorAt);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = vertex;
+      }
+    }
+    return best == null ? null : project(best);
+  }, [cursorAt, frame, line, project]);
+
   return (
-    <View style={[styles.frame, { width, height, backgroundColor: theme.colors.bgTint }]}>
+    <View
+      style={[styles.frame, { width, height, backgroundColor: theme.colors.bgTint }]}
+      {...gesture.panHandlers}
+    >
       <CoordinateGrid width={width} height={height} color={theme.colors.border} />
 
       {/* ── lotniska: pas i podpis, POD śladem ──────────────────────────── */}
@@ -95,19 +178,32 @@ export function TrackMap({
           <AirfieldMark
             key={airfield.icao}
             airfield={airfield}
-            point={toScreen(airfield, frame.view)}
+            point={project(airfield)}
             metersPerPixel={bar != null && bar.pixels > 0 ? bar.meters / bar.pixels : null}
             surface={theme.colors.borderStrong}
             labelColor={theme.colors.textMuted}
           />
         ))}
 
-      <TrackPolyline points={screenPoints} color={theme.colors.green} width={2.5} />
+      {/* ── trasa: przygaszona całość + PODŚWIETLONY fragment z profilu ──── */}
+      {/* Bez okna z profilu rysujemy jedną linię w pełnej mocy. Z oknem: cała trasa
+          gaśnie, a jej fragment zostaje jasny — dzięki temu widać, GDZIE się patrzy,
+          nie tracąc z oczu reszty lotu. Fragmentów bywa kilka i tak ma być: nad polem
+          skoków samolot przechodzi tędy raz na wyniesienie. */}
+      <TrackPolyline
+        points={screenPoints}
+        color={theme.colors.green}
+        width={2.5}
+        opacity={highlight != null ? 0.22 : 1}
+      />
+      {highlighted.length > 1 && (
+        <TrackPolyline points={highlighted} color={theme.colors.green} width={2.5} />
+      )}
 
       {/* ── znaczniki startu i lądowania ─────────────────────────────────── */}
       {frame != null &&
         markers.map((marker) => {
-          const p = toScreen(marker.position, frame.view);
+          const p = project(marker.position);
           return (
             <View key={marker.label} pointerEvents="none">
               {marker.ring === true && (
@@ -128,19 +224,47 @@ export function TrackMap({
           );
         })}
 
-      {/* ── atrybucja źródeł katalogu ────────────────────────────────────── */}
-      {/* Pasy lotnisk aeroklubowych pochodzą z OpenStreetMap (ODbL), a ta licencja
-          wymaga podpisu przy publicznym użyciu danych. Stąd stała adnotacja przy
-          samej mapie, a nie w odległym „o aplikacji". */}
-      <AppText variant="micro" tone="muted" style={styles.attribution}>
-        lotniska: OurAirports · © OpenStreetMap
-      </AppText>
+      {/* ── kursor sprzężony z profilem (issue #47 pkt 7) ─────────────────── */}
+      {/* Biały, bo nie jest zdarzeniem rejestru: zieleń, czerwień i błękit są zajęte
+          przez starty, lądowania i zrzuty, a wzięcie któregokolwiek kazałoby czytać
+          kursor jako coś, co się wydarzyło. */}
+      {cursorPoint != null && (
+        <View pointerEvents="none">
+          <View
+            style={[
+              styles.cursorRing,
+              {
+                left: cursorPoint.x - 9,
+                top: cursorPoint.y - 9,
+                borderColor: theme.colors.textPrimary,
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.cursorDot,
+              {
+                left: cursorPoint.x - 3.5,
+                top: cursorPoint.y - 3.5,
+                backgroundColor: theme.colors.textPrimary,
+              },
+            ]}
+          />
+        </View>
+      )}
+
+      {/* ŹRÓDŁA KATALOGU NIE STOJĄ NA MAPIE (decyzja 2026-08-15). Podpis „lotniska:
+          OurAirports · © OpenStreetMap" wisiał w rogu przy każdym otwarciu i mówił
+          o pochodzeniu danych komuś, kto ogląda swój lot. Atrybucja została przeniesiona
+          do dokumentacji (`docs/dane-lotnisk.md` §3.3) — obowiązek ODbL zostaje
+          spełniony tam, gdzie ktokolwiek go szuka. Nie przywracaj jej na mapę bez
+          rozmowy: to była świadoma zamiana miejsca, nie przeoczenie. */}
 
       {/* ── podziałka: bez kafelków jedyne odniesienie odległości ────────── */}
       {bar != null && (
         <View style={styles.scale}>
           <AppText variant="micro" tone="secondary">
-            {bar.meters >= 1000 ? `${bar.meters / 1000} km` : `${bar.meters} m`}
+            {formatNm(bar.nm)} NM
           </AppText>
           <View
             style={[
@@ -259,9 +383,10 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   markerLabel: { position: 'absolute' },
+  cursorRing: { position: 'absolute', width: 18, height: 18, borderRadius: 9, borderWidth: 1, opacity: 0.55 },
+  cursorDot: { position: 'absolute', width: 7, height: 7, borderRadius: 3.5 },
   airfieldDot: { position: 'absolute', width: 6, height: 6, borderRadius: 1 },
   airfieldLabel: { position: 'absolute', letterSpacing: 1 },
   scale: { position: 'absolute', left: 8, bottom: 6, gap: 2 },
   scaleBar: { height: 4, borderWidth: 1, borderTopWidth: 0 },
-  attribution: { position: 'absolute', right: 8, bottom: 6 },
 });

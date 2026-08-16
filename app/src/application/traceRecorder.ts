@@ -9,12 +9,26 @@
  * Zapis jest fire-and-forget i NIE MOŻE przeszkodzić lotowi: każdy błąd magazynu
  * jest połykany — ślad to materiał badawczy, nie rejestr. Retencję (`purge`) woła
  * composition root przy starcie.
+ *
+ * ══ ŚLAD NIE MIESZKA JUŻ NA TELEFONIE (issue #47) ══
+ * Nagranie jest odtąd PRZESYŁKĄ, nie zbiorem: `TraceSync` wysyła je paczkami i zaraz
+ * po potwierdzeniu kasuje (`purgeUploadedTrace`). Ekran śladu pobiera geometrię
+ * z serwera, więc telefon nie ma powodu trzymać drugiej kopii dziesiątek tysięcy
+ * wierszy. Rejestrator się przez to NIE ZMIENIA — nagrywa tak samo — zmienia się
+ * tylko to, jak długo zapis leży, zanim odjedzie.
  */
 
 import type { GpsFix } from '../domain';
 import type { ClockPort, SensorSample, TracePort } from './ports';
 
-/** Retencja śladu — po tylu dniach wpisy znikają przy starcie aplikacji. */
+/**
+ * SUFIT dla wpisów, których nie udało się wysłać (dni).
+ *
+ * Do issue #47 była to główna reguła życia śladu: „ślad znika po 14 dniach" mówił też
+ * ekran 14, bo po tylu dniach nie miał już czego rysować. Dziś nagranie znika zaraz po
+ * wysyłce, a ten próg dotyczy WYŁĄCZNIE tego, co nie odjechało — telefon całymi
+ * tygodniami bez zasięgu. Bez sufitu taka pamięć rosłaby bez końca.
+ */
 export const TRACE_RETENTION_DAYS = 14;
 
 export class TraceRecorder {

@@ -439,7 +439,8 @@ odtąd dwuczłonowa: **10 (sesja) → 14 (pełny ślad)**.
   wchodzi wprost do normy zużycia)
 - **z list wejść w ślad nadal NIE MA** (to z #25 zostaje): numer sesji na kafelku 01 jest
   samą liczbą porządkową. Wejście jest jedno — miniatura na ekranie sesji
-- **`14b` = brak zapisu** (wpis ręczny albo retencja 14 dni): stan pusty z POWODEM
+- **`14b` = brak zapisu** (wpis ręczny albo nagranie, które nie dotarło): stan pusty
+  z POWODEM. Retencja z tego powodu ZNIKŁA — patrz issue #47 niżej
 - **EKRAN 16 USUNIĘTY** razem z `16a`: jego treść wróciła tam, skąd przyszła — zrzuty
   na oś czasu sesji (jako zdarzenia w czasie, bo nimi są), czasy do wierszy osi, korekta
   do ołówka wiersza (od issue #40 — do przycisku „EDYTUJ DANE"). Kod:
@@ -692,6 +693,88 @@ Zostaje oś: `components/data/SessionAxis.tsx` + builder `logic/sessionAxis.ts`.
 - przy równym stemplu tankowanie i załadunek stoją PRZED uruchomieniem silnika i PO jego
   wyłączeniu (`RANK` w `sessionAxis.ts`) — dolewa się przy zatrzymanym śmigle
 
+## Ślad idzie z SERWERA, a telefon go nie trzyma (issue #47, 2026-08-14)
+Zapis GPS przestał mieszkać na telefonie: nagrywa → oddaje (`POST /traces`) → **kasuje**,
+a ekran 14 pobiera gotową geometrię z `GET /me/sessions/:uuid/track`. Retencja 14 dni
+była limitem PAMIĘCI URZĄDZENIA, nie decyzją o wartości danych — ślad przestał więc
+znikać, wraca po reinstalacji i jest na nowym telefonie.
+- **koperta niesie WYŁĄCZNIE geometrię** (linia, profil, log, statystyki). Rejestracja,
+  loty, czasy i czas w powietrzu liczą się dalej z LOKALNEGO rejestru (§6 pkt 1) — stąd
+  wariant `14c` (bez zasięgu) pokazuje komplet czasów i mówi wprost, że brakuje rysunku.
+  Dołożenie danych rejestru do tej koperty tworzy DRUGĄ prawdę o sesji: pilnuje tego test
+- **to jedyny świadomy wyjątek od offline-first** (decyzja użytkownika przy wyborze
+  wariantu): ślad jest materiałem do OGLĄDANIA po locie, nie przyrządem w locie. Reguła
+  „dane sesji nie mają wariantu z cache" zostaje nietknięta
+- **cztery powody braku znaczą co innego** i nie wolno ich zwijać do jednego: `manual`
+  (wpis ręczny), `no-record` (serwer nie ma), `pending-upload` (nagranie czeka
+  w kolejce NA TYM telefonie), `offline` (jest, brakuje drogi). „Brak śladu" pokazany
+  komuś, kto ma tylko wyłączone dane, jest kłamstwem o jego locie
+- **kompresja to RDP + zaokrąglenia** (`track/payload.ts`): linia w metrach, profil
+  w stopach, współrzędne do 5 miejsc. Statystyki liczą się PRZED upraszczaniem —
+  inaczej „max wznoszenie" zależałoby od tolerancji rysowania
+- **LOGU PUNKTÓW NIE MA** ani na ekranie, ani w kopercie (przegląd 2026-08-15): tabela
+  surowych fixów ze stanem bramki jakości jest materiałem do STROJENIA PROGÓW, a nie
+  odpowiedzią na pytanie pilota — została w panelu (A02c) i w nagraniu czytanym przez
+  `replay.ts`. Ekran nie ma też banera o pochodzeniu danych ani podpowiedzi o gestach:
+  jedno i drugie opowiadało o BUDOWIE aplikacji komuś, kto ogląda swój lot
+- **atrybucji źródeł katalogu nie ma na mapie** (2026-08-15) — obowiązek ODbL spełnia
+  `docs/dane-lotnisk.md` §3.2. To zamiana miejsca, nie przeoczenie: przywrócenie napisu
+  na mapę wymaga rozmowy
+- **linię rysuje się w przestrzeni EKRANU** (`screenPolyline.ts`) i obowiązują tam DWIE
+  reguły, obie okupione zgłoszeniem z urządzenia:
+  1. odcinek podpikselowy **scala się z następnym**, a nie znika. Stary kod pomijał go
+     i zostawiał DZIURĘ — dlatego gęsty zapis rysował się jako zbiór kropek. Nie
+     przywracaj żadnego „pomiń krótki odcinek": to jest dokładnie ten błąd;
+  2. prostokąt odcinka jest **dłuższy od niego o grubość kreski** (pół z każdej strony).
+     Prostokąt o dokładnej długości styka się z sąsiadem w JEDNYM PUNKCIE osi, a przy
+     zaokrąglonych końcach i obrocie to za mało: łuk rozpadał się w kropki, a wierzchołek
+     załamania był ścięty. Nadmiar zamienia styk w okrągłe złącze (`stroke-linejoin:
+     round` w SVG). Nie „optymalizuj" tego z powrotem do dokładnej długości
+- **znaczniki stoją na OBU wykresach** z czasem: mapa z nazwą („T/O 1 · 08:20"), profil
+  samą godziną, bo tam rodzaj niesie kolor — pełne nazwy przy czterech znacznikach nie
+  mieszczą się w szerokości telefonu. Maksimum bliższe niż 2 min od innego znacznika
+  DOPISUJE się do jego podpisu jako „MAX" zamiast stawiać drugi punkt w tym samym miejscu
+- **statystyki mają trzy bloki i każdy gaśnie osobno** (`null` = ekran milczy): prędkość
+  z pionem, czasy faz (pasek proporcji, suma = bieg silnika), trzymanie wysokości
+  w locie poziomym. Prędkość pionowa liczy się TĄ SAMĄ regresją, co faza w kokpicie
+  (`verticalSpeedSeries`) — druga definicja „wznoszenia" rozjechałaby się po cichu
+- **kursor prowadzi się WYŁĄCZNIE na profilu**, mapa go tylko pokazuje (przegląd
+  2026-08-15). Kursor jest pytaniem o CHWILĘ, a mapa nie ma osi czasu: dotknięcie trasy
+  trzeba było przekładać na najbliższy wierzchołek, co nad polem skoków wskazywało
+  dowolny z pięciu przelotów. Skutek uboczny jest korzystny — jeden palec zostaje
+  ekranowi na przewijanie, a mapa ma na nie 300 px wysokości
+- **przybliżony profil PODŚWIETLA fragment trasy na mapie, nie przestawia jej kadru.**
+  Sprzężenie zoomu byłoby jednostronne: profil → mapa jest jednoznaczny, mapa → profil
+  nie (ten sam obszar to kilka przelotów). Podświetlenie odpowiada „ten kawałek oglądasz"
+  bez uciekania mapy spod palca. Fragment jest zawsze JEDEN, bo linia jest uporządkowana
+  czasem (`highlightRuns.ts` — pierwsza wersja zbierała listę i test pokazał, że nie ma
+  jak zajść przypadek, dla którego ją napisano)
+- **gesty bez modułu natywnego** (`PanResponder`): jeden palec = kursor NA PROFILU,
+  dwa palce = zoom i przesunięcie, dwuklik = powrót do całości. Kadr
+  przelicza WSPÓŁRZĘDNE, nie skaluje widoku — inaczej podpisy rosłyby razem z trasą.
+  Matematyka kadru siedzi w `logic/mapViewport.ts` i ma testy. **Profil przybliża się
+  TYLKO W POZIOMIE** (`zoomAxis: 'x'`): jego pionem jest wysokość dobrana do zakresu
+  lotu, więc rozciąganie jej niczego nie odsłania — a rozciągnięcie czasu owszem, bo to
+  ono rozdziela zdarzenia leżące na sobie
+- **każdy wykres ma PODZIAŁKĘ i to ona jest wskaźnikiem przybliżenia**: mapa odległości
+  („500 m" zamiast „2 km"), profil czasu („2 min" zamiast „15 min", `timeScaleBar.ts`).
+  Nie plakietka „×2,4" — pilota interesuje odległość i czas, nie krotność. Obie stoją
+  w LEWYM DOLNYM rogu swojej karty, z tymi samymi odstępami (8/6 px): dwa wykresy
+  jednego ekranu trzymają skale w jednym miejscu, więc oko szuka ich raz. Profil nie
+  dostaje za to osi z regularnymi znacznikami czasu: wpadłyby w rząd godzin przy startach
+  i lądowaniach, a dwa rzędy liczb pod wykresem to błąd, który przegląd już raz wyrzucił
+- **siatka pionowa profilu = JEDEN KROK PODZIAŁKI**, więc kratka jest odczytem („garb
+  o dwóch kratkach trwał pół godziny"), a nie tłem. Jedzie razem z wykresem, bo opisuje
+  czas — tak jak siatka współrzędnych mapy opisuje teren
+- **dystans przy podziałce profilu dotyczy KONKRETNEGO ODCINKA**, nie „NM na piksel"
+  (`logic/trackDistance.ts`). Na osi czasu proporcji między czasem a drogą NIE MA: pięć
+  minut wznoszenia to inna droga niż pięć minut przelotu, a pięć minut postoju to zero.
+  Dlatego liczba zmienia się przy przesuwaniu wykresu i to jest poprawne — opisuje to
+  miejsce lotu, a nie średnią z całej sesji
+- **kolejność ekranu: mapa → profil → statystyki**. Metryki spod mapy zeszły do karty
+  statystyk (razem ze średnim wznoszeniem i zejściem spod profilu), żeby oba wykresy
+  przylegały do siebie — kursor je sprzęga, więc pilot patrzy na nie na przemian
+
 ## Norma zużycia liczy się PER SESJA, nie per godzina (issue #38, 2026-08-12)
 Werdykt „w normie" porównywał L/h sesji z pasmem blokowym samolotu — czyli z liczbą
 policzoną na średniej mieszance faz z 90 dni. Sesja z długim kołowaniem wychodziła przez
@@ -733,6 +816,7 @@ Pełna architektura: `docs/_main.md.txt` (sekcje 4–6). Zasady twarde:
 - **Brak sieci NIGDY nie blokuje pracy pilota** — sieć to okazja do synca, nie warunek. Jedyny świadomy wyjątek: utworzenie profilu (pierwsze logowanie / zapomniany PIN) wymaga sieci — tryb awaryjny bez tożsamości został rozważony i ODRZUCONY, nie proponuj go ponownie
 - Zapis = lokalne zdarzenie append-only (SQLite, UUID) → outbox wysyła automatycznie, gdy jest sieć; eksport do Sheets robi serwer (**pilot niczego nie eksportuje ręcznie**). Osobnego ekranu statusu NIE MA od 2026-08-12 — był trzecim widokiem tej samej sesji (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka = arkusz SyncChipa). Została sekcja w Ustawieniach (13): kolejka, ostatnia udana wysyłka, **uwagi serwera** (§4.5 — jedyne ich miejsce w aplikacji, bo SyncChip pojawia się tylko offline) i awaryjne „Synchronizuj teraz"
 - **Outbox ma DRUGI kierunek** (issue #32, 2026-08-12): `GET /me/events` odbudowuje lokalny rejestr z serwera po czyszczeniu pamięci aplikacji, reinstalacji albo na nowym telefonie (`application/sync/eventRestore.ts`, kursor per pilot, zapis od razu ze stemplem wysyłki). **To NIE jest wyjątek od offline-first — to jego warunek**: pobranie zasila REJESTR, nie EKRAN. „Mój dzień", „Historia dni" i statystyki dalej liczą się WYŁĄCZNIE z lokalnego strumienia (§6 pkt 1), więc nie wolno kazać im pytać serwera. Jedyny ślad w UI jest negatywny — dopóki pierwsze odtworzenie nie wróci, ekran nie rysuje stanu pustego (`streamHydrated` w store sesji), bo „jeszcze żadnego lotu" pokazane pilotowi z trzema sesjami wygląda jak utrata danych. Pełny opis: `docs/_main.md.txt` §4.9
+- **Ślad GPS jest JEDYNYM świadomym wyjątkiem** (issue #47, 2026-08-14): nagranie idzie na serwer i telefon kasuje kopię, więc ekran 14 bez zasięgu nie narysuje trasy (wariant `14c` mówi to wprost i pokazuje czasy z lokalnego rejestru). Wyjątek dotyczy WYŁĄCZNIE geometrii — czasy, loty i rozliczenie sesji liczą się lokalnie jak dotąd. Sekcja „Ślad idzie z SERWERA" wyżej, pełny opis: `docs/_main.md.txt` §4.10
 - Komponenty dzielimy wg źródła danych:
   1. **dane sesji** (timery, log samolotu na `04`, lista sesji doby na `01`, liczniki, statystyki) — lokalne, zawsze świeże, zero wariantów offline
   2. **dane z serwera** (przekazanie FOB/MH, status claim, lista pilotów) — 3 stany świeżości: `live` (bez adnotacji) / `cache` ("· z cache · sync 21 JUN 17:30", amber) / `brak` ("brak danych — wpisz z licznika")

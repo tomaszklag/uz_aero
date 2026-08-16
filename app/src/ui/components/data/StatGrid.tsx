@@ -34,8 +34,12 @@ export interface StatGridProps {
    * komórki leżą wprost na amber, linie i „pudełka" psułyby jednolitą powierzchnię).
    */
   flat?: boolean;
-  /** Liczba kolumn; 08 kładzie trzy stany paliwa w jednym rzędzie. */
-  columns?: 2 | 3;
+  /**
+   * Liczba kolumn; 08 kładzie trzy stany paliwa w jednym rzędzie, a statystyki śladu
+   * (14, issue #47) cztery liczby prędkości i pionu — tam wartości są krótkie
+   * („118", „+1 240"), więc mieszczą się bez łamania.
+   */
+  columns?: 2 | 3 | 4;
   style?: ViewStyle;
 }
 
@@ -46,7 +50,7 @@ export function StatGrid({ cells, flat = false, columns = 2, style }: StatGridPr
   // na telefonie ~0,7 px — MNIEJ niż odstęp — i druga komórka spadała do nowego wiersza
   // (zgłoszenie z urządzenia przy issue #23: „Blok" i „Loty" jedno pod drugim).
   // `flexGrow` dociąga komórki z powrotem do pełnej szerokości rzędu.
-  const cellBasis = columns === 3 ? '30%' : '45%';
+  const cellBasis = columns === 4 ? '22%' : columns === 3 ? '30%' : '45%';
 
   return (
     <View

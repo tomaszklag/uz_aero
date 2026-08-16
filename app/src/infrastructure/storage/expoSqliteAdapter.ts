@@ -386,6 +386,13 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
     });
   }
 
+  async purgeUploadedTrace(): Promise<number> {
+    const result = await this.getDb().runAsync(
+      'DELETE FROM gps_trace WHERE uploaded_at IS NOT NULL',
+    );
+    return result.changes;
+  }
+
   async purgeTraceOlderThan(threshold: EpochMillis): Promise<number> {
     const result = await this.getDb().runAsync('DELETE FROM gps_trace WHERE device_time < ?', [
       threshold,

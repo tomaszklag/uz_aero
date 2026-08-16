@@ -32,6 +32,7 @@ import type { AdminStatsQueries } from '../application/admin/queries/stats.ts';
 import type { AuthCommands } from '../application/common/commands/auth.ts';
 import type { IngestCommands } from '../application/mobile/commands/ingest.ts';
 import type { MyEventQueries } from '../application/mobile/queries/myEvents.ts';
+import type { SessionTrackQueries } from '../application/mobile/queries/sessionTrack.ts';
 import type { PrefsCommands } from '../application/mobile/commands/prefs.ts';
 import type { ReferenceQueries } from '../application/mobile/queries/reference.ts';
 import type { TaskSuggestionQueries } from '../application/mobile/queries/taskSuggestions.ts';
@@ -78,6 +79,13 @@ export interface ServerDeps {
   state: StateQueries;
   sheets: SheetQueries;
   traces: TraceSinkPort;
+  /**
+   * Ślad sesji do narysowania (`GET /me/sessions/:uuid/track`, issue #47) — kierunek
+   * powrotny wysyłki nagrania. Telefon oddaje surowe fixy i kasuje swoją kopię, więc
+   * ekran 14 pyta o gotową geometrię tutaj. Wyłącznie geometria: czasy i loty telefon
+   * dalej liczy z lokalnego rejestru.
+   */
+  sessionTrack: SessionTrackQueries;
   prefs: PrefsCommands;
   /**
    * Podpowiedzi do zadania dnia (`GET /me/task-suggestions`, issue #14) — czysty odczyt
@@ -184,7 +192,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerEventsRoutes(app, deps.ingest, deps.myEvents, deps.tokens);
   registerStateRoutes(app, deps.state, deps.tokens);
   registerSheetsRoutes(app, deps.sheets, deps.tokens);
-  registerTracesRoutes(app, deps.traces, deps.tokens);
+  registerTracesRoutes(app, deps.traces, deps.sessionTrack, deps.tokens);
   registerPrefsRoutes(app, deps.prefs, deps.tokens);
   registerTaskSuggestionRoutes(app, deps.taskSuggestions, deps.tokens);
 

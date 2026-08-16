@@ -14,5 +14,6 @@ export * from './sync/syncEngine';
 export * from './sync/eventRestore';
 export * from './sync/referenceSync';
 export * from './sync/traceSync';
+export * from './sync/sessionTrackFetch';
 export * from './sync/themePrefsSync';
 export * from './traceRecorder';

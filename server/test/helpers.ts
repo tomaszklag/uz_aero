@@ -49,6 +49,7 @@ import { IngestCommands } from '../src/application/mobile/commands/ingest.ts';
 import { PrefsCommands } from '../src/application/mobile/commands/prefs.ts';
 import { DayExporter } from '../src/application/common/export/dayExporter.ts';
 import { MyEventQueries } from '../src/application/mobile/queries/myEvents.ts';
+import { SessionTrackQueries } from '../src/application/mobile/queries/sessionTrack.ts';
 import { ReferenceQueries } from '../src/application/mobile/queries/reference.ts';
 import { TaskSuggestionQueries } from '../src/application/mobile/queries/taskSuggestions.ts';
 import { SheetQueries } from '../src/application/common/queries/sheets.ts';
@@ -207,6 +208,10 @@ export async function testHarness(
     state: new StateQueries(db, events, sessions, flags, exportLog),
     sheets: new SheetQueries(pgSheets),
     traces: new FsTraceSink(tracesDir),
+    // Droga POWROTNA nagrania (issue #47) — ten sam katalog co zapis, więc test wysyła
+    // ślad przez `POST /traces` i odbiera go przez `GET /me/sessions/:uuid/track`,
+    // czyli przechodzi dokładnie drogę telefonu po skasowaniu lokalnej kopii.
+    sessionTrack: new SessionTrackQueries(db, events, new FsTraceSource(tracesDir)),
     // Odczyt śladu wskazuje na TEN SAM katalog co zapis — dzięki temu test może wysłać
     // ślad przez `POST /traces` i przeczytać go przez trasę mapy, czyli przejść dokładnie
     // tę drogę, którą przechodzą dane w produkcji.

@@ -103,7 +103,8 @@ export function mapPlot(
     }),
 
     scale: {
-      label: bar.meters >= 1000 ? `${bar.meters / 1000} km` : `${bar.meters} m`,
+      // NM, nie kilometry: cały produkt liczy dystans w milach morskich (2026-08-15).
+      label: `${bar.nm} NM`,
       pixels: bar.pixels,
     },
   };

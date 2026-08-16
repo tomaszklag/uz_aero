@@ -37,6 +37,7 @@ import { IngestCommands } from './application/mobile/commands/ingest.ts';
 import { PrefsCommands } from './application/mobile/commands/prefs.ts';
 import { DayExporter } from './application/common/export/dayExporter.ts';
 import { MyEventQueries } from './application/mobile/queries/myEvents.ts';
+import { SessionTrackQueries } from './application/mobile/queries/sessionTrack.ts';
 import { ReferenceQueries } from './application/mobile/queries/reference.ts';
 import { TaskSuggestionQueries } from './application/mobile/queries/taskSuggestions.ts';
 import { SheetQueries } from './application/common/queries/sheets.ts';
@@ -167,6 +168,10 @@ const app = buildServer({
   state: new StateQueries(db, events, sessions, flags, exportLog),
   sheets: new SheetQueries(sheets),
   traces: new FsTraceSink(env.TRACES_DIR),
+  // Droga POWROTNA nagrania (issue #47) — telefon oddaje ślad i kasuje swoją kopię,
+  // więc ekran 14 pobiera gotową geometrię stąd. Ten sam katalog i ten sam adapter
+  // odczytu co w panelu: jedno nagranie, dwie powierzchnie, żadnej drugiej kopii.
+  sessionTrack: new SessionTrackQueries(db, events, new FsTraceSource(env.TRACES_DIR)),
   prefs: new PrefsCommands(new PgPilotPrefsRepo(db)),
   // Podpowiedzi zadania dnia (issue #14) — własny adapter nad `sessions` obok
   // `PgSessionsProjection`, bo to inne pytanie: tamten czyta i pisze POJEDYNCZY wiersz

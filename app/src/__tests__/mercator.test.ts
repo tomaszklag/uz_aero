@@ -157,12 +157,15 @@ describe('tilesFor', () => {
 });
 
 describe('scaleBar', () => {
-  it('wybiera ładną liczbę z ciągu 1-2-5', () => {
+  it('wybiera ładną liczbę MIL MORSKICH z ciągu 1-2-5', () => {
     const view = fitBounds({ north: 52.2, south: 52.1, east: 15.9, west: 15.7 }, 360, 300);
     const bar = scaleBar(view, EPZG.lat);
 
-    const mantissa = bar.meters / 10 ** Math.floor(Math.log10(bar.meters));
+    // Ładna ma być liczba w NM, bo to ona stoi pod kreską — metry są tylko pochodną
+    // do przeliczenia długości pasa startowego na piksele (2026-08-15).
+    const mantissa = bar.nm / 10 ** Math.floor(Math.log10(bar.nm));
     expect([1, 2, 5]).toContain(Math.round(mantissa));
+    expect(bar.meters).toBeCloseTo(bar.nm * 1852, 6);
   });
 
   it('podziałka nie przekracza zadanej szerokości', () => {

@@ -7,12 +7,17 @@
  * klonuje repo. Ślad lotu po uproszczeniu (RDP) ma kilkadziesiąt wierzchołków, więc
  * kilkadziesiąt `<View>` — koszt bez znaczenia dla ekranu, który nie animuje.
  *
- * `transformOrigin: 'left center'` jest tu warunkiem poprawności: bez niego RN obraca
- * wokół środka i każdy odcinek odjeżdża o połowę swojej długości.
+ * ══ CIĄGŁOŚĆ LINII (issue #47 pkt 1 i druga tura przeglądu) ══
+ * Cała geometria — łącznie z NADMIAREM na styku, bez którego łuk rozpada się w kropki,
+ * a wierzchołek jest ścięty — siedzi w `screenPolyline.ts` i tam jest wyjaśniona.
+ * Ten komponent wyłącznie ją rysuje i NIE MA prawa niczego pomijać: pominięty odcinek
+ * to dziura, a dziura co drugi punkt zamienia trasę w zbiór kropek.
  */
 
 import React from 'react';
 import { View, type ViewStyle } from 'react-native';
+
+import { polylineSegments, screenPath } from './screenPolyline';
 
 export interface Point2D {
   x: number;
@@ -37,39 +42,27 @@ export function TrackPolyline({
 }: TrackPolylineProps) {
   if (points.length < 2) return null;
 
-  const segments: React.ReactNode[] = [];
-  for (let i = 1; i < points.length; i++) {
-    const from = points[i - 1]!;
-    const to = points[i]!;
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    // Odcinek zerowej długości daje NaN w atan2 tylko przy obu zerach, ale i tak
-    // nie ma czego rysować — pomijamy, zamiast produkować niewidoczny prostokąt.
-    if (length < 0.5) continue;
-
-    segments.push(
-      <View
-        key={i}
-        style={{
-          position: 'absolute',
-          left: from.x,
-          // Kreska ma być WYŚRODKOWANA na trasie, nie zwisać pod nią.
-          top: from.y - width / 2,
-          width: length,
-          height: width,
-          backgroundColor: color,
-          borderRadius: width / 2,
-          transform: [{ rotate: `${Math.atan2(dy, dx)}rad` }],
-          transformOrigin: 'left center',
-        }}
-      />,
-    );
-  }
+  const segments = polylineSegments(screenPath(points), width);
 
   return (
     <View pointerEvents="none" style={[{ position: 'absolute', inset: 0, opacity }, style]}>
-      {segments}
+      {segments.map((segment, i) => (
+        <View
+          key={i}
+          style={{
+            position: 'absolute',
+            left: segment.left,
+            top: segment.top,
+            width: segment.length,
+            height: segment.thickness,
+            backgroundColor: color,
+            // Zaokrąglony koniec wystający dokładnie do wierzchołka JEST okrągłym
+            // złączem — tym samym, które w SVG robi `stroke-linejoin: round`.
+            borderRadius: segment.thickness / 2,
+            transform: [{ rotate: `${segment.angleRad}rad` }],
+          }}
+        />
+      ))}
     </View>
   );
 }
