@@ -9,7 +9,7 @@
  */
 
 import {
-  polylineJoints,
+  polylineSegments,
   screenPath,
   MIN_SCREEN_STEP_PX,
 } from '../ui/components/data/screenPolyline';
@@ -83,31 +83,6 @@ describe('łamana w przestrzeni ekranu', () => {
     expect(screenPath(points)).toEqual(points);
   });
 
-  it('zaślepki stają WYŁĄCZNIE na załamaniach, nie na prostej', () => {
-    // Prosta ukośna: nic do zaślepiania, mimo stu wierzchołków.
-    const straight: Point2D[] = [];
-    for (let i = 0; i < 100; i++) straight.push({ x: i * 2, y: i * 2 });
-    expect(polylineJoints(straight)).toEqual([]);
-
-    // Zakręt o 90° — jeden wierzchołek, jedna zaślepka.
-    const corner: Point2D[] = [
-      { x: 0, y: 0 },
-      { x: 50, y: 0 },
-      { x: 50, y: 50 },
-    ];
-    expect(polylineJoints(corner)).toEqual([{ x: 50, y: 0 }]);
-  });
-
-  it('zawrót o 180° liczy się jako załamanie, nie jako pełny obrót', () => {
-    const hairpin: Point2D[] = [
-      { x: 0, y: 0 },
-      { x: 40, y: 0 },
-      { x: 0, y: 0.5 },
-    ];
-
-    expect(polylineJoints(hairpin)).toHaveLength(1);
-  });
-
   it('dwa punkty i mniej przechodzą bez zmian', () => {
     expect(screenPath([])).toEqual([]);
     expect(screenPath([{ x: 1, y: 2 }])).toEqual([{ x: 1, y: 2 }]);
@@ -117,5 +92,87 @@ describe('łamana w przestrzeni ekranu', () => {
         { x: 1.1, y: 2.1 },
       ]),
     ).toHaveLength(2);
+  });
+});
+
+/**
+ * Druga tura przeglądu: „nadal na przełamaniach są dziury". Prostokąt o DOKŁADNEJ
+ * długości odcinka styka się z sąsiadem w jednym punkcie osi — przy zaokrąglonych
+ * końcach i obrocie to za mało, żeby linia była ciągła. Sprawdzone rysunkiem: łuk
+ * o krótkich odcinkach rozpadał się w kropki, a wierzchołek załamania był ścięty.
+ */
+describe('odcinki łamanej — nadmiar na styku', () => {
+  const THICK = 2.5;
+
+  it('każdy prostokąt jest dłuższy od odcinka DOKŁADNIE o grubość kreski', () => {
+    const segments = polylineSegments(
+      [
+        { x: 0, y: 0 },
+        { x: 30, y: 40 }, // odcinek długości 50
+      ],
+      THICK,
+    );
+
+    expect(segments).toHaveLength(1);
+    expect(segments[0]!.length).toBeCloseTo(50 + THICK, 6);
+    expect(segments[0]!.thickness).toBe(THICK);
+  });
+
+  it('prostokąt stoi ŚRODKIEM na środku odcinka', () => {
+    const [segment] = polylineSegments(
+      [
+        { x: 10, y: 10 },
+        { x: 10, y: 60 },
+      ],
+      THICK,
+    );
+
+    // Środek prostokąta = (left + length/2, top + thickness/2) w układzie sprzed obrotu.
+    expect(segment!.left + segment!.length / 2).toBeCloseTo(10, 6);
+    expect(segment!.top + segment!.thickness / 2).toBeCloseTo(35, 6);
+  });
+
+  it('sąsiedzi ZACHODZĄ na siebie wokół wspólnego wierzchołka', () => {
+    // Załamanie 90° — najgorszy przypadek dla styku dwóch prostokątów.
+    const segments = polylineSegments(
+      [
+        { x: 0, y: 0 },
+        { x: 40, y: 0 },
+        { x: 40, y: 40 },
+      ],
+      THICK,
+    );
+
+    for (const segment of segments) {
+      const centerX = segment.left + segment.length / 2;
+      const centerY = segment.top + segment.thickness / 2;
+      // Odległość środka do wspólnego wierzchołka (40, 0) to połowa odcinka (20),
+      // a prostokąt sięga 21,25 — czyli PRZECHODZI przez wierzchołek.
+      const reach = segment.length / 2;
+      expect(reach).toBeGreaterThan(Math.hypot(40 - centerX, 0 - centerY));
+    }
+  });
+
+  it('gęsty łuk nie rozpada się w kropki — każdy prostokąt dłuższy niż gruby', () => {
+    // Spirala wznoszenia po decymacji ekranowej: kroki rzędu 2 px.
+    const arc: Point2D[] = [];
+    for (let t = 0; t < 120; t++) arc.push({ x: Math.cos(t / 14) * 60, y: Math.sin(t / 14) * 60 });
+
+    for (const segment of polylineSegments(screenPath(arc), THICK)) {
+      expect(segment.length).toBeGreaterThan(THICK);
+    }
+  });
+
+  it('punkty w tym samym pikselu nie produkują prostokąta o zerowej długości', () => {
+    const segments = polylineSegments(
+      [
+        { x: 5, y: 5 },
+        { x: 5, y: 5 },
+        { x: 25, y: 5 },
+      ],
+      THICK,
+    );
+
+    expect(segments).toHaveLength(1);
   });
 });

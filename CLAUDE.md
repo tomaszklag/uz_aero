@@ -720,10 +720,16 @@ znikać, wraca po reinstalacji i jest na nowym telefonie.
 - **atrybucji źródeł katalogu nie ma na mapie** (2026-08-15) — obowiązek ODbL spełnia
   `docs/dane-lotnisk.md` §3.2. To zamiana miejsca, nie przeoczenie: przywrócenie napisu
   na mapę wymaga rozmowy
-- **linię rysuje się w przestrzeni EKRANU** (`screenPolyline.ts`): odcinek podpikselowy
-  scala się z następnym, a nie znika. Stary kod pomijał go i zostawiał DZIURĘ — dlatego
-  gęsty zapis rysował się jako zbiór kropek zamiast trasy (zgłoszenie pkt 1). Nie
-  przywracaj żadnego „pomiń krótki odcinek": to jest dokładnie ten błąd
+- **linię rysuje się w przestrzeni EKRANU** (`screenPolyline.ts`) i obowiązują tam DWIE
+  reguły, obie okupione zgłoszeniem z urządzenia:
+  1. odcinek podpikselowy **scala się z następnym**, a nie znika. Stary kod pomijał go
+     i zostawiał DZIURĘ — dlatego gęsty zapis rysował się jako zbiór kropek. Nie
+     przywracaj żadnego „pomiń krótki odcinek": to jest dokładnie ten błąd;
+  2. prostokąt odcinka jest **dłuższy od niego o grubość kreski** (pół z każdej strony).
+     Prostokąt o dokładnej długości styka się z sąsiadem w JEDNYM PUNKCIE osi, a przy
+     zaokrąglonych końcach i obrocie to za mało: łuk rozpadał się w kropki, a wierzchołek
+     załamania był ścięty. Nadmiar zamienia styk w okrągłe złącze (`stroke-linejoin:
+     round` w SVG). Nie „optymalizuj" tego z powrotem do dokładnej długości
 - **znaczniki stoją na OBU wykresach** z czasem: mapa z nazwą („T/O 1 · 08:20"), profil
   samą godziną, bo tam rodzaj niesie kolor — pełne nazwy przy czterech znacznikach nie
   mieszczą się w szerokości telefonu. Maksimum bliższe niż 2 min od innego znacznika

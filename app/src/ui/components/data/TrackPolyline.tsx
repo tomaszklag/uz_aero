@@ -7,22 +7,17 @@
  * klonuje repo. Ślad lotu po uproszczeniu (RDP) ma kilkadziesiąt wierzchołków, więc
  * kilkadziesiąt `<View>` — koszt bez znaczenia dla ekranu, który nie animuje.
  *
- * Odcinek pozycjonujemy ŚRODKIEM i obracamy wokół środka (domyślne zachowanie RN),
- * a nie lewym końcem z `transformOrigin`. Wynik geometryczny jest identyczny, ale nie
- * zależy od jednej właściwości stylu, której brak objawiłby się rozjechaną kreską —
- * czyli awarią wyglądającą jak zły ślad, a nie jak błąd rysowania.
- *
- * ══ CIĄGŁOŚĆ LINII (issue #47 pkt 1) ══
- * Punkty przechodzą najpierw przez `screenPath`, które scala kroki podpikselowe.
- * Ten komponent NIE MA prawa pomijać odcinków — pominięty odcinek to dziura, a dziura
- * co drugi punkt zamienia trasę w zbiór kropek. Cała historia tego błędu:
- * `screenPolyline.ts`.
+ * ══ CIĄGŁOŚĆ LINII (issue #47 pkt 1 i druga tura przeglądu) ══
+ * Cała geometria — łącznie z NADMIAREM na styku, bez którego łuk rozpada się w kropki,
+ * a wierzchołek jest ścięty — siedzi w `screenPolyline.ts` i tam jest wyjaśniona.
+ * Ten komponent wyłącznie ją rysuje i NIE MA prawa niczego pomijać: pominięty odcinek
+ * to dziura, a dziura co drugi punkt zamienia trasę w zbiór kropek.
  */
 
 import React from 'react';
 import { View, type ViewStyle } from 'react-native';
 
-import { polylineJoints, screenPath } from './screenPolyline';
+import { polylineSegments, screenPath } from './screenPolyline';
 
 export interface Point2D {
   x: number;
@@ -47,59 +42,27 @@ export function TrackPolyline({
 }: TrackPolylineProps) {
   if (points.length < 2) return null;
 
-  const path = screenPath(points);
-  const segments: React.ReactNode[] = [];
-
-  for (let i = 1; i < path.length; i++) {
-    const from = path[i - 1]!;
-    const to = path[i]!;
-    const dx = to.x - from.x;
-    const dy = to.y - from.y;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    // Punkty dokładnie pokryte (ten sam piksel na wejściu) — `atan2(0,0)` byłoby zerem
-    // bez znaczenia, a prostokąt zerowej długości i tak niewidoczny.
-    if (length === 0) continue;
-
-    segments.push(
-      <View
-        key={i}
-        style={{
-          position: 'absolute',
-          // Prostokąt stoi ŚRODKIEM na środku odcinka, więc obrót wokół środka
-          // (domyślny w RN) trafia dokładnie w linię — bez `transformOrigin`.
-          left: (from.x + to.x) / 2 - length / 2,
-          top: (from.y + to.y) / 2 - width / 2,
-          width: length,
-          height: width,
-          backgroundColor: color,
-          borderRadius: width / 2,
-          transform: [{ rotate: `${Math.atan2(dy, dx)}rad` }],
-        }}
-      />,
-    );
-  }
-
-  // Zaślepki załamań: bez nich w każdym ostrym zakręcie widać szczerbę i linia czyta
-  // się jak przerwana (zgłoszenie z przeglądu). Szczegóły: `screenPolyline.ts`.
-  const joints = polylineJoints(path).map((joint, i) => (
-    <View
-      key={`j${i}`}
-      style={{
-        position: 'absolute',
-        left: joint.x - width / 2,
-        top: joint.y - width / 2,
-        width,
-        height: width,
-        borderRadius: width / 2,
-        backgroundColor: color,
-      }}
-    />
-  ));
+  const segments = polylineSegments(screenPath(points), width);
 
   return (
     <View pointerEvents="none" style={[{ position: 'absolute', inset: 0, opacity }, style]}>
-      {segments}
-      {joints}
+      {segments.map((segment, i) => (
+        <View
+          key={i}
+          style={{
+            position: 'absolute',
+            left: segment.left,
+            top: segment.top,
+            width: segment.length,
+            height: segment.thickness,
+            backgroundColor: color,
+            // Zaokrąglony koniec wystający dokładnie do wierzchołka JEST okrągłym
+            // złączem — tym samym, które w SVG robi `stroke-linejoin: round`.
+            borderRadius: segment.thickness / 2,
+            transform: [{ rotate: `${segment.angleRad}rad` }],
+          }}
+        />
+      ))}
     </View>
   );
 }

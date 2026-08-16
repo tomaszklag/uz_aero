@@ -69,47 +69,67 @@ export function screenPath(
   return out;
 }
 
-/**
- * Kąt załamania, powyżej którego wierzchołek dostaje ZAŚLEPKĘ (radiany, ~20°).
- *
- * Łamana z obróconych prostokątów styka się w punkcie osi, a nie całą krawędzią: przy
- * ostrym zakręcie po zewnętrznej stronie zostaje klinowaty wycinek, a Android dokłada
- * do tego zaokrąglanie pozycji do pełnych pikseli. Efekt widać dokładnie tam, gdzie
- * trasa się przełamuje — linia wygląda, jakby się urywała i zaczynała od nowa.
- *
- * Zaślepka to kropka o średnicy grubości kreski, postawiona na wierzchołku. Stawiamy ją
- * WYŁĄCZNIE przy realnym załamaniu, bo przy prostej byłaby setką widoków bez powodu.
- */
-export const JOINT_MIN_ANGLE_RAD = 0.35;
+/** Jeden prostokąt do narysowania: pozycja lewego górnego rogu PRZED obrotem. */
+export interface PolylineSegment {
+  left: number;
+  top: number;
+  /** Długość RYSOWANA — dłuższa od geometrycznej o grubość kreski (patrz niżej). */
+  length: number;
+  thickness: number;
+  angleRad: number;
+}
 
 /**
- * Wierzchołki wymagające zaślepki — te, na których kierunek zmienia się na tyle,
- * że styk dwóch prostokątów zostawia szczerbę.
+ * Odcinki łamanej — z NADMIAREM na styku (issue #47, druga tura przeglądu).
+ *
+ * ══ DLACZEGO PROSTOKĄT JEST DŁUŻSZY OD ODCINKA ══
+ * Prostokąt o DOKŁADNEJ długości odcinka styka się z sąsiadem w jednym punkcie osi,
+ * a nie całą krawędzią. Przy zaokrąglonych końcach (`borderRadius`) i obrocie dokłada
+ * się do tego wygładzanie krawędzi i zaokrąglanie pozycji do pełnych pikseli — i styk
+ * przestaje być stykiem. Widać to w dwóch miejscach naraz:
+ *  • na ZAŁAMANIU wierzchołek jest ścięty, jakby linia się urywała,
+ *  • na ŁUKU o krótkich odcinkach (spirala wznoszenia po decymacji ekranowej) linia
+ *    rozpada się w kropki — bo przy długości rzędu 2 px zaokrąglenie zjada prawie
+ *    całą kreskę.
+ * Sprawdzone rysunkiem: ta sama łamana raz z długością dokładną, raz wydłużoną.
+ *
+ * Rozwiązanie jest jednym mnożeniem: prostokąt dostaje `length + thickness`, czyli
+ * wystaje o pół grubości z każdej strony. Sąsiedzi zachodzą na siebie, a zaokrąglony
+ * koniec wystający dokładnie do wierzchołka staje się okrągłym złączem — tym samym,
+ * które w SVG robi `stroke-linejoin: round`.
+ *
+ * Koszt: linia wystaje o pół grubości poza swój pierwszy i ostatni punkt. Przy kresce
+ * 2,5 px to ~1 px na obu końcach całej trasy — niewidoczne, a próba dociągnięcia tego
+ * kosztowałaby osobny wariant dla dwóch skrajnych odcinków.
  */
-export function polylineJoints(
+export function polylineSegments(
   path: readonly Point2D[],
-  minAngleRad: number = JOINT_MIN_ANGLE_RAD,
-): Point2D[] {
-  if (path.length < 3) return [];
+  thickness: number,
+): PolylineSegment[] {
+  const segments: PolylineSegment[] = [];
 
-  const joints: Point2D[] = [];
+  for (let i = 1; i < path.length; i++) {
+    const from = path[i - 1]!;
+    const to = path[i]!;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const span = Math.sqrt(dx * dx + dy * dy);
+    // Punkty dokładnie pokryte (ten sam piksel) — `atan2(0,0)` byłoby zerem bez
+    // znaczenia, a kropka i tak zostanie postawiona przez sąsiadów.
+    if (span === 0) continue;
 
-  for (let i = 1; i < path.length - 1; i++) {
-    const previous = path[i - 1]!;
-    const current = path[i]!;
-    const next = path[i + 1]!;
+    const length = span + thickness;
 
-    const inAngle = Math.atan2(current.y - previous.y, current.x - previous.x);
-    const outAngle = Math.atan2(next.y - current.y, next.x - current.x);
-
-    // Różnicę sprowadzamy do <−π, π>, żeby przejście przez 180° nie udawało zakrętu
-    // o pełny obrót.
-    let delta = outAngle - inAngle;
-    while (delta > Math.PI) delta -= 2 * Math.PI;
-    while (delta < -Math.PI) delta += 2 * Math.PI;
-
-    if (Math.abs(delta) >= minAngleRad) joints.push(current);
+    segments.push({
+      // Prostokąt stoi ŚRODKIEM na środku odcinka, więc obrót wokół środka (domyślny
+      // w RN) trafia dokładnie w linię — bez `transformOrigin`.
+      left: (from.x + to.x) / 2 - length / 2,
+      top: (from.y + to.y) / 2 - thickness / 2,
+      length,
+      thickness,
+      angleRad: Math.atan2(dy, dx),
+    });
   }
 
-  return joints;
+  return segments;
 }
