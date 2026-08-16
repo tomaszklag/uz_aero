@@ -288,8 +288,11 @@ export function TrackScreen({
             {/* Sumy CAŁEJ sesji: dwa loty to jeden zapis, więc dystans i czas liczą się
                 przez oba. Rozbicie per lot stoi na osi czasu ekranu 10. */}
             <StatBlock title="Podsumowanie" first>
+              {/* Bez licznika punktów: „1 412 z 1 508" opisywało JAKOŚĆ NAGRANIA, czyli
+                  pracę bramki jakości — pytanie strojącego progi, nie pilota. Odeszło
+                  razem z logiem punktów; obie rzeczy zostały w panelu i w replayu. */}
               <StatGrid
-                columns={2}
+                columns={3}
                 cells={[
                   {
                     label: 'W powietrzu',
@@ -306,11 +309,6 @@ export function TrackScreen({
                         : '— —',
                     unit: 'ft',
                     tone: 'blue',
-                  },
-                  {
-                    label: 'Punkty',
-                    value: track.usableCount.toLocaleString('pl-PL'),
-                    unit: `z ${track.totalCount.toLocaleString('pl-PL')}`,
                   },
                 ]}
               />
