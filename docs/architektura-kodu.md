@@ -995,7 +995,7 @@ Ekran pyta o jedno: `const skeleton = useSkeleton(!loaded)`. Reszta to układ.
    `live` / `cache` / `brak` (§6 pkt 2 wymagań). „Serwer jeszcze nie potwierdził tej sesji"
    (11) jest ODPOWIEDZIĄ, nie oczekiwaniem — plamka obiecywałaby coś, co może nie przyjść.
    Tak samo `disabled` z podanym powodem (04B) zostaje tym, czym jest.
-3. **Skeleton nie zastępuje stanu pustego.** „JESZCZE ŻADNEGO LOTU" wolno napisać dopiero,
+3. **Skeleton nie zastępuje stanu pustego.** „DZIŚ BEZ LOTÓW" wolno napisać dopiero,
    gdy wiadomo, że jest pusto — czyli po odtworzeniu rejestru z serwera (`streamHydrated`,
    §4.9). Do tej chwili miejsce trzymają plamki. To ta sama zasada, dla której `usePilotDay`
    oddaje `null` zamiast pustej doby.

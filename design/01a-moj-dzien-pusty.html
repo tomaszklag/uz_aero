@@ -93,7 +93,8 @@
   /* Sumy doby: Blok i Loty — „— —" zamiast zer: brak sesji to niewiedza, nie wynik
      (wzorzec z 10A). Kafla „Służba" nie ma (issue #23 pkt 2). */
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
+  /* Trzy kolumny od 2026-08-16 — Loty · Blok · Lot, tak jak na kafelku sesji. */
+  .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-muted); }
@@ -193,22 +194,35 @@
           <svg class="empty-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/>
           </svg>
-          <span class="empty-title">JESZCZE ŻADNEGO LOTU</span>
-          <span class="empty-desc">Sesje pojawią się tu same, gdy przejmiesz samolot i uruchomisz silnik. Nic nie trzeba otwierać.</span>
+          <!-- TEKST ZAPOWIADA ZAWARTOŚĆ, NIE TŁUMACZY MECHANIKI (2026-08-16).
+               Poprzedni napis („Sesje pojawią się tu same, gdy przejmiesz samolot
+               i uruchomisz silnik. Nic nie trzeba otwierać.") łamał słownik
+               („przejmiesz" = odebranie maszyny INNEMU pilotowi), zaprzeczał
+               czynności, której w modelu nie ma („otwieranie dnia"), powtarzał
+               obietnicę spod zielonego przycisku i mówił „LOTU" w tytule, a „Sesje"
+               w opisie. Tytuł nazywa FAKT o dobie, opis wylicza, co tu stanie. -->
+          <span class="empty-title">DZIŚ BEZ LOTÓW</span>
+          <span class="empty-desc">Po pierwszym locie stanie tu karta sesji: czasy bloku, starty i lądowania, paliwo.</span>
         </div>
       </div>
 
+      <!-- Kreski, nie zera — pusta doba nie zna tych wielkości, a nie ma ich równych
+           zeru. Podpisów tu NIE MA (2026-08-16): „brak lotów" powtarzało tytuł karty
+           stanu pustego dwa centymetry wyżej, a „0 st / 0 ldg" było liczbą lotów
+           powiedzianą jeszcze dwa razy. -->
       <div class="totals-card">
         <div class="totals">
           <div class="total-cell">
-            <span class="total-key">Blok</span>
-            <span class="total-val">— —</span>
-            <span class="total-sub">brak lotów</span>
-          </div>
-          <div class="total-cell">
             <span class="total-key">Loty</span>
             <span class="total-val">— —</span>
-            <span class="total-sub">0 st / 0 ldg</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Blok</span>
+            <span class="total-val">— —</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Lot</span>
+            <span class="total-val">— —</span>
           </div>
         </div>
       </div>

@@ -134,7 +134,8 @@
   /* Sumy doby: Blok i Loty — własna karta pod listą kafelków. Kafla „Służba" nie ma
      (issue #23 pkt 2): czas „od pierwszej do ostatniej czynności" niczego nie mierzył. */
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
+  /* Trzy kolumny od 2026-08-16 — Loty · Blok · Lot, tak jak na kafelku sesji. */
+  .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-primary); }
@@ -145,8 +146,22 @@
      / ls 2 — token `button_small`, ten sam, którym pisze pas akcji kafelka i akcje
      arkuszy. Do 2026-08-13 „ROZPOCZNIJ LOT" i „DODAJ LOT RĘCZNIE" były mono 11 px,
      a „Poprzednie dni" osobnym linkiem pisanym Archivo 12,5 px: trzy kroje na trzech
-     przyciskach jednego ekranu. Wielkość dalej różnicuje wagę akcji (01A: główna
-     akcja pustego dnia jest `.btn-primary` w display 22 px) — ale rodzina jest jedna. */
+     przyciskach jednego ekranu. Wielkość dalej różnicuje WAGĘ akcji — ale rodzina
+     jest jedna.
+
+     „ROZPOCZNIJ LOT" JEST `.btn-primary` NA KAŻDYM WARIANCIE DOBY (zgłoszenie
+     z urządzenia, 2026-08-16). Do tej pory zielony przycisk stał tylko na 01A i tylko
+     nad logiem, a po pierwszej sesji zamieniał się w szary pod sumami — czyli ten sam
+     ekran uczył się dwa razy w ciągu jednego dnia. Druga sesja nie jest mniej ważna
+     od pierwszej, więc nie ma czego różnicować. */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:17px; border-radius:16px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
   .btn-secondary {
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; min-height:48px; padding:13px; border-radius:12px;
@@ -225,6 +240,14 @@
 
     <div class="scroll">
 
+      <!-- AKCJA GŁÓWNA — zawsze ta sama i zawsze tutaj, nad logiem (2026-08-16).
+           Nad, a nie pod listą, bo lista rośnie przez cały dzień: przy szóstej sesji
+           przycisk pod sumami trzeba by dopiero wyszukać przewinięciem. -->
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
+
       <!-- Log dnia: płaska oś czasu sesji (issue #23 pkt 3). Kafelek = jedna sesja
            (bieg silnika z lotami w środku), rejestracja jest informacją kafelka.
            Sesje na liście są już ZATWIERDZONE — zdanie samolotu (09b) potwierdziło
@@ -287,26 +310,35 @@
       </a>
 
       <!-- Sumy doby pod listą — jedyna wielkość, która NIE należy do pojedynczej
-           sesji, więc jako jedyna została kartą własnego kształtu. -->
+           sesji, więc jako jedyna została kartą własnego kształtu.
+
+           TA SAMA TRÓJKA, CO NA KAFELKU SESJI: Loty · Blok · Lot (2026-08-16).
+           Do tej pory była tu para, w której komórka „Loty" niosła CZAS w powietrzu,
+           a liczbę lotów spychała do podpisu „5 st / 5 ldg" — czyli etykieta mówiła
+           o jednej wielkości, a wartość o drugiej. Podpis dublował przy tym sam siebie:
+           lot to start i lądowanie, więc obie liczby są liczbą lotów. Czas lotu ma
+           odtąd własną komórkę, bo to inna wielkość niż blok: blok mierzy pracę silnika
+           (uruchomienie → wyłączenie), lot — powietrze (start → lądowanie). -->
       <div class="totals-card">
         <div class="totals">
+          <div class="total-cell">
+            <span class="total-key">Loty</span>
+            <span class="total-val">5</span>
+          </div>
           <div class="total-cell">
             <span class="total-key">Blok</span>
             <span class="total-val">3:05</span>
             <span class="total-sub">2 samoloty</span>
           </div>
           <div class="total-cell">
-            <span class="total-key">Loty</span>
+            <span class="total-key">Lot</span>
             <span class="total-val">2:37</span>
-            <span class="total-sub">5 st / 5 ldg</span>
           </div>
         </div>
       </div>
 
-      <a href="02-preflight.html" class="btn-secondary">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        ROZPOCZNIJ LOT
-      </a>
+      <!-- „ROZPOCZNIJ LOT" STAŁ TU do 2026-08-16 jako `.btn-secondary` — przeniesiony
+           nad log i zrównany z wariantem pustego dnia. -->
 
       <!-- Ręczny wpis CAŁEGO lotu (model 2026-08-10, story pkt 7): samolot, czasy
            silnika i lotu, odczyty. Dla lotów zapisanych poza telefonem — papier,

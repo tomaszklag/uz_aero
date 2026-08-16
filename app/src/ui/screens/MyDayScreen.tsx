@@ -29,7 +29,7 @@
  * Sieć zasila natomiast sam REJESTR (§4.9, issue #32): telefon po czyszczeniu pamięci
  * albo reinstalacji odtwarza własne zdarzenia z serwera. Ekran nie dostaje od tego
  * ANI JEDNEGO nowego elementu — jedyny ślad jest negatywny i dotyczy stanu PUSTEGO
- * (`ready` niżej): „JESZCZE ŻADNEGO LOTU" pokazane pilotowi, który ma dziś trzy sesje,
+ * (`ready` niżej): „DZIŚ BEZ LOTÓW" pokazane pilotowi, który ma dziś trzy sesje,
  * byłoby kłamstwem wyglądającym jak utrata danych. Doba z sesjami rysuje się od razu.
  */
 
@@ -110,6 +110,13 @@ export function MyDayScreen({
 
   const vm = pilotDay != null ? buildMyDay(pilotDay) : null;
 
+  // Pas akcji nie zależy od doby (`myDayActions` bez argumentów od 2026-08-16), więc
+  // liczy się raz i poza czekaniem na strumień. Podział na sloty pilnuje, żeby miejsce
+  // przycisku zostało decyzją modelu — w JSX rozjechałoby się przy pierwszej zmianie.
+  const actions = myDayActions();
+  const topActions = actions.filter((a) => a.slot === 'top');
+  const bottomActions = actions.filter((a) => a.slot === 'bottom');
+
   // Plakietka okna korekty na wejściu do historii (`.history-badge`) — okno 24 h ma być
   // widoczne, zanim pilot pomyśli o szukaniu go (ten sam wzorzec co na ekranie startowym).
   const [historyBadge, setHistoryBadge] = useState<string | null>(null);
@@ -153,29 +160,39 @@ export function MyDayScreen({
   const ready = vm != null && (!empty || streamHydrated);
   /**
    * Dopóki dobie nie wolno wierzyć, miejsce trzymają plamki (issue #33). To NIE JEST
-   * to samo, co stan pusty: „JESZCZE ŻADNEGO LOTU" mówi, że dziś nic nie było, a
+   * to samo, co stan pusty: „DZIŚ BEZ LOTÓW" mówi, że dziś nic nie było, a
    * skeleton — że jeszcze nie wiemy (wzorzec `design/LOADERY.html`, reguła 4).
    * Odczyt z SQLite mieści się zwykle pod progiem bramki, więc na co dzień pilot nie
    * zobaczy tu niczego poza gotowym logiem.
    */
   const skeleton = useSkeleton(!ready);
 
+  /**
+   * Sumy doby w tej samej trójce, co kafelek sesji: Loty · Blok · Lot (2026-08-16).
+   *
+   * Podpis „5 st / 5 ldg" ZNIKŁ (zgłoszenie z urządzenia): lot to start i lądowanie,
+   * więc obie liczby są liczbą lotów powiedzianą jeszcze dwa razy — a stała nad nimi
+   * etykieta „Loty" niosła przy tym CZAS w powietrzu, nie licznik. Czas lotu dostał
+   * własną komórkę i własną nazwę, bo to inna wielkość niż blok: blok mierzy pracę
+   * silnika (uruchomienie → wyłączenie), lot — powietrze (start → lądowanie).
+   *
+   * Liczba samolotów zostaje jako jedyny podpis, bo mówi coś, czego nie widać
+   * w żadnej z trzech liczb: ile maszyn złożyło się na tę dobę. Przy pustej dobie
+   * podpisu nie ma — „brak lotów" powtarzało tytuł karty stanu pustego tuż nad nim.
+   */
   const totals: StatCell[] =
     vm == null
       ? []
       : [
+          { label: 'Loty', value: totalLabel(vm.totals.flights) },
           {
             label: 'Blok',
             value: totalLabel(vm.totals.block),
             unit: vm.empty
-              ? 'brak lotów'
+              ? undefined
               : `${vm.totals.aircraftCount} ${plural(vm.totals.aircraftCount, 'samolot', 'samoloty', 'samolotów')}`,
           },
-          {
-            label: 'Loty',
-            value: totalLabel(vm.totals.flight),
-            unit: `${vm.totals.takeoffs} st / ${vm.totals.landings} ldg`,
-          },
+          { label: 'Lot', value: totalLabel(vm.totals.flight) },
         ];
 
   return (
@@ -204,6 +221,39 @@ export function MyDayScreen({
       }
     >
       <View style={styles.content}>
+        {/* ── akcja główna: zawsze ta sama i zawsze w tym samym miejscu ───────
+            Zielony przycisk stoi NAD logiem przez cały dzień — także przy szóstej
+            sesji, gdy lista jest długa i pod nią trzeba by przewijać (zgłoszenie
+            z urządzenia, 2026-08-16). Skład i wagę liczy `myDayActions`; tam też
+            mieszka uzasadnienie, dlaczego nic z tego nie zależy już od tego, czy doba
+            jest pusta.
+
+            Blok NIE czeka na `ready`: nie mówi o dobie ani słowa, więc czekanie
+            zostawiałoby na pierwszej klatce dziurę w miejscu, w którym za moment
+            i tak stanie ten sam przycisk. */}
+        {topActions.map((action) => (
+          <ActionButton
+            key={action.id}
+            label={action.label}
+            tone="green"
+            variant="solid"
+            icon="start"
+            onPress={() => navigation.navigate('PreflightAircraft')}
+          />
+        ))}
+
+        {/* Przypis należy do PUSTEGO dnia: tłumaczy, czym jest zielony przycisk komuś,
+            kto jeszcze nic dziś nie zrobił. Przy dniu z sesjami byłby powtórzeniem
+            wiedzy, którą pilot ma już z własnej listy. Stoi ZARAZ POD przyciskiem, bo
+            opisuje trzy kroki TEJ jednej drogi — ujemny margines domyka odstęp
+            `content.gap` i skleja parę w jeden blok. */}
+        {ready && empty && (
+          <AppText variant="mono" tone="muted" style={styles.btnNote}>
+            Odczytasz paliwo i motogodziny, potwierdzisz zadanie —{'\n'}i lecisz. Loty zapiszą
+            się same.
+          </AppText>
+        )}
+
         {/* ── log dnia: płaska oś czasu sesji + sumy ─────────────────────────
             Etykieta grupy zamiast nagłówka karty (issue #42): kafelki są osobnymi
             kartami, więc lista nie mieszka już w jednym pojemniku. Znacznik strefy
@@ -242,56 +292,33 @@ export function MyDayScreen({
             {/* Sumy doby: jedyna wielkość, która NIE należy do pojedynczej sesji —
                 stąd własna karta pod listą, a nie stopka któregoś z kafelków. */}
             <Card flush>
-              <StatGrid cells={totals} columns={2} />
+              <StatGrid cells={totals} columns={3} />
             </Card>
           </>
         )}
 
-        {/* ── akcje: przejęcie (jedyna główna akcja pustego dnia) i wpis ręczny ──
-            Cały blok czeka na wczytanie doby (`ready`), bo inaczej pierwsza klatka
-            pokazywałaby wielki zielony przycisk pustego dnia pilotowi, który ma
-            za sobą trzy sesje — a potem podmieniałaby go pod palcem. */}
-        {/*
-          Skład pasa akcji liczy `myDayActions` — patrz jego docblock. Krótko: OBA
-          wejścia istnieją zawsze, zmienia się tylko waga „ROZPOCZNIJ LOT". Do
-          2026-08-14 pusty dzień miał wyłącznie zielony przycisk, więc pilot bez ani
-          jednej sesji nie miał jak wpisać lotu odbytego bez telefonu — a to dokładnie
-          ta sytuacja, dla której wpis ręczny istnieje (§3.8).
-
-          Plus, nie strzałki `takeover` (zgłoszenie z urządzenia przy issue #23):
-          mockup 01 rysuje tu DOPISANIE kolejnej sesji, a `maximize-2` znaczy przejęcie
-          CUDZEJ maszyny (04B).
-        */}
-        {ready &&
-          myDayActions(empty).map((action) => (
-            <ActionButton
-              key={action.id}
-              label={action.label}
-              tone={action.primary ? 'green' : 'neutral'}
-              variant={action.primary ? 'solid' : 'secondary'}
-              size={action.primary ? undefined : 'md'}
-              icon={action.id === 'manual' ? 'edit' : action.primary ? 'start' : 'add'}
-              onPress={() =>
-                navigation.navigate(action.id === 'manual' ? 'ManualFlight' : 'PreflightAircraft')
-              }
-            />
-          ))}
-
-        {/* Przypis należy do PUSTEGO dnia: tłumaczy, czym jest zielony przycisk komuś,
-            kto jeszcze nic dziś nie zrobił. Przy dniu z sesjami byłby powtórzeniem
-            wiedzy, którą pilot ma już z własnej listy. */}
-        {ready && empty && (
-          <AppText variant="mono" tone="muted" style={styles.btnNote}>
-            Odczytasz paliwo i motogodziny, potwierdzisz zadanie —{'\n'}i lecisz. Loty zapiszą
-            się same.
-          </AppText>
-        )}
-
-        {/* Ta sama przestrzeń w stanie ładowania: karta logu i JEDEN blok akcji.
-            Jeden, bo tyle wiadomo na pewno — pusty dzień dostanie zielone „ROZPOCZNIJ
-            LOT" z przypisem, a dzień z sesjami dwa przyciski drugorzędne (wzorzec,
-            reguła 2: skeleton obiecuje część wspólną, nie zgaduje wariantu). */}
+        {/* Ta sama przestrzeń w stanie ładowania — SAM log dnia z sumami. Przyciski
+            plamki nie potrzebują: stoją już na ekranie, bo nie zależą od doby. */}
         {!ready && skeleton && <MyDaySkeleton />}
+
+        {/* ── droga awaryjna: wpis CAŁEGO lotu po fakcie (15, §3.8) ───────────
+            Pod logiem i drugorzędnie, ale ZAWSZE — także przy pustym dniu, bo lot bez
+            telefonu (padła bateria, aparat w kurtce) to dokładnie ta doba, która nie
+            ma ani jednej sesji (zgłoszenie z urządzenia, 2026-08-14).
+
+            Ikona `edit`, nie strzałki `takeover` (zgłoszenie przy issue #23): mockup 01
+            rysuje tu DOPISANIE sesji, a `maximize-2` znaczy przejęcie CUDZEJ maszyny. */}
+        {bottomActions.map((action) => (
+          <ActionButton
+            key={action.id}
+            label={action.label}
+            tone="neutral"
+            variant="secondary"
+            size="md"
+            icon="edit"
+            onPress={() => navigation.navigate('ManualFlight')}
+          />
+        ))}
 
         {/* ── okno korekty 24 h ma mieć drzwi (12) ───────────────────────────
             Trzeci przycisk tego samego komponentu i kroju, co dwa wyżej (issue #42):
@@ -317,7 +344,20 @@ export function MyDayScreen({
 
 /**
  * `.empty-legs` — doba bez sesji mówi to wprost, zamiast udawać tabelę bez wierszy.
- * Napis obiecuje dokładnie to, co robi model: sesje pojawią się same.
+ *
+ * TEKST ZAPOWIADA ZAWARTOŚĆ, NIE TŁUMACZY MECHANIKI (2026-08-16, po przeglądzie UX).
+ * Poprzedni napis („Sesje pojawią się tu same, gdy przejmiesz samolot i uruchomisz
+ * silnik. Nic nie trzeba otwierać.") zawinił na cztery sposoby naraz:
+ *  · „przejmiesz" łamało słownik trzy centymetry od przycisku „ROZPOCZNIJ LOT" —
+ *    przejmuje się maszynę INNEMU pilotowi (04B), a nie wolny samolot;
+ *  · „Nic nie trzeba otwierać" zaprzeczało czynności, której w modelu NIE MA — żeby
+ *    zdementować „otwieranie dnia", trzeba je najpierw czytelnikowi przypomnieć;
+ *  · obietnica „zapisze się samo" stała już pod zielonym przyciskiem (`btnNote`),
+ *    więc pusty ekran niósł ten sam komunikat dwa razy;
+ *  · tytuł mówił „LOTU", opis „Sesje" — dwie nazwy tej samej rzeczy w sąsiednich
+ *    wierszach, choć karta jest listą SESJI.
+ * Odtąd tytuł nazywa FAKT o dobie, a opis wylicza, co konkretnie stanie w tym miejscu
+ * po pierwszym locie. Ani jedno, ani drugie nie powtarza przycisku obok.
  */
 function EmptySessions() {
   const { theme } = useTheme();
@@ -326,11 +366,10 @@ function EmptySessions() {
     <View style={styles.emptyLegs}>
       <Icon name="aircraft" size={30} color={theme.colors.borderStrong} />
       <AppText variant="display" tone="secondary" style={styles.emptyTitle}>
-        JESZCZE ŻADNEGO LOTU
+        DZIŚ BEZ LOTÓW
       </AppText>
       <AppText variant="body" tone="muted" style={styles.emptyDesc}>
-        Sesje pojawią się tu same, gdy przejmiesz samolot i uruchomisz silnik. Nic nie trzeba
-        otwierać.
+        Po pierwszym locie stanie tu karta sesji: czasy bloku, starty i lądowania, paliwo.
       </AppText>
     </View>
   );
@@ -346,7 +385,9 @@ function EmptySessions() {
  * DWIE plamki-kafelki, tak jak w historii (12), bo to ta sama lista tych samych kart.
  * Liczba mówi o KSZTAŁCIE listy, nie o jej długości — tej nikt jeszcze nie zna.
  * Etykieta grupy jest napisem stałym i NIE czeka (wzorzec, reguła 3: co znamy lokalnie,
- * rysujemy od razu).
+ * rysujemy od razu). Z tego samego powodu skeleton nie ma już plamki na przycisk:
+ * od 2026-08-16 pas akcji nie zależy od doby, więc przyciski są NA EKRANIE, a nie
+ * w drodze — plamka trzymałaby miejsce po czymś, co stoi obok niej.
  */
 function MyDaySkeleton() {
   const { theme } = useTheme();
@@ -356,10 +397,11 @@ function MyDaySkeleton() {
       <GroupLabel text="Log dnia" />
       <SkeletonRows rows={2} height={CARD_HEIGHT} radius={theme.radius.btn} gap={12} />
 
-      {/* Sumy doby w geometrii `StatGrid`: tło prześwieca przez 1-pikselowe odstępy. */}
+      {/* Sumy doby w geometrii `StatGrid`: tło prześwieca przez 1-pikselowe odstępy.
+          TRZY komórki, bo tyle ich jest od 2026-08-16 (Loty · Blok · Lot). */}
       <Card flush>
         <View style={[styles.skeletonTotals, { backgroundColor: theme.colors.border }]}>
-          {[0, 1].map((cell) => (
+          {[0, 1, 2].map((cell) => (
             <View
               key={cell}
               style={[styles.skeletonTotalCell, { backgroundColor: theme.colors.surface }]}
@@ -371,10 +413,6 @@ function MyDaySkeleton() {
           ))}
         </View>
       </Card>
-
-      {/* Wysokość i zaokrąglenie `ActionButton size="md"` — mniejszego z dwóch
-          wariantów, czyli części wspólnej pustego dnia i dnia z sesjami. */}
-      <Skeleton height={48} radius={theme.radius.md} />
     </View>
   );
 }
@@ -386,7 +424,9 @@ const styles = StyleSheet.create({
   // Odstęp taki sam jak `content.gap`: skeleton zajmuje miejsce listy ORAZ przycisku.
   skeletonBlock: { gap: 12 },
   skeletonTotals: { flexDirection: 'row', flexWrap: 'wrap', gap: 1 },
-  skeletonTotalCell: { flexGrow: 1, flexBasis: '45%', gap: 3, paddingHorizontal: 12, paddingVertical: 10 },
+  // `flexBasis` jak w `StatGrid` dla trzech kolumn (30%) — plamki mają stać dokładnie
+  // tam, gdzie za chwilę staną komórki sum.
+  skeletonTotalCell: { flexGrow: 1, flexBasis: '30%', gap: 3, paddingHorizontal: 12, paddingVertical: 10 },
 
   // ── stan pusty listy ───────────────────────────────────────────────────────
   emptyLegs: { alignItems: 'center', gap: 8, paddingVertical: 26, paddingHorizontal: 20 },

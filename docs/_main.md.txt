@@ -676,7 +676,7 @@ Dwie konsekwencje warte zapamiętania:
 > pilotowi jego dzień dokładnie wtedy, gdy zabraknie zasięgu, czyli w powietrzu.
 >
 > Jedyny ślad w UI jest negatywny i **dotyczy wyłącznie stanu pustego**: dopóki pierwsze
-> odtworzenie nie wróci, 01 i 12 nie rysują „JESZCZE ŻADNEGO LOTU" ani „BRAK ZAMKNIĘTYCH
+> odtworzenie nie wróci, 01 i 12 nie rysują „DZIŚ BEZ LOTÓW" ani „BRAK ZAMKNIĘTYCH
 > DNI". Doba z sesjami wyświetla się NATYCHMIAST z tego, co telefon ma lokalnie — ona
 > nigdy nie kłamie i nie ma powodu, żeby czekała na sieć. To ta sama zasada, dla której
 > `usePilotDay` zwraca `null` do pierwszego odczytu z bazy. Offline stan pusty pojawia

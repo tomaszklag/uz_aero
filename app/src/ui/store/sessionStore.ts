@@ -95,7 +95,7 @@ export interface SessionStore {
    *
    * Odpowiada na jedno pytanie ekranu: „czy pustemu rejestrowi wolno wierzyć". Zanim
    * pierwsze odtworzenie się zakończy, pusta doba może być artefaktem czyszczenia
-   * pamięci, a nie faktem — a „JESZCZE ŻADNEGO LOTU" pokazane pilotowi z trzema
+   * pamięci, a nie faktem — a „DZIŚ BEZ LOTÓW" pokazane pilotowi z trzema
    * sesjami za sobą jest kłamstwem (to ta sama zasada, dla której `usePilotDay` zwraca
    * `null` do pierwszego odczytu). `true` bez warstwy synca: bez serwera lokalny
    * rejestr JEST całą prawdą i nie ma na co czekać.
