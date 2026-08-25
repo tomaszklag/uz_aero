@@ -275,6 +275,9 @@ export function MyDayScreen({
                   aircraft={session.aircraft}
                   times={session.times}
                   stats={session.stats}
+                  // „RĘCZNIE" przy tytule — fakt o pochodzeniu CAŁEJ sesji
+                  // (decyzja 2026-08-16); wiersze osi znaczników nie dostają.
+                  {...(session.manual ? { titleTag: 'RĘCZNIE' } : {})}
                   // Ten sam napis i ta sama ikona, co na karcie w oknie korekty na 12
                   // — bo to ta sama akcja i to samo miejsce docelowe.
                   ctaLabel="OTWÓRZ I POPRAW"

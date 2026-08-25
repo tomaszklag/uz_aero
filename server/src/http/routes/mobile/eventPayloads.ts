@@ -57,6 +57,9 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
   session_claim: z.object({
     mode: z.enum(['free', 'takeover_online', 'takeover_offline']),
     previousPicId: z.string().max(50).nullable().optional(),
+    // Znacznik sesji wpisanej ręcznie po fakcie (ekran 15, 2026-08-16) — zasila
+    // plakietkę „RĘCZNIE"; brak pola = zapis z kokpitu.
+    manualEntry: z.boolean().optional(),
   }),
 
   preflight_confirm: z.object({

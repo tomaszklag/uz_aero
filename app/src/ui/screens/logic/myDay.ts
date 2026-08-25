@@ -64,6 +64,7 @@ export function buildMyDay(day: PilotDay): MyDayVm {
       aircraft: session.aircraftId,
       times: sessionTimes(session.startedAt, session.stoppedAt),
       stats: sessionStats(session.flightCount, session.blockMs, session.flightMs),
+      manual: session.manualEntry,
     })),
     totals: {
       // Suma z SESJI, nie `day.takeoffCount`: liczba w rzędzie sum ma się zgadzać

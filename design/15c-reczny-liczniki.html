@@ -182,17 +182,23 @@
           <div class="field">
             <span class="field-label">Po locie</span>
             <a href="15c-reczny-liczniki.html" class="field-input">
-              <span class="field-val amber">98</span><span class="field-unit">L</span>
+              <span class="field-val amber">76</span><span class="field-unit">L</span>
             </a>
           </div>
         </div>
 
+        <!-- DOLEWKA TYLKO PRZED URUCHOMIENIEM ALBO PO WYŁĄCZENIU — dolewa się przy
+             zatrzymanym śmigle (REFUEL_ENGINE_RUNNING jest twardym błędem domeny).
+             Dolewka z godziną ze środka biegu dostaje blokadę przy „ZAPISZ LOT".
+             Poranna dolewka (przed odczytem „przed uruchomieniem") NIE wchodzi do
+             rachunku zużycia — odczyt już ją zawiera; logika cofa o nią odczyt
+             początkowy strumienia, żeby litrów nie liczyć podwójnie. -->
         <div class="field">
           <span class="field-label">Dolewki</span>
           <div class="row-list">
             <a href="15c-reczny-liczniki.html" class="row">
-              <span class="row-time">10:56</span>
-              <span class="row-main">+48 L → 123 L</span>
+              <span class="row-time">09:35</span>
+              <span class="row-main">+48 L → 112 L</span>
               <span class="row-icon">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
               </span>
@@ -204,7 +210,7 @@
               <span class="row-label">Dodaj dolewkę</span>
             </a>
           </div>
-          <div class="field-sub">zużycie 62 L · 112 L + 48 L dolane − 98 L po locie</div>
+          <div class="field-sub">zużycie 36 L · 112 L − 76 L po locie (poranna dolewka już w odczycie)</div>
         </div>
       </div>
 

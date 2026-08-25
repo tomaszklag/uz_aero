@@ -310,6 +310,19 @@ export function StatsScreen({
           subtitle={subtitle(projection.aircraftId, projection.claimedAt, projection.operation)}
           right={
             <>
+              {/* „RĘCZNIE" — fakt o pochodzeniu CAŁEJ sesji (wpis z ekranu 15,
+                  decyzja 2026-08-16). W nagłówku, bo mówi o sesji jako całości;
+                  wiersze osi znaczników nie dostają (issue #40 pkt 6 — przy wpisie
+                  ręcznym świeciłyby wszystkie naraz). Neutralna: to proweniencja,
+                  nie ostrzeżenie. */}
+              {projection.manualEntry && (
+                <Tag
+                  label="RĘCZNIE"
+                  tone="neutral"
+                  size="md"
+                  style={{ borderRadius: theme.radius.pill }}
+                />
+              )}
               {/* Liczby lotów w nagłówku NIE MA (issue #40): stopka osi mówi „STARTY 2"
                   trzy centymetry niżej. Nie ma tu też plakietki „bez lotu" (uwaga
                   z urządzenia, 2026-08-14) — sesja bez startu opisuje się sama: oś nie

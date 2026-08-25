@@ -416,8 +416,16 @@ lot bez lądowania, lądowanie przed startem, zdarzenie poza klamrą biegu silni
 na ziemi, cofnięty licznik, paliwo ponad pojemność. Sprawdzenie idzie po CAŁYM strumieniu
 efektywnym, inaczej niż `checkAppend` pytający o pojedynczego kandydata do zapisu.
 
-Wpisy ręczne trafiają do strumienia jak każde inne (`manual_log_entry` dla całego lotu
-z ekranu 15; pojedyncze fakty — jako zdarzenia własnego typu z metodą `manual`).
+Wpisy ręczne trafiają do strumienia jak każde inne. CAŁY lot z ekranu 15 to komplet
+zwykłych zdarzeń sesji (`session_claim` → `preflight_confirm` → bieg → `day_close`)
+z czasami pilota w `gpsTime` i jawnym znacznikiem `session_claim.manualEntry` —
+z niego bierze się plakietka „RĘCZNIE" na kafelku (01/12) i w nagłówku rozliczenia
+(10); pojedyncze fakty dopisywane w edycji — jako zdarzenia własnego typu z metodą
+`manual`. Od przebudowy 2026-08-16 ekran 15 jest STEPPEREM czterech kroków z pełną
+paritą zadania (operacja, lotniska, klient, Dual), wieloma lotami w jednym biegu,
+zrzutami, dolewkami i odczytami z OBU stron biegu; nieścisłości (kolizje z własnymi
+sesjami, łańcuch MH/paliwa wobec przekazania z cache) OSTRZEGAJĄ, nigdy nie blokują —
+pełny opis w `CLAUDE.md`, sekcja „Wpis ręczny = ten sam lot, te same pytania".
 
 ### 3.9 Synchronizacja (sekcja w Ustawieniach 13 — dawny ekran 11 „eksport")
 
@@ -941,7 +949,9 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     │           z lotami w środku; rejestracja jako informacja kafelka), przekrojowo
     │           po samolotach; stąd rozpoczęcie lotu, ręczny wpis lotu i okno korekty 24 h
     │           warianty: 01a (zero sesji) · 01c (offline + arkusz syncu)
-    ├─→ [15 Lot ręczny]  CAŁA sesja po fakcie: samolot · czasy · odczyty WYMAGANE
+    ├─→ [15 Lot ręczny]  CAŁA sesja po fakcie, stepper 4 kroków (2026-08-16):
+    │       samolot+data+Dual → zadanie → czasy (N lotów, zrzuty) → liczniki
+    │       (paliwo przed/dolewki/po, MH z obu stron) + ostrzeżenia bez blokad
     ↓ Rozpocznij lot
 [02 Nowy lot 1/3]  samolot (wolny / aktywny PIC / wyłączony) · Dual
     │        └─ samolot zajęty → [modal Przejmij?] (wariant online / offline)

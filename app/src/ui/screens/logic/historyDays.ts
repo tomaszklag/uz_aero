@@ -118,6 +118,7 @@ function cardSpec(day: HistoryDay, pushing: boolean): DayCardSpec {
     // maszyny) i „Skoczków" wypadły: pierwsza była wielkością, o którą nikt nie pytał,
     // druga mieszka w szczegółach lotu, do których ta karta prowadzi.
     stats: sessionStats(state.flights.length, state.blockTimeMs, state.flightTimeMs),
+    manual: state.manualEntry,
     upload: uploadSpec(pendingCount, pushing),
   };
 }

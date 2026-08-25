@@ -124,6 +124,17 @@ export interface SessionClaimPayload {
   mode: SessionClaimMode;
   /** Kogo przejmujemy (z cache/serwera), gdy `mode` = takeover_*. */
   previousPicId?: string | null;
+  /**
+   * Sesja WPISANA RĘCZNIE po fakcie (ekran 15, przebudowa 2026-08-16) — jawny
+   * znacznik na zdarzeniu, które sesję zakłada. Jawny, bo nie da się go wywieść:
+   * `method: 'manual'` na starcie i lądowaniu niesie też zwykły lot z ręcznymi
+   * przyciskami, a heurystyka po stemplach zapisu rozpadłaby się przy pierwszym
+   * odtworzeniu rejestru z serwera. Czyta go plakietka „RĘCZNIE" na kafelku sesji
+   * (01/12) i w nagłówku rozliczenia (10); pojedyncze wiersze osi znaczników NIE
+   * dostają (issue #40 pkt 6 zostaje w mocy — przy wpisie ręcznym świeciłyby
+   * wszystkie naraz). `undefined` = zapis z kokpitu.
+   */
+  manualEntry?: boolean;
 }
 
 /** `preflight_confirm` — trasa, operacja, odczyt FOB+MH, korekty z powodem. */

@@ -40,6 +40,7 @@ import {
   type GpsPosition,
   type JumperCounts,
   type ManualLogEntryPayload,
+  type OperationType,
   type PreflightConfirmPayload,
   type EventCorrectionPayload,
   type RefuelPayload,
@@ -66,19 +67,67 @@ export interface ClaimInput extends SessionContext {
   gpsTime?: EpochMillis | null;
 }
 
-/** Wejście `manualFlight` (ekran 15) — kompletna sesja wpisana po fakcie. */
+/** Jeden lot wpisu ręcznego — para start → lądowanie wewnątrz biegu silnika. */
+export interface ManualFlightLeg {
+  takeoff: EpochMillis;
+  landing: EpochMillis;
+}
+
+/** Zrzut wpisu ręcznego — czas + opcjonalny skład (null = „niepodany", nie zero). */
+export interface ManualFlightDrop {
+  at: EpochMillis;
+  jumpers: JumperCounts | null;
+  altitudeFt?: number | null;
+}
+
+/**
+ * Dolewka wpisu ręcznego. Trójka before/added/after jest spójna z `RefuelPayload` —
+ * `refuel` nie ma korekty `amend` właśnie dlatego, że niesie trójkę, więc wpis ręczny
+ * też nie może jej rozłamać na osobne pola.
+ */
+export interface ManualFlightRefuel {
+  at: EpochMillis;
+  beforeL: number;
+  addedL: number;
+  afterL: number;
+}
+
+/**
+ * Wejście `manualFlight` (ekrany 15 → 15C) — kompletna sesja wpisana po fakcie.
+ *
+ * PARITA Z LOTEM AUTOMATYCZNYM (przebudowa 2026-08-16): wpis po fakcie opisuje ten
+ * sam lot, co zapis z kokpitu, więc niesie ten sam komplet — rodzaj operacji,
+ * lotniska, klienta, Duala, DOWOLNIE WIELE lotów w jednym biegu, zrzuty i dolewki.
+ * Poprzednia wersja wpisywała twardo `operation: 'inne'`, jedną parę start–lądowanie
+ * i zgadywała odczyt początkowy z cache — lot szkolny gubił Duala, dzień skokowy
+ * wymagał dziesięciu korekt po zapisaniu, a sesja z dolewką nie dawała się wpisać
+ * w ogóle.
+ */
 export interface ManualFlightInput {
   sessionUuid: string;
   aircraftId: string;
   picId: string;
   dualId: string | null;
-  times: {
-    engineStart: EpochMillis;
-    takeoff: EpochMillis;
-    landing: EpochMillis;
-    engineStop: EpochMillis;
-  };
-  /** Początek łańcucha MH — przekazanie z cache (logika: `initialReadingFor`). */
+  operation: OperationType;
+  departureIcao?: string | null;
+  arrivalIcao?: string | null;
+  client?: string | null;
+  /** Bieg silnika — dokładnie jeden na sesję (SESSION_ALREADY_RAN). */
+  engine: { start: EpochMillis; stop: EpochMillis };
+  /** Loty wewnątrz biegu, w dowolnej kolejności — komenda sortuje po czasie. */
+  flights: ManualFlightLeg[];
+  drops?: ManualFlightDrop[];
+  /**
+   * Dolewki — wyłącznie PRZED uruchomieniem albo PO zatrzymaniu silnika: dolewa się
+   * przy zatrzymanym śmigle (`REFUEL_ENGINE_RUNNING` jest twardym błędem). Dolewka
+   * w środku biegu odbije się w próbie generalnej i wpis NIE zostanie zapisany.
+   */
+  refuels?: ManualFlightRefuel[];
+  /**
+   * Odczyt PRZED uruchomieniem — od 2026-08-16 wpisywany przez pilota (krok 4),
+   * nie zgadywany z cache: pilot ma go na kartce, a zgadnięte ogniwo psuło łańcuch
+   * MH następnemu pilotowi.
+   */
   initialReading: FuelMhReading;
   /** Odczyt po locie — WYMAGANY, staje się przekazaniem (te same reguły co 09b). */
   finalReading: FuelMhReading;
@@ -317,27 +366,83 @@ export class SessionCommands {
     };
 
     type Draft = { type: EventType; payload: unknown; gpsTime?: EpochMillis };
+
+    // ── zdarzenia biegu w porządku CZASU, nie formularza ─────────────────────
+    // Loty i zrzuty przychodzą listami; scalamy je po `gpsTime`, żeby strumień
+    // czytał się jak prawdziwy dzień. Przy równym stemplu zrzut stoi MIĘDZY startem
+    // a lądowaniem swojej pary (rank), tak jak w `sessionAxis.ts`.
+    // Dolewki dzielą się na PRZED biegiem i PO nim — w środku biegu dolewki nie ma,
+    // bo dolewa się przy zatrzymanym śmigle (`REFUEL_ENGINE_RUNNING` to twardy błąd).
+    // Dolewka z czasem ze ŚRODKA biegu świadomie wchodzi do sekwencji w swoim
+    // miejscu czasowym, żeby próba generalna odrzuciła ją tym nazwanym błędem —
+    // przesunięcie jej za wyłączenie ukrywałoby błąd w danych pilota.
+    const refuelDraft = (r: ManualFlightRefuel): Draft => ({
+      type: 'refuel',
+      payload: { beforeL: r.beforeL, addedL: r.addedL, afterL: r.afterL },
+      gpsTime: r.at,
+    });
+    const refuels = [...(input.refuels ?? [])].sort((a, b) => a.at - b.at);
+    const refuelsBefore = refuels.filter((r) => r.at <= input.engine.start).map(refuelDraft);
+    const refuelsAfter = refuels.filter((r) => r.at >= input.engine.stop).map(refuelDraft);
+    const refuelsMidRun = refuels
+      .filter((r) => r.at > input.engine.start && r.at < input.engine.stop)
+      .map(refuelDraft);
+
+    const RANK = { takeoff: 0, drop: 1, refuel: 1, landing: 2 } as const;
+    const inRun: Draft[] = [
+      ...input.flights.flatMap((f): Draft[] => [
+        { type: 'takeoff', payload: { method: 'manual' }, gpsTime: f.takeoff },
+        { type: 'landing', payload: { method: 'manual' }, gpsTime: f.landing },
+      ]),
+      ...(input.drops ?? []).map(
+        (d, i): Draft => ({
+          type: 'drop',
+          payload: {
+            dropNumber: i + 1,
+            jumpers: d.jumpers,
+            altitudeFt: d.altitudeFt ?? null,
+            client: input.client ?? null,
+          },
+          gpsTime: d.at,
+        }),
+      ),
+      ...refuelsMidRun,
+    ].sort(
+      (a, b) =>
+        a.gpsTime! - b.gpsTime! ||
+        RANK[a.type as keyof typeof RANK] - RANK[b.type as keyof typeof RANK],
+    );
+
     const drafts: Draft[] = [
       {
         type: 'session_claim',
-        payload: { mode: 'free', previousPicId: null },
-        gpsTime: input.times.engineStart,
+        // `manualEntry` — jawny znacznik wpisu po fakcie (plakietka „RĘCZNIE");
+        // z metody zdarzeń nie da się go wywieść, bo `manual` niesie też zwykły
+        // lot z ręcznymi przyciskami.
+        payload: { mode: 'free', previousPicId: null, manualEntry: true },
+        gpsTime: input.engine.start,
       },
       {
         type: 'preflight_confirm',
+        // Ten sam komplet, co na 02E (parita z lotem automatycznym, 2026-08-16).
+        // `dualId` w PAYLOADZIE, nie tylko w nagłówku — payload jest faktem
+        // o składzie załogi i jego nośnikiem korekty (issue #43).
         payload: {
-          // Wpis po fakcie nie pyta o rodzaj operacji (mockup 15) — „inne" jest
-          // jedyną uczciwą wartością; szczegóły niesie pole uwag.
-          operation: 'inne',
+          operation: input.operation,
+          departureIcao: input.departureIcao ?? null,
+          arrivalIcao: input.arrivalIcao ?? null,
+          client: input.client ?? null,
+          dualId: input.dualId,
           reading: input.initialReading,
           notes: input.notes ?? null,
         },
-        gpsTime: input.times.engineStart,
+        gpsTime: input.engine.start,
       },
-      { type: 'engine_start', payload: {}, gpsTime: input.times.engineStart },
-      { type: 'takeoff', payload: { method: 'manual' }, gpsTime: input.times.takeoff },
-      { type: 'landing', payload: { method: 'manual' }, gpsTime: input.times.landing },
-      { type: 'engine_stop', payload: {}, gpsTime: input.times.engineStop },
+      ...refuelsBefore,
+      { type: 'engine_start', payload: {}, gpsTime: input.engine.start },
+      ...inRun,
+      { type: 'engine_stop', payload: {}, gpsTime: input.engine.stop },
+      ...refuelsAfter,
       {
         type: 'day_close',
         payload: { finalReading: input.finalReading, noFlightReason: null },

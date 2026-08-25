@@ -121,7 +121,9 @@ describe('buildMyDay — scenariusz mockupu 01', () => {
     const card = vm().sessions[0]!;
 
     expect(Object.keys(card).sort()).toEqual(
-      ['aircraft', 'sessionUuid', 'stats', 'times', 'title'].sort(),
+      // `manual` doszedł 2026-08-16 (plakietka „RĘCZNIE") — na OBU ekranach naraz,
+      // bo niesie go wspólny `SessionCardVm`.
+      ['aircraft', 'manual', 'sessionUuid', 'stats', 'times', 'title'].sort(),
     );
     expect(card.stats.map((s) => s.k)).toEqual(['Loty', 'Blok', 'Lot']);
   });

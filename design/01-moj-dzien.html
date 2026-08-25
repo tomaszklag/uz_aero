@@ -114,6 +114,12 @@
   /* Nagłówek kafelka — na 12 jest tu data, tu numer sesji. Ta sama skala i ten sam
      krój, bo to ta sama rola: co to za kafelek. */
   .day-title { font-family:var(--font-display); font-size:21px; letter-spacing:1.5px; color:var(--text-primary); line-height:1; }
+  .day-title-row { display:flex; align-items:center; gap:8px; }
+  /* Plakietka „RĘCZNIE" (przebudowa 15, 2026-08-16) — sesja wpisana po fakcie
+     z ekranu 15. Neutralna ramka bez wypełnienia: fakt o POCHODZENIU całej sesji,
+     nie ostrzeżenie. Przy tytule, bo mówi o sesji jako całości; wiersze osi na 10
+     znaczników nie dostają (issue #40 pkt 6 zostaje w mocy). */
+  .day-tag { font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); border:1px solid var(--border-strong); border-radius:5px; padding:2px 5px; }
   .day-ac { font-family:var(--font-mono); font-size:11px; letter-spacing:1.5px; color:var(--green); }
   /* Godziny biegu silnika ze znacznikiem strefy — jak na 12. Bieg jeszcze otwarty
      kończy się wielokropkiem („13:40 → … UTC"), nie udaje zamkniętego. */
@@ -294,7 +300,11 @@
 
       <a href="10-statystyki.html" class="day-card">
         <div class="day-top">
-          <span class="day-title">SESJA 3</span>
+          <span class="day-title-row">
+            <span class="day-title">SESJA 3</span>
+            <!-- Sesja wpisana po fakcie z ekranu 15 (telefon został w hangarze). -->
+            <span class="day-tag">RĘCZNIE</span>
+          </span>
           <span class="day-ac">SP-KLM</span>
         </div>
         <div class="day-times">13:40 → 15:10 UTC</div>

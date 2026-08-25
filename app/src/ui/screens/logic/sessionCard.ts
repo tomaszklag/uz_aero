@@ -36,6 +36,12 @@ export interface SessionCardVm {
   /** Godziny biegu silnika; `null`, gdy silnik nie ruszył ani razu. */
   times: string | null;
   stats: CardStat[];
+  /**
+   * Sesja wpisana ręcznie po fakcie (ekran 15) — plakietka „RĘCZNIE" przy tytule
+   * (decyzja 2026-08-16). Na kafelku i w nagłówku rozliczenia, NIE przy wierszach
+   * osi (issue #40 pkt 6: przy wpisie ręcznym świeciłyby wszystkie naraz).
+   */
+  manual: boolean;
 }
 
 /**

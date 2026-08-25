@@ -56,6 +56,8 @@ export interface PilotDaySession {
   flightMs: number;
   /** Liczba lotów (start → lądowanie) w tej sesji — kolumna „Loty" na 01. */
   flightCount: number;
+  /** Sesja wpisana ręcznie po fakcie (ekran 15) — plakietka „RĘCZNIE" na kafelku. */
+  manualEntry: boolean;
 }
 
 /** Dzień pilota w jednej dobie UTC — lista sesji + sumy, przekrojowo po samolotach. */
@@ -131,6 +133,7 @@ export function projectPilotDay(
         blockMs: leg.durationMs,
         flightMs: flightMsWithin(s, leg.startedAt, leg.stoppedAt),
         flightCount: flightCountWithin(s, leg.startedAt, leg.stoppedAt),
+        manualEntry: s.manualEntry,
       });
     }
 

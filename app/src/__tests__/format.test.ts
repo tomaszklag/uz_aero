@@ -17,7 +17,9 @@ import {
   dateUtcShort,
   duration,
   litres,
+  maskDateUtcInput,
   maskTimeUtcInput,
+  parseDateUtc,
   motoHours,
   parseDateTimeUtc,
   parseLitres,
@@ -119,6 +121,27 @@ describe('czas', () => {
     // Piąta cyfra nie ma gdzie trafić — ucinamy zamiast puszczać „08:0012".
     expect(maskTimeUtcInput('080012')).toBe('08:00');
     expect(maskTimeUtcInput('')).toBe('');
+  });
+
+  it('maska daty stawia kropki za pilota — wzorzec maski godziny (arkusz 15E)', () => {
+    expect(maskDateUtcInput('16')).toBe('16');
+    expect(maskDateUtcInput('1608')).toBe('16.08');
+    expect(maskDateUtcInput('16082026')).toBe('16.08.2026');
+    // Wpis z kropkami (wartość startowa arkusza) przechodzi bez zmian.
+    expect(maskDateUtcInput('16.08.2026')).toBe('16.08.2026');
+    // Dziewiąta cyfra nie ma gdzie trafić.
+    expect(maskDateUtcInput('160820267')).toBe('16.08.2026');
+  });
+
+  it('wpisana data ląduje o północy doby UTC; rok wolno pominąć', () => {
+    const ref = Date.UTC(2026, 7, 16, 16, 20);
+    expect(parseDateUtc('15.08.2026', ref)).toBe(Date.UTC(2026, 7, 15));
+    // Bez roku — rok z wartości odniesienia: poprawka o parę dni nie zmienia roku.
+    expect(parseDateUtc('15.08', ref)).toBe(Date.UTC(2026, 7, 15));
+    // Dzień spoza kalendarza NIE przewija się na następny miesiąc — cicha zmiana
+    // daty jest kłamstwem, nie uprzejmością (ta sama zasada co parseDateTimeUtc).
+    expect(parseDateUtc('31.04', ref)).toBeNull();
+    expect(parseDateUtc('bzdura', ref)).toBeNull();
   });
 
   it('wpisaną godzinę osadza w dniu lotnym, nie w dniu „dziś"', () => {
