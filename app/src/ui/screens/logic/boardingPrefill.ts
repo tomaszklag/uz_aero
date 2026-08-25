@@ -32,3 +32,20 @@ export function boardingPrefill(boarding: BoardingState | null): BoardingPrefill
   if (boarding == null || boarding.jumpers == null) return NONE;
   return { jumpers: boarding.jumpers, at: boarding.at };
 }
+
+/**
+ * Skład, którym otwiera się arkusz ZAŁADUNKU (05i) konkretnie — z fallbackiem na
+ * domyślny skład sesji (`SessionState.jumperDefaults`, ustawiony na kroku „zadanie",
+ * 02e), gdy nie ma czekającego załadunku do pokazania (pierwszy załadunek sesji albo
+ * kolejny po tym, jak `drop` skonsumował poprzedni skład).
+ *
+ * Dotyczy WYŁĄCZNIE załadunku: zrzut (05e) nadal czyta `boardingPrefill()` wprost i nie
+ * dostaje tego fallbacku — podstawienie defaultu tam sugerowałoby fizyczny fakt („tylu
+ * skoczków wyszło"), którego nikt jeszcze nie potwierdził.
+ */
+export function boardingInitialJumpers(
+  boarding: BoardingState | null,
+  sessionDefault: JumperCounts | null,
+): JumperCounts | null {
+  return boardingPrefill(boarding).jumpers ?? sessionDefault;
+}

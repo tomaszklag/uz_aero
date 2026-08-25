@@ -173,6 +173,19 @@ export interface PreflightConfirmPayload {
   notes?: string | null;
   /** Format MH samolotu — zapamiętany dla spójnego wyświetlania w sesji. */
   mhFormat?: MhFormat;
+  /**
+   * Domyślny skład skoczków dla tej sesji (operacja Skoki, 2026-08-17) — ustawiany
+   * na kroku „zadanie" (02e), zanim padnie pierwszy `boarding`.
+   *
+   * Podstawia liczniki KAŻDEGO załadunku bez własnej deklaracji (także po tym, jak
+   * `drop` skonsumował poprzedni skład — `boarding` nie dziedziczy z siebie nawzajem,
+   * tylko z tego pola) — patrz `boardingInitialJumpers` w `app/`. Nieedytowalny przez
+   * `event_correction.amend`: to tylko WARTOŚĆ STARTOWA formularza, a rzeczywisty skład
+   * każdego załadunku i zrzutu i tak zapisuje się (i poprawia) własnym zdarzeniem —
+   * korekta defaultu z mocą wsteczną nie miałaby czego naprawić w rejestrze.
+   * `null`/brak = nie ustawiono, liczniki startują od zera jak dotąd.
+   */
+  jumperDefaults?: JumperCounts | null;
 }
 
 /** `engine_start` — pozycja GPS + elewacja lotniska (baza dla detekcji S/L, §3.3). */

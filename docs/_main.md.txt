@@ -743,7 +743,7 @@ Typy zdarzeń:
 | Typ | Payload (istotne pola) |
 |-----|------------------------|
 | `session_claim` | tryb przejęcia (wolny / przejęcie online / przejęcie offline) |
-| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); od issue #43 także `dualId` — DRUGI PILOT CAŁEJ SESJI, który wygrywa z nagłówkiem zdarzeń (bez tego pola załogi nie dałoby się poprawić: nagłówek opisuje chwilę zapisu i jest append-only); `dutyStart` usunięty razem z klamrą służby (issue #23) |
+| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); od issue #43 także `dualId` — DRUGI PILOT CAŁEJ SESJI, który wygrywa z nagłówkiem zdarzeń (bez tego pola załogi nie dałoby się poprawić: nagłówek opisuje chwilę zapisu i jest append-only); `dutyStart` usunięty razem z klamrą służby (issue #23); od 2026-08-17 (operacja Skoki) także **`jumperDefaults`** — domyślny skład skoczków, ustawiany na kroku „zadanie" (02e), zanim padnie pierwszy `boarding`. Podstawia liczniki KAŻDEGO załadunku bez własnej deklaracji, także po `drop`, który konsumuje poprzedni skład (`boardingInitialJumpers` w apce). Nie wchodzi do białej listy `amend` — to tylko wartość startowa formularza, a rzeczywisty skład poprawia się przez własne zdarzenie `boarding`/`drop` |
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
 | `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |

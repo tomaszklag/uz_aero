@@ -18,7 +18,7 @@
 import { create } from 'zustand';
 
 import { isSameFieldOperation } from '../../domain';
-import type { MhFormat, OperationType, ReferenceAircraft } from '../../domain';
+import type { JumperCounts, MhFormat, OperationType, ReferenceAircraft } from '../../domain';
 
 export interface PreflightDraft {
   aircraft: ReferenceAircraft | null;
@@ -36,6 +36,13 @@ export interface PreflightDraft {
    * byłoby podpowiadaniem nieprawdy — podpowiedzi w arkuszu pilot wybiera sam.
    */
   notes: string | null;
+  /**
+   * Domyślny skład skoczków sesji (operacja Skoki, 2026-08-17) — ustawiany na kroku
+   * „zadanie" (02e), zanim padnie pierwszy `boarding`. Ma sens WYŁĄCZNIE przy operacji
+   * skoki; `confirmPreflight` filtruje go po `isJumpOperation`, więc odręczna zmiana
+   * operacji po ustawieniu defaultu nie wysyła sierocej wartości.
+   */
+  jumperDefaults: JumperCounts | null;
 
   /** Odczyt paliwa z paliwomierza (L). */
   fuelL: number;
@@ -103,6 +110,7 @@ function initial(): PreflightDraft {
     dualId: null,
     client: null,
     notes: null,
+    jumperDefaults: null,
     fuelL: 0,
     mh: 0,
     readingSource: 'manual',

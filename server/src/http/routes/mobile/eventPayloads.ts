@@ -79,6 +79,9 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     // i ich paczki mają nadal przechodzić.
     notes: z.string().max(2000).nullable().optional(),
     mhFormat: z.enum(['decimal', 'hhmm']).optional(),
+    // Domyślny skład skoczków sesji (2026-08-17) — wartość startowa dla załadunków
+    // bez własnej deklaracji; telefony sprzed tej zmiany go nie wysyłają.
+    jumperDefaults: jumpers.nullable().optional(),
   }),
 
   engine_start: z.object({

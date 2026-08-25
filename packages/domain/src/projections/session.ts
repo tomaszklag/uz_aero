@@ -154,6 +154,12 @@ export interface SessionState {
   /** Notatka pilota do dnia (issue #14) — wolny tekst z preflightu. */
   notes: string | null;
   mhFormat: MhFormat | null;
+  /**
+   * Domyślny skład skoczków sesji (`preflight_confirm.jumperDefaults`, 2026-08-17) —
+   * wartość startowa KAŻDEGO załadunku bez własnej deklaracji, także po tym, jak `drop`
+   * skonsumował poprzedni skład. `null` = nie ustawiono, liczniki wracają do zera.
+   */
+  jumperDefaults: JumperCounts | null;
 
   /**
    * Chwila przejęcia samolotu (`session_claim`) — początek sesji tej maszyny.
@@ -239,6 +245,7 @@ export function emptySessionState(): SessionState {
     client: null,
     notes: null,
     mhFormat: null,
+    jumperDefaults: null,
     claimedAt: null,
     preflightAt: null,
     engineRunning: false,
@@ -330,6 +337,7 @@ export function projectSession(events: Event[]): SessionState {
         state.client = p.client ?? null;
         state.notes = p.notes ?? null;
         state.mhFormat = p.mhFormat ?? null;
+        state.jumperDefaults = p.jumperDefaults ?? null;
         state.preflightAt = t;
         state.fuel.startL = p.reading.fuelL;
         state.fuel.lastReadingL = p.reading.fuelL;
