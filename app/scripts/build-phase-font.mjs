@@ -10,10 +10,12 @@
  * i jego przekreślony wariant z 09C. Żaden zestaw fontowy nie ma tego kształtu
  * (mockupy rysują go strokiem w stylu Lucide), a MDI `airplane` podstawiane
  * w zamian różniło się od ikony launchera generowanej wprost z mockupu.
- * `plane.svg` i `plane-off.svg` to OBRYSY tamtych ścieżek (font przyjmuje tylko
- * wypełnienia): stroke 1.6 (marka, 00/00a/00b) i 1.4 + linia 3,3→21,21 (09C),
- * trasowane oslllo-svg-fixer @1200 px. Zmiana kształtu = nowy obrys ze ścieżki
- * mockupu, nie ręczna edycja tych plików.
+ * `plane.svg` (stroke 1.6 — marka, 00/00a/00b) i `plane-off.svg` (1.4 + linia
+ * 3,3→21,21 — 09C) to DOSŁOWNIE ścieżki z mockupów; na wypełnienie, którego
+ * wymaga font, zamienia je `stroke-outline.mjs` w czasie generacji — obrys
+ * ANALITYCZNY (Clipper), nie trasowanie rastra: potrace zostawiał falujące
+ * krawędzie na skosach (zgłoszenie z urządzenia, 2026-08-26). Zmiana kształtu
+ * = podmiana ścieżki stroke jak w mockupie.
  *
  * Uruchomienie: npm run build:phase-font (wynik commitujemy do repo — build
  * aplikacji NIE zależy od tego skryptu).
@@ -27,6 +29,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SVGIcons2SVGFontStream } from 'svgicons2svgfont';
 import svg2ttf from 'svg2ttf';
+
+import { expandStrokes } from './stroke-outline.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const srcDir = join(root, 'assets', 'phase-icons');
@@ -60,7 +64,9 @@ fontStream.on('end', () => {
 
 import { Readable } from 'node:stream';
 for (const { file, name, codepoint } of GLYPHS) {
-  const glyph = Readable.from([readFileSync(join(srcDir, file), 'utf8')]);
+  const raw = readFileSync(join(srcDir, file), 'utf8');
+  // Źródła rysowane kreską (znak marki) dostają obrys; wypełnione (fazy) idą wprost.
+  const glyph = Readable.from([expandStrokes(raw) ?? raw]);
   glyph.metadata = { name, unicode: [String.fromCodePoint(codepoint)] };
   fontStream.write(glyph);
 }
