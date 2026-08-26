@@ -173,9 +173,10 @@ export interface ServerOptions {
    */
   requestLog?: boolean;
   /**
-   * Katalog buildu panelu (`admin/dist`) do serwowania pod `/admin/` — §9 architektury
-   * frontendu. Nieustawiony (dev, testy) = serwer w ogóle nie zna panelu i `/admin/`
-   * odpowiada 404; panel jedzie wtedy z Vite. Composition root bierze go z `ADMIN_DIST_DIR`.
+   * Podmiana katalogu buildu panelu — WYŁĄCZNIE dla testów (`adminStatic.test.ts`
+   * podstawia katalog tymczasowy). Nieustawiona = wbudowane `admin/dist`
+   * (`staticPanel.ts`, §9 architektury frontendu); katalog nieistniejący (dev bez
+   * buildu) = `/admin/` odpowiada 404, panel jedzie z Vite.
    */
   adminDistDir?: string;
   /**
@@ -237,7 +238,7 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
 
   // Statyczny build panelu — na końcu, żeby czytać ten plik w kolejności „API, potem
   // pliki"; w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji.
-  if (options.adminDistDir != null) registerAdminPanelStatic(app, options.adminDistDir);
+  registerAdminPanelStatic(app, options.adminDistDir);
 
   app.get('/health', async () => ({ ok: true }));
 

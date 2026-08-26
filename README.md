@@ -67,7 +67,8 @@ Vite). Konfiguracja buildu i healthcheck: `railway.json`.
      widzi adres proxy zamiast człowieka),
    - `PUBLIC_BASE_URL` = `https://<domena-uslugi>` (po kroku 5 — linki do kart arkusza
      klikane z telefonu).
-   `ADMIN_DIST_DIR` i `TRACES_DIR` są ustawione w obrazie — nie podawaj ich.
+   `TRACES_DIR` jest ustawiony w obrazie — nie podawaj go; build panelu serwer
+   znajduje sam (ścieżka wbudowana w obraz).
 4. **Wolumen na ślady GPS**: usługa → prawy przycisk → Attach Volume, mount path **`/data`**.
    Telefon kasuje nagranie po wysyłce (issue #47) — kopia na serwerze jest JEDYNĄ,
    bez wolumenu ginie przy każdym deployu.

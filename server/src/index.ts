@@ -89,11 +89,6 @@ const env = z
     PUBLIC_BASE_URL: z.string().url().optional(),
     /** Katalog zrzutu śladu kalibracyjnego (faza 5) — NDJSON per sesja. */
     TRACES_DIR: z.string().default('./traces'),
-    /**
-     * Katalog buildu panelu (`admin/dist`) do serwowania pod `/admin/` (§9 architektury
-     * frontendu). Nieustawiony = dev: panel jedzie z Vite, serwer go nie zna.
-     */
-    ADMIN_DIST_DIR: z.string().optional(),
     /** `1` = serwer stoi ZA proxy TLS (Railway itp.) i wierzy `X-Forwarded-*`. */
     TRUST_PROXY: z.string().optional(),
     /**
@@ -331,7 +326,6 @@ const app = buildServer({
     phaseTimeline,
   ),
 }, {
-  adminDistDir: env.ADMIN_DIST_DIR,
   trustProxy: env.TRUST_PROXY === '1',
 });
 
