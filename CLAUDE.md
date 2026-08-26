@@ -743,7 +743,12 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   dane już użyteczne przed odpytywaniem co puls, a bez ani jednego samolotu aplikacja
   nie ma czym pracować — pilot patrzyłby w warning przez kwadrans, choć administrator
   zdążył założyć flotę w panelu. Wejście w stan pyta serwer od razu, pętla synca
-  ponawia co 60 s, a ekran czyta lokalną bazę co 5 s — formularz wraca sam
+  ponawia co 60 s, a ekran czyta lokalną bazę co 5 s — formularz wraca sam.
+  **„SYNCHRONIZUJ TERAZ" (13) ponagla odtąd OBA kierunki**: dopycha kolejkę wysyłki
+  i pobiera dane referencyjne z pominięciem bramy wieku (`refreshReferenceNow`
+  w store → `ReferenceSync.refresh()`, ETag dalej działa) — pilot sięgający po
+  przycisk awaryjny pyta „co serwer wie teraz", a sama wysyłka odpowiadała na pół
+  pytania. Stempel wieku danych w „O aplikacji" odświeża się od razu po przebiegu
 - **„wstecz" z kroku 1 przy niepustym szkicu pyta o rezygnację** (`design/02h`,
   `AbandonPreflightSheet` + `usePreventRemove` — ta sama mechanika co blokada kokpitu
   04D). Potwierdzenie CZYŚCI szkic (`draft.reset()`): następne wejście zaczyna od nowa,

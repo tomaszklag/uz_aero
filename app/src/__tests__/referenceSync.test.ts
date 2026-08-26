@@ -178,6 +178,22 @@ describe('ReferenceSync', () => {
     expect((await repo.getAircraft()).map((a) => a.reg)).toEqual(['SP-AXA']);
   });
 
+  it('refresh() nie zna bramy wieku — droga „SYNCHRONIZUJ TERAZ" pyta zawsze (issue #55)', async () => {
+    const { clock, server, sync } = harness();
+    server.script = [
+      { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
+      { data: { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] }, etag: 'e2' },
+    ];
+    await sync.refreshIfStale();
+
+    // Głęboko w oknie świeżości: pętla okazji by odpuściła, ale ręczne ponaglenie
+    // pyta „co serwer wie TERAZ" — z ETagiem, więc niezmieniona flota kosztuje 304.
+    clock.advance(60_000);
+    expect(await sync.refresh()).toBe('refreshed');
+    expect(server.calls).toHaveLength(2);
+    expect(server.calls[1]).toEqual({ token: 'jwt-1', etag: 'e1' });
+  });
+
   it('po oknie wysyła If-None-Match; 304 podbija wiek danych bez zmiany treści', async () => {
     const { clock, repo, server, sync } = harness();
     server.script = [
