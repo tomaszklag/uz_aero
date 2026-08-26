@@ -43,10 +43,11 @@ COPY packages/ packages/
 COPY server/ server/
 COPY --from=admin-build /repo/admin/dist admin/dist
 
-# Ścieżki wewnątrz obrazu; resztę środowiska (DATABASE_URL, JWT_SECRET, PUBLIC_BASE_URL,
-# TRUST_PROXY=1, PORT) podaje hosting. `TRACES_DIR` celowo na /data — tam montuje się
-# trwały wolumen: po issue #47 kopia śladu GPS na serwerze jest JEDYNĄ kopią.
-ENV ADMIN_DIST_DIR=/repo/admin/dist
+# Resztę środowiska (DATABASE_URL, JWT_SECRET, PUBLIC_BASE_URL, TRUST_PROXY=1, PORT)
+# podaje hosting; build panelu serwer znajduje sam — ścieżka wbudowana względem źródeł
+# (`staticPanel.ts`), stąd COPY wyżej musi trafić dokładnie w `admin/dist`. `TRACES_DIR`
+# celowo na /data — tam montuje się trwały wolumen: po issue #47 kopia śladu GPS
+# na serwerze jest JEDYNĄ kopią.
 ENV TRACES_DIR=/data/traces
 
 EXPOSE 3000

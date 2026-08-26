@@ -129,7 +129,11 @@ export async function testHarness(
     sheets?: SheetsPort;
     audit?: AdminAuditPort;
     events?: (real: EventsStorePort) => EventsStorePort;
-    /** Katalog buildu panelu — wyłącznie `adminStatic.test.ts`; reszta testów bez plików. */
+    /**
+     * Podmiana katalogu buildu panelu — wyłącznie `adminStatic.test.ts`. Bez podmiany
+     * rejestracja (bezwarunkowa od 2026-08-26) wskazuje realne `admin/dist`, którego
+     * w testach zwykle nie ma → `/admin/` odpowiada 404 i żaden test na tym nie polega.
+     */
     adminDistDir?: string;
   } = {},
 ) {

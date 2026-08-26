@@ -616,11 +616,12 @@ te wchodzą następnym przekrojem.
   dnia; panel powtarza ją w każdym wierszu tabeli, gdzie cztery znaki to inna szerokość
   kolumny. Własna kopia tablicy miesięcy w panelu byłaby dokładnie tym trzecim
   egzemplarzem, dla którego ten pakiet powstał.
-- **Czego w tym przekroju NIE MA, świadomie:** (1) **serwowania builda pod `/admin`
-  przez `@fastify/static`** — dev jedzie na proxy Vite (`/admin/api` → serwer), żeby panel
-  i API były tym samym originem, bo `SameSite=Strict` inaczej nie działa; produkcyjne
-  serwowanie to `base:'/admin/'` (już ustawione), `ADMIN_DIST_DIR` i nagłówki cache
-  z §9. (2) **Rate-limitu na `/auth/*` i `/admin/api/auth/login`** (§8.8) — razem z nim
+- **Czego w tym przekroju NIE MA, świadomie:** (1) ~~**serwowania builda pod `/admin`
+  przez `@fastify/static`**~~ — **ZROBIONE 2026-08-26 przy hostingu Railway**
+  (`staticPanel.ts`, §9 architektury frontendu; rejestracja bezwarunkowa — env
+  `ADMIN_DIST_DIR` weszła i wyszła tego samego dnia, ścieżka buildu jest wbudowana).
+  Dev bez zmian jedzie na proxy Vite (`/admin/api` → serwer), żeby panel i API były
+  tym samym originem, bo `SameSite=Strict` inaczej nie działa. (2) **Rate-limitu na `/auth/*` i `/admin/api/auth/login`** (§8.8) — razem z nim
   wchodzi licznik prób z A00a, którego mockup sam zabrania przepisywać („5 prób / 15 minut
   to WARTOŚCI ROBOCZE"). (3) ~~**Świeżej roli przy każdym żądaniu panelu**~~ —
   **ZROBIONE 2026-08-01 razem z przekrojem A06** (`http/authorize.ts`:
