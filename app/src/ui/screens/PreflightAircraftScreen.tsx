@@ -92,6 +92,7 @@ export function PreflightAircraftScreen({
   const synced = useSessionStore((s) => s.synced);
   const outboxCount = useSessionStore((s) => s.outboxCount);
   const lastSyncAt = useSessionStore((s) => s.lastSyncAt);
+  const refreshReference = useSessionStore((s) => s.refreshReference);
 
   const pilotId = useCurrentPilot((s) => s.id);
   const pilotProfile = useCurrentPilot((s) => s.profile);
@@ -129,10 +130,17 @@ export function PreflightAircraftScreen({
 
   // Warning ma zniknąć SAM, gdy sync dowiezie flotę — pilot patrzący na ekran z radą
   // „sprawdź internet" nie może być zmuszony do wyjścia i powrotu, żeby sprawdzić,
-  // czy rada zadziałała. Ponawiamy więc odczyt lokalnej bazy, dopóki jest pusto.
+  // czy rada zadziałała. Dwa mechanizmy, dwie role:
+  //  • `refreshReference()` przy wejściu w stan — pytanie serwera OD RAZU, bez czekania
+  //    do 60 s na puls pętli. Brama wieku nie trzyma pustej floty (issue #55,
+  //    `referenceSync.refreshIfStale`), więc to jest prawdziwe zapytanie, nie no-op;
+  //    kolejne próby (brak zasięgu przy pierwszej) robi pętla synca własnym rytmem;
+  //  • odczyt lokalnej bazy co `EMPTY_FLEET_RECHECK_MS` — podnosi z niej to, co sync
+  //    dopisał, niezależnie od tego, KTÓRA okazja go przyniosła.
   useEffect(() => {
     if (!noFleet || queries == null) return;
     let alive = true;
+    void refreshReference();
     const timer = setInterval(() => {
       void Promise.all([queries.aircraft(), queries.pilots()]).then(([aircraft, list]) => {
         if (!alive || aircraft.length === 0) return;
@@ -145,7 +153,7 @@ export function PreflightAircraftScreen({
       alive = false;
       clearInterval(timer);
     };
-  }, [noFleet, pilotId, queries, setPilotProfile]);
+  }, [noFleet, pilotId, queries, refreshReference, setPilotProfile]);
 
   // ── bramka „wstecz": rezygnacja z nowego lotu (issue #55, `design/02h`) ────────
   /** Akcja nawigacji zatrzymana przez bramkę — arkusz jest otwarty, póki tu coś jest. */

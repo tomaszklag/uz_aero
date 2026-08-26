@@ -738,8 +738,12 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   „brak samolotów w pamięci urządzenia" czytała się jak usterka, a o ścianie pilot
   dowiadywał się z zablokowanego DALEJ. Zamiast formularza bursztynowa karta z powodem
   i drogą wyjścia; DALEJ nie ma WCALE (wyszarzony przycisk obiecywałby akcję, której
-  reguły nie dopuszczą — zasada z 10B). Ekran ponawia odczyt lokalnej bazy co 5 s,
-  więc gdy pętla synca dowiezie `GET /reference`, formularz wraca sam
+  reguły nie dopuszczą — zasada z 10B). **Brama wieku cache referencyjnego (15 min)
+  NIE trzyma pustej floty** (`referenceSync.refreshIfStale`, z testem): brama chroni
+  dane już użyteczne przed odpytywaniem co puls, a bez ani jednego samolotu aplikacja
+  nie ma czym pracować — pilot patrzyłby w warning przez kwadrans, choć administrator
+  zdążył założyć flotę w panelu. Wejście w stan pyta serwer od razu, pętla synca
+  ponawia co 60 s, a ekran czyta lokalną bazę co 5 s — formularz wraca sam
 - **„wstecz" z kroku 1 przy niepustym szkicu pyta o rezygnację** (`design/02h`,
   `AbandonPreflightSheet` + `usePreventRemove` — ta sama mechanika co blokada kokpitu
   04D). Potwierdzenie CZYŚCI szkic (`draft.reset()`): następne wejście zaczyna od nowa,

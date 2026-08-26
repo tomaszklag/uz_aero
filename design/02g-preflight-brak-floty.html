@@ -151,9 +151,12 @@
          FORMULARZA NIE MA W OGÓLE — ani sekcji, ani DALEJ (wyszarzony przycisk
          obiecywałby akcję, której reguły nie dopuszczą — ta sama zasada co 10B).
          Warning odpowiada na trzy pytania: co jest nie tak, dlaczego nie polecisz
-         i co się musi wydarzyć, żeby ekran wrócił do normy. Lista pobiera się sama
-         (pętla synca co 60 s), a ekran sam ponawia odczyt — gdy flota dojedzie,
-         formularz wraca bez udziału pilota. -->
+         i co się musi wydarzyć, żeby ekran wrócił do normy. Lista pobiera się sama:
+         wejście w ten stan pyta serwer OD RAZU — brama wieku cache referencyjnego
+         (15 min) NIE trzyma pustej floty, bo pusta flota nie ma czego chronić
+         (`referenceSync.refreshIfStale`) — kolejne próby robi pętla synca co 60 s,
+         a ekran ponawia odczyt lokalnej bazy co 5 s. Gdy flota dojedzie, formularz
+         wraca bez udziału pilota. -->
     <div class="app-header">
       <div class="header-left">
         <div class="screen-title">NOWY LOT</div>

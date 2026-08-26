@@ -160,6 +160,24 @@ describe('ReferenceSync', () => {
     expect(server.calls).toHaveLength(1);
   });
 
+  it('pusta flota omija bramę wieku — świeżo założony klub nie czeka kwadransa (issue #55)', async () => {
+    const { clock, repo, server, sync } = harness();
+    // Pierwsze logowanie PRZED założeniem floty w panelu (od issue #50 cache zasila
+    // wyłącznie serwer): odpowiedź z pustą listą jest prawdziwa i stempluje „sprawdzone".
+    server.script = [
+      { data: { aircraft: [], pilots: [tmk] }, etag: 'e0' },
+      { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
+    ];
+    await sync.refreshIfStale();
+
+    // Minutę później administrator zdążył dodać SP-AXA. Brama wieku nie ma tu czego
+    // chronić: bez ani jednego samolotu aplikacja nie ma czym pracować, a pilot
+    // patrzyłby w warning 02G przez kwadrans, choć flota już istnieje.
+    clock.advance(60_000);
+    expect(await sync.refreshIfStale()).toBe('refreshed');
+    expect((await repo.getAircraft()).map((a) => a.reg)).toEqual(['SP-AXA']);
+  });
+
   it('po oknie wysyła If-None-Match; 304 podbija wiek danych bez zmiany treści', async () => {
     const { clock, repo, server, sync } = harness();
     server.script = [
