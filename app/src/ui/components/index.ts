@@ -15,6 +15,7 @@ export * from './foundation/CheckIcon';
 export * from './foundation/Icon';
 export * from './foundation/Avatar';
 export * from './foundation/Brand';
+export * from './foundation/KeyboardCollapse';
 // Wzorzec ładowania (issue #33, `design/LOADERY.html`): plamka trzymająca miejsce
 // po danej, której jeszcze nie ma, i jej najczęstszy kształt — lista wierszy.
 // Spinnera na cały ekran nie ma w tej aplikacji nigdzie.

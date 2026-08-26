@@ -55,7 +55,7 @@ export function Brand({ size = 'md', tagline = true, style }: BrandProps) {
       </AppText>
       {tagline && (
         <AppText variant="mono" tone="muted" style={styles.tagline}>
-          Elektroniczny system lotniczy
+          Automatyczny logbook lotniczy
         </AppText>
       )}
     </View>
