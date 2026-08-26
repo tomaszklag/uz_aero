@@ -26,13 +26,21 @@ type FeatherName = React.ComponentProps<typeof Feather>['name'];
 type MciName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 /**
- * Fazy lotu (hero 05) potrzebują dwóch glifów, których nie ma w żadnym z zestawów:
- * śmigła i samolotu kołującego. Żyją we własnym foncie generowanym ze źródeł
- * `assets/phase-icons/` przez `npm run build:phase-font` — font, a nie SVG, bo
- * projekt nie dokłada modułów natywnych ponad expo-font (patrz wyżej).
+ * Glify, których nie ma w żadnym z zestawów, żyją we własnym foncie generowanym
+ * ze źródeł `assets/phase-icons/` przez `npm run build:phase-font` — font, a nie
+ * SVG, bo projekt nie dokłada modułów natywnych ponad expo-font (patrz wyżej).
+ * Fazy lotu (hero 05): śmigło i samolot kołujący. Znak marki (issue #54):
+ * samolot z mockupów logowania i jego przekreślony wariant z 09C — obrysy
+ * dokładnie tych ścieżek, które mockupy rysują strokiem (i z których powstała
+ * ikona launchera), więc logo na ekranie i w menu telefonu to TEN SAM kształt.
  * Punkty kodowe są kontraktem z generatorem — zmieniasz tu, zmień i tam.
  */
-const PHASE_GLYPHS = { 'plane-taxi': 0xe001, propeller: 0xe002 } as const;
+const PHASE_GLYPHS = {
+  'plane-taxi': 0xe001,
+  propeller: 0xe002,
+  plane: 0xe003,
+  'plane-off': 0xe004,
+} as const;
 type PhaseName = keyof typeof PHASE_GLYPHS;
 const PhaseIcons = createIconSet(
   PHASE_GLYPHS,
@@ -51,7 +59,9 @@ const p = (glyph: PhaseName): Glyph => ({ set: 'phase', glyph });
 
 /**
  * Rejestr znaczeniowy. Zestaw Feather (te same kształty co w mockupach) uzupełniamy
- * o MaterialCommunityIcons tam, gdzie Feather nie ma odpowiednika — samolot i spadochron.
+ * o MaterialCommunityIcons tam, gdzie Feather nie ma odpowiednika (spadochron,
+ * dystrybutor, glify faz startu/lądowania); samolot ma własny glif w foncie marki
+ * (`plane` — dokładnie ścieżka z mockupów, issue #54).
  */
 const REGISTRY = {
   // stany i komunikaty
@@ -117,10 +127,13 @@ const REGISTRY = {
   'no-track': m('map-marker-off'),
 
   // obiekty
-  aircraft: m('airplane'),
+  // Samolot = znak marki (issue #54): glif z własnego fontu, 1:1 ze ścieżką
+  // wklejaną w mockupach i z ikoną launchera — nie MDI `airplane`, które było
+  // jedynie najbliższym przybliżeniem.
+  aircraft: p('plane'),
   // Sesja, w której silnik ani razu nie ruszył (09C) — samolot PRZEKREŚLONY, nie zwykły:
   // stan pusty ma powiedzieć „nie było lotu", a nie „tu był samolot".
-  'aircraft-off': m('airplane-off'),
+  'aircraft-off': p('plane-off'),
 
   // powody zdania samolotu bez lotu (siatka kart 09C)
   'reason-weather': f('cloud-drizzle'),
@@ -139,7 +152,7 @@ const REGISTRY = {
 
   // rodzaje operacji (siatka kart — `CLAUDE.md`: ikony, nie select)
   'op-skoki': m('parachute'),
-  'op-ferry': m('airplane'),
+  'op-ferry': p('plane'),
   'op-egzamin': f('check-circle'),
   'op-techniczny': f('settings'),
   'op-inne': f('alert-circle'),
