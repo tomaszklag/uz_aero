@@ -40,9 +40,19 @@ w banerach, słownik sesja/lot w kontraktach) → **E' seed+demo ✅** (generato
 z tablicą LOTÓW zamiast tablicy wzlotów, `ConfirmStyle` i `gaugeNoise` wycięte, próba
 techniczna scala się z oblotem w JEDEN bieg, przerwany bieg = OSOBNA sesja z sufiksem
 uuid `-r2` i handoffem, dolewka PO zatrzymaniu jako materiał logu 04; 52 sesje).
-**PIVOT DOMKNIĘTY W KODZIE.** Baza dev NIE została przesiana — `npm run seed` +
-`npm run seed:demo` stawiają świat od nowa (decyzja o skasowaniu bazy należy do
-użytkownika); dopiero po tym ma sens przebieg `consumptionReplay.ts`.
+**PIVOT DOMKNIĘTY W KODZIE.** (Zdanie „`seed` + `seed:demo` stawiają świat od nowa"
+przestało obowiązywać przy issue #50 — patrz niżej.)
+**ISSUE #50 (2026-08-26) — SEED = SAM ADMINISTRATOR, DANE DEMO USUNIĘTE.**
+Przygotowanie testów z pilotami: `npm run seed` zakłada WYŁĄCZNIE konto `admin`
+(hasło z `SEED_PASSWORD`), bez floty i bez pilotów — wszystko zakłada administrator
+w panelu (A06/A07). Generator demo (`server/scripts/demo/`, `seed:demo`, `db:demo`,
+`demoScenario.test.ts`) skasowany W CAŁOŚCI (odzyskiwalny z historii gita); świat
+referencyjny testów serwera (SP-AXA i spółka) mieszka odtąd w `server/test/testWorld.ts`.
+Zaślepka floty telefonu (`app/src/infrastructure/referenceSeed.ts`) też skasowana:
+cache referencyjny wypełnia wyłącznie `GET /reference`, bo upsert synca nigdy nie
+kasuje wierszy i fikcyjne SP-AXA zostawałoby na telefonach testerów na zawsze.
+Kalibracja §3.6b poczeka na dane PRAWDZIWE z testów — po to one są.
+Baza dev wyczyszczona i postawiona od nowa (`docker rm -f uzaero-pg` → `db:up` → `seed`).
 **ISSUE #23 (2026-08-11) — KLAMRA SŁUŻBY USUNIĘTA W CAŁOŚCI** (sekcja „Dzień pilota =
 lista sesji" niżej). Zamyka temat odłożony przy pivocie: z modelu znikły
 `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła `DUTY_END_BEFORE_START`
@@ -185,7 +195,8 @@ i tymczasowy: mockupy prowadzą, kod dogania. **Nie „naprawiaj" ekranów RN po
 wdrożona, więc: zgodność ze strumieniami `schema_version` 1/2 wylatuje z domeny W CAŁOŚCI
 (wersja wraca do 1), kanoniczny dzień 22 JUNE w `projections.test.ts` zostaje PRZEBUDOWANY
 pod nowy model (odtąd wzorzec poprawności, nie zgodności), a baz NIE migrujemy — schematy
-edytujemy w miejscu, bazę dev kasujemy, seed + `seed:demo` stawiają świat od nowa.
+edytujemy w miejscu, bazę dev kasujemy, `seed` stawia konto admina, resztę świata
+zakłada się w panelu (dane demo usunięte przy issue #50).
 - Mockupy w `design/` to **zatwierdzona specyfikacja**: ekran RN wdrażamy 1:1 z odpowiadającego pliku HTML, sekcja po sekcji, bez upraszczania. Wątpliwość do mockupu = rozmowa przed implementacją, nie cicha zmiana w kodzie.
 - **Gdzie położyć nowy plik** (reguła od 2026-07-31, pełne uzasadnienie w `docs/architektura-kodu.md`):
   warstwa jest osią główną, a wewnątrz `application/`, `http/routes/` i `infrastructure/pg/`

@@ -16,8 +16,6 @@
     "server": "npm run dev --workspace server",
     "admin": "npm run dev --workspace admin",
     "seed": "npm run seed --workspace server",
-    "seed:demo": "npm run seed:demo --workspace server",
-    "db:demo": "npm run db:demo --workspace server",
     "setup": "node -e \"const f=require('fs');if(!f.existsSync('server/.env'))f.copyFileSync('server/.env.example','server/.env')\" && npm install",
     "db:up": "docker start uzaero-pg || docker run --name uzaero-pg -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=uzaero -p 5432:5432 -d postgres:16",
     "db:down": "docker stop uzaero-pg",

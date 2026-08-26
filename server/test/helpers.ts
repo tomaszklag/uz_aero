@@ -89,8 +89,8 @@ import { PgSheets } from '../src/infrastructure/pg/common/sheetsRepo.ts';
 import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
 import { FsTraceSource } from '../src/infrastructure/traces/fsTraceSource.ts';
 import { AdminFlightTrackQueries } from '../src/application/admin/queries/flightTrack.ts';
-import { seed } from '../src/infrastructure/pg/seed.ts';
 import { buildServer } from '../src/http/server.ts';
+import { seedTestWorld } from './testWorld.ts';
 
 export class TestClock implements Clock {
   constructor(private current = Date.UTC(2026, 5, 22, 8, 0, 0)) {}
@@ -141,7 +141,9 @@ export async function testHarness(
     transaction: (fn) => pglite.transaction((tx) => fn(tx as unknown as Queryable)) as never,
   };
   await migrate(db);
-  await seed(db, new ScryptHasher(), { defaultPassword: TEST_PASSWORD });
+  // Świat referencyjny testów (dawny produkcyjny seed) — produkcyjny `seed()` stawia
+  // od issue #50 wyłącznie konto administratora i ma własny `seed.test.ts`.
+  await seedTestWorld(db, new ScryptHasher(), TEST_PASSWORD);
 
   const clock = new TestClock();
   const tokens = new Hs256Tokens(TEST_SECRET, clock);

@@ -340,6 +340,13 @@ danych (nie strojąc niczego) pokazał trzy rzeczy:
 
 Odpowiedzi na punkty 2 i 3 zapadną PO kalibracji na tych danych — nie tutaj.
 
+**AKTUALIZACJA przy issue #50 (2026-08-26):** generator demo został USUNIĘTY razem
+z resztą danych demo (przygotowanie testów z pilotami — seed stawia odtąd wyłącznie
+konto administratora). Wnioski z przebiegu 2026-08-08 wyżej zostają jako ustalenia,
+a kalibracja progów poczeka na REALNĄ historię z testów — `consumptionReplay.ts`
+działa bez zmian, bo czyta bazę, nie generator. Gdyby syntetyczne dane były jeszcze
+kiedyś potrzebne, generator jest w historii gita.
+
 ### 3.7 Statystyki
 
 Dwa poziomy, bo dwie różne osie (3.6a):

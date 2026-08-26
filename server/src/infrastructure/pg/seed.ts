@@ -1,67 +1,39 @@
 /**
- * UZ Aero (serwer) — seed floty i pilotów.
+ * UZ Aero (serwer) — seed konta administratora (bootstrap wdrożenia).
  *
- * TE SAME dane co zaślepka w aplikacji (`app/src/infrastructure/referenceSeed.ts`):
- * dopóki telefon i serwer są rozwijane równolegle, oba światy muszą opowiadać ten sam
- * scenariusz (SP-AXA wolny, SP-FGK zajęty przez KRZ, An-2 z wymogiem Duala, SP-KWA
- * wyłączony), inaczej pierwszy sync „naprawi" telefonowi flotę na inną niż w testach.
+ * Od issue #50 (2026-08-26, przygotowanie testów z pilotami) seed zakłada WYŁĄCZNIE
+ * konto administratora: login `admin`, hasło z `SEED_PASSWORD`. Flotę i konta pilotów
+ * zakłada administrator w panelu (A06/A07) — świat scenariusza deweloperskiego
+ * (SP-AXA i spółka) mieszka odtąd w `test/testWorld.ts` i służy tylko testom.
  *
- * Idempotentny: `ON CONFLICT DO UPDATE` — wołanie na istniejącej bazie odświeża
- * rekordy zamiast się wywracać. Konta zakłada wyłącznie ten seed / administrator
- * (decyzja 2026-07-22: brak samodzielnej rejestracji).
+ * Idempotentny: stały `id`, `ON CONFLICT DO UPDATE` na polach tożsamości — ale NIGDY
+ * na `password_hash`: powtórny `npm run seed` na żywej bazie nie może po cichu
+ * zresetować hasła administratora (od resetu jest panel, `A06a`). Aktualizacja roli
+ * przy konflikcie jest celowa: seed to jedyna droga awaryjna, gdy klub zostanie bez
+ * administratora, a `domain/accountGuards.ts` pilnuje tylko operacji panelu.
  */
 
 import type { PasswordHasher, Queryable } from '../../application/common/ports.ts';
 
-const AIRCRAFT = [
-  ['SP-AXA', 'SP-AXA', 'Cessna 182', 2019, 330, 'hhmm', false, 'active'],
-  ['SP-FGK', 'SP-FGK', 'Cessna 182', 2017, 330, 'hhmm', false, 'active'],
-  ['SP-ANK', 'SP-ANK', 'Antonov An-2', 1984, 1700, 'hhmm', true, 'active'],
-  ['SP-KWA', 'SP-KWA', 'Cessna 172', 2021, 200, 'decimal', false, 'disabled'],
-] as const;
-
 /**
- * Role: seed daje po jednym koncie każdej roli, żeby panel dało się
- * przeklikać bez ręcznego UPDATE-u. Reszta to zwykli piloci — czyli stan, w którym
- * konto NIE ma dostępu do back-office'u, i taki ma być domyślny.
+ * `id` = `code` — świadomie, jak w dawnym seedzie scenariusza: upsert potrzebuje
+ * STAŁEGO klucza, inaczej powtórny bieg zakładałby drugie konto i wywracał się
+ * o unikalność kodu. Konta z panelu dostają uuid; to jedno jest bootstrapem.
  */
-const PILOTS = [
-  ['TMK', 'TMK', 'Tomasz Małkiewicz', 'tomasz@uzaero.pl', 'admin'],
-  ['AKO', 'AKO', 'Anna Kowalska', 'anna@uzaero.pl', 'training_lead'],
-  ['PWI', 'PWI', 'Piotr Wiśniewski', 'piotr@uzaero.pl', 'pilot'],
-  ['JSE', 'JSE', 'Jan Serafin', 'jan@uzaero.pl', 'pilot'],
-  ['KRZ', 'KRZ', 'Krzysztof Zieliński', 'krzysztof@uzaero.pl', 'pilot'],
-] as const;
+const ADMIN = { id: 'admin', code: 'admin', name: 'Administrator', role: 'admin' } as const;
 
 export async function seed(
   db: Queryable,
   hasher: PasswordHasher,
-  options: { defaultPassword: string },
+  options: { adminPassword: string },
 ): Promise<void> {
-  for (const [id, reg, type, year, capacityL, mhFormat, dualRequired, status] of AIRCRAFT) {
-    await db.query(
-      `INSERT INTO aircraft (id, reg, type, year, capacity_l, mh_format, dual_required, service_status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT (id) DO UPDATE SET
-         reg = EXCLUDED.reg, type = EXCLUDED.type, year = EXCLUDED.year,
-         capacity_l = EXCLUDED.capacity_l, mh_format = EXCLUDED.mh_format,
-         dual_required = EXCLUDED.dual_required, service_status = EXCLUDED.service_status,
-         updated_at = now()`,
-      [id, reg, type, year, capacityL, mhFormat, dualRequired, status],
-    );
-  }
-
-  for (const [id, code, name, email, role] of PILOTS) {
-    // Hash liczymy per pilot — wspólny hash dla wszystkich zdradzałby w bazie,
-    // że hasła startowe są identyczne.
-    const hash = await hasher.hash(options.defaultPassword);
-    await db.query(
-      `INSERT INTO pilots (id, code, name, email, password_hash, active, role)
-       VALUES ($1, $2, $3, $4, $5, TRUE, $6)
-       ON CONFLICT (id) DO UPDATE SET
-         code = EXCLUDED.code, name = EXCLUDED.name, email = EXCLUDED.email,
-         role = EXCLUDED.role, updated_at = now()`,
-      [id, code, name, email, hash, role],
-    );
-  }
+  const hash = await hasher.hash(options.adminPassword);
+  await db.query(
+    `INSERT INTO pilots (id, code, name, email, password_hash, active, role)
+     VALUES ($1, $2, $3, NULL, $4, TRUE, $5)
+     ON CONFLICT (id) DO UPDATE SET
+       code = EXCLUDED.code, name = EXCLUDED.name, role = EXCLUDED.role,
+       updated_at = now()`,
+    [ADMIN.id, ADMIN.code, ADMIN.name, hash, ADMIN.role],
+  );
 }
