@@ -277,6 +277,10 @@ describe('granice, których nie pilnuje kompilator', () => {
       // nagłówek CSRF z `http/adminCsrf.ts`, a nie zdolność.
       'http/routes/admin/adminRoute.ts',
       'http/routes/admin/auth.ts',
+      // Statyczny build panelu (§9) — pliki i przekierowania na `/admin/` są publiczne
+      // z definicji: stronę logowania trzeba pobrać BEZ sesji. Danych tu nie ma —
+      // wszystko, co panel wie, przychodzi później z `/admin/api/*` przez bramę.
+      'http/routes/admin/staticPanel.ts',
     ];
     const offenders = filesUnder('http/routes/admin')
       .filter((f) => !publicByDesign.includes(f))

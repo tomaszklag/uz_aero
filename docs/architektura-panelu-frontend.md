@@ -803,21 +803,34 @@ w `app/` istnieje z powodów RN, których tu nie ma.
 ## 9. Build i deploy pod `/admin`
 
 Statyczny build serwowany przez `@fastify/static` z tego samego kontenera (`ANALIZA` §5 poz. 18).
+**Wdrożone 2026-08-26** (hosting na Railway): `server/src/http/routes/admin/staticPanel.ts`,
+rejestracja BEZWARUNKOWA — env `ADMIN_DIST_DIR` usunięta tego samego dnia: miała dwa stany
+(nieustawiona w dev, stała w obrazie) i żadnego nie ustawiał człowiek, więc ścieżka buildu
+jest wbudowana (liczona od pliku źródłowego, niezależna od cwd). Testy w
+`test/adminStatic.test.ts`; obraz produkcyjny buduje `Dockerfile` w korzeniu repo
+(etap 1 = `vite build`, etap 2 = runtime).
 Konsekwencje, których nie widać z tego zdania:
 
 - **`base: '/admin/'` w `vite.config.ts`.** Bez tego wszystkie zasoby wskazują `/assets/*`
   i dostają 404 pod podścieżką. To najczęstsza awaria tego wariantu deployu.
-- **Wyjście: `admin/dist`, serwer wskazuje na nie przez env `ADMIN_DIST_DIR`.**
+- **Wyjście: `admin/dist`, serwowane spod wbudowanej ścieżki `<repo>/admin/dist`.**
   Serwer nie trzyma artefaktów cudzego workspace'u w swoim drzewie; obraz Dockera kopiuje
-  jeden katalog. `@fastify/static` z `prefix: '/admin/'`.
+  jeden katalog. `@fastify/static` z `prefix: '/admin/'`; katalog brakujący (dev bez
+  buildu) = ostrzeżenie i 404, nie wywrotka startu. Świadomy koszt bezwarunkowości:
+  `admin/dist` zbudowany lokalnie jest w dev widoczny pod `:3000/admin/` także wtedy,
+  gdy jest nieświeży — źródłem prawdy w dev pozostaje Vite.
 - **Hash routing = brak fallbacku SPA.** Serwer obsługuje dokładnie `GET /admin/` (index.html)
   i `/admin/assets/*`. Fallback typu „wszystko pod `/admin/*` → index.html" musiałby uważać,
   żeby nie przesłonić zasobów i nie połknąć 404 z API — to realne źródło błędów, którego
   za jeden znak `#` w URL-u po prostu nie kupujemy.
-- **Cache: zasoby `immutable`, `index.html` bez cache'u.** Vite hashuje nazwy plików,
+- **Cache: zasoby `immutable`, reszta buildu bez cache'u.** Vite hashuje nazwy plików,
   więc `/admin/assets/*` dostaje `Cache-Control: public, max-age=31536000, immutable`,
-  a `/admin/index.html` — `no-cache`. Bez tego administrator po wdrożeniu siedzi na starym
-  bundlu i zgłasza błędy z wersji, która już nie istnieje.
+  a cała reszta — `no-cache`: `index.html` wskazuje świeże hashe, a fonty z `admin/public/`
+  Vite kopiuje BEZ hasha w nazwie, więc `immutable` na nich byłoby kłamstwem. Bez tego
+  administrator po wdrożeniu siedzi na starym bundlu i zgłasza błędy z wersji, która już
+  nie istnieje. Uwaga implementacyjna (`staticPanel.ts`): emisja `cache-control`
+  wtyczki jest wyłączona (`cacheControl: false`), bo jej nagłówek wygrywałby
+  z ustawionym w `setHeaders`.
 - **Zero konfiguracji CORS i zero `API_BASE_URL` w panelu.** Ten sam origin ⇒ ścieżki
   względne (`fetch('/admin/sessions?…')`), ciasteczko `HttpOnly; Secure; SameSite=Strict`
   działa bez `SameSite=None`. To jest cała przewaga tego wariantu i nie wolno jej zmarnować

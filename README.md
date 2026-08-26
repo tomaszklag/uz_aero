@@ -32,52 +32,62 @@ możesz zostawić, na produkcji zmień `JWT_SECRET` i `SEED_PASSWORD`).
 | `npm run admin` | panel na `http://localhost:5173/admin/` (proxy `/admin/api` → serwer; **wymaga uruchomionego serwera**) |
 | `npm run db:up` | Postgres w Dockerze (tworzy kontener przy pierwszym razie) |
 | `npm run db:down` | zatrzymanie bazy |
-| `npm run seed` | migracje + konta pilotów (TMK/AKO/PWI/JSE/KRZ) i flota |
-| `npm run seed:demo` | trzy tygodnie ruchu klubu na **działającym** serwerze (patrz niżej) |
+| `npm run seed` | migracje + konto administratora (login `admin`, hasło z `SEED_PASSWORD`) |
 | `npm test` | wszystkie testy: aplikacja (Jest) + serwer (Vitest na PGlite) |
 | `npm run typecheck` | TypeScript w całym repo |
 | `npm run android` | przebudowa dev clienta (telefon po USB) — tylko po zmianie modułów natywnych (ostatnio: `expo-task-manager` + plugin `expo-location` dla usługi GPS w tle, 2026-08-03) |
 
 Kolejność przy pracy z serwerem: `db:up` → `seed` (raz) → `server`.
 
+Seed zakłada wyłącznie konto administratora (issue #50 — przygotowanie testów
+z pilotami): flotę i konta pilotów zakłada administrator w panelu (`npm run admin`,
+ekrany A06/A07). Świeży świat = `docker rm -f uzaero-pg` → `db:up` → `seed`.
+Dane demo zostały usunięte w całości; generator (`server/scripts/demo/`) jest
+w historii gita, gdyby kiedyś wrócił temat syntetycznych danych do kalibracji.
+
 Szybki sprawdzian serwera:
 
 ```bash
-curl -s -X POST localhost:3000/auth/login -H "content-type: application/json" -d '{"login":"TMK","password":"test1234"}'
+curl -s -X POST localhost:3000/auth/login -H "content-type: application/json" -d '{"login":"admin","password":"test1234"}'
 ```
 
-## Dane demo (tylko środowisko testowe)
+## Wdrożenie: Railway
 
-`npm run seed` daje flotę i konta, ale panel jest po nim PUSTY — nie ma ani jednego dnia
-lotnego. Ruch klubu dokłada osobne polecenie, uruchamiane przy **działającym** serwerze:
+Jeden obraz Dockera (`Dockerfile` w korzeniu) niesie API **i statyczny build panelu**
+(`/admin/` — ten sam origin, więc ciasteczko `SameSite=Strict` działa jak w dev za proxy
+Vite). Konfiguracja buildu i healthcheck: `railway.json`.
 
-```bash
-npm run seed:demo
-```
+1. **Projekt**: railway.com → New Project → Deploy from GitHub repo (`uz_aero`).
+   Railway wykryje `Dockerfile` przez `railway.json`.
+2. **Postgres**: w projekcie „Create → Database → PostgreSQL".
+3. **Zmienne serwisu** (zakładka Variables usługi z repo):
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (referencja do usługi Postgres),
+   - `JWT_SECRET` = losowe ≥32 znaki,
+   - `TRUST_PROXY` = `1` (serwer stoi za proxy TLS Railway; bez tego dziennik audytu
+     widzi adres proxy zamiast człowieka),
+   - `PUBLIC_BASE_URL` = `https://<domena-uslugi>` (po kroku 5 — linki do kart arkusza
+     klikane z telefonu).
+   `TRACES_DIR` jest ustawiony w obrazie — nie podawaj go; build panelu serwer
+   znajduje sam (ścieżka wbudowana w obraz).
+4. **Wolumen na ślady GPS**: usługa → prawy przycisk → Attach Volume, mount path **`/data`**.
+   Telefon kasuje nagranie po wysyłce (issue #47) — kopia na serwerze jest JEDYNĄ,
+   bez wolumenu ginie przy każdym deployu.
+5. **Domena**: Settings → Networking → Generate Domain (port 3000). Wpisz ją w
+   `PUBLIC_BASE_URL` (krok 3).
+6. **Seed konta `admin`**: dopisz do zmiennych usługi serwera `SEED_PASSWORD`
+   (≥8 znaków — to hasło administratora). Serwer przy starcie sam zapewni konto
+   (idempotentnie: powtórny start NIE resetuje hasła, dokłada najwyżej rolę admin).
+   Zmienną można potem skasować albo zostawić — obie decyzje są bezpieczne.
+   Alternatywa bez redeployu (wymaga TCP Proxy na usłudze Postgres): lokalnie
+   `$env:SEED_PASSWORD='…'; $env:DATABASE_URL='<DATABASE_PUBLIC_URL>'; npm run seed`.
+7. **Sprawdzian**: `https://<domena>/health` → `{"ok":true}`, `https://<domena>/admin/`
+   → logowanie panelu (`admin` + hasło z kroku 6). Flotę i konta pilotów załóż w A07/A06.
+8. **Aplikacja pilota**: build EAS z adresem serwera —
+   `EXPO_PUBLIC_API_URL=https://<domena>` (patrz `app/src/infrastructure/api/apiBaseUrl.ts`).
 
-Cztery tygodnie historii: **51 sesji na czterech samolotach, ~1400 zdarzeń**, z czego
-flagę niesie 7 (~14%) — patologie są MNIEJSZOŚCIĄ, bo skrzynka pełna zawsze przestaje być
-czytana. W tle zwykłe dni klubu: dni skokowe po 4–9 wzlotów, egzaminy, przeloty, próba
-silnika bez startu. Poza tym po jednym egzemplarzu każdego typu flagi z §4.5, dzień bez
-karty arkusza (zablokowany nakładką), doba z dwiema zmianami jednej maszyny, zetknięcie
-sesji co do minuty, dwie sesje bez wzlotu z podanym powodem (09C), korekta administracyjna
-po oknie 24 h, ślad w dzienniku audytu, konto wyłączone (JSE) i **jedna sesja otwarta DZIŚ**
-na SP-FGK (KRZ) — po to, żeby telefon miał co przejmować na ekranie 02. Mapa scenariusza:
-`server/scripts/demo/scenario.ts`.
-
-> Scenariusz jest w modelu po przebudowie flow (`docs/_main.md.txt` §3.6a): sesja samolotu
-> jest krótka i niesie TABLICĘ wzlotów, payloady nie niosą klamry służby, a `leg_close` ma
-> opcjonalny odczyt liczników (164 wzloty, 88 z odczytem). To był warunek wstępny kalibracji
-> progów analityki (§3.6b) — `consumptionReplay.ts` ma od 2026-08-08 na czym pracować.
-
-Skrypt nie dotyka bazy: wysyła paczki przez `POST /events` i klika w panel przez
-`/admin/api/*`, więc `sessions`, `flags` i karty arkusza powstają z produkcyjnego kodu.
-Identyfikatory zdarzeń są stałe (`demo-…`), więc powtórny bieg wraca jako `duplicates` —
-nic się nie dubluje i **nic nie jest kasowane**. Czystą bazę robi się usunięciem
-kontenera (`npm run db:down` + `docker rm uzaero-pg`), nie tym skryptem. Adres inny niż
-localhost wymaga jawnego `npm run seed:demo -- --allow-remote`.
-
-Kolejność: `db:up` → `seed` → `server` → `seed:demo` → `admin`.
+Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
+przy ruchu klubowym. Backup: rejestr jest append-only i jest jedynym źródłem — ustaw
+w Railway backupy Postgresa albo cykliczne `pg_dump` po `DATABASE_PUBLIC_URL`.
 
 ## Zasady
 

@@ -67,6 +67,7 @@ import { PgExportLogRepo } from './infrastructure/pg/common/exportLogRepo.ts';
 import { PgFlagsRepo } from './infrastructure/pg/common/flagsRepo.ts';
 import { PgSessionsProjection } from './infrastructure/pg/common/sessionsProjection.ts';
 import { migrate } from './infrastructure/pg/migrate.ts';
+import { seed } from './infrastructure/pg/seed.ts';
 import { PgPilotPrefsRepo } from './infrastructure/pg/mobile/pilotPrefsRepo.ts';
 import { PgPilotsRepo } from './infrastructure/pg/common/pilotsRepo.ts';
 import { PgRefreshTokens } from './infrastructure/pg/common/refreshTokensRepo.ts';
@@ -88,6 +89,15 @@ const env = z
     PUBLIC_BASE_URL: z.string().url().optional(),
     /** Katalog zrzutu śladu kalibracyjnego (faza 5) — NDJSON per sesja. */
     TRACES_DIR: z.string().default('./traces'),
+    /** `1` = serwer stoi ZA proxy TLS (Railway itp.) i wierzy `X-Forwarded-*`. */
+    TRUST_PROXY: z.string().optional(),
+    /**
+     * Ustawione = serwer przy KAŻDYM starcie zapewnia konto `admin` (ten sam
+     * idempotentny `seed()`, co `npm run seed`). Droga dla hostingu bez ręki na
+     * konsoli (Railway): jedna zmienna w UI zamiast tunelu do bazy. Powtórny start
+     * nie resetuje hasła ani `active` — dokłada najwyżej rolę admin (droga awaryjna).
+     */
+    SEED_PASSWORD: z.string().min(8, 'SEED_PASSWORD: minimum 8 znaków').optional(),
   })
   .parse(process.env);
 
@@ -96,6 +106,12 @@ const pool = new Pool({ connectionString: env.DATABASE_URL });
 const db = new PgDatabase(pool);
 
 await migrate(db);
+
+// Bootstrap konta administratora — patrz docblock SEED_PASSWORD w schemacie env.
+if (env.SEED_PASSWORD != null) {
+  await seed(db, new ScryptHasher(), { adminPassword: env.SEED_PASSWORD });
+  console.log('Seed: konto administratora „admin" zapewnione (SEED_PASSWORD ustawione).');
+}
 
 const tokens = new Hs256Tokens(env.JWT_SECRET, clock);
 const events = new PgEventsStore();
@@ -309,6 +325,8 @@ const app = buildServer({
     clock,
     phaseTimeline,
   ),
+}, {
+  trustProxy: env.TRUST_PROXY === '1',
 });
 
 await app.listen({ port: env.PORT, host: '0.0.0.0' });

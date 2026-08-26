@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { createEventsRepo, seedReferenceIfEmpty, ThemePrefsStore } from '../../infrastructure';
+import { createEventsRepo, ThemePrefsStore } from '../../infrastructure';
 import { ExpoSqliteAdapter } from '../../infrastructure/storage/expoSqliteAdapter';
 import { ExpoLocationAdapter } from '../../infrastructure/gps/expoLocationAdapter';
 import { HttpServerApi } from '../../infrastructure/api/httpServerApi';
@@ -82,12 +82,11 @@ export function useAppBootstrap(): BootstrapStatus {
         await storage.init();
         if (cancelled) return;
 
+        // Cache referencyjny wypełnia WYŁĄCZNIE serwer (`GET /reference`) — zaślepka
+        // pierwszego uruchomienia usunięta przy issue #50: upsert synca nigdy nie kasuje
+        // wierszy, więc fikcyjna flota zostawałaby na urządzeniu na zawsze. Do pierwszego
+        // syncu listy pokazują uczciwy stan pusty (`loaded`/`streamHydrated`, §4.9).
         const repo = createEventsRepo(storage);
-        // Zaślepka floty do czasu `GET /reference` — wstawiana tylko przy pustym cache,
-        // więc nigdy nie nadpisze danych z serwera.
-        await seedReferenceIfEmpty(repo);
-        if (cancelled) return;
-
         attachRepo(repo);
 
         // Warstwa synca (M3): HTTP → serwis poświadczeń → silnik. Store auth dostaje

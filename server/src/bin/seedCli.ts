@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — `npm run seed`: migracje + dane scenariusza.
+ * UZ Aero (serwer) — `npm run seed`: migracje + konto administratora.
  *
  * `SEED_PASSWORD` jest wymagane jawnie — seed z domyślnym hasłem zaszytym w kodzie
  * prędzej czy później trafiłby na serwer, na którym nikt go nie zmienił.
@@ -22,7 +22,7 @@ const env = z
 const pool = new Pool({ connectionString: env.DATABASE_URL });
 
 await migrate(pool);
-await seed(pool, new ScryptHasher(), { defaultPassword: env.SEED_PASSWORD });
+await seed(pool, new ScryptHasher(), { adminPassword: env.SEED_PASSWORD });
 await pool.end();
 
-console.log('Seed OK: 4 samoloty, 5 pilotów (hasło z SEED_PASSWORD).');
+console.log('Seed OK: konto administratora „admin" (hasło z SEED_PASSWORD).');
