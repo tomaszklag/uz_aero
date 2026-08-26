@@ -2,19 +2,16 @@
  * UZ Aero — tożsamość zalogowanego pilota.
  *
  * `CLAUDE.md`: *tożsamość pilota jest znana w całej sesji — NIE pytamy o kod pilota
- * w formularzach*. Ekran 00-login jeszcze nie istnieje, więc do czasu jego powstania
- * trzymamy tu jedno miejsce z tą wiedzą — zamiast rozsiewać `'TMK'` po ekranach.
- *
- * ⚠️ TYMCZASOWE: po zaimplementowaniu logowania (00) i odblokowania PIN-em (01) tę
- * wartość ustawia proces logowania, a `PILOT_ID` znika. Do tego czasu ekrany i tak
- * czytają ją stąd, więc podmiana będzie zmianą w jednym pliku.
+ * w formularzach*. Wartość ustawia proces logowania / odtworzenie profilu
+ * (`authStore.restore()`), a ekrany renderują się dopiero po `signed_in` — więc
+ * placeholder poniżej nigdy nie dociera do UI.
  */
 
 import { create } from 'zustand';
 
 import type { ReferencePilot } from '../../domain';
 
-/** Kod pilota scenariusza (zgodny z zaślepką floty w `infrastructure/referenceSeed.ts`). */
+/** Placeholder sprzed provisioning — testom i StyleGuide wystarcza stała wartość. */
 export const PILOT_ID = 'TMK';
 
 interface CurrentPilotStore {

@@ -89,8 +89,8 @@ import { PgSheets } from '../src/infrastructure/pg/common/sheetsRepo.ts';
 import { FsTraceSink } from '../src/infrastructure/traces/fsTraceSink.ts';
 import { FsTraceSource } from '../src/infrastructure/traces/fsTraceSource.ts';
 import { AdminFlightTrackQueries } from '../src/application/admin/queries/flightTrack.ts';
-import { seed } from '../src/infrastructure/pg/seed.ts';
 import { buildServer } from '../src/http/server.ts';
+import { seedTestWorld } from './testWorld.ts';
 
 export class TestClock implements Clock {
   constructor(private current = Date.UTC(2026, 5, 22, 8, 0, 0)) {}
@@ -129,6 +129,8 @@ export async function testHarness(
     sheets?: SheetsPort;
     audit?: AdminAuditPort;
     events?: (real: EventsStorePort) => EventsStorePort;
+    /** Katalog buildu panelu — wyłącznie `adminStatic.test.ts`; reszta testów bez plików. */
+    adminDistDir?: string;
   } = {},
 ) {
   const pglite = new PGlite();
@@ -141,7 +143,9 @@ export async function testHarness(
     transaction: (fn) => pglite.transaction((tx) => fn(tx as unknown as Queryable)) as never,
   };
   await migrate(db);
-  await seed(db, new ScryptHasher(), { defaultPassword: TEST_PASSWORD });
+  // Świat referencyjny testów (dawny produkcyjny seed) — produkcyjny `seed()` stawia
+  // od issue #50 wyłącznie konto administratora i ma własny `seed.test.ts`.
+  await seedTestWorld(db, new ScryptHasher(), TEST_PASSWORD);
 
   const clock = new TestClock();
   const tokens = new Hs256Tokens(TEST_SECRET, clock);
@@ -332,7 +336,7 @@ export async function testHarness(
     ),
     // Dziennik żądań na konsoli zgaszony: kilkaset linii na przebieg zakryłoby to,
     // po co czyta się wynik testów. Sam format ma własny test jednostkowy.
-  }, { requestLog: false });
+  }, { requestLog: false, adminDistDir: options.adminDistDir });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
   // wołanych POZA HTTP (przebudowa projekcji = CLI) składały je z tych samych klas.

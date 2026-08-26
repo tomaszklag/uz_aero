@@ -27,11 +27,18 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     picId: 'AWR',
     dualId: null,
     sessionPicId: 'AWR',
+    // Znacznik wpisu ręcznego (`session_claim.manualEntry`, ekran 15) — pole doszło
+    // do `SessionState` 2026-08-25, a ta fixture powstała wcześniej; sesja z A02a
+    // powstała na żywo.
+    manualEntry: false,
     operation: 'skoki',
     departureIcao: 'EPRA',
     arrivalIcao: 'EPRA',
     client: 'SKY CAMP',
     notes: null,
+    // Domyślny skład skoczków z zadania (02e) — pole doszło 2026-08-25 (dzień skokowy);
+    // karta dnia go nie czyta, więc kanoniczna fixture zostaje bez deklaracji składu.
+    jumperDefaults: null,
     mhFormat: 'decimal',
     // Chwila PRZEJĘCIA maszyny — oś samolotu. Klamra służby zniknęła z modelu
     // w całości (issue #23, 2026-08-11) — karta i tak nigdy jej nie dotyczyła.
