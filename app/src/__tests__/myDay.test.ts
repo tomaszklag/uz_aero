@@ -121,21 +121,51 @@ describe('buildMyDay — scenariusz mockupu 01', () => {
     const card = vm().sessions[0]!;
 
     expect(Object.keys(card).sort()).toEqual(
-      ['aircraft', 'sessionUuid', 'stats', 'times', 'title'].sort(),
+      // `manual` doszedł 2026-08-16 (plakietka „RĘCZNIE") — na OBU ekranach naraz,
+      // bo niesie go wspólny `SessionCardVm`.
+      ['aircraft', 'manual', 'sessionUuid', 'stats', 'times', 'title'].sort(),
     );
     expect(card.stats.map((s) => s.k)).toEqual(['Loty', 'Blok', 'Lot']);
   });
 
-  it('sumy zgadzają się z mockupem: Blok i Loty, bez sumy „Służba"', () => {
+  it('sumy zgadzają się z mockupem: Loty · Blok · Lot, bez sumy „Służba"', () => {
     const t = vm().totals;
 
+    expect(t.flights).toBe('3');
     expect(t.block).toBe('3:05');
     expect(t.flight).toBe('2:37');
-    expect(t.takeoffs).toBe(3);
-    expect(t.landings).toBe(3);
     expect(t.aircraftCount).toBe(2);
     // Klamra usunięta (issue #23): totals nie mają już pola `duty`.
     expect('duty' in t).toBe(false);
+  });
+
+  /**
+   * SUMY MAJĄ TĘ SAMĄ TRÓJKĘ, CO KAFELEK (zgłoszenie z urządzenia, 2026-08-16).
+   * Wcześniej rząd sum niósł parę „Blok / Loty", w której „Loty" znaczyło CZAS
+   * w powietrzu, a liczbę lotów spychało do podpisu „3 st / 3 ldg" — czyli tej samej
+   * trójki powiedzianej jeszcze dwa razy (lot to start i lądowanie). Test pilnuje
+   * obu połówek naprawy naraz: liczba lotów jest WARTOŚCIĄ, a osobne liczniki startów
+   * i lądowań z modelu widoku znikły.
+   */
+  it('liczba lotów jest wartością, a liczników startów i lądowań nie ma', () => {
+    const t = vm().totals;
+
+    expect('takeoffs' in t).toBe(false);
+    expect('landings' in t).toBe(false);
+  });
+
+  /**
+   * Suma doby ma się zgadzać z tym, co pilot doda z kafelków nad nią — dlatego
+   * `flights` liczy się z SESJI, a nie z `takeoffCount` projekcji.
+   */
+  it('liczba lotów doby to suma lotów z kafelków', () => {
+    const day = vm();
+    const fromCards = day.sessions.reduce(
+      (sum, card) => sum + Number(card.stats.find((s) => s.k === 'Loty')!.v),
+      0,
+    );
+
+    expect(day.totals.flights).toBe(String(fromCards));
   });
 });
 
@@ -145,6 +175,7 @@ describe('buildMyDay — dzień pusty (wariant 01A)', () => {
 
     expect(vm.empty).toBe(true);
     expect(vm.sessionCount).toBe(0);
+    expect(vm.totals.flights).toBeNull();
     expect(vm.totals.block).toBeNull();
     expect(vm.totals.flight).toBeNull();
     expect(totalLabel(vm.totals.block)).toBe('— —');
@@ -159,36 +190,40 @@ describe('buildMyDay — dzień pusty (wariant 01A)', () => {
 });
 
 /**
- * PAS AKCJI (zgłoszenie z urządzenia, 2026-08-14).
+ * PAS AKCJI (zgłoszenia z urządzenia, 2026-08-14 i 2026-08-16).
  *
  * Pierwsza wersja miała dziurę, której nie wyłapał żaden test, bo warunek siedział
  * w JSX: pusty dzień dostawał WYŁĄCZNIE „ROZPOCZNIJ LOT". Pilot, który przyleciał bez
  * telefonu i nie ma dziś ani jednej sesji, nie miał więc jak wpisać lotu — a to jest
  * dokładnie sytuacja, dla której wpis ręczny istnieje (§3.8).
+ *
+ * Druga tura zdjęła z pasa akcji WSZYSTKO, co zależało od doby: „ROZPOCZNIJ LOT" ma
+ * przez cały dzień ten sam wygląd i to samo miejsce, więc funkcja nie przyjmuje już
+ * żadnego argumentu. Testy pilnują teraz tego braku — sygnatura bezargumentowa jest
+ * jedyną formą, w której „zawsze tak samo" nie ma jak przestać być prawdą.
  */
 describe('myDayActions — co da się zrobić z poziomu 01', () => {
-  it('pusty dzień MA wpis ręczny — to wtedy jest najbardziej potrzebny', () => {
-    expect(myDayActions(true).map((a) => a.id)).toEqual(['start', 'manual']);
+  it('oba wejścia istnieją zawsze — wpis ręczny też', () => {
+    expect(myDayActions().map((a) => a.id)).toEqual(['start', 'manual']);
   });
 
-  it('dzień z sesjami ma te same dwa wejścia', () => {
-    expect(myDayActions(false).map((a) => a.id)).toEqual(['start', 'manual']);
+  it('„ROZPOCZNIJ LOT" jest akcją główną NIEZALEŻNIE od doby', () => {
+    expect(myDayActions().find((a) => a.id === 'start')?.primary).toBe(true);
   });
 
-  it('zmienia się WAGA, nie obecność: akcja główna tylko w pustym dniu', () => {
-    expect(myDayActions(true).map((a) => a.primary)).toEqual([true, false]);
-    expect(myDayActions(false).map((a) => a.primary)).toEqual([false, false]);
+  /**
+   * Kolejność tablicy JEST kolejnością na ekranie (2026-08-26: cały pas akcji
+   * pod logiem dnia): droga codzienna nad awaryjną.
+   */
+  it('„ROZPOCZNIJ LOT" stoi nad wpisem ręcznym', () => {
+    expect(myDayActions().map((a) => a.id)).toEqual(['start', 'manual']);
   });
 
-  it('akcji głównych jest najwyżej JEDNA — dwie zielone nie mówią, od czego zacząć', () => {
-    for (const empty of [true, false]) {
-      expect(myDayActions(empty).filter((a) => a.primary)).toHaveLength(1 - Number(!empty));
-    }
+  it('akcji głównych jest dokładnie JEDNA — dwie zielone nie mówią, od czego zacząć', () => {
+    expect(myDayActions().filter((a) => a.primary)).toHaveLength(1);
   });
 
   it('wpis ręczny NIGDY nie jest akcją główną — to droga awaryjna, nie codzienna', () => {
-    for (const empty of [true, false]) {
-      expect(myDayActions(empty).find((a) => a.id === 'manual')?.primary).toBe(false);
-    }
+    expect(myDayActions().find((a) => a.id === 'manual')?.primary).toBe(false);
   });
 });

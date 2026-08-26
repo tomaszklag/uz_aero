@@ -162,9 +162,11 @@ przycisk stracił i dopisek „· ręcznie", i ton amber, a baner — oba przyci
 (patrz tabela komponentów: `NoGpsBanner`, `CockpitActions`)); ekran 13
 Ustawienia (motyw kartami, `PinChangeSheet` offline, wylogowanie z ochroną outboxa
 przez `authStore.logout`, diagnostyka GPS z żywą subskrypcją i pozycją DDM, stempel
-cache referencyjnego) — zębatki kokpitu prowadzą tu zamiast do StyleGuide; 08 — pełny
-wpis §3.8 (`ManualEntrySheet`: 4 czasy + uwagi jedną komendą `manual_log_entry`)
-i stopki „Uwagi · …" na grupach rejestru; 09a/10a — dzień bez lotów: warunkowy baner
+cache referencyjnego) — zębatki kokpitu prowadzą tu zamiast do StyleGuide; 15 — wpis
+CAŁEGO lotu po fakcie (od 2026-08-16 stepper 4 kroków w `ManualFlightScreen`; szkic
+i bramki w `logic/manualFlight.ts`, ostrzeżenia w `logic/manualFlightWarnings.ts`,
+arkusze `FlightTimesSheet`/`FlightDateSheet`/`ManualDropSheet`/`RefuelEntrySheet`;
+`ManualEntrySheet` skasowany razem z ekranem 08); 09a/10a — dzień bez lotów: warunkowy baner
 zera, wariant edu-przekazania („liczniki się nie ruszyły"), przypis zamiast dzielenia
 przez zero. `GpsFix` niesie teraz też `lat`/`lon`/`accuracyM` (diagnostyka; detektor
 ich nie czyta).
@@ -995,7 +997,7 @@ Ekran pyta o jedno: `const skeleton = useSkeleton(!loaded)`. Reszta to układ.
    `live` / `cache` / `brak` (§6 pkt 2 wymagań). „Serwer jeszcze nie potwierdził tej sesji"
    (11) jest ODPOWIEDZIĄ, nie oczekiwaniem — plamka obiecywałaby coś, co może nie przyjść.
    Tak samo `disabled` z podanym powodem (04B) zostaje tym, czym jest.
-3. **Skeleton nie zastępuje stanu pustego.** „JESZCZE ŻADNEGO LOTU" wolno napisać dopiero,
+3. **Skeleton nie zastępuje stanu pustego.** „DZIŚ BEZ LOTÓW" wolno napisać dopiero,
    gdy wiadomo, że jest pusto — czyli po odtworzeniu rejestru z serwera (`streamHydrated`,
    §4.9). Do tej chwili miejsce trzymają plamki. To ta sama zasada, dla której `usePilotDay`
    oddaje `null` zamiast pustej doby.
@@ -1681,8 +1683,9 @@ bo jej **objawem był brak objawu**.
 
 `projectSession` obsługuje czas blokowy DWIEMA drogami. Para `engine_start`/`engine_stop`
 tworzy wpis w `state.legs` (do etapu B2a tablica nazywała się `engineRuns`);
-`manual_log_entry` (wpis ręczny §3.8, ekran 15) dokłada odcinek off-block→on-block **wprost
-do `blockTimeMs`, bez wpisu w `legs`**. Jest to sensowne — wpis ręczny nie opisuje cyklu
+`manual_log_entry` (pojedynczy wpis ręczny §3.8; CAŁY lot z ekranu 15 idzie od
+2026-08-16 kompletem zwykłych zdarzeń sesji, nie tym typem) dokłada odcinek
+off-block→on-block **wprost do `blockTimeMs`, bez wpisu w `legs`**. Jest to sensowne — wpis ręczny nie opisuje cyklu
 silnika, tylko zaraportowany czas — ale każdy, kto liczy czas pracy silnika z samych
 `legs`, dostanie w dniu z wpisem ręcznym mianownik za mały.
 

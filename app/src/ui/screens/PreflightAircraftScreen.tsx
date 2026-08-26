@@ -176,13 +176,13 @@ export function PreflightAircraftScreen({
           tone="green"
           variant="solid"
           trailingIcon="next"
-          disabledReason={
-            selected == null
-              ? 'Wybierz samolot, aby przejść dalej'
-              : needsDual
-                ? 'Wybierz drugiego pilota — ten samolot wymaga załogi 2-osobowej'
-                : null
-          }
+          disabledReason={selected == null ? 'Wybierz samolot, aby przejść dalej' : null}
+          // Brak Duala jest zablokowany BEZ osobnego tekstu pod przyciskiem: powód
+          // widać już w bannerze „Wymagana załoga dwuosobowa" nad sekcją wyboru —
+          // drugi napis powtarzałby to samo zdanie (§6 pkt 3, uwaga z urządzenia
+          // 2026-08-16: `disabledReason` zostaje dla blokad, których z ekranu nie
+          // widać, `disabled` dla tych widocznych).
+          disabled={needsDual}
           onPress={() => navigation.navigate('PreflightTask')}
         />
       }

@@ -95,7 +95,7 @@ export interface SessionStore {
    *
    * Odpowiada na jedno pytanie ekranu: „czy pustemu rejestrowi wolno wierzyć". Zanim
    * pierwsze odtworzenie się zakończy, pusta doba może być artefaktem czyszczenia
-   * pamięci, a nie faktem — a „JESZCZE ŻADNEGO LOTU" pokazane pilotowi z trzema
+   * pamięci, a nie faktem — a „DZIŚ BEZ LOTÓW" pokazane pilotowi z trzema
    * sesjami za sobą jest kłamstwem (to ta sama zasada, dla której `usePilotDay` zwraca
    * `null` do pierwszego odczytu). `true` bez warstwy synca: bez serwera lokalny
    * rejestr JEST całą prawdą i nie ma na co czekać.
@@ -210,6 +210,9 @@ export interface SessionStore {
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => {
+  /** Trwający zapis kołowania — serializacja przeciw wyścigowi, patrz `taxi()`. */
+  let taxiInFlight: Promise<CommandResult> | null = null;
+
   /** Brak podłączonych warstw to błąd programistyczny, nie stan runtime. */
   function requireCommands(): SessionCommands {
     const { commands } = get();
@@ -347,10 +350,48 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     // Trzy zdarzenia, które umie zapisać AUTOMAT — i jedyne, w których `method` mówi,
     // czy za zapisem stał palec pilota. Stąd `fromDetector`: patrz nagłówek `run`.
+    /**
+     * ZAPISY KOŁOWANIA SĄ ZSERIALIZOWANE (zgłoszenie z urządzenia, 2026-08-26:
+     * „Kołowanie" 2x pod rząd w logu). Pilot tapie „Taxi" w tej samej sekundzie,
+     * w której automat wykrywa ruch z tych samych fixów — a obie warstwy obrony
+     * mają to samo ślepe pole, ZAPIS W LOCIE: sito `taxiWrite` czyta projekcję,
+     * która odświeża się dopiero po zakończonym zapisie, a twarda reguła
+     * `ALREADY_TAXIING` czyta stan z bazy PRZED dopisaniem, bez transakcji — dwa
+     * nakładające się zapisy oba widzą „kołowania nie ma" i oba wchodzą.
+     *
+     * Drugi zapis czeka więc na pierwszy i dopiero na ŚWIEŻEJ projekcji rozstrzyga,
+     * czy jest jeszcze potrzebny. Duplikat oddaje wynik TAMTEGO zapisu — po cichu,
+     * bo kołowanie już jest w rejestrze, czyli dokładnie ten stan, o który wołający
+     * prosił; błąd „już kołujesz" za wpis, którego pilot nie dublował świadomie,
+     * byłby szumem (ta sama logika, co `skip` w `taxiWrite`).
+     *
+     * Serializacja jest per-store, nie per-komenda: obejmuje OBIE ścieżki (przycisk
+     * i autodetekcję), bo wyścig zachodzi właśnie między nimi.
+     */
     taxi(method = 'manual', position = null, at) {
-      return run(() => requireCommands().taxi(requireContext(), method, position, at), {
-        fromDetector: method === 'auto',
+      const previous = taxiInFlight;
+      const write = (async (): Promise<CommandResult> => {
+        if (previous != null) {
+          const settled = await previous.then(
+            (result) => ({ result }),
+            () => null,
+          );
+          // Po rozstrzygnięciu poprzedniego zapisu projekcja mówi prawdę: kołowanie
+          // otwarte = nasz wpis byłby duplikatem. Nieudany poprzedni zapis (null)
+          // niczego nie otworzył — piszemy normalnie.
+          if (settled != null && get().projection.taxiing) {
+            return settled.result;
+          }
+        }
+        return run(() => requireCommands().taxi(requireContext(), method, position, at), {
+          fromDetector: method === 'auto',
+        });
+      })();
+      taxiInFlight = write;
+      void write.catch(() => {}).finally(() => {
+        if (taxiInFlight === write) taxiInFlight = null;
       });
+      return write;
     },
 
     takeoff(method = 'manual', position = null, at) {

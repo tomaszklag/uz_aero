@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 15D Lot ręczny · arkusz czasu zdarzenia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+  .canvas-label { width:100%; max-width:460px; display:grid; grid-template-columns:auto 1fr auto; align-items:baseline; gap:20px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+  .film-strip { font-family:var(--font-display); font-size:34px; letter-spacing:3px; line-height:1; }
+  .slug { font-family:var(--font-mono); font-size:11px; color:var(--text-muted); letter-spacing:1.5px; text-transform:uppercase; border-left:1px solid var(--border); padding-left:18px; }
+  .canvas-meta { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); letter-spacing:1px; display:inline-flex; align-items:center; gap:10px; }
+  .phone {
+    width:393px; height:852px; border-radius:54px; background:var(--bg);
+    border:10px solid #0D0E12;
+    box-shadow:0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow:hidden; position:relative; isolation:isolate; flex-shrink:0;
+    transform:scale(var(--phone-scale)); transform-origin:top center;
+    margin-bottom:calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--green); }
+  .nav-strip span { color:var(--border-strong); }
+
+  .app-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .app-header .header-center { flex:1; text-align:center; }
+  .back-btn, .step-badge { min-width:56px; }
+  .screen-title { font-family:var(--font-display); font-size:26px; letter-spacing:3px; color:var(--text-primary); line-height:1; }
+  .screen-subtitle { font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:1px; margin-top:3px; }
+  .step-badge { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px 10px; flex-shrink:0; white-space:nowrap; }
+  .back-btn { display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:11px; color:var(--text-muted); text-decoration:none; letter-spacing:0.5px; }
+  .header-right { display:flex; align-items:center; gap:8px; }
+
+  .scroll { flex:1; overflow-y:auto; padding:14px 16px 20px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+  .scroll::-webkit-scrollbar { display:none; }
+
+  .section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; }
+  .section-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .time-pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .field { display:flex; flex-direction:column; gap:6px; }
+  .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
+  .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; min-height:46px; }
+  .field-time { font-family:var(--font-mono); font-size:20px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
+  .row-list { display:flex; flex-direction:column; gap:1px; background:var(--border); border-radius:12px; overflow:hidden; }
+  .row { display:flex; align-items:center; gap:10px; min-height:44px; padding:8px 12px; background:var(--surface-raised); }
+  .row.active { background:var(--surface-hover); box-shadow:inset 2px 0 0 var(--green); }
+  .row-num { font-family:var(--font-mono); font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); min-width:44px; }
+  .row-body { flex:1; display:flex; align-items:baseline; gap:8px; }
+  .row-time { font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:1px; color:var(--text-primary); }
+  .row-arrow { font-family:var(--font-mono); font-size:12px; color:var(--text-muted); }
+  .row-dur { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); margin-left:auto; }
+
+  /* ===== ARKUSZ ===== jedna rama dla wszystkich (SheetSurface): sufit 56 px nad
+     bezpiecznym obszarem zostaje na przyciemnione tło, treść przewija się w środku. */
+  .modal-overlay { position:absolute; inset:0; z-index:50; background:rgba(0,0,0,0.72); display:flex; flex-direction:column; justify-content:flex-end; }
+  .modal-sheet { background:var(--surface-raised); border-radius:24px 24px 0 0; padding:20px 18px 36px; display:flex; flex-direction:column; gap:16px; border-top:1px solid var(--border-strong); max-height:calc(100% - 56px); overflow-y:auto; }
+  .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
+  .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
+  /* Cel jednym wierszem mono — bez kolorowej ramki i ikony typu (issue #43). */
+  .target-label { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
+
+  /* ===== TIME STEPPER — JEDNA KONTROLKA NA CAŁĄ APLIKACJĘ (issue #43) =====
+     Ta sama, co w korektach (10E–10H) i w kokpicie (05F). Wpis ręczny miał do
+     2026-08-16 własną parę przycisków w `ManualEntrySheet` — komponencie po skasowanym
+     ekranie 08 — z krokiem 10 minut i bez możliwości wpisania godziny z klawiatury.
+     Reguły kontrolki: krok to MINUTA i tylko ona; godzinę da się WPISAĆ (tapnięcie
+     w wartość otwiera klawiaturę numeryczną, dwukropek stawia maska); przycisk rośnie
+     z napisem (46 px to minimum celu, nie sztywna szerokość); jeden wygląd, bez tonu
+     arkusza; podpis pojawia się TYLKO przy zmianie, a miejsce na niego jest
+     zarezerwowane, żeby reszta arkusza nie skakała. */
+  .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:10px 12px; }
+  .step-btn { min-width:66px; padding:0 10px; white-space:nowrap; height:46px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:13px; cursor:pointer; }
+  .step-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
+  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:30px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
+  .time-delta { font-family:var(--font-mono); font-size:9px; color:var(--amber); letter-spacing:0.5px; margin-top:5px; min-height:13px; }
+
+  .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
+  .modal-ref-val { color:var(--text-secondary); }
+
+  .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
+  .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; text-decoration:none; }
+  .modal-btn-confirm { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; text-decoration:none; box-shadow:0 0 24px rgba(46,204,113,0.3); }
+  /* Usunięcie lotu jest KOSZEM w linii tytułu, nie czerwonym przyciskiem pod akcjami
+     (issue #43): intencją wchodzącego jest poprawka, nie kasowanie. */
+  .sheet-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .icon-action { width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:10px; border:1px solid var(--border-strong); background:var(--surface); color:var(--red); cursor:pointer; }
+
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 15D</span>
+  <span class="slug">lot ręczny · arkusz czasu zdarzenia</span>
+  <span class="canvas-meta">Nad krokiem 3</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Lot ręczny: arkusz czasu zdarzenia">
+  <div class="status-bar">
+    <span>16:23</span>
+    <span class="status-right">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="0.6" fill="currentColor"/><rect x="4.5" y="5" width="3" height="6" rx="0.6" fill="currentColor"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.6" fill="currentColor"/><rect x="13.5" y="0" width="3" height="11" rx="0.6" fill="currentColor" opacity="0.4"/></svg>
+      <svg width="15" height="11" viewBox="0 0 15 11" fill="none"><path d="M7.5 9.5 9.9 7c-1.3-1.2-3.4-1.2-4.8 0l2.4 2.5Z" fill="currentColor"/><path d="M3.4 4.9C5.6 2.7 9.4 2.7 11.6 4.9l1.4-1.4C10 0.6 5 0.6 2 3.5l1.4 1.4Z" fill="currentColor" opacity="0.5"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <div class="app-header">
+      <span class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Wróć
+      </span>
+      <div class="header-center">
+        <div class="screen-title">LOT RĘCZNY</div>
+        <div class="screen-subtitle">SP-AXA · 16 SIE · CZASY UTC</div>
+      </div>
+      <div class="header-right">
+        <div class="step-badge">3 / 4</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="section">
+        <div class="section-label">Bieg silnika</div>
+        <div class="time-pair">
+          <div class="field">
+            <span class="field-label">Uruchomienie</span>
+            <span class="field-input"><span class="field-time">09:42</span></span>
+          </div>
+          <div class="field">
+            <span class="field-label">Wyłączenie</span>
+            <span class="field-input"><span class="field-time">11:18</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Loty · start → lądowanie</div>
+        <div class="row-list">
+          <div class="row">
+            <span class="row-num">Lot 1</span>
+            <span class="row-body"><span class="row-time">09:48</span><span class="row-arrow">→</span><span class="row-time">10:14</span></span>
+            <span class="row-dur">0:26</span>
+          </div>
+          <div class="row active">
+            <span class="row-num">Lot 2</span>
+            <span class="row-body"><span class="row-time">10:26</span><span class="row-arrow">→</span><span class="row-time">10:52</span></span>
+            <span class="row-dur">0:26</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARKUSZ CZASU — jedno wejście do KAŻDEJ godziny wpisu ręcznego: bieg silnika,
+         start, lądowanie, zrzut, dolewka. Ten sam komponent i te same reguły, co
+         w korektach — nie ma osobnej „wersji dla wpisu ręcznego". -->
+    <div class="modal-overlay">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+
+        <div class="sheet-head">
+          <span class="modal-title">START · LOT 2</span>
+          <span class="icon-action" title="Usuń ten lot">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </span>
+        </div>
+
+        <div class="target-label">Lot 2 · 16 SIE · czasy UTC</div>
+
+        <div>
+          <div class="field-label">Start</div>
+          <div class="time-stepper">
+            <button class="step-btn">−1 min</button>
+            <span class="time-val">10:26</span>
+            <button class="step-btn">+1 min</button>
+          </div>
+          <div class="time-delta">Zmiana o +4 min względem wpisu (10:22)</div>
+        </div>
+
+        <div>
+          <div class="field-label">Lądowanie</div>
+          <div class="time-stepper">
+            <button class="step-btn">−1 min</button>
+            <span class="time-val">10:52</span>
+            <button class="step-btn">+1 min</button>
+          </div>
+          <div class="time-delta"></div>
+        </div>
+
+        <div class="modal-ref">
+          <span>Czas lotu</span>
+          <span class="modal-ref-val">0:26</span>
+        </div>
+        <div class="modal-ref">
+          <span>Mieści się w biegu silnika</span>
+          <span class="modal-ref-val">09:42 → 11:18</span>
+        </div>
+
+        <div class="modal-actions">
+          <a href="15b-reczny-czasy.html" class="modal-btn-cancel">ANULUJ</a>
+          <a href="15b-reczny-czasy.html" class="modal-btn-confirm">ZAPISZ</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Arkusze wpisu ręcznego — kiedy który</div>
+  <a class="vp-item active" href="15d-reczny-czas-arkusz.html">
+    <span class="vp-badge blue">15D</span>
+    <span class="vp-body">
+      <span class="vp-name">Czas zdarzenia</span>
+      <span class="vp-when">Każda godzina kroku 3: bieg silnika, para start–lądowanie, zrzut. Krok ±1 min, tapnięcie w wartość otwiera klawiaturę numeryczną. Kosz w linii tytułu usuwa lot, gdy pilot dodał go przez pomyłkę.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="15e-reczny-data.html">
+    <span class="vp-badge blue">15E</span>
+    <span class="vp-body">
+      <span class="vp-name">Data lotu</span>
+      <span class="vp-when">Krok 1: ta sama kontrolka w skali dnia — ±1 dzień, skróty „dziś" i „wczoraj", wpisanie daty z klawiatury.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="15b-reczny-czasy.html">
+    <span class="vp-badge">15B</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 3 — czasy</span>
+      <span class="vp-when">Ekran pod tym arkuszem.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="15b-reczny-czasy.html">← 15B Krok 3</a>
+  <span>·</span>
+  <a href="15d-reczny-czas-arkusz.html" class="active">15D Arkusz czasu</a>
+  <span>·</span>
+  <a href="15e-reczny-data.html">15E Arkusz daty</a>
+  <span>·</span>
+  <a href="10e-korekta-zdarzenia.html">10E Korekta zdarzenia</a>
+</nav>
+
+</body>
+</html>

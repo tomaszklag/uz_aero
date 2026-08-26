@@ -24,6 +24,7 @@ import type {
   JumperCounts,
   MhFormat,
   OperationType,
+  SessionClaimPayload,
 } from '../events';
 import { applyCorrections, buildEventIndex, type IndexedEvent } from './corrections';
 
@@ -147,6 +148,12 @@ export interface SessionState {
    */
   sessionPicId: string | null;
 
+  /**
+   * Sesja wpisana ręcznie po fakcie (`session_claim.manualEntry`, ekran 15) —
+   * zasila plakietkę „RĘCZNIE" na kafelku (01/12) i w nagłówku rozliczenia (10).
+   */
+  manualEntry: boolean;
+
   operation: OperationType | null;
   departureIcao: string | null;
   arrivalIcao: string | null;
@@ -154,6 +161,12 @@ export interface SessionState {
   /** Notatka pilota do dnia (issue #14) — wolny tekst z preflightu. */
   notes: string | null;
   mhFormat: MhFormat | null;
+  /**
+   * Domyślny skład skoczków sesji (`preflight_confirm.jumperDefaults`, 2026-08-17) —
+   * wartość startowa KAŻDEGO załadunku bez własnej deklaracji, także po tym, jak `drop`
+   * skonsumował poprzedni skład. `null` = nie ustawiono, liczniki wracają do zera.
+   */
+  jumperDefaults: JumperCounts | null;
 
   /**
    * Chwila przejęcia samolotu (`session_claim`) — początek sesji tej maszyny.
@@ -233,12 +246,14 @@ export function emptySessionState(): SessionState {
     picId: null,
     dualId: null,
     sessionPicId: null,
+    manualEntry: false,
     operation: null,
     departureIcao: null,
     arrivalIcao: null,
     client: null,
     notes: null,
     mhFormat: null,
+    jumperDefaults: null,
     claimedAt: null,
     preflightAt: null,
     engineRunning: false,
@@ -330,6 +345,7 @@ export function projectSession(events: Event[]): SessionState {
         state.client = p.client ?? null;
         state.notes = p.notes ?? null;
         state.mhFormat = p.mhFormat ?? null;
+        state.jumperDefaults = p.jumperDefaults ?? null;
         state.preflightAt = t;
         state.fuel.startL = p.reading.fuelL;
         state.fuel.lastReadingL = p.reading.fuelL;
@@ -474,9 +490,13 @@ export function projectSession(events: Event[]): SessionState {
       // z pojęciem wzlotu: sesję zatwierdza `day_close.finalReading`.
 
       case 'session_claim':
-        // Tożsamość aktualizowana z nagłówka (wyżej), payload informacyjny. Zostaje sam
-        // czas: to on mówi, od kiedy samolot jest zajęty (09C, `claim_time` panelu).
+        // Tożsamość aktualizowana z nagłówka (wyżej), payload w większości
+        // informacyjny. Zostaje czas (od kiedy samolot zajęty — 09C, `claim_time`
+        // panelu) i znacznik wpisu ręcznego (plakietka „RĘCZNIE", 2026-08-16).
         state.claimedAt = t;
+        if ((event.payload as SessionClaimPayload).manualEntry === true) {
+          state.manualEntry = true;
+        }
         break;
 
       case 'crew_change':

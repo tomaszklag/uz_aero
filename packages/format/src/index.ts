@@ -272,6 +272,45 @@ export function parseTimeUtcOnDay(text: string, reference: EpochMillis): EpochMi
 }
 
 /**
+ * Maska wpisu daty „16.08.2026" — kropki stawia maska, pilot pisze same cyfry.
+ *
+ * Ta sama umowa, co `maskTimeUtcInput` dla godziny: separator nie istnieje na
+ * klawiaturze numerycznej, więc stawiamy go za pilota. Powstała dla arkusza daty
+ * lotu wpisu ręcznego (15E, przebudowa 2026-08-16).
+ */
+export function maskDateUtcInput(text: string): string {
+  const digits = text.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`;
+}
+
+/**
+ * „16.08" albo „16.08.2026" → północ tej doby UTC. Rok jest OPCJONALNY (brak = rok
+ * wartości odniesienia): przy wpisywaniu lotu sprzed paru dni rok się nie zmienia,
+ * a osiem cyfr zamiast czterech to dwa razy dłuższe pisanie najczęstszej poprawki.
+ *
+ * `null` = wpis nieczytelny ALBO dzień nie istnieje w kalendarzu — przewinięcie
+ * „31.04" na 1 maja byłoby cichą zmianą daty, czyli tym samym kłamstwem, przed
+ * którym broni się `parseDateTimeUtc`.
+ */
+export function parseDateUtc(text: string, reference: EpochMillis): EpochMillis | null {
+  const match = /^(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?$/.exec(text.trim());
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = match[3] != null ? Number(match[3]) : new Date(reference).getUTCFullYear();
+
+  const at = Date.UTC(year, month - 1, day);
+  const back = new Date(at);
+  if (back.getUTCFullYear() !== year || back.getUTCMonth() !== month - 1 || back.getUTCDate() !== day) {
+    return null;
+  }
+  return at;
+}
+
+/**
  * Znacznik czasu jako „2026-07-30 13:01:33" — PEŁNA data i sekundy, w UTC.
  *
  * Zapis pola korekty administratora (`design/admin/A02b-korekta.html`). Istnieje obok

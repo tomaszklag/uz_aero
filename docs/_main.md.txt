@@ -416,8 +416,16 @@ lot bez lądowania, lądowanie przed startem, zdarzenie poza klamrą biegu silni
 na ziemi, cofnięty licznik, paliwo ponad pojemność. Sprawdzenie idzie po CAŁYM strumieniu
 efektywnym, inaczej niż `checkAppend` pytający o pojedynczego kandydata do zapisu.
 
-Wpisy ręczne trafiają do strumienia jak każde inne (`manual_log_entry` dla całego lotu
-z ekranu 15; pojedyncze fakty — jako zdarzenia własnego typu z metodą `manual`).
+Wpisy ręczne trafiają do strumienia jak każde inne. CAŁY lot z ekranu 15 to komplet
+zwykłych zdarzeń sesji (`session_claim` → `preflight_confirm` → bieg → `day_close`)
+z czasami pilota w `gpsTime` i jawnym znacznikiem `session_claim.manualEntry` —
+z niego bierze się plakietka „RĘCZNIE" na kafelku (01/12) i w nagłówku rozliczenia
+(10); pojedyncze fakty dopisywane w edycji — jako zdarzenia własnego typu z metodą
+`manual`. Od przebudowy 2026-08-16 ekran 15 jest STEPPEREM czterech kroków z pełną
+paritą zadania (operacja, lotniska, klient, Dual), wieloma lotami w jednym biegu,
+zrzutami, dolewkami i odczytami z OBU stron biegu; nieścisłości (kolizje z własnymi
+sesjami, łańcuch MH/paliwa wobec przekazania z cache) OSTRZEGAJĄ, nigdy nie blokują —
+pełny opis w `CLAUDE.md`, sekcja „Wpis ręczny = ten sam lot, te same pytania".
 
 ### 3.9 Synchronizacja (sekcja w Ustawieniach 13 — dawny ekran 11 „eksport")
 
@@ -676,7 +684,7 @@ Dwie konsekwencje warte zapamiętania:
 > pilotowi jego dzień dokładnie wtedy, gdy zabraknie zasięgu, czyli w powietrzu.
 >
 > Jedyny ślad w UI jest negatywny i **dotyczy wyłącznie stanu pustego**: dopóki pierwsze
-> odtworzenie nie wróci, 01 i 12 nie rysują „JESZCZE ŻADNEGO LOTU" ani „BRAK ZAMKNIĘTYCH
+> odtworzenie nie wróci, 01 i 12 nie rysują „DZIŚ BEZ LOTÓW" ani „BRAK ZAMKNIĘTYCH
 > DNI". Doba z sesjami wyświetla się NATYCHMIAST z tego, co telefon ma lokalnie — ona
 > nigdy nie kłamie i nie ma powodu, żeby czekała na sieć. To ta sama zasada, dla której
 > `usePilotDay` zwraca `null` do pierwszego odczytu z bazy. Offline stan pusty pojawia
@@ -743,7 +751,7 @@ Typy zdarzeń:
 | Typ | Payload (istotne pola) |
 |-----|------------------------|
 | `session_claim` | tryb przejęcia (wolny / przejęcie online / przejęcie offline) |
-| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); od issue #43 także `dualId` — DRUGI PILOT CAŁEJ SESJI, który wygrywa z nagłówkiem zdarzeń (bez tego pola załogi nie dałoby się poprawić: nagłówek opisuje chwilę zapisu i jest append-only); `dutyStart` usunięty razem z klamrą służby (issue #23) |
+| `preflight_confirm` | trasa, operacja, odczyt FOB + MH, korekty z powodem, oznaczenie klienta i **notatka do dnia** (wolny tekst, issue #14); od issue #43 także `dualId` — DRUGI PILOT CAŁEJ SESJI, który wygrywa z nagłówkiem zdarzeń (bez tego pola załogi nie dałoby się poprawić: nagłówek opisuje chwilę zapisu i jest append-only); `dutyStart` usunięty razem z klamrą służby (issue #23); od 2026-08-17 (operacja Skoki) także **`jumperDefaults`** — domyślny skład skoczków, ustawiany na kroku „zadanie" (02e), zanim padnie pierwszy `boarding`. Podstawia liczniki KAŻDEGO załadunku bez własnej deklaracji, także po `drop`, który konsumuje poprzedni skład (`boardingInitialJumpers` w apce). Nie wchodzi do białej listy `amend` — to tylko wartość startowa formularza, a rzeczywisty skład poprawia się przez własne zdarzenie `boarding`/`drop` |
 | `engine_start` / `engine_stop` | pozycja GPS, elewacja przy starcie |
 | `taxi` | metoda (auto / manual), pozycja — otwiera lot w logu cyklu; NIE wpływa na czas blokowy ani czas lotu, więc zapisuje się bez okna „COFNIJ" |
 | `takeoff` / `landing` | metoda (auto / manual), pozycja |
@@ -941,7 +949,9 @@ i pogrubić bordery (1→1.5 px); jasność ekranu na max przy motywie słoneczn
     │           z lotami w środku; rejestracja jako informacja kafelka), przekrojowo
     │           po samolotach; stąd rozpoczęcie lotu, ręczny wpis lotu i okno korekty 24 h
     │           warianty: 01a (zero sesji) · 01c (offline + arkusz syncu)
-    ├─→ [15 Lot ręczny]  CAŁA sesja po fakcie: samolot · czasy · odczyty WYMAGANE
+    ├─→ [15 Lot ręczny]  CAŁA sesja po fakcie, stepper 4 kroków (2026-08-16):
+    │       samolot+data+Dual → zadanie → czasy (N lotów, zrzuty) → liczniki
+    │       (paliwo przed/dolewki/po, MH z obu stron) + ostrzeżenia bez blokad
     ↓ Rozpocznij lot
 [02 Nowy lot 1/3]  samolot (wolny / aktywny PIC / wyłączony) · Dual
     │        └─ samolot zajęty → [modal Przejmij?] (wariant online / offline)

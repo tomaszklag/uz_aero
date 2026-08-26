@@ -163,6 +163,7 @@ export function HistoryScreen({
                 aircraft={day.aircraft}
                 times={day.times}
                 stats={day.stats}
+                {...(day.manual ? { titleTag: 'RĘCZNIE' } : {})}
                 editable
                 ctaLabel="OTWÓRZ I POPRAW"
                 ctaIcon="edit"
@@ -192,6 +193,7 @@ export function HistoryScreen({
                 aircraft={day.aircraft}
                 times={day.times}
                 stats={day.stats}
+                {...(day.manual ? { titleTag: 'RĘCZNIE' } : {})}
                 // Oko, nie ołówek: po oknie 24 h ekran 10 otwiera się bez ołówków
                 // przy lotach i bez „Edytuj dane" — obiecywanie tu korekty byłoby
                 // obietnicą, której reguły i tak nie dotrzymają.

@@ -309,7 +309,9 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
   drugiego START ENGINE NIE MA — kolejny lot to nowe przejęcie)
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu sesji;
   wariant 09c: zdanie bez lotu) → 01-moj-dzien
-01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie: samolot, czasy, odczyty)
+01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie — STEPPER 4 kroków od
+  2026-08-16: 15 samolot+data+Dual → 15a zadanie → 15b czasy i loty → 15c liczniki;
+  arkusze: 15d czas zdarzenia na TimeStepperze, 15e data lotu)
 01-moj-dzien → 12-historia („Poprzednie dni" — sesje spoza dzisiejszej doby);
   KAFELEK sesji → 10-statystyki (ekran SESJI: detale i korekty TEJ sesji)
 12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
@@ -384,7 +386,9 @@ i nic ponadto.** Klamra służby („loty zapisywane, służba deklarowana", 202
 przeżyła pięć dni — czas „od meldunku do zamknięcia" niczego nie mierzył, a wymagał
 deklaracji, przycisku „Zamknij dzień" i osobnych reguł. Konsekwencje:
 - dzień należy do **pilota** i obejmuje sesje na różnych maszynach — na 01 jako PŁASKA
-  oś czasu (rejestracja to informacja kafelka, NIE oś grupowania); sumy doby: Blok i Loty
+  oś czasu (rejestracja to informacja kafelka, NIE oś grupowania); sumy doby w TEJ SAMEJ
+  trójce, co kafelek sesji: Loty · Blok · Lot (2026-08-16 — podpis „5 st / 5 ldg" był
+  liczbą lotów powiedzianą dwa razy, a komórka „Loty" niosła CZAS zamiast liczby)
 - dnia **nie otwiera się ani nie zamyka** — zaczyna się pierwszą sesją; „Zamknij dzień",
   ekran `01b` i edu-baner o klamrze nie istnieją
 - z modelu znikły: `preflight_confirm.dutyStart`, `day_close.dutyEnd`, reguła
@@ -518,9 +522,19 @@ kafelkiem `.day-card` — a na 01 stały obok siebie trzy przyciski w trzech kro
 - **„DODAJ LOT RĘCZNIE" jest na 01 ZAWSZE**, także przy pustym dniu (zgłoszenie
   z urządzenia, 2026-08-14). Do tej pory pusty dzień miał wyłącznie zielone „ROZPOCZNIJ
   LOT", więc pilot bez ani jednej sesji nie miał jak wpisać lotu odbytego bez telefonu —
-  a to jest dokładnie sytuacja, dla której wpis ręczny istnieje (§3.8). Zmienia się WAGA
-  przycisku, nie jego obecność; decyzję trzyma `myDayActions` w `logic/myDay.ts`, żeby
-  dało się ją przetestować (warunek w JSX przeżył tę dziurę bez jednego czerwonego testu)
+  a to jest dokładnie sytuacja, dla której wpis ręczny istnieje (§3.8). Decyzję trzyma
+  `myDayActions` w `logic/myDay.ts`, żeby dało się ją przetestować (warunek w JSX
+  przeżył tę dziurę bez jednego czerwonego testu)
+- **„ROZPOCZNIJ LOT" wygląda i stoi TAK SAMO przez cały dzień** (zgłoszenia
+  z urządzenia, 2026-08-16 i 2026-08-26): zawsze zielony główny, POD logiem dnia
+  i NAD „DODAJ LOT RĘCZNIE" — jednakowo na 01, 01A i 01C. Log jest właściwą treścią
+  ekranu domowego, więc stoi pierwszy; wcześniej pusty dzień miał przycisk zielony
+  na górze, a dzień z sesjami szary pod sumami — ekran uczył się dwa razy w ciągu
+  jednego dnia, a druga sesja nie jest mniej ważna od pierwszej. `myDayActions` jest
+  BEZARGUMENTOWE, a kolejność jego tablicy JEST kolejnością na ekranie — pas akcji
+  nie czeka na wczytanie strumienia, więc skeleton nie trzyma plamki po przyciskach.
+  Przypis „Odczytasz paliwo i motogodziny…" USUNIĘTY (2026-08-26): opisywał kroki
+  formularza, które pilot i tak zaraz zobaczy
 
 ## Edycja danych sesji = TRYB ekranu 10, nie osobny ekran (issue #43, 2026-08-13)
 „EDYTUJ DANE" prowadziło na ekran 08 (lista ręczna) — drugi widok tej samej sesji, z inną
@@ -654,6 +668,50 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
   prowenienecja nie jest pytaniem pilota, tylko rejestru i panelu
 - **wiersz „Historia zmian" istnieje TYLKO wtedy, gdy jest historia**: zerowy licznik to
   szum, nie informacja — ta sama reguła, którą issue #40 wyrzuciło „Notatki —"
+
+## Wpis ręczny = ten sam lot, te same pytania (przebudowa 15, 2026-08-16)
+Ekran 15 przestał być formularzem czterech pól: wpis po fakcie opisuje TEN SAM lot,
+co zapis automatyczny, więc pyta o to samo i tymi samymi kontrolkami. STEPPER czterech
+kroków (jak 02 → 02E → 02A): samolot+data+Dual → zadanie → czasy → liczniki.
+- **data lotu jest POLEM, domyślnie dzisiejszym** (arkusz 15E: ±1 dzień, skróty
+  „dziś"/„wczoraj", wpis z klawiatury przez `maskDateUtcInput`/`parseDateUtc`).
+  W nagłówku daty NIE MA — stała tam data z ZEGARA, która przy wpisie sprzed tygodnia
+  kłamała o tym, czego wpis dotyczy. Zmiana doby PRZESUWA wpisane godziny razem z dniem
+- **pełna parita zadania**: rodzaj operacji (bez wartości podstawionej — wybór ma być
+  świadomy), lotniska wg issue #13, klient, notatka i Dual. Komenda `manualFlight`
+  wpisywała twardo `operation: 'inne'` i `dualId: null` — lot szkolny z kartki gubił
+  drugiego pilota bezpowrotnie. Podpowiedzi z ostatniego dnia TU NIE MA (inaczej niż
+  na 02E): wpis opisuje konkretny lot z przeszłości, podstawianie robiłoby domysł
+- **dowolnie wiele lotów w jednym biegu** — lista par start–lądowanie z „Dodaj lot"
+  jako OSTATNIM wierszem (wzorzec „DODAJ WPIS" z issue #43). Stara wersja przyjmowała
+  jedną parę i odsyłała dzień skokowy do dziesięciu arkuszy korekty po zapisaniu.
+  Zrzuty tylko w dniu skokowym (issue #19 — brak sekcji, nie blokada)
+- **paliwo ma trzy stany**: przed uruchomieniem (wpisywany, nie zgadywany z cache —
+  zgadnięte ogniwo psuło łańcuch następnemu pilotowi), dolewki (trójka `refuel` domyka
+  się z pary „dolano + stan po") i stan po locie. Motogodziny z OBU stron biegu.
+  **Dolewka w środku biegu jest twardym błędem** (`REFUEL_ENGINE_RUNNING` — dolewa się
+  przy zatrzymanym śmigle): blokada mówi to przy przycisku, a komenda wstawia dolewkę
+  w jej miejscu czasowym, żeby próba generalna odrzuciła zapis nazwanym błędem
+- **ostrzeżenia NIE blokują** (`logic/manualFlightWarnings.ts`): kolizje czasów
+  z WŁASNYMI sesjami liczą się z lokalnego rejestru, łańcuch MH i paliwa z ostatniego
+  przekazania w cache (z adnotacją wieku, §4.8) — wszystko offline. Kolizje z cudzymi
+  sesjami rozstrzyga serwer flagą `aircraft_overlap` (§4.5). Blokują wyłącznie rzeczy,
+  które domena odrzuci twardo (kolejność czasów, cofnięty licznik) — fakt lotu jest
+  cenniejszy niż kompletność formularza. Granicę pilnują testy obu modułów
+- **sesja z wpisu niesie JAWNY znacznik** `session_claim.manualEntry` — z metody
+  zdarzeń nie da się go wywieść (`manual` niesie też lot z ręcznymi przyciskami),
+  a heurystyka po stemplach padłaby przy odtworzeniu rejestru. Plakietka „RĘCZNIE"
+  stoi na kafelku sesji (01/12, `DayCard.titleTag`) i w nagłówku rozliczenia (10) —
+  **nie przy wierszach osi** (issue #40 pkt 6 zostaje: świeciłyby wszystkie naraz)
+- **bez tagów „wymagane"**: wymagalność jest stanem DOMYŚLNYM formularza, plakietka
+  przy każdej sekcji nie odróżniała niczego od niczego (reguła SyncChipa z issue #12).
+  Oznaczamy WYŁĄCZNIE to, co opcjonalne. Ta reguła obowiązuje każdy nowy formularz
+- edu-baner „Wpis trafi na listę dnia…" USUNIĘTY (opisywał budowę rejestru komuś, kto
+  chce wpisać lot z kartki); `ManualEntrySheet` SKASOWANY (komponent po ekranie 08,
+  krok 10 minut, bez wpisu z klawiatury) — czasy idą przez `FlightTimesSheet`
+  na `TimeStepper`; notatka ma własną sekcję zamiast pola w arkuszu czasów
+- **wpis bez ani jednego lotu jest odrzucany blokadą** („LOT RĘCZNY" — lot jest jego
+  treścią); sesja bez lotu ma swoją drogę na żywo (09C ze zdaniem powodu)
 
 ## Log zdarzeń jest JEDEN — kokpit rysuje oś sesji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny

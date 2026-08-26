@@ -154,6 +154,22 @@
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   .modal-btn-cancel { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; }
   .modal-btn-confirm { display:flex; align-items:center; justify-content:center; padding:15px; border-radius:14px; border:none; background:var(--green); color:#0D0D0D; font-family:var(--font-display); font-size:17px; letter-spacing:2px; cursor:pointer; box-shadow:0 0 24px rgba(46,204,113,0.3); }
+  /* Arkusz składu skoczków potwierdza na niebiesko — ton pary zrzut/załadunek (05E/05I),
+     do której ten skład za chwilę popłynie. */
+  .modal-btn-confirm.blue { background:var(--blue); box-shadow:0 0 24px rgba(52,152,219,0.3); }
+
+  /* ===== LICZNIKI SKŁADU (w arkuszu domyślnego składu) =====
+     1:1 z pary 05E/05I — to są TE SAME trzy liczniki, tylko pytane wcześniej:
+     duże cele dotykowe 46px (rękawice), zero przygaszone. */
+  .type-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:13px; padding:9px 11px; }
+  .type-name { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .type-lbl { font-size:14px; font-weight:700; color:var(--text-primary); letter-spacing:0.5px; }
+  .type-hint { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
+  .stepper { display:flex; align-items:center; gap:10px; }
+  .step-btn { width:46px; height:46px; border-radius:13px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-raised); border:1px solid var(--border-strong); color:var(--text-primary); cursor:pointer; font-family:var(--font-display); font-size:26px; line-height:1; user-select:none; }
+  .step-btn:active { background:var(--blue-muted); border-color:var(--blue-border); color:var(--blue); }
+  .step-val { font-family:var(--font-mono); font-size:26px; font-weight:700; min-width:30px; text-align:center; color:var(--text-primary); }
+  .step-val.zero { color:var(--text-muted); }
 
   /* ===== PODPOWIEDZI LOTNISK (w arkuszu) =====
      Lista KART, nie natywny dropdown (reguła z CLAUDE.md). Pełna szerokość, a nie kolumna
@@ -350,15 +366,43 @@
         </div>
       </div>
 
-      <!-- SEKCJA: OPCJONALNIE — dwa pola wolnego tekstu, oba w trybie odczytu z OŁÓWKIEM
-           (nie lupą: tu się pisze, a nie przeszukuje katalog). Wpis dzieje się w arkuszu
-           `#sheet-client`, a przy notatce — w tym samym arkuszu z polem wielolinijkowym.
+      <!-- SEKCJA: OPCJONALNIE — pola w trybie odczytu z OŁÓWKIEM (nie lupą: tu się
+           ustawia wartość, a nie przeszukuje katalog). Skład skoczków otwiera arkusz
+           liczników `#sheet-jumpers` (tylko dzień skokowy — patrz komentarz przy polu),
+           klient — arkusz `#sheet-client`, notatka — ten sam arkusz z polem
+           wielolinijkowym.
 
            BEZ PODPOWIEDZI POD POLEM KLIENTA (issue #14). Stało tam „Wiąże zrzuty dnia
            z klientem — trafia do statystyk i arkusza rozliczeniowego", czyli opis tego,
            co się z wartością dzieje PÓŹNIEJ. Pilot w tym miejscu odpowiada na jedno
            pytanie — „dla kogo" — i etykieta pola już je zadaje. -->
       <div class="section">
+        <!-- DOMYŚLNY SKŁAD SKOCZKÓW (2026-08-17) — pole istnieje WYŁĄCZNIE przy operacji
+             skoki (ten sam predykat `isJumpOperation`, który bramkuje przycisk zrzutu
+             w kokpicie, issue #19; przy przelocie na 02F pola NIE MA — to brak pytania,
+             nie blokada). Ustawiony tu skład podstawia liczniki KAŻDEGO załadunku bez
+             własnej deklaracji — także po zrzucie, który konsumuje poprzedni skład —
+             a pilot nadal może go zmienić w konkretnym arkuszu 05I. Wartość pokazuje
+             tylko NIEZEROWE pozycje („4 tandem · 2 solo"); pusto = przygaszone
+             „Bez ustawionego składu". Po fakcie się go NIE poprawia: korekty idą przez
+             zdarzenia załadunku i zrzutu, które są poprawialne same w sobie. -->
+        <div class="field">
+          <div class="field-label-row">
+            <div class="field-label">Domyślny skład skoczków</div>
+            <span class="optional-tag">opcjonalne</span>
+          </div>
+          <div class="field-input" onclick="openSheet('sheet-jumpers')">
+            <span class="field-input-main grow">
+              <span class="field-input-val">4 tandem · 2 solo</span>
+            </span>
+            <span class="field-input-side">
+              <span class="field-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </span>
+            </span>
+          </div>
+        </div>
+
         <div class="field">
           <div class="field-label-row">
             <div class="field-label">Oznaczenie klienta</div>
@@ -383,13 +427,13 @@
              z polem wielolinijkowym. Pusto = przygaszone „Bez notatki".
 
              ARKUSZ NOTATKI TO TEN SAM KOMPONENT, CO `#sheet-client` — dlatego nie ma go
-             w pliku trzeci raz. Różnice: tytuł „Notatka do dnia", pole wysokie na kilka
+             w pliku trzeci raz. Różnice: tytuł „Notatka", pole wysokie na kilka
              linii zamiast jednej i podpowiedzi bez prawej kolumny (notatka nie należy do
              rodzaju operacji, więc nie ma czym jej opisać). Reszta identyczna: nagłówek
              „Ostatnio używane", ANULUJ / ZAPISZ, brak listy bez sieci. -->
         <div class="field">
           <div class="field-label-row">
-            <div class="field-label">Notatka do dnia</div>
+            <div class="field-label">Notatka</div>
             <span class="optional-tag">opcjonalne</span>
           </div>
           <div class="field-input">
@@ -575,6 +619,68 @@
       </div>
     </div>
 
+    <!-- ================= ARKUSZ: DOMYŚLNY SKŁAD SKOCZKÓW =================
+         Ukryty — pokazuje go tapnięcie w pole składu. TE SAME trzy liczniki, co para
+         05E/05I (ten sam skład, tylko pytany wcześniej), ale w ramie generycznego
+         arkusza tego ekranu: bez czasu i numeru lotu w nagłówku, bo na tym kroku żadna
+         sesja jeszcze nie istnieje — to wartość szkicu preflightu, nie zdarzenie.
+
+         SUMA ZERO = BRAK DEKLARACJI, nie „zero skoczków" — ta sama normalizacja, co
+         przy załadunku i zrzucie: zapis z samymi zerami czyści pole do „Bez ustawionego
+         składu". Dlatego nie ma osobnego przycisku „wyczyść". Potwierdzenie na
+         NIEBIESKO — ton pary zrzut/załadunek, do której ten skład popłynie. -->
+    <div class="modal-overlay" id="sheet-jumpers" style="display:none;" onclick="closeSheet('sheet-jumpers')">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Domyślny skład skoczków</div>
+
+        <div class="type-row">
+          <div class="type-name">
+            <span class="type-lbl">Tandem</span>
+            <span class="type-hint">z instruktorem</span>
+          </div>
+          <div class="stepper">
+            <div class="step-btn" onclick="bump('tandem',-1)">−</div>
+            <span class="step-val" id="v-tandem">4</span>
+            <div class="step-btn" onclick="bump('tandem',1)">+</div>
+          </div>
+        </div>
+
+        <div class="type-row">
+          <div class="type-name">
+            <span class="type-lbl">AFF</span>
+            <span class="type-hint">szkolenie</span>
+          </div>
+          <div class="stepper">
+            <div class="step-btn" onclick="bump('aff',-1)">−</div>
+            <span class="step-val zero" id="v-aff">0</span>
+            <div class="step-btn" onclick="bump('aff',1)">+</div>
+          </div>
+        </div>
+
+        <div class="type-row">
+          <div class="type-name">
+            <span class="type-lbl">Solo</span>
+            <span class="type-hint">licencjonowani</span>
+          </div>
+          <div class="stepper">
+            <div class="step-btn" onclick="bump('solo',-1)">−</div>
+            <span class="step-val" id="v-solo">2</span>
+            <div class="step-btn" onclick="bump('solo',1)">+</div>
+          </div>
+        </div>
+
+        <!-- Jedno zdanie o skutku, bo skutek dzieje się na INNYM ekranie (arkusz 05I)
+             — z samego pola nie widać, dokąd wartość popłynie. -->
+        <div class="modal-note">Ten skład podstawi się przy każdym załadunku tego lotu bez własnej deklaracji — przy konkretnym załadunku nadal można go zmienić.</div>
+
+        <div class="modal-actions">
+          <div class="modal-btn-cancel" onclick="closeSheet('sheet-jumpers')">ANULUJ</div>
+          <div class="modal-btn-confirm blue" onclick="closeSheet('sheet-jumpers')">ZAPISZ</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -584,7 +690,7 @@
     <span class="vp-badge">02E</span>
     <span class="vp-body">
       <span class="vp-name">Formularz w spoczynku · skoki (jedno lotnisko)</span>
-      <span class="vp-when">Stan spoczynku: żaden arkusz nie jest otwarty. Wszystkie pola są <b>przyciskami z wartością</b>, nie inputami — lupa przy trasie, ołówek przy kliencie i notatce; wpisywanie dzieje się w arkuszu wysuwanym od dołu (oba są w tym pliku, ukryte — tapnij pole, żeby zobaczyć). Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko skoków" (bez osobnego nagłówka sekcji — etykieta pola wystarcza) — samolot wraca tam, skąd wystartował. Przelot, egzamin, lot techniczny i inne pokazują w tym miejscu DWA pola pod sobą („Start", „Lądowanie"), tak jak na 02F. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
+      <span class="vp-when">Stan spoczynku: żaden arkusz nie jest otwarty. Wszystkie pola są <b>przyciskami z wartością</b>, nie inputami — lupa przy trasie, ołówek przy składzie skoczków, kliencie i notatce; wpisywanie dzieje się w arkuszu wysuwanym od dołu (wszystkie są w tym pliku, ukryte — tapnij pole, żeby zobaczyć). Wybrane są <b>skoki</b>, więc sekcja trasy to JEDNO pole „Lotnisko skoków" (bez osobnego nagłówka sekcji — etykieta pola wystarcza) — samolot wraca tam, skąd wystartował — a w opcjonalnych stoi „Domyślny skład skoczków" (przy innych operacjach tego pola NIE MA — tak jak przycisku zrzutu w kokpicie). Przelot, egzamin, lot techniczny i inne pokazują w miejscu trasy DWA pola pod sobą („Start", „Lądowanie"), tak jak na 02F. Widoczna podpowiedź z ostatniego dnia, dopóki pilot niczego nie dotknie.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -620,6 +726,15 @@
   // się razem z klawiaturą, czego statyczny mockup nie pokaże.
   function openSheet(id){ document.getElementById(id).style.display='flex'; }
   function closeSheet(id){ document.getElementById(id).style.display='none'; }
+
+  // Liczniki składu — ta sama mechanika co 05E/05I: krok 1, podłoga 0, zero przygaszone.
+  const jumpers = { tandem: 4, aff: 0, solo: 2 };
+  function bump(key, d){
+    jumpers[key] = Math.max(0, jumpers[key] + d);
+    const el = document.getElementById('v-' + key);
+    el.textContent = jumpers[key];
+    el.classList.toggle('zero', jumpers[key] === 0);
+  }
 </script>
 
 </body>

@@ -349,6 +349,39 @@ describe('projectSession — notatka dnia (issue #14)', () => {
   });
 });
 
+describe('projectSession — domyślny skład skoczków (2026-08-17)', () => {
+  it('jumperDefaults z preflightu wchodzi do projekcji', () => {
+    const state = projectSession([
+      ev('preflight_confirm', '08:00', {
+        operation: 'skoki',
+        reading: { fuelL: 150, mh: 1234.5 },
+        jumperDefaults: { tandem: 4, aff: 0, solo: 0 },
+      }),
+    ]);
+
+    expect(state.jumperDefaults).toEqual({ tandem: 4, aff: 0, solo: 0 });
+  });
+
+  it('sesja bez pola ma `null`', () => {
+    expect(projectSession(canonicalSession1()).jumperDefaults).toBeNull();
+  });
+
+  it('boarding nie nadpisuje defaultu sesji — to dwa osobne stany', () => {
+    const state = projectSession([
+      ev('preflight_confirm', '08:00', {
+        operation: 'skoki',
+        reading: { fuelL: 150, mh: 1234.5 },
+        jumperDefaults: { tandem: 4, aff: 0, solo: 0 },
+      }),
+      ev('engine_start', '08:12', {}),
+      ev('boarding', '08:10', { jumpers: { tandem: 1, aff: 1, solo: 0 } }),
+    ]);
+
+    expect(state.jumperDefaults).toEqual({ tandem: 4, aff: 0, solo: 0 });
+    expect(state.boarding).toEqual({ jumpers: { tandem: 1, aff: 1, solo: 0 }, at: at('08:10') });
+  });
+});
+
 describe('projectSession — odporność', () => {
   it('kolejność wejścia nie zmienia wyniku (porządkowanie po czasie)', () => {
     const ordered = canonicalSession3();

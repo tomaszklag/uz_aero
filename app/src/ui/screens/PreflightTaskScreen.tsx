@@ -48,6 +48,7 @@ import {
   Banner,
   Card,
   Field,
+  JumperDefaultsSheet,
   OptionGrid,
   Screen,
   ScreenHeader,
@@ -64,7 +65,8 @@ import { usePreflightDraft } from '../store/preflightDraft';
 import { useTaskSuggestions } from '../hooks/useTaskSuggestions';
 import { useNearbyPosition } from '../hooks/useNearbyPosition';
 import { operationLabel } from './logic/operations';
-import { airfieldByIcao, isSameFieldOperation, OPERATION_TYPES } from '../../domain';
+import { jumperDefaultsLabel, normalizeJumperDefaults } from './logic/jumperDefaults';
+import { airfieldByIcao, isJumpOperation, isSameFieldOperation, OPERATION_TYPES } from '../../domain';
 import type { OperationType } from '../../domain';
 
 /** Nazwa lotniska do pokazania obok kodu; `undefined`, gdy katalog go nie zna. */
@@ -129,6 +131,7 @@ export function PreflightTaskScreen({
   /** Który arkusz jest otwarty — `null` = żaden (dwa pola trasy, dwa pola tekstowe). */
   const [picker, setPicker] = useState<'departure' | 'arrival' | null>(null);
   const [editor, setEditor] = useState<'client' | 'notes' | null>(null);
+  const [jumperSheetOpen, setJumperSheetOpen] = useState(false);
 
   // Pozycja do listy „najbliżej Ciebie" w wyborze lotniska. Pytamy przez cały czas
   // na ekranie, nie dopiero przy otwarciu arkusza: zimny fix przychodzi wolniej, niż
@@ -302,6 +305,25 @@ export function PreflightTaskScreen({
           {/* Bez podpowiedzi pod polem („Wiąże zrzuty dnia z klientem…", issue #14):
               zdanie o statystykach i arkuszu rozliczeniowym opisywało, co się z wartością
               dzieje PÓŹNIEJ, a pilot w tym miejscu odpowiada tylko na pytanie „dla kogo". */}
+          {/* Ma sens wyłącznie przy skokach — ten sam predykat, którym domena bramkuje
+              przycisk zrzutu w kokpicie (issue #19), więc pole i akcja nie mają jak
+              się rozjechać. Ustawiony tu skład staje się wartością startową KAŻDEGO
+              załadunku bez własnej deklaracji, także po tym, jak zrzut skonsumował
+              poprzedni (`boardingInitialJumpers`) — nie edytuje się go po fakcie:
+              korekty idą przez zdarzenia załadunku i zrzutu, które już są poprawialne. */}
+          {isJumpOperation(draft.operation) && (
+            <Field label="Domyślny skład skoczków" tag={{ label: 'opcjonalne' }}>
+              <ValueBox
+                variant="text"
+                value={draft.jumperDefaults != null ? jumperDefaultsLabel(draft.jumperDefaults) : ''}
+                placeholder="Bez ustawionego składu"
+                actionIcon="edit"
+                accessibilityLabel={`Domyślny skład skoczków ${jumperDefaultsLabel(draft.jumperDefaults)} — zmień`}
+                onPress={() => setJumperSheetOpen(true)}
+              />
+            </Field>
+          )}
+
           <Field label="Oznaczenie klienta" tag={{ label: 'opcjonalne' }}>
             <ValueBox
               variant="text"
@@ -313,7 +335,7 @@ export function PreflightTaskScreen({
             />
           </Field>
 
-          <Field label="Notatka do dnia" tag={{ label: 'opcjonalne' }}>
+          <Field label="Notatka" tag={{ label: 'opcjonalne' }}>
             <ValueBox
               variant="text"
               value={draft.notes ?? ''}
@@ -363,7 +385,7 @@ export function PreflightTaskScreen({
 
       <TextEntrySheet
         visible={editor === 'notes'}
-        title="Notatka do dnia"
+        title="Notatka"
         initialText={draft.notes ?? ''}
         placeholder="np. lot z uczniem, pokaz dla szkoły"
         multiline
@@ -374,6 +396,17 @@ export function PreflightTaskScreen({
           setEditor(null);
         }}
         onCancel={() => setEditor(null)}
+      />
+
+      {/* ── arkusz domyślnego składu skoczków ────────────────────────────── */}
+      <JumperDefaultsSheet
+        visible={jumperSheetOpen}
+        initialJumpers={draft.jumperDefaults}
+        onConfirm={(jumpers) => {
+          draft.set('jumperDefaults', normalizeJumperDefaults(jumpers));
+          setJumperSheetOpen(false);
+        }}
+        onCancel={() => setJumperSheetOpen(false)}
       />
     </Screen>
   );

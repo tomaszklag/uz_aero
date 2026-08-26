@@ -62,7 +62,7 @@ import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
 import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
-import { boardingPrefill } from './logic/boardingPrefill';
+import { boardingInitialJumpers, boardingPrefill } from './logic/boardingPrefill';
 import { buildCockpitActions } from './logic/cockpitActions';
 import { cockpitFlightTimeMs } from './logic/cockpitFlightTime';
 import { buildCockpitAxis } from './logic/cockpitLog';
@@ -365,7 +365,7 @@ export function CockpitScreen({
       visible={boardingOpen}
       flightNumber={currentFlightNumber(projection.flights.length, inFlight)}
       time={timeUtc(boardingOpenedAt)}
-      initialJumpers={pendingBoarding.jumpers}
+      initialJumpers={boardingInitialJumpers(projection.boarding, projection.jumperDefaults)}
       declaredTime={pendingBoarding.at != null ? timeUtc(pendingBoarding.at) : null}
       busy={busy}
       onConfirm={(jumpers) => {

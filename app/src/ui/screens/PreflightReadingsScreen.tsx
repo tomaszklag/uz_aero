@@ -58,6 +58,7 @@ import {
   timeLocal,
   timeUtc,
 } from '../format';
+import { isJumpOperation } from '../../domain';
 import type { HandoverTrailEntry, ReferencePilot } from '../../domain';
 
 /** Próg, powyżej którego rozbieżność wobec przekazania wymaga świadomego potwierdzenia. */
@@ -179,6 +180,10 @@ export function PreflightReadingsScreen({
         client: draft.client,
         notes: draft.notes,
         mhFormat,
+        // Ma sens WYŁĄCZNIE przy skokach — pole na 02e jest wtedy ukryte, ale
+        // to jest bramka OSTATECZNA: wpis sprzed zmiany operacji nie wysyła
+        // sierocej wartości do sesji innego rodzaju.
+        jumperDefaults: isJumpOperation(draft.operation) ? draft.jumperDefaults : null,
       });
 
       draft.reset();

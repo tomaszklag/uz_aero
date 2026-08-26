@@ -379,19 +379,20 @@ describe('jeden bieg silnika na sesję (2026-08-10)', () => {
  * ZDARZEŃ (jadą w `gpsTime`, chwila zapisu zostaje w `deviceTime`), a próba generalna ma
  * chronić strumień przed osieroconą sesją — odrzucony komplet nie zapisuje NICZEGO.
  */
-describe('manualFlight — kompletna sesja po fakcie (ekran 15)', () => {
+describe('manualFlight — kompletna sesja po fakcie (ekrany 15 → 15C)', () => {
   const T_START = min(600);
+  const t = (m: number): number => T_START + m * 60_000;
   const input = (over: object = {}) => ({
     sessionUuid: 'sess-manual',
     aircraftId: AC,
     picId: PIC,
     dualId: null,
-    times: {
-      engineStart: T_START,
-      takeoff: T_START + 6 * 60_000,
-      landing: T_START + 49 * 60_000,
-      engineStop: T_START + 54 * 60_000,
-    },
+    operation: 'skoki' as const,
+    departureIcao: 'EPZG',
+    arrivalIcao: null,
+    client: 'Skydive ZG',
+    engine: { start: T_START, stop: t(54) },
+    flights: [{ takeoff: t(6), landing: t(49) }],
     initialReading: { fuelL: 121, mh: MH_START },
     finalReading: { fuelL: 98, mh: MH_START + 0.9 },
     notes: 'lot spisany z kartki',
@@ -408,7 +409,7 @@ describe('manualFlight — kompletna sesja po fakcie (ekran 15)', () => {
     expect(s.closed).toBe(true);
     expect(s.legs).toHaveLength(1);
     expect(s.legs[0]!.startedAt).toBe(T_START);
-    expect(s.legs[0]!.stoppedAt).toBe(T_START + 54 * 60_000);
+    expect(s.legs[0]!.stoppedAt).toBe(t(54));
     expect(s.flights).toHaveLength(1);
     expect(s.blockTimeMs).toBe(54 * 60_000);
     expect(s.fuel.startL).toBe(121);
@@ -416,6 +417,124 @@ describe('manualFlight — kompletna sesja po fakcie (ekran 15)', () => {
     // Okno korekty rusza od TERAZ (zapis), nie od przeszłego zatrzymania silnika —
     // inaczej wpis sprzed dwóch dni rodziłby się z oknem już wygasłym.
     expect(s.closedAt).toBe(min(700));
+  });
+
+  /**
+   * PARITA Z LOTEM AUTOMATYCZNYM (2026-08-16): zadanie z kroku 2 ląduje w payloadzie
+   * `preflight_confirm` — poprzednia wersja wpisywała twardo `operation: 'inne'`
+   * i lot szkolny z kartki gubił Duala bezpowrotnie.
+   */
+  it('niesie komplet zadania: operację, lotnisko, klienta i Duala', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await h.commands.manualFlight(input({ dualId: 'uczen-1' }));
+    const s = await h.queries.sessionState('sess-manual');
+
+    expect(s.operation).toBe('skoki');
+    expect(s.departureIcao).toBe('EPZG');
+    expect(s.client).toBe('Skydive ZG');
+    expect(s.dualId).toBe('uczen-1');
+  });
+
+  /**
+   * Znacznik „RĘCZNIE" jest JAWNY na `session_claim` (2026-08-16): z metody zdarzeń
+   * nie da się go wywieść, bo `manual` niesie też zwykły lot z ręcznymi przyciskami.
+   */
+  it('sesja z wpisu niesie manualEntry; sesja z kokpitu NIE', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await h.commands.manualFlight(input());
+    expect((await h.queries.sessionState('sess-manual')).manualEntry).toBe(true);
+
+    await h.commands.claim({ ...CTX, mode: 'free', previousPicId: null });
+    expect((await h.queries.sessionState(SESSION)).manualEntry).toBe(false);
+  });
+
+  it('przyjmuje WIELE lotów i sortuje je po czasie niezależnie od kolejności listy', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await h.commands.manualFlight(
+      input({
+        flights: [
+          { takeoff: t(30), landing: t(45) }, // podane w odwrotnej kolejności
+          { takeoff: t(6), landing: t(20) },
+        ],
+      }),
+    );
+    const s = await h.queries.sessionState('sess-manual');
+
+    expect(s.flights).toHaveLength(2);
+    expect(s.flights[0]!.takeoffAt).toBe(t(6));
+    expect(s.flights[1]!.takeoffAt).toBe(t(30));
+  });
+
+  it('zrzuty wchodzą między start a lądowanie swojej pary, z klientem z zadania', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await h.commands.manualFlight(
+      input({
+        flights: [{ takeoff: t(6), landing: t(49) }],
+        drops: [{ at: t(20), jumpers: { tandem: 2, aff: 0, solo: 1 }, altitudeFt: 4000 }],
+      }),
+    );
+    const s = await h.queries.sessionState('sess-manual');
+    const events = await h.repo.getAllEvents();
+    const drop = events.find((e) => e.type === 'drop')!;
+    const takeoff = events.find((e) => e.type === 'takeoff')!;
+    const landing = events.find((e) => e.type === 'landing')!;
+
+    expect(s.drops.count).toBe(1);
+    expect(s.drops.jumpers).toEqual({ tandem: 2, aff: 0, solo: 1 });
+    expect((drop.payload as { client: string }).client).toBe('Skydive ZG');
+    // W strumieniu zrzut stoi MIĘDZY startem a lądowaniem — porządek czasu, nie formularza.
+    expect(events.indexOf(drop)).toBeGreaterThan(events.indexOf(takeoff));
+    expect(events.indexOf(drop)).toBeLessThan(events.indexOf(landing));
+  });
+
+  /**
+   * PALIWO MA TRZY STANY (2026-08-16): przed uruchomieniem, dolewki, po locie.
+   * Dolewka przed biegiem wchodzi do strumienia PRZED `engine_start` — sesja
+   * z tankowaniem daje się wreszcie wpisać, a rachunek zużycia się domyka.
+   */
+  it('dolewka przed uruchomieniem zapisuje się i nie psuje rachunku paliwa', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await h.commands.manualFlight(
+      input({
+        initialReading: { fuelL: 112, mh: MH_START },
+        refuels: [{ at: t(-10), beforeL: 64, addedL: 48, afterL: 112 }],
+        finalReading: { fuelL: 76, mh: MH_START + 0.9 },
+      }),
+    );
+    const s = await h.queries.sessionState('sess-manual');
+
+    expect(s.closed).toBe(true);
+    expect(s.fuel.addedL).toBe(48);
+    // 112 przy przejęciu + 48 dolane − 76 po locie = 84 L zużycia — trójka się domyka.
+    expect(s.fuel.consumedL).toBe(112 + 48 - 76);
+  });
+
+  /**
+   * Dolewka w ŚRODKU biegu silnika jest błędem danych, nie wariantem: dolewa się
+   * przy zatrzymanym śmigle. Komenda wstawia ją w jej miejscu czasowym, więc próba
+   * generalna odrzuca CAŁY wpis nazwanym błędem — zamiast cicho przesuwać zdarzenie.
+   */
+  it('dolewka w środku biegu odrzuca cały wpis (REFUEL_ENGINE_RUNNING)', async () => {
+    const h = setup();
+    h.clock.set(min(700));
+
+    await expect(
+      h.commands.manualFlight(
+        input({ refuels: [{ at: t(25), beforeL: 90, addedL: 20, afterL: 110 }] }),
+      ),
+    ).rejects.toMatchObject({ code: 'REFUEL_ENGINE_RUNNING' });
+
+    expect(await h.repo.getAllEvents()).toHaveLength(0);
   });
 
   it('nie dotyka bieżącej sesji w session_meta — wpis historyczny nie jest „wznowieniem"', async () => {
@@ -431,8 +550,8 @@ describe('manualFlight — kompletna sesja po fakcie (ekran 15)', () => {
     const h = setup();
     h.clock.set(min(700));
 
-    // Cofnięty licznik MH odbije się dopiero na `day_close` — czyli na SIÓDMYM
-    // kandydacie. Bez próby generalnej sześć wcześniejszych już byłoby w bazie.
+    // Cofnięty licznik MH odbije się dopiero na `day_close` — czyli na OSTATNIM
+    // kandydacie. Bez próby generalnej wszystkie wcześniejsze już byłyby w bazie.
     await expect(
       h.commands.manualFlight(input({ finalReading: { fuelL: 98, mh: MH_START - 1 } })),
     ).rejects.toMatchObject({ code: 'MH_REGRESSION' });

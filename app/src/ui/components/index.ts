@@ -73,8 +73,15 @@ export * from './sheets/PinChangeSheet';
 export * from './sheets/ReadingSheet';
 export * from './sheets/DropSheet';
 export * from './sheets/BoardingSheet';
+export * from './sheets/JumperDefaultsSheet';
 export * from './sheets/ManualEventSheet';
-export * from './sheets/ManualEntrySheet';
+// `ManualEntrySheet` SKASOWANY (przebudowa 15, 2026-08-16) — komponent po usuniętym
+// ekranie 08, z krokiem 10 minut i bez wpisu godziny z klawiatury. Czasy wpisu
+// ręcznego przechodzą przez arkusze na `TimeStepper`:
+export * from './sheets/FlightTimesSheet';
+export * from './sheets/FlightDateSheet';
+export * from './sheets/ManualDropSheet';
+export * from './sheets/RefuelEntrySheet';
 export * from './sheets/CorrectionSheet';
 // Tryb edycji sesji (issue #43): odczyty przy przejęciu i zdaniu, skład zrzutu,
 // dopisanie brakującego faktu i historia zmian pola.

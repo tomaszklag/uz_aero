@@ -235,6 +235,57 @@ describe('useSessionStore', () => {
     });
   });
 
+  /**
+   * WYŚCIG RĘCZNEGO PRZYCISKU Z AUTODETEKCJĄ (zgłoszenie z urządzenia, 2026-08-26:
+   * „Kołowanie" 2x pod rząd w logu). Pilot tapie „Taxi" w tej samej sekundzie,
+   * w której automat wykrywa ruch z tych samych fixów. Obrona miała dwie warstwy
+   * i obie mają to samo ślepe pole — ZAPIS W LOCIE:
+   *  • sito `taxiWrite` (ścieżka auto) czyta `projection.taxiing`, a projekcja
+   *    odświeża się dopiero PO zakończeniu zapisu;
+   *  • twarda reguła `ALREADY_TAXIING` czyta stan z bazy PRZED dopisaniem — dwa
+   *    nakładające się zapisy oba widzą „kołowania nie ma" i oba wchodzą.
+   * Stąd serializacja w store: drugi zapis czeka na pierwszy i ogląda ŚWIEŻĄ
+   * projekcję — duplikat oddaje wynik tamtego zapisu zamiast dopisywać własny.
+   */
+  describe('taxi — zapisy zserializowane, wyścig nie duplikuje kołowania', () => {
+    it('równoległe manual+auto dają JEDNO zdarzenie taxi, bez błędu dla pilota', async () => {
+      const { repo, clock, store } = attach();
+      await openDay(clock);
+      clock.set(min(12));
+      await store().startEngine();
+
+      clock.set(min(14));
+      await Promise.all([store().taxi('manual'), store().taxi('auto', null, min(14))]);
+
+      const taxis = (await repo.getAllEvents()).filter((e) => e.type === 'taxi');
+      expect(taxis).toHaveLength(1);
+      // Duplikat rozstrzygnięty po cichu — pilot nie dostaje błędu o stanie,
+      // który właśnie chciał osiągnąć.
+      expect(store().lastError).toBeNull();
+      expect(store().projection.taxiing).toBe(true);
+    });
+
+    it('po starcie kołowanie wolno zapisać znów — serializacja nie zjada nowego faktu', async () => {
+      const { repo, clock, store } = attach();
+      await openDay(clock);
+      clock.set(min(12));
+      await store().startEngine();
+      clock.set(min(14));
+      await store().taxi('auto', null, min(14));
+      clock.set(min(20));
+      await store().takeoff('manual');
+      clock.set(min(40));
+      await store().landing('manual');
+
+      // Dobieg po lądowaniu — nowy wpis, nie duplikat (kołowanie zamknął start).
+      clock.set(min(41));
+      await store().taxi('auto', null, min(41));
+
+      const taxis = (await repo.getAllEvents()).filter((e) => e.type === 'taxi');
+      expect(taxis).toHaveLength(2);
+    });
+  });
+
   it('loadSession zdanego samolotu usuwa osierocony active_session_uuid', async () => {
     const { repo, clock, store } = attach();
     await openDay(clock);

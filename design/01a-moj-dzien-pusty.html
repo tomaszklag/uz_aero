@@ -93,7 +93,8 @@
   /* Sumy doby: Blok i Loty — „— —" zamiast zer: brak sesji to niewiedza, nie wynik
      (wzorzec z 10A). Kafla „Służba" nie ma (issue #23 pkt 2). */
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
+  /* Trzy kolumny od 2026-08-16 — Loty · Blok · Lot, tak jak na kafelku sesji. */
+  .totals { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
   .total-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-muted); }
   .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-muted); }
@@ -108,7 +109,6 @@
     border:none; text-decoration:none; cursor:pointer;
     box-shadow:0 0 24px rgba(46,204,113,0.3);
   }
-  .btn-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; margin-top:-4px; line-height:1.5; }
   /* Jeden krój na wszystkie przyciski ekranu (issue #42): display, jak `.btn-primary`
      wyżej — wielkość różnicuje wagę akcji, rodzina jest jedna. Osobna klasa
      `.history-link` (Archivo 12,5 px) została usunięta: to był przycisk udający link. */
@@ -176,13 +176,6 @@
 
     <div class="scroll">
 
-      <!-- Jedyna główna akcja pustego dnia -->
-      <a href="02-preflight.html" class="btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        ROZPOCZNIJ LOT
-      </a>
-      <div class="btn-note">Odczytasz paliwo i motogodziny, potwierdzisz zadanie —<br>i lecisz. Loty zapiszą się same.</div>
-
       <!-- Pusty log dnia: pokazany, ale bez wartości — nie udajemy zer.
            Ta sama etykieta grupy i te same sumy, co na 01 — brakuje wyłącznie
            kafelków sesji, bo nie ma jeszcze ani jednej. -->
@@ -193,25 +186,47 @@
           <svg class="empty-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7l-8.2-1.8L3 7l7 4-2 3-4-1-2 2 4 2 2 4 2-2-1-4 3-2 4 7 2-1.2Z"/>
           </svg>
-          <span class="empty-title">JESZCZE ŻADNEGO LOTU</span>
-          <span class="empty-desc">Sesje pojawią się tu same, gdy przejmiesz samolot i uruchomisz silnik. Nic nie trzeba otwierać.</span>
+          <!-- TEKST ZAPOWIADA ZAWARTOŚĆ, NIE TŁUMACZY MECHANIKI (2026-08-16).
+               Poprzedni napis („Sesje pojawią się tu same, gdy przejmiesz samolot
+               i uruchomisz silnik. Nic nie trzeba otwierać.") łamał słownik
+               („przejmiesz" = odebranie maszyny INNEMU pilotowi), zaprzeczał
+               czynności, której w modelu nie ma („otwieranie dnia"), powtarzał
+               obietnicę spod zielonego przycisku i mówił „LOTU" w tytule, a „Sesje"
+               w opisie. Tytuł nazywa FAKT o dobie, opis wylicza, co tu stanie. -->
+          <span class="empty-title">DZIŚ BEZ LOTÓW</span>
+          <span class="empty-desc">Po pierwszym locie stanie tu karta sesji: czasy bloku, starty i lądowania, paliwo.</span>
         </div>
       </div>
 
+      <!-- Kreski, nie zera — pusta doba nie zna tych wielkości, a nie ma ich równych
+           zeru. Podpisów tu NIE MA (2026-08-16): „brak lotów" powtarzało tytuł karty
+           stanu pustego dwa centymetry wyżej, a „0 st / 0 ldg" było liczbą lotów
+           powiedzianą jeszcze dwa razy. -->
       <div class="totals-card">
         <div class="totals">
           <div class="total-cell">
-            <span class="total-key">Blok</span>
-            <span class="total-val">— —</span>
-            <span class="total-sub">brak lotów</span>
-          </div>
-          <div class="total-cell">
             <span class="total-key">Loty</span>
             <span class="total-val">— —</span>
-            <span class="total-sub">0 st / 0 ldg</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Blok</span>
+            <span class="total-val">— —</span>
+          </div>
+          <div class="total-cell">
+            <span class="total-key">Lot</span>
+            <span class="total-val">— —</span>
           </div>
         </div>
       </div>
+
+      <!-- PAS AKCJI POD LOGIEM (uwaga z urządzenia, 2026-08-26) — ten sam układ,
+           co na 01 i 01C: log pierwszy, potem akcje. Przypisu pod przyciskiem NIE MA
+           (2026-08-26): opisywał kroki formularza, które pilot i tak zaraz zobaczy,
+           a obietnicę „loty zapiszą się same" niesie stan pusty logu wyżej. -->
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
 
       <!-- WPIS RĘCZNY JEST TU TAKŻE PRZY PUSTYM DNIU (zgłoszenie z urządzenia,
            2026-08-14). Do tej pory pusty dzień miał wyłącznie zielony przycisk —

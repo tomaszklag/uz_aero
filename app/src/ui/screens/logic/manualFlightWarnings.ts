@@ -1,0 +1,147 @@
+/**
+ * UZ Aero — ostrzeżenia o nieścisłościach wpisu ręcznego (krok 4, ekran 15C).
+ *
+ * Ostrzeżenie odpowiada na pytanie „czy te dane wyglądają na prawdziwe", nie „czy
+ * wolno je zapisać" — na to drugie odpowiada `manualFlightStepBlocker`. Stąd twarda
+ * zasada tego modułu: **ostrzeżenie NIGDY nie blokuje zapisu**. Pilot wpisujący lot
+ * z kartki tydzień później często ma dane niepełne, a fakt lotu jest cenniejszy niż
+ * kompletność formularza (ta sama zasada, co `NO_FLIGHT_WITHOUT_REASON`).
+ *
+ * Źródła są DWA i oba działają offline (decyzja 2026-08-16):
+ *  • **lokalny rejestr** — kolizje czasów z WŁASNYMI sesjami tej doby (`PilotDay`);
+ *  • **cache referencyjny** — łańcuch MH i paliwa wobec ostatniego przekazania
+ *    maszyny (§4.8), z adnotacją wieku danych, bo ostrzeżenie oparte na danych
+ *    sprzed dwóch dni musi o tym mówić (§6 pkt 2).
+ * Kolizji z sesjami INNYCH pilotów nie sprawdzamy z telefonu — rozstrzygnie je
+ * serwer flagą `aircraft_overlap`, a uwaga wróci na telefon (§4.5).
+ *
+ * Czysty TypeScript: bez Reacta, bez zegara, bez I/O.
+ */
+
+import type { Handover, PilotDay } from '../../../domain';
+import { litres, motoHours, timeUtc, dateTimeUtcShort } from '../../format';
+import { preRunAddedL, type ManualFlightDraft } from './manualFlight';
+
+/** Jedno ostrzeżenie — tekst do banera + opcjonalna adnotacja źródła (wiek cache). */
+export interface ManualFlightWarning {
+  id:
+    | 'session-overlap'
+    | 'mh-chain'
+    | 'fuel-chain'
+    | 'fuel-balance'
+    | 'drop-outside-flight';
+  text: string;
+  /** „z cache · sync 16 SIE 08:14" — tylko przy ostrzeżeniach z danych referencyjnych. */
+  src?: string;
+}
+
+/** Kontekst ostrzeżeń — wszystko, co pochodzi spoza szkicu, przychodzi argumentem. */
+export interface ManualFlightWarningContext {
+  /** Dzień pilota w dobie WPISU (lokalny rejestr) — `null`, gdy jeszcze nie wczytany. */
+  pilotDay: PilotDay | null;
+  /** Ostatnie przekazanie wybranej maszyny z cache referencyjnego. */
+  handover: Handover | null;
+  /** Format licznika MH samolotu — do napisów w ostrzeżeniach. */
+  mhFormat: 'decimal' | 'hhmm' | null;
+  /** Kiedy rekord samolotu pobrano z serwera — adnotacja wieku (§4.8). */
+  fetchedAt: number | null;
+}
+
+/**
+ * Rozbieżność łańcucha paliwa, od której zaczynamy mówić (L). Poniżej — cisza:
+ * paliwomierz nie pokazuje różnic mniejszych niż jego podziałka (por. podłoga pasma
+ * w `consumption/policy.ts`), więc ostrzeżenie o 2 L byłoby fałszywym alarmem
+ * przy każdej normalnej sesji.
+ */
+const FUEL_CHAIN_TOLERANCE_L = 6;
+
+/** Rozbieżność łańcucha MH, od której mówimy (h) — podziałka licznika to 0,1. */
+const MH_CHAIN_TOLERANCE_H = 0.1;
+
+/** Liczy komplet ostrzeżeń dla szkicu — kolejność stała, od najpoważniejszego. */
+export function manualFlightWarnings(
+  draft: ManualFlightDraft,
+  ctx: ManualFlightWarningContext,
+): ManualFlightWarning[] {
+  const warnings: ManualFlightWarning[] = [];
+
+  // ── kolizja czasów z własnymi sesjami doby (lokalny rejestr) ───────────────
+  if (draft.engineStart != null && draft.engineStop != null && ctx.pilotDay != null) {
+    for (const s of ctx.pilotDay.sessions) {
+      const stop = s.stoppedAt ?? Number.POSITIVE_INFINITY;
+      const overlaps = draft.engineStart < stop && s.startedAt < draft.engineStop;
+      if (overlaps) {
+        warnings.push({
+          id: 'session-overlap',
+          text:
+            `Czasy zachodzą na Twoją SESJĘ ${s.index} na ${s.aircraftId.toUpperCase()} ` +
+            `(${timeUtc(s.startedAt)} → ${s.stoppedAt != null ? timeUtc(s.stoppedAt) : '…'}). ` +
+            'Jeden pilot nie leci dwiema maszynami naraz.',
+        });
+      }
+    }
+  }
+
+  // ── łańcuch MH wobec ostatniego przekazania (cache referencyjny) ───────────
+  const src =
+    ctx.fetchedAt != null ? `z cache · sync ${dateTimeUtcShort(ctx.fetchedAt)}` : undefined;
+  if (draft.mhBefore != null && ctx.handover != null) {
+    const delta = Math.abs(draft.mhBefore - ctx.handover.reading.mh);
+    if (delta > MH_CHAIN_TOLERANCE_H) {
+      warnings.push({
+        id: 'mh-chain',
+        text:
+          `Licznik nie zgadza się z łańcuchem — ostatnie przekazanie to ` +
+          `${motoHours(ctx.handover.reading.mh, ctx.mhFormat)}, a wpis zaczyna od ` +
+          `${motoHours(draft.mhBefore, ctx.mhFormat)}.`,
+        ...(src != null ? { src } : {}),
+      });
+    }
+  }
+
+  // ── łańcuch paliwa wobec przekazania ───────────────────────────────────────
+  if (draft.fuelBeforeL != null && ctx.handover != null) {
+    // Ogniwem łańcucha jest NAJWCZEŚNIEJSZY znany stan wpisu: odczyt „przed
+    // uruchomieniem" MINUS poranne dolewki — odczyt jest już po tankowaniu,
+    // a poprzedni pilot zostawiał maszynę sprzed niego (ta sama korekta, którą
+    // `toManualFlightInput` robi odczytowi początkowemu).
+    const chainStartL = draft.fuelBeforeL - preRunAddedL(draft);
+    if (Math.abs(chainStartL - ctx.handover.reading.fuelL) > FUEL_CHAIN_TOLERANCE_L) {
+      warnings.push({
+        id: 'fuel-chain',
+        text:
+          `Paliwo nie zgadza się z przekazaniem — poprzedni pilot zostawił ` +
+          `${litres(ctx.handover.reading.fuelL)}, a wpis zaczyna od ${litres(chainStartL)}.`,
+        ...(src != null ? { src } : {}),
+      });
+    }
+  }
+
+  // ── bilans wewnętrzny: paliwa po locie więcej, niż mogło być ───────────────
+  if (draft.fuelBeforeL != null && draft.fuelAfterL != null) {
+    // Tylko dolewki PO odczycie „przed" — poranne już w nim siedzą (`preRunAddedL`).
+    const added =
+      draft.refuels.reduce((sum, r) => sum + r.addedL, 0) - preRunAddedL(draft);
+    if (draft.fuelAfterL > draft.fuelBeforeL + added) {
+      warnings.push({
+        id: 'fuel-balance',
+        text:
+          `Paliwa po locie (${litres(draft.fuelAfterL)}) jest więcej niż przed ` +
+          `z dolewkami (${litres(draft.fuelBeforeL + added)}) — brakuje dolewki?`,
+      });
+    }
+  }
+
+  // ── zrzut poza lotem (miękka reguła domeny DROP_ON_GROUND — mówimy wcześniej) ──
+  for (const d of draft.drops) {
+    const airborne = draft.flights.some((f) => d.at >= f.takeoff && d.at <= f.landing);
+    if (!airborne) {
+      warnings.push({
+        id: 'drop-outside-flight',
+        text: `Zrzut o ${timeUtc(d.at)} wypada poza każdym lotem — sprawdź godzinę.`,
+      });
+    }
+  }
+
+  return warnings;
+}

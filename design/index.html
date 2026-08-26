@@ -362,7 +362,7 @@
     <div class="card-num">02E</div>
     <div class="card-body">
       <div class="card-title">02e-preflight-zadanie</div>
-      <div class="card-desc">Nowy lot krok 2/3 — co teraz robimy: rodzaj operacji, trasa, klient i notatka do dnia; pola uzupełnione z ostatniego dnia (operacja i klient per pilot, trasa per samolot). Operacja wyznacza kształt trasy: skoki = jedno lotnisko, pozostałe = dwa pola start / lądowanie. Pola nie są inputami — to przyciski z wartością (lupa przy trasie, ołówek przy tekstach), a wpisywanie dzieje się w arkuszu wysuwanym od dołu</div>
+      <div class="card-desc">Nowy lot krok 2/3 — co teraz robimy: rodzaj operacji, trasa, klient i notatka do dnia; pola uzupełnione z ostatniego dnia (operacja i klient per pilot, trasa per samolot). Operacja wyznacza kształt trasy: skoki = jedno lotnisko, pozostałe = dwa pola start / lądowanie — a przy skokach dochodzi „Domyślny skład skoczków" (wartość startowa każdego załadunku bez własnej deklaracji, 2026-08-17). Pola nie są inputami — to przyciski z wartością (lupa przy trasie, ołówek przy tekstach), a wpisywanie dzieje się w arkuszu wysuwanym od dołu</div>
       <div class="card-tags"><span class="tag">formularz</span><span class="tag">pamięć</span><span class="tag">arkusze</span></div>
     </div>
   </a>
@@ -652,6 +652,46 @@
       <div class="card-tags"><span class="tag">historia</span><span class="tag">append-only</span><span class="tag">tylko odczyt</span></div>
     </div>
   </a>
+  <a href="15a-reczny-zadanie.html" class="card">
+    <div class="card-num">15A</div>
+    <div class="card-body">
+      <div class="card-title">15a-reczny-zadanie</div>
+      <div class="card-desc">Wpis ręczny, KROK 2/4 — zadanie: rodzaj operacji, lotniska, klient i notatka. Te same pola, co na 02E przy locie normalnym: wpis po fakcie opisuje ten sam lot, więc pyta o to samo (2026-08-16). Rodzaj operacji decyduje o liczbie pól trasy i o sekcji zrzutów w kroku 3</div>
+      <div class="card-tags"><span class="tag">krok 2/4</span><span class="tag">parita z 02E</span></div>
+    </div>
+  </a>
+  <a href="15b-reczny-czasy.html" class="card">
+    <div class="card-num">15B</div>
+    <div class="card-body">
+      <div class="card-title">15b-reczny-czasy</div>
+      <div class="card-desc">Wpis ręczny, KROK 3/4 — bieg silnika i DOWOLNIE WIELE lotów w środku (do 2026-08-16 wpis przyjmował dokładnie jedną parę), zrzuty tylko w dniu skokowym. Godziny przez arkusz 15D</div>
+      <div class="card-tags"><span class="tag">krok 3/4</span><span class="tag">N lotów</span></div>
+    </div>
+  </a>
+  <a href="15c-reczny-liczniki.html" class="card">
+    <div class="card-num">15C</div>
+    <div class="card-body">
+      <div class="card-title">15c-reczny-liczniki</div>
+      <div class="card-desc">Wpis ręczny, KROK 4/4 — paliwo PRZED uruchomieniem, dolewki i stan po locie; motogodziny z obu stron. Ostrzeżenia o kolizji czasów i o łańcuchu MH liczą się lokalnie i z cache referencyjnego — nie blokują zapisu</div>
+      <div class="card-tags"><span class="tag">krok 4/4</span><span class="tag">ostrzeżenia</span></div>
+    </div>
+  </a>
+  <a href="15d-reczny-czas-arkusz.html" class="card">
+    <div class="card-num">15D</div>
+    <div class="card-body">
+      <div class="card-title">15d-reczny-czas-arkusz</div>
+      <div class="card-desc">Arkusz czasu zdarzenia wpisu ręcznego — ta sama kontrolka, co w korektach (10E) i w kokpicie (05F): krok ±1 min, tapnięcie w wartość otwiera klawiaturę numeryczną. Usunięcie lotu jest koszem w linii tytułu</div>
+      <div class="card-tags"><span class="tag">arkusz</span><span class="tag">TimeStepper</span></div>
+    </div>
+  </a>
+  <a href="15e-reczny-data.html" class="card">
+    <div class="card-num">15E</div>
+    <div class="card-body">
+      <div class="card-title">15e-reczny-data</div>
+      <div class="card-desc">Arkusz daty lotu — ta sama kontrolka w skali doby: ±1 dzień, skróty „dziś" i „wczoraj", wpisanie daty z klawiatury. Bez kalendarza miesięcznego. Wiersz „Sesje w tej dobie" zapowiada ostrzeżenie o kolizji z kroku 4</div>
+      <div class="card-tags"><span class="tag">arkusz</span><span class="tag">data lotu</span></div>
+    </div>
+  </a>
   <a href="14b-slad-brak.html" class="card">
     <div class="card-num">14B</div>
     <div class="card-body">
@@ -763,8 +803,8 @@
     <div class="card-num">15</div>
     <div class="card-body">
       <div class="card-title">15-reczny-lot</div>
-      <div class="card-desc">Ręczny wpis CAŁEGO lotu z listy dziennej (model 2026-08-10) — samolot, czasy silnika i lotu, odczyty OBOWIĄZKOWE jak przy zdaniu. Dla lotów zapisanych poza telefonem: papier, rozładowana bateria. Tworzy kompletną sesję z oknem korekty 24 h</div>
-      <div class="card-tags"><span class="tag">wpis po fakcie</span><span class="tag">pełna sesja</span></div>
+      <div class="card-desc">Ręczny wpis CAŁEGO lotu z listy dziennej (model 2026-08-10) — KROK 1/4: samolot, DATA LOTU (domyślnie dzisiejsza) i opcjonalny Dual. Dla lotów zapisanych poza telefonem: papier, rozładowana bateria. Tworzy kompletną sesję z oknem korekty 24 h</div>
+      <div class="card-tags"><span class="tag">wpis po fakcie</span><span class="tag">pełna sesja</span><span class="tag">krok 1/4</span></div>
     </div>
   </a>
 </div>

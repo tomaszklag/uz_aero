@@ -36,6 +36,12 @@ export interface DayCardProps {
   times?: string | null;
   /** Rząd statystyk (Loty / Blok / Lot). */
   stats: { k: string; v: string }[];
+  /**
+   * Plakietka przy tytule — dziś wyłącznie „RĘCZNIE" dla sesji wpisanej po fakcie
+   * (ekran 15, decyzja 2026-08-16). Przy tytule, bo mówi o CAŁEJ sesji; wiersze osi
+   * znaczników nie dostają (issue #40 pkt 6).
+   */
+  titleTag?: string;
   /** Stopka: tagi stanu i przypisy. Pominięta = karta kończy się na statystykach. */
   foot?: React.ReactNode;
   /** Sesja w oknie korekty — niebieska ramka i niebieski pas akcji. */
@@ -53,6 +59,7 @@ export function DayCard({
   aircraft,
   times = null,
   stats,
+  titleTag,
   foot,
   editable = false,
   ctaLabel,
@@ -87,9 +94,20 @@ export function DayCard({
       ]}
     >
       <View style={styles.top}>
-        <AppText variant="display" style={styles.title}>
-          {title}
-        </AppText>
+        <View style={styles.titleRow}>
+          <AppText variant="display" style={styles.title}>
+            {title}
+          </AppText>
+          {titleTag != null && (
+            <AppText
+              variant="mono"
+              tone="muted"
+              style={[styles.titleTag, { borderColor: theme.colors.borderStrong }]}
+            >
+              {titleTag}
+            </AppText>
+          )}
+        </View>
         <AppText variant="mono" style={[styles.aircraft, { color: theme.colors.green }]}>
           {aircraft}
         </AppText>
@@ -163,7 +181,20 @@ export function DayCard({
 const styles = StyleSheet.create({
   card: { paddingVertical: 13, paddingHorizontal: 14, gap: 9 },
   top: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
   title: { fontSize: 21, lineHeight: 22, letterSpacing: 1.5 },
+  // Plakietka-przypis: mały mono w ramce, bez wypełnienia — fakt o pochodzeniu
+  // zapisu, nie stan ostrzegawczy, więc bez amber.
+  titleTag: {
+    fontSize: 7.5,
+    lineHeight: 11,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
   aircraft: { fontSize: 11, letterSpacing: 1.5 },
   /** `.day-times` — dosunięte do daty ujemnym marginesem, tak jak w mockupie. */
   times: { fontSize: 10, lineHeight: 13, letterSpacing: 0.5, marginTop: -5 },
