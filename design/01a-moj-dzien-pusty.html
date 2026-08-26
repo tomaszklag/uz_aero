@@ -109,7 +109,6 @@
     border:none; text-decoration:none; cursor:pointer;
     box-shadow:0 0 24px rgba(46,204,113,0.3);
   }
-  .btn-note { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); text-align:center; margin-top:-4px; line-height:1.5; }
   /* Jeden krój na wszystkie przyciski ekranu (issue #42): display, jak `.btn-primary`
      wyżej — wielkość różnicuje wagę akcji, rodzina jest jedna. Osobna klasa
      `.history-link` (Archivo 12,5 px) została usunięta: to był przycisk udający link. */
@@ -177,13 +176,6 @@
 
     <div class="scroll">
 
-      <!-- Jedyna główna akcja pustego dnia -->
-      <a href="02-preflight.html" class="btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        ROZPOCZNIJ LOT
-      </a>
-      <div class="btn-note">Odczytasz paliwo i motogodziny, potwierdzisz zadanie —<br>i lecisz. Loty zapiszą się same.</div>
-
       <!-- Pusty log dnia: pokazany, ale bez wartości — nie udajemy zer.
            Ta sama etykieta grupy i te same sumy, co na 01 — brakuje wyłącznie
            kafelków sesji, bo nie ma jeszcze ani jednej. -->
@@ -226,6 +218,15 @@
           </div>
         </div>
       </div>
+
+      <!-- PAS AKCJI POD LOGIEM (uwaga z urządzenia, 2026-08-26) — ten sam układ,
+           co na 01 i 01C: log pierwszy, potem akcje. Przypisu pod przyciskiem NIE MA
+           (2026-08-26): opisywał kroki formularza, które pilot i tak zaraz zobaczy,
+           a obietnicę „loty zapiszą się same" niesie stan pusty logu wyżej. -->
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
 
       <!-- WPIS RĘCZNY JEST TU TAKŻE PRZY PUSTYM DNIU (zgłoszenie z urządzenia,
            2026-08-14). Do tej pory pusty dzień miał wyłącznie zielony przycisk —

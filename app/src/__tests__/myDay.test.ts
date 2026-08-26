@@ -211,8 +211,12 @@ describe('myDayActions — co da się zrobić z poziomu 01', () => {
     expect(myDayActions().find((a) => a.id === 'start')?.primary).toBe(true);
   });
 
-  it('akcja główna stoi NAD logiem, wpis ręczny pod nim', () => {
-    expect(myDayActions().map((a) => a.slot)).toEqual(['top', 'bottom']);
+  /**
+   * Kolejność tablicy JEST kolejnością na ekranie (2026-08-26: cały pas akcji
+   * pod logiem dnia): droga codzienna nad awaryjną.
+   */
+  it('„ROZPOCZNIJ LOT" stoi nad wpisem ręcznym', () => {
+    expect(myDayActions().map((a) => a.id)).toEqual(['start', 'manual']);
   });
 
   it('akcji głównych jest dokładnie JEDNA — dwie zielone nie mówią, od czego zacząć', () => {

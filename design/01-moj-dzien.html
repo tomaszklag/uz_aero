@@ -156,10 +156,11 @@
      jest jedna.
 
      „ROZPOCZNIJ LOT" JEST `.btn-primary` NA KAŻDYM WARIANCIE DOBY (zgłoszenie
-     z urządzenia, 2026-08-16). Do tej pory zielony przycisk stał tylko na 01A i tylko
-     nad logiem, a po pierwszej sesji zamieniał się w szary pod sumami — czyli ten sam
-     ekran uczył się dwa razy w ciągu jednego dnia. Druga sesja nie jest mniej ważna
-     od pierwszej, więc nie ma czego różnicować. */
+     z urządzenia, 2026-08-16): do tej pory po pierwszej sesji zamieniał się w szary
+     — ekran uczył się dwa razy w ciągu jednego dnia, a druga sesja nie jest mniej
+     ważna od pierwszej. MIEJSCE: pod logiem dnia, nad wpisem ręcznym (uwaga
+     z urządzenia, 2026-08-26) — log jest właściwą treścią ekranu domowego, więc
+     stoi pierwszy; jednakowo na 01, 01A i 01C. */
   .btn-primary {
     display:flex; align-items:center; justify-content:center; gap:10px;
     width:100%; padding:17px; border-radius:16px;
@@ -245,14 +246,6 @@
     </div>
 
     <div class="scroll">
-
-      <!-- AKCJA GŁÓWNA — zawsze ta sama i zawsze tutaj, nad logiem (2026-08-16).
-           Nad, a nie pod listą, bo lista rośnie przez cały dzień: przy szóstej sesji
-           przycisk pod sumami trzeba by dopiero wyszukać przewinięciem. -->
-      <a href="02-preflight.html" class="btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        ROZPOCZNIJ LOT
-      </a>
 
       <!-- Log dnia: płaska oś czasu sesji (issue #23 pkt 3). Kafelek = jedna sesja
            (bieg silnika z lotami w środku), rejestracja jest informacją kafelka.
@@ -347,8 +340,14 @@
         </div>
       </div>
 
-      <!-- „ROZPOCZNIJ LOT" STAŁ TU do 2026-08-16 jako `.btn-secondary` — przeniesiony
-           nad log i zrównany z wariantem pustego dnia. -->
+      <!-- PAS AKCJI POD LOGIEM (uwaga z urządzenia, 2026-08-26): log jest właściwą
+           treścią ekranu domowego, więc stoi pierwszy. „ROZPOCZNIJ LOT" pozostaje
+           zielony i główny przez cały dzień (2026-08-16) — zmienia się wyłącznie
+           miejsce; stoi nad wpisem ręcznym, bo jest drogą codzienną, a wpis awaryjną. -->
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
 
       <!-- Ręczny wpis CAŁEGO lotu (model 2026-08-10, story pkt 7): samolot, czasy
            silnika i lotu, odczyty. Dla lotów zapisanych poza telefonem — papier,

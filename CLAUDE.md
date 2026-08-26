@@ -525,13 +525,16 @@ kafelkiem `.day-card` — a na 01 stały obok siebie trzy przyciski w trzech kro
   a to jest dokładnie sytuacja, dla której wpis ręczny istnieje (§3.8). Decyzję trzyma
   `myDayActions` w `logic/myDay.ts`, żeby dało się ją przetestować (warunek w JSX
   przeżył tę dziurę bez jednego czerwonego testu)
-- **„ROZPOCZNIJ LOT" wygląda i stoi TAK SAMO przez cały dzień** (zgłoszenie
-  z urządzenia, 2026-08-16 — dociąga punkt wyżej do końca): zawsze zielony główny
-  i zawsze NAD logiem dnia, na 01, 01A i 01C. Wcześniej pusty dzień miał go zielonego
-  na górze, a dzień z sesjami szarego pod sumami — ekran domowy uczył się dwa razy
-  w ciągu jednego dnia, a druga sesja nie jest mniej ważna od pierwszej. `myDayActions`
-  jest odtąd BEZARGUMENTOWE (miejsce niesie pole `slot`), więc pas akcji nie czeka na
-  wczytanie strumienia i skeleton nie trzyma plamki po przycisku, który stoi obok niej
+- **„ROZPOCZNIJ LOT" wygląda i stoi TAK SAMO przez cały dzień** (zgłoszenia
+  z urządzenia, 2026-08-16 i 2026-08-26): zawsze zielony główny, POD logiem dnia
+  i NAD „DODAJ LOT RĘCZNIE" — jednakowo na 01, 01A i 01C. Log jest właściwą treścią
+  ekranu domowego, więc stoi pierwszy; wcześniej pusty dzień miał przycisk zielony
+  na górze, a dzień z sesjami szary pod sumami — ekran uczył się dwa razy w ciągu
+  jednego dnia, a druga sesja nie jest mniej ważna od pierwszej. `myDayActions` jest
+  BEZARGUMENTOWE, a kolejność jego tablicy JEST kolejnością na ekranie — pas akcji
+  nie czeka na wczytanie strumienia, więc skeleton nie trzyma plamki po przyciskach.
+  Przypis „Odczytasz paliwo i motogodziny…" USUNIĘTY (2026-08-26): opisywał kroki
+  formularza, które pilot i tak zaraz zobaczy
 
 ## Edycja danych sesji = TRYB ekranu 10, nie osobny ekran (issue #43, 2026-08-13)
 „EDYTUJ DANE" prowadziło na ekran 08 (lista ręczna) — drugi widok tej samej sesji, z inną

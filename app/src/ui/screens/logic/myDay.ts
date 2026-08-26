@@ -92,35 +92,27 @@ export function totalLabel(value: string | null): string {
   return value ?? DASH;
 }
 
-/** Przycisk pasa akcji ekranu 01 — decyzja o TREŚCI i MIEJSCU, nie o wyglądzie. */
+/** Przycisk pasa akcji ekranu 01 — decyzja o TREŚCI i KOLEJNOŚCI, nie o wyglądzie. */
 export interface MyDayAction {
   id: 'start' | 'manual';
   label: string;
   /** Akcja główna dnia (zielona, pełna) — najwyżej JEDNA na ekranie. */
   primary: boolean;
-  /**
-   * Gdzie na ekranie stoi: `top` = nad logiem dnia, `bottom` = pod sumami doby.
-   * Miejsce należy do modelu, bo jest REGUŁĄ (patrz `myDayActions`), a nie układem
-   * — warunek w JSX nie miałby jak jej obronić przed następną „drobną" zmianą.
-   */
-  slot: 'top' | 'bottom';
 }
 
 /**
- * Co da się zrobić z poziomu „Mój dzień".
+ * Co da się zrobić z poziomu „Mój dzień". Kolejność tablicy JEST kolejnością na
+ * ekranie: cały pas akcji stoi POD logiem dnia (uwaga z urządzenia, 2026-08-26 —
+ * wcześniej zielony przycisk stał nad logiem i spychał listę sesji, czyli właściwą
+ * treść ekranu, poniżej akcji), a „ROZPOCZNIJ LOT" nad wpisem ręcznym, bo jest drogą
+ * codzienną, a wpis awaryjną.
  *
  * ══ PRZYCISK GŁÓWNY WYGLĄDA I STOI TAK SAMO PRZEZ CAŁY DZIEŃ ══
  * (zgłoszenie z urządzenia, 2026-08-16). Do tej pory „ROZPOCZNIJ LOT" zmieniał
- * JEDNO I DRUGIE w zależności od tego, czy pilot ma już dziś sesję: przy pustej dobie
- * był zielonym przyciskiem nad logiem, potem szarym pod sumami. Pilot uczy się ekranu
- * raz — a ten pokazywał mu dwa różne ekrany tego samego dnia i kazał szukać przycisku
- * po pierwszym locie. Druga sesja dnia nie jest przy tym mniej ważna od pierwszej,
- * więc nie ma czego różnicować wagą.
- *
- * Konsekwencja techniczna, nie kosmetyczna: skoro skład pasa akcji nie zależy już od
- * doby, przyciski NIE CZEKAJĄ na wczytanie strumienia — rysują się w pierwszej klatce
- * (reguła 3 wzorca ładowania: co znamy lokalnie, nie czeka). Przedtem czekać musiały,
- * bo inaczej wielki zielony przycisk podmieniałby się pod palcem na szary.
+ * wygląd i miejsce w zależności od tego, czy pilot ma już dziś sesję — ekran domowy
+ * uczył się dwa razy w ciągu jednego dnia, a druga sesja nie jest mniej ważna od
+ * pierwszej. Skład pasa nie zależy od doby, więc przyciski NIE CZEKAJĄ na wczytanie
+ * strumienia — rysują się w pierwszej klatce (reguła 3 wzorca ładowania).
  *
  * ══ DLACZEGO TO JEST REGUŁA, A NIE WARUNEK W JSX ══
  * Bo pierwsza wersja tego składu miała dziurę i nikt jej nie zauważył: pusty dzień
@@ -128,12 +120,10 @@ export interface MyDayAction {
  * (padła bateria, aparat został w kurtce) i nie ma dziś ANI JEDNEJ sesji, nie miał jak
  * wpisać lotu — a to jest dokładnie ta sytuacja, w której wpis ręczny powstał (§3.8,
  * mockup 15). Wejście znikało w stanie, w którym jest najbardziej potrzebne.
- *
- * Wpis ręczny zostaje drugorzędny i pod logiem: to droga awaryjna, nie codzienna.
  */
 export function myDayActions(): MyDayAction[] {
   return [
-    { id: 'start', label: 'ROZPOCZNIJ LOT', primary: true, slot: 'top' },
-    { id: 'manual', label: 'DODAJ LOT RĘCZNIE', primary: false, slot: 'bottom' },
+    { id: 'start', label: 'ROZPOCZNIJ LOT', primary: true },
+    { id: 'manual', label: 'DODAJ LOT RĘCZNIE', primary: false },
   ];
 }

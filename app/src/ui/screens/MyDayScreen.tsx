@@ -111,11 +111,9 @@ export function MyDayScreen({
   const vm = pilotDay != null ? buildMyDay(pilotDay) : null;
 
   // Pas akcji nie zależy od doby (`myDayActions` bez argumentów od 2026-08-16), więc
-  // liczy się raz i poza czekaniem na strumień. Podział na sloty pilnuje, żeby miejsce
-  // przycisku zostało decyzją modelu — w JSX rozjechałoby się przy pierwszej zmianie.
+  // liczy się raz i poza czekaniem na strumień. Kolejność tablicy jest kolejnością
+  // na ekranie — miejsce przycisku zostaje decyzją modelu, nie układu JSX.
   const actions = myDayActions();
-  const topActions = actions.filter((a) => a.slot === 'top');
-  const bottomActions = actions.filter((a) => a.slot === 'bottom');
 
   // Plakietka okna korekty na wejściu do historii (`.history-badge`) — okno 24 h ma być
   // widoczne, zanim pilot pomyśli o szukaniu go (ten sam wzorzec co na ekranie startowym).
@@ -221,39 +219,6 @@ export function MyDayScreen({
       }
     >
       <View style={styles.content}>
-        {/* ── akcja główna: zawsze ta sama i zawsze w tym samym miejscu ───────
-            Zielony przycisk stoi NAD logiem przez cały dzień — także przy szóstej
-            sesji, gdy lista jest długa i pod nią trzeba by przewijać (zgłoszenie
-            z urządzenia, 2026-08-16). Skład i wagę liczy `myDayActions`; tam też
-            mieszka uzasadnienie, dlaczego nic z tego nie zależy już od tego, czy doba
-            jest pusta.
-
-            Blok NIE czeka na `ready`: nie mówi o dobie ani słowa, więc czekanie
-            zostawiałoby na pierwszej klatce dziurę w miejscu, w którym za moment
-            i tak stanie ten sam przycisk. */}
-        {topActions.map((action) => (
-          <ActionButton
-            key={action.id}
-            label={action.label}
-            tone="green"
-            variant="solid"
-            icon="start"
-            onPress={() => navigation.navigate('PreflightAircraft')}
-          />
-        ))}
-
-        {/* Przypis należy do PUSTEGO dnia: tłumaczy, czym jest zielony przycisk komuś,
-            kto jeszcze nic dziś nie zrobił. Przy dniu z sesjami byłby powtórzeniem
-            wiedzy, którą pilot ma już z własnej listy. Stoi ZARAZ POD przyciskiem, bo
-            opisuje trzy kroki TEJ jednej drogi — ujemny margines domyka odstęp
-            `content.gap` i skleja parę w jeden blok. */}
-        {ready && empty && (
-          <AppText variant="mono" tone="muted" style={styles.btnNote}>
-            Odczytasz paliwo i motogodziny, potwierdzisz zadanie —{'\n'}i lecisz. Loty zapiszą
-            się same.
-          </AppText>
-        )}
-
         {/* ── log dnia: płaska oś czasu sesji + sumy ─────────────────────────
             Etykieta grupy zamiast nagłówka karty (issue #42): kafelki są osobnymi
             kartami, więc lista nie mieszka już w jednym pojemniku. Znacznik strefy
@@ -304,22 +269,27 @@ export function MyDayScreen({
             plamki nie potrzebują: stoją już na ekranie, bo nie zależą od doby. */}
         {!ready && skeleton && <MyDaySkeleton />}
 
-        {/* ── droga awaryjna: wpis CAŁEGO lotu po fakcie (15, §3.8) ───────────
-            Pod logiem i drugorzędnie, ale ZAWSZE — także przy pustym dniu, bo lot bez
-            telefonu (padła bateria, aparat w kurtce) to dokładnie ta doba, która nie
-            ma ani jednej sesji (zgłoszenie z urządzenia, 2026-08-14).
+        {/* ── pas akcji: POD logiem dnia (uwaga z urządzenia, 2026-08-26) ─────
+            Log jest właściwą treścią ekranu domowego, więc stoi pierwszy; akcje idą
+            pod nim w kolejności z `myDayActions` — „ROZPOCZNIJ LOT" (droga codzienna,
+            zielona i główna przez cały dzień) nad „DODAJ LOT RĘCZNIE" (droga
+            awaryjna: lot bez telefonu, §3.8 — dostępna też przy pustym dniu).
 
-            Ikona `edit`, nie strzałki `takeover` (zgłoszenie przy issue #23): mockup 01
-            rysuje tu DOPISANIE sesji, a `maximize-2` znaczy przejęcie CUDZEJ maszyny. */}
-        {bottomActions.map((action) => (
+            Blok NIE czeka na `ready`: o dobie nie mówi ani słowa, więc rysuje się
+            w pierwszej klatce. Ikona wpisu to `edit`, nie strzałki `takeover`
+            (zgłoszenie przy issue #23): mockup 01 rysuje tu DOPISANIE sesji,
+            a `maximize-2` znaczy przejęcie CUDZEJ maszyny. */}
+        {actions.map((action) => (
           <ActionButton
             key={action.id}
             label={action.label}
-            tone="neutral"
-            variant="secondary"
-            size="md"
-            icon="edit"
-            onPress={() => navigation.navigate('ManualFlight')}
+            tone={action.primary ? 'green' : 'neutral'}
+            variant={action.primary ? 'solid' : 'secondary'}
+            size={action.primary ? undefined : 'md'}
+            icon={action.primary ? 'start' : 'edit'}
+            onPress={() =>
+              navigation.navigate(action.id === 'start' ? 'PreflightAircraft' : 'ManualFlight')
+            }
           />
         ))}
 
@@ -355,8 +325,8 @@ export function MyDayScreen({
  *    przejmuje się maszynę INNEMU pilotowi (04B), a nie wolny samolot;
  *  · „Nic nie trzeba otwierać" zaprzeczało czynności, której w modelu NIE MA — żeby
  *    zdementować „otwieranie dnia", trzeba je najpierw czytelnikowi przypomnieć;
- *  · obietnica „zapisze się samo" stała już pod zielonym przyciskiem (`btnNote`),
- *    więc pusty ekran niósł ten sam komunikat dwa razy;
+ *  · obietnica „zapisze się samo" stała też pod zielonym przyciskiem (przypis
+ *    usunięty w całości 2026-08-26), więc pusty ekran niósł ją dwa razy;
  *  · tytuł mówił „LOTU", opis „Sesje" — dwie nazwy tej samej rzeczy w sąsiednich
  *    wierszach, choć karta jest listą SESJI.
  * Odtąd tytuł nazywa FAKT o dobie, a opis wylicza, co konkretnie stanie w tym miejscu
@@ -436,7 +406,4 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 19, lineHeight: 22, letterSpacing: 1.5, textAlign: 'center' },
   emptyDesc: { fontSize: 11, lineHeight: 17, textAlign: 'center', maxWidth: 260 },
 
-  // ── stopka ekranu ──────────────────────────────────────────────────────────
-  // `.btn-note`: przypis pod przyciskiem, dosunięty do niego ujemnym marginesem.
-  btnNote: { fontSize: 8.5, lineHeight: 13, letterSpacing: 0.5, textAlign: 'center', marginTop: -4 },
 });

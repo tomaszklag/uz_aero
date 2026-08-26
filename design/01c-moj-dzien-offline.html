@@ -116,7 +116,8 @@
   .total-val { font-family:var(--font-display); font-size:24px; letter-spacing:1px; line-height:1; color:var(--text-primary); }
   .total-sub { font-family:var(--font-mono); font-size:8px; color:var(--text-muted); }
   /* Jeden krój na wszystkie przyciski ekranu (issue #42) — patrz 01. Akcja główna
-     jest `.btn-primary` niezależnie od doby i stoi nad logiem (2026-08-16). */
+     jest `.btn-primary` niezależnie od doby; stoi pod logiem, nad wpisem ręcznym
+     (2026-08-26). */
   .btn-primary {
     display:flex; align-items:center; justify-content:center; gap:10px;
     width:100%; padding:17px; border-radius:16px;
@@ -224,13 +225,6 @@
     </div>
 
     <div class="scroll">
-      <!-- Akcja główna nad logiem — ten sam przycisk w tym samym miejscu, co na 01
-           i 01A. Brak sieci niczego tu nie zmienia: rozpoczęcie lotu działa offline. -->
-      <a href="02-preflight.html" class="btn-primary">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        ROZPOCZNIJ LOT
-      </a>
-
       <div class="group-lbl">Log dnia</div>
 
       <a href="10-statystyki.html" class="day-card">
@@ -302,6 +296,12 @@
         </div>
       </div>
 
+      <!-- Pas akcji pod logiem (2026-08-26), jak na 01 i 01A. Brak sieci niczego
+           tu nie zmienia: rozpoczęcie lotu działa offline. -->
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
       <a href="15-reczny-lot.html" class="btn-secondary">
         <svg width="15" height="15" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 8.5l1.8-0.5 5.4-5.4a1.2 1.2 0 0 0-1.7-1.7L1.6 6.3l-.6 1.8z"/></svg>
         DODAJ LOT RĘCZNIE
