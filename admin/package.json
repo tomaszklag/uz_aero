@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "tokens:css": "tsx ../packages/tokens/scripts/emitCss.ts src/styles/tokens.css",
+    "fonts:fetch": "tsx scripts/fetchFonts.mts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

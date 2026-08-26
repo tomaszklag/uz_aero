@@ -6,8 +6,9 @@
  * hookiem — dokładnie jak `server/src/index.ts` i `app/src/bootstrap/`.
  *
  * Kolejność arkuszy jest ZNACZĄCA i dlatego stoi tu, a nie w `index.html`:
- * `tokens.css` (generowany) → `base.css` (reset i korzeń) → `layout.css` (rama)
- * → komponenty. Zmienne muszą istnieć, zanim ktokolwiek po nie sięgnie.
+ * `fonts.css` (@font-face, self-host — §9) → `tokens.css` (generowany) → `base.css`
+ * (reset i korzeń) → `layout.css` (rama) → komponenty. Zmienne i kroje muszą
+ * istnieć, zanim ktokolwiek po nie sięgnie.
  */
 
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 
+import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/layout.css';
