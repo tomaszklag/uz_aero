@@ -9,6 +9,15 @@
       "android": {
         "buildType": "apk"
       }
+    },
+    "production": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://uzaeroserver-production.up.railway.app"
+      }
     }
   }
 }
