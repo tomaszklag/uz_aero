@@ -145,9 +145,13 @@ export function HistoryScreen({
             <AppText variant="display" style={styles.emptyTitle}>
               BRAK POPRZEDNICH DNI
             </AppText>
+            {/* Tekst mówi o WARTOŚCI ekranu (rozliczenia, okno korekty), nie o technice
+                (issue #55 pkt 2): wzmianka „również bez zasięgu" opisywała budowę
+                aplikacji — skąd ekran liczy dane, jest pilotowi obojętne. */}
             <AppText variant="body" tone="muted" style={styles.emptyText}>
-              Dzisiejsze sesje znajdziesz w „Mój dzień". Tutaj trafiają po zmianie doby —
-              wszystko liczone z zapisu na telefonie, również bez zasięgu.
+              Po zmianie doby znajdziesz tu swoje wcześniejsze sesje — komplet czasów
+              i lotów każdej z nich, z możliwością poprawienia danych przez 24 h od
+              zdania samolotu. Dzisiejsze sesje są na ekranie „Mój dzień".
             </AppText>
           </View>
         )}

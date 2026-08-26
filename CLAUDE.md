@@ -724,6 +724,35 @@ kroków (jak 02 → 02E → 02A): samolot+data+Dual → zadanie → czasy → li
 - **wpis bez ani jednego lotu jest odrzucany blokadą** („LOT RĘCZNY" — lot jest jego
   treścią); sesja bez lotu ma swoją drogę na żywo (09C ze zdaniem powodu)
 
+## Powód blokady wewnątrz przycisku, rezygnacja z lotu przez arkusz (issue #55, 2026-08-26)
+Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ekran:
+- **powód blokady stoi WEWNĄTRZ przycisku, nigdy pod nim** — `ActionButton.disabledReason`
+  renderuje się bursztynem w slocie podpisu (`hint`) i wygrywa z nim na czas blokady.
+  Napis doklejany pod przyciskiem pojawiał się i znikał razem ze stanem, skacząc
+  layoutem wszystkiego poniżej. Przycisk z powodem NIE dostaje przygaszenia opacity
+  (bursztyn pod 0.45 przestaje być ostrzeżeniem) — wyszarzenie niosą kolory. Reguła
+  §6 pkt 3 zostaje: blokada niewidoczna z ekranu ma powód, widoczna — sam `disabled`.
+  W mockupach: `.btn-reason` wewnątrz `.btn-primary.disabled` (02A)
+- **pusta flota na kroku 1 = warning na CAŁY ekran, nie formularz** (`design/02g`,
+  stan `noFleet` w `PreflightAircraftScreen`): sekcja „Samolot" z szarą linijką
+  „brak samolotów w pamięci urządzenia" czytała się jak usterka, a o ścianie pilot
+  dowiadywał się z zablokowanego DALEJ. Zamiast formularza bursztynowa karta z powodem
+  i drogą wyjścia; DALEJ nie ma WCALE (wyszarzony przycisk obiecywałby akcję, której
+  reguły nie dopuszczą — zasada z 10B). Ekran ponawia odczyt lokalnej bazy co 5 s,
+  więc gdy pętla synca dowiezie `GET /reference`, formularz wraca sam
+- **„wstecz" z kroku 1 przy niepustym szkicu pyta o rezygnację** (`design/02h`,
+  `AbandonPreflightSheet` + `usePreventRemove` — ta sama mechanika co blokada kokpitu
+  04D). Potwierdzenie CZYŚCI szkic (`draft.reset()`): następne wejście zaczyna od nowa,
+  bo porzucony formularz wracał z wyborami sprzed godziny i czytał się jak podpowiedź.
+  Pusty formularz wychodzi bez pytania — arkusz nad niczym pytałby o zgodę na nic
+  (`dirty()` w `preflightDraft.ts`, z testami). Bramka gaśnie po ukończeniu flow
+  (krok 3 czyści szkic), więc zwinięcie stosu po zdaniu samolotu przechodzi bez arkusza.
+  Zatrzymana akcja nawigacji jedzie dopiero z efektu PO re-renderze z opuszczoną bramką
+- **przypisy o budowie aplikacji wyleciały z dwóch miejsc**: spod klawiatury PIN
+  („PIN odblokowuje aplikację bez sieci…") i z pustego stanu „Poprzednich dni"
+  (wzmianka „również bez zasięgu") — pusty stan 12 mówi teraz o WARTOŚCI ekranu
+  (komplet czasów i lotów, okno korekty 24 h), nie o tym, skąd liczy dane
+
 ## Log zdarzeń jest JEDEN — kokpit rysuje oś sesji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny
 `EventLog` w kokpicie (04, 05, 04B). Ta sama sesja czytała się przez to dwa razy inaczej,

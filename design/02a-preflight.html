@@ -147,8 +147,11 @@
   .value-none { font-family:var(--font-mono); font-size:30px; font-weight:700; line-height:1; color:var(--text-muted); }
   .koryguj-btn.amber { border-color:var(--amber-border); color:var(--amber); background:var(--amber-muted); }
   .none-box { display:flex; align-items:flex-start; gap:8px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:11px 13px; font-family:var(--font-mono); font-size:10px; color:var(--amber); line-height:1.55; }
-  .btn-primary.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; pointer-events:none; cursor:not-allowed; }
-  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); text-align:center; }
+  /* Powód blokady stoi WEWNĄTRZ przycisku (issue #55): tekst POD przyciskiem pojawiał
+     się i znikał razem ze stanem, skacząc layoutem reszty ekranu. Bursztyn, bo to
+     ostrzeżenie o brakującym warunku, nie opis przycisku. */
+  .btn-primary.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; pointer-events:none; cursor:not-allowed; flex-direction:column; gap:6px; }
+  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
 
   /* ===== STATE SWITCH (canvas) ===== */
   .state-switch { width:100%; max-width:460px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -345,10 +348,12 @@
         ROZPOCZNIJ LOT
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </a>
-      <div class="only-none" style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
-        <span class="btn-primary disabled">ROZPOCZNIJ LOT</span>
+      <!-- Powód blokady WEWNĄTRZ przycisku (issue #55) — napis pod przyciskiem
+           skakał layoutem, gdy blokada się zwalniała. -->
+      <span class="btn-primary disabled only-none" style="margin-top:auto;">
+        ROZPOCZNIJ LOT
         <span class="btn-reason">Wprowadź odczyty paliwa i MH z liczników — rozpoczną nowe ogniwo łańcucha</span>
-      </div>
+      </span>
 
     </div>
 

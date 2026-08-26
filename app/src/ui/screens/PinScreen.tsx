@@ -168,11 +168,9 @@ export function PinScreen() {
           </View>
         )}
 
-        {setup && (
-          <AppText variant="micro" tone="muted" style={[styles.note, styles.setupNote]}>
-            PIN odblokowuje aplikację bez sieci — zapamiętaj go
-          </AppText>
-        )}
+        {/* Przypis „PIN odblokowuje aplikację bez sieci — zapamiętaj go" USUNIĘTY
+            (issue #55 pkt 1): opisywał budowę aplikacji komuś, kto właśnie ustawia PIN —
+            a mockup 00 takiego tekstu nigdy nie miał. */}
       </View>
     </Screen>
   );
@@ -190,6 +188,5 @@ const styles = StyleSheet.create({
   noteRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   // `.links-note` jest o oczko mniejsza od mikro-etykiety (8 px) — reszta z `micro`.
   note: { fontSize: 8 },
-  setupNote: { marginTop: 26 },
   guard: { maxWidth: 290, marginTop: 4 },
 });

@@ -316,6 +316,7 @@
   .vp-item.active { border-color:var(--green-border); background:rgba(46,204,113,0.05); pointer-events:none; }
   .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
   .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
   .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
   .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
   .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
@@ -477,6 +478,20 @@
       <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); zajęty samolot podglądasz na 04B i stamtąd przejmujesz, claim trafia do outboxa. Chip OFFLINE ze stemplem ostatniego synca.</span>
     </span>
   </a>
+  <a class="vp-item" href="02g-preflight-brak-floty.html">
+    <span class="vp-badge amber">02G</span>
+    <span class="vp-body">
+      <span class="vp-name">Brak floty w pamięci</span>
+      <span class="vp-when">Cache referencyjny przeczytany i PUSTY (świeża instalacja przed pierwszym syncem albo flota nie założona w panelu) — zamiast formularza warning na cały ekran, bez DALEJ (issue #55).</span>
+    </span>
+  </a>
+  <a class="vp-item" href="02h-preflight-rezygnacja.html">
+    <span class="vp-badge blue">02H</span>
+    <span class="vp-body">
+      <span class="vp-name">Rezygnacja z nowego lotu</span>
+      <span class="vp-when">„Wstecz" przy niepustym formularzu — arkusz pyta o rezygnację; potwierdzenie czyści szkic i następne wejście zaczyna od nowa (issue #55). Pusty formularz wychodzi bez pytania.</span>
+    </span>
+  </a>
 </aside>
 
 <nav class="nav-strip">
@@ -486,6 +501,8 @@
   <span>·</span>
   <a href="02-preflight.html" class="active">02 Preflight</a>
   <a href="02d-preflight-offline.html">02D Offline →</a>
+  <a href="02g-preflight-brak-floty.html">02G Brak floty →</a>
+  <a href="02h-preflight-rezygnacja.html">02H Rezygnacja →</a>
   <a href="02e-preflight-zadanie.html">02E Zadanie →</a>
   <a href="02a-preflight.html">02A Paliwo/MH →</a>
   <span>·</span>

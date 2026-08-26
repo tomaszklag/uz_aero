@@ -94,6 +94,7 @@ export * from './sheets/CorrectionHistorySheet';
 export * from './sheets/AirfieldSheet';
 export * from './sheets/TextEntrySheet';
 export * from './sheets/LeaveCockpitSheet';
+export * from './sheets/AbandonPreflightSheet';
 
 // Dane i akcje
 export * from './data/DayCard';
