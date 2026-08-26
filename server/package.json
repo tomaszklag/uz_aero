@@ -15,17 +15,18 @@
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
+    "@fastify/static": "^8.0.4",
     "@uzaero/domain": "*",
     "@uzaero/format": "*",
     "fastify": "^5.2.0",
     "pg": "^8.13.1",
+    "tsx": "^4.19.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.17",
     "@types/node": "^22.10.5",
     "@types/pg": "^8.11.10",
-    "tsx": "^4.19.2",
     "typescript": "~5.9.2",
     "vitest": "^2.1.8"
   }

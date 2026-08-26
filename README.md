@@ -51,6 +51,42 @@ Szybki sprawdzian serwera:
 curl -s -X POST localhost:3000/auth/login -H "content-type: application/json" -d '{"login":"admin","password":"test1234"}'
 ```
 
+## Wdrożenie: Railway
+
+Jeden obraz Dockera (`Dockerfile` w korzeniu) niesie API **i statyczny build panelu**
+(`/admin/` — ten sam origin, więc ciasteczko `SameSite=Strict` działa jak w dev za proxy
+Vite). Konfiguracja buildu i healthcheck: `railway.json`.
+
+1. **Projekt**: railway.com → New Project → Deploy from GitHub repo (`uz_aero`).
+   Railway wykryje `Dockerfile` przez `railway.json`.
+2. **Postgres**: w projekcie „Create → Database → PostgreSQL".
+3. **Zmienne serwisu** (zakładka Variables usługi z repo):
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}` (referencja do usługi Postgres),
+   - `JWT_SECRET` = losowe ≥32 znaki,
+   - `TRUST_PROXY` = `1` (serwer stoi za proxy TLS Railway; bez tego dziennik audytu
+     widzi adres proxy zamiast człowieka),
+   - `PUBLIC_BASE_URL` = `https://<domena-uslugi>` (po kroku 5 — linki do kart arkusza
+     klikane z telefonu).
+   `ADMIN_DIST_DIR` i `TRACES_DIR` są ustawione w obrazie — nie podawaj ich.
+4. **Wolumen na ślady GPS**: usługa → prawy przycisk → Attach Volume, mount path **`/data`**.
+   Telefon kasuje nagranie po wysyłce (issue #47) — kopia na serwerze jest JEDYNĄ,
+   bez wolumenu ginie przy każdym deployu.
+5. **Domena**: Settings → Networking → Generate Domain (port 3000). Wpisz ją w
+   `PUBLIC_BASE_URL` (krok 3).
+6. **Seed** (raz, z własnego komputera): w usłudze Postgres skopiuj publiczny
+   `DATABASE_PUBLIC_URL` i uruchom w `server/`:
+   `SEED_PASSWORD=<mocne-haslo> DATABASE_URL=<DATABASE_PUBLIC_URL> npm run seed`
+   (PowerShell: `$env:SEED_PASSWORD='…'; $env:DATABASE_URL='…'; npm run seed`).
+   Migracje i tak wykonują się przy starcie serwera; seed dokłada konto `admin`.
+7. **Sprawdzian**: `https://<domena>/health` → `{"ok":true}`, `https://<domena>/admin/`
+   → logowanie panelu (`admin` + hasło z kroku 6). Flotę i konta pilotów załóż w A07/A06.
+8. **Aplikacja pilota**: build EAS z adresem serwera —
+   `EXPO_PUBLIC_API_URL=https://<domena>` (patrz `app/src/infrastructure/api/apiBaseUrl.ts`).
+
+Koszt: plan Hobby (5 USD/mies. z wliczonym zużyciem) zwykle wystarcza na serwer + bazę
+przy ruchu klubowym. Backup: rejestr jest append-only i jest jedynym źródłem — ustaw
+w Railway backupy Postgresa albo cykliczne `pg_dump` po `DATABASE_PUBLIC_URL`.
+
 ## Zasady
 
 - Mockupy w `design/` są specyfikacją — ekran wdraża się 1:1 (`CLAUDE.md`).

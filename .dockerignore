@@ -1,0 +1,16 @@
+# Kontekst budowania = tylko to, co obraz naprawdę kopiuje (Dockerfile).
+# `app/` zostaje wycięte poza manifestem: npm potrzebuje mapy workspace'ów,
+# ale zależności Expo (setki MB) nie mają w obrazie serwera czego szukać.
+
+**/node_modules
+.git
+.expo
+
+app/*
+!app/package.json
+
+design/
+docs/
+traces/
+server/traces/
+*.md

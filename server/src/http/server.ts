@@ -41,6 +41,7 @@ import type { StateQueries } from '../application/mobile/queries/aircraftState.t
 import type { PilotsPort, TokenService, TraceSinkPort } from '../application/common/ports.ts';
 import { registerAdminCsrfGuard } from './adminCsrf.ts';
 import { registerRequestLog } from './requestLog.ts';
+import { registerAdminPanelStatic } from './routes/admin/staticPanel.ts';
 import type { AdminGate } from './routes/admin/adminRoute.ts';
 import { registerAdminAuditRoutes } from './routes/admin/audit.ts';
 import { registerAdminAuthRoutes } from './routes/admin/auth.ts';
@@ -171,10 +172,23 @@ export interface ServerOptions {
    * dziennika na przebieg zakryłoby to, po co się je czyta.
    */
   requestLog?: boolean;
+  /**
+   * Katalog buildu panelu (`admin/dist`) do serwowania pod `/admin/` — §9 architektury
+   * frontendu. Nieustawiony (dev, testy) = serwer w ogóle nie zna panelu i `/admin/`
+   * odpowiada 404; panel jedzie wtedy z Vite. Composition root bierze go z `ADMIN_DIST_DIR`.
+   */
+  adminDistDir?: string;
+  /**
+   * Zaufanie nagłówkom `X-Forwarded-*` (hosting za proxy TLS, np. Railway). Bez tego
+   * `req.ip` — a więc `actor_ip` w dzienniku audytu — pokazywałby dla wszystkich adres
+   * proxy zamiast człowieka. Domyślnie WYŁĄCZONE: serwer wystawiony wprost nie może
+   * wierzyć nagłówkowi, który klient wpisuje sam.
+   */
+  trustProxy?: boolean;
 }
 
 export function buildServer(deps: ServerDeps, options: ServerOptions = {}): FastifyInstance {
-  const app = Fastify({ logger: false });
+  const app = Fastify({ logger: false, trustProxy: options.trustProxy === true });
 
   // Przed trasami, żeby dziennik objął także żądania odbite przez strażnika CSRF
   // i te, które nie trafią w żadną trasę (404 też jest informacją o tym, co się dzieje).
@@ -220,6 +234,10 @@ export function buildServer(deps: ServerDeps, options: ServerOptions = {}): Fast
   registerAdminStatsRoutes(app, deps.adminStatsQueries, gate);
   registerAdminConsumptionRoutes(app, deps.adminConsumptionQueries, gate);
   registerAdminMaintenanceRoutes(app, deps.adminMaintenanceQueries, deps.adminMaintenance, gate);
+
+  // Statyczny build panelu — na końcu, żeby czytać ten plik w kolejności „API, potem
+  // pliki"; w routerze i tak wygrywają trasy konkretne, nie kolejność rejestracji.
+  if (options.adminDistDir != null) registerAdminPanelStatic(app, options.adminDistDir);
 
   app.get('/health', async () => ({ ok: true }));
 

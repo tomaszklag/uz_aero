@@ -803,6 +803,9 @@ w `app/` istnieje z powodów RN, których tu nie ma.
 ## 9. Build i deploy pod `/admin`
 
 Statyczny build serwowany przez `@fastify/static` z tego samego kontenera (`ANALIZA` §5 poz. 18).
+**Wdrożone 2026-08-26** (hosting na Railway): `server/src/http/routes/admin/staticPanel.ts`,
+rejestracja warunkiem `ADMIN_DIST_DIR` w composition root, testy w `test/adminStatic.test.ts`;
+obraz produkcyjny buduje `Dockerfile` w korzeniu repo (etap 1 = `vite build`, etap 2 = runtime).
 Konsekwencje, których nie widać z tego zdania:
 
 - **`base: '/admin/'` w `vite.config.ts`.** Bez tego wszystkie zasoby wskazują `/assets/*`

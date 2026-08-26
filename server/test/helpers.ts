@@ -129,6 +129,8 @@ export async function testHarness(
     sheets?: SheetsPort;
     audit?: AdminAuditPort;
     events?: (real: EventsStorePort) => EventsStorePort;
+    /** Katalog buildu panelu — wyłącznie `adminStatic.test.ts`; reszta testów bez plików. */
+    adminDistDir?: string;
   } = {},
 ) {
   const pglite = new PGlite();
@@ -334,7 +336,7 @@ export async function testHarness(
     ),
     // Dziennik żądań na konsoli zgaszony: kilkaset linii na przebieg zakryłoby to,
     // po co czyta się wynik testów. Sam format ma własny test jednostkowy.
-  }, { requestLog: false });
+  }, { requestLog: false, adminDistDir: options.adminDistDir });
 
   // `auditedWrite` i porty wychodzą na zewnątrz, żeby testy komend administracyjnych
   // wołanych POZA HTTP (przebudowa projekcji = CLI) składały je z tych samych klas.
