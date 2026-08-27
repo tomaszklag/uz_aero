@@ -2,25 +2,27 @@
  * UZ Aero — arkusz daty lotu (mockup `design/15e-reczny-data.html`, krok 1 wpisu
  * ręcznego).
  *
- * Ta sama kontrolka, co przy godzinie (15D / 10E), tylko w skali DOBY: przyciski
- * ±1 dzień, a tapnięcie w wartość otwiera klawiaturę numeryczną i pozwala wpisać
- * datę wprost (kropki stawia maska — `maskDateUtcInput`). Kalendarza miesięcznego
- * NIE MA: wpis ręczny powstaje w praktyce tego samego dnia albo dzień po locie,
- * a siatka 42 kratek to kontrolka, której pilot musi się dopiero nauczyć, żeby
- * cofnąć się o jeden dzień. Stąd też skróty „Dzisiaj" i „Wczoraj" — dwa dni,
- * w których powstaje niemal każdy wpis.
+ * Od issue #58 sercem arkusza jest KALENDARZ MIESIĘCZNY (`CalendarGrid`) — zgłoszenie
+ * z urządzenia odwróciło decyzję z 2026-08-16 (wtedy: stepper ±1 dzień + wpis
+ * z klawiatury, „siatka 42 kratek to kontrolka, której pilot musi się dopiero
+ * nauczyć"). W praktyce było odwrotnie: kalendarz jest kontrolką, którą pilot ZNA,
+ * a odklikiwanie daty przyciskiem ±1 dzień — tą, której musiał się uczyć.
+ * Skróty „Dzisiaj" i „Wczoraj" zostają NAD kalendarzem: te dwa dni obsługują
+ * niemal każdy wpis, więc zwykle siatki nie trzeba nawet dotykać.
+ *
+ * Przypis „doba liczy się od uruchomienia silnika" mieszka TUTAJ — i tylko tutaj
+ * (issue #58 pkt 3): na formularzu kroku 1 powtarzał się pod polem, a wersalikowa
+ * etykieta pola robiła z niego krzyk. Tu jest zwykłym zdaniem pod kalendarzem.
  */
 
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { utcDayStart } from '../../../domain';
-import { dateUtcLong, maskDateUtcInput, parseDateUtc } from '../../format';
 import { AppText } from '../foundation/AppText';
 import { useTheme } from '../../theme';
 import { toneColors } from '../tone';
-import { Field } from '../input/Field';
-import { Stepper } from '../input/Stepper';
+import { CalendarGrid } from '../input/CalendarGrid';
 import { Sheet } from './Sheet';
 
 const DAY_MS = 86_400_000;
@@ -93,29 +95,20 @@ export function FlightDateSheet({
       onConfirm={() => onConfirm(value)}
       onCancel={onCancel}
     >
-      <Field label="Doba UTC uruchomienia silnika">
-        <Stepper
-          value={value}
-          onChange={(next) => setValue(utcDayStart(next))}
-          step={DAY_MS}
-          stepLabel="1 dzień"
-          max={today}
-          format={dateUtcLong}
-          edit={{
-            toText: () => '',
-            mask: maskDateUtcInput,
-            parse: (text) => parseDateUtc(text, value),
-            keyboardType: 'number-pad',
-            maxLength: 10,
-            label: 'Data lotu',
-          }}
-        />
-      </Field>
-
       <View style={styles.quickRow}>
         {quick(today, 'Dzisiaj')}
         {quick(yesterday, 'Wczoraj')}
       </View>
+
+      {/* `key` po widoczności: każde otwarcie montuje siatkę od nowa, więc kartka
+          wraca na miesiąc WYBRANEJ doby — nie na ostatnio przeglądany. */}
+      <CalendarGrid key={String(visible)} value={value} max={today} today={today} onChange={setValue} />
+
+      {/* Zwykłe zdanie, nie wersalikowa etykieta (issue #58 pkt 3) — to przypis
+          o znaczeniu wyboru, a nie nazwa pola. */}
+      <AppText variant="body" tone="muted" style={styles.note}>
+        Doba liczy się od uruchomienia silnika.
+      </AppText>
     </Sheet>
   );
 }
@@ -131,4 +124,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   quickLabel: { fontSize: 11, letterSpacing: 1, textTransform: 'uppercase' },
+  note: { fontSize: 11, lineHeight: 15 },
 });

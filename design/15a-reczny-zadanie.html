@@ -76,9 +76,14 @@
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; text-decoration:none; }
   .field-input:hover { border-color:var(--green-border); }
+  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5 —
+     22 px robiło z kodu ICAO bohatera ekranu. PLACEHOLDER JEST ZAWSZE SKŁADEM
+     TEKSTOWYM (trzecia tura #58): body 15 w --text-placeholder, jak w arkuszu
+     notatki — instrukcja, nie wartość. Tekst pilota (klient, notatka) zawija się
+     W CAŁOŚCI (pkt 10). */
   .field-input-val { font-size:15px; line-height:20px; color:var(--text-primary); }
-  .field-input-val.icao { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:2px; }
-  .field-input-val.empty { color:var(--text-placeholder); }
+  .field-input-val.icao { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; }
+  .field-input-val.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-input-main { display:flex; align-items:center; gap:6px; flex-shrink:0; }
   .field-input-main.grow { flex:1; min-width:0; }
   .field-input-side { display:flex; align-items:center; gap:10px; flex-shrink:1; min-width:0; }
@@ -198,7 +203,16 @@
       <!-- SKOKI = JEDNO LOTNISKO (issue #13): startują i lądują na tym samym placu,
            więc pytanie o parę byłoby pytaniem o to samo dwa razy. Przy przelocie,
            egzaminie i locie technicznym stoją tu DWA pola — „Start" i „Lądowanie" —
-           jedno pod drugim, bez strzałki (wzorzec 02F). -->
+           jedno pod drugim, bez strzałki (wzorzec 02F).
+
+           TRASA JEST WYMAGANA (issue #58, kolejna tura z urządzenia): bez lotniska
+           (przy parze — bez obu) DALEJ jest zablokowane z powodem w przycisku
+           („Wybierz lotnisko startu."). Pole bez plakietki „opcjonalne" obiecuje
+           wymóg, więc bramka musi go egzekwować. To świadome ODEJŚCIE od 02E,
+           gdzie pustą trasę wolno zostawić (start silnika ma trwać sekundy — fakt
+           lotu > kompletność formularza): wpis opisuje lot, który JUŻ się odbył,
+           więc „jeszcze nie wiem, dokąd" tu nie istnieje. -->
+
       <div class="section">
         <div class="section-head"><span class="section-label">Lotnisko</span></div>
         <div class="field">
@@ -271,7 +285,7 @@
   <a class="vp-item" href="15-reczny-lot.html">
     <span class="vp-badge">15</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 1 — samolot i data</span>
+      <span class="vp-name">Krok 1 — data i samolot</span>
       <span class="vp-when">Maszyna, data lotu (domyślnie dzisiejsza), opcjonalny Dual.</span>
     </span>
   </a>

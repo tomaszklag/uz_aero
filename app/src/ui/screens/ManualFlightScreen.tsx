@@ -5,7 +5,8 @@
  * Wpis CAŁEGO lotu po fakcie — telefon został w kurtce, bateria padła, lot spisany
  * na papierze. Od przebudowy jest STEPPEREM o czterech krokach, jak lot normalny
  * (02 → 02E → 02A), i niesie PEŁNĄ PARITĘ z zapisem automatycznym:
- *  1. samolot · data lotu (domyślnie dzisiejsza) · opcjonalny Dual,
+ *  1. data lotu (pierwsza — wpis zaczyna się od „którego to było?", issue #58 pkt 1;
+ *     domyślnie dzisiejsza) · samolot · Dual (wymagany, gdy wymaga go samolot — pkt 4),
  *  2. zadanie: rodzaj operacji, lotniska, klient, notatka — pola z 02E,
  *  3. czasy: bieg silnika + DOWOLNIE WIELE lotów + zrzuty w dniu skokowym,
  *  4. liczniki: paliwo przed/dolewki/po, motogodziny z obu stron + OSTRZEŻENIA.
@@ -71,6 +72,7 @@ import {
 } from '../../domain';
 import {
   emptyManualFlightDraft,
+  manualFlightNeedsDual,
   manualFlightStepBlocker,
   preRunAddedL,
   sortedFlights,
@@ -144,7 +146,6 @@ export function ManualFlightScreen({
   // Który arkusz jest otwarty; listy (loty, zrzuty, dolewki) niosą też `id` pozycji.
   type SheetState =
     | { kind: 'date' }
-    | { kind: 'dual' }
     | { kind: 'airfield'; role: 'departure' | 'arrival' }
     | { kind: 'client' }
     | { kind: 'notes' }
@@ -160,6 +161,9 @@ export function ManualFlightScreen({
 
   const step = STEPS[stepIndex]!;
   const blocker = manualFlightStepBlocker(step, draft);
+  // Wymóg Duala (issue #58 pkt 4) — jak na 02: baner nazywa powód, przycisk dostaje
+  // sam `disabled` (blokada widoczna z ekranu nie powtarza swojego zdania w przycisku).
+  const needsDual = step === 'aircraft' && manualFlightNeedsDual(aircraft, draft);
   const warnings = useMemo(
     () =>
       step === 'readings'
@@ -278,15 +282,30 @@ export function ManualFlightScreen({
             variant="solid"
             icon="next"
             disabledReason={blocker}
+            disabled={needsDual}
             onPress={() => setStepIndex(stepIndex + 1)}
           />
         )
       }
     >
       <View style={{ gap: theme.spacing.md }}>
-        {/* ══ KROK 1 — SAMOLOT I DATA ════════════════════════════════════════ */}
+        {/* ══ KROK 1 — DATA I SAMOLOT ════════════════════════════════════════ */}
         {step === 'aircraft' && (
           <>
+            {/* Data lotu PIERWSZA (issue #58 pkt 1): wpis ręczny zaczyna się od
+                pytania „którego to było?" — data jest polem z dzisiejszą wartością
+                domyślną, nie napisem w nagłówku (zgłoszenie z urządzenia, 2026-08-16).
+                Przypisu o dobie tu NIE MA (pkt 3) — to samo zdanie stoi w arkuszu
+                daty, przy kontrolce, której dotyczy. */}
+            <Card title="Data lotu · UTC" header="inline">
+              <ValueBox
+                value={dateUtcLong(draft.day)}
+                actionIcon="clock"
+                onPress={() => setSheet({ kind: 'date' })}
+                accessibilityLabel={`Data lotu ${dateUtcLong(draft.day)} — zmień`}
+              />
+            </Card>
+
             <Card title="Samolot" header="inline">
               {fleet.length === 0 ? (
                 <AppText variant="body" tone="muted">
@@ -296,38 +315,40 @@ export function ManualFlightScreen({
                 <CardPicker
                   options={aircraftOptions}
                   value={draft.aircraftId}
+                  // Wybór Duala PRZEŻYWA zmianę maszyny (issue #58 — jak `setAircraft`
+                  // na 02): wybrana osoba nie traci ważności, a znikające bez słowa
+                  // pole czyta się jak błąd. Wymóg załogi 2-os. i tak egzekwuje
+                  // `manualFlightNeedsDual` przy DALEJ.
                   onChange={(id) => patch({ aircraftId: id })}
                 />
               )}
             </Card>
 
-            {/* Data lotu — POLE z dzisiejszą wartością domyślną, nie napis w nagłówku:
-                data z zegara przy wpisie sprzed tygodnia kłamała o tym, czego wpis
-                dotyczy (zgłoszenie z urządzenia, 2026-08-16). */}
-            <Card title="Data lotu · UTC" header="inline">
-              <ValueBox
-                value={dateUtcLong(draft.day)}
-                actionIcon="clock"
-                onPress={() => setSheet({ kind: 'date' })}
-                accessibilityLabel={`Data lotu ${dateUtcLong(draft.day)} — zmień`}
-              />
-              <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
-                doba liczy się od uruchomienia silnika
-              </AppText>
-            </Card>
-
-            {/* Dual — OPCJONALNY i dlatego jedyny z plakietką na tym kroku
-                (wymagalność jest stanem domyślnym; oznaczamy wyłącznie wyjątki). */}
+            {/* Dual — zwykle OPCJONALNY; przy samolocie z wymogiem załogi dwuosobowej
+                plakietka i baner mówią to samo, co na 02 (issue #58 pkt 4 — wpis
+                ręczny opisuje ten sam lot tym samym prawem). */}
             <Card
               title="Drugi pilot (Dual)"
               header="inline"
-              headerRight={<Tag label="opcjonalne" tone="neutral" />}
+              headerRight={
+                <Tag
+                  label={aircraft?.dualRequired ? 'wymagany · załoga 2-os.' : 'opcjonalne'}
+                  tone={aircraft?.dualRequired ? 'amber' : 'neutral'}
+                />
+              }
             >
               <CardPicker
                 options={dualOptions}
                 value={draft.dualId}
                 onChange={(id) => patch({ dualId: draft.dualId === id ? null : id })}
               />
+              {needsDual && (
+                <Banner
+                  kind="warning"
+                  title="Wymagana załoga dwuosobowa"
+                  text={`${aircraft?.type ?? 'Ten samolot'} wymaga drugiego pilota — wybierz go, aby przejść dalej.`}
+                />
+              )}
             </Card>
           </>
         )}
@@ -383,6 +404,7 @@ export function ManualFlightScreen({
               headerRight={<Tag label="opcjonalne" tone="neutral" />}
             >
               <ValueBox
+                variant="text"
                 value={draft.client ?? ''}
                 placeholder="np. nazwa klubu skoczków"
                 actionIcon="edit"
@@ -399,6 +421,7 @@ export function ManualFlightScreen({
               headerRight={<Tag label="opcjonalne" tone="neutral" />}
             >
               <ValueBox
+                variant="text"
                 value={draft.notes ?? ''}
                 placeholder="np. skąd pochodzi ten wpis"
                 actionIcon="edit"

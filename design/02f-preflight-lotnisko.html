@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28);
@@ -88,8 +88,11 @@
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; }
   .field-input:hover { border-color:var(--green-border); }
   .field-input-val { font-size:15px; line-height:20px; color:var(--text-primary); }
-  .field-input-val.icao { font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:2px; }
-  .field-input-val.empty { color:var(--text-muted); }
+  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5;
+     placeholder ZAWSZE składem tekstowym (trzecia tura #58): body 15
+     w --text-placeholder, jak w arkuszu notatki — instrukcja, nie wartość. */
+  .field-input-val.icao { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; }
+  .field-input-val.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   /* Wartość główna NIE kurczy się nigdy — kod ICAO ma być cały. Ustępuje prawa strona. */
   .field-input-main { display:flex; align-items:center; gap:6px; flex-shrink:0; }
   .field-input-main.grow { flex:1; min-width:0; }
@@ -119,12 +122,12 @@
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
   .modal-input-row { display:flex; align-items:center; gap:10px; background:var(--surface); border:2px solid var(--border-strong); border-radius:14px; padding:12px 16px; }
-  /* JEDEN KRÓJ I JEDEN STOPIEŃ WE WSZYSTKICH STANACH pola wyszukiwarki. Zmniejszanie
-     samego placeholdera zmieniałoby WYSOKOŚĆ kontrolki przy pierwszej i ostatniej
-     literze — czyli ten sam błąd, przez który pole wyjechało na dół arkusza. */
-  .modal-input-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:1.5px; color:var(--text-primary); flex:1; }
-  /* Pusta wyszukiwarka: zmienia się WYŁĄCZNIE kolor. */
-  .modal-input-val.placeholder { color:var(--text-muted); }
+  /* POLE JEST MONO, PLACEHOLDER SKŁADEM TEKSTOWYM (issue #58): kod pisze się krojem
+     kodu, ale zachęta to instrukcja — body 15 w --text-placeholder, jak placeholder
+     arkusza notatki. Wspólny line-height trzyma wysokość pola między stanami;
+     w RN robi to nakładka `PlaceholderOverlay` nad polem o stałej metryce. */
+  .modal-input-val { font-family:var(--font-mono); font-size:16px; font-weight:400; letter-spacing:1.5px; line-height:21px; color:var(--text-primary); flex:1; }
+  .modal-input-val.placeholder { font-family:var(--font-body); font-size:15px; letter-spacing:0; color:var(--text-placeholder); }
   .modal-actions { display:grid; grid-template-columns:1fr 2fr; gap:8px; }
   /* Wyszukiwarka nie ma czego potwierdzać — wybór to tapnięcie w wiersz. */
   .modal-actions.single { grid-template-columns:1fr; }
