@@ -127,11 +127,10 @@
   .links-row { margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .link-item { font-size: 12px; color: var(--text-secondary); text-decoration: none; padding: 3px 8px; transition: color 0.15s; }
   .link-item:hover { color: var(--green); }
-  .links-note {
-    margin-top: 6px;
-    font-family: var(--font-mono); font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--text-muted); display: flex; align-items: center; gap: 6px;
-  }
+  /* `.links-note` („Pełne logowanie wymaga internetu") USUNIĘTA (issue #55):
+     przypis o budowie aplikacji pod klawiaturą, której pilot używa codziennie.
+     Ograniczenie mówi o sobie samo tam, gdzie ma znaczenie: wariant 00B (offline
+     bez profilu) i nazwany błąd po nieudanej próbie logowania. */
   /* Ochrona wylogowania (sekcja 3.0): zmiana konta zablokowana przy niepustym outboxie —
      jedyne miejsce w aplikacji, gdzie pilot mógłby bezpowrotnie stracić zdarzenia. */
   .link-item.locked { color: var(--text-muted); opacity: 0.5; cursor: not-allowed; text-decoration: none; }
@@ -232,13 +231,11 @@
         </div>
       </div>
 
-      <!-- LINKS -->
+      <!-- LINKS — sam link, bez przypisu „Pełne logowanie wymaga internetu"
+           (issue #55): ograniczenie sieci mówi o sobie na 00A/00B, gdy naprawdę
+           zagradza drogę, a nie codziennie pod klawiaturą PIN. -->
       <div class="links-row">
         <a href="00a-login-full.html" class="link-item">Nie pamiętam PIN</a>
-        <div class="links-note">
-          <svg width="10" height="10" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
-          Pełne logowanie wymaga internetu
-        </div>
       </div>
 
     </div>

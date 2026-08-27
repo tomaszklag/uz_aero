@@ -758,9 +758,13 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   (krok 3 czyści szkic), więc zwinięcie stosu po zdaniu samolotu przechodzi bez arkusza.
   Zatrzymana akcja nawigacji jedzie dopiero z efektu PO re-renderze z opuszczoną bramką
 - **przypisy o budowie aplikacji wyleciały z dwóch miejsc**: spod klawiatury PIN
-  („PIN odblokowuje aplikację bez sieci…") i z pustego stanu „Poprzednich dni"
-  (wzmianka „również bez zasięgu") — pusty stan 12 mówi teraz o WARTOŚCI ekranu
-  (komplet czasów i lotów, okno korekty 24 h), nie o tym, skąd liczy dane
+  („PIN odblokowuje aplikację bez sieci…" przy ustawianiu PIN-u ORAZ — druga tura
+  z urządzenia — „Pełne logowanie wymaga internetu" pod „Nie pamiętam PIN":
+  ograniczenie mówi o sobie samo na 00B i nazwanym błędem po nieudanej próbie
+  logowania, a nie codziennie pod klawiaturą; strażnik outboxa zostaje, bo niesie
+  BLOKADĘ z powodem) i z pustego stanu „Poprzednich dni" (wzmianka „również bez
+  zasięgu") — pusty stan 12 mówi teraz o WARTOŚCI ekranu (komplet czasów i lotów,
+  okno korekty 24 h), nie o tym, skąd liczy dane
 
 ## Log zdarzeń jest JEDEN — kokpit rysuje oś sesji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny

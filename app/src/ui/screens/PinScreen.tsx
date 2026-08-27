@@ -25,14 +25,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import {
   AppText,
   Brand,
-  Icon,
   Numpad,
   OutboxGuard,
   PinDots,
   ProfileChip,
   Screen,
 } from '../components';
-import { useTheme } from '../theme';
 import { useSessionStore } from '../store';
 import { useAuthStore } from '../store/authStore';
 
@@ -41,7 +39,6 @@ const PIN_LENGTH = 4;
 const FEEDBACK_MS = 250;
 
 export function PinScreen() {
-  const { theme } = useTheme();
   const status = useAuthStore((s) => s.status);
   const pilot = useAuthStore((s) => s.pilot);
   const unlock = useAuthStore((s) => s.unlock);
@@ -151,19 +148,18 @@ export function PinScreen() {
               </AppText>
             </Pressable>
 
-            {reloginBlocked ? (
+            {/* Przypis „Pełne logowanie wymaga internetu" USUNIĘTY (issue #55, druga
+                tura z urządzenia): opisywał budowę aplikacji pod klawiaturą używaną
+                codziennie. Ograniczenie mówi o sobie samo tam, gdzie zagradza drogę —
+                wariant 00B (offline bez profilu) i nazwany błąd po nieudanej próbie
+                logowania (`authStore.login`). Zostaje wyłącznie strażnik outboxa,
+                bo on niesie BLOKADĘ z powodem (§3.0), nie ciekawostkę. */}
+            {reloginBlocked && (
               <OutboxGuard
                 count={outboxCount}
                 tail=" czeka na wysyłkę. Odblokuj PIN-em i poczekaj na synchronizację — inaczej dane dnia zostałyby bez właściciela."
                 style={styles.guard}
               />
-            ) : (
-              <View style={styles.noteRow}>
-                <Icon name="offline" size={10} color={theme.colors.textMuted} />
-                <AppText variant="micro" tone="muted" style={styles.note}>
-                  Pełne logowanie wymaga internetu
-                </AppText>
-              </View>
             )}
           </View>
         )}
@@ -185,8 +181,5 @@ const styles = StyleSheet.create({
   dots: { marginBottom: 30 },
   links: { marginTop: 26, alignItems: 'center', gap: 8 },
   link: { fontSize: 12 },
-  noteRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
-  // `.links-note` jest o oczko mniejsza od mikro-etykiety (8 px) — reszta z `micro`.
-  note: { fontSize: 8 },
   guard: { maxWidth: 290, marginTop: 4 },
 });
