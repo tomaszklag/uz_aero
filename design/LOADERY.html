@@ -92,25 +92,35 @@
      Geometria 1:1 z `01-moj-dzien.html` — kafelki i sumy mają te same wysokości
      co wersja z danymi, więc gdy doba dojdzie, NIC się nie przesuwa.
 
-     Od issue #42 sesja jest KAFELKIEM (tym samym, co na 12), więc plamką jest CAŁY
-     kafelek, nie jego wnętrze: nagłówek, rejestracja, godziny, trójka metryk i pas
-     akcji przychodzą razem, jednym odczytem — rozbicie ich na osobne plamki udawałoby,
-     że dojdą po kolei. Wysokość 156 px to ten sam kafelek, co w historii. */
+     JEDNA plamka-kafelek (issue #58 pkt 6). Doba ma dwa warianty — kartę stanu
+     pustego (01A) albo listę kafelków sesji — a skeleton obiecuje ich CZĘŚĆ WSPÓLNĄ
+     (reguła 2): przynajmniej jedną kartę tej wysokości. Dwie plamki zgadywały wariant
+     z sesjami; najczęstszy start dnia (zero lotów) podmieniał je na JEDNĄ kartę
+     „DZIŚ BEZ LOTÓW" i pół ekranu skakało. Karta stanu pustego i kafelek sesji mają
+     tę samą wysokość (156 px — ten sam kafelek, co w historii), więc jedna plamka
+     pasuje do obu przyszłości. Plamką jest CAŁY kafelek, nie jego wnętrze (issue #42):
+     nagłówek, rejestracja, godziny i trójka metryk przychodzą razem, jednym odczytem. */
   .group-lbl { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:2px 2px 0; }
   .card-slot { width:100%; height:156px; border-radius:14px; background:var(--surface-hover); animation:skel 1400ms ease-in-out infinite; }
 
   .totals-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
-  .totals { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); }
+  /* TRZY komórki — Loty · Blok · Lot (2026-08-16), jak w `StatGrid` ekranu. */
+  .totals { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); }
   .total-cell { background:var(--surface); padding:10px 12px; display:flex; flex-direction:column; gap:6px; }
 
-  /* Blok akcji: JEDEN przycisk, bo tylko tyle wiadomo na pewno (reguła 2).
-     Doba pusta dostanie zielone „ROZPOCZNIJ LOT" z przypisem, doba z sesjami — dwa
-     przyciski drugorzędne. Skeleton obiecuje część wspólną, nie zgaduje wariantu. */
-  .btn-slot { width:100%; min-height:48px; border-radius:12px; background:var(--surface-hover); animation:skel 1400ms ease-in-out infinite; }
-
-  /* Wejście w historię rysuje się NORMALNIE — jest statycznym przyciskiem, nie danymi.
-     Plakietki okna korekty (async, opcjonalna) skeleton NIE rezerwuje: może nigdy
+  /* Pas akcji rysuje się NORMALNIE — od 2026-08-16 nie zależy od doby (przyciski
+     są statyczne, `myDayActions` bez argumentów), więc plamek na przyciski NIE MA:
+     plamka trzymałaby miejsce po czymś, co stoi na ekranie od pierwszej klatki.
+     Plakietki okna korekty (async, opcjonalna) też nie rezerwujemy: może nigdy
      nie przyjść, a wtedy trzymalibyśmy miejsce na nic (reguła 2). */
+  .btn-primary {
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    width:100%; padding:17px; border-radius:16px;
+    background:var(--green); color:#0D0D0D;
+    font-family:var(--font-display); font-size:22px; letter-spacing:3px;
+    border:none; text-decoration:none; cursor:pointer;
+    box-shadow:0 0 24px rgba(46,204,113,0.3);
+  }
   .btn-secondary {
     display:flex; align-items:center; justify-content:center; gap:8px;
     width:100%; min-height:48px; padding:13px; border-radius:12px;
@@ -175,12 +185,12 @@
     <div class="scroll">
 
       <!-- Etykieta grupy jest STAŁA — „Log dnia" nie jest daną, więc rysuje się od razu.
-           Skeletonem są dwa kafelki sesji i dwie sumy: dokładnie te miejsca, w których
-           za chwilę pojawią się liczby. Dwa kafelki, bo tyle mieści się bez przewijania
-           — skeleton pokazuje KSZTAŁT listy, nie jej długość. -->
+           Skeletonem jest JEDEN kafelek i trzy sumy (issue #58 pkt 6): część wspólna
+           doby pustej (jedna karta „DZIŚ BEZ LOTÓW" tej samej wysokości) i doby
+           z sesjami (przynajmniej jeden kafelek). Skeleton pokazuje KSZTAŁT listy,
+           nie jej długość — a dwie plamki zgadywały wariant. -->
       <div class="group-lbl">Log dnia</div>
 
-      <div class="card-slot"></div>
       <div class="card-slot"></div>
 
       <div class="totals-card">
@@ -195,11 +205,24 @@
             <span class="skel" style="width:62px;height:22px;"></span>
             <span class="skel" style="width:50px;height:8px;"></span>
           </div>
+          <div class="total-cell">
+            <span class="skel" style="width:28px;height:7px;"></span>
+            <span class="skel" style="width:62px;height:22px;"></span>
+            <span class="skel" style="width:50px;height:8px;"></span>
+          </div>
         </div>
       </div>
 
-      <!-- Jeden blok przycisku: część wspólna obu wariantów dnia -->
-      <div class="btn-slot"></div>
+      <!-- Pas akcji STATYCZNY — nie zależy od doby (2026-08-16), więc rysuje się
+           od pierwszej klatki, bez plamek. -->
+      <a href="02-preflight.html" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+        ROZPOCZNIJ LOT
+      </a>
+      <a href="15-reczny-lot.html" class="btn-secondary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+        DODAJ LOT RĘCZNIE
+      </a>
 
       <!-- Statyczne wejście w historię rysuje się od razu, bez plakietki -->
       <a href="12-historia.html" class="btn-secondary">
@@ -290,7 +313,7 @@
     <span class="vp-badge">01</span>
     <span class="vp-body">
       <span class="vp-name">Mój dzień — log sesji doby</span>
-      <span class="vp-when">Stan pokazany na tym arkuszu: kafelki sesji, sumy i blok akcji. Kafelek jest tym samym komponentem, co w historii (issue #42), więc i plamka po nim ma jeden rozmiar. Do czasu odtworzenia rejestru (§4.9) skeleton stoi także zamiast stanu pustego 01A.</span>
+      <span class="vp-when">Stan pokazany na tym arkuszu: JEDNA plamka-kafelek i trzy sumy (issue #58 pkt 6) — część wspólna doby pustej i doby z sesjami, więc podmiana na kartę „DZIŚ BEZ LOTÓW" niczym nie skacze. Kafelek jest tym samym komponentem, co w historii (issue #42), więc i plamka po nim ma jeden rozmiar. Do czasu odtworzenia rejestru (§4.9) skeleton stoi także zamiast stanu pustego 01A.</span>
     </span>
   </a>
   <a class="vp-item" href="12-historia.html">

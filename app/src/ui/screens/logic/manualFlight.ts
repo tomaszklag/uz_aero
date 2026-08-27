@@ -115,13 +115,29 @@ export function emptyManualFlightDraft(now: EpochMillis): ManualFlightDraft {
 export type ManualFlightStep = 'aircraft' | 'task' | 'times' | 'readings';
 
 /**
+ * Czy krok 1 stoi na braku drugiego pilota (issue #58 pkt 4). Wymóg Duala jest
+ * właściwością SAMOLOTU (§3.1) i na preflightcie egzekwuje go `step1Valid` —
+ * wpis ręczny opisuje ten sam lot tym samym prawem, więc An-2 z kartki też nie
+ * przechodzi bez drugiego pilota. Osobna funkcja, nie gałąź `manualFlightStepBlocker`:
+ * blokada ma być `disabled` bez własnego tekstu, bo powód stoi już w banerze nad
+ * listą wyboru (ta sama decyzja co na 02 — drugi napis powtarzałby to samo zdanie).
+ */
+export function manualFlightNeedsDual(
+  aircraft: { dualRequired: boolean } | null,
+  draft: Pick<ManualFlightDraft, 'dualId'>,
+): boolean {
+  return aircraft != null && aircraft.dualRequired && draft.dualId == null;
+}
+
+/**
  * Powód, dla którego „DALEJ" (albo „ZAPISZ LOT" na ostatnim kroku) nie zadziała;
  * `null` = wolno iść dalej. Blokada z powodem jest tańsza od odrzuconego zapisu
  * z wyjątkiem — ta sama zasada co `releaseBlocker` na 09b.
  *
- * Blokują wyłącznie rzeczy, które domena odrzuci TWARDO (kolejność czasów, dolewka
- * przy pracującym silniku, cofnięty licznik) albo bez których wpisu nie da się
- * złożyć. Wszystko miękkie — kolizje z innymi sesjami, łańcuch MH — jest
+ * Blokują rzeczy, które domena odrzuci TWARDO (kolejność czasów, dolewka przy
+ * pracującym silniku, cofnięty licznik), te, bez których wpisu nie da się złożyć —
+ * oraz JEDEN wymóg czysto produktowy: trasa (issue #58, uzasadnienie przy kroku
+ * `task`). Wszystko miękkie — kolizje z innymi sesjami, łańcuch MH — jest
  * ostrzeżeniem w `manualFlightWarnings.ts` i NIE blokuje.
  */
 export function manualFlightStepBlocker(
@@ -133,9 +149,21 @@ export function manualFlightStepBlocker(
       if (draft.aircraftId == null) return 'Wybierz samolot, którego dotyczy lot.';
       return null;
 
-    case 'task':
+    case 'task': {
       if (draft.operation == null) return 'Wybierz rodzaj operacji.';
+      // Trasa jest WYMAGANA (issue #58, kolejna tura z urządzenia): wpis opisuje lot,
+      // który JUŻ się odbył — pilot zna lotnisko, więc „jeszcze nie wiem" tu nie
+      // istnieje, a brak trasy w zapisie po fakcie byłby dziurą w rejestrze, nie
+      // odroczoną decyzją. To świadome odejście od 02E, gdzie pustą trasę wolno
+      // zostawić (start silnika ma trwać sekundy — fakt lotu > kompletność
+      // formularza). Kształt wymogu idzie za rodzajem operacji (issue #13).
+      if (isSameFieldOperation(draft.operation)) {
+        return draft.departureIcao == null ? 'Wybierz lotnisko.' : null;
+      }
+      if (draft.departureIcao == null) return 'Wybierz lotnisko startu.';
+      if (draft.arrivalIcao == null) return 'Wybierz lotnisko lądowania.';
       return null;
+    }
 
     case 'times': {
       if (draft.engineStart == null || draft.engineStop == null) {

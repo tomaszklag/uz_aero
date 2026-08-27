@@ -118,11 +118,12 @@ export interface ValueBoxProps {
   /** Ton wartości — `amber` dla paliwa, `neutral` dla reszty. */
   tone?: Tone;
   /**
-   * `value` — liczba albo kod, mono i duże (czas, litry, ICAO).
-   * `text` — zdanie pilota (oznaczenie klienta, notatka): krój tekstowy, mniejszy
-   * stopień i do dwóch linii. Ten sam kształt pudełka i ten sam ołówek, bo to nadal
-   * jest „pole w trybie odczytu, które otwiera edycję" (issue #14) — inny jest tylko
-   * materiał w środku, a zdanie złożone czcionką licznika czyta się źle.
+   * `value` — liczba albo kod (czas, litry, ICAO): mono, pogrubione.
+   * `text` — zdanie pilota (oznaczenie klienta, notatka): krój tekstowy, ZAWIJA SIĘ
+   * W CAŁOŚCI (issue #58 pkt 10 — ucięta notatka wyglądała, jakby się nie zapisała).
+   * Ten sam kształt pudełka i ten sam ołówek, bo to nadal jest „pole w trybie odczytu,
+   * które otwiera edycję" (issue #14) — inny jest tylko materiał w środku, a zdanie
+   * złożone czcionką licznika czyta się źle.
    */
   variant?: 'value' | 'text';
   /** Napis zastępczy, gdy `value` jest puste — przygaszony, jak placeholder w polu. */
@@ -185,27 +186,37 @@ export function ValueBox({
           variant === 'text' ? styles.boxSideGrow : styles.boxSideFixed,
         ]}
       >
+        {/*
+         * METRYKA WARTOŚCI JAK W ARKUSZU EDYCJI (issue #58 pkt 5 i 9): mono 16 /
+         * odstęp 1.5 — dokładnie pole wpisu z arkusza lotniska. Kontrolka formularza
+         * jest tym samym polem oglądanym w spoczynku, więc 22 px robiło z każdej
+         * wartości bohatera ekranu.
+         *
+         * PLACEHOLDER JEST ZAWSZE SKŁADEM TEKSTOWYM (issue #58, trzecia tura):
+         * body 15 w `textPlaceholder` — dokładnie jak placeholder w arkuszu notatki.
+         * To instrukcja („wybierz lotnisko"), nie wartość, więc nie dziedziczy kroju
+         * liczb: mono robiło z zachęty wpisany kod. Wysokość kontrolki trzyma
+         * `minHeight: 46`, więc — inaczej niż w polach `TextInput`, gdzie placeholder
+         * MUSI dziedziczyć metrykę pola — osobny skład niczym tu nie skacze.
+         * Wariant tekstowy bez `numberOfLines` — zdanie zawija się w całości (pkt 10).
+         */}
         <AppText
-          variant={variant === 'text' ? 'body' : 'mono'}
-          numberOfLines={variant === 'text' ? 2 : 1}
+          variant={variant === 'text' || empty ? 'body' : 'mono'}
+          {...(variant === 'text' ? {} : { numberOfLines: 1 })}
           style={
-            variant === 'text'
+            variant === 'text' || empty
               ? {
                   flexShrink: 1,
                   fontSize: 15,
                   lineHeight: 20,
-                  color: empty ? theme.colors.textMuted : theme.colors.textPrimary,
+                  color: empty ? theme.colors.textPlaceholder : theme.colors.textPrimary,
                 }
               : {
                   fontFamily: theme.fontFamily.monoBold,
-                  fontSize: 22,
-                  lineHeight: 26,
-                  letterSpacing: 2,
-                  color: empty
-                    ? theme.colors.textMuted
-                    : tone === 'neutral'
-                      ? theme.colors.textPrimary
-                      : c.accent,
+                  fontSize: 16,
+                  lineHeight: 22,
+                  letterSpacing: 1.5,
+                  color: tone === 'neutral' ? theme.colors.textPrimary : c.accent,
                 }
           }
         >

@@ -321,8 +321,9 @@ Logi i tabele oznaczaj jawnie („Log dnia · UTC", „Lista lotów · czasy UTC
 → 09b-zdaj-samolot (odczyty paliwa i MH OBOWIĄZKOWE = zatwierdzenie logu sesji;
   wariant 09c: zdanie bez lotu) → 01-moj-dzien
 01-moj-dzien → 15-reczny-lot (wpis CAŁEGO lotu po fakcie — STEPPER 4 kroków od
-  2026-08-16: 15 samolot+data+Dual → 15a zadanie → 15b czasy i loty → 15c liczniki;
-  arkusze: 15d czas zdarzenia na TimeStepperze, 15e data lotu)
+  2026-08-16: 15 data+samolot+Dual (data pierwsza — issue #58) → 15a zadanie →
+  15b czasy i loty → 15c liczniki; arkusze: 15d czas zdarzenia na TimeStepperze,
+  15e data lotu na KALENDARZU miesięcznym)
 01-moj-dzien → 12-historia („Poprzednie dni" — sesje spoza dzisiejszej doby);
   KAFELEK sesji → 10-statystyki (ekran SESJI: detale i korekty TEJ sesji)
 12-historia → karta w oknie 24 h → 10-statystyki; karta po oknie → 10b (ten sam
@@ -683,13 +684,16 @@ kiedykolwiek zmieniana, pilot nie dowiadywał się znikąd.
 ## Wpis ręczny = ten sam lot, te same pytania (przebudowa 15, 2026-08-16)
 Ekran 15 przestał być formularzem czterech pól: wpis po fakcie opisuje TEN SAM lot,
 co zapis automatyczny, więc pyta o to samo i tymi samymi kontrolkami. STEPPER czterech
-kroków (jak 02 → 02E → 02A): samolot+data+Dual → zadanie → czasy → liczniki.
-- **data lotu jest POLEM, domyślnie dzisiejszym** (arkusz 15E: ±1 dzień, skróty
-  „dziś"/„wczoraj", wpis z klawiatury przez `maskDateUtcInput`/`parseDateUtc`).
-  W nagłówku daty NIE MA — stała tam data z ZEGARA, która przy wpisie sprzed tygodnia
-  kłamała o tym, czego wpis dotyczy. Zmiana doby PRZESUWA wpisane godziny razem z dniem
+kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → liczniki
+(data PIERWSZA i wymóg Duala — issue #58, sekcja wyżej).
+- **data lotu jest POLEM, domyślnie dzisiejszym** (arkusz 15E: od issue #58 kalendarz
+  miesięczny ze skrótami „Dzisiaj"/„Wczoraj"; `maskDateUtcInput`/`parseDateUtc` wyszły
+  z użycia w tym arkuszu). W nagłówku daty NIE MA — stała tam data z ZEGARA, która
+  przy wpisie sprzed tygodnia kłamała o tym, czego wpis dotyczy. Zmiana doby PRZESUWA
+  wpisane godziny razem z dniem
 - **pełna parita zadania**: rodzaj operacji (bez wartości podstawionej — wybór ma być
-  świadomy), lotniska wg issue #13, klient, notatka i Dual. Komenda `manualFlight`
+  świadomy), lotniska wg issue #13 (WYMAGANE — issue #58, sekcja wyżej; inaczej niż
+  na 02E), klient, notatka i Dual. Komenda `manualFlight`
   wpisywała twardo `operation: 'inne'` i `dualId: null` — lot szkolny z kartki gubił
   drugiego pilota bezpowrotnie. Podpowiedzi z ostatniego dnia TU NIE MA (inaczej niż
   na 02E): wpis opisuje konkretny lot z przeszłości, podstawianie robiłoby domysł
@@ -765,6 +769,76 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   BLOKADĘ z powodem) i z pustego stanu „Poprzednich dni" (wzmianka „również bez
   zasięgu") — pusty stan 12 mówi teraz o WARTOŚCI ekranu (komplet czasów i lotów,
   okno korekty 24 h), nie o tym, skąd liczy dane
+
+## Kontrolka = pole z arkusza, kalendarz daty, klawiatura od razu (issue #58, 2026-08-27)
+Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
+- **metryka wartości w kontrolce formularza = pole wpisu z arkusza: mono 16 / odstęp 1,5**
+  (`ValueBox`, mockupy 15/15A–C/15E/02E/02F/09B). Kontrolka jest tym samym polem
+  oglądanym w spoczynku — 22 px robiło z każdej wartości bohatera ekranu. Wielkie
+  stopnie zostają w ARKUSZACH edycji (odczyt 32, `ReadingSheet`) — tam się wpisuje,
+  tu się czyta
+- **placeholder jest ZAWSZE składem tekstowym: body 15 w `--text-placeholder`**
+  (trzecia i czwarta tura #58) — dokładnie jak placeholder arkusza notatki.
+  Placeholder to instrukcja („wybierz lotnisko", „Kod ICAO albo nazwa…"), nie
+  wartość, więc NIE dziedziczy kroju liczb — mono robił z zachęty wpisany kod.
+  W kontrolkach (`ValueBox`) wysokość trzyma `minHeight`, więc osobny skład niczym
+  nie skacze. W polach `TextInput` reguła obowiązuje TAK SAMO: pole tekstowe
+  (notatka, klient) ma ją za darmo (natywny placeholder dziedziczy body), a pole
+  MONO — wyszukiwarka lotniska — dostaje zachętę NAKŁADKĄ `PlaceholderOverlay`
+  nad polem o stałej metryce, bo natywnego placeholdera nie da się ostylować
+  osobno, a zmiana kroju całego pola przy pustym stanie skakałaby wysokością.
+  Nowe pole mono z placeholderem idzie przez tę nakładkę. Pola zdań pilota
+  (klient, notatka) to `ValueBox variant="text"` na KAŻDYM ekranie — na 15 brak
+  wariantu składał wartości licznikiem
+- **wariant tekstowy `ValueBox` zawija się W CAŁOŚCI** (klient, notatka): ucięta
+  notatka wyglądała, jakby się nie zapisała. Bez `numberOfLines`
+- **arkusz z polem wpisu otwiera się Z KLAWIATURĄ**: hook `useSheetInputFocus`
+  (drabinka prób) — callback ref na polu + `onShow` przez ramę `SheetSurface.onShow`
+  → `Sheet.onShow`; korzystają AirfieldSheet, TextEntrySheet, ReadingSheet. TRZY
+  podejścia JUŻ zawiodły i nie wracamy do nich (historia w `hooks/keyboardFocus.ts`):
+  `autoFocus` odpala się przy montowaniu, zanim okno modala istnieje; pojedyncze
+  `focus()` w `onShow` bywa przed fokusem IME okna i ustawia fokus widoku BEZ
+  klawiatury (drugi focus na skupionym polu to no-op); start drabinki wyłącznie
+  z `onShow` gubił pierwszą próbę, bo `onShow` potrafi wyprzedzić commit dzieci
+  modala (ref pusty → klawiatura dopiero z ponowienia = widoczne opóźnienie).
+  Drabinka rusza więc w PÓŹNIEJSZYM z dwóch zdarzeń (okno pokazane, pole
+  zamontowane — `shouldStartLadder`) i ponawia przez `blur()`+`focus()` po
+  150/400/800 ms, dopóki `Keyboard.isVisible()` nie potwierdzi klawiatury.
+  Nowy arkusz z wpisem MUSI iść przez ten hook
+- **data lotu jest PIERWSZYM polem kroku 1 wpisu ręcznego** — wpis zaczyna się od
+  „którego to było?", potem czym. Przypis „doba liczy się od uruchomienia silnika"
+  zniknął z formularza; to samo zdanie stoi w arkuszu daty jako ZWYKŁE zdanie
+  (nie wersalikowa etykieta) — przy kontrolce, której dotyczy
+- **arkusz daty = KALENDARZ MIESIĘCZNY** (`CalendarGrid` + `calendarMonth.ts`
+  z testami; mockup 15E) — odwraca decyzję z 2026-08-16 („kalendarza NIE MA"):
+  kalendarz jest kontrolką, którą pilot zna, odklikiwanie ±1 dzień — tą, której
+  musiał się uczyć. Skróty „Dzisiaj"/„Wczoraj" zostają NAD siatką (obsługują niemal
+  każdy wpis); tydzień od PONIEDZIAŁKU, doby = północe UTC, dni przyszłe wygaszone,
+  dni sąsiednich miesięcy nierysowane, strzałka „nowszy" gaśnie na bieżącym miesiącu.
+  Nagłówek miesiąca w MIANOWNIKU (`monthYearUtc` w `@uzaero/format`)
+- **wymóg Duala działa TAKŻE we wpisie ręcznym** (`manualFlightNeedsDual`): An-2
+  z kartki podlega temu samemu prawu, co na preflightcie — bursztynowa plakietka
+  „wymagany · załoga 2-os.", baner pod listą, DALEJ `disabled` BEZ własnego tekstu
+  (powód widać w banerze — reguła z 02). **Wybór Duala PRZEŻYWA wybór i zmianę
+  samolotu** (druga tura z urządzenia: pilot wybrany przed samolotem znikał po
+  tapnięciu w maszynę) — wymóg jest właściwością samolotu, ale wybrana OSOBA nie
+  traci ważności przy zmianie maszyny; lista Duali nie zależy od samolotu, więc
+  kasowanie było czystą stratą wyboru. Obowiązuje na 02 i 15 (`preflightDraft.test.ts`)
+- **trasa we wpisie ręcznym jest WYMAGANA** (`manualFlightStepBlocker`, krok 2):
+  bez lotniska (przy operacji z parą — bez OBU) DALEJ stoi z powodem w przycisku.
+  Pole bez plakietki „opcjonalne" obiecuje wymóg, więc bramka go egzekwuje. To
+  świadome odejście od 02E, gdzie pustą trasę wolno zostawić (start silnika ma
+  trwać sekundy — fakt lotu > kompletność formularza): wpis opisuje lot, który JUŻ
+  się odbył, więc „jeszcze nie wiem, dokąd" nie istnieje. Jedyny wymóg czysto
+  produktowy w blokadzie (reszta to twarde odmowy domeny)
+- **skeleton „Mojego dnia" = JEDNA plamka-kafelek** + trójka sum: część wspólna doby
+  pustej (karta „DZIŚ BEZ LOTÓW" ma tę samą wysokość 156 dp) i doby z sesjami —
+  dwie plamki zgadywały wariant i przy pustym dniu pół ekranu skakało
+- **arkusz Klient/Notatka nie ogłasza braku podpowiedzi**: zdanie „podpowiedzi
+  wymagają połączenia — wpisz wartość ręcznie" USUNIĘTE (opisywało budowę aplikacji
+  komuś, kto chce coś wpisać — kategoria przypisów z issue #43); offline i wpis
+  ręczny (`suggestions: null`) renderują nic. Stany „historia pusta" i „brak
+  w historii" zostają — mówią o liście, która istnieje
 
 ## Log zdarzeń jest JEDEN — kokpit rysuje oś sesji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny

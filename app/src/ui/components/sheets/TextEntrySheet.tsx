@@ -30,8 +30,10 @@
  * PODPOWIEDZI SĄ TYLKO ONLINE — i to jest decyzja, nie brak. Bez zasięgu arkusz działa
  * dokładnie tak jak wcześniej działało pole tekstowe: wpisujesz i potwierdzasz. Lista
  * to wygoda, nie warunek pracy (`CLAUDE.md`: „brak sieci NIGDY nie blokuje pracy pilota"),
- * dlatego jej brak mówi jedno spokojne zdanie zamiast ostrzeżenia — i dlatego nie
- * trzymamy jej w cache, którego i tak nie mielibyśmy jak unieważnić.
+ * dlatego jej braku NIE ogłaszamy (issue #58 pkt 8 — zdanie „podpowiedzi wymagają
+ * połączenia" opisywało budowę aplikacji komuś, kto chce coś wpisać; ta sama kategoria
+ * przypisów, którą wyrzuciło issue #43) — i dlatego nie trzymamy jej w cache, którego
+ * i tak nie mielibyśmy jak unieważnić.
  *
  * Tryb `multiline` obsługuje notatkę dnia: to jedyne pole w preflightcie, w którym pilot
  * pisze zdania, a nie kod.
@@ -41,6 +43,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useTheme } from '../../theme';
+import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
 import { HistoryLink } from '../data/HistoryLink';
 import { Sheet } from './Sheet';
@@ -95,6 +98,7 @@ export function TextEntrySheet({
 }: TextEntrySheetProps) {
   const { theme } = useTheme();
   const [text, setText] = useState(initialText);
+  const { inputRef, onShow } = useSheetInputFocus();
 
   /**
    * Wynik ostatniego przeszukania historii + jego pamięć („od którego wpisu było pusto").
@@ -130,10 +134,13 @@ export function TextEntrySheet({
       confirmLabel="ZAPISZ"
       onConfirm={() => onConfirm(text.trim())}
       onCancel={onCancel}
+      /* Klawiatura od otwarcia — drabinka prób z `useSheetInputFocus` (issue #58
+         pkt 8, druga tura: pojedynczy focus w onShow bywał nadal za wcześnie). */
+      onShow={onShow}
       /* POLE WPISU NA DOLE — patrz nota „ARKUSZ ROŚNIE W GÓRĘ" na górze pliku. */
       footer={
         <TextInput
-          autoFocus
+          ref={inputRef}
           value={text}
           onChangeText={change}
           multiline={multiline}
@@ -168,18 +175,14 @@ export function TextEntrySheet({
           (`HistoryLink`), więc arkusz w roli pisania notatki zostaje bez zmian. */}
       {onOpenHistory != null && <HistoryLink count={historyCount} onPress={onOpenHistory} />}
 
-      {/* CZTERY POWODY PUSTEJ LISTY I CZTERY RÓŻNE ODPOWIEDZI. Milczący arkusz wyglądał jak
-          niedziałające pobieranie — a „jeszcze pytamy", „brak sieci", „klub nie ma jeszcze
-          historii" i „wpis do niczego nie pasuje" to cztery zupełnie różne sytuacje.
-          Podczas pytania milczymy z rozmysłem: komunikat, który zaraz zniknie, jest gorszy
-          niż chwila ciszy. */}
-      {suggestions === undefined ? null : suggestions === null ? (
-        // Brak sieci nie jest tu awarią i nie zasługuje na amber: pole działa bez zmian,
-        // tylko bez listy. Jedno zdanie, żeby pilot nie szukał podpowiedzi, których nie ma.
-        <AppText variant="mono" tone="muted" style={styles.note}>
-          Podpowiedzi wymagają połączenia — wpisz wartość ręcznie
-        </AppText>
-      ) : suggestions.length === 0 ? (
+      {/* PUSTA LISTA MÓWI COŚ TYLKO WTEDY, GDY HISTORIA ISTNIEJE. Podczas pytania
+          (`undefined`) i bez odpowiedzi serwera (`null` — offline, wpis ręczny) arkusz
+          MILCZY: pole działa wtedy jak zwykłe pole tekstowe, a zdanie „podpowiedzi
+          wymagają połączenia" opisywało budowę aplikacji komuś, kto chce coś wpisać
+          (issue #58 pkt 8 — ta sama kategoria przypisów, którą wyrzuciło issue #43).
+          Odpowiedź dostają tylko stany, w których lista istnieje, a nie pomaga:
+          historia pusta i wpis bez trafienia. */}
+      {suggestions == null ? null : suggestions.length === 0 ? (
         // Serwer odpowiedział, tylko nie ma czym: pierwszy dzień klubu albo pierwsza notatka.
         <AppText variant="mono" tone="muted" style={styles.note}>
           Historia jest pusta — to będzie pierwszy wpis

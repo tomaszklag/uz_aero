@@ -100,7 +100,10 @@
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     text-decoration:none; cursor:pointer;
   }
-  .field-value { color:var(--amber); font-family:var(--font-display); font-size:26px; letter-spacing:1px; line-height:1; }
+  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5.
+     Kontrolka odczytu jest tą samą kontrolką, co na 15C i w trasie 02E — „jedna rzecz
+     ma w aplikacji JEDEN kształt" (issue #42); wielkość edycji zostaje w arkuszu 02B. */
+  .field-value { color:var(--amber); font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; line-height:22px; }
   .field-unit { font-family:var(--font-mono); font-size:12px; color:var(--text-secondary); }
   .field-sub { font-family:var(--font-mono); font-size:9px; color:var(--text-muted); margin-top:5px; letter-spacing:0.5px; }
 

@@ -133,11 +133,14 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
     // Wybór samolotu podstawia odczyty z przekazania (jeśli są) — to one, a nie
     // wpisy z palca, są punktem odniesienia łańcucha MH (§4.5). Gdy przekazania brak,
     // zostawiamy zera i UI mówi wprost „wpisz z licznika".
+    //
+    // Wybór Duala ZOSTAJE (issue #58, zgłoszenie z urządzenia: pilot wybrany przed
+    // samolotem znikał po tapnięciu w maszynę). WYMÓG załogi 2-os. jest właściwością
+    // samolotu, ale wybrana OSOBA nie traci ważności przy zmianie maszyny — lista
+    // Duali nie zależy od samolotu, a znikające bez słowa pole czyta się jak błąd.
     const handover = aircraft.handover;
     set({
       aircraft,
-      // Wymóg Duala jest właściwością samolotu — zmiana maszyny kasuje poprzedni wybór.
-      dualId: null,
       fuelL: handover?.reading.fuelL ?? 0,
       mh: handover?.reading.mh ?? 0,
       readingSource: handover != null ? 'handover' : 'manual',

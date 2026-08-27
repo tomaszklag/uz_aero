@@ -75,9 +75,13 @@
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:baseline; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; text-decoration:none; }
   .field-input:hover { border-color:var(--green-border); }
-  .field-val { font-family:var(--font-mono); font-size:20px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
+  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5.
+     Placeholder ZAWSZE składem tekstowym (trzecia tura #58): body 15
+     w --text-placeholder, jak w arkuszu notatki — instrukcja, nie wartość;
+     wysokość trzyma min-height kontrolki, więc osobny skład niczym nie skacze. */
+  .field-val { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
   .field-val.amber { color:var(--amber); }
-  .field-val.empty { color:var(--text-placeholder); font-weight:400; font-size:13px; letter-spacing:0.5px; }
+  .field-val.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-unit { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
 
@@ -273,7 +277,7 @@
   <a class="vp-item" href="15-reczny-lot.html">
     <span class="vp-badge">15</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 1 — samolot i data</span>
+      <span class="vp-name">Krok 1 — data i samolot</span>
       <span class="vp-when">Maszyna, data lotu, opcjonalny Dual.</span>
     </span>
   </a>

@@ -17,6 +17,7 @@ import {
   dateUtcShort,
   duration,
   litres,
+  monthYearUtc,
   maskDateUtcInput,
   maskTimeUtcInput,
   parseDateUtc,
@@ -189,6 +190,14 @@ describe('data dnia lotnego po polsku', () => {
     expect(dateTimeUtcShort(Date.UTC(2026, 5, 23, 16, 45))).toBe('23 CZE 16:45');
     expect(dateTimeUtcShort(Date.UTC(2026, 8, 2, 7, 5))).toBe('2 WRZ 07:05');
     expect(dateTimeUtcShort(Date.UTC(2026, 9, 30, 0, 0))).toBe('30 PAŹ 00:00');
+  });
+
+  it('nagłówek kalendarza niesie miesiąc w MIANOWNIKU, nie dopełniaczu (issue #58)', () => {
+    // „SIERPNIA 2026" w nagłówku brzmiałoby jak urwane zdanie — data to „22 sierpnia",
+    // ale nazwa miesiąca to „sierpień".
+    expect(monthYearUtc(Date.UTC(2026, 7, 16))).toBe('SIERPIEŃ 2026');
+    expect(monthYearUtc(Date.UTC(2026, 8, 1))).toBe('WRZESIEŃ 2026');
+    expect(monthYearUtc(Date.UTC(2027, 0, 1))).toBe('STYCZEŃ 2027');
   });
 
   it('panel zostaje przy skrótach lotniczych — polonizacja dotyczy telefonu', () => {
