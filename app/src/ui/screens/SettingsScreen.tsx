@@ -9,7 +9,10 @@
  * sieci (kolejka i ostatnia wysyłka = arkusz pod SyncChipem), a jego „SYNCHRONIZUJ
  * TERAZ" przeczyło regule, którą sam arkusz zapisuje: outbox wysyła się sam. Zostały
  * tu dwie rzeczy, których naprawdę nie ma nigdzie indziej — **uwagi serwera** (§4.5)
- * i **awaryjne ponaglenie wysyłki**. Mieszkają w Ustawieniach, bo Ustawienia widać
+ * i **awaryjne ponaglenie synchronizacji** (od issue #55 OBU kierunków: dopycha
+ * kolejkę wysyłki i pobiera dane referencyjne z pominięciem bramy wieku — pilot
+ * sięgający po ten przycisk pyta „co serwer wie teraz", nie „co wiedział kwadrans
+ * temu"). Mieszkają w Ustawieniach, bo Ustawienia widać
  * ZAWSZE: SyncChip pojawia się wyłącznie offline, więc flaga wystawiona przez serwer
  * po udanej wysyłce nie miałaby się gdzie pokazać.
  * Wszystko, co tu można zrobić, DZIAŁA OFFLINE — jedyny wyjątek (ponowne logowanie po
@@ -67,6 +70,7 @@ export function SettingsScreen({
   const lastSync = useSessionStore((s) => s.lastSync);
   const serverFlags = useSessionStore((s) => s.serverFlags);
   const syncNow = useSessionStore((s) => s.syncNow);
+  const refreshReferenceNow = useSessionStore((s) => s.refreshReferenceNow);
   const synced = useSessionStore((s) => s.synced);
   const projection = useSessionStore((s) => s.projection);
   const queries = useSessionStore((s) => s.queries);
@@ -76,16 +80,31 @@ export function SettingsScreen({
   const [pinSheet, setPinSheet] = useState(false);
   const [pinChanged, setPinChanged] = useState(false);
 
-  // ── synchronizacja: awaryjne ponaglenie wysyłki ───────────────────────────
+  // ── stempel cache referencyjnego — czytany na wejściu i po ręcznym syncu ──
+  const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
+  const readRefStamp = useCallback(async (): Promise<void> => {
+    if (repo == null) return;
+    const v = await repo.getMeta(REFERENCE_META_CHECKED_AT);
+    setRefCheckedAt(v != null ? Number(v) : null);
+  }, [repo]);
+
+  // ── synchronizacja: awaryjne ponaglenie OBU kierunków ─────────────────────
+  // „SYNCHRONIZUJ TERAZ" dopycha kolejkę wysyłki I pobiera świeże dane referencyjne
+  // z pominięciem bramy wieku (issue #55): pilot, który sięga po ten przycisk, pyta
+  // „co serwer wie teraz" — sama wysyłka odpowiadała na pół pytania, a świeżo dodany
+  // przez administratora samolot czekał na bramę. Stempel wieku czytamy ponownie,
+  // żeby wiersz w „O aplikacji" pokazał skutek od razu.
   const [syncing, setSyncing] = useState(false);
   const runManualSync = useCallback(async (): Promise<void> => {
     setSyncing(true);
     try {
       await syncNow();
+      await refreshReferenceNow();
+      await readRefStamp();
     } finally {
       setSyncing(false);
     }
-  }, [syncNow]);
+  }, [readRefStamp, refreshReferenceNow, syncNow]);
   // „Offline" znamy wyłącznie z wyniku OSTATNIEJ próby (§4.3) — innego pojęcia o sieci
   // aplikacja nie ma i nie udaje, że ma.
   const offline = lastSync?.kind === 'offline';
@@ -125,18 +144,10 @@ export function SettingsScreen({
     };
   }, [subscribe]);
 
-  // ── stempel cache referencyjnego + typ samolotu sesji ─────────────────────
-  const [refCheckedAt, setRefCheckedAt] = useState<number | null>(null);
+  // ── stempel cache referencyjnego (deklaracja przy ręcznym syncu wyżej) ────
   useEffect(() => {
-    if (repo == null) return;
-    let alive = true;
-    void repo.getMeta(REFERENCE_META_CHECKED_AT).then((v) => {
-      if (alive) setRefCheckedAt(v != null ? Number(v) : null);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [repo]);
+    void readRefStamp();
+  }, [readRefStamp]);
 
   const [aircraftType, setAircraftType] = useState<string | null>(null);
   useEffect(() => {
@@ -277,13 +288,13 @@ export function SettingsScreen({
             size="md"
             icon="sync"
             busy={syncing}
-            hint="Wysyłka działa sama w tle — to awaryjne ponaglenie"
+            hint="Synchronizacja działa sama w tle — to awaryjne ponaglenie"
             disabledReason={
-              offline ? 'Brak połączenia — wysyłka ruszy sama, gdy wróci zasięg' : null
+              offline ? 'Brak połączenia — synchronizacja ruszy sama, gdy wróci zasięg' : null
             }
             onPress={() => void runManualSync()}
           />
-          <SectionNote text="Kolejka opróżnia się sama, gdy jest sieć — nie musisz jej pilnować. Uwagi serwera pochodzą z ostatniej wysyłki; rozwiązuje je administrator w panelu." />
+          <SectionNote text="Kolejka opróżnia się sama, gdy jest sieć — nie musisz jej pilnować. Przycisk dopycha kolejkę i pobiera świeże dane referencyjne (flota, przekazania). Uwagi serwera pochodzą z ostatniej wysyłki; rozwiązuje je administrator w panelu." />
         </Card>
 
         {/* ── diagnostyka GPS (czujnik — oś niezależna od sieci) ────────────── */}

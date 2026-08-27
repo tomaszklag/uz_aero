@@ -17,6 +17,10 @@
  *    faktyczne zapytanie idzie dopiero, gdy od ostatniego potwierdzenia minęło
  *    `maxAgeMs` — claimy nie są danymi na żywo (od tego jest `GET /aircraft/:id/state`
  *    w chwili przejęcia), więc odpytywanie co puls byłoby paleniem baterii.
+ *    **Pusta flota bramy nie dostaje** (issue #55): brama chroni dane już użyteczne,
+ *    a bez ani jednego samolotu aplikacja nie ma czym pracować — pilot świeżego klubu
+ *    patrzyłby w warning „BRAK SAMOLOTÓW" przez kwadrans, choć administrator zdążył
+ *    założyć flotę w panelu. Dopóki jest pusto, każdy puls pyta naprawdę.
  *  • Każde niepowodzenie = `skipped`, cache zostaje — brak sieci nigdy nie psuje
  *    tego, co już wiemy (§6).
  */
@@ -51,10 +55,16 @@ export class ReferenceSync {
     private readonly maxAgeMs: number = REFERENCE_MAX_AGE_MS,
   ) {}
 
-  /** Wejście pętli okazji: pyta serwer tylko, gdy cache przekroczył bramę wieku. */
+  /**
+   * Wejście pętli okazji: pyta serwer tylko, gdy cache przekroczył bramę wieku —
+   * chyba że flota jest PUSTA (patrz docblock modułu): wtedy nie ma czego chronić
+   * i każda okazja jest prawdziwym zapytaniem, aż serwer dowiezie pierwszy samolot.
+   */
   async refreshIfStale(): Promise<ReferenceRefreshOutcome> {
     const checkedAt = await this.repo.getMeta(REFERENCE_META_CHECKED_AT);
-    if (checkedAt != null && this.repo.now - Number(checkedAt) < this.maxAgeMs) {
+    const withinGate =
+      checkedAt != null && this.repo.now - Number(checkedAt) < this.maxAgeMs;
+    if (withinGate && (await this.repo.getAircraft()).length > 0) {
       return 'fresh';
     }
     return this.refresh();

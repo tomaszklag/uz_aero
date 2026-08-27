@@ -9,7 +9,9 @@
  *     akcje wyznaczają czasy blokowe. Pasek postępu pokazuje, ile jeszcze trzymać.
  *  2. **Blokada z podanym powodem** (`disabledReason`) — zasada „nigdy cichy błąd"
  *     (§6 pkt 3). Powód renderujemy jako WIDOCZNY tekst, nie tooltip: `title` w RN
- *     nie istnieje, a pilot i tak nie ma czym najechać.
+ *     nie istnieje, a pilot i tak nie ma czym najechać. Powód stoi WEWNĄTRZ przycisku,
+ *     w slocie podpisu (issue #55): tekst POD przyciskiem pojawiał się i znikał razem
+ *     ze stanem blokady, skacząc layoutem wszystkiego poniżej.
  *  3. **Cel dotykowy ≥ 44 px** — próg dla rękawic; wymuszony `minHeight`.
  */
 
@@ -82,7 +84,12 @@ export interface ActionButtonProps {
   badgeTone?: Tone;
   /** Czas przytrzymania (ms). 0 = zwykłe tapnięcie. */
   holdMs?: number;
-  /** Blokada — wymaga podania powodu; powód jest pokazywany pod przyciskiem. */
+  /**
+   * Blokada — wymaga podania powodu; powód jest pokazywany WEWNĄTRZ przycisku,
+   * bursztynem, w miejscu podpisu `hint` (i zamiast niego, dopóki blokada trwa).
+   * Nigdy pod przyciskiem (issue #55): napis doklejany od dołu skakał layoutem
+   * ekranu przy każdej zmianie stanu.
+   */
   disabledReason?: string | null;
   /**
    * Blokada BEZ powodu — dla stanów, które widać (uwaga z urządzenia, 2026-08-14).
@@ -207,7 +214,15 @@ export function ActionButton({
               borderWidth: theme.borderWidth,
               borderColor: disabled ? theme.colors.border : solid || filled ? c.accent : c.border,
               backgroundColor: filled ? c.accent : background,
-              opacity: disabled ? 0.45 : pressed && holdMs === 0 && !fillsOnPress ? 0.7 : 1,
+              // Przycisk z powodem blokady NIE dostaje przygaszenia: powód ma być
+              // czytelny, a bursztyn pod opacity 0.45 przestaje być ostrzeżeniem.
+              // Wyszarzenie niosą już kolory (surfaceHover + textMuted).
+              opacity:
+                disabled && disabledReason == null
+                  ? 0.45
+                  : pressed && !disabled && holdMs === 0 && !fillsOnPress
+                    ? 0.7
+                    : 1,
             },
           ];
         }}
@@ -268,7 +283,14 @@ export function ActionButton({
                 {badge != null && <Tag label={badge} tone={badgeTone} />}
               </View>
 
-              {hint != null && (
+              {/* Powód blokady zajmuje slot podpisu i WYGRYWA z nim: dopóki blokada
+                  trwa, odpowiedzią na „czemu nie działa" jest powód, nie opis skutku
+                  (§6 pkt 3 + issue #55 — nigdy tekst pod przyciskiem). */}
+              {disabledReason != null ? (
+                <AppText variant="mono" style={[styles.hint, { color: theme.colors.amber }]}>
+                  {disabledReason}
+                </AppText>
+              ) : hint != null ? (
                 <AppText
                   variant="mono"
                   style={[
@@ -278,18 +300,11 @@ export function ActionButton({
                 >
                   {hint}
                 </AppText>
-              )}
+              ) : null}
             </>
           );
         }}
       </Pressable>
-
-      {/* Powód blokady — widoczny tekst, nigdy cichy błąd (§6 pkt 3). */}
-      {disabledReason != null && (
-        <AppText variant="label" tone="amber" style={styles.reason}>
-          {disabledReason}
-        </AppText>
-      )}
     </View>
   );
 }
@@ -312,5 +327,4 @@ const styles = StyleSheet.create({
   // `display` i wymóg 1:1 z obecnym renderem każe ją zachować (wysokość ~68 px).
   splashLabel: { fontSize: 20, lineHeight: 36 },
   hint: { fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', textAlign: 'center' },
-  reason: { textAlign: 'center', marginTop: 6 },
 });

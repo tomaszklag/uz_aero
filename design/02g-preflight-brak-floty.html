@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UZ Aero — 02G Nowy lot · Brak floty w pamięci</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
+    --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
+    --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
+    --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
+    --blue: #3498DB; --blue-muted: rgba(52,152,219,0.12); --blue-border: rgba(52,152,219,0.28);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'Archivo', system-ui, sans-serif; --font-mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    --phone-scale: min(1, calc((100vh - 240px) / 852px), calc((100vw - 60px) / 393px));
+    font-family: var(--font-body); background: var(--bg); color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba(46,204,113,0.05) 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-tint) 0%, var(--bg) 30%);
+    background-attachment: fixed;
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 80px; gap: 28px;
+  }
+
+  .canvas-label {
+    width: 100%; max-width: 460px;
+    display: grid; grid-template-columns: auto 1fr auto;
+    align-items: baseline; gap: 20px;
+    padding-bottom: 18px; border-bottom: 1px solid var(--border);
+  }
+  .film-strip { font-family: var(--font-display); font-size: 34px; letter-spacing: 3px; line-height: 1; }
+  .slug { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; border-left: 1px solid var(--border); padding-left: 18px; }
+  .canvas-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); letter-spacing: 1px; display: inline-flex; align-items: center; gap: 10px; }
+  .canvas-meta .pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px var(--amber-muted); animation: pulse 1800ms ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 4px var(--amber-muted); opacity:1; } 50% { box-shadow: 0 0 0 8px transparent; opacity:0.6; } }
+
+  .phone {
+    width: 393px; height: 852px; border-radius: 54px;
+    background: var(--bg);
+    border: 10px solid #0D0E12;
+    box-shadow: 0 0 0 1px #1C1E24, 0 40px 120px rgba(0,0,0,0.7), 0 24px 48px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.03);
+    overflow: hidden; position: relative; isolation: isolate; flex-shrink: 0;
+    transform: scale(var(--phone-scale)); transform-origin: top center;
+    margin-bottom: calc((var(--phone-scale) - 1) * 852px);
+  }
+  .phone::before { content:''; position:absolute; top:12px; left:50%; transform:translateX(-50%); width:124px; height:36px; border-radius:24px; background:#000; z-index:100; }
+  .phone::after { content:''; position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:134px; height:5px; border-radius:3px; background:var(--text-primary); opacity:0.28; z-index:100; }
+
+  .status-bar { display:flex; align-items:center; justify-content:space-between; padding:18px 36px 0; height:54px; font-weight:700; font-size:15px; color:var(--text-primary); position:relative; z-index:90; }
+  .status-right { display:inline-flex; align-items:center; gap:6px; }
+
+  .screen { position:absolute; top:54px; left:0; right:0; bottom:0; display:flex; flex-direction:column; overflow:hidden; }
+
+  .nav-strip { width:100%; max-width:460px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; font-family:var(--font-mono); font-size:11px; }
+  .nav-strip a { color:var(--text-muted); text-decoration:none; padding:4px 8px; border-radius:5px; transition:color 0.15s; }
+  .nav-strip a:hover { color:var(--green); }
+  .nav-strip a.active { color:var(--amber); }
+  .nav-strip span { color:var(--border-strong); }
+
+  /* App header — identyczny z 02: nagłówek znamy lokalnie, więc nie czeka i nie znika
+     (reguła LOADERY: co znamy lokalnie, nie czeka). */
+  .app-header {
+    display: flex; align-items: flex-start; justify-content: space-between; padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .header-left { display: flex; flex-direction: column; gap: 3px; }
+  .screen-title { font-family: var(--font-display); font-size: 26px; letter-spacing: 3px; color: var(--text-primary); line-height: 1; }
+  .step-badge {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
+    color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 4px 10px; margin-top: 2px;
+    flex-shrink: 0; white-space: nowrap;
+  }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+
+  .scroll { flex: 1; overflow-y: auto; padding: 14px 16px 24px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+
+  /* ===== WARNING NA CAŁY EKRAN (issue #55 pkt 3) =====
+     Zamiast formularza — bo formularz bez ani jednej pozycji do wyboru obiecywał
+     czynność, której nie da się wykonać: sekcja „Samolot" z jedną szarą linijką
+     tekstu czytała się jak drobna usterka, a pilot dowiadywał się o ścianie dopiero
+     z zablokowanego DALEJ. Karta jest bursztynowa (warning, nie błąd — nic się nie
+     zepsuło, po prostu nie ma jeszcze danych) i wisi na środku ekranu. */
+  .empty-warning {
+    margin: auto 0;
+    background: var(--amber-muted); border: 1px solid var(--amber-border); border-radius: 18px;
+    padding: 38px 22px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
+  }
+  .ew-icon {
+    width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+    background: var(--amber-muted); border: 1px solid var(--amber-border);
+    display: flex; align-items: center; justify-content: center; color: var(--amber);
+  }
+  .ew-title { font-family: var(--font-display); font-size: 30px; letter-spacing: 3px; color: var(--amber); line-height: 1; }
+  .ew-text { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; max-width: 288px; }
+  .ew-text b { color: var(--text-primary); font-weight: 600; }
+
+  /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
+  .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
+  .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
+  .vp-item { display:flex; align-items:flex-start; gap:10px; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-raised); text-decoration:none; transition:all .15s; }
+  .vp-item:hover { border-color:var(--green-border); }
+  .vp-item.active { border-color:var(--amber-border); background:rgba(243,156,18,0.05); pointer-events:none; }
+  .vp-badge { font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:1px; color:var(--green); background:var(--green-muted); border:1px solid var(--green-border); border-radius:6px; padding:3px 7px; flex-shrink:0; }
+  .vp-badge.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
+  .vp-badge.blue { color:var(--blue); background:var(--blue-muted); border-color:var(--blue-border); }
+  .vp-body { display:flex; flex-direction:column; gap:2px; flex:1; }
+  .vp-name { font-size:12.5px; font-weight:600; color:var(--text-primary); }
+  .vp-when { font-size:11px; color:var(--text-secondary); line-height:1.45; }
+  .vp-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--amber); margin-top:3px; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<header class="canvas-label">
+  <span class="film-strip">UZ AERO — 02G</span>
+  <span class="slug">nowy lot · brak floty w pamięci</span>
+  <span class="canvas-meta"><span class="pulse"></span>Wariant 02</span>
+</header>
+
+<main class="phone" role="region" aria-label="Mockup — Brak floty w pamięci telefonu">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span class="status-right">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="0.5"/><rect x="5" y="5" width="3" height="7" rx="0.5"/><rect x="10" y="2" width="3" height="10" rx="0.5"/><rect x="15" y="0" width="3" height="12" rx="0.5" opacity="0.4"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M8 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M4 7.5a6 6 0 0 1 8 0l-1 1a4.6 4.6 0 0 0-6 0l-1-1Z"/><path d="M1.5 4.5a10 10 0 0 1 13 0l-1 1a8.5 8.5 0 0 0-11 0l-1-1Z" opacity="0.6"/></svg>
+      <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+  </div>
+
+  <div class="screen">
+    <!-- KIEDY TEN WARIANT (issue #55 pkt 3): cache referencyjny jest PRZECZYTANY
+         (flaga `loaded` — bez niej to zwykły skeleton, patrz LOADERY) i nie ma w nim
+         ANI JEDNEGO samolotu. Od issue #50 cache wypełnia wyłącznie `GET /reference`,
+         więc ten stan zdarza się naprawdę: świeża instalacja przed pierwszym syncem
+         referencyjnym albo klub, któremu administrator nie założył jeszcze floty (A06).
+         Stan `brak` jest NIEZALEŻNY od łączności (§4.8) — dlatego rysujemy go online,
+         bez chipa; offline dochodzi standardowy pill OFFLINE w nagłówku (02D).
+
+         FORMULARZA NIE MA W OGÓLE — ani sekcji, ani DALEJ (wyszarzony przycisk
+         obiecywałby akcję, której reguły nie dopuszczą — ta sama zasada co 10B).
+         Warning odpowiada na trzy pytania: co jest nie tak, dlaczego nie polecisz
+         i co się musi wydarzyć, żeby ekran wrócił do normy. Lista pobiera się sama:
+         wejście w ten stan pyta serwer OD RAZU — brama wieku cache referencyjnego
+         (15 min) NIE trzyma pustej floty, bo pusta flota nie ma czego chronić
+         (`referenceSync.refreshIfStale`) — kolejne próby robi pętla synca co 60 s,
+         a ekran ponawia odczyt lokalnej bazy co 5 s. Gdy flota dojedzie, formularz
+         wraca bez udziału pilota. -->
+    <div class="app-header">
+      <div class="header-left">
+        <div class="screen-title">NOWY LOT</div>
+      </div>
+      <div class="header-right">
+        <div class="step-badge">1 / 3</div>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <div class="empty-warning">
+        <div class="ew-icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="ew-title">BRAK SAMOLOTÓW</div>
+        <div class="ew-text">W pamięci telefonu nie ma jeszcze floty — <b>bez wybranego samolotu nie da się rozpocząć lotu</b>.</div>
+        <div class="ew-text">Lista pobiera się z serwera automatycznie, gdy jest internet — sprawdź połączenie. Jeśli to nie pomaga, poproś administratora o dodanie samolotów do floty.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<aside class="variants-panel">
+  <div class="vp-title">Warianty kroku 1 (samolot i załoga) — kiedy który?</div>
+  <a class="vp-item" href="02-preflight.html">
+    <span class="vp-badge">02</span>
+    <span class="vp-body">
+      <span class="vp-name">Online</span>
+      <span class="vp-when">Jest sieć — stany claim i dane referencyjne na żywo z serwera. Bez plakietki łączności: online jest stanem domyślnym.</span>
+    </span>
+  </a>
+  <a class="vp-item" href="02d-preflight-offline.html">
+    <span class="vp-badge amber">02D</span>
+    <span class="vp-body">
+      <span class="vp-name">Offline — dane z cache</span>
+      <span class="vp-when">Brak sieci — lista samolotów i claimy z ostatniej synchronizacji (adnotacja wieku); chip OFFLINE ze stemplem ostatniego synca.</span>
+    </span>
+  </a>
+  <a class="vp-item active" href="02g-preflight-brak-floty.html">
+    <span class="vp-badge amber">02G</span>
+    <span class="vp-body">
+      <span class="vp-name">Brak floty w pamięci</span>
+      <span class="vp-when">Cache referencyjny przeczytany i PUSTY (świeża instalacja przed pierwszym syncem albo flota jeszcze nie założona w panelu). Zamiast formularza warning na cały ekran — bez sekcji i bez DALEJ; formularz wraca sam, gdy sync dowiezie listę.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="02h-preflight-rezygnacja.html">
+    <span class="vp-badge blue">02H</span>
+    <span class="vp-body">
+      <span class="vp-name">Rezygnacja z nowego lotu</span>
+      <span class="vp-when">„Wstecz" z kroku 1 przy niepustym formularzu — arkusz pyta, czy na pewno zrezygnować; potwierdzenie czyści szkic.</span>
+    </span>
+  </a>
+</aside>
+
+<nav class="nav-strip">
+  <a href="index.html">↩ Index</a>
+  <span>·</span>
+  <a href="01-moj-dzien.html">← 01 Mój dzień</a>
+  <span>·</span>
+  <a href="02-preflight.html">02 Preflight</a>
+  <a href="02g-preflight-brak-floty.html" class="active">02G Brak floty</a>
+  <a href="02h-preflight-rezygnacja.html">02H Rezygnacja →</a>
+</nav>
+
+</body>
+</html>

@@ -99,6 +99,14 @@ interface PreflightDraftStore extends PreflightDraft {
   mhFormat(): MhFormat;
   /** Czy krok 1 jest kompletny (m.in. wymóg Duala dla An-2). */
   step1Valid(): boolean;
+  /**
+   * Czy w szkicu jest jakikolwiek WYBÓR pilota do obrony (issue #55): bramka
+   * „wstecz" na kroku 1 pyta o rezygnację tylko wtedy, gdy jest czego bronić —
+   * pusty formularz wychodzi bez pytania, a arkusz nad niczym pytałby o zgodę
+   * na nic. Pyta o samolot i Duala, bo tylko te dwa da się ustawić na kroku 1;
+   * pola zadania (krok 2) są nieosiągalne bez wybranego samolotu.
+   */
+  dirty(): boolean;
 }
 
 function initial(): PreflightDraft {
@@ -164,5 +172,10 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
     // An-2 i podobne: bez drugiego pilota nie ruszamy (§3.1, konfiguracja §5.4).
     if (aircraft.dualRequired && dualId == null) return false;
     return true;
+  },
+
+  dirty() {
+    const { aircraft, dualId } = get();
+    return aircraft != null || dualId != null;
   },
 }));

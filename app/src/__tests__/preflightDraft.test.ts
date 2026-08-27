@@ -13,6 +13,24 @@
  */
 
 import { usePreflightDraft } from '../ui/store/preflightDraft';
+import type { ReferenceAircraft } from '../domain';
+
+const axa = (over: Partial<ReferenceAircraft> = {}): ReferenceAircraft => ({
+  id: 'SP-AXA',
+  reg: 'SP-AXA',
+  type: 'Cessna 182',
+  year: 2019,
+  capacityL: 330,
+  mhFormat: 'hhmm',
+  dualRequired: false,
+  serviceStatus: 'active',
+  claimPicId: null,
+  claimSince: null,
+  handover: null,
+  consumption: null,
+  fetchedAt: 0,
+  ...over,
+});
 
 /**
  * Kształt trasy (issue #13). Formularz pyta o jedno lotnisko przy skokach, ale rekord
@@ -62,5 +80,37 @@ describe('szkic preflightu — trasa wg rodzaju operacji', () => {
     );
 
     expect(usePreflightDraft.getState().arrivalIcao).toBe('EPKK');
+  });
+});
+
+/**
+ * Bramka „wstecz" na kroku 1 (issue #55). `dirty()` rozstrzyga, czy jest czego bronić:
+ * arkusz rezygnacji nad pustym formularzem pytałby o zgodę na nic, a jego brak przy
+ * wybranym samolocie pozwoliłby przypadkowemu gestowi skasować wybory bez pytania —
+ * bo potwierdzona rezygnacja CZYŚCI szkic.
+ */
+describe('szkic preflightu — dirty() dla bramki rezygnacji', () => {
+  beforeEach(() => {
+    usePreflightDraft.getState().reset();
+  });
+
+  it('świeży szkic nie ma czego bronić', () => {
+    expect(usePreflightDraft.getState().dirty()).toBe(false);
+  });
+
+  it('wybór samolotu podnosi bramkę', () => {
+    usePreflightDraft.getState().setAircraft(axa());
+    expect(usePreflightDraft.getState().dirty()).toBe(true);
+  });
+
+  it('sam Dual (bez samolotu) też podnosi bramkę', () => {
+    usePreflightDraft.getState().set('dualId', 'AKO');
+    expect(usePreflightDraft.getState().dirty()).toBe(true);
+  });
+
+  it('reset opuszcza bramkę — potwierdzona rezygnacja wychodzi bez drugiego pytania', () => {
+    usePreflightDraft.getState().setAircraft(axa());
+    usePreflightDraft.getState().reset();
+    expect(usePreflightDraft.getState().dirty()).toBe(false);
   });
 });

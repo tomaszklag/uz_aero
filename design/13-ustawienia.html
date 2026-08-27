@@ -301,7 +301,10 @@
            Ekran 11 USUNIĘTY (2026-08-12): był trzecim widokiem tej samej sesji
            (tabela lotów i „dane dnia" = ekran 10) i drugim wskaźnikiem sieci (kolejka
            i ostatnia wysyłka = arkusz pod SyncChipem). Zostało to, czego nie ma
-           nigdzie indziej: uwagi serwera (§4.5) i awaryjne wymuszenie wysyłki.
+           nigdzie indziej: uwagi serwera (§4.5) i awaryjne wymuszenie synchronizacji —
+           od issue #55 OBU kierunków: przycisk dopycha kolejkę wysyłki i pobiera
+           świeże dane referencyjne (flota, przekazania) z pominięciem bramy wieku,
+           bo pilot sięgający po niego pyta „co serwer wie TERAZ".
            Mieszka tutaj, bo Ustawienia są widoczne ZAWSZE — SyncChip pojawia się
            wyłącznie offline, więc flaga wystawiona po udanej wysyłce nie miałaby
            się gdzie pokazać. -->
@@ -327,7 +330,7 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           Synchronizuj teraz
         </button>
-        <div class="section-note">Wysyłką zarządza outbox <b>sam</b> — ten przycisk to awaryjne ponaglenie, nie krok procedury. Bez zasięgu jest wyłączony z podanym powodem.</div>
+        <div class="section-note">Synchronizacją zarządza aplikacja <b>sama</b> — ten przycisk to awaryjne ponaglenie, nie krok procedury: dopycha kolejkę wysyłki i pobiera świeże dane referencyjne (flota, przekazania). Bez zasięgu jest wyłączony z podanym powodem.</div>
       </div>
 
       <!-- ══ DIAGNOSTYKA GPS — czujnik lokalny, oś niezależna od sieci ══ -->

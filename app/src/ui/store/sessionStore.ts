@@ -195,6 +195,13 @@ export interface SessionStore {
   /** Odświeża cache referencyjny, jeśli przekroczył bramę wieku (§4.8). */
   refreshReference(): Promise<void>;
   /**
+   * Odświeża cache referencyjny BEZ bramy wieku — droga przycisku „SYNCHRONIZUJ
+   * TERAZ" (issue #55): pilot, który sięga po awaryjne ponaglenie, pyta „co serwer
+   * wie TERAZ", a odpowiedź „sprawdzałem kwadrans temu" mija się z pytaniem.
+   * ETag działa dalej, więc niezmieniona flota kosztuje 304 bez ciała.
+   */
+  refreshReferenceNow(): Promise<void>;
+  /**
    * Dopisuje do lokalnego strumienia zdarzenia, które ma serwer, a nie ma telefon
    * (§4.9, issue #32) — odtworzenie po czyszczeniu pamięci, reinstalacji albo na nowym
    * urządzeniu. Po zapisie podbija `streamRevision`, żeby otwarte ekrany przeliczyły
@@ -522,6 +529,12 @@ export const useSessionStore = create<SessionStore>((set, get) => {
       const { referenceSync } = get();
       if (referenceSync == null) return;
       await referenceSync.refreshIfStale();
+    },
+
+    async refreshReferenceNow() {
+      const { referenceSync } = get();
+      if (referenceSync == null) return;
+      await referenceSync.refresh();
     },
 
     async restoreEvents() {

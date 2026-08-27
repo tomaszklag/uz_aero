@@ -160,6 +160,40 @@ describe('ReferenceSync', () => {
     expect(server.calls).toHaveLength(1);
   });
 
+  it('pusta flota omija bramę wieku — świeżo założony klub nie czeka kwadransa (issue #55)', async () => {
+    const { clock, repo, server, sync } = harness();
+    // Pierwsze logowanie PRZED założeniem floty w panelu (od issue #50 cache zasila
+    // wyłącznie serwer): odpowiedź z pustą listą jest prawdziwa i stempluje „sprawdzone".
+    server.script = [
+      { data: { aircraft: [], pilots: [tmk] }, etag: 'e0' },
+      { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
+    ];
+    await sync.refreshIfStale();
+
+    // Minutę później administrator zdążył dodać SP-AXA. Brama wieku nie ma tu czego
+    // chronić: bez ani jednego samolotu aplikacja nie ma czym pracować, a pilot
+    // patrzyłby w warning 02G przez kwadrans, choć flota już istnieje.
+    clock.advance(60_000);
+    expect(await sync.refreshIfStale()).toBe('refreshed');
+    expect((await repo.getAircraft()).map((a) => a.reg)).toEqual(['SP-AXA']);
+  });
+
+  it('refresh() nie zna bramy wieku — droga „SYNCHRONIZUJ TERAZ" pyta zawsze (issue #55)', async () => {
+    const { clock, server, sync } = harness();
+    server.script = [
+      { data: { aircraft: [axa()], pilots: [tmk] }, etag: 'e1' },
+      { data: { aircraft: [axa({ claimPicId: 'KRZ' })], pilots: [tmk] }, etag: 'e2' },
+    ];
+    await sync.refreshIfStale();
+
+    // Głęboko w oknie świeżości: pętla okazji by odpuściła, ale ręczne ponaglenie
+    // pyta „co serwer wie TERAZ" — z ETagiem, więc niezmieniona flota kosztuje 304.
+    clock.advance(60_000);
+    expect(await sync.refresh()).toBe('refreshed');
+    expect(server.calls).toHaveLength(2);
+    expect(server.calls[1]).toEqual({ token: 'jwt-1', etag: 'e1' });
+  });
+
   it('po oknie wysyła If-None-Match; 304 podbija wiek danych bez zmiany treści', async () => {
     const { clock, repo, server, sync } = harness();
     server.script = [
