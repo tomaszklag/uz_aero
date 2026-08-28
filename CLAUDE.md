@@ -936,10 +936,25 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   ale NIE blokuje zapisu (fakt lotu > kompletność formularza; domena też trzyma tę regułę
   jako ostrzeżenie). Baner stoi na kroku 3, nie 4: ostrzeżenie ma być tam, gdzie da się
   je naprawić
-- **OSI NIE MA, DOPÓKI NIE MA BIEGU SILNIKA** (mockup `15H`) — sesja JEST biegiem silnika,
-  więc lot bez niego nie ma w czym się zawierać. A skoro nie ma osi, nie ma też wiersza
-  „DODAJ LOT": to BRAK AKCJI, nie wyszarzony przycisk (zasada z 10B i 02G). Powód niesie
-  „DALEJ" bursztynem w środku
+- **OŚ ISTNIEJE OD PIERWSZEJ SEKUNDY, a karty „Bieg silnika" NIE MA** (czwarta tura
+  z urządzenia; mockup `15H` = ten sam układ, co `15B`). Karta niosła parę godzin, którą
+  oś rysuje jako swój pierwszy i ostatni wiersz — „dubluje się «bieg silnika» z tym, co
+  mam na osi czasu, nie ma sensu ten input". Oba końce startują z `--:--` i SAME są
+  wejściem w wpisanie godziny, więc pusty krok 3 i krok 3 z pełną sesją to ten sam ekran
+  w dwóch stanach. Stopka sum czeka na bieg (trójka zer byłaby liczbą o niczym), a wiersza
+  „DODAJ LOT" nie ma, dopóki oba końce nie mają godziny — to BRAK AKCJI, nie wyszarzony
+  przycisk (zasada z 10B i 02G); powód niesie „DALEJ" bursztynem w środku
+- **KOLEJNOŚĆ OSI IDZIE LOTAMI, NIE GLOBALNĄ RANGĄ TYPU** (czwarta tura): przy locie
+  startującym DOKŁADNIE w godzinie lądowania poprzedniego stała ranga „start przed
+  lądowaniem" dawała obraz lotu, który zaczął się przed wylądowaniem poprzedniego.
+  Jednej rangi nie da się dobrać — wewnątrz lotu start musi wyprzedzać lądowanie,
+  a MIĘDZY lotami odwrotnie — więc każdy lot wykłada swoje wiersze w komplecie
+  (start → jego zrzuty → lądowanie), a loty idą po sobie w porządku czasu. Zrzuty poza
+  lotami wchodzą po czasie
+- **kolejny zrzut dziedziczy skład i wysokość po POPRZEDNIM** (`previousDrop`, czwarta
+  tura): dzień skokowy to ta sama maszyna, ten sam klub i zwykle ta sama wysokość
+  wyniesienia lot po locie. Poprzednik liczy się porządkiem CZASU, nie kolejnością
+  dopisywania — zrzuty wpisuje się w dowolnej kolejności, a poprawka godziny je przestawia
 - **nowy lot dziedziczy granice BIEGU** (`nextFlightTimes`): pierwszy bierze cały bieg
   (przy sesji z jednym lotem to od razu wartość właściwa), każdy kolejny biegnie od
   ostatniego lądowania do wyłączenia silnika. Stare „10 minut po ostatnim lądowaniu,

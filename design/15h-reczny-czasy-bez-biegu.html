@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 15B Lot ręczny · krok 3/4 · czasy</title>
+<title>UZ Aero — 15H Lot ręczny · krok 3/4 bez biegu silnika</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -116,6 +116,9 @@
   .axis-row:hover { background:var(--surface-hover); }
   .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
   .axis-time.dim { color:var(--text-secondary); }
+  /* Koniec biegu bez godziny — placeholder w miejscu wartości, bo wiersz JEST wejściem
+     w jej wpisanie (issue #62, czwarta tura). */
+  .axis-time.empty { color:var(--text-placeholder); }
   /* Pion osi rysuje sam wiersz: kropka + kreska do sąsiada. Osobny element linii
      rozjeżdżałby się przy wierszach o różnej wysokości. */
   .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
@@ -218,37 +221,46 @@
 
     <div class="scroll">
 
-      <!-- KROK 3 ZACZYNA SIĘ OD BIEGU SILNIKA I TYLKO OD NIEGO (issue #62 pkt 10).
+      <!-- KROK 3 ZACZYNA SIĘ OD BIEGU SILNIKA I TYLKO OD NIEGO (issue #62 pkt 10),
+           ALE JEST TYM SAMYM EKRANEM, CO 15B (czwarta tura z urządzenia).
 
-           Zgłoszenie z urządzenia: „nie powinienem móc dodać lotu, dopóki nie wpiszę
-           czasu uruchomienia i zatrzymania silnika". Do #62 „DODAJ LOT" stał tu od
-           pierwszej sekundy, a nowy lot dostawał godziny wyssane z palca (10:05 →
-           10:35), które potem trzeba było poprawiać dwoma arkuszami.
+           Do czwartej tury stała tu karta „Bieg silnika” z parą pól, a oś pojawiała
+           się dopiero po ich wypełnieniu — czyli krok 3 miewał DWA różne układy,
+           a w pełnym stanie te same dwie godziny stały w karcie i na osi naraz
+           („dubluje się «bieg silnika» z tym, co mam na osi czasu”).
 
-           Odpowiedzią nie jest wyszarzony przycisk. Sesja JEST biegiem silnika —
-           lot bez niego nie ma w czym się zawierać, więc dopóki biegu nie ma, NIE MA
-           TEŻ OSI, a skoro nie ma osi, nie ma czego do niej dodać. Wyszarzony przycisk
-           obiecywałby akcję, którą reguły i tak odrzucą (ta sama zasada, co brak
-           „EDYTUJ DANE" w podglądzie po oknie korekty, 10B, i brak „DALEJ" przy
-           pustej flocie, 02G).
+           Odtąd oś istnieje od pierwszej sekundy, a jej dwa końce startują z „--:--”
+           i SAME są wejściem w wpisanie godziny. Wypełnienie obu zamienia ten ekran
+           w 15B — bez zmiany układu, tylko z dopisanymi wierszami.
 
-           Powodu nie tłumaczymy tu zdaniem: niesie go „DALEJ" na dole ekranu, bursztynem
-           wewnątrz przycisku (issue #55). -->
-      <div class="section">
-        <div class="section-head"><span class="section-label">Bieg silnika</span></div>
-        <div class="time-pair">
-          <div class="field">
-            <span class="field-label">Uruchomienie</span>
-            <a href="15f-reczny-czas-pusty.html" class="field-input">
-              <span class="field-time empty">wpisz godzinę</span>
-            </a>
-          </div>
-          <div class="field">
-            <span class="field-label">Wyłączenie</span>
-            <a href="15f-reczny-czas-pusty.html" class="field-input">
-              <span class="field-time empty">wpisz godzinę</span>
-            </a>
-          </div>
+           Reguła „nie da się dodać lotu bez biegu silnika” zostaje w mocy i pilnuje jej
+           BRAK wiersza „DODAJ LOT”, a nie wyszarzony przycisk: wyszarzony obiecywałby
+           akcję, którą reguły i tak odrzucą (ta sama zasada, co brak „EDYTUJ DANE”
+           w podglądzie po oknie korekty, 10B, i brak „DALEJ” przy pustej flocie, 02G).
+
+           Powodu nie tłumaczymy tu zdaniem: niesie go „DALEJ” na dole ekranu,
+           bursztynem wewnątrz przycisku (issue #55).
+
+           Stopki sum też nie ma — bez biegu silnika blok nie ma z czego wyjść, a trójka
+           zer byłaby liczbą o niczym (reguła „zerowy licznik to szum” z issue #43). -->
+      <div class="section flush">
+        <div class="section-head"><span class="section-label">Przebieg sesji</span></div>
+
+        <div class="axis">
+          <a href="15f-reczny-czas-pusty.html" class="axis-row">
+            <span class="axis-time empty">--:--</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          </a>
+          <a href="15f-reczny-czas-pusty.html" class="axis-row last">
+            <span class="axis-time empty">--:--</span>
+            <span class="axis-mark"><span class="axis-dot"></span></span>
+            <span class="axis-label"><span class="axis-name">Wyłączenie</span></span>
+            <span class="axis-right"></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          </a>
         </div>
       </div>
 
@@ -283,7 +295,7 @@
     <span class="vp-badge amber">15H</span>
     <span class="vp-body">
       <span class="vp-name">Krok 3 bez biegu silnika</span>
-      <span class="vp-when">Stan, w którym krok 3 się otwiera. Godzin biegu nie ma, więc nie ma osi — a skoro nie ma osi, nie ma czego do niej dodać. Wpisanie obu godzin zamienia ten ekran w 15B.</span>
+      <span class="vp-when">Stan, w którym krok 3 się otwiera — TEN SAM układ, co 15B. Oś już jest, ale oba jej końce mają „--:--" i to one są wejściem w wpisanie godzin; stopki sum nie ma, bo blok nie ma z czego wyjść. „DODAJ LOT" pojawi się dopiero z biegiem silnika, a wpisanie obu godzin zamienia ten ekran w 15B bez zmiany układu.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

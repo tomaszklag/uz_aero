@@ -222,26 +222,18 @@
 
     <div class="scroll">
 
-      <div class="section">
-        <div class="section-head"><span class="section-label">Bieg silnika</span></div>
-        <div class="time-pair">
-          <div class="field">
-            <span class="field-label">Uruchomienie</span>
-            <a href="15d-reczny-czas-arkusz.html" class="field-input">
-              <span class="field-time">09:42</span>
-            </a>
-          </div>
-          <div class="field">
-            <span class="field-label">Wyłączenie</span>
-            <a href="15d-reczny-czas-arkusz.html" class="field-input">
-              <span class="field-time">11:18</span>
-            </a>
-          </div>
-        </div>
-        <!-- Podpisu „blok 1:36 · czas w powietrzu 1:06" TU NIE MA (issue #62): te same
-             dwie liczby stoją w stopce osi pod spodem, a stopka jest ich jedynym
-             miejscem — tak samo jak na ekranie rozliczenia (issue #38 pkt 9). -->
-      </div>
+      <!-- KARTY „BIEG SILNIKA” TU NIE MA (issue #62, czwarta tura z urządzenia).
+
+           Niosła parę godzin — 09:42 i 11:18 — czyli dokładnie te, które oś rysuje
+           jako swój pierwszy i ostatni wiersz. Zgłoszenie brzmiało wprost: „dubluje
+           się «bieg silnika» z tym, co mam na osi czasu, nie ma sensu ten input”.
+
+           Oba końce osi SĄ wejściem w ich wpisanie, więc pusty krok 3 (15H) i krok 3
+           z pełną sesją to odtąd TEN SAM ekran w dwóch stanach, a nie dwa układy.
+
+           Podpisu „blok 1:36 · czas w powietrzu 1:06” też tu nie ma: te dwie liczby
+           stoją w stopce osi, a stopka jest ich jedynym miejscem — tak samo jak na
+           ekranie rozliczenia (issue #38 pkt 9). -->
 
       <!-- PRZEBIEG SESJI — JEDNA OŚ zamiast dwóch płaskich list (issue #62 pkt 9 i 10).
 
@@ -449,7 +441,7 @@
     <span class="vp-badge">15B</span>
     <span class="vp-body">
       <span class="vp-name">Krok 3 — przebieg sesji</span>
-      <span class="vp-when">Bieg silnika wpisany, więc oś istnieje: dowolnie wiele lotów w środku, a zrzuty dnia skokowego stoją W SWOICH lotach i noszą ich numer (issue #62 pkt 9). Każdy wiersz otwiera swój arkusz.</span>
+      <span class="vp-when">Oś z wpisanym biegiem silnika: dowolnie wiele lotów w środku, a zrzuty dnia skokowego stoją W SWOICH lotach i noszą ich numer (issue #62 pkt 9). Każdy wiersz otwiera swój arkusz — końce biegu tak samo jak starty i lądowania, bo osobnej karty „Bieg silnika" już nie ma.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -457,7 +449,7 @@
     <span class="vp-badge amber">15H</span>
     <span class="vp-body">
       <span class="vp-name">Krok 3 bez biegu silnika</span>
-      <span class="vp-when">Godzin biegu jeszcze nie ma, więc osi NIE MA — a skoro nie ma osi, nie ma też czego do niej dodać: „DODAJ LOT" nie istnieje (issue #62 pkt 10), a nie stoi wyszarzone.</span>
+      <span class="vp-when">TEN SAM ekran w stanie wejścia: oś jest, ale oba jej końce mają „--:--" i to one są wejściem w wpisanie godzin. „DODAJ LOT" jeszcze nie istnieje (issue #62 pkt 10) — nie stoi wyszarzone.</span>
     </span>
   </a>
   <a class="vp-item" href="15c-reczny-liczniki.html">

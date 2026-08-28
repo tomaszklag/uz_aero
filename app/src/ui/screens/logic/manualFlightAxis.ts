@@ -135,6 +135,26 @@ export function nextFlightTimes(
   return { takeoff, landing: draft.engineStop };
 }
 
+/**
+ * Zrzut POPRZEDZAJĄCY daną chwilę — źródło wartości startowych następnego
+ * (issue #62, czwarta tura z urządzenia).
+ *
+ * Dzień skokowy to ta sama maszyna, ten sam klub i zwykle ta sama wysokość wyniesienia
+ * lot po locie. Nowy zrzut zaczynający od zera kazał więc wbijać te same liczby od nowa
+ * przy każdym wyniesieniu — a formularz miał je tuż obok. Kopiujemy skład i wysokość;
+ * godzina idzie z `nextDropAt`, bo ta akurat jest za każdym razem inna.
+ *
+ * `null` = nie ma poprzednika (pierwszy zrzut sesji) i wtedy pola startują puste:
+ * skład niepodany to `null`, nie zero (issue #21 pkt 5).
+ */
+export function previousDrop(
+  draft: ManualFlightDraft,
+  at: number,
+): ManualFlightDropDraft | null {
+  const earlier = draft.drops.filter((d) => d.at <= at).sort((a, b) => a.at - b.at);
+  return earlier.at(-1) ?? null;
+}
+
 /** Skład zrzutu w drugiej linii wiersza: „2 tandem · 1 solo · 4000 ft". */
 export function dropSummary(drop: Pick<ManualFlightDropDraft, 'jumpers' | 'altitudeFt'>): string {
   const parts: string[] = [];
@@ -150,9 +170,23 @@ export function dropSummary(drop: Pick<ManualFlightDropDraft, 'jumpers' | 'altit
   return parts.join(' · ');
 }
 
+/** Godzina, której jeszcze nie ma — ten sam placeholder, co w kontrolce czasu. */
+const NO_TIME = '--:--';
+
 /**
- * Szkic → wiersze osi. Pusta oś (`rows: []`) znaczy „biegu silnika jeszcze nie ma";
- * ekran nie rysuje wtedy ani osi, ani wejść dopisania.
+ * Szkic → wiersze osi.
+ *
+ * ══ OŚ ISTNIEJE OD PIERWSZEJ SEKUNDY (issue #62, czwarta tura z urządzenia) ══
+ * Do tej tury krok 3 miał NAD osią kartę „Bieg silnika" z parą godzin — dokładnie
+ * tych samych, które oś rysuje jako swój pierwszy i ostatni wiersz. Zgłoszenie
+ * brzmiało: „dubluje się «bieg silnika» z tym, co mam na osi czasu, nie ma sensu ten
+ * input". Karta zniknęła, a oś zaczyna się od dwóch końców z `--:--`, które SĄ
+ * wejściem w ich wpisanie.
+ *
+ * Zysk jest większy niż jedna karta mniej: pusty krok 3 i krok 3 z pełną sesją to
+ * odtąd TEN SAM ekran w dwóch stanach, a nie dwa różne układy. Reguła „nie da się
+ * dodać lotu bez biegu silnika" (pkt 10) zostaje w mocy — pilnuje jej ekran, nie
+ * pokazując wiersza „DODAJ LOT", dopóki oba końce nie mają godziny.
  *
  * @param jumpDay dzień skokowy — bez niego zrzutów na osi NIE MA (issue #19: przy
  *   przelocie zrzut nie może się wydarzyć, więc jego brak nie jest brakiem danych).
@@ -161,87 +195,97 @@ export function buildManualFlightAxis(
   draft: ManualFlightDraft,
   { jumpDay }: { jumpDay: boolean },
 ): ManualFlightAxis {
-  if (draft.engineStart == null || draft.engineStop == null) return { rows: [], foot: [] };
-
   const flights = sortedFlights(draft);
   const drops = jumpDay ? [...draft.drops].sort((a, b) => a.at - b.at) : [];
+  /** Numer zrzutu W CAŁEJ SESJI — liczy się z porządku czasu, nie z gniazda lotu. */
+  const dropNumber = new Map(drops.map((d, i) => [d.id, i + 1]));
+
+  const dropRow = (drop: ManualFlightDropDraft): SessionAxisRow => {
+    const inFlight = flightNumberAt(flights, drop.at);
+    return {
+      id: `drop:${drop.id}`,
+      kind: 'drop',
+      time: timeUtc(drop.at),
+      name: `Zrzut ${dropNumber.get(drop.id) ?? 1}`,
+      sub: dropSummary(drop),
+      /* PRAWA KOLUMNA ODPOWIADA NA TO SAMO PYTANIE, CO PRZY STARCIE: „który to lot".
+         Przy zrzucie brzmi ono „do którego lotu on należy" — i to jest odpowiedź
+         na zgłoszenie z issue #62 pkt 9. */
+      flight: inFlight != null ? `lot ${inFlight}` : 'poza lotem',
+      /* Miękka reguła domeny `DROP_ON_GROUND`, pokazana TU, a nie krok dalej:
+         ostrzeżenie ma stać tam, gdzie da się je naprawić. NIE blokuje zapisu —
+         fakt lotu jest cenniejszy niż kompletność formularza. */
+      warned: inFlight == null,
+    };
+  };
+
+  /**
+   * ══ KOLEJNOŚĆ IDZIE LOTAMI, NIE GLOBALNĄ RANGĄ (issue #62, czwarta tura) ══
+   * Pierwsza wersja sortowała wszystko jedną parą `(czas, ranga typu)` ze stałą rangą
+   * startu przed lądowaniem. Przy locie startującym DOKŁADNIE w godzinie lądowania
+   * poprzedniego dawało to kolejność „Start (lot 2) → Lądowanie (lot 1)", czyli obraz
+   * lotu, który zaczął się przed wylądowaniem poprzedniego — a to nieprawda.
+   *
+   * Jednej rangi nie da się dobrać: wewnątrz lotu start musi wyprzedzać lądowanie,
+   * a MIĘDZY lotami lądowanie musi wyprzedzać start. Te dwa wymagania są sprzeczne,
+   * więc kolejność bierze się stąd, skąd naprawdę wynika: z lotów. Każdy lot wykłada
+   * swoje wiersze w komplecie (start → jego zrzuty → lądowanie), a loty idą po sobie
+   * w porządku czasu, bo bramka kroku nie pozwala im na siebie zachodzić.
+   */
+  const middle: SessionAxisRow[] = [];
+  for (const [index, flight] of flights.entries()) {
+    middle.push({
+      id: `takeoff:${flight.id}`,
+      kind: 'takeoff',
+      time: timeUtc(flight.takeoff),
+      name: 'Start',
+      flight: `lot ${index + 1}`,
+    });
+    for (const drop of drops) {
+      if (drop.at >= flight.takeoff && drop.at <= flight.landing) middle.push(dropRow(drop));
+    }
+    middle.push({
+      id: `landing:${flight.id}`,
+      kind: 'landing',
+      time: timeUtc(flight.landing),
+      name: 'Lądowanie',
+      duration: flight.landing > flight.takeoff ? duration(flight.landing - flight.takeoff) : null,
+    });
+  }
+
+  /*
+   * Zrzuty POZA lotami wchodzą po czasie — za ostatni wiersz, który jeszcze się przed
+   * nimi zdarzył. Są z definicji poza każdym oknem lotu, więc nie mają jak zderzyć się
+   * o remis z tym, co dzieje się w środku.
+   */
+  for (const drop of drops) {
+    if (flightNumberAt(flights, drop.at) != null) continue;
+    const before = middle.filter((row) => rowTime(row, flights, drops) <= drop.at).length;
+    middle.splice(before, 0, dropRow(drop));
+  }
 
   const rows: SessionAxisRow[] = [
     {
       id: ENGINE_START,
       kind: 'engineStart',
-      time: timeUtc(draft.engineStart),
+      time: draft.engineStart != null ? timeUtc(draft.engineStart) : NO_TIME,
       name: 'Uruchomienie',
+    },
+    ...middle,
+    {
+      id: ENGINE_STOP,
+      kind: 'engineStop',
+      time: draft.engineStop != null ? timeUtc(draft.engineStop) : NO_TIME,
+      name: 'Wyłączenie',
     },
   ];
 
-  /**
-   * Zdarzenia lotów i zrzutów w JEDNYM porządku czasu — to jest cały mechanizm
-   * przynależności: zrzut wypadający w oknie lotu stanie między jego startem
-   * a lądowaniem, bo tak wynika z jego godziny.
-   *
-   * Przy równym stemplu start wygrywa z lądowaniem, a zrzut stoi po starcie
-   * i przed lądowaniem — czyli tam, gdzie mógł się wydarzyć.
+  /*
+   * Stopka pojawia się dopiero z biegiem silnika: bez niego blok nie ma z czego wyjść,
+   * a trójka zer w pustym stanie byłaby liczbą o niczym (reguła „zerowy licznik to szum,
+   * nie informacja" z issue #43).
    */
-  const middle: { at: number; rank: number; row: SessionAxisRow }[] = [];
-
-  flights.forEach((flight, index) => {
-    middle.push({
-      at: flight.takeoff,
-      rank: 0,
-      row: {
-        id: `takeoff:${flight.id}`,
-        kind: 'takeoff',
-        time: timeUtc(flight.takeoff),
-        name: 'Start',
-        flight: `lot ${index + 1}`,
-      },
-    });
-    middle.push({
-      at: flight.landing,
-      rank: 2,
-      row: {
-        id: `landing:${flight.id}`,
-        kind: 'landing',
-        time: timeUtc(flight.landing),
-        name: 'Lądowanie',
-        duration: flight.landing > flight.takeoff ? duration(flight.landing - flight.takeoff) : null,
-      },
-    });
-  });
-
-  drops.forEach((drop, index) => {
-    const inFlight = flightNumberAt(flights, drop.at);
-    middle.push({
-      at: drop.at,
-      rank: 1,
-      row: {
-        id: `drop:${drop.id}`,
-        kind: 'drop',
-        time: timeUtc(drop.at),
-        name: `Zrzut ${index + 1}`,
-        sub: dropSummary(drop),
-        /* PRAWA KOLUMNA ODPOWIADA NA TO SAMO PYTANIE, CO PRZY STARCIE: „który to lot".
-           Przy zrzucie brzmi ono „do którego lotu on należy" — i to jest odpowiedź
-           na zgłoszenie z issue #62 pkt 9. */
-        flight: inFlight != null ? `lot ${inFlight}` : 'poza lotem',
-        /* Miękka reguła domeny `DROP_ON_GROUND`, pokazana TU, a nie krok dalej:
-           ostrzeżenie ma stać tam, gdzie da się je naprawić. NIE blokuje zapisu —
-           fakt lotu jest cenniejszy niż kompletność formularza. */
-        warned: inFlight == null,
-      },
-    });
-  });
-
-  middle.sort((a, b) => a.at - b.at || a.rank - b.rank);
-  rows.push(...middle.map((m) => m.row));
-
-  rows.push({
-    id: ENGINE_STOP,
-    kind: 'engineStop',
-    time: timeUtc(draft.engineStop),
-    name: 'Wyłączenie',
-  });
+  if (draft.engineStart == null || draft.engineStop == null) return { rows, foot: [] };
 
   const airborne = flights.reduce((sum, f) => sum + Math.max(0, f.landing - f.takeoff), 0);
   return {
@@ -253,4 +297,19 @@ export function buildManualFlightAxis(
       { key: 'Czas lotu', value: duration(airborne), accent: true },
     ],
   };
+}
+
+/** Czas wiersza wyliczony z jego źródła — do wstawiania zrzutów spoza lotów. */
+function rowTime(
+  row: SessionAxisRow,
+  flights: readonly ManualFlightLegDraft[],
+  drops: readonly ManualFlightDropDraft[],
+): number {
+  if (row.id.startsWith('takeoff:')) {
+    return flights.find((f) => `takeoff:${f.id}` === row.id)?.takeoff ?? 0;
+  }
+  if (row.id.startsWith('landing:')) {
+    return flights.find((f) => `landing:${f.id}` === row.id)?.landing ?? 0;
+  }
+  return drops.find((d) => `drop:${d.id}` === row.id)?.at ?? 0;
 }

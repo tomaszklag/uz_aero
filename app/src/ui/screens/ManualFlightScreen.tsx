@@ -95,6 +95,7 @@ import {
   manualAxisTarget,
   nextDropAt,
   nextFlightTimes,
+  previousDrop,
 } from './logic/manualFlightAxis';
 import { manualFlightWarnings } from './logic/manualFlightWarnings';
 import { operationLabel } from './logic/operations';
@@ -264,6 +265,8 @@ export function ManualFlightScreen({
   );
   /** Ile zrzutów wypada poza każdym lotem — oś już je oznaczyła, baner je zlicza. */
   const strayDrops = axis.rows.filter((r) => r.kind === 'drop' && r.warned === true).length;
+  /** Bieg silnika ma oba końce — dopiero wtedy lot ma w czym się zawierać (pkt 10). */
+  const engineRunSet = draft.engineStart != null && draft.engineStop != null;
   // Do rachunku zużycia wchodzą tylko dolewki PO odczycie „przed uruchomieniem" —
   // poranne tankowanie już w tym odczycie siedzi (patrz `preRunAddedL`).
   const addedTotal =
@@ -480,34 +483,22 @@ export function ManualFlightScreen({
             w całości: `logic/manualFlightAxis.ts`. */}
         {step === 'times' && (
           <>
-            <Card title="Bieg silnika" header="inline">
-              <ValueBox
-                value={
-                  draft.engineStart != null && draft.engineStop != null
-                    ? `${timeUtc(draft.engineStart)} → ${timeUtc(draft.engineStop)}`
-                    : ''
-                }
-                placeholder="wpisz godziny biegu"
-                actionIcon="edit"
-                onPress={() => setSheet({ kind: 'engine' })}
-                accessibilityLabel="Godziny biegu silnika — zmień"
-              />
-              {/* Podpisu „blok … · czas w powietrzu …" tu NIE MA: obie liczby stoją
-                  w stopce osi pod spodem, a stopka jest ich jedynym miejscem
-                  (issue #38 pkt 9, ta sama reguła co na ekranie rozliczenia). */}
-            </Card>
+            {/* KARTY „BIEG SILNIKA" TU NIE MA (issue #62, czwarta tura z urządzenia):
+                niosła parę godzin, którą oś rysuje jako swój pierwszy i ostatni wiersz —
+                „dubluje się «bieg silnika» z tym, co mam na osi czasu, nie ma sensu ten
+                input". Oba końce osi startują z `--:--` i SĄ wejściem w ich wpisanie,
+                więc pusty krok 3 i krok 3 z pełną sesją to ten sam ekran w dwóch
+                stanach, a nie dwa różne układy.
 
-            {/* OSI NIE MA, DOPÓKI NIE MA BIEGU SILNIKA (issue #62 pkt 10) — a skoro
-                nie ma osi, nie ma też wiersza „DODAJ LOT". To BRAK AKCJI, nie
-                wyszarzony przycisk: wyszarzony obiecywałby czynność, którą reguły
-                i tak odrzucą (zasada z 10B i 02G). Powód niesie „DALEJ" na dole.
+                Reguła „nie da się dodać lotu bez biegu silnika" (pkt 10) zostaje
+                w mocy — pilnuje jej BRAK wiersza „DODAJ LOT", nie wyszarzony przycisk
+                (zasada z 10B i 02G). Powód niesie „DALEJ" na dole.
 
                 Karta ma pasek nagłówka i `flush` — dokładnie jak „Przebieg sesji"
                 na ekranie rozliczenia: oś sama trzyma swoje wiersze, a stopka sum
                 ma dobijać do krawędzi. Bez „czasy UTC" w nagłówku (inaczej niż tam):
-                podtytuł kroku mówi to zdanie wyżej i obejmuje nim także kartę biegu. */}
-            {axis.rows.length > 0 && (
-              <Card title="Przebieg sesji" flush>
+                podtytuł kroku mówi to zdanie o dwie linie wyżej. */}
+            <Card title="Przebieg sesji" flush>
                 <SessionAxis
                   rows={axis.rows}
                   foot={axis.foot}
@@ -527,24 +518,32 @@ export function ManualFlightScreen({
                   }}
                 />
 
-                {/* Dopisanie jako OSTATNIE WIERSZE OSI, nie przyciski pod kartą
-                    (wzorzec „DODAJ WPIS", issue #43): nowy lot i nowy zrzut trafią
-                    w przebieg sesji, więc wejście stoi tam, gdzie skończy się skutek. */}
-                <AxisAddRow label="DODAJ LOT" onPress={() => setSheet({ kind: 'flight', id: null })} />
+              {/* Dopisanie jako OSTATNIE WIERSZE OSI, nie przyciski pod kartą
+                  (wzorzec „DODAJ WPIS", issue #43): nowy lot i nowy zrzut trafią
+                  w przebieg sesji, więc wejście stoi tam, gdzie skończy się skutek.
 
-                {/* Zrzuty WYŁĄCZNIE w dniu skokowym (issue #19) — to brak wiersza,
-                    nie blokada z powodem: przy przelocie zrzut nie może się wydarzyć.
-                    Bez ani jednego lotu też go nie ma: `nextDropAt` nie miałby czego
-                    podstawić, a zrzut na ziemi jest tym, przed czym ta oś ostrzega. */}
-                {jumpDay && flights.length > 0 && (
-                  <AxisAddRow
-                    label="DODAJ ZRZUT"
-                    tone="muted"
-                    onPress={() => setSheet({ kind: 'drop', id: null })}
-                  />
-                )}
-              </Card>
-            )}
+                  „DODAJ LOT" istnieje dopiero z BIEGIEM SILNIKA (issue #62 pkt 10):
+                  lot bez niego nie ma w czym się zawierać, a nowy lot dziedziczy
+                  jego granice — bez nich nie byłoby czego podstawić. */}
+              {engineRunSet && (
+                <AxisAddRow
+                  label="DODAJ LOT"
+                  onPress={() => setSheet({ kind: 'flight', id: null })}
+                />
+              )}
+
+              {/* Zrzuty WYŁĄCZNIE w dniu skokowym (issue #19) — to brak wiersza,
+                  nie blokada z powodem: przy przelocie zrzut nie może się wydarzyć.
+                  Bez ani jednego lotu też go nie ma: `nextDropAt` nie miałby czego
+                  podstawić, a zrzut na ziemi jest tym, przed czym ta oś ostrzega. */}
+              {jumpDay && flights.length > 0 && (
+                <AxisAddRow
+                  label="DODAJ ZRZUT"
+                  tone="muted"
+                  onPress={() => setSheet({ kind: 'drop', id: null })}
+                />
+              )}
+            </Card>
 
             {/* Zrzut poza każdym lotem — miękka reguła domeny `DROP_ON_GROUND`. Do
                 issue #62 to zdanie padało dopiero na kroku 4, czyli ekran po tym, na
@@ -1140,6 +1139,12 @@ function dropSheetTitle(sheet: DropSheetState, drops: { id: string }[]): string 
  * Nowy zrzut ląduje w połowie PIERWSZEGO lotu, który zrzutu jeszcze nie ma (issue #62
  * pkt 9 — uzasadnienie przy `nextDropAt`). Do #62 trafiał zawsze w połowę OSTATNIEGO,
  * więc na dniu skokowym wszystkie wpadały do tego samego lotu.
+ *
+ * SKŁAD I WYSOKOŚĆ DZIEDZICZY PO POPRZEDNIM zrzucie (czwarta tura z urządzenia):
+ * dzień skokowy to ta sama maszyna, ten sam klub i zwykle ta sama wysokość wyniesienia
+ * lot po locie, więc wbijanie tych samych liczb od nowa przy każdym wyniesieniu było
+ * pracą, której formularz miał materiał nie wymagać. Godzina zostaje wyliczana — ta
+ * akurat jest za każdym razem inna.
  */
 function dropSheetValue(sheet: DropSheetState, draft: ManualFlightDraft) {
   if (sheet != null && sheet.kind === 'drop') {
@@ -1151,10 +1156,12 @@ function dropSheetValue(sheet: DropSheetState, draft: ManualFlightDraft) {
   }
   // Wiersz „DODAJ ZRZUT" pokazuje się dopiero przy pierwszym locie, więc `null`
   // tu nie wejdzie; awaryjnie bierzemy uruchomienie silnika.
+  const at = nextDropAt(draft) ?? draft.engineStart ?? draft.day + 10 * HOUR;
+  const previous = previousDrop(draft, at);
   return {
-    at: nextDropAt(draft) ?? draft.engineStart ?? draft.day + 10 * HOUR,
-    jumpers: null,
-    altitudeFt: null,
+    at,
+    jumpers: previous?.jumpers ?? null,
+    altitudeFt: previous?.altitudeFt ?? null,
   };
 }
 

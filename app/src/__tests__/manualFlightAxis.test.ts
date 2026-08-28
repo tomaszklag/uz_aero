@@ -14,6 +14,7 @@ import {
   manualAxisTarget,
   nextDropAt,
   nextFlightTimes,
+  previousDrop,
 } from '../ui/screens/logic/manualFlightAxis';
 import { emptyManualFlightDraft, type ManualFlightDraft } from '../ui/screens/logic/manualFlight';
 
@@ -36,13 +37,28 @@ function jumpDayDraft(): ManualFlightDraft {
 }
 
 describe('oś wpisu ręcznego', () => {
-  it('bez biegu silnika NIE MA osi ani sum (pkt 10)', () => {
-    const draft = emptyManualFlightDraft(DAY);
-    expect(buildManualFlightAxis(draft, { jumpDay: false })).toEqual({ rows: [], foot: [] });
+  it('OŚ ISTNIEJE od pustego stanu, z końcami bez godziny (issue #62, czwarta tura)', () => {
+    // Karta „Bieg silnika" nad osią niosła te same dwie godziny, co pierwszy i ostatni
+    // wiersz osi — „nie ma sensu ten input". Końce startują więc z `--:--` i to one
+    // są wejściem w ich wpisanie: pusty krok 3 i krok 3 z sesją to ten sam ekran.
+    const { rows, foot } = buildManualFlightAxis(emptyManualFlightDraft(DAY), {
+      jumpDay: false,
+    });
 
-    // Jedna godzina to wciąż nie jest bieg — sesja ma dwa końce.
-    const half = { ...draft, engineStart: at(9, 42) };
-    expect(buildManualFlightAxis(half, { jumpDay: false }).rows).toHaveLength(0);
+    expect(rows.map((r) => ({ kind: r.kind, time: r.time }))).toEqual([
+      { kind: 'engineStart', time: '--:--' },
+      { kind: 'engineStop', time: '--:--' },
+    ]);
+    // Stopka sum czeka na bieg silnika: trójka zer byłaby liczbą o niczym.
+    expect(foot).toEqual([]);
+  });
+
+  it('jeden koniec biegu też się rysuje — sesja ma dwa i widać, którego brakuje', () => {
+    const half = { ...emptyManualFlightDraft(DAY), engineStart: at(9, 42) };
+    const { rows, foot } = buildManualFlightAxis(half, { jumpDay: false });
+
+    expect(rows.map((r) => r.time)).toEqual(['09:42', '--:--']);
+    expect(foot).toEqual([]);
   });
 
   it('oś biegnie od uruchomienia do wyłączenia, a loty stoją w środku', () => {
@@ -117,6 +133,52 @@ describe('oś wpisu ręcznego', () => {
     };
     const ids = buildManualFlightAxis(draft, { jumpDay: false }).rows.map((r) => r.id);
     expect(ids).not.toContain('drop:d1');
+  });
+
+  it('lot startujący W GODZINIE lądowania poprzedniego nie wyprzedza go na osi', () => {
+    // Zgłoszenie z urządzenia (czwarta tura): przy równych stemplach kolejność
+    // wychodziła „Start (lot 2) → Lądowanie (lot 1)", czyli obraz lotu, który zaczął
+    // się przed wylądowaniem poprzedniego. Jednej rangi typu nie da się dobrać —
+    // wewnątrz lotu start musi wyprzedzać lądowanie, a MIĘDZY lotami odwrotnie.
+    const draft: ManualFlightDraft = {
+      ...jumpDayDraft(),
+      flights: [
+        { id: 'f1', takeoff: at(9, 48), landing: at(10, 14) },
+        // Start dokładnie w godzinie lądowania lotu 1 — touch and go z kartki.
+        { id: 'f2', takeoff: at(10, 14), landing: at(10, 40) },
+      ],
+    };
+
+    expect(buildManualFlightAxis(draft, { jumpDay: false }).rows.map((r) => r.id)).toEqual([
+      'engine-start',
+      'takeoff:f1',
+      'landing:f1',
+      'takeoff:f2',
+      'landing:f2',
+      'engine-stop',
+    ]);
+  });
+
+  it('zrzut na granicy lotu zostaje W NIM, a nie przed jego startem', () => {
+    // Druga strona tej samej reguły: wewnątrz lotu porządek jest start → zrzut →
+    // lądowanie, także gdy zrzut ma stempel równy któremuś z końców.
+    const draft: ManualFlightDraft = {
+      ...jumpDayDraft(),
+      flights: [{ id: 'f1', takeoff: at(9, 48), landing: at(10, 14) }],
+      drops: [
+        { id: 'dA', at: at(9, 48), jumpers: null, altitudeFt: null },
+        { id: 'dB', at: at(10, 14), jumpers: null, altitudeFt: null },
+      ],
+    };
+
+    expect(buildManualFlightAxis(draft, { jumpDay: true }).rows.map((r) => r.id)).toEqual([
+      'engine-start',
+      'takeoff:f1',
+      'drop:dA',
+      'drop:dB',
+      'landing:f1',
+      'engine-stop',
+    ]);
   });
 
   it('przynależność liczy się granicami DOMKNIĘTYMI — jak DROP_ON_GROUND w domenie', () => {
@@ -211,5 +273,39 @@ describe('wartości startowe dopisywanych pozycji', () => {
   it('bez lotów zrzut nie ma gdzie stanąć', () => {
     const draft = { ...emptyManualFlightDraft(DAY), engineStart: at(9, 42), engineStop: at(11, 18) };
     expect(nextDropAt(draft)).toBeNull();
+  });
+
+  it('kolejny zrzut dziedziczy skład i wysokość po poprzednim (czwarta tura)', () => {
+    // Dzień skokowy to ta sama maszyna, ten sam klub i zwykle ta sama wysokość
+    // wyniesienia lot po locie — wbijanie tych liczb od nowa przy każdym zrzucie
+    // było pracą, której formularz miał materiał nie wymagać.
+    const first = {
+      id: 'd1',
+      at: at(10, 1),
+      jumpers: { tandem: 2, aff: 0, solo: 1 },
+      altitudeFt: 4000,
+    };
+    const draft: ManualFlightDraft = { ...jumpDayDraft(), drops: [first] };
+
+    // Następny zrzut idzie do lotu 2 (środek 10:39) i bierze wartości z lotu 1.
+    expect(previousDrop(draft, at(10, 39))).toEqual(first);
+  });
+
+  it('pierwszy zrzut sesji nie ma po kim dziedziczyć', () => {
+    expect(previousDrop(jumpDayDraft(), at(10, 1))).toBeNull();
+  });
+
+  it('dziedziczy po zrzucie POPRZEDZAJĄCYM, nie po ostatnim w tablicy', () => {
+    // Zrzuty wpisuje się w dowolnej kolejności, a poprawka godziny je przestawia —
+    // liczy się porządek CZASU, nie kolejność dopisywania.
+    const draft: ManualFlightDraft = {
+      ...jumpDayDraft(),
+      drops: [
+        { id: 'late', at: at(11, 7), jumpers: { tandem: 9, aff: 0, solo: 0 }, altitudeFt: 9000 },
+        { id: 'early', at: at(10, 1), jumpers: { tandem: 2, aff: 0, solo: 1 }, altitudeFt: 4000 },
+      ],
+    };
+
+    expect(previousDrop(draft, at(10, 39))?.id).toBe('early');
   });
 });
