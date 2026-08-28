@@ -381,6 +381,30 @@
              ta sama nazwa dwa razy robiła stan „coś jest wybrane, a pod spodem nadal
              wiszą podpowiedzi", w którym nie było wiadomo, co obowiązuje. -->
 
+        <!-- NIE MA TU TEŻ PRZYPISU „Wpisz kod ICAO albo nazwę lotniska" (issue #62):
+             to samo zdanie stoi w polu wpisu jako placeholder. Bez pozycji i bez wpisu
+             arkusz jest po prostu pustą wyszukiwarką — i tak ma wyglądać, bo tym jest. -->
+
+        <!-- SEKCJA „WYBRANE" (widoczna, gdy pilot wraca do arkusza z wypełnionym polem,
+             czyli nie w tym stanie) niesie JEDEN wiersz z kodem, który jest w formularzu.
+             Rezygnacja z trasy to „×" NA TYM WIERSZU, w miejscu ptaszka (issue #62):
+
+               <div class="suggest-row selected">
+                 <span class="suggest-icao">EPKK</span>
+                 <span class="suggest-body"><span class="suggest-name">Kraków-Balice</span></span>
+                 <span class="suggest-clear">×</span>
+               </div>
+
+             Do #62 była to osobna linijka „Wyczyść lotnisko (EPKK)" na dnie arkusza:
+             napis stojący samotnie, powtarzający kod widoczny wyżej i nazywający
+             czynność, którą ikona mówi krócej. Akcja należy do WARTOŚCI, więc stoi
+             przy niej.
+
+             PTASZEK USTĘPUJE „×", zamiast stać obok — prawa krawędź wiersza niesie
+             dokładnie jedną rzecz, a nagłówek sekcji już mówi, że to jest wybrane.
+             W LIŚCIE WYNIKÓW ptaszek zostaje: tam odróżnia jeden wiersz od kilku
+             podobnych, kształtem, a nie samym kolorem (słońce, motywy jasne, daltonizm). -->
+
         <div class="suggest-head">
           <span class="suggest-title">Podpowiedzi</span>
         </div>

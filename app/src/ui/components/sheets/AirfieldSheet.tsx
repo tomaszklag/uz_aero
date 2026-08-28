@@ -30,7 +30,14 @@
  * PUSTE PYTANIE MA ODPOWIEDŹ: bez wpisanego tekstu lista pokazuje lotniska NAJBLIŻSZE
  * pilotowi (`nearestAirfields`) — zwykle stoi na tym, z którego zaraz wystartuje, więc
  * pierwsza pozycja jest zwykle tą właściwą. Bez pozycji (brak fixa, uprawnienie jeszcze
- * niedane — o lokalizację prosimy dopiero na kroku 4) zostaje zwykła zachęta do wpisania.
+ * niedane — o lokalizację prosimy dopiero na kroku 4) arkusz jest po prostu PUSTĄ
+ * WYSZUKIWARKĄ i tak ma wyglądać: przypis „Wpisz kod ICAO albo nazwę lotniska" był
+ * placeholderem pola powtórzonym dwa centymetry wyżej (issue #62).
+ *
+ * REZYGNACJA Z TRASY TO „×" NA WYBRANYM WIERSZU, w miejscu ptaszka (issue #62). Do tej
+ * pory był to link „Wyczyść lotnisko (EPKK)" na dnie arkusza — napis stojący osobno,
+ * powtarzający kod widoczny wyżej i nazywający czynność, którą ikona mówi krócej.
+ * Akcja należy do WARTOŚCI, więc stoi przy niej.
  *
  * KOD SPOZA KATALOGU wchodzi osobnym wierszem („Użyj kodu EDDB"), a nie po cichu:
  * katalog obejmuje Polskę, przelot potrafi skończyć się w Berlinie i to jest normalny
@@ -133,8 +140,6 @@ export function AirfieldSheet({
     return airfieldByIcao(code) == null ? code : null;
   }, [query]);
 
-  const hasHint = !searching && position == null;
-
   return (
     <Sheet
       visible={visible}
@@ -199,6 +204,11 @@ export function AirfieldSheet({
           rows={[selectedRow]}
           selectedIcao={currentIcao}
           onPick={onConfirm}
+          /* „×" W MIEJSCU ptaszka (issue #62) — rezygnacja z trasy była do tej pory
+             linkiem „Wyczyść lotnisko (EPKK)" na dnie arkusza: napisem stojącym
+             osobno i powtarzającym kod widoczny wyżej. Akcja należy do wartości,
+             więc stoi przy niej. */
+          onClear={() => onConfirm('')}
         />
       )}
 
@@ -249,25 +259,10 @@ export function AirfieldSheet({
         </Pressable>
       )}
 
-      {hasHint && (
-        <AppText variant="mono" tone="muted" style={styles.note}>
-          Wpisz kod ICAO albo nazwę lotniska
-        </AppText>
-      )}
-
-      {/* Wyczyszczenie trasy — trasa jest opcjonalna, więc musi być z czego zrezygnować. */}
-      {currentIcao.length > 0 && !searching && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Wyczyść lotnisko"
-          onPress={() => onConfirm('')}
-          style={({ pressed }) => [styles.clear, { opacity: pressed ? 0.6 : 1 }]}
-        >
-          <AppText variant="mono" tone="muted" style={styles.note}>
-            Wyczyść lotnisko ({currentIcao})
-          </AppText>
-        </Pressable>
-      )}
+      {/* PRZYPISU „Wpisz kod ICAO albo nazwę lotniska" TU NIE MA (issue #62): dokładnie
+          to samo zdanie stoi w polu wpisu jako placeholder, dwa centymetry niżej.
+          Bez pozycji i bez wpisu arkusz jest po prostu pustą wyszukiwarką — i tak ma
+          wyglądać, bo tym jest. */}
     </Sheet>
   );
 }
@@ -289,6 +284,4 @@ const styles = StyleSheet.create({
   // linii wypychałyby kod poza kontrolkę na wąskim telefonie.
   extraBody: { flex: 1, gap: 3, alignItems: 'flex-start' },
   extraText: { fontSize: 11 },
-  note: { fontSize: 9, letterSpacing: 0.5 },
-  clear: { alignSelf: 'flex-start', paddingVertical: 8 },
 });

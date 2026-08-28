@@ -242,7 +242,29 @@ export function Stepper({
           <TextInput
             autoFocus
             value={draft}
-            onChangeText={(text) => setDraft(edit.mask ? edit.mask(text) : text)}
+            /**
+             * WARTOŚĆ WYCHODZI NA KAŻDĄ ZMIANĘ TEKSTU, nie na wyjściu z pola
+             * (issue #62, uwaga z urządzenia).
+             *
+             * Do tej pory wpis szedł do rodzica dopiero przy `onBlur`, więc wszystko,
+             * co z tej wartości liczą arkusze — czas trwania pary, podpis przesunięcia,
+             * powód blokady „ZAPISZ" — odpowiadało dopiero po tapnięciu gdzieś obok.
+             * Pilot wpisywał godzinę, patrzył na wiersz „Blok" i widział poprzedni
+             * wynik: formularz sprawiał wrażenie, że nie przyjął tego, co wpisał.
+             *
+             * Niepełny wpis („08:3") nie parsuje się i po prostu nie rusza wartości —
+             * to nie jest błąd do pokazania, tylko normalny stan w połowie pisania.
+             * `commit` przy `onBlur` ZOSTAJE jako domknięcie: to on kasuje szkic
+             * i przywraca widok wartości.
+             */
+            onChangeText={(text) => {
+              const masked = edit.mask ? edit.mask(text) : text;
+              setDraft(masked);
+              const parsed = edit.parse(masked);
+              if (parsed == null) return;
+              const next = clamp(parsed);
+              if (next !== value) onChange(next);
+            }}
             onBlur={commit}
             onSubmitEditing={commit}
             keyboardType={edit.keyboardType ?? 'number-pad'}

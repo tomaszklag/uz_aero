@@ -25,6 +25,7 @@ import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { CheckIcon } from '../foundation/CheckIcon';
+import { IconAction } from '../data/IconAction';
 import { toneColors } from '../tone';
 
 /** Wiersz listy podpowiedzi — gotowy do narysowania, bez logiki w komponencie. */
@@ -49,6 +50,18 @@ export interface AirfieldSuggestionsProps {
    */
   selectedIcao?: string | null;
   onPick: (icao: string) => void;
+  /**
+   * Zdjęcie wyboru — „×" na wybranym wierszu, W MIEJSCU ptaszka (issue #62).
+   *
+   * Do #62 rezygnacja z trasy była osobnym linkiem „Wyczyść lotnisko (EPKK)" na dnie
+   * arkusza: napis w miejscu, w którym nic innego nie stoi, opisujący wartość widoczną
+   * dwa centymetry wyżej. Akcja należy do WARTOŚCI, więc stoi przy niej.
+   *
+   * Ptaszek ustępuje bez straty tylko tam, gdzie sekcja i tak nazywa się „Wybrane" —
+   * w liście wyników znacznik zostaje, bo tam odróżnia jeden wiersz od kilku podobnych
+   * (kształt, nie sam kolor: słońce, motywy jasne, daltonizm).
+   */
+  onClear?: (icao: string) => void;
   style?: ViewStyle;
 }
 
@@ -57,6 +70,7 @@ export function AirfieldSuggestions({
   rows,
   selectedIcao = null,
   onPick,
+  onClear,
   style,
 }: AirfieldSuggestionsProps) {
   const { theme } = useTheme();
@@ -121,8 +135,20 @@ export function AirfieldSuggestions({
               </View>
 
               {/* Ptaszek w kółku — ten sam znacznik wyboru co na liście samolotów (02).
-                  Kształt, nie sam kolor: działa w słońcu i przy daltonizmie. */}
-              {selected && (
+                  Kształt, nie sam kolor: działa w słońcu i przy daltonizmie.
+
+                  Z „×" (sekcja „Wybrane") ptaszek USTĘPUJE, zamiast stać obok: prawa
+                  krawędź wiersza niesie dokładnie jedną rzecz, a nazwa sekcji mówi już,
+                  że to jest wybrane — znacznik powtarzałby jej nagłówek. */}
+              {selected && onClear != null && (
+                <IconAction
+                  name="clear"
+                  accessibilityLabel={`Wyczyść lotnisko ${row.icao}`}
+                  onPress={() => onClear(row.icao)}
+                  size={15}
+                />
+              )}
+              {selected && onClear == null && (
                 <View style={[styles.check, { backgroundColor: green.accent }]}>
                   <CheckIcon size={12} color={theme.colors.bg} />
                 </View>

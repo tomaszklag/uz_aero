@@ -97,6 +97,10 @@ const REGISTRY = {
   // ikona wystarcza za napis — a wielki czerwony przycisk krzyczał jak akcja główna,
   // choć intencją wchodzącego jest poprawka, nie kasowanie (uwaga z urządzenia).
   trash: f('trash-2'),
+  // Zdjęcie WYBORU z pola („×" przy wybranym lotnisku, issue #62). To NIE jest `trash`:
+  // kosz odejmuje coś z rejestru i dlatego jest czerwony, a tu chodzi o wyczyszczenie
+  // wartości formularza, której pilot jeszcze nigdzie nie zapisał.
+  clear: f('x'),
 
   // akcje kokpitu
   start: f('play'),

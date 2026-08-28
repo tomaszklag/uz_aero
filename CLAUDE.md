@@ -874,6 +874,24 @@ poprawka dosięgła ośmiu arkuszy naraz.
   a pod godziną stanął **czas lokalny** drobnym drukiem (`TimeStepper.localTime`) — do #62
   składał go sobie sam arkusz 05F (issue #19), choć pytanie „która to u mnie godzina"
   pada przy każdym wpisywanym czasie
+- **wartość wychodzi na KAŻDĄ ZMIANĘ TEKSTU, nie przy `onBlur`** (druga tura z urządzenia):
+  wpis szedł do rodzica dopiero po wyjściu z pola, więc czas trwania pary, podpis
+  przesunięcia i powód blokady „ZAPISZ" odpowiadały dopiero po tapnięciu gdzieś obok —
+  pilot patrzył na wiersz „Blok" i widział poprzedni wynik. Wpis niepełny („08:3") nie
+  parsuje się i po prostu nie rusza wartości; `commit` przy `onBlur` zostaje domknięciem
+  (kasuje szkic i przywraca widok wartości). **Ta reguła obowiązuje każde pole wpisu**:
+  formularz odpowiada na to, co pilot właśnie napisał, a nie na to, co zatwierdził
+- **arkusz wyboru lotniska nie powtarza placeholdera** (druga tura z urządzenia):
+  przypis „Wpisz kod ICAO albo nazwę lotniska" mówił dokładnie to, co pole wpisu dwa
+  centymetry niżej. Bez pozycji i bez wpisu arkusz jest PUSTĄ WYSZUKIWARKĄ i tak ma
+  wyglądać — pustka nie wymaga tu podpisu
+- **rezygnacja z wartości to „×" PRZY NIEJ**, nie link pod listą: „Wyczyść lotnisko
+  (EPKK)" na dnie arkusza stało osobno, powtarzało kod widoczny wyżej i nazywało
+  czynność, którą ikona mówi krócej (`IconAction name="clear"`; kosz zostaje przy
+  ODEJMOWANIU z rejestru i dlatego jest czerwony). W sekcji „Wybrane" ptaszek USTĘPUJE
+  temu „×" — prawa krawędź wiersza niesie jedną rzecz, a nagłówek sekcji już mówi,
+  że to jest wybrane. W liście wyników ptaszek zostaje: tam odróżnia jeden wiersz
+  od kilku podobnych, kształtem, a nie samym kolorem
 - **KOD SPOZA KATALOGU jest OZNACZONY** (`airfieldMark.ts`): w arkuszu bursztynowy wiersz
   z plakietką „spoza katalogu", w formularzu ta sama plakietka przy wartości. Do #62 EDDB
   wyglądało dokładnie jak EPKK, a jedyną różnicą był BRAK drugiej linii z nazwą — sygnał

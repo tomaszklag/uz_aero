@@ -51,6 +51,10 @@ export function IconAction({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
+      /* 36 dp rysunku + 4 dp zapasu = próg 44 dp dla rękawic. Docblock obiecywał ten
+         zapas od issue #43, ale `hitSlop` nigdy nie było w kodzie — złapane przy
+         issue #62, gdy ikona trafiła do 48-dp wiersza listy. */
+      hitSlop={4}
       style={({ pressed }) => [
         styles.btn,
         {
