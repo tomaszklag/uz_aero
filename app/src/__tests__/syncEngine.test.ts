@@ -109,6 +109,11 @@ class ScriptedServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   };
 
+  /** Łańcuch paliwa (issue #62) — ten silnik go nie używa, ekran pyta wprost. */
+  async getFuelChain(): Promise<{ before: null; after: null }> {
+    return { before: null, after: null };
+  }
+
   /** Skryptowalny jak `statusScript`; domyślnie samolot wolny. */
   aircraftStateScript: Array<RemoteAircraftState | Error> = [];
   async getAircraftState(_token: string, aircraftId: string): Promise<RemoteAircraftState> {

@@ -84,6 +84,7 @@ import {
   emptyManualFlightDraft,
   manualFlightNeedsDual,
   manualFlightStepBlocker,
+  preRunAddedL,
   sortedFlights,
   toManualFlightInput,
   type ManualFlightDraft,
@@ -97,6 +98,13 @@ import {
   previousDrop,
 } from './logic/manualFlightAxis';
 import { buildManualFuelChain, fuelChainTarget, sortedRefuels } from './logic/manualFuelChain';
+import {
+  fuelAfterReference,
+  fuelBeforeReference,
+  fuelContinuityWarnings,
+} from './logic/fuelContinuity';
+import { useFuelChain } from '../hooks/useFuelChain';
+import type { RemoteFuelChain } from '../../application';
 import { manualFuelBalance, manualMhBalance } from './logic/manualFlightBalance';
 import { manualFlightWarnings } from './logic/manualFlightWarnings';
 import { operationLabel } from './logic/operations';
@@ -202,17 +210,34 @@ export function ManualFlightScreen({
   // Wymóg Duala (issue #58 pkt 4) — jak na 02: baner nazywa powód, przycisk dostaje
   // sam `disabled` (blokada widoczna z ekranu nie powtarza swojego zdania w przycisku).
   const needsDual = step === 'aircraft' && manualFlightNeedsDual(aircraft, draft);
+  /* Łańcuch paliwa pytany PUNKTOWO, gdy znamy już godzinę uruchomienia (issue #62,
+     piąta tura). `null` = nie wiadomo teraz i ekran wtedy o ciągłości milczy. */
+  const { chain } = useFuelChain(
+    draft.aircraftId,
+    draft.engineStart,
+    step === 'readings',
+  );
+
   const warnings = useMemo(
-    () =>
-      step === 'readings'
-        ? manualFlightWarnings(draft, {
-            pilotDay,
-            handover: aircraft?.handover ?? null,
-            mhFormat,
-            fetchedAt: aircraft?.fetchedAt ?? null,
-          })
-        : [],
-    [step, draft, pilotDay, aircraft, mhFormat],
+    () => {
+      if (step !== 'readings') return [];
+      const local = manualFlightWarnings(draft, {
+        pilotDay,
+        handover: aircraft?.handover ?? null,
+        mhFormat,
+        fetchedAt: aircraft?.fetchedAt ?? null,
+      });
+      /* Ciągłość idzie PIERWSZA: mówi o rozjeździe z cudzym odczytem, czyli o czymś,
+         czego pilot nie widzi nigdzie indziej. Reszta ostrzeżeń dotyczy jego własnych
+         liczb, które ma przed oczami na tym samym ekranie. */
+      const continuity = fuelContinuityWarnings(
+        chain,
+        draft.fuelBeforeL != null ? draft.fuelBeforeL - preRunAddedL(draft) : null,
+        draft.fuelAfterL,
+      );
+      return [...continuity, ...local];
+    },
+    [step, draft, pilotDay, aircraft, mhFormat, chain],
   );
 
   const save = useCallback(async () => {
@@ -936,11 +961,12 @@ export function ManualFlightScreen({
           const v = sheet?.kind === 'fuel' && sheet.which === 'before' ? draft.fuelBeforeL : draft.fuelAfterL;
           return v != null ? `${Math.round(v)}` : '';
         })()}
-        rows={
-          aircraft?.handover != null
-            ? [{ label: 'Ostatnie przekazanie', value: litres(aircraft.handover.reading.fuelL) }]
-            : []
-        }
+        /* CIĄGŁOŚĆ PALIWA (issue #62, piąta tura): liczba Z PODANYM ŹRÓDŁEM — co
+           poprzedni pilot zostawił, a co zastał następny. Wartości NIE PODSTAWIAMY:
+           liczba podstawiona wygląda jak odczytana z przyrządu i nikt jej potem nie
+           odróżni (uzasadnienie w `logic/fuelContinuity.ts`). Bez sieci zostaje samo
+           ostatnie przekazanie z cache, jak dotąd. */
+        rows={fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
         parse={parseLitres}
         onConfirm={(v) => {
           if (sheet?.kind !== 'fuel') return;
@@ -1181,6 +1207,29 @@ function dropSheetValue(sheet: DropSheetState, draft: ManualFlightDraft) {
     jumpers: previous?.jumpers ?? null,
     altitudeFt: previous?.altitudeFt ?? null,
   };
+}
+
+/**
+ * Wiersze odniesienia arkusza paliwa: sąsiad z łańcucha, a bez niego — ostatnie
+ * przekazanie z cache. Sąsiad wygrywa, bo dotyczy TEJ chwili, a przekazanie mówi
+ * „ile jest teraz" (issue #62, piąta tura).
+ */
+function fuelSheetRows(
+  sheet: { kind: string; which?: 'before' | 'after' } | null,
+  chain: RemoteFuelChain | null | undefined,
+  handover: { reading: { fuelL: number } } | null,
+): { label: string; value: string }[] {
+  if (sheet == null || sheet.kind !== 'fuel') return [];
+  const which = sheet.which ?? 'before';
+
+  const reference =
+    which === 'before' ? fuelBeforeReference(chain) : fuelAfterReference(chain);
+  if (reference != null) return [reference];
+
+  // Bez łańcucha (offline, pierwszy lot maszyny, starszy serwer) zostaje to, co było.
+  return handover != null
+    ? [{ label: 'Ostatnie przekazanie', value: litres(handover.reading.fuelL) }]
+    : [];
 }
 
 type RefuelSheetState = { kind: 'refuel'; id: string | null } | { kind: string } | null;

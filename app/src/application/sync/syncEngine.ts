@@ -25,6 +25,7 @@ import {
   ServerUnreachableError,
   type PushResult,
   type RemoteAircraftState,
+  type RemoteFuelChain,
   type RemoteTaskSuggestions,
   type ServerPort,
   type SessionSyncStatus,
@@ -97,6 +98,32 @@ export class SyncEngine {
    */
   fetchAircraftState(aircraftId: string): Promise<RemoteAircraftState | null> {
     return authorizedFetch(this.auth, (token) => this.server.getAircraftState(token, aircraftId));
+  }
+
+  /**
+   * Ciągłość paliwa wokół chwili (`GET /aircraft/:id/fuel-chain`, issue #62) — czym
+   * maszyna została ZDANA przed tym lotem i co zastał ten, kto ją przejął PO nim.
+   *
+   * Pytany PUNKTOWO, gdy wpis ręczny zna już godziny biegu silnika. `null` = nie wiadomo
+   * TERAZ (offline, wygasła sesja, starszy serwer bez tej trasy) i tak ma być: ekran
+   * milczy wtedy o ciągłości, zamiast zgadywać z ostatniego przekazania — to jest inne
+   * pytanie i dałoby odpowiedź poprawną formalnie, a nie na temat.
+   *
+   * Świadomie BEZ cache: łańcuch dotyczy KONKRETNEJ chwili konkretnej maszyny, więc
+   * magazyn trzeba by unieważniać przy każdym cudzym locie (ta sama decyzja, co przy
+   * podpowiedziach zadania).
+   */
+  fetchFuelChain(
+    aircraftId: string,
+    at: number,
+    exceptSessionUuid?: string,
+  ): Promise<RemoteFuelChain | null> {
+    return authorizedFetch(this.auth, (token) =>
+      this.server.getFuelChain(token, aircraftId, {
+        at,
+        ...(exceptSessionUuid != null ? { exceptSessionUuid } : {}),
+      }),
+    );
   }
 
   /**

@@ -965,6 +965,30 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   werdykt poza pasmem jest BURSZTYNOWY: paliwomierz i licznik mają rację. Podpis
   „przyrost … · blok …" USUNIĘTY — przyrost licznika nie równa się blokowi i nie ma
   prawa się równać (poprawka z issue #38, tu powtórzona)
+- **CIĄGŁOŚĆ PALIWA Z SĄSIEDNIMI SESJAMI** (piąta tura; `GET /aircraft/:id/fuel-chain`,
+  `server/src/domain/fuelChain.ts`, `logic/fuelContinuity.ts`, `hooks/useFuelChain.ts`):
+  maszyna nie tankuje się sama między sesjami, więc ile jeden pilot zostawił, tyle
+  następny powinien zastać. Trasa oddaje DWA punkty — odczyt przy zdaniu sesji
+  poprzedzającej i odczyt przy przejęciu następnej.
+  - **`handover` z `/reference` na to nie odpowiada**: to JEDEN punkt („ile jest teraz"),
+    a wpis ręczny pyta „ile było w czwartek" — między czwartkiem a dziś maszyna zdążyła
+    polatać, zwykle z kimś innym. Dla wpisu bieżącego oba pytania mają tę samą odpowiedź
+    i dlatego brak tej trasy tak długo nie przeszkadzał
+  - **WARTOŚCI NIE PODSTAWIAMY, pokazujemy ją ze ŹRÓDŁEM** („zostawione przed lotem ·
+    AKO · 16 SIE 09:00"). Podstawienie to dokładnie ta pomyłka, którą projekt popełnił
+    do 2026-08-16: wpis brał odczyt początkowy z cache, a „zgadnięte ogniwo psuło łańcuch
+    MH następnemu pilotowi". Liczba podstawiona wygląda jak odczytana z przyrządu
+  - **rozjazd jest OSTRZEŻENIEM, nigdy blokadą** — paliwomierz jest przyrządem fizycznym
+    i to on ma rację; ktoś mógł też dolać poza aplikacją. Tolerancja 6 L (podziałka
+    przyrządu), ostrzeżenie w OBIE strony
+  - **to nie jest wyłom w offline-first**: łańcuch należy do kategorii „dane z serwera"
+    (§4.8) i ma jej trzeci stan — `brak`. Bez sieci, na starszym serwerze (404) albo przy
+    pierwszym locie maszyny ekran o ciągłości MILCZY, a wpis zapisuje się jak dotąd.
+    Świadomie BEZ cache: odpowiedź dotyczy konkretnej chwili konkretnej maszyny, więc
+    magazyn trzeba by unieważniać przy każdym cudzym locie
+  - **serwer nie liczy nowego SQL-a**: `listByAircraft` i tak wczytuje całą historię
+    maszyny (łańcuch MH potrzebuje sąsiedztwa przez lata) — nowe jest samo pytanie
+    zadane tym wierszom. Trasa jest czystym odczytem, bez migracji
 - **CO BLOKUJE, A CO OSTRZEGA — GRANICA JEST JEDNA** (piąta tura): blokada zostaje
   WYŁĄCZNIE tam, gdzie domena i tak odmówi, bo `manualFlight` robi próbę generalną całej
   sekwencji i przy pierwszym twardym naruszeniu rzuca `DomainRuleError`, nie zapisując

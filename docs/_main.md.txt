@@ -570,6 +570,7 @@ administratora/szefa wyszkolenia, nie w kokpicie).
 | POST | `/auth/refresh` | odświeżenie JWT (refresh długożyciowy — patrz 3.0) |
 | GET | `/reference` | samoloty + konfiguracje + piloci + claim/przekazanie per samolot; ETag (flota **i** sesje) do cache |
 | GET | `/aircraft/:id/state` | aktywny claim (kto, od kiedy), najświeższy znany stan FOB + MH — wyliczony z ostatnich zsynchronizowanych zdarzeń (przekazanie ze **zdania samolotu**, opcjonalny odczyt z `leg_close`, lub zdarzenia w trakcie sesji, np. tankowanie), `last_sync_at` |
+| GET | `/aircraft/:id/fuel-chain?at=…` | ciągłość paliwa WOKÓŁ CHWILI (issue #62): odczyt przy zdaniu sesji poprzedzającej i przy przejęciu następnej → `{before, after}`, każde `{sessionUuid, picId, at, fuelL, mh}` albo `null`. Materiał podpowiedzi wpisu ręcznego — `handover` z `/reference` odpowiada na inne pytanie („ile jest TERAZ"), a wpis opisuje czwartek, gdy maszyna zdążyła polatać z kimś innym. Czysty odczyt, bez migracji; `except=<uuid>` wyklucza poprawianą sesję, żeby nie była sobie punktem odniesienia |
 | POST | `/events` | paczka zdarzeń → `{accepted, duplicates, flags}` |
 | GET | `/me/events` | strona WŁASNYCH zdarzeń pilota (kursor keyset po `received_at`) → `{events, nextCursor, hasMore}`; odtworzenie rejestru na urządzeniu, które go straciło (§4.9) |
 | GET | `/sessions/:uuid/sync-status` | wysłane/łącznie, flagi sesji, status i link eksportu |

@@ -16,6 +16,7 @@ import type {
   ReferenceFetch,
   RemoteEventPage,
   RemoteAircraftState,
+  RemoteFuelChain,
   RemoteTaskSuggestions,
   RemoteThemePrefs,
   ServerPort,
@@ -78,6 +79,26 @@ export class HttpServerApi implements ServerPort {
 
   getAircraftState(token: string, aircraftId: string): Promise<RemoteAircraftState> {
     return this.request('GET', `/aircraft/${encodeURIComponent(aircraftId)}/state`, { token });
+  }
+
+  /**
+   * `GET /aircraft/:id/fuel-chain?at=…` (issue #62) — sąsiedzi w łańcuchu paliwa.
+   *
+   * `except` wysyłamy tylko przy poprawianiu istniejącego wpisu: bez tego sesja byłaby
+   * sobie własnym punktem odniesienia i zawsze „zgadzała się" sama ze sobą.
+   */
+  getFuelChain(
+    token: string,
+    aircraftId: string,
+    params: { at: number; exceptSessionUuid?: string },
+  ): Promise<RemoteFuelChain> {
+    const query = new URLSearchParams({ at: String(params.at) });
+    if (params.exceptSessionUuid != null) query.set('except', params.exceptSessionUuid);
+    return this.request(
+      'GET',
+      `/aircraft/${encodeURIComponent(aircraftId)}/fuel-chain?${query.toString()}`,
+      { token },
+    );
   }
 
   getSyncStatus(token: string, sessionUuid: string): Promise<SessionSyncStatus> {

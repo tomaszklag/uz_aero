@@ -339,6 +339,26 @@
            serwer: oznaczy je flagą `aircraft_overlap`, a uwaga wróci na telefon (§4.5).
            ŻADNE Z NICH NIE BLOKUJE ZAPISU. -->
       <div class="warn-list">
+        <!-- CIĄGŁOŚĆ PALIWA idzie PIERWSZA (issue #62, piąta tura): mówi o rozjeździe
+             z CUDZYM odczytem, czyli o czymś, czego pilot nie widzi nigdzie indziej.
+             Reszta ostrzeżeń dotyczy jego własnych liczb, które ma na tym samym ekranie.
+
+             Źródłem jest `GET /aircraft/:id/fuel-chain` — odczyt przy zdaniu sesji
+             POPRZEDZAJĄCEJ i przy przejęciu NASTĘPNEJ. Przekazanie z `/reference` na to
+             pytanie nie odpowiada: to jeden punkt („ile jest teraz"), a wpis ręczny pyta
+             o czwartek, gdy maszyna zdążyła już polatać z kimś innym.
+
+             NIE BLOKUJE i blokować nie może: paliwomierz jest przyrządem fizycznym
+             i to on ma rację, a ktoś mógł dolać poza aplikacją. Bez sieci, przy pierwszym
+             locie maszyny albo na starszym serwerze tego ostrzeżenia po prostu nie ma —
+             ekran milczy o ciągłości, zamiast zgadywać. -->
+        <div class="warn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="warn-body">
+            <span class="warn-text"><b>Paliwo nie zgadza się z poprzednim lotem</b> — maszynę zdano ze 140 L, a wpis zaczyna od 112 L. Ktoś tankował poza aplikacją?</span>
+            <span class="warn-src">z rejestru · AKO · 16 SIE 09:00</span>
+          </span>
+        </div>
         <div class="warn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="warn-body">

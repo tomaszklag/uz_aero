@@ -150,6 +150,24 @@ export class ServerRejectedError extends Error {
   }
 }
 
+/** Jeden koniec łańcucha paliwa: czyj odczyt, kiedy i jaki (issue #62). */
+export interface RemoteFuelChainLink {
+  sessionUuid: string;
+  picId: string;
+  at: number;
+  fuelL: number;
+  mh: number;
+}
+
+/**
+ * Sąsiedztwo w łańcuchu paliwa. Oba pola bywają `null` i to jest NORMALNY stan,
+ * nie brak danych: pierwszy lot maszyny nie ma poprzednika, najnowszy — następcy.
+ */
+export interface RemoteFuelChain {
+  before: RemoteFuelChainLink | null;
+  after: RemoteFuelChainLink | null;
+}
+
 export interface ServerPort {
   login(login: string, password: string): Promise<AuthTokens>;
   refresh(refreshToken: string): Promise<AuthTokens>;
@@ -165,6 +183,20 @@ export interface ServerPort {
   ): Promise<RemoteEventPage>;
   getReference(token: string, etag?: string | null): Promise<ReferenceFetch>;
   getAircraftState(token: string, aircraftId: string): Promise<RemoteAircraftState>;
+  /**
+   * Ciągłość paliwa wokół chwili (`GET /aircraft/:id/fuel-chain`, issue #62) — czym
+   * maszyna została ZDANA przed tym lotem i co zastał ten, kto ją przejął PO nim.
+   *
+   * Osobno od `getAircraftState`, bo to inne pytanie: tamto mówi „ile jest teraz",
+   * a wpis ręczny opisuje czwartek — i między czwartkiem a dziś maszyna zdążyła
+   * polatać. WYŁĄCZNIE online: brak odpowiedzi znaczy „nie wiem" i ekran wtedy
+   * o ciągłości milczy, zamiast zgadywać z ostatniego przekazania.
+   */
+  getFuelChain(
+    token: string,
+    aircraftId: string,
+    params: { at: number; exceptSessionUuid?: string },
+  ): Promise<RemoteFuelChain>;
   getSyncStatus(token: string, sessionUuid: string): Promise<SessionSyncStatus>;
   /**
    * Ślad kalibracyjny GPS (faza 5) na `POST /traces` — osobny, niskopriorytetowy tor

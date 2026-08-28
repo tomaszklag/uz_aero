@@ -104,6 +104,7 @@ class PrefsServer implements ServerPort {
     throw new Error('nieużywane w tych testach');
   };
   getReference = async () => ({ data: null, etag: null });
+  getFuelChain = async () => ({ before: null, after: null });
   getAircraftState = async () => ({
     aircraftId: 'SP-AXA',
     claimPicId: null,
