@@ -985,13 +985,31 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   a MIĘDZY lotami odwrotnie — więc każdy lot wykłada swoje wiersze w komplecie
   (start → jego zrzuty → lądowanie), a loty idą po sobie w porządku czasu. Zrzuty poza
   lotami wchodzą po czasie
-- **PALIWO JEST SEKWENCJĄ, nie trzema polami** (piąta tura; `logic/manualFuelChain.ts`,
-  mockup `15C`): „najpierw podaję, ile było przed lotem, następnie ile dodałem, oraz
-  później ile zostało". Krok 4 miał trzy rozłączne pola w kolejności przed → po →
-  dolewki, choć dolewka wypada w czasie MIĘDZY odczytami — pilot składał z nich zdanie
-  w głowie. Odtąd jeden ciąg TĄ SAMĄ osią, co bieg silnika i rozliczenie; stopka mówi
-  zużycie. **Poranna dolewka ma wiersz na osi, ale NIE wchodzi do zużycia** — odczyt
-  „przed uruchomieniem" już ją zawiera (ta sama korekta, którą robi `toManualFlightInput`)
+- **PALIWO TO TRZY LICZBY I ANI JEDNA GODZINA** (siódma tura, mockup `15C`;
+  `ManualFlightFuel` w `logic/manualFlight.ts`): „system wykrywa ilość paliwa w oparciu
+  o poprzedzający lot, później podaję, ile paliwa zostało dotankowane oraz ile paliwa
+  zostało po wykonaniu operacji. Nie ma sensu podawać godziny, kiedy nastąpiło dolanie
+  albo pomiar — to wynika z godzin, kiedy samolot został uruchomiony i wyłączony."
+  Szkic trzyma `{ foundL, addedL, afterL }`, a kolejność pól zastępuje godziny:
+  zastane → dolane → (lot) → zostało.
+  - **ZASTANE wykrywa się z sesji poprzedzającej** (`readings-chain`) i podstawia RAZ,
+    tylko w pole jeszcze puste — wpisana wartość jest decyzją pilota i odpowiedź serwera
+    nie ma prawa jej nadpisać. Źródło zostaje widoczne przy polu, żeby liczba nie udawała
+    odczytu z paliwomierza; poprawka to jedno tapnięcie (przyrząd bije rachubę)
+  - **dolewka nie jest już pozycją listy**: jedna liczba, a zdarzenie `refuel` składa się
+    przy zapisie minutę PRZED uruchomieniem. `RefuelEntrySheet` i `manualFuelChain.ts`
+    SKASOWANE
+  - **trzy rzeczy zniknęły razem z godzinami**: (1) minuta dolewki nie ważyła nigdzie —
+    w obu dozwolonych oknach silnik stoi, więc żaden interwał analityki się nie zmienia;
+    (2) dolewkę dało się wpisać na ŚRODEK biegu, czyli w stan, który domena odrzuca —
+    dziś jest NIEWYRAŻALNY, więc blokada `REFUEL_ENGINE_RUNNING` przestała być potrzebna;
+    (3) odczyt „przed uruchomieniem" był stanem PO porannym tankowaniu, więc rachunek
+    musiał go cofać o dolewki sprzed niego (`preRunAddedL`), inaczej litry liczyły się
+    podwójnie. **Ta pułapka zniknęła razem z polem, które ją tworzyła** — `initialReading`
+    to wprost `foundL`
+  - **bilans „paliwa po locie więcej, niż mogło być" przestał być ostrzeżeniem**: domena
+    odrzuca ten stan twardo (`FUEL_INCREASE_WITHOUT_REFUEL`), więc mówi o nim BLOKADA.
+    Sufitem jest `foundL + addedL`
 - **NORMA LICZY SIĘ NA KROKU 4** (`logic/manualFlightBalance.ts`): oczekiwanie i pasmo
   liczy DOMENA (`consumption/expectation.ts`) z normy w cache referencyjnym, więc werdykt
   powstaje OFFLINE — ta sama arytmetyka, którą po zapisaniu pokaże ekran 10. Bez normy

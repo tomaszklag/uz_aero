@@ -41,8 +41,9 @@ function draft(over: Partial<ManualFlightDraft> = {}): ManualFlightDraft {
       { id: 'f1', takeoff: t(9, 48), landing: t(10, 14) },
       { id: 'f2', takeoff: t(10, 26), landing: t(10, 52) },
     ],
-    fuelBeforeL: 112,
-    fuelAfterL: 76,
+    // Paliwo: zastane 64 L, dolane 48 L przed startem, po locie 76 L (issue #62,
+    // siódma tura — trzy liczby i ani jednej godziny).
+    fuel: { foundL: 64, addedL: 48, afterL: 76 },
     mhBefore: 1306.35,
     mhAfter: 1307.88,
     ...over,
@@ -147,10 +148,10 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
     ).toContain('nakładają');
   });
 
-  it('krok 4 wymaga odczytów Z OBU STRON biegu', () => {
-    expect(manualFlightStepBlocker('readings', draft({ fuelBeforeL: null }))).toContain(
-      'sprzed uruchomienia',
-    );
+  it('krok 4 wymaga stanu Z OBU STRON biegu', () => {
+    expect(
+      manualFlightStepBlocker('readings', draft({ fuel: { foundL: null, addedL: 0, afterL: 76 } })),
+    ).toContain('zastany');
     expect(manualFlightStepBlocker('readings', draft({ mhAfter: null }))).toContain(
       'po locie',
     );
@@ -164,27 +165,17 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
   });
 
   /**
-   * Dolewka w środku biegu to twardy błąd (`REFUEL_ENGINE_RUNNING`) — bez tej bramki
-   * pilot dowiedziałby się o nim dopiero z odrzuconego zapisu na końcu formularza.
+   * DOLEWKA PRZY PRACUJĄCYM SILNIKU JEST OD SIÓDMEJ TURY NIEWYRAŻALNA (issue #62).
+   *
+   * Do niej dolewka niosła własną godzinę i dało się ją ustawić na środek biegu —
+   * bramka musiała więc pilnować `REFUEL_ENGINE_RUNNING`. Odkąd paliwo to trzy liczby
+   * bez godzin, a zdarzenie składa się przy zapisie minutę przed uruchomieniem, tego
+   * stanu nie da się w ogóle zbudować. Test pilnuje właśnie tego: bramka MILCZY, bo
+   * nie ma o czym mówić.
    */
-  it('krok 4 blokuje dolewkę przy pracującym silniku', () => {
-    const blocked = manualFlightStepBlocker(
-      'readings',
-      draft({ refuels: [{ id: 'r1', at: t(10, 56), addedL: 48, afterL: 123 }] }),
-    );
-    expect(blocked).toContain('pracującym silniku');
-
-    // Przed uruchomieniem i po wyłączeniu — wolno.
+  it('dolewka nie ma jak wypaść przy pracującym silniku', () => {
     expect(
-      manualFlightStepBlocker(
-        'readings',
-        draft({
-          refuels: [
-            { id: 'r1', at: t(9, 30), addedL: 48, afterL: 112 },
-            { id: 'r2', at: t(11, 30), addedL: 20, afterL: 96 },
-          ],
-        }),
-      ),
+      manualFlightStepBlocker('readings', draft({ fuel: { foundL: 64, addedL: 48, afterL: 76 } })),
     ).toBeNull();
   });
 });
@@ -207,53 +198,48 @@ describe('toManualFlightInput — szkic → wejście komendy', () => {
     expect(toManualFlightInput(draft({ aircraftId: null }), ids())).toBeNull();
   });
 
-  it('składa komplet: loty posortowane, dolewki z wyliczonym stanem przed', () => {
+  it('składa komplet: loty posortowane, dolewka z trójką z dwóch liczb', () => {
     const input = toManualFlightInput(
       draft({
         flights: [
           { id: 'f2', takeoff: t(10, 26), landing: t(10, 52) },
           { id: 'f1', takeoff: t(9, 48), landing: t(10, 14) },
         ],
-        refuels: [{ id: 'r1', at: t(9, 30), addedL: 48, afterL: 112 }],
       }),
       ids(),
     )!;
 
     expect(input.flights.map((f) => f.takeoff)).toEqual([t(9, 48), t(10, 26)]);
-    // Trójka refuel domyka się z pary „dolano + stan po" — before nie jest polem.
+    /* Trójka `refuel` domyka się z definicji, bo wszystkie trzy liczby biorą się
+       z tej samej pary: zastane (64) i dolane (48). Godzina wyprowadza się z biegu —
+       minutę przed uruchomieniem, żeby odczyt przy przejęciu opisywał stan PO
+       zatankowaniu. */
     expect(input.refuels).toEqual([
-      { at: t(9, 30), beforeL: 64, addedL: 48, afterL: 112 },
+      { at: t(9, 41), beforeL: 64, addedL: 48, afterL: 112 },
     ]);
   });
 
   /**
-   * PORANNA DOLEWKA NIE MOŻE WEJŚĆ DO RACHUNKU DWA RAZY. Pilot odczytuje „przed
-   * uruchomieniem" PO tankowaniu (112 L), ale w strumieniu odczyt preflightu pada
-   * PRZED dolewką — a zużycie liczy się `start + dolane − koniec`. Odczyt początkowy
-   * musi się więc cofnąć o poranne dolewki (112 − 48 = 64), inaczej sesja z porannym
-   * tankowaniem miałaby zużycie zawyżone dokładnie o dolewkę.
+   * ODCZYT POCZĄTKOWY TO WPROST ZASTANE — bez arytmetyki (issue #62, siódma tura).
+   *
+   * Do niej szkic trzymał stan PO porannym tankowaniu i rachunek musiał go cofać
+   * o dolewki sprzed niego (112 − 48 = 64), inaczej litry liczyły się podwójnie: raz
+   * w odczycie, raz w zdarzeniu dolewki. Odkąd pilot podaje zastane, cofać nie ma
+   * czego, a cała ta pułapka zniknęła razem z polem, które ją tworzyła.
    */
-  it('odczyt początkowy cofa się o poranne dolewki — bez podwójnego liczenia', () => {
-    const input = toManualFlightInput(
-      draft({
-        fuelBeforeL: 112,
-        refuels: [{ id: 'r1', at: t(9, 30), addedL: 48, afterL: 112 }],
-      }),
-      ids(),
-    )!;
-
+  it('odczyt początkowy = zastane, wprost i bez cofania', () => {
+    const input = toManualFlightInput(draft(), ids())!;
     expect(input.initialReading).toEqual({ fuelL: 64, mh: 1306.35 });
     // Zużycie z projekcji: 64 + 48 − 76 = 36 L — tyle, ile silnik naprawdę spalił.
+  });
 
-    // Dolewka PO wyłączeniu nie cofa odczytu — stan „przed" jej nie zawierał.
-    const postRun = toManualFlightInput(
-      draft({
-        fuelBeforeL: 112,
-        refuels: [{ id: 'r1', at: t(11, 30), addedL: 48, afterL: 124 }],
-      }),
+  it('bez tankowania nie ma zdarzenia dolewki — zero litrów nie jest zdarzeniem', () => {
+    const input = toManualFlightInput(
+      draft({ fuel: { foundL: 112, addedL: 0, afterL: 76 } }),
       ids(),
     )!;
-    expect(postRun.initialReading.fuelL).toBe(112);
+    expect(input.refuels).toEqual([]);
+    expect(input.initialReading.fuelL).toBe(112);
   });
 
   it('olej wchodzi do wejścia tylko przy faktycznym wpisie (issue #60)', () => {
@@ -354,23 +340,26 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
     expect(
       manualFlightWarnings(draft({ mhBefore: 1306.35 }), {
         ...emptyCtx,
-        handover: { reading: { fuelL: 112, mh: 1306.3 }, byPilotId: 'inny', at: t(8) },
+        /* 64 L, czyli ZASTANE ze szkicu — a nie 112 L, czyli stan po zatankowaniu.
+           To jest cała różnica, którą wprowadziła siódma tura issue #62: łańcuch
+           porównuje się z tym, co poprzedni pilot zostawił, a nie z tym, co ten
+           zobaczył na paliwomierzu po dolaniu 48 L. */
+        handover: { reading: { fuelL: 64, mh: 1306.3 }, byPilotId: 'inny', at: t(8) },
         fetchedAt: t(8, 14),
       }),
     ).toEqual([]);
   });
 
   /**
-   * Gdy pilot dolał PRZED uruchomieniem, ogniwem łańcucha jest stan sprzed dolewki
-   * (`afterL − addedL`) — odczyt „przed uruchomieniem" jest już po tankowaniu
-   * i porównywanie go z przekazaniem ostrzegałoby przy każdej porannej dolewce.
+   * Ogniwem łańcucha jest ZASTANE — dokładnie to, co poprzedni pilot zostawił.
+   * Do siódmej tury issue #62 trzeba je było odtwarzać z odczytu „przed uruchomieniem"
+   * minus poranne dolewki; teraz szkic trzyma je wprost, więc porównanie jest jedną
+   * odejmowaniem prostsze i nie ma jak się rozjechać z porannym tankowaniem.
    */
-  it('łańcuch paliwa liczy się od stanu SPRZED porannej dolewki', () => {
+  it('łańcuch paliwa liczy się od ZASTANEGO, nie od stanu po tankowaniu', () => {
     const warnings = manualFlightWarnings(
-      draft({
-        fuelBeforeL: 112,
-        refuels: [{ id: 'r1', at: t(9, 30), addedL: 48, afterL: 112 }],
-      }),
+      // Zastane 64, dolane 48 — przekazanie mówi 64, więc łańcuch się zgadza.
+      draft({ fuel: { foundL: 64, addedL: 48, afterL: 76 } }),
       {
         ...emptyCtx,
         handover: { reading: { fuelL: 64, mh: 1306.35 }, byPilotId: 'inny', at: t(8) },
@@ -381,10 +370,19 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
     expect(warnings.filter((w) => w.id === 'fuel-chain')).toEqual([]);
   });
 
-  it('paliwa po locie więcej niż przed z dolewkami — brakuje dolewki', () => {
-    const warnings = manualFlightWarnings(draft({ fuelAfterL: 140 }), emptyCtx);
+  /**
+   * BILANS WEWNĘTRZNY PRZESTAŁ BYĆ OSTRZEŻENIEM (issue #62, siódma tura): domena
+   * odrzuca ten stan twardo przy `day_close` (`FUEL_INCREASE_WITHOUT_REFUEL`), więc
+   * mówi o nim BLOKADA, a nie baner. Dwa zdania o jednej liczbie, raz miękko i raz
+   * twardo, byłyby szumem.
+   */
+  it('paliwo, którego przybyło, jest BLOKADĄ — nie ostrzeżeniem', () => {
+    const tooMuch = draft({ fuel: { foundL: 64, addedL: 48, afterL: 200 } });
 
-    expect(warnings.map((w) => w.id)).toContain('fuel-balance');
+    expect(manualFlightWarnings(tooMuch, emptyCtx).map((w) => w.id)).not.toContain(
+      'fuel-balance',
+    );
+    expect(manualFlightStepBlocker('readings', tooMuch)).toContain('brakuje dolewki');
   });
 
   it('zrzut poza każdym lotem — miękko, jak DROP_ON_GROUND w domenie', () => {

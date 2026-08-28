@@ -20,7 +20,7 @@
 
 import type { Handover, PilotDay } from '../../../domain';
 import { litres, motoHours, timeUtc, dateTimeUtcShort } from '../../format';
-import { preRunAddedL, type ManualFlightDraft } from './manualFlight';
+import type { ManualFlightDraft } from './manualFlight';
 
 /** Jedno ostrzeżenie — tekst do banera + opcjonalna adnotacja źródła (wiek cache). */
 export interface ManualFlightWarning {
@@ -28,7 +28,6 @@ export interface ManualFlightWarning {
     | 'session-overlap'
     | 'mh-chain'
     | 'fuel-chain'
-    | 'fuel-balance'
     | 'drop-outside-flight';
   text: string;
   /** „z cache · sync 16 SIE 08:14" — tylko przy ostrzeżeniach z danych referencyjnych. */
@@ -100,37 +99,28 @@ export function manualFlightWarnings(
   }
 
   // ── łańcuch paliwa wobec przekazania ───────────────────────────────────────
-  if (draft.fuelBeforeL != null && ctx.handover != null) {
-    // Ogniwem łańcucha jest NAJWCZEŚNIEJSZY znany stan wpisu: odczyt „przed
-    // uruchomieniem" MINUS poranne dolewki — odczyt jest już po tankowaniu,
-    // a poprzedni pilot zostawiał maszynę sprzed niego (ta sama korekta, którą
-    // `toManualFlightInput` robi odczytowi początkowemu).
-    const chainStartL = draft.fuelBeforeL - preRunAddedL(draft);
-    if (Math.abs(chainStartL - ctx.handover.reading.fuelL) > FUEL_CHAIN_TOLERANCE_L) {
+  if (draft.fuel.foundL != null && ctx.handover != null) {
+    /* Ogniwem łańcucha jest ZASTANE — dokładnie to, co poprzedni pilot zostawił
+       w zbiorniku. Do siódmej tury issue #62 trzeba było je odtwarzać z odczytu
+       „przed uruchomieniem" minus poranne dolewki; odkąd szkic trzyma je wprost,
+       porównanie jest jedną odejmowaniem prostsze i nie ma jak się rozjechać. */
+    if (Math.abs(draft.fuel.foundL - ctx.handover.reading.fuelL) > FUEL_CHAIN_TOLERANCE_L) {
       warnings.push({
         id: 'fuel-chain',
         text:
           `Paliwo nie zgadza się z przekazaniem — poprzedni pilot zostawił ` +
-          `${litres(ctx.handover.reading.fuelL)}, a wpis zaczyna od ${litres(chainStartL)}.`,
+          `${litres(ctx.handover.reading.fuelL)}, a wpis zaczyna od ${litres(draft.fuel.foundL)}.`,
         ...(src != null ? { src } : {}),
       });
     }
   }
 
-  // ── bilans wewnętrzny: paliwa po locie więcej, niż mogło być ───────────────
-  if (draft.fuelBeforeL != null && draft.fuelAfterL != null) {
-    // Tylko dolewki PO odczycie „przed" — poranne już w nim siedzą (`preRunAddedL`).
-    const added =
-      draft.refuels.reduce((sum, r) => sum + r.addedL, 0) - preRunAddedL(draft);
-    if (draft.fuelAfterL > draft.fuelBeforeL + added) {
-      warnings.push({
-        id: 'fuel-balance',
-        text:
-          `Paliwa po locie (${litres(draft.fuelAfterL)}) jest więcej niż przed ` +
-          `z dolewkami (${litres(draft.fuelBeforeL + added)}) — brakuje dolewki?`,
-      });
-    }
-  }
+  /*
+   * BILANS WEWNĘTRZNY („paliwa po locie więcej, niż mogło być") USUNIĘTY — od siódmej
+   * tury issue #62 jest twardą BLOKADĄ, nie ostrzeżeniem, bo domena odrzuca ten stan
+   * przy `day_close` (`FUEL_INCREASE_WITHOUT_REFUEL`). Mówienie o nim dwa razy, raz
+   * miękko i raz twardo, byłoby dwoma zdaniami o jednej liczbie.
+   */
 
   // ── zrzut poza lotem (miękka reguła domeny DROP_ON_GROUND — mówimy wcześniej) ──
   for (const d of draft.drops) {

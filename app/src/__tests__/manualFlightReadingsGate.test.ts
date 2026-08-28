@@ -33,8 +33,8 @@ function draft(over: Partial<ManualFlightDraft> = {}): ManualFlightDraft {
     engineStart: at(9, 42),
     engineStop: at(11, 18),
     flights: [{ id: 'f1', takeoff: at(9, 48), landing: at(10, 14) }],
-    fuelBeforeL: 112,
-    fuelAfterL: 84,
+    // Paliwo: zastane 112 L, bez tankowania, po locie 84 L (issue #62, siódma tura).
+    fuel: { foundL: 112, addedL: 0, afterL: 84 },
     mhBefore: 1236.5,
     mhAfter: 1238.0,
     ...over,
@@ -49,27 +49,33 @@ describe('bramka odczytów — blokuje TYLKO to, co domena odrzuci', () => {
     expect(gate(draft())).toBeNull();
   });
 
-  it('żąda obu odczytów — `initialReading` i `finalReading` są w komendzie wymagane', () => {
-    expect(gate(draft({ fuelBeforeL: null }))).toContain('sprzed uruchomienia');
+  it('żąda stanu z obu stron — `initialReading` i `finalReading` są w komendzie wymagane', () => {
+    expect(gate(draft({ fuel: { foundL: null, addedL: 0, afterL: 84 } }))).toContain(
+      'zastany',
+    );
     expect(gate(draft({ mhAfter: null }))).toContain('po locie');
   });
 
   it('łapie wartości UJEMNE (FUEL_NEGATIVE / MH_NEGATIVE)', () => {
-    expect(gate(draft({ fuelBeforeL: -5 }))).toBe('Odczyt paliwa nie może być ujemny.');
+    expect(gate(draft({ fuel: { foundL: -5, addedL: 0, afterL: 84 } }))).toBe(
+      'Stan paliwa nie może być ujemny.',
+    );
+    expect(gate(draft({ fuel: { foundL: 112, addedL: -20, afterL: 84 } }))).toBe(
+      'Dolane paliwo nie może być ujemne.',
+    );
     expect(gate(draft({ mhAfter: -1 }))).toBe(
       'Odczyt licznika motogodzin nie może być ujemny.',
     );
-    expect(
-      gate(draft({ refuels: [{ id: 'r1', at: at(11, 25), addedL: -20, afterL: 64 }] })),
-    ).toContain('ujemną');
   });
 
-  it('łapie odczyt ponad pojemność zbiorników (FUEL_OVER_CAPACITY)', () => {
-    expect(gate(draft({ fuelBeforeL: 200 }), 180)).toBe(
-      'Odczyt 200 L przekracza pojemność zbiorników (180 L).',
+  it('sufitem pojemności jest stan PO ZATANKOWANIU (FUEL_OVER_CAPACITY)', () => {
+    // 112 zastane + 80 dolane = 192 L, czyli ponad zbiornik — i to jest liczba,
+    // którą niesie odczyt przy przejęciu, więc to ją domena sprawdza.
+    expect(gate(draft({ fuel: { foundL: 112, addedL: 80, afterL: 84 } }), 180)).toBe(
+      'Stan 192 L przekracza pojemność zbiorników (180 L).',
     );
     // Bez znanej pojemności reguła ŚPI — dokładnie jak `checkCapacity` w domenie.
-    expect(gate(draft({ fuelBeforeL: 200 }), null)).toBeNull();
+    expect(gate(draft({ fuel: { foundL: 112, addedL: 80, afterL: 84 } }), null)).toBeNull();
   });
 
   it('łapie cofnięty licznik (MH_REGRESSION)', () => {
@@ -77,20 +83,14 @@ describe('bramka odczytów — blokuje TYLKO to, co domena odrzuci', () => {
   });
 
   it('łapie paliwo, które przybyło samo (FUEL_INCREASE_WITHOUT_REFUEL)', () => {
-    // 112 L na starcie, 140 L po locie, bez dolewki — tolerancja to max(10, 5% z 180) = 10.
-    expect(gate(draft({ fuelAfterL: 140 }))).toContain('brakuje dolewki');
-    // W granicach tolerancji milczymy: paliwomierz nie jest dokładniejszy niż jego podziałka.
-    expect(gate(draft({ fuelAfterL: 118 }))).toBeNull();
-    // Z dolewką po locie ten sam stan końcowy jest poprawny.
-    expect(
-      gate(draft({ fuelAfterL: 140, refuels: [{ id: 'r1', at: at(11, 30), addedL: 60, afterL: 144 }] })),
-    ).toBeNull();
-  });
-
-  it('łapie dolewkę przy pracującym silniku (REFUEL_ENGINE_RUNNING)', () => {
-    expect(
-      gate(draft({ refuels: [{ id: 'r1', at: at(10, 0), addedL: 20, afterL: 132 }] })),
-    ).toContain('pracującym silniku');
+    // 112 L przed startem, 140 L po locie, bez tankowania — tolerancja max(10, 5% z 180) = 10.
+    expect(gate(draft({ fuel: { foundL: 112, addedL: 0, afterL: 140 } }))).toContain(
+      'brakuje dolewki',
+    );
+    // W granicach tolerancji milczymy: paliwomierz nie jest dokładniejszy niż podziałka.
+    expect(gate(draft({ fuel: { foundL: 112, addedL: 0, afterL: 118 } }))).toBeNull();
+    // Z zatankowaniem ten sam stan końcowy jest poprawny — sufit rośnie o dolane litry.
+    expect(gate(draft({ fuel: { foundL: 112, addedL: 60, afterL: 140 } }))).toBeNull();
   });
 });
 
@@ -138,13 +138,13 @@ describe('werdykt normy', () => {
 
   it('wynik poza pasmem jest BURSZTYNOWY, nie czerwony — do sprawdzenia, nie błędny', () => {
     // 300 L z tej sesji jest poza każdym rozsądnym pasmem.
-    const balance = manualFuelBalance(draft({ fuelAfterL: 0, fuelBeforeL: 300 }), norm);
+    const balance = manualFuelBalance(draft({ fuel: { foundL: 300, addedL: 0, afterL: 0 } }), norm);
     expect(balance!.verdict!.label).not.toBe('✓ W NORMIE');
     expect(balance!.verdict!.tone).toBe('amber');
   });
 
   it('bez kompletu odczytów nie ma czego porównywać', () => {
-    expect(manualFuelBalance(draft({ fuelAfterL: null }), norm)).toBeNull();
+    expect(manualFuelBalance(draft({ fuel: { foundL: 112, addedL: 0, afterL: null } }), norm)).toBeNull();
     expect(manualMhBalance(draft({ mhBefore: null }), norm, 'decimal')).toBeNull();
   });
 

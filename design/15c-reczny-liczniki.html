@@ -86,6 +86,9 @@
   .field-val.amber { color:var(--amber); }
   .field-val.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-unit { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
+  /* Źródło wartości WYKRYTEJ (issue #62, siódma tura) — liczba przyszła z rejestru,
+     nie z paliwomierza, i ma tego nie udawać. Stoi po prawej, jak `meta` w kontrolce. */
+  .field-src { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-left:auto; }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
 
   /* ===== OŚ — TEN SAM KOMPONENT, CO NA KROKU 3 I W ROZLICZENIU (issue #62) =====
@@ -213,53 +216,53 @@
 
            TE SAME ARKUSZE, CO WSZĘDZIE INDZIEJ: `ReadingSheet` z klawiaturą numeryczną
            dla litrów i maską dla motogodzin (issue #43). -->
-      <!-- PALIWO JAKO SEKWENCJA (issue #62, piąta tura z urządzenia).
+      <!-- PALIWO TO TRZY LICZBY I ANI JEDNA GODZINA (issue #62, siódma tura).
 
-           Do tej tury były to TRZY ROZŁĄCZNE POLA — „Przed uruchomieniem” i „Po locie”
-           w parze, a lista dolewek POD nimi — choć dolewka wypada w czasie MIĘDZY
-           odczytami. Pilot widział trzy niezależne liczby i sam składał z nich zdanie.
-           Zgłoszenie brzmiało: „to powinna być sekwencja jak w czasach, które wpisuję”.
+           Zgłoszenie z urządzenia rozstrzygnęło kształt tej sekcji: „system wykrywa
+           ilość paliwa w oparciu o poprzedzający lot, później podaję, ile paliwa
+           zostało dotankowane oraz ile paliwa zostało po wykonaniu operacji. Nie ma
+           sensu podawać godziny, kiedy nastąpiło dolanie albo pomiar — to wynika
+           z godzin, kiedy samolot został uruchomiony i wyłączony."
 
-           Odtąd jeden ciąg w porządku czasu, tą samą osią (SessionAxis), którą
-           krok 3 rysuje bieg silnika, a ekran rozliczenia całą sesję. Rachunek
-           przestaje być czymś, co pilot składa w głowie — jest kolejnością wierszy.
+           Zniknęła przez to CAŁA lista dolewek z osobnymi godzinami (i arkusz do nich),
+           a razem z nią trzy rzeczy, które kosztowała:
 
-           DOLEWKA TYLKO PRZED URUCHOMIENIEM ALBO PO WYŁĄCZENIU — dolewa się przy
-           zatrzymanym śmigle (REFUEL_ENGINE_RUNNING jest twardym błędem domeny).
-           PORANNA dolewka ma swój wiersz na osi (wydarzyła się), ale NIE wchodzi do
-           zużycia: odczyt „przed uruchomieniem” już ją zawiera, więc liczyłaby się
-           dwa razy. Dlatego stopka niżej mówi samo „Zużycie”, bez „Dolane”. -->
-      <div class="section flush">
+            1. godzina dolewki rozstrzygała tylko „przed czy po biegu", a minuta nie
+               ważyła nigdzie — w obu oknach silnik stoi, więc żaden interwał analityki
+               nie zmienia się od przesunięcia o kwadrans;
+            2. dolewkę dało się wpisać na ŚRODEK biegu, czyli w stan, który domena
+               i tak odrzuca (REFUEL_ENGINE_RUNNING) — dziś taki stan jest niewyrażalny;
+            3. odczyt „przed uruchomieniem" był stanem PO porannym tankowaniu, więc
+               rachunek musiał go cofać o dolewki sprzed niego, inaczej litry liczyły
+               się podwójnie. Szkic trzyma odtąd ZASTANE — i cofać nie ma już czego.
+
+           Kolejność pól zastępuje godziny: zastane → dolane → (lot) → zostało.
+           ZASTANE wykrywa się z sesji poprzedzającej (readings-chain) i pokazuje ze
+           ŹRÓDŁEM — żeby liczba nie udawała odczytu z paliwomierza. Pilot poprawia ją
+           jednym tapnięciem: przyrząd fizyczny bije rachubę. -->
+      <div class="section">
         <div class="section-head"><span class="section-label">Paliwo</span></div>
-
-        <div class="axis">
-          <a href="15c-reczny-liczniki.html" class="axis-row">
-            <span class="axis-time">09:42</span>
-            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
-            <span class="axis-label"><span class="axis-name">Przed uruchomieniem</span><span class="axis-sub">112 L</span></span>
-            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
-          </a>
-          <a href="15c-reczny-liczniki.html" class="axis-row">
-            <span class="axis-time">09:35</span>
-            <span class="axis-mark"><span class="axis-dot amber"></span></span>
-            <span class="axis-label"><span class="axis-name">Dolewka</span><span class="axis-sub">+48 L → 112 L</span></span>
-            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
-          </a>
-          <a href="15c-reczny-liczniki.html" class="axis-row">
-            <span class="axis-time">11:18</span>
-            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
-            <span class="axis-label"><span class="axis-name">Po locie</span><span class="axis-sub">76 L</span></span>
-            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+        <div class="field">
+          <span class="field-label">Zastane</span>
+          <a href="15c-reczny-liczniki.html" class="field-input">
+            <span class="field-val amber">64</span><span class="field-unit">L</span>
+            <span class="field-src">z poprzedniego lotu · AKO</span>
           </a>
         </div>
-
-        <div class="axis-foot">
-          <span class="axis-foot-item"><span class="axis-foot-val amber">36 L</span><span class="axis-foot-key">Zużycie</span></span>
+        <div class="field">
+          <span class="field-label">Dolane</span>
+          <a href="15c-reczny-liczniki.html" class="field-input">
+            <span class="field-val amber">48</span><span class="field-unit">L</span>
+          </a>
         </div>
-
-        <a href="15c-reczny-liczniki.html" class="axis-add muted"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> DODAJ DOLEWKĘ</a>
+        <div class="field">
+          <span class="field-label">Po locie</span>
+          <a href="15c-reczny-liczniki.html" class="field-input">
+            <span class="field-val amber">76</span><span class="field-unit">L</span>
+          </a>
+        </div>
+        <div class="field-sub">zużycie 36 L · przed startem 112 L − po locie 76 L</div>
       </div>
-
       <!-- NORMA — „przeliczmy i sprawdźmy, czy się zgadza” (issue #62, piąta tura).
            Oczekiwanie liczy DOMENA z normy tej maszyny (cache referencyjny, więc
            działa offline) — ta sama arytmetyka, którą po zapisaniu pokaże ekran

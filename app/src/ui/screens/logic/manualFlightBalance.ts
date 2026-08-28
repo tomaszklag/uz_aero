@@ -36,8 +36,7 @@ import {
 import type { Tone } from '../../components';
 import { litres, motoHours } from '../../format';
 import type { ManualFlightDraft } from './manualFlight';
-import { sortedFlights } from './manualFlight';
-import { fuelUsedL } from './manualFuelChain';
+import { fuelUsedL, sortedFlights } from './manualFlight';
 
 /** Werdykt normy — plakietka przy wyniku, ten sam napis co na ekranie sesji. */
 export interface ManualVerdict {

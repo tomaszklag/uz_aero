@@ -42,16 +42,40 @@ export interface ManualFlightDropDraft {
 }
 
 /**
- * Dolewka szkicu. Pilot wpisuje „ile dolano" i „stan po dolaniu" — stan PRZED liczy
- * się z tej pary (`beforeL = afterL − addedL`), bo trójka `RefuelPayload` musi się
- * domykać z definicji, a trzecie pole do ręcznego wypełnienia byłoby zaproszeniem
- * do trójki, która się nie sumuje.
+ * ══ PALIWO TO TRZY LICZBY I ANI JEDNEJ GODZINY (issue #62, siódma tura) ══
+ *
+ * Zgłoszenie z urządzenia rozstrzygnęło kształt tej sekcji: „system wykrywa ilość
+ * paliwa w oparciu o poprzedzający lot, później podaję, ile paliwa zostało dotankowane
+ * oraz ile paliwa zostało po wykonaniu operacji. Nie ma sensu podawać godziny, kiedy
+ * nastąpiło dolanie albo pomiar — to wynika z godzin, kiedy samolot został uruchomiony
+ * i wyłączony."
+ *
+ * Zniknęła przez to CAŁA lista dolewek z osobnymi godzinami, a razem z nią trzy rzeczy,
+ * które ta lista kosztowała:
+ *  • godzina dolewki rozstrzygała tylko „przed czy po biegu", a minuta nie ważyła
+ *    nigdzie — w obu oknach silnik stoi, więc żaden interwał analityki nie zmienia się
+ *    od przesunięcia o kwadrans;
+ *  • dolewkę dało się wpisać na ŚRODEK biegu, czyli w stan, który domena i tak odrzuca
+ *    (`REFUEL_ENGINE_RUNNING`) — dziś taki stan jest NIEWYRAŻALNY;
+ *  • odczyt „przed uruchomieniem" był stanem PO porannym tankowaniu, więc rachunek
+ *    musiał go cofać o dolewki sprzed niego (`preRunAddedL`), inaczej litry liczyły się
+ *    podwójnie. Szkic trzyma odtąd ZASTANE, czyli wprost ogniwo łańcucha — i cofać nie
+ *    ma już czego.
+ *
+ * Kolejność jest naturalna i to ona zastępuje godziny: zastane → dolane → (lot) →
+ * zostało. Tankuje się przed lotem, więc zdarzenie `refuel` składa się przy zapisie
+ * tuż przed uruchomieniem silnika.
  */
-export interface ManualFlightRefuelDraft {
-  id: string;
-  at: EpochMillis;
+export interface ManualFlightFuel {
+  /**
+   * ZASTANE — ile było w zbiorniku, gdy pilot brał maszynę. Wykrywane z sesji
+   * poprzedzającej (`readings-chain`), korygowalne: paliwomierz bije rachubę.
+   */
+  foundL: number | null;
+  /** DOLANE przed lotem; 0 = nie tankował. Jedna liczba, bez godziny i bez listy. */
   addedL: number;
-  afterL: number;
+  /** ZOSTAŁO po locie — to jest przekazanie dla następnego pilota. */
+  afterL: number | null;
 }
 
 /** Szkic wpisu ręcznego — stan wspólny czterech kroków. */
@@ -77,9 +101,8 @@ export interface ManualFlightDraft {
   drops: ManualFlightDropDraft[];
 
   // ── krok 4: liczniki ──
-  refuels: ManualFlightRefuelDraft[];
-  fuelBeforeL: number | null;
-  fuelAfterL: number | null;
+  /** Paliwo: zastane → dolane → zostało. Bez godzin — patrz `ManualFlightFuel`. */
+  fuel: ManualFlightFuel;
   mhBefore: number | null;
   mhAfter: number | null;
   /**
@@ -113,9 +136,7 @@ export function emptyManualFlightDraft(now: EpochMillis): ManualFlightDraft {
     engineStop: null,
     flights: [],
     drops: [],
-    refuels: [],
-    fuelBeforeL: null,
-    fuelAfterL: null,
+    fuel: { foundL: null, addedL: 0, afterL: null },
     mhBefore: null,
     mhAfter: null,
     oilL: null,
@@ -229,36 +250,31 @@ export function manualFlightStepBlocker(
      * Każda pozycja niżej odpowiada konkretnemu `error` z `rules/sessionRules.ts`.
      */
     case 'readings': {
-      if (draft.fuelBeforeL == null || draft.mhBefore == null) {
+      const { foundL, addedL, afterL } = draft.fuel;
+
+      if (foundL == null || draft.mhBefore == null) {
         // `initialReading` jest w `ManualFlightInput` WYMAGANE — bez niego nie da się
         // złożyć wejścia komendy, a zgadywanie z cache psuło łańcuch (2026-08-16).
-        return 'Wpisz odczyt sprzed uruchomienia: paliwo i motogodziny.';
+        // Wykrycie z sesji poprzedzającej jest PODPOWIEDZIĄ, nie zwolnieniem z pytania.
+        return 'Wpisz stan zastany: paliwo i motogodziny.';
       }
-      if (draft.fuelAfterL == null || draft.mhAfter == null) {
-        return 'Wpisz odczyt po locie — to przekazanie dla następnego pilota.';
+      if (afterL == null || draft.mhAfter == null) {
+        return 'Wpisz stan po locie — to przekazanie dla następnego pilota.';
       }
 
-      // FUEL_NEGATIVE / MH_NEGATIVE — odczyt ujemny jest twardym błędem domeny.
-      if (draft.fuelBeforeL < 0 || draft.fuelAfterL < 0) {
-        return 'Odczyt paliwa nie może być ujemny.';
-      }
+      // FUEL_NEGATIVE / MH_NEGATIVE — wartość ujemna jest twardym błędem domeny.
+      if (foundL < 0 || afterL < 0) return 'Stan paliwa nie może być ujemny.';
+      if (addedL < 0) return 'Dolane paliwo nie może być ujemne.';
       if (draft.mhBefore < 0 || draft.mhAfter < 0) {
         return 'Odczyt licznika motogodzin nie może być ujemny.';
       }
-      const negative = draft.refuels.find((r) => r.addedL < 0 || r.afterL < 0);
-      if (negative != null) {
-        return `Dolewka o ${timeUtc(negative.at)} ma wartość ujemną — dolewa się dodatnie litry.`;
-      }
 
       // FUEL_OVER_CAPACITY — przy nieznanej pojemności reguła ŚPI, jak w domenie.
+      // Sufitem jest stan PO zatankowaniu: to jego niesie odczyt przy przejęciu.
       if (limits.capacityL != null) {
-        const over = Math.max(
-          draft.fuelBeforeL,
-          draft.fuelAfterL,
-          ...draft.refuels.map((r) => r.afterL),
-        );
+        const over = Math.max(foundL + addedL, afterL);
         if (over > limits.capacityL) {
-          return `Odczyt ${Math.round(over)} L przekracza pojemność zbiorników (${Math.round(limits.capacityL)} L).`;
+          return `Stan ${Math.round(over)} L przekracza pojemność zbiorników (${Math.round(limits.capacityL)} L).`;
         }
       }
 
@@ -267,24 +283,18 @@ export function manualFlightStepBlocker(
         return 'Licznik motogodzin nie może się cofnąć — stan po locie jest mniejszy niż przed.';
       }
 
-      // FUEL_INCREASE_WITHOUT_REFUEL — paliwo nie przybywa samo. Punktem odniesienia
-      // jest OSTATNI znany stan (dolewka albo odczyt początkowy), bo tak liczy to
-      // domena przy `day_close`; tolerancja ta sama, żeby telefon i serwer nie
-      // mówiły o tej samej liczbie dwóch różnych rzeczy.
-      const lastKnownL = lastKnownFuelL(draft);
-      if (draft.fuelAfterL > lastKnownL + fuelToleranceL(limits.capacityL)) {
-        return `Paliwa po locie (${Math.round(draft.fuelAfterL)} L) jest więcej niż ostatni znany stan (${Math.round(lastKnownL)} L) — brakuje dolewki?`;
+      // FUEL_INCREASE_WITHOUT_REFUEL — paliwo nie przybywa samo. Sufitem jest stan
+      // po zatankowaniu; tolerancja ta sama, co w domenie i na serwerze, żeby trzy
+      // miejsca nie mówiły o tej samej liczbie trzech różnych rzeczy.
+      const ceilingL = foundL + addedL;
+      if (afterL > ceilingL + fuelToleranceL(limits.capacityL)) {
+        return `Po locie (${Math.round(afterL)} L) jest więcej paliwa niż przed startem (${Math.round(ceilingL)} L) — brakuje dolewki?`;
       }
 
-      // REFUEL_ENGINE_RUNNING — dolewa się przy zatrzymanym śmigle.
-      if (draft.engineStart != null && draft.engineStop != null) {
-        const midRun = draft.refuels.find(
-          (r) => r.at > draft.engineStart! && r.at < draft.engineStop!,
-        );
-        if (midRun != null) {
-          return `Dolewka o ${timeUtc(midRun.at)} wypada przy pracującym silniku — dolewa się przed uruchomieniem albo po wyłączeniu.`;
-        }
-      }
+      /* REFUEL_ENGINE_RUNNING nie ma tu już czego pilnować: dolewka nie niesie własnej
+         godziny, tylko składa się przy zapisie tuż PRZED uruchomieniem silnika, więc
+         stan „dolewka przy pracującym śmigle" jest NIEWYRAŻALNY. To jest cały zysk
+         z rezygnacji z godzin (issue #62, siódma tura). */
       return null;
     }
   }
@@ -304,13 +314,33 @@ export function manualFlightBlocker(
 }
 
 /**
- * Ostatni ZNANY stan paliwa przed odczytem końcowym: `afterL` najpóźniejszej dolewki,
- * a bez dolewek — odczyt sprzed uruchomienia. To jest punkt, względem którego domena
- * pyta „czy paliwo nie przybyło samo" przy zdaniu samolotu.
+ * Ile paliwa było w zbiorniku PRZY STARCIE: zastane plus dolane.
+ *
+ * To jest liczba, którą pilot zobaczyłby na paliwomierzu tuż przed uruchomieniem —
+ * i to ona jest sufitem stanu po locie (paliwo nie przybywa samo) oraz punktem
+ * odniesienia rachunku zużycia.
  */
-export function lastKnownFuelL(draft: ManualFlightDraft): number {
-  const latest = [...draft.refuels].sort((a, b) => a.at - b.at).at(-1);
-  return latest?.afterL ?? draft.fuelBeforeL ?? 0;
+export function fuelAtStartL(draft: ManualFlightDraft): number | null {
+  const { foundL, addedL } = draft.fuel;
+  return foundL == null ? null : foundL + addedL;
+}
+
+/** Ile ubyło w tej sesji; `null` = brak któregoś końca, więc rachunku nie ma. */
+export function fuelUsedL(draft: ManualFlightDraft): number | null {
+  const start = fuelAtStartL(draft);
+  return start == null || draft.fuel.afterL == null ? null : start - draft.fuel.afterL;
+}
+
+/**
+ * Godzina zdarzenia `refuel` składanego przy zapisie — MINUTA PRZED uruchomieniem.
+ *
+ * Pilot jej nie podaje i nie powinien (issue #62, siódma tura): tankuje się przed
+ * lotem, a minuta w tym oknie nie waży nigdzie, bo silnik stoi. Ta jedna minuta
+ * odstępu ma znaczenie WYŁĄCZNIE porządkowe — dolewka musi paść przed
+ * `preflight_confirm`, żeby odczyt przy przejęciu opisywał stan PO zatankowaniu.
+ */
+export function refuelAt(draft: ManualFlightDraft): EpochMillis | null {
+  return draft.engineStart == null ? null : draft.engineStart - 60_000;
 }
 
 /**
@@ -341,21 +371,36 @@ export function toManualFlightInput(
     drops: [...draft.drops]
       .sort((a, b) => a.at - b.at)
       .map((d) => ({ at: d.at, jumpers: d.jumpers, altitudeFt: d.altitudeFt })),
-    refuels: [...draft.refuels]
-      .sort((a, b) => a.at - b.at)
-      .map((r) => ({ at: r.at, beforeL: r.afterL - r.addedL, addedL: r.addedL, afterL: r.afterL })),
-    // ── ODCZYT POCZĄTKOWY COFA SIĘ O PORANNE DOLEWKI ──────────────────────────
-    // Pole „przed uruchomieniem" pilot odczytuje PO porannym tankowaniu (zbiorniki
-    // pełne, silnik jeszcze stoi) — ale w strumieniu odczyt preflightu pada PRZED
-    // dolewką (tak wygląda każdy prawdziwy dzień: odczyt na 02a, tankowanie na 04a),
-    // a rachunek zużycia liczy `start + dolane − koniec`. Bez cofnięcia dolane litry
-    // weszłyby do rachunku PODWÓJNIE: raz w odczycie, raz w zdarzeniu dolewki —
-    // sesja z porannym tankowaniem miałaby zużycie zawyżone dokładnie o dolewkę.
+    /*
+     * DOLEWKA SKŁADA SIĘ TU, a nie w formularzu (issue #62, siódma tura). Jedna,
+     * minutę przed uruchomieniem, i tylko gdy pilot faktycznie tankował — zero
+     * litrów nie jest zdarzeniem. Trójka domyka się z definicji, bo wszystkie trzy
+     * liczby biorą się z tej samej pary: zastane i dolane.
+     */
+    refuels:
+      draft.fuel.addedL > 0
+        ? [
+            {
+              at: refuelAt(draft)!,
+              beforeL: draft.fuel.foundL!,
+              addedL: draft.fuel.addedL,
+              afterL: draft.fuel.foundL! + draft.fuel.addedL,
+            },
+          ]
+        : [],
+    /*
+     * ODCZYT POCZĄTKOWY = ZASTANE, wprost i bez arytmetyki.
+     *
+     * Do siódmej tury szkic trzymał stan PO porannym tankowaniu i rachunek musiał go
+     * cofać o dolewki sprzed niego, inaczej litry liczyły się podwójnie: raz w odczycie,
+     * raz w zdarzeniu dolewki. Odkąd pilot podaje ZASTANE, cofać nie ma czego — a cała
+     * ta pułapka przestała istnieć razem z polem, które ją tworzyło.
+     */
     initialReading: {
-      fuelL: draft.fuelBeforeL! - preRunAddedL(draft),
+      fuelL: draft.fuel.foundL!,
       mh: draft.mhBefore!,
     } satisfies FuelMhReading,
-    finalReading: { fuelL: draft.fuelAfterL!, mh: draft.mhAfter! } satisfies FuelMhReading,
+    finalReading: { fuelL: draft.fuel.afterL!, mh: draft.mhAfter! } satisfies FuelMhReading,
     // Olej (issue #60): klucze tylko przy faktycznym wpisie — jak na 02a.
     ...(draft.oilL != null || draft.oilAddedL != null
       ? { oilL: draft.oilL, oilAddedL: draft.oilAddedL }
@@ -373,17 +418,12 @@ export function sortedFlights(draft: ManualFlightDraft): ManualFlightLegDraft[] 
   return [...draft.flights].sort((a, b) => a.takeoff - b.takeoff);
 }
 
-/**
- * Suma litrów dolanych PRZED uruchomieniem silnika. Te dolewki poprzedzają odczyt
- * „przed uruchomieniem", więc odczyt już je zawiera — rachunek zużycia i łańcuch
- * paliwa muszą je odejmować, inaczej liczą je podwójnie.
+/*
+ * `preRunAddedL` USUNIĘTE (issue #62, siódma tura). Cofało odczyt początkowy o dolewki
+ * sprzed uruchomienia, bo szkic trzymał stan PO porannym tankowaniu. Szkic trzyma odtąd
+ * ZASTANE, więc nie ma czego cofać — a pułapka „dolane litry liczą się podwójnie"
+ * zniknęła razem z polem, które ją tworzyła.
  */
-export function preRunAddedL(draft: ManualFlightDraft): number {
-  if (draft.engineStart == null) return 0;
-  return draft.refuels
-    .filter((r) => r.at <= draft.engineStart!)
-    .reduce((sum, r) => sum + r.addedL, 0);
-}
 
 /** Pierwsza para lotów, które na siebie zachodzą; `null` = loty rozłączne. */
 function firstFlightOverlap(

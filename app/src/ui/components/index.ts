@@ -85,7 +85,9 @@ export * from './sheets/ManualEventSheet';
 export * from './sheets/FlightTimesSheet';
 export * from './sheets/FlightDateSheet';
 export * from './sheets/ManualDropSheet';
-export * from './sheets/RefuelEntrySheet';
+/* `RefuelEntrySheet` SKASOWANY (issue #62, siódma tura): dolewka przestała być pozycją
+   listy z własną godziną — jest jedną liczbą w karcie paliwa, a zdarzenie składa się
+   przy zapisie. Ostatni i jedyny wołający był w ekranie 15. */
 export * from './sheets/CorrectionSheet';
 // Tryb edycji sesji (issue #43): odczyty przy przejęciu i zdaniu, skład zrzutu,
 // dopisanie brakującego faktu i historia zmian pola.

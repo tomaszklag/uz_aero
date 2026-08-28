@@ -21,7 +21,7 @@
  * przed pierwszym zapisem, bo strumień append-only nie ma transakcji.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
@@ -38,7 +38,6 @@ import {
   OilSheet,
   OptionGrid,
   ReadingSheet,
-  RefuelEntrySheet,
   Screen,
   ScreenHeader,
   SessionAxis,
@@ -85,7 +84,8 @@ import {
   emptyManualFlightDraft,
   manualFlightNeedsDual,
   manualFlightStepBlocker,
-  preRunAddedL,
+  fuelAtStartL,
+  fuelUsedL,
   sortedFlights,
   toManualFlightInput,
   type ManualFlightDraft,
@@ -98,7 +98,6 @@ import {
   nextFlightTimes,
   previousDrop,
 } from './logic/manualFlightAxis';
-import { buildManualFuelChain, fuelChainTarget, sortedRefuels } from './logic/manualFuelChain';
 import {
   fuelAfterReference,
   fuelBeforeReference,
@@ -199,8 +198,9 @@ export function ManualFlightScreen({
     | { kind: 'engine'; field?: 'start' | 'stop' }
     | { kind: 'flight'; id: string | null; field?: 'takeoff' | 'landing' }
     | { kind: 'drop'; id: string | null }
-    | { kind: 'refuel'; id: string | null }
-    | { kind: 'fuel'; which: 'before' | 'after' }
+    /* Paliwo ma trzy pola i ani jednej godziny (issue #62, siódma tura) — arkusza
+       dolewki z własnym czasem już nie ma. */
+    | { kind: 'fuel'; which: 'found' | 'added' | 'after' }
     | { kind: 'mh'; which: 'before' | 'after' }
     | { kind: 'oil' }
     | null;
@@ -216,13 +216,33 @@ export function ManualFlightScreen({
   // Wymóg Duala (issue #58 pkt 4) — jak na 02: baner nazywa powód, przycisk dostaje
   // sam `disabled` (blokada widoczna z ekranu nie powtarza swojego zdania w przycisku).
   const needsDual = step === 'aircraft' && manualFlightNeedsDual(aircraft, draft);
-  /* Łańcuch paliwa pytany PUNKTOWO, gdy znamy już godzinę uruchomienia (issue #62,
+  /* Łańcuch odczytów pytany PUNKTOWO, gdy znamy już godzinę uruchomienia (issue #62,
      piąta tura). `null` = nie wiadomo teraz i ekran wtedy o ciągłości milczy. */
   const { chain } = useReadingsChain(
     draft.aircraftId,
     draft.engineStart,
     step === 'readings',
   );
+
+  /**
+   * PALIWO ZASTANE WYKRYWA SIĘ Z POPRZEDNIEGO LOTU (issue #62, siódma tura z urządzenia:
+   * „system wykrywa ilość paliwa w oparciu o poprzedzający lot").
+   *
+   * Podstawiamy RAZ i tylko w pole jeszcze puste — wpisana albo poprawiona wartość jest
+   * decyzją pilota i odpowiedź serwera nie ma prawa jej nadpisać. Źródło zostaje
+   * widoczne przy polu (`foundSrc`), żeby liczba nie udawała odczytu z paliwomierza:
+   * to jest podpowiedź z rejestru, a paliwomierz i tak ją bije.
+   */
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (prefilled.current || chain?.before == null) return;
+    prefilled.current = true;
+    setDraft((d) => (d.fuel.foundL != null ? d : { ...d, fuel: { ...d.fuel, foundL: chain.before!.fuelL } }));
+  }, [chain]);
+  const foundSrc =
+    chain?.before != null && draft.fuel.foundL === chain.before.fuelL
+      ? `z poprzedniego lotu · ${chain.before.picId.toUpperCase()}`
+      : undefined;
 
   const warnings = useMemo(
     () => {
@@ -237,11 +257,10 @@ export function ManualFlightScreen({
          czego pilot nie widzi nigdzie indziej. Reszta ostrzeżeń dotyczy jego własnych
          liczb, które ma przed oczami na tym samym ekranie. */
       const continuity = [
-        ...fuelContinuityWarnings(
-          chain,
-          draft.fuelBeforeL != null ? draft.fuelBeforeL - preRunAddedL(draft) : null,
-          draft.fuelAfterL,
-        ),
+        /* Ogniwem łańcucha jest ZASTANE — dokładnie ta liczba, którą poprzedni pilot
+           zostawił w zbiorniku. Odkąd szkic trzyma ją wprost, nie trzeba już niczego
+           cofać o poranne dolewki (issue #62, siódma tura). */
+        ...fuelContinuityWarnings(chain, draft.fuel.foundL, draft.fuel.afterL),
         ...mhContinuityWarnings(chain, mhFormat, draft.mhBefore, draft.mhAfter),
         ...oilContinuityWarnings(chain, draft.oilL),
       ];
@@ -315,8 +334,9 @@ export function ManualFlightScreen({
   /** Bieg silnika ma oba końce — dopiero wtedy lot ma w czym się zawierać (pkt 10). */
   const engineRunSet = draft.engineStart != null && draft.engineStop != null;
 
-  // ── krok 4: sekwencja paliwa i werdykt normy (issue #62, piąta tura) ────────
-  const fuelChain = useMemo(() => buildManualFuelChain(draft), [draft]);
+  // ── krok 4: paliwo i werdykt normy (issue #62, piąta i siódma tura) ────────
+  const startL = fuelAtStartL(draft);
+  const used = fuelUsedL(draft);
   const norm = aircraft?.consumption ?? null;
   const balances = useMemo(
     () =>
@@ -628,28 +648,57 @@ export function ManualFlightScreen({
         {/* ══ KROK 4 — LICZNIKI, PALIWO I OSTRZEŻENIA ════════════════════════ */}
         {step === 'readings' && (
           <>
-            {/* PALIWO JAKO SEKWENCJA (issue #62, piąta tura z urządzenia): „najpierw
-                podaję, ile było przed lotem, następnie ile dodałem, oraz później ile
-                zostało". Do tej tury były to trzy rozłączne pola w kolejności
-                przed → po → dolewki, choć dolewka wypada w czasie MIĘDZY odczytami —
-                pilot składał z nich zdanie w głowie. Ta sama oś, co na kroku 3
-                i na ekranie rozliczenia; uzasadnienie w `logic/manualFuelChain.ts`. */}
-            <Card title="Paliwo" flush>
-              <SessionAxis
-                rows={fuelChain.rows}
-                foot={fuelChain.foot}
-                onCorrect={(rowId) => {
-                  const target = fuelChainTarget(rowId);
-                  if (target == null) return;
-                  if (target.kind === 'reading') setSheet({ kind: 'fuel', which: target.which });
-                  else setSheet({ kind: 'refuel', id: target.id });
-                }}
-              />
-              <AxisAddRow
-                label="DODAJ DOLEWKĘ"
-                tone="muted"
-                onPress={() => setSheet({ kind: 'refuel', id: null })}
-              />
+            {/* PALIWO TO TRZY LICZBY I ANI JEDNA GODZINA (issue #62, siódma tura
+                z urządzenia): zastane → dolane → zostało. Kolejność pól zastępuje
+                godziny, bo tankuje się przed lotem — uzasadnienie przy
+                `ManualFlightFuel`. Sekwencja na osi i lista dolewek z osobnymi
+                godzinami ZNIKŁY: pytały o minutę, która nigdzie nie waży, a pozwalały
+                wyrazić stan, który domena i tak odrzuca. */}
+            <Card title="Paliwo" header="inline">
+              <Field label="Zastane">
+                <ValueBox
+                  value={draft.fuel.foundL != null ? String(Math.round(draft.fuel.foundL)) : ''}
+                  placeholder="odczyt z paliwomierza"
+                  unit="L"
+                  tone="amber"
+                  {...(foundSrc != null ? { meta: foundSrc } : {})}
+                  actionIcon="edit"
+                  onPress={() => setSheet({ kind: 'fuel', which: 'found' })}
+                  accessibilityLabel="Paliwo zastane — wpisz odczyt"
+                />
+              </Field>
+
+              <Field label="Dolane">
+                <ValueBox
+                  value={draft.fuel.addedL > 0 ? String(Math.round(draft.fuel.addedL)) : ''}
+                  placeholder="nie tankowałem"
+                  unit="L"
+                  tone="amber"
+                  actionIcon="edit"
+                  onPress={() => setSheet({ kind: 'fuel', which: 'added' })}
+                  accessibilityLabel="Paliwo dolane przed lotem — wpisz ilość"
+                />
+              </Field>
+
+              <Field label="Po locie">
+                <ValueBox
+                  value={draft.fuel.afterL != null ? String(Math.round(draft.fuel.afterL)) : ''}
+                  placeholder="odczyt z paliwomierza"
+                  unit="L"
+                  tone="amber"
+                  actionIcon="edit"
+                  onPress={() => setSheet({ kind: 'fuel', which: 'after' })}
+                  accessibilityLabel="Paliwo po locie — wpisz odczyt"
+                />
+              </Field>
+
+              {/* Rachunek pokazujemy dopiero, gdy ma z czego wyjść — kreska przy
+                  niepełnych danych byłaby liczbą o niczym. */}
+              {used != null && startL != null && (
+                <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
+                  {`zużycie ${litres(used)} · przed startem ${Math.round(startL)} L − po locie ${Math.round(draft.fuel.afterL!)} L`}
+                </AppText>
+              )}
             </Card>
 
             <Card title="Motogodziny" header="inline">
@@ -786,7 +835,9 @@ export function ManualFlightScreen({
               landing: f.landing + delta,
             })),
             drops: draft.drops.map((d) => ({ ...d, at: d.at + delta })),
-            refuels: draft.refuels.map((r) => ({ ...r, at: r.at + delta })),
+            /* Paliwa nie przesuwamy — nie ma już własnych godzin (issue #62, siódma
+               tura): godzina dolewki wyprowadza się przy zapisie z biegu silnika,
+               który właśnie przesunęliśmy razem z dobą. */
           });
           close();
         }}
@@ -942,53 +993,37 @@ export function ManualFlightScreen({
         onCancel={close}
       />
 
-      <RefuelEntrySheet
-        visible={sheet?.kind === 'refuel'}
-        title={refuelSheetTitle(sheet, sortedRefuels(draft))}
-        value={refuelSheetValue(sheet, draft)}
-        min={dayMin}
-        max={dayMax}
-        onDelete={
-          sheet?.kind === 'refuel' && sheet.id != null
-            ? () => {
-                patch({ refuels: draft.refuels.filter((r) => r.id !== sheet.id) });
-                close();
-              }
-            : undefined
-        }
-        onConfirm={(v) => {
-          if (sheet?.kind !== 'refuel') return;
-          if (sheet.id == null) {
-            patch({ refuels: [...draft.refuels, { id: uuidv4(), ...v }] });
-          } else {
-            patch({
-              refuels: draft.refuels.map((r) => (r.id === sheet.id ? { ...r, ...v } : r)),
-            });
-          }
-          close();
-        }}
-        onCancel={close}
-      />
-
+      {/* JEDEN arkusz na trzy pola paliwa — ten sam `ReadingSheet`, co wszędzie
+          indziej, tylko z innym tytułem i innym wierszem odniesienia. Arkusza dolewki
+          z własną godziną NIE MA (issue #62, siódma tura). */}
       <ReadingSheet
         visible={sheet?.kind === 'fuel'}
-        title={sheet?.kind === 'fuel' && sheet.which === 'before' ? 'Paliwo przed uruchomieniem' : 'Paliwo po locie'}
+        title={fuelSheetTitle(sheet)}
         unit="L"
         tone="amber"
         initialText={(() => {
-          const v = sheet?.kind === 'fuel' && sheet.which === 'before' ? draft.fuelBeforeL : draft.fuelAfterL;
+          if (sheet?.kind !== 'fuel') return '';
+          const v =
+            sheet.which === 'found'
+              ? draft.fuel.foundL
+              : sheet.which === 'added'
+                ? (draft.fuel.addedL > 0 ? draft.fuel.addedL : null)
+                : draft.fuel.afterL;
           return v != null ? `${Math.round(v)}` : '';
         })()}
-        /* CIĄGŁOŚĆ PALIWA (issue #62, piąta tura): liczba Z PODANYM ŹRÓDŁEM — co
-           poprzedni pilot zostawił, a co zastał następny. Wartości NIE PODSTAWIAMY:
-           liczba podstawiona wygląda jak odczytana z przyrządu i nikt jej potem nie
-           odróżni (uzasadnienie w `logic/readingsContinuity.ts`). Bez sieci zostaje samo
-           ostatnie przekazanie z cache, jak dotąd. */
+        /* Liczba Z PODANYM ŹRÓDŁEM (issue #62, piąta tura): co poprzedni pilot zostawił,
+           a co zastał następny. Stan zastany JEST podstawiany z poprzedniego lotu
+           (siódma tura — decyzja użytkownika), ale źródło zostaje widoczne i pilot
+           poprawia go jednym tapnięciem: paliwomierz bije rachubę. */
         rows={fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
         parse={parseLitres}
         onConfirm={(v) => {
           if (sheet?.kind !== 'fuel') return;
-          patch(sheet.which === 'before' ? { fuelBeforeL: v } : { fuelAfterL: v });
+          const fuel = { ...draft.fuel };
+          if (sheet.which === 'found') fuel.foundL = v;
+          else if (sheet.which === 'added') fuel.addedL = v;
+          else fuel.afterL = v;
+          patch({ fuel });
           close();
         }}
         onCancel={close}
@@ -1232,21 +1267,31 @@ function dropSheetValue(sheet: DropSheetState, draft: ManualFlightDraft) {
   };
 }
 
+/** Tytuł arkusza paliwa — nazywa POLE, bo to ono jest pytaniem tego arkusza. */
+function fuelSheetTitle(sheet: { kind: string; which?: string } | null): string {
+  if (sheet == null || sheet.kind !== 'fuel') return 'Paliwo';
+  if (sheet.which === 'found') return 'Paliwo zastane';
+  if (sheet.which === 'added') return 'Paliwo dolane';
+  return 'Paliwo po locie';
+}
+
 /**
  * Wiersze odniesienia arkusza paliwa: sąsiad z łańcucha, a bez niego — ostatnie
  * przekazanie z cache. Sąsiad wygrywa, bo dotyczy TEJ chwili, a przekazanie mówi
  * „ile jest teraz" (issue #62, piąta tura).
+ *
+ * Pole „dolane" odniesienia NIE MA i mieć nie może: rejestr nie wie, ile pilot
+ * zatankował — zna tylko stany po obu stronach.
  */
 function fuelSheetRows(
-  sheet: { kind: string; which?: 'before' | 'after' } | null,
+  sheet: { kind: string; which?: string } | null,
   chain: RemoteReadingsChain | null | undefined,
   handover: { reading: { fuelL: number } } | null,
 ): { label: string; value: string }[] {
-  if (sheet == null || sheet.kind !== 'fuel') return [];
-  const which = sheet.which ?? 'before';
+  if (sheet == null || sheet.kind !== 'fuel' || sheet.which === 'added') return [];
 
   const reference =
-    which === 'before' ? fuelBeforeReference(chain) : fuelAfterReference(chain);
+    sheet.which === 'after' ? fuelAfterReference(chain) : fuelBeforeReference(chain);
   if (reference != null) return [reference];
 
   // Bez łańcucha (offline, pierwszy lot maszyny, starszy serwer) zostaje to, co było.
@@ -1257,7 +1302,7 @@ function fuelSheetRows(
 
 /** Wiersze odniesienia arkusza motogodzin — jak przy paliwie, sąsiad przed przekazaniem. */
 function mhSheetRows(
-  sheet: { kind: string; which?: 'before' | 'after' } | null,
+  sheet: { kind: string; which?: string } | null,
   chain: RemoteReadingsChain | null | undefined,
   format: MhFormat,
   handover: { reading: { mh: number } } | null,
@@ -1274,30 +1319,11 @@ function mhSheetRows(
     : [];
 }
 
-type RefuelSheetState = { kind: 'refuel'; id: string | null } | { kind: string } | null;
-
-function refuelSheetTitle(sheet: RefuelSheetState, refuels: { id: string }[]): string {
-  if (sheet == null || sheet.kind !== 'refuel') return 'DOLEWKA';
-  const s = sheet as { kind: 'refuel'; id: string | null };
-  if (s.id == null) return 'DODAJ DOLEWKĘ';
-  return `DOLEWKA ${refuels.findIndex((r) => r.id === s.id) + 1}`;
-}
-
-/** Nowa dolewka staje kwadrans przed uruchomieniem — dolewa się przed biegiem. */
-function refuelSheetValue(sheet: RefuelSheetState, draft: ManualFlightDraft) {
-  if (sheet != null && sheet.kind === 'refuel') {
-    const s = sheet as { kind: 'refuel'; id: string | null };
-    const existing = s.id != null ? draft.refuels.find((r) => r.id === s.id) : null;
-    if (existing != null) {
-      return { at: existing.at, addedL: existing.addedL, afterL: existing.afterL };
-    }
-  }
-  return {
-    at: (draft.engineStart ?? draft.day + 10 * HOUR) - 15 * MIN,
-    addedL: 0,
-    afterL: draft.fuelBeforeL ?? 0,
-  };
-}
+/*
+ * `refuelSheetTitle` i `refuelSheetValue` USUNIĘTE razem z arkuszem dolewki (issue #62,
+ * siódma tura). Dolewka nie jest już pozycją listy z własną godziną i własnym numerem —
+ * jest jedną liczbą w karcie paliwa, a zdarzenie składa się przy zapisie.
+ */
 
 const styles = StyleSheet.create({
   // 44 px celu dotknięcia i kreska nad wierszem — jak „DODAJ WPIS" na osi edycji (10D).
