@@ -25,7 +25,7 @@ import {
   ServerUnreachableError,
   type PushResult,
   type RemoteAircraftState,
-  type RemoteFuelChain,
+  type RemoteReadingsChain,
   type RemoteTaskSuggestions,
   type ServerPort,
   type SessionSyncStatus,
@@ -101,7 +101,7 @@ export class SyncEngine {
   }
 
   /**
-   * Ciągłość paliwa wokół chwili (`GET /aircraft/:id/fuel-chain`, issue #62) — czym
+   * Ciągłość odczytów wokół chwili (`GET /aircraft/:id/readings-chain`, issue #62) — czym
    * maszyna została ZDANA przed tym lotem i co zastał ten, kto ją przejął PO nim.
    *
    * Pytany PUNKTOWO, gdy wpis ręczny zna już godziny biegu silnika. `null` = nie wiadomo
@@ -113,13 +113,13 @@ export class SyncEngine {
    * magazyn trzeba by unieważniać przy każdym cudzym locie (ta sama decyzja, co przy
    * podpowiedziach zadania).
    */
-  fetchFuelChain(
+  fetchReadingsChain(
     aircraftId: string,
     at: number,
     exceptSessionUuid?: string,
-  ): Promise<RemoteFuelChain | null> {
+  ): Promise<RemoteReadingsChain | null> {
     return authorizedFetch(this.auth, (token) =>
-      this.server.getFuelChain(token, aircraftId, {
+      this.server.getReadingsChain(token, aircraftId, {
         at,
         ...(exceptSessionUuid != null ? { exceptSessionUuid } : {}),
       }),

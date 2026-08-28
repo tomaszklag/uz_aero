@@ -965,11 +965,26 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   werdykt poza pasmem jest BURSZTYNOWY: paliwomierz i licznik mają rację. Podpis
   „przyrost … · blok …" USUNIĘTY — przyrost licznika nie równa się blokowi i nie ma
   prawa się równać (poprawka z issue #38, tu powtórzona)
-- **CIĄGŁOŚĆ PALIWA Z SĄSIEDNIMI SESJAMI** (piąta tura; `GET /aircraft/:id/fuel-chain`,
-  `server/src/domain/fuelChain.ts`, `logic/fuelContinuity.ts`, `hooks/useFuelChain.ts`):
-  maszyna nie tankuje się sama między sesjami, więc ile jeden pilot zostawił, tyle
-  następny powinien zastać. Trasa oddaje DWA punkty — odczyt przy zdaniu sesji
-  poprzedzającej i odczyt przy przejęciu następnej.
+- **CIĄGŁOŚĆ ODCZYTÓW Z SĄSIEDNIMI SESJAMI** (piąta i szósta tura;
+  `GET /aircraft/:id/readings-chain`, `server/src/domain/readingsChain.ts`,
+  `logic/readingsContinuity.ts`, `hooks/useReadingsChain.ts`): maszyna nie tankuje się
+  sama między sesjami, więc ile jeden pilot zostawił, tyle następny powinien zastać.
+  Trasa oddaje DWA punkty — odczyt przy zdaniu sesji poprzedzającej i przy przejęciu
+  następnej — i obejmuje PALIWO, MOTOGODZINY oraz OLEJ.
+  - **olej idzie WŁASNĄ osią**: bagnet tuż po locie kłamie, więc zdanie samolotu oleju
+    NIE MIERZY (issue #60), a interwał biegnie pomiar→pomiar przez wiele sesji. Olej
+    dostaje przez to KOTWICĘ (ostatni pomiar nie późniejszy niż pytana chwila + suma
+    dolewek od niej, kształt `Handover.oil`), a nie parę „przed/po". „Ile powinno zostać
+    po tym locie" nie jest pytaniem, na które rejestr umie odpowiedzieć
+  - **ostrzegamy tylko o oleju, którego PRZYBYŁO** bez zapisanej dolewki: ubytek jest
+    normalnym zużyciem i ma własny rachunek. Ta sama asymetria, co przy
+    `FUEL_INCREASE_WITHOUT_REFUEL`
+  - **ostrzeżenia łańcucha WYPIERAJĄ te liczone z przekazania**, gdy trasa odpowiedziała:
+    `handover` mówi „ile jest teraz", a wpis dotyczy przeszłej chwili — dwa zdania o tej
+    samej liczbie, z których jedno jest mniej trafne, to szum. Bez łańcucha zostają
+    lokalne, jak dotąd
+  - **nazwa poszła za znaczeniem**: trasa nazywała się `fuel-chain`, dopóki niosła samo
+    paliwo. Po dołożeniu MH i oleju byłaby kłamstwem, więc `readings-chain`
   - **`handover` z `/reference` na to nie odpowiada**: to JEDEN punkt („ile jest teraz"),
     a wpis ręczny pyta „ile było w czwartek" — między czwartkiem a dziś maszyna zdążyła
     polatać, zwykle z kimś innym. Dla wpisu bieżącego oba pytania mają tę samą odpowiedź

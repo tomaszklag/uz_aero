@@ -100,7 +100,7 @@ class PullServer implements ServerPort {
     handover: null,
     lastSyncAt: null,
   });
-  getFuelChain = async () => ({ before: null, after: null });
+  getReadingsChain = async () => ({ before: null, after: null, oil: null });
   getSyncStatus = async (): Promise<SessionSyncStatus> => {
     throw new Error('nieużywane w tych testach');
   };

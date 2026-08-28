@@ -141,8 +141,24 @@ export function pickHandover(sessions: readonly SessionRow[]): HandoverPick | nu
  * `oczekiwane = pomiar + dolewki − stawka × ΔMH`. Dolewki sesji-kotwicy też się liczą:
  * padły PO jej pomiarze.
  */
-export function latestOilHandover(sessions: readonly SessionRow[]): OilHandover | null {
-  const measured = sessions
+export function latestOilHandover(
+  sessions: readonly SessionRow[],
+  opts: {
+    /**
+     * Pytaj o stan NA CHWILĘ, nie o „teraz" (issue #62, szósta tura). Wpis ręczny
+     * opisuje czwartek, więc kotwicą ma być pomiar sprzed czwartku, a dolewki liczą się
+     * do tej samej granicy — te zapisane później opisują stan, którego pilot wpisujący
+     * ten lot nie mógł zastać. Pominięte = cała historia, czyli zachowanie sprzed #62.
+     */
+    asOf?: number;
+  } = {},
+): OilHandover | null {
+  const inScope =
+    opts.asOf == null
+      ? sessions
+      : sessions.filter((s) => s.claimTime != null && s.claimTime <= opts.asOf!);
+
+  const measured = inScope
     .filter((s) => s.oilLevelL != null)
     .sort(
       (a, b) =>
@@ -159,7 +175,7 @@ export function latestOilHandover(sessions: readonly SessionRow[]): OilHandover 
     }
     return (s.claimTime ?? 0) > (anchor.claimTime ?? 0);
   };
-  const addedAfter = sessions
+  const addedAfter = inScope
     .filter((s) => s.sessionUuid !== anchor.sessionUuid && chainAfter(s))
     .reduce((sum, s) => sum + (s.oilAddedL ?? 0), 0);
 

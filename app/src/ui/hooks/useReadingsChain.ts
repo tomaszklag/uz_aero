@@ -1,5 +1,5 @@
 /**
- * UZ Aero — CIĄGŁOŚĆ PALIWA dla wpisu ręcznego (issue #62, piąta tura z urządzenia).
+ * UZ Aero — CIĄGŁOŚĆ ODCZYTÓW dla wpisu ręcznego (issue #62, piąta tura z urządzenia).
  *
  * „Jeśli podałem już godziny i mam połączenie do API, to możemy pobrać poprzedzający
  * i kolejny lot" — hook pyta serwer o to, czym maszyna została zdana PRZED tym lotem
@@ -26,12 +26,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { RemoteFuelChain } from '../../application';
+import type { RemoteReadingsChain } from '../../application';
 import { useSessionStore } from '../store';
 
-export interface UseFuelChain {
+export interface UseReadingsChain {
   /** `undefined` = w toku, `null` = nie wiadomo, obiekt = odpowiedź serwera. */
-  chain: RemoteFuelChain | null | undefined;
+  chain: RemoteReadingsChain | null | undefined;
 }
 
 /**
@@ -40,13 +40,13 @@ export interface UseFuelChain {
  * @param enabled ekran jest na kroku, który tej odpowiedzi używa. Bez tego pytalibyśmy
  *   serwer przy każdej zmianie szkicu na krokach, które łańcucha nie pokazują.
  */
-export function useFuelChain(
+export function useReadingsChain(
   aircraftId: string | null,
   at: number | null,
   enabled: boolean,
-): UseFuelChain {
+): UseReadingsChain {
   const sync = useSessionStore((s) => s.sync);
-  const [chain, setChain] = useState<RemoteFuelChain | null | undefined>(null);
+  const [chain, setChain] = useState<RemoteReadingsChain | null | undefined>(null);
   const alive = useRef(true);
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export function useFuelChain(
 
     setChain(undefined);
     void sync
-      .fetchFuelChain(aircraftId, at)
+      .fetchReadingsChain(aircraftId, at)
       .then((data) => {
         if (alive.current) setChain(data);
       })

@@ -28,7 +28,7 @@ export function registerStateRoutes(
   });
 
   /**
-   * Ciągłość paliwa wokół chwili `at` (issue #62, piąta tura) — czym maszyna została
+   * Ciągłość odczytów wokół chwili (paliwo, motogodziny, olej) `at` (issue #62, piąta tura) — czym maszyna została
    * zdana PRZED tym lotem i co zastał ten, kto ją przejął PO nim.
    *
    * Materiał podpowiedzi wpisu ręcznego: lot sprzed tygodnia opisuje maszynę, którą
@@ -38,7 +38,7 @@ export function registerStateRoutes(
    * Bez `at` odmawiamy zamiast zgadywać „teraz": chwila jest CAŁYM pytaniem tej trasy,
    * a domyślne „teraz" dałoby odpowiedź poprawną formalnie i nie na temat.
    */
-  app.get('/aircraft/:id/fuel-chain', async (req, reply) => {
+  app.get('/aircraft/:id/readings-chain', async (req, reply) => {
     if (authorize(tokens, tokenFromRequest(req)) == null) {
       return reply.code(401).send({ error: 'unauthorized' });
     }
@@ -50,7 +50,7 @@ export function registerStateRoutes(
     if (!Number.isFinite(at)) {
       return reply.code(400).send({ error: 'bad_at' });
     }
-    return reply.send(await state.fuelChain(id, at, query.except));
+    return reply.send(await state.readingsChain(id, at, query.except));
   });
 
   app.get('/sessions/:uuid/sync-status', async (req, reply) => {

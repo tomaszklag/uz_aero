@@ -359,6 +359,32 @@
             <span class="warn-src">z rejestru · AKO · 16 SIE 09:00</span>
           </span>
         </div>
+
+        <!-- MOTOGODZINY idą tym samym mechanizmem: łańcuch MH jest osią SAMOLOTU (§4.5),
+             więc odczyt sąsiada mówi wprost, od czego ten wpis powinien zaczynać.
+             Rozjazd znaczy albo literówkę, albo lot, który nie trafił do rejestru. -->
+        <div class="warn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="warn-body">
+            <span class="warn-text"><b>Licznik nie zgadza się z poprzednim lotem</b> — maszynę zdano na 1 306:50, a wpis zaczyna od 1 306:21.</span>
+            <span class="warn-src">z rejestru · AKO · 16 SIE 09:00</span>
+          </span>
+        </div>
+
+        <!-- OLEJ ostrzega TYLKO W JEDNĄ STRONĘ: o poziomie, którego PRZYBYŁO bez
+             zapisanej dolewki. Ubytek jest normalnym zużyciem i ma własny rachunek
+             w module oleju — ta sama asymetria, co przy FUEL_INCREASE_WITHOUT_REFUEL.
+
+             Olej nie ma pary „przed/po", bo bagnet tuż po locie kłamie i zdanie
+             samolotu oleju NIE MIERZY (issue #60): rejestr zna KOTWICĘ — ostatni pomiar
+             i dolewki od niego — a nie „ile powinno zostać po tym locie". -->
+        <div class="warn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span class="warn-body">
+            <span class="warn-text"><b>Oleju jest więcej niż przy ostatnim pomiarze</b> — było 9,2 L i dolano 1,0 L, a wpis podaje 12,0 L. Brakuje dolewki?</span>
+            <span class="warn-src">z rejestru · 16 SIE 07:00</span>
+          </span>
+        </div>
         <div class="warn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="warn-body">

@@ -47,7 +47,7 @@ class TraceServer implements ServerPort {
   refresh = async (): Promise<AuthTokens> => ({ token: 'jwt-2', refreshToken: 'r2', pilot: PILOT });
   pushEvents = async () => ({ accepted: 0, duplicates: 0, flags: [] });
   getReference = async () => ({ data: { aircraft: [], pilots: [] }, etag: null });
-  getFuelChain = async () => ({ before: null, after: null });
+  getReadingsChain = async () => ({ before: null, after: null, oil: null });
   getAircraftState = async () => ({
     aircraftId: 'SP-AXA',
     claimPicId: null,

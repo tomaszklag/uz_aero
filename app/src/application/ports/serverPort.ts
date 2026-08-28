@@ -19,6 +19,7 @@
 import type {
   Event,
   Handover,
+  OilHandover,
   OperationType,
   ReferenceAircraft,
   ReferencePilot,
@@ -151,7 +152,7 @@ export class ServerRejectedError extends Error {
 }
 
 /** Jeden koniec łańcucha paliwa: czyj odczyt, kiedy i jaki (issue #62). */
-export interface RemoteFuelChainLink {
+export interface RemoteReadingsChainLink {
   sessionUuid: string;
   picId: string;
   at: number;
@@ -163,9 +164,18 @@ export interface RemoteFuelChainLink {
  * Sąsiedztwo w łańcuchu paliwa. Oba pola bywają `null` i to jest NORMALNY stan,
  * nie brak danych: pierwszy lot maszyny nie ma poprzednika, najnowszy — następcy.
  */
-export interface RemoteFuelChain {
-  before: RemoteFuelChainLink | null;
-  after: RemoteFuelChainLink | null;
+export interface RemoteReadingsChain {
+  before: RemoteReadingsChainLink | null;
+  after: RemoteReadingsChainLink | null;
+  /**
+   * Ostatni POMIAR OLEJU nie później niż pytana chwila, razem z sumą dolewek od niego.
+   *
+   * Olej idzie WŁASNĄ osią, bo bagnet tuż po locie kłamie i zdanie samolotu oleju
+   * NIE MIERZY (issue #60): interwał biegnie pomiar→pomiar przez wiele sesji, więc
+   * pary „przed/po" tu nie ma — jest kotwica. Ten sam kształt, co `Handover.oil`,
+   * więc ekran liczy z niej oczekiwanie tym samym `oilPreflight`, co na 02a.
+   */
+  oil: OilHandover | null;
 }
 
 export interface ServerPort {
@@ -184,7 +194,7 @@ export interface ServerPort {
   getReference(token: string, etag?: string | null): Promise<ReferenceFetch>;
   getAircraftState(token: string, aircraftId: string): Promise<RemoteAircraftState>;
   /**
-   * Ciągłość paliwa wokół chwili (`GET /aircraft/:id/fuel-chain`, issue #62) — czym
+   * Ciągłość odczytów wokół chwili (`GET /aircraft/:id/readings-chain`, issue #62) — czym
    * maszyna została ZDANA przed tym lotem i co zastał ten, kto ją przejął PO nim.
    *
    * Osobno od `getAircraftState`, bo to inne pytanie: tamto mówi „ile jest teraz",
@@ -192,11 +202,11 @@ export interface ServerPort {
    * polatać. WYŁĄCZNIE online: brak odpowiedzi znaczy „nie wiem" i ekran wtedy
    * o ciągłości milczy, zamiast zgadywać z ostatniego przekazania.
    */
-  getFuelChain(
+  getReadingsChain(
     token: string,
     aircraftId: string,
     params: { at: number; exceptSessionUuid?: string },
-  ): Promise<RemoteFuelChain>;
+  ): Promise<RemoteReadingsChain>;
   getSyncStatus(token: string, sessionUuid: string): Promise<SessionSyncStatus>;
   /**
    * Ślad kalibracyjny GPS (faza 5) na `POST /traces` — osobny, niskopriorytetowy tor

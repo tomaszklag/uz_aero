@@ -11,7 +11,10 @@
 import type { Handover } from '@uzaero/domain';
 
 import { activeClaim, latestHandover } from '../../common/aircraftStateView.ts';
-import { fuelChainNeighbours, type FuelChainNeighbours } from '../../../domain/fuelChain.ts';
+import {
+  readingsChainNeighbours,
+  type ReadingsChainNeighbours,
+} from '../../../domain/readingsChain.ts';
 
 import type {
   Database,
@@ -64,19 +67,19 @@ export class StateQueries {
   }
 
   /**
-   * Ciągłość paliwa wokół chwili `at` na tej maszynie (issue #62, piąta tura).
+   * Ciągłość odczytów wokół chwili `at` na tej maszynie (issue #62, piąta tura).
    *
    * Czyta TĘ SAMĄ listę sesji, co `aircraftState` — `listByAircraft` i tak wczytuje
    * całą historię maszyny, bo łańcuch MH potrzebuje sąsiedztwa przez lata. Nowe jest
    * wyłącznie pytanie zadane tym wierszom; SQL zostaje bez zmian.
    */
-  async fuelChain(
+  async readingsChain(
     aircraftId: string,
     at: number,
     exceptUuid?: string,
-  ): Promise<FuelChainNeighbours> {
+  ): Promise<ReadingsChainNeighbours> {
     const sessions = await this.sessions.listByAircraft(this.db, aircraftId);
-    return fuelChainNeighbours(sessions, at, exceptUuid);
+    return readingsChainNeighbours(sessions, at, exceptUuid);
   }
 
   async syncStatus(sessionUuid: string): Promise<SyncStatus> {

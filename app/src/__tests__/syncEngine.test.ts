@@ -110,8 +110,8 @@ class ScriptedServer implements ServerPort {
   };
 
   /** Łańcuch paliwa (issue #62) — ten silnik go nie używa, ekran pyta wprost. */
-  async getFuelChain(): Promise<{ before: null; after: null }> {
-    return { before: null, after: null };
+  async getReadingsChain(): Promise<{ before: null; after: null; oil: null }> {
+    return { before: null, after: null, oil: null };
   }
 
   /** Skryptowalny jak `statusScript`; domyślnie samolot wolny. */

@@ -16,7 +16,7 @@ import type {
   ReferenceFetch,
   RemoteEventPage,
   RemoteAircraftState,
-  RemoteFuelChain,
+  RemoteReadingsChain,
   RemoteTaskSuggestions,
   RemoteThemePrefs,
   ServerPort,
@@ -82,21 +82,22 @@ export class HttpServerApi implements ServerPort {
   }
 
   /**
-   * `GET /aircraft/:id/fuel-chain?at=…` (issue #62) — sąsiedzi w łańcuchu paliwa.
+   * `GET /aircraft/:id/readings-chain?at=…` (issue #62) — sąsiedzi w łańcuchu odczytów
+   * (paliwo, motogodziny) i kotwica pomiaru oleju na tę chwilę.
    *
    * `except` wysyłamy tylko przy poprawianiu istniejącego wpisu: bez tego sesja byłaby
    * sobie własnym punktem odniesienia i zawsze „zgadzała się" sama ze sobą.
    */
-  getFuelChain(
+  getReadingsChain(
     token: string,
     aircraftId: string,
     params: { at: number; exceptSessionUuid?: string },
-  ): Promise<RemoteFuelChain> {
+  ): Promise<RemoteReadingsChain> {
     const query = new URLSearchParams({ at: String(params.at) });
     if (params.exceptSessionUuid != null) query.set('except', params.exceptSessionUuid);
     return this.request(
       'GET',
-      `/aircraft/${encodeURIComponent(aircraftId)}/fuel-chain?${query.toString()}`,
+      `/aircraft/${encodeURIComponent(aircraftId)}/readings-chain?${query.toString()}`,
       { token },
     );
   }

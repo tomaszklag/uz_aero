@@ -1,5 +1,5 @@
 /**
- * UZ Aero (serwer) — CIĄGŁOŚĆ PALIWA WOKÓŁ DANEJ CHWILI (issue #62, piąta tura).
+ * UZ Aero (serwer) — CIĄGŁOŚĆ ODCZYTÓW WOKÓŁ DANEJ CHWILI (issue #62, piąta i szósta tura).
  *
  * ══ PO CO ══
  * Wpis ręczny opisuje lot, który JUŻ się odbył — często kilka dni temu, na maszynie,
@@ -15,20 +15,32 @@
  * a dziś maszyna zdążyła polatać. Dla wpisu bieżącego oba pytania mają tę samą
  * odpowiedź i dlatego brak tej trasy tak długo nie przeszkadzał.
  *
+ * ══ TRZY WIELKOŚCI, DWIE RÓŻNE OSIE ══
+ * Paliwo i motogodziny czyta się przy PRZEJĘCIU i przy ZDANIU, więc mają po dwa końce
+ * i jadą tą samą parą sąsiadów. **Olej NIE MA końca przy zdaniu** — bagnet tuż po locie
+ * kłamie, więc pomiar żyje wyłącznie przy przejęciu, a interwał zużycia biegnie
+ * pomiar→pomiar przez wiele sesji z kotwicą w liczniku (issue #60). Olej dostaje przez
+ * to własne pole o kształcie `OilHandover`: KOTWICĘ i sumę dolewek od niej, a nie parę
+ * „przed/po". To nie jest niekonsekwencja — to jest ta sama różnica, przez którą pomiar
+ * oleju nie jest krokiem zdania samolotu.
+ *
  * ══ CZEGO TU NIE MA ══
  * Werdyktu. Ta funkcja mówi, co wie rejestr — czy pilot ma się tym przejąć, rozstrzyga
  * telefon i rozstrzyga to OSTRZEŻENIEM, nigdy blokadą (issue #62: „nic nie może
- * blokować"). Serwer nie ma tu prawa głosu, bo pilot patrzy na paliwomierz, a paliwomierz
- * jest przyrządem fizycznym i to on ma rację (`CLAUDE.md`: liczniki fizyczne > serwer).
+ * blokować"). Serwer nie ma tu prawa głosu, bo pilot patrzy na paliwomierz i na bagnet,
+ * a to są przyrządy fizyczne (`CLAUDE.md`: liczniki fizyczne > dane z serwera).
  *
  * Czysta funkcja na wierszach projekcji — bez SQL-a i bez zegara, żeby dała się
  * przetestować na tablicy.
  */
 
+import type { OilHandover } from '@uzaero/domain';
+
+import { latestOilHandover } from '../application/common/aircraftStateView.ts';
 import type { SessionRow } from '../application/common/ports.ts';
 
 /** Jeden koniec łańcucha: czyj odczyt, kiedy i jaki. */
-export interface FuelChainLink {
+export interface ReadingsChainLink {
   sessionUuid: string;
   picId: string;
   /** Kiedy padł ten odczyt (UTC) — zdanie samolotu albo jego przejęcie. */
@@ -43,9 +55,16 @@ export interface FuelChainLink {
  * normalny stan, nie brak danych: pierwszy lot maszyny nie ma poprzednika,
  * a najnowszy nie ma następcy.
  */
-export interface FuelChainNeighbours {
-  before: FuelChainLink | null;
-  after: FuelChainLink | null;
+export interface ReadingsChainNeighbours {
+  before: ReadingsChainLink | null;
+  after: ReadingsChainLink | null;
+  /**
+   * Ostatni POMIAR OLEJU nie później niż `at`, razem z sumą dolewek od niego (issue #60).
+   * Ten sam kształt, co `Handover.oil` w `/reference` — bo to ta sama wielkość, tylko
+   * pytana o przeszłą chwilę zamiast o „teraz". Ekran liczy z niej oczekiwanie tym
+   * samym `oilPreflight.expectation()`, co na 02a.
+   */
+  oil: OilHandover | null;
 }
 
 /**
@@ -62,11 +81,11 @@ export interface FuelChainNeighbours {
  * Bierzemy WYŁĄCZNIE sesje z kompletem odczytów: sesja bez `fuelEndL` nie mówi nic
  * o stanie zbiornika, a `0` udające odczyt byłoby gorsze od milczenia.
  */
-export function fuelChainNeighbours(
+export function readingsChainNeighbours(
   sessions: readonly SessionRow[],
   at: number,
   exceptUuid?: string,
-): FuelChainNeighbours {
+): ReadingsChainNeighbours {
   const usable = sessions.filter((s) => s.sessionUuid !== exceptUuid);
 
   /*
@@ -119,5 +138,10 @@ export function fuelChainNeighbours(
             mh: after.mhStart,
           }
         : null,
+    /* Olej idzie WŁASNĄ osią (patrz nagłówek): kotwica to ostatni pomiar nie później
+       niż `at`, a dolewki liczą się do tej samej granicy — te zapisane PÓŹNIEJ opisują
+       stan, którego pilot wpisujący ten lot nie mógł zastać. Regułę wyboru kotwicy
+       (licznik przed zegarem) trzyma `latestOilHandover`, więc jest jedna. */
+    oil: latestOilHandover(usable, { asOf: at }),
   };
 }

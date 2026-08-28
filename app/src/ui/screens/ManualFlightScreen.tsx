@@ -76,6 +76,7 @@ import {
   OPERATION_TYPES,
   isJumpOperation,
   isSameFieldOperation,
+  type MhFormat,
   type OperationType,
   type ReferenceAircraft,
   type ReferencePilot,
@@ -102,9 +103,14 @@ import {
   fuelAfterReference,
   fuelBeforeReference,
   fuelContinuityWarnings,
-} from './logic/fuelContinuity';
-import { useFuelChain } from '../hooks/useFuelChain';
-import type { RemoteFuelChain } from '../../application';
+  mhAfterReference,
+  mhBeforeReference,
+  mhContinuityWarnings,
+  oilContinuityWarnings,
+  oilReference,
+} from './logic/readingsContinuity';
+import { useReadingsChain } from '../hooks/useReadingsChain';
+import type { RemoteReadingsChain } from '../../application';
 import { manualFuelBalance, manualMhBalance } from './logic/manualFlightBalance';
 import { manualFlightWarnings } from './logic/manualFlightWarnings';
 import { operationLabel } from './logic/operations';
@@ -212,7 +218,7 @@ export function ManualFlightScreen({
   const needsDual = step === 'aircraft' && manualFlightNeedsDual(aircraft, draft);
   /* Łańcuch paliwa pytany PUNKTOWO, gdy znamy już godzinę uruchomienia (issue #62,
      piąta tura). `null` = nie wiadomo teraz i ekran wtedy o ciągłości milczy. */
-  const { chain } = useFuelChain(
+  const { chain } = useReadingsChain(
     draft.aircraftId,
     draft.engineStart,
     step === 'readings',
@@ -230,12 +236,24 @@ export function ManualFlightScreen({
       /* Ciągłość idzie PIERWSZA: mówi o rozjeździe z cudzym odczytem, czyli o czymś,
          czego pilot nie widzi nigdzie indziej. Reszta ostrzeżeń dotyczy jego własnych
          liczb, które ma przed oczami na tym samym ekranie. */
-      const continuity = fuelContinuityWarnings(
-        chain,
-        draft.fuelBeforeL != null ? draft.fuelBeforeL - preRunAddedL(draft) : null,
-        draft.fuelAfterL,
-      );
-      return [...continuity, ...local];
+      const continuity = [
+        ...fuelContinuityWarnings(
+          chain,
+          draft.fuelBeforeL != null ? draft.fuelBeforeL - preRunAddedL(draft) : null,
+          draft.fuelAfterL,
+        ),
+        ...mhContinuityWarnings(chain, mhFormat, draft.mhBefore, draft.mhAfter),
+        ...oilContinuityWarnings(chain, draft.oilL),
+      ];
+
+      /* Gdy łańcuch odpowiedział, jego ostrzeżenia WYPIERAJĄ te liczone z przekazania:
+         `handover` mówi „ile jest teraz", a wpis dotyczy przeszłej chwili — dwa zdania
+         o tej samej liczbie, z których jedno jest mniej trafne, to szum. Bez łańcucha
+         (offline, pierwszy lot maszyny) zostają lokalne, dokładnie jak dotąd. */
+      const superseded =
+        chain?.before != null ? local.filter((w) => w.id !== 'mh-chain' && w.id !== 'fuel-chain') : local;
+
+      return [...continuity, ...superseded];
     },
     [step, draft, pilotDay, aircraft, mhFormat, chain],
   );
@@ -964,7 +982,7 @@ export function ManualFlightScreen({
         /* CIĄGŁOŚĆ PALIWA (issue #62, piąta tura): liczba Z PODANYM ŹRÓDŁEM — co
            poprzedni pilot zostawił, a co zastał następny. Wartości NIE PODSTAWIAMY:
            liczba podstawiona wygląda jak odczytana z przyrządu i nikt jej potem nie
-           odróżni (uzasadnienie w `logic/fuelContinuity.ts`). Bez sieci zostaje samo
+           odróżni (uzasadnienie w `logic/readingsContinuity.ts`). Bez sieci zostaje samo
            ostatnie przekazanie z cache, jak dotąd. */
         rows={fuelSheetRows(sheet, chain, aircraft?.handover ?? null)}
         parse={parseLitres}
@@ -986,11 +1004,11 @@ export function ManualFlightScreen({
           const v = sheet?.kind === 'mh' && sheet.which === 'before' ? draft.mhBefore : draft.mhAfter;
           return v != null ? motoHours(v, mhFormat) : '';
         })()}
-        rows={
-          aircraft?.handover != null
-            ? [{ label: 'Ostatnie przekazanie', value: motoHours(aircraft.handover.reading.mh, mhFormat) }]
-            : []
-        }
+        /* Ciągłość licznika (issue #62, szósta tura) — ta sama zasada, co przy paliwie:
+           odczyt sąsiada ze źródłem, a bez łańcucha ostatnie przekazanie z cache.
+           Łańcuch MH jest osią SAMOLOTU (§4.5), więc sąsiad mówi wprost, od czego ten
+           wpis powinien zaczynać i na czym kończyć. */
+        rows={mhSheetRows(sheet, chain, mhFormat, aircraft?.handover ?? null)}
         parse={parseMotoHours}
         onConfirm={(v) => {
           if (sheet?.kind !== 'mh') return;
@@ -1010,6 +1028,11 @@ export function ManualFlightScreen({
         initialAddedText={oilValueText(draft.oilAddedL)}
         parse={parseLitres}
         rows={[
+          /* KOTWICA POMIARU idzie pierwsza (issue #62, szósta tura): mówi, od czego
+             ten poziom miał startować — a to jest jedyne pytanie ciągłości, na które
+             rejestr umie odpowiedzieć. Pary „przed/po" olej NIE MA, bo bagnet tuż po
+             locie kłamie i zdanie samolotu oleju nie mierzy (issue #60). */
+          ...(oilReference(chain) != null ? [oilReference(chain)!] : []),
           ...(aircraft?.oilMinL != null
             ? [{ label: `Minimum przed lotem · ${aircraft.reg}`, value: oilLitres(aircraft.oilMinL) }]
             : []),
@@ -1216,7 +1239,7 @@ function dropSheetValue(sheet: DropSheetState, draft: ManualFlightDraft) {
  */
 function fuelSheetRows(
   sheet: { kind: string; which?: 'before' | 'after' } | null,
-  chain: RemoteFuelChain | null | undefined,
+  chain: RemoteReadingsChain | null | undefined,
   handover: { reading: { fuelL: number } } | null,
 ): { label: string; value: string }[] {
   if (sheet == null || sheet.kind !== 'fuel') return [];
@@ -1229,6 +1252,25 @@ function fuelSheetRows(
   // Bez łańcucha (offline, pierwszy lot maszyny, starszy serwer) zostaje to, co było.
   return handover != null
     ? [{ label: 'Ostatnie przekazanie', value: litres(handover.reading.fuelL) }]
+    : [];
+}
+
+/** Wiersze odniesienia arkusza motogodzin — jak przy paliwie, sąsiad przed przekazaniem. */
+function mhSheetRows(
+  sheet: { kind: string; which?: 'before' | 'after' } | null,
+  chain: RemoteReadingsChain | null | undefined,
+  format: MhFormat,
+  handover: { reading: { mh: number } } | null,
+): { label: string; value: string }[] {
+  if (sheet == null || sheet.kind !== 'mh') return [];
+  const which = sheet.which ?? 'before';
+
+  const reference =
+    which === 'before' ? mhBeforeReference(chain, format) : mhAfterReference(chain, format);
+  if (reference != null) return [reference];
+
+  return handover != null
+    ? [{ label: 'Ostatnie przekazanie', value: motoHours(handover.reading.mh, format) }]
     : [];
 }
 
