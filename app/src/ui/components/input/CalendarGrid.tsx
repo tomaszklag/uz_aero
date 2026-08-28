@@ -4,7 +4,7 @@
  * Zastąpił stepper ±1 dzień z wpisem z klawiatury — zgłoszenie z urządzenia brzmiało
  * wprost: „powinien być date-picker z kalendarzem". Siatka odpowiada na pytanie
  * „którego to było?" jednym tapnięciem, a dwa najczęstsze dni i tak mają skróty
- * w arkuszu („Dzisiaj" / „Wczoraj" — zostają NAD kalendarzem, bo to one obsługują
+ * w arkuszu („Wczoraj" / „Dzisiaj" — zostają NAD kalendarzem, bo to one obsługują
  * niemal każdy wpis).
  *
  * Zasady siatki:

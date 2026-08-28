@@ -692,7 +692,7 @@ co zapis automatyczny, więc pyta o to samo i tymi samymi kontrolkami. STEPPER c
 kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → liczniki
 (data PIERWSZA i wymóg Duala — issue #58, sekcja wyżej).
 - **data lotu jest POLEM, domyślnie dzisiejszym** (arkusz 15E: od issue #58 kalendarz
-  miesięczny ze skrótami „Dzisiaj"/„Wczoraj"; `maskDateUtcInput`/`parseDateUtc` wyszły
+  miesięczny ze skrótami „Wczoraj"/„Dzisiaj"; `maskDateUtcInput`/`parseDateUtc` wyszły
   z użycia w tym arkuszu). W nagłówku daty NIE MA — stała tam data z ZEGARA, która
   przy wpisie sprzed tygodnia kłamała o tym, czego wpis dotyczy. Zmiana doby PRZESUWA
   wpisane godziny razem z dniem
@@ -818,7 +818,7 @@ Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
 - **arkusz daty = KALENDARZ MIESIĘCZNY** (`CalendarGrid` + `calendarMonth.ts`
   z testami; mockup 15E) — odwraca decyzję z 2026-08-16 („kalendarza NIE MA"):
   kalendarz jest kontrolką, którą pilot zna, odklikiwanie ±1 dzień — tą, której
-  musiał się uczyć. Skróty „Dzisiaj"/„Wczoraj" zostają NAD siatką (obsługują niemal
+  musiał się uczyć. Skróty „Wczoraj"/„Dzisiaj" zostają NAD siatką (obsługują niemal
   każdy wpis); tydzień od PONIEDZIAŁKU, doby = północe UTC, dni przyszłe wygaszone,
   dni sąsiednich miesięcy nierysowane, strzałka „nowszy" gaśnie na bieżącym miesiącu.
   Nagłówek miesiąca w MIANOWNIKU (`monthYearUtc` w `@uzaero/format`)

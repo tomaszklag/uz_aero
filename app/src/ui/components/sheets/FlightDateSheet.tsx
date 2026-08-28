@@ -7,7 +7,8 @@
  * z klawiatury, „siatka 42 kratek to kontrolka, której pilot musi się dopiero
  * nauczyć"). W praktyce było odwrotnie: kalendarz jest kontrolką, którą pilot ZNA,
  * a odklikiwanie daty przyciskiem ±1 dzień — tą, której musiał się uczyć.
- * Skróty „Dzisiaj" i „Wczoraj" zostają NAD kalendarzem: te dwa dni obsługują
+ * Skróty „Wczoraj" i „Dzisiaj" (w tej kolejności — starsze po lewej, issue #62)
+ * zostają NAD kalendarzem: te dwa dni obsługują
  * niemal każdy wpis, więc zwykle siatki nie trzeba nawet dotykać.
  *
  * Przypis „doba liczy się od uruchomienia silnika" mieszka TUTAJ — i tylko tutaj
@@ -95,9 +96,12 @@ export function FlightDateSheet({
       onConfirm={() => onConfirm(value)}
       onCancel={onCancel}
     >
+      {/* WCZORAJ PRZED DZISIAJ (zgłoszenie z urządzenia, issue #62): skróty stoją nad
+          siatką, w której czas płynie w prawo i w dół, więc para w odwrotnej kolejności
+          czytała się pod prąd całego arkusza. Starsze po lewej — jak wszędzie. */}
       <View style={styles.quickRow}>
-        {quick(today, 'Dzisiaj')}
         {quick(yesterday, 'Wczoraj')}
+        {quick(today, 'Dzisiaj')}
       </View>
 
       {/* `key` po widoczności: każde otwarcie montuje siatkę od nowa, więc kartka
