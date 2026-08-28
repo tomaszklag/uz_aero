@@ -42,11 +42,6 @@ export interface ManualEventSheetProps {
   now: number;
   /** Sformatowanie czasu zdarzenia do wyświetlenia (UTC). */
   formatTime: (t: number) => string;
-  /**
-   * Ten sam czas w strefie telefonu — pokazywany drobnym drukiem pod zegarem UTC.
-   * Formatuje WOŁAJĄCY, tak samo jak UTC: arkusz nie zna stref, zna tylko napisy.
-   */
-  formatLocalTime: (t: number) => string;
   busy?: boolean;
   onConfirm: (type: ManualEventType, at: number) => void;
   onCancel: () => void;
@@ -65,7 +60,6 @@ export function ManualEventSheet({
   initialType,
   now,
   formatTime,
-  formatLocalTime,
   busy = false,
   onConfirm,
   onCancel,
@@ -144,21 +138,19 @@ export function ManualEventSheet({
         min={now - MAX_BACK_MIN * 60_000}
         // W przyszłość nie da się zapisać zdarzenia, które jeszcze nie zaszło.
         max={now}
+        /* Czas lokalny drobnym drukiem POD zegarem (issue #19). Rejestr jedzie w UTC
+           i tak zostaje — ale pilot patrzy na zegarek na ręce, a ten pokazuje LT. Bez
+           tej linii przeliczał w głowie, czy „08:14" to rzeczywiście chwila, którą
+           pamięta (`CLAUDE.md`: LT tylko jako wartość drugorzędna). Od issue #62 pkt 6
+           rysuje ją SAMA kontrolka — ten arkusz był jedynym, który ją miał, a pytanie
+           „która to u mnie godzina" pada przy każdym wpisywanym czasie. */
+        localTime
         footer={
-          <>
-            {/* Czas lokalny drobnym drukiem POD zegarem (issue #19). Rejestr jedzie
-                w UTC i tak zostaje — ale pilot patrzy na zegarek na ręce, a ten pokazuje
-                LT. Bez tej linii przeliczał w głowie, czy „08:14" to rzeczywiście chwila,
-                którą pamięta (`CLAUDE.md`: LT tylko jako wartość drugorzędna). */}
-            <AppText variant="mono" tone="muted" style={styles.local}>
-              {formatLocalTime(at)} LT
-            </AppText>
-            <AppText variant="mono" style={[styles.delta, { color: amber.accent }]}>
-              {minutesAgo === 0
-                ? 'teraz'
-                : `${minutesAgo} min temu — tyle trwało, zanim zauważyłeś`}
-            </AppText>
-          </>
+          <AppText variant="mono" style={[styles.delta, { color: amber.accent }]}>
+            {minutesAgo === 0
+              ? 'teraz'
+              : `${minutesAgo} min temu — tyle trwało, zanim zauważyłeś`}
+          </AppText>
         }
       />
 
@@ -192,6 +184,5 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   typeLabel: { fontSize: 19, lineHeight: 21, letterSpacing: 2 },
-  local: { fontSize: 11, letterSpacing: 1, textAlign: 'center' },
   delta: { fontSize: 10, letterSpacing: 0.5, textAlign: 'center', minHeight: 14 },
 });

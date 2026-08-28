@@ -150,6 +150,15 @@
   .suggest-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
   .suggest-name { font-size:12px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .suggest-meta { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
+  /* KOD SPOZA KATALOGU (issue #62 pkt 1) — bursztyn i plakietka zamiast szarej ramki
+     nie do odróżnienia od podpowiedzi katalogu. Ten sam znacznik zostaje potem przy
+     wartości w formularzu (02E, 15), więc wybór widać także po zamknięciu arkusza. */
+  .suggest-row.foreign { border-color:var(--amber-border); border-width:1.5px; background:var(--amber-muted); }
+  .suggest-row.foreign:hover { border-color:var(--amber); }
+  .suggest-row.foreign .suggest-icao { color:var(--amber); }
+  .suggest-row.foreign .suggest-body { align-items:flex-start; gap:3px; }
+  .tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; border-radius:5px; padding:2px 6px; border:1px solid var(--border-strong); color:var(--text-muted); }
+  .tag.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
 
   /* Kursor tekstowy — stoi w polu ARKUSZA, bo to jedyne miejsce, w którym się pisze.
      Mockup pokazuje moment szukania, nie stan spoczynku (ten jest na 02E). */
@@ -400,15 +409,36 @@
         <!-- KOD SPOZA KATALOGU wchodzi OSOBNYM wierszem pod listą, gdy wpis ma kształt
              kodu ICAO, a katalog go nie zna (przelot do EDDB):
 
-               <div class="suggest-row">
+               <div class="suggest-row foreign">
                  <span class="suggest-icao">EDDB</span>
                  <span class="suggest-body">
-                   <span class="suggest-name">Użyj tego kodu — katalog zna tylko polskie lotniska</span>
+                   <span class="tag amber">spoza katalogu</span>
+                   <span class="suggest-name">Zapisze się sam kod, bez nazwy lotniska</span>
                  </span>
                </div>
 
              Świadome tapnięcie odróżnia „lecę do EDDB" od literówki w EPKK — dlatego
-             kod spoza katalogu nie wchodzi po cichu razem z zamknięciem arkusza. -->
+             kod spoza katalogu nie wchodzi po cichu razem z zamknięciem arkusza.
+
+             DWIE ZMIANY Z ISSUE #62 pkt 1 (zgłoszenie z urządzenia):
+
+             1. WIERSZ JEST BURSZTYNOWY I NOSI PLAKIETKĘ. Do #62 wyglądał jak każda inna
+                podpowiedź — szara ramka, szare tło — i różnił się wyłącznie zdaniem
+                obok, więc w liście wyników czytał się jak kolejne lotnisko. Bursztyn,
+                nie czerwień: kod jest poprawny i zapisze się bez przeszkód, to rzecz
+                do wiedzy, a nie do poprawienia.
+
+             2. ZDANIE MÓWI O SKUTKU TAPNIĘCIA, nie o zawartości katalogu. „Użyj tego
+                kodu — katalog zna tylko polskie lotniska" opisywało budowę aplikacji
+                komuś, kto wpisuje kod lotniska docelowego (ta sama kategoria przypisów,
+                którą wyrzuciły issue #43 i #55).
+
+             TA SAMA PLAKIETKA ZOSTAJE PRZY WARTOŚCI W FORMULARZU (02E i 15, krok 2):
+             po wyborze EDDB wyglądało dokładnie jak EPKK — ta sama ramka, ten sam krój,
+             a jedyną różnicą był BRAK drugiej linii z nazwą, czyli sygnał negatywny.
+             W kontrolce plakietka stoi w miejscu nazwy: kod z katalogu niesie nazwę,
+             kod spoza — plakietkę, nigdy obie naraz. -->
+        <!-- (styl wiersza: `.suggest-row.foreign` + `.tag.amber` niżej w tym pliku) -->
 
         <!-- POLE WPISU NA DOLE, TUŻ NAD AKCJĄ: arkusz jest przyklejony do dolnej
              krawędzi i rośnie w GÓRĘ, więc pole na górze przeskakiwało przy każdej

@@ -62,7 +62,7 @@ import { useGps, useSensors } from '../bootstrap/servicesContext';
 import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
-import { duration, hhmm, litres, oilLitres, parseLitres, thousands, timeLocal, timeUtc } from '../format';
+import { duration, hhmm, litres, oilLitres, parseLitres, thousands, timeUtc } from '../format';
 import { boardingInitialJumpers, boardingPrefill } from './logic/boardingPrefill';
 import { buildCockpitActions } from './logic/cockpitActions';
 import { cockpitFlightTimeMs } from './logic/cockpitFlightTime';
@@ -667,7 +667,6 @@ export function CockpitScreen({
           initialType={inFlight ? 'landing' : 'takeoff'}
           now={now}
           formatTime={timeUtc}
-          formatLocalTime={timeLocal}
           busy={busy}
           onConfirm={(type, at) => {
             setManualOpen(false);

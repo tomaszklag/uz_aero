@@ -266,13 +266,35 @@ export function parseLitres(text: string): number | null {
  * cyfr to zła zamiana — zajmuje pół ekranu i podstawia podpowiedzi słownikowe. Pilot
  * wbija „0800", maska pokazuje „08:00" (zgłoszenie z urządzenia: arkusz godziny meldunku).
  *
+ * ══ KROPKA I PRZECINEK ZNACZĄ DWUKROPEK (issue #62 pkt 2) ══
+ * Klawiatura numeryczna Androida dwukropka nie ma, ale kropkę albo przecinek — owszem,
+ * i to w nie zawsze tym samym miejscu. Do issue #62 maska wycinała je razem z resztą
+ * niecyfr, więc „8.30" zostawało jako „830" i wychodziło z maski jako **„83:0"**:
+ * `parseTimeUtcOnDay` odrzucał to (83 > 23), a `Stepper` cicho zostawiał wartość sprzed
+ * edycji. Pilot widział wtedy godzinę, której nie wpisał, i przyciski ±1 min przesuwające
+ * nie tę liczbę, co trzeba — jedno zgłoszenie z urządzenia opisało oba objawy naraz.
+ *
+ * Reguła jest więc ta sama, co w `maskMotoHoursInput`: PIERWSZY separator — jakikolwiek
+ * by nie był — kończy część godzinową i staje się dwukropkiem. Wiodący („:30") odrzucamy,
+ * bo godzina zaczyna liczbę; jednocyfrową godzinę przed separatorem dopełniamy zerem,
+ * skoro pilot sam powiedział, że już ją skończył.
+ *
  * Liczą się wyłącznie cyfry i tylko cztery pierwsze — resztę ucinamy, zamiast pozwolić
  * na „08:0012". Wpis krótszy zostaje krótki („08:0"), bo to normalny stan w połowie
  * pisania; o tym, czy wartość ma sens, orzeka `parseTimeUtcOnDay`.
  */
 export function maskTimeUtcInput(text: string): string {
-  const digits = text.replace(/\D/g, '').slice(0, 4);
-  return digits.length <= 2 ? digits : `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  const separator = text.search(/[.,:]/);
+  if (separator < 0) {
+    const digits = text.replace(/\D/g, '').slice(0, 4);
+    return digits.length <= 2 ? digits : `${digits.slice(0, 2)}:${digits.slice(2)}`;
+  }
+
+  const hours = text.slice(0, separator).replace(/\D/g, '').slice(0, 2);
+  // Separator bez godziny przed nim nie ma czego zamykać — czekamy na cyfrę.
+  if (hours.length === 0) return '';
+  const minutes = text.slice(separator + 1).replace(/\D/g, '').slice(0, 2);
+  return `${hours.padStart(2, '0')}:${minutes}`;
 }
 
 /**

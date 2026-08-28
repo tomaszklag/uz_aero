@@ -22,7 +22,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import {
   ActionButton,
@@ -41,6 +41,7 @@ import {
   RefuelEntrySheet,
   Screen,
   ScreenHeader,
+  SessionAxis,
   SyncChip,
   Tag,
   TextEntrySheet,
@@ -48,6 +49,7 @@ import {
   type GridOption,
   type PickerOption,
 } from '../components';
+import { Icon } from '../components/foundation/Icon';
 import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { usePilotDay } from '../hooks/usePilotDay';
@@ -88,8 +90,16 @@ import {
   type ManualFlightDraft,
   type ManualFlightStep,
 } from './logic/manualFlight';
+import {
+  buildManualFlightAxis,
+  manualAxisTarget,
+  nextDropAt,
+  nextFlightTimes,
+} from './logic/manualFlightAxis';
 import { manualFlightWarnings } from './logic/manualFlightWarnings';
 import { operationLabel } from './logic/operations';
+/** Nazwa lotniska albo plakietka „spoza katalogu" — ta sama, co na 02E (issue #62 pkt 1). */
+import { airfieldValueProps } from '../components/input/airfieldMark';
 
 /** Kolejność kroków — indeks w tej tablicy jest numerem w plakietce „n / 4". */
 const STEPS: ManualFlightStep[] = ['aircraft', 'task', 'times', 'readings'];
@@ -241,8 +251,16 @@ export function ManualFlightScreen({
 
   const dualName = pilots.find((p) => p.id === draft.dualId)?.name ?? null;
   const flights = sortedFlights(draft);
-  const drops = [...draft.drops].sort((a, b) => a.at - b.at);
   const refuels = [...draft.refuels].sort((a, b) => a.at - b.at);
+  // Zrzut istnieje wyłącznie w dniu skokowym (issue #19) — i to samo pytanie
+  // rozstrzyga, czy zrzuty wchodzą na oś kroku 3.
+  const jumpDay = draft.operation != null && isJumpOperation(draft.operation);
+  const axis = useMemo(
+    () => buildManualFlightAxis(draft, { jumpDay }),
+    [draft, jumpDay],
+  );
+  /** Ile zrzutów wypada poza każdym lotem — oś już je oznaczyła, baner je zlicza. */
+  const strayDrops = axis.rows.filter((r) => r.kind === 'drop' && r.warned === true).length;
   // Do rachunku zużycia wchodzą tylko dolewki PO odczycie „przed uruchomieniem" —
   // poranne tankowanie już w tym odczycie siedzi (patrz `preRunAddedL`).
   const addedTotal =
@@ -397,7 +415,7 @@ export function ManualFlightScreen({
                 <ValueBox
                   value={draft.departureIcao ?? ''}
                   placeholder="wybierz lotnisko"
-
+                  {...airfieldValueProps(draft.departureIcao)}
                   actionIcon="search"
                   onPress={() => setSheet({ kind: 'airfield', role: 'departure' })}
                   accessibilityLabel={`Lotnisko startu ${draft.departureIcao ?? 'niewybrane'} — zmień`}
@@ -408,7 +426,7 @@ export function ManualFlightScreen({
                   <ValueBox
                     value={draft.arrivalIcao ?? ''}
                     placeholder="wybierz lotnisko"
-
+                    {...airfieldValueProps(draft.arrivalIcao)}
                     actionIcon="search"
                     onPress={() => setSheet({ kind: 'airfield', role: 'arrival' })}
                     accessibilityLabel={`Lotnisko lądowania ${draft.arrivalIcao ?? 'niewybrane'} — zmień`}
@@ -451,7 +469,12 @@ export function ManualFlightScreen({
           </>
         )}
 
-        {/* ══ KROK 3 — CZASY: bieg silnika, loty, zrzuty ═════════════════════ */}
+        {/* ══ KROK 3 — PRZEBIEG SESJI: bieg silnika, a w nim loty i zrzuty ═══
+            Do issue #62 były tu DWIE PŁASKIE LISTY („Loty" i „Zrzuty"), przez co
+            zrzut nie miał jak pokazać, do którego lotu należy — mimo że domena
+            definiuje to zawieraniem się w czasie (`DROP_ON_GROUND`). Odtąd jest oś,
+            ta sama, którą pilot ogląda w kokpicie i w rozliczeniu. Uzasadnienie
+            w całości: `logic/manualFlightAxis.ts`. */}
         {step === 'times' && (
           <>
             <Card title="Bieg silnika" header="inline">
@@ -462,71 +485,76 @@ export function ManualFlightScreen({
                     : ''
                 }
                 placeholder="wpisz godziny biegu"
-
                 actionIcon="edit"
                 onPress={() => setSheet({ kind: 'engine' })}
                 accessibilityLabel="Godziny biegu silnika — zmień"
               />
-              {draft.engineStart != null && draft.engineStop != null && (
-                <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
-                  {`blok ${duration(draft.engineStop - draft.engineStart)} · czas w powietrzu ${duration(
-                    flights.reduce((sum, f) => sum + Math.max(0, f.landing - f.takeoff), 0),
-                  )}`}
-                </AppText>
-              )}
+              {/* Podpisu „blok … · czas w powietrzu …" tu NIE MA: obie liczby stoją
+                  w stopce osi pod spodem, a stopka jest ich jedynym miejscem
+                  (issue #38 pkt 9, ta sama reguła co na ekranie rozliczenia). */}
             </Card>
 
-            <Card title="Loty · start → lądowanie" header="inline">
-              {flights.map((f, i) => (
-                <Field key={f.id} label={`Lot ${i + 1}`}>
-                  <ValueBox
-                    value={`${timeUtc(f.takeoff)} → ${timeUtc(f.landing)} · ${duration(f.landing - f.takeoff)}`}
-                    actionIcon="edit"
-                    onPress={() => setSheet({ kind: 'flight', id: f.id })}
-                    accessibilityLabel={`Lot ${i + 1} — popraw czasy`}
-                  />
-                </Field>
-              ))}
-              {/* Dopisanie jest OSTATNIM wierszem listy (wzorzec „DODAJ WPIS" z osi,
-                  issue #43): nowy lot trafi na koniec, więc wejście stoi tam, gdzie
-                  skończy się jego skutek. */}
-              <ActionButton
-                label="DODAJ LOT"
-                tone="green"
-                variant="secondary"
-                size="md"
-                icon="add"
-                onPress={() => setSheet({ kind: 'flight', id: null })}
-              />
-            </Card>
+            {/* OSI NIE MA, DOPÓKI NIE MA BIEGU SILNIKA (issue #62 pkt 10) — a skoro
+                nie ma osi, nie ma też wiersza „DODAJ LOT". To BRAK AKCJI, nie
+                wyszarzony przycisk: wyszarzony obiecywałby czynność, którą reguły
+                i tak odrzucą (zasada z 10B i 02G). Powód niesie „DALEJ" na dole.
 
-            {/* Zrzuty WYŁĄCZNIE w dniu skokowym (issue #19) — to brak sekcji,
-                nie blokada z powodem: przy przelocie zrzut nie może się wydarzyć. */}
-            {draft.operation != null && isJumpOperation(draft.operation) && (
-              <Card
-                title="Zrzuty"
-                header="inline"
-                headerRight={<Tag label="opcjonalne" tone="neutral" />}
-              >
-                {drops.map((d, i) => (
-                  <Field key={d.id} label={`Zrzut ${i + 1}`}>
-                    <ValueBox
-                      value={`${timeUtc(d.at)} · ${dropSummary(d.jumpers, d.altitudeFt)}`}
-                      actionIcon="edit"
-                      onPress={() => setSheet({ kind: 'drop', id: d.id })}
-                      accessibilityLabel={`Zrzut ${i + 1} — popraw`}
-                    />
-                  </Field>
-                ))}
-                <ActionButton
-                  label="DODAJ ZRZUT"
-                  tone="green"
-                  variant="secondary"
-                  size="md"
-                  icon="add"
-                  onPress={() => setSheet({ kind: 'drop', id: null })}
+                Karta ma pasek nagłówka i `flush` — dokładnie jak „Przebieg sesji"
+                na ekranie rozliczenia: oś sama trzyma swoje wiersze, a stopka sum
+                ma dobijać do krawędzi. Bez „czasy UTC" w nagłówku (inaczej niż tam):
+                podtytuł kroku mówi to zdanie wyżej i obejmuje nim także kartę biegu. */}
+            {axis.rows.length > 0 && (
+              <Card title="Przebieg sesji" flush>
+                <SessionAxis
+                  rows={axis.rows}
+                  foot={axis.foot}
+                  /* Każdy wiersz otwiera SWÓJ arkusz — inaczej niż w rozliczeniu,
+                     gdzie oś jest opisowa (issue #40) i ołówków nie ma. Tutaj jest
+                     formularzem, więc cel dotknięcia i ołówek są jego treścią. */
+                  onCorrect={(rowId) => {
+                    const target = manualAxisTarget(rowId);
+                    if (target == null) return;
+                    if (target.kind === 'engine') setSheet({ kind: 'engine' });
+                    else if (target.kind === 'flight') setSheet({ kind: 'flight', id: target.id });
+                    else setSheet({ kind: 'drop', id: target.id });
+                  }}
                 />
+
+                {/* Dopisanie jako OSTATNIE WIERSZE OSI, nie przyciski pod kartą
+                    (wzorzec „DODAJ WPIS", issue #43): nowy lot i nowy zrzut trafią
+                    w przebieg sesji, więc wejście stoi tam, gdzie skończy się skutek. */}
+                <AxisAddRow label="DODAJ LOT" onPress={() => setSheet({ kind: 'flight', id: null })} />
+
+                {/* Zrzuty WYŁĄCZNIE w dniu skokowym (issue #19) — to brak wiersza,
+                    nie blokada z powodem: przy przelocie zrzut nie może się wydarzyć.
+                    Bez ani jednego lotu też go nie ma: `nextDropAt` nie miałby czego
+                    podstawić, a zrzut na ziemi jest tym, przed czym ta oś ostrzega. */}
+                {jumpDay && flights.length > 0 && (
+                  <AxisAddRow
+                    label="DODAJ ZRZUT"
+                    tone="muted"
+                    onPress={() => setSheet({ kind: 'drop', id: null })}
+                  />
+                )}
               </Card>
+            )}
+
+            {/* Zrzut poza każdym lotem — miękka reguła domeny `DROP_ON_GROUND`. Do
+                issue #62 to zdanie padało dopiero na kroku 4, czyli ekran po tym, na
+                którym godzinę się wpisuje; ostrzeżenie ma stać tam, gdzie da się je
+                naprawić. NIE blokuje: fakt lotu jest cenniejszy niż kompletność
+                formularza. Wiersz osi mówi KTÓRY zrzut, baner — co z tym zrobić. */}
+            {strayDrops > 0 && (
+              <Banner
+                kind="warning"
+                tone="amber"
+                icon="warning"
+                text={
+                  strayDrops === 1
+                    ? 'Jeden zrzut wypada poza wszystkimi lotami — popraw jego godzinę albo dopisz lot, w którym się odbył.'
+                    : `${strayDrops} zrzuty wypadają poza wszystkimi lotami — popraw ich godziny albo dopisz loty, w których się odbyły.`
+                }
+              />
             )}
           </>
         )}
@@ -752,14 +780,17 @@ export function ManualFlightScreen({
         onCancel={close}
       />
 
+      {/* Godziny biegu są PUSTE, dopóki pilot ich nie wpisze (issue #62 pkt 3): do #62
+          arkusz otwierał się z 10:00 i 11:00, a potem mierzył od nich przesunięcie
+          i tymi liczbami ruszał przy ±1 min. Ta sama reguła, która każe wpisywać
+          paliwo przed uruchomieniem zamiast brać je z cache. */}
       <FlightTimesSheet
         visible={sheet?.kind === 'engine'}
         title="BIEG SILNIKA"
-        subtitle={`${dateUtcDayMonth(draft.day)} · czasy UTC`}
         durationLabel="Blok"
         fields={[
-          { key: 'start', label: 'Uruchomienie', value: draft.engineStart ?? draft.day + 10 * HOUR },
-          { key: 'stop', label: 'Wyłączenie', value: draft.engineStop ?? draft.day + 11 * HOUR },
+          { key: 'start', label: 'Uruchomienie', value: draft.engineStart },
+          { key: 'stop', label: 'Wyłączenie', value: draft.engineStop },
         ]}
         min={dayMin}
         max={dayMax}
@@ -773,7 +804,6 @@ export function ManualFlightScreen({
       <FlightTimesSheet
         visible={sheet?.kind === 'flight'}
         title={flightSheetTitle(sheet, flights)}
-        subtitle={`${dateUtcDayMonth(draft.day)} · czasy UTC`}
         durationLabel="Czas lotu"
         fields={flightSheetFields(sheet, draft)}
         min={flightBounds.min}
@@ -809,7 +839,7 @@ export function ManualFlightScreen({
 
       <ManualDropSheet
         visible={sheet?.kind === 'drop'}
-        title={dropSheetTitle(sheet, drops)}
+        title={dropSheetTitle(sheet, [...draft.drops].sort((a, b) => a.at - b.at))}
         value={dropSheetValue(sheet, draft)}
         min={dayMin}
         max={dayMax}
@@ -943,6 +973,42 @@ export function ManualFlightScreen({
 // Pomocnicze — wartości startowe arkuszy (poza JSX, żeby dało się je czytać)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Wiersz dopisania na końcu osi — 44 px celu dotknięcia i kreska nad nim, dokładnie
+ * jak „DODAJ WPIS" w trybie edycji rozliczenia (issue #43). Plus, nie ołówek: ołówek
+ * obiecuje poprawianie istniejącej wartości.
+ */
+function AxisAddRow({
+  label,
+  tone = 'green',
+  onPress,
+}: {
+  label: string;
+  tone?: 'green' | 'muted';
+  onPress: () => void;
+}) {
+  const { theme } = useTheme();
+  const color = tone === 'green' ? theme.colors.green : theme.colors.textMuted;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.axisAdd,
+        { borderTopColor: theme.colors.border },
+        pressed ? { backgroundColor: theme.colors.surfaceHover } : null,
+      ]}
+    >
+      <Icon name="add" size={13} color={color} />
+      <AppText variant="mono" style={{ ...styles.axisAddLabel, color }}>
+        {label}
+      </AppText>
+    </Pressable>
+  );
+}
+
 type FlightSheetState = { kind: 'flight'; id: string | null } | { kind: string } | null;
 
 function flightSheetTitle(
@@ -957,9 +1023,8 @@ function flightSheetTitle(
 }
 
 /**
- * Wartości startowe pary start–lądowanie: edytowany lot swoje, NOWY lot zaczyna
- * 10 minut po ostatnim lądowaniu (albo 5 minut po uruchomieniu, gdy lotów brak) —
- * typowy rytm dnia skokowego, a pilot i tak poprawia godziny z kartki.
+ * Wartości startowe pary start–lądowanie: edytowany lot swoje, NOWY lot dziedziczy
+ * granice BIEGU SILNIKA (issue #62 pkt 8 — uzasadnienie przy `nextFlightTimes`).
  */
 function flightSheetFields(sheet: FlightSheetState, draft: ManualFlightDraft) {
   if (sheet == null || sheet.kind !== 'flight') return [];
@@ -971,15 +1036,12 @@ function flightSheetFields(sheet: FlightSheetState, draft: ManualFlightDraft) {
       { key: 'landing', label: 'Lądowanie', value: existing.landing },
     ];
   }
-  const flights = sortedFlights(draft);
-  const lastLanding = flights.at(-1)?.landing;
-  const base =
-    lastLanding != null
-      ? lastLanding + 10 * MIN
-      : (draft.engineStart ?? draft.day + 10 * HOUR) + 5 * MIN;
+  // Wiersz „DODAJ LOT" istnieje wyłącznie przy wpisanym biegu, więc `null` tu nie
+  // wejdzie — a gdyby weszło, arkusz otworzy się pusty i blokada każe wpisać godziny.
+  const next = nextFlightTimes(draft);
   return [
-    { key: 'takeoff', label: 'Start', value: base },
-    { key: 'landing', label: 'Lądowanie', value: base + 30 * MIN },
+    { key: 'takeoff', label: 'Start', value: next?.takeoff ?? null },
+    { key: 'landing', label: 'Lądowanie', value: next?.landing ?? null },
   ];
 }
 
@@ -992,7 +1054,11 @@ function dropSheetTitle(sheet: DropSheetState, drops: { id: string }[]): string 
   return `ZRZUT ${drops.findIndex((d) => d.id === s.id) + 1}`;
 }
 
-/** Nowy zrzut zaczyna w połowie ostatniego lotu — tam zwykle pada „drzwi otwarte". */
+/**
+ * Nowy zrzut ląduje w połowie PIERWSZEGO lotu, który zrzutu jeszcze nie ma (issue #62
+ * pkt 9 — uzasadnienie przy `nextDropAt`). Do #62 trafiał zawsze w połowę OSTATNIEGO,
+ * więc na dniu skokowym wszystkie wpadały do tego samego lotu.
+ */
 function dropSheetValue(sheet: DropSheetState, draft: ManualFlightDraft) {
   if (sheet != null && sheet.kind === 'drop') {
     const s = sheet as { kind: 'drop'; id: string | null };
@@ -1001,12 +1067,13 @@ function dropSheetValue(sheet: DropSheetState, draft: ManualFlightDraft) {
       return { at: existing.at, jumpers: existing.jumpers, altitudeFt: existing.altitudeFt };
     }
   }
-  const last = sortedFlights(draft).at(-1);
-  const at =
-    last != null
-      ? last.takeoff + Math.round((last.landing - last.takeoff) / 2)
-      : (draft.engineStart ?? draft.day + 10 * HOUR) + 20 * MIN;
-  return { at, jumpers: null, altitudeFt: null };
+  // Wiersz „DODAJ ZRZUT" pokazuje się dopiero przy pierwszym locie, więc `null`
+  // tu nie wejdzie; awaryjnie bierzemy uruchomienie silnika.
+  return {
+    at: nextDropAt(draft) ?? draft.engineStart ?? draft.day + 10 * HOUR,
+    jumpers: null,
+    altitudeFt: null,
+  };
 }
 
 type RefuelSheetState = { kind: 'refuel'; id: string | null } | { kind: string } | null;
@@ -1034,19 +1101,15 @@ function refuelSheetValue(sheet: RefuelSheetState, draft: ManualFlightDraft) {
   };
 }
 
-/** Podsumowanie zrzutu w wierszu listy: skład albo „skład niepodany" + wysokość. */
-function dropSummary(
-  jumpers: { tandem: number; aff: number; solo: number } | null,
-  altitudeFt: number | null,
-): string {
-  const parts: string[] = [];
-  if (jumpers == null) {
-    parts.push('skład niepodany');
-  } else {
-    if (jumpers.tandem > 0) parts.push(`${jumpers.tandem} tandem`);
-    if (jumpers.aff > 0) parts.push(`${jumpers.aff} AFF`);
-    if (jumpers.solo > 0) parts.push(`${jumpers.solo} solo`);
-  }
-  if (altitudeFt != null) parts.push(`${altitudeFt} ft`);
-  return parts.join(' · ');
-}
+const styles = StyleSheet.create({
+  // 44 px celu dotknięcia i kreska nad wierszem — jak „DODAJ WPIS" na osi edycji (10D).
+  axisAdd: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 44,
+    borderTopWidth: 1,
+  },
+  axisAddLabel: { fontSize: 10, letterSpacing: 1.5 },
+});

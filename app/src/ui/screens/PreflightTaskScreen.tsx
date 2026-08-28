@@ -66,13 +66,13 @@ import { useTaskSuggestions } from '../hooks/useTaskSuggestions';
 import { useNearbyPosition } from '../hooks/useNearbyPosition';
 import { operationLabel } from './logic/operations';
 import { jumperDefaultsLabel, normalizeJumperDefaults } from './logic/jumperDefaults';
-import { airfieldByIcao, isJumpOperation, isSameFieldOperation, OPERATION_TYPES } from '../../domain';
+import { isJumpOperation, isSameFieldOperation, OPERATION_TYPES } from '../../domain';
 import type { OperationType } from '../../domain';
-
-/** Nazwa lotniska do pokazania obok kodu; `undefined`, gdy katalog go nie zna. */
-function airfieldName(icao: string): string | undefined {
-  return airfieldByIcao(icao)?.name;
-}
+/**
+ * Nazwa lotniska albo plakietka „spoza katalogu" (issue #62 pkt 1) — jedna decyzja
+ * na oba ekrany z trasą, żeby EDDB nie wyglądało tu inaczej niż we wpisie ręcznym.
+ */
+import { airfieldValueProps } from '../components/input/airfieldMark';
 
 /** Siatka operacji — ikony jak w `.op-grid` mockupu 02e, nazwy z `operationLabel`. */
 const OPERATIONS: GridOption<OperationType>[] = OPERATION_TYPES.map((value) => ({
@@ -286,7 +286,7 @@ export function PreflightTaskScreen({
               <ValueBox
                 value={draft.departureIcao}
                 placeholder="Wybierz lotnisko"
-                meta={airfieldName(draft.departureIcao)}
+                {...airfieldValueProps(draft.departureIcao)}
                 actionIcon="search"
                 accessibilityLabel={`Lotnisko startu ${draft.departureIcao || 'nie wybrane'} — zmień`}
                 onPress={() => setPicker('departure')}
@@ -298,7 +298,7 @@ export function PreflightTaskScreen({
                 <ValueBox
                   value={draft.arrivalIcao}
                   placeholder="Wybierz lotnisko"
-                  meta={airfieldName(draft.arrivalIcao)}
+                  {...airfieldValueProps(draft.arrivalIcao)}
                   actionIcon="search"
                   accessibilityLabel={`Lotnisko lądowania ${draft.arrivalIcao || 'nie wybrane'} — zmień`}
                   onPress={() => setPicker('arrival')}

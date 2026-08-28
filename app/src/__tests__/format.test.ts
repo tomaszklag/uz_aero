@@ -137,6 +137,38 @@ describe('czas', () => {
     expect(maskTimeUtcInput('')).toBe('');
   });
 
+  it('kropka i przecinek znaczą dwukropek (issue #62 pkt 2)', () => {
+    // Klawiatura numeryczna ma kropkę albo przecinek, nie ma dwukropka. Do issue #62
+    // maska wycinała je razem z resztą niecyfr, więc „8.30" wychodziło jako „83:0" —
+    // `parseTimeUtcOnDay` odrzucał to (83 > 23), a `Stepper` cicho zostawiał starą
+    // godzinę. Separator kończy część godzinową, dokładnie jak w masce motogodzin.
+    expect(maskTimeUtcInput('8.30')).toBe('08:30');
+    expect(maskTimeUtcInput('8,30')).toBe('08:30');
+    expect(maskTimeUtcInput('08.30')).toBe('08:30');
+    expect(maskTimeUtcInput('16,45')).toBe('16:45');
+
+    // Wpis znak po znaku: separator zamyka godzinę od razu, także jednocyfrową.
+    expect(maskTimeUtcInput('8.')).toBe('08:');
+    expect(maskTimeUtcInput('08:')).toBe('08:');
+    expect(maskTimeUtcInput('8.3')).toBe('08:3');
+
+    // Wiodący separator nie ma czego zamknąć — godzina zaczyna liczbę.
+    expect(maskTimeUtcInput('.30')).toBe('');
+    expect(maskTimeUtcInput(',')).toBe('');
+    // Drugi separator jest już bez znaczenia — minuty biorą same cyfry.
+    expect(maskTimeUtcInput('8.3.0')).toBe('08:30');
+    // Nadmiar cyfr po separatorze ucinamy tak samo jak w wersji bez separatora.
+    expect(maskTimeUtcInput('8.3012')).toBe('08:30');
+  });
+
+  it('maska godziny domyka się z parserem — wpis z separatorem daje czas', () => {
+    // Właściwy dowód z issue #62: cała droga „to, co pilot wbił" → znacznik czasu.
+    // Bez poprawki maski parser dostawał „83:0" i zwracał `null`, czyli wpis ginął.
+    const day = Date.UTC(2026, 5, 22);
+    expect(parseTimeUtcOnDay(maskTimeUtcInput('8.30'), day)).toBe(Date.UTC(2026, 5, 22, 8, 30));
+    expect(parseTimeUtcOnDay(maskTimeUtcInput('8,30'), day)).toBe(Date.UTC(2026, 5, 22, 8, 30));
+  });
+
   it('maska daty stawia kropki za pilota — wzorzec maski godziny (arkusz 15E)', () => {
     expect(maskDateUtcInput('16')).toBe('16');
     expect(maskDateUtcInput('1608')).toBe('16.08');

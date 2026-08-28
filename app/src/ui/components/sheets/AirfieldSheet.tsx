@@ -54,7 +54,10 @@ import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
 import { AirfieldSuggestions } from '../input/AirfieldSuggestions';
 import { PlaceholderOverlay } from '../input/PlaceholderOverlay';
+import { Tag } from '../status/Tag';
+import { toneColors } from '../tone';
 import { airfieldRow } from '../input/airfieldRow';
+import { FOREIGN_AIRFIELD_NOTE, FOREIGN_AIRFIELD_TAG } from '../input/airfieldMark';
 import { Sheet } from './Sheet';
 import { icaoToStore } from './airfieldEntry';
 import { airfieldByIcao, nearestAirfields, searchAirfields, type LatLon } from '../../../domain';
@@ -83,6 +86,7 @@ export function AirfieldSheet({
   onCancel,
 }: AirfieldSheetProps) {
   const { theme } = useTheme();
+  const amber = toneColors(theme, 'amber');
   const [text, setText] = useState('');
   const { inputRef, onShow } = useSheetInputFocus();
 
@@ -205,29 +209,43 @@ export function AirfieldSheet({
         onPick={onConfirm}
       />
 
-      {/* Kod spoza katalogu — świadome tapnięcie, nie ciche przyjęcie literówki. */}
+      {/* KOD SPOZA KATALOGU — świadome tapnięcie, nie ciche przyjęcie literówki, ale
+          od issue #62 pkt 1 także WIDOCZNIE inny od wierszy katalogu. Do #62 wiersz
+          był szary jak każda podpowiedź i różnił się wyłącznie zdaniem obok, więc
+          w liście wyników czytał się jak kolejne lotnisko. Bursztyn i plakietka mówią,
+          że to jest wybór innego rodzaju — dokładnie ten sam znacznik, który zostanie
+          potem przy wartości w formularzu (`airfieldValueProps`).
+
+          Bursztyn, nie czerwień: kod jest poprawny i zapisze się bez przeszkód —
+          to rzecz do wiedzy, nie do poprawienia. */}
       {foreign != null && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Użyj kodu ${foreign}`}
+          accessibilityLabel={`Użyj kodu ${foreign} — ${FOREIGN_AIRFIELD_TAG}`}
           onPress={() => onConfirm(foreign)}
           style={({ pressed }) => [
             styles.extra,
             {
               borderRadius: theme.radius.md,
-              borderWidth: theme.borderWidth,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surfaceRaised,
+              borderWidth: theme.borderWidthStrong,
+              borderColor: amber.border,
+              backgroundColor: amber.muted,
               opacity: pressed ? 0.75 : 1,
             },
           ]}
         >
-          <AppText variant="mono" style={{ ...styles.extraCode, color: theme.colors.textPrimary }}>
+          <AppText variant="mono" style={{ ...styles.extraCode, color: amber.accent }}>
             {foreign}
           </AppText>
-          <AppText variant="body" tone="secondary" style={styles.extraText}>
-            Użyj tego kodu — katalog zna tylko polskie lotniska
-          </AppText>
+          <View style={styles.extraBody}>
+            <Tag label={FOREIGN_AIRFIELD_TAG} tone="amber" />
+            {/* Zdanie mówi o SKUTKU tapnięcia, nie o zawartości katalogu (issue #62
+                pkt 1): „katalog zna tylko polskie lotniska" opisywało budowę aplikacji
+                komuś, kto wpisuje kod lotniska docelowego. */}
+            <AppText variant="body" tone="secondary" style={styles.extraText}>
+              {FOREIGN_AIRFIELD_NOTE}
+            </AppText>
+          </View>
         </Pressable>
       )}
 
@@ -267,7 +285,10 @@ const styles = StyleSheet.create({
     minHeight: 48, // cel dotykowy dla rękawic
   },
   extraCode: { fontSize: 14, letterSpacing: 2, minWidth: 52 },
-  extraText: { flex: 1, fontSize: 11 },
+  // Plakietka nad zdaniem, nie obok: wiersz ma 48 px wysokości i oba naraz w jednej
+  // linii wypychałyby kod poza kontrolkę na wąskim telefonie.
+  extraBody: { flex: 1, gap: 3, alignItems: 'flex-start' },
+  extraText: { fontSize: 11 },
   note: { fontSize: 9, letterSpacing: 0.5 },
   clear: { alignSelf: 'flex-start', paddingVertical: 8 },
 });

@@ -44,7 +44,20 @@ export interface StepperEdit {
 }
 
 export interface StepperProps {
-  value: number;
+  /**
+   * `null` = wartości JESZCZE NIE MA i kontrolka tego nie ukrywa (issue #62 pkt 3).
+   *
+   * Arkusz czasów wpisu ręcznego otwierał się z godzinami 10:00 i 11:00, których nikt
+   * nie wpisał — a potem mierzył od nich przesunięcie („względem wpisu (10:00)") i tymi
+   * właśnie liczbami ruszał przy ±1 min. Wartość podstawiona wygląda jak wartość
+   * wpisana i to jest cały problem: pilot nie ma jak odróżnić swojego odczytu od
+   * zgadywanki formularza. Ta sama reguła, która każe wpisywać paliwo przed
+   * uruchomieniem zamiast brać je z cache.
+   *
+   * Przy `null` przyciski ± są wygaszone (nie ma czego przesuwać), a wartość pokazuje
+   * `placeholder` — wpisanie z klawiatury zostaje jedyną drogą i o to chodzi.
+   */
+  value: number | null;
   onChange: (next: number) => void;
   /** Krok podstawowy (przyciski ±). */
   step?: number;
@@ -75,9 +88,60 @@ export interface StepperProps {
   edit?: StepperEdit;
   /** Podpis pod wartością (np. „maks. 218 L do pełna"). */
   hint?: string;
+  /** Co pokazać zamiast wartości, dopóki jej nie ma (`value === null`). */
+  placeholder?: string;
   unit?: string;
   tone?: Tone;
   style?: ViewStyle;
+}
+
+/**
+ * Przycisk kroku — komponent MODUŁOWY, nie zagnieżdżony w ciele `Stepper`.
+ *
+ * Zadeklarowany wewnątrz `Stepper` (tak było do issue #62) jest przy każdym renderze
+ * NOWYM typem komponentu, więc React nie aktualizuje istniejącego drzewa, tylko odmontowuje
+ * je i montuje od nowa. Dla `Pressable` znaczy to utratę respondera dotyku w połowie
+ * tapnięcia: pierwszy dotyk po zmianie wartości potrafił nie wywołać `onPress` w ogóle.
+ */
+function StepButton({
+  delta,
+  label,
+  disabled,
+  accent,
+  onPress,
+}: {
+  delta: number;
+  label: string;
+  disabled: boolean;
+  accent: string;
+  onPress: (delta: number) => void;
+}) {
+  const { theme } = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${delta > 0 ? 'Zwiększ' : 'Zmniejsz'} o ${label.replace(/^[+−-]/, '')}`}
+      disabled={disabled}
+      onPress={() => onPress(delta)}
+      style={({ pressed }) => [
+        styles.btn,
+        {
+          borderRadius: theme.radius.md,
+          borderWidth: theme.borderWidth,
+          borderColor: theme.colors.borderStrong,
+          backgroundColor: pressed ? accent : theme.colors.surfaceRaised,
+          opacity: disabled ? 0.35 : 1,
+        },
+      ]}
+    >
+      {/* Jedna linia ZAWSZE: „+1 min" łamało się na dwie, bo przycisk miał sztywne
+          46 px szerokości — próg rękawic policzony dla samego „+". Odtąd 46 px jest
+          MINIMUM, a szerokość rośnie z napisem (uwaga z urządzenia, 2026-08-14). */}
+      <AppText variant="mono" tone={disabled ? 'muted' : 'primary'} numberOfLines={1}>
+        {label}
+      </AppText>
+    </Pressable>
+  );
 }
 
 export function Stepper({
@@ -92,6 +156,7 @@ export function Stepper({
   format,
   edit,
   hint,
+  placeholder = '—',
   unit,
   tone = 'amber',
   style,
@@ -102,12 +167,32 @@ export function Stepper({
   /** Tekst w trakcie wpisywania; `null` = pole zamknięte, wartość tylko do odczytu. */
   const [draft, setDraft] = useState<string | null>(null);
 
+  const clamp = useCallback(
+    (n: number) => Math.min(max, Math.max(min, n)),
+    [max, min],
+  );
+
+  /**
+   * Krok ± liczy się od WPISU W TOKU, jeśli taki jest (issue #62 pkt 3).
+   *
+   * Do issue #62 brał wyłącznie `value`, czyli wartość sprzed otwarcia klawiatury:
+   * pilot wpisywał 08:15, dotykał „+1 min" i dostawał 10:01, bo przycisk przesuwał
+   * godzinę podstawioną przez formularz, a nie tę wpisaną. Zatwierdzenie pola dzieje
+   * się przy `onBlur`, więc w chwili tapnięcia świeża wartość istnieje TYLKO w `draft` —
+   * i to ona jest tym, co pilot ma przed oczami.
+   */
   const bump = useCallback(
     (delta: number) => {
-      const next = Math.min(max, Math.max(min, value + delta));
+      const pending = draft != null ? (edit?.parse(draft) ?? null) : null;
+      const base = pending ?? value;
+      if (draft != null) setDraft(null);
+      // Wartości nie ma i wpis jej nie dał — nie ma czego przesuwać (przycisk i tak
+      // jest wtedy wygaszony; ta gałąź broni przed wpisem nieczytelnym).
+      if (base == null) return;
+      const next = clamp(base + delta);
       if (next !== value) onChange(next);
     },
-    [max, min, onChange, value],
+    [clamp, draft, edit, onChange, value],
   );
 
   /**
@@ -120,38 +205,13 @@ export function Stepper({
     const parsed = edit?.parse(draft) ?? null;
     setDraft(null);
     if (parsed == null) return;
-    const next = Math.min(max, Math.max(min, parsed));
+    const next = clamp(parsed);
     if (next !== value) onChange(next);
-  }, [draft, edit, max, min, onChange, value]);
+  }, [clamp, draft, edit, onChange, value]);
 
-  const Button = ({ delta, label }: { delta: number; label: string }) => {
-    const disabled = value + delta > max || value + delta < min;
-    return (
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${delta > 0 ? 'Zwiększ' : 'Zmniejsz'} o ${label.replace(/^[+−-]/, '')}`}
-        disabled={disabled}
-        onPress={() => bump(delta)}
-        style={({ pressed }) => [
-          styles.btn,
-          {
-            borderRadius: theme.radius.md,
-            borderWidth: theme.borderWidth,
-            borderColor: theme.colors.borderStrong,
-            backgroundColor: pressed ? c.muted : theme.colors.surfaceRaised,
-            opacity: disabled ? 0.35 : 1,
-          },
-        ]}
-      >
-        {/* Jedna linia ZAWSZE: „+1 min" łamało się na dwie, bo przycisk miał sztywne
-            46 px szerokości — próg rękawic policzony dla samego „+". Odtąd 46 px jest
-            MINIMUM, a szerokość rośnie z napisem (uwaga z urządzenia, 2026-08-14). */}
-        <AppText variant="mono" tone={disabled ? 'muted' : 'primary'} numberOfLines={1}>
-          {label}
-        </AppText>
-      </Pressable>
-    );
-  };
+  /** Czy krok wyszedłby poza granice — przy braku wartości nie ma czego przesuwać. */
+  const stepBlocked = (delta: number): boolean =>
+    value == null || value + delta > max || value + delta < min;
 
   return (
     <View style={[{ gap: theme.spacing.sm }, style]}>
@@ -168,7 +228,13 @@ export function Stepper({
           },
         ]}
       >
-        <Button delta={-step} label={`−${stepLabel ?? step}`} />
+        <StepButton
+          delta={-step}
+          label={`−${stepLabel ?? step}`}
+          disabled={stepBlocked(-step)}
+          accent={c.muted}
+          onPress={bump}
+        />
 
         {/* Wartość jest CELEM DOTKNIĘCIA, gdy da się ją wpisać — przyciski zostają
             do poprawki o krok, klawiatura do przeskoku. Bez `edit` to zwykły napis. */}
@@ -199,17 +265,29 @@ export function Stepper({
               edit == null ? undefined : `${edit.label ?? 'Wartość'} — wpisz z klawiatury`
             }
             disabled={edit == null}
-            onPress={() => setDraft(edit?.toText(value) ?? null)}
+            /* Pusta wartość otwiera PUSTE pole — `toText` opisuje liczbę, a nie jej brak. */
+            onPress={() => setDraft(value == null ? '' : (edit?.toText(value) ?? null))}
             /* BEZ podkreślenia (uwaga z urządzenia, 2026-08-14). Przerywana kreska pod
                godziną wyglądała jak usterka rysowania, a nie jak zaproszenie do wpisu —
                wartość steppera i tak jest największym elementem kontrolki, więc palec
                ląduje na niej sam. */
             style={styles.value}
           >
-            <AppText variant="param" style={{ color: c.accent }}>
-              {format ? format(value) : String(value)}
-            </AppText>
-            {unit != null && (
+            {/* Brak wartości bierze KOLOR placeholdera (issue #58), ale ZOSTAJE przy
+                metryce wartości — inaczej niż zachęty w polach formularza. Placeholder
+                steppera nie jest zdaniem („wybierz lotnisko"), tylko pustym slotem
+                w kształcie liczby („--:--"), a zmiana kroju przy wpisaniu godziny
+                podskoczyłaby wysokością całej kontrolki. */}
+            {value == null ? (
+              <AppText variant="param" style={{ color: theme.colors.textPlaceholder }}>
+                {placeholder}
+              </AppText>
+            ) : (
+              <AppText variant="param" style={{ color: c.accent }}>
+                {format ? format(value) : String(value)}
+              </AppText>
+            )}
+            {unit != null && value != null && (
               <AppText variant="label" tone="secondary">
                 {unit}
               </AppText>
@@ -217,14 +295,32 @@ export function Stepper({
           </Pressable>
         )}
 
-        <Button delta={step} label={`+${stepLabel ?? step}`} />
+        <StepButton
+          delta={step}
+          label={`+${stepLabel ?? step}`}
+          disabled={stepBlocked(step)}
+          accent={c.muted}
+          onPress={bump}
+        />
       </View>
 
       {bigStep != null && (
         <View style={[styles.row, { gap: theme.spacing.sm }]}>
-          <Button delta={-bigStep} label={`−${bigStepLabel ?? bigStep}`} />
+          <StepButton
+            delta={-bigStep}
+            label={`−${bigStepLabel ?? bigStep}`}
+            disabled={stepBlocked(-bigStep)}
+            accent={c.muted}
+            onPress={bump}
+          />
           <View style={{ flex: 1 }} />
-          <Button delta={bigStep} label={`+${bigStepLabel ?? bigStep}`} />
+          <StepButton
+            delta={bigStep}
+            label={`+${bigStepLabel ?? bigStep}`}
+            disabled={stepBlocked(bigStep)}
+            accent={c.muted}
+            onPress={bump}
+          />
         </View>
       )}
 

@@ -94,6 +94,13 @@
   .time-local { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; }
   /* Godzina, której jeszcze nie ma: skład PLACEHOLDERA, nie liczby (issue #58). */
   .time-val.empty { color:var(--text-placeholder); }
+  .field-time.placeholder { color:var(--text-placeholder); }
+  .step-btn[disabled] { opacity:0.35; cursor:not-allowed; pointer-events:none; }
+  /* Powód blokady WEWNĄTRZ przycisku, nigdy pod nim (issue #55): napis doklejany pod
+     spodem pojawiał się i znikał razem ze stanem, skacząc layoutem reszty. Przycisk
+     z powodem NIE dostaje przygaszenia opacity — bursztyn musi zostać ostrzeżeniem. */
+  .modal-btn-confirm.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; pointer-events:none; cursor:not-allowed; flex-direction:column; gap:5px; }
+  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
 
   /* ===== TIME STEPPER — JEDNA KONTROLKA NA CAŁĄ APLIKACJĘ (issue #43) =====
      Ta sama, co w korektach (10E–10H) i w kokpicie (05F). Wpis ręczny miał do
@@ -137,17 +144,18 @@
 </head>
 <body>
 
+
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 15D</span>
-  <span class="slug">lot ręczny · arkusz czasu zdarzenia</span>
-  <span class="canvas-meta">Nad krokiem 3</span>
+  <span class="film-strip">UZ AERO — 15F</span>
+  <span class="slug">lot ręczny · arkusz czasu bez wartości</span>
+  <span class="canvas-meta">Stan otwarcia</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny: arkusz czasu zdarzenia">
+<main class="phone" role="region" aria-label="Mockup — Lot ręczny: arkusz czasu w stanie pustym">
   <div class="status-bar">
-    <span>16:23</span>
+    <span>09:14</span>
     <span class="status-right">
-      <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="0.6" fill="currentColor"/><rect x="4.5" y="5" width="3" height="6" rx="0.6" fill="currentColor"/><rect x="9" y="2.5" width="3" height="8.5" rx="0.6" fill="currentColor"/><rect x="13.5" y="0" width="3" height="11" rx="0.6" fill="currentColor" opacity="0.4"/></svg>
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0" y="7" width="3" height="4" rx="1" fill="currentColor"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="currentColor"/><rect x="9" y="2.5" width="3" height="8.5" rx="1" fill="currentColor"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="currentColor" opacity="0.35"/></svg>
       <svg width="15" height="11" viewBox="0 0 15 11" fill="none"><path d="M7.5 9.5 9.9 7c-1.3-1.2-3.4-1.2-4.8 0l2.4 2.5Z" fill="currentColor"/><path d="M3.4 4.9C5.6 2.7 9.4 2.7 11.6 4.9l1.4-1.4C10 0.6 5 0.6 2 3.5l1.4 1.4Z" fill="currentColor" opacity="0.5"/></svg>
       <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity="0.5"/></svg>
     </span>
@@ -174,85 +182,74 @@
         <div class="time-pair">
           <div class="field">
             <span class="field-label">Uruchomienie</span>
-            <span class="field-input"><span class="field-time">09:42</span></span>
+            <span class="field-input"><span class="field-time placeholder">--:--</span></span>
           </div>
           <div class="field">
             <span class="field-label">Wyłączenie</span>
-            <span class="field-input"><span class="field-time">11:18</span></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-label">Loty · start → lądowanie</div>
-        <div class="row-list">
-          <div class="row">
-            <span class="row-num">Lot 1</span>
-            <span class="row-body"><span class="row-time">09:48</span><span class="row-arrow">→</span><span class="row-time">10:14</span></span>
-            <span class="row-dur">0:26</span>
-          </div>
-          <div class="row active">
-            <span class="row-num">Lot 2</span>
-            <span class="row-body"><span class="row-time">10:26</span><span class="row-arrow">→</span><span class="row-time">10:52</span></span>
-            <span class="row-dur">0:26</span>
+            <span class="field-input"><span class="field-time placeholder">--:--</span></span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ARKUSZ CZASU — jedno wejście do KAŻDEJ godziny wpisu ręcznego: bieg silnika,
-         start, lądowanie, zrzut, dolewka. Ten sam komponent i te same reguły, co
-         w korektach — nie ma osobnej „wersji dla wpisu ręcznego". -->
+    <!-- ARKUSZ CZASU W STANIE OTWARCIA (issue #62 pkt 3).
+
+         Do issue #62 ten arkusz otwierał się z godzinami 10:00 i 11:00, których nikt
+         nie wpisał. Podstawiona godzina wygląda dokładnie jak wpisana i pilot nie ma
+         jak ich odróżnić — a potem ta sama zgadywanka służy jeszcze za dwie rzeczy:
+         za punkt odniesienia podpisu („Zmiana o −105 min względem wpisu (10:00)")
+         i za bazę kroku ±1 min. Zgłoszenie z urządzenia opisało oba objawy naraz
+         i zaproponowało wprost: „może ten popup powinien działać tak, że nie mam
+         żadnych default wartości, tylko są wymagane".
+
+         To ta sama reguła, która każe wpisywać paliwo przed uruchomieniem zamiast
+         brać je z cache: zgadnięte ogniwo psuje łańcuch następnemu pilotowi. -->
     <div class="modal-overlay">
       <div class="modal-sheet">
         <div class="modal-handle"></div>
 
         <div class="sheet-head">
-          <span class="modal-title">START · LOT 2</span>
-          <span class="icon-action" title="Usuń ten lot">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          </span>
+          <span class="modal-title">BIEG SILNIKA</span>
         </div>
 
-        <!-- DATY TU NIE MA (issue #62 pkt 6): stała w wierszu „Lot 2 · 16 SIE · czasy
-             UTC", choć tę samą datę niesie podtytuł ekranu pod nagłówkiem. Wiersz
-             kosztował linię i nie odpowiadał na żadne pytanie zadane w tym arkuszu.
-             UTC zeszło do ETYKIET pól — tam, gdzie mieszka każda inna jednostka
-             tego systemu („Wysokość zrzutu (ft)"). -->
         <div>
-          <div class="field-label">Start (UTC)</div>
+          <div class="field-label">Uruchomienie (UTC)</div>
           <div class="time-stepper">
-            <button class="step-btn">−1 min</button>
-            <span class="time-val">10:26</span>
-            <button class="step-btn">+1 min</button>
+            <!-- Przyciski ± są WYGASZONE, dopóki nie ma czego przesuwać. Wpisanie
+                 z klawiatury (tapnięcie w wartość) zostaje jedyną drogą i o to chodzi. -->
+            <button class="step-btn" disabled>−1 min</button>
+            <span class="time-val empty">--:--</span>
+            <button class="step-btn" disabled>+1 min</button>
           </div>
-          <div class="time-delta">Zmiana o +4 min względem wpisu (10:22)</div>
-          <div class="time-local">12:26 LT</div>
+          <!-- Podpisu przesunięcia NIE MA: nie ma od czego mierzyć. Miejsce po nim
+               zostaje zarezerwowane, żeby wpisanie godziny nie przesunęło arkusza. -->
+          <div class="time-delta"></div>
         </div>
 
         <div>
-          <div class="field-label">Lądowanie (UTC)</div>
+          <div class="field-label">Wyłączenie (UTC)</div>
           <div class="time-stepper">
-            <button class="step-btn">−1 min</button>
-            <span class="time-val">10:52</span>
-            <button class="step-btn">+1 min</button>
+            <button class="step-btn" disabled>−1 min</button>
+            <span class="time-val empty">--:--</span>
+            <button class="step-btn" disabled>+1 min</button>
           </div>
           <div class="time-delta"></div>
-          <div class="time-local">12:52 LT</div>
         </div>
 
         <div class="modal-ref">
-          <span>Czas lotu</span>
-          <span class="modal-ref-val">0:26</span>
-        </div>
-        <div class="modal-ref">
-          <span>Mieści się w biegu silnika</span>
-          <span class="modal-ref-val">09:42 → 11:18</span>
+          <span>Blok</span>
+          <span class="modal-ref-val">—</span>
         </div>
 
         <div class="modal-actions">
           <a href="15b-reczny-czasy.html" class="modal-btn-cancel">ANULUJ</a>
-          <a href="15b-reczny-czasy.html" class="modal-btn-confirm">ZAPISZ</a>
+          <!-- POWÓD BLOKADY WEWNĄTRZ PRZYCISKU, nigdy pod nim (issue #55). Do issue #62
+               odmowa padała dopiero przy „DALEJ" na dole kroku — czyli po zamknięciu
+               arkusza, gdy pilot nie widział już żadnej z tych godzin. -->
+          <span class="modal-btn-confirm disabled">
+            ZAPISZ
+            <span class="btn-reason">Wpisz obie godziny</span>
+          </span>
         </div>
       </div>
     </div>
@@ -262,33 +259,26 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Arkusz czasu — stany</div>
-  <a class="vp-item active" href="15d-reczny-czas-arkusz.html">
-    <span class="vp-badge blue">15D</span>
-    <span class="vp-body">
-      <span class="vp-name">Z wartością — poprawka</span>
-      <span class="vp-when">Godzina już jest: wpisana wcześniej albo wyprowadzona z biegu silnika przy nowym locie (issue #62 pkt 8). Krok ±1 min, tapnięcie w wartość otwiera klawiaturę numeryczną, podpis mówi o ile przesunięto, pod spodem czas lokalny. Kosz w linii tytułu usuwa lot, gdy pilot dodał go przez pomyłkę.</span>
-    </span>
-    <span class="vp-tag">ten ekran</span>
-  </a>
-  <a class="vp-item" href="15f-reczny-czas-pusty.html">
+  <a class="vp-item active" href="15f-reczny-czas-pusty.html">
     <span class="vp-badge blue">15F</span>
     <span class="vp-body">
       <span class="vp-name">Bez wartości — stan otwarcia</span>
-      <span class="vp-when">Bieg silnika otwierany po raz pierwszy: godzin nie ma, bo nikt ich nie wpisał (issue #62 pkt 3 — koniec z podstawianiem 10:00). Przyciski ± wygaszone, „ZAPISZ" z powodem w środku.</span>
+      <span class="vp-when">Bieg silnika otwierany po raz pierwszy: godzin nie ma, bo nikt ich nie wpisał. Przyciski ± wygaszone, „ZAPISZ" z powodem w środku.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="15d-reczny-czas-arkusz.html">
+    <span class="vp-badge blue">15D</span>
+    <span class="vp-body">
+      <span class="vp-name">Z wartością — poprawka</span>
+      <span class="vp-when">Godzina już jest (wpisana albo wyprowadzona z biegu silnika przy nowym locie): ± działa, podpis mówi o ile przesunięto, pod spodem czas lokalny.</span>
     </span>
   </a>
   <a class="vp-item" href="15g-reczny-czas-kolejnosc.html">
     <span class="vp-badge amber">15G</span>
     <span class="vp-body">
       <span class="vp-name">Odwrócona para godzin</span>
-      <span class="vp-when">Wyłączenie wcześniejsze niż uruchomienie (issue #62 pkt 5): czas trwania pokazuje „—", a „ZAPISZ" nazywa skutek.</span>
-    </span>
-  </a>
-  <a class="vp-item" href="15e-reczny-data.html">
-    <span class="vp-badge blue">15E</span>
-    <span class="vp-body">
-      <span class="vp-name">Data lotu</span>
-      <span class="vp-when">Krok 1: osobna kontrolka — kalendarz miesięczny ze skrótami „Dzisiaj" i „Wczoraj".</span>
+      <span class="vp-when">Wyłączenie wcześniejsze niż uruchomienie: czas trwania pokazuje „—", a „ZAPISZ" nazywa skutek.</span>
     </span>
   </a>
   <a class="vp-item" href="15b-reczny-czasy.html">
@@ -305,13 +295,11 @@
   <span>·</span>
   <a href="15b-reczny-czasy.html">← 15B Krok 3</a>
   <span>·</span>
-  <a href="15d-reczny-czas-arkusz.html" class="active">15D Arkusz czasu</a>
+  <a href="15d-reczny-czas-arkusz.html">15D Arkusz czasu</a>
   <span>·</span>
-  <a href="15f-reczny-czas-pusty.html">15F Bez wartości</a>
+  <a href="15f-reczny-czas-pusty.html" class="active">15F Bez wartości</a>
   <span>·</span>
   <a href="15g-reczny-czas-kolejnosc.html">15G Odwrócona para</a>
-  <span>·</span>
-  <a href="15e-reczny-data.html">15E Arkusz daty</a>
 </nav>
 
 </body>

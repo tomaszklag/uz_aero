@@ -33,6 +33,22 @@ describe('podpis przesunięcia czasu', () => {
     );
   });
 
+  it('ponad godzinę mówi w godzinach, nie w minutach (issue #62 pkt 4)', () => {
+    // „+205 min" kazało pilotowi dzielić przez sześćdziesiąt, żeby zobaczyć, o ile
+    // właściwie się pomylił. Człon zerowy zjadamy — „−1 h", nie „−1 h 0 min".
+    expect(timeShiftHint(at(12, 26), at(9, 1), timeUtc)).toBe(
+      'Zmiana o +3 h 25 min względem 09:01',
+    );
+    expect(timeShiftHint(at(10, 1), at(9, 1), timeUtc)).toBe('Zmiana o +1 h względem 09:01');
+    expect(timeShiftHint(at(8, 1), at(9, 1), timeUtc)).toBe('Zmiana o −1 h względem 09:01');
+    expect(timeShiftHint(at(6, 30), at(9, 1), timeUtc)).toBe(
+      'Zmiana o −2 h 31 min względem 09:01',
+    );
+
+    // Granica: 59 minut zostaje minutami, 60 staje się godziną.
+    expect(timeShiftHint(at(10, 0), at(9, 1), timeUtc)).toBe('Zmiana o +59 min względem 09:01');
+  });
+
   it('sekundy nie robią z minuty dwóch', () => {
     // Czasy zdarzeń niosą sekundy (GPS), a kontrolka chodzi po minutach — podpis ma
     // opisywać krok, który pilot zrobił, a nie różnicę co do sekundy.

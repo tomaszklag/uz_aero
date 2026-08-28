@@ -111,6 +111,14 @@ export interface ValueBoxProps {
   unit?: string;
   /** Wartość drugorzędna po prawej („10:00 LT", „różnica +8 L"). */
   meta?: string;
+  /**
+   * Plakietka przy WARTOŚCI, nie przy etykiecie (issue #62 pkt 1).
+   *
+   * Etykieta ma własny znacznik w `Field` i mówi o POLU („opcjonalne"). Ten mówi
+   * o tym, co w polu stoi — dziś: że kod lotniska jest spoza katalogu. Stoi w prawej
+   * grupie zamiast `meta`, bo obie odpowiadają na to samo pytanie „co to za wartość".
+   */
+  tag?: { label: string; tone?: Tone };
   /** Ikona po prawej — obecność ołówka mówi, że wartość da się zmienić. */
   actionIcon?: IconName;
   /** Bez `onPress` pole jest czystym odczytem. */
@@ -144,6 +152,7 @@ export function ValueBox({
   value,
   unit,
   meta,
+  tag,
   actionIcon,
   onPress,
   tone = 'neutral',
@@ -235,6 +244,7 @@ export function ValueBox({
             {meta}
           </AppText>
         )}
+        {tag != null && <Tag label={tag.label} tone={tag.tone ?? 'neutral'} />}
         {actionIcon != null && (
           <Icon name={actionIcon} size={13} color={theme.colors.textMuted} />
         )}

@@ -264,9 +264,14 @@ go nie nazwał). Odtąd jest **`components/input/TimeStepper.tsx`** i ona ustala
 - **podpis „o ile przesunięto" pojawia się TYLKO przy zmianie**, a miejsce na niego jest
   zarezerwowane: „bez zmiany względem wpisu (09:01)" opisywało stan widoczny w kontrolce
   nad nim, a wskakiwanie i znikanie zdania przesuwało resztę arkusza
-- arkusz podaje wyłącznie to, co go RÓŻNI: etykietę, granice, ton i ewentualną stopkę
-  (czas lokalny w 05f). Nowy krok, nowa nazwa kroku ani własna para przycisków ± nie
-  wchodzą do arkusza — wchodzą do `TimeStepper`
+- arkusz podaje wyłącznie to, co go RÓŻNI: etykietę, granice i ewentualną stopkę.
+  Nowy krok, nowa nazwa kroku ani własna para przycisków ± nie wchodzą do arkusza —
+  wchodzą do `TimeStepper`
+- **rozszerzone przy issue #62** (sekcja niżej): godzina bywa PUSTA (`value: number | null`
+  — koniec z podstawianiem 10:00), separator wpisu jest wolny (kropka i przecinek znaczą
+  dwukropek), przesunięcie ponad godzinę mówi w godzinach, czas lokalny rysuje SAMA
+  kontrolka (`localTime`), a krok ± liczy się od wpisu w toku, nie od wartości sprzed
+  otwarcia klawiatury
 
 ### Wzorzec formularzy
 - Pola input: `background: var(--surface-raised)`, `border-radius: 12px`, focus = `var(--green-border)`
@@ -697,9 +702,10 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
   wpisywała twardo `operation: 'inne'` i `dualId: null` — lot szkolny z kartki gubił
   drugiego pilota bezpowrotnie. Podpowiedzi z ostatniego dnia TU NIE MA (inaczej niż
   na 02E): wpis opisuje konkretny lot z przeszłości, podstawianie robiłoby domysł
-- **dowolnie wiele lotów w jednym biegu** — lista par start–lądowanie z „Dodaj lot"
-  jako OSTATNIM wierszem (wzorzec „DODAJ WPIS" z issue #43). Stara wersja przyjmowała
-  jedną parę i odsyłała dzień skokowy do dziesięciu arkuszy korekty po zapisaniu.
+- **dowolnie wiele lotów w jednym biegu** — od issue #62 na OSI SESJI, nie na płaskiej
+  liście (sekcja „Krok 3 wpisu ręcznego = OŚ SESJI" niżej), z „DODAJ LOT" jako ostatnim
+  wierszem (wzorzec „DODAJ WPIS" z issue #43). Stara wersja przyjmowała jedną parę
+  i odsyłała dzień skokowy do dziesięciu arkuszy korekty po zapisaniu.
   Zrzuty tylko w dniu skokowym (issue #19 — brak sekcji, nie blokada)
 - **paliwo ma trzy stany**: przed uruchomieniem (wpisywany, nie zgadywany z cache —
   zgadnięte ogniwo psuło łańcuch następnemu pilotowi), dolewki (trójka `refuel` domyka
@@ -839,6 +845,72 @@ Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
   komuś, kto chce coś wpisać — kategoria przypisów z issue #43); offline i wpis
   ręczny (`suggestions: null`) renderują nic. Stany „historia pusta" i „brak
   w historii" zostają — mówią o liście, która istnieje
+
+## Kontrolka czasu, oś wpisu ręcznego, kod spoza katalogu (issue #62, 2026-08-28)
+Dziesięć uwag z urządzenia; sześć pierwszych mieszka w JEDNEJ kontrolce czasu, więc
+poprawka dosięgła ośmiu arkuszy naraz.
+- **kropka i przecinek ZNACZĄ dwukropek** (`maskTimeUtcInput`) — maska wycinała je razem
+  z resztą niecyfr, więc „8.30" wychodziło jako **„83:0"**, `parseTimeUtcOnDay` odrzucał
+  to (83 > 23), a `Stepper` cicho zostawiał wartość sprzed edycji. Reguła jest ta sama,
+  co w `maskMotoHoursInput`: PIERWSZY separator kończy część godzinową. Stąd też druga
+  połowa zgłoszenia — „przyciski nie przesuwają wpisanej godziny" — bo przesuwały tę,
+  której pilot nie wpisał
+- **krok ± liczy się od WPISU W TOKU**, nie od wartości sprzed otwarcia klawiatury:
+  zatwierdzenie pola dzieje się przy `onBlur`, więc w chwili tapnięcia świeża wartość
+  istnieje TYLKO w `draft` (`Stepper.bump`). Przy okazji `StepButton` wyszedł z ciała
+  `Stepper` — zadeklarowany w środku był przy każdym renderze NOWYM typem komponentu,
+  co odmontowywało `Pressable` w połowie tapnięcia
+- **wartości domyślnej NIE MA** (`Stepper`/`TimeStepper` przyjmują `value: number | null`,
+  mockup `15F`): arkusz biegu silnika otwierał się z 10:00 i 11:00, których nikt nie
+  wpisał — a podstawiona godzina wygląda jak wpisana, służy potem za punkt odniesienia
+  podpisu i za bazę kroku. Ta sama reguła, która każe wpisywać paliwo przed uruchomieniem
+  zamiast brać je z cache. Przy `null` przyciski ± są wygaszone, a zapisu pilnuje blokada
+- **przesunięcie ponad godzinę mówi w godzinach** („+3 h 25 min", nie „+205 min")
+- **arkusz czasów sam sprawdza kolejność pary** (`flightTimesBlocker`, mockup `15G`) —
+  odmowa padała dopiero przy „DALEJ", gdy obu godzin nie było już widać. Zdanie mówi
+  o SKUTKU („blok wychodzi ujemny"), bo nazwy pól są w mianowniku, a odmiany nie da się
+  wyprowadzić regułą; ta sama blokada obsługuje przez to obie role arkusza
+- **z arkusza czasów znikła DATA** (niesie ją podtytuł ekranu), UTC zeszło do ETYKIET pól,
+  a pod godziną stanął **czas lokalny** drobnym drukiem (`TimeStepper.localTime`) — do #62
+  składał go sobie sam arkusz 05F (issue #19), choć pytanie „która to u mnie godzina"
+  pada przy każdym wpisywanym czasie
+- **KOD SPOZA KATALOGU jest OZNACZONY** (`airfieldMark.ts`): w arkuszu bursztynowy wiersz
+  z plakietką „spoza katalogu", w formularzu ta sama plakietka przy wartości. Do #62 EDDB
+  wyglądało dokładnie jak EPKK, a jedyną różnicą był BRAK drugiej linii z nazwą — sygnał
+  negatywny. **Nazwa albo plakietka, NIGDY obie** (prawa krawędź niesie jedną rzecz).
+  Napis mówi o SKUTKU tapnięcia („Zapisze się sam kod, bez nazwy lotniska"), a nie
+  o zawartości katalogu — „katalog zna tylko polskie lotniska" opisywało budowę aplikacji
+  komuś, kto wpisuje kod lotniska docelowego
+
+### Krok 3 wpisu ręcznego = OŚ SESJI (issue #62 pkt 8–10)
+Krok 3 pokazywał DWIE PŁASKIE LISTY obok siebie („Loty" i „Zrzuty"), więc zrzut nie miał
+jak powiedzieć, do którego lotu należy — mimo że model to wie: `DropPayload` **nie ma**
+pola z numerem lotu i mieć nie musi, bo przynależność jest ZAWIERANIEM SIĘ W CZASIE
+i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, milczał ekran.
+- **oś jest ta sama, co w kokpicie i w rozliczeniu** (`SessionAxis`; builder ze szkicu:
+  `logic/manualFlightAxis.ts`, mockup `15b`). Zrzut stoi między startem a lądowaniem
+  swojego lotu i niesie jego numer w prawej kolumnie — tej samej, która przy starcie
+  mówi „który lot się tu zaczyna"
+- **wiersz ma tu 44 px, nie 28**: w rozliczeniu oś jest opisowa i rytm celu dotykowego
+  marnowałby kolumnę (issue #40), a tutaj KAŻDY wiersz otwiera swój arkusz
+- **zrzut poza każdym lotem** dostaje bursztynową kropkę, podpis „poza lotem" i baner —
+  ale NIE blokuje zapisu (fakt lotu > kompletność formularza; domena też trzyma tę regułę
+  jako ostrzeżenie). Baner stoi na kroku 3, nie 4: ostrzeżenie ma być tam, gdzie da się
+  je naprawić
+- **OSI NIE MA, DOPÓKI NIE MA BIEGU SILNIKA** (mockup `15H`) — sesja JEST biegiem silnika,
+  więc lot bez niego nie ma w czym się zawierać. A skoro nie ma osi, nie ma też wiersza
+  „DODAJ LOT": to BRAK AKCJI, nie wyszarzony przycisk (zasada z 10B i 02G). Powód niesie
+  „DALEJ" bursztynem w środku
+- **nowy lot dziedziczy granice BIEGU** (`nextFlightTimes`): pierwszy bierze cały bieg
+  (przy sesji z jednym lotem to od razu wartość właściwa), każdy kolejny biegnie od
+  ostatniego lądowania do wyłączenia silnika. Stare „10 minut po ostatnim lądowaniu,
+  30 minut długości" brało się znikąd i wymagało dwóch poprawek
+- **nowy zrzut ląduje w PIERWSZYM locie bez zrzutu** (`nextDropAt`) — do #62 każdy trafiał
+  w połowę OSTATNIEGO, więc na dniu skokowym wszystkie wpadały do tego samego. Dzień
+  skokowy to zwykle jedno wyniesienie na lot, więc ta reguła trafia w intencję bez
+  ani jednego dodatkowego pytania
+- stopka sum zamyka oś, a wiersze dopisania idą POD nią — ta sama kolejność, co w trybie
+  edycji rozliczenia (10D)
 
 ## Log zdarzeń jest JEDEN — kokpit rysuje oś sesji (issue #44, 2026-08-14)
 Aplikacja miała dwa style logu tej samej sesji: oś na ekranie sesji (10) i osobny

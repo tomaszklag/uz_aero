@@ -163,15 +163,11 @@
   .section.flush { padding:0; gap:0; overflow:hidden; }
   .section.flush .section-head { padding:14px 14px 8px; }
 
-  /* Ostrzeżenie o zrzucie poza lotem — bursztyn, jak wszystkie miękkie reguły wpisu
-     ręcznego (15C). NIE BLOKUJE: fakt lotu jest cenniejszy niż kompletność formularza,
-     a domena też trzyma `DROP_ON_GROUND` jako ostrzeżenie, nie błąd. */
-  .warn { display:flex; align-items:flex-start; gap:9px; background:var(--amber-muted); border:1px solid var(--amber-border); border-radius:12px; padding:10px 12px; }
-  .warn svg { color:var(--amber); flex-shrink:0; margin-top:1px; }
-  .warn-text { font-size:11px; color:var(--text-secondary); line-height:1.5; }
-  .warn-text b { color:var(--amber); font-weight:700; }
-
   .btn-primary { display:flex; align-items:center; justify-content:center; gap:10px; background:var(--green); color:#0A0A0A; border:none; border-radius:14px; padding:16px; font-family:var(--font-display); font-size:22px; letter-spacing:3px; text-decoration:none; box-shadow:0 0 30px rgba(46,204,113,0.35); }
+  /* Powód blokady WEWNĄTRZ przycisku, nigdy pod nim (issue #55). Przycisk z powodem
+     NIE dostaje przygaszenia opacity — bursztyn pod 0.45 przestaje być ostrzeżeniem. */
+  .btn-primary.disabled { background:var(--surface-hover); color:var(--text-muted); box-shadow:none; cursor:not-allowed; flex-direction:column; gap:6px; }
+  .btn-reason { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--amber); text-align:center; line-height:1.5; }
 
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
   .vp-title { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); padding:0 2px 2px; }
@@ -190,12 +186,12 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO — 15B</span>
-  <span class="slug">lot ręczny · czasy · krok 3 / 4</span>
-  <span class="canvas-meta">Ekran 15B</span>
+  <span class="film-strip">UZ AERO — 15H</span>
+  <span class="slug">lot ręczny · krok 3 bez biegu silnika</span>
+  <span class="canvas-meta">Stan wejścia</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny, krok 3: czasy">
+<main class="phone" role="region" aria-label="Mockup — Lot ręczny, krok 3 bez wpisanego biegu silnika">
   <div class="status-bar">
     <span>16:22</span>
     <span class="status-right">
@@ -222,208 +218,46 @@
 
     <div class="scroll">
 
+      <!-- KROK 3 ZACZYNA SIĘ OD BIEGU SILNIKA I TYLKO OD NIEGO (issue #62 pkt 10).
+
+           Zgłoszenie z urządzenia: „nie powinienem móc dodać lotu, dopóki nie wpiszę
+           czasu uruchomienia i zatrzymania silnika". Do #62 „DODAJ LOT" stał tu od
+           pierwszej sekundy, a nowy lot dostawał godziny wyssane z palca (10:05 →
+           10:35), które potem trzeba było poprawiać dwoma arkuszami.
+
+           Odpowiedzią nie jest wyszarzony przycisk. Sesja JEST biegiem silnika —
+           lot bez niego nie ma w czym się zawierać, więc dopóki biegu nie ma, NIE MA
+           TEŻ OSI, a skoro nie ma osi, nie ma czego do niej dodać. Wyszarzony przycisk
+           obiecywałby akcję, którą reguły i tak odrzucą (ta sama zasada, co brak
+           „EDYTUJ DANE" w podglądzie po oknie korekty, 10B, i brak „DALEJ" przy
+           pustej flocie, 02G).
+
+           Powodu nie tłumaczymy tu zdaniem: niesie go „DALEJ" na dole ekranu, bursztynem
+           wewnątrz przycisku (issue #55). -->
       <div class="section">
         <div class="section-head"><span class="section-label">Bieg silnika</span></div>
         <div class="time-pair">
           <div class="field">
             <span class="field-label">Uruchomienie</span>
-            <a href="15d-reczny-czas-arkusz.html" class="field-input">
-              <span class="field-time">09:42</span>
+            <a href="15f-reczny-czas-pusty.html" class="field-input">
+              <span class="field-time empty">wpisz godzinę</span>
             </a>
           </div>
           <div class="field">
             <span class="field-label">Wyłączenie</span>
-            <a href="15d-reczny-czas-arkusz.html" class="field-input">
-              <span class="field-time">11:18</span>
+            <a href="15f-reczny-czas-pusty.html" class="field-input">
+              <span class="field-time empty">wpisz godzinę</span>
             </a>
           </div>
         </div>
-        <!-- Podpisu „blok 1:36 · czas w powietrzu 1:06" TU NIE MA (issue #62): te same
-             dwie liczby stoją w stopce osi pod spodem, a stopka jest ich jedynym
-             miejscem — tak samo jak na ekranie rozliczenia (issue #38 pkt 9). -->
-      </div>
-
-      <!-- PRZEBIEG SESJI — JEDNA OŚ zamiast dwóch płaskich list (issue #62 pkt 9 i 10).
-
-           Zrzut stoi MIĘDZY startem a lądowaniem swojego lotu i niesie jego numer po
-           prawej. Przynależność nie jest tu osobnym polem, tylko POZYCJĄ — dokładnie
-           tak, jak definiuje ją domena (`DROP_ON_GROUND` pyta o zawieranie się zrzutu
-           w oknie lotu) i jak rysuje ją oś kokpitu oraz rozliczenia.
-
-           Zrzuty pokazujemy WYŁĄCZNIE w dniu skokowym (issue #19); przy przelocie czy
-           egzaminie nie ma ich na osi ani w wierszu dopisania — to brak akcji, nie
-           blokada z powodem. Skład zostaje opcjonalny: `null` znaczy „nie podano",
-           a nie „zero skoczków". -->
-      <div class="section flush">
-        <div class="section-head"><span class="section-label">Przebieg sesji</span></div>
-
-        <div class="axis">
-          <a href="15d-reczny-czas-arkusz.html" class="axis-row">
-            <span class="axis-time">09:42</span>
-            <span class="axis-mark"><span class="axis-dot"></span></span>
-            <span class="axis-label"><span class="axis-name">Uruchomienie</span></span>
-            <span class="axis-right"></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <a href="15d-reczny-czas-arkusz.html" class="axis-row">
-            <span class="axis-time">09:48</span>
-            <span class="axis-mark"><span class="axis-dot green"></span></span>
-            <span class="axis-label"><span class="axis-name">Start</span></span>
-            <span class="axis-right"><span class="axis-flight">lot 1</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <!-- ZRZUT WEWNĄTRZ SWOJEGO LOTU: godzina mieści się w oknie lotu 1, więc
-               wiersz stoi między jego startem a lądowaniem, a prawa kolumna nazywa
-               ten lot po imieniu. To jest cała odpowiedź na „kilka zrzutów w kilku
-               lotach" — nie nowe pole w modelu, tylko pokazanie tego, co model już wie. -->
-          <a href="10g-korekta-zrzutu.html" class="axis-row">
-            <span class="axis-time dim">10:08</span>
-            <span class="axis-mark"><span class="axis-dot blue"></span></span>
-            <span class="axis-label">
-              <span class="axis-name">Zrzut 1</span>
-              <span class="axis-sub">2 tandem · 1 solo · 4 000 ft</span>
-            </span>
-            <span class="axis-right"><span class="axis-flight">lot 1</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <a href="15d-reczny-czas-arkusz.html" class="axis-row">
-            <span class="axis-time">10:14</span>
-            <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
-            <span class="axis-right"><span class="axis-dur">0:26</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <a href="15d-reczny-czas-arkusz.html" class="axis-row">
-            <span class="axis-time">10:26</span>
-            <span class="axis-mark"><span class="axis-dot green"></span></span>
-            <span class="axis-label"><span class="axis-name">Start</span></span>
-            <span class="axis-right"><span class="axis-flight">lot 2</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <a href="10g-korekta-zrzutu.html" class="axis-row">
-            <span class="axis-time dim">10:46</span>
-            <span class="axis-mark"><span class="axis-dot blue"></span></span>
-            <span class="axis-label">
-              <span class="axis-name">Zrzut 2</span>
-              <span class="axis-sub">skład niepodany</span>
-            </span>
-            <span class="axis-right"><span class="axis-flight">lot 2</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <a href="15d-reczny-czas-arkusz.html" class="axis-row">
-            <span class="axis-time">10:52</span>
-            <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
-            <span class="axis-right"><span class="axis-dur">0:26</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <!-- ZRZUT POZA LOTEM — miękka reguła domeny `DROP_ON_GROUND`. Do issue #62
-               to ostrzeżenie pokazywało się dopiero na kroku 4, czyli ekran po tym,
-               na którym godzinę się wpisuje. NIE BLOKUJE zapisu (fakt lotu jest
-               cenniejszy niż kompletność formularza) — mówi tylko, gdzie popatrzeć. -->
-          <a href="10g-korekta-zrzutu.html" class="axis-row warned">
-            <span class="axis-time dim">10:56</span>
-            <span class="axis-mark"><span class="axis-dot amber"></span></span>
-            <span class="axis-label">
-              <span class="axis-name">Zrzut 3</span>
-              <span class="axis-sub">skład niepodany</span>
-            </span>
-            <span class="axis-right"><span class="axis-flight">poza lotem</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <a href="15d-reczny-czas-arkusz.html" class="axis-row">
-            <span class="axis-time">11:00</span>
-            <span class="axis-mark"><span class="axis-dot green"></span></span>
-            <span class="axis-label"><span class="axis-name">Start</span></span>
-            <span class="axis-right"><span class="axis-flight">lot 3</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <a href="15d-reczny-czas-arkusz.html" class="axis-row">
-            <span class="axis-time">11:14</span>
-            <span class="axis-mark"><span class="axis-dot red"></span></span>
-            <span class="axis-label"><span class="axis-name">Lądowanie</span></span>
-            <span class="axis-right"><span class="axis-dur">0:14</span></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-
-          <a href="15d-reczny-czas-arkusz.html" class="axis-row last">
-            <span class="axis-time">11:18</span>
-            <span class="axis-mark"><span class="axis-dot"></span></span>
-            <span class="axis-label"><span class="axis-name">Wyłączenie</span></span>
-            <span class="axis-right"></span>
-            <span class="axis-pen">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-            </span>
-          </a>
-        </div>
-
-        <!-- Stopka sum zamyka OŚ, a wiersze dopisania idą pod nią — ta sama kolejność,
-             co w trybie edycji rozliczenia (10D): „DODAJ WPIS" stoi tam pod stopką.
-             Sumy opisują to, co na osi już jest; dopisanie mówi, że można dołożyć. -->
-        <div class="axis-foot">
-          <span class="axis-foot-item"><span class="axis-foot-val">3</span><span class="axis-foot-key">Loty</span></span>
-          <span class="axis-foot-item"><span class="axis-foot-val">1:36</span><span class="axis-foot-key">Blok</span></span>
-          <span class="axis-foot-item"><span class="axis-foot-val green">1:06</span><span class="axis-foot-key">Czas lotu</span></span>
-        </div>
-
-        <!-- Dopisanie jako OSTATNIE WIERSZE KARTY: nowy lot i nowy zrzut trafią w przebieg
-             sesji, więc wejście stoi tam, gdzie skończy się jego skutek. Nowy lot bierze
-             godziny BIEGU SILNIKA (issue #62 pkt 8): przy sesji z jednym lotem to jest
-             od razu wartość właściwa, a przy kolejnych — od ostatniego lądowania do
-             wyłączenia silnika. -->
-        <a href="15d-reczny-czas-arkusz.html" class="axis-add">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          DODAJ LOT
-        </a>
-        <a href="10g-korekta-zrzutu.html" class="axis-add muted">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          DODAJ ZRZUT
-        </a>
-      </div>
-
-      <!-- Wiersz osi mówi, KTÓRY zrzut wypadł poza lotem; baner mówi, co z tym zrobić.
-           Do issue #62 to zdanie padało dopiero na kroku 4 — ekran po tym, na którym
-           godzinę się wpisuje. Ostrzeżenie ma stać tam, gdzie da się je naprawić. -->
-      <div class="warn">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span class="warn-text">Jeden zrzut wypada poza wszystkimi lotami — popraw jego godzinę albo dopisz lot, w którym się odbył.</span>
       </div>
 
       <div class="spacer"></div>
 
-      <a href="15c-reczny-liczniki.html" class="btn-primary">
+      <span class="btn-primary disabled">
         DALEJ
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </a>
+        <span class="btn-reason">Wpisz godziny biegu silnika: uruchomienie i wyłączenie</span>
+      </span>
 
     </div>
   </div>
@@ -445,19 +279,19 @@
       <span class="vp-when">Rodzaj operacji, lotniska, klient, notatka.</span>
     </span>
   </a>
-  <a class="vp-item active" href="15b-reczny-czasy.html">
-    <span class="vp-badge">15B</span>
-    <span class="vp-body">
-      <span class="vp-name">Krok 3 — przebieg sesji</span>
-      <span class="vp-when">Bieg silnika wpisany, więc oś istnieje: dowolnie wiele lotów w środku, a zrzuty dnia skokowego stoją W SWOICH lotach i noszą ich numer (issue #62 pkt 9). Każdy wiersz otwiera swój arkusz.</span>
-    </span>
-    <span class="vp-tag">ten ekran</span>
-  </a>
-  <a class="vp-item" href="15h-reczny-czasy-bez-biegu.html">
+  <a class="vp-item active" href="15h-reczny-czasy-bez-biegu.html">
     <span class="vp-badge amber">15H</span>
     <span class="vp-body">
       <span class="vp-name">Krok 3 bez biegu silnika</span>
-      <span class="vp-when">Godzin biegu jeszcze nie ma, więc osi NIE MA — a skoro nie ma osi, nie ma też czego do niej dodać: „DODAJ LOT" nie istnieje (issue #62 pkt 10), a nie stoi wyszarzone.</span>
+      <span class="vp-when">Stan, w którym krok 3 się otwiera. Godzin biegu nie ma, więc nie ma osi — a skoro nie ma osi, nie ma czego do niej dodać. Wpisanie obu godzin zamienia ten ekran w 15B.</span>
+    </span>
+    <span class="vp-tag">ten ekran</span>
+  </a>
+  <a class="vp-item" href="15b-reczny-czasy.html">
+    <span class="vp-badge">15B</span>
+    <span class="vp-body">
+      <span class="vp-name">Krok 3 — przebieg sesji</span>
+      <span class="vp-when">Bieg wpisany: oś od uruchomienia do wyłączenia, loty w środku, zrzuty w swoich lotach.</span>
     </span>
   </a>
   <a class="vp-item" href="15c-reczny-liczniki.html">
@@ -467,11 +301,11 @@
       <span class="vp-when">Paliwo przed / dolewki / po, motogodziny przed i po, ostrzeżenia.</span>
     </span>
   </a>
-  <a class="vp-item" href="15d-reczny-czas-arkusz.html">
-    <span class="vp-badge blue">15D</span>
+  <a class="vp-item" href="15f-reczny-czas-pusty.html">
+    <span class="vp-badge blue">15F</span>
     <span class="vp-body">
-      <span class="vp-name">Arkusz czasu zdarzenia</span>
-      <span class="vp-when">Ta sama kontrolka, co w korektach (10E) i w kokpicie (05F): krok ±1 min, tapnięcie w godzinę otwiera klawiaturę numeryczną.</span>
+      <span class="vp-name">Arkusz czasu bez wartości</span>
+      <span class="vp-when">Otwiera się z każdego z dwóch pól wyżej.</span>
     </span>
   </a>
 </aside>
@@ -481,13 +315,11 @@
   <span>·</span>
   <a href="15a-reczny-zadanie.html">← 15A Krok 2</a>
   <span>·</span>
-  <a href="15b-reczny-czasy.html" class="active">15B Krok 3</a>
+  <a href="15b-reczny-czasy.html">15B Krok 3</a>
   <span>·</span>
-  <a href="15h-reczny-czasy-bez-biegu.html">15H Bez biegu</a>
+  <a href="15h-reczny-czasy-bez-biegu.html" class="active">15H Bez biegu</a>
   <span>·</span>
   <a href="15c-reczny-liczniki.html">15C Krok 4 →</a>
-  <span>·</span>
-  <a href="15d-reczny-czas-arkusz.html">15D Arkusz czasu</a>
 </nav>
 
 </body>

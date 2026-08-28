@@ -71,6 +71,13 @@ export interface SheetProps {
    */
   confirmLabel?: string;
   confirmTone?: Tone;
+  /**
+   * Powód, dla którego potwierdzenie nie zadziała — bursztynem WEWNĄTRZ przycisku
+   * (issue #55). Arkusz, który sam waliduje treść (`FlightTimesSheet`), mówi tu
+   * o odwróconej parze godzin zamiast pozwolić odmówić dopiero bramce kroku,
+   * gdy pilot nie widzi już żadnej z tych liczb.
+   */
+  confirmDisabledReason?: string | null;
   onConfirm?: () => void;
   cancelLabel?: string;
   onCancel: () => void;
@@ -105,6 +112,7 @@ export function Sheet({
   warningTone = 'amber',
   confirmLabel,
   confirmTone = 'green',
+  confirmDisabledReason = null,
   onConfirm,
   cancelLabel = 'ANULUJ',
   onCancel,
@@ -145,6 +153,7 @@ export function Sheet({
                 tone={confirmTone}
                 variant="solid"
                 size="md"
+                disabledReason={confirmDisabledReason}
                 onPress={onConfirm}
                 style={{ flex: 2 }}
               />
