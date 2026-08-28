@@ -177,8 +177,11 @@ export function ManualFlightScreen({
     | { kind: 'airfield'; role: 'departure' | 'arrival' }
     | { kind: 'client' }
     | { kind: 'notes' }
-    | { kind: 'engine' }
-    | { kind: 'flight'; id: string | null }
+    /* `field` = KTÓRY koniec pary pilot tapnął (issue #62, trzecia tura); brak =
+       obie godziny naraz, czyli wejście z karty „Bieg silnika" i „DODAJ LOT",
+       gdzie para powstaje w całości. */
+    | { kind: 'engine'; field?: 'start' | 'stop' }
+    | { kind: 'flight'; id: string | null; field?: 'takeoff' | 'landing' }
     | { kind: 'drop'; id: string | null }
     | { kind: 'refuel'; id: string | null }
     | { kind: 'fuel'; which: 'before' | 'after' }
@@ -514,9 +517,13 @@ export function ManualFlightScreen({
                   onCorrect={(rowId) => {
                     const target = manualAxisTarget(rowId);
                     if (target == null) return;
-                    if (target.kind === 'engine') setSheet({ kind: 'engine' });
-                    else if (target.kind === 'flight') setSheet({ kind: 'flight', id: target.id });
-                    else setSheet({ kind: 'drop', id: target.id });
+                    if (target.kind === 'engine') {
+                      setSheet({ kind: 'engine', field: target.field });
+                    } else if (target.kind === 'flight') {
+                      setSheet({ kind: 'flight', id: target.id, field: target.field });
+                    } else {
+                      setSheet({ kind: 'drop', id: target.id });
+                    }
                   }}
                 />
 
@@ -786,12 +793,9 @@ export function ManualFlightScreen({
           paliwo przed uruchomieniem zamiast brać je z cache. */}
       <FlightTimesSheet
         visible={sheet?.kind === 'engine'}
-        title="BIEG SILNIKA"
+        title={engineSheetTitle(sheet)}
         durationLabel="Blok"
-        fields={[
-          { key: 'start', label: 'Uruchomienie', value: draft.engineStart },
-          { key: 'stop', label: 'Wyłączenie', value: draft.engineStop },
-        ]}
+        fields={engineSheetFields(sheet, draft)}
         min={dayMin}
         max={dayMax}
         onConfirm={(v) => {
@@ -808,6 +812,19 @@ export function ManualFlightScreen({
         fields={flightSheetFields(sheet, draft)}
         min={flightBounds.min}
         max={flightBounds.max}
+        /* Lot MUSI mieścić się w biegu silnika (issue #62, trzecia tura): arkusz
+           przyjmował start po wyłączeniu bez słowa, a odmowa padała dopiero przy
+           „DALEJ". Nie jako `min`/`max`, bo te przycięłyby wpis po cichu. */
+        {...(draft.engineStart != null && draft.engineStop != null
+          ? {
+              bounds: {
+                from: draft.engineStart,
+                to: draft.engineStop,
+                label: 'biegu silnika',
+                format: timeUtc,
+              },
+            }
+          : {})}
         onDelete={
           sheet?.kind === 'flight' && sheet.id != null
             ? () => {
@@ -1009,7 +1026,55 @@ function AxisAddRow({
   );
 }
 
-type FlightSheetState = { kind: 'flight'; id: string | null } | { kind: string } | null;
+type EngineSheetState = { kind: 'engine'; field?: 'start' | 'stop' } | { kind: string } | null;
+
+/**
+ * Tytuł arkusza biegu silnika. Edycja jednego końca nazywa TEN koniec — pilot tapnął
+ * w „Uruchomienie" na osi i ma dostać arkusz o tej samej nazwie (issue #62, trzecia
+ * tura); wejście z karty otwiera parę i tytuł mówi o całości.
+ */
+function engineSheetTitle(sheet: EngineSheetState): string {
+  if (sheet == null || sheet.kind !== 'engine') return 'BIEG SILNIKA';
+  const field = (sheet as { field?: 'start' | 'stop' }).field;
+  if (field === 'start') return 'URUCHOMIENIE';
+  if (field === 'stop') return 'WYŁĄCZENIE';
+  return 'BIEG SILNIKA';
+}
+
+/**
+ * Pola arkusza biegu: edytowany koniec jako kontrolka, drugi jako wiersz odniesienia.
+ * Bez `field` (wejście z karty) edytowalne są oba — para powstaje wtedy w całości.
+ */
+function engineSheetFields(sheet: EngineSheetState, draft: ManualFlightDraft) {
+  const field = sheet != null && sheet.kind === 'engine'
+    ? (sheet as { field?: 'start' | 'stop' }).field
+    : undefined;
+  return [
+    {
+      key: 'start',
+      label: 'Uruchomienie',
+      value: draft.engineStart,
+      ...(field === 'stop' ? { readOnly: true } : {}),
+    },
+    {
+      key: 'stop',
+      label: 'Wyłączenie',
+      value: draft.engineStop,
+      ...(field === 'start' ? { readOnly: true } : {}),
+    },
+  ];
+}
+
+type FlightSheetState =
+  | { kind: 'flight'; id: string | null; field?: 'takeoff' | 'landing' }
+  | { kind: string }
+  | null;
+
+/** Który koniec pary pilot tapnął; `undefined` = wejście otwierające parę w całości. */
+function flightSheetField(sheet: FlightSheetState): 'takeoff' | 'landing' | undefined {
+  if (sheet == null || sheet.kind !== 'flight') return undefined;
+  return (sheet as { field?: 'takeoff' | 'landing' }).field;
+}
 
 function flightSheetTitle(
   sheet: FlightSheetState,
@@ -1019,7 +1084,11 @@ function flightSheetTitle(
   const s = sheet as { kind: 'flight'; id: string | null };
   if (s.id == null) return 'DODAJ LOT';
   const index = flights.findIndex((f) => f.id === s.id);
-  return `LOT ${index + 1}`;
+  // „START · LOT 2" — dokładnie ten tytuł niesie mockup 15D. Edycja jednego końca
+  // nazywa go pierwsza, bo to on jest pytaniem arkusza; numer lotu mówi, którego.
+  const field = flightSheetField(sheet);
+  const name = field === 'takeoff' ? 'START' : field === 'landing' ? 'LĄDOWANIE' : null;
+  return name != null ? `${name} · LOT ${index + 1}` : `LOT ${index + 1}`;
 }
 
 /**
@@ -1031,9 +1100,22 @@ function flightSheetFields(sheet: FlightSheetState, draft: ManualFlightDraft) {
   const s = sheet as { kind: 'flight'; id: string | null };
   const existing = s.id != null ? draft.flights.find((f) => f.id === s.id) : null;
   if (existing != null) {
+    // Edytowany koniec jest kontrolką, drugi wierszem odniesienia — pilot poprawia
+    // godzinę WZGLĘDEM niego, a reguła kolejności ma co porównać (issue #62).
+    const field = flightSheetField(sheet);
     return [
-      { key: 'takeoff', label: 'Start', value: existing.takeoff },
-      { key: 'landing', label: 'Lądowanie', value: existing.landing },
+      {
+        key: 'takeoff',
+        label: 'Start',
+        value: existing.takeoff,
+        ...(field === 'landing' ? { readOnly: true } : {}),
+      },
+      {
+        key: 'landing',
+        label: 'Lądowanie',
+        value: existing.landing,
+        ...(field === 'takeoff' ? { readOnly: true } : {}),
+      },
     ];
   }
   // Wiersz „DODAJ LOT" istnieje wyłącznie przy wpisanym biegu, więc `null` tu nie

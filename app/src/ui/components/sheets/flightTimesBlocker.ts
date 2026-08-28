@@ -29,15 +29,41 @@ export interface FlightTimesPair {
 }
 
 /**
- * `null` = wolno zapisać. Kolejność sprawdzeń jest kolejnością pytań pilota: najpierw
- * „czy wpisałem wszystko", potem „czy w dobrą stronę".
+ * Okno, w którym para MUSI się zmieścić — dla lotu jest nim bieg silnika.
  *
- * @param fields jedno albo dwa pola arkusza (para start–koniec).
+ * ISTNIEJE OD ISSUE #62 (trzecia tura z urządzenia): arkusz lotu przyjmował start
+ * po wyłączeniu silnika bez słowa, a odmowa padała dopiero przy „DALEJ" na dole kroku.
+ * Lot poza biegiem silnika nie jest niedokładnością do zaakceptowania — to sesja,
+ * w której samolot leciał z zatrzymanym śmigłem.
+ */
+export interface FlightTimesBounds {
+  from: number;
+  to: number;
+  /**
+   * Nazwa okna w powodzie blokady, W MIEJSCOWNIKU — zdanie brzmi „muszą mieścić się
+   * w …", a odmiany z mianownika nie da się wyprowadzić regułą (to samo ograniczenie,
+   * przez które reguła kolejności mówi o skutku, a nie o nazwach pól). Dziś jedyną
+   * wartością jest „biegu silnika".
+   */
+  label: string;
+  /** Jak wypisać godzinę granicy (zwykle `timeUtc`). */
+  format: (t: number) => string;
+}
+
+/**
+ * `null` = wolno zapisać. Kolejność sprawdzeń jest kolejnością pytań pilota: najpierw
+ * „czy wpisałem wszystko", potem „czy w dobrą stronę", na końcu „czy w ogóle tam pasuje".
+ *
+ * @param fields jedno albo dwa pola arkusza (para start–koniec). Przy edycji JEDNEGO
+ *   końca drugi wchodzi tu jako pole tylko do odczytu — inaczej reguła kolejności
+ *   nie miałaby czego porównać i dałoby się ustawić start po lądowaniu.
  * @param durationLabel podpis wiersza czasu trwania — „Blok", „Czas lotu".
+ * @param bounds okno, w którym para ma się zmieścić; pominięte — nie sprawdzamy.
  */
 export function flightTimesBlocker(
   fields: readonly FlightTimesPair[],
   durationLabel = 'Czas trwania',
+  bounds?: FlightTimesBounds,
 ): string | null {
   const missing = fields.filter((f) => f.value == null);
   if (missing.length > 0) {
@@ -46,11 +72,26 @@ export function flightTimesBlocker(
     return fields.length > 1 ? 'Wpisz obie godziny.' : 'Wpisz godzinę.';
   }
 
-  if (fields.length < 2) return null;
+  if (fields.length >= 2) {
+    const span = fields[1]!.value! - fields[0]!.value!;
+    if (span <= 0) {
+      return `Sprawdź kolejność godzin — ${durationLabel.toLowerCase()} wychodzi ${
+        span < 0 ? 'ujemny' : 'zerowy'
+      }.`;
+    }
+  }
 
-  const span = fields[1]!.value! - fields[0]!.value!;
-  if (span > 0) return null;
-  return `Sprawdź kolejność godzin — ${durationLabel.toLowerCase()} wychodzi ${
-    span < 0 ? 'ujemny' : 'zerowy'
-  }.`;
+  if (bounds != null) {
+    // Sprawdzamy KAŻDE pole z osobna, także to nieedytowalne: przy edycji jednego
+    // końca drugi bywa już poza oknem (pilot skrócił bieg silnika po wpisaniu lotu),
+    // a arkusz ma o tym powiedzieć, zamiast puszczać zapis w takim stanie.
+    const outside = fields.some((f) => f.value! < bounds.from || f.value! > bounds.to);
+    if (outside) {
+      return `Godziny muszą mieścić się w ${bounds.label} (${bounds.format(
+        bounds.from,
+      )} → ${bounds.format(bounds.to)}).`;
+    }
+  }
+
+  return null;
 }

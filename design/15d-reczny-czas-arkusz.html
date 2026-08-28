@@ -218,7 +218,29 @@
              UTC", choć tę samą datę niesie podtytuł ekranu pod nagłówkiem. Wiersz
              kosztował linię i nie odpowiadał na żadne pytanie zadane w tym arkuszu.
              UTC zeszło do ETYKIET pól — tam, gdzie mieszka każda inna jednostka
-             tego systemu („Wysokość zrzutu (ft)"). -->
+             tego systemu („Wysokość zrzutu (ft)").
+
+             ARKUSZ MA TYLE KONTROLEK, ILE PYTAŃ (issue #62, trzecia tura z urządzenia).
+             Tapnięcie w START na osi otwierało parę start + lądowanie, czyli dawało
+             do ręki kontrolkę, o którą nikt nie prosił, i kazało szukać wzrokiem tej
+             właściwej — „skoro klikam w konkretną pozycję, to wiem, że tylko to chcę
+             edytować". Tytuł nazywa więc TEN koniec („START · LOT 2"), a kontrolka
+             jest jedna.
+
+             DRUGI KONIEC NIE ZNIKA — schodzi do wierszy odniesienia pod spodem.
+             Dwa powody: pilot poprawia godzinę WZGLĘDEM niego („żeby wyszło 26 minut"),
+             a reguła kolejności musi mieć co porównać, bo inaczej dałoby się ustawić
+             start po lądowaniu.
+
+             PARA W CAŁOŚCI zostaje tylko tam, gdzie powstaje w całości: przy „DODAJ
+             LOT" i przy wejściu z karty „Bieg silnika". Tam obie kontrolki są, a
+             klawiatura ląduje na pierwszej. -->
+        <!-- ARKUSZ OTWIERA SIĘ Z KLAWIATURĄ na tej kontrolce (issue #62, trzecia tura):
+             arkusz czasu jest formularzem o jednym pytaniu, więc pilot i tak tapie
+             w wartość, żeby wbić godzinę — bez tego każdy wpis kosztował tapnięcie
+             więcej. Przy parze („DODAJ LOT") klawiatura ląduje na PIERWSZEJ kontrolce.
+             Podnosi ją drabinka prób z `useSheetInputFocus` i nic innego: trzy
+             podejścia już zawiodły, historia w `hooks/keyboardFocus.ts`. -->
         <div>
           <div class="field-label">Start (UTC)</div>
           <div class="time-stepper">
@@ -230,17 +252,12 @@
           <div class="time-local">12:26 LT</div>
         </div>
 
-        <div>
-          <div class="field-label">Lądowanie (UTC)</div>
-          <div class="time-stepper">
-            <button class="step-btn">−1 min</button>
-            <span class="time-val">10:52</span>
-            <button class="step-btn">+1 min</button>
-          </div>
-          <div class="time-delta"></div>
-          <div class="time-local">12:52 LT</div>
+        <!-- Wiersze odniesienia: nieedytowalny koniec pary i to, co z pary wychodzi.
+             Obu pilot sam nie wpisał, więc oba należą tutaj, a nie do kontrolek. -->
+        <div class="modal-ref">
+          <span>Lądowanie</span>
+          <span class="modal-ref-val">10:52</span>
         </div>
-
         <div class="modal-ref">
           <span>Czas lotu</span>
           <span class="modal-ref-val">0:26</span>

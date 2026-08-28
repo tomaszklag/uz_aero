@@ -38,10 +38,18 @@ import type {
 } from './manualFlight';
 import { sortedFlights } from './manualFlight';
 
-/** Co otwiera tapnięcie w wiersz — ekran nie parsuje `id` samodzielnie. */
+/**
+ * Co otwiera tapnięcie w wiersz — ekran nie parsuje `id` samodzielnie.
+ *
+ * Cel niesie KONKRETNY KONIEC pary (issue #62, trzecia tura z urządzenia): „skoro
+ * klikam w konkretną pozycję, to wiem, że tylko to chcę edytować". Tapnięcie w START
+ * otwierało arkusz z parą start + lądowanie, czyli dawało do ręki kontrolkę, o którą
+ * nikt nie prosił, i kazało szukać wzrokiem tej właściwej. Drugi koniec zostaje
+ * w arkuszu jako wiersz odniesienia — patrz `FlightTimesField.readOnly`.
+ */
 export type ManualAxisTarget =
-  | { kind: 'engine' }
-  | { kind: 'flight'; id: string }
+  | { kind: 'engine'; field: 'start' | 'stop' }
+  | { kind: 'flight'; id: string; field: 'takeoff' | 'landing' }
   | { kind: 'drop'; id: string };
 
 export interface ManualFlightAxis {
@@ -58,9 +66,14 @@ const ENGINE_STOP = 'engine-stop';
  * `SessionAxis` woła `onCorrect` dla każdego wiersza, więc odmowa musi być możliwa).
  */
 export function manualAxisTarget(rowId: string): ManualAxisTarget | null {
-  if (rowId === ENGINE_START || rowId === ENGINE_STOP) return { kind: 'engine' };
-  if (rowId.startsWith('takeoff:')) return { kind: 'flight', id: rowId.slice('takeoff:'.length) };
-  if (rowId.startsWith('landing:')) return { kind: 'flight', id: rowId.slice('landing:'.length) };
+  if (rowId === ENGINE_START) return { kind: 'engine', field: 'start' };
+  if (rowId === ENGINE_STOP) return { kind: 'engine', field: 'stop' };
+  if (rowId.startsWith('takeoff:')) {
+    return { kind: 'flight', id: rowId.slice('takeoff:'.length), field: 'takeoff' };
+  }
+  if (rowId.startsWith('landing:')) {
+    return { kind: 'flight', id: rowId.slice('landing:'.length), field: 'landing' };
+  }
   if (rowId.startsWith('drop:')) return { kind: 'drop', id: rowId.slice('drop:'.length) };
   return null;
 }

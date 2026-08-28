@@ -29,7 +29,7 @@
  */
 
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type TextInput } from 'react-native';
 
 import { useTheme } from '../../theme';
 import { timeLocal } from '../../format';
@@ -64,6 +64,10 @@ export interface TimeStepperProps {
   max?: number;
   /** Co pokazać, dopóki godziny nie ma (`value === null`). */
   placeholder?: string;
+  /** Kontrolka otwiera się w trybie wpisu — patrz `StepperProps.autoEdit`. */
+  autoEdit?: boolean;
+  /** Callback ref pola wpisu dla `useSheetInputFocus` — patrz `StepperProps.inputRef`. */
+  inputRef?: (input: TextInput | null) => void;
   /**
    * Dopisać czas lokalny urządzenia drobnym drukiem („10:30 LT", issue #62 pkt 6).
    * Rejestr jedzie w UTC — LT jest tu wartością DRUGORZĘDNĄ i tak ma wyglądać.
@@ -86,6 +90,8 @@ export function TimeStepper({
   min,
   max,
   placeholder,
+  autoEdit = false,
+  inputRef,
   localTime = false,
   footer,
 }: TimeStepperProps) {
@@ -107,6 +113,8 @@ export function TimeStepper({
         max={max}
         format={format}
         {...(placeholder != null ? { placeholder } : {})}
+        autoEdit={autoEdit}
+        {...(inputRef != null ? { inputRef } : {})}
         /* Odniesieniem wpisu jest wartość, a przy jej braku — DOLNA GRANICA arkusza
            (doba lotu). Bez tego godzina wpisana do pustego pola trafiłaby w dzień
            „dziś", czyli nie w ten, którego dotyczy wpis ręczny. */

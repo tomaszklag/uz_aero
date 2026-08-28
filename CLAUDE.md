@@ -881,6 +881,27 @@ poprawka dosięgła ośmiu arkuszy naraz.
   parsuje się i po prostu nie rusza wartości; `commit` przy `onBlur` zostaje domknięciem
   (kasuje szkic i przywraca widok wartości). **Ta reguła obowiązuje każde pole wpisu**:
   formularz odpowiada na to, co pilot właśnie napisał, a nie na to, co zatwierdził
+- **arkusz czasu OTWIERA SIĘ Z KLAWIATURĄ** na pierwszej kontrolce (trzecia tura):
+  jest formularzem o jednym pytaniu, więc pilot i tak tapie w wartość — bez tego każdy
+  wpis kosztował tapnięcie więcej. `Stepper.autoEdit` startuje w trybie wpisu (pole musi
+  ISTNIEĆ, żeby callback ref miał się na czym zawiesić), a klawiaturę podnosi drabinka
+  `useSheetInputFocus` i nic innego. `autoFocus` działa TYLKO poza `autoEdit`: przy
+  `autoEdit` pole montuje się razem z arkuszem, czyli zanim okno modala istnieje —
+  to jest dokładnie pierwszy z trzech błędów opisanych w `hooks/keyboardFocus.ts`
+- **arkusz ma tyle kontrolek, ile pytań** (trzecia tura): tapnięcie w START na osi
+  otwierało parę start + lądowanie, czyli dawało kontrolkę, o którą nikt nie prosił —
+  „skoro klikam w konkretną pozycję, to wiem, że tylko to chcę edytować". Cel osi niesie
+  więc KONIEC pary (`ManualAxisTarget.field`), tytuł go nazywa („START · LOT 2"),
+  a drugi koniec schodzi do wiersza odniesienia (`FlightTimesField.readOnly`) — nie
+  znika, bo pilot poprawia godzinę WZGLĘDEM niego, a reguła kolejności musi mieć co
+  porównać. Para w całości zostaje tam, gdzie powstaje w całości: „DODAJ LOT" i wejście
+  z karty „Bieg silnika"
+- **lot musi MIEŚCIĆ SIĘ w biegu silnika, a arkusz mówi to od razu** (trzecia tura):
+  przyjmował start po wyłączeniu silnika bez słowa, a odmowa padała dopiero przy „DALEJ".
+  `FlightTimesBounds` jest osobne od `min`/`max` ŚWIADOMIE: granice steppera przycinają
+  wpis po cichu, a cichej poprawki wartości pilota ta aplikacja nie robi (§6 pkt 3) —
+  wyjście poza okno jest blokadą z nazwanym powodem. Kolejność godzin ma pierwszeństwo
+  przed granicami (najpierw to, co widać w kontrolce nad przyciskiem)
 - **arkusz wyboru lotniska nie powtarza placeholdera** (druga tura z urządzenia):
   przypis „Wpisz kod ICAO albo nazwę lotniska" mówił dokładnie to, co pole wpisu dwa
   centymetry niżej. Bez pozycji i bez wpisu arkusz jest PUSTĄ WYSZUKIWARKĄ i tak ma

@@ -90,6 +90,27 @@ export interface StepperProps {
   hint?: string;
   /** Co pokazać zamiast wartości, dopóki jej nie ma (`value === null`). */
   placeholder?: string;
+  /**
+   * Kontrolka OTWIERA SIĘ od razu w trybie wpisu (issue #62, trzecia tura z urządzenia).
+   *
+   * Arkusz czasu jest formularzem o jednym pytaniu — po jego otwarciu pilot i tak
+   * tapie w wartość, żeby wbić godzinę. Bez tego każdy wpis kosztował jedno tapnięcie
+   * więcej, a arkusz otwierał się w stanie, w którym nic nie zapraszało do pisania.
+   *
+   * SAMO to nie podnosi KLAWIATURY — do tego służy `inputRef` z `useSheetInputFocus`
+   * (patrz niżej). Tu chodzi tylko o to, żeby pole W OGÓLE ISTNIAŁO w drzewie,
+   * bo inaczej callback ref nie ma się na czym zawiesić.
+   */
+  autoEdit?: boolean;
+  /**
+   * Callback ref na wewnętrzny `TextInput` — WYŁĄCZNIE dla `useSheetInputFocus`.
+   *
+   * Klawiaturę w arkuszu podnosi drabinka prób z tego hooka i nic innego: trzy
+   * podejścia już zawiodły i ich historia stoi w `hooks/keyboardFocus.ts`.
+   * `autoFocus` na tym polu odpaliłby się przy montowaniu, zanim okno modala
+   * istnieje — czyli dokładnie pierwszy z tych błędów.
+   */
+  inputRef?: (input: TextInput | null) => void;
   unit?: string;
   tone?: Tone;
   style?: ViewStyle;
@@ -157,6 +178,8 @@ export function Stepper({
   edit,
   hint,
   placeholder = '—',
+  autoEdit = false,
+  inputRef,
   unit,
   tone = 'amber',
   style,
@@ -164,8 +187,16 @@ export function Stepper({
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
 
-  /** Tekst w trakcie wpisywania; `null` = pole zamknięte, wartość tylko do odczytu. */
-  const [draft, setDraft] = useState<string | null>(null);
+  /**
+   * Tekst w trakcie wpisywania; `null` = pole zamknięte, wartość tylko do odczytu.
+   *
+   * Przy `autoEdit` startujemy OTWARCI. Inicjalizator leniwy, a nie efekt: `Modal`
+   * odmontowuje dzieci przy zamknięciu arkusza (patrz `useSheetInputFocus`), więc
+   * każde otwarcie montuje kontrolkę od nowa i stan liczy się raz, we właściwej chwili.
+   */
+  const [draft, setDraft] = useState<string | null>(() =>
+    autoEdit && edit != null ? (value == null ? '' : edit.toText(value)) : null,
+  );
 
   const clamp = useCallback(
     (n: number) => Math.min(max, Math.max(min, n)),
@@ -240,7 +271,13 @@ export function Stepper({
             do poprawki o krok, klawiatura do przeskoku. Bez `edit` to zwykły napis. */}
         {draft != null && edit != null ? (
           <TextInput
-            autoFocus
+            /* `autoFocus` TYLKO poza `autoEdit`: tam pole pojawia się w odpowiedzi na
+               tapnięcie pilota, więc okno modala od dawna istnieje i fokus jest
+               natychmiastowy. Przy `autoEdit` pole montuje się razem z arkuszem —
+               i wtedy fokus należy do drabinki `useSheetInputFocus`, bo `autoFocus`
+               odpala się, zanim okno modala w ogóle jest (`hooks/keyboardFocus.ts`). */
+            autoFocus={!autoEdit}
+            ref={inputRef}
             value={draft}
             /**
              * WARTOŚĆ WYCHODZI NA KAŻDĄ ZMIANĘ TEKSTU, nie na wyjściu z pola

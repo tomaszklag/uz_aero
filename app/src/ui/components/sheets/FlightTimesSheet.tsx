@@ -30,10 +30,11 @@
 import React, { useEffect, useState } from 'react';
 
 import { duration, timeUtc } from '../../format';
+import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { IconAction } from '../data/IconAction';
 import { TimeStepper } from '../input/TimeStepper';
 import { Sheet } from './Sheet';
-import { flightTimesBlocker } from './flightTimesBlocker';
+import { flightTimesBlocker, type FlightTimesBounds } from './flightTimesBlocker';
 
 /** Jedno pole czasu arkusza — klucz wraca w `onConfirm` z nową wartością. */
 export interface FlightTimesField {
@@ -46,6 +47,19 @@ export interface FlightTimesField {
    * z tego, co już wpisał (godziny biegu przy nowym locie, pkt 8).
    */
   value: number | null;
+  /**
+   * Pole tylko do ODCZYTU — kontekst edytowanego, nie druga kontrolka (issue #62,
+   * trzecia tura z urządzenia).
+   *
+   * „Skoro klikam w konkretną pozycję, to wiem, że tylko to chcę edytować": tapnięcie
+   * w START na osi otwierało arkusz z parą start + lądowanie, czyli dawało do ręki
+   * kontrolkę, o którą nikt nie prosił, i kazało szukać wzrokiem tej właściwej.
+   *
+   * Drugi koniec pary NIE ZNIKA jednak z arkusza — schodzi do wiersza odniesienia.
+   * Dwa powody: pilot poprawia godzinę WZGLĘDEM niej („żeby wyszło 26 minut"), a reguła
+   * kolejności nie miałaby czego porównać i dałoby się ustawić start po lądowaniu.
+   */
+  readOnly?: boolean;
 }
 
 export interface FlightTimesSheetProps {
@@ -59,6 +73,13 @@ export interface FlightTimesSheetProps {
   /** Granice doby wpisu — stepper nie wyjdzie poza dzień lotu. */
   min?: number;
   max?: number;
+  /**
+   * Okno, w którym godziny MUSZĄ się zmieścić — dla lotu jest nim bieg silnika
+   * (issue #62, trzecia tura). Świadomie NIE jako `min`/`max`: te przycinają wpis
+   * po cichu, a cichej poprawki wartości pilota ta aplikacja nie robi (§6 pkt 3).
+   * Wyjście poza okno jest blokadą z nazwanym powodem.
+   */
+  bounds?: FlightTimesBounds;
   /** Obecność włącza kosz w linii tytułu (usuwany lot); brak = pary nie da się usunąć. */
   onDelete?: () => void;
   onConfirm: (values: Record<string, number>) => void;
@@ -72,11 +93,16 @@ export function FlightTimesSheet({
   durationLabel = 'Czas trwania',
   min,
   max,
+  bounds,
   onDelete,
   onConfirm,
   onCancel,
 }: FlightTimesSheetProps) {
   const [values, setValues] = useState<Record<string, number | null>>({});
+  /* Klawiatura od otwarcia arkusza, na PIERWSZYM edytowalnym polu (issue #62,
+     trzecia tura). Drabinka prób z hooka i nic innego — trzy podejścia już zawiodły
+     i ich historia stoi w `hooks/keyboardFocus.ts`. */
+  const { inputRef, onShow } = useSheetInputFocus();
 
   // Każde otwarcie startuje od wartości pól — arkusz nie pamięta poprzedniej edycji.
   useEffect(() => {
@@ -97,22 +123,36 @@ export function FlightTimesSheet({
       ? resolved[1]!.current - resolved[0]!.current
       : null;
 
+  /* Reguły widzą KOMPLET pól, także te tylko do odczytu: inaczej edycja samego startu
+     nie miałaby czego porównać z lądowaniem (patrz `FlightTimesField.readOnly`). */
   const blocker = flightTimesBlocker(
     resolved.map((f) => ({ label: f.label, value: f.current })),
     durationLabel,
+    bounds,
   );
+
+  const editable = resolved.filter((f) => f.readOnly !== true);
 
   return (
     <Sheet
       visible={visible}
       title={title}
-      /* Wiersz czasu trwania zostaje — to jedyna liczba, której pilot sam nie wpisał,
-         a która mówi, czy para godzin ma sens. Data z tego miejsca ZNIKŁA (pkt 6). */
-      rows={
-        resolved.length === 2
+      onShow={onShow}
+      /* Wiersze odniesienia: nieedytowalny koniec pary i czas trwania. Pierwszy mówi,
+         WZGLĘDEM czego pilot poprawia godzinę, drugi — co z tego wychodzi; obu pilot
+         sam nie wpisał, więc oba należą do tej sekcji, a nie do kontrolek.
+         Data z tego miejsca ZNIKŁA (pkt 6). */
+      rows={[
+        ...resolved
+          .filter((f) => f.readOnly === true)
+          .map((f) => ({
+            label: f.label,
+            value: f.current != null ? timeUtc(f.current) : '—',
+          })),
+        ...(resolved.length === 2
           ? [{ label: durationLabel, value: pair != null && pair > 0 ? duration(pair) : '—' }]
-          : []
-      }
+          : []),
+      ]}
       confirmLabel="ZAPISZ"
       confirmDisabledReason={blocker}
       onConfirm={() => {
@@ -133,7 +173,7 @@ export function FlightTimesSheet({
         ) : undefined
       }
     >
-      {resolved.map((f) => (
+      {editable.map((f, i) => (
         <TimeStepper
           key={f.key}
           /* Jednostka mieszka w ETYKIECIE, jak wszędzie w tym systemie (pkt 6). */
@@ -143,6 +183,12 @@ export function FlightTimesSheet({
           format={timeUtc}
           placeholder="--:--"
           localTime
+          /* PIERWSZE pole otwiera się z klawiaturą (issue #62, trzecia tura): arkusz
+             czasu jest formularzem o jednym pytaniu, więc pilot i tak tapie w wartość.
+             Przy parze („DODAJ LOT") klawiatura ląduje na starcie, bo od niego zaczyna
+             się lot i od niego zaczyna się czytanie arkusza. */
+          autoEdit={i === 0}
+          {...(i === 0 ? { inputRef } : {})}
           {...(f.value != null ? { originalTime: f.value, origin: 'wpisu' } : {})}
           {...(min != null ? { min } : {})}
           {...(max != null ? { max } : {})}

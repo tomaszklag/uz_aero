@@ -11,6 +11,7 @@
 import {
   buildManualFlightAxis,
   flightNumberAt,
+  manualAxisTarget,
   nextDropAt,
   nextFlightTimes,
 } from '../ui/screens/logic/manualFlightAxis';
@@ -124,6 +125,45 @@ describe('oś wpisu ręcznego', () => {
     expect(flightNumberAt(flights, at(10, 14))).toBe(1); // dokładnie lądowanie
     expect(flightNumberAt(flights, at(10, 20))).toBeNull(); // między lotami
     expect(flightNumberAt(flights, at(9, 42))).toBeNull(); // uruchomienie silnika
+  });
+});
+
+describe('co otwiera tapnięcie w wiersz osi', () => {
+  it('niesie KONKRETNY koniec pary, nie samą parę (issue #62, trzecia tura)', () => {
+    // „Skoro klikam w konkretną pozycję, to wiem, że tylko to chcę edytować" —
+    // tapnięcie w START otwierało arkusz z parą start + lądowanie.
+    expect(manualAxisTarget('takeoff:f2')).toEqual({
+      kind: 'flight',
+      id: 'f2',
+      field: 'takeoff',
+    });
+    expect(manualAxisTarget('landing:f2')).toEqual({
+      kind: 'flight',
+      id: 'f2',
+      field: 'landing',
+    });
+    expect(manualAxisTarget('engine-start')).toEqual({ kind: 'engine', field: 'start' });
+    expect(manualAxisTarget('engine-stop')).toEqual({ kind: 'engine', field: 'stop' });
+  });
+
+  it('zrzut nie ma końców — otwiera się w całości', () => {
+    expect(manualAxisTarget('drop:d1')).toEqual({ kind: 'drop', id: 'd1' });
+  });
+
+  it('wiersz nieznanego rodzaju nie otwiera niczego', () => {
+    expect(manualAxisTarget('cokolwiek')).toBeNull();
+  });
+
+  it('identyfikatory wierszy osi zgadzają się z tym, co czyta `manualAxisTarget`', () => {
+    // Bez tego testu builder i czytnik mogą rozjechać się po cichu: oś rysowałaby
+    // wiersze, których tapnięcie nic nie otwiera.
+    const draft: ManualFlightDraft = {
+      ...jumpDayDraft(),
+      drops: [{ id: 'd1', at: at(10, 8), jumpers: null, altitudeFt: null }],
+    };
+    for (const row of buildManualFlightAxis(draft, { jumpDay: true }).rows) {
+      expect(manualAxisTarget(row.id)).not.toBeNull();
+    }
   });
 });
 
