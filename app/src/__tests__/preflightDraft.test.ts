@@ -84,6 +84,36 @@ describe('szkic preflightu — trasa wg rodzaju operacji', () => {
 });
 
 /**
+ * Wybór Duala PRZEŻYWA wybór i zmianę samolotu (issue #58, zgłoszenie z urządzenia:
+ * pilot wybrany przed samolotem znikał po tapnięciu w maszynę). WYMÓG załogi 2-os.
+ * jest właściwością samolotu, ale wybrana OSOBA nie traci ważności przy zmianie
+ * maszyny — lista Duali nie zależy od samolotu, więc kasowanie było czystą stratą
+ * wyboru, a znikające bez słowa pole czyta się jak błąd aplikacji.
+ */
+describe('szkic preflightu — Dual przeżywa wybór samolotu', () => {
+  beforeEach(() => {
+    usePreflightDraft.getState().reset();
+  });
+
+  it('pilot wybrany PRZED samolotem zostaje po wyborze maszyny', () => {
+    const draft = usePreflightDraft.getState();
+    draft.set('dualId', 'AKO');
+    draft.setAircraft(axa());
+
+    expect(usePreflightDraft.getState().dualId).toBe('AKO');
+  });
+
+  it('zmiana maszyny na inną też nie kasuje wyboru', () => {
+    const draft = usePreflightDraft.getState();
+    draft.setAircraft(axa());
+    draft.set('dualId', 'AKO');
+    draft.setAircraft(axa({ id: 'SP-KLM', reg: 'SP-KLM', type: 'Cessna 172' }));
+
+    expect(usePreflightDraft.getState().dualId).toBe('AKO');
+  });
+});
+
+/**
  * Bramka „wstecz" na kroku 1 (issue #55). `dirty()` rozstrzyga, czy jest czego bronić:
  * arkusz rezygnacji nad pustym formularzem pytałby o zgodę na nic, a jego brak przy
  * wybranym samolocie pozwoliłby przypadkowemu gestowi skasować wybory bez pytania —

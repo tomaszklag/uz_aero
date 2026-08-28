@@ -11,7 +11,7 @@
   :root {
     --bg: #0D0D0D; --bg-tint: #111318; --surface: #141414; --surface-raised: #1A1A1A; --surface-hover: #222222;
     --border: #252525; --border-strong: #333333; --hairline: rgba(255,255,255,0.04);
-    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A;
+    --text-primary: #E8E8E8; --text-secondary: #888888; --text-muted: #7A7A7A; --text-placeholder: #5A5A5A;
     --green: #2ECC71; --green-hover: #3DDC82; --green-muted: rgba(46,204,113,0.12); --green-border: rgba(46,204,113,0.28); --green-glow: rgba(46,204,113,0.4);
     --amber: #F39C12; --amber-muted: rgba(243,156,18,0.12); --amber-border: rgba(243,156,18,0.28); --amber-glow: rgba(243,156,18,0.35);
     --red: #E74C3C; --red-muted: rgba(231,76,60,0.12); --red-border: rgba(231,76,60,0.28); --red-glow: rgba(231,76,60,0.4);
@@ -123,7 +123,8 @@
   .field-input.filled { border-color: var(--border-strong); }
   .field-input.mono { font-family: var(--font-mono); font-size: 17px; font-weight: 700; letter-spacing: 2px; }
   .field-input-val { font-size: 15px; font-weight: 600; color: var(--text-primary); }
-  .field-placeholder { color: var(--text-muted); font-size: 14px; font-style: italic; }
+  /* Placeholder = ta sama metryka co wartość, zwykła waga, własny token (issue #58). */
+  .field-placeholder { color: var(--text-placeholder); font-size: 15px; }
   .field-hint { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted); }
 
   /* Bez `.route-row` / `.route-arrow` — wybrane są skoki, więc trasa to jedno pole
@@ -487,7 +488,7 @@
         <div class="field">
           <div class="field-label">Lotnisko skoków</div>
           <div class="field-input filled mono">
-            <span class="field-input-val" style="font-family: var(--font-mono); font-size: 18px; letter-spacing: 3px; font-weight: 700;">EPKK</span>
+            <span class="field-input-val" style="font-family: var(--font-mono); font-size: 16px; letter-spacing: 1.5px; font-weight: 700;">EPKK</span>
           </div>
         </div>
       </div>

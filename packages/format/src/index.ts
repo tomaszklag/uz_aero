@@ -75,6 +75,33 @@ export function dateUtcLong(t: EpochMillis): string {
 }
 
 /**
+ * Miesiące w MIANOWNIKU — nagłówek kalendarza daty lotu (issue #58). Osobna tablica
+ * obok dopełniaczowej `MONTHS_PL`, bo to inna rola gramatyczna: „22 czerwca" czyta się
+ * jako datę, ale nagłówek miesiąca to nazwa własna („CZERWIEC 2026"), nie data.
+ * Dopełniacz w nagłówku brzmiałby jak urwane zdanie.
+ */
+const MONTHS_PL_NOMINATIVE = [
+  'STYCZEŃ',
+  'LUTY',
+  'MARZEC',
+  'KWIECIEŃ',
+  'MAJ',
+  'CZERWIEC',
+  'LIPIEC',
+  'SIERPIEŃ',
+  'WRZESIEŃ',
+  'PAŹDZIERNIK',
+  'LISTOPAD',
+  'GRUDZIEŃ',
+];
+
+/** Nagłówek miesiąca kalendarza jako „SIERPIEŃ 2026" (UTC). */
+export function monthYearUtc(t: EpochMillis): string {
+  const d = new Date(t);
+  return `${MONTHS_PL_NOMINATIVE[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+/**
  * Data i godzina jako „23 CZE 16:45" (UTC) — stempel z ekranów telefonu: termin okna
  * korekty (10, 12), wiek migawki cudzej sesji (04b), stan cache przy odczytach.
  *

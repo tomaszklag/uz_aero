@@ -58,6 +58,8 @@ export * from './input/Numpad';
 export * from './input/ProfileChip';
 export * from './input/Field';
 export * from './input/Stepper';
+export * from './input/CalendarGrid';
+export * from './input/PlaceholderOverlay';
 export * from './input/CounterRow';
 export * from './input/ReasonField';
 

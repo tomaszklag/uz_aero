@@ -74,6 +74,8 @@ export interface SheetProps {
   onConfirm?: () => void;
   cancelLabel?: string;
   onCancel: () => void;
+  /** Okno modala już istnieje — arkusz z polem wpisu robi tu `focus()` (patrz `SheetSurface`). */
+  onShow?: () => void;
   /**
    * Treść PRZYPIĘTA nad rzędem akcji, poza obszarem przewijania.
    *
@@ -106,6 +108,7 @@ export function Sheet({
   onConfirm,
   cancelLabel = 'ANULUJ',
   onCancel,
+  onShow,
   footer,
   headerAction,
   children,
@@ -117,6 +120,7 @@ export function Sheet({
     <SheetSurface
       visible={visible}
       onCancel={onCancel}
+      onShow={onShow}
       keyboardHeight={keyboardHeight}
       designPad={theme.spacing.xxxl}
       /* Treść przewijana, akcje poza nią: gdy miejsca jest mało, skraca się to, co pilot

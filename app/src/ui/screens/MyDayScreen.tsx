@@ -355,9 +355,13 @@ function EmptySessions() {
  * chodzi: gdy doba dojdzie, plamki podmieniają się na kafelki, a nic nie przeskakuje
  * pod palcem trzymanym już nad kartą.
  *
- * DWIE plamki-kafelki, tak jak w historii (12), bo to ta sama lista tych samych kart.
- * Liczba mówi o KSZTAŁCIE listy, nie o jej długości — tej nikt jeszcze nie zna.
- * Etykieta grupy jest napisem stałym i NIE czeka (wzorzec, reguła 3: co znamy lokalnie,
+ * JEDNA plamka-kafelek (issue #58 pkt 6). Doba ma dwa warianty — karta stanu pustego
+ * albo lista kafelków sesji — a skeleton obiecuje ich CZĘŚĆ WSPÓLNĄ (reguła 2
+ * wzorca): przynajmniej jedną kartę tej wysokości. Dwie plamki zgadywały wariant
+ * z sesjami; najczęstszy start dnia (zero lotów) podmieniał je na JEDNĄ kartę
+ * „DZIŚ BEZ LOTÓW" i pół ekranu skakało. Karta stanu pustego i kafelek sesji mają
+ * tę samą wysokość (156 dp), więc jedna plamka pasuje do obu przyszłości.
+ * Etykieta grupy jest napisem stałym i NIE czeka (reguła 3: co znamy lokalnie,
  * rysujemy od razu). Z tego samego powodu skeleton nie ma już plamki na przycisk:
  * od 2026-08-16 pas akcji nie zależy od doby, więc przyciski są NA EKRANIE, a nie
  * w drodze — plamka trzymałaby miejsce po czymś, co stoi obok niej.
@@ -368,7 +372,7 @@ function MyDaySkeleton() {
   return (
     <View accessible accessibilityLabel="Ładowanie" style={styles.skeletonBlock}>
       <GroupLabel text="Log dnia" />
-      <SkeletonRows rows={2} height={CARD_HEIGHT} radius={theme.radius.btn} gap={12} />
+      <SkeletonRows rows={1} height={CARD_HEIGHT} radius={theme.radius.btn} gap={12} />
 
       {/* Sumy doby w geometrii `StatGrid`: tło prześwieca przez 1-pikselowe odstępy.
           TRZY komórki, bo tyle ich jest od 2026-08-16 (Loty · Blok · Lot). */}

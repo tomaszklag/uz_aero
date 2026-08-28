@@ -49,9 +49,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { useTheme } from '../../theme';
+import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
 import { Icon } from '../foundation/Icon';
 import { AirfieldSuggestions } from '../input/AirfieldSuggestions';
+import { PlaceholderOverlay } from '../input/PlaceholderOverlay';
 import { airfieldRow } from '../input/airfieldRow';
 import { Sheet } from './Sheet';
 import { icaoToStore } from './airfieldEntry';
@@ -82,6 +84,7 @@ export function AirfieldSheet({
 }: AirfieldSheetProps) {
   const { theme } = useTheme();
   const [text, setText] = useState('');
+  const { inputRef, onShow } = useSheetInputFocus();
 
   useEffect(() => {
     // Każde otwarcie zaczyna od pustego pola — patrz nota na górze pliku.
@@ -134,6 +137,9 @@ export function AirfieldSheet({
       title={title}
       cancelLabel="ANULUJ"
       onCancel={onCancel}
+      /* Klawiatura od otwarcia — drabinka prób z `useSheetInputFocus` (issue #58
+         pkt 7, druga tura: pojedynczy focus w onShow bywał nadal za wcześnie). */
+      onShow={onShow}
       /* POLE WPISU JEST NA DOLE — patrz nota „ARKUSZ ROŚNIE W GÓRĘ" na górze pliku. */
       footer={
         <View
@@ -150,37 +156,32 @@ export function AirfieldSheet({
           ]}
         >
           <Icon name="search" size={16} color={theme.colors.textMuted} />
-          <TextInput
-            autoFocus
-            value={text}
-            onChangeText={setText}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            placeholder="Kod ICAO albo nazwa…"
-            placeholderTextColor={theme.colors.textPlaceholder}
-            selectionColor={theme.colors.selection}
-            cursorColor={theme.colors.textPrimary}
-            accessibilityLabel={title}
-            /**
-             * JEDEN KRÓJ I JEDEN STOPIEŃ WE WSZYSTKICH STANACH — mono w zwykłej wadze,
-             * mniejsze niż wartości-przyrządy w formularzu.
-             *
-             * Placeholder w React Native dziedziczy po polu wszystko poza kolorem, więc
-             * przy wersalikach licznika (mono 700, 20 px) zachęta wyglądała jak wpisana
-             * wartość, a nie jak podpowiedź. Kuszące było zmniejszać ją tylko przy pustym
-             * polu — i byłby to ten sam błąd, który wygonił pole wpisu na dół arkusza:
-             * zmiana stopnia zmienia WYSOKOŚĆ pola, więc kontrolka podskakiwałaby przy
-             * pierwszej i ostatniej literze. Stała metryka, zmienny tylko kolor.
-             */
-            style={{
-              flex: 1,
-              padding: 0,
-              fontFamily: theme.fontFamily.mono,
-              fontSize: 16,
-              letterSpacing: 1.5,
-              color: theme.colors.textPrimary,
-            }}
-          />
+          {/* POLE JEST MONO, PLACEHOLDER SKŁADEM TEKSTOWYM (issue #58): kod pisze
+              się krojem kodu, ale zachęta jest instrukcją i idzie body 15
+              w `textPlaceholder` — jak placeholder arkusza notatki. Natywnemu
+              placeholderowi nie da się nadać osobnego kroju, a zmiana kroju POLA
+              przy pustym stanie skakałaby wysokością — stąd `PlaceholderOverlay`
+              POD polem: metryka pola stała, kursor i znaki malują się na wierzchu. */}
+          <View style={styles.inputWrap}>
+            <PlaceholderOverlay visible={text.length === 0} text="Kod ICAO albo nazwa…" />
+            <TextInput
+              ref={inputRef}
+              value={text}
+              onChangeText={setText}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              selectionColor={theme.colors.selection}
+              cursorColor={theme.colors.textPrimary}
+              accessibilityLabel={title}
+              style={{
+                padding: 0,
+                fontFamily: theme.fontFamily.mono,
+                fontSize: 16,
+                letterSpacing: 1.5,
+                color: theme.colors.textPrimary,
+              }}
+            />
+          </View>
         </View>
       }
     >
@@ -255,6 +256,8 @@ export function AirfieldSheet({
 
 const styles = StyleSheet.create({
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  // Kotwica nakładki placeholdera: `absoluteFill` liczy się względem tego pudełka.
+  inputWrap: { flex: 1, justifyContent: 'center' },
   extra: {
     flexDirection: 'row',
     alignItems: 'center',

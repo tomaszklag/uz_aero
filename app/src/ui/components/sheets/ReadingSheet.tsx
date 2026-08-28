@@ -24,6 +24,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import { maskTimeUtcInput } from '../../format';
 import { useTheme } from '../../theme';
+import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { AppText } from '../foundation/AppText';
 import { Sheet, type SheetRow } from './Sheet';
 import { toneColors, type Tone } from '../tone';
@@ -90,6 +91,7 @@ export function ReadingSheet({
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
   const [text, setText] = useState(initialText);
+  const { inputRef, onShow } = useSheetInputFocus();
   /**
    * Zaznaczenie STEROWANE przy otwarciu, nie `selectTextOnFocus`.
    *
@@ -157,6 +159,9 @@ export function ReadingSheet({
         if (parsed != null) onConfirm(parsed);
       }}
       onCancel={onCancel}
+      /* Klawiatura od otwarcia — drabinka prób z `useSheetInputFocus` (issue #58
+         pkt 7, druga tura: pojedynczy focus w onShow bywał nadal za wcześnie). */
+      onShow={onShow}
     >
       <View
         style={[
@@ -175,7 +180,7 @@ export function ReadingSheet({
         ]}
       >
         <TextInput
-          autoFocus
+          ref={inputRef}
           value={text}
           onChangeText={change}
           keyboardType={KEYBOARD_TYPE[keyboard]}

@@ -35,6 +35,12 @@ export interface SheetSurfaceProps {
   visible: boolean;
   /** Tapnięcie w tło i „wstecz" Androida. Potwierdzenie wymaga celowego przycisku. */
   onCancel: () => void;
+  /**
+   * Chwila, w której okno modala JUŻ ISTNIEJE (issue #58 pkt 7 i 8). Arkusz z polem
+   * wpisu startuje stąd drabinkę fokusu `useSheetInputFocus` — nie pojedyncze
+   * `focus()` i nie `autoFocus`: oba zawiodły, historia w `hooks/keyboardFocus.ts`.
+   */
+  onShow?: () => void;
   /** Odstęp między elementami arkusza — mockupy dają 12–16 dp. */
   gap?: number;
   paddingHorizontal?: number;
@@ -61,6 +67,7 @@ export interface SheetSurfaceProps {
 export function SheetSurface({
   visible,
   onCancel,
+  onShow,
   gap,
   paddingHorizontal,
   paddingTop,
@@ -89,6 +96,7 @@ export function SheetSurface({
       transparent
       animationType="slide"
       onRequestClose={onCancel}
+      onShow={onShow}
       statusBarTranslucent
     >
       {/* Tapnięcie w tło = anuluj. Potwierdzenie wymaga celowego tapnięcia w przycisk. */}

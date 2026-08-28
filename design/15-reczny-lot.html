@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero — 15 Lot ręczny · krok 1/4 · samolot i data</title>
+<title>UZ Aero — 15 Lot ręczny · krok 1/4 · data i samolot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -90,9 +90,15 @@
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:46px; cursor:pointer; text-decoration:none; }
   .field-input:hover { border-color:var(--green-border); }
+  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5.
+     Kontrolka formularza jest tym samym polem oglądanym w spoczynku — 20 px robiło
+     z każdej wartości bohatera ekranu. PLACEHOLDER JEST ZAWSZE SKŁADEM TEKSTOWYM
+     (trzecia tura #58): body 15 w --text-placeholder, jak w arkuszu notatki — to
+     instrukcja, nie wartość, więc nie dziedziczy kroju liczb. Wysokość trzyma
+     min-height kontrolki, więc osobny skład niczym nie skacze. */
   .field-input-val { font-size:15px; line-height:20px; color:var(--text-primary); }
-  .field-input-val.big { font-family:var(--font-mono); font-size:20px; font-weight:700; letter-spacing:1.5px; }
-  .field-input-val.empty { color:var(--text-placeholder); }
+  .field-input-val.big { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; }
+  .field-input-val.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-icon { display:flex; color:var(--text-muted); flex-shrink:0; }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
 
@@ -126,11 +132,11 @@
 
 <header class="canvas-label">
   <span class="film-strip">UZ AERO — 15</span>
-  <span class="slug">lot ręczny · samolot i data · krok 1 / 4</span>
+  <span class="slug">lot ręczny · data i samolot · krok 1 / 4</span>
   <span class="canvas-meta">Z ekranu 01</span>
 </header>
 
-<main class="phone" role="region" aria-label="Mockup — Lot ręczny, krok 1: samolot i data">
+<main class="phone" role="region" aria-label="Mockup — Lot ręczny, krok 1: data i samolot">
   <div class="status-bar">
     <span>16:20</span>
     <span class="status-right">
@@ -168,6 +174,29 @@
            (okno korekty, przekazanie, dopisywanie korektą) komuś, kto chce wpisać lot
            z kartki. To ta sama kategoria napisów, którą wyrzuciło issue #43. -->
 
+<!-- DATA LOTU PIERWSZA (issue #58 pkt 1), JAKO POLE, domyślnie DZISIEJSZA.
+           Wpis ręczny zaczyna się od pytania „którego to było?" — dopiero potem czym.
+           Powstaje najczęściej tego samego dnia („telefon został w hangarze"), więc
+           dziś jest trafną wartością domyślną — ale lot sprzed tygodnia musi dać się
+           wpisać bez proszenia administratora, a do 2026-08-16 nie dawał się w ogóle:
+           czasy szły z arkusza liczącego godziny od „teraz".
+
+           PRZYPISU O DOBIE TU NIE MA (issue #58 pkt 3): „doba liczy się od
+           uruchomienia silnika" stoi w arkuszu daty (15E) — przy kontrolce, której
+           dotyczy — jako zwykłe zdanie. Kotwica doby (`sessionDay`) bez zmian:
+           bieg spod północy trafia w ten sam dzień, co na 01 i 12. -->
+      <div class="section">
+        <div class="section-head"><span class="section-label">Data lotu · UTC</span></div>
+        <div class="field">
+          <a href="15e-reczny-data.html" class="field-input">
+            <span class="field-input-val big">16 SIE 2026</span>
+            <span class="field-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+            </span>
+          </a>
+        </div>
+      </div>
+
       <div class="section">
         <div class="section-head"><span class="section-label">Samolot</span></div>
         <div class="ac-list">
@@ -195,30 +224,21 @@
         </div>
       </div>
 
-      <!-- DATA LOTU JAKO POLE, domyślnie DZISIEJSZA (zgłoszenie z urządzenia).
-           Wpis ręczny powstaje najczęściej tego samego dnia („telefon został
-           w hangarze"), więc dziś jest trafną wartością domyślną — ale lot sprzed
-           tygodnia musi dać się wpisać bez proszenia administratora, a do 2026-08-16
-           nie dawał się w ogóle: czasy szły z arkusza liczącego godziny od „teraz".
-
-           Data dotyczy URUCHOMIENIA SILNIKA i to jest kotwica doby (`sessionDay`),
-           więc bieg spod północy trafia w ten sam dzień, co na 01 i 12. -->
-      <div class="section">
-        <div class="section-head"><span class="section-label">Data lotu · UTC</span></div>
-        <div class="field">
-          <a href="15e-reczny-data.html" class="field-input">
-            <span class="field-input-val big">16 SIE 2026</span>
-            <span class="field-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
-            </span>
-          </a>
-          <div class="field-sub">dzisiaj · doba liczy się od uruchomienia silnika</div>
-        </div>
-      </div>
-
-      <!-- DUAL — OPCJONALNY i dlatego jedyny z plakietką na tym ekranie.
+      <!-- DUAL — zwykle OPCJONALNY i dlatego jedyny z plakietką na tym ekranie.
            Do 2026-08-16 wpis ręczny zapisywał `dualId: null` na sztywno, więc lot
-           szkolny wpisany z kartki gubił drugiego pilota bezpowrotnie. -->
+           szkolny wpisany z kartki gubił drugiego pilota bezpowrotnie.
+
+           SAMOLOT Z WYMOGIEM ZAŁOGI DWUOSOBOWEJ egzekwuje go TAKŻE TUTAJ (issue #58
+           pkt 4 — wpis ręczny opisuje ten sam lot tym samym prawem, co preflight):
+           po wybraniu SP-ANK plakietka zmienia się w bursztynowe „wymagany · załoga
+           2-os.", pod listą staje baner „Wymagana załoga dwuosobowa", a DALEJ jest
+           `disabled` BEZ własnego tekstu — powód widać w banerze (ta sama decyzja
+           co na 02: drugi napis powtarzałby to samo zdanie).
+
+           WYBÓR DUALA PRZEŻYWA WYBÓR I ZMIANĘ SAMOLOTU (druga tura z urządzenia:
+           pilot wybrany przed samolotem znikał po tapnięciu w maszynę) — wymóg jest
+           właściwością samolotu, ale wybrana OSOBA nie traci ważności przy zmianie
+           maszyny; lista Duali nie zależy od samolotu. Tak samo na 02. -->
       <div class="section">
         <div class="section-head">
           <span class="section-label">Drugi pilot (Dual)</span>
@@ -250,8 +270,8 @@
   <a class="vp-item active" href="15-reczny-lot.html">
     <span class="vp-badge">15</span>
     <span class="vp-body">
-      <span class="vp-name">Krok 1 — samolot i data</span>
-      <span class="vp-when">Maszyna z listy kart, data lotu (domyślnie dzisiejsza) i opcjonalny Dual. Jedyne pola, bez których nie wiadomo, CZEGO wpis dotyczy.</span>
+      <span class="vp-name">Krok 1 — data i samolot</span>
+      <span class="vp-when">Data lotu pierwsza (domyślnie dzisiejsza), maszyna z listy kart i Dual — opcjonalny, chyba że samolot wymaga załogi dwuosobowej. Jedyne pola, bez których nie wiadomo, CZEGO wpis dotyczy.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>
@@ -287,7 +307,7 @@
     <span class="vp-badge blue">15E</span>
     <span class="vp-body">
       <span class="vp-name">Arkusz daty lotu</span>
-      <span class="vp-when">Otwiera się z kroku 1: krok ±1 dzień, skróty „dziś" i „wczoraj", wpisanie daty z klawiatury.</span>
+      <span class="vp-when">Otwiera się z kroku 1: kalendarz miesięczny ze skrótami „Dzisiaj" i „Wczoraj"; dni przyszłe wygaszone.</span>
     </span>
   </a>
 </aside>

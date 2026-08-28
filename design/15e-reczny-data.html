@@ -69,9 +69,9 @@
   .field { display:flex; flex-direction:column; gap:6px; }
   .field-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .field-input { background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; min-height:46px; }
-  .field-val { font-family:var(--font-mono); font-size:20px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
+  /* Metryka wartości = pole wpisu z arkusza (issue #58 pkt 5 i 9): mono 16 / 1.5. */
+  .field-val { font-family:var(--font-mono); font-size:16px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); }
   .field-icon { display:flex; color:var(--text-muted); }
-  .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
   .ac-option { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:52px; padding:10px 14px; border-radius:12px; background:var(--green-muted); border:1px solid var(--green-border); }
   .ac-reg { font-family:var(--font-mono); font-size:14px; font-weight:700; letter-spacing:1.5px; color:var(--green); }
   .ac-type { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); }
@@ -81,19 +81,39 @@
   .modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border-strong); align-self:center; margin-bottom:2px; }
   .modal-title { font-family:var(--font-display); font-size:22px; letter-spacing:2px; color:var(--text-primary); }
 
-  /* ===== STEPPER W SKALI DNIA =====
-     Ta sama kontrolka, co przy godzinie (15D / 10E), tylko z krokiem DOBY: przyciski
-     ±1 dzień, a tapnięcie w wartość otwiera klawiaturę numeryczną i pozwala wpisać datę
-     wprost (kropki stawia maska). Kalendarza miesięcznego NIE MA — wpis ręczny powstaje
-     w praktyce tego samego dnia albo dzień po locie, a siatka 42 kratek to element,
-     którego pilot musi się dopiero nauczyć, żeby cofnąć się o jeden dzień. */
-  .time-stepper { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--green-border); border-radius:14px; padding:10px 12px; }
-  .step-btn { min-width:74px; padding:0 10px; white-space:nowrap; height:46px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface-raised); color:var(--text-primary); font-family:var(--font-mono); font-size:13px; cursor:pointer; }
-  .step-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
-  .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:24px; font-weight:700; letter-spacing:1.5px; color:var(--text-primary); cursor:text; }
-  .time-delta { font-family:var(--font-mono); font-size:9px; color:var(--amber); letter-spacing:0.5px; margin-top:5px; min-height:13px; }
+  /* ===== KALENDARZ MIESIĘCZNY (issue #58 pkt 2) =====
+     Zastąpił stepper ±1 dzień z wpisem z klawiatury — zgłoszenie z urządzenia
+     odwróciło decyzję z 2026-08-16 (wtedy: „siatka 42 kratek to element, którego
+     pilot musi się dopiero nauczyć"). W praktyce było odwrotnie: kalendarz jest
+     kontrolką, którą pilot ZNA, a odklikiwanie daty przyciskiem ±1 dzień — tą,
+     której musiał się uczyć.
+      • tydzień od PONIEDZIAŁKU, doby = północe UTC (jak `sessionDay`);
+      • dni przyszłe wygaszone (lot w przyszłości to nonsens), „dziś" ma obwódkę
+        także niewybrane;
+      • dni sąsiednich miesięcy NIE rysujemy — tapnięcie w nie zmieniałoby dobę
+        i miesiąc naraz;
+      • strzałka „nowszy miesiąc" gaśnie na miesiącu dzisiejszym.
+     W kodzie: `CalendarGrid` + czysta matematyka w `calendarMonth.ts` (z testami). */
+  .calendar { display:flex; flex-direction:column; gap:6px; }
+  .cal-head { display:flex; align-items:center; gap:10px; margin-bottom:2px; }
+  .cal-nav { min-width:44px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-primary); cursor:pointer; }
+  .cal-nav:hover { border-color:var(--green-border); }
+  .cal-nav.disabled { opacity:0.35; pointer-events:none; color:var(--text-muted); }
+  .cal-month { flex:1; text-align:center; font-family:var(--font-mono); font-size:13px; letter-spacing:1.5px; color:var(--text-primary); }
+  .cal-week { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .cal-wd { text-align:center; font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:var(--text-muted); }
+  .cal-day { min-height:40px; display:flex; align-items:center; justify-content:center; border-radius:12px; border:1px solid transparent; font-family:var(--font-mono); font-size:13px; letter-spacing:0.5px; color:var(--text-primary); cursor:pointer; }
+  .cal-day:hover { background:var(--surface-hover); }
+  .cal-day.today { border-color:var(--border-strong); }
+  .cal-day.selected { border-color:var(--green-border); background:var(--green-muted); color:var(--green); font-weight:700; }
+  .cal-day.future { color:var(--text-placeholder); pointer-events:none; }
+  .cal-day.blank { pointer-events:none; }
+  /* Zwykłe zdanie, nie wersalikowa etykieta (issue #58 pkt 3) — przypis o znaczeniu
+     wyboru, nie nazwa pola. Na formularzu kroku 1 tego zdania NIE MA. */
+  .cal-note { font-size:11px; line-height:1.4; color:var(--text-muted); }
 
-  /* Skróty — dwa dni, w których powstaje niemal każdy wpis ręczny. */
+  /* Skróty — dwa dni, w których powstaje niemal każdy wpis ręczny; stoją NAD
+     kalendarzem, bo zwykle siatki nie trzeba nawet dotykać. */
   .quick-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .quick { display:flex; align-items:center; justify-content:center; min-height:44px; border-radius:12px; border:1px solid var(--border-strong); background:var(--surface); color:var(--text-secondary); font-family:var(--font-mono); font-size:11px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; }
   .quick.selected { border-color:var(--green-border); background:var(--green-muted); color:var(--green); }
@@ -150,17 +170,7 @@
     </div>
 
     <div class="scroll">
-      <div class="section">
-        <div class="section-label">Samolot</div>
-        <div class="ac-option">
-          <span>
-            <span class="ac-reg">SP-AXA</span><br>
-            <span class="ac-type">Cessna 182</span>
-          </span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-      </div>
-
+      <!-- Data pierwsza — jak na kroku 1 (issue #58 pkt 1). -->
       <div class="section">
         <div class="section-label">Data lotu · UTC</div>
         <div class="field">
@@ -172,6 +182,17 @@
           </span>
         </div>
       </div>
+
+      <div class="section">
+        <div class="section-label">Samolot</div>
+        <div class="ac-option">
+          <span>
+            <span class="ac-reg">SP-AXA</span><br>
+            <span class="ac-type">Cessna 182</span>
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
     </div>
 
     <div class="modal-overlay">
@@ -179,20 +200,48 @@
         <div class="modal-handle"></div>
         <span class="modal-title">DATA LOTU</span>
 
-        <div>
-          <div class="field-label">Doba UTC uruchomienia silnika</div>
-          <div class="time-stepper">
-            <button class="step-btn">−1 dzień</button>
-            <span class="time-val">15 SIE 2026</span>
-            <button class="step-btn">+1 dzień</button>
-          </div>
-          <div class="time-delta">Zmiana o −1 dzień względem dzisiaj (16 SIE)</div>
-        </div>
-
         <div class="quick-row">
           <button class="quick">Dzisiaj</button>
           <button class="quick selected">Wczoraj</button>
         </div>
+
+        <!-- SIERPIEŃ 2026: 1. dzień w sobotę, dziś = 16 (obwódka), wybrane = 15,
+             dni za dzisiejszym wygaszone. Strzałka „nowszy miesiąc" zgaszona,
+             bo pokazywany miesiąc JEST miesiącem dzisiejszym. -->
+        <div class="calendar">
+          <div class="cal-head">
+            <button class="cal-nav" title="Poprzedni miesiąc">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span class="cal-month">SIERPIEŃ 2026</span>
+            <button class="cal-nav disabled" title="Następny miesiąc">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="cal-week">
+            <span class="cal-wd">PN</span><span class="cal-wd">WT</span><span class="cal-wd">ŚR</span><span class="cal-wd">CZ</span><span class="cal-wd">PT</span><span class="cal-wd">SO</span><span class="cal-wd">ND</span>
+          </div>
+          <div class="cal-week">
+            <span class="cal-day blank"></span><span class="cal-day blank"></span><span class="cal-day blank"></span><span class="cal-day blank"></span><span class="cal-day blank"></span><span class="cal-day">1</span><span class="cal-day">2</span>
+          </div>
+          <div class="cal-week">
+            <span class="cal-day">3</span><span class="cal-day">4</span><span class="cal-day">5</span><span class="cal-day">6</span><span class="cal-day">7</span><span class="cal-day">8</span><span class="cal-day">9</span>
+          </div>
+          <div class="cal-week">
+            <span class="cal-day">10</span><span class="cal-day">11</span><span class="cal-day">12</span><span class="cal-day">13</span><span class="cal-day">14</span><span class="cal-day selected">15</span><span class="cal-day today">16</span>
+          </div>
+          <div class="cal-week">
+            <span class="cal-day future">17</span><span class="cal-day future">18</span><span class="cal-day future">19</span><span class="cal-day future">20</span><span class="cal-day future">21</span><span class="cal-day future">22</span><span class="cal-day future">23</span>
+          </div>
+          <div class="cal-week">
+            <span class="cal-day future">24</span><span class="cal-day future">25</span><span class="cal-day future">26</span><span class="cal-day future">27</span><span class="cal-day future">28</span><span class="cal-day future">29</span><span class="cal-day future">30</span>
+          </div>
+          <div class="cal-week">
+            <span class="cal-day future">31</span><span class="cal-day blank"></span><span class="cal-day blank"></span><span class="cal-day blank"></span><span class="cal-day blank"></span><span class="cal-day blank"></span><span class="cal-day blank"></span>
+          </div>
+        </div>
+
+        <div class="cal-note">Doba liczy się od uruchomienia silnika.</div>
 
         <div class="modal-ref">
           <span>Sesje w tej dobie</span>
@@ -222,7 +271,7 @@
     <span class="vp-badge blue">15E</span>
     <span class="vp-body">
       <span class="vp-name">Data lotu</span>
-      <span class="vp-when">Krok 1. Ta sama kontrolka w skali doby: ±1 dzień, skróty „dziś" i „wczoraj", wpisanie daty z klawiatury. Wiersz „Sesje w tej dobie" mówi od razu, co pilot ma już w tym dniu — czyli materiał do ostrzeżenia o kolizji z kroku 4.</span>
+      <span class="vp-when">Krok 1. Kalendarz miesięczny (issue #58): skróty „Dzisiaj" i „Wczoraj" nad siatką, dni przyszłe wygaszone, tydzień od poniedziałku. Wiersz „Sesje w tej dobie" mówi od razu, co pilot ma już w tym dniu — czyli materiał do ostrzeżenia o kolizji z kroku 4.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

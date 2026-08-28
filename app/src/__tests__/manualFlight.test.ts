@@ -13,6 +13,7 @@
 import {
   emptyManualFlightDraft,
   manualFlightBlocker,
+  manualFlightNeedsDual,
   manualFlightStepBlocker,
   sortedFlights,
   toManualFlightInput,
@@ -76,6 +77,30 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
   it('krok 2 wymaga rodzaju operacji', () => {
     expect(manualFlightStepBlocker('task', draft({ operation: null }))).toContain('operacji');
     expect(manualFlightStepBlocker('task', draft())).toBeNull();
+  });
+
+  /**
+   * Trasa jest we wpisie ręcznym WYMAGANA (issue #58, kolejna tura): wpis opisuje
+   * lot, który JUŻ się odbył, więc „jeszcze nie wiem, dokąd" tu nie istnieje.
+   * Kształt wymogu idzie za rodzajem operacji (issue #13): skoki = jedno lotnisko,
+   * reszta = para start → lądowanie.
+   */
+  it('krok 2 wymaga lotniska; przy operacji z parą — obu', () => {
+    // Skoki (jedno pole): bez lotniska stoi.
+    expect(manualFlightStepBlocker('task', draft({ departureIcao: null }))).toContain(
+      'lotnisko',
+    );
+    // Para: brak startu i brak lądowania to dwa osobne, nazwane powody.
+    expect(
+      manualFlightStepBlocker('task', draft({ operation: 'ferry', departureIcao: null })),
+    ).toContain('startu');
+    expect(manualFlightStepBlocker('task', draft({ operation: 'ferry' }))).toContain(
+      'lądowania',
+    );
+    // Komplet pary przechodzi.
+    expect(
+      manualFlightStepBlocker('task', draft({ operation: 'ferry', arrivalIcao: 'EPWA' })),
+    ).toBeNull();
   });
 
   it('krok 3 wymaga biegu silnika i przynajmniej jednego lotu', () => {
@@ -157,6 +182,19 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
         }),
       ),
     ).toBeNull();
+  });
+});
+
+describe('manualFlightNeedsDual — wymóg załogi dwuosobowej (issue #58 pkt 4)', () => {
+  it('samolot z wymogiem Duala blokuje krok 1 bez drugiego pilota', () => {
+    // An-2 z kartki podlega temu samemu prawu, co An-2 na preflightcie (§3.1).
+    expect(manualFlightNeedsDual({ dualRequired: true }, draft({ dualId: null }))).toBe(true);
+    expect(manualFlightNeedsDual({ dualRequired: true }, draft({ dualId: 'ako' }))).toBe(false);
+  });
+
+  it('bez wymogu — Dual pozostaje opcjonalny; przed wyborem samolotu bramka milczy', () => {
+    expect(manualFlightNeedsDual({ dualRequired: false }, draft({ dualId: null }))).toBe(false);
+    expect(manualFlightNeedsDual(null, draft({ dualId: null }))).toBe(false);
   });
 });
 
