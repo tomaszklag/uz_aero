@@ -45,6 +45,7 @@ import {
   NoGpsBanner,
   ParamGrid,
   PhaseHero,
+  ReadingSheet,
   Screen,
   SessionAxis,
   StatusChip,
@@ -61,7 +62,7 @@ import { useGps, useSensors } from '../bootstrap/servicesContext';
 import { useAircraft } from '../hooks/useAircraft';
 import { useFlightDetection } from '../hooks/useFlightDetection';
 import { useSensorTrace } from '../hooks/useSensorTrace';
-import { duration, hhmm, litres, thousands, timeLocal, timeUtc } from '../format';
+import { duration, hhmm, litres, oilLitres, parseLitres, thousands, timeLocal, timeUtc } from '../format';
 import { boardingInitialJumpers, boardingPrefill } from './logic/boardingPrefill';
 import { buildCockpitActions } from './logic/cockpitActions';
 import { cockpitFlightTimeMs } from './logic/cockpitFlightTime';
@@ -145,6 +146,7 @@ export function CockpitScreen({
   const stopEngine = useSessionStore((s) => s.stopEngine);
   const drop = useSessionStore((s) => s.drop);
   const boarding = useSessionStore((s) => s.boarding);
+  const addOil = useSessionStore((s) => s.addOil);
   const taxi = useSessionStore((s) => s.taxi);
   const takeoff = useSessionStore((s) => s.takeoff);
   const landing = useSessionStore((s) => s.landing);
@@ -156,6 +158,8 @@ export function CockpitScreen({
   const [busy, setBusy] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
   const [boardingOpen, setBoardingOpen] = useState(false);
+  // Dolewka oleju z kokpitu (issue #60) — arkusz, nie ekran: jedna liczba.
+  const [oilOpen, setOilOpen] = useState(false);
   // Czas w nagłówku arkusza załadunku — łapany przy OTWARCIU: na ziemi przed startem
   // ticker sekundowy nie chodzi (`useTicker(engineOn)`), więc „teraz" z rendera
   // potrafiłoby być sprzed kilku minut.
@@ -373,6 +377,44 @@ export function CockpitScreen({
         void run(() => boarding({ jumpers }));
       }}
       onCancel={() => setBoardingOpen(false)}
+    />
+  );
+
+  /**
+   * Arkusz dolewki oleju (issue #60, decyzja 2026-08-27: dolewka zdarza się także PO
+   * przejęciu). Jedna liczba — poziomu po dolewce nie ma jak uczciwie zmierzyć (silnik
+   * zwykle gorący), a rachunek interwału olejowego traktuje dolewkę jako składnik,
+   * nie granicę. Wiersze odniesienia: co wiadomo z przejęcia i z konfiguracji.
+   */
+  const oilSheet = (
+    <ReadingSheet
+      visible={oilOpen}
+      title="Dolewka oleju"
+      unit="L"
+      tone="neutral"
+      initialText=""
+      rows={[
+        ...(projection.oil.afterL != null
+          ? [{ label: 'Przy przejęciu · po dolewkach', value: oilLitres(projection.oil.afterL) }]
+          : []),
+        ...(aircraft?.oilMinL != null
+          ? [{ label: 'Minimum przed lotem', value: oilLitres(aircraft.oilMinL) }]
+          : []),
+        ...(aircraft?.oilCapacityL != null
+          ? [{ label: 'Zbiornik oleju', value: oilLitres(aircraft.oilCapacityL) }]
+          : []),
+      ]}
+      parse={parseLitres}
+      warningFor={(v) =>
+        aircraft?.oilCapacityL != null && v > aircraft.oilCapacityL
+          ? `Dolewka ${oilLitres(v)} nie zmieści się w zbiorniku (${oilLitres(aircraft.oilCapacityL)}) — popraw wpis.`
+          : null
+      }
+      onConfirm={(v) => {
+        setOilOpen(false);
+        void run(() => addOil({ addedL: v }));
+      }}
+      onCancel={() => setOilOpen(false)}
     />
   );
 
@@ -673,9 +715,24 @@ export function CockpitScreen({
     onPress: () => navigation.navigate('Refuel'),
   };
 
+  /**
+   * Dolewka oleju (issue #60, decyzja 2026-08-27) — jak tankowanie: PRZED uruchomieniem
+   * i PO zatrzymaniu, przy zatrzymanym śmigle. Podpis niesie minimum z konfiguracji
+   * (odniesienie decyzji „czy dolewać"), nie pomiar z przejęcia — ten stoi w logu
+   * sesji niżej, a kokpit nie powtarza tego, co mówi log (reguła stanu modalnego).
+   */
+  const oilAction: ActionCardSpec = {
+    id: 'oil',
+    icon: 'oil',
+    label: 'Dolej olej',
+    sub: aircraft?.oilMinL != null ? `Minimum ${oilLitres(aircraft.oilMinL)}` : 'Olej silnikowy',
+    onPress: () => setOilOpen(true),
+  };
+
   const groundActions: ActionCardSpec[] = sessionEnded
     ? [
         refuelAction,
+        oilAction,
         {
           // POPRAW DANE SESJI (issue #43) — następca „Listy ręcznej" (ekran 08 usunięty).
           // Prowadzi do TRYBU EDYCJI ekranu sesji i wraca TU, do kokpitu: bez tego
@@ -693,6 +750,7 @@ export function CockpitScreen({
       ]
     : [
         refuelAction,
+        oilAction,
         // Załadunek TYLKO w dniu skokowym i TYLKO przed startem (issue #21 pkt 7):
         // pierwszy skład wsiada zwykle przy wyłączonym silniku, a jego deklaracja tu
         // otwiera arkusz zrzutu już wypełniony. Po biegu kafelka nie ma — kolejny lot
@@ -828,6 +886,7 @@ export function CockpitScreen({
       </View>
 
       {boardingSheet}
+      {oilSheet}
       {leaveSheet}
       {toast}
     </Screen>

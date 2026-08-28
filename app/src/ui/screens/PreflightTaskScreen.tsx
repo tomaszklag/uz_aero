@@ -233,20 +233,28 @@ export function PreflightTaskScreen({
             Baner opisuje REGUŁĘ, a nie bieżące wartości — dlatego nie znika po pierwszej
             zmianie pola, jak robiła to poprzednia adnotacja. „Uzupełnione z ostatniego
             dnia" przestawało być prawdą dla poprawionego pola i baner musiał uciekać
-            z ekranu; zdanie o tym, CO uzupełniamy, jest prawdziwe cały czas. */}
-        {prefilled && (
+            z ekranu; zdanie o tym, CO uzupełniamy, jest prawdziwe cały czas.
+
+            ZNIKA za to po „WYCZYŚĆ FORMULARZ" (uwaga z urządzenia, 2026-08-27) — pilnuje
+            tego `draft.suggested`, nie sama pamięć zadania: po wyczyszczeniu podstawione
+            dane już nie stoją (i nie wrócą — `taskTouched`), więc baner o nich kłamałby,
+            także po powrocie na ekran. */}
+        {prefilled && draft.suggested && (
           <Banner
             kind="edu"
             tone="blue"
-            icon="info"
             title="Dane z ostatniego dnia"
             text={
-              'Formularz uzupełniamy z ostatniego dnia: rodzaj operacji i klienta — z Twojego, ' +
-              'trasę — z tego samolotu. Zweryfikuj wartości przed przejściem dalej.'
+              'Rodzaj operacji i oznaczenie klienta zostały uzupełnione z Twojego ostatniego dnia lotnego. Lotnisko startu pochodzi z ostatniego miejsca lądowania samolotu. ' +
+              'Zweryfikuj wartości przed przejściem dalej.'
             }
             collapsedLabel="Skąd te dane?"
             dismissed={sourceDismissed}
             onDismiss={setSourceDismissed}
+            // Baner tłumaczący, skąd wzięły się wartości, jest naturalnym miejscem
+            // decyzji „nie chcę ich": czyści pola zadania do stanu początkowego
+            // i przywraca czysty formularz (notatki nie rusza — nie była podpowiedzią).
+            action={{ label: 'Wyczyść formularz', onPress: () => draft.clearTask() }}
           />
         )}
 

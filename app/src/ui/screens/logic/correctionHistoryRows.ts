@@ -29,6 +29,8 @@ const FIELD_LABEL: Record<CorrectionField, string> = {
   time: 'czas',
   fuelL: 'paliwo',
   mh: 'motogodziny',
+  oilL: 'pomiar oleju',
+  oilAddedL: 'dolewka oleju',
   jumpers: 'skoczkowie',
   notes: 'notatka',
   dualId: 'drugi pilot',

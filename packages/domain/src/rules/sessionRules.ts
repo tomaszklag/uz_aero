@@ -42,6 +42,7 @@ import {
   CORRECTION_WINDOW_MS,
   FUEL_EPSILON_L,
   MH_TOLERANCE_H,
+  OIL_EPSILON_L,
   fuelToleranceL,
 } from './tolerances';
 
@@ -57,16 +58,28 @@ const MH_EPSILON_H = 1e-6;
 export interface AircraftLimits {
   /** Pojemność zbiorników (L); `null` = nieznana (offline bez cache) → reguła pojemności śpi. */
   capacityL: number | null;
+  /** Minimalny poziom oleju przed lotem (L); `null` = nieskonfigurowany → ostrzeżenie śpi (issue #60). */
+  oilMinL: number | null;
+  /** Pojemność zbiornika oleju (L); `null` = nieznana → sufit pomiaru i dolewki śpi. */
+  oilCapacityL: number | null;
 }
 
 /** Brak wiedzy o samolocie — dozwolony stan offline (§4.8), nie błąd. */
-export const UNKNOWN_LIMITS: AircraftLimits = { capacityL: null };
+export const UNKNOWN_LIMITS: AircraftLimits = {
+  capacityL: null,
+  oilMinL: null,
+  oilCapacityL: null,
+};
 
 /** Wyciąga limity z rekordu cache referencyjnego (`null` → limity nieznane). */
 export function aircraftLimitsFrom(
   aircraft: ReferenceAircraft | null | undefined,
 ): AircraftLimits {
-  return { capacityL: aircraft?.capacityL ?? null };
+  return {
+    capacityL: aircraft?.capacityL ?? null,
+    oilMinL: aircraft?.oilMinL ?? null,
+    oilCapacityL: aircraft?.oilCapacityL ?? null,
+  };
 }
 
 /**
@@ -356,6 +369,7 @@ function checkByType(
       if (p.reading.mh < 0) {
         v.push(error('MH_NEGATIVE', 'Odczyt motogodzin nie może być ujemny.', { mh: p.reading.mh }));
       }
+      v.push(...checkOilAtPreflight(p.oilL ?? null, p.oilAddedL ?? null, limits));
       break;
     }
 
@@ -497,6 +511,24 @@ function checkByType(
           );
         }
       }
+      break;
+    }
+
+    case 'oil_add': {
+      const p = candidate.payload;
+      // Jak tankowanie: dolewa się przy zatrzymanym śmigle (issue #60, decyzja
+      // 2026-08-27) — przed uruchomieniem i po wyłączeniu, do zdania samolotu
+      // (po `day_close` blokuje ogólna bramka typów korekty).
+      if (state.engineRunning) {
+        v.push(
+          error(
+            'OIL_ADD_ENGINE_RUNNING',
+            'Dolewka oleju przy pracującym silniku — wyłącz silnik.',
+          ),
+        );
+      }
+      // Ujemna ilość i dolewka ponad zbiornik — te same progi, co para na przejęciu.
+      v.push(...checkOilValues(null, p.addedL, limits));
       break;
     }
 
@@ -808,17 +840,32 @@ export function lastKnownMh(state: SessionState): KnownMh | null {
  */
 const AMEND_ALLOWED: Partial<Record<EventType, readonly (keyof CorrectionFields)[]>> = {
   // Notatka z kroku „zadanie" (02e) i skład załogi należą do preflightu: tam pilot
-  // napisał jedno i zadeklarował drugie.
-  preflight_confirm: ['fuelL', 'mh', 'notes', 'dualId'],
+  // napisał jedno i zadeklarował drugie. Olej (issue #60) też: pomiar żyje wyłącznie
+  // przy przejęciu — zdanie samolotu (day_close) oleju nie mierzy, więc go nie koryguje.
+  preflight_confirm: ['fuelL', 'mh', 'oilL', 'oilAddedL', 'notes', 'dualId'],
   day_close: ['fuelL', 'mh'],
   drop: ['jumpers'],
   manual_log_entry: ['notes'],
 };
 
+/**
+ * Pola, w których `null` jest WARTOŚCIĄ (skład niepodany, notatka skasowana, sesja
+ * jednoosobowa, pomiar/dolewka oleju wycofane) — obecność liczy się po kluczu.
+ */
+const NULL_IS_VALUE: ReadonlySet<keyof CorrectionFields> = new Set([
+  'jumpers',
+  'notes',
+  'dualId',
+  'oilL',
+  'oilAddedL',
+]);
+
 /** Nazwy pól dla komunikatu — pilot nie zna nazw z payloadu. */
 const AMEND_FIELD_LABEL: Record<keyof CorrectionFields, string> = {
   fuelL: 'paliwo',
   mh: 'motogodziny',
+  oilL: 'pomiar oleju',
+  oilAddedL: 'dolewka oleju',
   jumpers: 'skład zrzutu',
   notes: 'notatka',
   dualId: 'drugi pilot',
@@ -840,11 +887,11 @@ function checkAmendFields(
 ): RuleViolation[] {
   const v: RuleViolation[] = [];
   const allowed = AMEND_ALLOWED[targetType] ?? [];
-  // `jumpers: null` i `notes: null` są WARTOŚCIAMI (skład niepodany, notatka skasowana),
-  // więc obecność pola liczymy po kluczu, nie po `!== undefined`.
+  // `jumpers: null`, `notes: null`, `oilL: null` itd. są WARTOŚCIAMI (skład niepodany,
+  // notatka skasowana, pomiar wycofany), więc obecność liczymy po kluczu, nie po
+  // `!== undefined` — listę trzyma `NULL_IS_VALUE`.
   const present = (Object.keys(fields) as (keyof CorrectionFields)[]).filter(
-    (key) =>
-      fields[key] !== undefined || key === 'jumpers' || key === 'notes' || key === 'dualId',
+    (key) => fields[key] !== undefined || NULL_IS_VALUE.has(key),
   );
 
   if (present.length === 0) {
@@ -868,6 +915,13 @@ function checkAmendFields(
   if (fields.fuelL != null) v.push(...checkFuelReading(fields.fuelL, limits, 'Odczyt paliwa'));
   if (fields.mh != null && fields.mh < 0) {
     v.push(error('MH_NEGATIVE', 'Odczyt motogodzin nie może być ujemny.', { mh: fields.mh }));
+  }
+  // Olej: te same TWARDE progi, co przy pierwszym zapisie (ujemne, ponad zbiornik).
+  // Ostrzeżenie „poniżej minimum" tu NIE gra: to podpowiedź „dolej, zanim polecisz",
+  // a korekta po fakcie niczego już nie doleje — i widzi zwykle tylko połowę pary
+  // (pomiar ALBO dolewkę), więc rachunek minimum kłamałby częściej, niż pomagał.
+  if ('oilL' in fields || 'oilAddedL' in fields) {
+    v.push(...checkOilValues(fields.oilL ?? null, fields.oilAddedL ?? null, limits));
   }
   if (fields.jumpers != null) {
     const { tandem, aff, solo } = fields.jumpers;
@@ -900,6 +954,86 @@ function checkFuelReading(
     v.push(error('FUEL_NEGATIVE', `${label} nie może być ujemny.`, { value }));
   }
   v.push(...checkCapacity(value, limits, label));
+  return v;
+}
+
+/**
+ * Olej (issue #60) — TWARDA arytmetyka: ujemne wartości i stan ponad zbiornik.
+ *
+ * Sufit liczy się na STANIE PO DOLEWCE (`pomiar + dolane`), bo to z nim samolot idzie
+ * w powietrze — dzięki temu pomiar 10,6 z dolewką 1,5 pada jednym błędem, a nie dwoma.
+ * Dolewka bez pomiaru (bagnet gorący) ma własny wariant: więcej niż zbiornik i tak się
+ * nie zmieści. Bez konfiguracji zbiornika (`null`) sufit śpi — jak `checkCapacity` (§4.8).
+ */
+function checkOilValues(
+  levelL: number | null,
+  addedL: number | null,
+  limits: AircraftLimits,
+): RuleViolation[] {
+  const v: RuleViolation[] = [];
+  if (levelL != null && levelL < 0) {
+    v.push(error('OIL_NEGATIVE', 'Pomiar oleju nie może być ujemny.', { oilL: levelL }));
+  }
+  if (addedL != null && addedL < 0) {
+    v.push(error('OIL_NEGATIVE', 'Dolewka oleju nie może być ujemna.', { oilAddedL: addedL }));
+  }
+  if (v.length > 0) return v; // arytmetyka na ujemnych mówiłaby o niczym
+
+  const cap = limits.oilCapacityL;
+  if (cap == null) return v;
+  const afterL = levelL != null ? levelL + (addedL ?? 0) : null;
+  if (afterL != null && afterL > cap + OIL_EPSILON_L) {
+    v.push(
+      error(
+        'OIL_OVER_CAPACITY',
+        (addedL ?? 0) > 0
+          ? `Stan oleju po dolewce (${round1(afterL)} L) przekracza zbiornik (${round1(cap)} L).`
+          : `Pomiar oleju (${round1(afterL)} L) przekracza zbiornik (${round1(cap)} L).`,
+        { oilL: levelL, oilAddedL: addedL, oilAfterL: afterL, oilCapacityL: cap },
+      ),
+    );
+  } else if (afterL == null && addedL != null && addedL > cap + OIL_EPSILON_L) {
+    v.push(
+      error(
+        'OIL_OVER_CAPACITY',
+        `Dolewka oleju (${round1(addedL)} L) nie zmieści się w zbiorniku (${round1(cap)} L).`,
+        { oilAddedL: addedL, oilCapacityL: cap },
+      ),
+    );
+  }
+  return v;
+}
+
+/**
+ * Olej przy przejęciu: twarda arytmetyka + MIĘKKIE „poniżej minimum" (issue #60).
+ *
+ * Minimum flaguje warning, nie error — PIC decyduje, a wpisane w konfiguracji minimum
+ * bywa błędne (ta sama filozofia, co FUEL_MISMATCH: fakt z terenu jest cenniejszy niż
+ * nasza pewność). Ostrzeżenie liczy się na stanie PO dolewce i mówi, ile brakuje —
+ * dolewka domykająca minimum gasi je w całości. Bez pomiaru minimum milczy: nie ma
+ * wartości, o której mogłoby orzekać.
+ */
+function checkOilAtPreflight(
+  levelL: number | null,
+  addedL: number | null,
+  limits: AircraftLimits,
+): RuleViolation[] {
+  const v = checkOilValues(levelL, addedL, limits);
+  if (v.length > 0) return v; // minimum na wartości ponad zbiornik byłoby szumem
+
+  const minL = limits.oilMinL;
+  if (minL == null || levelL == null) return v;
+  const afterL = levelL + (addedL ?? 0);
+  if (afterL < minL - OIL_EPSILON_L) {
+    const missingL = minL - afterL;
+    v.push(
+      warning(
+        'OIL_BELOW_MIN',
+        `Olej poniżej minimum: ${round1(afterL)} L przy minimum ${round1(minL)} L — dolej co najmniej ${round1(missingL)} L.`,
+        { oilAfterL: afterL, oilMinL: minL, missingL },
+      ),
+    );
+  }
   return v;
 }
 

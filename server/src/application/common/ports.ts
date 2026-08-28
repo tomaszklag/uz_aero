@@ -329,6 +329,14 @@ export interface SessionRow {
   /** Suma wysokości zrzutów Z FIXEM i ich licznik — średnia zakresu = suma / licznik. */
   dropAltSumFt: number | null;
   dropAltCount: number | null;
+  /**
+   * Olej (issue #60): pomiar z przejęcia i SUMA dolanego (para z preflightu + zdarzenia
+   * `oil_add`). `oilLevelL: null` = pomiaru nie było — stan zwykły dla sesji sprzed
+   * modułu i wpisów ręcznych, NIE „nieprzeliczone". Z tych kolumn składa się
+   * przekazanie oleju w `GET /reference` (`Handover.oil`).
+   */
+  oilLevelL: number | null;
+  oilAddedL: number | null;
 }
 
 export interface SessionsProjectionPort {

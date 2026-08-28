@@ -25,7 +25,7 @@
  */
 
 import type { CorrectionFields, Event, NoFlightReason } from '@uzaero/domain';
-import { formatLatLon, litres, motoHours, plural, timeUtcSeconds } from '@uzaero/format';
+import { formatLatLon, litres, motoHours, oilLitres, plural, timeUtcSeconds } from '@uzaero/format';
 
 import type { TimelineEntryDto } from '../../api/dto';
 import type { PillTone } from '../../ui/components/Pill';
@@ -129,6 +129,15 @@ function amendSummary(fields: CorrectionFields): string {
   if ('dualId' in fields) {
     parts.push(fields.dualId == null ? 'bez Duala' : `Dual: ${fields.dualId}`);
   }
+  // Olej (issue #60): `null` to wartość — „wpisu nie było", nie brak pola.
+  if ('oilL' in fields) {
+    parts.push(fields.oilL == null ? 'pomiar oleju wycofany' : `olej ${fields.oilL} L`);
+  }
+  if ('oilAddedL' in fields) {
+    parts.push(
+      fields.oilAddedL == null ? 'bez dolewki oleju' : `dolewka oleju ${fields.oilAddedL} L`,
+    );
+  }
   return parts.length > 0 ? parts.join(' · ') : 'brak rozpoznanych pól';
 }
 
@@ -152,6 +161,12 @@ function describe(event: Event): string[] {
         `operacja: ${p.operation} · ${yesNo(p.departureIcao, '?')} → ${yesNo(p.arrivalIcao, '?')}`,
         `odczyt: FOB ${litres(p.reading.fuelL)} · MH ${motoHours(p.reading.mh, p.mhFormat ?? null)}`,
       ];
+      // Olej (issue #60) — linia tylko przy faktycznym wpisie; dolewka w nawiasie.
+      if (p.oilL != null || p.oilAddedL != null) {
+        const level = p.oilL != null ? `${p.oilL} L` : 'bez pomiaru';
+        const added = p.oilAddedL != null && p.oilAddedL > 0 ? ` (dolano ${p.oilAddedL} L)` : '';
+        lines.push(`olej: ${level}${added}`);
+      }
       if (p.client != null) lines.push(`klient: ${p.client}`);
       for (const c of p.corrections ?? []) {
         // Korekta odczytu z preflightu jest LOGIEM, nie nadpisaniem — pokazujemy oba
@@ -221,6 +236,11 @@ function describe(event: Event): string[] {
       }
       return lines;
     }
+
+    case 'oil_add':
+      // Dolewka oleju z kokpitu (issue #60) — sama ilość: poziomu po dolewce nie ma
+      // jak uczciwie zmierzyć, a pomiar z przejęcia stoi w wierszu preflightu wyżej.
+      return [`dolano ${oilLitres(event.payload.addedL)}`];
 
     case 'crew_change':
       return [

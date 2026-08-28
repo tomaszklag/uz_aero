@@ -52,7 +52,7 @@ const AC = 'ac-1';
 const PIC = 'pic-1';
 
 /** Konfiguracja SP-AXA: Cessna 182, zbiorniki 330 L (jak w `rules.test.ts`). */
-const LIMITS: AircraftLimits = { capacityL: 330 };
+const LIMITS: AircraftLimits = { capacityL: 330, oilMinL: null, oilCapacityL: null };
 
 /** 22 JUNE 2026, 08:00 UTC — początek kanonicznego dnia. */
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);

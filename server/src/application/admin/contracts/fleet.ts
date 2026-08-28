@@ -85,6 +85,10 @@ export interface AdminAircraftListItem {
   mhFormat: MhFormat;
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
+  /** Konfiguracja oleju (issue #60); `null` = nieskonfigurowane — moduł milczy. */
+  oilMinL: number | null;
+  oilCapacityL: number | null;
+  oilNormLPerH: number | null;
   /** ISO 8601 UTC — ostatnia zmiana wiersza konfiguracji (nie: ostatni lot). */
   updatedAt: string;
 

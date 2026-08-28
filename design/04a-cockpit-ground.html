@@ -268,6 +268,21 @@
             <div class="action-sub">Dolej i zapisz odczyt</div>
           </div>
         </a>
+        <!-- DOLEJ OLEJ (issue #60, decyzja 2026-08-27): dolewka zdarza się także PO
+             przejęciu, więc sam krok liczników nie wystarcza. Jak tankowanie — przy
+             zatrzymanym śmigle, przed uruchomieniem i po wyłączeniu. Otwiera ARKUSZ
+             jednej liczby (wzorzec 02B), nie ekran: poziomu po dolewce nie ma jak
+             uczciwie zmierzyć, pyta się o samą ilość. Podpis niesie minimum
+             z konfiguracji — pomiar z przejęcia stoi w logu wyżej (stan modalny). -->
+        <a href="04a-cockpit-ground.html" class="action-card">
+          <div class="action-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+          </div>
+          <div>
+            <div class="action-label">Dolej olej</div>
+            <div class="action-sub">Minimum 8,5 L</div>
+          </div>
+        </a>
         <!-- ZAŁADUNEK (issue #21) — TYLKO dzień skokowy i TYLKO przed startem: pierwszy
              skład wsiada zwykle przy wyłączonym silniku, a zadeklarowane tu liczby
              wypełnią arkusz zrzutu 05E. Podpis jest STAŁY: zapisany załadunek widać

@@ -27,7 +27,15 @@ import type { EpochMillis } from '../time';
 import type { CorrectionFields, Event, EventOf, JumperCounts } from '../events/events';
 
 /** Który wymiar zdarzenia zmieniła poprawka. */
-export type CorrectionField = 'time' | 'fuelL' | 'mh' | 'jumpers' | 'notes' | 'dualId';
+export type CorrectionField =
+  | 'time'
+  | 'fuelL'
+  | 'mh'
+  | 'oilL'
+  | 'oilAddedL'
+  | 'jumpers'
+  | 'notes'
+  | 'dualId';
 
 /**
  * Wartość pola w historii — czas i liczby jako `number`, skład zrzutu jako trójka,
@@ -82,6 +90,13 @@ function originalValue(target: Event, field: CorrectionField): CorrectionValue {
     if (target.type !== 'preflight_confirm') return null;
     return target.payload.dualId !== undefined ? target.payload.dualId : target.dualId;
   }
+  // Olej (issue #60): brak pola w zapisie pierwotnym = „pomiaru/dolewki nie było" — null.
+  if (field === 'oilL') {
+    return target.type === 'preflight_confirm' ? (target.payload.oilL ?? null) : null;
+  }
+  if (field === 'oilAddedL') {
+    return target.type === 'preflight_confirm' ? (target.payload.oilAddedL ?? null) : null;
+  }
 
   const reading =
     target.type === 'preflight_confirm'
@@ -93,24 +108,33 @@ function originalValue(target: Event, field: CorrectionField): CorrectionValue {
   return field === 'fuelL' ? reading.fuelL : reading.mh;
 }
 
-/** Pola `amend` w kolejności, w jakiej mają stanąć w historii (paliwo przed licznikiem). */
+/** Pola `amend` w kolejności, w jakiej mają stanąć w historii (paliwo przed licznikiem, olej za nim). */
 const AMEND_FIELDS: readonly Exclude<CorrectionField, 'time'>[] = [
   'fuelL',
   'mh',
+  'oilL',
+  'oilAddedL',
   'jumpers',
   'notes',
   'dualId',
 ];
 
 /**
- * Czy payload niesie to pole. `jumpers: null` (skład niepodany) i `notes: null`
- * (notatka skasowana) są WARTOŚCIAMI, więc obecność liczy się po kluczu.
+ * Pola, w których `null` jest WARTOŚCIĄ (skład niepodany, notatka skasowana, sesja
+ * jednoosobowa, pomiar/dolewka oleju wycofane) — obecność liczy się po samym kluczu.
  */
+const NULL_IS_VALUE: ReadonlySet<Exclude<CorrectionField, 'time'>> = new Set([
+  'jumpers',
+  'notes',
+  'dualId',
+  'oilL',
+  'oilAddedL',
+]);
+
+/** Czy payload niesie to pole — dla pól z `NULL_IS_VALUE` rozstrzyga sam klucz. */
 function hasField(fields: CorrectionFields, field: Exclude<CorrectionField, 'time'>): boolean {
-  // `jumpers`, `notes` i `dualId` mogą nieść `null` jako WARTOŚĆ (skład niepodany,
-  // notatka skasowana, sesja jednoosobowa) — dla nich liczy się sam klucz.
   if (!(field in fields)) return false;
-  if (field === 'jumpers' || field === 'notes' || field === 'dualId') return true;
+  if (NULL_IS_VALUE.has(field)) return true;
   return fields[field] !== undefined;
 }
 

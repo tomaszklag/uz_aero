@@ -77,5 +77,10 @@ export function sessionRowFrom(sessionUuid: string, stream: Event[]): SessionRow
     jumpersSolo: s.drops.jumpers.solo,
     dropAltSumFt: s.drops.altitudeSumFt,
     dropAltCount: s.drops.altitudeFixCount,
+    // Olej (issue #60): pomiar z przejęcia i SUMA dolanego (para z preflightu +
+    // zdarzenia `oil_add`) — wartości POLICZONE przez projekcję, jak wszystko wyżej.
+    // Z tych kolumn `GET /reference` składa przekazanie oleju (`Handover.oil`).
+    oilLevelL: s.oil.levelL,
+    oilAddedL: s.oil.addedL,
   };
 }

@@ -23,6 +23,9 @@ interface AircraftRow {
   dual_required: boolean;
   service_status: string;
   updated_at: string;
+  oil_min_l: number | null;
+  oil_capacity_l: number | null;
+  oil_norm_l_per_h: number | null;
 }
 
 interface PilotRefRow {
@@ -58,6 +61,11 @@ export class PgReferenceRepo implements ReferencePort {
       mhFormat: r.mh_format as MhFormat,
       dualRequired: r.dual_required,
       serviceStatus: r.service_status as ServiceStatus,
+      // Konfiguracja oleju (issue #60) — `null` = administrator nie skonfigurował;
+      // moduł dla tej jednostki milczy (podpowiedzi i ostrzeżenia śpią, pomiar działa).
+      oilMinL: r.oil_min_l != null ? Number(r.oil_min_l) : null,
+      oilCapacityL: r.oil_capacity_l != null ? Number(r.oil_capacity_l) : null,
+      oilNormLPerH: r.oil_norm_l_per_h != null ? Number(r.oil_norm_l_per_h) : null,
       claimPicId: null,
       claimSince: null,
       handover: null,

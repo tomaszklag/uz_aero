@@ -29,8 +29,8 @@ const SESSION = 'sess-1';
 const AC = 'ac-1';
 const PIC = 'pic-1';
 
-/** Konfiguracja SP-AXA z design-notes: Cessna 182, zbiorniki 330 L. */
-const LIMITS: AircraftLimits = { capacityL: 330 };
+/** Konfiguracja SP-AXA z design-notes: Cessna 182, zbiorniki 330 L; olej min 8,5 / zbiornik 11,4 L (issue #60). */
+const LIMITS: AircraftLimits = { capacityL: 330, oilMinL: 8.5, oilCapacityL: 11.4 };
 
 /** 22 JUNE 2026, 08:00 UTC — początek kanonicznego dnia. */
 const T0 = Date.UTC(2026, 5, 22, 8, 0, 0);
@@ -693,5 +693,103 @@ describe('zegary', () => {
 
   it('brak fixa GPS nie generuje flagi driftu', () => {
     expect(check(ground(), ev('engine_start', {}, { t: min(12), gpsTime: null }))).toEqual([]);
+  });
+});
+
+describe('olej przy przejęciu (issue #60)', () => {
+  /** Preflight z polami olejowymi — reszta jak kanoniczny `preflight()`. */
+  const oilPreflight = (oil: { oilL?: number | null; oilAddedL?: number | null }): Event =>
+    ev(
+      'preflight_confirm',
+      {
+        operation: 'skoki',
+        departureIcao: 'EPKK',
+        arrivalIcao: 'EPKK',
+        reading: { fuelL: 150, mh: MH_START },
+        mhFormat: 'hhmm',
+        ...oil,
+      },
+      { t: min(0) },
+    );
+
+  it('domena przyjmuje brak pomiaru (stare strumienie, wpis ręczny) — wymagalność egzekwuje ekran 02a', () => {
+    expect(check([claim()], oilPreflight({}))).toEqual([]);
+    expect(check([claim()], oilPreflight({ oilL: null, oilAddedL: null }))).toEqual([]);
+  });
+
+  it('ujemny pomiar i ujemna dolewka są twardo odrzucane', () => {
+    expect(hard(check([claim()], oilPreflight({ oilL: -1 })))).toEqual(['OIL_NEGATIVE']);
+    expect(hard(check([claim()], oilPreflight({ oilAddedL: -0.5 })))).toEqual(['OIL_NEGATIVE']);
+  });
+
+  it('stan ponad zbiornik oleju jest twardo odrzucany — pomiar, suma i dolewka w ciemno', () => {
+    expect(hard(check([claim()], oilPreflight({ oilL: 12 })))).toEqual(['OIL_OVER_CAPACITY']);
+    // 10,6 + 1,5 = 12,1 > 11,4 — sufit liczy się na STANIE PO DOLEWCE
+    expect(hard(check([claim()], oilPreflight({ oilL: 10.6, oilAddedL: 1.5 })))).toEqual([
+      'OIL_OVER_CAPACITY',
+    ]);
+    // dolewka bez pomiaru też nie zmieści więcej, niż mieści zbiornik
+    expect(hard(check([claim()], oilPreflight({ oilAddedL: 12 })))).toEqual(['OIL_OVER_CAPACITY']);
+    // równo do pełna jest legalne (epsilon łapie artefakty IEEE-754, nie intencję)
+    expect(check([claim()], oilPreflight({ oilL: 10.4, oilAddedL: 1.0 }))).toEqual([]);
+  });
+
+  it('bez konfiguracji zbiornika sufit śpi (offline bez cache, §4.8)', () => {
+    expect(check([claim()], oilPreflight({ oilL: 12 }), UNKNOWN_LIMITS)).toEqual([]);
+  });
+
+  it('poniżej minimum flaguje MIĘKKO i mówi, ile brakuje — zapis przechodzi', () => {
+    const v = check([claim()], oilPreflight({ oilL: 7.8 }));
+    expect(hard(v)).toEqual([]);
+    expect(soft(v)).toEqual(['OIL_BELOW_MIN']);
+    expect(warningsOf(v)[0]?.details?.missingL).toBeCloseTo(0.7, 6);
+  });
+
+  it('dolewka domykająca minimum gasi ostrzeżenie; równo na minimum nie jest „poniżej"', () => {
+    expect(check([claim()], oilPreflight({ oilL: 7.8, oilAddedL: 1.0 }))).toEqual([]);
+    expect(check([claim()], oilPreflight({ oilL: 8.5 }))).toEqual([]);
+  });
+});
+
+describe('dolewka oleju z kokpitu — oil_add (issue #60, decyzja 2026-08-27)', () => {
+  const oilAdd = (addedL: number, o: EvOptions = {}): Event =>
+    ev('oil_add', { addedL }, o);
+
+  it('wolno dolać PRZED uruchomieniem i PO wyłączeniu — jak tankowanie', () => {
+    expect(check(ground(), oilAdd(1.0, { t: min(2) }))).toEqual([]);
+    expect(check(afterCycle(), oilAdd(1.0, { t: min(160) }))).toEqual([]);
+  });
+
+  it('przy pracującym silniku dolewka jest twardo odrzucana', () => {
+    expect(hard(check(running(), oilAdd(1.0, { t: min(20) })))).toEqual([
+      'OIL_ADD_ENGINE_RUNNING',
+    ]);
+  });
+
+  it('ujemna ilość i dolewka ponad zbiornik — te same progi, co para na przejęciu', () => {
+    expect(hard(check(ground(), oilAdd(-0.5, { t: min(2) })))).toEqual(['OIL_NEGATIVE']);
+    expect(hard(check(ground(), oilAdd(12, { t: min(2) })))).toEqual(['OIL_OVER_CAPACITY']);
+    expect(check(ground(), oilAdd(12, { t: min(2) }), UNKNOWN_LIMITS)).toEqual([]);
+  });
+
+  it('po zdaniu samolotu dolewki już nie ma — bramka typów korekty', () => {
+    const closed = [
+      ...afterCycle(),
+      ev('day_close', { finalReading: { fuelL: 100, mh: 1236.9 } }, { t: min(170) }),
+    ];
+    expect(hard(check(closed, oilAdd(1.0, { t: min(180) })))).toContain('DAY_CLOSED');
+  });
+
+  it('korekty: retime i void przechodzą, amend jest odrzucany (parytet z refuel)', () => {
+    const add = oilAdd(1.0, { t: min(2) });
+    const stream = [...ground(), add];
+    const correction = (payload: Record<string, unknown>): Event =>
+      ev('event_correction', { targetUuid: add.uuid, ...payload } as never, { t: min(6) });
+
+    expect(check(stream, correction({ action: 'retime', newTime: min(3) }))).toEqual([]);
+    expect(check(stream, correction({ action: 'void' }))).toEqual([]);
+    expect(
+      hard(check(stream, correction({ action: 'amend', fields: { oilAddedL: 2 } }))),
+    ).toEqual(['CORRECTION_FIELD_NOT_ALLOWED']);
   });
 });

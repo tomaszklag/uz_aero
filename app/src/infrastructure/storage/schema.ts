@@ -16,7 +16,7 @@
  */
 
 /** Wersja schematu — sterowana `PRAGMA user_version`. Podnieś przy każdej migracji. */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /**
  * Migracja 0 → 1: pełny schemat początkowy.
@@ -172,10 +172,32 @@ export const MIGRATION_4 = `
   );
 `;
 
+/**
+ * Migracja 5: konfiguracja OLEJU samolotu (issue #60) — minimum, zbiornik i norma
+ * nominalna dla sekcji oleju na kroku liczników (02a).
+ *
+ * Osobna tabela z DOKŁADNIE tych powodów, co `reference_consumption` (docblock wyżej):
+ * `ADD COLUMN` nie jest idempotentne, a komplet migracji musi przejść ponownie bez
+ * błędu. Do Etapu D serwer tych pól nie wysyła — tabela stoi pusta i sekcja oleju
+ * działa bez podpowiedzi konfiguracji, dokładnie jak przy samolocie nieskonfigurowanym.
+ * Trzy kolumny zamiast JSON-a, bo to trzy niezależne liczby KONFIGURACJI (siostry
+ * `capacity_l`), a nie przepisywany w całości model.
+ */
+export const MIGRATION_5 = `
+  CREATE TABLE IF NOT EXISTS reference_oil (
+    aircraft_id  TEXT PRIMARY KEY NOT NULL,
+    min_l        REAL,
+    capacity_l   REAL,
+    norm_l_per_h REAL,
+    fetched_at   INTEGER NOT NULL
+  );
+`;
+
 /** Migracje w kolejności stosowania: indeks = wersja docelowa − 1. */
 export const MIGRATIONS: readonly string[] = [
   MIGRATION_1,
   MIGRATION_2,
   MIGRATION_3,
   MIGRATION_4,
+  MIGRATION_5,
 ];

@@ -32,7 +32,7 @@ import {
 
 const DAY = Date.UTC(2026, 7, 6);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
-const LIMITS: AircraftLimits = { capacityL: 212 };
+const LIMITS: AircraftLimits = { capacityL: 212, oilMinL: 8.5, oilCapacityL: 11.4 };
 
 let seq = 0;
 function event(type: Event['type'], time: number, payload: unknown = {}): Event {
@@ -93,6 +93,9 @@ function session(): {
     arrivalIcao: 'EPZG',
     reading: { fuelL: 150, mh: 1234.5 },
     mhFormat: 'decimal',
+    // Olej z bagnetu przy przejęciu (issue #60) — pomiar 10,2 L + dolane 1,0 L.
+    oilL: 10.2,
+    oilAddedL: 1.0,
   });
   const drop = event('drop', at(8, 52), {
     dropNumber: 1,
@@ -514,5 +517,64 @@ describe('regresja: poprawka dociera do analityki zużycia', () => {
       correction(dayClose, at(11, 40), { action: 'amend', fields: { mh: 1236.5 } }),
     ];
     expect(buildFuelIntervals(stream).mh?.deltaMh).toBeCloseTo(2.0, 6);
+  });
+});
+
+describe('amend — olej przy przejęciu (issue #60)', () => {
+  it('poprawiony pomiar wchodzi do projekcji; dolewka i paliwo zostają nietknięte', () => {
+    const { events, preflight } = session();
+    expect(projectSession(events).oil).toEqual({ levelL: 10.2, addedL: 1.0, afterL: 11.2 });
+
+    const stream = [
+      ...events,
+      correction(preflight, at(11, 40), { action: 'amend', fields: { oilL: 9.7 } }),
+    ];
+    const after = projectSession(stream);
+    expect(after.oil.levelL).toBe(9.7);
+    expect(after.oil.addedL).toBe(1.0);
+    expect(after.oil.afterL).toBeCloseTo(10.7, 6);
+    expect(after.fuel.startL).toBe(150);
+  });
+
+  it('`oilL: null` kasuje omyłkowy pomiar — null jest wartością, nie brakiem pola', () => {
+    const { events, preflight } = session();
+    const stream = [
+      ...events,
+      correction(preflight, at(11, 40), { action: 'amend', fields: { oilL: null } }),
+    ];
+    const after = projectSession(stream);
+    expect(after.oil.levelL).toBeNull();
+    expect(after.oil.afterL).toBeNull();
+    // dolewka to osobny fakt — kasowanie pomiaru jej nie rusza
+    expect(after.oil.addedL).toBe(1.0);
+  });
+
+  it('olej nie należy do zdania samolotu — biała lista odrzuca cel day_close', () => {
+    const { events, dayClose } = session();
+    const candidate = correction(dayClose, at(11, 40), {
+      action: 'amend',
+      fields: { oilL: 9.7 },
+    });
+    expect(codes(check(events, candidate))).toEqual(['CORRECTION_FIELD_NOT_ALLOWED']);
+  });
+
+  it('korekta nie jest furtką: te same progi zbiornika, co przy pierwszym zapisie', () => {
+    const { events, preflight } = session();
+    const candidate = correction(preflight, at(11, 40), {
+      action: 'amend',
+      fields: { oilL: 12 },
+    });
+    expect(codes(check(events, candidate))).toEqual(['OIL_OVER_CAPACITY']);
+  });
+
+  it('unieważniona dolewka z kokpitu (oil_add) znika z sumy oleju', () => {
+    const { events } = session();
+    const add = event('oil_add', at(8, 6), { addedL: 0.5 });
+    const stream = [...events, add];
+    expect(projectSession(stream).oil.addedL).toBeCloseTo(1.5, 6); // 1,0 z przejęcia + 0,5
+
+    const voided = [...stream, correction(add, at(11, 40), { action: 'void' })];
+    expect(projectSession(voided).oil.addedL).toBeCloseTo(1.0, 6);
+    expect(projectSession(voided).oil.afterL).toBeCloseTo(11.2, 6);
   });
 });

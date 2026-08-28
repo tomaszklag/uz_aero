@@ -53,6 +53,25 @@ export interface HandoverTrailEntry {
   durationMs: number | null;
 }
 
+/**
+ * Ostatni znany POMIAR OLEJU samolotu (issue #60) — materiał podpowiedzi na kroku
+ * liczników. Interwał olejowy biegnie pomiar→pomiar przez wiele sesji (zdanie samolotu
+ * oleju nie mierzy — bagnet tuż po locie kłamie), więc przekazanie potrafi nieść pomiar
+ * sprzed dowolnie wielu przejęć: kotwicą rachunku oczekiwania jest MH przy pomiarze,
+ * a dolewki zapisane PO nim wchodzą do rachunku sumą.
+ */
+export interface OilHandover {
+  /** Pomiar z bagnetu (L). */
+  levelL: number;
+  /** Odczyt MH przy tym pomiarze — kotwica rachunku; `null` gdy nieznany. */
+  atMh: number | null;
+  /** Kiedy zmierzono (UTC). */
+  at: EpochMillis;
+  byPilotId: string | null;
+  /** Suma dolewek zapisanych po pomiarze (kolejne przejęcia bez pomiaru). */
+  addedSinceL: number;
+}
+
 /** Przekazanie od poprzednika (JSON w kolumnie `handover`, §5.2). */
 export interface Handover {
   reading: FuelMhReading;
@@ -62,6 +81,11 @@ export interface Handover {
   at: EpochMillis;
   /** Historia prowadząca do tych wartości, od najstarszej. Puste = serwer jej nie podał. */
   trail?: HandoverTrailEntry[];
+  /**
+   * Ostatni pomiar oleju (issue #60); brak pola = serwer sprzed modułu oleju,
+   * `null` = serwer nie zna żadnego pomiaru. Wypełnia Etap D.
+   */
+  oil?: OilHandover | null;
 }
 
 /**
@@ -165,6 +189,24 @@ export interface ReferenceAircraft {
   /** Czy wymagany drugi pilot (np. An-2) — blokuje preflight bez Duala (§5.4). */
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
+  /*
+   * Konfiguracja OLEJU (issue #60) — trzy liczby z dokumentacji jednostki, wszystkie
+   * OPCJONALNE na dwóch poziomach naraz:
+   *  - `?` (brak klucza) = rekord sprzed modułu oleju — starszy serwer / stary wiersz
+   *    cache'u; Etap D zaczyna wysyłać pola zawsze, ale odczyt musi przeżyć oba światy,
+   *  - `null` = administrator nie skonfigurował — moduł dla tej jednostki milczy
+   *    (pomiar dalej można zapisać; reguły i podpowiedzi śpią).
+   */
+  /** Minimalny poziom oleju przed lotem (L); poniżej → ostrzeżenie „dolej co najmniej…". */
+  oilMinL?: number | null;
+  /** Pojemność zbiornika oleju (L) — twardy sufit pomiaru i dolewki, jak `capacityL` dla tankowania. */
+  oilCapacityL?: number | null;
+  /**
+   * Nominalna norma zużycia oleju (L/h względem MH) — z dokumentacji silnika albo
+   * z doświadczenia klubu. Zasila sugestię oczekiwanego poziomu, DOPÓKI analityka nie
+   * policzy własnej stawki z pomiarów (faza 2) — wyliczona wygrywa z wpisaną.
+   */
+  oilNormLPerH?: number | null;
   /** Aktywny claim: kto (pilot id) — null gdy wolny. */
   claimPicId: string | null;
   /** Od kiedy trwa aktywny claim (UTC) — null gdy wolny. */

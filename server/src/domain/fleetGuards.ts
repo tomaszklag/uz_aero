@@ -34,7 +34,11 @@
  * Kody odmowy. Surowe (`zasób_czynność`) — nazwanie ich po polsku jest sprawą panelu,
  * tak samo jak przy `AccountRefusal`: serwer nie zna języka interfejsu.
  */
-export type FleetRefusal = 'capacity_not_positive' | 'open_session';
+export type FleetRefusal =
+  | 'capacity_not_positive'
+  | 'open_session'
+  | 'oil_not_positive'
+  | 'oil_min_above_capacity';
 
 /**
  * Pojemność zbiorników. `null` = pole nietknięte w `PATCH`-u, więc nie ma czego oceniać.
@@ -63,5 +67,31 @@ export function refuseDisable(input: {
 }): FleetRefusal | null {
   if (input.nextStatus !== 'disabled') return null;
   if (input.openSessions > 0) return 'open_session';
+  return null;
+}
+
+/**
+ * Konfiguracja OLEJU (issue #60) — ocena na wartościach EFEKTYWNYCH po zmianie
+ * (komenda składa `before + patch`, bo PATCH niesie różnicę, a reguła orzeka o stanie).
+ *
+ * `null` = pole nieskonfigurowane i to jest stan LEGALNY (moduł dla jednostki milczy)
+ * — inaczej niż pojemność zbiorników, która jest obowiązkowa. Odrzucamy za to:
+ *  • wartości niedodatnie/nieskończone — zero litrów oleju nie jest stanem świata,
+ *    jest literówką, a minimum 0 wyłączałoby ostrzeżenie po cichu;
+ *  • minimum PONAD pojemność — ostrzeżenie „dolej co najmniej…" żądałoby wtedy
+ *    stanu, którego zbiornik fizycznie nie mieści, przy KAŻDYM pomiarze.
+ */
+export function refuseOil(input: {
+  oilMinL: number | null;
+  oilCapacityL: number | null;
+  oilNormLPerH: number | null;
+}): FleetRefusal | null {
+  const positive = (v: number | null): boolean => v == null || (Number.isFinite(v) && v > 0);
+  if (!positive(input.oilMinL) || !positive(input.oilCapacityL) || !positive(input.oilNormLPerH)) {
+    return 'oil_not_positive';
+  }
+  if (input.oilMinL != null && input.oilCapacityL != null && input.oilMinL > input.oilCapacityL) {
+    return 'oil_min_above_capacity';
+  }
   return null;
 }

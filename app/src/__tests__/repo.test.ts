@@ -130,6 +130,10 @@ describe('EventsRepo + InMemoryAdapter', () => {
         claimSince: null,
         handover: null,
         consumption: null,
+        // Konfiguracja oleju (issue #60) — musi przeżyć rundę zapis→odczyt.
+        oilMinL: 8.5,
+        oilCapacityL: 11.4,
+        oilNormLPerH: 0.12,
       },
     ]);
     await repo.upsertPilots([{ id: 'pic-1', code: 'KRZ', name: 'Jan Kowalski', active: true }]);
@@ -141,6 +145,9 @@ describe('EventsRepo + InMemoryAdapter', () => {
 
     const byId = await repo.getAircraftById('ac-1');
     expect(byId?.capacityL).toBe(330);
+    expect(byId?.oilMinL).toBe(8.5);
+    expect(byId?.oilCapacityL).toBe(11.4);
+    expect(byId?.oilNormLPerH).toBe(0.12);
 
     const pilots = await repo.getPilots();
     expect(pilots[0]!.code).toBe('KRZ');

@@ -240,3 +240,52 @@ describe('historia zmian — wpisy nieczytelne', () => {
     expect(correctionHistory(stream, target.uuid)).toEqual([]);
   });
 });
+
+describe('historia zmian — olej przy przejęciu (issue #60)', () => {
+  const preflightWithOil = (): Event =>
+    event('preflight_confirm', at(8, 4), {
+      operation: 'skoki',
+      reading: { fuelL: 150, mh: 1234.5 },
+      mhFormat: 'decimal',
+      oilL: 10.2,
+    });
+
+  it('pomiar i dolewka mają OSOBNE wpisy z parą „było → jest"', () => {
+    const target = preflightWithOil();
+    const stream = [
+      target,
+      correction(target, at(11, 42), {
+        action: 'amend',
+        fields: { oilL: 9.7, oilAddedL: 1.0 },
+      }),
+    ];
+    const history = correctionHistory(stream, target.uuid);
+    expect(history).toHaveLength(2);
+    expect(history[0]).toMatchObject({ field: 'oilL', from: 10.2, to: 9.7, kind: 'amend' });
+    // dolewki w zapisie pierwotnym nie było — kotwicą jest null, nie zero
+    expect(history[1]).toMatchObject({ field: 'oilAddedL', from: null, to: 1.0 });
+  });
+
+  it('`oilL: null` czyta się jako skasowanie pomiaru', () => {
+    const target = preflightWithOil();
+    const stream = [
+      target,
+      correction(target, at(11, 42), { action: 'amend', fields: { oilL: null } }),
+    ];
+    const history = correctionHistory(stream, target.uuid);
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({ field: 'oilL', from: 10.2, to: null, kind: 'amend' });
+  });
+
+  it('druga poprawka pomiaru odnosi się do pierwszej, nie do oryginału', () => {
+    const target = preflightWithOil();
+    const stream = [
+      target,
+      correction(target, at(11, 42), { action: 'amend', fields: { oilL: 9.7 } }),
+      correction(target, at(12, 5), { action: 'amend', fields: { oilL: 9.9 } }),
+    ];
+    const history = correctionHistory(stream, target.uuid);
+    expect(history).toHaveLength(2);
+    expect(history[1]).toMatchObject({ field: 'oilL', from: 9.7, to: 9.9 });
+  });
+});

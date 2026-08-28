@@ -227,3 +227,92 @@ describe('norma zużycia w kanale referencyjnym (etap 3, 2026-08-05)', () => {
     expect(other.consumption).toBeNull();
   });
 });
+
+// ── przekazanie oleju (issue #60, etap D) ───────────────────────────────────────
+
+describe('przekazanie oleju w /reference (issue #60)', () => {
+  it('kotwicą jest pomiar najdalszy w łańcuchu MH; dolewki po nim wchodzą sumą (także oil_add)', async () => {
+    const { app } = await testHarness();
+    const token = await authed(app);
+    const DAY = Date.UTC(2026, 5, 22);
+    const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
+    let seq = 0;
+    const mk = (sess: string, type: string, time: number, payload: object) => ({
+      uuid: `oil-ref-${++seq}`,
+      sessionUuid: sess,
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type,
+      deviceTime: time,
+      gpsTime: time,
+      payload,
+      schemaVersion: 1,
+    });
+
+    // Sesja 1: POMIAR 10,6 L przy liczniku 1230,5 — to ona zostanie kotwicą.
+    const s1 = await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        events: [
+          mk('sess-oil-1', 'session_claim', at(8, 0), { mode: 'free' }),
+          mk('sess-oil-1', 'preflight_confirm', at(8, 0), {
+            operation: 'skoki',
+            reading: { fuelL: 150, mh: 1230.5 },
+            oilL: 10.6,
+            mhFormat: 'hhmm',
+          }),
+          mk('sess-oil-1', 'engine_start', at(8, 10), {}),
+          mk('sess-oil-1', 'engine_stop', at(10, 30), {}),
+          mk('sess-oil-1', 'day_close', at(10, 40), {
+            finalReading: { fuelL: 120, mh: 1232.7 },
+          }),
+        ],
+      },
+    });
+    expect(s1.statusCode).toBe(200);
+
+    // Sesja 2: BEZ pomiaru (bagnet gorący) — dolewka 0,7 przy przejęciu + 0,3 z kokpitu.
+    const s2 = await app.inject({
+      method: 'POST',
+      url: '/events',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        events: [
+          mk('sess-oil-2', 'session_claim', at(11, 0), { mode: 'free' }),
+          mk('sess-oil-2', 'preflight_confirm', at(11, 0), {
+            operation: 'skoki',
+            reading: { fuelL: 120, mh: 1232.7 },
+            oilAddedL: 0.7,
+            mhFormat: 'hhmm',
+          }),
+          mk('sess-oil-2', 'oil_add', at(11, 5), { addedL: 0.3 }),
+          mk('sess-oil-2', 'engine_start', at(11, 10), {}),
+          mk('sess-oil-2', 'engine_stop', at(12, 30), {}),
+          mk('sess-oil-2', 'day_close', at(12, 40), {
+            finalReading: { fuelL: 100, mh: 1234.1 },
+          }),
+        ],
+      },
+    });
+    expect(s2.statusCode).toBe(200);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/reference',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const axa = res.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+
+    // Rachunek telefonu: oczekiwane = 10,6 + 1,0 − stawka × (licznik − 1230,5).
+    expect(axa.handover.oil).toEqual({
+      levelL: 10.6,
+      atMh: 1230.5,
+      at: at(8, 0),
+      byPilotId: 'TMK',
+      addedSinceL: 1.0,
+    });
+  });
+});

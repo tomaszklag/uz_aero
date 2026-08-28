@@ -46,6 +46,9 @@ interface AircraftDbRow {
   dual_required: boolean;
   service_status: string;
   updated_at: string | Date;
+  oil_min_l: string | number | null;
+  oil_capacity_l: string | number | null;
+  oil_norm_l_per_h: string | number | null;
 }
 
 interface JoinedDbRow extends AircraftDbRow {
@@ -79,6 +82,9 @@ const toAircraft = (r: AircraftDbRow): AdminAircraft => ({
   mhFormat: toMhFormat(r.mh_format),
   dualRequired: r.dual_required,
   serviceStatus: toServiceStatus(r.service_status),
+  oilMinL: r.oil_min_l != null ? Number(r.oil_min_l) : null,
+  oilCapacityL: r.oil_capacity_l != null ? Number(r.oil_capacity_l) : null,
+  oilNormLPerH: r.oil_norm_l_per_h != null ? Number(r.oil_norm_l_per_h) : null,
 });
 
 const toJoin = (r: JoinedDbRow): AdminAircraftJoin => ({
@@ -219,8 +225,9 @@ export class PgAdminFleetRepo implements FleetAdminPort {
 
   async insert(tx: Queryable, aircraft: AdminAircraft): Promise<void> {
     await tx.query(
-      `INSERT INTO aircraft (id, reg, type, year, capacity_l, mh_format, dual_required, service_status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      `INSERT INTO aircraft (id, reg, type, year, capacity_l, mh_format, dual_required, service_status,
+                             oil_min_l, oil_capacity_l, oil_norm_l_per_h)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
         aircraft.id,
         aircraft.reg,
@@ -230,6 +237,9 @@ export class PgAdminFleetRepo implements FleetAdminPort {
         aircraft.mhFormat,
         aircraft.dualRequired,
         aircraft.serviceStatus,
+        aircraft.oilMinL,
+        aircraft.oilCapacityL,
+        aircraft.oilNormLPerH,
       ],
     );
   }
@@ -253,6 +263,11 @@ export class PgAdminFleetRepo implements FleetAdminPort {
               mh_format      = COALESCE($7, mh_format),
               dual_required  = COALESCE($8, dual_required),
               service_status = COALESCE($9, service_status),
+              -- Olej (issue #60): NULL znaczy "wyczyść" (moduł ma zamilknąć), więc
+              -- każda para niesie jawny znacznik zmiany — ta sama sztuczka, co rok.
+              oil_min_l        = CASE WHEN $11 THEN $10 ELSE oil_min_l END,
+              oil_capacity_l   = CASE WHEN $13 THEN $12 ELSE oil_capacity_l END,
+              oil_norm_l_per_h = CASE WHEN $15 THEN $14 ELSE oil_norm_l_per_h END,
               updated_at     = now()
         WHERE id = $1`,
       [
@@ -265,6 +280,12 @@ export class PgAdminFleetRepo implements FleetAdminPort {
         patch.mhFormat ?? null,
         patch.dualRequired ?? null,
         patch.serviceStatus ?? null,
+        patch.oilMinL ?? null,
+        patch.oilMinL !== undefined,
+        patch.oilCapacityL ?? null,
+        patch.oilCapacityL !== undefined,
+        patch.oilNormLPerH ?? null,
+        patch.oilNormLPerH !== undefined,
       ],
     );
   }

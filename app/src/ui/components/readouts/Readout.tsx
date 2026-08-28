@@ -44,6 +44,19 @@ export interface ReadoutProps {
   onCorrect: () => void;
   correctLabel?: string;
   missingLabel?: string;
+  /** Napisy adnotacji świeżości inne niż domyślne (sekcja oleju, issue #60). */
+  missingNote?: string;
+  manualNote?: string;
+  /**
+   * Jawny stan „brak danych" — nadpisuje wywiedziony (issue #60).
+   *
+   * Domyślnie pusta wartość ZNACZY brak danych, bo paliwo i MH zawsze niosą liczbę
+   * (z przekazania albo z palca). Olej łamie to founderskie założenie: wartość zaczyna
+   * pusta W KAŻDYM stanie świeżości (pomiar jest aktem pilota, prefill fabrykowałby
+   * dane), a szlak podpowiedzi i podpis konfiguracji mają stać obok pustej wartości.
+   * `missing={false}` mówi: pusto, ale to nie jest brak — pokaż resztę sekcji.
+   */
+  missing?: boolean;
   /** Historia prowadząca do tej wartości. */
   trail?: TrailRow[];
   style?: ViewStyle;
@@ -61,13 +74,16 @@ export function Readout({
   onCorrect,
   correctLabel = 'Koryguj',
   missingLabel = 'Wpisz odczyt',
+  missingNote,
+  manualNote,
+  missing: missingOverride,
   trail = [],
   style,
 }: ReadoutProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone);
   const amber = toneColors(theme, 'amber');
-  const missing = freshness === 'brak' || value == null;
+  const missing = missingOverride ?? (freshness === 'brak' || value == null);
 
   return (
     <View
@@ -96,7 +112,10 @@ export function Readout({
                 fontFamily: theme.fontFamily.monoBold,
                 fontSize: 30,
                 lineHeight: 32,
-                color: missing
+                // Pusta wartość jest wyciszona także, gdy sekcja NIE jest w stanie
+                // „brak" (olej przed pomiarem) — „— —" w kolorze akcentu wyglądałoby
+                // jak odczyt, a jest jego brakiem.
+                color: missing || value == null
                   ? theme.colors.textMuted
                   : tone === 'neutral'
                     ? theme.colors.textPrimary
@@ -110,7 +129,12 @@ export function Readout({
             </AppText>
           </View>
 
-          <FreshnessNote state={freshness} syncedAt={syncedAt} />
+          <FreshnessNote
+            state={freshness}
+            syncedAt={syncedAt}
+            {...(missingNote != null ? { missingLabel: missingNote } : {})}
+            {...(manualNote != null ? { manualLabel: manualNote } : {})}
+          />
 
           {!missing && gauge}
 

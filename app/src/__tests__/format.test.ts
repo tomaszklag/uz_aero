@@ -21,11 +21,13 @@ import {
   maskTimeUtcInput,
   parseDateUtc,
   motoHours,
+  oilLitres,
   parseDateTimeUtc,
   parseLitres,
   parseMotoHours,
   parseTimeUtcOnDay,
   relativeAge,
+  stampUtc,
   thousands,
   timeUtc,
 } from '../ui/format';
@@ -88,6 +90,17 @@ describe('paliwo', () => {
     expect(litres(88)).toBe('88 L');
     expect(litres(87.6)).toBe('88 L');
     expect(litres(null)).toBe('—');
+  });
+
+  it('olej z jednym miejscem po przecinku — podziałka bagnetu, nie paliwomierza', () => {
+    expect(oilLitres(10.2)).toBe('10,2 L');
+    expect(oilLitres(10)).toBe('10,0 L');
+    expect(oilLitres(10.16)).toBe('10,2 L');
+    expect(oilLitres(null)).toBe('—');
+  });
+
+  it('datownik osi czasu: dzień i miesiąc bez roku + godzina UTC', () => {
+    expect(stampUtc(Date.UTC(2026, 5, 21, 7, 2))).toBe('21 CZERWCA 07:02');
   });
 
   it('parsuje litry i odrzuca śmieci', () => {

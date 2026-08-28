@@ -109,6 +109,10 @@ export class AdminCorrectionQueries {
     );
     const limits: AircraftLimits = {
       capacityL: await this.aircraft.capacityL(this.db, candidate.aircraftId),
+      // Kolumny konfiguracji oleju dochodzą w Etapie D (issue #60) — do tego czasu
+      // reguły olejowe przy korekcie administratora śpią, jak przy nieznanym samolocie.
+      oilMinL: null,
+      oilCapacityL: null,
     };
 
     return {

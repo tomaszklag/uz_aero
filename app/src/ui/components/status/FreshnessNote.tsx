@@ -42,6 +42,12 @@ export interface FreshnessNoteProps {
   syncedAt?: string | null;
   /** Tekst dla `brak`; domyślnie wersja z mockupu. */
   missingLabel?: string;
+  /**
+   * Tekst dla `manual`; domyślnie wersja z licznika. Sekcja oleju (issue #60) podaje
+   * własny, bo jej wartość czyta się z bagnetu, nie z licznika — a adnotacja
+   * o pochodzeniu, która myli przyrząd, przestaje poświadczać cokolwiek.
+   */
+  manualLabel?: string;
   style?: ViewStyle;
 }
 
@@ -49,6 +55,7 @@ export function FreshnessNote({
   state,
   syncedAt,
   missingLabel = 'Brak danych — wpisz z licznika',
+  manualLabel = 'Twój odczyt z licznika',
   style,
 }: FreshnessNoteProps) {
   const { theme } = useTheme();
@@ -59,7 +66,7 @@ export function FreshnessNote({
   const c = toneColors(theme, manual ? 'green' : 'amber');
 
   const label = manual
-    ? 'Twój odczyt z licznika'
+    ? manualLabel
     : state === 'cache'
       ? syncedAt != null
         ? `Ostatnie pobrane · ${syncedAt}`

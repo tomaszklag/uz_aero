@@ -31,12 +31,14 @@ import {
   Banner,
   InlineNote,
   LevelBar,
+  OilSheet,
   ReadingSheet,
   Readout,
   Screen,
   ScreenHeader,
   SyncChip,
   type Freshness,
+  type SheetRow,
   type TrailRow,
 } from '../components';
 import { useTheme } from '../theme';
@@ -47,16 +49,24 @@ import { usePreflightDraft } from '../store/preflightDraft';
 // dotyka `react-native`, więc nie ma go w barrelu.
 import { requestNotificationPermission } from '../../infrastructure/permissions/notificationPermission';
 import { claimDecision } from './logic/claimMode';
+import { preflightBlocker } from './logic/preflightGate';
 import {
-  dateUtcLong,
+  oilAfterRow,
+  oilClaimView,
+  oilEntryWarning,
+  oilValueText,
+  type OilConfig,
+} from './logic/oilPreflight';
+import {
   duration,
   litres,
   motoHours,
+  oilLitres,
   parseLitres,
   maskMotoHoursInput,
   parseMotoHours,
+  stampUtc,
   timeLocal,
-  timeUtc,
 } from '../format';
 import { isJumpOperation } from '../../domain';
 import type { HandoverTrailEntry, ReferencePilot } from '../../domain';
@@ -65,10 +75,8 @@ import type { HandoverTrailEntry, ReferencePilot } from '../../domain';
 const FUEL_WARN_L = 10;
 const MH_WARN_H = 0.5;
 
-/** „21 JUNE 09:15" — datownik osi czasu (mockup 02a). Czas nieoznaczony = UTC. */
-function stamp(t: number): string {
-  return `${dateUtcLong(t).replace(/ \d{4}$/, '')} ${timeUtc(t)}`;
-}
+/** Datownik osi czasu (mockup 02a) mieszka od issue #60 w `@uzaero/format` (`stampUtc`). */
+const stamp = stampUtc;
 
 /**
  * „29 JULY 16:50 UTC · 18:50 LT" — moment przekazania z JAWNĄ strefą.
@@ -101,7 +109,7 @@ export function PreflightReadingsScreen({
   // Do rozstrzygnięcia, czy przekazanie jest „od kogoś", czy własne sprzed dnia przerwy.
   const pilotId = useCurrentPilot((s) => s.id);
   const [pilots, setPilots] = useState<ReferencePilot[]>([]);
-  const [editing, setEditing] = useState<'fuel' | 'mh' | null>(null);
+  const [editing, setEditing] = useState<'fuel' | 'mh' | 'oil' | null>(null);
   const [busy, setBusy] = useState(false);
 
   const queries = useSessionStore((s) => s.queries);
@@ -177,6 +185,11 @@ export function PreflightReadingsScreen({
         departureIcao: draft.departureIcao || null,
         arrivalIcao: draft.arrivalIcao || null,
         reading: { fuelL: draft.fuelL, mh: draft.mh },
+        // Olej (issue #60): klucze tylko przy faktycznym wpisie — sesja bez pomiaru
+        // nie niesie pustych pól, a brak klucza czyta się wszędzie tak samo jak null.
+        ...(draft.oilL != null || draft.oilAddedL != null
+          ? { oilL: draft.oilL, oilAddedL: draft.oilAddedL }
+          : {}),
         client: draft.client,
         notes: draft.notes,
         mhFormat,
@@ -297,10 +310,42 @@ export function PreflightReadingsScreen({
 
   const capacity = aircraft.capacityL;
   const missing = freshness === 'brak';
-  const mhDiff = handover != null ? draft.mh - handover.reading.mh : 0;
-  // Bez odczytów nie da się rozpocząć łańcucha MH — to jedyna twarda blokada tego kroku.
-  const noReadings = draft.fuelL <= 0 && draft.mh <= 0;
+  // Powód, dla którego ROZPOCZNIJ LOT stoi — logika z testami (`preflightGate.ts`).
+  // Pomiar oleju jest krokiem WYMAGANYM (decyzja 2026-08-27, issue #60).
+  const blocker = preflightBlocker({
+    fuelL: draft.fuelL,
+    mh: draft.mh,
+    oilL: draft.oilL,
+    handoverMh: handover?.reading.mh ?? null,
+  });
 
+  // ── olej (issue #60): pomiar, nie potwierdzenie — logika w `logic/oilPreflight` ──
+  const oilConfig: OilConfig = {
+    minL: aircraft.oilMinL ?? null,
+    capacityL: aircraft.oilCapacityL ?? null,
+    normLPerH: aircraft.oilNormLPerH ?? null,
+  };
+  const oilView = oilClaimView({
+    config: oilConfig,
+    lastOil: handover?.oil ?? null,
+    currentMh: draft.mh,
+    mhFormat,
+    synced,
+    enteredL: draft.oilL,
+    addedL: draft.oilAddedL,
+    pilotName,
+  });
+  const oilSheetRows: SheetRow[] = [
+    ...(oilView.expectedL != null
+      ? [{ label: 'Oczekiwane wg normy', value: `≈ ${oilLitres(oilView.expectedL)}` }]
+      : []),
+    ...(oilConfig.minL != null
+      ? [{ label: `Minimum przed lotem · ${aircraft.reg}`, value: oilLitres(oilConfig.minL) }]
+      : []),
+    ...(oilConfig.capacityL != null
+      ? [{ label: `Zbiornik oleju · ${aircraft.reg}`, value: oilLitres(oilConfig.capacityL) }]
+      : []),
+  ];
   return (
     <Screen
       scroll
@@ -332,13 +377,7 @@ export function PreflightReadingsScreen({
           variant="solid"
           busy={busy}
           trailingIcon="next"
-          disabledReason={
-            noReadings
-              ? 'Wprowadź odczyty paliwa i MH z liczników — rozpoczną nowe ogniwo łańcucha'
-              : mhDiff < 0
-                ? 'Licznik motogodzin nie może być niższy niż przekazany — popraw odczyt'
-                : null
-          }
+          disabledReason={blocker}
           onPress={takeOver}
         />
       }
@@ -411,6 +450,35 @@ export function PreflightReadingsScreen({
                 'nieścisłości zostaną rozwiązane przez koordynatora.',
             ].join('\n')}
           />
+        )}
+
+        {/* ── olej silnikowy (issue #60) — POMIAR, nie potwierdzenie ──────────
+            Paliwo i MH wyżej pilot POTWIERDZA (przekazane wartości stoją wpisane);
+            oleju nikt nie przekazuje — bagnet czyta się TERAZ. Dlatego wartość zaczyna
+            PUSTA w każdym stanie świeżości (prefill oczekiwaną fabrykowałby pomiar).
+            Pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27) — bez niego ROZPOCZNIJ
+            LOT stoi z powodem (`preflightBlocker`). Tag „opcjonalnie" tu NIE stoi,
+            bo wymagalność jest stanem domyślnym formularza (oznaczamy wyłącznie to,
+            co opcjonalne). Sekcja stoi ZA blokiem przekazania, bo nie jest jego częścią. */}
+        <Readout
+          label="Olej silnikowy"
+          value={oilView.value}
+          unit="L"
+          freshness={oilView.freshness}
+          syncedAt={syncedAt}
+          caption={oilView.caption !== '' ? oilView.caption : undefined}
+          missing={false}
+          missingNote="Brak historii — pierwszy pomiar zacznie łańcuch"
+          manualNote="Twój pomiar z bagnetu"
+          correctLabel={draft.oilL != null || draft.oilAddedL != null ? 'Koryguj' : 'Wpisz pomiar'}
+          trail={oilView.trail}
+          onCorrect={() => setEditing('oil')}
+        />
+
+        {/* Ostrzeżenie warunkowe — znika razem z warunkiem (dolewką albo poprawką),
+            nie zamyka się ręcznie. Poniżej minimum NIE blokuje: PIC decyduje (D3). */}
+        {oilView.warning != null && (
+          <InlineNote icon="warning" tone="amber" text={oilView.warning} />
         )}
 
         {/* ── ostrzeżenia warunkowe (dawny ekran 03) ──────────────────────────
@@ -498,6 +566,23 @@ export function PreflightReadingsScreen({
             : null;
         }}
         onConfirm={(v) => applyReading('mh', v)}
+        onCancel={() => setEditing(null)}
+      />
+
+      {/* ── arkusz pomiaru oleju (02i) ───────────────────────────────────── */}
+      <OilSheet
+        visible={editing === 'oil'}
+        initialLevelText={oilValueText(draft.oilL)}
+        initialAddedText={oilValueText(draft.oilAddedL)}
+        parse={parseLitres}
+        rows={oilSheetRows}
+        afterRowFor={(l, a) => oilAfterRow(l, a, oilConfig)}
+        warningFor={(l, a) => oilEntryWarning(l, a, oilConfig, oilView.expectedL)}
+        onConfirm={(l, a) => {
+          draft.set('oilL', l);
+          draft.set('oilAddedL', a);
+          setEditing(null);
+        }}
         onCancel={() => setEditing(null)}
       />
     </Screen>

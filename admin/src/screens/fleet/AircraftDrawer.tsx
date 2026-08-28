@@ -191,6 +191,7 @@ function NewAircraft({ capabilities, onClose }: AircraftDrawerProps) {
           <MhFormatChoice draft={draft} onChange={setDraft} disabled={!edit.enabled} />
           <DualChoice draft={draft} onChange={setDraft} disabled={!edit.enabled} />
           <ServiceChoice draft={draft} onChange={setDraft} disabled={!edit.enabled} reason={null} />
+          <OilFields draft={draft} onChange={setDraft} disabled={!edit.enabled} form={form} />
 
           <Card title="Co ta konfiguracja włącza" actions={<Pill tone="dim">wejścia reguł</Pill>}>
             {/* Zapis progu składa `toleranceText`, a nie interpolacja w JSX-ie: ten sam
@@ -296,6 +297,7 @@ function ExistingAircraft({
         disabled={!edit.enabled}
         reason={disable.enabled ? null : disable.reason}
       />
+      <OilFields draft={draft} onChange={setDraft} disabled={!edit.enabled} form={form} />
 
       <Card
         title="Skutki zmiany"
@@ -367,6 +369,85 @@ function ExistingAircraft({
         </span>
       </Card>
     </Drawer>
+  );
+}
+
+/**
+ * Konfiguracja OLEJU (issue #60) — mockup `A07a`, karta między „Stan służby" a normą
+ * z analityki. Trzy liczby z dokumentacji jednostki (POH), wszystkie OPCJONALNE:
+ * puste pola = sekcja oleju w aplikacji bez podpowiedzi i bez ostrzeżeń (pomiar dalej
+ * da się zapisać) — moduł wchodzi do floty stopniowo, samolot po samolocie.
+ */
+function OilFields({
+  draft,
+  onChange,
+  disabled,
+  form,
+}: {
+  draft: AircraftDraft;
+  onChange: (next: AircraftDraft) => void;
+  disabled: boolean;
+  form: ReturnType<typeof formState>;
+}) {
+  return (
+    <Card title="Olej silnikowy">
+      <OptionGrid>
+        <Field
+          htmlFor="samolot-olej-min"
+          label="Minimum przed lotem (L)"
+          hint={form.oilMin.message ?? form.oilPair.message}
+        >
+          <TextInput
+            id="samolot-olej-min"
+            mono
+            value={draft.oilMin}
+            disabled={disabled}
+            invalid={(draft.oilMin.length > 0 && !form.oilMin.ok) || !form.oilPair.ok}
+            onChange={(event) => onChange({ ...draft, oilMin: event.target.value })}
+          />
+        </Field>
+
+        <Field
+          htmlFor="samolot-olej-zbiornik"
+          label="Zbiornik oleju (L)"
+          hint={form.oilCapacity.message}
+        >
+          <TextInput
+            id="samolot-olej-zbiornik"
+            mono
+            value={draft.oilCapacity}
+            disabled={disabled}
+            invalid={(draft.oilCapacity.length > 0 && !form.oilCapacity.ok) || !form.oilPair.ok}
+            onChange={(event) => onChange({ ...draft, oilCapacity: event.target.value })}
+          />
+        </Field>
+      </OptionGrid>
+
+      <Field
+        htmlFor="samolot-olej-norma"
+        label="Norma zużycia — nominalna (L/h) · opcjonalnie"
+        hint={
+          form.oilNorm.message ?? (
+            <>
+              <b>Minimum</b> zapala ostrzeżenie na kroku liczników („dolej co najmniej…"),
+              <b> zbiornik</b> ogranicza pomiar i dolewkę — jak pojemność ogranicza tankowanie.
+              <b> Norma nominalna</b> (z dokumentacji silnika) zasila sugestię oczekiwanego
+              poziomu, dopóki analityka nie policzy własnej stawki z pomiarów — wyliczona
+              wygra z wpisaną. Puste pola = moduł oleju dla tej jednostki milczy.
+            </>
+          )
+        }
+      >
+        <TextInput
+          id="samolot-olej-norma"
+          mono
+          value={draft.oilNorm}
+          disabled={disabled}
+          invalid={draft.oilNorm.length > 0 && !form.oilNorm.ok}
+          onChange={(event) => onChange({ ...draft, oilNorm: event.target.value })}
+        />
+      </Field>
+    </Card>
   );
 }
 

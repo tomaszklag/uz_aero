@@ -48,7 +48,7 @@ import type { JumperCounts, SessionState } from '@uzaero/domain';
 // z docblockami „lustro … z app/src/ui/format.ts" — czyli umowa utrzymywana
 // dyscypliną, a nie kompilatorem. Karta arkusza musi pokazywać dokładnie te same
 // napisy co ekran 10, bo pilot porównuje jedno z drugim.
-import { hhmm, motoHours, timeUtc } from '@uzaero/format';
+import { hhmm, motoHours, oilLitres, timeUtc } from '@uzaero/format';
 
 import type { DaySheet } from '../ports.ts';
 
@@ -111,6 +111,15 @@ export function sheetTabName(claimedAt: number, aircraftId: string): string {
  */
 function litres(value: number | null): string {
   return value == null ? '—' : String(Math.round(value));
+}
+
+/**
+ * Olej BEZ jednostki (nagłówek bloku ją niesie, jak przy paliwie), ale z jednym
+ * miejscem po przecinku — podziałka bagnetu, nie paliwomierza. Jedno źródło formatu:
+ * `oilLitres` z pakietu, tu tylko zdjęta jednostka.
+ */
+function oilNoUnit(value: number | null): string {
+  return oilLitres(value).replace(/\sL$/, '');
 }
 
 /** „22 (12 tandem / 6 AFF / 4 solo)" — rozbicie jak w stopce mockupu 11; zera pomijamy. */
@@ -279,6 +288,29 @@ export function buildDaySheet(input: DaySheetDay): DaySheet | null {
     ]),
     mhDayRow(input.sessions, dayMhFormat),
   );
+
+  // OLEJ (issue #60) — tylko gdy którakolwiek sesja niesie pomiar albo dolewkę.
+  // Warunkowo jak „Zrzuty": doby sprzed modułu (i bez oleju) zostają BEZ zmiany treści,
+  // więc ponowny eksport starej karty nie podbija rewizji pustym blokiem.
+  // Poziom nie jest wielkością addytywną — „Doba" niesie PIERWSZY pomiar i sumę
+  // dolanego (ta sama reguła, którą blok paliwa zapisał przy odczytach zbiorników).
+  if (input.sessions.some((s) => s.state.oil.levelL != null || s.state.oil.addedL > 0)) {
+    rows.push(
+      [],
+      ['Olej (L)'],
+      ['Sesja', 'Pomiar', 'Dolane'],
+      ...input.sessions.map((s) => [
+        labelOf(s),
+        oilNoUnit(s.state.oil.levelL),
+        oilNoUnit(s.state.oil.addedL > 0 ? s.state.oil.addedL : null),
+      ]),
+      [
+        'Doba',
+        oilNoUnit(firstKnown(input.sessions.map((s) => s.state.oil.levelL))),
+        oilNoUnit(input.sessions.reduce((sum, s) => sum + s.state.oil.addedL, 0)),
+      ],
+    );
+  }
 
   // Strona przychodowa doby — tylko gdy którakolwiek zmiana była operacją Skoki (§3.7).
   if (input.sessions.some((s) => s.state.operation === 'skoki')) {

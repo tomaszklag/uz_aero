@@ -58,6 +58,13 @@ const REGISTRY = {
   check: f('check'),
   warning: f('alert-triangle'),
   info: f('alert-circle'),
+  /**
+   * Pytajnik banerów POUCZAJĄCYCH (uwaga z urządzenia, 2026-08-27): baner, który
+   * wyjaśnia, PYTA — nie ostrzega. `info` (alert-circle) rysuje wykrzyknik w kółku
+   * i na ekranie czytał się jak ostrzeżenie; wyjaśnienia dostają własny glif,
+   * ten sam w banerze i w zwiniętym chipie.
+   */
+  help: f('help-circle'),
   peek: f('eye'), // podgląd read-only cudzego samolotu (04B)
   // Przejęcie samolotu (`.takeover-btn` z 04B) — strzałki rozchodzące się na zewnątrz.
   // To dokładnie ten kształt, który mockup wkleja jako SVG (Feather `maximize-2`):
@@ -102,6 +109,8 @@ const REGISTRY = {
 
   // akcje naziemne (siatka na 04)
   refuel: m('fuel'),
+  /** Dolewka oleju (issue #60) — kropla; dystrybutor zostaje przy tankowaniu. */
+  oil: f('droplet'),
   crew: f('user-check'),
   'manual-log': f('file-text'),
   'end-day': f('log-out'),

@@ -488,3 +488,60 @@ describe('projectSession — bieg silnika jako byt (Leg)', () => {
     expect(s.legs.map((l) => l.index)).toEqual([1, 2]);
   });
 });
+
+describe('olej przy przejęciu (issue #60)', () => {
+  const preflightOil = (
+    oil: { oilL?: number | null; oilAddedL?: number | null },
+  ): Event =>
+    ev('preflight_confirm', '08:00', {
+      operation: 'skoki',
+      departureIcao: 'EPKK',
+      arrivalIcao: 'EPKK',
+      reading: { fuelL: 150, mh: mh('1234:30') },
+      mhFormat: 'hhmm',
+      ...oil,
+    }, 'sess-oil');
+
+  it('bez pól olejowych stan zostaje pusty (pomiaru nie było ≠ zero)', () => {
+    const s = projectSession([preflightOil({})]);
+    expect(s.oil).toEqual({ levelL: null, addedL: 0, afterL: null });
+    // pusty stan sesji ma ten sam kształt — skeleton store'u nie może się różnić
+    expect(emptySessionState().oil).toEqual({ levelL: null, addedL: 0, afterL: null });
+  });
+
+  it('sam pomiar: poziom = stan po (nie dolewano)', () => {
+    const s = projectSession([preflightOil({ oilL: 10.2 })]);
+    expect(s.oil).toEqual({ levelL: 10.2, addedL: 0, afterL: 10.2 });
+  });
+
+  it('pomiar + dolewka: stan po jest RACHUNKIEM, nie trzecim polem', () => {
+    const s = projectSession([preflightOil({ oilL: 7.8, oilAddedL: 1.0 })]);
+    expect(s.oil.levelL).toBe(7.8);
+    expect(s.oil.addedL).toBe(1.0);
+    expect(s.oil.afterL).toBeCloseTo(8.8, 6);
+  });
+
+  it('dolewka w ciemno (bagnet gorący): ilość znana, poziom nie', () => {
+    const s = projectSession([preflightOil({ oilL: null, oilAddedL: 1.0 })]);
+    expect(s.oil).toEqual({ levelL: null, addedL: 1.0, afterL: null });
+  });
+
+  it('dolewka z kokpitu (oil_add) sumuje się z parą z przejęcia', () => {
+    const s = projectSession([
+      preflightOil({ oilL: 10.2 }),
+      ev('oil_add', '08:05', { addedL: 1.0 }, 'sess-oil'),
+    ]);
+    expect(s.oil.levelL).toBe(10.2);
+    expect(s.oil.addedL).toBe(1.0);
+    expect(s.oil.afterL).toBeCloseTo(11.2, 6);
+  });
+
+  it('dolewka z kokpitu bez pomiaru na przejęciu: suma rośnie, poziom pozostaje nieznany', () => {
+    const s = projectSession([
+      preflightOil({}),
+      ev('oil_add', '08:05', { addedL: 1.0 }, 'sess-oil'),
+      ev('oil_add', '10:40', { addedL: 0.5 }, 'sess-oil'),
+    ]);
+    expect(s.oil).toEqual({ levelL: null, addedL: 1.5, afterL: null });
+  });
+});

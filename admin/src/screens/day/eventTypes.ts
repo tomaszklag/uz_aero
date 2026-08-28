@@ -78,6 +78,9 @@ export const EVENT_META: Record<EventType, EventMeta> = {
   // Załadunek (issue #21): opisuje lot jak zrzut — to dwa końce tego samego wyniesienia.
   boarding: { dot: 'blue', badge: 'załadunek', badgeTone: 'blue', corrections: FACT },
   refuel: { dot: 'amber', badge: 'paliwo', badgeTone: 'amber', corrections: FACT },
+  // Dolewka oleju z kokpitu (issue #60): retime/void jak tankowanie; `amend`-a nie ma
+  // świadomie (pojedyncza liczba — unieważnij i dolej ponownie).
+  oil_add: { dot: 'amber', badge: 'olej', badgeTone: 'amber', corrections: FACT },
   crew_change: { dot: 'amber', badge: 'załoga', badgeTone: 'amber', corrections: FACT },
   // Wpis ręczny ma też WARTOŚĆ do poprawienia: uwagę pilota (issue #43).
   manual_log_entry: {

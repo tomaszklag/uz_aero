@@ -298,7 +298,6 @@ export function CrewChangeScreen({
         <Banner
           kind="edu"
           tone="blue"
-          icon="info"
           title="Dlaczego dwie osobne sekcje?"
           text={
             'Zmiana Dual to zwykłe zdarzenie w Twojej sesji — zapisujesz je sam, także bez zasięgu. ' +

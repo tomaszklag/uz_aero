@@ -378,6 +378,28 @@ export function litres(value: number | null): string {
 }
 
 /**
+ * „21 CZERWCA 09:15" — datownik osi czasu przekazania (mockup 02a): dzień i miesiąc
+ * bez roku + godzina. Czas nieoznaczony = UTC. Do issue #60 przepis żył jako prywatny
+ * `stamp()` ekranu liczników; sekcja oleju potrzebuje go w logice, a dwie kopie tego
+ * samego formatu to dokładnie problem, przeciw któremu ten pakiet istnieje.
+ */
+export function stampUtc(epochMs: number): string {
+  return `${dateUtcLong(epochMs).replace(/ \d{4}$/, '')} ${timeUtc(epochMs)}`;
+}
+
+/**
+ * Olej w litrach — JEDNO miejsce po przecinku (issue #60). Bagnet czyta się
+ * z dokładnością ćwierci litra, więc zaokrąglenie do pełnych litrów (jak `litres`)
+ * zjadałoby całą treść pomiaru: 10,2 i 10,6 L to dwa różne stany, „10 L" i „11 L" —
+ * fikcja precyzji w złą stronę. Przecinek po polsku, jak w mockupach; parsery litrów
+ * przyjmują go od zawsze.
+ */
+export function oilLitres(value: number | null): string {
+  if (value == null) return '—';
+  return `${(Math.round(value * 10) / 10).toFixed(1).replace('.', ',')} L`;
+}
+
+/**
  * „3 500" — tysiące rozdzielone spacją (mockup 05: Altitude w FT).
  * Ujemne dostają minus typograficzny „−" jak pozostałe odczyty; GPS potrafi
  * oddać wysokość pod poziomem morza.

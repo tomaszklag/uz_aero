@@ -49,6 +49,7 @@ import {
   hhmm,
   litres,
   motoHours,
+  oilLitres,
   parseLitres,
   maskMotoHoursInput,
   parseMotoHours,
@@ -56,6 +57,7 @@ import {
   timeUtc,
 } from '../format';
 import { correctionImpact, methodBadgeFor, voidLabelFor } from '../screens/logic/correction';
+import { oilValueText } from '../screens/logic/oilPreflight';
 import type { AxisRow } from '../screens/logic/sessionAxis';
 import { claimRetimePlan } from '../screens/logic/claimRetime';
 import { fieldLabel, needsFieldLabels } from '../screens/logic/correctionHistoryRows';
@@ -74,6 +76,7 @@ const ADD_ICON = {
   drop: 'drop',
   boarding: 'boarding',
   refuel: 'refuel',
+  oil_add: 'oil',
 } as const;
 
 export interface SessionEditApi {
@@ -133,6 +136,7 @@ export function useSessionEdit(
   const drop = useSessionStore((s) => s.drop);
   const boarding = useSessionStore((s) => s.boarding);
   const refuel = useSessionStore((s) => s.refuel);
+  const addOil = useSessionStore((s) => s.addOil);
   const manualLogEntry = useSessionStore((s) => s.manualLogEntry);
 
   const aircraft = useAircraft(projection.aircraftId);
@@ -182,7 +186,13 @@ export function useSessionEdit(
       setHistory({
         uuid: found.event.uuid,
         title: found.label,
-        only: found.sheet === 'reading' ? READING_FIELDS : undefined,
+        // Zakres idzie za POLAMI arkusza celu: przejęcie niesie też olej (issue #60).
+        only:
+          found.sheet === 'reading'
+            ? found.event.type === 'preflight_confirm'
+              ? CLAIM_READING_FIELDS
+              : READING_FIELDS
+            : undefined,
       });
     },
     [events, rows],
@@ -287,6 +297,21 @@ export function useSessionEdit(
   }, [effectiveOf, readingTarget]);
 
   /**
+   * Olej W MOCY (po korektach) — tylko dla przejęcia (issue #60): `day_close` oleju nie
+   * niesie, więc jego arkusz pól olejowych nie pokazuje. Puste teksty = wpisu nie było.
+   */
+  const oilCurrent = useMemo(() => {
+    if (readingTarget == null) return null;
+    const current = effectiveOf(readingTarget.uuid) ?? readingTarget;
+    if (current.type !== 'preflight_confirm') return null;
+    return {
+      levelText: oilValueText(current.payload.oilL ?? null),
+      addedText: oilValueText(current.payload.oilAddedL ?? null),
+      parse: parseLitres,
+    };
+  }, [effectiveOf, readingTarget]);
+
+  /**
    * Pole czasu arkusza odczytu — TYLKO przy przejęciu (uwaga z urządzenia, issue #43).
    *
    * Granice: nie wcześniej niż doba wstecz od bieżącej godziny przejęcia (dalej to nie
@@ -354,12 +379,16 @@ export function useSessionEdit(
     if (projection.fuel.consumedL != null) {
       out.push({ label: 'Zużycie sesji', value: litres(projection.fuel.consumedL) });
     }
+    // Sufit dla pól olejowych — tylko tam, gdzie te pola w ogóle są (przejęcie).
+    if (readingTarget?.type === 'preflight_confirm' && aircraft?.oilCapacityL != null) {
+      out.push({ label: 'Zbiornik oleju', value: oilLitres(aircraft.oilCapacityL) });
+    }
     out.push({
       label: 'Format licznika',
       value: mhFormat === 'hhmm' ? 'hh:mm' : 'godziny dziesiętne',
     });
     return out;
-  }, [aircraft, mhFormat, projection.fuel.consumedL]);
+  }, [aircraft, mhFormat, projection.fuel.consumedL, readingTarget]);
 
   // ── arkusz zrzutu (10G) ─────────────────────────────────────────────────────
 
@@ -506,6 +535,9 @@ export function useSessionEdit(
         else if (type === 'drop') await drop({ jumpers: EMPTY_JUMPERS, at: time });
         else if (type === 'boarding') await boarding({ jumpers: EMPTY_JUMPERS, at: time });
         else if (type === 'refuel' && extra?.refuel != null) await refuel(extra.refuel, time);
+        else if (type === 'oil_add' && extra?.oilAddedL != null) {
+          await addOil({ addedL: extra.oilAddedL }, time);
+        }
       } catch {
         // Odrzucenie reguł jest w `lastError`.
       } finally {
@@ -527,7 +559,7 @@ export function useSessionEdit(
         }
       }
     },
-    [boarding, drop, landing, manualLogEntry, refuel, taxi, takeoff],
+    [addOil, boarding, drop, landing, manualLogEntry, refuel, taxi, takeoff],
   );
 
   // ── arkusze ─────────────────────────────────────────────────────────────────
@@ -581,20 +613,25 @@ export function useSessionEdit(
           parseFuel={parseLitres}
           parseMh={parseMotoHours}
           maskMh={(text) => maskMotoHoursInput(text, mhFormat)}
+          oil={oilCurrent}
           rows={readingRows}
           warning={
             readingTarget.type === 'day_close'
               ? 'Ten odczyt jest przekazaniem maszyny: od niego zaczyna się następna sesja tego samolotu i to on domyka łańcuch motogodzin.'
               : 'Ten odczyt otwiera łańcuch motogodzin sesji — zmiana przeliczy zużycie i porównanie z normą.'
           }
-          /* Odczyt to paliwo, licznik i — przy przejęciu — godzina. Notatka i Dual
-             siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają własne arkusze. */
-          historyCount={historyCountOf(readingTarget.uuid, READING_FIELDS)}
+          /* Odczyt to paliwo, licznik, przy przejęciu godzina — i od issue #60 olej.
+             Notatka i Dual siedzą w tym samym zdarzeniu, ale są innym pytaniem i mają
+             własne arkusze; zakres historii idzie za polami TEGO arkusza. */
+          historyCount={historyCountOf(
+            readingTarget.uuid,
+            oilCurrent != null ? CLAIM_READING_FIELDS : READING_FIELDS,
+          )}
           onOpenHistory={() =>
             setHistory({
               uuid: readingTarget.uuid,
               title: target?.label ?? '',
-              only: READING_FIELDS,
+              only: oilCurrent != null ? CLAIM_READING_FIELDS : READING_FIELDS,
             })
           }
           onSave={({ newTime, ...fields }, reason) => {
@@ -741,6 +778,18 @@ const EMPTY_JUMPERS: JumperCounts = { tandem: 0, aff: 0, solo: 0 };
  * przy notatce — i odwrotnie.
  */
 const READING_FIELDS: readonly CorrectionField[] = ['time', 'fuelL', 'mh'];
+/**
+ * Zakres arkusza odczytu PRZEJĘCIA — z olejem (issue #60): pomiar i dolewka żyją
+ * w tym samym arkuszu co paliwo i licznik, więc jego licznik historii i zawężenie
+ * obejmują całą piątkę. Zdanie (`day_close`) oleju nie niesie i zostaje przy trójce.
+ */
+const CLAIM_READING_FIELDS: readonly CorrectionField[] = [
+  'time',
+  'fuelL',
+  'mh',
+  'oilL',
+  'oilAddedL',
+];
 const NOTE_FIELDS: readonly CorrectionField[] = ['notes'];
 const DUAL_FIELDS: readonly CorrectionField[] = ['dualId'];
 
@@ -758,11 +807,17 @@ function formatValue(
   if (value == null) {
     if (field === 'notes') return 'bez notatki';
     if (field === 'dualId') return 'bez drugiego pilota';
+    // Olej: `null` to wycofany pomiar / brak dolewki (issue #60) — zmiana ma się przeczytać.
+    if (field === 'oilL') return 'bez pomiaru';
+    if (field === 'oilAddedL') return 'bez dolewki';
     return null;
   }
   if (field === 'time') return typeof value === 'number' ? timeUtc(value) : null;
   if (field === 'fuelL') return typeof value === 'number' ? litres(value) : null;
   if (field === 'mh') return typeof value === 'number' ? motoHours(value, mhFormat) : null;
+  if (field === 'oilL' || field === 'oilAddedL') {
+    return typeof value === 'number' ? litres(value) : null;
+  }
   // Drugi pilot jest identyfikatorem, a pilot czyta KOD (AKO) — surowe uuid w historii
   // nie mówiłoby nic nikomu.
   if (field === 'dualId') return typeof value === 'string' ? codeOf(value) : null;

@@ -51,7 +51,12 @@
 
 import { fuelToleranceL, type MhFormat, type ServiceStatus } from '@uzaero/domain';
 
-import { refuseCapacity, refuseDisable, type FleetRefusal } from '../../../domain/fleetGuards.ts';
+import {
+  refuseCapacity,
+  refuseDisable,
+  refuseOil,
+  type FleetRefusal,
+} from '../../../domain/fleetGuards.ts';
 import type { AuditedWrite } from '../auditedWrite.ts';
 import type { Actor, AdminAircraft, AircraftPatch, FleetAdminPort } from '../ports.ts';
 import { uniqueConflictOn } from './uniqueConflict.ts';
@@ -64,6 +69,10 @@ export interface CreateAircraftInput {
   mhFormat: MhFormat;
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
+  /** Konfiguracja oleju (issue #60) — `null` = moduł dla jednostki milczy. */
+  oilMinL: number | null;
+  oilCapacityL: number | null;
+  oilNormLPerH: number | null;
 }
 
 /** Zmiana konfiguracji. Pola nieustawione zostają bez zmian (`PATCH` opisuje RÓŻNICĘ). */
@@ -117,6 +126,9 @@ const FIELDS = [
   'mhFormat',
   'dualRequired',
   'serviceStatus',
+  'oilMinL',
+  'oilCapacityL',
+  'oilNormLPerH',
 ] as const;
 
 export class AdminFleetCommands {
@@ -147,6 +159,8 @@ export class AdminFleetCommands {
       const aircraft = await this.write.run(actor, async (tx) => {
         const capacity = refuseCapacity(input.capacityL);
         if (capacity != null) throw new Refused(capacity);
+        const oil = refuseOil(input);
+        if (oil != null) throw new Refused(oil);
 
         const clash = await this.fleet.conflict(tx, { reg: input.reg, exceptId: null });
         if (clash != null) throw new Conflict();
@@ -168,6 +182,9 @@ export class AdminFleetCommands {
               mhFormat: created.mhFormat,
               dualRequired: created.dualRequired,
               serviceStatus: created.serviceStatus,
+              oilMinL: created.oilMinL,
+              oilCapacityL: created.oilCapacityL,
+              oilNormLPerH: created.oilNormLPerH,
               // Próg WYNIKAJĄCY z pojemności, a nie druga jej kopia: dziennik ma
               // odpowiadać na pytanie „od ilu litrów ta jednostka zaczyna być flagowana",
               // a nikt nie liczy tego w pamięci przy czytaniu wpisu.
@@ -208,6 +225,18 @@ export class AdminFleetCommands {
 
         const capacity = refuseCapacity(input.capacityL ?? null);
         if (capacity != null) throw new Refused(capacity);
+
+        // Reguła oleju orzeka o STANIE po zmianie, a PATCH niesie różnicę — składamy
+        // wartości efektywne: minimum podniesione ponad ISTNIEJĄCĄ pojemność też ma
+        // zostać odrzucone, nie tylko para wysłana w jednym żądaniu.
+        const oil = refuseOil({
+          oilMinL: input.oilMinL !== undefined ? input.oilMinL : before.oilMinL,
+          oilCapacityL:
+            input.oilCapacityL !== undefined ? input.oilCapacityL : before.oilCapacityL,
+          oilNormLPerH:
+            input.oilNormLPerH !== undefined ? input.oilNormLPerH : before.oilNormLPerH,
+        });
+        if (oil != null) throw new Refused(oil);
 
         if (input.serviceStatus !== undefined && input.serviceStatus !== before.serviceStatus) {
           // Licznik czytany PO wzięciu blokady — tak jak przy populacji administratorów.

@@ -98,6 +98,21 @@ export interface MhState {
   deltaH: number | null;
 }
 
+/**
+ * Olej silnikowy (issue #60) — pomiar żyje WYŁĄCZNIE przy przejęciu, bo bagnet mówi
+ * prawdę tylko na zimnym silniku; zdanie samolotu oleju nie mierzy. Sesja nie ma więc
+ * własnego bilansu zużycia (interwał biegnie pomiar→pomiar przez wiele sesji, kotwicą
+ * jest MH) — stan niesie sam fakt: co zmierzono i co dolano.
+ */
+export interface OilState {
+  /** Pomiar z bagnetu przy przejęciu (L); `null` = pomiaru nie było. */
+  levelL: number | null;
+  /** Dolane przy przejęciu (L); 0 = nie dolewano. */
+  addedL: number;
+  /** Stan po dolewce = pomiar + dolane; `null` bez pomiaru (dolewka w ciemno go nie zna). */
+  afterL: number | null;
+}
+
 /** Rozliczenie zrzutów (§3.7 — strona przychodowa dnia). */
 export interface DropSummary {
   /** Liczba wyniesień (zdarzeń drop). */
@@ -212,6 +227,7 @@ export interface SessionState {
 
   fuel: FuelState;
   mh: MhState;
+  oil: OilState;
   drops: DropSummary;
   /** Załadunek czekający na zrzut; `null` = brak (nikt nie siedzi / już wynieśli). */
   boarding: BoardingState | null;
@@ -269,6 +285,7 @@ export function emptySessionState(): SessionState {
     landingCount: 0,
     fuel: { startL: null, addedL: 0, endL: null, consumedL: null, lastReadingL: null },
     mh: { start: null, end: null, deltaH: null },
+    oil: { levelL: null, addedL: 0, afterL: null },
     drops: {
       count: 0,
       jumpers: { tandem: 0, aff: 0, solo: 0 },
@@ -350,6 +367,10 @@ export function projectSession(events: Event[]): SessionState {
         state.fuel.startL = p.reading.fuelL;
         state.fuel.lastReadingL = p.reading.fuelL;
         state.mh.start = p.reading.mh;
+        // Olej (issue #60): pomiar żyje wyłącznie tutaj; stan po dolewce jest rachunkiem.
+        state.oil.levelL = p.oilL ?? null;
+        state.oil.addedL = p.oilAddedL ?? 0;
+        state.oil.afterL = p.oilL != null ? p.oilL + (p.oilAddedL ?? 0) : null;
         // Dual ZADEKLAROWANY dla całej sesji (issue #43) — patrz `declaredDualId` niżej.
         if ('dualId' in p) declaredDual = { value: p.dualId ?? null };
         break;
@@ -413,6 +434,16 @@ export function projectSession(events: Event[]): SessionState {
         // unieważniająca takeoff nie zakleszczyła stanu „wiecznego kołowania".
         state.taxiing = false;
         state.openTakeoffAt = null;
+        break;
+      }
+
+      case 'oil_add': {
+        // Dolewka z kokpitu (issue #60) — SKŁADNIK stanu oleju, nie granica rachunku:
+        // dokłada się do sumy dolanego obok pary z przejęcia, a stan po dolewce
+        // przelicza się, o ile w ogóle był pomiar (dolewka poziomu nie zna).
+        state.oil.addedL += event.payload.addedL;
+        state.oil.afterL =
+          state.oil.levelL != null ? state.oil.levelL + state.oil.addedL : null;
         break;
       }
 

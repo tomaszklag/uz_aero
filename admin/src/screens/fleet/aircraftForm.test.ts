@@ -31,6 +31,9 @@ const dto = (over: Partial<AircraftListItemDto> = {}): AircraftListItemDto => ({
   year: 2011,
   capacityL: 1257,
   fuelToleranceL: 62.85,
+  oilMinL: null,
+  oilCapacityL: null,
+  oilNormLPerH: null,
   mhFormat: 'decimal',
   dualRequired: true,
   serviceStatus: 'active',
@@ -121,6 +124,10 @@ describe('szkic → ciało żądania', () => {
       mhFormat: 'decimal',
       dualRequired: true,
       serviceStatus: 'active',
+      // Olej (issue #60): nieskonfigurowany jedzie jako JAWNE nulle — moduł milczy.
+      oilMinL: null,
+      oilCapacityL: null,
+      oilNormLPerH: null,
     });
   });
 
@@ -155,5 +162,64 @@ describe('szkic → ciało żądania', () => {
     expect(updateBody(before, draft({ serviceStatus: 'disabled' }))).toEqual({
       serviceStatus: 'disabled',
     });
+  });
+});
+
+// ── konfiguracja oleju (issue #60, etap D) ──────────────────────────────────────
+
+describe('pola oleju — lustro `fleetGuards.refuseOil`', () => {
+  it('puste pola są legalne (moduł milczy), a szkic wysyła jawne nulle przy tworzeniu', () => {
+    const draft = { ...EMPTY_DRAFT, reg: 'SP-OIL', type: 'Cessna 182', capacity: '330' };
+    expect(formState(draft).ok).toBe(true);
+    expect(createBody(draft)).toMatchObject({ oilMinL: null, oilCapacityL: null, oilNormLPerH: null });
+  });
+
+  it('wpisane wartości parsują polski przecinek i wchodzą do ciała', () => {
+    const draft = {
+      ...EMPTY_DRAFT,
+      reg: 'SP-OIL',
+      type: 'Cessna 182',
+      capacity: '330',
+      oilMin: '8,5',
+      oilCapacity: '11,4',
+      oilNorm: '0,12',
+    };
+    expect(formState(draft).ok).toBe(true);
+    expect(createBody(draft)).toMatchObject({ oilMinL: 8.5, oilCapacityL: 11.4, oilNormLPerH: 0.12 });
+  });
+
+  it('zero i śmieci odbijają z powodem pod POLEM, minimum ponad zbiornik — pod PARĄ', () => {
+    const zero = formState({ ...EMPTY_DRAFT, reg: 'SP-OIL', type: 'C182', capacity: '330', oilMin: '0' });
+    expect(zero.ok).toBe(false);
+    expect(zero.oilMin.message).toContain('większe od zera');
+
+    const garbage = formState({ ...EMPTY_DRAFT, reg: 'SP-OIL', type: 'C182', capacity: '330', oilNorm: 'dużo' });
+    expect(garbage.oilNorm.ok).toBe(false);
+
+    const inverted = formState({
+      ...EMPTY_DRAFT,
+      reg: 'SP-OIL',
+      type: 'C182',
+      capacity: '330',
+      oilMin: '12',
+      oilCapacity: '10',
+    });
+    expect(inverted.ok).toBe(false);
+    expect(inverted.oilPair.message).toContain('nie może przekraczać zbiornika');
+  });
+
+  it('PATCH: wyczyszczone pole jedzie jako jawny null, pominięta zmiana nie jedzie wcale', () => {
+    const before = dto({ oilMinL: 8.5, oilCapacityL: 11.4, oilNormLPerH: 0.12 });
+    const draft = draftOf(before);
+    expect(draft.oilMin).toBe('8,5');
+
+    // Bez zmian — ciało puste (serwer odmawia `no_changes`).
+    expect(updateBody(before, draft)).toEqual({});
+
+    // Wyczyszczenie minimum = jawny null; reszta pól nietknięta.
+    expect(updateBody(before, { ...draft, oilMin: '' })).toEqual({ oilMinL: null });
+
+    // Zmiana wartości = liczba.
+    expect(updateBody(before, { ...draft, oilNorm: '0,15' })).toEqual({ oilNormLPerH: 0.15 });
   });
 });

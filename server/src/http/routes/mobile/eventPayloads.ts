@@ -70,6 +70,13 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     // z klamrą służby (issue #23). Schematy nie są `strict`, więc ewentualna paczka
     // ze starego telefonu z tym polem nadal przejdzie; projekcja je ignoruje.
     reading,
+    // Olej przy przejęciu (issue #60): pomiar z bagnetu + dolewka. Opcjonalne, bo
+    // telefony sprzed modułu ich nie wysyłają; `null` = wpisu nie było (wartość,
+    // nie brak). Lekcja `leg_close` w drugą stronę: schematy nie są `strict`, więc
+    // BEZ tych pól serwer wycinałby pomiar PO CICHU — telefon by go miał, serwer
+    // i odtworzenie rejestru już nie.
+    oilL: finite.nullable().optional(),
+    oilAddedL: finite.nullable().optional(),
     corrections: z.array(z.record(z.unknown())).optional(),
     // Dual przypisany CAŁEJ sesji (issue #43) — pole opcjonalne, bo telefony sprzed
     // tej zmiany go nie wysyłają, a wtedy obowiązuje nagłówek zdarzeń.
@@ -134,6 +141,14 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
     consumptionLPerH: finite.nullable().optional(),
   }),
 
+  // Dolewka oleju z kokpitu (issue #60) — jedna liczba, bez trójki: poziomu po
+  // dolewce nie ma jak uczciwie zmierzyć, a rachunek interwału olejowego traktuje
+  // dolewkę jako składnik, nie granicę. Lekcja `leg_close`: nieznany typ payloadu
+  // wraca jako 400 bad_payload i blokuje synchronizację CAŁEJ kolejki telefonu.
+  oil_add: z.object({
+    addedL: finite,
+  }),
+
   crew_change: z.object({
     role: z.enum(['pic', 'dual']),
     pilotOutId: z.string().max(50).nullable().optional(),
@@ -195,6 +210,10 @@ export const PAYLOAD_SCHEMAS: Record<string, z.ZodTypeAny> = {
       fields: z.object({
         fuelL: finite.optional(),
         mh: finite.optional(),
+        // Olej (issue #60): `null` to wartość — „pomiaru/dolewki nie było" (kasowanie
+        // omyłkowego wpisu), jak przy notatce i Dualu.
+        oilL: finite.nullable().optional(),
+        oilAddedL: finite.nullable().optional(),
         jumpers: jumpers.nullable().optional(),
         // Ten sam limit, co przy notatce z preflightu — poprawka nie może przemycić
         // dłuższego tekstu niż oryginał (`notes` w `preflight_confirm`).

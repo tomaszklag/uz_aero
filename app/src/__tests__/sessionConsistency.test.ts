@@ -21,7 +21,7 @@ import {
 
 const DAY = Date.UTC(2026, 7, 6);
 const at = (h: number, m: number): number => DAY + (h * 60 + m) * 60_000;
-const LIMITS: AircraftLimits = { capacityL: 212 };
+const LIMITS: AircraftLimits = { capacityL: 212, oilMinL: null, oilCapacityL: null };
 
 let seq = 0;
 function event(type: Event['type'], time: number, payload: unknown = {}): Event {
@@ -216,6 +216,8 @@ describe('odczyty', () => {
 
   it('bez limitów z cache (offline, §4.8) reguła pojemności śpi', () => {
     const events = [...healthy().filter((e) => e.type !== 'day_close'), dayClose(300, 1236.1)];
-    expect(codes(issues(events, { capacityL: null }))).not.toContain('FUEL_OVER_CAPACITY');
+    expect(
+      codes(issues(events, { capacityL: null, oilMinL: null, oilCapacityL: null })),
+    ).not.toContain('FUEL_OVER_CAPACITY');
   });
 });

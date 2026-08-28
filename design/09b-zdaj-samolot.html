@@ -262,7 +262,10 @@
       </div>
 
       <div class="handover-box" id="eduHandover">
-        <svg class="handover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        <!-- Pytajnik zamiast strzałek przekazania (uwaga z urządzenia, 2026-08-27):
+             pouczający PYTA i nosi TĘ SAMĄ ikonę co zwinięty chip — reguła DS dla
+             banerów typu C, jednakowa na 02E, 05F, 07 i tutaj. -->
+        <svg class="handover-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span class="handover-text">Te odczyty — <b>62 L</b> i <b>1 241:09 MH</b> — zobaczy następny pilot jako
         <strong>przekazanie</strong>. Stają się ogniwem łańcucha SP-KLM: serwer porównuje z nimi start
         kolejnej sesji i flaguje dziury albo cofnięcia licznika.</span>

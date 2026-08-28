@@ -74,6 +74,8 @@ function readFields(value: unknown): CorrectionFields | undefined {
   const raw = value as {
     fuelL?: unknown;
     mh?: unknown;
+    oilL?: unknown;
+    oilAddedL?: unknown;
     jumpers?: unknown;
     notes?: unknown;
     dualId?: unknown;
@@ -81,6 +83,11 @@ function readFields(value: unknown): CorrectionFields | undefined {
   const fields: CorrectionFields = {};
   if (typeof raw.fuelL === 'number') fields.fuelL = raw.fuelL;
   if (typeof raw.mh === 'number') fields.mh = raw.mh;
+  // `oilL: null` = „pomiaru nie było" (kasowanie omyłkowego wpisu) — wartość, nie brak.
+  if (raw.oilL === null) fields.oilL = null;
+  else if (typeof raw.oilL === 'number') fields.oilL = raw.oilL;
+  if (raw.oilAddedL === null) fields.oilAddedL = null;
+  else if (typeof raw.oilAddedL === 'number') fields.oilAddedL = raw.oilAddedL;
   // `dualId: null` to deklaracja „sesja jednoosobowa", więc jest wartością.
   if (raw.dualId === null) fields.dualId = null;
   else if (typeof raw.dualId === 'string') fields.dualId = raw.dualId;
@@ -146,6 +153,8 @@ function amend(event: Event, fields: CorrectionFields): Event {
         payload: {
           ...event.payload,
           reading,
+          ...('oilL' in fields ? { oilL: fields.oilL ?? null } : {}),
+          ...('oilAddedL' in fields ? { oilAddedL: fields.oilAddedL ?? null } : {}),
           ...('notes' in fields ? { notes: fields.notes ?? null } : {}),
           ...('dualId' in fields ? { dualId: fields.dualId ?? null } : {}),
         },

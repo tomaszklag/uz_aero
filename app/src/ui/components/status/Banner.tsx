@@ -9,11 +9,23 @@
  *  • `warning` — ostrzeżenie warunkowe (rozbieżność paliwa/MH, brak drugiego pilota).
  *                Pojawia się i znika **z warunkiem**; nie zamyka się ręcznie.
  *  • `edu`     — pouczający, jednorazowy. Pomocny za pierwszym razem, szum potem.
- *                **Zamykalny**: `×` chowa go, w jego miejscu zostaje mini-chip `(?)`.
+ *                **Zamykalny**: `×` chowa go, w jego miejscu zostaje mini-chip.
  *
  * Stan schowania banera `edu` aplikacja zapamiętuje NA STAŁE per pilot — inaczej pilot
  * zamykałby go w kółko i wzorzec byłby gorszy niż jego brak. Tu przyjmujemy to przez
  * `dismissed` + `onDismiss`, żeby komponent pozostał bezstanowy.
+ *
+ * IKONA POUCZAJĄCEGO TO ZAWSZE PYTAJNIK (uwaga z urządzenia, 2026-08-27) — komponent
+ * WYMUSZA ją dla `edu`, ignorując `icon` od wołającego: baner, który wyjaśnia, PYTA,
+ * a wykrzyknik (`info` = alert-circle) czytał się jak ostrzeżenie. TA SAMA ikona stoi
+ * w banerze i w zwiniętym chipie — chip rysował dotąd tekstowe „?", więc dwa stany
+ * jednej rzeczy wyglądały jak dwie rzeczy. Egzekwowane tutaj, nie konwencją w ekranach,
+ * bo konwencja już raz się rozjechała (trzy ekrany podawały `info`, jeden `sync`).
+ *
+ * `action` — opcjonalny przycisk POD treścią (np. „Wyczyść formularz" w banerze
+ * o podstawionych danych na 02E): baner tłumaczący, skąd wzięły się wartości, jest
+ * naturalnym miejscem decyzji „nie chcę ich". Slot jest częścią komponentu, żeby
+ * przycisk w banerze wyglądał wszędzie tak samo.
  */
 
 import React from 'react';
@@ -40,6 +52,8 @@ export interface BannerProps {
   onDismiss?: (next: boolean) => void;
   /** Etykieta mini-chipu po zwinięciu (np. „Jak to działa?"). */
   collapsedLabel?: string;
+  /** Przycisk pod treścią (np. „Wyczyść formularz") — patrz docblock modułu. */
+  action?: { label: string; onPress: () => void };
   style?: ViewStyle;
 }
 
@@ -58,13 +72,17 @@ export function Banner({
   dismissed = false,
   onDismiss,
   collapsedLabel = 'Wyjaśnienie',
+  action,
   style,
 }: BannerProps) {
   const { theme } = useTheme();
   const c = toneColors(theme, tone ?? DEFAULT_TONE[kind]);
   const dismissible = kind === 'edu' && onDismiss != null;
+  // Pouczający PYTA — pytajnik wymuszony na poziomie DS (patrz docblock modułu).
+  const effectiveIcon: IconName | undefined = kind === 'edu' ? 'help' : icon;
 
-  // Zwinięty baner pouczający — mini-chip w miejscu, w którym stał.
+  // Zwinięty baner pouczający — mini-chip w miejscu, w którym stał; TA SAMA ikona,
+  // co w banerze rozwiniętym, żeby dwa stany jednej rzeczy wyglądały jak jedna rzecz.
   if (dismissible && dismissed) {
     return (
       <Pressable
@@ -87,8 +105,9 @@ export function Banner({
           style,
         ]}
       >
+        <Icon name="help" size={13} color={c.accent} />
         <AppText variant="label" style={{ color: c.accent }}>
-          ? {collapsedLabel}
+          {collapsedLabel}
         </AppText>
       </Pressable>
     );
@@ -111,7 +130,9 @@ export function Banner({
       ]}
     >
       <View style={styles.row}>
-        {icon != null && <Icon name={icon} size={20} color={c.accent} style={styles.icon} />}
+        {effectiveIcon != null && (
+          <Icon name={effectiveIcon} size={20} color={c.accent} style={styles.icon} />
+        )}
         <View style={styles.content}>
           {title != null && (
             <AppText variant="label" style={{ color: c.accent }}>
@@ -121,6 +142,29 @@ export function Banner({
           <AppText variant="body" tone="secondary">
             {text}
           </AppText>
+
+          {action != null && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={action.label}
+              onPress={action.onPress}
+              style={({ pressed }) => [
+                styles.action,
+                {
+                  minHeight: 40,
+                  paddingHorizontal: theme.spacing.md,
+                  borderRadius: theme.radius.sm,
+                  borderWidth: theme.borderWidth,
+                  borderColor: c.border,
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <AppText variant="mono" style={[styles.actionLabel, { color: c.accent }]}>
+                {action.label}
+              </AppText>
+            </Pressable>
+          )}
         </View>
       </View>
 
@@ -156,4 +200,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   mini: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },
+  action: {
+    alignSelf: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  actionLabel: { fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
 });

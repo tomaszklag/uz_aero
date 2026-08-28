@@ -191,6 +191,10 @@ export class AdminCorrectionCommands {
         const candidate = correctionCandidate(before, stream, input.correction, this.newId(), at);
         const limits: AircraftLimits = {
           capacityL: await this.aircraft.capacityL(tx, candidate.aircraftId),
+          // Kolumny konfiguracji oleju dochodzą w Etapie D (issue #60) — do tego czasu
+          // reguły olejowe przy korekcie administratora śpią, jak przy nieznanym samolocie.
+          oilMinL: null,
+          oilCapacityL: null,
         };
 
         const errors = correctionViolations(before, candidate, limits);

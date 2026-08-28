@@ -114,3 +114,68 @@ describe('szkic preflightu — dirty() dla bramki rezygnacji', () => {
     expect(usePreflightDraft.getState().dirty()).toBe(false);
   });
 });
+
+/**
+ * Baner „Skąd te dane?" na 02E (uwaga z urządzenia, 2026-08-27): rozwinięty ma dawać
+ * przycisk czyszczący formularz do stanu pustego. Szkic niesie do tego dwie rzeczy:
+ * `clearTask()` (pola zadania wracają do początkowych, podpowiedź nie wraca) oraz
+ * flagę `suggested` — baner mówi o podstawionych danych tylko wtedy, gdy one
+ * faktycznie stoją w formularzu, także po powrocie na ekran.
+ */
+describe('szkic preflightu — clearTask() dla banera „Skąd te dane?"', () => {
+  beforeEach(() => {
+    usePreflightDraft.getState().reset();
+  });
+
+  it('podpowiedź podnosi flagę suggested, clearTask ją opuszcza', () => {
+    const draft = usePreflightDraft.getState();
+    expect(draft.suggested).toBe(false);
+    draft.suggestTask({ operation: 'ferry', client: 'SKY CAMP' }, { departureIcao: 'EPKK', arrivalIcao: 'EPWA' });
+    expect(usePreflightDraft.getState().suggested).toBe(true);
+
+    usePreflightDraft.getState().clearTask();
+    expect(usePreflightDraft.getState().suggested).toBe(false);
+  });
+
+  it('clearTask przywraca pola zadania do stanu początkowego', () => {
+    const draft = usePreflightDraft.getState();
+    draft.suggestTask({ operation: 'ferry', client: 'SKY CAMP' }, { departureIcao: 'EPKK', arrivalIcao: 'EPWA' });
+    usePreflightDraft.getState().clearTask();
+
+    expect(usePreflightDraft.getState()).toMatchObject({
+      operation: 'skoki',
+      departureIcao: '',
+      arrivalIcao: '',
+      client: null,
+    });
+  });
+
+  it('po wyczyszczeniu podpowiedź NIE wraca — czysty formularz zostaje czysty', () => {
+    const draft = usePreflightDraft.getState();
+    draft.suggestTask({ operation: 'ferry', client: 'SKY CAMP' }, { departureIcao: 'EPKK', arrivalIcao: 'EPWA' });
+    usePreflightDraft.getState().clearTask();
+    // Ten sam efekt, który podstawił dane za pierwszym razem (remount ekranu).
+    usePreflightDraft.getState().suggestTask(
+      { operation: 'ferry', client: 'SKY CAMP' },
+      { departureIcao: 'EPKK', arrivalIcao: 'EPWA' },
+    );
+
+    expect(usePreflightDraft.getState()).toMatchObject({ operation: 'skoki', client: null, suggested: false });
+  });
+
+  it('notatka pilota przeżywa czyszczenie — nigdy nie była podpowiedzią', () => {
+    const draft = usePreflightDraft.getState();
+    draft.set('notes', 'lot z uczniem');
+    usePreflightDraft.getState().suggestTask({ operation: 'ferry', client: null }, { departureIcao: 'EPKK', arrivalIcao: 'EPKK' });
+    // suggestTask po dotknięciu pól NIE nadpisuje (taskTouched)? — notatka nie jest
+    // polem zadania, więc podpowiedź weszła; czyszczenie ma jej nie ruszyć.
+    usePreflightDraft.getState().clearTask();
+    expect(usePreflightDraft.getState().notes).toBe('lot z uczniem');
+  });
+
+  it('reset() opuszcza też flagę suggested', () => {
+    usePreflightDraft.getState().suggestTask({ operation: 'ferry', client: null }, { departureIcao: 'EPKK', arrivalIcao: 'EPKK' });
+    usePreflightDraft.getState().reset();
+    expect(usePreflightDraft.getState().suggested).toBe(false);
+  });
+});

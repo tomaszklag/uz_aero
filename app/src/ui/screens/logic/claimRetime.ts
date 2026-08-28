@@ -58,6 +58,7 @@ const CASCADED: readonly Event['type'][] = [
   'drop',
   'boarding',
   'refuel',
+  'oil_add',
   'crew_change',
   'manual_log_entry',
   'engine_stop',

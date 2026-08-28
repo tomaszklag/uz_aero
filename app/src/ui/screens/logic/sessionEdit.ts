@@ -70,6 +70,7 @@ const EVENT_LABEL: Partial<Record<EventType, string>> = {
   drop: 'Zrzut',
   boarding: 'Załadunek',
   refuel: 'Tankowanie',
+  oil_add: 'Dolewka oleju',
   manual_log_entry: 'Wpis ręczny',
 };
 
@@ -173,7 +174,10 @@ export function withIssues(rows: AxisRow[], issues: readonly RuleViolation[]): A
 
 /** Typ zdarzenia, które wolno dopisać w trybie edycji (arkusz 10H). */
 export interface AddableType {
-  type: Extract<EventType, 'takeoff' | 'landing' | 'taxi' | 'drop' | 'boarding' | 'refuel'>;
+  type: Extract<
+    EventType,
+    'takeoff' | 'landing' | 'taxi' | 'drop' | 'boarding' | 'refuel' | 'oil_add'
+  >;
   label: string;
 }
 
@@ -202,5 +206,12 @@ export function addableTypes(operation: OperationType | null): AddableType[] {
           { type: 'boarding', label: 'Załadunek' },
         ]
       : [];
-  return [...base, ...jump, { type: 'refuel', label: 'Tankowanie' }];
+  return [
+    ...base,
+    ...jump,
+    { type: 'refuel', label: 'Tankowanie' },
+    // Dolewka oleju (issue #60): `amend`-a świadomie nie ma (parytet z refuel), więc
+    // dopisanie jest jedyną drogą naprawy po unieważnieniu błędnej dolewki po zdaniu.
+    { type: 'oil_add', label: 'Dolewka oleju' },
+  ];
 }

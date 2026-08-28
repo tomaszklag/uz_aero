@@ -768,6 +768,33 @@
           </div>
         </div>
 
+        <!-- OLEJ SILNIKOWY (issue #60) — trzy liczby z dokumentacji jednostki (POH),
+             wszystkie OPCJONALNE: puste pola = sekcja oleju w aplikacji bez podpowiedzi
+             i bez ostrzeżeń (pomiar dalej da się zapisać). Dzięki temu moduł wchodzi
+             do floty stopniowo, samolot po samolocie, bez wymuszania konfiguracji. -->
+        <div class="card" style="flex-shrink:0;padding:0;border:none;background:none;gap:12px;">
+          <div class="card-title">Olej silnikowy</div>
+          <div class="opt-grid">
+            <div class="field">
+              <span class="label">Minimum przed lotem (L)</span>
+              <input class="input mono" value="7,5" />
+            </div>
+            <div class="field">
+              <span class="label">Zbiornik oleju (L)</span>
+              <input class="input mono" value="10,4" />
+            </div>
+          </div>
+          <div class="field">
+            <span class="label">Norma zużycia — nominalna (L/h) · opcjonalnie</span>
+            <input class="input mono" value="0,10" />
+            <span class="hint"><b>Minimum</b> zapala ostrzeżenie na kroku liczników („dolej co najmniej…"),
+            <b>zbiornik</b> ogranicza wpis dolewki — tak samo, jak pojemność ogranicza tankowanie.
+            <b>Norma nominalna</b> (z dokumentacji silnika albo z doświadczenia) zasila sugestię
+            oczekiwanego poziomu, dopóki analityka nie policzy własnej stawki z pomiarów —
+            wyliczona wygrywa z wpisaną.</span>
+          </div>
+        </div>
+
         <!-- Norma zużycia jest DANĄ WYLICZONĄ z rejestru, nie konfiguracją — karta
              stoi w szufladzie edycji, żeby administrator widział ją przy pojemności
              i formacie MH, ale nie ma tu ani jednego pola do wpisania. Źródło: A10a. -->

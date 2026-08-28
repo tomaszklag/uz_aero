@@ -214,6 +214,17 @@ describe('toManualFlightInput — szkic → wejście komendy', () => {
     expect(postRun.initialReading.fuelL).toBe(112);
   });
 
+  it('olej wchodzi do wejścia tylko przy faktycznym wpisie (issue #60)', () => {
+    const withOil = toManualFlightInput(draft({ oilL: 8.2, oilAddedL: 1.0 }), ids())!;
+    expect(withOil.oilL).toBe(8.2);
+    expect(withOil.oilAddedL).toBe(1.0);
+
+    // Bez wpisu kluczy NIE MA — sesja bez pomiaru nie niesie pustych pól.
+    const without = toManualFlightInput(draft(), ids())!;
+    expect('oilL' in without).toBe(false);
+    expect('oilAddedL' in without).toBe(false);
+  });
+
   /**
    * Issue #13 w wpisie ręcznym: skoki startują i lądują na tym samym placu, więc
    * jedno pole trasy wypełnia OBIE role — formularz i domena nie mają jak się rozjechać.

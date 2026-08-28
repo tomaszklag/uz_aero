@@ -565,3 +565,70 @@ describe('daySheetContent (czysta funkcja)', () => {
     ]);
   });
 });
+
+// ── blok „Olej (L)" (issue #60, etap D) ─────────────────────────────────────────
+
+describe('blok oleju na karcie doby (issue #60)', () => {
+  const claimAnd = (extra: Event[]): Event[] => [
+    {
+      uuid: 'oil-claim-1',
+      sessionUuid: 'sess-oil',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type: 'session_claim',
+      deviceTime: at(8, 0),
+      gpsTime: at(8, 0),
+      payload: { mode: 'free' },
+      schemaVersion: 1,
+      syncedAt: null,
+    } as Event,
+    ...extra,
+  ];
+
+  const preflight = (oil: { oilL?: number | null; oilAddedL?: number | null }): Event =>
+    ({
+      uuid: 'oil-pf-1',
+      sessionUuid: 'sess-oil',
+      aircraftId: 'SP-AXA',
+      picId: 'TMK',
+      dualId: null,
+      type: 'preflight_confirm',
+      deviceTime: at(8, 0),
+      gpsTime: at(8, 0),
+      payload: {
+        operation: 'ferry',
+        reading: { fuelL: 150, mh: 1234.5 },
+        mhFormat: 'hhmm',
+        ...oil,
+      },
+      schemaVersion: 1,
+      syncedAt: null,
+    }) as Event;
+
+  it('sesja z pomiarem i dolewką dostaje blok z wierszem sesji i „Dobą"', () => {
+    const state = projectSession(claimAnd([preflight({ oilL: 10.2, oilAddedL: 1.0 })]));
+    const sheet = buildDaySheet({
+      day: '2026-06-22',
+      aircraftId: 'SP-AXA',
+      sessions: [{ sessionUuid: 'sess-oil', state, crew: { pic: 'TMK', dual: null } }],
+      excluded: [],
+    });
+
+    expect(sheet?.rows.some((r) => r[0] === 'Olej (L)')).toBe(true);
+    expect(sheet?.rows).toContainEqual(['S1', '10,2', '1,0']);
+    expect(sheet?.rows).toContainEqual(['Doba', '10,2', '1,0']);
+  });
+
+  it('doba bez oleju NIE dostaje bloku — ponowny eksport starej karty nie podbija rewizji', () => {
+    const state = projectSession(claimAnd([preflight({})]));
+    const sheet = buildDaySheet({
+      day: '2026-06-22',
+      aircraftId: 'SP-AXA',
+      sessions: [{ sessionUuid: 'sess-oil', state, crew: { pic: 'TMK', dual: null } }],
+      excluded: [],
+    });
+
+    expect(sheet?.rows.some((r) => r[0] === 'Olej (L)')).toBe(false);
+  });
+});

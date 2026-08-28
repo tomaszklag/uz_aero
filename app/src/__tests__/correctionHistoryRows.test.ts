@@ -47,7 +47,16 @@ describe('podpis wiersza historii zmian', () => {
   it('każde pole rejestru ma polską nazwę', () => {
     // Brak wpisu w słowniku dawał `undefined` w miejscu plakietki — dokładnie tak
     // wyglądały pierwsze korekty notatki i Duala, zanim doszły tu obie nazwy.
-    const fields: CorrectionField[] = ['time', 'fuelL', 'mh', 'jumpers', 'notes', 'dualId'];
+    const fields: CorrectionField[] = [
+      'time',
+      'fuelL',
+      'mh',
+      'oilL',
+      'oilAddedL',
+      'jumpers',
+      'notes',
+      'dualId',
+    ];
 
     for (const field of fields) {
       expect(fieldLabel(field)).toEqual(expect.any(String));

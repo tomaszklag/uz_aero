@@ -34,6 +34,7 @@ import {
   FlightDateSheet,
   FlightTimesSheet,
   ManualDropSheet,
+  OilSheet,
   OptionGrid,
   ReadingSheet,
   RefuelEntrySheet,
@@ -57,10 +58,17 @@ import {
   litres,
   maskMotoHoursInput,
   motoHours,
+  oilLitres,
   parseLitres,
   parseMotoHours,
   timeUtc,
 } from '../format';
+import {
+  oilAfterRow,
+  oilEntryWarning,
+  oilValueText,
+  type OilConfig,
+} from './logic/oilPreflight';
 import {
   OPERATION_TYPES,
   isJumpOperation,
@@ -132,6 +140,16 @@ export function ManualFlightScreen({
   }, [queries]);
 
   const aircraft = fleet.find((a) => a.id === draft.aircraftId) ?? null;
+  /**
+   * Konfiguracja oleju do arkusza (issue #60). `normLPerH` ŚWIADOMIE null: wpis
+   * opisuje przeszłość, a oczekiwanie z normy liczy się względem bieżącego licznika —
+   * podpowiadałoby o innym dniu (ta sama reguła, co brak podpowiedzi zadania na 15A).
+   */
+  const oilConfig: OilConfig = {
+    minL: aircraft?.oilMinL ?? null,
+    capacityL: aircraft?.oilCapacityL ?? null,
+    normLPerH: null,
+  };
   const mhFormat = aircraft?.mhFormat ?? 'decimal';
 
   // Dzień pilota w DOBIE WPISU — materiał ostrzeżenia o kolizji czasów (lokalny
@@ -154,6 +172,7 @@ export function ManualFlightScreen({
     | { kind: 'refuel'; id: string | null }
     | { kind: 'fuel'; which: 'before' | 'after' }
     | { kind: 'mh'; which: 'before' | 'after' }
+    | { kind: 'oil' }
     | null;
   const [sheet, setSheet] = useState<SheetState>(null);
   const close = () => setSheet(null);
@@ -573,6 +592,36 @@ export function ManualFlightScreen({
               )}
             </Card>
 
+            {/* ── olej (issue #60) — tu OPCJONALNY, świadomym wyjątkiem ──────────
+                Na 02a pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27), ale lot
+                z kartki sprzed tygodnia może uczciwego pomiaru nie mieć, a fakt lotu
+                jest cenniejszy niż kompletność formularza (reguła flow 15 — blokera
+                NIE MA). Stąd tag „opcjonalnie": tu naprawdę odróżnia. */}
+            <Card title="Olej · opcjonalnie" header="inline">
+              <Field label="Pomiar i dolewka">
+                <ValueBox
+                  value={(() => {
+                    if (draft.oilL != null) {
+                      return (draft.oilAddedL ?? 0) > 0
+                        ? `${oilValueText(draft.oilL)} + ${oilValueText(draft.oilAddedL)}`
+                        : oilValueText(draft.oilL);
+                    }
+                    return draft.oilAddedL != null ? `+ ${oilValueText(draft.oilAddedL)}` : '';
+                  })()}
+                  placeholder="pomiar z bagnetu"
+                  unit="L"
+                  actionIcon="edit"
+                  onPress={() => setSheet({ kind: 'oil' })}
+                  accessibilityLabel="Olej — pomiar i dolewka"
+                />
+              </Field>
+              {draft.oilL != null && (draft.oilAddedL ?? 0) > 0 && (
+                <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
+                  {`po dolewce ${oilLitres(draft.oilL + (draft.oilAddedL ?? 0))}`}
+                </AppText>
+              )}
+            </Card>
+
             {/* Ostrzeżenia z lokalnego rejestru i cache referencyjnego — amber,
                 znikają razem z warunkiem, NIGDY nie blokują zapisu. */}
             {warnings.map((w) => (
@@ -833,6 +882,32 @@ export function ManualFlightScreen({
         onConfirm={(v) => {
           if (sheet?.kind !== 'mh') return;
           patch(sheet.which === 'before' ? { mhBefore: v } : { mhAfter: v });
+          close();
+        }}
+        onCancel={close}
+      />
+
+      {/* ── arkusz pomiaru oleju (issue #60) — TEN SAM komponent co na 02a ────
+          Bez wiersza „Oczekiwane wg normy": wpis opisuje przeszłość (patrz
+          `oilConfig` wyżej). Minimum i zbiornik zostają — to konfiguracja
+          jednostki, nie rachunek na dziś. */}
+      <OilSheet
+        visible={sheet?.kind === 'oil'}
+        initialLevelText={oilValueText(draft.oilL)}
+        initialAddedText={oilValueText(draft.oilAddedL)}
+        parse={parseLitres}
+        rows={[
+          ...(aircraft?.oilMinL != null
+            ? [{ label: `Minimum przed lotem · ${aircraft.reg}`, value: oilLitres(aircraft.oilMinL) }]
+            : []),
+          ...(aircraft?.oilCapacityL != null
+            ? [{ label: `Zbiornik oleju · ${aircraft.reg}`, value: oilLitres(aircraft.oilCapacityL) }]
+            : []),
+        ]}
+        afterRowFor={(l, a) => oilAfterRow(l, a, oilConfig)}
+        warningFor={(l, a) => oilEntryWarning(l, a, oilConfig, null)}
+        onConfirm={(l, a) => {
+          patch({ oilL: l, oilAddedL: a });
           close();
         }}
         onCancel={close}

@@ -19,7 +19,7 @@
  * a zegar telefonu bywa przestawiony (audyt wyłapał wybór po `closeTime`).
  */
 
-import type { Handover } from '@uzaero/domain';
+import type { Handover, OilHandover } from '@uzaero/domain';
 
 import type { SessionRow } from './ports.ts';
 
@@ -102,12 +102,17 @@ export function pickHandover(sessions: readonly SessionRow[]): HandoverPick | nu
     )
     .sort((a, b) => (b.claimTime ?? 0) - (a.claimTime ?? 0))[0];
 
+  // Olej jest NIEZALEŻNY od tego, która sesja niesie przekazanie paliwa/MH:
+  // pomiar biegnie własnym łańcuchem pomiar→pomiar (issue #60).
+  const oil = latestOilHandover(sessions);
+
   if (newerOpen != null) {
     return {
       handover: {
         reading: { fuelL: newerOpen.fuelLastL!, mh: newerOpen.mhLast! },
         byPilotId: newerOpen.picId,
         at: newerOpen.claimTime ?? 0,
+        oil,
       },
       source: 'open_session',
     };
@@ -118,8 +123,52 @@ export function pickHandover(sessions: readonly SessionRow[]): HandoverPick | nu
       reading: { fuelL: base.fuelEndL!, mh: base.mhEnd! },
       byPilotId: base.picId,
       at: base.closeTime ?? 0,
+      oil,
     },
     source: 'handover',
+  };
+}
+
+/**
+ * Ostatni znany POMIAR OLEJU floty (issue #60) — materiał podpowiedzi na kroku
+ * liczników (`Handover.oil`).
+ *
+ * Kotwicą jest sesja z pomiarem NAJDALSZA W ŁAŃCUCHU MH (`mhStart` — licznik przy
+ * przejęciu, czyli ta sama chwila, w której czyta się bagnet; §4.5: „timestampy są
+ * drugorzędne"), a nie najświeższa zegarem. Dolewki zapisane PO pomiarze — para
+ * z preflightów bez pomiaru i zdarzenia `oil_add` — wchodzą SUMĄ (`sessions.oil_added_l`
+ * niesie jedno i drugie): rachunek telefonu to
+ * `oczekiwane = pomiar + dolewki − stawka × ΔMH`. Dolewki sesji-kotwicy też się liczą:
+ * padły PO jej pomiarze.
+ */
+export function latestOilHandover(sessions: readonly SessionRow[]): OilHandover | null {
+  const measured = sessions
+    .filter((s) => s.oilLevelL != null)
+    .sort(
+      (a, b) =>
+        (b.mhStart ?? -Infinity) - (a.mhStart ?? -Infinity) ||
+        (b.claimTime ?? 0) - (a.claimTime ?? 0),
+    );
+  const anchor = measured[0];
+  if (anchor == null) return null;
+
+  // Sesja „za kotwicą" w łańcuchu: po liczniku, a przy remisie/braku — po zegarze.
+  const chainAfter = (s: SessionRow): boolean => {
+    if (s.mhStart != null && anchor.mhStart != null && s.mhStart !== anchor.mhStart) {
+      return s.mhStart > anchor.mhStart;
+    }
+    return (s.claimTime ?? 0) > (anchor.claimTime ?? 0);
+  };
+  const addedAfter = sessions
+    .filter((s) => s.sessionUuid !== anchor.sessionUuid && chainAfter(s))
+    .reduce((sum, s) => sum + (s.oilAddedL ?? 0), 0);
+
+  return {
+    levelL: anchor.oilLevelL!,
+    atMh: anchor.mhStart,
+    at: anchor.claimTime ?? 0,
+    byPilotId: anchor.picId,
+    addedSinceL: (anchor.oilAddedL ?? 0) + addedAfter,
   };
 }
 

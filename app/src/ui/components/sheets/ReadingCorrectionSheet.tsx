@@ -36,8 +36,23 @@ import { Sheet, type SheetRow } from './Sheet';
 export interface ReadingCorrection {
   fuelL?: number;
   mh?: number;
+  /**
+   * Pomiar / dolewka oleju (issue #60); `null` to WARTOŚĆ — „tego wpisu nie było"
+   * (wyczyszczone pole kasuje omyłkowy pomiar), inaczej niż pominięcie klucza.
+   */
+  oilL?: number | null;
+  oilAddedL?: number | null;
   /** Nowy czas zdarzenia; obecny tylko wtedy, gdy arkusz ma pole czasu i pilot go ruszył. */
   newTime?: number;
+}
+
+/** Pola oleju — TYLKO przy przejęciu (issue #60): zdanie samolotu oleju nie mierzy. */
+export interface ReadingOilFields {
+  /** Wartości w mocy, już sformatowane; pusty tekst = wpisu nie było. */
+  levelText: string;
+  addedText: string;
+  /** Tekst → litry; `null` = wpis niepoprawny (pusty tekst NIE przechodzi tędy). */
+  parse: (text: string) => number | null;
 }
 
 /** Pole czasu arkusza: wartość, granice i OSTRZEŻENIE zależne od wybranej godziny. */
@@ -85,6 +100,8 @@ export interface ReadingCorrectionSheetProps {
    * którego na niej nie ma.
    */
   maskMh?: (text: string) => string;
+  /** Pola oleju przy przejęciu; pominięte = arkusz ich nie pokazuje (zdanie). */
+  oil?: ReadingOilFields | null;
   /** Wiersze odniesienia: pojemność zbiorników, wpływ na zużycie, format licznika. */
   rows?: SheetRow[];
   /** Ostrzeżenie o skutku — łańcuch MH, przekazanie następnemu pilotowi. */
@@ -93,6 +110,14 @@ export interface ReadingCorrectionSheetProps {
   onOpenHistory?: () => void;
   onSave: (fields: ReadingCorrection, reason: string | null) => void;
   onCancel: () => void;
+}
+
+/** Wynik pola olejowego: pusty tekst to legalne „wpisu nie było", nie błąd. */
+function oilFieldValue(text: string, parse: (t: string) => number | null) {
+  const trimmed = text.trim();
+  if (trimmed === '') return { ok: true as const, value: null };
+  const parsed = parse(trimmed);
+  return parsed != null ? { ok: true as const, value: parsed } : { ok: false as const, value: null };
 }
 
 export function ReadingCorrectionSheet({
@@ -105,6 +130,7 @@ export function ReadingCorrectionSheet({
   parseFuel,
   parseMh,
   maskMh,
+  oil,
   rows,
   warning,
   historyCount = 0,
@@ -116,6 +142,8 @@ export function ReadingCorrectionSheet({
   const amberTone = toneColors(theme, 'amber');
   const [fuel, setFuel] = useState(fuelText);
   const [mh, setMh] = useState(mhText);
+  const [oilLevel, setOilLevel] = useState(oil?.levelText ?? '');
+  const [oilAdded, setOilAdded] = useState(oil?.addedText ?? '');
   const [at, setAt] = useState(time?.value ?? 0);
   const [reason, setReason] = useState('');
 
@@ -124,17 +152,27 @@ export function ReadingCorrectionSheet({
     if (!visible) return;
     setFuel(fuelText);
     setMh(mhText);
+    setOilLevel(oil?.levelText ?? '');
+    setOilAdded(oil?.addedText ?? '');
     setAt(time?.value ?? 0);
     setReason('');
-  }, [visible, fuelText, mhText, time?.value]);
+  }, [visible, fuelText, mhText, oil?.levelText, oil?.addedText, time?.value]);
 
   const fuelValue = parseFuel(fuel);
   const mhValue = parseMh(mh);
   const fuelChanged = fuel.trim() !== fuelText.trim();
   const mhChanged = mh.trim() !== mhText.trim();
+  const oilLevelState = oil != null ? oilFieldValue(oilLevel, oil.parse) : null;
+  const oilAddedState = oil != null ? oilFieldValue(oilAdded, oil.parse) : null;
+  const oilLevelChanged = oil != null && oilLevel.trim() !== oil.levelText.trim();
+  const oilAddedChanged = oil != null && oilAdded.trim() !== oil.addedText.trim();
   const timeChanged = time != null && at !== time.value;
-  const readable = (!fuelChanged || fuelValue != null) && (!mhChanged || mhValue != null);
-  const changed = fuelChanged || mhChanged || timeChanged;
+  const readable =
+    (!fuelChanged || fuelValue != null) &&
+    (!mhChanged || mhValue != null) &&
+    (!oilLevelChanged || oilLevelState?.ok === true) &&
+    (!oilAddedChanged || oilAddedState?.ok === true);
+  const changed = fuelChanged || mhChanged || oilLevelChanged || oilAddedChanged || timeChanged;
   // Ostrzeżenie „blokujące" nie wyszarza przycisku, tylko odbiera mu akcję i mówi
   // powód — ta sama zasada, co przy pustym formularzu (§6 pkt 3).
   const timeNote = time != null ? time.noteFor(at) : null;
@@ -144,6 +182,9 @@ export function ReadingCorrectionSheet({
     const fields: ReadingCorrection = {};
     if (fuelChanged && fuelValue != null) fields.fuelL = fuelValue;
     if (mhChanged && mhValue != null) fields.mh = mhValue;
+    // `null` przechodzi ŚWIADOMIE: wyczyszczone pole to korekta „pomiaru nie było".
+    if (oilLevelChanged && oilLevelState?.ok) fields.oilL = oilLevelState.value;
+    if (oilAddedChanged && oilAddedState?.ok) fields.oilAddedL = oilAddedState.value;
     if (timeChanged) fields.newTime = at;
     onSave(fields, reason.trim() === '' ? null : reason.trim());
   };
@@ -235,6 +276,34 @@ export function ReadingCorrectionSheet({
           style={styles.cell}
         />
       </View>
+
+      {/* OLEJ — tylko przy przejęciu (issue #60): pomiar żyje tam, gdzie powstał.
+          Wyczyszczone pole jest korektą „tego wpisu nie było" — dlatego puste
+          przechodzi, a podpowiedź po zmianie mówi „było —" przy braku oryginału. */}
+      {oil != null && (
+        <View style={styles.grid}>
+          <TextField
+            label="Olej — pomiar"
+            value={oilLevel}
+            onChangeText={setOilLevel}
+            keyboardType="decimal-pad"
+            hint={
+              oilLevelChanged ? `było ${oil.levelText.trim() === '' ? '—' : oil.levelText}` : undefined
+            }
+            style={styles.cell}
+          />
+          <TextField
+            label="Olej — dolewka"
+            value={oilAdded}
+            onChangeText={setOilAdded}
+            keyboardType="decimal-pad"
+            hint={
+              oilAddedChanged ? `było ${oil.addedText.trim() === '' ? '—' : oil.addedText}` : undefined
+            }
+            style={styles.cell}
+          />
+        </View>
+      )}
 
       {changed && !readable && (
         <AppText variant="mono" tone="red" style={styles.error}>

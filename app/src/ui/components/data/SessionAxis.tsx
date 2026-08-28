@@ -74,6 +74,7 @@ export type SessionAxisKind =
   | 'engineStop'
   | 'release'
   | 'refuel'
+  | 'oilAdd'
   | 'boarding'
   | 'crew'
   /** Stan TRWAJĄCY, nie zdarzenie rejestru: „Silnik pracuje…", „W locie…" (kokpit). */
@@ -141,6 +142,7 @@ const KIND_TONE: Record<SessionAxisKind, Tone> = {
   engineStop: 'neutral',
   release: 'neutral',
   refuel: 'amber',
+  oilAdd: 'amber',
   boarding: 'blue',
   crew: 'neutral',
   live: 'green',
@@ -157,6 +159,7 @@ const HOLLOW: Record<SessionAxisKind, boolean> = {
   engineStop: false,
   release: true,
   refuel: false,
+  oilAdd: false,
   boarding: false,
   crew: false,
   live: false,
@@ -173,6 +176,7 @@ const DIMMED: Record<SessionAxisKind, boolean> = {
   engineStop: false,
   release: true,
   refuel: true,
+  oilAdd: true,
   boarding: true,
   crew: true,
   live: false,

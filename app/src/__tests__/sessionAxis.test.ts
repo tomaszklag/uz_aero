@@ -169,6 +169,20 @@ describe('oś sesji', () => {
     expect(rows.find((row) => row.kind === 'release')!.sub).toBe('odczyt 171 L · 1236:05');
   });
 
+  it('pomiar oleju wchodzi do podpisu przejęcia — zdanie oleju nie mierzy (issue #60)', () => {
+    const withOil = sessionEvents().map((e) =>
+      e.type === 'preflight_confirm'
+        ? ({ ...e, payload: { ...e.payload, oilL: 8.2, oilAddedL: 1.0 } } as Event)
+        : e,
+    );
+    const rows = axis(withOil).rows;
+    expect(rows.find((row) => row.kind === 'claim')!.sub).toBe(
+      'odczyt 150 L · 1234:30 · olej 8,2 L (+1,0 L)',
+    );
+    // zdanie samolotu zostaje bez oleju — bagnet tuż po locie kłamie
+    expect(rows.find((row) => row.kind === 'release')!.sub).toBe('odczyt 171 L · 1236:05');
+  });
+
   it('zrzut niesie skład i wysokość; brak obu nie robi pustego podpisu', () => {
     const { rows } = axis();
     expect(rows.find((row) => row.id === 'drop-1')!.sub).toBe('4 skoczków · 12 800 ft');
@@ -255,6 +269,27 @@ describe('zdarzenia naziemne', () => {
     const kinds = axis(rowneCzasy).rows.map((r) => r.kind);
 
     expect(kinds.indexOf('refuel')).toBeLessThan(kinds.indexOf('engineStart'));
+  });
+
+  it('dolewka oleju wchodzi na oś z ilością; przy równym stemplu stoi przed silnikiem (issue #60)', () => {
+    const zOlejem = [
+      ...sessionEvents(),
+      event('refuel', at(8, 12), { beforeL: 130, addedL: 20, afterL: 150 }, 'refuel-rowno'),
+      event('oil_add', at(8, 12), { addedL: 1.0 }, 'oil-1'),
+    ];
+    const rows = axis(zOlejem).rows;
+    const oil = rows.find((r) => r.kind === 'oilAdd')!;
+
+    expect(oil.name).toBe('Dolewka oleju');
+    // Sama ilość — poziomu po dolewce nie ma jak zmierzyć (silnik zwykle gorący),
+    // a pomiar z przejęcia stoi wyżej na tej samej osi.
+    expect(oil.sub).toBe('+1,0 L');
+    expect(oil.targetUuid).toBe('oil-1');
+
+    const kinds = rows.map((r) => r.kind);
+    expect(kinds.indexOf('oilAdd')).toBeLessThan(kinds.indexOf('engineStart'));
+    // ...ale za tankowaniem o tym samym stemplu (jedna pauza, stały porządek).
+    expect(kinds.indexOf('refuel')).toBeLessThan(kinds.indexOf('oilAdd'));
   });
 
   it('załadunek niesie skład, a bez deklaracji — sam fakt', () => {

@@ -807,6 +807,15 @@ export interface AdminAircraft {
   mhFormat: MhFormat;
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
+  /**
+   * Konfiguracja OLEJU (issue #60) — trzy liczby z dokumentacji jednostki (A07a),
+   * wszystkie `null`-owalne: puste = moduł oleju dla tej jednostki milczy
+   * (podpowiedzi i ostrzeżenia śpią, pomiar dalej działa). Norma nominalna zasila
+   * sugestię oczekiwanego poziomu, dopóki analityka nie policzy własnej (faza 2).
+   */
+  oilMinL: number | null;
+  oilCapacityL: number | null;
+  oilNormLPerH: number | null;
 }
 
 /**
@@ -861,7 +870,7 @@ export interface FleetCounts {
   claimed: number;
 }
 
-/** Zmiana konfiguracji. Pola nieustawione zostają bez zmian. */
+/** Zmiana konfiguracji. Pola nieustawione zostają bez zmian; `null` = wyczyść. */
 export interface AircraftPatch {
   reg?: string;
   type?: string;
@@ -870,6 +879,9 @@ export interface AircraftPatch {
   mhFormat?: MhFormat;
   dualRequired?: boolean;
   serviceStatus?: ServiceStatus;
+  oilMinL?: number | null;
+  oilCapacityL?: number | null;
+  oilNormLPerH?: number | null;
 }
 
 /**

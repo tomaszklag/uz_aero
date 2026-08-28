@@ -71,6 +71,14 @@ const capacityL = z.coerce.number().finite().min(-1_000_000).max(1_000_000);
 const mhFormat = z.enum(['decimal', 'hhmm']);
 const serviceStatus = z.enum(['active', 'disabled']);
 
+/**
+ * Konfiguracja oleju (issue #60): `null` = nieskonfigurowane (moduł dla jednostki
+ * milczy) i jest to WARTOŚĆ, nie brak pola. Bez `.positive()` — jak przy pojemności:
+ * „większe od zera" i „minimum ≤ zbiornik" są REGUŁAMI (`fleetGuards.refuseOil`),
+ * nie kształtem żądania.
+ */
+const oilValue = z.coerce.number().finite().min(-1_000_000).max(1_000_000).nullable();
+
 const listQuery = z.object({
   status: serviceStatus.optional(),
   // `z.coerce.boolean()` jest tu pułapką: uznaje KAŻDY niepusty napis za `true`, więc
@@ -110,6 +118,9 @@ const createBody = z.object({
   mhFormat,
   dualRequired: z.boolean().default(false),
   serviceStatus: serviceStatus.default('active'),
+  oilMinL: oilValue.default(null),
+  oilCapacityL: oilValue.default(null),
+  oilNormLPerH: oilValue.default(null),
 });
 
 /**
@@ -125,6 +136,9 @@ const patchBody = z.object({
   mhFormat: mhFormat.optional(),
   dualRequired: z.boolean().optional(),
   serviceStatus: serviceStatus.optional(),
+  oilMinL: oilValue.optional(),
+  oilCapacityL: oilValue.optional(),
+  oilNormLPerH: oilValue.optional(),
 });
 
 const idParams = z.object({ id: z.string().min(1).max(100) });
@@ -194,6 +208,9 @@ export function registerAdminFleetRoutes(
         mhFormat: body.data.mhFormat,
         dualRequired: body.data.dualRequired,
         serviceStatus: body.data.serviceStatus,
+        oilMinL: body.data.oilMinL,
+        oilCapacityL: body.data.oilCapacityL,
+        oilNormLPerH: body.data.oilNormLPerH,
       });
       if (!outcome.ok) return refusal(reply, outcome);
 

@@ -165,7 +165,6 @@ export function ManualEventSheet({
       <Banner
         kind="edu"
         tone="blue"
-        icon="info"
         text={
           'Wpis zostanie oznaczony jako ręczny — w statystykach i arkuszu widać, ' +
           'które zdarzenia pochodzą z GPS, a które od pilota. Zapis jest lokalny: ' +

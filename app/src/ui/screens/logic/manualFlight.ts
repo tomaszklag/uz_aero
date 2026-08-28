@@ -82,6 +82,16 @@ export interface ManualFlightDraft {
   fuelAfterL: number | null;
   mhBefore: number | null;
   mhAfter: number | null;
+  /**
+   * Olej przy przejęciu (issue #60). Na 02a pomiar jest krokiem WYMAGANYM (decyzja
+   * 2026-08-27), ale wpis ręczny jest ŚWIADOMYM WYJĄTKIEM: lot z kartki sprzed
+   * tygodnia może uczciwego pomiaru nie mieć, a fakt lotu jest cenniejszy niż
+   * kompletność formularza (reguła flow 15). Bez oczekiwania z normy: wpis opisuje
+   * przeszłość, a podpowiedź „ile powinno być TERAZ" mówiłaby o innym dniu
+   * (ta sama reguła, co brak podpowiedzi zadania na 15a).
+   */
+  oilL: number | null;
+  oilAddedL: number | null;
 }
 
 /**
@@ -108,6 +118,8 @@ export function emptyManualFlightDraft(now: EpochMillis): ManualFlightDraft {
     fuelAfterL: null,
     mhBefore: null,
     mhAfter: null,
+    oilL: null,
+    oilAddedL: null,
   };
 }
 
@@ -240,6 +252,10 @@ export function toManualFlightInput(
       mh: draft.mhBefore!,
     } satisfies FuelMhReading,
     finalReading: { fuelL: draft.fuelAfterL!, mh: draft.mhAfter! } satisfies FuelMhReading,
+    // Olej (issue #60): klucze tylko przy faktycznym wpisie — jak na 02a.
+    ...(draft.oilL != null || draft.oilAddedL != null
+      ? { oilL: draft.oilL, oilAddedL: draft.oilAddedL }
+      : {}),
     notes: draft.notes,
   };
 }

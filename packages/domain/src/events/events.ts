@@ -185,6 +185,29 @@ export interface PreflightConfirmPayload {
   /** Format MH samolotu — zapamiętany dla spójnego wyświetlania w sesji. */
   mhFormat?: MhFormat;
   /**
+   * Pomiar oleju z bagnetu przy przejęciu (L) — issue #60.
+   *
+   * W FLOW przejęcia (02a) pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27) —
+   * bramkę trzyma ekran (`preflightBlocker`), jak przy odczytach paliwa i MH.
+   * POLE payloadu pozostaje mimo to opcjonalne, bo strumień musi przyjąć sesje,
+   * które pomiaru legalnie nie mają: sprzed modułu oleju i z wpisu ręcznego
+   * (ekran 15 — fakt lotu jest cenniejszy niż kompletność formularza).
+   * Zdanie samolotu (09b) oleju NIE mierzy — bagnet tuż po locie kłamie; interwał
+   * zużycia biegnie pomiar→pomiar przez wiele sesji, z licznikiem MH (`reading.mh`)
+   * jako kotwicą rachunku. `undefined`/`null` = pomiaru nie było; zera NIE
+   * podstawiamy, bo zero to odczyt.
+   */
+  oilL?: number | null;
+  /**
+   * Olej dolany przy przejęciu (L) — para z pomiarem, bo to jedna czynność przy
+   * bagnecie: zmierz → jeśli mało, dolej. Stan po dolewce jest RACHUNKIEM
+   * (`oilL + oilAddedL`), nie trzecim polem — inaczej niż trójka `refuel`, dzięki
+   * czemu korekta `amend` jednej liczby nie rozjeżdża arytmetyki. Dolewka bez
+   * pomiaru jest legalna (bagnet gorący, ale wiadomo ile dolano) — ogniwo łańcucha
+   * słabsze, lecz prawdziwe. `undefined`/`null` = nie dolewano.
+   */
+  oilAddedL?: number | null;
+  /**
    * Domyślny skład skoczków dla tej sesji (operacja Skoki, 2026-08-17) — ustawiany
    * na kroku „zadanie" (02e), zanim padnie pierwszy `boarding`.
    *
@@ -240,6 +263,7 @@ export interface TaxiPayload {
  * które tu wpuszczamy, staje się częścią kontraktu. Dopuszczalność zależy od TYPU CELU
  * i pilnuje tego reguła `CORRECTION_FIELD_NOT_ALLOWED`:
  *  • `fuelL` / `mh` — `preflight_confirm.reading` i `day_close.finalReading`,
+ *  • `oilL` / `oilAddedL` — `preflight_confirm` (issue #60; olej żyje tylko przy przejęciu),
  *  • `jumpers`      — `drop.jumpers`.
  *
  * `refuel` świadomie NIE MA `amend`: niesie spójną trójkę before/added/after, więc
@@ -260,6 +284,13 @@ export interface CorrectionFields {
    * wskazanej osobie. Zmianę załogi W TRAKCIE opisuje `crew_change`, nie to pole.
    */
   dualId?: string | null;
+  /**
+   * Nowy pomiar oleju (`preflight_confirm.oilL`, litry); `null` = „pomiaru nie było"
+   * (kasowanie omyłkowego wpisu) — wartość, nie brak pola, jak przy notatce.
+   */
+  oilL?: number | null;
+  /** Nowa dolewka oleju (`preflight_confirm.oilAddedL`, litry); `null` = nie dolewano. */
+  oilAddedL?: number | null;
   /**
    * Nowa treść notatki (`preflight_confirm.notes`, `manual_log_entry.notes`);
    * `null` = notatkę skasowano.
@@ -370,6 +401,23 @@ export interface RefuelPayload {
   consumptionLPerH?: number | null;
 }
 
+/**
+ * `oil_add` — dolewka oleju z kokpitu (issue #60, decyzja 2026-08-27: dolewka zdarza
+ * się także PO przejęciu, więc sam `preflight_confirm.oilAddedL` nie wystarcza).
+ *
+ * Jak tankowanie: przy zatrzymanym śmigle, przed uruchomieniem i po wyłączeniu.
+ * Inaczej niż tankowanie niesie JEDNĄ liczbę, nie trójkę — poziomu po dolewce nie ma
+ * jak uczciwie zmierzyć (silnik zwykle gorący), a rachunek interwału olejowego i tak
+ * traktuje dolewkę jako SKŁADNIK, nie granicę (pomiar→pomiar + suma dolewek).
+ * Korekty: `retime` i `void`; `amend`-a NIE MA świadomie (parytet z `refuel`):
+ * błędną dolewkę unieważnia się i dolewa ponownie — kokpit stoi otwarty do zdania,
+ * a po zdaniu służy temu arkusz „Dodaj wpis" (10h).
+ */
+export interface OilAddPayload {
+  /** Ilość dolana (L). */
+  addedL: number;
+}
+
 /** `crew_change` — rola + pilot schodzący/wchodzący (§3.5). */
 export interface CrewChangePayload {
   role: CrewRole;
@@ -456,6 +504,7 @@ export interface EventPayloadMap {
   drop: DropPayload;
   boarding: BoardingPayload;
   refuel: RefuelPayload;
+  oil_add: OilAddPayload;
   crew_change: CrewChangePayload;
   manual_log_entry: ManualLogEntryPayload;
   day_close: DayClosePayload;
@@ -477,6 +526,7 @@ export const EVENT_TYPES: readonly EventType[] = [
   'drop',
   'boarding',
   'refuel',
+  'oil_add',
   'crew_change',
   'manual_log_entry',
   'day_close',

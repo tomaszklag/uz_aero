@@ -44,7 +44,7 @@
 
 import { applyCorrections, correctionHistory } from '../../../domain';
 import type { Event, EventOf, MhFormat, SessionState } from '../../../domain';
-import { hhmm, litres, motoHours, thousands, timeUtc } from '../../format';
+import { hhmm, litres, motoHours, oilLitres, thousands, timeUtc } from '../../format';
 
 /**
  * Rodzaj punktu na osi — steruje kolorem kropki i tonem napisu.
@@ -65,6 +65,7 @@ export type AxisKind =
   | 'engineStop'
   | 'release'
   | 'refuel'
+  | 'oilAdd'
   | 'boarding'
   | 'crew'
   /** Stan TRWAJĄCY — dokłada go kokpit (`cockpitLog.ts`), nie ten builder. */
@@ -168,6 +169,9 @@ const RANK: Record<AxisKind, number> = {
   // stoją przed uruchomieniem i po wyłączeniu — inaczej „Tankowanie" wpadałoby w środek
   // biegu silnika tylko dlatego, że zegar pokazał tę samą minutę.
   refuel: 0.5,
+  // Dolewka oleju dzieje się w tej samej pauzie, co tankowanie — przy równym stemplu
+  // stoi tuż za nim, przed załadunkiem (issue #60).
+  oilAdd: 0.55,
   boarding: 0.6,
   crew: 0.7,
   engineStart: 1,
@@ -212,7 +216,7 @@ export function buildSessionAxis(
       at: projection.claimedAt,
       time: timeUtc(projection.claimedAt),
       name: 'Przejęcie',
-      sub: readingLine(projection.fuel.startL, projection.mh.start, mhFormat),
+      sub: claimReadingLine(projection, mhFormat),
       flight: null,
       duration: null,
       targetUuid: target,
@@ -291,6 +295,24 @@ export function buildSessionAxis(
         duration: null,
         targetUuid: refuel.uuid,
         corrected: corrected.has(refuel.uuid),
+      });
+    }
+
+    if (event.type === 'oil_add') {
+      const oilAdd = event as EventOf<'oil_add'>;
+      rows.push({
+        id: oilAdd.uuid,
+        kind: 'oilAdd',
+        at: at(oilAdd),
+        time: timeUtc(at(oilAdd)),
+        name: 'Dolewka oleju',
+        // Sama ilość: stanu po dolewce zwykle nie ma jak zmierzyć (silnik gorący),
+        // a pomiar z przejęcia stoi wyżej na tej samej osi (issue #60).
+        sub: `+${oilLitres(oilAdd.payload.addedL)}`,
+        flight: null,
+        duration: null,
+        targetUuid: oilAdd.uuid,
+        corrected: corrected.has(oilAdd.uuid),
       });
     }
 
@@ -460,6 +482,24 @@ function readingLine(fuelL: number | null, mh: number | null, format: MhFormat):
   const parts: string[] = [];
   if (fuelL != null) parts.push(`odczyt ${litres(fuelL)}`);
   if (mh != null) parts.push(motoHours(mh, format));
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+/**
+ * Podpis PRZEJĘCIA = odczyty + pomiar oleju (issue #60). Osobno od `readingLine`,
+ * bo zdanie samolotu oleju NIE MIERZY (bagnet tuż po locie kłamie — olej nie spłynął)
+ * i jego podpis ma zostać dokładnie taki, jaki był. Dolewka w nawiasie, wzorem
+ * tankowania na tej samej osi („+48 L → 171 L"): ilość dolana jest faktem przebiegu,
+ * nie przypisem.
+ */
+function claimReadingLine(projection: SessionState, format: MhFormat): string | null {
+  const base = readingLine(projection.fuel.startL, projection.mh.start, format);
+  const { levelL, addedL } = projection.oil;
+  const oil =
+    levelL != null
+      ? `olej ${oilLitres(levelL)}${addedL > 0 ? ` (+${oilLitres(addedL)})` : ''}`
+      : null;
+  const parts = [base, oil].filter((p): p is string => p != null);
   return parts.length > 0 ? parts.join(' · ') : null;
 }
 

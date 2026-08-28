@@ -872,3 +872,79 @@ describe('zakres uprawnień floty', () => {
     expect(res.statusCode).toBe(403);
   });
 });
+
+// ── konfiguracja oleju (issue #60, etap D) ──────────────────────────────────────
+
+describe('konfiguracja oleju (issue #60)', () => {
+  const base = { reg: 'SP-OIL', type: 'Cessna 182', capacityL: 330, mhFormat: 'hhmm' as const };
+
+  it('trójka oleju zapisuje się, wraca w liście i w /reference; PATCH null czyści', async () => {
+    const { app } = await testHarness();
+    const tmk = await token(app, 'TMK');
+
+    const created = await createAircraft(app, tmk, {
+      ...base,
+      oilMinL: 8.5,
+      oilCapacityL: 11.4,
+      oilNormLPerH: 0.12,
+    });
+    expect(created.statusCode).toBe(201);
+    expect(created.json().aircraft).toMatchObject({
+      oilMinL: 8.5,
+      oilCapacityL: 11.4,
+      oilNormLPerH: 0.12,
+    });
+    const id = created.json().aircraft.id as string;
+
+    // Kanał do telefonów: konfiguracja jedzie w /reference obok pojemności.
+    const ref = await reference(app, tmk);
+    const oilAc = ref
+      .json()
+      .aircraft.find((a: { reg: string }) => a.reg === 'SP-OIL');
+    expect(oilAc).toMatchObject({ oilMinL: 8.5, oilCapacityL: 11.4, oilNormLPerH: 0.12 });
+    // Jednostka bez konfiguracji niesie jawne nulle — moduł dla niej milczy.
+    const axa = ref.json().aircraft.find((a: { reg: string }) => a.reg === 'SP-AXA');
+    expect(axa).toMatchObject({ oilMinL: null, oilCapacityL: null, oilNormLPerH: null });
+
+    // `null` = wyczyść (moduł ma zamilknąć) — inaczej niż pominięcie pola.
+    const cleared = await patchAircraft(app, tmk, id, { oilMinL: null });
+    expect(cleared.statusCode).toBe(200);
+    expect(cleared.json().aircraft).toMatchObject({ oilMinL: null, oilCapacityL: 11.4 });
+  });
+
+  it('zero i minimum ponad zbiornik odbijają się z powodem — reguła, nie kształt żądania', async () => {
+    const { app } = await testHarness();
+    const tmk = await token(app, 'TMK');
+
+    const zero = await createAircraft(app, tmk, { ...base, reg: 'SP-OL0', oilMinL: 0 });
+    expect(zero.statusCode).toBe(409);
+    expect(zero.json()).toMatchObject({ error: 'refused', reason: 'oil_not_positive' });
+
+    const inverted = await createAircraft(app, tmk, {
+      ...base,
+      reg: 'SP-OL1',
+      oilMinL: 12,
+      oilCapacityL: 10,
+    });
+    expect(inverted.statusCode).toBe(409);
+    expect(inverted.json()).toMatchObject({ error: 'refused', reason: 'oil_min_above_capacity' });
+  });
+
+  it('reguła minimum ≤ zbiornik działa na stanie EFEKTYWNYM po PATCH-u, nie na samym żądaniu', async () => {
+    const { app } = await testHarness();
+    const tmk = await token(app, 'TMK');
+
+    const created = await createAircraft(app, tmk, {
+      ...base,
+      reg: 'SP-OL2',
+      oilMinL: 8.5,
+      oilCapacityL: 10,
+    });
+    const id = created.json().aircraft.id as string;
+
+    // Samo minimum w żądaniu — zbiornik 10 L stoi już w bazie; 12 > 10 ma odbić.
+    const res = await patchAircraft(app, tmk, id, { oilMinL: 12 });
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toMatchObject({ error: 'refused', reason: 'oil_min_above_capacity' });
+  });
+});

@@ -189,6 +189,7 @@ describe('co wolno dopisać', () => {
       'drop',
       'boarding',
       'refuel',
+      'oil_add',
     ]);
   });
 
@@ -198,6 +199,7 @@ describe('co wolno dopisać', () => {
       'landing',
       'taxi',
       'refuel',
+      'oil_add',
     ]);
   });
 
@@ -215,6 +217,7 @@ describe('co wolno dopisać', () => {
       'landing',
       'taxi',
       'refuel',
+      'oil_add',
     ]);
   });
 });

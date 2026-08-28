@@ -45,6 +45,8 @@ export interface SessionDbRow {
   jumpers_solo: number | null;
   drop_alt_sum_ft: number | null;
   drop_alt_count: number | null;
+  oil_level_l: number | null;
+  oil_added_l: number | null;
 }
 
 /**
@@ -83,6 +85,8 @@ export const sessionColumns = (alias: string): string =>
     'jumpers_solo',
     'drop_alt_sum_ft',
     'drop_alt_count',
+    'oil_level_l',
+    'oil_added_l',
   ]
     .map((column) => `${alias}.${column}`)
     .join(', ');
@@ -132,5 +136,10 @@ export function toSessionRow(r: SessionDbRow): SessionRow {
     jumpersSolo: r.jumpers_solo,
     dropAltSumFt: r.drop_alt_sum_ft,
     dropAltCount: r.drop_alt_count,
+    // Olej (issue #60): `NULL` w poziomie = „pomiaru nie było" (stan zwykły dla sesji
+    // sprzed modułu i wpisów ręcznych bez oleju), nie brak przeliczenia. Suma dolanego
+    // bez pomiaru bywa niezerowa (dolewka w ciemno / `oil_add`).
+    oilLevelL: r.oil_level_l,
+    oilAddedL: r.oil_added_l,
   };
 }

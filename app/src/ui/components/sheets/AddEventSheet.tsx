@@ -53,9 +53,11 @@ export interface AddEventSheetProps {
   onCancel: () => void;
 }
 
-/** Pola specyficzne dla typu — dziś potrzebuje ich wyłącznie tankowanie. */
+/** Pola specyficzne dla typu — tankowanie (trójka) i dolewka oleju (jedna liczba). */
 export interface AddEventExtra {
   refuel?: { beforeL: number; addedL: number; afterL: number };
+  /** Dolewka oleju (issue #60) — sama ilość: poziomu po dolewce nie ma jak zmierzyć. */
+  oilAddedL?: number;
 }
 
 export function AddEventSheet({
@@ -78,6 +80,7 @@ export function AddEventSheet({
   // wszystkich trzech to zaproszenie do wpisu, który reguła odrzuci.
   const [beforeText, setBeforeText] = useState('');
   const [addedText, setAddedText] = useState('');
+  const [oilText, setOilText] = useState('');
 
   useEffect(() => {
     if (!visible) return;
@@ -86,14 +89,18 @@ export function AddEventSheet({
     setNote('');
     setBeforeText(fuelBeforeL == null ? '' : String(Math.round(fuelBeforeL)));
     setAddedText('');
+    setOilText('');
   }, [visible, initialTime, options, fuelBeforeL]);
 
   const rows = refsFor?.(typeId, time) ?? [];
   const isRefuel = typeId === 'refuel';
+  const isOilAdd = typeId === 'oil_add';
   const before = parseNumber(beforeText);
   const added = parseNumber(addedText);
   const after = before != null && added != null ? before + added : null;
+  const oilAdded = parseNumber(oilText);
   const refuelReady = !isRefuel || (before != null && added != null && added > 0);
+  const oilReady = !isOilAdd || (oilAdded != null && oilAdded > 0);
 
   return (
     <Sheet
@@ -102,7 +109,7 @@ export function AddEventSheet({
       rows={rows}
       confirmLabel="DODAJ WPIS"
       onConfirm={
-        typeId === '' || busy || !refuelReady
+        typeId === '' || busy || !refuelReady || !oilReady
           ? undefined
           : () =>
               onConfirm(
@@ -111,7 +118,9 @@ export function AddEventSheet({
                 note.trim() === '' ? null : note.trim(),
                 isRefuel && before != null && added != null && after != null
                   ? { refuel: { beforeL: before, addedL: added, afterL: after } }
-                  : undefined,
+                  : isOilAdd && oilAdded != null
+                    ? { oilAddedL: oilAdded }
+                    : undefined,
               )
       }
       onCancel={onCancel}
@@ -158,6 +167,19 @@ export function AddEventSheet({
         </>
       )}
 
+      {/* Dolewka oleju (issue #60): JEDNA liczba — poziomu po dolewce nie ma jak
+          uczciwie zmierzyć (silnik zwykle gorący), a rachunek traktuje dolewkę jako
+          składnik interwału pomiar→pomiar, nie granicę. */}
+      {isOilAdd && (
+        <TextField
+          label="Dolano"
+          value={oilText}
+          onChangeText={setOilText}
+          keyboardType="decimal-pad"
+          hint="ilość w litrach"
+        />
+      )}
+
       <ReasonField
         value={note}
         onChangeText={setNote}
@@ -167,7 +189,6 @@ export function AddEventSheet({
       <Banner
         kind="edu"
         tone="blue"
-        icon="info"
         text={
           'Wpis dostanie w rejestrze znacznik „ręcznie" — na osi sesji wygląda jak każdy ' +
           'inny, a metodę widzi administrator w panelu.'

@@ -43,11 +43,16 @@ import { AppText } from '../foundation/AppText';
 import { ActionButton } from '../data/ActionButton';
 import { Banner } from '../status/Banner';
 import { SheetSurface } from './SheetSurface';
-import type { Tone } from '../tone';
+import { toneColors, type Tone } from '../tone';
 
 export interface SheetRow {
   label: string;
   value: string;
+  /**
+   * Ton WARTOŚCI (issue #60: „Po dolewce · 9,2 L" zielone od minimum w górę).
+   * Kolor niesie werdykt o liczbie, nie ozdobę — bez tonu wiersz zostaje neutralny.
+   */
+  tone?: Tone;
 }
 
 export interface SheetProps {
@@ -164,7 +169,14 @@ export function Sheet({
           <AppText variant="mono" tone="muted" style={styles.rowLabel}>
             {row.label}
           </AppText>
-          <AppText variant="mono" tone="secondary" style={styles.rowLabel}>
+          <AppText
+            variant="mono"
+            tone="secondary"
+            style={[
+              styles.rowLabel,
+              row.tone != null ? { color: toneColors(theme, row.tone).accent } : null,
+            ]}
+          >
             {row.value}
           </AppText>
         </View>

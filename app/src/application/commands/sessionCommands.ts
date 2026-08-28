@@ -43,6 +43,7 @@ import {
   type OperationType,
   type PreflightConfirmPayload,
   type EventCorrectionPayload,
+  type OilAddPayload,
   type RefuelPayload,
   type SessionClaimMode,
   type SessionState,
@@ -131,6 +132,12 @@ export interface ManualFlightInput {
   initialReading: FuelMhReading;
   /** Odczyt po locie — WYMAGANY, staje się przekazaniem (te same reguły co 09b). */
   finalReading: FuelMhReading;
+  /**
+   * Pomiar / dolewka oleju przy przejęciu (issue #60). Na 02a pomiar jest krokiem
+   * wymaganym; wpis ręczny jest wyjątkiem (fakt lotu > kompletność formularza).
+   */
+  oilL?: number | null;
+  oilAddedL?: number | null;
   notes?: string | null;
 }
 
@@ -271,6 +278,14 @@ export class SessionCommands {
   /** `at` — tankowanie dopisane po fakcie (issue #43); domyślnie chwila zapisu. */
   refuel(ctx: SessionContext, payload: RefuelPayload, at?: EpochMillis): Promise<CommandResult> {
     return this.execute(ctx, 'refuel', () => ({
+      payload,
+      ...(at !== undefined ? { gpsTime: at } : {}),
+    }));
+  }
+
+  /** Dolewka oleju z kokpitu (issue #60) — jak tankowanie: przy zatrzymanym śmigle. */
+  addOil(ctx: SessionContext, payload: OilAddPayload, at?: EpochMillis): Promise<CommandResult> {
+    return this.execute(ctx, 'oil_add', () => ({
       payload,
       ...(at !== undefined ? { gpsTime: at } : {}),
     }));
@@ -434,6 +449,10 @@ export class SessionCommands {
           client: input.client ?? null,
           dualId: input.dualId,
           reading: input.initialReading,
+          // Olej (issue #60) — pomiar żyje przy przejęciu, także we wpisie po fakcie.
+          ...(input.oilL != null || input.oilAddedL != null
+            ? { oilL: input.oilL ?? null, oilAddedL: input.oilAddedL ?? null }
+            : {}),
           notes: input.notes ?? null,
         },
         gpsTime: input.engine.start,

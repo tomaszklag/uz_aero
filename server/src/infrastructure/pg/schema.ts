@@ -64,7 +64,7 @@
  * nie kosztuje.
  */
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /**
  * Migracja bazowa — CAŁY schemat serwera.
@@ -475,7 +475,35 @@ export const MIGRATION_1 = `
   );
 `;
 
-export const MIGRATIONS: readonly string[] = [MIGRATION_1];
+/**
+ * Migracja 2: MODUŁ OLEJU (issue #60) — konfiguracja floty i projekcja sesji.
+ *
+ * PIERWSZA migracja po zgnieceniu (2026-08-08) i pierwsza wobec BAZY PRODUKCYJNEJ
+ * (Railway, 2026-08-26) — „schemat edytujemy w miejscu" przestało obowiązywać, więc
+ * zmiana jest w całości ADDYTYWNA: nullable kolumny na końcach tabel, zero backfillu
+ * (NULL = „sprzed modułu oleju" i to jest poprawna odpowiedź, nie brak przeliczenia).
+ * `IF NOT EXISTS`, żeby migracja przeżyła powtórne wykonanie na bazie, którą ktoś
+ * poprawiał ręcznie — runner i tak stosuje ją raz.
+ *
+ *  • `aircraft.oil_*` — trzy liczby z dokumentacji jednostki (A07a), wszystkie
+ *    OPCJONALNE: minimum zapala ostrzeżenie na kroku liczników, pojemność ogranicza
+ *    pomiar i dolewkę (siostra `capacity_l`), norma nominalna zasila sugestię
+ *    oczekiwanego poziomu, dopóki analityka nie policzy własnej stawki (faza 2).
+ *  • `sessions.oil_level_l/oil_added_l` — projekcja `SessionState.oil`: pomiar
+ *    z przejęcia i SUMA dolanego (para z preflightu + zdarzenia `oil_add`). Z nich
+ *    `GET /reference` składa przekazanie oleju (`Handover.oil`) bez chodzenia po
+ *    strumieniu zdarzeń całej floty.
+ */
+export const MIGRATION_2 = `
+  ALTER TABLE aircraft ADD COLUMN IF NOT EXISTS oil_min_l        DOUBLE PRECISION;
+  ALTER TABLE aircraft ADD COLUMN IF NOT EXISTS oil_capacity_l   DOUBLE PRECISION;
+  ALTER TABLE aircraft ADD COLUMN IF NOT EXISTS oil_norm_l_per_h DOUBLE PRECISION;
+
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS oil_level_l DOUBLE PRECISION;
+  ALTER TABLE sessions ADD COLUMN IF NOT EXISTS oil_added_l DOUBLE PRECISION;
+`;
+
+export const MIGRATIONS: readonly string[] = [MIGRATION_1, MIGRATION_2];
 
 /**
  * Jednozdaniowy opis KAŻDEJ migracji — kolumna „Co wprowadza" z ekranu `A11`.
@@ -497,4 +525,5 @@ export const MIGRATIONS: readonly string[] = [MIGRATION_1];
  */
 export const MIGRATION_TITLES: readonly string[] = [
   'Schemat bazowy: konta, flota, rejestr zdarzeń, projekcje, eksport, audyt, analityka',
+  'Moduł oleju (issue #60): konfiguracja floty (minimum, zbiornik, norma nominalna) i projekcja pomiaru z dolewkami w sesji',
 ];

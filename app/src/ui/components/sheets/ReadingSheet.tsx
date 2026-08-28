@@ -130,6 +130,10 @@ export function ReadingSheet({
   );
 
   const parsed = parse(text);
+  // Puste pole to nie jest wpis nieczytelny (issue #60 — arkusz dolewki startuje pusty,
+  // bo prefill fabrykowałby ilość): zamiast czerwonego „nie rozumiem" bursztynowe
+  // wezwanie, a przycisk zostaje bez akcji z podanym powodem (§6 pkt 3).
+  const empty = text.trim() === '';
   const warning = parsed != null ? (warningFor?.(parsed) ?? null) : null;
 
   /** Cyfry: akcent tonu (mockup 02b: `.modal-input-val` = `var(--amber)`). */
@@ -141,11 +145,13 @@ export function ReadingSheet({
       title={title}
       rows={rows}
       warning={
-        parsed == null
-          ? 'Nie rozumiem tej wartości — popraw wpis, żeby móc potwierdzić.'
-          : (warning ?? undefined)
+        empty
+          ? 'Wpisz wartość, żeby zapisać.'
+          : parsed == null
+            ? 'Nie rozumiem tej wartości — popraw wpis, żeby móc potwierdzić.'
+            : (warning ?? undefined)
       }
-      warningTone={parsed == null ? 'red' : 'amber'}
+      warningTone={parsed != null ? 'amber' : empty ? 'amber' : 'red'}
       confirmLabel="POTWIERDŹ"
       onConfirm={() => {
         if (parsed != null) onConfirm(parsed);
@@ -160,7 +166,10 @@ export function ReadingSheet({
             paddingVertical: 14,
             borderRadius: theme.radius.lg - 2,
             borderWidth: theme.borderWidthStrong,
-            borderColor: parsed == null ? toneColors(theme, 'red').border : theme.colors.borderStrong,
+            borderColor:
+              parsed == null && !empty
+                ? toneColors(theme, 'red').border
+                : theme.colors.borderStrong,
             backgroundColor: theme.colors.surface,
           },
         ]}

@@ -236,6 +236,25 @@
         <div class="field-sub">przyrost 1:32 · blok 1:36 · licznik obrotomierzowy</div>
       </div>
 
+      <!-- OLEJ (issue #60) — tu OPCJONALNY, świadomym wyjątkiem: na 02A pomiar jest
+           krokiem WYMAGANYM (decyzja 2026-08-27), ale lot z kartki sprzed tygodnia
+           może uczciwego pomiaru nie mieć, a fakt lotu jest cenniejszy niż kompletność
+           formularza (reguła flow 15 — blokera NIE MA). Stąd tag „opcjonalnie":
+           tu naprawdę odróżnia. Jedno wejście otwiera TEN SAM arkusz co 02I (pomiar
+           + dolewka); bez wiersza „Oczekiwane wg normy" — wpis opisuje przeszłość,
+           a oczekiwanie liczy się względem bieżącego licznika, więc mówiłoby o innym
+           dniu (ta sama reguła, co brak podpowiedzi zadania na 15A). -->
+      <div class="section">
+        <div class="section-head"><span class="section-label">Olej</span><span class="optional-tag">opcjonalnie</span></div>
+        <div class="field">
+          <span class="field-label">Pomiar i dolewka</span>
+          <a href="15c-reczny-liczniki.html" class="field-input">
+            <span class="field-val">8,2 + 1,0</span><span class="field-unit">L</span>
+          </a>
+        </div>
+        <div class="field-sub">po dolewce 9,2 L</div>
+      </div>
+
       <!-- OSTRZEŻENIA liczone z LOKALNEGO rejestru (kolizje z własnymi sesjami)
            i z cache referencyjnego (łańcuch MH i paliwa maszyny) — bez pytania serwera,
            więc działają offline. Kolizje z sesjami INNYCH pilotów rozstrzygnie i tak

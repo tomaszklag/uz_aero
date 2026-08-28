@@ -38,3 +38,6 @@ export const CORRECTION_WINDOW_MS = 24 * 60 * 60 * 1000;
  * a paliwo wpisujemy z dokładnością do litra — 1 mL zapasu wystarczy z nawiązką.
  */
 export const FUEL_EPSILON_L = 0.001;
+
+/** Ten sam epsilon dla litrów OLEJU (issue #60) — jedna dokładność dla wszystkich litrów. */
+export const OIL_EPSILON_L = FUEL_EPSILON_L;

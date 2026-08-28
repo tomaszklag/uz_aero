@@ -72,6 +72,7 @@ export * from './readouts/Trail';
 export * from './sheets/Sheet';
 export * from './sheets/PinChangeSheet';
 export * from './sheets/ReadingSheet';
+export * from './sheets/OilSheet';
 export * from './sheets/DropSheet';
 export * from './sheets/BoardingSheet';
 export * from './sheets/JumperDefaultsSheet';

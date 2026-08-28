@@ -22,9 +22,9 @@ export class PgSessionsProjection implements SessionsProjectionPort {
           block_ms, flight_ms, flights_count,
           takeoff_count, landing_count, mh_delta_h, fuel_consumed_l,
           drop_count, jumpers_tandem, jumpers_aff, jumpers_solo,
-          drop_alt_sum_ft, drop_alt_count, updated_at)
+          drop_alt_sum_ft, drop_alt_count, oil_level_l, oil_added_l, updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
-               $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29, now())
+               $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31, now())
        ON CONFLICT (session_uuid) DO UPDATE SET
          aircraft_id = EXCLUDED.aircraft_id, pic_id = EXCLUDED.pic_id,
          dual_id = EXCLUDED.dual_id, status = EXCLUDED.status,
@@ -41,6 +41,7 @@ export class PgSessionsProjection implements SessionsProjectionPort {
          drop_count = EXCLUDED.drop_count, jumpers_tandem = EXCLUDED.jumpers_tandem,
          jumpers_aff = EXCLUDED.jumpers_aff, jumpers_solo = EXCLUDED.jumpers_solo,
          drop_alt_sum_ft = EXCLUDED.drop_alt_sum_ft, drop_alt_count = EXCLUDED.drop_alt_count,
+         oil_level_l = EXCLUDED.oil_level_l, oil_added_l = EXCLUDED.oil_added_l,
          updated_at = now()`,
       [
         row.sessionUuid,
@@ -72,6 +73,8 @@ export class PgSessionsProjection implements SessionsProjectionPort {
         row.jumpersSolo,
         row.dropAltSumFt,
         row.dropAltCount,
+        row.oilLevelL,
+        row.oilAddedL,
       ],
     );
   }

@@ -78,6 +78,14 @@ interface AircraftRow {
    * `null` znaczy „model poniżej progu publikacji albo nigdy nie pobrany", a nie zero.
    */
   consumption: string | null;
+  /**
+   * Konfiguracja oleju z `reference_oil` (migracja 5, issue #60) — `LEFT JOIN`-em.
+   * `null` w każdej kolumnie = administrator nie skonfigurował albo serwer sprzed
+   * Etapu D; sekcja oleju działa wtedy bez podpowiedzi.
+   */
+  oil_min_l: number | null;
+  oil_capacity_l: number | null;
+  oil_norm_l_per_h: number | null;
 }
 
 interface PilotRow {
@@ -250,15 +258,35 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
             [a.id, JSON.stringify(a.consumption), a.fetchedAt],
           );
         }
+
+        // Konfiguracja oleju (migracja 5, issue #60) — ta sama reguła co przy normie:
+        // brak konfiguracji z serwera KASUJE wpis, żeby wykreślone w panelu minimum
+        // nie ostrzegało pilota do końca życia telefonu.
+        const oilConfigured = a.oilMinL != null || a.oilCapacityL != null || a.oilNormLPerH != null;
+        if (!oilConfigured) {
+          await db.runAsync('DELETE FROM reference_oil WHERE aircraft_id = ?', [a.id]);
+        } else {
+          await db.runAsync(
+            `INSERT INTO reference_oil (aircraft_id, min_l, capacity_l, norm_l_per_h, fetched_at)
+             VALUES (?, ?, ?, ?, ?)
+             ON CONFLICT(aircraft_id) DO UPDATE SET
+               min_l=excluded.min_l, capacity_l=excluded.capacity_l,
+               norm_l_per_h=excluded.norm_l_per_h, fetched_at=excluded.fetched_at`,
+            [a.id, a.oilMinL ?? null, a.oilCapacityL ?? null, a.oilNormLPerH ?? null, a.fetchedAt],
+          );
+        }
       }
     });
   }
 
   async getAircraft(): Promise<ReferenceAircraft[]> {
     const rows = await this.getDb().getAllAsync<AircraftRow>(
-      `SELECT a.*, c.model AS consumption
+      `SELECT a.*, c.model AS consumption,
+              o.min_l AS oil_min_l, o.capacity_l AS oil_capacity_l,
+              o.norm_l_per_h AS oil_norm_l_per_h
          FROM reference_aircraft a
          LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
+         LEFT JOIN reference_oil o ON o.aircraft_id = a.id
         ORDER BY a.reg ASC`,
     );
     return rows.map(rowToAircraft);
@@ -266,9 +294,12 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
 
   async getAircraftById(id: string): Promise<ReferenceAircraft | null> {
     const row = await this.getDb().getFirstAsync<AircraftRow>(
-      `SELECT a.*, c.model AS consumption
+      `SELECT a.*, c.model AS consumption,
+              o.min_l AS oil_min_l, o.capacity_l AS oil_capacity_l,
+              o.norm_l_per_h AS oil_norm_l_per_h
          FROM reference_aircraft a
          LEFT JOIN reference_consumption c ON c.aircraft_id = a.id
+         LEFT JOIN reference_oil o ON o.aircraft_id = a.id
         WHERE a.id = ?`,
       [id],
     );
@@ -423,6 +454,7 @@ export class ExpoSqliteAdapter implements StoragePort, TracePort {
       DELETE FROM events;
       DELETE FROM reference_aircraft;
       DELETE FROM reference_consumption;
+      DELETE FROM reference_oil;
       DELETE FROM reference_pilots;
       DELETE FROM session_meta;
       DELETE FROM gps_trace;
@@ -532,6 +564,9 @@ function rowToAircraft(row: AircraftRow): ReferenceAircraft {
     claimSince: row.claim_since,
     handover: row.handover ? (JSON.parse(row.handover) as Handover) : null,
     consumption: row.consumption ? (JSON.parse(row.consumption) as ConsumptionNorm) : null,
+    oilMinL: row.oil_min_l ?? null,
+    oilCapacityL: row.oil_capacity_l ?? null,
+    oilNormLPerH: row.oil_norm_l_per_h ?? null,
     fetchedAt: row.fetched_at,
   };
 }

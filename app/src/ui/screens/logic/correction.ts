@@ -84,6 +84,8 @@ export function flightNumberOf(events: readonly Event[], target: Event): number 
 
 /** Napis destrukcyjny — dopełniacz per typ („TEGO LĄDOWANIA NIE BYŁO"). */
 export function voidLabelFor(type: EventType): string {
+  // Rodzaj żeński poza szablonem: „TEGO DOLEWKI" kłamałoby gramatyką (issue #60).
+  if (type === 'oil_add') return 'TEJ DOLEWKI NIE BYŁO';
   const noun: Partial<Record<EventType, string>> = {
     landing: 'LĄDOWANIA',
     takeoff: 'STARTU',

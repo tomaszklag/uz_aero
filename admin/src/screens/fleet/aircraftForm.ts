@@ -28,6 +28,14 @@ export interface AircraftDraft {
   mhFormat: MhFormat;
   dualRequired: boolean;
   serviceStatus: ServiceStatus;
+  /**
+   * Konfiguracja OLEJU (issue #60) — trzy pola opcjonalne: puste = moduł dla tej
+   * jednostki milczy (podpowiedzi i ostrzeżenia w aplikacji śpią, pomiar działa).
+   * Lustro reguł serwera: wartości dodatnie, minimum ≤ zbiornik (`fleetGuards.refuseOil`).
+   */
+  oilMin: string;
+  oilCapacity: string;
+  oilNorm: string;
 }
 
 /** Lustro `reg` z trasy: 3–10 znaków, litery, cyfry i myślnik. */
@@ -126,11 +134,61 @@ export function capacityState(value: string): FieldState {
   return OK;
 }
 
+/** Wpis pola olejowego → litry; pusty tekst = `null` (nieskonfigurowane), nie błąd. */
+export function parseOil(value: string): { ok: boolean; value: number | null } {
+  const text = value.trim();
+  if (text === '') return { ok: true, value: null };
+  const parsed = parseLitres(text);
+  return parsed != null ? { ok: true, value: parsed } : { ok: false, value: null };
+}
+
+/**
+ * Jedno pole olejowe: puste jest LEGALNE, wpisane musi być dodatnią liczbą.
+ * `label` wchodzi do komunikatu, bo trzy pola dzielą jedną regułę.
+ */
+export function oilFieldState(value: string, label: string): FieldState {
+  const parsed = parseOil(value);
+  if (!parsed.ok) {
+    return { ok: false, message: `${label}: liczba w litrach (np. 8,5) albo puste pole.` };
+  }
+  if (parsed.value != null && parsed.value <= 0) {
+    return {
+      ok: false,
+      // Powód, nie „popraw pole": minimum 0 wyłączałoby ostrzeżenie po cichu — serwer
+      // odmawia z kodem `oil_not_positive`.
+      message: `${label} musi być większe od zera — puste pole znaczy „nieskonfigurowane".`,
+    };
+  }
+  return OK;
+}
+
+/**
+ * Para minimum–zbiornik (issue #60): minimum PONAD pojemność żądałoby przy każdym
+ * pomiarze stanu, którego zbiornik fizycznie nie mieści. Lustro `oil_min_above_capacity`.
+ */
+export function oilPairState(draft: Pick<AircraftDraft, 'oilMin' | 'oilCapacity'>): FieldState {
+  const min = parseOil(draft.oilMin);
+  const capacity = parseOil(draft.oilCapacity);
+  if (!min.ok || !capacity.ok) return OK; // o formacie mówią już stany pól
+  if (min.value != null && capacity.value != null && min.value > capacity.value) {
+    return {
+      ok: false,
+      message: 'Minimum oleju nie może przekraczać zbiornika — ostrzeżenie „dolej" nie miałoby jak zgasnąć.',
+    };
+  }
+  return OK;
+}
+
 export interface FormState {
   reg: FieldState;
   type: FieldState;
   year: FieldState;
   capacity: FieldState;
+  oilMin: FieldState;
+  oilCapacity: FieldState;
+  oilNorm: FieldState;
+  /** Reguła PARY minimum–zbiornik — komunikat pod sekcją oleju, nie pod jednym polem. */
+  oilPair: FieldState;
   /** Czy wolno wysłać. */
   ok: boolean;
   /** Powód blokady przycisku — WIDOCZNY tekst, nigdy sam wyszarzony przycisk. */
@@ -142,13 +200,22 @@ export function formState(draft: AircraftDraft): FormState {
   const type = typeState(draft.type);
   const year = yearState(draft.year);
   const capacity = capacityState(draft.capacity);
-  const ok = reg.ok && type.ok && year.ok && capacity.ok;
+  const oilMin = oilFieldState(draft.oilMin, 'Minimum oleju');
+  const oilCapacity = oilFieldState(draft.oilCapacity, 'Zbiornik oleju');
+  const oilNorm = oilFieldState(draft.oilNorm, 'Norma zużycia oleju');
+  const oilPair = oilPairState(draft);
+  const ok =
+    reg.ok && type.ok && year.ok && capacity.ok && oilMin.ok && oilCapacity.ok && oilNorm.ok && oilPair.ok;
 
   return {
     reg,
     type,
     year,
     capacity,
+    oilMin,
+    oilCapacity,
+    oilNorm,
+    oilPair,
     ok,
     reason: ok ? null : 'Popraw pola oznaczone niżej — serwer odrzuci ten zapis.',
   };
@@ -163,7 +230,15 @@ export const EMPTY_DRAFT: AircraftDraft = {
   mhFormat: 'decimal',
   dualRequired: false,
   serviceStatus: 'active',
+  oilMin: '',
+  oilCapacity: '',
+  oilNorm: '',
 };
+
+/** Liczba → tekst pola olejowego; przecinek po polsku, jak wpisuje go administrator. */
+function oilText(value: number | null): string {
+  return value == null ? '' : String(value).replace('.', ',');
+}
 
 /** Jednostka z listy → szkic formularza (wejście „Edytuj"). */
 export function draftOf(aircraft: AircraftListItemDto): AircraftDraft {
@@ -175,6 +250,9 @@ export function draftOf(aircraft: AircraftListItemDto): AircraftDraft {
     mhFormat: aircraft.mhFormat,
     dualRequired: aircraft.dualRequired,
     serviceStatus: aircraft.serviceStatus,
+    oilMin: oilText(aircraft.oilMinL),
+    oilCapacity: oilText(aircraft.oilCapacityL),
+    oilNorm: oilText(aircraft.oilNormLPerH),
   };
 }
 
@@ -188,6 +266,9 @@ export function createBody(draft: AircraftDraft): CreateAircraftBody {
     mhFormat: draft.mhFormat,
     dualRequired: draft.dualRequired,
     serviceStatus: draft.serviceStatus,
+    oilMinL: parseOil(draft.oilMin).value,
+    oilCapacityL: parseOil(draft.oilCapacity).value,
+    oilNormLPerH: parseOil(draft.oilNorm).value,
   };
 }
 
@@ -221,6 +302,15 @@ export function updateBody(
   if (draft.mhFormat !== before.mhFormat) body.mhFormat = draft.mhFormat;
   if (draft.dualRequired !== before.dualRequired) body.dualRequired = draft.dualRequired;
   if (draft.serviceStatus !== before.serviceStatus) body.serviceStatus = draft.serviceStatus;
+
+  // Olej (issue #60): wyczyszczone pole to jawne `null` („moduł ma zamilknąć"),
+  // a nie pominięcie — pominięte pole PATCH zostawia bez zmian.
+  const oilMinL = parseOil(draft.oilMin).value;
+  if (oilMinL !== before.oilMinL) body.oilMinL = oilMinL;
+  const oilCapacityL = parseOil(draft.oilCapacity).value;
+  if (oilCapacityL !== before.oilCapacityL) body.oilCapacityL = oilCapacityL;
+  const oilNormLPerH = parseOil(draft.oilNorm).value;
+  if (oilNormLPerH !== before.oilNormLPerH) body.oilNormLPerH = oilNormLPerH;
 
   return body;
 }

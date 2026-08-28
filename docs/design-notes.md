@@ -281,12 +281,26 @@ wolno go zamknąć:
 
 ### Wzorzec zamykalnego banera (Typ C)
 
-- `×` (32 px) na banerze → baner znika, w jego miejscu pojawia się mini-chip `(?)` z krótką
-  etykietą; klik `(?)` przywraca baner. Kolor chipu = akcent banera (niebieski/zielony).
+- **Ikona pouczającego to ZAWSZE pytajnik** (`help-circle`; uwaga z urządzenia,
+  2026-08-27) — baner, który wyjaśnia, PYTA, a wykrzyknik (`alert-circle`) czytał się
+  jak ostrzeżenie. **TA SAMA ikona stoi w banerze rozwiniętym i w zwiniętym chipie** —
+  chip rysował wcześniej sam pytajnik, a baner wykrzyknik, więc dwa stany jednej rzeczy
+  wyglądały jak dwie rzeczy. W kodzie egzekwuje to komponent `Banner` (dla `kind="edu"`
+  ignoruje `icon` od wołającego), nie konwencja w ekranach — konwencja już raz się
+  rozjechała.
+- `×` (32 px) na banerze → baner znika, w jego miejscu pojawia się mini-chip (ta sama
+  ikona pytajnika + krótka etykieta); klik chipu przywraca baner. Kolor chipu = akcent
+  banera (niebieski/zielony).
 - **Stan „schowany" zapamiętany NA STAŁE per pilot** (localStorage / profil) — to sedno.
-  Baner nie wraca rozwinięty co sesję; `(?)` to rzadka furtka, nie powtarzalny obowiązek.
-  Dzień 1 uczy pełnymi banerami, dzień 3 to czysty ekran z dyskretnymi `(?)`.
-- Klasy: `.edu-dismiss` (× na banerze), `.edu-mini` (chip `(?)`); funkcje `eduCollapse(id)` /
+  Baner nie wraca rozwinięty co sesję; chip to rzadka furtka, nie powtarzalny obowiązek.
+  Dzień 1 uczy pełnymi banerami, dzień 3 to czysty ekran z dyskretnymi chipami.
+- **Opcjonalny przycisk akcji pod treścią** (`Banner.action`, `.hint-action` w mockupach;
+  uwaga z urządzenia, 2026-08-27): baner tłumaczący, skąd wzięło się coś na ekranie,
+  bywa naturalnym miejscem decyzji „nie chcę tego" — wzorcem jest „Wyczyść formularz"
+  w banerze „Skąd te dane?" na 02E (czyści pola zadania do stanu początkowego, notatki
+  nie rusza, podpowiedź nie wraca, a baner znika razem z danymi, o których mówił).
+  Obrys w tonie banera, mono wersalikami, cel dotykowy ≥ 40 px.
+- Klasy: `.edu-dismiss` (× na banerze), `.edu-mini` (chip); funkcje `eduCollapse(id)` /
   `eduExpand(id)`. Wdrożone: 10e, 05f, 07, 09.
 - Wyjątek: instrukcje **rzadkich** akcji (np. 3-kroki przekazania) zostają — przy rzadkim
   użyciu pilot i tak zapomina, więc coaching wciąż pomaga.

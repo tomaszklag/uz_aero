@@ -65,6 +65,8 @@ function closedState(over: Partial<SessionState> = {}): SessionState {
     landingCount: 9,
     fuel: { startL: 780, addedL: 379, endL: 153, consumedL: 1006, lastReadingL: 153 },
     mh: { start: 3902.1, end: 3907.8, deltaH: 5.7 },
+    // Olej (issue #60) — kanoniczna sesja z A02a powstała bez pomiaru.
+    oil: { levelL: null, addedL: 0, afterL: null },
     drops: {
       count: 9,
       jumpers: { tandem: 21, aff: 9, solo: 17 },

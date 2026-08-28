@@ -99,6 +99,19 @@ describe('godzina przejęcia — kaskada', () => {
     expect(byUuid.get('engine-off')).toBe(at(10, 43));
   });
 
+  it('dolewka oleju (oil_add) jedzie w kaskadzie jak tankowanie (issue #60)', () => {
+    const withOil = [
+      ...sessionEvents(),
+      event('oil_add', at(8, 6), { addedL: 1.0 }, 'oil-1'),
+    ];
+    const result = plan(withOil, at(9, 0));
+    if (result.kind !== 'cascade') throw new Error('spodziewano się kaskady');
+
+    const step = result.steps.find((s) => s.uuid === 'oil-1');
+    // 08:06 + 48 min = 08:54 — dolewka zostaje PRZED uruchomieniem, w swoim odstępie.
+    expect(step?.newTime).toBe(at(8, 54));
+  });
+
   it('ZDANIA samolotu kaskada nie rusza — to ono zamyka okno korekty', () => {
     const result = plan(sessionEvents(), at(9, 0));
     if (result.kind !== 'cascade') throw new Error('spodziewano się kaskady');

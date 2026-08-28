@@ -310,9 +310,35 @@
           </div>
         </div>
 
+        <!-- OLEJ (issue #60) — para TYLKO przy PRZEJĘCIU: zdanie samolotu oleju nie
+             mierzy (bagnet tuż po locie kłamie), więc jego arkusz tych pól nie ma.
+             Wyczyszczone pole jest korektą „tego wpisu nie było" — puste przechodzi,
+             a podpowiedź po zmianie mówi „było —" przy braku oryginału. -->
+        <div>
+          <div class="field-label">Olej — pomiar i dolewka</div>
+          <div class="reading-grid">
+            <div class="reading-field">
+              <span class="reading-val">
+                <input class="reading-input" type="text" value="10,2" inputmode="decimal" aria-label="Pomiar oleju w litrach" />
+                <span class="reading-unit">L</span>
+              </span>
+            </div>
+            <div class="reading-field">
+              <span class="reading-val">
+                <input class="reading-input" type="text" value="" placeholder="—" inputmode="decimal" aria-label="Dolewka oleju w litrach" />
+                <span class="reading-unit">L</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div class="modal-ref">
           <span>Pojemność zbiorników</span>
           <span class="modal-ref-val">212 L</span>
+        </div>
+        <div class="modal-ref">
+          <span>Zbiornik oleju</span>
+          <span class="modal-ref-val">11,4 L</span>
         </div>
         <div class="modal-ref">
           <span>Wpływ na zużycie sesji</span>

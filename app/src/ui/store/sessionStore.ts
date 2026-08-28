@@ -31,6 +31,7 @@ import {
   type GpsPosition,
   type ManualLogEntryPayload,
   type PreflightConfirmPayload,
+  type OilAddPayload,
   type RefuelPayload,
   type RuleViolation,
   type SessionFlag,
@@ -164,6 +165,8 @@ export interface SessionStore {
   ): Promise<CommandResult>;
   /** `at` = czas rzeczywisty, gdy tankowanie dopisujemy po fakcie (issue #43). */
   refuel(payload: RefuelPayload, at?: EpochMillis): Promise<CommandResult>;
+  /** Dolewka oleju z kokpitu (issue #60) — jak tankowanie: przy zatrzymanym śmigle. */
+  addOil(payload: OilAddPayload, at?: EpochMillis): Promise<CommandResult>;
   /** Korekta zdarzenia (04c) — zmiana czasu albo unieważnienie, zapis append-only. */
   correctEvent(payload: EventCorrectionPayload): Promise<CommandResult>;
   drop(input: DropInput): Promise<CommandResult>;
@@ -415,6 +418,10 @@ export const useSessionStore = create<SessionStore>((set, get) => {
 
     refuel(payload, at) {
       return run(() => requireCommands().refuel(requireContext(), payload, at));
+    },
+
+    addOil(payload, at) {
+      return run(() => requireCommands().addOil(requireContext(), payload, at));
     },
 
     correctEvent(payload) {

@@ -315,7 +315,6 @@ export function ReleaseAircraftScreen({
             <Banner
               kind="edu"
               tone="green"
-              icon="sync"
               text={handoverText(vm.aircraftId, reading, vm.mhFormat)}
               collapsedLabel="Co znaczą te odczyty?"
               dismissed={handoverDismissed}

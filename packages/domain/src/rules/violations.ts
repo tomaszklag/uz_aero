@@ -65,6 +65,15 @@ export type ViolationCode =
   | 'MH_NEGATIVE'
   | 'MH_REGRESSION'
   | 'MH_DELTA_MISMATCH'
+  // ── olej (issue #60) — pomiar przy przejęciu jest krokiem WYMAGANYM w aplikacji
+  //    (bramka ekranu 02a), ale domena przyjmuje strumienie bez niego (sprzed modułu,
+  //    wpis ręczny) i twarda jest tylko arytmetyka; „poniżej minimum" flaguje miękko,
+  //    bo PIC decyduje, a konfiguracja minimum bywa błędna (filozofia FUEL_MISMATCH) ──
+  | 'OIL_NEGATIVE'
+  | 'OIL_OVER_CAPACITY'
+  | 'OIL_BELOW_MIN'
+  /** Dolewka z kokpitu przy pracującym silniku — jak `REFUEL_ENGINE_RUNNING`. */
+  | 'OIL_ADD_ENGINE_RUNNING'
   // ── zrzuty i załadunek ─────────────────────────────────────────────────────
   // (`DROP_NO_JUMPERS` usunięty 2026-08-11, issue #21 pkt 5: skład jest opcjonalny —
   //  zrzut bez liczb to legalny znacznik faktu, nie błąd formularza)

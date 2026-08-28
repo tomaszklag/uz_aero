@@ -65,6 +65,10 @@ export interface CreateAircraftBody {
   mhFormat: MhFormat;
   dualRequired: boolean;
   serviceStatus: 'active' | 'disabled';
+  /** Konfiguracja oleju (issue #60); `null` = nieskonfigurowane. */
+  oilMinL: number | null;
+  oilCapacityL: number | null;
+  oilNormLPerH: number | null;
 }
 
 export function createAircraft(body: CreateAircraftBody): Promise<AircraftChangeDto> {
@@ -80,6 +84,10 @@ export interface UpdateAircraftBody {
   mhFormat?: MhFormat;
   dualRequired?: boolean;
   serviceStatus?: 'active' | 'disabled';
+  /** Olej (issue #60): `null` = wyczyść (moduł ma zamilknąć), pominięcie = bez zmian. */
+  oilMinL?: number | null;
+  oilCapacityL?: number | null;
+  oilNormLPerH?: number | null;
 }
 
 export function updateAircraft(id: string, body: UpdateAircraftBody): Promise<AircraftChangeDto> {

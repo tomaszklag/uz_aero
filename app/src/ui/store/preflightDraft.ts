@@ -48,8 +48,26 @@ export interface PreflightDraft {
   fuelL: number;
   /** Odczyt licznika motogodzin (godziny dziesiętne). */
   mh: number;
+  /**
+   * Pomiar oleju z bagnetu (L) — issue #60. `null` = JESZCZE nie zmierzono: pomiar
+   * jest krokiem wymaganym (bramka `preflightBlocker` trzyma ROZPOCZNIJ LOT, dopóki
+   * pilot go nie wpisze), a zera nie podstawiamy, bo zero to odczyt.
+   */
+  oilL: number | null;
+  /** Olej dolany przy przejęciu (L); `null` = nie dolewano. */
+  oilAddedL: number | null;
   /** Czy odczyty pochodzą z przekazania, czy pilot wpisał je sam. */
   readingSource: 'handover' | 'manual';
+  /**
+   * Czy w formularzu STOJĄ wartości z podpowiedzi (uwaga z urządzenia, 2026-08-27).
+   *
+   * Banerowi „Skąd te dane?" nie wystarcza „pamięć zadania istnieje": po `clearTask()`
+   * dane już nie stoją, a po powrocie na ekran podpowiedź nie wraca (`taskTouched`) —
+   * baner oparty o samą pamięć opowiadałby wtedy o podstawieniu, którego nie widać.
+   * Flagę podnosi `suggestTask` (gdy faktycznie coś podstawił), opuszczają `clearTask`
+   * i `reset`.
+   */
+  suggested: boolean;
   /**
    * Czy pilot dotknął pól ZADANIA (operacja, trasa, klient) w tym preflighcie.
    *
@@ -94,6 +112,13 @@ interface PreflightDraftStore extends PreflightDraft {
    * się jako dotknięcie pól przez pilota — inaczej podpowiedź zablokowałaby samą siebie.
    */
   suggestTask(task: Pick<PreflightDraft, 'operation' | 'client'>, route: Pick<PreflightDraft, 'departureIcao' | 'arrivalIcao'>): void;
+  /**
+   * Czyści pola ZADANIA do stanu początkowego — przycisk „Wyczyść formularz" w banerze
+   * „Skąd te dane?" (uwaga z urządzenia, 2026-08-27). Wyczyszczenie jest świadomym
+   * wyborem pilota, więc liczy się jako dotknięcie zadania: podpowiedź nie wraca przy
+   * następnym wejściu na ekran. Notatki NIE rusza — nigdy nie była podpowiedzią.
+   */
+  clearTask(): void;
   reset(): void;
   /** Format MH wybranego samolotu — steruje wyświetlaniem (§5.4). */
   mhFormat(): MhFormat;
@@ -121,7 +146,10 @@ function initial(): PreflightDraft {
     jumperDefaults: null,
     fuelL: 0,
     mh: 0,
+    oilL: null,
+    oilAddedL: null,
     readingSource: 'manual',
+    suggested: false,
     taskTouched: false,
   };
 }
@@ -140,6 +168,10 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
       dualId: null,
       fuelL: handover?.reading.fuelL ?? 0,
       mh: handover?.reading.mh ?? 0,
+      // Pomiar oleju należy do KONKRETNEJ maszyny — po zmianie samolotu wpis sprzed
+      // zmiany opisywałby cudzy bagnet (issue #60).
+      oilL: null,
+      oilAddedL: null,
       readingSource: handover != null ? 'handover' : 'manual',
     });
   },
@@ -154,7 +186,20 @@ export const usePreflightDraft = create<PreflightDraftStore>((set, get) => ({
     if (get().taskTouched) return;
     // Podpowiedź z ostatniego dnia też przechodzi przez kształt trasy: zapamiętana para
     // „EPKK → EPWA" przy operacji skoki opisywałaby dzień, którego się nie da polecieć.
-    set((state) => withRouteShape({ ...state, ...task, ...route }));
+    set((state) => withRouteShape({ ...state, ...task, ...route, suggested: true }));
+  },
+
+  clearTask() {
+    const empty = initial();
+    set({
+      operation: empty.operation,
+      departureIcao: empty.departureIcao,
+      arrivalIcao: empty.arrivalIcao,
+      client: empty.client,
+      suggested: false,
+      // Świadoma decyzja pilota — podpowiedź nie ma prawa wrócić i wypełnić od nowa.
+      taskTouched: true,
+    });
   },
 
   reset() {
