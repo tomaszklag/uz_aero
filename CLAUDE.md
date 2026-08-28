@@ -881,6 +881,25 @@ poprawka dosięgła ośmiu arkuszy naraz.
   parsuje się i po prostu nie rusza wartości; `commit` przy `onBlur` zostaje domknięciem
   (kasuje szkic i przywraca widok wartości). **Ta reguła obowiązuje każde pole wpisu**:
   formularz odpowiada na to, co pilot właśnie napisał, a nie na to, co zatwierdził
+- **ARKUSZ I KLAWIATURA WCHODZĄ RAZEM** (szósta tura z urządzenia: „otwiera się popup
+  i po krótkiej chwili otwiera się klawiatura"). To nie było złe wyczucie czasu w JS,
+  tylko kolejność wymuszona przez system: `Modal` na Androidzie jest OSOBNYM OKNEM
+  natywnym, a IME może przyczepić się wyłącznie do okna z fokusem wejścia — więc
+  animacja wjazdu okna leżała na krytycznej ścieżce klawiatury.
+  - **`animationType="none"` na `Modal`, a panel animuje `SheetSurface` sam**
+    (`Animated` po `transform`/`opacity`, `useNativeDriver` — bez modułu natywnego,
+    jak puls skeletonów). Okno pojawia się natychmiast, `onShow` pada od razu, a ruch
+    panelu biegnie RÓWNOLEGLE z wjeżdżającą klawiaturą
+  - **wyjazd trzyma okno dłużej niż `visible`**: `Modal` odmontowuje dzieci
+    natychmiast, więc bez tego panel znikałby skokiem. Otwarcie W TRAKCIE wyjazdu ubija
+    tamtą animację (`stopAnimation` → `finished: false`), inaczej jej callback zamknąłby
+    arkusz właśnie otwarty
+  - **wysunięcie rusza w PÓŹNIEJSZYM z dwóch zdarzeń** (okno pokazane, panel zmierzony)
+    — ta sama koniunkcja i ten sam powód, co przy drabince fokusu
+  - **drabinka fokusu ZOSTAJE**, ale w węższej roli: broni już tylko przed `onShow`
+    wyprzedzającym commit dzieci modala, nie przed animacją okna
+  - `SheetSurface` jest JEDYNYM `Modal`-em w aplikacji, więc ta zmiana obejmuje
+    wszystkie osiem arkuszy naraz
 - **arkusz czasu OTWIERA SIĘ Z KLAWIATURĄ** na pierwszej kontrolce (trzecia tura):
   jest formularzem o jednym pytaniu, więc pilot i tak tapie w wartość — bez tego każdy
   wpis kosztował tapnięcie więcej. `Stepper.autoEdit` startuje w trybie wpisu (pole musi

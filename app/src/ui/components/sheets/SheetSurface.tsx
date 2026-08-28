@@ -22,14 +22,53 @@
  * Rama NIE zna treści: tytuł, pola i przyciski należą do konkretnego arkusza. Zmienne
  * zostają tylko te, które mockupy naprawdę różnicują — odstęp wewnętrzny, zapas dolny
  * z projektu i kolor akcentu górnej krawędzi.
+ *
+ * ══ ARKUSZ I KLAWIATURA WCHODZĄ RAZEM (issue #62, szósta tura z urządzenia) ══
+ * Zgłoszenie: „otwiera się popup i po krótkiej chwili otwiera się klawiatura". To nie
+ * było złe wyczucie czasu w JS — to była kolejność wymuszona przez system.
+ *
+ * `Modal` na Androidzie jest OSOBNYM OKNEM natywnym (`Dialog` z własnym `Window`),
+ * a klawiatura może przyczepić się wyłącznie do okna, które ma fokus wejścia. Dopóki
+ * animacja wjazdu okna trwa, `focus()` ustawia fokus WIDOKU bez IME — dokładnie to
+ * odkryła druga tura issue #58 („fokus IME dostaje dopiero po dojechaniu animacji
+ * wjazdu", `hooks/keyboardFocus.ts`). Animacja `Modal`-a leżała więc na krytycznej
+ * ścieżce klawiatury i kosztowała te „krótką chwilę".
+ *
+ * Odtąd okno pojawia się BEZ animacji (`animationType="none"`), więc `onShow` pada
+ * natychmiast i drabinka fokusu łapie klawiaturę w PIERWSZEJ próbie. Wysunięcie panelu
+ * animujemy sami — i dzięki temu biegnie RÓWNOLEGLE z wjeżdżającą klawiaturą, zamiast
+ * przed nią. Bez modułu natywnego: `Animated` po `transform` i `opacity` z
+ * `useNativeDriver`, tak samo jak puls skeletonów.
+ *
+ * Drabinka fokusu ZOSTAJE. Nie jest już wprawdzie protezą na animację okna, ale nadal
+ * broni przed drugą przyczyną z tamtej historii: `onShow` potrafi wyprzedzić commit
+ * dzieci modala, a wtedy pierwsza próba nie ma na czym zadziałać.
  */
 
-import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Easing,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../theme';
 import { sheetBottomPad, sheetMaxHeight } from '../../hooks/keyboardGeometry';
+
+/**
+ * Czas wysunięcia panelu. Dobrany pod animację klawiatury Androida (~250 ms): dwie
+ * bliskie sobie krzywe czyta się jak JEDEN ruch, a nie jak dwa zdarzenia po sobie.
+ */
+const ENTER_MS = 220;
+
+/** Zamknięcie jest szybsze od otwarcia — tak działa każdy dobrze zrobiony arkusz. */
+const EXIT_MS = 160;
 
 export interface SheetSurfaceProps {
   visible: boolean;
@@ -82,6 +121,69 @@ export function SheetSurface({
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
 
+  /**
+   * 0 = panel schowany pod dolną krawędzią, 1 = na miejscu. Jedna wartość napędza
+   * i wysunięcie panelu, i przyciemnienie tła — bo to jest jeden ruch, nie dwa.
+   */
+  const enter = useRef(new Animated.Value(0)).current;
+  /**
+   * Okno modala żyje DŁUŻEJ niż `visible`: przy zamykaniu trzyma je animacja wyjazdu,
+   * a bez tego panel znikałby skokiem (`Modal` odmontowuje dzieci natychmiast).
+   */
+  const [mounted, setMounted] = useState(visible);
+  /** Wysokość panelu — dystans wysunięcia. Do pomiaru animujemy z całego ekranu. */
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
+
+  /*
+   * Wysunięcie rusza w PÓŹNIEJSZYM z dwóch zdarzeń: okno pokazane i panel zmierzony.
+   * Ta sama koniunkcja, co przy drabince fokusu (`shouldStartLadder`) i z tego samego
+   * powodu — kolejność bywa OBIE strony, zależnie od urządzenia i obciążenia JS.
+   * Bez pomiaru animowalibyśmy z wysokości całego ekranu, czyli za daleko i za szybko.
+   */
+  const shown = useRef(false);
+  const measured = useRef(false);
+
+  const startEnter = (): void => {
+    if (!shown.current || !measured.current) return;
+    Animated.timing(enter, {
+      toValue: 1,
+      duration: ENTER_MS,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+
+  useEffect(() => {
+    if (visible) {
+      /* Otwarcie W TRAKCIE wyjazdu musi ubić tamtą animację — inaczej jej callback
+         odmontowałby arkusz, który pilot właśnie otworzył. `stopAnimation` sprawia,
+         że callback dostaje `finished: false`, a bramka niżej go ignoruje. */
+      enter.stopAnimation();
+      // Nowe otwarcie zaczyna od zera — bramki i pomiar też, bo okno powstaje od nowa.
+      enter.setValue(0);
+      shown.current = false;
+      measured.current = false;
+      /* Wysokość ZERUJEMY, choć znamy poprzednią: gdyby panel urósł między otwarciami,
+         start z krótszego dystansu odsłoniłby jego górny pasek na jedną klatkę. Przed
+         pomiarem lepszy jest dystans na pewno za duży niż na pewno za mały. */
+      setPanelHeight(null);
+      setMounted(true);
+      return;
+    }
+    if (!mounted) return;
+    Animated.timing(enter, {
+      toValue: 0,
+      duration: EXIT_MS,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setMounted(false);
+    });
+    // `mounted` świadomie poza zależnościami: to stan WYNIKOWY tego efektu, a jego
+    // dopisanie zapętliłoby zamykanie na samym sobie.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, enter]);
+
   const maxHeight = sheetMaxHeight(windowHeight, keyboardHeight, insets.top);
   const bottomPad = sheetBottomPad(
     designPad ?? theme.spacing.xxxl,
@@ -92,24 +194,53 @@ export function SheetSurface({
 
   return (
     <Modal
-      visible={visible}
+      visible={mounted}
       transparent
-      animationType="slide"
+      /* BEZ animacji okna — patrz nota „ARKUSZ I KLAWIATURA WCHODZĄ RAZEM" na górze
+         pliku. Okno pojawia się natychmiast, `onShow` pada od razu i drabinka fokusu
+         łapie klawiaturę w pierwszej próbie; wysunięcie panelu robimy sami niżej. */
+      animationType="none"
       onRequestClose={onCancel}
-      onShow={onShow}
+      onShow={() => {
+        shown.current = true;
+        startEnter();
+        onShow?.();
+      }}
       statusBarTranslucent
     >
       {/* Tapnięcie w tło = anuluj. Potwierdzenie wymaga celowego tapnięcia w przycisk. */}
-      <Pressable
-        style={[styles.overlay, { backgroundColor: theme.colors.overlay }]}
-        onPress={onCancel}
-        accessibilityLabel="Zamknij"
-      />
+      <Animated.View
+        style={[styles.overlay, { backgroundColor: theme.colors.overlay, opacity: enter }]}
+      >
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onCancel}
+          accessibilityLabel="Zamknij"
+        />
+      </Animated.View>
 
       {/* Klawiatura podnosi arkusz zamiast go zasłaniać — patrz `useKeyboardHeight`. */}
-      <View style={[styles.bottom, { paddingBottom: keyboardHeight }]}>
-        <View
+      <View style={[styles.bottom, { paddingBottom: keyboardHeight }]} pointerEvents="box-none">
+        <Animated.View
+          onLayout={(e) => {
+            const h = e.nativeEvent.layout.height;
+            if (h <= 0 || measured.current) return;
+            setPanelHeight(h);
+            measured.current = true;
+            startEnter();
+          }}
           style={{
+            transform: [
+              {
+                /* Do pomiaru panel stoi poniżej całego ekranu — czyli i tak niewidoczny,
+                   więc nie mruga w złym miejscu. Po pomiarze dystans jest dokładnie
+                   jego wysokością i wysunięcie czyta się jak jeden ruch od krawędzi. */
+                translateY: enter.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [panelHeight ?? windowHeight, 0],
+                }),
+              },
+            ],
             maxHeight,
             gap: gap ?? theme.spacing.md,
             paddingHorizontal: paddingHorizontal ?? theme.spacing.lg,
@@ -138,7 +269,7 @@ export function SheetSurface({
           </ScrollView>
 
           {pinned}
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

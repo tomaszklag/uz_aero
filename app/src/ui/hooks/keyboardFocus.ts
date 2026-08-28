@@ -15,6 +15,17 @@
  * (`Keyboard.isVisible`). Widoczna klawiatura zatrzymuje drabinkę — późne
  * `blur+focus` przy wysuniętej klawiaturze mrugałoby kursorem bez powodu.
  *
+ * ══ ROLA DRABINKI ZAWĘZIŁA SIĘ (issue #62, szósta tura) ══
+ * Powód nr 2 z tej historii — czekanie na animację wjazdu okna — ZNIKŁ: `SheetSurface`
+ * otwiera `Modal` bez animacji (`animationType="none"`) i animuje panel sam, więc okno
+ * dostaje fokus wejścia natychmiast, a pierwsza próba drabinki zwykle wystarcza.
+ * To była właśnie ta „krótka chwila" między arkuszem a klawiaturą.
+ *
+ * Drabinka ZOSTAJE, bo powód nr 1 działa dalej w innej postaci: `onShow` potrafi
+ * wyprzedzić commit dzieci modala (stąd koniunkcja w `shouldStartLadder`), a przy
+ * obciążonym JS pierwsza próba nadal bywa za wczesna. Ponowienia są tanie — gasną
+ * same, gdy tylko klawiatura wyjdzie.
+ *
  * Ten moduł jest CZYSTY (decyzja per próba); zegar i RN siedzą w `useSheetInputFocus`.
  */
 
