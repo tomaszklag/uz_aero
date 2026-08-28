@@ -951,6 +951,29 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   a MIĘDZY lotami odwrotnie — więc każdy lot wykłada swoje wiersze w komplecie
   (start → jego zrzuty → lądowanie), a loty idą po sobie w porządku czasu. Zrzuty poza
   lotami wchodzą po czasie
+- **PALIWO JEST SEKWENCJĄ, nie trzema polami** (piąta tura; `logic/manualFuelChain.ts`,
+  mockup `15C`): „najpierw podaję, ile było przed lotem, następnie ile dodałem, oraz
+  później ile zostało". Krok 4 miał trzy rozłączne pola w kolejności przed → po →
+  dolewki, choć dolewka wypada w czasie MIĘDZY odczytami — pilot składał z nich zdanie
+  w głowie. Odtąd jeden ciąg TĄ SAMĄ osią, co bieg silnika i rozliczenie; stopka mówi
+  zużycie. **Poranna dolewka ma wiersz na osi, ale NIE wchodzi do zużycia** — odczyt
+  „przed uruchomieniem" już ją zawiera (ta sama korekta, którą robi `toManualFlightInput`)
+- **NORMA LICZY SIĘ NA KROKU 4** (`logic/manualFlightBalance.ts`): oczekiwanie i pasmo
+  liczy DOMENA (`consumption/expectation.ts`) z normy w cache referencyjnym, więc werdykt
+  powstaje OFFLINE — ta sama arytmetyka, którą po zapisaniu pokaże ekran 10. Bez normy
+  maszyny ekran MILCZY o oczekiwaniu (brak normy nie jest brakiem danych pilota), a
+  werdykt poza pasmem jest BURSZTYNOWY: paliwomierz i licznik mają rację. Podpis
+  „przyrost … · blok …" USUNIĘTY — przyrost licznika nie równa się blokowi i nie ma
+  prawa się równać (poprawka z issue #38, tu powtórzona)
+- **CO BLOKUJE, A CO OSTRZEGA — GRANICA JEST JEDNA** (piąta tura): blokada zostaje
+  WYŁĄCZNIE tam, gdzie domena i tak odmówi, bo `manualFlight` robi próbę generalną całej
+  sekwencji i przy pierwszym twardym naruszeniu rzuca `DomainRuleError`, nie zapisując
+  ani jednego zdarzenia — wybór jest więc między „powiedzieć teraz" a „wywalić się po
+  tapnięciu w ZAPISZ", nie między blokadą a swobodą. Bramka kroku 4 pokrywa dokładnie:
+  `FUEL_NEGATIVE`, `MH_NEGATIVE`, `FUEL_OVER_CAPACITY` (śpi bez znanej pojemności, jak
+  w domenie), `MH_REGRESSION`, `FUEL_INCREASE_WITHOUT_REFUEL` (tolerancja `fuelToleranceL`
+  — ta sama, co serwer), `REFUEL_ENGINE_RUNNING`. Wszystko, co jest OCENĄ danych —
+  ciągłość paliwa, łańcuch MH, werdykt normy, bilans — nie blokuje NIGDY
 - **kolejny zrzut dziedziczy skład i wysokość po POPRZEDNIM** (`previousDrop`, czwarta
   tura): dzień skokowy to ta sama maszyna, ten sam klub i zwykle ta sama wysokość
   wyniesienia lot po locie. Poprzednik liczy się porządkiem CZASU, nie kolejnością

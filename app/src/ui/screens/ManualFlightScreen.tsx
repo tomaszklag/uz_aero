@@ -55,9 +55,9 @@ import { useCurrentPilot, useSessionStore } from '../store';
 import { usePilotDay } from '../hooks/usePilotDay';
 import { uuidv4 } from '../../infrastructure/id';
 import {
+  dateTimeUtcShort,
   dateUtcDayMonth,
   dateUtcLong,
-  duration,
   litres,
   maskMotoHoursInput,
   motoHours,
@@ -84,7 +84,6 @@ import {
   emptyManualFlightDraft,
   manualFlightNeedsDual,
   manualFlightStepBlocker,
-  preRunAddedL,
   sortedFlights,
   toManualFlightInput,
   type ManualFlightDraft,
@@ -97,6 +96,8 @@ import {
   nextFlightTimes,
   previousDrop,
 } from './logic/manualFlightAxis';
+import { buildManualFuelChain, fuelChainTarget, sortedRefuels } from './logic/manualFuelChain';
+import { manualFuelBalance, manualMhBalance } from './logic/manualFlightBalance';
 import { manualFlightWarnings } from './logic/manualFlightWarnings';
 import { operationLabel } from './logic/operations';
 /** Nazwa lotniska albo plakietka „spoza katalogu" — ta sama, co na 02E (issue #62 pkt 1). */
@@ -193,7 +194,11 @@ export function ManualFlightScreen({
   const close = () => setSheet(null);
 
   const step = STEPS[stepIndex]!;
-  const blocker = manualFlightStepBlocker(step, draft);
+  /* Pojemność zbiorników wchodzi do bramki (issue #62, piąta tura): sufit odczytu jest
+     twardym błędem domeny, a przy nieznanej pojemności reguła śpi — tak jak w domenie. */
+  const blocker = manualFlightStepBlocker(step, draft, {
+    capacityL: aircraft?.capacityL ?? null,
+  });
   // Wymóg Duala (issue #58 pkt 4) — jak na 02: baner nazywa powód, przycisk dostaje
   // sam `disabled` (blokada widoczna z ekranu nie powtarza swojego zdania w przycisku).
   const needsDual = step === 'aircraft' && manualFlightNeedsDual(aircraft, draft);
@@ -255,7 +260,6 @@ export function ManualFlightScreen({
 
   const dualName = pilots.find((p) => p.id === draft.dualId)?.name ?? null;
   const flights = sortedFlights(draft);
-  const refuels = [...draft.refuels].sort((a, b) => a.at - b.at);
   // Zrzut istnieje wyłącznie w dniu skokowym (issue #19) — i to samo pytanie
   // rozstrzyga, czy zrzuty wchodzą na oś kroku 3.
   const jumpDay = draft.operation != null && isJumpOperation(draft.operation);
@@ -267,11 +271,24 @@ export function ManualFlightScreen({
   const strayDrops = axis.rows.filter((r) => r.kind === 'drop' && r.warned === true).length;
   /** Bieg silnika ma oba końce — dopiero wtedy lot ma w czym się zawierać (pkt 10). */
   const engineRunSet = draft.engineStart != null && draft.engineStop != null;
-  // Do rachunku zużycia wchodzą tylko dolewki PO odczycie „przed uruchomieniem" —
-  // poranne tankowanie już w tym odczycie siedzi (patrz `preRunAddedL`).
-  const addedTotal =
-    draft.refuels.reduce((sum, r) => sum + r.addedL, 0) - preRunAddedL(draft);
 
+  // ── krok 4: sekwencja paliwa i werdykt normy (issue #62, piąta tura) ────────
+  const fuelChain = useMemo(() => buildManualFuelChain(draft), [draft]);
+  const norm = aircraft?.consumption ?? null;
+  const balances = useMemo(
+    () =>
+      [
+        manualFuelBalance(draft, norm),
+        manualMhBalance(draft, norm, mhFormat),
+      ].filter((b): b is NonNullable<typeof b> => b != null),
+    [draft, norm, mhFormat],
+  );
+  /* Norma jest DANĄ Z SERWERA, więc niesie adnotację wieku (§4.8) — ta sama, co przy
+     ostrzeżeniach łańcucha. Bez normy nie ma czego kwalifikować i adnotacji nie ma. */
+  const normSrc =
+    norm != null && aircraft?.fetchedAt != null
+      ? `z cache · sync ${dateTimeUtcShort(aircraft.fetchedAt)}`
+      : null;
   // Granice godzin wpisu = doba lotu; stepper nie ucieknie w cudzy dzień.
   const dayMin = draft.day;
   const dayMax = draft.day + 24 * HOUR - MIN;
@@ -568,57 +585,28 @@ export function ManualFlightScreen({
         {/* ══ KROK 4 — LICZNIKI, PALIWO I OSTRZEŻENIA ════════════════════════ */}
         {step === 'readings' && (
           <>
-            <Card title="Paliwo" header="inline">
-              <Field label="Przed uruchomieniem">
-                <ValueBox
-                  value={draft.fuelBeforeL != null ? String(Math.round(draft.fuelBeforeL)) : ''}
-                  placeholder="odczyt z paliwomierza"
-                  unit="L"
-                  tone="amber"
-                  actionIcon="edit"
-                  onPress={() => setSheet({ kind: 'fuel', which: 'before' })}
-                  accessibilityLabel="Paliwo przed uruchomieniem — wpisz odczyt"
-                />
-              </Field>
-              <Field label="Po locie">
-                <ValueBox
-                  value={draft.fuelAfterL != null ? String(Math.round(draft.fuelAfterL)) : ''}
-                  placeholder="odczyt z paliwomierza"
-                  unit="L"
-                  tone="amber"
-                  actionIcon="edit"
-                  onPress={() => setSheet({ kind: 'fuel', which: 'after' })}
-                  accessibilityLabel="Paliwo po locie — wpisz odczyt"
-                />
-              </Field>
-
-              <Field label="Dolewki">
-                {refuels.map((r, i) => (
-                  <ValueBox
-                    key={r.id}
-                    value={`${timeUtc(r.at)} · +${Math.round(r.addedL)} L → ${Math.round(r.afterL)} L`}
-
-                    tone="amber"
-                    actionIcon="edit"
-                    onPress={() => setSheet({ kind: 'refuel', id: r.id })}
-                    accessibilityLabel={`Dolewka ${i + 1} — popraw`}
-                  />
-                ))}
-                <ActionButton
-                  label="DODAJ DOLEWKĘ"
-                  tone="green"
-                  variant="secondary"
-                  size="md"
-                  icon="add"
-                  onPress={() => setSheet({ kind: 'refuel', id: null })}
-                />
-              </Field>
-
-              {draft.fuelBeforeL != null && draft.fuelAfterL != null && (
-                <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
-                  {`zużycie ${litres(draft.fuelBeforeL + addedTotal - draft.fuelAfterL)} · ${Math.round(draft.fuelBeforeL)} L${addedTotal > 0 ? ` + ${Math.round(addedTotal)} L dolane` : ''} − ${Math.round(draft.fuelAfterL)} L po locie`}
-                </AppText>
-              )}
+            {/* PALIWO JAKO SEKWENCJA (issue #62, piąta tura z urządzenia): „najpierw
+                podaję, ile było przed lotem, następnie ile dodałem, oraz później ile
+                zostało". Do tej tury były to trzy rozłączne pola w kolejności
+                przed → po → dolewki, choć dolewka wypada w czasie MIĘDZY odczytami —
+                pilot składał z nich zdanie w głowie. Ta sama oś, co na kroku 3
+                i na ekranie rozliczenia; uzasadnienie w `logic/manualFuelChain.ts`. */}
+            <Card title="Paliwo" flush>
+              <SessionAxis
+                rows={fuelChain.rows}
+                foot={fuelChain.foot}
+                onCorrect={(rowId) => {
+                  const target = fuelChainTarget(rowId);
+                  if (target == null) return;
+                  if (target.kind === 'reading') setSheet({ kind: 'fuel', which: target.which });
+                  else setSheet({ kind: 'refuel', id: target.id });
+                }}
+              />
+              <AxisAddRow
+                label="DODAJ DOLEWKĘ"
+                tone="muted"
+                onPress={() => setSheet({ kind: 'refuel', id: null })}
+              />
             </Card>
 
             <Card title="Motogodziny" header="inline">
@@ -642,12 +630,42 @@ export function ManualFlightScreen({
                   accessibilityLabel="Motogodziny po locie — wpisz stan"
                 />
               </Field>
-              {draft.mhBefore != null && draft.mhAfter != null && draft.engineStart != null && draft.engineStop != null && (
-                <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
-                  {`przyrost ${motoHours(draft.mhAfter - draft.mhBefore, mhFormat)} · blok ${duration(draft.engineStop - draft.engineStart)}`}
-                </AppText>
-              )}
+              {/* Podpisu „przyrost … · blok …" tu NIE MA (issue #62, piąta tura):
+                  przyrost licznika NIE RÓWNA SIĘ czasowi blokowemu i nie ma prawa się
+                  równać (obrotomierz na wolnych obrotach chodzi wolniej niż zegar),
+                  więc zestawianie ich obok sugerowało błąd przy poprawnym odczycie —
+                  ta sama poprawka, którą issue #38 wprowadziło na ekranie 10. Przyrost
+                  porównuje się z NORMĄ maszyny, w karcie niżej. */}
             </Card>
+
+            {/* ── NORMA: czy to zużycie się zgadza (issue #62, piąta tura) ────────
+                „W oparciu o te dane oraz dane z czasu lotu powinniśmy przeliczyć normę
+                i sprawdzić, czy się zgadza". Oczekiwanie liczy DOMENA z normy tej
+                maszyny (cache referencyjny, więc działa offline) — ta sama arytmetyka,
+                którą po zapisaniu pokaże ekran rozliczenia.
+
+                Karty nie ma, gdy nie ma czego pokazać: bez kompletu odczytów albo bez
+                normy maszyny ekran MILCZY, zamiast rysować kreski. Werdykt jest
+                bursztynowy, nie czerwony — wynik poza pasmem jest DO SPRAWDZENIA,
+                a paliwomierz i licznik mają rację (liczniki fizyczne > dane serwera). */}
+            {balances.length > 0 && (
+              <Card title="Norma zużycia" header="inline">
+                {balances.map((b) => (
+                  <Field key={b.label} label={b.label}>
+                    <ValueBox
+                      value={b.actual}
+                      tone={b.verdict?.tone ?? 'neutral'}
+                      {...(b.verdict != null ? { tag: b.verdict } : {})}
+                    />
+                    {b.expected != null && (
+                      <AppText variant="mono" tone="muted" style={{ fontSize: 9, lineHeight: 14 }}>
+                        {normSrc != null ? `${b.expected} · ${normSrc}` : b.expected}
+                      </AppText>
+                    )}
+                  </Field>
+                ))}
+              </Card>
+            )}
 
             {/* ── olej (issue #60) — tu OPCJONALNY, świadomym wyjątkiem ──────────
                 Na 02a pomiar jest krokiem WYMAGANYM (decyzja 2026-08-27), ale lot
@@ -883,7 +901,7 @@ export function ManualFlightScreen({
 
       <RefuelEntrySheet
         visible={sheet?.kind === 'refuel'}
-        title={refuelSheetTitle(sheet, refuels)}
+        title={refuelSheetTitle(sheet, sortedRefuels(draft))}
         value={refuelSheetValue(sheet, draft)}
         min={dayMin}
         max={dayMax}

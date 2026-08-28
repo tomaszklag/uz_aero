@@ -22,7 +22,7 @@ import type {
   JumperCounts,
   OperationType,
 } from '../../../domain';
-import { isSameFieldOperation, utcDayStart } from '../../../domain';
+import { fuelToleranceL, isSameFieldOperation, utcDayStart } from '../../../domain';
 import type { ManualFlightInput } from '../../../application';
 import { timeUtc } from '../../format';
 
@@ -152,9 +152,19 @@ export function manualFlightNeedsDual(
  * `task`). Wszystko miękkie — kolizje z innymi sesjami, łańcuch MH — jest
  * ostrzeżeniem w `manualFlightWarnings.ts` i NIE blokuje.
  */
+/**
+ * Granice jednostki potrzebne bramce (issue #62, piąta tura). `capacityL === null`
+ * usypia sufit pojemności — dokładnie tak, jak robi to `checkCapacity` w domenie:
+ * bez wiedzy o zbiorniku nie orzekamy o odczycie (§4.8).
+ */
+export interface ManualFlightLimits {
+  capacityL: number | null;
+}
+
 export function manualFlightStepBlocker(
   step: ManualFlightStep,
   draft: ManualFlightDraft,
+  limits: ManualFlightLimits = { capacityL: null },
 ): string | null {
   switch (step) {
     case 'aircraft':
@@ -202,18 +212,71 @@ export function manualFlightStepBlocker(
       return null;
     }
 
+    /**
+     * ══ CO TU BLOKUJE, A CO TYLKO OSTRZEGA (issue #62, piąta tura z urządzenia) ══
+     * Zgłoszenie prosiło, żeby „nic nie blokowało — tylko ostrzeżenia wymagające
+     * reakcji". Reguła obowiązuje wszystko, co jest OCENĄ danych: ciągłość paliwa
+     * z sąsiednimi sesjami, łańcuch MH, werdykt normy, bilans. Te nie blokują nigdy
+     * i mieszkają w `manualFlightWarnings.ts`.
+     *
+     * Blokada zostaje wyłącznie tam, gdzie DOMENA I TAK ODMÓWI zapisu — bo wtedy
+     * wybór nie jest między „zablokować a wpuścić", tylko między „powiedzieć teraz"
+     * a „wywalić się po tapnięciu w ZAPISZ". Komenda `manualFlight` robi próbę
+     * generalną CAŁEJ sekwencji i przy pierwszym twardym naruszeniu rzuca
+     * `DomainRuleError`, nie zapisując ani jednego zdarzenia — pilot straciłby tapnięcie
+     * i zobaczył czerwony baner zamiast nazwanego powodu przy przycisku (§6 pkt 3).
+     *
+     * Każda pozycja niżej odpowiada konkretnemu `error` z `rules/sessionRules.ts`.
+     */
     case 'readings': {
       if (draft.fuelBeforeL == null || draft.mhBefore == null) {
+        // `initialReading` jest w `ManualFlightInput` WYMAGANE — bez niego nie da się
+        // złożyć wejścia komendy, a zgadywanie z cache psuło łańcuch (2026-08-16).
         return 'Wpisz odczyt sprzed uruchomienia: paliwo i motogodziny.';
       }
       if (draft.fuelAfterL == null || draft.mhAfter == null) {
         return 'Wpisz odczyt po locie — to przekazanie dla następnego pilota.';
       }
+
+      // FUEL_NEGATIVE / MH_NEGATIVE — odczyt ujemny jest twardym błędem domeny.
+      if (draft.fuelBeforeL < 0 || draft.fuelAfterL < 0) {
+        return 'Odczyt paliwa nie może być ujemny.';
+      }
+      if (draft.mhBefore < 0 || draft.mhAfter < 0) {
+        return 'Odczyt licznika motogodzin nie może być ujemny.';
+      }
+      const negative = draft.refuels.find((r) => r.addedL < 0 || r.afterL < 0);
+      if (negative != null) {
+        return `Dolewka o ${timeUtc(negative.at)} ma wartość ujemną — dolewa się dodatnie litry.`;
+      }
+
+      // FUEL_OVER_CAPACITY — przy nieznanej pojemności reguła ŚPI, jak w domenie.
+      if (limits.capacityL != null) {
+        const over = Math.max(
+          draft.fuelBeforeL,
+          draft.fuelAfterL,
+          ...draft.refuels.map((r) => r.afterL),
+        );
+        if (over > limits.capacityL) {
+          return `Odczyt ${Math.round(over)} L przekracza pojemność zbiorników (${Math.round(limits.capacityL)} L).`;
+        }
+      }
+
+      // MH_REGRESSION — licznik motogodzin nie chodzi wstecz.
       if (draft.mhAfter < draft.mhBefore) {
         return 'Licznik motogodzin nie może się cofnąć — stan po locie jest mniejszy niż przed.';
       }
-      // Dolewka przy pracującym śmigle to twardy błąd domeny (REFUEL_ENGINE_RUNNING)
-      // — mówimy to przy przycisku, zamiast pozwolić próbie generalnej odrzucić zapis.
+
+      // FUEL_INCREASE_WITHOUT_REFUEL — paliwo nie przybywa samo. Punktem odniesienia
+      // jest OSTATNI znany stan (dolewka albo odczyt początkowy), bo tak liczy to
+      // domena przy `day_close`; tolerancja ta sama, żeby telefon i serwer nie
+      // mówiły o tej samej liczbie dwóch różnych rzeczy.
+      const lastKnownL = lastKnownFuelL(draft);
+      if (draft.fuelAfterL > lastKnownL + fuelToleranceL(limits.capacityL)) {
+        return `Paliwa po locie (${Math.round(draft.fuelAfterL)} L) jest więcej niż ostatni znany stan (${Math.round(lastKnownL)} L) — brakuje dolewki?`;
+      }
+
+      // REFUEL_ENGINE_RUNNING — dolewa się przy zatrzymanym śmigle.
       if (draft.engineStart != null && draft.engineStop != null) {
         const midRun = draft.refuels.find(
           (r) => r.at > draft.engineStart! && r.at < draft.engineStop!,
@@ -228,13 +291,26 @@ export function manualFlightStepBlocker(
 }
 
 /** Bramka zapisu = wszystkie kroki naraz (ostatni krok widzi także błędy wcześniejszych). */
-export function manualFlightBlocker(draft: ManualFlightDraft): string | null {
+export function manualFlightBlocker(
+  draft: ManualFlightDraft,
+  limits?: ManualFlightLimits,
+): string | null {
   return (
-    manualFlightStepBlocker('aircraft', draft) ??
-    manualFlightStepBlocker('task', draft) ??
-    manualFlightStepBlocker('times', draft) ??
-    manualFlightStepBlocker('readings', draft)
+    manualFlightStepBlocker('aircraft', draft, limits) ??
+    manualFlightStepBlocker('task', draft, limits) ??
+    manualFlightStepBlocker('times', draft, limits) ??
+    manualFlightStepBlocker('readings', draft, limits)
   );
+}
+
+/**
+ * Ostatni ZNANY stan paliwa przed odczytem końcowym: `afterL` najpóźniejszej dolewki,
+ * a bez dolewek — odczyt sprzed uruchomienia. To jest punkt, względem którego domena
+ * pyta „czy paliwo nie przybyło samo" przy zdaniu samolotu.
+ */
+export function lastKnownFuelL(draft: ManualFlightDraft): number {
+  const latest = [...draft.refuels].sort((a, b) => a.at - b.at).at(-1);
+  return latest?.afterL ?? draft.fuelBeforeL ?? 0;
 }
 
 /**

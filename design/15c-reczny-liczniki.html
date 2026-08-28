@@ -66,7 +66,10 @@
   .scroll::-webkit-scrollbar { display:none; }
   .spacer { flex:1; min-height:8px; }
 
-  .section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; }
+  /* `flex-shrink:0` jest OBOWIĄZKOWE: `.scroll` jest kolumną flex, więc bez tego
+     sekcje ściskają się zamiast przewijać — karta z osią paliwa (jedyna z `overflow:
+     hidden`) zapadała się przez to do jednego piksela i znikała z ekranu. */
+  .section { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:14px; display:flex; flex-direction:column; gap:12px; flex-shrink:0; }
   .section-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
   .section-label { font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); }
   .optional-tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
@@ -84,6 +87,42 @@
   .field-val.empty { color:var(--text-placeholder); font-weight:400; font-family:var(--font-body); font-size:15px; line-height:20px; letter-spacing:0; }
   .field-unit { font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); }
   .field-sub { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); line-height:1.5; }
+
+  /* ===== OŚ — TEN SAM KOMPONENT, CO NA KROKU 3 I W ROZLICZENIU (issue #62) =====
+     Paliwo jest sekwencją, więc rysuje się tym, czym rysują się wszystkie sekwencje
+     tej aplikacji. Wiersz ma 44 px, bo każdy otwiera swój arkusz. */
+  .section.flush { padding:0; gap:0; overflow:hidden; }
+  .section.flush .section-head { padding:14px 14px 8px; }
+  .axis { padding:6px 0; }
+  .axis-row { display:grid; grid-template-columns:52px 14px 1fr 18px; align-items:center; gap:8px; padding:0 12px 0 10px; min-height:44px; text-decoration:none; cursor:pointer; }
+  .axis-row:hover { background:var(--surface-hover); }
+  .axis-time { font-family:var(--font-mono); font-size:11px; color:var(--text-primary); }
+  .axis-mark { position:relative; align-self:stretch; display:flex; justify-content:center; }
+  .axis-mark::before { content:''; position:absolute; top:0; bottom:0; width:1px; background:var(--border-strong); }
+  .axis-row:first-child .axis-mark::before { top:50%; }
+  .axis-row:last-child .axis-mark::before { bottom:50%; }
+  .axis-dot { position:relative; align-self:center; width:9px; height:9px; border-radius:50%; background:var(--border-strong); border:2px solid var(--surface); box-shadow:0 0 0 2px var(--surface); }
+  /* Amber jest w tym systemie kolorem PALIWA — przy dolewce niesie znaczenie, nie ozdobę. */
+  .axis-dot.amber { background:var(--amber); }
+  .axis-dot.hollow { background:var(--surface); border:1.5px solid var(--text-muted); box-shadow:0 0 0 2px var(--surface); }
+  .axis-label { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .axis-name { font-family:var(--font-mono); font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-primary); }
+  .axis-sub { font-family:var(--font-mono); font-size:8.5px; letter-spacing:0.5px; color:var(--text-muted); }
+  .axis-pen { display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+  .axis-row:hover .axis-pen { color:var(--green); }
+  .axis-add { display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; border-top:1px solid var(--border); font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; color:var(--text-muted); text-decoration:none; }
+  .axis-add:hover { background:var(--surface-hover); }
+  .axis-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-top:1px solid var(--border); background:var(--surface-raised); }
+  .axis-foot-item { display:flex; flex-direction:column; gap:2px; }
+  .axis-foot-val { font-family:var(--font-display); font-size:20px; letter-spacing:1.5px; line-height:1; color:var(--text-primary); }
+  .axis-foot-val.amber { color:var(--amber); }
+  .axis-foot-key { font-family:var(--font-mono); font-size:7px; letter-spacing:1.2px; text-transform:uppercase; color:var(--text-muted); }
+
+  /* Plakietka werdyktu przy WARTOŚCI — zielona w normie, bursztynowa poza pasmem.
+     Nigdy czerwona: wynik poza pasmem jest do sprawdzenia, a nie błędny. */
+  .tag { font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; border-radius:5px; padding:2px 6px; border:1px solid var(--border-strong); color:var(--text-muted); margin-left:auto; }
+  .tag.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }
+  .tag.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
 
   .pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 
@@ -174,47 +213,77 @@
 
            TE SAME ARKUSZE, CO WSZĘDZIE INDZIEJ: `ReadingSheet` z klawiaturą numeryczną
            dla litrów i maską dla motogodzin (issue #43). -->
-      <div class="section">
+      <!-- PALIWO JAKO SEKWENCJA (issue #62, piąta tura z urządzenia).
+
+           Do tej tury były to TRZY ROZŁĄCZNE POLA — „Przed uruchomieniem” i „Po locie”
+           w parze, a lista dolewek POD nimi — choć dolewka wypada w czasie MIĘDZY
+           odczytami. Pilot widział trzy niezależne liczby i sam składał z nich zdanie.
+           Zgłoszenie brzmiało: „to powinna być sekwencja jak w czasach, które wpisuję”.
+
+           Odtąd jeden ciąg w porządku czasu, tą samą osią (SessionAxis), którą
+           krok 3 rysuje bieg silnika, a ekran rozliczenia całą sesję. Rachunek
+           przestaje być czymś, co pilot składa w głowie — jest kolejnością wierszy.
+
+           DOLEWKA TYLKO PRZED URUCHOMIENIEM ALBO PO WYŁĄCZENIU — dolewa się przy
+           zatrzymanym śmigle (REFUEL_ENGINE_RUNNING jest twardym błędem domeny).
+           PORANNA dolewka ma swój wiersz na osi (wydarzyła się), ale NIE wchodzi do
+           zużycia: odczyt „przed uruchomieniem” już ją zawiera, więc liczyłaby się
+           dwa razy. Dlatego stopka niżej mówi samo „Zużycie”, bez „Dolane”. -->
+      <div class="section flush">
         <div class="section-head"><span class="section-label">Paliwo</span></div>
-        <div class="pair">
-          <div class="field">
-            <span class="field-label">Przed uruchomieniem</span>
-            <a href="15c-reczny-liczniki.html" class="field-input">
-              <span class="field-val amber">112</span><span class="field-unit">L</span>
-            </a>
-          </div>
-          <div class="field">
-            <span class="field-label">Po locie</span>
-            <a href="15c-reczny-liczniki.html" class="field-input">
-              <span class="field-val amber">76</span><span class="field-unit">L</span>
-            </a>
-          </div>
+
+        <div class="axis">
+          <a href="15c-reczny-liczniki.html" class="axis-row">
+            <span class="axis-time">09:42</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label"><span class="axis-name">Przed uruchomieniem</span><span class="axis-sub">112 L</span></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          </a>
+          <a href="15c-reczny-liczniki.html" class="axis-row">
+            <span class="axis-time">09:35</span>
+            <span class="axis-mark"><span class="axis-dot amber"></span></span>
+            <span class="axis-label"><span class="axis-name">Dolewka</span><span class="axis-sub">+48 L → 112 L</span></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          </a>
+          <a href="15c-reczny-liczniki.html" class="axis-row">
+            <span class="axis-time">11:18</span>
+            <span class="axis-mark"><span class="axis-dot hollow"></span></span>
+            <span class="axis-label"><span class="axis-name">Po locie</span><span class="axis-sub">76 L</span></span>
+            <span class="axis-pen"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          </a>
         </div>
 
-        <!-- DOLEWKA TYLKO PRZED URUCHOMIENIEM ALBO PO WYŁĄCZENIU — dolewa się przy
-             zatrzymanym śmigle (REFUEL_ENGINE_RUNNING jest twardym błędem domeny).
-             Dolewka z godziną ze środka biegu dostaje blokadę przy „ZAPISZ LOT".
-             Poranna dolewka (przed odczytem „przed uruchomieniem") NIE wchodzi do
-             rachunku zużycia — odczyt już ją zawiera; logika cofa o nią odczyt
-             początkowy strumienia, żeby litrów nie liczyć podwójnie. -->
+        <div class="axis-foot">
+          <span class="axis-foot-item"><span class="axis-foot-val amber">36 L</span><span class="axis-foot-key">Zużycie</span></span>
+        </div>
+
+        <a href="15c-reczny-liczniki.html" class="axis-add muted"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> DODAJ DOLEWKĘ</a>
+      </div>
+
+      <!-- NORMA — „przeliczmy i sprawdźmy, czy się zgadza” (issue #62, piąta tura).
+           Oczekiwanie liczy DOMENA z normy tej maszyny (cache referencyjny, więc
+           działa offline) — ta sama arytmetyka, którą po zapisaniu pokaże ekran
+           rozliczenia. Karty NIE MA, gdy maszyna nie ma jeszcze normy: brak normy
+           nie jest brakiem danych pilota i nie ma prawa wyglądać jak jego błąd.
+           Werdykt jest BURSZTYNOWY, nie czerwony — wynik poza pasmem jest
+           DO SPRAWDZENIA, a paliwomierz i licznik mają rację. -->
+      <div class="section">
+        <div class="section-head"><span class="section-label">Norma zużycia</span></div>
         <div class="field">
-          <span class="field-label">Dolewki</span>
-          <div class="row-list">
-            <a href="15c-reczny-liczniki.html" class="row">
-              <span class="row-time">09:35</span>
-              <span class="row-main">+48 L → 112 L</span>
-              <span class="row-icon">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-              </span>
-            </a>
-            <a href="15c-reczny-liczniki.html" class="row add">
-              <span class="row-time">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              </span>
-              <span class="row-label">Dodaj dolewkę</span>
-            </a>
-          </div>
-          <div class="field-sub">zużycie 36 L · 112 L − 76 L po locie (poranna dolewka już w odczycie)</div>
+          <span class="field-label">Zużycie paliwa</span>
+          <span class="field-input">
+            <span class="field-val amber">36 L</span>
+            <span class="tag green">✓ w normie</span>
+          </span>
+          <div class="field-sub">oczekiwane 33 L · pasmo 27 – 40 L · z cache · sync 16 SIE 08:14</div>
+        </div>
+        <div class="field">
+          <span class="field-label">Przyrost licznika</span>
+          <span class="field-input">
+            <span class="field-val">1:29</span>
+            <span class="tag amber">↑ powyżej normy</span>
+          </span>
+          <div class="field-sub">oczekiwane 1:21 · pasmo 1:14 – 1:27 · z cache · sync 16 SIE 08:14</div>
         </div>
       </div>
 
@@ -237,7 +306,12 @@
             </a>
           </div>
         </div>
-        <div class="field-sub">przyrost 1:32 · blok 1:36 · licznik obrotomierzowy</div>
+        <!-- PODPISU „przyrost 1:32 · blok 1:36" TU NIE MA (issue #62, piąta tura):
+             przyrost licznika NIE RÓWNA SIĘ czasowi blokowemu i nie ma prawa się równać
+             — obrotomierz na wolnych obrotach chodzi wolniej niż zegar. Zestawione obok
+             siebie sugerowały błąd przy poprawnym odczycie; to ta sama pomyłka, którą
+             issue #38 wyrzuciło z ekranu 10. Przyrost porównuje się z NORMĄ maszyny,
+             w karcie „Norma zużycia" wyżej. -->
       </div>
 
       <!-- OLEJ (issue #60) — tu OPCJONALNY, świadomym wyjątkiem: na 02A pomiar jest
