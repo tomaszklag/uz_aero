@@ -29,8 +29,21 @@
  * Ten moduł jest CZYSTY (decyzja per próba); zegar i RN siedzą w `useSheetInputFocus`.
  */
 
-/** Odstępy kolejnych prób od startu drabinki — obejmują animację wjazdu i zamulony JS. */
-export const RETRY_DELAYS_MS = [150, 400, 800];
+/**
+ * Odstępy kolejnych prób od startu drabinki.
+ *
+ * PIERWSZE PONOWIENIE JEST BLISKO (issue #62, szósta tura). Poprzedni harmonogram
+ * (150/400/800) był dobrany tak, żeby PRZECZEKAĆ animację wjazdu okna — a tej już nie
+ * ma, odkąd `SheetSurface` otwiera `Modal` bez animacji. Zostało wyłącznie okno na
+ * przejęcie fokusu wejścia przez świeżo pokazane okno, czyli klatka albo dwie: `onShow`
+ * pada, gdy dialog jest POKAZANY, ale fokus wejścia potrafi dojść beat później, a wtedy
+ * próba nr 0 ustawia fokus widoku bez IME. Czekanie 150 ms na naprawę tego jest widoczne
+ * gołym okiem — stąd pierwsza próba po 50 ms.
+ *
+ * Dalsze rungi zostają rzadkie: są na zamulony JS, nie na fokus okna, a przy wysuniętej
+ * klawiaturze i tak gasną (`focusStep` pyta o `Keyboard.isVisible`).
+ */
+export const RETRY_DELAYS_MS = [50, 180, 400, 800];
 
 /**
  * Drabinka rusza w PÓŹNIEJSZYM z dwóch zdarzeń: okno modala pokazane (`onShow`)

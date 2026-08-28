@@ -143,3 +143,71 @@ describe('lot musi mieścić się w biegu silnika (issue #62, trzecia tura)', ()
     expect(flightTimesBlocker(flight(11, 30, 11, 50), 'Czas lotu')).toBeNull();
   });
 });
+
+describe('pole KONTEKSTU nie jest polem do wypełnienia (issue #62, szósta tura)', () => {
+  /**
+   * Zgłoszenie z urządzenia: „jak otwieram popup, gdzie mam wpisać godzinę
+   * uruchomienia, to nawet jak coś wpiszę, to na przycisku ZAPISZ mam «wpisz obie
+   * godziny» — to uniemożliwia wpisanie godziny uruchomienia".
+   *
+   * Przyczyna: blokada żądała wartości od WSZYSTKICH pól, także od tego, którego
+   * arkusz nie pokazuje jako kontrolki. Przy pierwszym wpisywaniu biegu silnika drugi
+   * koniec z definicji jest jeszcze pusty, więc komunikat nie gasł nigdy.
+   */
+  it('pusty kontekst NIE blokuje zapisu wpisanej godziny', () => {
+    expect(
+      flightTimesBlocker(
+        [
+          { label: 'Uruchomienie', value: at(9, 42) },
+          { label: 'Wyłączenie', value: null, readOnly: true },
+        ],
+        'Blok',
+      ),
+    ).toBeNull();
+  });
+
+  it('brak wartości w polu EDYTOWALNYM nadal blokuje, w liczbie pojedynczej', () => {
+    expect(
+      flightTimesBlocker(
+        [
+          { label: 'Uruchomienie', value: null },
+          { label: 'Wyłączenie', value: at(11, 18), readOnly: true },
+        ],
+        'Blok',
+      ),
+    ).toBe('Wpisz godzinę.');
+  });
+
+  it('kontekst Z WARTOŚCIĄ nadal wchodzi do porównania kolejności', () => {
+    // Po to właśnie drugi koniec zostaje w arkuszu jako wiersz odniesienia: gdyby
+    // wypadł z reguł, dałoby się ustawić uruchomienie po wyłączeniu.
+    expect(
+      flightTimesBlocker(
+        [
+          { label: 'Uruchomienie', value: at(12, 0) },
+          { label: 'Wyłączenie', value: at(11, 18), readOnly: true },
+        ],
+        'Blok',
+      ),
+    ).toBe('Sprawdź kolejność godzin — blok wychodzi ujemny.');
+  });
+
+  it('kontekst Z WARTOŚCIĄ nadal wchodzi do granic biegu', () => {
+    const engineRun = {
+      from: at(9, 42),
+      to: at(11, 18),
+      label: 'biegu silnika',
+      format: (t: number) => timeUtc(t),
+    };
+    expect(
+      flightTimesBlocker(
+        [
+          { label: 'Start', value: at(10, 0) },
+          { label: 'Lądowanie', value: at(11, 40), readOnly: true },
+        ],
+        'Czas lotu',
+        engineRun,
+      ),
+    ).not.toBeNull();
+  });
+});

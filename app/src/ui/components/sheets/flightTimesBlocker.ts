@@ -26,6 +26,19 @@
 export interface FlightTimesPair {
   label: string;
   value: number | null;
+  /**
+   * Pole KONTEKSTU, nie do wypełnienia (drugi koniec pary przy edycji jednego z nich).
+   *
+   * ROZRÓŻNIENIE JEST TU KONIECZNE (zgłoszenie z urządzenia, issue #62): bez niego
+   * blokada żądała wartości także od pola, którego arkusz nawet nie pokazuje jako
+   * kontrolki — a przy pierwszym wpisywaniu biegu silnika drugi koniec z definicji
+   * jest jeszcze pusty. Efekt: „wpisz obie godziny" nie gasło NIGDY i nie dało się
+   * zapisać nawet tej jednej godziny, którą pilot właśnie wpisał.
+   *
+   * Kontekst nadal WCHODZI do porównań (kolejność, granice) — ale tylko wtedy, gdy
+   * ma wartość. Pusty kontekst znaczy „nie mam z czym porównać", a nie „brakuje danych".
+   */
+  readOnly?: boolean;
 }
 
 /**
@@ -65,15 +78,21 @@ export function flightTimesBlocker(
   durationLabel = 'Czas trwania',
   bounds?: FlightTimesBounds,
 ): string | null {
-  const missing = fields.filter((f) => f.value == null);
-  if (missing.length > 0) {
+  /* Wypełnienia żądamy WYŁĄCZNIE od pól, które arkusz pokazuje jako kontrolki. Pole
+     kontekstu bywa puste z definicji — przy pierwszym wpisywaniu biegu silnika drugi
+     koniec jeszcze nie istnieje. */
+  const editable = fields.filter((f) => f.readOnly !== true);
+  if (editable.some((f) => f.value == null)) {
     // Które pole jest puste, widać w kontrolce nad przyciskiem — placeholder stoi
     // w miejscu godziny. Powtarzanie nazwy dokładałoby zdanie, nie informację.
-    return fields.length > 1 ? 'Wpisz obie godziny.' : 'Wpisz godzinę.';
+    return editable.length > 1 ? 'Wpisz obie godziny.' : 'Wpisz godzinę.';
   }
 
-  if (fields.length >= 2) {
-    const span = fields[1]!.value! - fields[0]!.value!;
+  // Kolejność porównujemy dopiero, gdy OBA końce mają wartość — pusty kontekst znaczy
+  // „nie mam z czym porównać", a nie „para jest odwrócona".
+  const [first, second] = fields;
+  if (fields.length >= 2 && first?.value != null && second?.value != null) {
+    const span = second.value - first.value;
     if (span <= 0) {
       return `Sprawdź kolejność godzin — ${durationLabel.toLowerCase()} wychodzi ${
         span < 0 ? 'ujemny' : 'zerowy'
@@ -82,10 +101,12 @@ export function flightTimesBlocker(
   }
 
   if (bounds != null) {
-    // Sprawdzamy KAŻDE pole z osobna, także to nieedytowalne: przy edycji jednego
-    // końca drugi bywa już poza oknem (pilot skrócił bieg silnika po wpisaniu lotu),
-    // a arkusz ma o tym powiedzieć, zamiast puszczać zapis w takim stanie.
-    const outside = fields.some((f) => f.value! < bounds.from || f.value! > bounds.to);
+    // Sprawdzamy KAŻDE pole z wartością, także kontekstowe: przy edycji jednego końca
+    // drugi bywa już poza oknem (pilot skrócił bieg silnika po wpisaniu lotu), a arkusz
+    // ma o tym powiedzieć, zamiast puszczać zapis w takim stanie.
+    const outside = fields.some(
+      (f) => f.value != null && (f.value < bounds.from || f.value > bounds.to),
+    );
     if (outside) {
       return `Godziny muszą mieścić się w ${bounds.label} (${bounds.format(
         bounds.from,

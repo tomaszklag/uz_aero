@@ -897,7 +897,22 @@ poprawka dosięgła ośmiu arkuszy naraz.
   - **wysunięcie rusza w PÓŹNIEJSZYM z dwóch zdarzeń** (okno pokazane, panel zmierzony)
     — ta sama koniunkcja i ten sam powód, co przy drabince fokusu
   - **drabinka fokusu ZOSTAJE**, ale w węższej roli: broni już tylko przed `onShow`
-    wyprzedzającym commit dzieci modala, nie przed animacją okna
+    wyprzedzającym commit dzieci modala, nie przed animacją okna. Jej odstępy zostały
+    przez to PRZESTROJONE (50/180/400/800 zamiast 150/400/800): pierwsze ponowienie
+    czekało na animację okna, a teraz czeka wyłącznie na przejęcie fokusu wejścia przez
+    świeżo pokazane okno — klatkę albo dwie
+  - **zamykany arkusz NIE ŁAPIE DOTYKU** (`pointerEvents` po `visible`, nie po animacji):
+    odkąd okno żyje dłużej niż `visible`, pełnoekranowa nakładka przez ~160 ms po
+    zamknięciu zjadała pierwsze tapnięcie w ekran pod spodem („jakby 2× muszę wcisnąć
+    DALEJ"). Arkusz w trakcie wyjazdu ma być już tylko OBRAZEM
+  - **przy JEDNEJ kontrolce etykieta nie powtarza tytułu**: „URUCHOMIENIE" nad polem
+    „Uruchomienie (UTC)" to było jedno słowo dwa razy. Zostaje sama jednostka
+    („Godzina (UTC)"); przy parze kontrolek etykiety wracają do nazw, bo wtedy odróżniają
+  - **pole KONTEKSTU nie jest polem do wypełnienia** (`FlightTimesPair.readOnly`):
+    blokada żądała wartości także od drugiego końca pary, którego arkusz nie pokazuje —
+    a przy pierwszym wpisywaniu biegu silnika ten koniec z definicji jest pusty, więc
+    „wpisz obie godziny" nie gasło NIGDY i nie dało się zapisać wpisanej godziny.
+    Kontekst wchodzi do porównań (kolejność, granice) tylko wtedy, gdy MA wartość
   - `SheetSurface` jest JEDYNYM `Modal`-em w aplikacji, więc ta zmiana obejmuje
     wszystkie osiem arkuszy naraz
 - **arkusz czasu OTWIERA SIĘ Z KLAWIATURĄ** na pierwszej kontrolce (trzecia tura):

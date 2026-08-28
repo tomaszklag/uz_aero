@@ -189,7 +189,7 @@ export function manualFlightStepBlocker(
 
     case 'times': {
       if (draft.engineStart == null || draft.engineStop == null) {
-        return 'Wpisz godziny biegu silnika: uruchomienie i wyłączenie.';
+        return 'Wpisz godzinę uruchomienia i wyłączenia silnika.';
       }
       if (draft.engineStart >= draft.engineStop) {
         return 'Wyłączenie silnika musi być po uruchomieniu.';

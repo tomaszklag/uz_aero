@@ -241,8 +241,14 @@
              więcej. Przy parze („DODAJ LOT") klawiatura ląduje na PIERWSZEJ kontrolce.
              Podnosi ją drabinka prób z `useSheetInputFocus` i nic innego: trzy
              podejścia już zawiodły, historia w `hooks/keyboardFocus.ts`. -->
+        <!-- ETYKIETA NIE POWTARZA TYTUŁU (zgłoszenie z urządzenia, issue #62 szósta
+             tura: „mam 2× labelkę «Uruchomienie»"). Przy JEDNEJ kontrolce nazwę niesie
+             tytuł arkusza dwa centymetry wyżej („START · LOT 2"), więc etykieta zostaje
+             z samą jednostką — ona jedyna coś tu jeszcze dodaje. Przy parze kontrolek
+             („DODAJ LOT", wejście z karty biegu) etykiety wracają do nazw, bo wtedy
+             odróżniają jedno pole od drugiego. -->
         <div>
-          <div class="field-label">Start (UTC)</div>
+          <div class="field-label">Godzina (UTC)</div>
           <div class="time-stepper">
             <button class="step-btn">−1 min</button>
             <span class="time-val">10:26</span>

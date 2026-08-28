@@ -208,8 +208,15 @@ export function SheetSurface({
       }}
       statusBarTranslucent
     >
-      {/* Tapnięcie w tło = anuluj. Potwierdzenie wymaga celowego tapnięcia w przycisk. */}
+      {/* Tapnięcie w tło = anuluj. Potwierdzenie wymaga celowego tapnięcia w przycisk.
+
+          W TRAKCIE WYJAZDU NAKŁADKA NIE ŁAPIE DOTYKU (zgłoszenie z urządzenia: „jakby
+          2× muszę wcisnąć DALEJ"). Odkąd okno żyje dłużej niż `visible`, przez ~160 ms
+          po zamknięciu arkusza pełnoekranowa nakładka wciąż stała nad ekranem i zjadała
+          pierwsze tapnięcie — pilot trafiał w gasnące tło zamiast w przycisk pod nim.
+          Zamykany arkusz ma być już tylko OBRAZEM. */}
       <Animated.View
+        pointerEvents={visible ? 'auto' : 'none'}
         style={[styles.overlay, { backgroundColor: theme.colors.overlay, opacity: enter }]}
       >
         <Pressable
@@ -220,7 +227,10 @@ export function SheetSurface({
       </Animated.View>
 
       {/* Klawiatura podnosi arkusz zamiast go zasłaniać — patrz `useKeyboardHeight`. */}
-      <View style={[styles.bottom, { paddingBottom: keyboardHeight }]} pointerEvents="box-none">
+      <View
+        style={[styles.bottom, { paddingBottom: keyboardHeight }]}
+        pointerEvents={visible ? 'box-none' : 'none'}
+      >
         <Animated.View
           onLayout={(e) => {
             const h = e.nativeEvent.layout.height;

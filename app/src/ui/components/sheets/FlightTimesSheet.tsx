@@ -123,10 +123,16 @@ export function FlightTimesSheet({
       ? resolved[1]!.current - resolved[0]!.current
       : null;
 
-  /* Reguły widzą KOMPLET pól, także te tylko do odczytu: inaczej edycja samego startu
-     nie miałaby czego porównać z lądowaniem (patrz `FlightTimesField.readOnly`). */
+  /* Reguły widzą KOMPLET pól, także te tylko do odczytu — inaczej edycja samego startu
+     nie miałaby czego porównać z lądowaniem. Ale `readOnly` MUSI dojechać razem z nimi:
+     bez tego blokada żąda wypełnienia pola, którego arkusz nie pokazuje jako kontrolki,
+     i „wpisz obie godziny" nie gaśnie nigdy (zgłoszenie z urządzenia). */
   const blocker = flightTimesBlocker(
-    resolved.map((f) => ({ label: f.label, value: f.current })),
+    resolved.map((f) => ({
+      label: f.label,
+      value: f.current,
+      ...(f.readOnly === true ? { readOnly: true } : {}),
+    })),
     durationLabel,
     bounds,
   );
@@ -176,8 +182,12 @@ export function FlightTimesSheet({
       {editable.map((f, i) => (
         <TimeStepper
           key={f.key}
-          /* Jednostka mieszka w ETYKIECIE, jak wszędzie w tym systemie (pkt 6). */
-          label={`${f.label} (UTC)`}
+          /* Jednostka mieszka w ETYKIECIE, jak wszędzie w tym systemie (pkt 6).
+             PRZY JEDNEJ KONTROLCE etykieta NIE POWTARZA nazwy — tę mówi tytuł arkusza
+             dwa centymetry wyżej („URUCHOMIENIE" nad polem „Uruchomienie (UTC)" było
+             tym samym słowem dwa razy, zgłoszenie z urządzenia). Zostaje sama jednostka,
+             bo ona jedyna niesie tu informację. */
+          label={editable.length > 1 ? `${f.label} (UTC)` : 'Godzina (UTC)'}
           value={f.current}
           onChange={(next) => setValues((v) => ({ ...v, [f.key]: next }))}
           format={timeUtc}

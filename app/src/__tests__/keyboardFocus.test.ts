@@ -42,10 +42,13 @@ describe('focusStep — drabinka fokusu w arkuszu', () => {
     expect(shouldStartLadder(true, true)).toBe(true);
   });
 
-  it('odstępy prób obejmują animację wjazdu modala (ostatnia próba po niej)', () => {
-    // Wjazd arkusza (slide) trwa ~300 ms; ostatnie ponowienie musi wypaść za nim,
-    // inaczej cała drabinka kończy się przed chwilą, w której fokus IME w ogóle
-    // może dostać okno.
+  it('pierwsze ponowienie jest BLISKO, ostatnie daleko (issue #62, szósta tura)', () => {
+    // Do #62 pierwsza próba wypadała po 150 ms, bo miała przeczekać animację wjazdu
+    // okna. Animacji już nie ma (`SheetSurface` otwiera Modal bez niej), a zostało
+    // tylko przejęcie fokusu wejścia przez świeżo pokazane okno — klatka albo dwie.
+    // 150 ms czekania na to widać gołym okiem („nie wysuwa się od razu klawiatura").
+    expect(Math.min(...RETRY_DELAYS_MS)).toBeLessThanOrEqual(80);
+    // Ostatnie ponowienie zostaje daleko: jest na zamulony JS, nie na fokus okna.
     expect(Math.max(...RETRY_DELAYS_MS)).toBeGreaterThanOrEqual(400);
     // Rosnąco — każda próba daje oknu więcej czasu niż poprzednia.
     expect([...RETRY_DELAYS_MS].sort((a, b) => a - b)).toEqual(RETRY_DELAYS_MS);

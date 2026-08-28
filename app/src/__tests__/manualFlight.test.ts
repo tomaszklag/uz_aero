@@ -104,7 +104,11 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
   });
 
   it('krok 3 wymaga biegu silnika i przynajmniej jednego lotu', () => {
-    expect(manualFlightStepBlocker('times', draft({ engineStart: null }))).toContain('biegu');
+    // Napis wprost ze zgłoszenia z urządzenia (issue #62, szósta tura) — nie „godziny
+    // biegu silnika: uruchomienie i wyłączenie", tylko to, czego pilot ma poszukać.
+    expect(manualFlightStepBlocker('times', draft({ engineStart: null }))).toBe(
+      'Wpisz godzinę uruchomienia i wyłączenia silnika.',
+    );
     expect(manualFlightStepBlocker('times', draft({ flights: [] }))).toContain(
       'przynajmniej jeden lot',
     );
