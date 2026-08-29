@@ -115,7 +115,7 @@ import {
 import { useReadingsChain } from '../hooks/useReadingsChain';
 import type { RemoteReadingsChain } from '../../application';
 import { manualFuelBalance, manualMhBalance } from './logic/manualFlightBalance';
-import { manualFlightWarnings } from './logic/manualFlightWarnings';
+import { jumpDayWithoutDrop, manualFlightWarnings } from './logic/manualFlightWarnings';
 import { operationLabel } from './logic/operations';
 /** Nazwa lotniska albo plakietka „spoza katalogu" — ta sama, co na 02E (issue #62 pkt 1). */
 import { airfieldValueProps } from '../components/input/airfieldMark';
@@ -646,6 +646,20 @@ export function ManualFlightScreen({
                     ? 'Jeden zrzut wypada poza wszystkimi lotami — popraw jego godzinę albo dopisz lot, w którym się odbył.'
                     : `${strayDrops} zrzuty wypadają poza wszystkimi lotami — popraw ich godziny albo dopisz loty, w których się odbyły.`
                 }
+              />
+            )}
+
+            {/* Dzień skokowy z pustym logiem zrzutów (zgłoszenie z urządzenia,
+                2026-08-29). Ten sam rachunek, co przy zrzucie poza lotem: ostrzeżenie
+                stoi na kroku, na którym da się je naprawić — wiersz „DODAJ ZRZUT" jest
+                dwa centymetry wyżej. Zapisu NIE blokuje: lot skokowy bez wyniesienia
+                zdarza się naprawdę (chmura, powrót z pełną kabiną). */}
+            {jumpDayWithoutDrop(draft) && (
+              <Banner
+                kind="warning"
+                tone="amber"
+                icon="warning"
+                text="Zadanie to skoki, a w logu nie ma ani jednego zrzutu — dopisz go na osi albo zostaw, jeśli wyniesienie się nie odbyło."
               />
             )}
           </>

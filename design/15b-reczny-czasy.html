@@ -407,7 +407,19 @@
 
       <!-- Wiersz osi mówi, KTÓRY zrzut wypadł poza lotem; baner mówi, co z tym zrobić.
            Do issue #62 to zdanie padało dopiero na kroku 4 — ekran po tym, na którym
-           godzinę się wpisuje. Ostrzeżenie ma stać tam, gdzie da się je naprawić. -->
+           godzinę się wpisuje. Ostrzeżenie ma stać tam, gdzie da się je naprawić.
+
+           DRUGI BANER TEGO KROKU (zgłoszenie z urządzenia, 2026-08-29) nie jest tu
+           narysowany, bo ten ekran zrzut MA: „Zadanie to skoki, a w logu nie ma ani
+           jednego zrzutu — dopisz go na osi albo zostaw, jeśli wyniesienie się nie
+           odbyło". Pojawia się przy operacji SKOKI z co najmniej jednym lotem i pustą
+           listą zrzutów. Na żywo ten problem nie istnieje (zrzut zapisuje się
+           przyciskiem w chwili wyniesienia); z kartki trzeba go dopisać z pamięci,
+           a zapomnianego nie odtworzy nikt — skład i wysokość zna tylko ten, kto leciał.
+           NIE BLOKUJE: lot skokowy bez wyniesienia zdarza się naprawdę (chmura, powrót
+           z pełną kabiną), więc zdanie podaje obie drogi wyjścia. Bez ani jednego lotu
+           baner MILCZY — tam odpowiedzią jest blokada „Dodaj przynajmniej jeden lot"
+           w przycisku DALEJ, a zrzut nie ma jeszcze do czego należeć. -->
       <div class="warn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span class="warn-text">Jeden zrzut wypada poza wszystkimi lotami — popraw jego godzinę albo dopisz lot, w którym się odbył.</span>

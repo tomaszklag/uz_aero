@@ -1004,6 +1004,17 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   ale NIE blokuje zapisu (fakt lotu > kompletność formularza; domena też trzyma tę regułę
   jako ostrzeżenie). Baner stoi na kroku 3, nie 4: ostrzeżenie ma być tam, gdzie da się
   je naprawić
+- **DZIEŃ SKOKOWY BEZ ANI JEDNEGO ZRZUTU OSTRZEGA** (`jumpDayWithoutDrop`, zgłoszenie
+  z urządzenia 2026-08-29): zrzut jest TREŚCIĄ zadania skokowego, więc jego brak niemal
+  zawsze znaczy, że pilot o nim zapomniał — a zapomnianego nie odtworzy nikt, bo skład
+  i wysokość zna wyłącznie ten, kto leciał. Na żywo problem nie istnieje (zrzut zapisuje
+  się przyciskiem w chwili wyniesienia), więc pyta o to sam wpis ręczny. **Nigdy blokada**:
+  lot skokowy bez wyniesienia zdarza się naprawdę (chmura, powrót z pełną kabiną), więc
+  zdanie podaje OBIE drogi wyjścia — dopisz albo zostaw. Baner na kroku 3 (tam stoi
+  „DODAJ ZRZUT") i pozycja w ostrzeżeniach kroku 4, jak przy zrzucie poza lotem.
+  **Milczy bez ani jednego lotu**: tam odpowiedzią jest blokada „Dodaj przynajmniej
+  jeden lot", a zrzut nie ma jeszcze do czego należeć — dwa zdania o pustym logu naraz
+  byłyby szumem
 - **OŚ ISTNIEJE OD PIERWSZEJ SEKUNDY, a karty „Bieg silnika" NIE MA** (czwarta tura
   z urządzenia; mockup `15H` = ten sam układ, co `15B`). Karta niosła parę godzin, którą
   oś rysuje jako swój pierwszy i ostatni wiersz — „dubluje się «bieg silnika» z tym, co

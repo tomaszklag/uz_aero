@@ -18,7 +18,7 @@
  * Czysty TypeScript: bez Reacta, bez zegara, bez I/O.
  */
 
-import type { Handover, PilotDay } from '../../../domain';
+import { isJumpOperation, type Handover, type PilotDay } from '../../../domain';
 import { litres, motoHours, timeUtc, dateTimeUtcShort } from '../../format';
 import type { ManualFlightDraft } from './manualFlight';
 
@@ -28,7 +28,8 @@ export interface ManualFlightWarning {
     | 'session-overlap'
     | 'mh-chain'
     | 'fuel-chain'
-    | 'drop-outside-flight';
+    | 'drop-outside-flight'
+    | 'jump-without-drop';
   text: string;
   /** „z cache · sync 16 SIE 08:14" — tylko przy ostrzeżeniach z danych referencyjnych. */
   src?: string;
@@ -133,5 +134,40 @@ export function manualFlightWarnings(
     }
   }
 
+  if (jumpDayWithoutDrop(draft)) {
+    warnings.push({
+      id: 'jump-without-drop',
+      text:
+        'Zadanie to skoki, a w logu nie ma ani jednego zrzutu — dopisz go na osi ' +
+        'albo zostaw, jeśli wyniesienie się nie odbyło.',
+    });
+  }
+
   return warnings;
+}
+
+/**
+ * DZIEŃ SKOKOWY BEZ ANI JEDNEGO ZRZUTU (zgłoszenie z urządzenia, 2026-08-29).
+ *
+ * Zrzut jest TREŚCIĄ zadania skokowego, więc jego brak niemal zawsze znaczy, że pilot
+ * o nim zapomniał — a zapomniany zrzut nie odtworzy się z niczego: skład i wysokość
+ * zna wyłącznie ten, kto leciał. Na żywo problem nie istnieje, bo zrzut zapisuje się
+ * przyciskiem w chwili wyniesienia; z kartki trzeba go dopisać z pamięci i właśnie
+ * dlatego wpis ręczny wymaga o niego zapytać.
+ *
+ * ══ OSTRZEŻENIE, NIGDY BLOKADA ══
+ * Bo lot skokowy BEZ zrzutu jest legalny i zdarza się naprawdę: wyniesienie przerwane
+ * chmurą, powrót z pełną kabiną, oblot maszyny wpisany na zadanie skokowe. Ta sama
+ * zasada, którą trzyma cały ten moduł — fakt lotu jest cenniejszy niż kompletność
+ * formularza. Zdanie mówi więc obie drogi wyjścia: dopisz albo zostaw.
+ *
+ * Milczymy, dopóki nie ma ani jednego lotu: wtedy odpowiedzią jest blokada „Dodaj
+ * przynajmniej jeden lot" i drugie zdanie o pustym logu byłoby szumem — a zrzut nie
+ * ma jeszcze do czego należeć.
+ */
+export function jumpDayWithoutDrop(
+  draft: Pick<ManualFlightDraft, 'operation' | 'flights' | 'drops'>,
+): boolean {
+  if (draft.operation == null || !isJumpOperation(draft.operation)) return false;
+  return draft.flights.length > 0 && draft.drops.length === 0;
 }

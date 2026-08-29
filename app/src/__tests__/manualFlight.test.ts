@@ -19,6 +19,7 @@ import {
   type ManualFlightDraft,
 } from '../ui/screens/logic/manualFlight';
 import {
+  jumpDayWithoutDrop,
   manualFlightWarnings,
   type ManualFlightWarningContext,
 } from '../ui/screens/logic/manualFlightWarnings';
@@ -40,6 +41,12 @@ function draft(over: Partial<ManualFlightDraft> = {}): ManualFlightDraft {
     flights: [
       { id: 'f1', takeoff: t(9, 48), landing: t(10, 14) },
       { id: 'f2', takeoff: t(10, 26), landing: t(10, 52) },
+    ],
+    /* Zadanie to SKOKI, więc szkic „kompletny" musi mieć zrzut — bez niego jest
+       niekompletny i od 2026-08-29 mówi to ostrzeżenie (`jumpDayWithoutDrop`).
+       Zrzut siedzi w pierwszym locie, żeby nie zapalał też `drop-outside-flight`. */
+    drops: [
+      { id: 'd0', at: t(10, 2), jumpers: { tandem: 2, aff: 1, solo: 1 }, altitudeFt: 4000 },
     ],
     // Paliwo: zastane 64 L, dolane 48 L przed startem, po locie 76 L (issue #62,
     // siódma tura — trzy liczby i ani jednej godziny).
@@ -416,6 +423,47 @@ describe('manualFlightWarnings — ostrzegają, nigdy nie blokują', () => {
         emptyCtx,
       ),
     ).toEqual([]);
+  });
+});
+
+/**
+ * DZIEŃ SKOKOWY BEZ ZRZUTU (zgłoszenie z urządzenia, 2026-08-29).
+ *
+ * Na żywo zrzut zapisuje się przyciskiem w chwili wyniesienia, więc problem nie
+ * istnieje. Z kartki trzeba go dopisać z pamięci — a zapomniany zrzut nie odtworzy
+ * się z niczego: skład i wysokość zna wyłącznie ten, kto leciał.
+ */
+describe('jumpDayWithoutDrop — skoki z pustym logiem zrzutów', () => {
+  it('zadanie skokowe z lotami i bez zrzutu OSTRZEGA', () => {
+    expect(jumpDayWithoutDrop(draft({ drops: [] }))).toBe(true);
+    expect(manualFlightWarnings(draft({ drops: [] }), emptyCtx).map((w) => w.id)).toContain(
+      'jump-without-drop',
+    );
+  });
+
+  it('ale NIE BLOKUJE — lot skokowy bez wyniesienia zdarza się naprawdę', () => {
+    // Chmura, powrót z pełną kabiną, oblot wpisany na zadanie skokowe. Fakt lotu
+    // jest cenniejszy niż kompletność formularza.
+    expect(manualFlightStepBlocker('times', draft({ drops: [] }))).toBeNull();
+    expect(manualFlightBlocker(draft({ drops: [] }))).toBeNull();
+  });
+
+  it('zadanie NIESKOKOWE milczy — zrzut nie ma się tam z czego wziąć', () => {
+    expect(
+      jumpDayWithoutDrop(draft({ operation: 'ferry', drops: [], arrivalIcao: 'EPKK' })),
+    ).toBe(false);
+  });
+
+  it('bez ani jednego lotu MILCZY — odpowiedzią jest wtedy blokada o locie', () => {
+    // Dwa zdania o pustym logu naraz byłyby szumem, a zrzut nie ma jeszcze do czego
+    // należeć.
+    const noFlights = draft({ flights: [], drops: [] });
+    expect(jumpDayWithoutDrop(noFlights)).toBe(false);
+    expect(manualFlightStepBlocker('times', noFlights)).toBe('Dodaj przynajmniej jeden lot.');
+  });
+
+  it('milczy, dopóki rodzaj operacji nie jest wybrany', () => {
+    expect(jumpDayWithoutDrop(draft({ operation: null, drops: [] }))).toBe(false);
   });
 });
 
