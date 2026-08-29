@@ -51,7 +51,6 @@ import {
   AbandonPreflightSheet,
   ActionButton,
   AppText,
-  Banner,
   Card,
   CardPicker,
   Icon,
@@ -67,6 +66,7 @@ import { useTheme } from '../theme';
 import { useCurrentPilot, useSessionStore } from '../store';
 import { useSkeleton } from '../hooks/useSkeleton';
 import { usePreflightDraft } from '../store/preflightDraft';
+import { dualRequirementBlocker } from './logic/dualRequirement';
 import { timeUtc } from '../format';
 import type { ReferenceAircraft, ReferencePilot } from '../../domain';
 
@@ -183,7 +183,6 @@ export function PreflightAircraftScreen({
   }, [draft]);
 
   const selected = draft.aircraft;
-  const needsDual = selected?.dualRequired === true && draft.dualId == null;
 
   const aircraftOptions: PickerOption<string>[] = useMemo(
     () =>
@@ -269,13 +268,16 @@ export function PreflightAircraftScreen({
             tone="green"
             variant="solid"
             trailingIcon="next"
-            disabledReason={selected == null ? 'Wybierz samolot, aby przejść dalej' : null}
-            // Brak Duala jest zablokowany BEZ osobnego tekstu: powód widać już
-            // w bannerze „Wymagana załoga dwuosobowa" nad sekcją wyboru — drugi napis
-            // powtarzałby to samo zdanie (§6 pkt 3, uwaga z urządzenia 2026-08-16:
-            // `disabledReason` zostaje dla blokad, których z ekranu nie widać,
-            // `disabled` dla tych widocznych).
-            disabled={needsDual}
+            // Powody padają POJEDYNCZO i w kolejności czynności: najpierw maszyna,
+            // potem to, czego ona wymaga. Brak Duala jedzie odtąd TĄ SAMĄ drogą —
+            // baner nad sekcją wyboru zniknął (uwaga z urządzenia 2026-08-29,
+            // `logic/dualRequirement.ts`), bo jeden wyjątek od „powód stoi w przycisku"
+            // kosztował więcej niż powtórzenie, którego miał oszczędzić.
+            disabledReason={
+              selected == null
+                ? 'Wybierz samolot, aby przejść dalej'
+                : dualRequirementBlocker(selected, draft.dualId)
+            }
             onPress={() => navigation.navigate('PreflightTask')}
           />
         )
@@ -387,13 +389,11 @@ export function PreflightAircraftScreen({
                 onChange={(id) => draft.set('dualId', draft.dualId === id ? null : id)}
               />
             )}
-            {needsDual && (
-              <Banner
-                kind="warning"
-                title="Wymagana załoga dwuosobowa"
-                text={`${selected?.type ?? 'Ten samolot'} wymaga drugiego pilota — wybierz go, aby przejść dalej.`}
-              />
-            )}
+            {/* Baner „Wymagana załoga dwuosobowa" USUNIĘTY (uwaga z urządzenia,
+                2026-08-29): powód, dla którego nie da się iść dalej, ma w tej
+                aplikacji jedno miejsce — wnętrze przycisku, który nie działa.
+                Plakietka nagłówka zostaje: mówi o WŁAŚCIWOŚCI maszyny, w miejscu
+                wyboru, także wtedy gdy Dual jest już wskazany i nic nie blokuje. */}
           </Card>
         </View>
       )}

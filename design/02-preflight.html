@@ -306,7 +306,12 @@
     color: var(--amber); background: var(--amber-muted); border: 1px solid var(--amber-border);
     border-radius: 5px; padding: 2px 6px; white-space: nowrap;
   }
-  .btn-primary.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; }
+  /* Powód blokady stoi WEWNĄTRZ przycisku (issue #55): tekst POD przyciskiem pojawiał
+     się i znikał razem ze stanem, skacząc layoutem reszty ekranu. Zablokowany przycisk
+     układa się przez to w KOLUMNĘ — napis, pod nim bursztynowe zdanie. */
+  .btn-primary.disabled { background: var(--surface-hover); color: var(--text-muted); box-shadow: none; pointer-events: none; cursor: not-allowed; flex-direction: column; gap: 6px; }
+  .btn-label { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .btn-reason { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--amber); text-align: center; line-height: 1.5; }
 
   /* ===== VARIANTS PANEL (canvas — skróty do wariantów ekranu) ===== */
   .variants-panel { width:100%; max-width:460px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 12px 10px; display:flex; flex-direction:column; gap:7px; }
@@ -434,10 +439,16 @@
             <div class="aircraft-check"></div>
           </div>
         </div>
-        <div class="fuel-warning" id="crew-warning" style="display: none;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          An-2 wymaga załogi 2-osobowej — wybierz drugiego pilota
-        </div>
+        <!-- BANERA „An-2 wymaga załogi 2-osobowej" TU NIE MA (uwaga z urządzenia,
+             2026-08-29). Powód, dla którego nie da się iść dalej, ma w tej aplikacji
+             JEDNO miejsce — wnętrze przycisku, który nie działa (issue #55). Wymóg
+             Duala był ostatnim wyjątkiem: mówił banerem, a „DALEJ" dostawał samo
+             wyszarzenie. Jeden wyjątek kosztuje więcej niż powtórzenie, którego miał
+             oszczędzić — pilot napotyka blokadę przy PRZYCISKU i tam szuka odpowiedzi.
+
+             Plakietka „wymagany · załoga 2-os." przy nagłówku ZOSTAJE: mówi
+             o właściwości maszyny, w miejscu wyboru, także wtedy gdy Dual jest już
+             wskazany i nic nie blokuje. -->
       </div>
 
       <!-- USUNIĘTE STĄD (decyzja 2026-07-30): rodzaj operacji, trasa i oznaczenie
@@ -451,10 +462,16 @@
            „od kiedy" się nie deklaruje. Rozpoczęcie lotu ma trwać kilka sekund,
            nie otwierać dnia. -->
 
-      <!-- CTA Button -->
+      <!-- CTA Button — powód blokady wjeżdża W ŚRODEK, w `.btn-reason` (issue #55).
+           Przycisk zablokowany układa się wtedy w kolumnę: napis, pod nim bursztynowe
+           zdanie. Bez przygaszenia opacity — bursztyn pod nią przestaje być
+           ostrzeżeniem, a wyszarzenie niosą już kolory tła i napisu. -->
       <a href="02e-preflight-zadanie.html" class="btn-primary" id="btn-next">
-        DALEJ
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <span class="btn-label">
+          DALEJ
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+        <span class="btn-reason" id="btn-reason" style="display:none;">Wybierz drugiego pilota — ten samolot wymaga załogi dwuosobowej</span>
       </a>
 
     </div>
@@ -545,8 +562,13 @@
 
     tag.className = required ? 'required-tag' : 'optional-tag';
     tag.textContent = required ? 'wymagany · załoga 2-os.' : 'opcjonalne';
-    document.getElementById('crew-warning').style.display = (required && !hasCrew) ? 'flex' : 'none';
-    document.getElementById('btn-next').classList.toggle('disabled', required && !hasCrew);
+
+    // Powód blokady i sama blokada zapalają się RAZEM i z jednego warunku: przycisk
+    // wyszarzony bez zdania w środku jest dokładnie tym, co zgłoszenie z 2026-08-29
+    // kazało usunąć.
+    const blocked = required && !hasCrew;
+    document.getElementById('btn-reason').style.display = blocked ? 'block' : 'none';
+    document.getElementById('btn-next').classList.toggle('disabled', blocked);
   }
 </script>
 

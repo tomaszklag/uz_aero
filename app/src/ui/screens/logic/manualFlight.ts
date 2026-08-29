@@ -25,6 +25,7 @@ import type {
 import { fuelToleranceL, isSameFieldOperation, utcDayStart } from '../../../domain';
 import type { ManualFlightInput } from '../../../application';
 import { timeUtc } from '../../format';
+import { dualRequirementBlocker } from './dualRequirement';
 
 /** Jeden lot szkicu — para start → lądowanie; `id` tylko na potrzeby listy UI. */
 export interface ManualFlightLegDraft {
@@ -147,20 +148,13 @@ export function emptyManualFlightDraft(now: EpochMillis): ManualFlightDraft {
 /** Kroki steppera — nazwy, nie numery, żeby blokada czytała się jak zdanie. */
 export type ManualFlightStep = 'aircraft' | 'task' | 'times' | 'readings';
 
-/**
- * Czy krok 1 stoi na braku drugiego pilota (issue #58 pkt 4). Wymóg Duala jest
- * właściwością SAMOLOTU (§3.1) i na preflightcie egzekwuje go `step1Valid` —
- * wpis ręczny opisuje ten sam lot tym samym prawem, więc An-2 z kartki też nie
- * przechodzi bez drugiego pilota. Osobna funkcja, nie gałąź `manualFlightStepBlocker`:
- * blokada ma być `disabled` bez własnego tekstu, bo powód stoi już w banerze nad
- * listą wyboru (ta sama decyzja co na 02 — drugi napis powtarzałby to samo zdanie).
+/*
+ * `manualFlightNeedsDual` USUNIĘTE (uwaga z urządzenia, 2026-08-29). Było OSOBNĄ
+ * funkcją obok bramki kroku wyłącznie po to, żeby brak Duala dawał `disabled` BEZ
+ * powodu — a powód niósł baner pod listą. Odkąd powód ma stać w PRZYCISKU jak każdy
+ * inny (`dualRequirement.ts`), wymóg jest zwykłą gałęzią `manualFlightStepBlocker`
+ * i nie ma po co istnieć obok niej.
  */
-export function manualFlightNeedsDual(
-  aircraft: { dualRequired: boolean } | null,
-  draft: Pick<ManualFlightDraft, 'dualId'>,
-): boolean {
-  return aircraft != null && aircraft.dualRequired && draft.dualId == null;
-}
 
 /**
  * Powód, dla którego „DALEJ" (albo „ZAPISZ LOT" na ostatnim kroku) nie zadziała;
@@ -180,6 +174,11 @@ export function manualFlightNeedsDual(
  */
 export interface ManualFlightLimits {
   capacityL: number | null;
+  /**
+   * Wymóg załogi dwuosobowej wybranej maszyny (§3.1). W bramce, a nie obok niej,
+   * odkąd powód blokady stoi w przycisku — patrz `dualRequirement.ts`.
+   */
+  dualRequired?: boolean;
 }
 
 export function manualFlightStepBlocker(
@@ -190,7 +189,9 @@ export function manualFlightStepBlocker(
   switch (step) {
     case 'aircraft':
       if (draft.aircraftId == null) return 'Wybierz samolot, którego dotyczy lot.';
-      return null;
+      // Kolejność jest kolejnością czynności: najpierw maszyna, potem to, czego ona
+      // wymaga. Bez wybranej maszyny wymóg Duala nie ma o czym mówić.
+      return dualRequirementBlocker({ dualRequired: limits.dualRequired === true }, draft.dualId);
 
     case 'task': {
       if (draft.operation == null) return 'Wybierz rodzaj operacji.';

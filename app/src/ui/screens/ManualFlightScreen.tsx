@@ -82,7 +82,6 @@ import {
 } from '../../domain';
 import {
   emptyManualFlightDraft,
-  manualFlightNeedsDual,
   manualFlightStepBlocker,
   fuelAtStartL,
   fuelUsedL,
@@ -108,6 +107,11 @@ import {
   oilContinuityWarnings,
   oilReference,
 } from './logic/readingsContinuity';
+import {
+  prefillSource,
+  readingsPrefill,
+  type AppliedPrefill,
+} from './logic/readingsPrefill';
 import { useReadingsChain } from '../hooks/useReadingsChain';
 import type { RemoteReadingsChain } from '../../application';
 import { manualFuelBalance, manualMhBalance } from './logic/manualFlightBalance';
@@ -212,10 +216,10 @@ export function ManualFlightScreen({
      twardym błędem domeny, a przy nieznanej pojemności reguła śpi — tak jak w domenie. */
   const blocker = manualFlightStepBlocker(step, draft, {
     capacityL: aircraft?.capacityL ?? null,
+    // Wymóg Duala (issue #58 pkt 4) jedzie odtąd bramką jak każdy inny powód — baner
+    // pod listą wyboru zniknął (uwaga z urządzenia 2026-08-29, `dualRequirement.ts`).
+    dualRequired: aircraft?.dualRequired === true,
   });
-  // Wymóg Duala (issue #58 pkt 4) — jak na 02: baner nazywa powód, przycisk dostaje
-  // sam `disabled` (blokada widoczna z ekranu nie powtarza swojego zdania w przycisku).
-  const needsDual = step === 'aircraft' && manualFlightNeedsDual(aircraft, draft);
   /* Łańcuch odczytów pytany PUNKTOWO, gdy znamy już godzinę uruchomienia (issue #62,
      piąta tura). `null` = nie wiadomo teraz i ekran wtedy o ciągłości milczy. */
   const { chain } = useReadingsChain(
@@ -225,24 +229,32 @@ export function ManualFlightScreen({
   );
 
   /**
-   * PALIWO ZASTANE WYKRYWA SIĘ Z POPRZEDNIEGO LOTU (issue #62, siódma tura z urządzenia:
-   * „system wykrywa ilość paliwa w oparciu o poprzedzający lot").
+   * ODCZYTY ZASTANE WYKRYWAJĄ SIĘ Z POPRZEDNIEGO LOTU (issue #62, siódma tura:
+   * „system wykrywa ilość paliwa w oparciu o poprzedzający lot" — i ósma, która
+   * rozciągnęła to na LICZNIK, bo `readings-chain` niesie MH sąsiada tą samą odpowiedzią).
    *
-   * Podstawiamy RAZ i tylko w pole jeszcze puste — wpisana albo poprawiona wartość jest
-   * decyzją pilota i odpowiedź serwera nie ma prawa jej nadpisać. Źródło zostaje
-   * widoczne przy polu (`foundSrc`), żeby liczba nie udawała odczytu z paliwomierza:
-   * to jest podpowiedź z rejestru, a paliwomierz i tak ją bije.
+   * Decyzję „czy wolno wpisać się w to pole" trzyma `readingsPrefill` z testami, nie ten
+   * efekt: reguła brzmi „puste jest niczyje, nasza poprzednia podpowiedź jest nasza,
+   * reszta należy do pilota" i ma cztery gałęzie, których w efekcie nikt by nie sprawdził.
    */
-  const prefilled = useRef(false);
+  const applied = useRef<AppliedPrefill | null>(null);
   useEffect(() => {
-    if (prefilled.current || chain?.before == null) return;
-    prefilled.current = true;
-    setDraft((d) => (d.fuel.foundL != null ? d : { ...d, fuel: { ...d.fuel, foundL: chain.before!.fuelL } }));
-  }, [chain]);
-  const foundSrc =
-    chain?.before != null && draft.fuel.foundL === chain.before.fuelL
-      ? `z poprzedniego lotu · ${chain.before.picId.toUpperCase()}`
-      : undefined;
+    const result = readingsPrefill(draft.aircraftId, chain?.before, applied.current, {
+      foundL: draft.fuel.foundL,
+      mhBefore: draft.mhBefore,
+    });
+    if (result == null) return;
+    applied.current = result.applied;
+    setDraft((d) => ({
+      ...d,
+      fuel: { ...d.fuel, foundL: result.fields.foundL },
+      mhBefore: result.fields.mhBefore,
+    }));
+  }, [chain, draft.aircraftId, draft.fuel.foundL, draft.mhBefore]);
+  // Źródło stoi przy polu, żeby liczba nie udawała odczytu z przyrządu — i gaśnie, gdy
+  // pilot ją poprawi: przy jego własnym odczycie byłoby zwyczajnie nieprawdziwe.
+  const foundSrc = prefillSource(chain?.before, 'fuelL', draft.fuel.foundL);
+  const mhBeforeSrc = prefillSource(chain?.before, 'mh', draft.mhBefore);
 
   const warnings = useMemo(
     () => {
@@ -405,7 +417,6 @@ export function ManualFlightScreen({
             variant="solid"
             icon="next"
             disabledReason={blocker}
-            disabled={needsDual}
             onPress={() => setStepIndex(stepIndex + 1)}
           />
         )
@@ -448,8 +459,10 @@ export function ManualFlightScreen({
             </Card>
 
             {/* Dual — zwykle OPCJONALNY; przy samolocie z wymogiem załogi dwuosobowej
-                plakietka i baner mówią to samo, co na 02 (issue #58 pkt 4 — wpis
-                ręczny opisuje ten sam lot tym samym prawem). */}
+                plakietka nagłówka mówi o WŁAŚCIWOŚCI maszyny, a o blokadzie mówi
+                „DALEJ" (uwaga z urządzenia 2026-08-29). Baner „Wymagana załoga
+                dwuosobowa" USUNIĘTY: powód blokady ma jedno miejsce w całej
+                aplikacji — wnętrze przycisku, który nie działa. */}
             <Card
               title="Drugi pilot (Dual)"
               header="inline"
@@ -465,13 +478,6 @@ export function ManualFlightScreen({
                 value={draft.dualId}
                 onChange={(id) => patch({ dualId: draft.dualId === id ? null : id })}
               />
-              {needsDual && (
-                <Banner
-                  kind="warning"
-                  title="Wymagana załoga dwuosobowa"
-                  text={`${aircraft?.type ?? 'Ten samolot'} wymaga drugiego pilota — wybierz go, aby przejść dalej.`}
-                />
-              )}
             </Card>
           </>
         )}
@@ -707,6 +713,7 @@ export function ManualFlightScreen({
                   value={draft.mhBefore != null ? motoHours(draft.mhBefore, mhFormat) : ''}
                   placeholder="stan licznika"
                   unit="MH"
+                  {...(mhBeforeSrc != null ? { meta: mhBeforeSrc } : {})}
                   actionIcon="edit"
                   onPress={() => setSheet({ kind: 'mh', which: 'before' })}
                   accessibilityLabel="Motogodziny przed uruchomieniem — wpisz stan"

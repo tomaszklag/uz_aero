@@ -742,7 +742,19 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   layoutem wszystkiego poniżej. Przycisk z powodem NIE dostaje przygaszenia opacity
   (bursztyn pod 0.45 przestaje być ostrzeżeniem) — wyszarzenie niosą kolory. Reguła
   §6 pkt 3 zostaje: blokada niewidoczna z ekranu ma powód, widoczna — sam `disabled`.
-  W mockupach: `.btn-reason` wewnątrz `.btn-primary.disabled` (02A)
+  W mockupach: `.btn-reason` wewnątrz `.btn-primary.disabled` (02, 02A).
+  **WYJĄTEK „widoczna z ekranu" JEST WĄSKI I ZWĘŻONY 2026-08-29** (uwaga z urządzenia):
+  obejmuje wyłącznie stan czytelny z KONTROLKI NAD PRZYCISKIEM — arkusz korekty otwarty
+  na wartości pierwotnej („nic się jeszcze nie zmieniło"). NIE obejmuje stanu opisanego
+  gdzie indziej na ekranie: wymóg Duala mówił o sobie banerem pod listą wyboru
+  i to był błąd — pilot napotyka blokadę przy PRZYCISKU i tam szuka odpowiedzi,
+  a wszystkie pozostałe blokady formularzy odpowiadają mu właśnie tam. Jeden wyjątek
+  kosztuje więcej niż powtórzenie, którego miał oszczędzić. Sam wymóg mieszka odtąd
+  w `logic/dualRequirement.ts` — JEDNO zdanie czytane przez 02 (`disabledReason`)
+  i przez krok 1 wpisu ręcznego (gałąź `manualFlightStepBlocker`), bo rozjazd między
+  tymi dwoma ekranami był treścią zgłoszenia. Plakietka „wymagany · załoga 2-os."
+  przy nagłówku ZOSTAJE: mówi o WŁAŚCIWOŚCI maszyny w miejscu wyboru, także wtedy
+  gdy nic nie blokuje — to inna rzecz niż powód, dla którego nie da się iść dalej
 - **pusta flota na kroku 1 = warning na CAŁY ekran, nie formularz** (`design/02g`,
   stan `noFleet` w `PreflightAircraftScreen`): sekcja „Samolot" z szarą linijką
   „brak samolotów w pamięci urządzenia" czytała się jak usterka, a o ścianie pilot
@@ -822,10 +834,10 @@ Dziesięć uwag z urządzenia wokół wpisu ręcznego (15) i design systemu:
   każdy wpis); tydzień od PONIEDZIAŁKU, doby = północe UTC, dni przyszłe wygaszone,
   dni sąsiednich miesięcy nierysowane, strzałka „nowszy" gaśnie na bieżącym miesiącu.
   Nagłówek miesiąca w MIANOWNIKU (`monthYearUtc` w `@uzaero/format`)
-- **wymóg Duala działa TAKŻE we wpisie ręcznym** (`manualFlightNeedsDual`): An-2
-  z kartki podlega temu samemu prawu, co na preflightcie — bursztynowa plakietka
-  „wymagany · załoga 2-os.", baner pod listą, DALEJ `disabled` BEZ własnego tekstu
-  (powód widać w banerze — reguła z 02). **Wybór Duala PRZEŻYWA wybór i zmianę
+- **wymóg Duala działa TAKŻE we wpisie ręcznym**: An-2 z kartki podlega temu samemu
+  prawu, co na preflightcie — bursztynowa plakietka „wymagany · załoga 2-os." przy
+  nagłówku i powód W PRZYCISKU (`logic/dualRequirement.ts` — patrz sekcja niżej;
+  baner pod listą i `manualFlightNeedsDual` usunięte 2026-08-29). **Wybór Duala PRZEŻYWA wybór i zmianę
   samolotu** (druga tura z urządzenia: pilot wybrany przed samolotem znikał po
   tapnięciu w maszynę) — wymóg jest właściwością samolotu, ale wybrana OSOBA nie
   traci ważności przy zmianie maszyny; lista Duali nie zależy od samolotu, więc
@@ -992,10 +1004,9 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   albo pomiar — to wynika z godzin, kiedy samolot został uruchomiony i wyłączony."
   Szkic trzyma `{ foundL, addedL, afterL }`, a kolejność pól zastępuje godziny:
   zastane → dolane → (lot) → zostało.
-  - **ZASTANE wykrywa się z sesji poprzedzającej** (`readings-chain`) i podstawia RAZ,
-    tylko w pole jeszcze puste — wpisana wartość jest decyzją pilota i odpowiedź serwera
-    nie ma prawa jej nadpisać. Źródło zostaje widoczne przy polu, żeby liczba nie udawała
-    odczytu z paliwomierza; poprawka to jedno tapnięcie (przyrząd bije rachubę)
+  - **ZASTANE wykrywa się z sesji poprzedzającej** (`readings-chain`) — razem
+    z LICZNIKIEM, bo jedna odpowiedź niesie oba (ósma tura). Reguły podstawiania
+    i granica „czego nie podstawiamy": sekcja o łańcuchu niżej
   - **dolewka nie jest już pozycją listy**: jedna liczba, a zdarzenie `refuel` składa się
     przy zapisie minutę PRZED uruchomieniem. `RefuelEntrySheet` i `manualFuelChain.ts`
     SKASOWANE
@@ -1041,10 +1052,19 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
     a wpis ręczny pyta „ile było w czwartek" — między czwartkiem a dziś maszyna zdążyła
     polatać, zwykle z kimś innym. Dla wpisu bieżącego oba pytania mają tę samą odpowiedź
     i dlatego brak tej trasy tak długo nie przeszkadzał
-  - **WARTOŚCI NIE PODSTAWIAMY, pokazujemy ją ze ŹRÓDŁEM** („zostawione przed lotem ·
-    AKO · 16 SIE 09:00"). Podstawienie to dokładnie ta pomyłka, którą projekt popełnił
-    do 2026-08-16: wpis brał odczyt początkowy z cache, a „zgadnięte ogniwo psuło łańcuch
-    MH następnemu pilotowi". Liczba podstawiona wygląda jak odczytana z przyrządu
+  - **PODSTAWIAMY WYŁĄCZNIE ODCZYTY ZASTANE I ZAWSZE ZE ŹRÓDŁEM PRZY POLU**
+    (`logic/readingsPrefill.ts` z testami; paliwo — issue #62 siódma tura, licznik —
+    ósma, bo trasa niesie MH sąsiada tą samą odpowiedzią). To NIE jest pomyłka
+    z 2026-08-16 („wpis brał odczyt początkowy z cache, a zgadnięte ogniwo psuło łańcuch
+    MH następnemu pilotowi") pod trzema warunkami naraz: (1) źródłem jest REJESTR —
+    konkretny sąsiad tej maszyny w tej chwili, nie „ostatni znany stan"; (2) liczba
+    niesie ŹRÓDŁO przy polu („z poprzedniego lotu · AKO"), więc nie udaje odczytu
+    z przyrządu — a to było sednem tamtej pomyłki; (3) wpisujemy się TYLKO w pole puste
+    albo takie, w którym stoi nasza własna wcześniejsza podpowiedź (zmiana maszyny
+    wymienia ją, poprawka pilota jest nietykalna, a wtedy gaśnie też adnotacja).
+    **Odczytów PO locie nie podstawia nikt**: `after` jest odpowiedzią na pytanie, które
+    formularz zadaje, więc podstawiony zawsze by się „zgadzał" i kasował jedyne
+    ostrzeżenie, dla którego łańcuch powstał — zostaje wierszem odniesienia w arkuszu
   - **rozjazd jest OSTRZEŻENIEM, nigdy blokadą** — paliwomierz jest przyrządem fizycznym
     i to on ma rację; ktoś mógł też dolać poza aplikacją. Tolerancja 6 L (podziałka
     przyrządu), ostrzeżenie w OBIE strony

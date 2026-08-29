@@ -13,7 +13,6 @@
 import {
   emptyManualFlightDraft,
   manualFlightBlocker,
-  manualFlightNeedsDual,
   manualFlightStepBlocker,
   sortedFlights,
   toManualFlightInput,
@@ -23,6 +22,7 @@ import {
   manualFlightWarnings,
   type ManualFlightWarningContext,
 } from '../ui/screens/logic/manualFlightWarnings';
+import { DUAL_REQUIRED_REASON } from '../ui/screens/logic/dualRequirement';
 import { emptyPilotDay, utcDayStart, type PilotDay } from '../domain';
 
 const DAY = Date.UTC(2026, 7, 16); // 16 SIE 2026, północ UTC
@@ -180,16 +180,31 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
   });
 });
 
-describe('manualFlightNeedsDual — wymóg załogi dwuosobowej (issue #58 pkt 4)', () => {
-  it('samolot z wymogiem Duala blokuje krok 1 bez drugiego pilota', () => {
+describe('wymóg załogi dwuosobowej na kroku 1 (issue #58 pkt 4)', () => {
+  // Wymóg jedzie odtąd BRAMKĄ, nie osobną flagą obok niej (uwaga z urządzenia
+  // 2026-08-29): powód blokady stoi w przycisku, więc musi być zdaniem, nie boolem.
+  const limits = (dualRequired: boolean) => ({ capacityL: null, dualRequired });
+
+  it('samolot z wymogiem Duala blokuje krok 1 bez drugiego pilota — i mówi czym', () => {
     // An-2 z kartki podlega temu samemu prawu, co An-2 na preflightcie (§3.1).
-    expect(manualFlightNeedsDual({ dualRequired: true }, draft({ dualId: null }))).toBe(true);
-    expect(manualFlightNeedsDual({ dualRequired: true }, draft({ dualId: 'ako' }))).toBe(false);
+    expect(manualFlightStepBlocker('aircraft', draft({ dualId: null }), limits(true))).toBe(
+      DUAL_REQUIRED_REASON,
+    );
+    expect(
+      manualFlightStepBlocker('aircraft', draft({ dualId: 'ako' }), limits(true)),
+    ).toBeNull();
   });
 
-  it('bez wymogu — Dual pozostaje opcjonalny; przed wyborem samolotu bramka milczy', () => {
-    expect(manualFlightNeedsDual({ dualRequired: false }, draft({ dualId: null }))).toBe(false);
-    expect(manualFlightNeedsDual(null, draft({ dualId: null }))).toBe(false);
+  it('bez wymogu — Dual pozostaje opcjonalny', () => {
+    expect(manualFlightStepBlocker('aircraft', draft({ dualId: null }), limits(false))).toBeNull();
+    // Bez podanych granic bramka wymogu nie zgaduje: nie wie, jaka to maszyna.
+    expect(manualFlightStepBlocker('aircraft', draft({ dualId: null }))).toBeNull();
+  });
+
+  it('przed wyborem samolotu odpowiada o SAMOLOCIE — powody padają pojedynczo', () => {
+    expect(
+      manualFlightStepBlocker('aircraft', draft({ aircraftId: null, dualId: null }), limits(true)),
+    ).toBe('Wybierz samolot, którego dotyczy lot.');
   });
 });
 

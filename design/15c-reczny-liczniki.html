@@ -127,8 +127,6 @@
   .tag.green { color:var(--green); background:var(--green-muted); border-color:var(--green-border); }
   .tag.amber { color:var(--amber); background:var(--amber-muted); border-color:var(--amber-border); }
 
-  .pair { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-
   /* Dolewki — lista zdarzeń w czasie, tak jak loty na kroku 3. Stan „po" liczy się
      z odczytów, a nie z osobnego pola: `refuel` niesie spójną trójkę before/added/after
      i to arkusz dolewki ją domyka. */
@@ -283,7 +281,10 @@
         <div class="field">
           <span class="field-label">Przyrost licznika</span>
           <span class="field-input">
-            <span class="field-val">1:29</span>
+            <!-- 1 307:53 − 1 306:21 = 1:32, czyli DOKŁADNIE różnica pary z karty niżej.
+                 Liczba w makiecie ma się zgadzać z liczbami, z których wynika: makieta
+                 jest specyfikacją, a nie ilustracją. -->
+            <span class="field-val">1:32</span>
             <span class="tag amber">↑ powyżej normy</span>
           </span>
           <div class="field-sub">oczekiwane 1:21 · pasmo 1:14 – 1:27 · z cache · sync 16 SIE 08:14</div>
@@ -291,23 +292,32 @@
       </div>
 
       <!-- MOTOGODZINY PRZED I PO — do 2026-08-16 wpis pytał tylko o stan po locie,
-           a stan przed brał z przekazania. Łańcuch MH jest osią SAMOLOTU (§4.5), więc
-           zgadnięte ogniwo psuło rachunek następnemu pilotowi, nie temu, który wpisuje. -->
+           a stan przed brał z PRZEKAZANIA („ile jest teraz"), więc dla lotu sprzed
+           tygodnia zgadywał. Łańcuch MH jest osią SAMOLOTU (§4.5), a zgadnięte ogniwo
+           psuło rachunek następnemu pilotowi, nie temu, który wpisuje.
+
+           STAN PRZED URUCHOMIENIEM WYKRYWA SIĘ Z SĄSIADA (issue #62, ósma tura): trasa
+           `readings-chain` niesie licznik razem z paliwem, więc to ta sama odpowiedź
+           i ta sama reguła — źródło przy polu, poprawka jednym tapnięciem. Stan PO
+           locie zostaje pytaniem: `after` jest odpowiedzią na nie, a podstawiona
+           odpowiedź zawsze się „zgadza" i kasuje ostrzeżenie, dla którego łańcuch powstał.
+
+           Pola stoją PIONOWO, nie parą: w połówce kolumny nie mieści się źródło obok
+           wartości, a karta paliwa nad nimi układa swoje trzy tak samo. -->
       <div class="section">
         <div class="section-head"><span class="section-label">Motogodziny</span></div>
-        <div class="pair">
-          <div class="field">
-            <span class="field-label">Przed uruchomieniem</span>
-            <a href="15c-reczny-liczniki.html" class="field-input">
-              <span class="field-val">1 306:21</span>
-            </a>
-          </div>
-          <div class="field">
-            <span class="field-label">Po locie</span>
-            <a href="15c-reczny-liczniki.html" class="field-input">
-              <span class="field-val">1 307:53</span>
-            </a>
-          </div>
+        <div class="field">
+          <span class="field-label">Przed uruchomieniem</span>
+          <a href="15c-reczny-liczniki.html" class="field-input">
+            <span class="field-val">1 306:21</span>
+            <span class="field-src">z poprzedniego lotu · AKO</span>
+          </a>
+        </div>
+        <div class="field">
+          <span class="field-label">Po locie</span>
+          <a href="15c-reczny-liczniki.html" class="field-input">
+            <span class="field-val">1 307:53</span>
+          </a>
         </div>
         <!-- PODPISU „przyrost 1:32 · blok 1:36" TU NIE MA (issue #62, piąta tura):
              przyrost licznika NIE RÓWNA SIĘ czasowi blokowemu i nie ma prawa się równać
@@ -346,7 +356,7 @@
              z CUDZYM odczytem, czyli o czymś, czego pilot nie widzi nigdzie indziej.
              Reszta ostrzeżeń dotyczy jego własnych liczb, które ma na tym samym ekranie.
 
-             Źródłem jest `GET /aircraft/:id/fuel-chain` — odczyt przy zdaniu sesji
+             Źródłem jest `GET /aircraft/:id/readings-chain` — odczyt przy zdaniu sesji
              POPRZEDZAJĄCEJ i przy przejęciu NASTĘPNEJ. Przekazanie z `/reference` na to
              pytanie nie odpowiada: to jeden punkt („ile jest teraz"), a wpis ręczny pyta
              o czwartek, gdy maszyna zdążyła już polatać z kimś innym.
@@ -354,23 +364,30 @@
              NIE BLOKUJE i blokować nie może: paliwomierz jest przyrządem fizycznym
              i to on ma rację, a ktoś mógł dolać poza aplikacją. Bez sieci, przy pierwszym
              locie maszyny albo na starszym serwerze tego ostrzeżenia po prostu nie ma —
-             ekran milczy o ciągłości, zamiast zgadywać. -->
+             ekran milczy o ciągłości, zamiast zgadywać.
+
+             DLACZEGO OSTRZEŻENIA SĄ TU Z DRUGIEJ STRONY BIEGU (issue #62, ósma tura):
+             odczyty ZASTANE przyszły z sąsiada i mają to napisane przy polach, więc
+             z sąsiadem zgodzić się nie mogą — rozjazd „przed" pojawia się dopiero wtedy,
+             gdy pilot poprawi liczbę z przyrządu (i wtedy gaśnie adnotacja źródła).
+             Strona PO locie jest niepodstawiana z definicji i to ona niesie właściwe
+             pytanie: czy ten lot zostawił maszynę tam, gdzie zastał ją następny. -->
         <div class="warn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="warn-body">
-            <span class="warn-text"><b>Paliwo nie zgadza się z poprzednim lotem</b> — maszynę zdano ze 140 L, a wpis zaczyna od 112 L. Ktoś tankował poza aplikacją?</span>
-            <span class="warn-src">z rejestru · AKO · 16 SIE 09:00</span>
+            <span class="warn-text"><b>Paliwo nie zgadza się z następnym lotem</b> — następny pilot zastał 92 L, a wpis kończy na 76 L.</span>
+            <span class="warn-src">z rejestru · JKW · 16 SIE 15:00</span>
           </span>
         </div>
 
         <!-- MOTOGODZINY idą tym samym mechanizmem: łańcuch MH jest osią SAMOLOTU (§4.5),
-             więc odczyt sąsiada mówi wprost, od czego ten wpis powinien zaczynać.
+             więc odczyt sąsiada mówi wprost, na czym ten wpis powinien kończyć.
              Rozjazd znaczy albo literówkę, albo lot, który nie trafił do rejestru. -->
         <div class="warn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <span class="warn-body">
-            <span class="warn-text"><b>Licznik nie zgadza się z poprzednim lotem</b> — maszynę zdano na 1 306:50, a wpis zaczyna od 1 306:21.</span>
-            <span class="warn-src">z rejestru · AKO · 16 SIE 09:00</span>
+            <span class="warn-text"><b>Licznik nie zgadza się z następnym lotem</b> — następny pilot zastał 1 308:10, a wpis kończy na 1 307:53.</span>
+            <span class="warn-src">z rejestru · JKW · 16 SIE 15:00</span>
           </span>
         </div>
 
@@ -394,13 +411,12 @@
             <span class="warn-text"><b>Czasy zachodzą na Twoją SESJĘ 2</b> na SP-KLM (10:20 → 11:02). Jeden pilot nie leci dwiema maszynami naraz.</span>
           </span>
         </div>
-        <div class="warn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <span class="warn-body">
-            <span class="warn-text"><b>Licznik nie zgadza się z łańcuchem</b> — ostatnie przekazanie SP-AXA to 1 308:10, a Ty zaczynasz od 1 306:21.</span>
-            <span class="warn-src">z cache · sync 16 SIE 08:14</span>
-          </span>
-        </div>
+        <!-- OSTRZEŻENIA Z CACHE SĄ TU WYPARTE (issue #62, piąta tura) — dlatego nie ma
+             pod spodem wiersza „Licznik nie zgadza się z łańcuchem · z cache". Odkąd
+             trasa `readings-chain` odpowiedziała, jej ostrzeżenia wypierają liczone
+             z przekazania: `handover` mówi „ile jest TERAZ", a wpis dotyczy przeszłej
+             chwili — dwa zdania o tej samej liczbie, z których jedno jest mniej trafne,
+             to szum. Bez sieci wracają lokalne i wtedy niosą adnotację wieku cache'u. -->
       </div>
 
       <div class="spacer"></div>

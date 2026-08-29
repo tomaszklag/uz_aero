@@ -11,12 +11,15 @@
  *    wartość, to należy wypisać, z czego ona wynika";
  *  • **ostrzeżenia o rozjeździe** — i tylko ostrzeżenia.
  *
- * ══ DLACZEGO NIE PODSTAWIAMY WARTOŚCI ══
- * Bo to jest dokładnie ta pomyłka, którą projekt już raz popełnił: do 2026-08-16 wpis
- * ręczny BRAŁ odczyt początkowy z cache zamiast pytać pilota, a „zgadnięte ogniwo psuło
- * łańcuch MH następnemu pilotowi". Liczba podstawiona wygląda jak odczytana z przyrządu
- * i nikt jej potem nie odróżni. Pokazujemy więc, co wie rejestr, a wpisuje pilot —
- * ta sama reguła, przez którą godziny biegu silnika przestały startować od 10:00.
+ * ══ TEN MODUŁ POKAZUJE, NIE PODSTAWIA ══
+ * Podstawianiem zajmuje się `readingsPrefill` i WYŁĄCZNIE dla odczytów ZASTANYCH
+ * (paliwo i licznik przed uruchomieniem), pod trzema warunkami opisanymi tam. Wiersze
+ * stąd są czymś innym i dlatego zostają także przy polach wypełnionych: mówią, co wie
+ * rejestr, obok tego, co widzi pilot na przyrządzie.
+ *
+ * Odczytów PO locie nie podstawia nikt — `after` jest odpowiedzią na pytanie, które ten
+ * formularz zadaje, więc podstawiony zawsze by się „zgadzał" i kasował jedyne
+ * ostrzeżenie, dla którego łańcuch powstał.
  *
  * ══ NIC Z TEGO NIE BLOKUJE ══
  * Rozjazd z sąsiadem jest OSTRZEŻENIEM, nigdy blokadą: paliwomierz jest przyrządem
