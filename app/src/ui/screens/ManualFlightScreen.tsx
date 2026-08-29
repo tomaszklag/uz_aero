@@ -259,12 +259,12 @@ export function ManualFlightScreen({
 
   /**
    * KRĘGI EDYTOWANEGO LOTU (uwaga z urządzenia, 2026-08-29). Stan arkusza, nie szkicu:
-   * do szkicu trafiają dopiero razem z godzinami przy „ZAPISZ", tak jak one — inaczej
+   * do szkicu trafiają dopiero razem z godzinami przy „ZAPISZ", tak jak one - inaczej
    * anulowanie arkusza zostawiałoby w locie liczbę, której pilot nie zatwierdził.
    *
    * Ładuje się z lotu przy KAŻDYM otwarciu (efekt niżej), bo `FlightTimesSheet` nie
    * odmontowuje się między otwarciami: bez tego drugi lot dziedziczyłby licznik po
-   * pierwszym — dokładnie ten błąd, który `Stepper` ma u siebie rozwiązany leniwym
+   * pierwszym - dokładnie ten błąd, który `Stepper` ma u siebie rozwiązany leniwym
    * inicjalizatorem.
    */
   const [circuits, setCircuits] = useState(0);
@@ -1060,7 +1060,7 @@ export function ManualFlightScreen({
           : {})}
         onConfirm={(v) => {
           if (sheet?.kind !== 'flight') return;
-          /* Kręgi zapisujemy WYŁĄCZNIE stąd, gdzie arkusz je pokazywał — przy edycji
+          /* Kręgi zapisujemy WYŁĄCZNIE stąd, gdzie arkusz je pokazywał - przy edycji
              jednego końca pary licznika nie było, więc nie ma go czym nadpisać.
              Zero czyścimy do `undefined`: „bez kręgów" ma być brakiem pola. */
           const withCircuits =

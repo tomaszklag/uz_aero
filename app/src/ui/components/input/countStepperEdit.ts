@@ -1,5 +1,5 @@
 /**
- * UZ Aero — WPIS Z KLAWIATURY DLA LICZNIKA CAŁKOWITEGO (`Stepper`, uwaga z urządzenia
+ * UZ Aero - WPIS Z KLAWIATURY DLA LICZNIKA CAŁKOWITEGO (`Stepper`, uwaga z urządzenia
  * 2026-08-29: kręgi w locie ręcznym).
  *
  * Odpowiednik `timeStepperEdit` dla liczby sztuk. Osobny plik z tego samego powodu:
@@ -8,7 +8,7 @@
  * (historia przy `TimeStepper`).
  *
  * ══ DLACZEGO KLAWIATURA, SKORO SĄ ± ══
- * Bo ± jest dobre dla poprawki o jeden, a nie dla wpisania dwunastu kręgów — dokładnie
+ * Bo ± jest dobre dla poprawki o jeden, a nie dla wpisania dwunastu kręgów - dokładnie
  * ta sama reguła, przez którą godzinę da się WPISAĆ zamiast odklikiwać minutami.
  * Kontrolka i tak otworzy klawiaturę sama tylko nad pustą wartością
  * (`stepperOpensForTyping`), a licznik startuje od zera, nie od pustki.
@@ -17,7 +17,7 @@
 import type { StepperEdit } from './Stepper';
 
 /**
- * @param label do czytnika ekranu — co właściwie się liczy („Touch and go").
+ * @param label do czytnika ekranu - co właściwie się liczy („Touch and go").
  */
 export function countStepperEdit(label: string): StepperEdit {
   return {

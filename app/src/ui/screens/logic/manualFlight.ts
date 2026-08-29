@@ -31,17 +31,17 @@ import { dualRequirementBlocker } from './dualRequirement';
 export interface ManualFlightLegDraft {
   id: string;
   takeoff: EpochMillis;
-  /** OSTATNIE lądowanie lotu — przy kręgach zamyka całą serię, patrz `touchAndGo`. */
+  /** OSTATNIE lądowanie lotu - przy kręgach zamyka całą serię, patrz `touchAndGo`. */
   landing: EpochMillis;
   /**
-   * KRĘGI (touch and go) wykonane MIĘDZY tymi godzinami — pole OPCJONALNE i domyślnie
+   * KRĘGI (touch and go) wykonane MIĘDZY tymi godzinami - pole OPCJONALNE i domyślnie
    * puste (uwaga z urządzenia, 2026-08-29). Pozwala zapisać serię jedną kopertą czasu
    * zamiast wyliczać każdą parę godzin z osobna:
    *
    *   „częściej będzie tak, że podaję godzinę uruchomienia, startu, ostatniego
    *    lądowania i wyłączenia oraz podaję ilość lotów".
    *
-   * Nieobecne i `0` znaczą to samo — zwykły lot. Pełne uzasadnienie (i dlaczego NIE
+   * Nieobecne i `0` znaczą to samo - zwykły lot. Pełne uzasadnienie (i dlaczego NIE
    * dzielimy koperty na równe odcinki) przy `LandingPayload.touchAndGo` w domenie.
    */
   touchAndGo?: number;

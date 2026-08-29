@@ -71,7 +71,7 @@ export interface ClaimInput extends SessionContext {
 /** Jeden lot wpisu ręcznego - para start → lądowanie wewnątrz biegu silnika. */
 export interface ManualFlightLeg {
   takeoff: EpochMillis;
-  /** OSTATNIE lądowanie lotu — przy kręgach zamyka całą serię, patrz `touchAndGo`. */
+  /** OSTATNIE lądowanie lotu - przy kręgach zamyka całą serię, patrz `touchAndGo`. */
   landing: EpochMillis;
   /**
    * Kręgi (touch and go) wykonane MIĘDZY tymi godzinami; pominięte = zwykły lot.
@@ -416,7 +416,7 @@ export class SessionCommands {
         {
           type: 'landing',
           // Kręgi jadą na LĄDOWANIU, bo to ono zamyka serię i to ono niesie liczbę
-          // przyziemień — start otwierający lot jest jeden i o kręgach nie wie.
+          // przyziemień - start otwierający lot jest jeden i o kręgach nie wie.
           // Zero nie wchodzi do payloadu: „bez kręgów" ma być brakiem pola, nie zerem
           // (serwer odrzuca `touchAndGo: 0` właśnie po to, żeby nie było dwóch zapisów
           // jednego faktu).

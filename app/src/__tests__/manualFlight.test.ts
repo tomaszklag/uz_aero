@@ -558,12 +558,12 @@ describe('manualFlightBlocker - bramka zapisu widzi wszystkie kroki', () => {
 });
 
 /**
- * KRĘGI (TOUCH AND GO) — jedna koperta czasu zamiast pięciu par godzin (uwaga
+ * KRĘGI (TOUCH AND GO) - jedna koperta czasu zamiast pięciu par godzin (uwaga
  * z urządzenia, 2026-08-29).
  *
  * „Częściej będzie tak, że podaję godzinę uruchomienia, startu, ostatniego lądowania
  * i wyłączenia oraz podaję ilość lotów." Szkic niesie liczbę przy locie, a arytmetykę
- * (ile z tego lądowań i startów) robi projekcja — tu pilnujemy DROGI tej liczby.
+ * (ile z tego lądowań i startów) robi projekcja - tu pilnujemy DROGI tej liczby.
  */
 describe('touch and go we wpisie ręcznym', () => {
   const ids = () => ({ sessionUuid: 'sess-1', picId: 'tmk' });
@@ -578,7 +578,7 @@ describe('touch and go we wpisie ręcznym', () => {
     expect(input!.flights).toEqual([{ takeoff: t(10, 0), landing: t(10, 40), touchAndGo: 4 }]);
   });
 
-  it('BEZ kręgów pola nie ma wcale — „zero" i „brak" to ten sam fakt', () => {
+  it('BEZ kręgów pola nie ma wcale - „zero" i „brak" to ten sam fakt', () => {
     /* Dwa zapisy jednego faktu rozjeżdżają się przy pierwszej korekcie, więc zero
        nie wchodzi do payloadu (serwer odrzuca `touchAndGo: 0` z tego samego powodu). */
     expect(toManualFlightInput(withCircuits(), ids())!.flights[0]).not.toHaveProperty(
@@ -589,7 +589,7 @@ describe('touch and go we wpisie ręcznym', () => {
     );
   });
 
-  it('kręgi NIE zmieniają bramek kroku — to nadal jeden lot w biegu silnika', () => {
+  it('kręgi NIE zmieniają bramek kroku - to nadal jeden lot w biegu silnika', () => {
     // Koperta czasu jest jedna i mieści się w biegu, więc reguły kolejności i granic
     // widzą dokładnie to, co przy zwykłym locie.
     expect(manualFlightStepBlocker('times', withCircuits(4))).toBeNull();

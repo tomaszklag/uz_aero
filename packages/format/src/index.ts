@@ -478,7 +478,7 @@ export function eventsCount(n: number): string {
 }
 
 /**
- * „1 lądowanie" / „2 lądowania" / „5 lądowań" (uwaga z urządzenia, 2026-08-29 — kręgi
+ * „1 lądowanie" / „2 lądowania" / „5 lądowań" (uwaga z urządzenia, 2026-08-29 - kręgi
  * we wpisie ręcznym). Mieszka tu, nie w helperze ekranu, bo tę samą liczbę odmienia
  * arkusz lotu (podpis „razem N w tym locie") i oś sesji (nazwa wiersza lądowania),
  * a dwie odmiany tego samego rzeczownika rozjechałyby się przy pierwszej poprawce.

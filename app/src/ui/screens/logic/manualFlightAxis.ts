@@ -246,7 +246,7 @@ export function buildManualFlightAxis(
     }
     /* KRĘGI WIDAĆ PRZY LĄDOWANIU, bo to ono je zamyka i to ono niesie licznik
        (uwaga z urządzenia, 2026-08-29). Nazwa wiersza mówi wprost, że przyziemień
-       było więcej niż jedno — inaczej pilot wpisałby liczbę w arkuszu i nie
+       było więcej niż jedno - inaczej pilot wpisałby liczbę w arkuszu i nie
        zobaczyłby jej nigdzie na osi, czyli nie miałby jak sprawdzić, co zapisuje. */
     const circuits = flight.touchAndGo ?? 0;
     middle.push({

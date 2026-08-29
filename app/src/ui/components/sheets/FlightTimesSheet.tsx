@@ -88,7 +88,7 @@ export interface FlightTimesSheetProps {
   onConfirm: (values: Record<string, number>) => void;
   onCancel: () => void;
   /**
-   * LICZNIK KRĘGÓW (touch and go) — sekcja istnieje WYŁĄCZNIE wtedy, gdy arkusz opisuje
+   * LICZNIK KRĘGÓW (touch and go) - sekcja istnieje WYŁĄCZNIE wtedy, gdy arkusz opisuje
    * CAŁY lot, czyli parę start + ostatnie lądowanie (uwaga z urządzenia, 2026-08-29).
    *
    * Nie ma jej przy biegu silnika (kręgi są własnością lotu, nie sesji) ani przy edycji
@@ -228,13 +228,13 @@ export function FlightTimesSheet({
       ))}
 
       {/* KRĘGI: LICZBA ZAMIAST PIĘCIU PAR GODZIN (uwaga z urządzenia, 2026-08-29).
-          Pole jest opcjonalne i domyślnie zerowe — pojedynczy lot to zwykła para
+          Pole jest opcjonalne i domyślnie zerowe - pojedynczy lot to zwykła para
           godzin i o kręgi nikt go nie pyta.
 
           Podpis pod kontrolką mówi, ILE LĄDOWAŃ z tego wychodzi, bo to jest liczba
           trafiająca do rejestru, a pilot podaje inną (kręgi). Zamiana „4" na „5"
           w głowie jest dokładnie tym rodzajem rachunku, którego formularz ma
-          oszczędzić — i tym, na którym łatwo się pomylić o jeden. */}
+          oszczędzić - i tym, na którym łatwo się pomylić o jeden. */}
       {circuits != null && (
         <Field
           label="Touch and go"
