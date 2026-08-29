@@ -13,6 +13,7 @@
 import {
   emptyManualFlightDraft,
   manualFlightBlocker,
+  manualFlightDirty,
   manualFlightStepBlocker,
   sortedFlights,
   toManualFlightInput,
@@ -464,6 +465,67 @@ describe('jumpDayWithoutDrop — skoki z pustym logiem zrzutów', () => {
 
   it('milczy, dopóki rodzaj operacji nie jest wybrany', () => {
     expect(jumpDayWithoutDrop(draft({ operation: null, drops: [] }))).toBe(false);
+  });
+});
+
+/**
+ * BRAMKA „WSTECZ" (uwaga z urządzenia, 2026-08-29). Pusty formularz wychodzi bez
+ * pytania — arkusz „na pewno rezygnujesz?" nad niczym pytałby o zgodę na nic (issue #55).
+ */
+describe('manualFlightDirty — czy jest co stracić', () => {
+  const DAY = utcDayStart(t(16));
+
+  it('świeży szkic jest czysty', () => {
+    expect(manualFlightDirty(emptyManualFlightDraft(t(16)), DAY)).toBe(false);
+  });
+
+  it('każdy wybór pilota brudzi szkic', () => {
+    const fresh = emptyManualFlightDraft(t(16));
+    expect(manualFlightDirty({ ...fresh, aircraftId: 'sp-axa' }, DAY)).toBe(true);
+    expect(manualFlightDirty({ ...fresh, dualId: 'ako' }, DAY)).toBe(true);
+    expect(manualFlightDirty({ ...fresh, operation: 'skoki' }, DAY)).toBe(true);
+    expect(manualFlightDirty({ ...fresh, notes: 'z kartki' }, DAY)).toBe(true);
+    expect(manualFlightDirty({ ...fresh, engineStart: t(9, 42) }, DAY)).toBe(true);
+    expect(manualFlightDirty({ ...fresh, mhBefore: 1306.35 }, DAY)).toBe(true);
+  });
+
+  it('ZMIANA DATY też brudzi — to pierwsze pytanie kroku 1, nie tło', () => {
+    const fresh = emptyManualFlightDraft(t(16));
+    expect(manualFlightDirty({ ...fresh, day: DAY - 24 * 60 * 60_000 }, DAY)).toBe(true);
+  });
+
+  it('widzi pola zagnieżdżone i tablice, nie tylko skalary', () => {
+    const fresh = emptyManualFlightDraft(t(16));
+    expect(manualFlightDirty({ ...fresh, fuel: { ...fresh.fuel, addedL: 48 } }, DAY)).toBe(true);
+    expect(
+      manualFlightDirty(
+        { ...fresh, flights: [{ id: 'f1', takeoff: t(9, 48), landing: t(10, 14) }] },
+        DAY,
+      ),
+    ).toBe(true);
+  });
+
+  /**
+   * Rachunek liczy się z KLUCZY pustego szkicu, więc nowe pole wchodzi do niego samo.
+   * Ten test przybija właśnie tę własność: gdyby ktoś przepisał funkcję na ręczną
+   * koniunkcję, pierwsze dopisane pole przestałoby brudzić i nikt by tego nie zauważył
+   * (bramka nawigacji nie ma jak krzyknąć).
+   */
+  it('rachunek obejmuje KAŻDE pole szkicu — także dopisane w przyszłości', () => {
+    const fresh = emptyManualFlightDraft(t(16));
+    const dirtyValue = (v: unknown): unknown => {
+      if (Array.isArray(v)) return ['cokolwiek'];
+      if (v !== null && typeof v === 'object') {
+        const [first] = Object.keys(v as object);
+        return { ...(v as object), [first!]: 999 };
+      }
+      return typeof v === 'number' ? (v as number) + 1 : 'cokolwiek';
+    };
+
+    for (const key of Object.keys(fresh) as (keyof ManualFlightDraft)[]) {
+      const touched = { ...fresh, [key]: dirtyValue(fresh[key]) } as ManualFlightDraft;
+      expect([key, manualFlightDirty(touched, DAY)]).toEqual([key, true]);
+    }
   });
 });
 

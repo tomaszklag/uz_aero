@@ -772,8 +772,9 @@ Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ek
   przycisk awaryjny pyta „co serwer wie teraz", a sama wysyłka odpowiadała na pół
   pytania. Stempel wieku danych w „O aplikacji" odświeża się od razu po przebiegu
 - **„wstecz" z kroku 1 przy niepustym szkicu pyta o rezygnację** (`design/02h`,
-  `AbandonPreflightSheet` + `usePreventRemove` — ta sama mechanika co blokada kokpitu
-  04D). Potwierdzenie CZYŚCI szkic (`draft.reset()`): następne wejście zaczyna od nowa,
+  `AbandonDraftSheet` + `usePreventRemove` — ta sama mechanika co blokada kokpitu
+  04D; od 2026-08-29 ten sam arkusz obsługuje wpis ręczny, patrz sekcja niżej).
+  Potwierdzenie CZYŚCI szkic (`draft.reset()`): następne wejście zaczyna od nowa,
   bo porzucony formularz wracał z wyborami sprzed godziny i czytał się jak podpowiedź.
   Pusty formularz wychodzi bez pytania — arkusz nad niczym pytałby o zgodę na nic
   (`dirty()` w `preflightDraft.ts`, z testami). Bramka gaśnie po ukończeniu flow
@@ -949,13 +950,36 @@ poprawka dosięgła ośmiu arkuszy naraz.
     Kontekst wchodzi do porównań (kolejność, granice) tylko wtedy, gdy MA wartość
   - `SheetSurface` jest JEDYNYM `Modal`-em w aplikacji, więc ta zmiana obejmuje
     wszystkie osiem arkuszy naraz
-- **arkusz czasu OTWIERA SIĘ Z KLAWIATURĄ** na pierwszej kontrolce (trzecia tura):
-  jest formularzem o jednym pytaniu, więc pilot i tak tapie w wartość — bez tego każdy
-  wpis kosztował tapnięcie więcej. `Stepper.autoEdit` startuje w trybie wpisu (pole musi
-  ISTNIEĆ, żeby callback ref miał się na czym zawiesić), a klawiaturę podnosi drabinka
-  `useSheetInputFocus` i nic innego. `autoFocus` działa TYLKO poza `autoEdit`: przy
-  `autoEdit` pole montuje się razem z arkuszem, czyli zanim okno modala istnieje —
-  to jest dokładnie pierwszy z trzech błędów opisanych w `hooks/keyboardFocus.ts`
+- **arkusz czasu OTWIERA SIĘ Z KLAWIATURĄ, ale TYLKO NAD PUSTĄ GODZINĄ** (trzecia tura;
+  zawężone 2026-08-29 uwagą z urządzenia). Pierwotny rachunek — „formularz o jednym
+  pytaniu, więc pilot i tak tapie w wartość" — jest prawdziwy dla arkusza stawiającego
+  godzinę OD ZERA (15F) i fałszywy dla wszystkich pozostałych: „jak mam «dodaj lot»,
+  gdzie mam już wpisane default wartości, to nie otwieraj klawiatury — tutaj raczej będę
+  korzystał z przycisków ±1 min. Tak samo jak otwieram popup, aby wyedytować godzinę".
+  **Reguła: klawiatura wchodzi sama wyłącznie tam, gdzie nie ma czego przesuwać** —
+  przy pustej wartości ± są wygaszone (brak bazy dla kroku), więc wpis jest jedyną
+  drogą; przy wpisanej zasłaniałaby drugą kontrolkę pary i wiersz „Blok" pod nią.
+  Decyzja siedzi w KONTROLCE (`stepperOpensForTyping`, z testami), nie w arkuszu, bo
+  jest własnością `autoEdit` jako takiego — każdy przyszły arkusz dostaje ją za darmo.
+  `Stepper.autoEdit` startuje wtedy w trybie wpisu (pole musi ISTNIEĆ, żeby callback ref
+  miał się na czym zawiesić), a klawiaturę podnosi drabinka `useSheetInputFocus` i nic
+  innego. `autoFocus` działa TYLKO poza `autoEdit`: przy `autoEdit` pole montuje się
+  razem z arkuszem, czyli zanim okno modala istnieje — to jest dokładnie pierwszy
+  z trzech błędów opisanych w `hooks/keyboardFocus.ts`
+- **„WSTECZ" W STEPPERZE COFA O KROK, A Z PIERWSZEGO PYTA O REZYGNACJĘ** (uwaga
+  z urządzenia, 2026-08-29). Stepper wpisu ręcznego jest JEDNYM ekranem nawigacji, a krok
+  to jego stan — więc strzałka w nagłówku cofała o krok, a przycisk sprzętowy i gest
+  krawędziowy zdejmowały ze stosu CAŁY wpis („jak cofam z definicji zadania, to jest
+  cofnięcie do ekranu startu"). Dwa „wstecz" na jednym ekranie mają robić to samo:
+  łapie je `usePreventRemove` (ta sama mechanika, co blokada kokpitu 04D i rezygnacja
+  z preflightu). Z kroku 1 przy NIEPUSTYM szkicu wchodzi arkusz rezygnacji — pusty
+  wychodzi bez pytania (`manualFlightDirty`, liczone z KLUCZY pustego szkicu, więc nowe
+  pole wchodzi do rachunku samo; ręczna koniunkcja przestałaby być prawdziwa przy
+  pierwszym dopisanym polu i nikt by tego nie zauważył). Arkusz jest JEDEN dla obu dróg
+  do lotu — `AbandonDraftSheet` (dawny `AbandonPreflightSheet`): wspólne zostaje zdanie
+  „w rejestrze nie ma jeszcze nic, formularz zacznie od nowa", a parametrami idą tytuł,
+  wiersze podsumowania i NAZWA przycisku, który dopiero zapisuje („ROZPOCZNIJ LOT"
+  vs „ZAPISZ LOT")
 - **arkusz ma tyle kontrolek, ile pytań** (trzecia tura): tapnięcie w START na osi
   otwierało parę start + lądowanie, czyli dawało kontrolkę, o którą nikt nie prosił —
   „skoro klikam w konkretną pozycję, to wiem, że tylko to chcę edytować". Cel osi niesie

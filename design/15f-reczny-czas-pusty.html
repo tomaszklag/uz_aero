@@ -216,7 +216,13 @@
           <div class="field-label">Uruchomienie (UTC)</div>
           <div class="time-stepper">
             <!-- Przyciski ± są WYGASZONE, dopóki nie ma czego przesuwać. Wpisanie
-                 z klawiatury (tapnięcie w wartość) zostaje jedyną drogą i o to chodzi. -->
+                 z klawiatury (tapnięcie w wartość) zostaje jedyną drogą i o to chodzi.
+
+                 I DLATEGO TO JEST JEDYNY ARKUSZ CZASU, KTÓRY OTWIERA SIĘ Z KLAWIATURĄ
+                 (`stepperOpensForTyping`, uwaga z urządzenia 2026-08-29): warunkiem
+                 jest PUSTA wartość. Nad godziną już wpisaną — przy „DODAJ LOT"
+                 i przy korekcie (15D) — klawiatura nie wchodzi sama, bo tam pilot
+                 poprawia o minutę przyciskiem, a ona zasłania pół arkusza. -->
             <button class="step-btn" disabled>−1 min</button>
             <span class="time-val empty">--:--</span>
             <button class="step-btn" disabled>+1 min</button>

@@ -23,8 +23,14 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import {
+  CommonActions,
+  usePreventRemove,
+  type NavigationAction,
+} from '@react-navigation/native';
 
 import {
+  AbandonDraftSheet,
   ActionButton,
   AirfieldSheet,
   AppText,
@@ -82,6 +88,7 @@ import {
 } from '../../domain';
 import {
   emptyManualFlightDraft,
+  manualFlightDirty,
   manualFlightStepBlocker,
   fuelAtStartL,
   fuelUsedL,
@@ -136,7 +143,12 @@ const MIN = 60_000;
 export function ManualFlightScreen({
   navigation,
 }: {
-  navigation: { navigate: (screen: string) => void; goBack: () => void };
+  // `dispatch` wykonuje akcję nawigacji zatrzymaną przez bramkę rezygnacji — jak na 02.
+  navigation: {
+    navigate: (screen: string) => void;
+    goBack: () => void;
+    dispatch: (action: NavigationAction) => void;
+  };
 }) {
   const { theme } = useTheme();
   const queries = useSessionStore((s) => s.queries);
@@ -150,9 +162,43 @@ export function ManualFlightScreen({
   const [draft, setDraft] = useState<ManualFlightDraft>(() =>
     emptyManualFlightDraft(Date.now()),
   );
+  /** Doba, z jaką szkic powstał — punkt odniesienia dla `manualFlightDirty`. */
+  const pristineDay = useRef(draft.day).current;
   const patch = useCallback((over: Partial<ManualFlightDraft>) => {
     setDraft((d) => ({ ...d, ...over }));
   }, []);
+
+  /* ── bramka „wstecz": krok wstecz, a z pierwszego kroku — rezygnacja ───────────
+   *
+   * Zgłoszenie z urządzenia (2026-08-29): „jak cofam z definicji zadania, to jest
+   * cofnięcie do ekranu startu. Powinno cofać się do wyboru dnia i pilota".
+   *
+   * Cały stepper jest JEDNYM ekranem nawigacji, a krok to jego stan — więc przycisk
+   * sprzętowy i gest krawędziowy zdejmowały ze stosu CAŁY wpis, nie krok. Strzałka
+   * w nagłówku robiła to dobrze od początku i właśnie ta różnica jest usterką: dwa
+   * „wstecz" na jednym ekranie mają robić to samo.
+   *
+   * Ta sama mechanika, co przy rezygnacji z preflightu (issue #55) i przy blokadzie
+   * kokpitu (04D) — `usePreventRemove`, bo obejmuje i przycisk, i gest.
+   */
+  const [leaveAction, setLeaveAction] = useState<NavigationAction | null>(null);
+  const [leaving, setLeaving] = useState(false);
+  const dirty = manualFlightDirty(draft, pristineDay);
+
+  usePreventRemove(!leaving && (stepIndex > 0 || dirty), ({ data }) => {
+    // Z dalszego kroku „wstecz" znaczy KROK WSTECZ — akcję nawigacji porzucamy.
+    if (stepIndex > 0) {
+      setStepIndex((i) => i - 1);
+      return;
+    }
+    setLeaveAction(data.action);
+  });
+
+  // Zatrzymana akcja jedzie dopiero PO re-renderze z opuszczoną bramką: dispatch w tym
+  // samym tiku trafiłby w listener pamiętający jeszcze bramkę podniesioną (issue #55).
+  useEffect(() => {
+    if (leaving && leaveAction != null) navigation.dispatch(leaveAction);
+  }, [leaving, leaveAction, navigation]);
 
   // ── dane referencyjne: flota i piloci (do wyboru Duala) ────────────────────
   const [fleet, setFleet] = useState<ReferenceAircraft[]>([]);
@@ -385,8 +431,12 @@ export function ManualFlightScreen({
           size="md"
           {...(subtitle != null ? { subtitle } : {})}
           step={`${stepIndex + 1} / ${STEPS.length}`}
+          /* Strzałka robi DOKŁADNIE to samo, co przycisk sprzętowy — łącznie z pytaniem
+             o rezygnację nad niepustym formularzem. Dwa „wstecz" na jednym ekranie,
+             które zachowują się różnie, to była pierwsza połowa zgłoszenia. */
           onBack={() => {
             if (stepIndex > 0) setStepIndex(stepIndex - 1);
+            else if (dirty) setLeaveAction(CommonActions.navigate('MyDay'));
             else navigation.navigate('MyDay');
           }}
           backLabel={stepIndex === 0 ? 'Mój dzień' : 'Wróć'}
@@ -1103,6 +1153,35 @@ export function ManualFlightScreen({
           close();
         }}
         onCancel={close}
+      />
+
+      {/* Rezygnacja z wpisu — ten sam arkusz, co przy porzuceniu preflightu
+          (`design/02h`). Wiersze odniesienia tylko dla FAKTYCZNYCH wyborów: kreska
+          niczego nie przypomina. Data stoi w nich zawsze, bo jest pierwszym pytaniem
+          kroku 1 i pilot mógł ją zmienić jako jedyną rzecz. */}
+      <AbandonDraftSheet
+        visible={leaveAction != null && !leaving}
+        title="ZREZYGNOWAĆ Z WPISU RĘCZNEGO?"
+        saveLabel="ZAPISZ LOT"
+        rows={[
+          { label: 'Data lotu', value: dateUtcDayMonth(draft.day) },
+          ...(aircraft != null
+            ? [{ label: 'Wybrany samolot', value: `${aircraft.reg} · ${aircraft.type}` }]
+            : []),
+          ...(draft.operation != null
+            ? [{ label: 'Zadanie', value: operationLabel(draft.operation) }]
+            : []),
+          ...(draft.flights.length > 0
+            ? [
+                {
+                  label: 'Wpisane loty',
+                  value: draft.flights.length === 1 ? '1 lot' : `${draft.flights.length} loty`,
+                },
+              ]
+            : []),
+        ]}
+        onStay={() => setLeaveAction(null)}
+        onAbandon={() => setLeaving(true)}
       />
     </Screen>
   );

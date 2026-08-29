@@ -233,13 +233,23 @@
              start po lądowaniu.
 
              PARA W CAŁOŚCI zostaje tylko tam, gdzie powstaje w całości: przy „DODAJ
-             LOT" i przy wejściu z karty „Bieg silnika". Tam obie kontrolki są, a
-             klawiatura ląduje na pierwszej. -->
-        <!-- ARKUSZ OTWIERA SIĘ Z KLAWIATURĄ na tej kontrolce (issue #62, trzecia tura):
-             arkusz czasu jest formularzem o jednym pytaniu, więc pilot i tak tapie
-             w wartość, żeby wbić godzinę — bez tego każdy wpis kosztował tapnięcie
-             więcej. Przy parze („DODAJ LOT") klawiatura ląduje na PIERWSZEJ kontrolce.
-             Podnosi ją drabinka prób z `useSheetInputFocus` i nic innego: trzy
+             LOT" i przy wejściu z karty „Bieg silnika". -->
+        <!-- TU KLAWIATURY NIE MA (uwaga z urządzenia, 2026-08-29):
+
+               „jak mam «dodaj lot», gdzie mam już wpisane default wartości, to nie
+                otwieraj tutaj klawiatury — tutaj raczej będę korzystał z przycisków,
+                którymi manipuluję godziną +/- 1 min. Tak samo jak otwieram popup,
+                aby wyedytować godzinę."
+
+             Trzecia tura issue #62 kazała arkuszowi czasu otwierać się Z KLAWIATURĄ.
+             To była prawda o arkuszu stawiającym godzinę OD ZERA (wariant 15F) —
+             i nieprawda o TYM: godzina już tu stoi, więc pilot poprawia ją o minutę
+             przyciskiem, a klawiatura zasłaniałaby drugą kontrolkę pary i wiersz „Blok".
+
+             Reguła jest jedna i mieszka w KONTROLCE (`stepperOpensForTyping`):
+             klawiatura wchodzi sama WYŁĄCZNIE nad pustą wartością — tam ± są wygaszone
+             (nie ma bazy, od której liczyć krok), więc wpis z klawiatury jest jedyną
+             drogą. Podnosi ją drabinka prób z `useSheetInputFocus` i nic innego: trzy
              podejścia już zawiodły, historia w `hooks/keyboardFocus.ts`. -->
         <!-- ETYKIETA NIE POWTARZA TYTUŁU (zgłoszenie z urządzenia, issue #62 szósta
              tura: „mam 2× labelkę «Uruchomienie»"). Przy JEDNEJ kontrolce nazwę niesie
@@ -289,7 +299,7 @@
     <span class="vp-badge blue">15D</span>
     <span class="vp-body">
       <span class="vp-name">Z wartością — poprawka</span>
-      <span class="vp-when">Godzina już jest: wpisana wcześniej albo wyprowadzona z biegu silnika przy nowym locie (issue #62 pkt 8). Krok ±1 min, tapnięcie w wartość otwiera klawiaturę numeryczną, podpis mówi o ile przesunięto, pod spodem czas lokalny. Kosz w linii tytułu usuwa lot, gdy pilot dodał go przez pomyłkę.</span>
+      <span class="vp-when">Godzina już jest: wpisana wcześniej albo wyprowadzona z biegu silnika przy nowym locie (issue #62 pkt 8). Klawiatura NIE wchodzi sama — nad wpisaną godziną pilot poprawia o minutę przyciskiem ±, a wpis z klawiatury zostaje pod tapnięciem w wartość (2026-08-29). Podpis mówi, o ile przesunięto, pod spodem czas lokalny. Kosz w linii tytułu usuwa lot, gdy pilot dodał go przez pomyłkę.</span>
     </span>
     <span class="vp-tag">ten ekran</span>
   </a>

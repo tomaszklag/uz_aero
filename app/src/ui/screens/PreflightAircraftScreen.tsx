@@ -34,7 +34,7 @@
  *    Ekran co kilka sekund ponawia odczyt lokalnej bazy, więc gdy pętla synca (60 s)
  *    dowiezie `GET /reference`, formularz wraca bez udziału pilota;
  *  • **„wstecz" przy niepustym formularzu pyta o rezygnację** (`design/02h`,
- *    `AbandonPreflightSheet`): ta sama mechanika co blokada kokpitu (04d) —
+ *    `AbandonDraftSheet`): ta sama mechanika co blokada kokpitu (04d) —
  *    `usePreventRemove` łapie przycisk sprzętowy i gest. Potwierdzenie CZYŚCI szkic,
  *    więc następne wejście zaczyna od nowa; wcześniej porzucony formularz wracał
  *    z wyborami sprzed godziny. Pusty formularz wychodzi bez pytania — arkusz nad
@@ -48,7 +48,7 @@ import { StyleSheet, View } from 'react-native';
 import { usePreventRemove, type NavigationAction } from '@react-navigation/native';
 
 import {
-  AbandonPreflightSheet,
+  AbandonDraftSheet,
   ActionButton,
   AppText,
   Card,
@@ -403,14 +403,25 @@ export function PreflightAircraftScreen({
           zdążył zrobić — a to jest właśnie treść ekranu 04b. Cała decyzja przeniosła się
           tam razem z ostrzeżeniem o niewysłanych danych poprzednika. */}
 
-      <AbandonPreflightSheet
+      {/* Wiersze odniesienia tylko dla FAKTYCZNYCH wyborów — kreska niczego nie
+          przypomina (ta sama reguła, co godzina przejęcia w `LeaveCockpitSheet`). */}
+      <AbandonDraftSheet
         visible={leaveAction != null && !leaving}
-        aircraftLabel={selected != null ? `${selected.reg} · ${selected.type}` : null}
-        dualName={
-          draft.dualId != null
-            ? (pilots.find((p) => p.id === draft.dualId)?.name ?? draft.dualId)
-            : null
-        }
+        title="ZREZYGNOWAĆ Z NOWEGO LOTU?"
+        saveLabel="ROZPOCZNIJ LOT"
+        rows={[
+          ...(selected != null
+            ? [{ label: 'Wybrany samolot', value: `${selected.reg} · ${selected.type}` }]
+            : []),
+          ...(draft.dualId != null
+            ? [
+                {
+                  label: 'Drugi pilot',
+                  value: pilots.find((p) => p.id === draft.dualId)?.name ?? draft.dualId,
+                },
+              ]
+            : []),
+        ]}
         onStay={stayInForm}
         onAbandon={confirmAbandon}
       />

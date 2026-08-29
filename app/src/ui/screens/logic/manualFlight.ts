@@ -145,6 +145,37 @@ export function emptyManualFlightDraft(now: EpochMillis): ManualFlightDraft {
   };
 }
 
+/**
+ * Czy w szkicu jest COKOLWIEK do stracenia (uwaga z urządzenia, 2026-08-29).
+ *
+ * Odpowiednik `preflightDraft.dirty()` i istnieje z tego samego powodu: „wstecz" nad
+ * niepustym formularzem pyta o rezygnację, nad pustym wychodzi bez słowa — arkusz
+ * „na pewno rezygnujesz?" nad formularzem, w którym nic nie ma, pytałby o zgodę na nic
+ * (issue #55).
+ *
+ * ══ POROWNANIE JEST WYLICZONE Z PUSTEGO SZKICU, NIE WYPISANE Z PAMIĘCI ══
+ * Lista pól `ManualFlightDraft` ma ich osiemnaście i rośnie z każdą turą zgłoszeń —
+ * ręczna koniunkcja przestałaby być prawdziwa przy pierwszym nowym polu i nikt by tego
+ * nie zauważył (bramka nawigacji nie ma jak krzyknąć). Iterujemy więc po KLUCZACH
+ * pustego szkicu: nowe pole wchodzi do rachunku samo, w dniu, w którym powstaje.
+ *
+ * @param pristineDay doba, z jaką szkic powstał — bez niej zmiana DATY lotu wyglądałaby
+ *   jak stan pusty, a jest pierwszym pytaniem kroku 1 i pełnoprawnym wyborem pilota.
+ */
+export function manualFlightDirty(draft: ManualFlightDraft, pristineDay: EpochMillis): boolean {
+  const pristine = emptyManualFlightDraft(pristineDay);
+  return (Object.keys(pristine) as (keyof ManualFlightDraft)[]).some((key) => {
+    const mine = draft[key];
+    const empty = pristine[key];
+    // Puste tablice szkicu (loty, zrzuty) — każdy element jest wyborem pilota.
+    if (Array.isArray(mine)) return mine.length > 0;
+    // Zagnieżdżone liczby (paliwo) — kształt jest stały, więc porównanie tekstowe
+    // jest tu bezpieczne i nie wymaga własnego deep-equala.
+    if (mine !== null && typeof mine === 'object') return JSON.stringify(mine) !== JSON.stringify(empty);
+    return mine !== empty;
+  });
+}
+
 /** Kroki steppera — nazwy, nie numery, żeby blokada czytała się jak zdanie. */
 export type ManualFlightStep = 'aircraft' | 'task' | 'times' | 'readings';
 

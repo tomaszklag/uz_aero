@@ -99,7 +99,9 @@ export * from './sheets/CorrectionHistorySheet';
 export * from './sheets/AirfieldSheet';
 export * from './sheets/TextEntrySheet';
 export * from './sheets/LeaveCockpitSheet';
-export * from './sheets/AbandonPreflightSheet';
+// Rezygnacja z wielokrokowego formularza, który jeszcze nic nie zapisał — JEDEN arkusz
+// na obie drogi do lotu (preflight 02 i wpis ręczny 15; dawny `AbandonPreflightSheet`).
+export * from './sheets/AbandonDraftSheet';
 
 // Dane i akcje
 export * from './data/DayCard';

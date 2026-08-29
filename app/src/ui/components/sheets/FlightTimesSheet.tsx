@@ -195,8 +195,14 @@ export function FlightTimesSheet({
           localTime
           /* PIERWSZE pole otwiera się z klawiaturą (issue #62, trzecia tura): arkusz
              czasu jest formularzem o jednym pytaniu, więc pilot i tak tapie w wartość.
-             Przy parze („DODAJ LOT") klawiatura ląduje na starcie, bo od niego zaczyna
-             się lot i od niego zaczyna się czytanie arkusza. */
+             Przy parze klawiatura ląduje na starcie, bo od niego zaczyna się lot
+             i od niego zaczyna się czytanie arkusza.
+
+             Ale TYLKO nad pustą godziną — decyduje `stepperOpensForTyping` w kontrolce
+             (uwaga z urządzenia 2026-08-29). „DODAJ LOT" dziedziczy granice biegu
+             silnika, a korekta otwiera się na istniejącym czasie: w obu tych razach
+             pilot poprawia o minutę przyciskiem ±, a klawiatura zasłaniałaby drugą
+             kontrolkę pary i wiersz „Blok" pod nią. */
           autoEdit={i === 0}
           {...(i === 0 ? { inputRef } : {})}
           {...(f.value != null ? { originalTime: f.value, origin: 'wpisu' } : {})}

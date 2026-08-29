@@ -25,6 +25,7 @@ import {
 import { useTheme } from '../../theme';
 import { AppText } from '../foundation/AppText';
 import { toneColors, type Tone } from '../tone';
+import { stepperOpensForTyping } from './stepperAutoEdit';
 
 /** Umowa wpisu z klawiatury: jak wartość zamienia się w tekst i z powrotem. */
 export interface StepperEdit {
@@ -190,12 +191,17 @@ export function Stepper({
   /**
    * Tekst w trakcie wpisywania; `null` = pole zamknięte, wartość tylko do odczytu.
    *
-   * Przy `autoEdit` startujemy OTWARCI. Inicjalizator leniwy, a nie efekt: `Modal`
-   * odmontowuje dzieci przy zamknięciu arkusza (patrz `useSheetInputFocus`), więc
-   * każde otwarcie montuje kontrolkę od nowa i stan liczy się raz, we właściwej chwili.
+   * Przy `autoEdit` startujemy OTWARCI — ale TYLKO nad pustą wartością
+   * (`stepperOpensForTyping`, uwaga z urządzenia 2026-08-29): mając co przesuwać,
+   * pilot sięga po ± i klawiatura zasłania mu wtedy pół arkusza bez powodu. Pole
+   * startuje więc puste, bo przy niepustym w ogóle się nie otwiera.
+   *
+   * Inicjalizator leniwy, a nie efekt: `Modal` odmontowuje dzieci przy zamknięciu
+   * arkusza (patrz `useSheetInputFocus`), więc każde otwarcie montuje kontrolkę od nowa
+   * i stan liczy się raz, we właściwej chwili.
    */
   const [draft, setDraft] = useState<string | null>(() =>
-    autoEdit && edit != null ? (value == null ? '' : edit.toText(value)) : null,
+    stepperOpensForTyping(autoEdit, edit != null, value) ? '' : null,
   );
 
   const clamp = useCallback(

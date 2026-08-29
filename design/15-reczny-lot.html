@@ -148,6 +148,16 @@
 
   <div class="screen">
     <div class="app-header">
+      <!-- „WSTECZ" Z KROKU 1 PYTA O REZYGNACJĘ (uwaga z urządzenia, 2026-08-29), o ile
+           w formularzu cokolwiek jest: ten sam arkusz, co przy porzuceniu preflightu
+           (`design/02h-preflight-rezygnacja.html`), z tytułem „ZREZYGNOWAĆ Z WPISU
+           RĘCZNEGO?" i nazwą przycisku zapisu „ZAPISZ LOT". Pusty formularz wychodzi
+           bez pytania — arkusz nad niczym pytałby o zgodę na nic.
+
+           Z KROKÓW 2–4 „wstecz" cofa O KROK, a nie na „Mój dzień". Strzałka robiła to
+           dobrze od początku, ale przycisk sprzętowy i gest krawędziowy zdejmowały ze
+           stosu cały wpis — bo stepper jest JEDNYM ekranem nawigacji, a krok to jego
+           stan. Łapie je `usePreventRemove`, tak samo jak przy blokadzie kokpitu (04D). -->
       <a href="01-moj-dzien.html" class="back-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Mój dzień
