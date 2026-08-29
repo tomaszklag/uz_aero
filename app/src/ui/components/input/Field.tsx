@@ -31,19 +31,38 @@ export interface FieldProps {
   label: string;
   /** Znacznik po prawej stronie etykiety („opcjonalne", „wymagane"). */
   tag?: { label: string; tone?: Tone };
+  /**
+   * Adnotacja po prawej stronie etykiety — goła linijka mono, bez ramki plakietki
+   * (uwaga z urządzenia, 2026-08-29: czas lokalny przy kontrolce godziny).
+   *
+   * Różni się od `tag` ROLĄ, nie wyglądem: plakietka mówi o WŁAŚCIWOŚCI pola
+   * („opcjonalne", „wymagany · załoga 2-os."), a adnotacja o jego BIEŻĄCEJ WARTOŚCI
+   * widzianej inaczej — ta sama chwila w strefie pilota. Stąd brak obramowania: to
+   * nie jest etykieta stanu, tylko druga twarz liczby stojącej pod spodem.
+   *
+   * Linia etykiety jest dla niej właściwym miejscem, bo nic nie kosztuje w pionie
+   * i przylega do kontrolki: pod spodem stała za podpisem przesunięcia i czytała się
+   * jak pierwszy z wierszy odniesienia niżej, a nie jak przypis do godziny.
+   */
+  labelNote?: string;
   /** Podpowiedź pod polem — do czego ta wartość służy. */
   hint?: string;
   children: React.ReactNode;
   style?: ViewStyle;
 }
 
-export function Field({ label, tag, hint, children, style }: FieldProps) {
+export function Field({ label, tag, labelNote, hint, children, style }: FieldProps) {
   return (
     <View style={[{ gap: 5 }, style]}>
       <View style={styles.labelRow}>
         <AppText variant="mono" tone="muted" style={styles.label}>
           {label}
         </AppText>
+        {labelNote != null && (
+          <AppText variant="mono" tone="muted" style={styles.labelNote}>
+            {labelNote}
+          </AppText>
+        )}
         {tag != null && <Tag label={tag.label} tone={tag.tone ?? 'neutral'} />}
       </View>
 
@@ -308,6 +327,10 @@ const styles = StyleSheet.create({
   result: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   resultLabel: { flexShrink: 1, fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase' },
   label: { fontSize: 9, letterSpacing: 2, textTransform: 'uppercase' },
+  // Ten sam stopień co etykieta, ale BEZ wersalików i szerokiego światła: adnotacja
+  // niesie wartość („12:26 LT"), a nie nazwę — rozstrzelone wersaliki robiłyby
+  // z godziny drugą etykietę.
+  labelNote: { fontSize: 9, letterSpacing: 0.5 },
   hint: { fontSize: 9, letterSpacing: 0.5, lineHeight: 13 },
   box: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   boxSide: { flexDirection: 'row', alignItems: 'center', gap: 6 },

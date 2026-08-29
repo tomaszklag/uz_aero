@@ -731,8 +731,14 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
   chce wpisać lot z kartki); `ManualEntrySheet` SKASOWANY (komponent po ekranie 08,
   krok 10 minut, bez wpisu z klawiatury) — czasy idą przez `FlightTimesSheet`
   na `TimeStepper`; notatka ma własną sekcję zamiast pola w arkuszu czasów
-- **wpis bez ani jednego lotu jest odrzucany blokadą** („LOT RĘCZNY" — lot jest jego
-  treścią); sesja bez lotu ma swoją drogę na żywo (09C ze zdaniem powodu)
+- **wpis bez ani jednego lotu OSTRZEGA, nie blokuje** (uwaga z urządzenia, 2026-08-29 —
+  odwraca decyzję z przebudowy 15). Blokada „Dodaj przynajmniej jeden lot" stała na
+  uzasadnieniu „wpis nazywa się LOT RĘCZNY, więc lot jest jego treścią", a ono było
+  fałszywe: „mogła być taka sytuacja, że uruchomiłem i wyłączyłem, ale nie wykonałem
+  żadnego lotu". To DOKŁADNIE ten stan, który flow na żywo ma jako 09C (pogoda, usterka,
+  próba silnika), a domena traktuje go miękko (`NO_FLIGHT_WITHOUT_REASON` to flaga, nie
+  odmowa) — blokada odbierała pilotowi zapisanie czasu, w którym maszyna była zajęta.
+  Ostrzeżenie `no-flight` stoi na kroku 3, jak baner braku zrzutu
 
 ## Powód blokady wewnątrz przycisku, rezygnacja z lotu przez arkusz (issue #55, 2026-08-26)
 Cztery uwagi z urządzenia; dwie z nich to reguły obowiązujące każdy nowy ekran:
@@ -903,9 +909,16 @@ poprawka dosięgła ośmiu arkuszy naraz.
   o SKUTKU („blok wychodzi ujemny"), bo nazwy pól są w mianowniku, a odmiany nie da się
   wyprowadzić regułą; ta sama blokada obsługuje przez to obie role arkusza
 - **z arkusza czasów znikła DATA** (niesie ją podtytuł ekranu), UTC zeszło do ETYKIET pól,
-  a pod godziną stanął **czas lokalny** drobnym drukiem (`TimeStepper.localTime`) — do #62
-  składał go sobie sam arkusz 05F (issue #19), choć pytanie „która to u mnie godzina"
-  pada przy każdym wpisywanym czasie
+  a **czas lokalny stanął W LINII ETYKIETY, PO PRAWEJ** (`TimeStepper.localTime` →
+  `Field.labelNote`) — do #62 składał go sobie sam arkusz 05F (issue #19), choć pytanie
+  „która to u mnie godzina" pada przy każdym wpisywanym czasie. **Pod kontrolką stał
+  za nisko** (uwaga z urządzenia, 2026-08-29): wisiał ZA zarezerwowanym wierszem podpisu
+  przesunięcia i złożony tak samo jak wiersze odniesienia arkusza — więc czytał się jak
+  pierwszy z NICH, a nie jak przypis do godziny nad nim. W linii etykiety para mówi
+  wszystko sama (po lewej strefa wpisu, po prawej „która to u mnie"), nic nie kosztuje
+  w pionie, a przy PARZE kontrolek każda godzina ma swoje LT dokładnie nad sobą.
+  `labelNote` to goła linijka mono, nie plakietka: `tag` mówi o WŁAŚCIWOŚCI pola
+  („opcjonalne"), adnotacja o jego bieżącej WARTOŚCI widzianej inaczej
 - **wartość wychodzi na KAŻDĄ ZMIANĘ TEKSTU, nie przy `onBlur`** (druga tura z urządzenia):
   wpis szedł do rodzica dopiero po wyjściu z pola, więc czas trwania pary, podpis
   przesunięcia i powód blokady „ZAPISZ" odpowiadały dopiero po tapnięciu gdzieś obok —
@@ -1057,9 +1070,8 @@ i tak sprawdza ją `DROP_ON_GROUND` (`rules/consistency.ts`). Wiedział model, m
   lot skokowy bez wyniesienia zdarza się naprawdę (chmura, powrót z pełną kabiną), więc
   zdanie podaje OBIE drogi wyjścia — dopisz albo zostaw. Baner na kroku 3 (tam stoi
   „DODAJ ZRZUT") i pozycja w ostrzeżeniach kroku 4, jak przy zrzucie poza lotem.
-  **Milczy bez ani jednego lotu**: tam odpowiedzią jest blokada „Dodaj przynajmniej
-  jeden lot", a zrzut nie ma jeszcze do czego należeć — dwa zdania o pustym logu naraz
-  byłyby szumem
+  **Milczy bez ani jednego lotu**: mówi wtedy ostrzeżenie `no-flight`, a zrzut nie ma
+  jeszcze do czego należeć — dwa zdania o pustym logu naraz byłyby szumem
 - **OŚ ISTNIEJE OD PIERWSZEJ SEKUNDY, a karty „Bieg silnika" NIE MA** (czwarta tura
   z urządzenia; mockup `15H` = ten sam układ, co `15B`). Karta niosła parę godzin, którą
   oś rysuje jako swój pierwszy i ostatni wiersz — „dubluje się «bieg silnika» z tym, co

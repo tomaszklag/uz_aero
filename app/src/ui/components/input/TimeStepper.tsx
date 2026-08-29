@@ -101,8 +101,17 @@ export function TimeStepper({
       ? null
       : timeShiftHint(value, originalTime, format, origin);
 
+  /* CZAS LOKALNY STOI W LINII ETYKIETY, PO PRAWEJ (uwaga z urządzenia, 2026-08-29:
+     „LMT jest za nisko, jest za duży padding między inputem a tą wartością — to powinno
+     być bliżej, aby było jednoznacznie wiadomo, że to jest związane z tą kontrolką").
+     Pod kontrolką wisiał ZA zarezerwowanym wierszem podpisu przesunięcia, złożony tak
+     samo jak wiersze odniesienia arkusza — i czytał się jak pierwszy z NICH.
+     W linii etykiety para mówi wszystko sama: po lewej strefa wpisu, po prawej „która
+     to u mnie". Bez godziny nie ma czego przeliczać, więc adnotacja znika z wartością. */
+  const note = localTime && value != null ? `${timeLocal(value)} LT` : undefined;
+
   return (
-    <Field label={label}>
+    <Field label={label} {...(note != null ? { labelNote: note } : {})}>
       <Stepper
         value={value}
         onChange={onChange}
@@ -135,14 +144,6 @@ export function TimeStepper({
             </AppText>
           )}
         </View>
-      )}
-
-      {/* Czas lokalny drobnym drukiem POD zegarem (issue #19, uogólnione w #62 pkt 6).
-          Bez godziny nie ma czego przeliczać — linia znika razem z wartością. */}
-      {localTime && value != null && (
-        <AppText variant="mono" tone="muted" style={styles.shiftText}>
-          {timeLocal(value)} LT
-        </AppText>
       )}
 
       {footer}

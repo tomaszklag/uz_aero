@@ -91,7 +91,9 @@
   .target-label { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
   /* Czas lokalny drobnym drukiem POD zegarem UTC (issue #62 pkt 6). Rejestr jedzie
      w UTC i tak zostaje — ale pilot ma na ręce zegarek, który pokazuje LT. */
-  .time-local { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; }
+  /* Linia etykiety kontrolki: nazwa po lewej, czas lokalny po prawej (2026-08-29). */
+  .field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  .time-local { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
   /* Godzina, której jeszcze nie ma: skład PLACEHOLDERA, nie liczby (issue #58). */
   .time-val.empty { color:var(--text-placeholder); }
   .field-time.placeholder { color:var(--text-placeholder); }

@@ -418,8 +418,26 @@
            a zapomnianego nie odtworzy nikt — skład i wysokość zna tylko ten, kto leciał.
            NIE BLOKUJE: lot skokowy bez wyniesienia zdarza się naprawdę (chmura, powrót
            z pełną kabiną), więc zdanie podaje obie drogi wyjścia. Bez ani jednego lotu
-           baner MILCZY — tam odpowiedzią jest blokada „Dodaj przynajmniej jeden lot"
-           w przycisku DALEJ, a zrzut nie ma jeszcze do czego należeć. -->
+           baner MILCZY — mówi wtedy TRZECI baner (niżej), a zrzut nie ma jeszcze
+           do czego należeć.
+
+           TRZECI BANER TEGO KROKU (uwaga z urządzenia, 2026-08-29): „Nie dodałeś ani
+           jednego lotu — sesja zapisze się jako bieg silnika bez lotu. Dopisz lot,
+           jeśli go pominąłeś".
+
+           To ODWRÓCENIE decyzji z przebudowy 15 (2026-08-16), która odrzucała taki wpis
+           blokadą „Dodaj przynajmniej jeden lot" z uzasadnieniem „wpis nazywa się LOT
+           RĘCZNY, więc lot jest jego treścią". Uzasadnienie było fałszywe:
+
+             „mogła być taka sytuacja, że uruchomiłem i wyłączyłem, ale nie wykonałem
+              żadnego lotu"
+
+           — i to jest DOKŁADNIE ten sam stan, który flow na żywo ma jako 09C („zdanie
+           bez lotu": pogoda, usterka, próba silnika). Skoro sesja bez lotu jest legalna
+           w locie, to jest legalna także z kartki; blokada odbierała pilotowi możliwość
+           zapisania czasu, w którym maszyna była zajęta. Domena trzyma tę samą granicę:
+           `NO_FLIGHT_WITHOUT_REASON` jest u niej MIĘKKĄ flagą, nie odmową. -->
+      <!-- (Baner „bez lotu" nie jest tu narysowany, bo ten ekran loty MA.) -->
       <div class="warn">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span class="warn-text">Jeden zrzut wypada poza wszystkimi lotami — popraw jego godzinę albo dopisz lot, w którym się odbył.</span>

@@ -29,7 +29,8 @@ export interface ManualFlightWarning {
     | 'mh-chain'
     | 'fuel-chain'
     | 'drop-outside-flight'
-    | 'jump-without-drop';
+    | 'jump-without-drop'
+    | 'no-flight';
   text: string;
   /** „z cache · sync 16 SIE 08:14" — tylko przy ostrzeżeniach z danych referencyjnych. */
   src?: string;
@@ -134,6 +135,15 @@ export function manualFlightWarnings(
     }
   }
 
+  if (draft.flights.length === 0) {
+    warnings.push({
+      id: 'no-flight',
+      text:
+        'Nie dodałeś ani jednego lotu — sesja zapisze się jako bieg silnika bez lotu. ' +
+        'Dopisz lot, jeśli go pominąłeś.',
+    });
+  }
+
   if (jumpDayWithoutDrop(draft)) {
     warnings.push({
       id: 'jump-without-drop',
@@ -161,9 +171,8 @@ export function manualFlightWarnings(
  * zasada, którą trzyma cały ten moduł — fakt lotu jest cenniejszy niż kompletność
  * formularza. Zdanie mówi więc obie drogi wyjścia: dopisz albo zostaw.
  *
- * Milczymy, dopóki nie ma ani jednego lotu: wtedy odpowiedzią jest blokada „Dodaj
- * przynajmniej jeden lot" i drugie zdanie o pustym logu byłoby szumem — a zrzut nie
- * ma jeszcze do czego należeć.
+ * Milczymy, dopóki nie ma ani jednego lotu: wtedy mówi ostrzeżenie `no-flight`, drugie
+ * zdanie o pustym logu byłoby szumem, a zrzut nie ma jeszcze do czego należeć.
  */
 export function jumpDayWithoutDrop(
   draft: Pick<ManualFlightDraft, 'operation' | 'flights' | 'drops'>,

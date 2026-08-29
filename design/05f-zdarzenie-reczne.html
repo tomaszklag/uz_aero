@@ -89,7 +89,10 @@
   .time-val { font-family:var(--font-mono); font-size:32px; font-weight:700; letter-spacing:2px; color:var(--text-primary); flex:1; text-align:center; cursor:text; }
   /* Czas lokalny drobnym drukiem POD zegarem (issue #19) — drugorzędna wartość,
      drugorzędny stopień pisma. Rejestr jedzie w UTC i tak zostaje. */
-  .time-local { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-muted); text-align:center; }
+  /* Linia etykiety kontrolki: nazwa po lewej, czas lokalny po prawej (2026-08-29).
+     Baseline, nie center — obie linijki to ten sam stopień pisma. */
+  .time-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+  .time-local { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
   .time-delta { font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; color:var(--amber); text-align:center; min-height:14px; }
 
   .note-box { position:relative; display:flex; align-items:flex-start; gap:9px; background:var(--blue-muted); border:1px solid var(--blue-border); border-radius:12px; padding:11px 40px 11px 13px; }
@@ -186,16 +189,21 @@
         <div class="sheet-lead">GPS nie wykrył zdarzenia albo wykrył je za późno. <b>Zapisz je sam</b> — czas możesz cofnąć, jeśli orientujesz się po fakcie.</div>
 
         <div class="time-block">
-          <div class="time-lbl">Czas zdarzenia (UTC)</div>
+          <!-- CZAS LOKALNY W LINII ETYKIETY, PO PRAWEJ (uwaga z urządzenia, 2026-08-29
+               — pełne uzasadnienie w 15D). To ten sam czas, co na zegarku na ręce pilota
+               (scenariusz mockupów: LT = UTC+2); bez niego pilot przeliczał w głowie,
+               czy „14:10" to rzeczywiście chwila, którą pamięta. Pod kontrolką stał
+               za daleko i mieszał się z podpisem przesunięcia — w linii etykiety para
+               czyta się sama: po lewej strefa wpisu, po prawej „która to u mnie". -->
+          <div class="time-head">
+            <div class="time-lbl">Czas zdarzenia (UTC)</div>
+            <div class="time-local" id="tvl">16:10 LT</div>
+          </div>
           <div class="time-row">
             <div class="step-btn" onclick="bump(-1)">−1 min</div>
             <span class="time-val" id="tv">14:10</span>
             <div class="step-btn" onclick="bump(1)">+1 min</div>
           </div>
-          <!-- Ten sam czas na zegarku na ręce pilota (scenariusz mockupów: LT = UTC+2).
-               Bez tej linii pilot przeliczał w głowie, żeby sprawdzić, czy „14:10" to
-               rzeczywiście chwila, którą pamięta. -->
-          <div class="time-local" id="tvl">16:10 LT</div>
           <div class="time-delta" id="td">4 min temu — tyle trwało, zanim zauważyłeś</div>
         </div>
 

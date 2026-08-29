@@ -699,6 +699,24 @@ export function ManualFlightScreen({
               />
             )}
 
+            {/* Sesja bez ani jednego lotu (uwaga z urządzenia, 2026-08-29): „mogła być
+                taka sytuacja, że uruchomiłem i wyłączyłem, ale nie wykonałem żadnego
+                lotu". To ten sam stan, co 09C na żywo, więc NIE BLOKUJE — mówi tylko,
+                co się zapisze. Baner stoi tam, gdzie da się go naprawić: wiersz
+                „DODAJ LOT" jest w osi wyżej. Warunek pyta o oba końce biegu, bo bez
+                nich oś nie ma jeszcze wierszy i zdanie o pustym logu wyprzedzałoby
+                pytanie, na które pilot dopiero odpowiada. */}
+            {draft.engineStart != null &&
+              draft.engineStop != null &&
+              draft.flights.length === 0 && (
+                <Banner
+                  kind="warning"
+                  tone="amber"
+                  icon="warning"
+                  text="Nie dodałeś ani jednego lotu — sesja zapisze się jako bieg silnika bez lotu. Dopisz lot, jeśli go pominąłeś."
+                />
+              )}
+
             {/* Dzień skokowy z pustym logiem zrzutów (zgłoszenie z urządzenia,
                 2026-08-29). Ten sam rachunek, co przy zrzucie poza lotem: ostrzeżenie
                 stoi na kroku, na którym da się je naprawić — wiersz „DODAJ ZRZUT" jest
@@ -1161,7 +1179,7 @@ export function ManualFlightScreen({
           kroku 1 i pilot mógł ją zmienić jako jedyną rzecz. */}
       <AbandonDraftSheet
         visible={leaveAction != null && !leaving}
-        title="ZREZYGNOWAĆ Z WPISU RĘCZNEGO?"
+        title="ZREZYGNOWAĆ Z WPISU RĘCZNEGO?"
         rows={[
           { label: 'Data lotu', value: dateUtcDayMonth(draft.day) },
           ...(aircraft != null

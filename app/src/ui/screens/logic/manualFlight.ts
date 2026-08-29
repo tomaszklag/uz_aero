@@ -247,9 +247,16 @@ export function manualFlightStepBlocker(
       if (draft.engineStart >= draft.engineStop) {
         return 'Wyłączenie silnika musi być po uruchomieniu.';
       }
-      // Sesja bez ani jednego lotu ma swoją drogę na żywo (09C — zdanie bez lotu
-      // z powodem); wpis ręczny nazywa się „LOT RĘCZNY" i lot jest jego treścią.
-      if (draft.flights.length === 0) return 'Dodaj przynajmniej jeden lot.';
+      /* SESJA BEZ ANI JEDNEGO LOTU NIE JEST BŁĘDEM (uwaga z urządzenia, 2026-08-29:
+         „mogła być taka sytuacja, że uruchomiłem i wyłączyłem, ale nie wykonałem
+         żadnego lotu"). Blokada „Dodaj przynajmniej jeden lot" stała tu od przebudowy
+         15 z uzasadnieniem „wpis nazywa się LOT RĘCZNY, więc lot jest jego treścią" —
+         i to uzasadnienie było fałszywe: flow na żywo ma dla tego stanu WŁASNY ekran
+         (09C, zdanie bez lotu — pogoda, usterka, próba silnika), a domena traktuje go
+         miękko (`NO_FLIGHT_WITHOUT_REASON` to flaga, nie odmowa). Skoro sesja bez lotu
+         jest legalna w locie, jest legalna także z kartki; blokada odbierała pilotowi
+         zapisanie czasu, w którym maszyna była zajęta.
+         Mówi o tym odtąd OSTRZEŻENIE (`manualFlightWarnings`), jak przy braku zrzutu. */
       for (const f of sortedFlights(draft)) {
         if (f.takeoff >= f.landing) {
           return `Lądowanie lotu ${timeUtc(f.takeoff)} → ${timeUtc(f.landing)} musi być po starcie.`;

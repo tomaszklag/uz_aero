@@ -91,7 +91,10 @@
   .target-label { font-family:var(--font-mono); font-size:11px; letter-spacing:1px; color:var(--text-secondary); }
   /* Czas lokalny drobnym drukiem POD zegarem UTC (issue #62 pkt 6). Rejestr jedzie
      w UTC i tak zostaje — ale pilot ma na ręce zegarek, który pokazuje LT. */
-  .time-local { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:3px; }
+  /* Linia etykiety kontrolki: nazwa po lewej, czas lokalny po prawej. Baseline, nie
+     center — obie linijki to ten sam stopień pisma, więc mają siedzieć na jednej linii. */
+  .field-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  .time-local { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); }
   /* Godzina, której jeszcze nie ma: skład PLACEHOLDERA, nie liczby (issue #58). */
   .time-val.empty { color:var(--text-placeholder); }
 
@@ -257,15 +260,29 @@
              z samą jednostką — ona jedyna coś tu jeszcze dodaje. Przy parze kontrolek
              („DODAJ LOT", wejście z karty biegu) etykiety wracają do nazw, bo wtedy
              odróżniają jedno pole od drugiego. -->
+        <!-- CZAS LOKALNY STOI W LINII ETYKIETY, PO PRAWEJ (uwaga z urządzenia,
+             2026-08-29). Wcześniej wisiał POD kontrolką, za podpisem przesunięcia:
+             „LMT jest za nisko, jest za duży padding między inputem a tą wartością —
+             to powinno być bliżej, aby było jednoznacznie wiadomo, że to jest związane
+             z tą kontrolką". I rzeczywiście — oddzielony bursztynową linijką, złożony
+             tak samo jak wiersze odniesienia niżej, czytał się jak PIERWSZY Z NICH,
+             a nie jak przypis do godziny nad nim.
+
+             W linii etykiety para czyta się sama: po lewej „w jakiej strefie wpisuję",
+             po prawej „która to u mnie". Nic nie kosztuje pionu, bo etykieta i tak
+             zajmuje ten wiersz, a odległość od kontrolki jest zerowa. Ten sam wzorzec,
+             co plakietka w nagłówku karty („wymagany · załoga 2-os.", „opcjonalne"). -->
         <div>
-          <div class="field-label">Godzina (UTC)</div>
+          <div class="field-head">
+            <div class="field-label">Godzina (UTC)</div>
+            <div class="time-local">12:26 LT</div>
+          </div>
           <div class="time-stepper">
             <button class="step-btn">−1 min</button>
             <span class="time-val">10:26</span>
             <button class="step-btn">+1 min</button>
           </div>
           <div class="time-delta">Zmiana o +4 min względem wpisu (10:22)</div>
-          <div class="time-local">12:26 LT</div>
         </div>
 
         <!-- Wiersze odniesienia: nieedytowalny koniec pary i to, co z pary wychodzi.

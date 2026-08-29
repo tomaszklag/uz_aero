@@ -112,16 +112,24 @@ describe('manualFlightStepBlocker — bramki kroków', () => {
     ).toBeNull();
   });
 
-  it('krok 3 wymaga biegu silnika i przynajmniej jednego lotu', () => {
+  it('krok 3 wymaga biegu silnika', () => {
     // Napis wprost ze zgłoszenia z urządzenia (issue #62, szósta tura) — nie „godziny
     // biegu silnika: uruchomienie i wyłączenie", tylko to, czego pilot ma poszukać.
     expect(manualFlightStepBlocker('times', draft({ engineStart: null }))).toBe(
       'Wpisz godzinę uruchomienia i wyłączenia silnika.',
     );
-    expect(manualFlightStepBlocker('times', draft({ flights: [] }))).toContain(
-      'przynajmniej jeden lot',
-    );
     expect(manualFlightStepBlocker('times', draft())).toBeNull();
+  });
+
+  it('ale NIE wymaga lotu — bieg bez lotu jest legalny (uwaga z urządzenia, 2026-08-29)', () => {
+    /* „Mogła być taka sytuacja, że uruchomiłem i wyłączyłem, ale nie wykonałem żadnego
+       lotu" — dokładnie ten stan flow na żywo ma jako 09C, a domena traktuje go miękko
+       (`NO_FLIGHT_WITHOUT_REASON` to flaga, nie odmowa). Blokada odbierała pilotowi
+       zapisanie czasu, w którym maszyna była zajęta. */
+    const noFlights = draft({ flights: [], drops: [] });
+    expect(manualFlightStepBlocker('times', noFlights)).toBeNull();
+    expect(manualFlightBlocker(noFlights)).toBeNull();
+    expect(manualFlightWarnings(noFlights, emptyCtx).map((w) => w.id)).toContain('no-flight');
   });
 
   it('krok 3 pilnuje kolejności: wyłączenie po uruchomieniu, lądowanie po starcie', () => {
@@ -455,12 +463,12 @@ describe('jumpDayWithoutDrop — skoki z pustym logiem zrzutów', () => {
     ).toBe(false);
   });
 
-  it('bez ani jednego lotu MILCZY — odpowiedzią jest wtedy blokada o locie', () => {
+  it('bez ani jednego lotu MILCZY — mówi wtedy ostrzeżenie o braku lotu', () => {
     // Dwa zdania o pustym logu naraz byłyby szumem, a zrzut nie ma jeszcze do czego
     // należeć.
     const noFlights = draft({ flights: [], drops: [] });
     expect(jumpDayWithoutDrop(noFlights)).toBe(false);
-    expect(manualFlightStepBlocker('times', noFlights)).toBe('Dodaj przynajmniej jeden lot.');
+    expect(manualFlightWarnings(noFlights, emptyCtx).map((w) => w.id)).toEqual(['no-flight']);
   });
 
   it('milczy, dopóki rodzaj operacji nie jest wybrany', () => {
