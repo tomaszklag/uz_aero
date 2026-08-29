@@ -29,10 +29,13 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { duration, timeUtc } from '../../format';
+import { duration, landingsCount, timeUtc } from '../../format';
 import { useSheetInputFocus } from '../../hooks/useSheetInputFocus';
 import { IconAction } from '../data/IconAction';
+import { Field } from '../input/Field';
+import { Stepper } from '../input/Stepper';
 import { TimeStepper } from '../input/TimeStepper';
+import { countStepperEdit } from '../input/countStepperEdit';
 import { Sheet } from './Sheet';
 import { flightTimesBlocker, type FlightTimesBounds } from './flightTimesBlocker';
 
@@ -84,6 +87,18 @@ export interface FlightTimesSheetProps {
   onDelete?: () => void;
   onConfirm: (values: Record<string, number>) => void;
   onCancel: () => void;
+  /**
+   * LICZNIK KRĘGÓW (touch and go) — sekcja istnieje WYŁĄCZNIE wtedy, gdy arkusz opisuje
+   * CAŁY lot, czyli parę start + ostatnie lądowanie (uwaga z urządzenia, 2026-08-29).
+   *
+   * Nie ma jej przy biegu silnika (kręgi są własnością lotu, nie sesji) ani przy edycji
+   * pojedynczego końca pary: arkusz ma tyle kontrolek, ile pytań (issue #62, trzecia
+   * tura), a pilot tapiący w START pyta o godzinę startu, nie o liczbę przyziemień.
+   */
+  circuits?: {
+    value: number;
+    onChange: (next: number) => void;
+  };
 }
 
 export function FlightTimesSheet({
@@ -97,6 +112,7 @@ export function FlightTimesSheet({
   onDelete,
   onConfirm,
   onCancel,
+  circuits,
 }: FlightTimesSheetProps) {
   const [values, setValues] = useState<Record<string, number | null>>({});
   /* Klawiatura od otwarcia arkusza, na PIERWSZYM edytowalnym polu (issue #62,
@@ -210,6 +226,41 @@ export function FlightTimesSheet({
           {...(max != null ? { max } : {})}
         />
       ))}
+
+      {/* KRĘGI: LICZBA ZAMIAST PIĘCIU PAR GODZIN (uwaga z urządzenia, 2026-08-29).
+          Pole jest opcjonalne i domyślnie zerowe — pojedynczy lot to zwykła para
+          godzin i o kręgi nikt go nie pyta.
+
+          Podpis pod kontrolką mówi, ILE LĄDOWAŃ z tego wychodzi, bo to jest liczba
+          trafiająca do rejestru, a pilot podaje inną (kręgi). Zamiana „4" na „5"
+          w głowie jest dokładnie tym rodzajem rachunku, którego formularz ma
+          oszczędzić — i tym, na którym łatwo się pomylić o jeden. */}
+      {circuits != null && (
+        <Field
+          label="Touch and go"
+          tag={{ label: 'opcjonalne' }}
+          hint={`razem ${landingsCount(circuits.value + 1)} w tym locie`}
+        >
+          <Stepper
+            value={circuits.value}
+            onChange={circuits.onChange}
+            step={1}
+            stepLabel="1"
+            min={0}
+            max={MAX_CIRCUITS}
+            format={String}
+            edit={countStepperEdit('Touch and go')}
+            tone="neutral"
+          />
+        </Field>
+      )}
     </Sheet>
   );
 }
+
+/**
+ * Sufit licznika kręgów. Nie jest regułą lotniczą, tylko granicą pola: dwie cyfry
+ * (`countStepperEdit`) i tyle, ile realnie mieści się w jednym biegu silnika. Wyżej
+ * wpis przestaje być skrótem, a zaczyna być pomyłką w klawiaturze.
+ */
+const MAX_CIRCUITS = 99;

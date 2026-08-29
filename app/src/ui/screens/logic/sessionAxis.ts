@@ -44,7 +44,7 @@
 
 import { applyCorrections, correctionHistory } from '../../../domain';
 import type { Event, EventOf, MhFormat, SessionState } from '../../../domain';
-import { hhmm, litres, motoHours, oilLitres, thousands, timeUtc } from '../../format';
+import { hhmm, landingsCount, litres, motoHours, oilLitres, thousands, timeUtc } from '../../format';
 
 /**
  * Rodzaj punktu na osi - steruje kolorem kropki i tonem napisu.
@@ -372,7 +372,15 @@ export function buildSessionAxis(
         kind: 'landing',
         at: flight.landingAt,
         time: timeUtc(flight.landingAt),
-        name: 'Lądowanie',
+        /* KRĘGI PRZY LĄDOWANIU (uwaga z urządzenia, 2026-08-29): lot z touch and go
+           ma jedną kopertę czasu i kilka przyziemień, a oś jest jedynym miejscem
+           w rozliczeniu, gdzie ta liczba może stanąć przy swoim locie. Bez tego
+           stopka mówiłaby „5 lądowań" nad osią z jednym wierszem lądowania i pilot
+           nie miałby jak sprawdzić, do którego lotu należą. */
+        name:
+          (flight.touchAndGo ?? 0) > 0
+            ? `Lądowanie · ${landingsCount(flight.touchAndGo! + 1)}`
+            : 'Lądowanie',
         sub: null,
         // Numer lotu pada RAZ, przy starcie: para start → lądowanie czyta się w pionie,
         // a przy lądowaniu prawą kolumnę zajmuje czas lotu - czyli liczba, po którą

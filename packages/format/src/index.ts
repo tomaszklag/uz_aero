@@ -478,6 +478,16 @@ export function eventsCount(n: number): string {
 }
 
 /**
+ * „1 lądowanie" / „2 lądowania" / „5 lądowań" (uwaga z urządzenia, 2026-08-29 — kręgi
+ * we wpisie ręcznym). Mieszka tu, nie w helperze ekranu, bo tę samą liczbę odmienia
+ * arkusz lotu (podpis „razem N w tym locie") i oś sesji (nazwa wiersza lądowania),
+ * a dwie odmiany tego samego rzeczownika rozjechałyby się przy pierwszej poprawce.
+ */
+export function landingsCount(n: number): string {
+  return `${n} ${plural(n, 'lądowanie', 'lądowania', 'lądowań')}`;
+}
+
+/**
  * WIEK jako wartość względna: „3 dni 3 h", „6 h 41 min", „26 min".
  *
  * Reguła świeżości panelu (`design/admin/SZABLON.html`, sekcja `.fresh`): *„Wiek

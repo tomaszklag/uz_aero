@@ -29,7 +29,7 @@
  * Zero Reacta, zero zegara systemowego - wejściem jest szkic, wyjściem wiersze.
  */
 
-import { duration, timeUtc } from '../../format';
+import { duration, landingsCount, timeUtc } from '../../format';
 import type { SessionAxisFootItem, SessionAxisRow } from '../../components/data/SessionAxis';
 import type {
   ManualFlightDraft,
@@ -244,11 +244,16 @@ export function buildManualFlightAxis(
     for (const drop of drops) {
       if (drop.at >= flight.takeoff && drop.at <= flight.landing) middle.push(dropRow(drop));
     }
+    /* KRĘGI WIDAĆ PRZY LĄDOWANIU, bo to ono je zamyka i to ono niesie licznik
+       (uwaga z urządzenia, 2026-08-29). Nazwa wiersza mówi wprost, że przyziemień
+       było więcej niż jedno — inaczej pilot wpisałby liczbę w arkuszu i nie
+       zobaczyłby jej nigdzie na osi, czyli nie miałby jak sprawdzić, co zapisuje. */
+    const circuits = flight.touchAndGo ?? 0;
     middle.push({
       id: `landing:${flight.id}`,
       kind: 'landing',
       time: timeUtc(flight.landing),
-      name: 'Lądowanie',
+      name: circuits > 0 ? `Lądowanie · ${landingsCount(circuits + 1)}` : 'Lądowanie',
       duration: flight.landing > flight.takeoff ? duration(flight.landing - flight.takeoff) : null,
     });
   }

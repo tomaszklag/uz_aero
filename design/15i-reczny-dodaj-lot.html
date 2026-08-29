@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UZ Aero - 15D Lot ręczny · arkusz czasu zdarzenia</title>
+<title>UZ Aero - 15I Lot ręczny · dodaj lot (kręgi)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -112,6 +112,14 @@
   .step-btn:hover { border-color:var(--green-border); background:var(--green-muted); }
   .time-val { flex:1; text-align:center; font-family:var(--font-mono); font-size:30px; font-weight:700; letter-spacing:2px; color:var(--text-primary); cursor:text; }
   .time-delta { font-family:var(--font-mono); font-size:9px; color:var(--amber); letter-spacing:0.5px; margin-top:5px; min-height:13px; }
+  /* Plakietka „opcjonalne" w linii etykiety - ta sama, co przy Dualu na 02 i 15.
+     Oznaczamy WYŁĄCZNIE to, co opcjonalne: wymagalność jest stanem domyślnym. */
+  .optional-tag { font-family:var(--font-mono); font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border); border-radius:5px; padding:2px 6px; white-space:nowrap; }
+  /* Ile lądowań z tego wychodzi - liczba, którą pilot ZOBACZY w rejestrze, licząca się
+     z tej, którą podał. Zamiana „4" na „5" w głowie jest dokładnie tym rachunkiem,
+     którego formularz ma oszczędzić, i tym, na którym łatwo pomylić się o jeden. */
+  .count-sum { font-family:var(--font-mono); font-size:9px; letter-spacing:0.5px; color:var(--text-muted); margin-top:5px; }
+  .count-sum b { color:var(--text-primary); font-weight:700; }
 
   .modal-ref { display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); padding:0 2px; }
   .modal-ref-val { color:var(--text-secondary); }
@@ -141,8 +149,8 @@
 <body>
 
 <header class="canvas-label">
-  <span class="film-strip">UZ AERO - 15D</span>
-  <span class="slug">lot ręczny · arkusz czasu zdarzenia</span>
+  <span class="film-strip">UZ AERO - 15I</span>
+  <span class="slug">lot ręczny · dodaj lot z kręgami</span>
   <span class="canvas-meta">Nad krokiem 3</span>
 </header>
 
@@ -211,89 +219,80 @@
         <div class="modal-handle"></div>
 
         <div class="sheet-head">
-          <span class="modal-title">START · LOT 2</span>
-          <span class="icon-action" title="Usuń ten lot">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          </span>
+          <span class="modal-title">DODAJ LOT</span>
         </div>
 
-        <!-- DATY TU NIE MA (issue #62 pkt 6): stała w wierszu „Lot 2 · 16 SIE · czasy
-             UTC", choć tę samą datę niesie podtytuł ekranu pod nagłówkiem. Wiersz
-             kosztował linię i nie odpowiadał na żadne pytanie zadane w tym arkuszu.
-             UTC zeszło do ETYKIET pól - tam, gdzie mieszka każda inna jednostka
-             tego systemu („Wysokość zrzutu (ft)").
-
-             ARKUSZ MA TYLE KONTROLEK, ILE PYTAŃ (issue #62, trzecia tura z urządzenia).
-             Tapnięcie w START na osi otwierało parę start + lądowanie, czyli dawało
-             do ręki kontrolkę, o którą nikt nie prosił, i kazało szukać wzrokiem tej
-             właściwej - „skoro klikam w konkretną pozycję, to wiem, że tylko to chcę
-             edytować". Tytuł nazywa więc TEN koniec („START · LOT 2"), a kontrolka
-             jest jedna.
-
-             DRUGI KONIEC NIE ZNIKA - schodzi do wierszy odniesienia pod spodem.
-             Dwa powody: pilot poprawia godzinę WZGLĘDEM niego („żeby wyszło 26 minut"),
-             a reguła kolejności musi mieć co porównać, bo inaczej dałoby się ustawić
-             start po lądowaniu.
-
-             PARA W CAŁOŚCI zostaje tylko tam, gdzie powstaje w całości: przy „DODAJ
-             LOT" i przy wejściu z karty „Bieg silnika". -->
-        <!-- TU KLAWIATURY NIE MA (uwaga z urządzenia, 2026-08-29):
-
-               „jak mam «dodaj lot», gdzie mam już wpisane default wartości, to nie
-                otwieraj tutaj klawiatury - tutaj raczej będę korzystał z przycisków,
-                którymi manipuluję godziną +/- 1 min. Tak samo jak otwieram popup,
-                aby wyedytować godzinę."
-
-             Trzecia tura issue #62 kazała arkuszowi czasu otwierać się Z KLAWIATURĄ.
-             To była prawda o arkuszu stawiającym godzinę OD ZERA (wariant 15F) -
-             i nieprawda o TYM: godzina już tu stoi, więc pilot poprawia ją o minutę
-             przyciskiem, a klawiatura zasłaniałaby drugą kontrolkę pary i wiersz „Blok".
-
-             Reguła jest jedna i mieszka w KONTROLCE (`stepperOpensForTyping`):
-             klawiatura wchodzi sama WYŁĄCZNIE nad pustą wartością - tam ± są wygaszone
-             (nie ma bazy, od której liczyć krok), więc wpis z klawiatury jest jedyną
-             drogą. Podnosi ją drabinka prób z `useSheetInputFocus` i nic innego: trzy
-             podejścia już zawiodły, historia w `hooks/keyboardFocus.ts`. -->
-        <!-- ETYKIETA NIE POWTARZA TYTUŁU (zgłoszenie z urządzenia, issue #62 szósta
-             tura: „mam 2× labelkę «Uruchomienie»"). Przy JEDNEJ kontrolce nazwę niesie
-             tytuł arkusza dwa centymetry wyżej („START · LOT 2"), więc etykieta zostaje
-             z samą jednostką - ona jedyna coś tu jeszcze dodaje. Przy parze kontrolek
-             („DODAJ LOT", wejście z karty biegu) etykiety wracają do nazw, bo wtedy
-             odróżniają jedno pole od drugiego. -->
-        <!-- CZAS LOKALNY STOI W LINII ETYKIETY, PO PRAWEJ (uwaga z urządzenia,
-             2026-08-29). Wcześniej wisiał POD kontrolką, za podpisem przesunięcia:
-             „LMT jest za nisko, jest za duży padding między inputem a tą wartością -
-             to powinno być bliżej, aby było jednoznacznie wiadomo, że to jest związane
-             z tą kontrolką". I rzeczywiście - oddzielony bursztynową linijką, złożony
-             tak samo jak wiersze odniesienia niżej, czytał się jak PIERWSZY Z NICH,
-             a nie jak przypis do godziny nad nim.
-
-             W linii etykiety para czyta się sama: po lewej „w jakiej strefie wpisuję",
-             po prawej „która to u mnie". Nic nie kosztuje pionu, bo etykieta i tak
-             zajmuje ten wiersz, a odległość od kontrolki jest zerowa. Ten sam wzorzec,
-             co plakietka w nagłówku karty („wymagany · załoga 2-os.", „opcjonalne"). -->
+        <!-- PARA GODZIN W CAŁOŚCI - bo tu lot POWSTAJE w całości (issue #62, trzecia
+             tura). Tapnięcie w pojedynczą pozycję na osi otwiera arkusz z jedną
+             kontrolką (15D); „DODAJ LOT" i wejście z karty biegu dają obie, więc
+             etykiety wracają do nazw: przy parze to one odróżniają jedno pole od
+             drugiego. Czas lokalny stoi po prawej w linii etykiety, przy SWOJEJ
+             godzinie (2026-08-29) - przy parze to jedyne miejsce, w którym nie trzeba
+             zgadywać, do której z dwóch należy. -->
         <div>
           <div class="field-head">
-            <div class="field-label">Godzina (UTC)</div>
-            <div class="time-local">12:26 LT</div>
+            <div class="field-label">Start (UTC)</div>
+            <div class="time-local">12:00 LT</div>
           </div>
           <div class="time-stepper">
             <button class="step-btn">−1 min</button>
-            <span class="time-val">10:26</span>
+            <span class="time-val">10:00</span>
             <button class="step-btn">+1 min</button>
           </div>
-          <div class="time-delta">Zmiana o +4 min względem wpisu (10:22)</div>
         </div>
 
-        <!-- Wiersze odniesienia: nieedytowalny koniec pary i to, co z pary wychodzi.
-             Obu pilot sam nie wpisał, więc oba należą tutaj, a nie do kontrolek. -->
-        <div class="modal-ref">
-          <span>Lądowanie</span>
-          <span class="modal-ref-val">10:52</span>
+        <div>
+          <div class="field-head">
+            <div class="field-label">Ostatnie lądowanie (UTC)</div>
+            <div class="time-local">12:40 LT</div>
+          </div>
+          <div class="time-stepper">
+            <button class="step-btn">−1 min</button>
+            <span class="time-val">10:40</span>
+            <button class="step-btn">+1 min</button>
+          </div>
         </div>
+
+        <!-- ═══ KRĘGI: LICZBA ZAMIAST PIĘCIU PAR GODZIN (uwaga z urządzenia, 2026-08-29)
+             ═══════════════════════════════════════════════════════════════════════
+
+               „Częściej będzie tak, że podaję godzinę uruchomienia, startu, ostatniego
+                lądowania i wyłączenia oraz podaję ilość lotów - czyli wykonałem w tym
+                czasie 4 touch and go."
+
+             POLE JEST OPCJONALNE i domyślnie puste: pojedynczy lot to zwykła para
+             godzin i o kręgi nikt go nie pyta. Wpisana liczba mówi, ILE RAZY maszyna
+             przyziemiła i wystartowała ponownie MIĘDZY tymi dwiema godzinami.
+
+             DLACZEGO „TOUCH AND GO", A NIE „LICZBA LOTÓW": bo to jest liczba, którą
+             pilot pamięta („zrobiłem cztery kręgi"), a nie wynik dodawania. Liczba
+             lądowań wychodzi z niej sama i stoi TU, pod polem - pilot ma zobaczyć,
+             co właśnie zadeklarował, zanim to zapisze.
+
+             CZEGO NIE ROBIMY: nie dzielimy 10:00 → 10:40 na pięć równych lotów.
+             Pięć par wymyślonych minut wyglądałoby na osi dokładnie jak zapisane,
+             a arkusz korekty pozwoliłby je „poprawiać" jak fakty. Rejestr mówi więc
+             prawdę o swojej dokładności: JEDNA koperta czasu, którą pilot podał,
+             i PIĘĆ lądowań, które policzył. -->
+        <div>
+          <div class="field-head">
+            <div class="field-label">Touch and go</div>
+            <div class="optional-tag">opcjonalne</div>
+          </div>
+          <div class="time-stepper">
+            <button class="step-btn">−1</button>
+            <span class="time-val">4</span>
+            <button class="step-btn">+1</button>
+          </div>
+          <div class="count-sum">razem <b>5 lądowań</b> w tym locie</div>
+        </div>
+
+        <!-- Wiersze odniesienia: to, co z pary wychodzi. Czas lotu liczy się od startu
+             do OSTATNIEGO lądowania - kręgi go nie dzielą, bo maszyna nie zatrzymała
+             się między nimi. -->
         <div class="modal-ref">
           <span>Czas lotu</span>
-          <span class="modal-ref-val">0:26</span>
+          <span class="modal-ref-val">0:40</span>
         </div>
         <div class="modal-ref">
           <span>Mieści się w biegu silnika</span>
@@ -312,13 +311,12 @@
 
 <aside class="variants-panel">
   <div class="vp-title">Arkusz czasu - stany</div>
-  <a class="vp-item active" href="15d-reczny-czas-arkusz.html">
+  <a class="vp-item" href="15d-reczny-czas-arkusz.html">
     <span class="vp-badge blue">15D</span>
     <span class="vp-body">
       <span class="vp-name">Z wartością - poprawka</span>
       <span class="vp-when">Godzina już jest: wpisana wcześniej albo wyprowadzona z biegu silnika przy nowym locie (issue #62 pkt 8). Klawiatura NIE wchodzi sama - nad wpisaną godziną pilot poprawia o minutę przyciskiem ±, a wpis z klawiatury zostaje pod tapnięciem w wartość (2026-08-29). Podpis mówi, o ile przesunięto, pod spodem czas lokalny. Kosz w linii tytułu usuwa lot, gdy pilot dodał go przez pomyłkę.</span>
     </span>
-    <span class="vp-tag">ten ekran</span>
   </a>
   <a class="vp-item" href="15f-reczny-czas-pusty.html">
     <span class="vp-badge blue">15F</span>
@@ -355,15 +353,15 @@
   <span>·</span>
   <a href="15b-reczny-czasy.html">← 15B Krok 3</a>
   <span>·</span>
-  <a href="15d-reczny-czas-arkusz.html" class="active">15D Arkusz czasu</a>
+  <a href="15d-reczny-czas-arkusz.html">15D Arkusz czasu</a>
+  <span>·</span>
+  <a href="15i-reczny-dodaj-lot.html" class="active">15I Dodaj lot</a>
   <span>·</span>
   <a href="15f-reczny-czas-pusty.html">15F Bez wartości</a>
   <span>·</span>
   <a href="15g-reczny-czas-kolejnosc.html">15G Odwrócona para</a>
   <span>·</span>
   <a href="15e-reczny-data.html">15E Arkusz daty</a>
-  <span>·</span>
-  <a href="15i-reczny-dodaj-lot.html">15I Dodaj lot</a>
 </nav>
 
 </body>

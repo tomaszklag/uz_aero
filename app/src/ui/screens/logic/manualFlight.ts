@@ -31,7 +31,20 @@ import { dualRequirementBlocker } from './dualRequirement';
 export interface ManualFlightLegDraft {
   id: string;
   takeoff: EpochMillis;
+  /** OSTATNIE lądowanie lotu — przy kręgach zamyka całą serię, patrz `touchAndGo`. */
   landing: EpochMillis;
+  /**
+   * KRĘGI (touch and go) wykonane MIĘDZY tymi godzinami — pole OPCJONALNE i domyślnie
+   * puste (uwaga z urządzenia, 2026-08-29). Pozwala zapisać serię jedną kopertą czasu
+   * zamiast wyliczać każdą parę godzin z osobna:
+   *
+   *   „częściej będzie tak, że podaję godzinę uruchomienia, startu, ostatniego
+   *    lądowania i wyłączenia oraz podaję ilość lotów".
+   *
+   * Nieobecne i `0` znaczą to samo — zwykły lot. Pełne uzasadnienie (i dlaczego NIE
+   * dzielimy koperty na równe odcinki) przy `LandingPayload.touchAndGo` w domenie.
+   */
+  touchAndGo?: number;
 }
 
 /** Zrzut szkicu - czas + opcjonalny skład (null = „niepodany", nie zero). */
@@ -406,7 +419,12 @@ export function toManualFlightInput(
     arrivalIcao: sameField ? draft.departureIcao : draft.arrivalIcao,
     client: draft.client,
     engine: { start: draft.engineStart!, stop: draft.engineStop! },
-    flights: sortedFlights(draft).map((f) => ({ takeoff: f.takeoff, landing: f.landing })),
+    flights: sortedFlights(draft).map((f) => ({
+      takeoff: f.takeoff,
+      landing: f.landing,
+      // Zero i brak znaczą to samo, więc do komendy jedzie tylko liczba dodatnia.
+      ...(f.touchAndGo != null && f.touchAndGo > 0 ? { touchAndGo: f.touchAndGo } : {}),
+    })),
     drops: [...draft.drops]
       .sort((a, b) => a.at - b.at)
       .map((d) => ({ at: d.at, jumpers: d.jumpers, altitudeFt: d.altitudeFt })),

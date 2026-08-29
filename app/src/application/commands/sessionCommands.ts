@@ -71,7 +71,13 @@ export interface ClaimInput extends SessionContext {
 /** Jeden lot wpisu ręcznego - para start → lądowanie wewnątrz biegu silnika. */
 export interface ManualFlightLeg {
   takeoff: EpochMillis;
+  /** OSTATNIE lądowanie lotu — przy kręgach zamyka całą serię, patrz `touchAndGo`. */
   landing: EpochMillis;
+  /**
+   * Kręgi (touch and go) wykonane MIĘDZY tymi godzinami; pominięte = zwykły lot.
+   * Wchodzi wprost do `LandingPayload.touchAndGo` i tam mieszka pełne uzasadnienie.
+   */
+  touchAndGo?: number;
 }
 
 /** Zrzut wpisu ręcznego - czas + opcjonalny skład (null = „niepodany", nie zero). */
@@ -407,7 +413,19 @@ export class SessionCommands {
     const inRun: Draft[] = [
       ...input.flights.flatMap((f): Draft[] => [
         { type: 'takeoff', payload: { method: 'manual' }, gpsTime: f.takeoff },
-        { type: 'landing', payload: { method: 'manual' }, gpsTime: f.landing },
+        {
+          type: 'landing',
+          // Kręgi jadą na LĄDOWANIU, bo to ono zamyka serię i to ono niesie liczbę
+          // przyziemień — start otwierający lot jest jeden i o kręgach nie wie.
+          // Zero nie wchodzi do payloadu: „bez kręgów" ma być brakiem pola, nie zerem
+          // (serwer odrzuca `touchAndGo: 0` właśnie po to, żeby nie było dwóch zapisów
+          // jednego faktu).
+          payload: {
+            method: 'manual',
+            ...(f.touchAndGo != null && f.touchAndGo > 0 ? { touchAndGo: f.touchAndGo } : {}),
+          },
+          gpsTime: f.landing,
+        },
       ]),
       ...(input.drops ?? []).map(
         (d, i): Draft => ({

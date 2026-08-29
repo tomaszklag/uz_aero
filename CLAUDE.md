@@ -731,6 +731,32 @@ kroków (jak 02 → 02E → 02A): data+samolot+Dual → zadanie → czasy → li
   chce wpisać lot z kartki); `ManualEntrySheet` SKASOWANY (komponent po ekranie 08,
   krok 10 minut, bez wpisu z klawiatury) - czasy idą przez `FlightTimesSheet`
   na `TimeStepper`; notatka ma własną sekcję zamiast pola w arkuszu czasów
+- **KRĘGI (TOUCH AND GO) TO LICZBA PRZY LĄDOWANIU, NIE PIĘĆ PAR GODZIN** (uwaga
+  z urządzenia, 2026-08-29; mockup `15I`). Zgłoszenie: „częściej będzie tak, że podaję
+  godzinę uruchomienia, startu, ostatniego lądowania i wyłączenia oraz podaję ilość
+  lotów - czyli wykonałem w tym czasie 4 touch and go".
+  - **`LandingPayload.touchAndGo`** (opcjonalne, dodatnie) - ile razy maszyna przyziemiła
+    i wystartowała ponownie MIĘDZY startem lotu a tym lądowaniem. Brak pola i zero znaczą
+    to samo, więc do payloadu wchodzi tylko liczba dodatnia (serwer odrzuca `0`: dwa
+    zapisy jednego faktu rozjeżdżają się przy pierwszej korekcie)
+  - **rośnie OBA liczniki**: `touchAndGo: 4` to 5 lądowań i 5 startów (start otwierający
+    plus cztery po kręgach). Arytmetykę trzymają PROJEKCJE, nie czytelnicy - i są DWIE:
+    `projections/session.ts` liczy ze strumienia, `projections/pilotDay.ts` z LOTÓW.
+    Bez tej drugiej doba pilota po cichu zaniżałaby lądowania (sesja 5, dzień 1, obie
+    liczby na innych ekranach); ma na to własny test
+  - **NIE DZIELIMY koperty na równe odcinki**: pięć par wymyślonych minut wyglądałoby
+    na osi jak zapisane, a arkusz korekty pozwoliłby je „poprawiać" jak fakty. Rejestr
+    mówi prawdę o swojej dokładności - jedna koperta czasu i tyle lądowań, ile pilot
+    policzył. To świadoma cena: ten sam dzień zapisany automatem da 5 lotów, a skrótem
+    1 lot i 5 lądowań
+  - **detekcja GPS tego pola NIE USTAWIA** i ścieżka automatyczna liczy się dokładnie
+    jak przed zmianą - każdy krąg produkuje tam własną, PRAWDZIWĄ parę zdarzeń.
+    Pilnuje tego osobny test w `projections.test.ts`
+  - **licznik jest w arkuszu CAŁEGO lotu** (`FlightTimesSheet.circuits`), nigdy przy
+    biegu silnika (kręgi są własnością lotu) ani przy edycji jednego końca pary (arkusz
+    ma tyle kontrolek, ile pytań). Podpis pod polem mówi, ile z tego wychodzi LĄDOWAŃ -
+    zamiana „4" na „5" w głowie jest rachunkiem, którego formularz ma oszczędzić.
+    Odmiana idzie przez `landingsCount` w `@uzaero/format`, wspólną z osią
 - **wpis bez ani jednego lotu OSTRZEGA, nie blokuje** (uwaga z urządzenia, 2026-08-29 -
   odwraca decyzję z przebudowy 15). Blokada „Dodaj przynajmniej jeden lot" stała na
   uzasadnieniu „wpis nazywa się LOT RĘCZNY, więc lot jest jego treścią", a ono było

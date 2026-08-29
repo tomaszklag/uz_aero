@@ -257,6 +257,26 @@ export function ManualFlightScreen({
   const [sheet, setSheet] = useState<SheetState>(null);
   const close = () => setSheet(null);
 
+  /**
+   * KRĘGI EDYTOWANEGO LOTU (uwaga z urządzenia, 2026-08-29). Stan arkusza, nie szkicu:
+   * do szkicu trafiają dopiero razem z godzinami przy „ZAPISZ", tak jak one — inaczej
+   * anulowanie arkusza zostawiałoby w locie liczbę, której pilot nie zatwierdził.
+   *
+   * Ładuje się z lotu przy KAŻDYM otwarciu (efekt niżej), bo `FlightTimesSheet` nie
+   * odmontowuje się między otwarciami: bez tego drugi lot dziedziczyłby licznik po
+   * pierwszym — dokładnie ten błąd, który `Stepper` ma u siebie rozwiązany leniwym
+   * inicjalizatorem.
+   */
+  const [circuits, setCircuits] = useState(0);
+  useEffect(() => {
+    if (sheet?.kind !== 'flight') return;
+    const editing = sheet.id != null ? draft.flights.find((f) => f.id === sheet.id) : undefined;
+    setCircuits(editing?.touchAndGo ?? 0);
+    // Celowo bez `draft.flights`: liczba ma się wczytać przy OTWARCIU arkusza, a nie
+    // wracać do zapisanej przy każdej zmianie szkicu w tle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheet]);
+
   const step = STEPS[stepIndex]!;
   /* Pojemność zbiorników wchodzi do bramki (issue #62, piąta tura): sufit odczytu jest
      twardym błędem domeny, a przy nieznanej pojemności reguła śpi - tak jak w domenie. */
@@ -1033,19 +1053,33 @@ export function ManualFlightScreen({
               }
             : undefined
         }
+        /* Licznik kręgów TYLKO przy CAŁYM locie: tapnięcie w pojedynczą pozycję osi
+           pyta o godzinę tej pozycji i nic więcej (issue #62, trzecia tura). */
+        {...(flightSheetField(sheet) === undefined
+          ? { circuits: { value: circuits, onChange: setCircuits } }
+          : {})}
         onConfirm={(v) => {
           if (sheet?.kind !== 'flight') return;
+          /* Kręgi zapisujemy WYŁĄCZNIE stąd, gdzie arkusz je pokazywał — przy edycji
+             jednego końca pary licznika nie było, więc nie ma go czym nadpisać.
+             Zero czyścimy do `undefined`: „bez kręgów" ma być brakiem pola. */
+          const withCircuits =
+            flightSheetField(sheet) === undefined
+              ? { touchAndGo: circuits > 0 ? circuits : undefined }
+              : {};
           if (sheet.id == null) {
             patch({
               flights: [
                 ...draft.flights,
-                { id: uuidv4(), takeoff: v['takeoff']!, landing: v['landing']! },
+                { id: uuidv4(), takeoff: v['takeoff']!, landing: v['landing']!, ...withCircuits },
               ],
             });
           } else {
             patch({
               flights: draft.flights.map((f) =>
-                f.id === sheet.id ? { ...f, takeoff: v['takeoff']!, landing: v['landing']! } : f,
+                f.id === sheet.id
+                  ? { ...f, takeoff: v['takeoff']!, landing: v['landing']!, ...withCircuits }
+                  : f,
               ),
             });
           }
